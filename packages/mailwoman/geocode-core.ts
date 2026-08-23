@@ -24,12 +24,11 @@
 
 import { existsSync } from "node:fs"
 
-import type { GeocodeOutcome, GeocodeOutcomeLike } from "@mailwoman/api"
-import { isUnitGradePostcodeHit } from "@mailwoman/codex"
+import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree, DroppedSpan } from "@mailwoman/core/decoder"
-import { decodeAsJSON, loneValueBearingNode } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
 	deriveInputMode,

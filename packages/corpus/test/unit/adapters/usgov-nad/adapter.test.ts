@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import {
 	createUsgovNADAdapter,
 	USGOV_NAD_ADAPTER_ID,

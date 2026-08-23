@@ -7,7 +7,7 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { createLayerCoverageTable, createLayerManifestTable, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers"
 import {
 	createPOISearchFTS,
 	createPOIStagingTables,
@@ -16,7 +16,6 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
-import type { Kysely } from "kysely"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 

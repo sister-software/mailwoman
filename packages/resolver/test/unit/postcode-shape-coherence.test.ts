@@ -27,7 +27,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
+import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "@mailwoman/resolver/postcode-shape-coherence"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"

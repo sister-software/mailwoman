@@ -30,7 +30,7 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises"
-import { dirname, join, resolve } from "node:path"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"

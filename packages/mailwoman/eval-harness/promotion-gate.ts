@@ -74,7 +74,7 @@ import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, md5File, tempRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 
 import { deOrderEval } from "./de-order-eval.ts"

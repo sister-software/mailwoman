@@ -24,7 +24,7 @@ import { promisify } from "node:util"
 
 import { $public } from "@mailwoman/core/env"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { localeToCountry, resolverDefaultCountry, spec as parseSpec } from "mailwoman/commands/parse"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"

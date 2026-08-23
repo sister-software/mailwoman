@@ -122,7 +122,6 @@ import {
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
-import type { Kysely } from "kysely"
 
 import { BDC_H3_RESOLUTION, type BDCDatabase } from "../schema.ts"
 import {

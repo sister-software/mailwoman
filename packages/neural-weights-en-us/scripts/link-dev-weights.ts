@@ -41,16 +41,7 @@
 
 import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
-import {
-	existsSync,
-	readFileSync,
-	renameSync,
-	statSync,
-	symlinkSync,
-	unlinkSync,
-	writeFileSync,
-	mkdirSync,
-} from "node:fs"
+import { existsSync, readFileSync, statSync, writeFileSync, mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"

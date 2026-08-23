@@ -8,7 +8,7 @@ import { readFile, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "@mailwoman/corpus/adapters/tiger/adapter"
 import { beforeEach, describe, expect, it } from "vitest"
 

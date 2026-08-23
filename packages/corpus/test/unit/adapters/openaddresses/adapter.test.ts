@@ -7,7 +7,7 @@
 import { rm, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,

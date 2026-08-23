@@ -16,7 +16,7 @@
 import { existsSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"

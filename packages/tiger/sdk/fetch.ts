@@ -25,12 +25,9 @@
  */
 
 import { spawn } from "node:child_process"
-import { createWriteStream, existsSync } from "node:fs"
-import { mkdir, rename } from "node:fs/promises"
+import { mkdir } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"

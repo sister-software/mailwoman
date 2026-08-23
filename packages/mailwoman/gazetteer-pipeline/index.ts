@@ -45,7 +45,6 @@ import { mailwomanDataRoot } from "../resolver-backend.ts"
 import { candidateLayerManifest } from "./candidate-manifest.ts"
 import { emitCoverageManifest } from "./coverage-manifest.ts"
 import {
-	DEFAULT_CANDIDATE_OUT,
 	DEFAULT_FOLD_COUNTRIES,
 	DEFAULT_IMPORTANCE_DB,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,

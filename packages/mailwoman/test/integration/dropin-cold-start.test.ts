@@ -46,9 +46,9 @@ import { promisify } from "node:util"
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
-import { afterEach, describe, expect, test, vi } from "vitest"
+import { afterEach, describe, expect, test } from "vitest"
 
 const execFileAsync = promisify(execFile)
 

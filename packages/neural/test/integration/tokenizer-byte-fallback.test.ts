@@ -15,7 +15,7 @@
  *   as one UTF-8 sequence via `TextDecoder`, advance the cursor by the DECODED string's length).
  */
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
 

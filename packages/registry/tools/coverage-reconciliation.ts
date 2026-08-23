@@ -40,14 +40,13 @@ import {
 	reconciliationReport,
 	resolveEntities,
 	streamRows,
-	type ColumnMapping,
 	type GeocodeAddress,
 	type ReconcileConfig,
 	type SourceRecord,
 } from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { buildSpecs, norm, type SourceSpec } from "./shared.ts"
+import { buildSpecs } from "./shared.ts"
 
 /**
  * Options for {@linkcode coverageReconciliation}.

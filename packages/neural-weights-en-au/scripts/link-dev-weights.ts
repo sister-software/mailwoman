@@ -30,7 +30,7 @@
  *   checked-in repo files symlinked in place; there's nothing to go stale.
  */
 
-import { existsSync, lstatSync, mkdirSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"

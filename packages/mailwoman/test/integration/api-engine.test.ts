@@ -26,13 +26,13 @@
  *   real WOF + TX shards being present (`describeIfStack`), same as the express predecessor.
  */
 
-import { existsSync, realpathSync } from "node:fs"
+import { existsSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { createMailwomanAPI } from "@mailwoman/api"
 import { metricsSnapshot, resetMetricsForTest, serveNode, type ServerHandle } from "@mailwoman/api-kit"
 import { $public } from "@mailwoman/core/env"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { createServeEngine } from "mailwoman/api-engine"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"

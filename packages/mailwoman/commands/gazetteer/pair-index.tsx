@@ -31,7 +31,7 @@
  *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
-import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
+import { createReadStream, existsSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import type { ComponentTag } from "@mailwoman/core/types"

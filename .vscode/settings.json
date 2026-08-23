@@ -30,6 +30,14 @@
 		"editor.tabSize": 2
 	},
 
+	// Removing an unused import is a SUGGESTION in oxc, not a safe fix, so the default fix kind leaves
+	// it in place. `safe_fix_or_suggestion` is what makes save-to-remove work; it stops short of
+	// `dangerous_fix`, which can change behavior.
+	"oxc.fixKind": "safe_fix_or_suggestion",
+	"editor.codeActionsOnSave": {
+		"source.fixAll.oxc": "explicit"
+	},
+
 	"editor.insertSpaces": false,
 	"editor.tabSize": 2,
 

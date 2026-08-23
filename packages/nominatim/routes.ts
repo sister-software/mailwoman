@@ -10,7 +10,6 @@
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { errorContent, legacyQuery } from "@mailwoman/api-kit"
-import type { Context } from "hono"
 
 import type {
 	NominatimEngine,

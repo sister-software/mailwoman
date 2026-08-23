@@ -85,7 +85,7 @@
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
 		"docs:build": "yarn workspace @mailwoman/docs build",
-		"fix:oxlint": "oxlint --fix",
+		"fix:oxlint": "oxlint --fix --fix-suggestions && oxlint --fix --fix-suggestions",
 		"fix:python": "uvx ruff@0.15.20 check --fix corpus-python && uvx ruff@0.15.20 format corpus-python",
 		"format": "oxfmt .",
 		"lint": "run-s lint:oxlint lint:oxfmt lint:python health",

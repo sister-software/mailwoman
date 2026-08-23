@@ -16,13 +16,9 @@
  *   https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/
  */
 
-import { spawn } from "node:child_process"
-import { createWriteStream, existsSync } from "node:fs"
-import { mkdir, rename } from "node:fs/promises"
+import { mkdir } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
 
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"

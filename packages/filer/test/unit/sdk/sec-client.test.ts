@@ -23,12 +23,7 @@ import { mkdtempSync, readdirSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import {
-	createFakeClock,
-	drainMicrotasks,
-	maxCountInSlidingWindow,
-	VirtualClock,
-} from "@mailwoman/core/api/test-clocks"
+import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` is used both as a VALUE (`toBeInstanceOf`) and as a TYPE (`as ResourceErrorShape`). The value arrives
 // via the post-reset dynamic import below; a `const` carries no type side, so the type position needs its own static

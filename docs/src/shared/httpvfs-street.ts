@@ -26,7 +26,7 @@ import {
 	type StreetLocale,
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
-import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
+import { clampFraction, pointAlong } from "@mailwoman/spatial"
 
 /**
  * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.

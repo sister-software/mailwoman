@@ -17,7 +17,6 @@ import {
 	decodeAsTuples,
 	decodeAsXML,
 	type AddressTree,
-	type Calibrator,
 	type ComponentTag,
 	type DecoderToken,
 	type SerializeJSONOpts,
@@ -25,24 +24,14 @@ import {
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import {
-	proposeSpans,
-	type ProposedSpan,
-	type SpanProposerLexicon,
-	WORD_CONSISTENCY_SHIP_DEFAULT,
-} from "@mailwoman/core/pipeline"
+import { proposeSpans, type ProposedSpan, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 
 // SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
 // `./onnx-runner.ts` bypasses the browser counterpart. The package name is what routes this.
 import { DEFAULT_INTRA_OP_THREADS, type InferResult, ONNXRunner } from "#onnx-runner"
 
-import {
-	confidentLocaleCountry,
-	detectAddressSystem,
-	LOCALE_COUNTRIES,
-	resolveSystemVerdict,
-} from "./address-system.ts"
-import { type AnchorLookup, type AnchorSpanMode, parseAnchorLookup } from "./anchor-inference.ts"
+import { confidentLocaleCountry, LOCALE_COUNTRIES, resolveSystemVerdict } from "./address-system.ts"
+import { type AnchorLookup, parseAnchorLookup } from "./anchor-inference.ts"
 import { normalizeInputCase } from "./case-normalize.ts"
 import type {
 	NeuralAddressClassifierConfig,
@@ -51,7 +40,7 @@ import type {
 	SpanProposerConfig,
 } from "./classifier-options.ts"
 import { type CountryLexicon, parseCountryLexicon } from "./country-inference.ts"
-import { buildFSTEmissionPriors, type FSTMatcherLike, type ImportanceLengthScaleMode } from "./fst-prior.ts"
+import { buildFSTEmissionPriors } from "./fst-prior.ts"
 import { type GazetteerLexicon, parseGazetteerLexicon } from "./gazetteer-inference.ts"
 import { STAGE2_BIO_LABELS } from "./labels.ts"
 import { PairIndexResolver, peekPairIndexHeader } from "./pair-index-resolver.ts"
@@ -63,20 +52,20 @@ import {
 } from "./placetype-pair-prior.ts"
 import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
 import { repairPostcodeLabels } from "./postcode-repair.ts"
-import { addEmissionMatrix, buildEmissionPriors, type QueryShapeLike } from "./query-shape-prior.ts"
+import { addEmissionMatrix, buildEmissionPriors } from "./query-shape-prior.ts"
 import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
 import { buildSoftFeatures, type SoftFeatureChannel } from "./soft-features.ts"
 import { bridgePunctuationGaps } from "./span-bridge.ts"
-import { buildSpanProposalPriors, type SpanProposalPriorOpts } from "./span-proposal-prior.ts"
+import { buildSpanProposalPriors } from "./span-proposal-prior.ts"
 import { buildCodexSpanLexicon } from "./span-proposer-lexicon.ts"
-import { buildStreetMorphologyEmissionPriors, type StreetMorphologyPriorOpts } from "./street-morphology-prior.ts"
+import { buildStreetMorphologyEmissionPriors } from "./street-morphology-prior.ts"
 import { MailwomanTokenizer } from "./tokenizer.ts"
 import { TRACE_PRIOR_KINDS } from "./trace.ts"
 import type { NeuralParseTrace, TracePrior, TraceRepair, TraceRepairPass } from "./trace.ts"
 import { repairUnitLabels } from "./unit-repair.ts"
 import { buildBIOEndMask, buildBIOStartMask, buildBIOTransitionMask, softmax, viterbi } from "./viterbi.ts"
 import type { ResolveWeightsOpts, ResolvedWeights } from "./weights.ts"
-import { enforceWordConsistency, type WordConsistencyOpts } from "./word-consistency.ts"
+import { enforceWordConsistency } from "./word-consistency.ts"
 
 export type {
 	NeuralAddressClassifierConfig,

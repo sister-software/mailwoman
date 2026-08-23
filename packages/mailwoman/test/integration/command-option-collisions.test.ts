@@ -5,7 +5,7 @@
 import { readFile, readdir } from "node:fs/promises"
 import { join, relative, sep } from "node:path"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 

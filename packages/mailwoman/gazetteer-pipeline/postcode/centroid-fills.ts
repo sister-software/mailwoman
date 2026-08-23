@@ -20,7 +20,7 @@
  *      (city-states like Berlin). Every coordinate still comes from our own admin DB.
  */
 
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync } from "node:fs"
 import type { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"

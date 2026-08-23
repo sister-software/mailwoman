@@ -13,18 +13,14 @@
  */
 
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
-import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode, AddressTree, ComponentTag, Interpretation } from "@mailwoman/core/decoder"
-import { loneValueBearingNode } from "@mailwoman/core/decoder"
 import {
-	type AddressPointLookup,
 	type BackendCapabilityGap,
 	type CoincidentLocality,
 	compareReferential,
 	type ResolveCandidateTrace,
 	type ResolveNodeTrace,
 	DEFAULT_PLACETYPE_MAP,
-	type InterpolationLookup,
 	isPlacetypeFallback,
 	type PlacetypeMap,
 	type PostcodePrefixIndexLike,
@@ -33,7 +29,6 @@ import {
 	type ResolveOpts,
 	type Resolver,
 	type ResolverBackend,
-	type StreetCentroidLookup,
 	countriesFromPostcodeFormat,
 } from "@mailwoman/core/resolver"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"

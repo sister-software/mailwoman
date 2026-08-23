@@ -16,8 +16,6 @@ import {
 } from "@mailwoman/bdc/schema"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createLayerCoverageTable, createLayerManifestTable, LayerTier } from "@mailwoman/core/layers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
-import type { Kysely } from "kysely"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<BDCDatabase> {

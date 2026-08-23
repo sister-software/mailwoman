@@ -12,7 +12,7 @@
 
 import { expect, test } from "vitest"
 
-import { osgb36AiryToWGS84, osgb36GridToAiryLatLon, osgb36ToCoordinates2D, osgb36ToWGS84 } from "#index"
+import { osgb36GridToAiryLatLon, osgb36ToCoordinates2D, osgb36ToWGS84 } from "#index"
 
 /**
  * Degrees-minutes-seconds → decimal degrees. OS publishes its worked examples in DMS, and transcribing them by hand

@@ -31,7 +31,7 @@ import { promisify } from "node:util"
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)

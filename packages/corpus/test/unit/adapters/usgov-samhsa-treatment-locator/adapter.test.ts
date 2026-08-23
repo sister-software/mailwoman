@@ -7,7 +7,7 @@
 import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import {
 	USGOV_SAMHSA_ADAPTER_ID,
 	USGOV_SAMHSA_DEFAULT_LICENSE,

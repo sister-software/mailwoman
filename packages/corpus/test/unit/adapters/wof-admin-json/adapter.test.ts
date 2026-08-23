@@ -7,7 +7,7 @@
 import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import {
 	WOF_ADMIN_ADAPTER_ID,
 	createWOFAdminAdapter,

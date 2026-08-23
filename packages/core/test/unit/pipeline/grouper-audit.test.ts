@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { AddressTree } from "@mailwoman/core/decoder/types"
-import { grouperAudit, runPipeline } from "@mailwoman/core/pipeline/runtime-pipeline"
+import { runPipeline } from "@mailwoman/core/pipeline/runtime-pipeline"
 import type { PhraseProposal, RuntimePipelineStages } from "@mailwoman/core/pipeline/types"
 import { describe, expect, it } from "vitest"
 

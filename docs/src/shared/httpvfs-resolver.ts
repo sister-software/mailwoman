@@ -45,7 +45,6 @@ import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/proximity-r
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 // THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
 // one-normalizer discipline that keeps the candidate table's keys reachable by construction.
-import { haversineKm } from "@mailwoman/spatial"
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
 

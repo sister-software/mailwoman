@@ -10,7 +10,7 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"

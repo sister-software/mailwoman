@@ -63,7 +63,7 @@ import { dirname, join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
