@@ -132,3 +132,48 @@ re-dosing a lever that could not work; a dose is not a fix when the mechanism is
 - **`mwdev_coverage` answered about the wrong corpus.** A cached census of `0.26.0` was reported
   against a config training on `0.27.0`; a country the newer corpus added read as zero rows. Fixed in
   #1839, and the wrapper that dropped the guard in #1841.
+
+## Postscript — v5.1.0 falsifies the admission hypothesis (2026-08-24)
+
+The isolation run landed: same corpus, same seed 42, same schedule, CN/JP/KR/TW dropped (134 → 130
+admitted, −15.2M street-less rows, every other weight byte-identical).
+
+```
+leg                                  improved  regressed  net  differed
+self-control (shipped vs itself)            0          0    0     0/649
+v5.0.0 (134 countries)                     37         35    2   185/649
+v5.1.0 (130, CJK dropped)                  37         43   -6   193/649
+```
+
+D-rule: v5.0.0 FR 2 / GB 4 / DE 1 → v5.1.0 **FR 3 / GB 13 / DE 0**. Dropping the street-less
+countries did not clear the regressions — GB got worse. **The admission hypothesis is falsified**,
+per the pre-registered clause, and no re-dose follows.
+
+Two facts survive the falsification, and they are the yield of the arc:
+
+**1. A 19-row persistent core regresses under BOTH candidates.** The St Mary Axe cluster, `Milford
+on Sea Parish Council…`, `Passeig de Gràcia` / `Passeig de Sant Joan`, `Rua Augusta` (both rows),
+`COMER parís.méxico` (both rows), `12 MG Road… Bengaluru`, `Tel Aviv-Yafo`, `Port of Spain`. This
+core survives the CJK toggle, so it is attributable to what the two runs share: the corpus change
+(`v0.19.0-suffix-boundary-v2` → `v0.27.0-house-venue-intl`) and from-scratch-ness itself — still two
+confounded variables against the shipped model, and no run so far separates them.
+
+**2. The one-seed variance floor is ~40 rows.** Two runs whose configs differ by 2.23% of the
+admitted pool flip 40 rows between them (16 regress only under v5.0.0, 24 only under v5.1.0). The
+churn concentrates in a fragile class — bare multi-word streets and GB venues, the rows the shipped
+model holds near 0.5 confidence: `Calle de Alcalá`, `Paseo de la Castellana`, `Via Laietana`, `Corso
+Vittorio Emanuele II` regress under v5.1.0 while `Bloor Street West`, `Rambla de Catalunya`,
+`Connaught Road Central`, `Des Voeux Road Central` improve. **Row-level D-rule counts from a single
+from-scratch run are under-powered against this floor.** GB 4 → 13 is mostly churn: 7 of the 13 are
+v5.1.0-only venue rows.
+
+Real wins bought by the corpus change, for the record: the standing `es-op3` failure
+(`Southeast, Carrer Passeig d'es Port, 15, 07691 Portopetro, Illes Balears, Spain`) improves under
+v5.1.0, as does #1744's Bangladesh row (`London College of Legal Studies (South), … Dhaka 1205`).
+The D-rule still holds both candidates.
+
+**Where this leaves the line:** shipped v4.4.0 stays. The open next questions, each a run and a
+decision, none pre-authorized: a seed-variance measurement (same config, different seed — prices the
+churn floor directly), or the v4.4.0 arc's own path applied forward (a suffix-boundary-style cure
+fine-tuned ON TOP of the v5.0.0 base rather than another base). Both candidates' artifacts and run
+IDs are retained; the board runs are replayable via `{kind:"recorded"}`.
