@@ -237,8 +237,29 @@ export function assemblePromotionVerdict(
 	const results: Record<string, { floor: number; actual: number | undefined; pass: boolean }> = {}
 	let failed = false
 
+	// A leg-handled floor is ENFORCED by its leg but was absent from `results` entirely, so a reader
+	// counting floors here saw 17 where the spec declares 18 — and a floor that is missing from a report
+	// reads as a floor that did not run. Enforcement stays with the leg; this only completes the record,
+	// from the sidecar the leg already writes. Reaching this function at all means the leg passed, since
+	// it returns non-zero otherwise.
+	const legSidecars: Record<string, { file: string; rate: string }> = {
+		"fr.bare_street_intact": { file: "fr-bare-street.json", rate: "bare_rate" },
+	}
+
 	for (const [key, floor] of Object.entries(gate.floors)) {
-		if (LEG_HANDLED_FLOORS.has(key)) continue
+		if (LEG_HANDLED_FLOORS.has(key)) {
+			const legSidecar = legSidecars[key]
+			const raw = legSidecar ? maybeRead(legSidecar.file) : undefined
+
+			if (raw) {
+				const actual = parseJSONStrict<Record<string, number>>(raw)[legSidecar!.rate]
+
+				results[key] = { floor, actual, pass: true }
+			}
+
+			continue
+		}
+
 		const actual = graded[key]
 		const pass = actual !== undefined && actual >= floor
 
