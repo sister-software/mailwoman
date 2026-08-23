@@ -281,7 +281,7 @@ describe("clusterAuthoritativeComponents (pass a)", () => {
 		expect(byNode.get(FRN_D)).toBe(byNode.get(FORM499_D))
 
 		// Every component distinct from every other.
-		const componentIds = new Set([
+		const componentIDs = new Set([
 			byNode.get(FRN_A),
 			byNode.get(FRN_B),
 			byNode.get(FRN_C),
@@ -289,7 +289,7 @@ describe("clusterAuthoritativeComponents (pass a)", () => {
 			byNode.get(SOLO_HOLDING),
 		])
 
-		expect(componentIds.size).toBe(5)
+		expect(componentIDs.size).toBe(5)
 	})
 
 	it("is idempotent — running twice does not grow filer_cluster rows nor change assignments", async () => {

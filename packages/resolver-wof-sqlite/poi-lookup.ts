@@ -241,7 +241,7 @@ export class POILookup implements Disposable {
 	#searchKRing(query: POISearchQuery, limit: number): POISearchHit[] {
 		const center = query.center!
 		const maxRings = query.maxRings ?? DEFAULT_MAX_RINGS
-		const categoryIds: number[] = []
+		const categoryIDs: number[] = []
 
 		// `categoryIDs` (the fan-out list) supersedes the single `categoryID`; either way, resolve each id through the
 		// dictionary and drop the ones the db doesn't carry (Overture-taxonomy drift, or an identity id with no rows).
@@ -251,12 +251,12 @@ export class POILookup implements Disposable {
 			const resolved = this.#categoryToID.get(id)
 
 			if (resolved !== undefined) {
-				categoryIds.push(resolved)
+				categoryIDs.push(resolved)
 			}
 		}
 
 		// No resolvable leaf (every id unknown to the dictionary) can't have rows — a clean miss, not a throw.
-		if (!categoryIds.length) return []
+		if (!categoryIDs.length) return []
 
 		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION) as H3Cell
 		const seenCells = new Set<string>()
@@ -275,7 +275,7 @@ export class POILookup implements Disposable {
 
 				// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows. The
 				// post-ring distance sort + `slice(0, limit)` below dedupes the pool down to the nearest `limit`.
-				for (const categoryID of categoryIds) {
+				for (const categoryID of categoryIDs) {
 					rows.push(...allRows<POIRow>(this.#categoryCellProbe, shortCell, categoryID, limit))
 				}
 			}

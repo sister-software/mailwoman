@@ -15,7 +15,7 @@
  *   the presentational {@link PlaceAutocomplete} listbox renders `suggestions` / `activeIndex`.
  */
 
-import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react"
+import { type KeyboardEvent, useCallback, useEffect, useState } from "react"
 
 import { useDebouncedValue } from "../common/useDebouncedValue.ts"
 import type { Suggestion } from "./types.ts"
@@ -95,6 +95,12 @@ export interface UsePlaceAutocomplete {
 }
 
 const LISTBOX_ID = "mw-demo-suggest-list"
+
+/**
+ * Stable empty list for the derived no-suggestions state — a fresh `[]` per render would churn the identity every
+ * consumer and every useCallback dependency list sees.
+ */
+const NO_SUGGESTIONS: Suggestion[] = []
 const optionID = (index: number) => `mw-demo-suggest-${index}`
 
 /**
@@ -118,30 +124,33 @@ export function usePlaceAutocomplete({
 	minChars = 2,
 	debounceMs = 150,
 }: UsePlaceAutocompleteOptions): UsePlaceAutocomplete {
-	const [suggestions, setSuggestions] = useState<Suggestion[]>([])
+	/**
+	 * The last COMPLETED fetch, keyed by the query that produced it. Visibility is DERIVED from this during render rather
+	 * than pushed through sync setStates in the effect — the effect's only job is the async fetch, so every state write
+	 * in it happens after an await and the react(set-state-in-effect) rule is satisfied by structure, not by exception.
+	 */
+	const [fetched, setFetched] = useState<{ query: string; suggestions: Suggestion[] } | null>(null)
+	/**
+	 * The query whose list was dismissed or picked. Suppression as DATA, replacing the one-shot ref flag: a pick stores
+	 * the query the rewritten text will produce, so the post-pick fetch is skipped and the place just chosen is never
+	 * re-suggested. One divergence from the ref version, accepted and small: after Esc, retyping the exact same string
+	 * keeps the list hidden until the query changes.
+	 */
+	const [dismissed, setDismissed] = useState<string | null>(null)
 	const [activeIndex, setActiveIndex] = useState(-1)
-	// One-shot guard: a pick rewrites `text` to the chosen name, which would otherwise re-trigger the fetch and
-	// immediately re-suggest the place just chosen. Set on pick, consumed by the next effect run.
-	const suppressRef = useRef(false)
 
 	const query = localitySegment(text)
 	const debouncedQuery = useDebouncedValue(query, debounceMs)
 
+	const eligible = Boolean(autocomplete) && debouncedQuery.length >= minChars && !/^\d/.test(debouncedQuery)
+
+	const suggestions =
+		eligible && fetched?.query === debouncedQuery && dismissed !== debouncedQuery ? fetched.suggestions : NO_SUGGESTIONS
+
 	useEffect(() => {
-		if (suppressRef.current) {
-			suppressRef.current = false
-			setSuggestions([])
-			setActiveIndex(-1)
+		if (!autocomplete || debouncedQuery.length < minChars || /^\d/.test(debouncedQuery)) return
 
-			return
-		}
-
-		if (!autocomplete || debouncedQuery.length < minChars || /^\d/.test(debouncedQuery)) {
-			setSuggestions([])
-			setActiveIndex(-1)
-
-			return
-		}
+		if (dismissed === debouncedQuery) return
 
 		let cancelled = false
 
@@ -150,11 +159,11 @@ export function usePlaceAutocomplete({
 				const next = await autocomplete(debouncedQuery)
 
 				if (cancelled) return
-				setSuggestions(next)
+				setFetched({ query: debouncedQuery, suggestions: next })
 				setActiveIndex(-1)
 			} catch {
 				if (cancelled) return
-				setSuggestions([])
+				setFetched({ query: debouncedQuery, suggestions: [] })
 				setActiveIndex(-1)
 			}
 		})()
@@ -162,22 +171,25 @@ export function usePlaceAutocomplete({
 		return () => {
 			cancelled = true
 		}
-	}, [debouncedQuery, autocomplete, minChars])
+	}, [debouncedQuery, autocomplete, minChars, dismissed])
 
 	const pick = useCallback(
 		(value: string) => {
-			suppressRef.current = true
-			setText(replaceSegment(text, value))
-			setSuggestions([])
+			const next = replaceSegment(text, value)
+
+			setText(next)
+			// Suppress the fetch the rewritten text would trigger — the segment being typed IS the picked name.
+			setDismissed(localitySegment(next))
+			setFetched(null)
 			setActiveIndex(-1)
 		},
 		[text, setText]
 	)
 
 	const dismiss = useCallback(() => {
-		setSuggestions([])
+		setDismissed(debouncedQuery)
 		setActiveIndex(-1)
-	}, [])
+	}, [debouncedQuery])
 
 	const onInputKeyDown = useCallback(
 		(event: KeyboardEvent<HTMLInputElement>) => {

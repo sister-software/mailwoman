@@ -56,7 +56,7 @@ test("toGeoJSON: properties carry record count, cohesion, and DISTINCT, SORTED s
 	const p = fc.features[0]!.properties
 	expect(p.recordCount).toBe(4)
 	expect(p.cohesion).toBe(3.5)
-	expect(p.sourceIds).toEqual(["r1", "r2", "r3", "r4"])
+	expect(p.sourceIDs).toEqual(["r1", "r2", "r3", "r4"])
 	expect(p.sources).toEqual(["ca-state", "nppes"]) // de-duped + sorted; null omitted
 })
 

@@ -396,7 +396,7 @@ describe("§7-3a gates", () => {
 					valid_from: "2026-01-01",
 					valid_to: null,
 					match_score: -5,
-					evidence: JSON.stringify({ memberNodeIds: [FORM_A, FORM_B] }),
+					evidence: JSON.stringify({ memberNodeIDs: [FORM_A, FORM_B] }),
 				})
 				.execute()
 

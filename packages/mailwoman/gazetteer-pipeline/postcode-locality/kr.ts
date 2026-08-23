@@ -231,8 +231,8 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 		// Hangul name confirmation: a name-matched locality that is ALSO nearby (two signals agreeing —
 		// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
-		const nameIds = nameIdx.get(bare(place)) ?? new Set<number>()
-		const named = nb.find(({ pid }) => nameIds.has(pid))
+		const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
+		const named = nb.find(({ pid }) => nameIDs.has(pid))
 
 		if (named) {
 			nameConfirmed++

@@ -389,7 +389,7 @@ async function readNodeInfo(
  */
 async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<string[][]> {
 	const nodeRows = await db.selectFrom("filer_node").select(["node_id"]).orderBy("node_id").execute()
-	const nodeIds = nodeRows.map((row) => row.node_id)
+	const nodeIDs = nodeRows.map((row) => row.node_id)
 
 	const edgeRows = await db
 		.selectFrom("filer_edge")
@@ -405,7 +405,7 @@ async function readAuthoritativeGroups(db: Kysely<FilerDatabase>): Promise<strin
 	}))
 
 	// Threshold is irrelevant in value (every real link is Infinity) — 0 is as good as any finite number.
-	return cluster(nodeIds, links, { threshold: 0 })
+	return cluster(nodeIDs, links, { threshold: 0 })
 }
 
 /**
@@ -639,11 +639,11 @@ export async function clusterInferredLinks(
 		await trx.deleteFrom("filer_cluster").where("assertion", "=", FilerEdgeAssertion.Inferred).execute()
 
 		for (const entity of entities) {
-			const memberNodeIds = entity.records.map((record) => record.id).toSorted()
+			const memberNodeIDs = entity.records.map((record) => record.id).toSorted()
 			// Content-derived (see clusterAuthoritativeComponents) — stable across reruns.
-			const clusterID = `${FilerEdgeAssertion.Inferred}:${memberNodeIds[0]}`
+			const clusterID = `${FilerEdgeAssertion.Inferred}:${memberNodeIDs[0]}`
 
-			for (const nodeID of memberNodeIds) {
+			for (const nodeID of memberNodeIDs) {
 				clusterRows.push({ node_id: nodeID, cluster_id: clusterID, assertion: FilerEdgeAssertion.Inferred })
 			}
 
@@ -652,7 +652,7 @@ export async function clusterInferredLinks(
 			linkedClusters++
 			const representativeID = entity.representative.id
 
-			for (const nodeID of memberNodeIds) {
+			for (const nodeID of memberNodeIDs) {
 				if (nodeID === representativeID) continue
 
 				await trx
@@ -670,7 +670,7 @@ export async function clusterInferredLinks(
 						valid_from: validFrom,
 						valid_to: null,
 						match_score: entity.cohesion,
-						evidence: JSON.stringify({ memberNodeIds }),
+						evidence: JSON.stringify({ memberNodeIDs }),
 					})
 					// Both the same-vintage-rebuild and earlier-vintage-supersession cases are handled ABOVE, before
 					// this loop runs (see the module docstring's "cross-vintage supersession" section), so this

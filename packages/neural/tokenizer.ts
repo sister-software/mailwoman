@@ -170,7 +170,7 @@ export class MailwomanTokenizer {
 	 * Tokenize `text` to pieces + ids + native char offsets.
 	 *
 	 * The returned `pieces[i].piece` matches what the Python `sp.EncodeAsPieces(text)[i]` returns, and `pieces[i].id`
-	 * matches `sp.EncodeAsIds(text)[i]`. Offsets come from SentencePiece's own `SentencePieceText` proto (byte
+	 * matches `sp.EncodeAsIDs(text)[i]`. Offsets come from SentencePiece's own `SentencePieceText` proto (byte
 	 * positions), converted to UTF-16 and whitespace-trimmed — see the file header for the two conventions this layer
 	 * owns.
 	 */
@@ -212,7 +212,7 @@ export class MailwomanTokenizer {
 				vector.push_back(id)
 			}
 
-			return this.processor.decodeIds(vector)
+			return this.processor.decodeIDs(vector)
 		} finally {
 			vector.delete()
 		}

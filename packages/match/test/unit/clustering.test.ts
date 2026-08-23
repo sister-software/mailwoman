@@ -21,7 +21,7 @@ const shape = (clusters: { id: string }[][]) =>
 				.toSorted()
 				.join("")
 		)
-		.sort()
+		.toSorted()
 
 describe("cluster", () => {
 	it("merges a transitive chain into one connected component", () => {

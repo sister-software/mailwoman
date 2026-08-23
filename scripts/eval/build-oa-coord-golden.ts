@@ -57,7 +57,7 @@ type CSVRecord = Record<string, string | undefined>
 /**
  * Drop a leading UTF-8 BOM.
  *
- * The spliterator has no BOM option, and a BOM survives into the FIRST HEADER NAME — `﻿LON` rather than `LON` — so
+ * The spliterator has no BOM option, and a BOM survives into the FIRST HEADER NAME — `\uFEFFLON` rather than `LON` — so
  * every row reads that one column as absent while the rest parse cleanly.
  */
 async function* withoutBOM(source: AsyncIterable<Uint8Array | string>): AsyncIterable<Uint8Array> {

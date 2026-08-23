@@ -165,9 +165,9 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 		const orig = original.query("New York")
 		const rest = restored.query("New York")
 		expect(rest.accepting).toHaveLength(orig.accepting.length)
-		const origIds = orig.accepting.map((p) => p.wofID).toSorted()
-		const restIds = rest.accepting.map((p) => p.wofID).toSorted()
-		expect(restIds).toEqual(origIds)
+		const origIDs = orig.accepting.map((p) => p.wofID).toSorted()
+		const restIDs = rest.accepting.map((p) => p.wofID).toSorted()
+		expect(restIDs).toEqual(origIDs)
 	})
 
 	it("NYC parent chain survives roundtrip", () => {

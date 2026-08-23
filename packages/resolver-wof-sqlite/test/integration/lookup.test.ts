@@ -110,7 +110,7 @@ const FIXTURE: FixturePlace[] = [
 		lat: 48.85,
 		lon: 2.34,
 		// The canonical name also lives in `names` in a real WOF distribution — required for the
-		// exact-match tier (#exactMatchIds queries `names`, not `spr`). Same shape as Brooklyn below.
+		// exact-match tier (#exactMatchIDs queries `names`, not `spr`). Same shape as Brooklyn below.
 		alt_names: ["Paris", "Pari", "París", "パリ", "巴黎"],
 		ancestor_ids: [85_633_723],
 	},
@@ -188,7 +188,7 @@ const FIXTURE: FixturePlace[] = [
 		lat: 40.64,
 		lon: -73.95,
 		// The canonical name also lives in `names` in a real WOF distribution — required for the
-		// exact-match tier (#exactMatchIds queries `names`, not `spr`).
+		// exact-match tier (#exactMatchIDs queries `names`, not `spr`).
 		alt_names: ["Brooklyn"],
 		ancestor_ids: [85_633_147],
 	},
@@ -410,7 +410,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 
 	test("exact-match tier survives a names-less (slim) DB via the place_search alias bag", async () => {
 		// Slim DBs built with `dropNames` have no `names` table — the aliases survive only inside the
-		// FTS `alt_names` token bag. #exactMatchIds must fall back to it so "Brooklyn" still tiers the
+		// FTS `alt_names` token bag. #exactMatchIDs must fall back to it so "Brooklyn" still tiers the
 		// exact-named borough above the fuzzy "Brooklyn Park" against a hot/slim DB.
 		const db = buildFixtureDB()
 		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })

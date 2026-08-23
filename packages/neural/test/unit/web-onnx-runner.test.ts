@@ -11,7 +11,7 @@
  *   What this test guards:
  *
  *   - The runner loads a real production ONNX model end-to-end.
- *   - `infer(tokenIds)` returns logits with the expected shape.
+ *   - `infer(tokenIDs)` returns logits with the expected shape.
  *   - The classifier composed with this runner produces an `AddressTree` for a simple address.
  *   - WebONNXRunner is interchangeable with ONNXRunner from the classifier's POV — same `parse()`
  *       output shape, no API divergence.
@@ -49,11 +49,11 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 	test("loads a real model and produces logits of the expected shape", async () => {
 		const modelBytes = new Uint8Array(await readFile(weights!.modelPath))
 		const runner = await WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false })
-		const tokenIds = [1, 2, 3, 4, 5] // arbitrary; the SP vocab assigns these to common pieces
-		const result = await runner.infer(tokenIds)
+		const tokenIDs = [1, 2, 3, 4, 5] // arbitrary; the SP vocab assigns these to common pieces
+		const result = await runner.infer(tokenIDs)
 
 		expect(result.numLabels).toBeGreaterThan(0)
-		expect(result.logits).toHaveLength(tokenIds.length)
+		expect(result.logits).toHaveLength(tokenIDs.length)
 		expect(result.logits[0]?.length).toBe(result.numLabels)
 
 		// Logits should be finite numbers (no NaN/Infinity from a misconfigured runtime).

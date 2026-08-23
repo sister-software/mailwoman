@@ -217,7 +217,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	for (const split of ["train", "val", "test"] as const) {
 		const labeledPath = opts.labeledPaths[split]
 		const outPath = join(opts.outputDir, `${split}.txt`)
-		await streamSortedSourceIds(labeledPath, outPath)
+		await streamSortedSourceIDs(labeledPath, outPath)
 	}
 
 	const total = opts.counts.train + opts.counts.val + opts.counts.test
@@ -237,7 +237,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
  * Extract `source_id`s from a labeled JSONL file, write them sorted to `outPath`. Empty input → empty output file (not
  * absent). Uses `sort(1)` for disk-spilling external sort so peak memory stays O(1) regardless of labeled-row count.
  */
-async function streamSortedSourceIds(labeledJsonlPath: string, outPath: string): Promise<void> {
+async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string): Promise<void> {
 	const unsortedPath = `${outPath}.unsorted`
 	const out = createWriteStream(unsortedPath, { encoding: "utf8" })
 

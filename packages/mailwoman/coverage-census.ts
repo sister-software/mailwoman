@@ -317,7 +317,7 @@ export function readAdmittedCountries(configPath: string): Set<string> {
  * Board rows per country, and how many of them gate.
  *
  * Reads the cases tree the loader reads: two-letter directories only. `generalization/` is excluded by that same filter
- * and holds 279 rows, so a glob over `*​/*.jsonl` overstates the board by 43%.
+ * and holds 279 rows, so a glob over `*\u200B/*.jsonl` overstates the board by 43%.
  */
 export function readBoardCoverage(casesRoot: string): Map<string, { rows: number; gated: number }> {
 	const out = new Map<string, { rows: number; gated: number }>()

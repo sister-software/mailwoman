@@ -127,10 +127,10 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 	// Fan the canonical seed id out over its Overture leaves (`supermarket` → grocery_store, …), resolving each through
 	// the db's dictionary and dropping the ones it doesn't carry. Absent list ⇒ the seed id itself (identity).
 	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
-	const categoryIds = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
+	const categoryIDs = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
-	if (!categoryIds.length) return []
-	const categoryIDList = categoryIds.join(", ")
+	if (!categoryIDs.length) return []
+	const categoryIDList = categoryIDs.join(", ")
 
 	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION) as H3Cell
 	const seenCells = new Set<string>()

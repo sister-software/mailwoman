@@ -13,7 +13,7 @@ import { matchPOISubject } from "@mailwoman/kind-classifier"
 import { emitOverpassQL } from "@mailwoman/poi-taxonomy/overpass"
 import type { OverpassIntentLike } from "@mailwoman/poi-taxonomy/overpass"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useEffectEvent, useState } from "react"
 
 import { useDebouncedValue } from "../common/useDebouncedValue.ts"
 import { loadPOIRuntime } from "./runtime.ts"
@@ -103,21 +103,31 @@ export function usePOISearch({
 	debounceMs = 250,
 }: UsePOISearchOptions): UsePOISearch {
 	const [runtime, setRuntime] = useState<POIRuntime | null>(null)
-	const [result, setResult] = useState<POIExplorerResult | null>(null)
-	const [liveSearch, setLiveSearch] = useState<LiveSearchState>({ status: "idle" })
+	/**
+	 * The classify result KEYED BY the query that produced it. The visible result is derived during render
+	 * (`storedResult.query === trimmedText ? … : null`), so a new query invalidates the old answer by derivation — the
+	 * effect never writes state synchronously to "reset", which is the react(set-state-in-effect) shape the lint bump
+	 * rightly flags.
+	 */
+	const [storedResult, setStoredResult] = useState<{ query: string; value: POIExplorerResult } | null>(null)
+	/**
+	 * Live-search state, keyed the same way: launched FOR a query, visible only while that query stands.
+	 */
+	const [storedLive, setStoredLive] = useState<{ query: string; state: LiveSearchState } | null>(null)
 
 	const debouncedText = useDebouncedValue(text, debounceMs)
+	const trimmedText = debouncedText.trim()
 
-	// Capture the loader in a ref so the load fires exactly ONCE on mount, regardless of whether the
-	// caller passes a fresh `loadRuntime` closure each render (an inline `async () => …` would otherwise
-	// retrigger the effect → reload → re-render loop). The runtime is a load-once resource.
-	const loadRuntimeRef = useRef(loadRuntime)
-	loadRuntimeRef.current = loadRuntime
+	// The load fires exactly ONCE on mount regardless of whether the caller passes a fresh `loadRuntime`
+	// closure each render (an inline `async () => …` would otherwise retrigger the effect → reload →
+	// re-render loop). `useEffectEvent` reads the LATEST closure without joining the dependency list —
+	// the runtime is a load-once resource.
+	const loadRuntimeEvent = useEffectEvent(() => loadRuntime())
 
 	useEffect(() => {
 		let cancelled = false
 
-		loadRuntimeRef.current().then((loaded) => {
+		void loadRuntimeEvent().then((loaded) => {
 			if (!cancelled) {
 				setRuntime(loaded)
 			}
@@ -129,20 +139,16 @@ export function usePOISearch({
 	}, [])
 
 	// Classify the debounced query and derive the subject + OverpassQL (async, so it lives in an effect).
+	// Every state write below happens after an await — invalidation on query change is handled by the
+	// key derivation above, not by a synchronous reset here.
 	useEffect(() => {
 		if (!runtime) return
 
+		const trimmed = trimmedText
+
+		if (!trimmed) return
+
 		let cancelled = false
-		const trimmed = debouncedText.trim()
-
-		// A new query invalidates live results from the previous one.
-		setLiveSearch({ status: "idle" })
-
-		if (!trimmed) {
-			setResult(null)
-
-			return
-		}
 
 		const input = { raw: trimmed, normalized: trimmed }
 		const shape = computeQueryShape(trimmed)
@@ -153,7 +159,7 @@ export function usePOISearch({
 			const matched = kindResult.kind === "poi_query" ? matchPOISubject(trimmed, undefined, runtime.lexicon) : null
 
 			if (!matched) {
-				setResult({ kindResult })
+				setStoredResult({ query: trimmed, value: { kindResult } })
 
 				return
 			}
@@ -161,15 +167,18 @@ export function usePOISearch({
 			// Brand subject: the lexicon carries the brand's canonical name as `categoryID` + its Wikidata QID. No category
 			// record, no OverpassQL (brands are searched by QID against the layer's `brand_wikidata` index, not OSM tags).
 			if ((matched.match.kind ?? "category") === "brand") {
-				setResult({
-					kindResult,
-					subject: {
-						kind: "brand",
-						name: matched.match.categoryID,
-						...(matched.match.wikidata ? { wikidata: matched.match.wikidata } : {}),
-						matchedPhrase: matched.match.matchedPhrase,
-						confidence: matched.match.confidence,
-						remainder: matched.remainder,
+				setStoredResult({
+					query: trimmed,
+					value: {
+						kindResult,
+						subject: {
+							kind: "brand",
+							name: matched.match.categoryID,
+							...(matched.match.wikidata ? { wikidata: matched.match.wikidata } : {}),
+							matchedPhrase: matched.match.matchedPhrase,
+							confidence: matched.match.confidence,
+							remainder: matched.remainder,
+						},
 					},
 				})
 
@@ -179,29 +188,37 @@ export function usePOISearch({
 			const category = runtime.lookup.getPOICategory(matched.match.categoryID)
 
 			if (!category) {
-				setResult({ kindResult })
+				setStoredResult({ query: trimmed, value: { kindResult } })
 
 				return
 			}
 
-			setResult({
-				kindResult,
-				subject: {
-					kind: "category",
-					category,
-					matchedPhrase: matched.match.matchedPhrase,
-					confidence: matched.match.confidence,
-					remainder: matched.remainder,
-					buildLocal: runtime.lookup.requiresBuildLocalLayer(category),
+			setStoredResult({
+				query: trimmed,
+				value: {
+					kindResult,
+					subject: {
+						kind: "category",
+						category,
+						matchedPhrase: matched.match.matchedPhrase,
+						confidence: matched.match.confidence,
+						remainder: matched.remainder,
+						buildLocal: runtime.lookup.requiresBuildLocalLayer(category),
+					},
+					...buildOverpass(runtime, matched.match.categoryID, matched.match.matchedPhrase, matched.remainder),
 				},
-				...buildOverpass(runtime, matched.match.categoryID, matched.match.matchedPhrase, matched.remainder),
 			})
 		})
 
 		return () => {
 			cancelled = true
 		}
-	}, [debouncedText, runtime])
+	}, [trimmedText, runtime])
+
+	// Derived visibility: an answer stands only while its query does. A new query reads as null/idle
+	// with no reset write anywhere.
+	const result = storedResult?.query === trimmedText ? storedResult.value : null
+	const liveSearch: LiveSearchState = storedLive?.query === trimmedText ? storedLive.state : { status: "idle" }
 
 	const subject = result?.subject
 
@@ -221,7 +238,7 @@ export function usePOISearch({
 
 		if (subject.kind === "category" ? subject.buildLocal : !(brandLiveSearch && subject.wikidata)) return
 
-		setLiveSearch({ status: "loading" })
+		setStoredLive({ query: trimmedText, state: { status: "loading" } })
 
 		try {
 			const outcome = await runLiveSearch(
@@ -241,16 +258,25 @@ export function usePOISearch({
 			)
 
 			if (outcome.status === "success") {
-				setLiveSearch({ status: "success", hits: outcome.hits, centerName: outcome.centerName })
+				setStoredLive({
+					query: trimmedText,
+					state: { status: "success", hits: outcome.hits, centerName: outcome.centerName },
+				})
 			} else if (outcome.status === "unplaced") {
-				setLiveSearch({ status: "error", message: `couldn't place "${outcome.anchor}"` })
+				setStoredLive({ query: trimmedText, state: { status: "error", message: `couldn't place "${outcome.anchor}"` } })
 			} else {
-				setLiveSearch({ status: "error", message: "the published POI layer isn't reachable" })
+				setStoredLive({
+					query: trimmedText,
+					state: { status: "error", message: "the published POI layer isn't reachable" },
+				})
 			}
 		} catch {
-			setLiveSearch({ status: "error", message: "the published POI layer isn't reachable" })
+			setStoredLive({
+				query: trimmedText,
+				state: { status: "error", message: "the published POI layer isn't reachable" },
+			})
 		}
-	}, [runLiveSearch, runtime, subject, brandLiveSearch])
+	}, [runLiveSearch, runtime, subject, brandLiveSearch, trimmedText])
 
 	return { runtimeReady: runtime !== null, result, liveSearch, canSearchLive, searchLive }
 }

@@ -483,7 +483,7 @@ export async function crossDatasetCorrelation(
 	}
 
 	// --- The reconciliation artifact: a GeoJSON FeatureCollection of every resolved entity. Each feature
-	// carries `sources` + `sourceIds` (so an analyst filters the cross-dataset links by `sources` length ≥ 2)
+	// carries `sources` + `sourceIDs` (so an analyst filters the cross-dataset links by `sources` length ≥ 2)
 	// and the geocode tier. QGIS-ready; this is the operator-verifiable output of the matcher. ---
 	if (OUT_GEOJSON) {
 		const fc = toGeoJSON(entities)

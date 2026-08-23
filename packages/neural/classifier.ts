@@ -81,7 +81,7 @@ export type {
  */
 export interface NeuralRunner {
 	infer(
-		tokenIds: number[],
+		tokenIDs: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },

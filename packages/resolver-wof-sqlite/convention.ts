@@ -142,8 +142,8 @@ export function mergeConventions(base: Convention, ...overrides: Array<Conventio
  * region, …, locality). Starts from `WORLD_DEFAULT` so every field is defined regardless of which (if any) ancestors
  * carry an override.
  */
-export function resolveConvention(source: ConventionSource, ancestorIds: readonly number[]): ResolvedConvention {
-	const layers = ancestorIds.map((id) => source.get(id))
+export function resolveConvention(source: ConventionSource, ancestorIDs: readonly number[]): ResolvedConvention {
+	const layers = ancestorIDs.map((id) => source.get(id))
 	const merged = mergeConventions(WORLD_DEFAULT, ...layers)
 
 	return {

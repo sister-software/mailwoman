@@ -188,13 +188,13 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 
 	// Phase 4: Load names for matching places.
 	progress("names", "Loading name variants")
-	const placeIds = sprRows.map((r) => r.id)
+	const placeIDs = sprRows.map((r) => r.id)
 	const namesByPlace = new Map<number, string[]>()
 
 	const allLanguages = languages.includes("*")
 
-	for (let i = 0; i < placeIds.length; i += 500) {
-		const chunk = placeIds.slice(i, i + 500)
+	for (let i = 0; i < placeIDs.length; i += 500) {
+		const chunk = placeIDs.slice(i, i + 500)
 		const idPlaceholders = chunk.map(() => "?").join(",")
 
 		const nameStmt = allLanguages

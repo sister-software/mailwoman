@@ -380,9 +380,9 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	 * (carried by build-slim, #189). Empty on DBs built before the table. Lets the demo resolver tier an exact-abbrev
 	 * match ("VT" → Vermont) above a foreign region that merely token-matches — the data-driven replacement for the
 	 * hardcoded region-abbreviation map, which this replaced and which is now gone. Mirrors
-	 * `WOFWasmPlaceLookup.#abbrExactIds` — keep the two in lockstep.
+	 * `WOFWasmPlaceLookup.#abbrExactIDs` — keep the two in lockstep.
 	 */
-	async #abbrExactIds(text: string): Promise<Set<number>> {
+	async #abbrExactIDs(text: string): Promise<Set<number>> {
 		const t = text.trim()
 
 		if (!t || !(await this.#schema()).hasAbbr) return new Set()
@@ -447,13 +447,13 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 		// token-matches "VT". Mirrors WOFWasmPlaceLookup; no-op on slim DBs without `place_abbr`.
 		// Issued together with the main query — the queries are independent and the worker pipelines
 		// them, saving a main-thread→worker round-trip gap per lookup.
-		const [rows, abbrIds] = await Promise.all([this.#worker.db.exec(sql).then(rowsFromExec), this.#abbrExactIds(text)])
+		const [rows, abbrIDs] = await Promise.all([this.#worker.db.exec(sql).then(rowsFromExec), this.#abbrExactIDs(text)])
 		const normQuery = normName(text)
 
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
 		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
 		const strictExact = (row: Record<string, unknown>): boolean =>
-			normName(String(row.name)) === normQuery || abbrIds.has(Number(row.id))
+			normName(String(row.name)) === normQuery || abbrIDs.has(Number(row.id))
 
 		const anyStrictExact = rows.some(strictExact)
 

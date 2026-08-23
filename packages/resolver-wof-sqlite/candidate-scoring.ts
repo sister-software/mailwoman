@@ -176,7 +176,7 @@ export function rankCandidates(
 	// WASM lookup) — a sole alias hit ("New York City" → New York) must still carry the flag the
 	// demo cascade / #369 re-rank read.
 	if (weights.exactMatchTiering && candidates.length) {
-		const exactIds = exactMatchIDs(
+		const exactIDs = exactMatchIDs(
 			db,
 			schemaName,
 			candidates.map((c) => c.id as number),
@@ -187,10 +187,10 @@ export function rankCandidates(
 		// re-rank — #369's postcode-anchor country pin in `resolveTree` — can keep the country pin from
 		// crossing the exact/partial boundary ("ME" → Maine, not the more-populous Missouri).
 		for (const c of candidates) {
-			c.exactMatch = exactIds.has(c.id as number)
+			c.exactMatch = exactIDs.has(c.id as number)
 		}
 
-		if (exactIds.size) {
+		if (exactIDs.size) {
 			// #905: WITHIN the exact tier, population is the PRIMARY key and the weighted score
 			// only breaks population ties. Exactness saturates text relevance, and the bm25
 			// residue inside `score` is length-noise (see the fetch-site comment), so letting it
@@ -210,25 +210,25 @@ export function rankCandidates(
 			// #936 option 3: an OFFICIAL name (preferred form in an official language of the place's
 			// country, `names.official = 1`) counts as the place's own name for the sub-tier — "Åbo" is
 			// Turku's name, not merely its alias. Floor-gated on the holder's population (see the
-			// RankingWeights docstring for the measured 100k boundary). officialIds ⊆ exactIds by
+			// RankingWeights docstring for the measured 100k boundary). officialIDs ⊆ exactIDs by
 			// construction (official rows are names rows), so only the sub-tier KIND changes.
-			const officialIds = weights.officialNameExact
+			const officialIDs = weights.officialNameExact
 				? officialNameIDs(
 						db,
 						schemaName,
 						candidates
-							.filter((c) => exactIds.has(c.id as number) && (c.population ?? 0) >= weights.officialNameExactFloor)
+							.filter((c) => exactIDs.has(c.id as number) && (c.population ?? 0) >= weights.officialNameExactFloor)
 							.map((c) => c.id as number),
 						query.text
 					)
 				: undefined
 
 			const kind = (c: PlaceCandidate): number => {
-				if (!exactIds.has(c.id as number)) return 0
+				if (!exactIDs.has(c.id as number)) return 0
 
 				if (norm(String(c.name ?? "")) === needle) return 2
 
-				return officialIds?.has(c.id as number) ? 2 : 1
+				return officialIDs?.has(c.id as number) ? 2 : 1
 			}
 
 			// With proximity hints (near/bias), prominence (population + nearness, same units)

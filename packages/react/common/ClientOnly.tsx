@@ -8,11 +8,21 @@
  *   Remix, Docusaurus). It renders `fallback` on the server and the first client paint, then swaps to
  *   `children()` once mounted — keeping timers, clipboard, and dynamic imports off the server render.
  *
- *   The mount flag is derived from a `useEffect` that fires only in the browser; this is a legitimate
- *   external-sync effect (bridging the server/client rendering boundary), not derived state.
+ *   The mount flag comes from `useSyncExternalStore` with a constant snapshot pair — `false` on the
+ *   server, `true` in the browser — which is the store-shaped statement of exactly this boundary. The
+ *   earlier `useState(false)` + `useEffect(() => setMounted(true))` said the same thing with a
+ *   render-cascade the react(set-state-in-effect) rule rightly flags: the second render was the
+ *   mechanism, not an accident, and the store form gets the same second paint without a set-state.
  */
 
-import { type ReactNode, useEffect, useState } from "react"
+import { type ReactNode, useSyncExternalStore } from "react"
+
+/**
+ * The boundary never changes after mount, so nothing ever notifies.
+ */
+function subscribeNever(): () => void {
+	return () => {}
+}
 
 export interface ClientOnlyProps {
 	/**
@@ -26,9 +36,11 @@ export interface ClientOnlyProps {
 }
 
 export function ClientOnly({ children, fallback = null }: ClientOnlyProps): ReactNode {
-	const [mounted, setMounted] = useState(false)
-
-	useEffect(() => setMounted(true), [])
+	const mounted = useSyncExternalStore(
+		subscribeNever,
+		() => true,
+		() => false
+	)
 
 	return mounted ? children() : fallback
 }

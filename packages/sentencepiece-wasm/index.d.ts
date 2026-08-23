@@ -36,7 +36,7 @@ export declare class SentencePieceProcessor {
 	 */
 	loadFromSerializedProto(serialized: Uint8Array): string
 	encodeWithOffsets(text: string): EncodeWithOffsetsResult
-	decodeIds(ids: IntVector): string
+	decodeIDs(ids: IntVector): string
 	/**
 	 * Embind object lifetime: the processor owns WASM-heap memory — call when done (long-lived singletons in practice
 	 * never do).

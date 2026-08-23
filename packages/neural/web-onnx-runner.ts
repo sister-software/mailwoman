@@ -160,7 +160,7 @@ export class WebONNXRunner implements NeuralRunner {
 	}
 
 	async infer(
-		tokenIds: number[],
+		tokenIDs: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
@@ -170,12 +170,12 @@ export class WebONNXRunner implements NeuralRunner {
 		}
 	): Promise<InferResult> {
 		const session = await this.#ensureSession()
-		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
+		const seqLen = Math.min(tokenIDs.length, this.fixedSeqLen)
 		const padded = new BigInt64Array(this.fixedSeqLen)
 		const mask = new BigInt64Array(this.fixedSeqLen)
 
 		for (let i = 0; i < seqLen; i++) {
-			padded[i] = BigInt(tokenIds[i]!)
+			padded[i] = BigInt(tokenIDs[i]!)
 			mask[i] = 1n
 		}
 

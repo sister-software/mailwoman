@@ -89,7 +89,7 @@ export interface NominatimReverseParams {
  * Parsed `/lookup` parameters.
  */
 export interface NominatimLookupParams {
-	osmIds: string[]
+	osmIDs: string[]
 	addressdetails?: boolean
 	format: NominatimFormat
 }

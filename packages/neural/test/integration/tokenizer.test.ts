@@ -38,11 +38,11 @@ interface FixtureEntry {
 const fixture = parseJSONStrict<FixtureEntry[]>(readFileSync(FIXTURE_PATH, "utf8"))
 
 describe("MailwomanTokenizer — Python parity", () => {
-	test.each(fixture)("pieces+ids match Python for $raw", async ({ raw, pieces: expectedPieces, ids: expectedIds }) => {
+	test.each(fixture)("pieces+ids match Python for $raw", async ({ raw, pieces: expectedPieces, ids: expectedIDs }) => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
 		const result = tokenizer.encode(raw)
 		expect(result.pieces.map((p) => p.piece)).toEqual(expectedPieces)
-		expect(result.ids).toEqual(expectedIds)
+		expect(result.ids).toEqual(expectedIDs)
 	})
 })
 

@@ -267,7 +267,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		const q = legacyQuery(c)
 
 		const params: NominatimLookupParams = {
-			osmIds: asString(q["osm_ids"])?.split(",") ?? [],
+			osmIDs: asString(q["osm_ids"])?.split(",") ?? [],
 			addressdetails: parseBool(q["addressdetails"]),
 			format: parseFormat(q["format"]),
 		}

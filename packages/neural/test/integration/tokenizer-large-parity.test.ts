@@ -45,18 +45,18 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 		const failures: string[] = []
 		const MAX_REPORTED = 5
 
-		for (const { raw, pieces: expectedPieces, ids: expectedIds } of fixture) {
+		for (const { raw, pieces: expectedPieces, ids: expectedIDs } of fixture) {
 			const result = tokenizer.encode(raw)
 			const tsPieces = result.pieces.map((p) => p.piece)
 			const piecesMatch = tsPieces.length === expectedPieces.length && tsPieces.every((p, i) => p === expectedPieces[i])
-			const idsMatch = result.ids.length === expectedIds.length && result.ids.every((id, i) => id === expectedIds[i])
+			const idsMatch = result.ids.length === expectedIDs.length && result.ids.every((id, i) => id === expectedIDs[i])
 
 			if (!piecesMatch || !idsMatch) {
 				divergences++
 
 				if (failures.length < MAX_REPORTED) {
 					failures.push(
-						`raw=${JSON.stringify(raw)}\n  expected pieces=${JSON.stringify(expectedPieces)}\n  TS pieces=${JSON.stringify(tsPieces)}\n  expected ids=${JSON.stringify(expectedIds)}\n  TS ids=${JSON.stringify(result.ids)}`
+						`raw=${JSON.stringify(raw)}\n  expected pieces=${JSON.stringify(expectedPieces)}\n  TS pieces=${JSON.stringify(tsPieces)}\n  expected ids=${JSON.stringify(expectedIDs)}\n  TS ids=${JSON.stringify(result.ids)}`
 					)
 				}
 			}

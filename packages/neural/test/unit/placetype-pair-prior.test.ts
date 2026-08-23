@@ -113,9 +113,9 @@ function asComponentTag(value: string | undefined): ComponentTag {
  * A `PairIndexLike` double backed by a plain `(child, parent) -> edge` map, with recorded probe calls so tests can
  * assert on the exact keys probed (the space-join proof needs this).
  *
- * An entry value is `"<childTag>"` or `"<childTag>>​<parentTag>"`. The short form means a `locality` parent — the shape
- * every shipped register artifact carries, and the only default in play here: the SUT itself derives nothing (PIX2),
- * this is a fixture shorthand.
+ * An entry value is `"<childTag>"` or `"<childTag>>\u200B<parentTag>"`. The short form means a `locality` parent — the
+ * shape every shipped register artifact carries, and the only default in play here: the SUT itself derives nothing
+ * (PIX2), this is a fixture shorthand.
  */
 function mockPairIndex(
 	entries: Record<string, string>,

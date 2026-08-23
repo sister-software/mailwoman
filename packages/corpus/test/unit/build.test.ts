@@ -122,10 +122,10 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(trainRows.filter((r) => r.components.region === "Vermont")).toEqual([])
 
 		// The .txt manifests stay in lockstep with the per-split JSONL.
-		const trainIds = new Set(await Array.fromAsync(TextSpliterator.fromAsync(join(outDir, "splits", "train.txt"))))
+		const trainIDs = new Set(await Array.fromAsync(TextSpliterator.fromAsync(join(outDir, "splits", "train.txt"))))
 
 		for (const r of vermontHeldOut) {
-			expect(trainIds.has(r.source_id)).toBe(false)
+			expect(trainIDs.has(r.source_id)).toBe(false)
 		}
 	})
 

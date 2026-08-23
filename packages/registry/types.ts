@@ -81,7 +81,7 @@ export type ReconciliationBucket = "enrolled" | "eligible-not-enrolled" | "funde
 
 export interface EntityGeoData {
 	entityID: string
-	sourceIds?: string[]
+	sourceIDs?: string[]
 	recordCount?: number
 	cohesion?: number | null
 	sources: string[]

@@ -129,27 +129,27 @@ describe("buildSlimWOFDatabase", () => {
 		const slim = new DatabaseSync(output, { readOnly: true })
 
 		try {
-			const nameIds = slim
+			const nameIDs = slim
 				.prepare(`SELECT DISTINCT id FROM names ORDER BY id`)
 				.all()
 				.map((r) => (r as { id: number }).id)
 
 			// Top-1 locality = Chicago (200); ancestors 100/101; postcodes 300/301.
-			expect(nameIds).toEqual([100, 200, 300])
+			expect(nameIDs).toEqual([100, 200, 300])
 			// Paris (400) and Mascoutah (202) names must be gone.
-			expect(nameIds).not.toContain(400)
-			expect(nameIds).not.toContain(202)
+			expect(nameIDs).not.toContain(400)
+			expect(nameIDs).not.toContain(202)
 
 			// place_population is filtered to surviving spr ids: ancestors 100/101 + top-1 locality 200.
 			// Postcodes (300/301) have no population row; trimmed places (202/400) are gone.
-			const popIds = slim
+			const popIDs = slim
 				.prepare(`SELECT id FROM place_population ORDER BY id`)
 				.all()
 				.map((r) => (r as { id: number }).id)
 
-			expect(popIds).toEqual([100, 101, 200])
-			expect(popIds).not.toContain(400)
-			expect(popIds).not.toContain(202)
+			expect(popIDs).toEqual([100, 101, 200])
+			expect(popIDs).not.toContain(400)
+			expect(popIDs).not.toContain(202)
 
 			// The slim DB never carries a geojson table — production source has none, and the builder
 			// reads population from place_population, not geojson.

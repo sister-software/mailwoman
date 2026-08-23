@@ -73,7 +73,7 @@ const ALIAS_SEPARATOR_CODEPOINT = ALIAS_SEPARATOR.codePointAt(0) as number
 
 /**
  * Does any alias in an `alt_names` bag exactly equal the (already-normalized) query? The single shared implementation
- * of the exact-tier alias check for every consumer of the bag — the Node resolver's `#exactMatchIds` fallback, the WASM
+ * of the exact-tier alias check for every consumer of the bag — the Node resolver's `#exactMatchIDs` fallback, the WASM
  * resolver, and the demo's httpvfs resolver — so the bag format and its parsers can't drift.
  *
  * Two formats exist in the wild:
