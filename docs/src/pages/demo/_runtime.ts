@@ -335,13 +335,16 @@ export function useDemoMapRuntime({
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
 
-			const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
+			// `city`, `state`, `postal_code` and `house_number_prefix` are libpostal vocabulary, not `ComponentTag`s,
+			// so the `|| n.tag === "…"` arms that used to sit on these four finds could never match. They compiled
+			// only while the flattener returned `{ tag: string }`; against the real tag union they are type errors.
+			const localityNode = nodes.find((n) => n.tag === "locality")
 
 			const stateNode = nodes
-				.filter((n) => n.tag === "region" || n.tag === "state")
+				.filter((n) => n.tag === "region")
 				.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 
-			const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
+			const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
 			// ── Street tier (#377): exact situs point / TIGER interpolation, ahead of the admin cascade. ──
 			let streetResolution: StreetResolution | null = null
@@ -351,7 +354,7 @@ export function useDemoMapRuntime({
 				.toSorted((a, b) => (a.start ?? 0) - (b.start ?? 0))
 
 			const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
-			const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
+			const houseNumberNode = nodes.find((n) => n.tag === "house_number")
 			const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
 
 			const streetSlug =

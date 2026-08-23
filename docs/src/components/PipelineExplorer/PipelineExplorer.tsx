@@ -118,7 +118,7 @@ function useDocsPipeline(): { runtime: PipelineRuntime; panels: PipelinePanels }
 				onStage(2)
 
 				const tBeforeResolve = performance.now()
-				const cascadeHits = await runCascade(lookup, tree as { roots: unknown[] }, input)
+				const cascadeHits = await runCascade(lookup, tree, input)
 				const tResolve = performance.now()
 
 				const candidates: ResolvedPlaceView[] = cascadeHits.map((c) => ({

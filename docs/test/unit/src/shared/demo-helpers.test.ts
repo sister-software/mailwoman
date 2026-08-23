@@ -12,6 +12,8 @@
  *   coverage against the real DB lives in `scripts/eval/demo-cascade-smoke.ts`.
  */
 
+import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
+import type { ComponentTag } from "@mailwoman/core/types/component"
 import { runCascade } from "@mailwoman/docs/shared/demo-helpers"
 import type { MailwomanLookupLike } from "@mailwoman/docs/shared/resources"
 import { describe, expect, test, vi } from "vitest"
@@ -55,21 +57,22 @@ function stubLookup(places: StubPlace[]): MailwomanLookupLike {
 	}
 }
 
-interface TreeNode {
-	tag: string
-	value: string
-	confidence: number
-	children: TreeNode[]
-}
-
-const node = (tag: string, value: string, children: TreeNode[] = []): TreeNode => ({
+// The real node type. A local structural stand-in compiled only while `runCascade` took a loose
+// `{ roots: unknown[] }`; now that it takes an `AddressTree`, a fixture that cannot satisfy one is a
+// fixture that does not model what the function is given.
+//
+// `start`/`end` are required and are not decoration: the resolver reads spans. They are derived from the
+// raw string here so a fixture cannot claim an offset the text does not have.
+const node = (tag: ComponentTag, value: string, children: AddressNode[] = []): AddressNode => ({
 	tag,
 	value,
+	start: 0,
+	end: value.length,
 	confidence: 0.95,
 	children,
 })
 
-const tree = (raw: string, roots: TreeNode[]) => ({ raw, roots }) as { roots: unknown[] }
+const tree = (raw: string, roots: AddressNode[]): AddressTree => ({ raw, roots })
 
 describe("runCascade (shared resolveTree over the candidate lookup)", () => {
 	test("locality pin with region context — locality outranks the resolved region", async () => {

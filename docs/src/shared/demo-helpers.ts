@@ -11,7 +11,7 @@
 // usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
 // which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
-import { clampConfidence } from "@mailwoman/core/decoder"
+import { clampConfidence, type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ParseResult } from "@mailwoman/react"
 
@@ -180,118 +180,16 @@ export function pairCountryForInput(input: string): string | undefined {
 
 //#endregion
 
-//#region US state abbreviation expansion
-
-// TODO: WE have this elsewhere
-
-/**
- * @deprecated
- */
-const US_STATE_ABBREV: Record<string, string> = {
-	AL: "Alabama",
-	AK: "Alaska",
-	AZ: "Arizona",
-	AR: "Arkansas",
-	CA: "California",
-	CO: "Colorado",
-	CT: "Connecticut",
-	DE: "Delaware",
-	DC: "District of Columbia",
-	FL: "Florida",
-	GA: "Georgia",
-	HI: "Hawaii",
-	ID: "Idaho",
-	IL: "Illinois",
-	IN: "Indiana",
-	IA: "Iowa",
-	KS: "Kansas",
-	KY: "Kentucky",
-	LA: "Louisiana",
-	ME: "Maine",
-	MD: "Maryland",
-	MA: "Massachusetts",
-	MI: "Michigan",
-	MN: "Minnesota",
-	MS: "Mississippi",
-	MO: "Missouri",
-	MT: "Montana",
-	NE: "Nebraska",
-	NV: "Nevada",
-	NH: "New Hampshire",
-	NJ: "New Jersey",
-	NM: "New Mexico",
-	NY: "New York",
-	NC: "North Carolina",
-	ND: "North Dakota",
-	OH: "Ohio",
-	OK: "Oklahoma",
-	OR: "Oregon",
-	PA: "Pennsylvania",
-	RI: "Rhode Island",
-	SC: "South Carolina",
-	SD: "South Dakota",
-	TN: "Tennessee",
-	TX: "Texas",
-	UT: "Utah",
-	VT: "Vermont",
-	VA: "Virginia",
-	WA: "Washington",
-	WV: "West Virginia",
-	WI: "Wisconsin",
-	WY: "Wyoming",
-	PR: "Puerto Rico",
-}
-
-// TODO: WE have this elsewhere
-/**
- * @deprecated
- */
-export const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
-
-// TODO: WE have this elsewhere
-/**
- * USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French département) before
- * "Illinois", so its France bbox filters out the actual US city — expanding to the full name resolves the right region.
- * Full names pass through unchanged.
- *
- * @deprecated
- */
-export function expandUSRegion(text: string): string {
-	return US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
-}
-
-//#endregion
-
 //#region Tree flattening
 
 /**
- * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order. TODO: We have
- * this elsewhere.
+ * Flatten a solver tree to its nodes in source order.
  *
- * @todo Move this out of docs into somewhere re-usable
+ * Re-exported rather than declared: `@mailwoman/core/decoder`'s `flattenTreeNodes` is the shared home, and the local
+ * copy this replaces sorted by TRAVERSAL order — which put a child ahead of its parent on 7 of 10 ordinary addresses
+ * (`street_suffix` before `street`, `house_number` before `street`, `postcode` before `locality`).
  */
-export function flattenTree(tree?: AddressTree | null): TreeNode[] {
-	const out: TreeNode[] = []
-
-	const roots = tree?.roots ?? []
-	const stack = [...(roots as TreeNode[])]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (typeof n.tag === "string") {
-			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
-		}
-
-		if (Array.isArray(n.children)) {
-			for (const c of n.children) {
-				stack.push(c as TreeNode)
-			}
-		}
-	}
-
-	return out.toReversed()
-}
+export { flattenTreeNodes as flattenTree } from "@mailwoman/core/decoder"
 
 //#endregion
 
@@ -300,7 +198,7 @@ export function flattenTree(tree?: AddressTree | null): TreeNode[] {
 /**
  * A source-order parsed node, as {@link flattenTree} yields it.
  */
-export type FlatNode = ReturnType<typeof flattenTree>[number]
+export type FlatNode = FlatTreeNode
 
 /**
  * What both demo parse paths need out of the neural classify stage before resolution.
@@ -423,7 +321,7 @@ export async function runClassifyStage(
 
 	return {
 		tree,
-		nodes: flattenTree(tree),
+		nodes: flattenTreeNodes(tree),
 		kindResult: kindResult as ParseResult["kindResult"],
 		timing: { shape: tShape - tStart, classify: tClassify - tShape },
 	}
