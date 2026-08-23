@@ -312,6 +312,33 @@ On the query side, the migratable remainder is the cold, already-`async` `SELECT
 
 Read the workspace-local docstrings before changing infrastructure files. The headers in `scripts/*.mjs`, `.release-it.json`, and `.github/workflows/*.yml` explain why each piece exists. If a file's purpose isn't documented inline and you're about to touch it, add the docstring as part of your change — future-you (or future-claude) will thank you.
 
+**A reader that can return a PARTIAL result must say what it got, or throw.** The 2026-08-23 model arc
+produced seven bugs of one shape, and every one returned a well-formed wrong answer that nobody would
+have questioned:
+
+- `Array.isArray` on a nested Arrow column. Corpus `labels` arrives as `{list:[{element:…}]}` on some
+  shards and as a plain array on others, so the check is false for the first and every label count reads
+  ZERO. Produced "GB has no street data".
+- `getCursor(["country","labels"])` silently DROPPING `labels` on the shards one writer era produced —
+  no error, the column is simply absent. Measured on one GB shard: unprojected 1,519/2,000 street rows,
+  projected 0/2,000. Produced "only 4 countries have street data"; the real figure is 29.
+- `flattenTreeNodes` projecting away `source`, and later the whole resolver payload. Both times the
+  affected spans reported as `unchanged`.
+- An `EngineConfig` key typo (`weightsCacheRoot` for `weights_cache`). A plain object drops the unknown
+  key in silence, both arms ran the same weights, and the comparison reported "0 of 6 differ" — which
+  reads as "the candidate is identical" and means "the lever never ran".
+- Two artifact resolvers sorting by NAME. `v0.9.9` beats `v0.26.0` lexically and `v8-jp-full` beats both
+  numerically, so a coverage report silently described a corpus nine versions old.
+
+The common shape is that each failure is indistinguishable from a real absence, and absence is usually
+what the question was about — so the wrong answer arrives looking like a discovery. Three rules follow.
+Prefer a reader that ERRORS on a requested-but-missing column over one that omits it. When a projection
+drops a field, the consumer that needed it gets `unchanged`, not a type error, so carry the whole payload
+or name what you dropped. And `?? 0`, optional chaining and a bare `.filter()` all convert _"I could not
+read this"_ into _"there is none of it"_ — at a measurement boundary that is a lie, and the cheap
+insurance is to re-measure a surprising ABSENCE by a second path before reporting it. One shard read two
+ways caught two of the seven in sixty seconds.
+
 **The defects that survive review live in the input tail.** Every correctness bug the 2026-08-02 audit found was in code that worked on every input anyone had tried: a ReDoS that needs tab characters, an `expandH3Cell` that drops a leading zero only for base cells 0–7 (7 of 122), a quote-blind CSV splitter against sources where 6 of 8 carry no embedded newline, a quadratic scan whose every existing caller happened to be chunk-bounded, a freshness guard that compared zero checksums. Reading the code tells you what it does on the inputs you are imagining, which is exactly the set that already works. So when a change rests on a claim about data or scale — _this source has no quoted newlines_, _this path is fast enough now_, _this artifact is stale_ — spend the one command that settles it. Measuring found all five of those; each of the four audit findings that turned out WRONG had been reasoned to instead, and was disproved by someone implementing it.
 
 Corollary for the docstring you write afterwards: if the claim was established by measurement, put the number in. `27,405 ms → 175 ms on 8 MB` tells the next reader whether the constraint still binds. "This is slow" does not.
