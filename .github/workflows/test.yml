@@ -667,6 +667,114 @@ jobs:
       - name: Test react (browser mode)
         run: yarn workspace @mailwoman/react test:browser
 
+  # The regression gauntlet — ADVISORY, and deliberately not in `test`'s `needs`.
+  #
+  # The gauntlet is described everywhere as the release authority, and until this job existed it ran
+  # only when a person remembered to run it. `es-op3-southeast-portopetro` was a `status: pass` row
+  # failing on main for at least two days before anyone looked (#1789). A release authority nobody
+  # polls is a record of the last time somebody cared, not a gate.
+  #
+  # ADVISORY MEANS TWO THINGS, and both are load-bearing:
+  #   1. This job is absent from the `test` aggregator's `needs`, so it can never block a merge.
+  #   2. The run step swallows its own exit code and reports the fraction as an annotation.
+  # The gate is red today (382/383). A blocking job merged in that state would refuse every PR from
+  # its first minute, which is how a check gets deleted instead of fixed.
+  #
+  # TO MAKE IT BLOCKING once the gate is green: add `gauntlet` to the `test` job's `needs` list, add
+  # it to that job's enumerated skipped-is-fatal condition, and delete the `|| GAUNTLET_EXIT=$?`
+  # swallow below. Three edits, all in this file. Do not do it while a gated row is red.
+  #
+  # NOT PORTABLE — the gauntlet reads the WOF databases, the address-point shards and the model
+  # weights, which exist only on the lab host. It skips with the rest of the data legs when the
+  # fleet is down, for the reason `data-fleet` documents at the top of this file.
+  gauntlet:
+    needs: data-fleet
+    if: needs.data-fleet.outputs.up == 'true'
+    env:
+      MAILWOMAN_DATA_ROOT: ${{ secrets.MAILWOMAN_DATA_ROOT }}
+    runs-on:
+      - self-hosted
+      - mailwoman-data
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      # Same content-keyed restore as unit-slow — see that job for why there are no restore-keys and
+      # why this step must precede `Install dependencies`.
+      - name: Restore compiled tree
+        uses: actions/cache@v6
+        with:
+          path: |
+            */out
+            packages/*/out
+          key: out-${{ runner.os }}-${{ hashFiles('**/*.ts', '**/*.tsx', '**/tsconfig*.json', 'yarn.lock') }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # The gauntlet runs the COMPILED tree and refuses to grade a stale one, so this is not
+      # optional even on a cache hit.
+      - name: Compile
+        run: yarn compile
+
+      - name: Materialize weights (derived store; multi-minute build only on a key change)
+        run: node scripts/copy-weights.ts
+
+      - name: Symlink base-latn model (en-us already materialized)
+        run: |
+          mkdir -p packages/neural-weights-base-latn
+          for f in model.onnx tokenizer.model model-card.json calibration.json calibration-per-locale.json anchor-lexicon-v1.json country-surface-lexicon-v1.json; do
+            [ -f "packages/neural-weights-base-latn/$f" ] || ln -sf "../neural-weights-en-us/$f" "packages/neural-weights-base-latn/$f"
+          done
+
+      # The exit code is CAPTURED, not propagated — see the advisory note in this job's header. The
+      # gated fraction is the number to read; a `verdict: FAIL` with no fraction means the run did
+      # not reach a verdict, which is a different and worse problem than a failing row.
+      - name: Regression gauntlet (advisory)
+        id: run
+        run: |
+          set -o pipefail
+          GAUNTLET_EXIT=0
+          node packages/mailwoman/out/cli.js eval gauntlet --layer regression 2>&1 | tee gauntlet.log || GAUNTLET_EXIT=$?
+          echo "exit=${GAUNTLET_EXIT}" >> "$GITHUB_OUTPUT"
+
+          header=$(grep -oE '=== Gauntlet · regression \([0-9]+/[0-9]+ gated cases pass[^)]*\)' gauntlet.log | tail -1 || true)
+          fraction=$(printf '%s' "$header" | grep -oE '[0-9]+/[0-9]+' | head -1 || true)
+
+          {
+            echo "## gauntlet · regression (advisory)"
+            echo ""
+            if [ -n "$fraction" ]; then
+              echo "gated: **${fraction}**"
+            else
+              echo "gated: **no header parsed** — the run did not reach a verdict. Read the log; this is not the same as a failing row."
+            fi
+            echo ""
+            echo '```'
+            grep -E '^\s+✗ ' gauntlet.log || echo "(no failing gated rows printed)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$GAUNTLET_EXIT" -ne 0 ]; then
+            echo "::warning title=gauntlet regression is RED::gated ${fraction:-unknown}. This check is advisory and does not block the merge. See #1789."
+          fi
+
+      - name: Upload the gauntlet log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gauntlet-regression-log
+          path: gauntlet.log
+          retention-days: 14
+
   # Packs every published workspace + installs the tarballs into a throwaway project (no monorepo
   # hoisting) + runs the compiled CLI. Catches the class of bug that shipped in v4.8.0: an
   # undeclared runtime dep, an unshipped file, or a command module with an eager top-level side
