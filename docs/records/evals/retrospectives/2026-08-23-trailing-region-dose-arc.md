@@ -160,7 +160,47 @@ Three unrelated levers — exposure, composition, regularization — reach the s
 NINE venue-led rows. A floor that three independent levers cannot move is not a property of any of
 them.
 
-### The control this demands, and it has not been run
+### The control, RUN — and it splits the ledger
+
+**v4.13.0: the v0.22.0 base corpus, no added shard, same 4,000 steps, same seed, same brake.**
+
+    5 improved / 10 regressed, net -5. Five of the ten venue-led.
+
+A plain fine-tune of this base costs ten rows before any new data is involved. And every one of those
+ten also appears in v4.11.0's eighteen and v4.12.0's nineteen, so the cost separates exactly:
+
+| run          | regressed | fine-tune tax | attributable to the DATA |
+| ------------ | --------: | ------------: | -----------------------: |
+| v4.13.0 null |        10 |            10 |                        — |
+| v4.11.0      |        18 |            10 |                    **8** |
+| v4.12.0      |        19 |            10 |                    **9** |
+
+Both readings matter and neither was available before:
+
+1. **The arc over-attributed.** A third of every "regression" charged to these shards was the price of
+   fine-tuning at all. Five runs of shard-blame were measuring a mixture.
+2. **The arc was not wrong.** Eight to nine rows ARE the data's doing, and they are the right ones —
+   `gb-venue-ye-three-lords`, `gb-lex-cafe-st-marys`, `gb-op2-four-seasons-cjk` appear only in the
+   treated arms. The venue diagnosis holds for that subset.
+
+**The floor of nine venue-led regressions was a mixture too**: five are the tax, four are the data.
+That is why exposure, composition and the brake could not move it — three of those levers act only on
+the four.
+
+### What this changes for anything shipped from here
+
+The baseline for grading a candidate is the NULL RUN, not the shipped model. A candidate that costs
+ten rows has cost nothing; one that costs eighteen has cost eight. Every gate in this arc used the
+wrong denominator.
+
+It also sets a floor on what a fine-tune can deliver: **it must buy back five net rows before it breaks
+even**, because that is what 4,000 steps against this base costs on its own. None of the six came
+close, and no shard-side change can, since the tax is charged before the shard is read.
+
+That is the real argument for a from-scratch base over a fine-tune, and it is now a measured one
+rather than a preference.
+
+### The control as originally specified (kept — the reasoning stands)
 
 If the same nine rows regress under every intervention, the next question is whether they regress
 under NO intervention: **fine-tune the base corpus with no added shard at all, same steps, same seed.**
