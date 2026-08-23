@@ -53,6 +53,12 @@ export type PostcodePlacement = "leading" | "after_locality" | "after_region"
  */
 export interface ShardTuple {
 	locality?: string
+	/**
+	 * The segment before the locality, when the source has one. A shard whose every row BEGINS with the locality teaches
+	 * that the first named segment is the locality, which flips the model's default — measured on the v4.8.0 candidate,
+	 * where `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`.
+	 */
+	dependentLocality?: string
 	region?: string
 	postcode?: string
 	country?: string

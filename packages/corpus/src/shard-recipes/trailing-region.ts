@@ -48,6 +48,16 @@
  *   Each of the three placements matches a board row verbatim. A tuple with no placement means `leading`,
  *   so a tuples file written before the field existed produces the rows it always did.
  *
+ *   LEFT CONTEXT (v25). A tuple may carry a `dependentLocality`, and when it does the surface becomes
+ *   `«dep_locality», «locality»…`. This is not decoration: without it EVERY row in the shard begins with
+ *   the locality, and at a 9.4% share that taught the model the first named segment is the locality.
+ *   Measured on the v4.8.0 candidate — `Ye Three Lords, 27 Minories, London EC3N 1DE` came back
+ *   `locality: "Ye Three Lords"` with venue and street both gone, `Le Colimaçon, 44 Rue Vieille du
+ *   Temple, 75004 Paris` came back `locality: "Le Colimaçon"`, and 11 of 25 regressions were venue-led
+ *   rows across seven countries. The house-number prefix does NOT supply this: a number before the
+ *   locality does not teach that a NAME can precede one. `no-fragment.ts`'s header records the same
+ *   trap from the other direction.
+ *
  *   The (postcode, locality, region) triples are REAL — `postalcode-intl.db` parents joined to admin
  *   localities and their region ancestors — with one filter that had to be measured rather than assumed.
  *   A handful of localities act as catch-all parents: `Schwedt/Oder` claims 9,222 postcodes, `Korb`
@@ -84,6 +94,7 @@ export const trailingRegionRecipe: ShardRecipe = {
 			const locality = String(t.locality ?? "").trim()
 			const region = String(t.region ?? "").trim()
 			const country = String(t.country ?? "").trim()
+			const dependentLocality = String(t.dependentLocality ?? "").trim()
 
 			// A pair whose region EQUALS its locality (Santa Cruz de Tenerife inside Santa Cruz de
 			// Tenerife) teaches nothing about the boundary this shard exists for.
@@ -104,6 +115,15 @@ export const trailingRegionRecipe: ShardRecipe = {
 
 			const components: Record<string, string> = { locality, region }
 
+			// LEFT CONTEXT. Without it every row begins with the locality, and the shard teaches that the first named
+			// segment IS the locality — measured on the v4.8.0 candidate: `Ye Three Lords, 27 Minories, London EC3N 1DE`
+			// came back `locality: "Ye Three Lords"` with the venue and street gone, and 11 of its 25 regressions were
+			// venue-led rows across seven countries. The house-number prefix does not supply it, because a NUMBER before
+			// the locality does not teach that a NAME can precede one.
+			if (dependentLocality && dependentLocality !== locality) {
+				components["dependent_locality"] = dependentLocality
+			}
+
 			if (withCountry) {
 				components["country"] = country
 			}
@@ -118,7 +138,11 @@ export const trailingRegionRecipe: ShardRecipe = {
 
 			const placement = (t.postcodePlacement as PostcodePlacement | undefined) ?? "leading"
 			// Both trailing placements put the code inside the ADMIN tail; they differ in which segment carries it.
-			const localitySegment = postcode && placement === "after_locality" ? `${locality} ${postcode}` : locality
+			const bareLocality = postcode && placement === "after_locality" ? `${locality} ${postcode}` : locality
+
+			const localitySegment =
+				components["dependent_locality"] === undefined ? bareLocality : `${dependentLocality}, ${bareLocality}`
+
 			const regionSegment = postcode && placement === "after_region" ? `${region} ${postcode}` : region
 
 			const tail = withCountry
