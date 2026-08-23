@@ -380,8 +380,10 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		// street node's stamped resolution tier per call — the wired engine must carry that over, and
 		// must trim batch rows the same way (the route passes raw input through).
 		async (c) => {
+			// `resolver`, not `geocoder` — the missing method is `engine.resolveTree`, and the 503's `error`
+			// value is what a caller branches on.
 			if (!engine.resolveTree) {
-				return geocoderUnavailableError(c)
+				return geocoderUnavailableError(c, "resolver")
 			}
 
 			const { tree, opts } = c.req.valid("json")
