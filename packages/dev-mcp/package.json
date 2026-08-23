@@ -115,6 +115,11 @@
 			"default": "./out/tree-fingerprint.js",
 			"types": "./out/tree-fingerprint.d.ts"
 		},
+		"./tools/coverage": {
+			"node": "./tools/coverage.ts",
+			"default": "./out/tools/coverage.js",
+			"types": "./out/tools/coverage.d.ts"
+		},
 		"./arc": {
 			"node": "./arc.ts",
 			"default": "./out/arc.js",

@@ -10,7 +10,7 @@
 import { existsSync, readdirSync, statSync } from "node:fs"
 
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { censusCoverage, type CountryCoverage } from "mailwoman/coverage-census"
+import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage-census"
 import { z } from "zod"
 
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
@@ -149,43 +149,60 @@ export const coverageTool = (_deps: DevToolDeps): DevTool => ({
 			refresh: args["refresh"] === true,
 		})
 
-		const wanted = (args["countries"] as string[] | undefined)?.map((c) => c.toUpperCase())
-		const trains = (c: CountryCoverage): boolean => c.admitted && c.corpusRows > 0
-
-		const shown = wanted
-			? report.countries.filter((c) => wanted.includes(c.country))
-			: report.countries.filter((c) => trains(c)).toSorted((a, b) => b.corpusRows - a.corpusRows)
-
-		const missing = wanted?.filter((cc) => !report.countries.some((c) => c.country === cc)) ?? []
-		const trained = report.countries.filter(trains)
-		const withStreet = trained.filter((c) => c.corpusStreetRows > 0)
-
-		return {
-			corpus_version: report.corpusVersion,
-			corpus_rows_total: report.corpusRowsTotal,
-			corpus_census_taken_at: report.corpusCensusTakenAt ?? "just now (recounted)",
-			config: report.configPath,
-			n_trained: trained.length,
-			n_trained_with_street_data: withStreet.length,
-			n_geocodable: report.countries.filter((c) => c.gazetteerPlaces > 0).length,
-			rows: shown,
-			rendered: shown.map(line),
-			...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
-			mismatches: report.mismatches,
-			summary:
-				`${trained.length} countries train (${withStreet.length} with street-level rows); ` +
-				`${report.countries.filter((c) => c.gazetteerPlaces > 0).length} are geocodable to a locality, ` +
-				`2 to a rooftop a consumer can obtain (US, FR). ` +
-				(report.mismatches.presentButDropped.length
-					? `SILENTLY DROPPED — corpus rows, not admitted by \`country_weights\`: ${report.mismatches.presentButDropped.join(", ")}. `
-					: "") +
-				(report.mismatches.packageWithoutTraining.length
-					? `Ships a locale package but was never trained: ${report.mismatches.packageWithoutTraining.join(", ")}. `
-					: "") +
-				(report.corpusCensusTakenAt
-					? `Corpus counts are CACHED from ${report.corpusCensusTakenAt} — pass refresh after building a new corpus.`
-					: "Corpus counts were recounted in this call."),
-			notes: report.notes,
-		}
+		return projectCoverage(report, args["countries"] as string[] | undefined)
 	},
 })
+
+/**
+ * Project a {@linkcode CoverageReport} into the tool's response shape.
+ *
+ * Pure and exported so the projection can be TESTED. It builds its result field by field, which means a field the
+ * report grows and this function does not name is dropped in silence — and the consumer reads that as the field not
+ * existing. The corpus-mismatch guard shipped inert for exactly that reason: the census computed it, fifteen tests
+ * passed, and the first live call showed nothing, because this function did not carry it.
+ */
+export function projectCoverage(report: CoverageReport, wantedCountries?: string[]): Record<string, unknown> {
+	const wanted = wantedCountries?.map((c) => c.toUpperCase())
+	const trains = (c: CountryCoverage): boolean => c.admitted && c.corpusRows > 0
+
+	const shown = wanted
+		? report.countries.filter((c) => wanted.includes(c.country))
+		: report.countries.filter((c) => trains(c)).toSorted((a, b) => b.corpusRows - a.corpusRows)
+
+	const missing = wanted?.filter((cc) => !report.countries.some((c) => c.country === cc)) ?? []
+	const trained = report.countries.filter(trains)
+	const withStreet = trained.filter((c) => c.corpusStreetRows > 0)
+
+	return {
+		corpus_version: report.corpusVersion,
+		...(report.configuredCorpusVersion ? { configured_corpus_version: report.configuredCorpusVersion } : {}),
+		...(report.corpusMismatch ? { corpus_mismatch: report.corpusMismatch } : {}),
+		corpus_rows_total: report.corpusRowsTotal,
+		corpus_census_taken_at: report.corpusCensusTakenAt ?? "just now (recounted)",
+		config: report.configPath,
+		n_trained: trained.length,
+		n_trained_with_street_data: withStreet.length,
+		n_geocodable: report.countries.filter((c) => c.gazetteerPlaces > 0).length,
+		rows: shown,
+		rendered: shown.map(line),
+		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
+		mismatches: report.mismatches,
+		summary:
+			// A mismatch LEADS. A caller reads the first sentence, and every count after it is about a corpus the run
+			// does not read.
+			(report.corpusMismatch ? `CORPUS MISMATCH — ${report.corpusMismatch} ` : "") +
+			`${trained.length} countries train (${withStreet.length} with street-level rows); ` +
+			`${report.countries.filter((c) => c.gazetteerPlaces > 0).length} are geocodable to a locality, ` +
+			`2 to a rooftop a consumer can obtain (US, FR). ` +
+			(report.mismatches.presentButDropped.length
+				? `SILENTLY DROPPED — corpus rows, not admitted by \`country_weights\`: ${report.mismatches.presentButDropped.join(", ")}. `
+				: "") +
+			(report.mismatches.packageWithoutTraining.length
+				? `Ships a locale package but was never trained: ${report.mismatches.packageWithoutTraining.join(", ")}. `
+				: "") +
+			(report.corpusCensusTakenAt
+				? `Corpus counts are CACHED from ${report.corpusCensusTakenAt} — pass refresh after building a new corpus.`
+				: "Corpus counts were recounted in this call."),
+		notes: report.notes,
+	}
+}
