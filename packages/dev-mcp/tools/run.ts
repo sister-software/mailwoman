@@ -8,6 +8,7 @@
  *   load-bearing half of it.
  */
 
+import { haversineKm } from "@mailwoman/spatial"
 import { z } from "zod"
 
 import type { EngineConfig } from "../engine-registry.ts"
@@ -31,6 +32,10 @@ const RUN_ROW_FIELDS = [
 	"components",
 	"lat",
 	"lon",
+	// Haversine kilometres from the row's TRUTH point, for the sets that carry one — board, panel, golden,
+	// parity, and a literal set whose caller pinned coordinates. `null` on a row with no truth AND on a row
+	// that resolved nothing, which are different facts: read it beside `lat`.
+	"km",
 	"tier",
 	"admin_coherence",
 	"hierarchy",
@@ -106,6 +111,13 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					components: componentsOf(run),
 					lat: run.result.lat,
 					lon: run.result.lon,
+					km:
+						item.truthLat === undefined ||
+						item.truthLon === undefined ||
+						run.result.lat === null ||
+						run.result.lon === null
+							? null
+							: haversineKm(run.result.lat, run.result.lon, item.truthLat, item.truthLon),
 					tier: run.result.resolution_tier,
 					admin_coherence: run.result.admin_coherence ?? null,
 					// The resolved winner identities (name + placeID per rung) — what the chimera triage (#1731)

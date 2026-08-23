@@ -92,6 +92,41 @@ export function provenanceFor(
 }
 
 /**
+ * One hand-picked input, with or without a truth point.
+ *
+ * The coordinate is an ASSERTION by the caller — nothing here verifies it, and an invented pin looks identical to a
+ * surveyed one in the output. That is why the set's `why` is required, and why this describes where a point should come
+ * from rather than merely accepting a number.
+ *
+ * Declared out of line because the union nests four calls deep inside the set schema, which `unicorn/max-nested-calls`
+ * refuses — and rightly: a reader should meet this shape under its own name.
+ */
+const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
+	input: z.string().min(1),
+	lat: z.number().describe("Truth latitude. Say where it came from in `why` — an invented pin grades nothing."),
+	lon: z.number(),
+	tolerance_m: z
+		.number()
+		.positive()
+		.optional()
+		.describe("Per-row distance tolerance. Omit to let the caller's threshold apply."),
+	truth_type: z
+		.string()
+		.optional()
+		.describe(
+			"How the point was established — `rooftop`, `parcel`, `interpolated`, `centroid`. Stratifiable, because a " +
+				"headline at 1 km lives or dies on it."
+		),
+})
+
+const LITERAL_INPUT_SCHEMA = z.union([z.string(), LITERAL_INPUT_WITH_TRUTH_SCHEMA])
+
+const LITERAL_INPUTS_DESCRIPTION =
+	"Bare strings are OBSERVED — no truth, no grade. An object carrying `lat`/`lon` is GRADED against that point, " +
+	"which is what makes this the authoring loop for a new board row: measure the candidates before writing the case " +
+	"file, rather than writing rows and discovering the score afterwards."
+
+/**
  * Which inputs a measuring tool runs over.
  *
  * `{"kind":"board"}` is the shortest legal value and the default everywhere, so the well-powered choice is the cheapest
@@ -137,7 +172,7 @@ export const INPUT_SET_SCHEMA = z
 		}),
 		z.object({
 			kind: z.literal("literal"),
-			inputs: z.array(z.string()).min(1),
+			inputs: z.array(LITERAL_INPUT_SCHEMA).min(1).describe(LITERAL_INPUTS_DESCRIPTION),
 			why: z
 				.string()
 				.min(1)
