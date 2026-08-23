@@ -29,7 +29,7 @@
 import { existsSync } from "node:fs"
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import {
 	PairIndexResolver,

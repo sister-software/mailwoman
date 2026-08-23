@@ -19,7 +19,6 @@ import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, test } from "vitest"
 
 /**

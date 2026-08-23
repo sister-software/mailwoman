@@ -63,7 +63,6 @@ import {
 	LayerTier,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"

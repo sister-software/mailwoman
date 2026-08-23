@@ -29,10 +29,9 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { existsSync, lstatSync, mkdirSync, renameSync, statSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, mkdirSync, statSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import {
 	linkForce,

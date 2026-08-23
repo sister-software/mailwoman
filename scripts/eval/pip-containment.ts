@@ -19,8 +19,7 @@
  *   NAME] [--json OUT]
  */
 
-import { existsSync, globSync, readFileSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
+import { globSync, readFileSync, writeFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"

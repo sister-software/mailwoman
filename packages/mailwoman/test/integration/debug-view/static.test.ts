@@ -17,7 +17,7 @@
 import { existsSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"

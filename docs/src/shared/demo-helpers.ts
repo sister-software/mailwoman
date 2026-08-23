@@ -15,7 +15,6 @@ import { clampConfidence, type FlatTreeNode, flattenTreeNodes } from "@mailwoman
 import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ParseResult } from "@mailwoman/react"
 
-import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources/index.ts"
 
 // Moved into the package so the resolvers can reach it; re-exported for the demo's callers.

@@ -29,10 +29,7 @@ import { parseArgs } from "node:util"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
-import {
-	type AddressPointDatabase,
-	createAddressPointIndexes,
-} from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"

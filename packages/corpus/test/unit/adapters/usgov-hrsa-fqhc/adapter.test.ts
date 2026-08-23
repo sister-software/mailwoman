@@ -7,7 +7,7 @@
 import { rm } from "node:fs/promises"
 import { join } from "node:path"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import {
 	USGOV_HRSA_FQHC_ADAPTER_ID,
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,

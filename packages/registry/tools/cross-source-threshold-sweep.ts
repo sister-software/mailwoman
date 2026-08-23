@@ -40,14 +40,13 @@ import {
 	ingestRows,
 	resolveEntities,
 	streamRows,
-	type ColumnMapping,
 	type GeocodeAddress,
 	type ResolvedEntity,
 	type SourceRecord,
 } from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { buildSpecs, norm, type SourceSpec } from "./shared.ts"
+import { buildSpecs } from "./shared.ts"
 
 /**
  * Independent sources that must agree before a cluster counts as cross-source corroborated.

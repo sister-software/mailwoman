@@ -16,7 +16,7 @@
  *   groups that moved to siblings are re-exported here rather than requiring every importer to move with them.
  */
 
-import type { AddressTree, ComponentTag } from "../decoder/types.ts"
+import type { AddressTree } from "../decoder/types.ts"
 import type { GazetteerArtifactCoverage } from "./coverage-facts.ts"
 import type {
 	AddressPointLookup,
@@ -24,7 +24,7 @@ import type {
 	PostcodePrefixIndexLike,
 	StreetCentroidLookup,
 } from "./lookup-types.ts"
-import { DEFAULT_PLACETYPE_MAP, type PlacetypeMap } from "./placetype-map.ts"
+import type { PlacetypeMap } from "./placetype-map.ts"
 
 export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "./coverage-facts.ts"
 export { hardCountrySafelistFromCoverage } from "./coverage-facts.ts"

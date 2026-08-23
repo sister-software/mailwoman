@@ -23,12 +23,10 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { CoverageBasis, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
-import type { Kysely } from "kysely"
 import {
 	bboxCoverageCells,
 	buildPOIDatabase,

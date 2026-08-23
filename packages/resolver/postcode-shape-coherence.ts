@@ -74,7 +74,7 @@
  *   false exclusions; kill on any B1-3 δ).
  */
 
-import { candidateSystemsForPostcode, type SystemCode } from "@mailwoman/codex"
+import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { matchCountry, matchSubdivision } from "@mailwoman/codex/country"
 import { isUSStateAbbreviation } from "@mailwoman/codex/us"
 import type { AddressNode } from "@mailwoman/core/decoder"

@@ -16,7 +16,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
 import { afterEach, describe, expect, test, vi } from "vitest"
 

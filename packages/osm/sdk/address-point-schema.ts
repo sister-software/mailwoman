@@ -10,7 +10,6 @@
 import { createLayerCoverageTable, createLayerManifestTable, type LayerContractDatabase } from "@mailwoman/core/layers"
 import {
 	ADDRESS_POINT_COLUMNS,
-	type AddressPointDatabase,
 	type AddressPointTable,
 	createAddressPointTable,
 } from "@mailwoman/resolver-wof-sqlite/address-point-schema"

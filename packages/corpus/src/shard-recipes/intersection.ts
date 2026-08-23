@@ -34,7 +34,7 @@
  *   - `$MAILWOMAN_DATA_ROOT/oa-cache/us__il__cook.zip` (ZIP→city tails)
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { existsSync, writeFileSync } from "node:fs"
 
 import type { DuckDBConnection } from "@duckdb/node-api"
 import type { ComponentTag } from "@mailwoman/core/types"

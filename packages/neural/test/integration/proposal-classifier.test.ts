@@ -15,7 +15,7 @@ import { existsSync } from "node:fs"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import {
 	createNeuralProposalClassifier,

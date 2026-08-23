@@ -74,7 +74,7 @@
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
  */
 
-import { existsSync, realpathSync } from "node:fs"
+import { existsSync } from "node:fs"
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"

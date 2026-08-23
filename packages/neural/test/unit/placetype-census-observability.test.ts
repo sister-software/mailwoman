@@ -19,12 +19,11 @@
  *   two artifacts (`foldVersion`) is part of what's under test.
  */
 
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs"
+import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import type { ComponentTag } from "@mailwoman/core/types"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import type { PairEdge, PairIndexLike } from "@mailwoman/neural/pair-index-resolver"

@@ -20,7 +20,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 

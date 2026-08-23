@@ -44,7 +44,6 @@ import { existsSync, unlinkSync } from "node:fs"
 import { readFile } from "node:fs/promises"
 import { DatabaseSync } from "node:sqlite"
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 import { join } from "path-ts"

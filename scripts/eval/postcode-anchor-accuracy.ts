@@ -18,7 +18,6 @@
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 
-import { readFileSync } from "node:fs"
 import { parseArgs as parseNodeArgs } from "node:util"
 
 import { dataRootPath, percentile } from "@mailwoman/core/utils"

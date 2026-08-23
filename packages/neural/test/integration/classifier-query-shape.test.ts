@@ -9,7 +9,7 @@
  *   specific logit shapes and verifies the queryShape opt nudges the Viterbi decoder's choices.
  */
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import type { InferResult } from "@mailwoman/neural/onnx-runner"

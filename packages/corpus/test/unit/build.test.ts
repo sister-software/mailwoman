@@ -18,7 +18,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
 import { buildCorpus, type BuildStage } from "@mailwoman/corpus/build"
 import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"

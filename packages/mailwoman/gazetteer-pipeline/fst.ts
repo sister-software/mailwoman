@@ -32,7 +32,7 @@ import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "no
 import { join, resolve } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath, repoRootPathBuilder, resourceDictionaryPath } from "@mailwoman/core/utils"
+import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"

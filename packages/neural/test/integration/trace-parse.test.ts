@@ -12,7 +12,7 @@
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import type { AnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"

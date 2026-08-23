@@ -34,10 +34,10 @@
  */
 
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
 import { cellToParent } from "h3-js"
-import { sql, type Kysely } from "kysely"
+import { sql } from "kysely"
 
 import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "../schema.ts"
 

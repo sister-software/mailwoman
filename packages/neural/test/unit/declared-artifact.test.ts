@@ -15,7 +15,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { readDeclaredArtifactFile, unfedAnchorDetail } from "@mailwoman/neural/weights"
 import { describe, expect, it } from "vitest"
 

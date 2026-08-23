@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import type { SourceRecord } from "@mailwoman/registry"
 import { geocodeStream } from "mailwoman/geocode-stream"
 import { describe, expect, it } from "vitest"

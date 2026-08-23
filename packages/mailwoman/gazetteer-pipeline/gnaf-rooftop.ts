@@ -43,10 +43,7 @@ import {
 	OSM_ADDRESS_POINT_COLUMNS,
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk"
-import {
-	type AddressPointDatabase,
-	createAddressPointIndexes,
-} from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,

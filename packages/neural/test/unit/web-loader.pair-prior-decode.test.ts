@@ -19,7 +19,7 @@
 
 import { readFileSync } from "node:fs"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import { serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"

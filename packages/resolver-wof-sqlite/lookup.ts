@@ -39,7 +39,7 @@ import {
 	placePopulationExists,
 	placeSearchFTSExists,
 } from "./fts.ts"
-import { cfNormalize, softNameScore, trigramJaccard } from "./name-score.ts"
+import { cfNormalize, softNameScore } from "./name-score.ts"
 import { encyclopedicClauses } from "./place-importance-schema.ts"
 import type { WOFPostalCityAliasLookup } from "./postal-city-alias-lookup.ts"
 import { DEFAULT_WEIGHTS, type RankingWeights } from "./ranking-weights.ts"

@@ -10,7 +10,6 @@
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { legacyQuery } from "@mailwoman/api-kit"
-import type { Context } from "hono"
 
 import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, PhotonSearchParams } from "./engine.ts"
 import { photonToSchemaOrg } from "./projection.ts"

@@ -6,7 +6,7 @@
 
 import { existsSync } from "node:fs"
 
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildFSTEmissionPriors,
 	groupPiecesIntoWords,

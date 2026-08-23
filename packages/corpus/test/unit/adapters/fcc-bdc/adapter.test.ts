@@ -8,7 +8,7 @@ import { readFile, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import {
 	FCC_BDC_ADAPTER_ID,
 	FCC_BDC_DEFAULT_LICENSE,

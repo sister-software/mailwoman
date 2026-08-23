@@ -57,11 +57,9 @@ import {
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import { openBuiltDatabase } from "@mailwoman/core/utils"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
-import type { Kysely } from "kysely"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const ASOF_DATE = "2026-07-15"

@@ -22,7 +22,7 @@
 import { readFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { workspacePath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
 

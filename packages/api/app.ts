@@ -8,7 +8,7 @@
  *   CLI wires the real parse/geocode/resolve stack (phase 4b); tests inject fixtures.
  */
 
-import { OpenAPIHono, type z } from "@hono/zod-openapi"
+import { OpenAPIHono } from "@hono/zod-openapi"
 import { errorResponse, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"

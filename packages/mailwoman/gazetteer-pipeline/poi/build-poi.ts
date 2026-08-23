@@ -45,7 +45,6 @@ import {
 	LayerTier,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"

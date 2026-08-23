@@ -41,7 +41,6 @@ import {
 	type FilerDatabase,
 } from "@mailwoman/filer"
 import { toFRN, type ProviderListRow } from "@mailwoman/filer/sdk"
-import type { Kysely } from "kysely"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const GEOID_SF = "060750001001001"

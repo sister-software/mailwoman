@@ -4,7 +4,7 @@
  * packages, but ships only the shared model + tokenizer + calibration + lexicons; locale-specific data stays in each
  * overlay).
  */
-import { existsSync, mkdirSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"

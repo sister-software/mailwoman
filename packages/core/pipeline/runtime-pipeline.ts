@@ -18,7 +18,6 @@ import type { ComponentTag } from "../types/component.ts"
 import { PipelineFaultStage, WORD_CONSISTENCY_SHIP_DEFAULT, deriveInputMode } from "./types.ts"
 import type {
 	AddressClassifier,
-	ClassifierOpts,
 	FSTMatcherLike,
 	InputMode,
 	LocaleHint,

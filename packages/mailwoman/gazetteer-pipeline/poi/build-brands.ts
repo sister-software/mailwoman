@@ -31,7 +31,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { allRows, dataRootPath, repoRootPath, workspacePath } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, workspacePath } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "./defaults.ts"

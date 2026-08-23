@@ -15,7 +15,6 @@
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
-import { haversineKm } from "@mailwoman/spatial"
 
 import { foldName } from "./fold-name.ts"
 

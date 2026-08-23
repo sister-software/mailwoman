@@ -69,7 +69,6 @@ import { haversineKm } from "@mailwoman/spatial"
 import {
 	ABLATION_ABSENT,
 	type AblationGrade,
-	type AblationLadder,
 	achievedRung,
 	buildCaseLadder,
 	describeLadder,
