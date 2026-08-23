@@ -9,11 +9,13 @@
  *   picks up a directory the loader excludes. None of them throws; each returns a confident number.
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { readAdmittedCountries, readBoardCoverage } from "mailwoman/coverage-census"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { dataRootPath } from "@mailwoman/core/utils"
+import { buildCorpusCensus, readAdmittedCountries, readBoardCoverage } from "mailwoman/coverage-census"
 import { beforeAll, describe, expect, it } from "vitest"
 
 let root: string
@@ -117,4 +119,40 @@ describe("readBoardCoverage", () => {
 	it("returns nothing rather than throwing when the cases tree is absent", () => {
 		expect(readBoardCoverage(join(root, "no-cases")).size).toBe(0)
 	})
+})
+
+/**
+ * The corpus is a build artifact, not a fixture, so this leg runs only where one exists.
+ */
+const CORPUS = String(
+	dataRootPath(
+		"corpus",
+		"versioned",
+		"v0.26.0-trailing-region-leftcontext",
+		"corpus-v0.26.0-trailing-region-leftcontext",
+		"MANIFEST.json"
+	)
+)
+
+describe.skipIf(!existsSync(CORPUS))("buildCorpusCensus against a real shard", () => {
+	it("counts street rows on a shard whose PROJECTION drops the labels column", async () => {
+		// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era writer's shards — silently,
+		// with no error — while the v0.5.0 base returns both. A dropped label column reads as "this country has no
+		// street rows", which is indistinguishable from the truth. Before the fallback this shard reported 0; it
+		// carries 825,083 street rows out of 831,800.
+		const manifest = parseJSONStrict<{ shards: Array<{ split?: string; path: string }> }>(readFileSync(CORPUS, "utf8"))
+
+		const one = manifest.shards.filter((s) => s.split === "train" && s.path.includes("v0.17.0-batch")).slice(0, 1)
+
+		expect(one).toHaveLength(1)
+
+		const scratch = join(mkdtempSync(join(tmpdir(), "mw-census-real-")), "MANIFEST.json")
+
+		writeFileSync(scratch, JSON.stringify({ ...manifest, shards: one }))
+
+		const census = await buildCorpusCensus(scratch)
+
+		expect(census.total).toBeGreaterThan(0)
+		expect(census.streetRows["GB"] ?? 0).toBeGreaterThan(0)
+	}, 120_000)
 })

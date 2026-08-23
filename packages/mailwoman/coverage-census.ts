@@ -23,9 +23,11 @@
  *
  *   ## The corpus census is CACHED, and says when it was taken
  *
- *   Counting rows means reading every train shard. Column projection makes that ~6 minutes for 681M rows across 705
- *   shards — cheap enough to be exact and far too slow for a tool call, so it is cached to the data root and refreshed
- *   on request. A stale cache is reported with its age rather than silently served as current.
+ *   Counting rows means reading every train shard. Measured on 681M rows across 705 shards: ~6 minutes projecting
+ *   `country` alone, and ~19 minutes once `labels` comes too — and `labels` cannot be dropped, because the street count
+ *   is the column that separates "we taught this country's addresses" from "we taught its name". Exact and far too slow
+ *   for a tool call, so it is cached to the data root and refreshed on request. A stale cache is reported with its age
+ *   rather than silently served as current.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
@@ -182,10 +184,23 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 		}
 
 		try {
-			const cursor = reader.getCursor(["country", "labels"])
-			let record: Record<string, unknown> | null
+			// Column projection is what makes a full read affordable, and on SOME shards it silently drops `labels`
+			// rather than erroring: the overlay family written by the v0.17.0-era writer returns `{country}` alone for
+			// `getCursor(["country", "labels"])`, while the v0.5.0 base returns both. A dropped label column reads as
+			// "this country has no street rows", which is indistinguishable from the truth and is exactly the mistake
+			// this file exists to prevent — it reported 4 countries with street data where an unprojected read finds
+			// GB alone at 1,519 of 2,000 rows. So probe the first record and fall back for that shard.
+			let cursor = reader.getCursor(["country", "labels"])
+			let record = await cursor.next()
 
-			while ((record = await cursor.next())) {
+			if (record && record["labels"] === undefined) {
+				await reader.close?.()
+				reader = await ParquetReader.openFile(path)
+				cursor = reader.getCursor()
+				record = await cursor.next()
+			}
+
+			while (record) {
 				total++
 
 				const country = String(record["country"] ?? "").toUpperCase() || "??"
@@ -195,6 +210,8 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 				if (unwrapList(record["labels"]).some((label) => STREET_LABEL.test(String(label)))) {
 					streetRows[country] = (streetRows[country] ?? 0) + 1
 				}
+
+				record = await cursor.next()
 			}
 		} finally {
 			await reader.close?.()
