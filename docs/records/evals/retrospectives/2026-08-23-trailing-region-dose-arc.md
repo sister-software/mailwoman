@@ -141,10 +141,42 @@ set by US and FR. Adding them shifts those expectations for the countries it alr
 IE venue rows are where that shows. Composition and dose modulate the size of the shift; neither
 removes it.
 
+### v4.12.0 — the brake is not the lever either, and a FLOOR appears
+
+One variable against v4.11.0: `ewc_lambda` 1e4 -> 1e5. Same corpus, source, weight, steps, seed.
+
+**7 improved / 19 regressed, net -12. Venue-led still 9. FR -3, GB -5, IE -3.** A ten-fold stronger
+brake moved the net by one row and the venue class by none.
+
+| run     | lever changed                                  | net | venue-led |
+| ------- | ---------------------------------------------- | --: | --------: |
+| v4.8.0  | admin shard @ 9.4%                             | -18 |        12 |
+| v4.9.0  | + dependent locality                           | -20 |        15 |
+| v4.10.0 | dose -> 3.1%                                   | -13 |     **9** |
+| v4.11.0 | venue-bearing rows, no new source, no new dose | -13 |     **9** |
+| v4.12.0 | EWC brake x10                                  | -12 |     **9** |
+
+Three unrelated levers — exposure, composition, regularization — reach the same floor with the SAME
+NINE venue-led rows. A floor that three independent levers cannot move is not a property of any of
+them.
+
+### The control this demands, and it has not been run
+
+If the same nine rows regress under every intervention, the next question is whether they regress
+under NO intervention: **fine-tune the base corpus with no added shard at all, same steps, same seed.**
+
+- If those nine still move, the arc's entire premise is wrong. The regressions are an artifact of
+  fine-tuning this base for 4,000 steps, not of the data, and every conclusion above about shards is
+  measuring the wrong thing.
+- If they hold, the data is implicated after all and the floor is a real interaction.
+
+It is one 4,000-step run, ~13 minutes and ~$1. **Run it before any further shard work.** Nothing in
+this arc should be trusted until it is answered, including the sections above.
+
 ## The cause, stated once
 
-**Adding non-US/FR admin tails to this model regresses FR/GB/IE venue parsing, and neither
-composition nor dose removes it.** Five runs: three admin-only shards at three doses, one dose cut on
+**PROVISIONAL, pending the null-run control described above.** Adding non-US/FR admin tails to this
+model regresses FR/GB/IE venue parsing, and neither composition, dose, nor the EWC brake removes it. Five runs: three admin-only shards at three doses, one dose cut on
 a byte-identical shard, and one that carried venue+street+house_number in every row inside an
 already-shipping bucket. All five net-negative, all five losing the same classes in the same
 countries. Composition and dose modulate the size of the shift; the shift itself tracks the data.
