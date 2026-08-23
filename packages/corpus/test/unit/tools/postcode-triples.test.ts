@@ -14,6 +14,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import {
+	applyCountryBudget,
 	applyLocalityQuota,
 	POSTCODE_CONVENTIONS,
 	type PostcodeTriple,
@@ -133,6 +134,51 @@ describe("applyLocalityQuota", () => {
 		const triples = [make("Leipzig", "04103"), make("Leipzig", "04105"), make("Leipzig", "04107")]
 
 		expect(applyLocalityQuota(triples, 2).map((row) => row.postcode)).toEqual(["04103", "04105"])
+	})
+})
+
+describe("applyCountryBudget", () => {
+	const make = (cc: string, locality: string, postcode: string): PostcodeTriple => ({
+		postcode,
+		locality,
+		region: "R",
+		country: "C",
+		cc,
+		locale: "en",
+		postcodePlacement: cc === "IN" ? "after_region" : "leading",
+	})
+
+	it("bounds a country a per-locality quota cannot", () => {
+		// IN has 128,152 distinct localities, so even a quota of ONE leaves it contributing 63,533 rows against 39,790
+		// from the other seven combined. Without this the shard teaches the trailing surface as an Indian fact.
+		const triples = [
+			...Array.from({ length: 50 }, (_, i) => make("IN", `village-${i}`, String(i))),
+			...Array.from({ length: 5 }, (_, i) => make("FR", `commune-${i}`, String(i))),
+		]
+
+		const kept = applyCountryBudget(
+			triples,
+			new Map([
+				["IN", 5],
+				["FR", 5],
+			])
+		)
+
+		expect(kept.filter((row) => row.cc === "IN")).toHaveLength(5)
+		expect(kept.filter((row) => row.cc === "FR")).toHaveLength(5)
+	})
+
+	it("drops a country the budget does not name, rather than letting it through uncapped", () => {
+		// An unnamed country is one nobody sized. Passing it through is how a source silently dominates a shard.
+		const triples = [make("FR", "Lyon", "69000"), make("MX", "Puebla", "72000")]
+
+		expect(applyCountryBudget(triples, new Map([["FR", 10]])).map((row) => row.cc)).toEqual(["FR"])
+	})
+
+	it("accepts one number as the same cap for every country", () => {
+		const triples = [make("FR", "a", "1"), make("FR", "b", "2"), make("MX", "c", "3")]
+
+		expect(applyCountryBudget(triples, 1).map((row) => row.cc)).toEqual(["FR", "MX"])
 	})
 })
 

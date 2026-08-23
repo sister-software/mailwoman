@@ -130,6 +130,40 @@ export function applyLocalityQuota(
 }
 
 /**
+ * Take at most `budget` tuples per COUNTRY, in the order they arrive.
+ *
+ * A per-locality quota bounds how often one place repeats; it cannot bound a country. IN has 128,152 distinct
+ * localities, so even at a quota of ONE it contributes 63,533 rows against 39,790 from the other seven combined — the
+ * shard would teach the trailing surface as an Indian fact rather than a general one, and at 103,323 rows it would take
+ * 30% of an 8,000-step run's sample budget at three reps per row.
+ *
+ * Applied AFTER {@link applyLocalityQuota}, so a country's budget is spent on breadth (many localities) rather than on
+ * one city's postcode list.
+ */
+export function applyCountryBudget(
+	triples: readonly PostcodeTriple[],
+	budget: number | ReadonlyMap<string, number>
+): PostcodeTriple[] {
+	const spent = new Map<string, number>()
+	const kept: PostcodeTriple[] = []
+
+	for (const triple of triples) {
+		const cap = typeof budget === "number" ? budget : budget.get(triple.cc)
+
+		if (cap === undefined) continue
+
+		const n = spent.get(triple.cc) ?? 0
+
+		if (n >= cap) continue
+
+		spent.set(triple.cc, n + 1)
+		kept.push(triple)
+	}
+
+	return kept
+}
+
+/**
  * Read triples out of `postalcode-intl.db` by following each postcode's `parent_id` into the admin gazetteer and that
  * place's ancestry to a region.
  *
