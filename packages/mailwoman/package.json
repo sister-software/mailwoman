@@ -64,6 +64,11 @@
 			"default": "./out/doctor/*.js",
 			"types": "./out/doctor/*.d.ts"
 		},
+		"#doctor": {
+			"node": "./doctor/index.ts",
+			"default": "./out/doctor/index.js",
+			"types": "./out/doctor/index.d.ts"
+		},
 		"#gazetteer/*": {
 			"node": "./gazetteer-pipeline/*.ts",
 			"default": "./out/gazetteer-pipeline/*.js",
@@ -108,6 +113,11 @@
 			"node": "./geocode-session.ts",
 			"default": "./out/geocode-session.js",
 			"types": "./out/geocode-session.d.ts"
+		},
+		"#autocomplete-core": {
+			"node": "./autocomplete-core.ts",
+			"default": "./out/autocomplete-core.js",
+			"types": "./out/autocomplete-core.d.ts"
 		}
 	},
 	"exports": {

@@ -14,9 +14,13 @@ import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
  * Resolve the FST artifact from an explicit flag, environment, or the application data directory.
+ *
+ * The filename is LOWERCASE on both halves of the locale tag, because that is what the builder writes
+ * (`gazetteer-pipeline/fst.ts`'s artifact list). A `fst-en-US.bin` default resolves to nothing on every machine, and
+ * the command reports it as a missing artifact rather than as a name it got wrong.
  */
 export function resolveFSTPath(explicitPath?: string): string {
-	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? dataRootPath("wof", "fst-per-locale", "fst-en-US.bin")
+	return explicitPath ?? $public.MAILWOMAN_FST_BIN ?? dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
 }
 
 /**
