@@ -58,6 +58,12 @@ export interface ArcLeg {
 	 * reason this file exists is that the summary was allowed to stand in for them.
 	 */
 	regressedInputs: string[]
+	/**
+	 * The addresses that improved. Carried for the same reason as the regressions, and originally omitted — which made
+	 * every report from this tool one-sided: "35 regressed" with the 37 wins reduced to a count nobody could inspect. A
+	 * candidate is a TRADE, and a reader cannot price a trade with one side hidden.
+	 */
+	improvedInputs: string[]
 	runID?: string
 }
 
@@ -91,6 +97,7 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
 	const differed = (result["arms_differed_on"] ?? {}) as { n?: number; of?: number }
 	const rows = (result["rows_changed"] ?? []) as ComparedRow[]
 	const regressedRows = rows.filter((row) => row.grade === "regressed")
+	const improvedRows = rows.filter((row) => row.grade === "improved")
 	const byCountry: Record<string, number> = {}
 
 	for (const row of regressedRows) {
@@ -112,6 +119,7 @@ function legFrom(label: string, weights: string, result: Record<string, unknown>
 		of: differed.of ?? 0,
 		regressedByCountry: byCountry,
 		regressedInputs: regressedRows.map((row) => row.input),
+		improvedInputs: improvedRows.map((row) => row.input),
 		...(typeof result["run_id"] === "string" ? { runID: result["run_id"] } : {}),
 	}
 }
@@ -303,6 +311,14 @@ export function renderArc(arc: ArcResult): string {
 			`attributable to the LEVER: net ${arc.attributableNet}, regressions ${arc.attributableRegressions} ` +
 				"(candidate minus null)"
 		)
+	}
+
+	if (arc.candidate.improvedInputs.length) {
+		lines.push("", "improved addresses:")
+
+		for (const input of arc.candidate.improvedInputs) {
+			lines.push(`  + ${input}`)
+		}
 	}
 
 	if (arc.candidate.regressedInputs.length) {
