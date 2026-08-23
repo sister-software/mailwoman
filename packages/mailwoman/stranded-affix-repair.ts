@@ -30,10 +30,17 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "street_prefix"])
 
 /**
- * Tags a stranded affix may be absorbed into. Both are name-bearing place tags whose surface can legitimately end in a
- * street-type word — `Brixton Hill` the locality, `Bishop's Stortford` the venue.
+ * Tags a stranded affix may be absorbed into — name-bearing place tags whose surface can legitimately end in a
+ * street-type word: `Brixton Hill` the locality, `Bishop's Stortford` the venue, `Hythe Marina Village` the dependent
+ * locality.
+ *
+ * `dependent_locality` belongs here for the same reason the other two do, and its absence stranded a suffix on a real
+ * address: `MDL Hythe Marina Village, Shamrock Way, Hythe Marina Village, Hythe, Southampton SO45 6DY` tagged
+ * `Shamrock` a dependent_locality and left `Way` with no street anywhere in the tree — a structurally invalid result
+ * the board's own validity check flagged. A suburb name is no less able to end in `Way`, `Green` or `Row` than a
+ * locality is.
  */
-const ABSORBING_TAGS: ReadonlySet<string> = new Set(["locality", "venue"])
+const ABSORBING_TAGS: ReadonlySet<string> = new Set(["locality", "venue", "dependent_locality"])
 
 function walk(nodes: readonly AddressNode[], visit: (node: AddressNode) => void): void {
 	for (const node of nodes) {

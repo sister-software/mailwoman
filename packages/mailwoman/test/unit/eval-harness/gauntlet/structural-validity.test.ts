@@ -47,8 +47,6 @@ function weightsPresent(): boolean {
  * defect written down first, because a row added here silently is a defect converted into a permanent exemption.
  */
 const KNOWN_INVALID: Record<string, string> = {
-	"gb-interesting-mischicks":
-		"#1747 residual — `Grv` stranded in a multi-clause venue string; not adjacent to a place name, so the affix repair correctly declines it.",
 	"ie-op2-pairc-adhamhnain": "`Letterkenny` read as dependent_locality with no locality anchor. Undiagnosed.",
 }
 

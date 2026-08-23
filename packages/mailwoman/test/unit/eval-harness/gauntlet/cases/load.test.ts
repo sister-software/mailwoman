@@ -43,7 +43,7 @@ import { describe, expect, it } from "vitest"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 591
+const CORPUS_SIZE = 649
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -201,9 +201,12 @@ const CORPUS_SIZE = 591
  *
  * Moved 2026-08-19 (late) — → this — by the `gb-cs-brixton-hill` / `gb-cs-biggin-hill` pair (#1747): a `street_suffix`
  * with no `street` anywhere in the tree, so the resolver was handed a bare `Brixton` and answered Brixton, DEVON, 300.3
- * km away. 573 → 575, so the board id moves too.
+ * km away. 573 → 575, so the board id moves too. * Moved 2026-08-23 — → this — by the operator's Google Maps batch (57
+ * rows, 36 gated) plus the #1764 accented-commune row. Truth is each place's own map pin, resolved from the supplied
+ * short link. First VE and PG coverage the board has had, and the first rows for punctuation-led venue names
+ * (`%ARABICA`, `¿Por Qué No?`, `@homePizza`, `Coffee#1`). 591 → 649, so the board id moves too.
  */
-const CORPUS_HASH = "24cb955cc5797760c5fa4e3c282987f0b476267a9dcd09297a1a9d109fb1cd46"
+const CORPUS_HASH = "3151451bb04adc1910b901f700d0e7d781727a2c9a9629823ba6bd8fe81d091d"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -223,7 +226,7 @@ const CORPUS_HASH = "24cb955cc5797760c5fa4e3c282987f0b476267a9dcd09297a1a9d109fb
  * `@575:acce97708a29`), for the 5-row trailing-region cohort (`@575:acce97708a29` → `@580:7ff4bfccaa0e`), and for the
  * 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → this).
  */
-const BOARD_ID = "gauntlet-regression@591:8c601b9f121f"
+const BOARD_ID = "gauntlet-regression@649:3df68a3c428a"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
