@@ -38,7 +38,7 @@ export type WOFPlacetype =
  * treat it as ordinal, not absolute.
  *
  * `id` is the WOF place id. It's named generically (not `wof_id`) so the shape stays structurally compatible with
- * `@mailwoman/resolver`'s `ResolvedPlace` — `WOFSqlitePlaceLookup` satisfies the generic `ResolverBackend` contract
+ * `@mailwoman/resolver`'s `ResolvedPlace` — `WOFSQLitePlaceLookup` satisfies the generic `ResolverBackend` contract
  * without an adapter shim.
  *
  * `distanceKm` is populated only when the query carried `near` (and the place has a centroid). Useful for downstream
@@ -121,6 +121,14 @@ export interface PlaceCandidate {
 	 * the falsehood-detection differentiator.
 	 */
 	mismatch?: boolean
+	/**
+	 * Admin-containment stamp (#1717 stage 2) — TRI-STATE, mirroring `ResolvedPlace.containedByQualifier` in
+	 * `@mailwoman/core`: `true` = the ancestors sidecar vouches this candidate sits under the query's
+	 * {@link FindPlaceQuery.regionQualifier}; `false` = evaluated and not vouched for; absent = never evaluated (no
+	 * qualifier on the query, or an artifact without the sidecar). Absence is load-bearing — the resolver walk reads it
+	 * as `unavailable`, never as "not contained".
+	 */
+	containedByQualifier?: boolean
 }
 
 /**
@@ -176,6 +184,11 @@ export interface FindPlaceQuery {
 	 */
 	primaryOnly?: boolean
 	/**
+	 * Alias-row NAME ROLES the probe refuses to answer through (#1730) — the bare-toponym side races pass `abbr`/`gloss`.
+	 * Role-NULL alias rows (the exonym tier) stay open; backends/artifacts without a role column ignore it.
+	 */
+	excludeNameRoles?: readonly string[]
+	/**
 	 * WOF place id — narrows to descendants of this place.
 	 */
 	parentID?: number
@@ -193,6 +206,14 @@ export interface FindPlaceQuery {
 	 * → the population-first order is untouched (byte-identical).
 	 */
 	postcodeContainmentCoherence?: boolean
+	/**
+	 * The tree's parsed REGION qualifier (#1717 stage 2) — set by the resolver on locality lookups when
+	 * `ResolveOpts.adminContainmentRerank` is on. See the `ResolverBackend` contract in `@mailwoman/core/resolver`: a
+	 * capable backend stamps `containedByQualifier`, ranks contained candidates first, and may ADD contained same-key
+	 * candidates a country scope hid — additive only, never a filter. Ignored on an artifact without the ancestors
+	 * sidecar (candidates then carry no stamp).
+	 */
+	regionQualifier?: string
 	/**
 	 * Proximity hint — candidates close to this point get a ranking boost.
 	 */

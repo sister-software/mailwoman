@@ -10,27 +10,16 @@
 // usedExports analysis (httpvfs-resolver statically imports only expandPlacetypeFilter from it),
 // which shipped the demo's WOF cascade as `TypeError: i is not a function` — invisible for days
 // behind the manifest wire-key bug. Static named imports are fully analyzable; do not re-dynamize.
-import { clampConfidence } from "@mailwoman/core/decoder"
+import { clampConfidence, type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
+import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ParseResult } from "@mailwoman/react"
-import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
-import { CandidateResolverBackend } from "./candidate-resolver-backend.ts"
 import type { DualRole, FSTMatcherLike, MailwomanClassifierLike, MailwomanLookupLike } from "./resources/index.ts"
 
 // Moved into the package so the resolvers can reach it; re-exported for the demo's callers.
 export { type ResolveBias, runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 //#region Types
-
-/**
- * WOF hierarchy rank of a locality.
- */
-const WOF_RANK_LOCALITY = 5
-
-/**
- * WOF hierarchy rank of a region, one step up from a locality.
- */
-const WOF_RANK_REGION = 4
 
 export interface ReleaseInfo {
 	version: string
@@ -62,15 +51,20 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB
 	 *
 	 * @deprecated use `hasFST` instead
 	 */
-	// oxlint-disable-next-line sister-software/no-title-case-acronym
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasFst?: boolean
 	/**
 	 * Pre-2026-07-04 manifests published lowercase-acronym keys.
 	 *
 	 * @deprecated use `hasWOFDB` instead
 	 */
-	// oxlint-disable-next-line sister-software/no-title-case-acronym
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasWofDb?: boolean
+	/**
+	 * The spelling the LIVE 2026-08-11 manifest actually carries (WOF caps, lowercase b) — a wire key is a string
+	 * contract, and every spelling ever published must stay readable here.
+	 */
+	hasWOFDb?: boolean
 }
 
 /**
@@ -95,7 +89,10 @@ export function normalizeReleasesManifest(raw: {
 		releases: raw.releases.map((r) => ({
 			...r,
 			hasFST: r.hasFST ?? r.hasFst ?? false,
-			hasWOFDB: r.hasWOFDB ?? r.hasWofDb ?? false,
+			// The 2026-08-11 v9.1.0 manifest (live until the next model release) writes `hasWOFDb` — WOF caps,
+			// lowercase b. The 08-14 casing sweep renamed reader AND writer to `hasWOFDB` but missed this third
+			// live spelling, which turned the demo's whole WOF cascade off silently for four days.
+			hasWOFDB: r.hasWOFDB ?? r.hasWOFDb ?? r.hasWofDb ?? false,
 		})),
 	}
 }
@@ -107,7 +104,7 @@ export interface ParsedNode {
 }
 
 export interface TreeNode {
-	tag?: string
+	tag: string
 	value?: unknown
 	confidence?: number
 	start?: number
@@ -181,104 +178,16 @@ export function pairCountryForInput(input: string): string | undefined {
 
 //#endregion
 
-//#region US state abbreviation expansion
-
-const US_STATE_ABBREV: Record<string, string> = {
-	AL: "Alabama",
-	AK: "Alaska",
-	AZ: "Arizona",
-	AR: "Arkansas",
-	CA: "California",
-	CO: "Colorado",
-	CT: "Connecticut",
-	DE: "Delaware",
-	DC: "District of Columbia",
-	FL: "Florida",
-	GA: "Georgia",
-	HI: "Hawaii",
-	ID: "Idaho",
-	IL: "Illinois",
-	IN: "Indiana",
-	IA: "Iowa",
-	KS: "Kansas",
-	KY: "Kentucky",
-	LA: "Louisiana",
-	ME: "Maine",
-	MD: "Maryland",
-	MA: "Massachusetts",
-	MI: "Michigan",
-	MN: "Minnesota",
-	MS: "Mississippi",
-	MO: "Missouri",
-	MT: "Montana",
-	NE: "Nebraska",
-	NV: "Nevada",
-	NH: "New Hampshire",
-	NJ: "New Jersey",
-	NM: "New Mexico",
-	NY: "New York",
-	NC: "North Carolina",
-	ND: "North Dakota",
-	OH: "Ohio",
-	OK: "Oklahoma",
-	OR: "Oregon",
-	PA: "Pennsylvania",
-	RI: "Rhode Island",
-	SC: "South Carolina",
-	SD: "South Dakota",
-	TN: "Tennessee",
-	TX: "Texas",
-	UT: "Utah",
-	VT: "Vermont",
-	VA: "Virginia",
-	WA: "Washington",
-	WV: "West Virginia",
-	WI: "Wisconsin",
-	WY: "Wyoming",
-	PR: "Puerto Rico",
-}
-
-export const normName = (s: string): string => s.toLowerCase().trim().replaceAll(/\s+/g, " ")
-
-/**
- * USPS two-letter codes → full state name. A bare "IL" FTS-matches "Ille-et-Vilaine" (a French département) before
- * "Illinois", so its France bbox filters out the actual US city — expanding to the full name resolves the right region.
- * Full names pass through unchanged.
- */
-export function expandUSRegion(text: string): string {
-	return US_STATE_ABBREV[text.trim().toUpperCase()] ?? text
-}
-
-//#endregion
-
 //#region Tree flattening
 
 /**
- * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
+ * Flatten a solver tree to its nodes in source order.
+ *
+ * Re-exported rather than declared: `@mailwoman/core/decoder`'s `flattenTreeNodes` is the shared home, and the local
+ * copy this replaces sorted by TRAVERSAL order — which put a child ahead of its parent on 7 of 10 ordinary addresses
+ * (`street_suffix` before `street`, `house_number` before `street`, `postcode` before `locality`).
  */
-export function flattenTree(
-	tree: unknown
-): Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> {
-	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
-	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
-	const stack = [...(roots as TreeNode[])]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (typeof n.tag === "string") {
-			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
-		}
-
-		if (Array.isArray(n.children)) {
-			for (const c of n.children) {
-				stack.push(c as TreeNode)
-			}
-		}
-	}
-
-	return out.toReversed()
-}
+export { flattenTreeNodes as flattenTree } from "@mailwoman/core/decoder"
 
 //#endregion
 
@@ -287,7 +196,7 @@ export function flattenTree(
 /**
  * A source-order parsed node, as {@link flattenTree} yields it.
  */
-export type FlatNode = ReturnType<typeof flattenTree>[number]
+export type FlatNode = FlatTreeNode
 
 /**
  * What both demo parse paths need out of the neural classify stage before resolution.
@@ -296,7 +205,7 @@ export interface ClassifyStageResult {
 	/**
 	 * The decoded solver tree (opaque to the caller beyond `runCascade` / `flattenTree`).
 	 */
-	tree: unknown
+	tree: AddressTree
 	/**
 	 * Source-order flattened nodes.
 	 */
@@ -397,7 +306,7 @@ export async function runClassifyStage(
 		{
 			computeQueryShape,
 			groupPhrases,
-			classifier: deps.classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+			classifier: deps.classifier as Parameters<typeof runPipeline>[1]["classifier"],
 			fst: (deps.fst ?? undefined) as Parameters<typeof runPipeline>[1]["fst"],
 			streetMorphology: (deps.streetMorphology ?? undefined) as Parameters<typeof runPipeline>[1]["streetMorphology"],
 		},
@@ -410,7 +319,7 @@ export async function runClassifyStage(
 
 	return {
 		tree,
-		nodes: flattenTree(tree),
+		nodes: flattenTreeNodes(tree),
 		kindResult: kindResult as ParseResult["kindResult"],
 		timing: { shape: tShape - tStart, classify: tClassify - tShape },
 	}
@@ -497,21 +406,6 @@ export function createCalibrator(table: { table: CalibrationBin[] } | Calibratio
 //#endregion
 
 //#region WOF resolution
-
-/**
- * Minimal structural view of a decorated `AddressTree` node (decoupled from core's types).
- */
-interface ResolvedTreeNode {
-	source?: string
-	sourceID?: string
-	value?: unknown
-	lat?: number
-	lon?: number
-	placeID?: string
-	metadata?: Record<string, unknown>
-	alternatives?: unknown[]
-	children?: ResolvedTreeNode[]
-}
 
 /**
  * Admin resolution for the demo (#861): run the SHARED `@mailwoman/resolver` `resolveTree` — the greedy walk + admin

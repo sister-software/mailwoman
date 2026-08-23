@@ -13,6 +13,6 @@
 	// `./**/*` glob below — it must be named explicitly.
 	"files": ["./package.json"],
 	"include": ["./**/*"],
-	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
+	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [{ "path": "../core" }, { "path": "../mailwoman" }]
 }

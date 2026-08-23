@@ -488,9 +488,10 @@ Twenty-four tool scripts, no `registry/tools/shared.ts`.
 
 ### B12. Byte formatting ×4
 
-`humanBytes` ×2 (`corpus/src/tools/fetch/{openaddresses.ts:135, tiger-full.ts:80}`) and `iec` ×2
-(`corpus/src/tools/fetch/{ban.ts:162, state-hi-schools.ts:102}`) — two names, one job, four copies,
-all in the same directory. **Proposed home:** `corpus/src/tools/fetch/format.ts`.
+> `humanBytes` ×2 (`corpus/src/tools/fetch/{openaddresses.ts:135, tiger-full.ts:80}`) and `iec` ×2
+> (`corpus/src/tools/fetch/{ban.ts:162, state-hi-schools.ts:102}`) — two names, one job, four copies,
+> all in the same directory. **Proposed home:** `corpus/src/tools/fetch/format.ts`.
+> DONE. Moved to @mailwoman/core/fs/utils
 
 ### B13. `tiger/sdk` internal duplication
 

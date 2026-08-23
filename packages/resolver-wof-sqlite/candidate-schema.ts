@@ -16,6 +16,9 @@
 
 import { sql, type Kysely } from "kysely"
 
+import type { CandidateAncestorsDatabase } from "./candidate-ancestors-schema.ts"
+import type { NameKey } from "./street-normalize.ts"
+
 /**
  * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key; the
  * rest is denormalized so a resolve is one probe (no join to `spr`). Coordinates + bbox + name are nullable at the SQL
@@ -25,7 +28,7 @@ export interface CandidateTable {
 	/**
 	 * The shared {@link normalizeLocalityForKey} of the name/alias — the probe key.
 	 */
-	name_key: string
+	name_key: NameKey
 	/**
 	 * Small int from {@link CountryCodeTable} (shrinks the clustered key).
 	 */
@@ -82,6 +85,21 @@ export interface CandidateTable {
 	 * real `encyclopedic` column for every country, add a SECOND column rather than redefining this one.
 	 */
 	importance: number | null
+	/**
+	 * The NAME'S detected role on this row, or NULL (#1730). Two build-time detectors stamp `is_primary = 0` rows only:
+	 *
+	 * - `'abbr'` — provenance-based: the surface is a WOF `variant` name in one of the place's country's official languages
+	 *   (or English) — the #936 signal, measured at a 13× key-collision rate vs preferred names.
+	 * - `'gloss'` — anomaly-based: the row belongs to a place whose key count crosses the gloss threshold with a non-admin
+	 *   placetype and NO measured prominence (population absent AND importance unmeasured) — the translation-gloss
+	 *   fingerprint (#1730's sweep; `Poisson` → a US fish-name place). Provenance CANNOT separate a gloss from an exonym
+	 *   (WOF imported both as `x_preferred`), which is why this detector is an anomaly test and stamps only the certain
+	 *   core.
+	 *
+	 * NULL = no role detected. The column is WRITE-ONLY in this build generation: no ranking consumer reads it — a rank
+	 * penalty is its own future, D-rule-gated step with the `gloss_key` board as tripwire.
+	 */
+	name_role: string | null
 }
 
 /**
@@ -101,9 +119,11 @@ export interface PlacetypeCodeTable {
 }
 
 /**
- * The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`.
+ * The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`. Extends the ancestors sidecar
+ * (`candidate_ancestor` + `candidate_interval` — see candidate-ancestors-schema.ts for the encoding decision), so the
+ * builder's one typed client covers every table in the artifact.
  */
-export interface CandidateDatabase {
+export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	/**
 	 * The clustered `WITHOUT ROWID` lookup table the reader probes.
 	 */
@@ -140,6 +160,7 @@ export const CANDIDATE_COLUMNS = [
 	// Appended, never inserted mid-list: the first six entries ARE the clustered primary key, and the
 	// positional `INSERT INTO cand_stage VALUES (…)` in the builder binds by position.
 	"importance",
+	"name_role",
 ] as const
 
 /**
@@ -178,6 +199,7 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 		.addColumn("population", "integer")
 		.addColumn("is_primary", "integer")
 		.addColumn("importance", "real")
+		.addColumn("name_role", "text")
 		.execute()
 }
 
@@ -204,6 +226,7 @@ export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promi
 		.addColumn("population", "integer")
 		.addColumn("is_primary", "integer")
 		.addColumn("importance", "real")
+		.addColumn("name_role", "text")
 		.addPrimaryKeyConstraint("candidate_pk", [
 			"name_key",
 			"country_id",

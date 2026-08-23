@@ -11,9 +11,7 @@
 	font-size: 0.9rem;
 }
 
-/* ---------------------------------------------------------------------------
- * Header
- * --------------------------------------------------------------------------- */
+/* #region Header */
 
 .header {
 	display: flex;
@@ -33,9 +31,9 @@
 	color: var(--ifm-color-emphasis-500);
 }
 
-/* ---------------------------------------------------------------------------
- * Fallback (FST not loaded)
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Fallback (FST not loaded) */
 
 .fallback {
 	display: flex;
@@ -73,9 +71,9 @@
 	font-style: italic;
 }
 
-/* ---------------------------------------------------------------------------
- * Walk trail
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Walk trail */
 
 .trail {
 	display: flex;
@@ -98,9 +96,9 @@
 	flex-shrink: 0;
 }
 
-/* ---------------------------------------------------------------------------
- * Token pills
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Token pills */
 
 .tokenPill {
 	display: inline-flex;
@@ -138,9 +136,9 @@
 	text-decoration: line-through;
 }
 
-/* ---------------------------------------------------------------------------
- * State badges
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region State badges */
 
 .stateBadge {
 	display: inline-flex;
@@ -173,9 +171,9 @@
 	cursor: help;
 }
 
-/* ---------------------------------------------------------------------------
- * Places panel (accepting states)
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Places panel (accepting states) */
 
 .placesPanel {
 	width: 100%;
@@ -281,9 +279,9 @@
 	padding-left: 0.5rem;
 }
 
-/* ---------------------------------------------------------------------------
- * Continuations panel
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Continuations panel */
 
 .continuationsPanel {
 	margin-top: 0.5rem;
@@ -347,9 +345,9 @@
 	color: var(--ifm-color-success-contrast-foreground);
 }
 
-/* ---------------------------------------------------------------------------
- * Summary footer
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Summary footer */
 
 .summary {
 	display: flex;
@@ -381,3 +379,5 @@
 .negativeEvidence strong {
 	font-family: var(--ifm-font-family-monospace);
 }
+
+/* #endregion */

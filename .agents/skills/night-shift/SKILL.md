@@ -145,10 +145,11 @@ When continuing training to recover or extend a fragile capability, `init_from`
 is **not a substitute for `resume`**. The two paths look similar in config but
 carry different state:
 
-| Path        | Loads weights | Loads optimizer state (Adam moments, LR schedule, step counter) | Use when                                                                                                |
-| ----------- | :-----------: | :-------------------------------------------------------------: | ------------------------------------------------------------------------------------------------------- |
-| `resume`    |      yes      |                             **yes**                             | continuing a run; recovering or extending a learned capability; any fragile, low-prevalence tag         |
-| `init_from` |      yes      |                               no                                | warm-starting a _new_ run with a fresh objective; fine-tune off a different base; A/B optimizer recipes |
+| Path        | Loads weights | Loads optimizer state (Adam moments, LR schedule, step counter) | Use when                                                                                                    |
+| ----------- | :-----------: | :-------------------------------------------------------------: | ----------------------------------------------------------------------------------------------------------- |
+| `resume`    |      yes      |                             **yes**                             | continuing a run; recovering or extending a learned capability; any fragile, low-prevalence tag             |
+| `init_from` |      yes      |                               no                                | warm-starting a _new_ run with a fresh objective; fine-tune off a different base; A/B optimizer recipes     |
+| neither     |      no       |                               no                                | **from-scratch** — a new source the base never saw, a tokenizer change, or a corpus whose composition moved |
 
 Why this matters: late-emergent splits (`street_prefix/suffix` in the
 consolidation arc, the multi-locale country signal) sit in narrow basins that
@@ -165,11 +166,28 @@ hypothesis. Run C — same recipe, **`resume`** — reproduced the predicted 75
 at 2k. ~35 min A100 lost; one consult-round downstream based on a misread
 result.
 
+**Rule: decide the SHAPE before you decide between these two.** Both rows above
+presuppose a base, so copying last night's config carries `init_from` forward and
+the shape then never gets re-decided — six consecutive runs on 2026-08-23 were
+fine-tunes for that reason alone, and the null control later showed the fine-tune
+itself cost 10 of 649 board rows before the new shard was read. **A fine-tune
+cannot introduce a source the base never saw.** Write down `kind`, `why`, and
+which null run backs it, then pick a row.
+
 **Rule: never `init_from` to continue a run whose capability you are still
 trying to grow.** If you need the checkpoint slot, snapshot the optimizer state
 with the weights and delete the _next_ checkpoint, not the resume target.
 
 ## Pre-publish eval gate
+
+**A candidate number means nothing until the controls have run.** Before the per-tag
+analysis below, run `mwdev_arc` — self-control, then null, then candidate. It refuses
+to attribute a result when the shipped model disagrees with itself, and it subtracts
+the fine-tune tax rather than charging it to the lever. The protocol and its rationale
+are the `training-arc` skill; the gate floors are the `eval-model` skill. Neither is
+optional, and the per-tag check below is in addition to them, not instead.
+
+### Per-tag error analysis
 
 **Before uploading a model artifact to HF, run the full per-tag error analysis and compare against the current default release:**
 

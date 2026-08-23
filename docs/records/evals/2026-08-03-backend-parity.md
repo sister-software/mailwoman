@@ -363,7 +363,7 @@ node mailwoman/out/cli.js eval oa-resolver --eval <rows.jsonl> --default-country
 Instruments A and C used a throwaway 2×2 runner (both lookups in one process, `createRuntimePipeline`
 
 - `createWOFResolver`, re-parse per arm) that was not committed — the `scripts/` drawer is closed to
-  one-offs. The essential contract to rebuild it: construct `WOFSqlitePlaceLookup({ databasePath })`
+  one-offs. The essential contract to rebuild it: construct `WOFSQLitePlaceLookup({ databasePath })`
   and `WOFCandidateTableLookup({ databasePath })` directly rather than through `createResolverBackend`
   (which reads `$MAILWOMAN_CANDIDATE_DB` and can only yield one backend per call), pass
   `resolveOpts.defaultCountry` per arm, and read results off `node.lat` / `node.lon` /

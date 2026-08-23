@@ -35,7 +35,7 @@ model-index:
 # mailwoman — neural address-parser weights (fr-fr)
 
 The trained-model bundle (`@mailwoman/neural-weights-fr-fr`) for
-[Mailwoman](https://mailwoman.sister.software), a postal-address parser. This
+[Mailwoman](https://mailwoman.ai), a postal-address parser. This
 package is **data only** — `model.onnx`, `tokenizer.model`, and metadata. It has
 no JavaScript; it is loaded at inference time by `@mailwoman/neural`.
 
@@ -106,7 +106,7 @@ honest caveats on the FR numbers:
 Because the older anchor-off / pre-diversified-golden figures in this bundle's
 `model-card.json` `eval` block were measured before the anchor-on grading
 discipline, treat them as historical; the per-tag parity tables under
-[`docs/articles/evals/`](https://mailwoman.sister.software) carry the
+[`docs/articles/evals/`](https://mailwoman.ai) carry the
 config-stated numbers.
 
 ## Calibration
@@ -137,7 +137,7 @@ card carries the full corpus + recipe provenance.
 ## License & links
 
 - **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html).
-- **Docs & concepts:** https://mailwoman.sister.software
+- **Docs & concepts:** https://mailwoman.ai
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
 - The functional contract for this bundle is `model-card.json`; this `README.md`
   is the HuggingFace-facing card.

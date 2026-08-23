@@ -70,7 +70,7 @@ export function inputSetProvenance(set: ResolvedInputSet): Provenance["input_set
 export function provenanceFor(
 	engine: {
 		engineID: string
-		effective: unknown
+		effective: Record<string, unknown>
 		fingerprint: { digest: string; gitHead: string; dirtyFiles: string[] }
 		buildMs: number
 		uses: number
@@ -83,12 +83,47 @@ export function provenanceFor(
 		git_head: engine.fingerprint.gitHead,
 		dirty: engine.fingerprint.dirtyFiles.length > 0,
 		dirty_files: engine.fingerprint.dirtyFiles,
-		config_effective: engine.effective as Record<string, unknown>,
+		config_effective: engine.effective,
 		engine_build_ms: engine.buildMs,
 		engine_was_warm: engine.uses > 1,
 		input_set: inputSetProvenance(set),
 	}
 }
+
+/**
+ * One hand-picked input, with or without a truth point.
+ *
+ * The coordinate is an ASSERTION by the caller — nothing here verifies it, and an invented pin looks identical to a
+ * surveyed one in the output. That is why the set's `why` is required, and why this describes where a point should come
+ * from rather than merely accepting a number.
+ *
+ * Declared out of line because the union nests four calls deep inside the set schema, which `unicorn/max-nested-calls`
+ * refuses — and rightly: a reader should meet this shape under its own name.
+ */
+const LITERAL_INPUT_WITH_TRUTH_SCHEMA = z.object({
+	input: z.string().min(1),
+	lat: z.number().describe("Truth latitude. Say where it came from in `why` — an invented pin grades nothing."),
+	lon: z.number(),
+	tolerance_m: z
+		.number()
+		.positive()
+		.optional()
+		.describe("Per-row distance tolerance. Omit to let the caller's threshold apply."),
+	truth_type: z
+		.string()
+		.optional()
+		.describe(
+			"How the point was established — `rooftop`, `parcel`, `interpolated`, `centroid`. Stratifiable, because a " +
+				"headline at 1 km lives or dies on it."
+		),
+})
+
+const LITERAL_INPUT_SCHEMA = z.union([z.string(), LITERAL_INPUT_WITH_TRUTH_SCHEMA])
+
+const LITERAL_INPUTS_DESCRIPTION =
+	"Bare strings are OBSERVED — no truth, no grade. An object carrying `lat`/`lon` is GRADED against that point, " +
+	"which is what makes this the authoring loop for a new board row: measure the candidates before writing the case " +
+	"file, rather than writing rows and discovering the score afterwards."
 
 /**
  * Which inputs a measuring tool runs over.
@@ -136,7 +171,7 @@ export const INPUT_SET_SCHEMA = z
 		}),
 		z.object({
 			kind: z.literal("literal"),
-			inputs: z.array(z.string()).min(1),
+			inputs: z.array(LITERAL_INPUT_SCHEMA).min(1).describe(LITERAL_INPUTS_DESCRIPTION),
 			why: z
 				.string()
 				.min(1)
@@ -161,6 +196,16 @@ export const ENGINE_CONFIG_SCHEMA = z
 		candidate_db: z.string().optional(),
 		resolve_db: z.string().optional(),
 		data_root: z.string().optional(),
+		weights_cache: z
+			.string()
+			.optional()
+			.describe(
+				"Grade a CANDIDATE model instead of the installed one: a package-shaped directory " +
+					"(`<root>/node_modules/@mailwoman/neural-weights-<locale>/`), as `mwdev_gate` takes. This is what makes " +
+					"shipped-vs-candidate an ordinary two-arm comparison rather than a script. A root that is not staged is " +
+					"REFUSED, not silently replaced by the shipped weights — the resolution ladder falls through, so an " +
+					"unchecked typo would grade the default model under the candidate's name."
+			),
 		gazetteer_prior: z.boolean().optional(),
 		place_country: z.boolean().optional(),
 		place_country_threshold: z.number().optional(),
@@ -169,7 +214,8 @@ export const ENGINE_CONFIG_SCHEMA = z
 		locale_country_prior: z.boolean().optional(),
 		postcode_shape_coherence: z.boolean().optional(),
 		postcode_containment_coherence: z.boolean().optional(),
-		retry_alternate_register: z.boolean().optional(),
+		admin_containment_rerank: z.boolean().optional(),
+		poi_venue_tier: z.boolean().optional(),
 	})
 	.describe("Every lever, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
 
@@ -197,6 +243,69 @@ export function componentsOf(run: GeocodeRun): Record<string, string> {
  * here. Both forms go back: the structured trace is what makes evidence diffable across arms, and the rendered rows are
  * what let a human read it in a transcript without an agent paraphrasing — which is where detail goes missing.
  */
+/**
+ * The parse trace without its matrices. The full `NeuralParseTrace` ships per-token logit and emission rows (33 floats
+ * × tokens, twice) plus per-channel feature matrices — thousands of numbers that no reader consumes inline and that
+ * crowd a context window the rendered rows already serve. The slim form keeps everything discrete and diagnostic
+ * (pieces, tokens with labels + confidences, the viterbi path, priors, locale head, repairs, per-channel CONFIDENCE
+ * vectors) and states what it dropped; `full_parse_trace: true` returns the raw object for the rare numeric dig.
+ */
+export function slimParseTrace(parse: NonNullable<GeocodeRun["trace"]>["parse"]): Record<string, unknown> {
+	const { logits, emissions, anchor, gazetteer, country, ...rest } = parse
+
+	void logits
+	void emissions
+
+	const channel = (c: { confidence?: unknown } | undefined): unknown =>
+		c && typeof c === "object" ? { confidence: c.confidence } : c
+
+	return {
+		...rest,
+		anchor: channel(anchor),
+		gazetteer: channel(gazetteer),
+		country: channel(country),
+		matrices_omitted:
+			"logits, emissions, and per-channel feature matrices omitted (thousands of floats) — pass " +
+			"full_parse_trace: true for the raw numbers.",
+	}
+}
+
+/**
+ * The #1649 intent gate's verdict, when it fired.
+ *
+ * A refusal is not a parse failure, and everything downstream of it looks exactly like one: the gate discards a
+ * COMPLETED tree and hands back `roots: []`, so `decodeAsJSON` answers `{}` and the resolver-interior records are
+ * empty. Rendered without this line, `Cafe at St Mary's, Oxford` reads as an input the parser could make nothing of,
+ * when in fact it parsed to `locality=Oxford › dependent_locality=St Mary's › street=Cafe` and was refused as a
+ * thing-query. Reporting the refusal is what separates "we could not" from "we would not".
+ */
+function droppedRow(run: GeocodeRun): string[] {
+	const dropped = (run.result as { dropped_components?: Array<{ tag: string; value: string; kept: string }> })
+		.dropped_components
+
+	if (!dropped?.length) return []
+
+	return [
+		"projection: " +
+			dropped.map((d) => `${d.tag} "${d.value}" DELETED — "${d.kept}" held the slot`).join("; ") +
+			" — the flat map holds one value per tag, so these spans were parsed and then discarded (#1755). " +
+			"A null component below may be this, not an absence in the input.",
+	]
+}
+
+function refusalRow(run: GeocodeRun): string[] {
+	const markers = (run.result as { intent_markers?: Array<{ kind: string; evidence?: string }> }).intent_markers
+
+	if (!markers?.length) return []
+
+	const named = markers.map((m) => (m.evidence ? `${m.kind} (${m.evidence})` : m.kind)).join(", ")
+
+	return [
+		`intent: REFUSED as ${named} — the #1649 gate discarded a completed parse rather than the parse failing. ` +
+			"Every empty component below follows from that decision, not from the model.",
+	]
+}
+
 export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reason?: string } {
 	if (!run.trace) {
 		return {
@@ -214,8 +323,77 @@ export function renderTrace(run: GeocodeRun): { rendered: string[]; absent_reaso
 			channelsRow(run.trace),
 			localeHeadRow(run.trace),
 			decodeRow(run.trace),
+			...refusalRow(run),
+			...droppedRow(run),
+			...resolverRows(run.trace),
 		],
 	}
+}
+
+/**
+ * The #1721 resolver-interior rows — one line per backend lookup: the query as sent, the gates that fired, the pick,
+ * and the candidate table with each row's per-stage rank vector. `resolver: []` renders as its own claim (the walk
+ * performed no lookups) rather than nothing, because an absent line is indistinguishable from a section that predates
+ * the field.
+ */
+function resolverRows(trace: NonNullable<GeocodeRun["trace"]>): string[] {
+	const records = trace.resolver
+
+	if (!records) {
+		return ["resolver: (absent — this trace predates the resolver-interior records)"]
+	}
+
+	if (!records.length) {
+		return ["resolver: no lookups performed (no resolvable node reached the walk)"]
+	}
+
+	return records.map((record) => {
+		const query = [
+			record.placetype,
+			record.query.country ? `country=${record.query.country}` : null,
+			record.query.parentID !== undefined ? `parent=${record.query.parentID}` : null,
+			record.query.regionQualifier ? `qualifier=${JSON.stringify(record.query.regionQualifier)}` : null,
+			`limit=${record.query.limit}`,
+		]
+			.filter((part) => part !== null)
+			.join(" ")
+
+		const reach =
+			record.reachableIn === undefined
+				? ""
+				: record.reachableIn.length
+					? `\n    UNREACHABLE, not absent — the key lives in ${record.reachableIn
+							.map((b) => `${b.placetype}×${b.n}`)
+							.join(", ")}. The band was chosen by the parse tag, so this is a mislabel, not missing data.`
+					: "\n    absent — every admin band was probed and none holds this key. COVERAGE, not reachability."
+
+		const rows = record.candidates.map((c) => {
+			const ranks = Object.entries(c.ranks)
+				.map(([stage, rank]) => `${stage}:${rank}`)
+				.join("→")
+
+			const picked = record.picked && record.picked.id === c.id ? " ◀ PICKED" : ""
+
+			return `    ${c.name} (${c.country} ${c.placetype} id=${c.id}) score=${c.score}${
+				c.prominence !== undefined ? ` prom=${c.prominence.toFixed(2)}` : ""
+			}${c.importance !== undefined ? ` imp=${c.importance.toFixed(2)}` : ""}${
+				c.population !== undefined ? ` pop=${c.population}` : ""
+			}${c.containedByQualifier !== undefined ? ` contained=${c.containedByQualifier}` : ""} [${ranks}]${picked}`
+		})
+
+		const head =
+			`resolver ${JSON.stringify(record.value)} → ${query}` +
+			(record.gates.length ? ` gates=[${record.gates.join(",")}]` : "") +
+			(record.picked
+				? record.picked.source === "ranked"
+					? ""
+					: ` picked-via=${record.picked.source}`
+				: " → NOTHING (picked: null)") +
+			(record.candidatesTruncated ? ` (+${record.candidatesTruncated} rows past the cap)` : "") +
+			reach
+
+		return [head, ...rows].join("\n")
+	})
 }
 
 /**
@@ -254,6 +432,12 @@ export interface ComparedRow {
 	b: unknown
 	issues_a: string[]
 	issues_b: string[]
+	/**
+	 * Whether the two arms' place-identity chains differ — PRESENT only when both arms stated one (see
+	 * `ExternalAnswer.place_ids`). Deliberately outside `differed`: the coordinate-level zero-diff contract batteries pin
+	 * on is unchanged, and identity is its own claim.
+	 */
+	identity_differed?: boolean
 }
 
 /**
@@ -272,13 +456,7 @@ export type StratumKey = "country" | "address_kind" | "status" | "truth_toleranc
  * stratified result and is not one. Measured 2026-08-16: `stratify_by: "truth_type"` against a 60-row FR panel returned
  * `{"unknown": {n: 60}}` rather than saying the key did not exist.
  */
-export const STRATUM_KEYS: readonly StratumKey[] = [
-	"country",
-	"address_kind",
-	"status",
-	"truth_tolerance_m",
-	"truth_type",
-]
+const STRATUM_KEYS: readonly StratumKey[] = ["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]
 
 /**
  * @throws When `by` is not a known stratum — silence here manufactures a fake one-bucket table.

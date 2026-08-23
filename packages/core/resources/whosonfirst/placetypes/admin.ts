@@ -1,14 +1,15 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
+
 import {
 	type Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha2LanguageCode,
 	isAlpha3bLanguageCode,
-} from "@mailwoman/core/resources/languages"
-import type { GeoFeature, GeometryLiteral } from "@mailwoman/spatial"
+} from "#resources/languages"
 
 import type { WhosOnFirstPlacetype } from "./definition.ts"
 
@@ -33,6 +34,14 @@ export interface WOFBaseProperties {
 	"wof:lastmodified"?: number
 	"geom:latitude"?: number
 	"geom:longitude"?: number
+	/**
+	 * The label centroid — where a human would drop the pin, distinct from the geometry's mathematical centroid. The
+	 * difference is territorial: France's `geom:` centroid sits in Spain (42.19, -2.74) because the multipolygon spans
+	 * the overseas territories, while `lbl:` is metropolitan France (46.71, 2.46). Prefer `lbl:` wherever a point stands
+	 * in for the place.
+	 */
+	"lbl:latitude"?: number
+	"lbl:longitude"?: number
 	/**
 	 * `"minLon,minLat,maxLon,maxLat"` — WOF writes the bbox as a comma-joined string, not an array. Read by the gazetteer
 	 * ingest for the resolver's point-in-box proximity.

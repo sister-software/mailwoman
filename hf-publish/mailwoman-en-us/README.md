@@ -26,8 +26,8 @@ base_model: mailwoman-en-us
 Open-source neural address parser that runs entirely in the browser via ONNX Runtime Web.
 
 - **Source**: https://github.com/sister-software/mailwoman
-- **Demo**: https://mailwoman.sister.software/demo
-- **Docs**: https://mailwoman.sister.software/docs
+- **Demo**: https://mailwoman.ai/demo
+- **Docs**: https://mailwoman.ai/docs
 - **License**: AGPL-3.0
 
 ## Usage

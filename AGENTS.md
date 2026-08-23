@@ -1,8 +1,8 @@
 # AGENTS.md
 
-Mailwoman is a postal-address parser shipped as the unscoped entry package `mailwoman` (CLI + library) plus **55 scoped `@mailwoman/*` workspaces** — **56 entries in the root `workspaces` array**, which is the list to trust. The repo root is the private orchestration package `@mailwoman/universe` (not published).
+Mailwoman is a postal-address parser shipped as the unscoped entry package `mailwoman` (CLI + library) plus **56 scoped `@mailwoman/*` workspaces** — **57 entries in the root `workspaces` array**, which is the list to trust. The repo root is the private orchestration package `@mailwoman/universe` (not published).
 
-**50 of the 56 publish to npm.** The publish set is `.release-it.json`'s `@release-it-plugins/workspaces` list, and it is not derivable from the `private` flag alone: five workspaces are `private: true` and can never publish (`docs`, `tile-worker`, `geocode-oracle`, `neural-weights-base-latn`, `dev-mcp`), while **`osm` is public but deliberately held OUT of the release list** — ODbL counsel sign-off pending, see `packages/osm/README.md`. That is six, and 56 − 50 = **six**, so every absence currently has a reason someone can state. Trust the subtraction over the story: run the check in the release-list pitfall below whenever you add or move a workspace, and when the number stops matching the workspaces you can name a reason for, one has fallen out of the release. The table groups them by role:
+**51 of the 57 publish to npm.** The publish set is `.release-it.json`'s `@release-it-plugins/workspaces` list, and it is not derivable from the `private` flag alone: five workspaces are `private: true` and can never publish (`docs`, `tile-worker`, `geocode-oracle`, `neural-weights-base-latn`, `dev-mcp`), while **`osm` is public but deliberately held OUT of the release list** — ODbL counsel sign-off pending, see `packages/osm/README.md`. That is six, and 57 − 51 = **six**, so every absence currently has a reason someone can state. Trust the subtraction over the story: run the check in the release-list pitfall below whenever you add or move a workspace, and when the number stops matching the workspaces you can name a reason for, one has fallen out of the release. The table groups them by role:
 
 | Workspace                                                                    | npm package                                     | Purpose                                                                                                                                                                                                                                                                                       |
 | ---------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,15 +66,16 @@ Mailwoman is a postal-address parser shipped as the unscoped entry package `mail
 | `packages/react/`                                                            | `@mailwoman/react`                              | React components + headless hooks — the docs site's parse/geocode/POI explorers, decomposed for use in any React app. Storybook-tested, Docusaurus-independent                                                                                                                                |
 | `packages/map-tui/`                                                          | `@mailwoman/map-tui`                            | Terminal vector-tile map renderer — braille `MapFrame` values from PMTiles (asciify-based); powers the `mw geocode --debug` map pane, plus the `map-tui` bin — a standalone browser over those frames. Frame-first: consumers own presentation                                                |
 | **Private / infra**                                                          |                                                 |                                                                                                                                                                                                                                                                                               |
-| `docs/`                                                                      | `@mailwoman/docs` (private)                     | Docusaurus site → https://mailwoman.sister.software. The other workspace that nests under `src/`                                                                                                                                                                                              |
+| `docs/`                                                                      | `@mailwoman/docs` (private)                     | Docusaurus site → https://mailwoman.ai. The other workspace that nests under `src/`                                                                                                                                                                                                           |
 | `packages/tile-worker/`                                                      | `@mailwoman/tile-worker` (private)              | Tile worker for the demo-map coverage overlay                                                                                                                                                                                                                                                 |
 | `packages/geocode-oracle/`                                                   | `@mailwoman/geocode-oracle` (private)           | Third-party reference geocoders (Google, US Census) as a VERIFICATION ORACLE for gauntlet-case authoring. Both clients answer with `@mailwoman/record`'s `PostalAddress` so the comparison is field-to-field. Never a runtime dependency of the parser                                        |
 | `packages/dev-mcp/`                                                          | `@mailwoman/dev-mcp` (private)                  | Maintainer-only MCP server — a warm geocoder plus measuring tools, so an agent reaches for the board rather than a one-off probe script. Holds engines in-process and REFUSES on a source edit rather than serving stale modules. Spec: `docs/superpowers/specs/2026-08-15-dev-mcp-server.md` |
+| `packages/ancestrie/`                                                        | `@mailwoman/ancestrie`                          | A materialized trie over an ancestry graph — one prefix walk yields completions, ranks, and containment lineage from one static artifact. Standalone by design (#1728), published 2026-08-18. Lineage + format doc in the package                                                             |
 | `packages/neural-weights-base-latn/`                                         | `@mailwoman/neural-weights-base-latn` (private) | PARKED, not published. Shared Latin-script base model for the future consumer-facing dedup (#1177). Do NOT add it to `release.config.json` locales or depend on it from a published package until the release wiring lands                                                                    |
 
 Source files live at each workspace's root, with exactly two exceptions: **`packages/corpus/` and `docs/` nest under `src/`**. Every workspace lives under `packages/` except `docs/`, which stays at the repository root.
 
-Beyond the 55 workspaces the repo root holds workspace config, `scripts/`, and six directories that are **not** workspaces — do not go looking for them in the table:
+Beyond the 56 workspaces the repo root holds workspace config, `scripts/`, and six directories that are **not** workspaces — do not go looking for them in the table:
 
 - `apps/web-demo/` — a standalone Python + single-page-HTML parser demo (`server.py`, no `package.json`), served behind the playpen nginx
 - `corpus-python/` — the Python training code, including the Modal launcher
@@ -94,6 +95,7 @@ Beyond the 55 workspaces the repo root holds workspace config, `scripts/`, and s
 - **[`docs/engineering/reference/coverage-overlay.mdx`](./docs/engineering/reference/coverage-overlay.mdx)** — the demo-map address-coverage ("fog of war") overlay runbook: rebuild/republish (the `coverage build` + `tiles publish` CLIs), the `mailwoman-tiles` upload/credential gotchas, the HI/NH data situation, tuning knobs. Read before touching the coverage overlay, the `tile-worker`, or `coverage build`.
 - **[`RELEASING.md`](./RELEASING.md)** — local and CI release flows. Read before cutting a release.
 - **[`docs/records/evals/`](./docs/records/evals/)** — eval reports per training step. The per-model score ledger lives at `evals/scores-by-version.json` (repo root), schema in `docs/engineering/reference/eval-ledger.schema.json`. **Ledger status:** revived at the 2026-07-02 re-anchor (#885) — the v5.0.0 row is from the full re-score, and appending is now automated (`mailwoman eval ledger-append`; `mailwoman eval gate` prints the pre-filled command on every PASS). Rows for 4.5.0–4.16.2 were never populated (the freeze the re-anchor ended); their headlines live in [`docs/records/site-2026-08/releases.mdx`](./docs/records/site-2026-08/releases.mdx) + each version's `model-card.json`. The authoritative human-readable per-tag table is the latest `parity-scorecard-*.md`.
+- **[`.claude/output-styles/mailwoman-development.md`](./.claude/output-styles/mailwoman-development.md)** — the central style contract for agent output. The harness loads it as the session output style; the `five-whys` skill, PR template, and issue templates link to it instead of copying its rules. It covers commands, runbooks, handoffs, warnings, evidence, and root-cause reports. Published docs pages follow [`writing-system.md`](./docs/engineering/writing-system.md) instead.
 
 ## Release pipeline pitfalls
 
@@ -103,8 +105,8 @@ Local: `yarn release`. CI: GitHub Actions → `publish` workflow → manual disp
 
 The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `tokenizer.model`) that are **not** committed to git. Multiple pieces cooperate to get those files in place — be careful when changing any of them:
 
-- `<workspace>/scripts/link-dev-weights.ts` — symlinks the artifacts from `$MAILWOMAN_DATA_ROOT/...` into the workspace so `@mailwoman/neural` can find them during local dev.
-- `packages/neural/test/weights.test.ts` — invokes `link-dev-weights.ts` to verify auto-resolve. **Running `yarn test` re-creates the symlinks** in `packages/neural-weights-en-us/` as a side effect.
+- `<workspace>/scripts/link-dev-weights.ts` — materializes the artifacts from `$MAILWOMAN_DATA_ROOT/...` into the **data-root overlay** (`$MAILWOMAN_DATA_ROOT/weights/<locale>/`), NOT into the tracked workspace — the workspace package stays bare on a dev checkout (writing into it caused the four hazards `scripts/link-weights-overlay.ts`'s header lists: empty worktrees, `yarn test` mutating tracked dirs, copy-through-symlink, `YN0035` tarballs). `resolveWeights`'s overlay rung is what reads it in local dev; a test asserting the consumer's package-carries-weights state must seed its own scratch overlay instead (`dropin-cold-start.test.ts`, #1733).
+- `packages/neural/test/weights.test.ts` — invokes `link-dev-weights.ts` to verify auto-resolve. **Running `yarn test` re-populates the data-root overlay** as a side effect.
 - `scripts/copy-weights.ts` — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace. Skipped in CI when `MAILWOMAN_SKIP_WEIGHTS_COPY=1` (the default for the `publish` workflow when `release_weights=false`).
 - `scripts/publish-workspace.ts` — invoked per workspace by release-it. Calls `yarn pack -o <tmp>` (translates `workspace:*` → concrete versions) then `npm publish <tmp>` (npm CLI handles npm-side auth, including Trusted Publishing OIDC in CI).
 
@@ -133,7 +135,7 @@ docstring says so. Membership is earned by a codex postcode shape plus a confoun
 `yarn npm publish` (and `npm publish`) refuse to upload tarballs containing symlinks — the registry returns HTTP 415 (`YN0035: Symbolic link is not allowed`). Two specific traps make this easy to hit:
 
 1. **`fs.copyFile` follows symlinks at the destination.** A naïve `fs.copyFile(SOURCE, dest)` where `dest` is a symlink writes through the symlink — the symlink stays in place. `scripts/copy-weights.ts` mitigates this by `unlink`ing each destination first. Any new script that materializes files into these workspaces **must do the same** (or use `cp --remove-destination` / `fs.cp` with equivalent semantics).
-2. **Tests re-create symlinks.** `weights.test.ts` calls `link-dev-weights.ts` on every run. Even if `copy-weights.ts` was already run, a subsequent `yarn test` (manual or otherwise) re-symlinks `packages/neural-weights-en-us/`.
+2. **Tests re-created symlinks — historically.** `weights.test.ts` calls `link-dev-weights.ts` on every run; while the linkers wrote into the tracked workspaces, any `yarn test` after `copy-weights.ts` re-symlinked `packages/neural-weights-en-us/`. The linkers now write to the data-root overlay instead, which closes that window by construction — but the safety net below stays, because it also covers a hand-made symlink or an old checkout.
 
 To make publish robust regardless of repo state, `scripts/publish-workspace.ts` walks the workspace's `package.json` `files` array right before publishing and dereferences any symlinks (`readlink` → `unlink` → `copyFile`). **Do not remove this safety net** — it closes the window between `copy-weights.ts` (one-shot, at `before:init`) and the actual publish.
 
@@ -224,7 +226,7 @@ If a release fails partway through publishing:
   - `packages/core/utils/sealed-db.ts` — `swapDatabaseIntoPlace(tmp, final)`, the atomic publish step this file specifies in prose, next to `sealDatabase` / `openBuiltDatabase`.
   - `packages/core/utils/stats.ts` — `percentile` (nearest-rank, `p` in **[0, 100]**), `median`, `formatPercent`. Watch the unit: local copies elsewhere took a fraction, so a careless swap silently changes a gate number.
   - `packages/core/utils/jsonl.ts`, `packages/core/utils/hash.ts` — JSONL read/write/iterate, `sha256File` / `sha256Hex` / `md5File`.
-  - `@mailwoman/spatial` — `haversineKm`, and now `pointInRing` / `pointInPolygon` / `pointInMultiPolygon`. `packages/resolver-wof-sqlite/geo.ts` re-exports both for its own readers.
+  - `@mailwoman/spatial` — `haversineKm`, `pointInRing` / `pointInPolygon` / `pointInMultiPolygon`, the ring-list GeoJSON types with `pointInPolygonRings` / `geometryContains`, and `bboxAround`. Import them from here and nowhere else: several of them were defined in `resolver-wof-sqlite/geo.ts` despite having no SQLite dependency, which is how a gazetteer BUILD step ended up taking point-in-polygon from a query backend. That seam is gone, along with the package's `./geo` subpath.
   - `packages/match/comparators.ts` — `jaro`, `jaroWinkler`, `levenshteinSimilarity`, `nameSimilarity`, `jaccard`.
   - `packages/corpus/src/adapter.ts` — `HOUSE_NUMBER_PREFIX` + `splitStreetLine(line)`, the house-number/street split every US CSV adapter uses.
 
@@ -311,6 +313,33 @@ On the query side, the migratable remainder is the cold, already-`async` `SELECT
 
 Read the workspace-local docstrings before changing infrastructure files. The headers in `scripts/*.mjs`, `.release-it.json`, and `.github/workflows/*.yml` explain why each piece exists. If a file's purpose isn't documented inline and you're about to touch it, add the docstring as part of your change — future-you (or future-claude) will thank you.
 
+**A reader that can return a PARTIAL result must say what it got, or throw.** The 2026-08-23 model arc
+produced seven bugs of one shape, and every one returned a well-formed wrong answer that nobody would
+have questioned:
+
+- `Array.isArray` on a nested Arrow column. Corpus `labels` arrives as `{list:[{element:…}]}` on some
+  shards and as a plain array on others, so the check is false for the first and every label count reads
+  ZERO. Produced "GB has no street data".
+- `getCursor(["country","labels"])` silently DROPPING `labels` on the shards one writer era produced —
+  no error, the column is simply absent. Measured on one GB shard: unprojected 1,519/2,000 street rows,
+  projected 0/2,000. Produced "only 4 countries have street data"; the real figure is 29.
+- `flattenTreeNodes` projecting away `source`, and later the whole resolver payload. Both times the
+  affected spans reported as `unchanged`.
+- An `EngineConfig` key typo (`weightsCacheRoot` for `weights_cache`). A plain object drops the unknown
+  key in silence, both arms ran the same weights, and the comparison reported "0 of 6 differ" — which
+  reads as "the candidate is identical" and means "the lever never ran".
+- Two artifact resolvers sorting by NAME. `v0.9.9` beats `v0.26.0` lexically and `v8-jp-full` beats both
+  numerically, so a coverage report silently described a corpus nine versions old.
+
+The common shape is that each failure is indistinguishable from a real absence, and absence is usually
+what the question was about — so the wrong answer arrives looking like a discovery. Three rules follow.
+Prefer a reader that ERRORS on a requested-but-missing column over one that omits it. When a projection
+drops a field, the consumer that needed it gets `unchanged`, not a type error, so carry the whole payload
+or name what you dropped. And `?? 0`, optional chaining and a bare `.filter()` all convert _"I could not
+read this"_ into _"there is none of it"_ — at a measurement boundary that is a lie, and the cheap
+insurance is to re-measure a surprising ABSENCE by a second path before reporting it. One shard read two
+ways caught two of the seven in sixty seconds.
+
 **The defects that survive review live in the input tail.** Every correctness bug the 2026-08-02 audit found was in code that worked on every input anyone had tried: a ReDoS that needs tab characters, an `expandH3Cell` that drops a leading zero only for base cells 0–7 (7 of 122), a quote-blind CSV splitter against sources where 6 of 8 carry no embedded newline, a quadratic scan whose every existing caller happened to be chunk-bounded, a freshness guard that compared zero checksums. Reading the code tells you what it does on the inputs you are imagining, which is exactly the set that already works. So when a change rests on a claim about data or scale — _this source has no quoted newlines_, _this path is fast enough now_, _this artifact is stale_ — spend the one command that settles it. Measuring found all five of those; each of the four audit findings that turned out WRONG had been reasoned to instead, and was disproved by someone implementing it.
 
 Corollary for the docstring you write afterwards: if the claim was established by measurement, put the number in. `27,405 ms → 175 ms on 8 MB` tells the next reader whether the constraint still binds. "This is slow" does not.
@@ -323,7 +352,7 @@ That corollary covers a MEASUREMENT THAT STILL BINDS, and nothing else. It is no
 
 ### Acronym casing in identifiers
 
-Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSqlitePlaceLookup`, `modelURL`. Not `createWofResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
+Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `parseJSON`, `readID`, `fetchOSM`, `WOFSQLitePlaceLookup`, `modelURL`. Not `createWofResolver` / `parseJson` / `readId`. This applies to TS/TSX identifiers (functions, classes, types, interfaces, object properties) and the code examples in living reference docs. It does **not** touch:
 
 - **`snake_case`** — DB columns and wire keys (`parent_id`, `place_id`, `name_key`) stay as-is; they're string contracts, and the convention is camelCase-only by construction.
 - **External library names** — match the dependency's own casing (`HttpStatusCode` from axios, `createQueryId`/`createWithSql` from kysely, `sqlite-wasm`).

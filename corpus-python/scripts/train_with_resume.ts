@@ -18,7 +18,7 @@
 import { openSync } from "node:fs"
 
 import { $public } from "@mailwoman/core/env"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
+import { passThroughCLIArguments } from "@mailwoman/core/scripting/utils"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { $, sleep } from "zx"
 
@@ -26,10 +26,10 @@ const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)
 const LOG = $public.LOG ?? tempRootPath("stage1-train.log")
 const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml"
 /**
- * DELIBERATE cliArguments: EXTRA_ARGS is a verbatim passthrough to `python -m mailwoman_train train` — parseArgs cannot
- * collect undeclared flags, and reconstructing them from tokens would be lossy.
+ * Verbatim passthrough to `python -m mailwoman_train train` — parseArgs cannot collect undeclared flags, and
+ * reconstructing them from tokens would be lossy.
  */
-const EXTRA_ARGS = cliArguments()
+const ADDITIONAL_COMMAND_LINE_ARGS = passThroughCLIArguments()
 
 // Open the log once in append mode; every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
 const logFd = openSync(LOG, "a")
@@ -57,8 +57,8 @@ async function runTraining(resume: boolean): Promise<number> {
 	const shell = $({ stdio: ["ignore", logFd, logFd], nothrow: true })
 
 	const output = resume
-		? await shell`python -u -m mailwoman_train train --config ${CONFIG} --resume auto ${EXTRA_ARGS}`
-		: await shell`python -u -m mailwoman_train train --config ${CONFIG} ${EXTRA_ARGS}`
+		? await shell`python -u -m mailwoman_train train --config ${CONFIG} --resume auto ${ADDITIONAL_COMMAND_LINE_ARGS}`
+		: await shell`python -u -m mailwoman_train train --config ${CONFIG} ${ADDITIONAL_COMMAND_LINE_ARGS}`
 
 	return output.exitCode ?? 1
 }
@@ -66,7 +66,7 @@ async function runTraining(resume: boolean): Promise<number> {
 let attempt = 0
 
 // First attempt — fresh start unless --resume is already in the passed args.
-if (!EXTRA_ARGS.includes("--resume")) {
+if (!ADDITIONAL_COMMAND_LINE_ARGS.includes("--resume")) {
 	console.log("[wrapper] attempt 1: fresh start")
 
 	const exit = await runTraining(false)

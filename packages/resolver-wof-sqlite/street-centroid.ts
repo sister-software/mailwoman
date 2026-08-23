@@ -22,10 +22,13 @@ import { DatabaseSync } from "node:sqlite"
 
 import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/resolver"
 
-import { hasTable } from "./sqlite-utils.ts"
+import { hasTable, prepareGet, type PreparedGet } from "./sqlite-utils.ts"
 import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
+	type NameKey,
+	type StreetKey,
+	streetLocaleForSurface,
 	type StreetLocale,
 	stripArrondissement,
 } from "./street-normalize.ts"
@@ -71,8 +74,8 @@ function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: n
 export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	readonly #db: DatabaseSync
 	readonly #locale: StreetLocale
-	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
-	readonly #byLocality: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #byPostcode: PreparedGet<[postcode: string, street: StreetKey], AggRow> | undefined
+	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey], AggRow> | undefined
 
 	/**
 	 * @param dbPath Shard path.
@@ -86,11 +89,13 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
 		// `street_centroid` table this lookup is a no-op miss, not a crash (mirrors the address-point reader).
 		if (hasTable(this.#db, "street_centroid")) {
-			this.#byPostcode = this.#db.prepare(
+			this.#byPostcode = prepareGet(
+				this.#db,
 				`SELECT ${AGG_SELECT} FROM street_centroid WHERE postcode = ? AND street_norm = ?`
 			)
 
-			this.#byLocality = this.#db.prepare(
+			this.#byLocality = prepareGet(
+				this.#db,
 				`SELECT ${AGG_SELECT} FROM street_centroid WHERE locality_base = ? AND street_norm = ?`
 			)
 		}
@@ -98,19 +103,19 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 
 	find(query: { street: string; postcode?: string; locality?: string }): StreetCentroidHit | null {
 		if (!this.#byPostcode || !this.#byLocality) return null
-		const streetNorm = normalizeStreetForKeyLocale(query.street, this.#locale)
+		const streetNorm = normalizeStreetForKeyLocale(query.street, streetLocaleForSurface(query.street, this.#locale))
 
 		if (!streetNorm) return null
 
 		let row: AggRow | undefined
 
 		if (query.postcode?.trim()) {
-			row = this.#byPostcode.get(query.postcode.trim(), streetNorm) as AggRow | undefined
+			row = this.#byPostcode(query.postcode.trim(), streetNorm)
 		}
 
 		if ((!row || row.lat == null) && query.locality?.trim()) {
 			const base = stripArrondissement(normalizeLocalityForKey(query.locality))
-			row = this.#byLocality.get(base, streetNorm) as AggRow | undefined
+			row = this.#byLocality(base, streetNorm)
 		}
 
 		if (!row || row.lat == null || row.lon == null) return null

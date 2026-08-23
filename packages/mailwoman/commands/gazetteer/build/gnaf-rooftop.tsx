@@ -10,7 +10,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -49,7 +50,7 @@ interface Options {
 
 const GazetteerBuildGNAFRooftop: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildGNAFRooftopShard } = await import("../../../gazetteer-pipeline/gnaf-rooftop.ts")
+		const { buildGNAFRooftopShard } = await import("#gazetteer/gnaf-rooftop")
 
 		const r = await buildGNAFRooftopShard({
 			standardDir: options.standardDir,

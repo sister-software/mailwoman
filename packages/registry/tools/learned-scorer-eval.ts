@@ -38,6 +38,7 @@ import { writeFileSync } from "node:fs"
 
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
+
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
@@ -46,7 +47,7 @@ import {
 	streamRows,
 	type ColumnMapping,
 	type SourceRecord,
-} from "@mailwoman/registry"
+} from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C, TRAINING_EPOCHS } from "./shared.ts"
@@ -115,7 +116,7 @@ export interface ScorerPairwiseEvalOptions {
 	outMd?: string
 }
 
-interface MessyRow {
+interface MessyRow extends Record<string, string> {
 	npi: string
 	name: string
 	org: string
@@ -253,7 +254,7 @@ export async function scorerPairwiseEval(
 	const geocoder = await options.createGeocoder()
 	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
 
-	const records = await ingestRows(rows as unknown as Record<string, string>[], mapping, {
+	const records = await ingestRows(rows, mapping, {
 		geocodeAddress: geocoder.seam,
 	})
 

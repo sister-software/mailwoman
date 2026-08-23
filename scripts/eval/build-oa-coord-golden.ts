@@ -25,7 +25,7 @@
  *   --entry it/countrywide.csv --out data/eval/external/oa-it-coord-150.jsonl --n 150
  */
 
-// oxlint-disable max-depth
+// oxlint-disable max-depth -- the streaming source-format state machine is intentionally kept in one pass
 
 import { createReadStream, globSync, mkdirSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
@@ -56,7 +56,7 @@ type CSVRecord = Record<string, string | undefined>
 /**
  * Drop a leading UTF-8 BOM.
  *
- * The spliterator has no BOM option, and a BOM survives into the FIRST HEADER NAME — `﻿LON` rather than `LON` — so
+ * The spliterator has no BOM option, and a BOM survives into the FIRST HEADER NAME — `\uFEFFLON` rather than `LON` — so
  * every row reads that one column as absent while the rest parse cleanly.
  */
 async function* withoutBOM(source: AsyncIterable<Uint8Array | string>): AsyncIterable<Uint8Array> {

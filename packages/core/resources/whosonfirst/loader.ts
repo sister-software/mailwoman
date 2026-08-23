@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { Alpha3bLanguageCode } from "@mailwoman/core/resources/languages"
-import type { TextNormalizer } from "@mailwoman/core/tokenization"
 import FastGlob, { type Entry } from "fast-glob"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
+
+import type { Alpha3bLanguageCode } from "#resources/languages"
+import type { TextNormalizer } from "#tokenization"
 
 import type { Displayable } from "../debugging.ts"
 import { ResourceMapCache } from "../ResourceMapCache.ts"

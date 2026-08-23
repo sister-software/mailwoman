@@ -15,11 +15,13 @@
  *   License: stamped `"Public Domain"` per Iowa state government open-data terms.
  */
 
-import { splitStreetLine, stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import { lookupStateAbbreviation } from "@mailwoman/corpus/codex/us-fips-state"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
+
+import { splitStreetLine, stableSourceID } from "#adapters/utils"
+import { lookupStateAbbreviation } from "#codex/us-fips-state"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
  * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
@@ -82,7 +84,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 
 				if (!state) continue
 
-				const fullAddress = [address1, address2].filter(Boolean).join(" ")
+				const fullAddress = [address1, address2].filter(isPresent).join(" ")
 				const split = splitStreetLine(fullAddress)
 
 				if (!split) continue
@@ -98,10 +100,14 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 					postcode: zip,
 				}
 
-				const streetPart = [split.house_number, split.street].filter(Boolean).join(" ").trim()
+				const streetPart = [split.house_number, split.street].filter(isPresent).join(" ").trim()
 
-				const raw = [venue, streetPart, [city, [stateAbbr, zip].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
-					.filter(Boolean)
+				const raw = [
+					venue,
+					streetPart,
+					[city, [stateAbbr, zip].filter(isPresent).join(" ")].filter(isPresent).join(", "),
+				]
+					.filter(isPresent)
 					.join(", ")
 
 				const aligned = reconcileComponents(components, raw)

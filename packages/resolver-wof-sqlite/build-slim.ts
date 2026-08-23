@@ -25,7 +25,7 @@
  *
  *   The output DB has the resolver-facing schema: `spr`, `names`, `place_population`, plus the
  *   `place_search` FTS5 / `place_bbox` R*Tree virtual tables rebuilt against the trimmed row set
- *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSqlitePlaceLookup`
+ *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSQLitePlaceLookup`
  *   opens the slim DB without any code change — it sees a smaller universe, nothing more.
  *
  *   Multi-shard inputs (e.g. admin + postcode) are processed in sequence; selected rows accumulate
@@ -222,10 +222,10 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 
 		// Materialize region/state ABBREVIATIONS into a standalone `place_abbr (id, abbr)` table BEFORE
 		// `names` is (optionally) dropped. The full DB lets the resolver tier an exact-abbrev match by
-		// querying `names` (`#exactMatchIds`), but the slim DB drops `names` for size — so the
+		// querying `names` (`#exactMatchIDs`), but the slim DB drops `names` for size — so the
 		// browser resolver gets its own tiny lookup (~hundreds of rows) to do the same data-driven
 		// exact-abbrev tiering ("VT" → Vermont, not a token-matching foreign region) instead of the
-		// demo's hardcoded `expandUSRegion` map. Sourced from the `language='abbr'` rows
+		// demo's hardcoded region-abbreviation map (since deleted). Sourced from the `language='abbr'` rows
 		// `add-region-abbrevs.ts` wrote, already filtered to surviving spr ids via the names copy. The
 		// table is always created (empty when the source predates the abbrev enrichment) so the
 		// resolver can query it unconditionally.

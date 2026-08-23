@@ -17,7 +17,6 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import {
 	canonicalizeRouteKey,
 	normalizeLocalityForKey,

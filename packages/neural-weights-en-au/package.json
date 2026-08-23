@@ -23,8 +23,12 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!scripts/**"
+		"!scripts/**",
+		"!test/**"
 	],
+	"exports": {
+		"./*": "./*"
+	},
 	"publishConfig": {
 		"access": "public"
 	},
@@ -32,7 +36,8 @@
 		"@mailwoman/neural-weights-en-us": "workspace:*"
 	},
 	"devDependencies": {
-		"@mailwoman/core": "workspace:*"
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*"
 	},
 	"mailwoman": {
 		"baseWeights": "@mailwoman/neural-weights-en-us"

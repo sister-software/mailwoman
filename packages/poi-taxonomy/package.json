@@ -22,7 +22,8 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!scripts/**"
+		"!scripts/**",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -47,7 +48,32 @@
 			"default": "./out/venue-word-hints.js",
 			"types": "./out/venue-word-hints.d.ts"
 		},
-		"./data/*.json": "./data/*.json"
+		"./data/*.json": "./data/*.json",
+		"./brands": {
+			"node": "./brands.ts",
+			"default": "./out/brands.js",
+			"types": "./out/brands.d.ts"
+		},
+		"./lookup": {
+			"node": "./lookup.ts",
+			"default": "./out/lookup.js",
+			"types": "./out/lookup.d.ts"
+		},
+		"./scripts/generate-taxonomy": {
+			"node": "./scripts/generate-taxonomy.ts",
+			"default": "./out/scripts/generate-taxonomy.js",
+			"types": "./out/scripts/generate-taxonomy.d.ts"
+		},
+		"./types": {
+			"node": "./types.ts",
+			"default": "./out/types.js",
+			"types": "./out/types.d.ts"
+		},
+		"./packaged-data": {
+			"node": "./packaged-data.ts",
+			"default": "./out/packaged-data.js",
+			"types": "./out/packaged-data.d.ts"
+		}
 	},
 	"publishConfig": {
 		"access": "public"

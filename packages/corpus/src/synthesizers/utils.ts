@@ -32,10 +32,12 @@ import {
 	matchLeadingDesignator,
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
+import { isPresent } from "@mailwoman/core/objects"
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
 import { mulberry32 } from "@mailwoman/core/utils"
-import type { CanonicalRow, LabeledRow, QuarantinedRow } from "@mailwoman/corpus/types"
-import { alignRow, assertSpanInvariants, type ComponentSpan } from "@mailwoman/corpus/utils"
+
+import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
+import { alignRow, assertSpanInvariants, type ComponentSpan } from "#utils/align"
 
 import { whitespaceTokenizer, type Tokenizer } from "../utils/tokenize.ts"
 
@@ -237,7 +239,7 @@ export const typoInject: Augmentation = (row) => {
 		return n
 	}
 
-	const values = Object.values(row.components).filter(Boolean) as string[]
+	const values = Object.values(row.components).filter(isPresent)
 
 	const eligible = (Object.entries(row.components) as Array<[ComponentTag, string]>).filter(
 		([, v]) => v && ALPHA_NAME.test(v) && occurs(v) === 1 && !values.some((o) => o !== v && o.includes(v))

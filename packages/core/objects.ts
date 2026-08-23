@@ -28,7 +28,7 @@ export type StringKeyOf<O> = Extract<keyof O, string>
 export function pick<O extends object, K extends string>(
 	input: O,
 	scalarEnum: Record<K, K>,
-	transform?: (value: O[keyof O], key: keyof O, input: O) => never
+	transform?: (value: O[keyof O], key: keyof O, input: O) => O[keyof O]
 ): Pick<O, StringKeyOf<O>>
 
 /**
@@ -40,7 +40,7 @@ export function pick<O extends object, K extends string>(
 export function pick<O extends object, K extends keyof O>(
 	input: O,
 	setLike: SetLike<K>,
-	transform?: (value: O[keyof O], key: keyof O, input: O) => never
+	transform?: (value: O[keyof O], key: keyof O, input: O) => O[keyof O]
 ): Pick<O, K>
 
 /**
@@ -52,7 +52,7 @@ export function pick<O extends object, K extends keyof O>(
 export function pick<O extends object, K extends keyof O>(
 	input: O,
 	scalarEnum: Record<K, K>,
-	transform?: (value: O[keyof O], key: keyof O, input: O) => never
+	transform?: (value: O[keyof O], key: keyof O, input: O) => O[keyof O]
 ): Pick<O, StringKeyOf<O>>
 
 /**
@@ -64,7 +64,7 @@ export function pick<O extends object, K extends keyof O>(
 export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 	input: O,
 	constraints: Iterable<K>,
-	transform?: (value: O[keyof O], key: keyof O, input: O) => never
+	transform?: (value: O[keyof O], key: keyof O, input: O) => O[keyof O]
 ): Pick<O, K>
 
 /**
@@ -76,7 +76,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 	input: O,
 	constraints: Record<K, K>,
-	transform?: (value: O[keyof O], key: keyof O, input: O) => never
+	transform?: (value: O[keyof O], key: keyof O, input: O) => O[keyof O]
 ): Pick<O, K>
 
 /**
@@ -88,7 +88,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 export function pick<O extends object, K extends string>(
 	input: O,
 	keys: Iterable<K>,
-	transform?: (value: O[keyof O], key: keyof O, input: O) => never
+	transform?: (value: O[keyof O], key: keyof O, input: O) => O[keyof O]
 ): Pick<O, StringKeyOf<O>>
 
 /**
@@ -100,7 +100,7 @@ export function pick<O extends object, K extends string>(
 export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 	input: O,
 	constraints: Iterable<K> | Record<K, K> | SetLike<K>,
-	transform?: (value: O[keyof O], key: keyof O, input: O) => never
+	transform?: (value: O[keyof O], key: keyof O, input: O) => O[keyof O]
 ): Pick<O, K> {
 	const picked: Partial<Pick<O, keyof O>> = {}
 
@@ -111,7 +111,7 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 	const keys = isIterable(constraints) ? Array.from(constraints) : Object.values(constraints)
 
 	for (const key of keys) {
-		const value = (input as never)[key]
+		const value = Reflect.get(input, key) as O[keyof O]
 		picked[key as keyof O] = transform ? transform(value, key, input) : value
 	}
 
@@ -127,6 +127,18 @@ export function pick<O extends object, K extends keyof O = StringKeyOf<O>>(
 
 export function isRecordLike(input: unknown): input is object {
 	return typeof input === "object" && input !== null && !Array.isArray(input)
+}
+
+type Falsy = false | 0 | 0n | "" | null | undefined
+
+/**
+ * Typed counterpart to `Boolean` for collection filters. The runtime semantics are intentionally identical: all falsy
+ * values are removed, while the overload narrows them out of the resulting element type.
+ */
+export function isPresent<T>(input: T): input is Exclude<T, Falsy>
+
+export function isPresent(input: unknown): boolean {
+	return Boolean(input)
 }
 
 /**

@@ -18,13 +18,14 @@
 import { existsSync, statSync } from "node:fs"
 
 import type { APIClient } from "@mailwoman/core/api"
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { Text } from "ink"
-import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
+
+import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "../../data-bundles.ts"
 import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "../../data-release.ts"
-import { formatBytes } from "../../doctor/checks.ts"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -117,7 +118,7 @@ async function statusForBundles(
 				checks.push({
 					ok: false,
 					check: label,
-					detail: `missing (expected ~${formatBytes(artifact.approxBytes)}) — mailwoman data pull ${name}`,
+					detail: `missing (expected ~${ByteFormatter.formatSI(artifact.approxBytes)}) — mailwoman data pull ${name}`,
 				})
 
 				continue
@@ -137,8 +138,8 @@ async function statusForBundles(
 				ok: !stale,
 				check: label,
 				detail: stale
-					? `stale — ${formatBytes(sizeBytes)} on disk vs ${formatBytes(expected)} ${checkRemote ? "(live)" : "(recorded)"} at ${existing}`
-					: `present (${formatBytes(sizeBytes)}) at ${existing}`,
+					? `stale — ${ByteFormatter.formatSI(sizeBytes)} on disk vs ${ByteFormatter.formatSI(expected)} ${checkRemote ? "(live)" : "(recorded)"} at ${existing}`
+					: `present (${ByteFormatter.formatSI(sizeBytes)}) at ${existing}`,
 			})
 		}
 	}

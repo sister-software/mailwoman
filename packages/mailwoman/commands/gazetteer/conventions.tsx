@@ -28,8 +28,14 @@ import { DatabaseSync } from "node:sqlite"
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
 import type { Convention } from "@mailwoman/resolver-wof-sqlite"
+import {
+	createAddressConventionTable,
+	createConventionMetaTable,
+	type ConventionDatabase,
+} from "@mailwoman/resolver-wof-sqlite/convention-schema"
 import { Box, Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -104,7 +110,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { assertDatabaseIntegrity, dataRootPath } = await import("@mailwoman/core/utils")
 
 		const { BUILTIN_STRATEGY_NAMES } = await import("@mailwoman/resolver-wof-sqlite")
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
@@ -119,18 +125,11 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const db = new DatabaseSync(output)
 		// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `db` handle.
-		const kdb = new DatabaseClient({ database: db })
+		const kdb = new DatabaseClient<ConventionDatabase>({ database: db })
 		await kdb.schema.dropTable("address_convention").ifExists().execute()
 		await kdb.schema.dropTable("meta").ifExists().execute()
 
-		await kdb.schema
-			.createTable("address_convention")
-			// wof_id: the WOF admin polygon this profile attaches to. convention: the Convention JSON.
-			// source: provenance — why this row exists / where it came from.
-			.addColumn("wof_id", "integer", (c) => c.primaryKey())
-			.addColumn("convention", "text", (c) => c.notNull())
-			.addColumn("source", "text", (c) => c.notNull())
-			.execute()
+		await createAddressConventionTable(kdb)
 
 		const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
 
@@ -139,11 +138,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		// Freeze into the read-only distributable asset — same discipline as our other WOF tables.
-		await kdb.schema
-			.createTable("meta")
-			.addColumn("key", "text", (c) => c.primaryKey())
-			.addColumn("value", "text")
-			.execute()
+		await createConventionMetaTable(kdb)
 
 		const meta: Record<string, string> = {
 			name: "mailwoman-conventions",
@@ -163,9 +158,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 
 		db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
 		db.exec("ANALYZE")
-		const ok = (db.prepare("PRAGMA integrity_check").get() as { integrity_check: string }).integrity_check
-
-		if (ok !== "ok") throw new Error(`integrity_check failed: ${ok}`)
+		assertDatabaseIntegrity(db, output)
 		db.exec("VACUUM")
 		await kdb.destroy() // closes the underlying `db` handle
 

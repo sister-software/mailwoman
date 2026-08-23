@@ -39,7 +39,7 @@ from itertools import islice
 from pathlib import Path
 
 from .augment import augment_row
-from .data_loader import _raw_row_stream
+from .data_loader import _raw_row_stream, source_row_counts
 
 _AUGMENT_KEYS = ("directional", "region", "glue", "case", "punct_drop", "upper_case", "ordinal")
 
@@ -89,16 +89,28 @@ def audit_mixture(
     total_draws = sum(draw_totals.values())
 
     full_windows = [w for w in window_counts if sum(w.values()) == window]
+    # DOSE, not just share (#1677). `reps_per_row` is the number every weight is implicitly choosing and
+    # that nobody sees: a 0.60% share of 7.68M draws over 277 rows is 165 passes per row, while a 3.57%
+    # share over 53,078 rows is 5. The v4.6.0 bare-country collapse was picked at weight 1.0 — the
+    # smallest number in the config — by someone reading 1.0 as a small dose.
+    rows_by_source = source_row_counts(Path(corpus_dir), "train")
+
     draw_per_source: dict[str, dict] = {}
     for src in sorted(set(draw_totals) | set(requested)):
         req = requested.get(src)
         share = draw_totals.get(src, 0) / total_draws if total_draws else 0.0
         deviations = [abs(w.get(src, 0) / window - req) / req for w in full_windows] if req else []
+        rows = rows_by_source.get(src)
+        draws_for_src = draw_totals.get(src, 0)
         draw_per_source[src] = {
             "requested_share": req,
-            "draws": draw_totals.get(src, 0),
+            "draws": draws_for_src,
             "draw_share": share,
             "max_window_relative_deviation": max(deviations) if deviations else 0.0,
+            # `None` when the shard's row count could not be read — reported as unknown rather than as a
+            # dose of zero, which would read as "this shard is safe".
+            "rows": rows,
+            "reps_per_row": (draws_for_src / rows) if rows else None,
         }
 
     # Pass 2 — emitted level: the same stream expanded through the augmentation policy,
@@ -223,19 +235,63 @@ def run(
     return report
 
 
+#: A source whose per-row exposure exceeds this multiple of the median is almost certainly a mistake.
+#: 8x is deliberately loose — the #1677 case was 33x the shards weighted six times higher, so a guard
+#: that only catches THAT is a guard for one incident rather than for the foot-gun.
+_DOSE_OUTLIER_MULTIPLE = 8.0
+
+
 def _print_summary(report: dict) -> None:
+    per_source = report["draw_level"]["per_source"]
+
     print(f"\n=== epoch mixture audit ({report['meta']['draws_realized']:,} draws) ===")
-    print(f"{'source':<28} {'requested':>9} {'draws':>9} {'realized':>9} {'max win dev':>11} {'emit dist':>9}")
-    for src, stats in report["draw_level"]["per_source"].items():
+    print(
+        f"{'source':<28} {'requested':>9} {'draws':>9} {'realized':>9} "
+        f"{'rows':>9} {'reps/row':>9} {'max win dev':>11} {'emit dist':>9}"
+    )
+    for src, stats in per_source.items():
         emit = report["emitted_level"]["per_source"].get(src, {})
         req = stats["requested_share"]
         dist = emit.get("distortion_vs_draw_share")
+        rows = stats.get("rows")
+        reps = stats.get("reps_per_row")
         print(
             f"{src:<28} {req if req is not None else float('nan'):>9.4f} {stats['draws']:>9,} "
-            f"{stats['draw_share']:>9.4f} {stats['max_window_relative_deviation']:>11.3f} "
+            f"{stats['draw_share']:>9.4f} {rows if rows is not None else 0:>9,} "
+            f"{reps if reps is not None else float('nan'):>9.1f} "
+            f"{stats['max_window_relative_deviation']:>11.3f} "
             f"{dist if dist is not None else float('nan'):>9.3f}"
         )
     print(f"augmented share of emitted rows: {report['emitted_level']['augmented_share']:.3f}")
+
+    # The guard #1677 asks for. Loud, at the point a human is looking at the mixture, because the whole
+    # failure was that the number nobody printed was the number that mattered.
+    doses = sorted(s["reps_per_row"] for s in per_source.values() if s.get("reps_per_row"))
+    if doses:
+        median = doses[len(doses) // 2]
+        hot = {
+            src: s["reps_per_row"]
+            for src, s in per_source.items()
+            if s.get("reps_per_row") and s["reps_per_row"] > median * _DOSE_OUTLIER_MULTIPLE
+        }
+        if hot:
+            print(
+                f"\n⚠ DOSE OUTLIER — median exposure is {median:.1f} reps/row; these exceed "
+                f"{_DOSE_OUTLIER_MULTIPLE:g}x that:"
+            )
+            for src, reps in sorted(hot.items(), key=lambda kv: -kv[1]):
+                rows = per_source[src].get("rows") or 0
+                print(f"    {src:<28} {reps:>9.1f} reps/row over {rows:,} rows")
+            print(
+                "  Weight is not dose. To choose an exposure directly, invert it: "
+                "weight = target_reps x rows x total_weight / total_samples (#1677)."
+            )
+
+    unknown = [src for src, s in per_source.items() if s.get("rows") is None]
+    if unknown:
+        # Absence reported as absence: a shard whose rows could not be read has an UNKNOWN dose, which is
+        # different from a safe one, and the outlier guard above could not have considered it.
+        print(f"\n  row count unavailable, dose UNKNOWN (not safe): {', '.join(sorted(unknown))}")
 
 
 def main() -> None:

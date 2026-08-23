@@ -42,70 +42,28 @@
  *   this file. `runCascade` now comes from `@mailwoman/resolver-wof-wasm/browser-cascade`, which is
  *   where `demo-helpers` re-exports it FROM — the same function, so the "measure the REAL cascade"
  *   guarantee is intact and the docs dependency (which `mailwoman`'s tsconfig cannot carry: `docs`
- *   depends on `mailwoman`, so a project reference would be a cycle) is gone. `flattenTree` is
- *   copied verbatim below because it is defined locally in `demo-helpers` and is 20 lines of pure
- *   tree walk; see the note on it.
+ *   depends on `mailwoman`, so a project reference would be a cycle) is gone. The flattener that was
+ *   copied here for the same reason now comes from `@mailwoman/core/decoder` (`flattenTreeNodes`),
+ *   which both this and the demo take it from — and which fixed the order both copies had wrong.
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
+import { join } from "node:path"
 
-import { $public } from "@mailwoman/core/env"
+import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runPipeline } from "@mailwoman/core/pipeline"
-import { tempRootPath } from "@mailwoman/core/utils"
 import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
 import { computeQueryShape } from "@mailwoman/query-shape"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
 import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
-
-/**
- * Flatten a solver tree into source-order nodes. Depth-first appended in reverse; flip for source order.
- *
- * Copied verbatim from `docs/src/shared/demo-helpers.ts`, which defines it locally rather than re-exporting it. Taking
- * it by import would mean a `mailwoman` → `docs` project reference, and `docs` already depends on `mailwoman` — a
- * cycle. Twenty lines of pure tree walk with no behavior to drift is the cheaper of the two evils; if a third consumer
- * appears, promote it to a shared package instead of copying it again.
- */
-function flattenTree(
-	tree: unknown
-): Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> {
-	const out: Array<{ tag: string; value?: unknown; confidence?: number; start?: number; end?: number }> = []
-	const roots = (tree as { roots?: unknown[] } | null | undefined)?.roots ?? []
-
-	interface TreeNode {
-		tag: string
-		value?: unknown
-		confidence?: number
-		start?: number
-		end?: number
-		children?: unknown
-	}
-
-	const stack = [...(roots as TreeNode[])]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (typeof n.tag === "string") {
-			out.push({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end })
-		}
-
-		if (Array.isArray(n.children)) {
-			for (const c of n.children) {
-				stack.push(c as TreeNode)
-			}
-		}
-	}
-
-	return out.toReversed()
-}
+import { resolveWOFHotDB, wofHotStageDir } from "./wof-hot-db.ts"
 
 /**
  * Options for {@linkcode demoCascadeSmoke} — one field per flag the gate used to serialize into argv.
@@ -220,12 +178,12 @@ export async function demoCascadeSmoke(
 	// is dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually
 	// runs; in a clean install without the package the leg fails HERE, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
-	const STAGE = options.stageDir || tempRootPath("v440-stage", "en-us", "v4.4.0")
-	const DB = options.db || ($public.MAILWOMAN_WOF_HOT_DB ?? path.join(STAGE, "wof-hot.db"))
-	const MODEL = options.model || path.join(STAGE, "model.onnx")
-	const TOK = options.tokenizer || path.join(STAGE, "tokenizer.model")
-	const CARD = options.card || path.join(STAGE, "model-card.json")
-	const FST = options.fst || path.join(STAGE, "fst-en-US.bin")
+	const STAGE = options.stageDir || wofHotStageDir()
+	const DB = options.db || resolveWOFHotDB(String(STAGE))
+	const MODEL = options.model || join(STAGE, "model.onnx")
+	const TOK = options.tokenizer || join(STAGE, "tokenizer.model")
+	const CARD = options.card || join(STAGE, "model-card.json")
+	const FST = options.fst || join(STAGE, "fst-en-US.bin")
 	const GAZ = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
 	const FILE = options.file || "data/eval/external/demo-cascade-smoke.jsonl"
 	const JSON_OUT = options.json || ""
@@ -269,7 +227,7 @@ export async function demoCascadeSmoke(
 	const card = parseJSONStrict<{ labels?: readonly string[] }>(readFileSync(CARD, "utf8"))
 
 	const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
-		.map((f) => path.join(STAGE, f))
+		.map((f) => join(STAGE, f))
 		.filter((p) => existsSync(p))
 
 	if (!postcodeBinaries.length) {
@@ -294,7 +252,7 @@ export async function demoCascadeSmoke(
 	})
 
 	const fst = deserializeFST(readFileSync(FST))
-	const lookup = new WOFSqlitePlaceLookup({ databasePath: DB })
+	const lookup = new WOFSQLitePlaceLookup({ databasePath: DB })
 
 	// ── Run ──────────────────────────────────────────────────────────────────────────────────────────
 	const results: RowResult[] = []
@@ -303,29 +261,28 @@ export async function demoCascadeSmoke(
 		const { tree } = await runPipeline(row.input, {
 			computeQueryShape,
 			groupPhrases,
-			classifier: classifier as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+			classifier: classifier as Parameters<typeof runPipeline>[1]["classifier"],
 			fst: fst as Parameters<typeof runPipeline>[1]["fst"],
 		})
 
-		// Node selection copied VERBATIM from the demo page (docs/src/pages/demo/index.tsx) — same
-		// locality/city filter, same highest-confidence region pick, same postcode find.
-		const nodes = flattenTree(tree)
-		const localityNodes = nodes.filter((n) => n.tag === "locality" || n.tag === "city")
+		// Node selection mirrors the demo page (docs/src/pages/demo/_runtime.ts) — same locality filter,
+		// same highest-confidence region pick, same postcode find.
+		// `city` / `state` / `postal_code` are libpostal vocabulary and are NOT `ComponentTag`s, so the
+		// `|| n.tag === "…"` arms that used to sit here could never match. They compiled only while the
+		// flattener returned `{ tag: string }`; the real tag union makes them a type error.
+		const nodes = flattenTreeNodes(tree)
+		const localityNodes = nodes.filter((n) => n.tag === "locality")
 
 		const stateNode = nodes
-			.filter((n) => n.tag === "region" || n.tag === "state")
+			.filter((n) => n.tag === "region")
 			.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 
-		const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
+		const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
 		// #861: runCascade now takes the TREE and runs the shared resolveTree (greedy walk + coherence
 		// passes + span-rescore) over the lookup, exactly as the browser composes it. The node
 		// extraction above stays for the explain output + the anchor-centroid fallback below.
-		const hits = await runCascade(
-			lookup as unknown as Parameters<typeof runCascade>[0],
-			tree as { roots: unknown[] },
-			row.input
-		)
+		const hits = await runCascade(lookup as Parameters<typeof runCascade>[0], tree, row.input)
 
 		// The demo's anchor-centroid fallback for postcode-only dead ends (WOF placeholder zeros / the
 		// slim DB's absent postalcode rows): synthesize the approximate hit from the anchor channel.

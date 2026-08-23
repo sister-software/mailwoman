@@ -12,29 +12,60 @@ import { existsSync } from "node:fs"
 
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import { alignRow } from "@mailwoman/corpus/utils"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator } from "spliterator"
 
+import { stableSourceIDFromParts } from "#adapters/utils"
+import { alignRow } from "#utils"
+
 /**
- * {@link stableSourceID}, but accepting arbitrary disambiguator keys (e.g. a variant index `v`) that aren't
- * `ComponentTag`s. `stableSourceID` sorts + hashes EVERY key it's given, so passing extra keys is how the legacy
- * builders kept per-variant ids unique — the strict typing is just too narrow for that. Centralizes the one cast.
+ * {@link stableSourceIDFromParts} under the name the recipes use: arbitrary disambiguator keys (e.g. a variant index
+ * `v`) that aren't `ComponentTag`s, which is how the legacy builders kept per-variant ids unique.
  */
 export function shardSourceID(adapterID: string, parts: Record<string, string | undefined>): string {
-	return stableSourceID(adapterID, parts as unknown as Parameters<typeof stableSourceID>[1])
+	return stableSourceIDFromParts(adapterID, parts)
 }
+
+/**
+ * Where a country's convention writes the postcode inside the `«locality», «region»[, «country»]` admin tail.
+ *
+ * Load-bearing rather than cosmetic: the same digits change TAG with position. Measured on the shipped model,
+ * `Heladería Frappé Manía, Avenida Country Club, Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number`
+ * and loses the locality into the street, while the identical row written `… 6001 Barcelona, Anzoátegui, Venezuela`
+ * tags it `postcode` and recovers `locality: Barcelona`. So a shard emitting one placement teaches one family of
+ * countries.
+ *
+ * Each is attested by a gauntlet board row, which is the bar for adding another:
+ *
+ * - `leading` — `«postcode» «locality», «region»`. `Rua da Praia, 15, 8600-315 Lagos, Algarve, Portugal`
+ *   (`pt_structured`). The default, and what every tuple written before this field existed means.
+ * - `after_locality` — `«locality» «postcode», «region»`. `…, Barcelona 6001, Anzoátegui, Venezuela`
+ *   (`ve_city_postcode_trailing_state`).
+ * - `after_region` — `«locality», «region» «postcode»`. `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`
+ *   (`in_structured`).
+ */
+export type PostcodePlacement = "leading" | "after_locality" | "after_region"
 
 /**
  * A (locality, region, postcode, country) source tuple — the input to tuples-mode recipes.
  */
 export interface ShardTuple {
 	locality?: string
+	/**
+	 * The segment before the locality, when the source has one. A shard whose every row BEGINS with the locality teaches
+	 * that the first named segment is the locality, which flips the model's default — measured on the v4.8.0 candidate,
+	 * where `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`.
+	 */
+	dependentLocality?: string
 	region?: string
 	postcode?: string
 	country?: string
+	/**
+	 * Defaults to `leading` when absent, which is what every tuple file written before this field existed means — so an
+	 * old tuples file produces byte-identical rows.
+	 */
+	postcodePlacement?: PostcodePlacement
 	[k: string]: unknown
 }
 

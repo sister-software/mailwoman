@@ -28,16 +28,12 @@ import { parseArgs } from "node:util"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
-import {
-	type AddressPointDatabase,
-	createAddressPointIndexes,
-} from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 
 import {
-	asOSMLayerContractDB,
 	createOSMAddressPointIndexes,
 	createOSMAddressPointTables,
 	OSM_ADDRESS_H3_RESOLUTION,
@@ -45,7 +41,7 @@ import {
 	type OSMAddressPointDatabase,
 } from "../sdk/address-point-schema.ts"
 import { extractAddrPoints } from "../sdk/extract.ts"
-import { normalizeStreetForKeyLocale, streetLocaleForCountry } from "../sdk/street-locale.ts"
+import { normalizeStreetForKeyLocale, streetLocaleForCountry, streetLocaleForSurface } from "../sdk/street-locale.ts"
 import { buildStreetRecoveryIndex } from "../sdk/street-recovery.ts"
 
 interface BuildArgs {
@@ -178,7 +174,9 @@ async function main(): Promise<void> {
 			recovered++
 		}
 
-		const streetNorm = normalizeStreetForKeyLocale(street, locale)
+		// Per-SURFACE locale routing (the Québec finishing move): a French-lead surface folds under the fr
+		// rules whatever the country default; the probe side routes with the same shared function.
+		const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 		const number = rec.housenumber.trim().toLowerCase()
 
 		if (!streetNorm || !number) {
@@ -222,10 +220,10 @@ async function main(): Promise<void> {
 
 	console.error(`[osm] indexing…`)
 
-	await createAddressPointIndexes(kdb as unknown as DatabaseClient<AddressPointDatabase>)
+	await createAddressPointIndexes(kdb)
 	await createOSMAddressPointIndexes(kdb)
 
-	await writeLayerManifest(asOSMLayerContractDB(kdb), {
+	await writeLayerManifest(kdb, {
 		name: `osm-address-points-${args.country}-${args.slug}`,
 		version: args.release,
 		schemaVersion: 1,
@@ -234,7 +232,11 @@ async function main(): Promise<void> {
 		attribution: "© OpenStreetMap contributors",
 		source,
 		sourceVintage: args.release,
-		buildCmd: "node osm/out/scripts/build-rooftop-shard.js",
+		// The path this recorded — `osm/out/scripts/build-rooftop-shard.js` — moved under `packages/` in the
+		// workspace regroup, and the literal survived INSIDE every shard built before then, where no lint can
+		// reach it. `mailwoman data inventory` is what surfaced it, on three shipped artifacts that pass every
+		// "has a manifest" check and cannot be rebuilt from what they say.
+		buildCmd: "node packages/osm/out/scripts/build-rooftop-shard.js",
 		buildSHA: args.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },

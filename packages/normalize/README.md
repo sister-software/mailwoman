@@ -61,7 +61,7 @@ Stage 1 in the [Staged Pipeline Contract](https://github.com/sister-software/mai
 
 - [`@mailwoman/query-shape`](../query-shape) — Stage 1.5, structural priors that consume the normalized output
 - [Staged Pipeline Contract](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/STAGES.mdx)
-- [Tokenization concepts](https://mailwoman.sister.software/articles/concepts/tokenization/)
+- [Tokenization concepts](https://mailwoman.ai/articles/concepts/tokenization/)
 
 ## License
 

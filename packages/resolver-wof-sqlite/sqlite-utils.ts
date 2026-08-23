@@ -5,7 +5,48 @@
  *   Small shared helpers for the SQLite-backed lookups.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync, SQLInputValue } from "node:sqlite"
+
+import { allRows, getRow } from "@mailwoman/core/utils"
+
+// The row-shape assertion itself lives in `core` so the readers that cannot depend on this package reach the same
+// seam; re-exported here because this module is where this package's readers already look for it.
+export { allRows, getRow } from "@mailwoman/core/utils"
+
+/**
+ * A prepared single-row query whose parameter tuple remains visible to TypeScript. `StatementSync` accepts only the
+ * broad `SQLInputValue[]`, which otherwise erases tagged key types before they reach SQLite.
+ */
+export type PreparedGet<Parameters extends SQLInputValue[], Row> = (...parameters: Parameters) => Row | undefined
+
+/**
+ * Prepare a single-row query while preserving its exact parameter tuple at every call site.
+ */
+export function prepareGet<Parameters extends SQLInputValue[], Row>(
+	db: DatabaseSync,
+	sql: string
+): PreparedGet<Parameters, Row> {
+	const statement = db.prepare(sql)
+
+	return (...parameters) => getRow<Row>(statement, ...parameters)
+}
+
+/**
+ * Multi-row counterpart to {@link PreparedGet}.
+ */
+export type PreparedAll<Parameters extends SQLInputValue[], Row> = (...parameters: Parameters) => Row[]
+
+/**
+ * Prepare a multi-row query while preserving its exact parameter tuple at every call site.
+ */
+export function prepareAll<Parameters extends SQLInputValue[], Row>(
+	db: DatabaseSync,
+	sql: string
+): PreparedAll<Parameters, Row> {
+	const statement = db.prepare(sql)
+
+	return (...parameters) => allRows<Row>(statement, ...parameters)
+}
 
 /**
  * True when `name` is a table in the open database. The street-level lookups use this to degrade gracefully on an
@@ -36,7 +77,7 @@ export function hasTable(db: DatabaseSync, name: string): boolean {
  */
 export function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
 	try {
-		const rows = db.prepare(`PRAGMA table_info(${table})`).all() as unknown as Array<{ name: string }>
+		const rows = allRows<{ name: string }>(db.prepare(`PRAGMA table_info(${table})`))
 
 		return rows.some((r) => String(r.name) === column)
 	} catch {

@@ -21,7 +21,7 @@ const moduleDir = import.meta.dirname
  * failures into one: a corrupt `taxonomy.json` throws, gets swallowed as "not this candidate", and the package reports
  * a missing table it is in fact looking straight at.
  */
-export function resolvePackagedDataPath(filename: string): string {
+function resolvePackagedDataPath(filename: string): string {
 	const candidates = [resolve(moduleDir, "data", filename), resolve(moduleDir, "..", "data", filename)]
 	const found = candidates.find((candidate) => existsSync(candidate))
 
@@ -40,6 +40,6 @@ export function readPackagedTable<T>(filename: string): T {
 
 	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. `poi-taxonomy` declares zero
 	// dependencies, so `@mailwoman/core`'s parse wrappers are deliberately out of reach.
-	// oxlint-disable-next-line no-restricted-properties
+	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
 	return JSON.parse(readFileSync(path, "utf8")) as T
 }

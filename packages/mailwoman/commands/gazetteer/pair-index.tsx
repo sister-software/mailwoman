@@ -30,13 +30,14 @@
  *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
-import { createReadStream, existsSync, readFileSync, writeFileSync } from "node:fs"
+import { createReadStream, existsSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
@@ -150,7 +151,7 @@ function splitPathList(value: string | undefined): string[] {
 	return (value ?? "")
 		.split(",")
 		.map((path) => path.trim())
-		.filter(Boolean)
+		.filter((path) => path.length > 0)
 }
 
 /**
@@ -200,7 +201,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// `pair-index-resolver` reaches only `core/types` — so neither load pulls the ONNX runtime.
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PairIndexResolver, serializePairIndex } = await import("@mailwoman/neural/pair-index-resolver")
-		const { PairIndexBuilder, applyPairIndexHoldout } = await import("mailwoman/gazetteer-pipeline/pair-index")
+		const { PairIndexBuilder, applyPairIndexHoldout } = await import("#gazetteer-pipeline/pair-index")
 		const { CSVSpliterator, JSONSpliterator } = await import("spliterator")
 		const { extractBoroughPairs } = await import("../../gazetteer-pipeline/borough-pairs.ts")
 		const { extractLieuDitPairs } = await import("../../gazetteer-pipeline/lieudit-pairs.ts")

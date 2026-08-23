@@ -36,7 +36,7 @@ Here is the same matching decision, scored two ways:
 
 String-first draws its decision boundary vertically: spell it close enough and it is a match, regardless of where on Earth the two records sit. Geocode-first draws it horizontally: near is plausible, far is no, and the spelling only breaks ties between neighbours. The two traps — the same place wearing different costumes, the different places wearing nearly the same one — live in the corners where those boundaries disagree. Geocode-first gets both right. The image above is the same Fellegi-Sunter scorer with real per-field weights, run twice: once seeing only the name, once seeing distance too. Geography carries the heavier evidence by design.
 
-So we stopped matching the costume. [Mailwoman](https://mailwoman.sister.software) is a calibrated street-level geocoder — give it a messy line, it returns a coordinate, a resolution tier, and a calibrated uncertainty. Once you have that, entity resolution changes shape. You match on the resolved place: the coordinate, the canonical key, the admin hierarchy. The string becomes evidence, not identity.
+So we stopped matching the costume. [Mailwoman](https://mailwoman.ai) is a calibrated street-level geocoder — give it a messy line, it returns a coordinate, a resolution tier, and a calibrated uncertainty. Once you have that, entity resolution changes shape. You match on the resolved place: the coordinate, the canonical key, the admin hierarchy. The string becomes evidence, not identity.
 
 Three things change, and they drive the rest.
 

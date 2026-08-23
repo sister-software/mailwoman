@@ -8,7 +8,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -29,7 +30,7 @@ interface Options {
 
 const GazetteerBuildNLPC6: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildNLPC6Shard } = await import("../../../gazetteer-pipeline/postcode/nl-pc6.ts")
+		const { buildNLPC6Shard } = await import("#gazetteer/postcode/nl-pc6")
 		const r = await buildNLPC6Shard({ csvPath: options.csv, out: options.out })
 
 		return `nl-pc6: ${r.inserted.toLocaleString()} PC6 rows (skipped ${r.skipped}) → ${r.out} — sealed 0444`

@@ -10,9 +10,43 @@
  *   `RemoteResolver` adapter (Phase 4.4 — Pelias / BAN / Nominatim) without a public-API break.
  *
  *   See `docs/plan/phases/PHASE_4_3_resolver_integration.md` for the design intent.
+ *
+ *   This module is a published subpath (`@mailwoman/core/resolver/types`) with a wide consumer set, so the
+ *   groups that moved to siblings are re-exported here rather than requiring every importer to move with them.
  */
 
-import type { AddressTree, ComponentTag } from "../decoder/types.ts"
+import type { AddressTree } from "../decoder/types.ts"
+import type { GazetteerArtifactCoverage } from "./coverage-facts.ts"
+import type {
+	AddressPointLookup,
+	InterpolationLookup,
+	PostcodePrefixIndexLike,
+	StreetCentroidLookup,
+} from "./lookup-types.ts"
+import type { PlacetypeMap } from "./placetype-map.ts"
+
+export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "./coverage-facts.ts"
+export { hardCountrySafelistFromCoverage } from "./coverage-facts.ts"
+
+export type {
+	AddressPointHit,
+	AddressPointLookup,
+	InterpolatedPointHit,
+	InterpolationLookup,
+	PostcodePrefixAncestor,
+	PostcodePrefixIndexLike,
+	PostcodePrefixNode,
+	StreetCentroidHit,
+	StreetCentroidLookup,
+} from "./lookup-types.ts"
+
+export {
+	DEFAULT_PLACETYPE_MAP,
+	expandPlacetypeFilter,
+	isPlacetypeFallback,
+	PLACETYPE_FILTER_GROUPS,
+	type PlacetypeMap,
+} from "./placetype-map.ts"
 
 /**
  * One candidate place returned by a resolver. Mirrors the shape used by `@mailwoman/core/resolver-wof-sqlite`'s
@@ -128,6 +162,23 @@ export interface ResolvedPlace {
 	 * Absent when the exact placetype matched (the normal case).
 	 */
 	resolutionQuality?: "fallback"
+	/**
+	 * The admin-containment verdict for this candidate (#1717 stage 2) — TRI-STATE, and the absence is load-bearing
+	 * (meaning-of-zero): `true` = the backend's ancestors sidecar vouches that this candidate sits UNDER the query's
+	 * parsed region qualifier; `false` = the backend evaluated containment and could not vouch for it; `undefined` = the
+	 * question was never asked — the lever is off, the query carried no qualifier, or the backend/artifact cannot answer
+	 * (no sidecar). Set only by backends implementing `FindPlaceQuery.regionQualifier`; consumed by the resolver walk's
+	 * `adminContainmentRerank` partition, which must never read `undefined` as "not contained".
+	 */
+	containedByQualifier?: boolean
+	/**
+	 * #1731: `true` when a `parentID` region scope was applied, MISSED across the whole probe cascade, and the backend's
+	 * unscoped fallback produced this row — the re-admission path where a wrong-instance namesake enters (the Astoria
+	 * class: no locality-group row exists under the parent, so the fallback answers population-first from anywhere).
+	 * Absent when the question never arose (no parent scope, or the scoped probe answered). Backend-optional; the
+	 * resolver-interior trace (#1721) surfaces it as a gate.
+	 */
+	regionScopeMiss?: boolean
 }
 
 /**
@@ -137,98 +188,6 @@ export interface ResolvedPlace {
  * Structurally compatible with `PlaceLookup` from `@mailwoman/core/resolver-wof-sqlite` so the latter satisfies this
  * interface without an adapter shim.
  */
-/**
- * One country's measured hard-filter coverage fact, as recorded at a promote gate. Facts about the gazetteer artifact
- * live IN the artifact (the `country_coverage` table the gazetteer build emits) — code constants are only the fallback
- * for artifacts that predate the manifest.
- *
- * Meaning-of-zero discipline: a country ABSENT from the coverage map was never measured — never "measured and failed".
- * A measured-and-failed country is PRESENT with `hardFilterSafe: false` (e.g. FI at 69.5% hard-resolve), so the
- * negative result is a first-class record, distinguishable from ignorance.
- */
-export interface CountryCoverageFact {
-	/**
-	 * ISO 3166-1 alpha-2, uppercase.
-	 */
-	country: string
-	/**
-	 * The promote-gate VERDICT: hard-filtering this country is a pure win (a hard-filter miss is almost always a genuine
-	 * non-match, not a coverage gap). Stored as a verdict — not re-derived from `hardResolveRate` at read time — because
-	 * the gate is a judgment over a panel, not a pure rate function (CA cleared at the #928 promote on the
-	 * postcode-format-prior rationale despite a sub-95% panel resolve rate).
-	 */
-	hardFilterSafe: boolean
-	/**
-	 * Measured hard-resolve rate (0..1) on the panel named in `source`, when the receipt recorded one.
-	 */
-	hardResolveRate?: number
-	/**
-	 * Panel size behind `hardResolveRate`, when recorded.
-	 */
-	sampleSize?: number
-	/**
-	 * ISO-8601 date of the measurement / promote gate.
-	 */
-	measuredAt: string
-	/**
-	 * The receipt: which panel/gate produced this row (issue + date, human-readable).
-	 */
-	source: string
-}
-
-/**
- * One country's coarse guard-B bounding box, as carried by the gazetteer artifact's `country_bbox` table.
- */
-export interface CountryBBoxFact {
-	/**
-	 * ISO 3166-1 alpha-2, uppercase.
-	 */
-	country: string
-	latMin: number
-	latMax: number
-	lonMin: number
-	lonMax: number
-	/**
-	 * Provenance of the box (harness + date).
-	 */
-	source: string
-}
-
-/**
- * Facts a loaded gazetteer artifact declares about itself — read from the artifact's own manifest tables at open time,
- * carried on the {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts from the artifact they are
- * actually resolving against. `undefined` on the handle = the artifact predates the manifest → consumers fall back to
- * the code constants (byte-identical legacy behavior).
- */
-export interface GazetteerArtifactCoverage {
-	/**
-	 * Country → measured coverage fact. ABSENCE = never measured (meaning-of-zero), never "failed".
-	 */
-	countryCoverage: ReadonlyMap<string, CountryCoverageFact>
-	/**
-	 * Country → guard-B bbox. ABSENCE = no box → the plausibility guard fails open for that country.
-	 */
-	countryBBoxes: ReadonlyMap<string, CountryBBoxFact>
-	/**
-	 * Derived at load: the countries whose fact says `hardFilterSafe` — the artifact's hard-country safelist.
-	 */
-	hardCountrySafelist: ReadonlySet<string>
-}
-
-/**
- * Derive the hard-country safelist from coverage facts — the ONE derivation both the reader and the build share.
- */
-export function hardCountrySafelistFromCoverage(facts: Iterable<CountryCoverageFact>): ReadonlySet<string> {
-	const out = new Set<string>()
-
-	for (const fact of facts) {
-		if (fact.hardFilterSafe) {
-			out.add(fact.country.toUpperCase())
-		}
-	}
-
-	return out
-}
 
 export interface ResolverBackend {
 	findPlace(query: {
@@ -267,6 +226,24 @@ export interface ResolverBackend {
 		 * ignore it.
 		 */
 		primaryOnly?: boolean
+		/**
+		 * Alias-row NAME ROLES the probe refuses to answer through (#1730) — set by the bare-toponym side races with
+		 * `abbr`/`gloss`. A lone bare token matching only an abbreviation row ("Tó" folded onto Toledo's "TO") or a
+		 * translation-gloss row is a weak re-reading, not a naming; role-NULL alias rows (the exonym tier, the country
+		 * display names) stay fully open, which is what `primaryOnly` could never express. Backends without a role column
+		 * ignore it — an older artifact degrades to today's behavior.
+		 */
+		excludeNameRoles?: readonly string[]
+		/**
+		 * The tree's parsed REGION qualifier, verbatim (#1717 stage 2) — set by the resolver on locality lookups when
+		 * `ResolveOpts.adminContainmentRerank` is on. A capable backend resolves the qualifier to its own region-class rows
+		 * and (a) stamps every returned candidate's `containedByQualifier`, (b) ranks contained candidates ahead of
+		 * uncontained ones, and (c) may ADD contained same-name candidates its other filters (a locale-inferred country
+		 * scope) would have hidden — additive only, never a filter, so a qualifier that matches nothing changes nothing.
+		 * Backends without a containment source ignore it (candidates then carry no stamp, which the walk reports as
+		 * `unavailable`).
+		 */
+		regionQualifier?: string
 		limit?: number
 	}): Promise<ResolvedPlace[]>
 	/**
@@ -351,170 +328,6 @@ export interface CoincidentLocality extends ResolvedPlace {
 /**
  * Options for `resolveTree`. All optional with sensible defaults.
  */
-/**
- * One exact address-point hit (#476): a real situs coordinate for `(street, number)` within a postcode/locality scope —
- * the street-level tier in front of admin-centroid resolution.
- */
-export interface AddressPointHit {
-	lat: number
-	lon: number
-	/**
-	 * Provenance, e.g. `"overture:NAD"`.
-	 */
-	source: string
-	/**
-	 * Pinned data release the point came from, e.g. `"2026-05-20.0"`.
-	 */
-	release: string
-	/**
-	 * The point's OWN scope tags, when the shard row carries them — the register's locality (normalized key form) and
-	 * postcode. A rooftop answer can then be DECORATED with the commune/postcode the register attests, which a query that
-	 * never named them cannot supply. Optional: not every source carries both, and existing readers/consumers predate the
-	 * fields.
-	 */
-	localityNorm?: string
-	postcode?: string
-}
-
-/**
- * Street-level exact-point lookup (#476). Implementations own their normalization — both the shard build and this
- * lookup must apply the SAME normalizer (see `resolver-wof-sqlite/street-normalize.ts`). Core depends only on this
- * contract.
- */
-export interface AddressPointLookup {
-	find(query: {
-		street: string
-		number: string
-		postcode?: string
-		locality?: string
-		/**
-		 * Optional bbox scope (`minLat`/`maxLat`/`minLon`/`maxLon`), tried AFTER postcode/locality. For shards whose points
-		 * carry no postcode/locality of their own (OSM addr nodes often don't) but DO carry a coordinate — the resolved
-		 * locality's bounding box scopes the `(street, number)` probe instead. US situs never passes it (byte-stable).
-		 */
-		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
-	}): AddressPointHit | null
-}
-
-/**
- * One interpolated coordinate estimate (#483) — NEVER an exact situs point (`uncertaintyM` prices the estimate
- * honestly). Structural mirror of `InterpolatedHit` in `resolver-wof-sqlite/interpolation.ts`; keep this a SUBSET of
- * that shape so the concrete `StreetInterpolator`/`AddressPointInterpolator` satisfy {@link InterpolationLookup} with no
- * adapter (the {@link AddressPointHit} precedent).
- */
-export interface InterpolatedPointHit {
-	lat: number
-	lon: number
-	interpolated: true
-	/**
-	 * `address_point` = bracketed between real neighbor points; `tiger_range` = linear within a segment range.
-	 */
-	method: "address_point" | "tiger_range"
-	/**
-	 * False when only the opposite side's range contained the number (right block, wrong side).
-	 */
-	parityMatched?: boolean
-	/**
-	 * `both` = neighbors bracketed it; `single` = one-sided extrapolation (larger uncertainty).
-	 */
-	bracket?: "both" | "single"
-	/**
-	 * Honest uncertainty radius in METERS (half the matched segment length).
-	 */
-	uncertaintyM: number
-	source: string
-	release: string
-}
-
-/**
- * House-number interpolation lookup (#483). Like {@link AddressPointLookup}, implementations own their normalization
- * (the shared `resolver-wof-sqlite/street-normalize.ts`); core depends only on this contract. Postcode-scoped; without
- * a postcode the tier answers only when the covering ranges agree on ONE postcode — `near` (the resolved locality's
- * coordinate) lets an implementation break a multi-postcode tie by segment proximity instead of abstaining (the
- * Brooklyn-vs-Great-Neck namesake class). Optional and advisory: implementations may ignore it.
- */
-export interface InterpolationLookup {
-	find(query: {
-		street: string
-		number: string
-		postcode?: string
-		near?: { lat: number; lon: number }
-	}): InterpolatedPointHit | null
-	/**
-	 * The ARTIFACT's own conformal radius multiplier for `uncertaintyM` (#374), read from the shard's
-	 * `interp_calibration` metadata table at open time (the pair-index δ/transitionBeta header precedent): the multiplier
-	 * is a property of the calibration set the artifact was built against, so it ships in the artifact, not in caller
-	 * code. The resolver applies it as the DEFAULT whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
-	 * `undefined` (or an implementation without the property) = the artifact carries none — shards built before the
-	 * metadata table existed; behavior is then exactly the pre-artifact ladder (caller-supplied factor or raw).
-	 * Implementations must read this at OPEN time (constructor/factory), never per-lookup — `find()` is synchronous by
-	 * design.
-	 */
-	readonly radiusCalibration?: number
-}
-
-/**
- * One street-CENTROID hit (#1042) — the street-level tier BELOW the exact address-point tier and ABOVE admin-centroid
- * resolution. A street's centroid + an honest extent-derived radius, for a street-only query (no house number) that an
- * address-point tier cannot serve by definition. Derived from a national register's rooftop points
- * (`street-centroids-<cc>.db`, a `GROUP BY street` roll-up). `uncertaintyM` prices the coarseness (half the street's
- * bbox diagonal) so a consumer never mistakes it for a rooftop.
- */
-export interface StreetCentroidHit {
-	lat: number
-	lon: number
-	/**
-	 * Honest coarse radius in METERS — half the street's bounding-box diagonal.
-	 */
-	uncertaintyM: number
-	source: string
-	release: string
-}
-
-/**
- * Street-centroid lookup (#1042). Like {@link AddressPointLookup}, implementations own their normalization (the shared
- * `resolver-wof-sqlite/street-normalize.ts`); core depends only on this contract. Scoped by `postcode` (preferred) or
- * `locality` (the base commune) — NO house number: this is the street-only tier.
- */
-export interface StreetCentroidLookup {
-	find(query: { street: string; postcode?: string; locality?: string }): StreetCentroidHit | null
-}
-
-/**
- * One admin-ancestry entry a PFX1 node asserts (coarsest-first: country → constituent country → district).
- */
-export interface PostcodePrefixAncestor {
-	placetype: string
-	wofID: number
-	name: string
-}
-
-/**
- * A PFX1 postcode-prefix node — the partial-code prior's payload ({@link ResolveOpts.postcodePrefixPrior}, #31
- * Mechanism 3). The coordinate is OPTIONAL and its absence is meaningful: an ancestry-only tier (NI's 80 BT districts)
- * carries `ancestors` and no `lat`/`lon` — representable as absence, never as `0,0` (the meaning-of-zero rule).
- * `radiusP95Km` is mandatory whenever a coordinate is present (M-3's receipt: a 1-digit US band and a GB outward code
- * are both "a prefix with a centroid" and differ by 200×).
- */
-export interface PostcodePrefixNode {
-	prefix: string
-	ancestors: readonly PostcodePrefixAncestor[]
-	lat?: number
-	lon?: number
-	radiusP95Km?: number
-	unitCount: number
-}
-
-/**
- * The PFX1 index the resolver probes — minimal, structural (`probe` + optional `country`), so `@mailwoman/resolver`
- * consumes an index built in `@mailwoman/neural` without depending on it (B3-5: the partial-code prior touches zero
- * model inputs). `country` is the ISO-3166 alpha-2 the index was built for (upper-case); the resolver only probes an
- * index whose country matches the query's country scope.
- */
-export interface PostcodePrefixIndexLike {
-	probe(prefix: string): PostcodePrefixNode | null
-	readonly country?: string
-}
 
 export interface ResolveOpts {
 	/**
@@ -917,10 +730,6 @@ export interface ResolveOpts {
 	 */
 	hierarchyCompletion?: boolean
 	/**
-	 * @deprecated Renamed to {@link hierarchyCompletion} (#405 generalized #387). Still honored.
-	 */
-	cityStateFallback?: boolean
-	/**
 	 * Attach each resolved node's ancestor lineage (#404) — the containment chain (county → region → country) the
 	 * backend's {@link ResolverBackend.ancestors} returns — onto `metadata.ancestors`. The Pelias/Nominatim
 	 * "always-attach-the-hierarchy" enrichment, so a consumer gets the full admin ladder from a single resolved place.
@@ -928,121 +737,123 @@ export interface ResolveOpts {
 	 * resolver actually resolved.
 	 */
 	includeAncestors?: boolean
+	/**
+	 * Admin-containment re-rank (#1717 stage 2) — make a parsed REGION qualifier participate in locality-candidate
+	 * selection. `Weimar, Thüringen` under the en-US locale resolves to Weimar, Texas: the locale-inferred
+	 * `defaultCountry` becomes a hard `country` filter on the locality lookup, so the candidate pool is all-US before any
+	 * comparator runs — the qualifier the parse got RIGHT never reaches the deciding site (the #1729 lesson, measured
+	 * again here: the DE row is simply not in the list). The coherence passes cannot reach this class either:
+	 * `applyAdminCoherence` needs the locality to have FAILED, `applyRegionCountryCoherence` expands only the codex US+CA
+	 * subdivision table, and there is no postcode for #42 to re-scope by.
+	 *
+	 * When on, the walk threads the tree's first region-tagged span onto every locality lookup
+	 * (`FindPlaceQuery.regionQualifier`); a capable backend answers containment from its ancestors sidecar — stamping
+	 * `ResolvedPlace.containedByQualifier` and ADDING contained same-name candidates a locale-inferred country scope hid
+	 * — and the walk finishes with a TIER-SAFE stable partition: contained candidates ahead of uncontained ones, within
+	 * the exact-match tier, preserving each group's relative order. The partition runs AFTER the fame/anchor re-ranks
+	 * because the qualifier is the address's OWN text — evidence, which outranks a prior (the same precedence
+	 * `anchorPosterior` holds over `rankByImportance`).
+	 *
+	 * Soft by construction: candidates are only ever added or reordered, never dropped, so a qualifier that matches
+	 * nothing (or contains no same-name candidate) leaves the answer byte-identical. Stands down under an EXPLICIT caller
+	 * `defaultCountry` (the #912 posture: only a locale-INFERRED scope is bypassable by the address's own evidence). Each
+	 * locality pick records `metadata.admin_containment`: `"contained"` (the sidecar vouched for at least one candidate),
+	 * `"no_contained_candidate"` (evaluated, none contained), or `"unavailable"` (the backend or artifact cannot answer —
+	 * a pre-sidecar candidate.db, the FTS/browser backends) — so an inert lever is visible in the trace rather than
+	 * silently dead (#1719's rule; the parse-side census cannot see resolver levers, so the stamp is the census surface
+	 * here).
+	 *
+	 * **Default OFF** (D-rule): opt in and measure; the promotion battery is the full board + gauntlet + parity ON/OFF
+	 * with one declared variable.
+	 */
+	adminContainmentRerank?: boolean
+	/**
+	 * Resolver-interior trace sink (#1721): when set, the walk emits one {@link ResolveNodeTrace} per candidate lookup —
+	 * the query as sent, the candidate table with per-stage ranks, every gate that fired, and the pick's provenance — so
+	 * "the right row was present at rank 3 and lost to the fame term" is a recorded fact instead of a spelunking result.
+	 * Absent (the default) the walk does ZERO trace bookkeeping and stays byte-identical; the sink is a hot-path opt-in
+	 * for debug surfaces, never a production default.
+	 */
+	traceSink?: (record: ResolveNodeTrace) => void
+	/**
+	 * When a lookup resolves NOTHING, re-probe the same value across the other admin bands and record which ones hold it
+	 * ({@link ResolveNodeTrace.reachableIn}) — a DIAGNOSTIC that never changes the answer.
+	 *
+	 * The distinction it buys is the one a `null` cannot carry: a key we hold under a different placetype is a
+	 * REACHABILITY failure — the model's tag chose the band, and a wrong tag makes a row we own unreachable — while a key
+	 * that exists nowhere is a coverage fact. Those call for opposite work and today reach a caller identically.
+	 *
+	 * Costs one extra backend call per band per miss, so it is off by default and belongs to debug surfaces. Requires
+	 * `traceSink`: with no sink there is nowhere to record the answer, and the probes would be pure cost.
+	 */
+	diagnoseUnreachable?: boolean
 }
 
 /**
- * Mapping from mailwoman's address-component tags to the resolver's placetype taxonomy. Components not present in the
- * map are NOT queried — the resolver pass leaves their classifier attribution untouched.
- *
- * Phase 4.3 default ships the obvious admin-level mappings; other tags (postcode, street, venue, dependent_locality,
- * prefecture, etc.) are explicitly omitted because:
- *
- * - `postcode` lives in a separate WOF shard (Phase 4.3.x follow-up via the postalcode loader).
- * - `street` / `house_number` aren't in WOF admin — would need OSM / OpenAddresses gazetteers and license diligence
- *   (Phase 4.4 candidate).
- * - Non-US JP-specific tags wait on a different shard entirely.
+ * One candidate as the resolver's deciding site saw it — the fields the ranking stages actually read, plus a per-stage
+ * rank vector. `ranks` carries one entry per stage that RAN, in execution order (`initial` = the backend's own order;
+ * then whichever of `anchor`, `locale_prior`, `importance`, `containment`, `exact_type` were active); a stage a
+ * candidate set never went through is absent, never defaulted. The vector is what makes loss attributable: the stage
+ * whose entry moved a row down is the term it lost to.
  */
-export type PlacetypeMap = Partial<Record<ComponentTag, string>>
-
-/**
- * Placetype equivalences applied when a backend does not supply its own. A `locality` query must also reach `borough`
- * and `localadmin` rows — Brooklyn is a borough, and a strict filter made it unreachable.
- */
-export const DEFAULT_PLACETYPE_MAP: PlacetypeMap = {
-	country: "country",
-	region: "region",
-	locality: "locality",
-	dependent_locality: "locality",
-	subregion: "county",
-	// `postcode` (mailwoman tag) maps to WOF's `postalcode` placetype. Resolves only when the
-	// backend has the postcode shard available — `WOFSqlitePlaceLookup` auto-routes `postalcode`
-	// queries to a `postalcode_us` (or similarly-named) shard, falling back to main if absent.
-	postcode: "postalcode",
+export interface ResolveCandidateTrace {
+	id: string | number
+	name: string
+	country: string
+	placetype: string
+	score: number
+	prominence?: number
+	importance?: number
+	population?: number
+	exactMatch?: boolean
+	containedByQualifier?: boolean
+	ranks: Record<string, number>
 }
 
 /**
- * Placetype-equivalence groups for lookup FILTERING. WOF splits a single addressing tier across several placetypes, but
- * an address's span can name ANY of them. A backend that filters to the one "obvious" placetype makes the equivalents
- * unreachable, so a fuzzy same-name place in the wrong tier wins instead.
- *
- * Three tiers are affected (the value of each entry is the set the SQL filter should accept; the FIRST entry is the
- * canonical/requested type, which shard routing keys off):
- *
- * - **`locality`** — `locality` (most cities), `borough` (Brooklyn, the Paris arrondissements, the London boroughs), and
- *   `localadmin` (FR communes, US towns/townships in New England). Without the group, Brooklyn-the-borough (pop 2.5M)
- *   was unreachable and the fuzzy "Brooklyn Park, MN" won.
- * - **`region`** — `region` + `macroregion` (#718). WOF does NOT model every country's top-level civil division as
- *   `region`: Italian regions (Lombardia, Veneto, Toscana…) are `macroregion` (their PROVINCES are `region`), and the
- *   post-2016 French régions (Île-de-France) are `macroregion` too. An address's `region` span names exactly those, so
- *   a `region`-only filter resolved them to NOTHING (confirmed against the IT/FR eval rows). US states / DE
- *   Bundesländer / ES provincias are genuine `region`, so the EXACT-type match is preferred in ranking (see the
- *   resolve.ts fallback-quality annotation) — the macro is the recall safety net, not a demotion.
- * - **`county`** — `county` + `macrocounty` (#718). The `subregion` ComponentTag maps to `county` via
- *   {@link DEFAULT_PLACETYPE_MAP}; WOF carries `macrocounty` for FR départements-grouping / DE / GB tiers above the
- *   county. Proactive (no eval row exercises `subregion` today) but symmetric with `region` — biasing to inclusion,
- *   since a missed resolution costs more than a too-broad candidate (which is QA-visible). Same exact-type preference
- *   applies.
- *
- * This table is the single source of truth for that expansion, shared by every lookup backend
- * (`@mailwoman/core/resolver-wof-sqlite`, `@mailwoman/core/resolver-wof-wasm`, and the demo's httpvfs lookup) so the
- * Node and browser resolvers can't drift. Keyed by the REQUESTED placetype. Placetypes without an entry pass through
- * unchanged — an explicit `placetype: "borough"` query stays narrow.
+ * One `ResolveNodeTrace` per backend lookup the walk performed (#1721) — and one per POST-WALK recovery that answers
+ * off the walk (`span_rescore`, `postal_compound_recovery`), so no resolved coordinate is off the record. `gates`
+ * records mechanism events in execution order, in the resolver's own vocabulary (`parent_fallback_retry`,
+ * `region_scope_miss`, `backend_error`, `postcode_format_probe`, `postcode_prefix_prior`, `bare_race`,
+ * `empty_admin_pick`, `min_score_reject`, `bare_country_repick`, `bare_region_repick`, `placetype_fallback`). `picked:
+ * null` states the lookup resolved nothing — a claim, not an omission. The candidate table is capped
+ * ({@link ResolveNodeTrace.candidatesTruncated} counts the tail) so a trace stays a record, not a dump.
  */
-export const PLACETYPE_FILTER_GROUPS: Readonly<Record<string, readonly string[]>> = {
-	locality: ["locality", "borough", "localadmin"],
-	region: ["region", "macroregion"],
-	county: ["county", "macrocounty"],
-}
-
-/**
- * Expand a placetype filter through {@link PLACETYPE_FILTER_GROUPS}, deduplicated and order-preserving (the first entry
- * stays first — shard routing keys off it). `null`/`undefined` (no filter) passes through untouched.
- */
-export function expandPlacetypeFilter(placetypes: null): null
-export function expandPlacetypeFilter(placetypes: readonly string[]): string[]
-export function expandPlacetypeFilter(placetypes: readonly string[] | null): string[] | null
-
-export function expandPlacetypeFilter(placetypes: readonly string[] | null): string[] | null {
-	if (!placetypes) return null
-	const out: string[] = []
-
-	for (const placetype of placetypes) {
-		for (const expanded of PLACETYPE_FILTER_GROUPS[placetype] ?? [placetype]) {
-			if (!out.includes(expanded)) {
-				out.push(expanded)
-			}
-		}
+export interface ResolveNodeTrace {
+	tag: string
+	value: string
+	placetype: string
+	query: {
+		country?: string
+		parentID?: string | number
+		postcode?: string
+		regionQualifier?: string
+		limit: number
 	}
-
-	return out
-}
-
-/**
- * Macro/broader-tier members of {@link PLACETYPE_FILTER_GROUPS} — the recall safety net a query may fall through to
- * when no candidate of the EXACT requested placetype exists (#718). DELIBERATELY scoped to the `macro*` tiers only: the
- * `locality` group's `borough`/`localadmin` are genuine peers (Brooklyn-the-borough is a first-class locality answer,
- * #404-class), NOT fallbacks — so they must NOT be deprioritized or annotated. Only `macroregion`/`macrocounty` are a
- * broader admin tier standing in for a true `region`/`county`.
- */
-const MACRO_FALLBACK_PLACETYPES: ReadonlySet<string> = new Set(["macroregion", "macrocounty"])
-
-/**
- * Did `candidatePlacetype` resolve `requestedPlacetype` only via a BROADER admin tier (a macro-type fallback within the
- * {@link PLACETYPE_FILTER_GROUPS} expansion), rather than the exact type (#718)?
- *
- * `region` → `region` is exact (false); `region` → `macroregion` is a fallback (true). Scoped to the `macro*` tiers
- * (see {@link MACRO_FALLBACK_PLACETYPES}) so the `locality` group's borough/localadmin peers stay exact. The resolver
- * uses this to (a) prefer an exact-type candidate in ranking and (b) annotate `resolutionQuality: "fallback"` when only
- * a macro-type matched. A placetype outside the requested group, or any non-macro member, is treated as exact (false).
- */
-export function isPlacetypeFallback(requestedPlacetype: string, candidatePlacetype: string): boolean {
-	const group = PLACETYPE_FILTER_GROUPS[requestedPlacetype]
-
-	if (!group) return false
-
-	if (candidatePlacetype === requestedPlacetype) return false
-
-	return MACRO_FALLBACK_PLACETYPES.has(candidatePlacetype) && group.includes(candidatePlacetype)
+	gates: string[]
+	/**
+	 * Which OTHER admin bands hold this value, probed only when the lookup resolved nothing and
+	 * {@link ResolveOpts.diagnoseUnreachable} is on.
+	 *
+	 * `[]` is a measured absence — every band was asked and none held it, so the miss is coverage. `undefined` means
+	 * nobody asked, which is a different fact and must not be read as an empty answer.
+	 */
+	reachableIn?: Array<{ placetype: string; n: number }>
+	candidates: ResolveCandidateTrace[]
+	candidatesTruncated: number
+	picked: {
+		id: string | number
+		name: string
+		source:
+			| "ranked"
+			| "bare_country"
+			| "bare_region"
+			| "postcode_prefix"
+			| "postcode_format_probe"
+			| "empty_admin"
+			| "span_rescore"
+			| "postal_compound_recovery"
+	} | null
 }
 
 /**
@@ -1054,6 +865,13 @@ export function isPlacetypeFallback(requestedPlacetype: string, candidatePlacety
  */
 export interface Resolver {
 	resolveTree(tree: AddressTree, opts?: ResolveOpts): Promise<AddressTree>
+	/**
+	 * Direct gazetteer probe, passed through from the {@link ResolverBackend} — for pipeline-level consumers that need one
+	 * lookup outside a tree walk (the #1738 dominant-bearer guard on the coarse placer's hard-country promotion is the
+	 * first). Optional like the members below: a resolver without it degrades its consumers to their without-the-probe
+	 * behavior, never to a crash.
+	 */
+	findPlace?: ResolverBackend["findPlace"]
 	/**
 	 * Facts the loaded gazetteer artifact declares about itself, passed through from the {@link ResolverBackend} so
 	 * pipeline-level consumers (the hard-country coverage gate, guard-B plausibility) read them from the handle they

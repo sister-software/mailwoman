@@ -28,6 +28,7 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
+import { foldName } from "./fold-name.ts"
 import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "./toponym-prior.ts"
 
 export interface SpanRescoreOptions {
@@ -118,17 +119,6 @@ export interface RescoreCandidate {
 	 */
 	alternatives: ResolvedPlace[]
 }
-
-/**
- * Normalize for exact comparison: lowercase, strip diacritics + punctuation, collapse whitespace.
- */
-const norm = (s: string): string =>
-	s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[^a-z0-9 ]/g, " ")
-		.replaceAll(/\s+/g, " ")
-		.trim()
 
 interface RawTok {
 	text: string
@@ -414,7 +404,7 @@ export async function findRescoreCandidate(
 	const softCountryEligible = softCountry && !!country && !qualified && !!wholeInput
 
 	for (const sp of spans) {
-		const key = norm(sp.text)
+		const key = foldName(sp.text)
 
 		if (key.length < 2 || /^\d+$/.test(key)) continue // skip bare numbers / empties
 		// Whole-input coverage and the soft-country prior are SEPARATE gates. `bare` (the prior) also
@@ -496,7 +486,7 @@ export async function findRescoreCandidate(
 		const code = postcodeCodeSubset(postcode) || postcode.trim()
 
 		for (const sp of spans) {
-			const key = norm(sp.text)
+			const key = foldName(sp.text)
 
 			if (key.length < 2 || /^\d+$/.test(key)) continue
 			const hits = await backend.findPlace({ text: sp.text, placetype: "locality", limit: 5 })

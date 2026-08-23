@@ -39,7 +39,8 @@ import { join } from "node:path"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import type { Check } from "mailwoman/cli-kit"
+
+import type { Check } from "#cli-kit"
 
 /**
  * The four surfaces every emitter + generated client covers. Order matches the salvaged README's table, mailwoman last
@@ -47,7 +48,7 @@ import type { Check } from "mailwoman/cli-kit"
  */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
 
-export type ClientSurface = (typeof CLIENT_SURFACES)[number]
+type ClientSurface = (typeof CLIENT_SURFACES)[number]
 
 /**
  * OpenAPI flavors the emitters print. 3.1 is the published document; 3.0 is progenitor's diet (openapiv3 only
@@ -85,7 +86,7 @@ function copyLicenseFiles(destDir: string): void {
 /**
  * Absolute paths to each surface's emitted document, per flavor.
  */
-export interface SpecPaths {
+interface SpecPaths {
 	v31: Record<ClientSurface, string>
 	v30: Record<ClientSurface, string>
 }
@@ -93,7 +94,7 @@ export interface SpecPaths {
 /**
  * Everything a completed (or partially completed, on early abort) run produced.
  */
-export interface GenerateClientsReceipt {
+interface GenerateClientsReceipt {
 	version: string
 	outDir: string
 	specsDir: string
@@ -270,8 +271,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://mailwoman.sister.software"
-Documentation = "https://mailwoman.sister.software/docs"
+Homepage = "https://mailwoman.ai"
+Documentation = "https://mailwoman.ai/docs"
 Repository = "https://github.com/sister-software/mailwoman"
 Issues = "https://github.com/sister-software/mailwoman/issues"
 
@@ -421,7 +422,7 @@ function pythonReadme(): string {
 	const lines = [
 		"# mailwoman-client (Python)",
 		"",
-		"Typed Python clients for [Mailwoman](https://mailwoman.sister.software)'s HTTP surfaces —",
+		"Typed Python clients for [Mailwoman](https://mailwoman.ai)'s HTTP surfaces —",
 		"**generated from their published OpenAPI specs** and bundled under one distributable:",
 		"",
 		"| Subpackage                   | Surface           | Endpoints                                                            |",
@@ -558,7 +559,7 @@ rust-version = "1.82"
 description = "Typed Rust clients for Mailwoman's Photon / Nominatim / libpostal drop-in geocoding APIs and native /v1/* surface, generated from their OpenAPI specs."
 license = "AGPL-3.0-only OR LicenseRef-Commercial"
 repository = "https://github.com/sister-software/mailwoman"
-homepage = "https://mailwoman.sister.software"
+homepage = "https://mailwoman.ai"
 documentation = "https://docs.rs/mailwoman-client"
 readme = "README.md"
 keywords = ["geocoding", "photon", "nominatim", "libpostal", "openapi"]
@@ -667,7 +668,7 @@ function rustReadme(): string {
 	const lines = [
 		"# mailwoman-client (Rust)",
 		"",
-		"Typed Rust clients for [Mailwoman](https://mailwoman.sister.software)'s HTTP surfaces,",
+		"Typed Rust clients for [Mailwoman](https://mailwoman.ai)'s HTTP surfaces,",
 		"**generated at compile time** by [`progenitor`](https://github.com/oxidecomputer/progenitor)",
 		"from their OpenAPI specs, exposed as four modules of one crate:",
 		"",

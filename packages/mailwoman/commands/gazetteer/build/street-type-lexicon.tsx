@@ -8,7 +8,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -27,7 +28,7 @@ interface Options {
 
 const GazetteerBuildStreetTypeLexicon: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetTypeLexicon } = await import("../../../gazetteer-pipeline/evidence-lexicons.ts")
+		const { buildStreetTypeLexicon } = await import("#gazetteer/evidence-lexicons")
 		const built = await buildStreetTypeLexicon({ output: options.output })
 
 		return `${built.path} — ${built.entries} surfaces, max_ngram=${built.maxNgram}`

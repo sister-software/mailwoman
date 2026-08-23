@@ -31,7 +31,7 @@ import {
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { sealDatabase } from "@mailwoman/core/utils"
+import { repoRootPath, sealDatabase } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -41,13 +41,15 @@ import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-
 import { resolvePath } from "path-ts"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
+import { candidateLayerManifest } from "./candidate-manifest.ts"
 import { emitCoverageManifest } from "./coverage-manifest.ts"
 import {
-	DEFAULT_CANDIDATE_OUT,
 	DEFAULT_FOLD_COUNTRIES,
 	DEFAULT_IMPORTANCE_DB,
+	DEFAULT_WOF_PRIORITY_COUNTRIES,
 	geonamesAdminGapCountries,
 } from "./defaults.ts"
+import { buildSHA, stampLayerManifest } from "./stamp-manifest.ts"
 
 /**
  * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
@@ -62,6 +64,14 @@ import {
  *
  * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB — superseded by Code-Point Open, the same
  * underlying survey under a clean licence) and **`postalcode-jp.db`** (142,604 rows, 37 MB).
+ *
+ * Every member is spelled `postalcode-`, and that is a routing contract rather than a house style. `deriveSchemaName`
+ * (`resolver-wof-sqlite/sharding.ts`) turns the filename into the attached SQL schema name, and
+ * `pickShardsForPlacetype` selects by testing that name against the placetype — which is `postalcode`. A shard added
+ * here as `postcode-<cc>.db` builds the candidate table fine (the builders read `spr` directly) and is then unreachable
+ * to any `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error. The
+ * `postcode-locality-<cc>.db` family is the deliberate exception and is NOT a member of this list: those hold a
+ * `postcode_locality` relation table and no `spr`, so they are never routed as place shards at all.
  */
 export const DEFAULT_POSTCODE_SHARDS = [
 	"postalcode-us.db",
@@ -92,9 +102,9 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	// (56,075 rows, worst coordinate delta 0).
 	// Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,NO,HR,PL,SE,BE`.
 	"postalcode-geonames-tail.db",
-	"postcode-ca-overture.db",
+	"postalcode-ca-overture.db",
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
-		(cc) => `postcode-${cc}-overture.db`
+		(cc) => `postalcode-${cc}-overture.db`
 	),
 ]
 
@@ -340,6 +350,13 @@ export interface BuildOptions {
 	 * empty on purpose.
 	 */
 	importanceDB?: string | false
+	/**
+	 * Countries judged by the cross-source currency backfill (#1737 — deprecated-with-no-successor WOF localities
+	 * resurrected only under a GeoNames attestation; see `resurrectCurrencyHoles`). Default: the WOF-priority set — the
+	 * only countries whose admin comes from WOF repos, so the only ones that can carry this hole class. Countries without
+	 * a `<data-root>/geonames/<CC>.txt` dump are skipped loudly by the pass. Pass `false` to disable.
+	 */
+	currencyBackfillCountries?: readonly string[] | false
 	onProgress?: (phase: string, message: string) => void
 }
 
@@ -356,12 +373,18 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// deliberate opt-out in the build log.
 	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? resolveImportanceDB())
 
+	const backfillCountries =
+		opts.currencyBackfillCountries === false
+			? undefined
+			: (opts.currencyBackfillCountries ?? DEFAULT_WOF_PRIORITY_COUNTRIES)
+
 	const result = await buildCandidateTable({
 		input: opts.adminDB,
 		output: opts.out,
 		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
 		localities: [...(opts.localityShards ?? resolveLocalityShards())],
 		...(importance ? { importance } : {}),
+		...(backfillCountries ? { currencyBackfill: { geonamesDir: geonamesDir(), countries: backfillCountries } } : {}),
 		onProgress: opts.onProgress,
 	})
 
@@ -370,6 +393,28 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// falling back to the code constants. MUST run pre-seal (a shipped DB is never patched — rebuild).
 	opts.onProgress?.("coverage-manifest", "baking country coverage + bbox manifest")
 	await emitCoverageManifest({ dbPath: opts.out })
+
+	// The layer contract's manifest, alongside the coverage one and for the same reason: facts about the
+	// artifact live IN the artifact. It names its ANCESTOR rather than restating the ancestor's sources —
+	// see candidate-manifest.ts for why a derived layer's provenance has to be a chain.
+	opts.onProgress?.("layer-manifest", "stamping provenance")
+	const sha = buildSHA(String(repoRootPath()))
+
+	await stampLayerManifest(
+		opts.out,
+		candidateLayerManifest({
+			adminDBPath: opts.adminDB,
+			shardCounts: {
+				postcodes: (opts.postcodeShards ?? resolvePostcodeShards()).length,
+				localities: (opts.localityShards ?? resolveLocalityShards()).length,
+			},
+			importance: Boolean(importance),
+			buildSHA: sha,
+			version: new Date().toISOString().slice(0, 10),
+			createdAt: new Date().toISOString(),
+		})
+	)
+
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(opts.out)
 

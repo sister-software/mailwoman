@@ -72,9 +72,8 @@ import { readFile } from "node:fs/promises"
 import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, md5File, tempRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 
 import { deOrderEval } from "./de-order-eval.ts"
@@ -87,6 +86,7 @@ import { presetCompare } from "./preset-compare.ts"
 import { assemblePromotionVerdict } from "./promotion-gate-verdict.ts"
 import { scoreAffix, type ScoreAffixOptions } from "./score-affix.ts"
 import { scoreCountryHomograph } from "./score-country-homograph.ts"
+import { resolveWOFHotDB } from "./wof-hot-db.ts"
 
 /**
  * Render captured sink lines the way a child process's stdout arrived: one trailing newline per `report()` call. Every
@@ -425,7 +425,7 @@ async function runDemoCascadeLeg(env: {
 	gazetteerLexicon: string
 }): Promise<void> {
 	const { outDir, shipModel, tokenizer, card, gazetteerLexicon } = env
-	const HOT_DB = $public.MAILWOMAN_WOF_HOT_DB || tempRootPath("v440-stage", "en-us", "v4.4.0", "wof-hot.db")
+	const HOT_DB = resolveWOFHotDB()
 
 	if (!existsSync(HOT_DB)) {
 		const msg = `⚠ demo-cascade smoke SKIPPED — no wof-hot.db at ${HOT_DB} (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524).`
@@ -814,6 +814,10 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 					model: shipModel,
 					tokenizer: EFF_TOK,
 					modelCard: EFF_CARD,
+					// The leg's anchor + lexicon siblings must come from the arm being graded, not from whatever the
+					// checkout happens to have linked. Without this it read the tracked workspace, which is bare on a dev
+					// checkout, and the ENOENT surfaced as a bare-street floor FAILURE.
+					...(WC ? { weightsCache: WC } : {}),
 					floor: String(bareStreetFloor),
 					json: `${OUT_DIR}/fr-bare-street.json`,
 				},

@@ -16,7 +16,24 @@ export type {
 	WOFDatabase,
 } from "./schema.ts"
 
-export { WOFSqlitePlaceLookup, type RankingWeights, type WOFSqlitePlaceLookupOpts } from "./lookup.ts"
+export { WOFSQLitePlaceLookup, type RankingWeights, type WOFSQLitePlaceLookupOpts } from "./lookup.ts"
+
+export {
+	CANDIDATE_ANCESTOR_COLUMNS,
+	CANDIDATE_ANCESTOR_TABLE,
+	CANDIDATE_INTERVAL_TABLE,
+	createCandidateAncestorTable,
+	createCandidateIntervalTable,
+	intervalContains,
+	MAX_ANCESTOR_DEPTH,
+} from "./candidate-ancestors-schema.ts"
+
+export type {
+	CandidateAncestorsDatabase,
+	CandidateAncestorTable,
+	CandidateIntervalTable,
+	IntervalLabel,
+} from "./candidate-ancestors-schema.ts"
 
 export { CANDIDATE_FTS_TABLE, createCandidateFTS } from "./candidate-fts.ts"
 
@@ -96,19 +113,6 @@ export {
 	type BuildPlaceSearchFTSOpts,
 	type BuildPlaceSearchFTSResult,
 } from "./fts.ts"
-
-export {
-	bboxAround,
-	geometryContains,
-	haversineKm,
-	pointInPolygonRings,
-	pointInRing,
-	type Bbox,
-	type GeojsonGeometry,
-	type GeojsonMultiPolygon,
-	type GeojsonPolygon,
-	type GeojsonPosition,
-} from "./geo.ts"
 
 export { PLACETYPE_DEPTH, ancestorLineage, placetypeDepth, type AncestorPlaceRow } from "./ancestry.ts"
 

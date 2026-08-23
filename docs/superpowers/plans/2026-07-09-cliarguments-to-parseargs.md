@@ -955,7 +955,7 @@ git commit -m "refactor(lookups): coordinate CLIs use parseArgs with '--' positi
 ```ts
 // DELIBERATE cliArguments: EXTRA_ARGS is a verbatim passthrough to `python -m mailwoman_train train`
 // — parseArgs cannot collect undeclared flags, and reconstructing them would be lossy.
-const EXTRA_ARGS = cliArguments()
+const EXTRA_ARGS = passThroughCLIArguments()
 ```
 
 - [ ] **Step 2: Commit**

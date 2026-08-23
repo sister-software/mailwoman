@@ -147,8 +147,6 @@ const parse = createRuntimePipeline({
 await parse("350 5TH AVE, NEW YORK, NY 10118", {
 	locale: "en-US", // assert a locale instead of detecting it
 	hardPlaceCountry: true, // confine resolution to a confidently-detected country (default: on)
-	jointReconcile: false, // beam-search decode instead of argmax (default: off)
-	arbitrate: false, // union the neural parse with the legacy rule parse (default: off)
 })
 ```
 
@@ -166,12 +164,28 @@ mailwoman parse "350 5th Ave, New York, NY 10118" --resolve --resolve-db ./wof.s
 mailwoman geocode "1600 Amphitheatre Pkwy, Mountain View, CA 94043"
 ```
 
-Programmatically, build a `WofSqlitePlaceLookup` backend (from
+Programmatically, build a `WOFSQLitePlaceLookup` backend (from
 `@mailwoman/resolver-wof-sqlite`), pass it to `createWOFResolver` (from `@mailwoman/resolver`),
 and hand the resolver to `createRuntimePipeline({ classifier, resolver })`. The resolved
 `result.tree` roots then carry a `wof:id` and coordinate. See
-[Getting started → Adding resolution](https://mailwoman.sister.software/docs/developers/get-started/install-and-first-parse)
+[Getting started → Adding resolution](https://mailwoman.ai/docs/developers/get-started/install-and-first-parse)
 for the worked example.
+
+### Which place the coordinate comes from
+
+When nothing finer than an administrative centroid resolved, result assembly walks a ladder and takes the first rung that has a coordinate. That ladder is **not fixed** — it leads with the postcode when the postcode is the finer thing, and with the locality otherwise:
+
+```
+GB unit / NL PC6 / CA urban LDU   →   postcode, locality, dependent_locality, region, country
+Germany                            →   postcode, locality, dependent_locality, region, country
+everything else                    →   locality, dependent_locality, postcode, region, country
+```
+
+Both routes to the first arm live in `@mailwoman/codex` and are read by `@mailwoman/resolver`'s `adminLadderForNodes`. The second arm is the #945 convention, adopted for France where one _code postal_ often spans several communes.
+
+The distinction is a fact about a country's **administrative** geography rather than its postal system, and code length does not predict it — France and Germany are both five digits and disagree. Germany's Gemeinden are large enough that Berlin is a single locality, so its PLZ is finer by a wide margin: on 2,997 OpenAddresses rows the coordinate p50 goes 5.84 km → 1.24 km, better on every percentile including p99, and the within-5-km population doubles.
+
+Membership is earned by a full-panel measurement, never by a shape that looks tight. See [`@mailwoman/codex`](../codex) for the tier table and what each member measured.
 
 ## Architecture
 
@@ -209,8 +223,8 @@ package is the umbrella that wires them together as a single `npm install`.
 
 ## Related
 
-- [Documentation & blog](https://mailwoman.sister.software)
-- [What Mailwoman Is](https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is)
+- [Documentation & blog](https://mailwoman.ai)
+- [What Mailwoman Is](https://mailwoman.ai/docs/developers/get-started/what-mailwoman-is)
 - [GitHub](https://github.com/sister-software/mailwoman)
 
 ## License

@@ -22,7 +22,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -54,7 +55,7 @@ function parseExtracts(extractSpec: string | undefined): Array<{ path: string; r
 	return extractSpec
 		.split(",")
 		.map((entry) => entry.trim())
-		.filter(Boolean)
+		.filter((entry) => entry.length > 0)
 		.map((entry) => {
 			const split = entry.indexOf("=")
 

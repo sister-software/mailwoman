@@ -39,6 +39,8 @@ import { cpSync, existsSync, rmSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { Text } from "ink"
+import { resolvePath } from "path-ts"
+
 import {
 	type Check,
 	CheckList,
@@ -46,8 +48,7 @@ import {
 	type ParsedCommandComponent,
 	CommandError,
 	useCommandTask,
-} from "mailwoman/cli-kit"
-import { resolvePath } from "path-ts"
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

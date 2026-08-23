@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 const AllowedOrigins: ReadonlySet<string> = new Set([
+	"https://mailwoman.ai",
 	"https://mailwoman.sister.software",
 	"https://sister.software",
 	"https://dev.sister.software",

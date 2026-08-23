@@ -80,7 +80,7 @@ export type ReconciliationBucket = "enrolled" | "eligible-not-enrolled" | "funde
 
 export interface EntityGeoData {
 	entityID: string
-	sourceIds?: string[]
+	sourceIDs?: string[]
 	recordCount?: number
 	cohesion?: number | null
 	sources: string[]
@@ -90,5 +90,14 @@ export interface EntityGeoData {
 	geocodeTier?: ResolutionTier | null
 	bucket?: ReconciliationBucket
 }
+
+/**
+ * Feature properties the map renderer consumes — {@link EntityGeoData} with every field optional, plus an unconstrained
+ * `bucket`. The renderer assigns a color per DISTINCT bucket value in first-seen order and builds its legend from that
+ * set, so a bucket is any categorical label, not only a {@link ReconciliationBucket}; and a collection assembled from
+ * something other than resolved entities (raw address points, links read back from a file) carries no entity id or
+ * display name.
+ */
+export type MapFeatureData = Partial<Omit<EntityGeoData, "bucket">> & { bucket?: string }
 
 //#endregion

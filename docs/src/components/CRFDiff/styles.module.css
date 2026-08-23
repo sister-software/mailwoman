@@ -10,7 +10,7 @@
 	margin: 1rem 0 1.5rem 0;
 }
 
-/* ── Legend ─────────────────────────────────────────────────────────── */
+/* #region Legend */
 
 .legend {
 	display: flex;
@@ -44,7 +44,9 @@
 	background: #9ca3af;
 }
 
-/* ── Decode section (argmax + Viterbi rows) ─────────────────────────── */
+/* #endregion */
+
+/* #region Decode section (argmax + Viterbi rows) */
 
 .decodeSection {
 	margin-bottom: 1rem;
@@ -135,7 +137,9 @@
 	color: #d8504a;
 }
 
-/* ── Transition matrix table ────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Transition matrix table */
 
 .matrixSection {
 	margin-top: 1.25rem;

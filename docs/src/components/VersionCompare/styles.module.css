@@ -4,6 +4,8 @@
  * confidence-delta annotations, and parallel timing panels.
  * ============================================================================ */
 
+/* #region Root container */
+
 .compareRoot {
 	margin-top: 1.5rem;
 }
@@ -31,7 +33,9 @@
 	font-size: 0.75rem;
 }
 
-/* ── Side-by-side SpanHighlight ribbons ───────────────────────────────── */
+/* #endregion */
+
+/* #region Side-by-side SpanHighlight ribbons */
 
 .spanRow {
 	display: grid;
@@ -58,7 +62,9 @@
 	font-size: 0.7rem;
 }
 
-/* ── Unified diff table ────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Unified diff table */
 
 .compareTable {
 	width: 100%;
@@ -115,7 +121,9 @@
 	min-width: 3rem;
 }
 
-/* ── Row kind tints ────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Row kind tints */
 
 .rowPrimaryOnly td {
 	background: rgba(216, 80, 74, 0.06);
@@ -137,7 +145,9 @@
 	background: rgba(230, 168, 0, 0.06);
 }
 
-/* ── Delta badge ───────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Delta badge */
 
 .deltaUp {
 	display: inline-block;
@@ -167,7 +177,9 @@
 	opacity: 0.4;
 }
 
-/* ── Side-by-side timing ───────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Side-by-side timing */
 
 .timingRow {
 	display: grid;
@@ -179,7 +191,9 @@
 	min-width: 0;
 }
 
-/* ── Mobile: stack vertically ──────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Mobile: stack vertically */
 
 @media (max-width: 640px) {
 	.spanRow,

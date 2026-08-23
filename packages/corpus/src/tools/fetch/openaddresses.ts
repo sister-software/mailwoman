@@ -61,7 +61,9 @@ import { pipeline } from "node:stream/promises"
 import { setTimeout as sleep } from "node:timers/promises"
 import { promisify } from "node:util"
 
+import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -80,8 +82,6 @@ const HTTP_OK = 200
  * Smallest plausible OpenAddresses shard. Below 10 KiB the file is a stub or an error body.
  */
 const MIN_PLAUSIBLE_SHARD_BYTES = 10_240
-
-const BYTES_PER_KIB = 1024
 
 const execFileAsync = promisify(execFile)
 
@@ -129,20 +129,6 @@ async function countLines(path: string): Promise<number> {
 	}
 
 	return count
-}
-
-function humanBytes(bytes: number): string {
-	const units = ["B", "KiB", "MiB", "GiB", "TiB"]
-	let value = bytes
-	let unit = 0
-
-	while (value >= BYTES_PER_KIB && unit < units.length - 1) {
-		value /= 1024
-
-		unit++
-	}
-
-	return `${value.toFixed(unit === 0 ? 0 : 1)}${units[unit]}`
 }
 
 interface StreamDownloadOpts {
@@ -262,18 +248,28 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	if (collectionID === undefined) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
 
-		const res = await fetch(`${OA_BASE}/api/collections`, {
-			headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" },
-			signal: AbortSignal.timeout(30_000),
+		// The collections API only. The COLLECTION ARCHIVES stay on raw `fetch` — they stream multi-gigabyte
+		// bodies straight to disk, where response caching is nonsense and axios would buffer them in memory.
+		const res = await new APIClient({
+			displayName: "openaddresses-api",
+			retry: true,
+			axios: { headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" } },
 		})
+			// `validateStatus` keeps a non-2xx as a RESPONSE rather than a throw: the caller reports the status and
+			// returns `fail(country)`, a graceful path this must not turn into an exception.
+			.fetch<OaCollection[]>({
+				url: `${OA_BASE}/api/collections`,
+				timeout: 30_000,
+				validateStatus: () => true,
+			})
 
-		if (!res.ok) {
+		if (!isSuccessStatus(res.status)) {
 			report?.(`ERROR: GET /api/collections returned HTTP ${res.status}.`)
 
 			return fail(country)
 		}
 
-		const collections = (await res.json()) as OaCollection[]
+		const collections = res.data
 		const match = collections.find((item) => item.name === country)
 
 		if (match?.id === undefined) {
@@ -394,7 +390,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 
 	await writeManifest(manifestPath, manifest)
 
-	report?.(`  ✓ ${humanBytes(size)}  rows=${rowCount}  sha256=${sha}`)
+	report?.(`  ✓ ${ByteFormatter.formatIEC(size)}  rows=${rowCount}  sha256=${sha}`)
 	report?.(`  MANIFEST written to ${manifestPath}`)
 	report?.(`=== done`)
 	report?.(`Feed to the adapter:`)

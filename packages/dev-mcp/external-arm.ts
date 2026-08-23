@@ -51,7 +51,7 @@ export type ExternalEngine = (typeof ExternalEngine)[keyof typeof ExternalEngine
  * operators did not consent to being a benchmark subject. Refused rather than warned — a warning on the cheapest thing
  * to type is a warning that gets typed.
  */
-export const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstreetmap.org"])
+const REFUSED_ENDPOINT_HOSTS = new Set(["photon.komoot.io", "nominatim.openstreetmap.org"])
 
 /**
  * Minimum spacing between two dispatches to an external arm, in milliseconds.
@@ -114,6 +114,14 @@ export interface ExternalAnswer {
 	 * changed row can see that one arm answered with a country and the other with a rooftop.
 	 */
 	label: string | null
+	/**
+	 * The answer's place-identity chain (mailwoman arms only — the resolved hierarchy's placeIDs, finest first). A
+	 * coordinate diff is blind to a wrong-INSTANCE win under a nearly-right coordinate (the Astoria class: the correct
+	 * Queens point under the Oregon placeID), and the 2026-08-18 band-injection battery needed a hand-written probe for
+	 * exactly this. ABSENT when the arm cannot state identity — external engines, oracles, and runs recorded before this
+	 * field existed — and an identity comparison only runs when BOTH sides carry one.
+	 */
+	place_ids?: string[]
 	/**
 	 * The engine's own type/layer for the top result (Pelias `layer`, Photon `type`, Nominatim `addresstype`). Reported,
 	 * never thresholded: these vocabularies are not the same vocabulary.

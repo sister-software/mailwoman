@@ -3,6 +3,7 @@
 
 import { Spinner } from "@inkjs/ui"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import type { PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -10,16 +11,11 @@ import { weightsPackageName } from "@mailwoman/neural/weights"
 import type { Resolver } from "@mailwoman/resolver"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { Text } from "ink"
-import type { createRuntimePipeline } from "mailwoman"
-import {
-	CommandError,
-	type CommandSpec,
-	type ParsedCommandComponent,
-	useCommandTask,
-	writeRawStdout,
-} from "mailwoman/cli-kit"
-import { probeWeights, WeightsGuard, type WeightsOutcome } from "mailwoman/cli-kit/weights-guard"
 import type React from "react"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
+import { probeWeights, WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
+import type { createRuntimePipeline } from "#index"
 
 import { resolverDefaultCountry } from "../country-scope.ts"
 
@@ -29,7 +25,6 @@ export type { CountryScope } from "../country-scope.ts"
 /**
  * Bytes per KiB, for human-readable sizes.
  */
-const BYTES_PER_KIB = 1024
 
 const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
@@ -409,7 +404,7 @@ function emitFaultWarnings(result: { faults: ReadonlyArray<{ stage: string; name
  * already printed — so no path degrades silently, and none double-warns.
  */
 async function runStructuralPipeline(input: string, options: ParseOptions): Promise<string> {
-	const { createRuntimePipeline } = await import("mailwoman")
+	const { createRuntimePipeline } = await import("#index")
 	const pipeline = createRuntimePipeline({ poiQueryKind: options.poi })
 	const result = await pipeline(input, { locale: options.locale })
 	emitFaultWarnings(result)
@@ -519,7 +514,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// ships a span head (a no-op otherwise). `--no-street-evidence-rerank` passes `false` to disable it.
 	const streetEvidence = options.streetEvidenceRerank ? undefined : (false as const)
 
-	const { createRuntimePipeline } = await import("mailwoman")
+	const { createRuntimePipeline } = await import("#index")
 
 	if (options.resolve) {
 		return withResolver(options, async (resolver) => {
@@ -561,17 +556,6 @@ function formatMs(ms: number): string {
 	if (ms < 100) return `${ms.toFixed(1)}ms`
 
 	return `${Math.round(ms)}ms`
-}
-
-function formatBytes(b: number): string {
-	const sign = b < 0 ? "-" : "+"
-	const abs = Math.abs(b)
-
-	if (abs < BYTES_PER_KIB) return `${sign}${abs}B`
-
-	if (abs < 1024 * 1024) return `${sign}${(abs / 1024).toFixed(1)}KB`
-
-	return `${sign}${(abs / 1024 / 1024).toFixed(1)}MB`
 }
 
 /**
@@ -638,7 +622,7 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 		return { stageRuns, totals, paths, heapDelta: heapAfter - heapBefore }
 	}
 
-	const { createRuntimePipeline } = await import("mailwoman")
+	const { createRuntimePipeline } = await import("#index")
 
 	const collected = options.resolve
 		? await withResolver(options, (resolver) =>
@@ -689,7 +673,10 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 	)
 
 	lines.push("")
-	lines.push(`heap delta (post-warmup → post-bench): ${formatBytes(collected.heapDelta)}`)
+	// `formatIEC` carries a minus itself; a growth needs the plus spelled out or the sign is only legible by absence.
+	const heapDelta = collected.heapDelta
+
+	lines.push(`heap delta (post-warmup → post-bench): ${heapDelta > 0 ? "+" : ""}${ByteFormatter.formatIEC(heapDelta)}`)
 
 	return lines.join("\n")
 }
@@ -815,7 +802,7 @@ async function runNeural(
 			policy.set({ component: o.component, mode: o.mode })
 		}
 
-		const wholeInputSection = { body: input, start: 0, end: input.length } as unknown as Section
+		const wholeInputSection = { body: input, start: 0, end: input.length } as Section
 		const proposals = await collectProposals([wholeInputSection], [proposalCls], { locale: options.locale })
 		const filtered = filterByPolicy(proposals, policy, options.locale)
 		tree = proposalsToTree(input, filtered)

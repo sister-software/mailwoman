@@ -19,13 +19,30 @@
 import { randomUUID } from "node:crypto"
 
 import { formatPercent } from "@mailwoman/core/utils"
-import { haversineKm } from "@mailwoman/spatial"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 
-import { armLabel, type ArmSpec, type ExternalArm, normalizeArmSpec, type OracleArm, type RecordedArm } from "./arms.ts"
-import { checkConfounds, crossEngineReading, type ConfoundReading } from "./confound.ts"
+import {
+	armLabel,
+	type ArmSpec,
+	type ExternalArm,
+	normalizeArmSpec,
+	type OracleArm,
+	type ArmRunner,
+	type RecordedArm,
+} from "./arms.ts"
+import {
+	armsDiffered,
+	ARM_SEPARATION_THRESHOLD_KM,
+	assertedStratum,
+	type GeoRow,
+	isolationSentence,
+	recordAnswers,
+	resolveGradeMode,
+	withheldVerdict,
+} from "./compare-helpers.ts"
+import { checkConfounds, crossEngineReading } from "./confound.ts"
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
 import {
@@ -33,7 +50,6 @@ import {
 	distanceKm,
 	EQUIVALENCE_THRESHOLD_KM,
 	gradeAtThreshold,
-	hitAt,
 	thresholdKey,
 	thresholdTable,
 	tostEquivalence,
@@ -58,8 +74,8 @@ import {
 	RETENTION_MAX_RUNS,
 	RUN_STORE_DIR,
 	tryPutRun,
-	type RecordedAnswer,
 	type StoredRun,
+	type RecordedAnswer,
 } from "./run-store.ts"
 import {
 	bucketRows,
@@ -68,9 +84,9 @@ import {
 	inputSetProvenance,
 	provenanceFor,
 	stratify,
-	assertStratumKey,
 	type StratumKey,
 } from "./tool-kit.ts"
+import { worktreeArmRunner } from "./worktree-runner.ts"
 
 /**
  * What the caller asked for on the grading axis. `auto` picks `truth` where the set has it — see spec §5.5: a diff is
@@ -97,7 +113,7 @@ const ABORT_AFTER_CONSECUTIVE_FAILURES = 5
  */
 const DEFAULT_GRADE_THRESHOLD_KM = EQUIVALENCE_THRESHOLD_KM
 
-export interface CompareOptions {
+interface CompareOptions {
 	inputs?: InputSetRef
 	armA: unknown
 	armB: unknown
@@ -186,15 +202,11 @@ async function compareMailwomanArms(
 	if (engineA.fingerprint.digest !== engineB.fingerprint.digest) {
 		throw new Error(
 			`Arms were built against different source trees (${engineA.fingerprint.digest} vs ` +
-				`${engineB.fingerprint.digest}). That is not a comparison. Restart the MCP server and re-run.`
+				`${engineB.fingerprint.digest}). That is not a comparison. Call mwdev_restart and re-run.`
 		)
 	}
 
-	const confounds = checkConfounds(
-		engineA.effective as unknown as Record<string, unknown>,
-		engineB.effective as unknown as Record<string, unknown>,
-		options.declared
-	)
+	const confounds = checkConfounds(engineA.effective, engineB.effective, options.declared)
 
 	const rows: ComparedRow[] = []
 	const errors: Array<{ id: string; input: string; arm: "a" | "b"; message: string }> = []
@@ -292,7 +304,7 @@ async function compareMailwomanArms(
 		isolationSentence(confounds, zeroDifferenceCaveat),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
-		.filter(Boolean)
+		.filter((sentence) => sentence.length > 0)
 		.join(" ")
 
 	// Both arms are recorded under distinct labels: they are two configurations of the same engine, so `mailwoman` alone
@@ -353,16 +365,6 @@ async function compareMailwomanArms(
 }
 
 /**
- * How one arm answers one raw query string, whichever kind of arm it is.
- */
-interface ArmRunner {
-	label: string
-	provenance: Record<string, unknown>
-	answer: (input: string) => Promise<ExternalAnswer>
-	warnings: string[]
-}
-
-/**
  * A mailwoman arm projected onto the same answer shape an external one produces: a point, a label, a type, or a stated
  * absence. Everything else the pipeline knows is deliberately dropped here — the other arm cannot answer it, so
  * carrying it into a cross-engine row would invite a comparison that has no other side.
@@ -376,7 +378,7 @@ async function mailwomanRunner(
 
 	return {
 		label: "mailwoman",
-		provenance: provenanceFor(engine, set) as unknown as Record<string, unknown>,
+		provenance: { ...provenanceFor(engine, set) },
 		warnings: [],
 		answer: async (input) => answerFromGauntletResult(toGauntletResult((await engine.session.geocode(input)).result)),
 	}
@@ -390,12 +392,15 @@ async function mailwomanRunner(
  * recorded arm and the live arm it was recorded from stop agreeing.
  */
 function answerFromGauntletResult(result: GauntletResult): ExternalAnswer {
+	const placeIDs = result.hierarchy.map((rung) => rung.placeID).filter((id): id is string => typeof id === "string")
+
 	return {
 		lat: result.lat,
 		lon: result.lon,
 		label: result.locality ?? result.region ?? null,
 		resultType: result.tier,
 		noResultReason: result.lat === null ? "the pipeline resolved no coordinate" : null,
+		...(placeIDs.length ? { place_ids: placeIDs } : {}),
 	}
 }
 
@@ -544,22 +549,6 @@ async function externalRunner(
 }
 
 /**
- * One row of a cross-engine comparison.
- */
-// `issues_a` / `issues_b` are dropped rather than carried empty: they are `checkCase`'s output, and an empty issue
-// list on a row nothing graded reads as a row that graded clean.
-interface GeoRow extends Omit<ComparedRow, "a" | "b" | "issues_a" | "issues_b"> {
-	a: ExternalAnswer
-	b: ExternalAnswer
-	truth_lat: number | null
-	truth_lon: number | null
-	truth_tolerance_m: number | null
-	truth_type: string | null
-	distance_km_a: number | null
-	distance_km_b: number | null
-}
-
-/**
  * A comparison with at least one arm that is not mailwoman.
  *
  * Everything here is the pre-registered protocol and nothing here is a choice made after seeing the numbers: the same
@@ -581,6 +570,8 @@ async function compareAcrossEngines(
 		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
 
 		if (arm.kind === "recorded") return recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
+
+		if (arm.kind === "worktree") return worktreeArmRunner(registry, arm, set)
 
 		if (arm.kind === "oracle") {
 			const { runner, identity, client } = oracleRunner(arm, set, meter, deps)
@@ -688,6 +679,11 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 			address_kind: item.addressKind,
 			status: item.status,
 			differed: armsDiffered(a, b, distanceA, distanceB, hasTruth),
+			// Tri-state, and separate from `differed` ON PURPOSE: identity comparison runs only when BOTH
+			// arms state a place-identity chain (absent = incomparable, never "same"), and it does not feed
+			// `arms_differed_on` — a battery pinned on the coordinate-level zero-diff contract keeps its
+			// meaning, while a wrong-instance swap under a stable coordinate becomes visible beside it.
+			...(a.place_ids && b.place_ids ? { identity_differed: a.place_ids.join(">") !== b.place_ids.join(">") } : {}),
 			grade: hasTruth && !hasOracle ? gradeAtThreshold(distanceA, distanceB, options.gradeThresholdKm) : "ungradeable",
 			a,
 			b,
@@ -702,6 +698,9 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 
 	const graded = rows.filter((row) => row.grade !== "ungradeable")
 	const differed = rows.filter((row) => row.differed)
+	// The emitted change list also carries identity-only rows (differed stays coordinate-level; the row's
+	// own identity_differed flag says which kind of change a reader is looking at).
+	const changedRows = rows.filter((row) => row.differed || row.identity_differed === true)
 	const withTruth = rows.filter((row) => row.truth_lat !== null).length
 
 	const mode = hasOracle
@@ -764,7 +763,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		confounds.warnings.join(" "),
 		set.why ? `Hand-picked because: ${set.why}` : "",
 	]
-		.filter(Boolean)
+		.filter((sentence) => sentence.length > 0)
 		.join(" ")
 
 	const run: StoredRun = {
@@ -823,6 +822,15 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		n_errored_b: errored.b,
 		errors,
 		arms_differed_on: { n: differed.length, of: rows.length },
+		identity_changed: {
+			n: rows.filter((row) => row.identity_differed === true).length,
+			of_comparable: rows.filter((row) => row.identity_differed !== undefined).length,
+			note:
+				"Rows where both arms stated a place-identity chain and the chains differ. Separate from " +
+				"arms_differed_on: a wrong-instance swap under a stable coordinate counts HERE and not there. " +
+				"of_comparable below the row count means at least one arm (an external engine, an oracle, or a run " +
+				'recorded before identity was stored) states no identity — incomparable, never "same".',
+		},
 		differed_basis: withTruth === rows.length ? "threshold-crossing-vs-truth" : "arm-separation",
 		arms_differed_on_note:
 			withTruth === rows.length
@@ -856,76 +864,10 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		...(identities["a"] ? { arm_a_identity: identities["a"] } : {}),
 		...(identities["b"] ? { arm_b_identity: identities["b"] } : {}),
 		...(options.stratifyBy ? { strata: stratifyGeo(rows, options.stratifyBy) } : {}),
-		rows_changed: differed,
+		rows_changed: changedRows,
 		warnings,
 	}
 }
-
-/**
- * One arm's answers, in the shape a later run replays them from.
- *
- * Every row is recorded, including the no-results. A store that kept only the answered rows would replay as a set that
- * had never been asked about the rest, and "this arm did not answer here" is the finding on exactly the rows a
- * comparison is usually chasing.
- */
-function recordAnswers(rows: GeoRow[], side: "a" | "b"): RecordedAnswer[] {
-	return rows.map((row) => ({
-		id: row.id,
-		input: row.input,
-		lat: row[side].lat,
-		lon: row[side].lon,
-		label: row[side].label,
-		resultType: row[side].resultType,
-		noResultReason: row[side].noResultReason,
-	}))
-}
-
-/**
- * Whether two arms disagreed on one row.
- *
- * TWO RULES, because the good one needs truth and not every set has it.
- *
- * With truth, the useful difference is the VERDICT: whether the arms land on the same side of the thresholds. Two hits
- * 900 m apart are the same finding; a hit and a miss are not. A raw coordinate diff would report 100% and mean nothing,
- * because across engines the coordinates always differ.
- *
- * Without truth there is no verdict to cross, and the threshold rule silently answers "identical" for every row — both
- * distances are null, `hitAt(null, …)` is false on both sides, and the comparison reports `0 of N differed` however far
- * apart the two arms landed. Read through `describeObservedRate` that becomes "tight enough to read as a real absence",
- * which is a fabricated claim of no difference. So the truthless rule is arm SEPARATION: they differ when exactly one
- * of them answered, or when they answered more than {@link ARM_SEPARATION_THRESHOLD_KM} apart.
- *
- * Which rule ran is reported as `differed_basis` — the two are not the same measurement and a reader comparing across
- * two results needs to know which one produced each number.
- */
-function armsDiffered(
-	a: ExternalAnswer,
-	b: ExternalAnswer,
-	distanceA: number | null,
-	distanceB: number | null,
-	hasTruth: boolean
-): boolean {
-	if (hasTruth) {
-		return DISTANCE_THRESHOLDS_KM.some((threshold) => hitAt(distanceA, threshold) !== hitAt(distanceB, threshold))
-	}
-
-	const answeredA = a.lat !== null && a.lon !== null
-	const answeredB = b.lat !== null && b.lon !== null
-
-	if (answeredA !== answeredB) return true
-
-	if (!answeredA) return false
-
-	return haversineKm(a.lat!, a.lon!, b.lat!, b.lon!) > ARM_SEPARATION_THRESHOLD_KM
-}
-
-/**
- * How far apart two arms may land before they count as disagreeing, when there is no truth to grade against.
- *
- * The tightest of the pre-registered thresholds rather than a fourth number: a separation inside it is a separation
- * that could not change a verdict at any threshold the protocol reports.
- */
-const ARM_SEPARATION_THRESHOLD_KM = DISTANCE_THRESHOLDS_KM[0]!
 
 /**
  * How precise the truth itself is, as a histogram of the rows' own declared tolerances.
@@ -1017,43 +959,4 @@ function stratumValue(row: GeoRow, by: StratumKey): string {
 	if (by === "address_kind") return row.address_kind ?? "unknown"
 
 	return row.status ?? "unknown"
-}
-
-/**
- * Pick the grading mode, honouring an explicit request and refusing one that cannot be met.
- *
- * `truth` is a REFUSAL when the set carries none, not a silent downgrade: a caller who asked to be graded and was
- * quietly given a diff is the exact failure §5.5 is about, one step earlier.
- */
-function resolveGradeMode(request: GradeRequest, hasTruth: boolean, absence: string): "truth" | "diff-only" {
-	if (request === "diff-only") return "diff-only"
-
-	if (request === "truth" && !hasTruth) {
-		throw new Error(
-			`grade: "truth" was requested but ${absence}. Nothing here can be graded — run against {kind:"board"}, or ` +
-				'pass grade: "diff-only" to describe the differences without a verdict.'
-		)
-	}
-
-	return hasTruth ? "truth" : "diff-only"
-}
-
-function withheldVerdict(mode: "truth" | "diff-only", reason: string): Record<string, unknown> {
-	return mode === "diff-only" ? { verdict: null, verdict_withheld_reason: reason } : {}
-}
-
-function isolationSentence(confounds: ConfoundReading, exclude: string): string {
-	if (confounds.variable_isolation === "clean") return ""
-
-	return `VARIABLE ISOLATION ${confounds.variable_isolation.toUpperCase()}: ${confounds.warnings.filter((warning) => warning !== exclude).join(" ")}`
-}
-
-/**
- * Validate a caller-supplied stratum. The zod enum catches this over MCP; a direct caller bypasses it, and an unchecked
- * cast there produced a one-bucket `unknown` table that looked stratified.
- */
-function assertedStratum(by: string): StratumKey {
-	assertStratumKey(by)
-
-	return by
 }

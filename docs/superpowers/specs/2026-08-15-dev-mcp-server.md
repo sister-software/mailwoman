@@ -275,7 +275,7 @@ refusal names what is resident and what it would cost.
 | Held                                                                  | Cost to rebuild           | Owner                                   |
 | --------------------------------------------------------------------- | ------------------------- | --------------------------------------- |
 | `NeuralAddressClassifier` + per-country overlay classifiers           | ~1.0 s (measured, §1.2)   | engine worker                           |
-| Resolver backend (`WOFCandidateTableLookup` / `WOFSqlitePlaceLookup`) | ~2 ms open, 2.0 GB mapped | engine worker                           |
+| Resolver backend (`WOFCandidateTableLookup` / `WOFSQLitePlaceLookup`) | ~2 ms open, 2.0 GB mapped | engine worker                           |
 | `ShardProvider`, `BANShardProvider`, `OSMShardProvider`, `POILookup`  | ~6 ms                     | engine worker                           |
 | `CoarsePlacer`, FST + street-morphology matchers                      | ~23 ms                    | engine worker                           |
 | Board corpus (837 rows) + its `regressionCorpusHash`                  | ms                        | supervisor, re-verified per read (§3.4) |
@@ -583,8 +583,11 @@ Passthrough to `node packages/mailwoman/out/cli.js`, with three guards:
 
 1. **Subcommand allowlist.** Read-only verbs only: `parse`, `geocode`, `reverse`, `doctor`,
    `eval …`, `gazetteer stats`, `poi …`, `--help`. Everything else refuses with a message naming the
-   boundary. Explicitly denied: `data pull`, `gazetteer build`, `coverage build`, `tiles publish`,
-   `release …`, `corpus …` writes, `eval ledger-append`.
+   boundary. Explicitly denied: `data pull`, `gazetteer build`, `gazetteer inspect sync`,
+   `coverage build`, `tiles publish`, `release …`, `corpus …` writes, `eval ledger-append`. Two of those
+   are nested under a verb that is read-only elsewhere — `eval ledger-append` writes the score ledger, and
+   `gazetteer inspect sync` clones country repositories into the shared data root while its `inspect`
+   siblings (`tree`, `graph`, `mermaid`) only read.
 2. **Stale-tree refusal** (§3.4a).
 3. **No shell.** `args` is an array passed to `spawn` without a shell, so nothing composes a pipeline
    through this tool.
@@ -1111,6 +1114,16 @@ different cost, not a larger `n` on this one.
 ---
 
 ## 11. First slice
+
+> **§3.1 update, 2026-08-18.** The supervisor/socket split was resolved by a different cut than the
+> one sketched here, driven by measured need: staleness (not warmth) was the binding cost — the
+> refusal-on-source-edit locked the tool developer out for most of two working days. The shipped
+> shape is a never-stale stdio SHIM (`cli.ts`, imports nothing from the repo runtime) forking a
+> restartable WORKER (`worker.ts`, the whole module graph) over IPC, with `mwdev_restart` as a
+> shim-owned tool emitting `tools/list_changed` after a swap. Matches the pattern the MCP ecosystem
+> converged on (mcp-reloader, reloaderoo, mcp-hmr); `process.execve` was evaluated and rejected —
+> it discards the initialized MCP session with the module graph. Warmth across restarts remains
+> deliberately unbuilt: engines are lazy and rebuild on first use, which the restart report states.
 
 > **Status, 2026-08-16.** This section is the plan of record and is kept as written. The slice shipped
 > (#1698), and the prediction it tests held, so the deferrals below were taken in order rather than

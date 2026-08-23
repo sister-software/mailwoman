@@ -21,9 +21,11 @@
 
 import { DatabaseSync } from "node:sqlite"
 
+import { allRows } from "@mailwoman/core/utils"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -67,9 +69,9 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 		const pcl = new DatabaseSync(postcodeLocalityDB, { readOnly: true })
 		const pcToLocality = new Map<string, number>()
 
-		for (const r of pcl
-			.prepare("SELECT postcode, locality_id FROM postcode_locality WHERE is_containing = 1")
-			.all() as unknown as Array<{ postcode: string; locality_id: number }>) {
+		for (const r of allRows<{ postcode: string; locality_id: number }>(
+			pcl.prepare("SELECT postcode, locality_id FROM postcode_locality WHERE is_containing = 1")
+		)) {
 			// First containing locality per postcode wins (postcodes with one containing polygon — the norm).
 			if (!pcToLocality.has(String(r.postcode))) {
 				pcToLocality.set(String(r.postcode), Number(r.locality_id))
@@ -83,9 +85,9 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const sprToPlace = new Map<number, { name: string; lat: number; lon: number }>()
 
-		for (const r of db
-			.prepare("SELECT spr_id, name, latitude AS lat, longitude AS lon FROM candidate WHERE latitude IS NOT NULL")
-			.all() as unknown as Array<{ spr_id: number; name: string | null; lat: number; lon: number }>) {
+		for (const r of allRows<{ spr_id: number; name: string | null; lat: number; lon: number }>(
+			db.prepare("SELECT spr_id, name, latitude AS lat, longitude AS lon FROM candidate WHERE latitude IS NOT NULL")
+		)) {
 			if (!sprToPlace.has(Number(r.spr_id))) {
 				sprToPlace.set(Number(r.spr_id), { name: String(r.name ?? ""), lat: Number(r.lat), lon: Number(r.lon) })
 			}
@@ -96,9 +98,9 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const alias = new DatabaseSync(aliasDB, { readOnly: true })
 
-		const edges = alias
-			.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
-			.all() as unknown as Array<{ postcode: string; postal_city: string }>
+		const edges = allRows<{ postcode: string; postal_city: string }>(
+			alias.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
+		)
 
 		alias.close()
 

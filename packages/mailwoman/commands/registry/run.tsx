@@ -21,14 +21,15 @@
 import { readFileSync, writeFileSync } from "node:fs"
 
 import { Spinner } from "@inkjs/ui"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 import { resolverDefaultCountry } from "../../country-scope.ts"
 import type { ShardResolver } from "../../geocode-core.ts"
@@ -233,7 +234,7 @@ export interface EvalGeocoderFlags {
 
 /**
  * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take. This is the eval
- * scripts' historical construction, preserved exactly: a plain `WOFSqlitePlaceLookup` over an explicit WOF path (NOT
+ * scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup` over an explicit WOF path (NOT
  * the candidate-table backend {@link buildGeocoder} uses), `defaultCountry: "US"`, `placeCountry: false`, and
  * `postcodeRepair: true` at the parse — so migrated evals reproduce the retired scripts' numbers. Shared by the
  * `registry train-scorer` and `registry scorer-eval` commands.
@@ -258,7 +259,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		})
 
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const lookup = new mod.WOFSqlitePlaceLookup({ databasePath: wof })
+		const lookup = new mod.WOFSQLitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
 		const shardProvider = new ShardProvider(mod, dataRoot)
 
@@ -451,7 +452,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		const geojson = toGeoJSON(result.entities)
 
 		const crossSource = result.entities.filter(
-			(e) => new Set(e.records.map((r) => r.source).filter(Boolean)).size >= 2
+			(e) => new Set(e.records.map((r) => r.source).filter(isPresent)).size >= 2
 		).length
 
 		const summary =

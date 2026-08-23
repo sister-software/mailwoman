@@ -9,8 +9,11 @@
 import { writeFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
+import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { toMapHTML } from "@mailwoman/registry"
+import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
+
+import { type MapFeatureData, toMapHTML } from "#index"
 
 /**
  * Options for {@linkcode sourceProvenanceMap}.
@@ -99,14 +102,14 @@ export function sourceProvenanceMap(
 
 	const counts = new Map<string, number>()
 
-	const features = rows.map((r) => {
+	const features: GeoFeature<PointLiteral, MapFeatureData>[] = rows.map((r) => {
 		const { bucket, publisher } = categorize(r.source)
 		counts.set(bucket, (counts.get(bucket) ?? 0) + 1)
-		const addr = [r.number, r.street_raw].filter(Boolean).join(" ").trim()
+		const addr = [r.number, r.street_raw].filter(isPresent).join(" ").trim()
 
 		return {
-			type: "Feature" as const,
-			geometry: { type: "Point" as const, coordinates: [r.lon, r.lat] },
+			type: "Feature",
+			geometry: { type: "Point", coordinates: [r.lon, r.lat] },
 			properties: {
 				bucket,
 				sources: [bucket],
@@ -118,9 +121,9 @@ export function sourceProvenanceMap(
 		}
 	})
 
-	const geojson = { type: "FeatureCollection" as const, features }
+	const geojson: GeoFeatureCollection<PointLiteral, MapFeatureData> = { type: "FeatureCollection", features }
 
-	const html = toMapHTML(geojson as never, {
+	const html = toMapHTML(geojson, {
 		title: `Address-point provenance — ${STATE.toUpperCase()}, every point colored by its open-data source`,
 		flavor: "light",
 		colorBy: "bucket",

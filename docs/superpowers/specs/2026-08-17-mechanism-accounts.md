@@ -145,6 +145,15 @@ attention-as-explanation.
   the corrected measurement inverted the @1km column (#1725, closed).
 - Run store + recorded arms (#1714) — every comparison replayable by `run_id`, which is what makes
   account-generation over past runs possible.
+- `mwdev_diagnose` v1 (#1722) — per-row accounts over the parse / evidence / retrieval / outcome
+  seams, seven mechanism-state shapes as documented predicates, the five-lever counterfactual sweep,
+  and `by_shape` aggregation. v1 reports the SET of matching shapes with each predicate attached and
+  `calibration: "none"`, not the normalized posterior §4 describes — the scoring layer arrives with
+  the v2 conformal calibration, which is what a posterior's numbers would have to mean.
+  Coverage bound found while building it: the resolver-interior trace (#1721) records the walk's own
+  `#lookupAndPick` only, so a row answered by the post-walk span-rescore carries a resolved
+  coordinate beside an empty lookup list; accounts state that case rather than let the empty list
+  read as "no retrieval happened".
 
 ## 9. Sequencing
 

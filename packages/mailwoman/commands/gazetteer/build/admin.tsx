@@ -10,7 +10,8 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -42,12 +43,12 @@ const csv = (raw: string | undefined): string[] | undefined =>
 		? raw
 				.split(",")
 				.map((s) => s.trim().toUpperCase())
-				.filter(Boolean)
+				.filter((entry) => entry.length > 0)
 		: undefined
 
 const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB, buildAdmin } = await import("mailwoman/gazetteer-pipeline")
+		const { artifactSizeMB, buildAdmin } = await import("#gazetteer-pipeline")
 
 		const result = await buildAdmin({
 			dataDir: options.data,

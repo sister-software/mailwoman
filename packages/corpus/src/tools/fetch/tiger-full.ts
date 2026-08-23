@@ -27,6 +27,8 @@ import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 import { setTimeout as sleep } from "node:timers/promises"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -45,8 +47,6 @@ const HTTP_OK = 200
  * Lowest 3xx status; at or above it the response is a redirect or an error, not a body.
  */
 const HTTP_REDIRECT = 300
-
-const BYTES_PER_KIB = 1024
 
 const TIGER_BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT"
 
@@ -74,20 +74,6 @@ interface CountyEntry {
 	filename: string
 	sha256: string
 	bytes: number
-}
-
-function humanBytes(bytes: number): string {
-	const units = ["B", "KiB", "MiB", "GiB", "TiB"]
-	let value = bytes
-	let unit = 0
-
-	while (value >= BYTES_PER_KIB && unit < units.length - 1) {
-		value /= 1024
-
-		unit++
-	}
-
-	return `${value.toFixed(unit === 0 ? 0 : 1)}${units[unit]}`
 }
 
 /**
@@ -192,7 +178,7 @@ export async function fetchTigerFull(
 	options: FetchTigerFullOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const skipStateFips = (options.skipStateFips ?? "50").split(/\s+/).filter(Boolean)
+	const skipStateFips = (options.skipStateFips ?? "50").split(/\s+/).filter((value) => value.length > 0)
 	const rateSleepMs = Math.round((options.rateSleep ?? 0.2) * 1000)
 	const maxParallel = options.maxParallel ?? 4
 	const dryRun = options.dryRun ?? false
@@ -204,13 +190,17 @@ export async function fetchTigerFull(
 
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 
-	const listingRes = await fetch(`${TIGER_BASE_URL}/`, {
-		headers: { "Accept-Encoding": "gzip, br" },
-		signal: AbortSignal.timeout(60_000),
+	// `responseType: "text"` — an Apache directory index, scraped below. The per-county ARCHIVE downloads
+	// stay on raw `fetch` (they stream to disk; see `downloadOne`).
+	const listingRes = await new APIClient({
+		displayName: "tiger-listing",
+		retry: true,
+		axios: { headers: { "Accept-Encoding": "gzip, br" } },
 	})
+		.fetch<string>({ url: `${TIGER_BASE_URL}/`, responseType: "text", timeout: 60_000 })
+		.then(pluckResponseData)
 
-	if (!listingRes.ok) throw new Error(`Failed to fetch TIGER directory listing: HTTP ${listingRes.status}`)
-	const html = await listingRes.text()
+	const html = listingRes
 	const allZips = [...new Set(html.match(/tl_2024_[0-9]{5}_addrfeat\.zip/g))].toSorted()
 	const totalCounties = allZips.length
 	report?.(`  Found ${totalCounties} county ZIPs in the TIGER 2024 ADDRFEAT index.`)
@@ -313,7 +303,10 @@ export async function fetchTigerFull(
 		// Collect results from this state.
 		for (const result of results) {
 			if (result.ok) {
-				report?.(`  ok ${result.filename}  ${humanBytes(result.bytes)}  sha256=${result.sha256.slice(0, 12)}...`)
+				report?.(
+					`  ok ${result.filename}  ${ByteFormatter.formatIEC(result.bytes)}  sha256=${result.sha256.slice(0, 12)}...`
+				)
+
 				manifest.set(result.filename, { filename: result.filename, sha256: result.sha256, bytes: result.bytes })
 
 				totalFetched++
@@ -349,7 +342,7 @@ export async function fetchTigerFull(
 	report?.(`  Counties failed           : ${totalFailed}`)
 
 	if (totalBytesFetched > 0) {
-		report?.(`  Bytes fetched this run    : ${humanBytes(totalBytesFetched)} (${totalBytesFetched})`)
+		report?.(`  Bytes fetched this run    : ${ByteFormatter.formatIEC(totalBytesFetched)} (${totalBytesFetched})`)
 	}
 
 	if (totalFailed > 0) {

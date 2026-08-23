@@ -17,6 +17,8 @@
 
 import type { Kysely } from "kysely"
 
+import type { NameKey, RouteKey, StreetKey } from "./street-normalize.ts"
+
 /**
  * One rooftop address point. `(street_norm, number)` within a `postcode` (preferred) or `locality_norm` scope is the
  * lookup; `street_key` is the #483 route-fold key for interpolation. Coordinates are non-null (the builder drops
@@ -26,11 +28,12 @@ export interface AddressPointTable {
 	/**
 	 * Shared {@link normalizeStreetForKey} of the street — the build/query-consistent probe key.
 	 */
-	street_norm: string
+	street_norm: StreetKey
 	/**
-	 * `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2).
+	 * `canonicalizeRouteKey(street_norm)` — the route-fold key (#483 Method 2). Its own brand, so it cannot be
+	 * interchanged with the plain `street_norm` above.
 	 */
-	street_key: string
+	street_key: RouteKey
 	/**
 	 * House number, normalized lower-case (kept TEXT — "123-A", "12 1/2" must survive).
 	 */
@@ -40,7 +43,7 @@ export interface AddressPointTable {
 	/**
 	 * Shared {@link normalizeLocalityForKey} of the locality — the fallback scope.
 	 */
-	locality_norm: string | null
+	locality_norm: NameKey | null
 	/**
 	 * The street as it appeared in the source (kept for display / debugging).
 	 */
@@ -65,6 +68,15 @@ export interface AddressPointDatabase {
 }
 
 /**
+ * The slice of a Kysely handle the `address_point` DDL touches — the parameter type its builders take.
+ *
+ * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`), so a shard that EXTENDS
+ * `AddressPointTable` — OSM adds `h3_cell` — cannot pass its own handle to a `Kysely<AddressPointDatabase>` parameter.
+ * Naming only `schema` lets it, and the DDL below needs nothing else.
+ */
+export type AddressPointSchemaHandle = Pick<Kysely<AddressPointDatabase>, "schema">
+
+/**
  * The `address_point` columns in INSERT order. The builder's positional prepared statement derives its placeholder list
  * from this, so the positional order can't drift from the DDL / the reader.
  */
@@ -85,7 +97,7 @@ export const ADDRESS_POINT_COLUMNS = [
 /**
  * Create the `address_point` table — called before the streaming bulk load.
  */
-export async function createAddressPointTable(db: Kysely<AddressPointDatabase>): Promise<void> {
+export async function createAddressPointTable(db: AddressPointSchemaHandle): Promise<void> {
 	await db.schema
 		.createTable("address_point")
 		.addColumn("street_norm", "text", (c) => c.notNull())
@@ -106,7 +118,7 @@ export async function createAddressPointTable(db: Kysely<AddressPointDatabase>):
 /**
  * Create the three probe indexes the reader relies on (postcode-scope, locality-scope, route-key).
  */
-export async function createAddressPointIndexes(db: Kysely<AddressPointDatabase>): Promise<void> {
+export async function createAddressPointIndexes(db: AddressPointSchemaHandle): Promise<void> {
 	await db.schema
 		.createIndex("idx_ap_postcode")
 		.on("address_point")

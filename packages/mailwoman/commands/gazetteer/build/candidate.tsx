@@ -11,12 +11,9 @@
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import {
-	DEFAULT_CANDIDATE_OUT,
-	DEFAULT_FOLD_COUNTRIES,
-	DEFAULT_IMPORTANCE_DB,
-} from "mailwoman/gazetteer-pipeline/defaults"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { DEFAULT_CANDIDATE_OUT, DEFAULT_FOLD_COUNTRIES, DEFAULT_IMPORTANCE_DB } from "#gazetteer-pipeline/defaults"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -59,7 +56,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			resolveImportanceDB,
 			resolvePostcodeShards,
 			wofDir,
-		} = await import("mailwoman/gazetteer-pipeline")
+		} = await import("#gazetteer-pipeline")
 
 		const root = mailwomanDataRoot()
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
@@ -69,7 +66,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
-					.filter(Boolean)
+					.filter((cc) => cc.length > 0)
 			: DEFAULT_FOLD_COUNTRIES
 
 		let adminDB = adminIn
@@ -125,6 +122,7 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 		return [
 			`gazetteer: ${out}`,
 			`${r.rows.toLocaleString()} rows — ${r.primaries.toLocaleString()} primary, ${r.aliases.toLocaleString()} alias, ${r.postcodes.toLocaleString()} postcode + ${r.postcodeAliases.toLocaleString()} postcode-alias (from ${r.places.toLocaleString()} places)`,
+			`ancestors: ${r.ancestorRows.toLocaleString()} closure rows across ${r.ancestorPlaces.toLocaleString()} places; ${r.intervalPlaces.toLocaleString()} interval labels`,
 			r.importanceScored === undefined
 				? "importance: not joined (no score source) — the column is empty"
 				: `importance: ${r.importanceScored.toLocaleString()} places scored, ${r.importanceGated?.toLocaleString() ?? 0} refused as a different same-name place`,

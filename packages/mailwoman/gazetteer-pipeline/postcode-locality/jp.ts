@@ -39,9 +39,18 @@ import { readFileSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { assertDatabaseIntegrity, pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator, TextSpliterator } from "spliterator"
+
+import {
+	createPostcodeLocalityIndex,
+	createPostcodeLocalityMetaTable,
+	createPostcodeLocalityTable,
+	POSTCODE_LOCALITY_INSERT_SQL,
+	type PostcodeLocalityDatabase,
+	type PostcodeLocalityInsertValues,
+} from "./schema.ts"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -196,21 +205,12 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 	}
 
 	const db = new DatabaseSync(args.output)
-	const kdb = new DatabaseClient({ database: db })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
 
-	await kdb.schema
-		.createTable("postcode_locality")
-		.addColumn("postcode", "text", (c) => c.notNull())
-		.addColumn("country", "text", (c) => c.notNull())
-		.addColumn("locality_id", "integer", (c) => c.notNull())
-		.addColumn("locality_name", "text", (c) => c.notNull())
-		.addColumn("aliases", "text")
-		.addColumn("distance_km", "real", (c) => c.notNull())
-		.addColumn("is_containing", "integer", (c) => c.notNull())
-		.execute()
+	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
 
-	const rows: Array<[string, string, number, string, string, number, number]> = []
+	const rows: PostcodeLocalityInsertValues[] = []
 	let matched = 0
 	const keys = [...postal.keys()].filter((k) => points.has(k))
 
@@ -238,7 +238,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		}
 	}
 
-	const insert = db.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
+	const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
 	db.exec("BEGIN")
 
 	for (const r of rows) {
@@ -247,18 +247,9 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	db.exec("COMMIT")
 
-	await kdb.schema
-		.createIndex("postcode_locality_by_pc")
-		.on("postcode_locality")
-		.columns(["postcode", "country"])
-		.execute()
+	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
 
-	await kdb.schema
-		.createTable("meta")
-		.ifNotExists()
-		.addColumn("key", "text", (c) => c.primaryKey())
-		.addColumn("value", "text")
-		.execute()
+	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
 
 	const matchRate = `${((100 * matched) / keys.length).toFixed(1)}%`
 
@@ -282,13 +273,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	db.exec("PRAGMA journal_mode=DELETE")
 	db.exec("ANALYZE")
-	const ok = (db.prepare("PRAGMA integrity_check").get() as Record<string, string>)["integrity_check"]
-
-	if (ok !== "ok") {
-		console.error(`integrity_check failed: ${ok}`)
-
-		process.exit(1)
-	}
+	assertDatabaseIntegrity(db, args.output)
 
 	db.exec("VACUUM")
 	db.close()

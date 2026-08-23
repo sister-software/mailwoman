@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and design discussion
+    url: mailto:teffen@sister.software
+    about: For questions that are not a bug report or a feature request.

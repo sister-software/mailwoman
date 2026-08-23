@@ -33,9 +33,14 @@ import { DatabaseSync } from "node:sqlite"
 import { parseArgs } from "node:util"
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
-import { KNOWN_SCHEMA_VERSION, PairIndexResolver, peekPairIndexHeader } from "@mailwoman/neural/pair-index-resolver"
+import {
+	KNOWN_SCHEMA_VERSION,
+	type PairIndexHeader,
+	PairIndexResolver,
+	peekPairIndexHeader,
+} from "@mailwoman/neural/pair-index-resolver"
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).
@@ -98,8 +103,8 @@ function expectedPairSet(db: DatabaseSync, country: string, parentPlacetypes: st
 	const parentPlaceholder = parentPlacetypes.map((_, i) => `?${i + 2}`).join(",")
 	const wofCountry = country.toUpperCase()
 
-	const rows = db
-		.prepare(
+	const rows = allRows<{ child_name: string; parent_name: string }>(
+		db.prepare(
 			`WITH child_surface AS (
 				SELECT id, name FROM spr
 				WHERE country = ?1 AND placetype = 'locality' AND is_current = 1 AND is_deprecated = 0
@@ -127,8 +132,10 @@ function expectedPairSet(db: DatabaseSync, country: string, parentPlacetypes: st
 			FROM edge e
 			JOIN child_surface cs ON cs.id = e.child_id
 			JOIN parent_surface ps ON ps.id = e.parent_id`
-		)
-		.all(wofCountry, ...parentPlacetypes) as unknown as Array<{ child_name: string; parent_name: string }>
+		),
+		wofCountry,
+		...parentPlacetypes
+	)
 
 	const folded = new Map<string, [string, string]>()
 
@@ -202,7 +209,7 @@ function main(): void {
 			fail(`header foldVersion ${header.foldVersion} != 1`)
 		}
 
-		const extended = header as unknown as {
+		const extended = header as PairIndexHeader & {
 			probeArtifact?: boolean
 			edge?: { child?: string; parent?: string }
 			source?: { kind?: string; namePolicy?: string }

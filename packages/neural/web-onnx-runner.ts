@@ -100,6 +100,8 @@ export class WebONNXRunner implements NeuralRunner {
 	 * Fetch the model from a URL and construct.
 	 */
 	static async fromURL(modelURL: string, opts: WebONNXRunnerOpts = {}): Promise<WebONNXRunner> {
+		// Raw `fetch`: this is the BROWSER runtime. `APIClient` carries axios, which has no place in the
+		// client bundle, and the platform primitive is what the browser already has.
 		const res = await fetch(modelURL)
 
 		if (!res.ok) throw new Error(`fetch ${modelURL} failed: ${res.status} ${res.statusText}`)
@@ -157,7 +159,7 @@ export class WebONNXRunner implements NeuralRunner {
 	}
 
 	async infer(
-		tokenIds: number[],
+		tokenIDs: number[],
 		anchor?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		gazetteer?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
 		country?: { features: ReadonlyArray<ReadonlyArray<number>>; confidence: ReadonlyArray<number> },
@@ -167,12 +169,12 @@ export class WebONNXRunner implements NeuralRunner {
 		}
 	): Promise<InferResult> {
 		const session = await this.#ensureSession()
-		const seqLen = Math.min(tokenIds.length, this.fixedSeqLen)
+		const seqLen = Math.min(tokenIDs.length, this.fixedSeqLen)
 		const padded = new BigInt64Array(this.fixedSeqLen)
 		const mask = new BigInt64Array(this.fixedSeqLen)
 
 		for (let i = 0; i < seqLen; i++) {
-			padded[i] = BigInt(tokenIds[i]!)
+			padded[i] = BigInt(tokenIDs[i]!)
 			mask[i] = 1n
 		}
 

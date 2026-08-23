@@ -39,20 +39,14 @@ import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
 
 import { readReleaseManifest } from "./data-release.ts"
-import {
-	geocodeAddress,
-	type GeocodeClassifier,
-	type GeocodeResult,
-	regionSlugFromTree,
-	ShardProvider,
-} from "./geocode-core.ts"
+import { geocodeAddress, type GeocodeClassifier, regionSlugFromTree, ShardProvider } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
 import {
 	buildNoGazetteerMessage,
@@ -87,7 +81,7 @@ function wofPaths(): string[] {
 		return env
 			.split(",")
 			.map((p) => p.trim())
-			.filter(Boolean)
+			.filter(isPresent)
 
 	return wofShardPaths().filter((p) => existsSync(p))
 }

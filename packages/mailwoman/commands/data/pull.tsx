@@ -40,8 +40,11 @@ import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
 import type { APIClient } from "@mailwoman/core/api"
+import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { mailwomanDataRoot, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { Text } from "ink"
+import { resolvePath } from "path-ts"
+
 import {
 	type Check,
 	CheckList,
@@ -49,8 +52,7 @@ import {
 	type CommandSpec,
 	type ParsedCommandComponent,
 	useCommandTask,
-} from "mailwoman/cli-kit"
-import { resolvePath } from "path-ts"
+} from "#cli-kit"
 
 import {
 	artifactURL,
@@ -61,7 +63,6 @@ import {
 	type RemoteArtifactState,
 } from "../../data-bundles.ts"
 import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "../../data-release.ts"
-import { formatBytes } from "../../doctor/checks.ts"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -195,6 +196,8 @@ async function probeRemote(
  * while still asking for, and receiving, the whole file.
  */
 async function downloadToDisk(url: string, destPath: string): Promise<number> {
+	// Raw `fetch` for the TRANSFER; the HEAD probes above go through `APIClient`. The body streams to disk, so
+	// there is nothing to pace and nothing worth caching.
 	const res = await fetch(url, { headers: { range: "bytes=0-" } })
 
 	if (!res.ok || !res.body) throw new Error(`download failed (HTTP ${res.status}) for ${url}`)
@@ -279,14 +282,14 @@ async function pullBundles(
 				checks.push({
 					ok: true,
 					check: label,
-					detail: `[dry-run] ${formatBytes(artifact.approxBytes)} ${artifactURL(artifact, opts.host)} → ${localAbsPath}`,
+					detail: `[dry-run] ${ByteFormatter.formatSI(artifact.approxBytes)} ${artifactURL(artifact, opts.host)} → ${localAbsPath}`,
 				})
 
 				continue
 			}
 
 			console.error(
-				`▸ pull ${artifactURL(artifact, opts.host)} (~${formatBytes(artifact.approxBytes)}) → ${localAbsPath}`
+				`▸ pull ${artifactURL(artifact, opts.host)} (~${ByteFormatter.formatSI(artifact.approxBytes)}) → ${localAbsPath}`
 			)
 
 			try {
@@ -319,9 +322,9 @@ async function pullBundles(
 						)
 					}
 
-					verifyDetail = `content-length verified (${formatBytes(bytesWritten)})`
+					verifyDetail = `content-length verified (${ByteFormatter.formatSI(bytesWritten)})`
 				} else {
-					verifyDetail = `WARNING: no md5 sidecar and no Content-Length available — could not verify (${formatBytes(bytesWritten)} written, trusting the transfer)`
+					verifyDetail = `WARNING: no md5 sidecar and no Content-Length available — could not verify (${ByteFormatter.formatSI(bytesWritten)} written, trusting the transfer)`
 				}
 
 				mkdirSync(dirname(localAbsPath), { recursive: true })

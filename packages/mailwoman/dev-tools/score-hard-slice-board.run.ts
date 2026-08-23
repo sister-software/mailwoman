@@ -53,10 +53,11 @@ import { parseArgs } from "node:util"
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createWOFResolver } from "@mailwoman/resolver"
+import { createWOFResolver, mostSpecificResolved } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { haversineKm } from "@mailwoman/spatial"
-import { createRuntimePipeline } from "mailwoman"
+
+import { createRuntimePipeline } from "#index"
 
 import { type HardSliceCase, loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
 import { createResolverBackend } from "../resolver-backend.ts"
@@ -99,7 +100,7 @@ const wofPaths = wofShardPaths().filter(existsSync)
 if (!wofPaths.length)
 	throw new Error("no WOF shards found — this board grades the RESOLVED place, so it needs the gazetteer")
 
-const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths }) as never)
+const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths }))
 
 const classifiers = new Map<string, Awaited<ReturnType<typeof NeuralAddressClassifier.loadFromWeights>>>()
 
@@ -129,9 +130,9 @@ for (const arm of arms) {
 		byLocale.set(
 			locale,
 			createRuntimePipeline({
-				classifier: classifiers.get(locale)! as never,
-				resolver: resolver as never,
-				fst: fst as never,
+				classifier: classifiers.get(locale)!,
+				resolver,
+				fst,
 			})
 		)
 	}
@@ -143,19 +144,10 @@ for (const arm of arms) {
 
 //#region Scoring
 
-const PLACETYPE_RANK: Record<string, number> = {
-	postalcode: 6,
-	locality: 5,
-	localadmin: 4,
-	borough: 4,
-	county: 3,
-	region: 2,
-	country: 0,
-}
-
 interface Resolved {
 	id: number
 	name: string
+	value: string
 	placetype: string
 	lat: number
 	lon: number
@@ -176,6 +168,7 @@ function collectResolved(tree: AddressTree): Resolved[] {
 			out.push({
 				id: Number(n.placeID.slice(4)),
 				name: String(meta?.["resolver_name"] ?? n.value ?? ""),
+				value: String(n.value ?? ""),
 				placetype: String(n.sourceID ?? "").split(":")[0] ?? "",
 				lat: n.lat,
 				lon: n.lon,
@@ -194,6 +187,7 @@ function collectResolved(tree: AddressTree): Resolved[] {
 				out.push({
 					id: Number(interp.placeID.slice(4)),
 					name: String(interp.metadata?.["resolver_name"] ?? n.value ?? ""),
+					value: String(n.value ?? ""),
 					placetype: String(interp.sourceID ?? interp.tag).split(":")[0] ?? "",
 					lat: interp.lat,
 					lon: interp.lon,
@@ -213,16 +207,12 @@ function collectResolved(tree: AddressTree): Resolved[] {
 	return out
 }
 
+/**
+ * The resolved place whose coordinate this board grades — `@mailwoman/resolver`'s ranking, the same one result assembly
+ * walks, so a board score tracks what a caller is handed.
+ */
 function mostSpecific(rs: Resolved[]): Resolved | null {
-	let best: Resolved | null = null
-
-	for (const r of rs) {
-		if (!best || (PLACETYPE_RANK[r.placetype] ?? -1) > (PLACETYPE_RANK[best.placetype] ?? -1)) {
-			best = r
-		}
-	}
-
-	return best
+	return mostSpecificResolved(rs, (r) => ({ placetype: r.placetype, value: r.value, resolverName: r.name }))
 }
 
 interface Outcome {
@@ -313,7 +303,7 @@ for (const c of board) {
 		const pipeline = pipelines.get(arm)!.get(c.locale)!
 
 		try {
-			const { tree } = await pipeline(c.input, { locale: c.locale } as never)
+			const { tree } = await pipeline(c.input, { locale: c.locale })
 			byArm[arm] = score(c, collectResolved(tree))
 		} catch (error) {
 			console.error(`[${arm}] ${c.id} threw: ${(error as Error).message}`)

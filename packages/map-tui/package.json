@@ -32,6 +32,46 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./cli-args": {
+			"node": "./cli-args.ts",
+			"default": "./out/cli-args.js",
+			"types": "./out/cli-args.d.ts"
+		},
+		"./frame": {
+			"node": "./frame.ts",
+			"default": "./out/frame.js",
+			"types": "./out/frame.d.ts"
+		},
+		"./raster": {
+			"node": "./raster.ts",
+			"default": "./out/raster.js",
+			"types": "./out/raster.d.ts"
+		},
+		"./input": {
+			"node": "./input.ts",
+			"default": "./out/input.js",
+			"types": "./out/input.d.ts"
+		},
+		"./mercator": {
+			"node": "./mercator.ts",
+			"default": "./out/mercator.js",
+			"types": "./out/mercator.d.ts"
+		},
+		"./renderer": {
+			"node": "./renderer.ts",
+			"default": "./out/renderer.js",
+			"types": "./out/renderer.d.ts"
+		},
+		"./tile-source": {
+			"node": "./tile-source.ts",
+			"default": "./out/tile-source.js",
+			"types": "./out/tile-source.d.ts"
+		},
+		"./style": {
+			"node": "./style.ts",
+			"default": "./out/style.js",
+			"types": "./out/style.d.ts"
 		}
 	},
 	"publishConfig": {

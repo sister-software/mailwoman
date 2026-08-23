@@ -14,7 +14,6 @@
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
-import { haversineKm } from "@mailwoman/spatial"
 
 import { foldName } from "./fold-name.ts"
 
@@ -312,7 +311,7 @@ function foldVoieTokens(s: string): string[] {
 		.replaceAll(/[.,'’]/g, "")
 		.replaceAll("-", " ")
 		.split(/\s+/)
-		.filter(Boolean)
+		.filter((token) => token.length > 0)
 }
 
 /**
@@ -415,7 +414,7 @@ export function applyStreetCentroid(
 	const rawSegments = raw
 		.split(",")
 		.map((s) => s.trim())
-		.filter(Boolean)
+		.filter((segment) => segment.length > 0)
 
 	const CAP = 5
 

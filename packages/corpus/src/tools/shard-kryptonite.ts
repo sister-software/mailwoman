@@ -20,10 +20,11 @@ import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import type { CanonicalRow, LabeledRow } from "@mailwoman/corpus/types"
-import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "@mailwoman/corpus/utils"
-import type { ShardManifest } from "@mailwoman/corpus/utils"
 import { JSONSpliterator } from "spliterator"
+
+import type { CanonicalRow, LabeledRow } from "#types"
+import { alignRow, PARQUET_COLUMNS, ROW_GROUP_SIZE, SHARD_COMPRESSION, writeShards } from "#utils"
+import type { ShardManifest } from "#utils"
 
 export interface ShardKryptoniteOptions {
 	jsonl: string
@@ -105,7 +106,7 @@ export async function buildKryptoniteShard(
 	// first_source_id-prefix inference). Without this, deepseek-kryptonite IDs would have
 	// to match a prefix in KNOWN_SOURCE_PREFIXES — we add it there too as a belt-and-braces.
 	for (const sh of newManifest.shards) {
-		;(sh as unknown as { source: string }).source = source
+		sh.source = source
 	}
 
 	// Compose the final corpus-v0.4.0 manifest: every shard from base + the new shard(s).

@@ -73,6 +73,20 @@ const stringArgs = rawStringArgs as {
  * the postcode point (rank 6 > 5), which measured a non-production preference and hid a 1.5 km-class FR gap for weeks.
  * All dumps BEFORE this epoch are postcode-convention: NEVER compare across conventions (the tokenizer-F1 rule,
  * coordinate edition). `--prefer-postcode-coord` reproduces the old convention for continuity runs only.
+ *
+ * Do NOT "align" this table to `PLACETYPE_SPECIFICITY`. That scale ranks `postalcode` above `locality`, which is the
+ * preference this convention exists to reject, and swapping it in reinstates the measurement that hid the FR gap.
+ *
+ * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority` SWITCHES per
+ * row, leading with `postcode` only when `isUnitGradePostcodeHit` says the code is street-block-class (a GB unit
+ * postcode, an NL PC6) and with `locality` otherwise. This table is the second arm, flattened — right for the FR rows
+ * it grades and wrong for a GB unit-postcode row, which it will never see.
+ *
+ * `@mailwoman/resolver`'s `resolvedSpecificity` is the conditional both arms now consume, and this table is the last
+ * flat copy left. It differs on ONE axis: it ranks `postalcode` (5) above `localadmin`/`borough` (4), where the shared
+ * scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier. Migrating changes this gate's
+ * verdict on any row that resolves a `localadmin` or `borough`, so it needs that count on this gate's own panel first —
+ * a promoted convention does not move on an argument.
  */
 const PLACETYPE_RANK: Record<string, number> = {
 	locality: 6,
@@ -166,7 +180,7 @@ async function main() {
 		}>(goldenPath)
 	)
 
-	const [{ WOFSqlitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
+	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
 		await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite"),
 			import("@mailwoman/neural/scorer"),
@@ -227,7 +241,7 @@ async function main() {
 	const officialNameExact = pins["official-name-exact"] === true
 
 	const resolver = createWOFResolver(
-		new WOFSqlitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined) as never
+		new WOFSQLitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined)
 	)
 
 	const adminCoherencePin = tri("admin-coherence", "no-admin-coherence")

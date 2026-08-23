@@ -31,12 +31,17 @@
  *   `candidate-importance.ts`, which owns that join and explains why the id would be wrong). It is
  *   optional: without {@link BuildCandidateOptions.importance} the column is NULL on every row, which
  *   the consumer reads as unmeasured and ignores.
+ *
+ *   The build also materializes the ANCESTORS SIDECAR (`candidate_ancestor` closure rows +
+ *   `candidate_interval` pre/post labels) from the source `ancestors` table — the containment
+ *   lineage behind {@link WOFCandidateTableLookup.ancestors} and the admin-coherence check.
+ *   `candidate-ancestors-schema.ts` owns the encoding decision and the DAG/absence semantics.
  */
 
 import { existsSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { enumerateCountryDisplayNames } from "@mailwoman/codex/country"
+import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 
 import { createCandidateFTS } from "./candidate-fts.ts"
@@ -47,80 +52,20 @@ import {
 	createCandidateTable,
 	type CandidateDatabase,
 } from "./candidate-schema.ts"
+import { explodeAliasBags } from "./candidate/alias-bags.ts"
+import { buildAncestorsSidecar } from "./candidate/ancestors-sidecar.ts"
+import { stageCountryDisplayNames } from "./candidate/country-display-names.ts"
+import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "./candidate/name-roles.ts"
+import type { PlaceAttrs } from "./candidate/place-attrs.ts"
+import { foldShard } from "./candidate/shard-fold.ts"
+import { resurrectCurrencyHoles } from "./currency-backfill.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
-/**
- * Fold every country surface ICU knows onto that country's candidate row (#1678 thread 1).
- *
- * A bare `格鲁吉亚` (Georgia the country) resolved to NOTHING while `佐治亚州` (Georgia the US state) resolved correctly, and
- * the model gave both the same wrong `locality` tag — so the tag was never the variable. Measured 2026-08-15: 140 of
- * 237 country rows are synthetic and carry a canonical English name and nothing else; WOF holds no Chinese country
- * names at all; and the GeoNames alias fold filters through a Latin-script regex, so neither existing source could ever
- * supply them.
- *
- * `Intl.DisplayNames` already knows every one — ~280 regions, ~5,244 surfaces, from the same ICU the runtime uses for
- * every other locale-sensitive operation. No download, no vendored corpus, no snapshot to drift.
- *
- * `is_primary = 0`: these are NAMES THE WORLD USES, not the country's canonical name. The display `name` stays whatever
- * the gazetteer already had, so resolving `格鲁吉亚` answers with the Georgia country row rather than renaming it.
- *
- * Returns the row count so the caller can report it — a zero means ICU supplied nothing, which is a different fact from
- * the pass not having run.
- */
-export function stageCountryDisplayNames(ctx: {
-	attrs: Map<number, PlaceAttrs>
-	iso2ByID: Map<number, string>
-	countryPtID: number
-	stageRow: (k: string, a: PlaceAttrs, sid: number, isPrimary: number) => void
-	tx: { exec(sql: string): void }
-}): number {
-	// One country row per ISO2. Where a code has several (historic rows surviving the is_current filter), the most
-	// populous wins — the same tiebreak the ranking uses everywhere else.
-	const countryByISO2 = new Map<string, { sid: number; a: PlaceAttrs }>()
-
-	for (const [sid, a] of ctx.attrs) {
-		if (a.ptid !== ctx.countryPtID) continue
-
-		const iso2 = ctx.iso2ByID.get(a.cid)
-
-		if (!iso2 || iso2 === "??") continue
-
-		const held = countryByISO2.get(iso2)
-
-		if (!held || a.pop > held.a.pop) {
-			countryByISO2.set(iso2, { sid, a })
-		}
-	}
-
-	let staged = 0
-
-	ctx.tx.exec("BEGIN")
-
-	for (const { iso2, name } of enumerateCountryDisplayNames()) {
-		const target = countryByISO2.get(iso2)
-
-		if (!target) continue
-
-		const k = normalizeLocalityForKey(name)
-
-		// The country's own key is already staged as its primary; INSERT OR IGNORE at materialization dedupes the
-		// rest, so this only skips the obvious self-alias.
-		if (!k || k === target.a.pkey) continue
-
-		ctx.stageRow(k, target.a, target.sid, 0)
-
-		staged++
-	}
-
-	ctx.tx.exec("COMMIT")
-
-	return staged
-}
-
-/**
- * Boundary-preserving alias-bag separator (#523, U+E000).
- */
-const ALIAS_SEP = "\u{E000}"
+// The build's contract is this module path; the passes behind it live in `./candidate/`. Re-exported
+// here so a consumer never has to know which pass owns which name.
+export { stageCountryDisplayNames } from "./candidate/country-display-names.ts"
+export { GLOSS_EXCLUDED_PLACETYPES, GLOSS_KEY_THRESHOLD } from "./candidate/name-roles.ts"
+export type { PlaceAttrs } from "./candidate/place-attrs.ts"
 
 export interface BuildCandidateOptions {
 	/**
@@ -161,9 +106,26 @@ export interface BuildCandidateOptions {
 	 */
 	importance?: string
 	/**
+	 * Cross-source currency backfill (#1737). WOF carries deprecated-with-no-successor records for real, populated
+	 * settlements (Rochester Kent, Aldershot, Telford — 120 GB localities alone), and the currency filter correctly drops
+	 * them, leaving holes no ranking can fill. When this option is set, pass 1c resurrects a dead locality ONLY under
+	 * three gates, positive evidence throughout: no live same-name row of any placetype near the dead record (a distant
+	 * same-name row is a NAMESAKE and does not block — Rochester, Northumberland pop 318 must not veto Rochester, Kent);
+	 * an independent GeoNames P-class attestation of the same folded name within {@link CURRENCY_BACKFILL_RADIUS_KM}; and
+	 * the attestor at or above {@link CURRENCY_BACKFILL_POP_FLOOR}. The staged row keeps the real WOF id, name, centroid
+	 * and bbox — GeoNames only ATTESTS the place and supplies the population that lets it stand in prominence races.
+	 * `countries` are judged only where `<cc>.txt` exists under `geonamesDir`; absent dumps are skipped loudly.
+	 */
+	currencyBackfill?: { geonamesDir: string; countries: readonly string[] }
+	/**
 	 * Optional progress callback for CLI / test introspection.
 	 */
 	onProgress?: (phase: string, message: string) => void
+	/**
+	 * Key-count threshold for the gloss anomaly detector — {@link GLOSS_KEY_THRESHOLD} unless a test passes a
+	 * fixture-scale value. The production number is the #1730 sweep's own cut (4,000 places at >= 50 keys).
+	 */
+	glossKeyThreshold?: number
 }
 
 export interface BuildCandidateResult {
@@ -180,6 +142,21 @@ export interface BuildCandidateResult {
 	 */
 	postcodeAliases: number
 	/**
+	 * Closure rows in the `candidate_ancestor` sidecar (see candidate-ancestors-schema.ts). Zero means the source
+	 * `ancestors` table contributed nothing within the resolvable placetypes — a finding, reported rather than implied.
+	 */
+	ancestorRows: number
+	/**
+	 * Places carrying at least one closure row.
+	 */
+	ancestorPlaces: number
+	/**
+	 * Places that received a pre/post interval label — the canonical-parent forest's node count. Places outside it (no
+	 * recorded ancestry, shard rows, cycle-skipped) have NO label: containment against them is unverifiable, never
+	 * false.
+	 */
+	intervalPlaces: number
+	/**
 	 * Places that took an `importance` score from the join (#28).
 	 *
 	 * `undefined` and `0` mean different things. `undefined` is "the pass did not run" — no score source was given. A `0`
@@ -194,28 +171,23 @@ export interface BuildCandidateResult {
 	 * join is being asked to guess.
 	 */
 	importanceGated?: number
-}
-
-export interface PlaceAttrs {
-	cid: number
-	rid: number
-	ptid: number
-	name: string
-	lat: number
-	lon: number
-	mnLat: number
-	mnLon: number
-	mxLat: number
-	mxLon: number
-	pop: number
-	neg: number
-	pkey: string
 	/**
-	 * The place's toponym-fame score, or null when the score source has no measurement for it (#28). A property of the
-	 * PLACE, so it rides {@link stageRow} onto the alias and abbrev rows too — that is how a bare `Moscow` reaches
-	 * Москва's score through the alias row that carries the key.
+	 * Alias rows stamped `name_role = 'gloss'` — the anomaly detector's certain core (#1730).
 	 */
-	imp: number | null
+	roleGloss: number
+	/**
+	 * Alias rows stamped `name_role = 'abbr'` — the variant-in-official-language provenance signal (#1730/#936).
+	 */
+	roleAbbr: number
+	/**
+	 * Admin places whose staged key count reached {@link GLOSS_KEY_THRESHOLD} — the sweep's tail, reported so the stamped
+	 * fraction has its denominator.
+	 */
+	keyTailPlaces: number
+	/**
+	 * Of {@link BuildCandidateResult.keyTailPlaces}, how many carry at least one stamped role row.
+	 */
+	keyTailWithRole: number
 }
 
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
@@ -337,7 +309,12 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		const cid = ccID(r.country as string | null)
 		const ptid = ptID(r.placetype as string | null)
 		const rid = regionOf.get(sid) ?? 0
-		const pop = Number(r.pop) || 0
+		// A zero population on a COUNTRY row is a WOF absence artifact, never a real zero — 147 of 237
+		// primary country records carried none (measured 2026-08-18, #1650), which ranked those nations
+		// below any namesake hamlet in every prominence race ("Georgia" → Georgia VT). The codex table is
+		// the secondary source; a country absent from it too stays at zero honestly.
+		const wofPop = Number(r.pop) || 0
+		const pop = wofPop === 0 && r.placetype === "country" ? (COUNTRY_POPULATION[String(r.country ?? "")] ?? 0) : wofPop
 		const neg = -Math.log10(pop + 1)
 		const name = String(r.name ?? "")
 		const pkey = normalizeLocalityForKey(name)
@@ -380,7 +357,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 				a.mxLon,
 				pop,
 				1,
-				a.imp
+				a.imp,
+				null
 			)
 
 			nPrim++
@@ -415,7 +393,8 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			a.mxLon,
 			a.pop,
 			isPrimary,
-			a.imp
+			a.imp,
+			null
 		)
 	}
 
@@ -433,30 +412,33 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		}).toLocaleString()} country surfaces`
 	)
 
-	// --- pass 2: distinct normalized aliases from place_search.alt_names ---
-	progress("aliases", "exploding alias bags")
-	let nAlias = 0
-	out.exec("BEGIN")
+	// --- pass 1c: cross-source currency backfill (#1737 — resurrectCurrencyHoles owns the gates). Runs BEFORE
+	// the alias pass so a resurrected place's alt names explode like any primary's. ---
+	if (opts.currencyBackfill) {
+		const nBackfill = await resurrectCurrencyHoles({
+			src,
+			tx: out,
+			geonamesDir: opts.currencyBackfill.geonamesDir,
+			countries: opts.currencyBackfill.countries,
+			attrs,
+			ccID,
+			ptID,
+			regionOf,
+			importance,
+			stageRow,
+			progress,
+		})
 
-	for (const r of src.prepare("SELECT wof_id, alt_names FROM place_search").iterate()) {
-		const a = attrs.get(Number(r.wof_id))
-		const alt = r.alt_names as string | null
-
-		if (!a || !alt) continue
-		const seen = new Set<string>([a.pkey])
-
-		for (const piece of alt.split(ALIAS_SEP)) {
-			const k = normalizeLocalityForKey(piece)
-
-			if (!k || seen.has(k)) continue
-			seen.add(k)
-			stageRow(k, a, Number(r.wof_id), 0)
-
-			nAlias++
-		}
+		progress("currency-backfill", `${nBackfill.toLocaleString()} resurrections staged`)
+	} else {
+		// Never a silent absence: a build without the option leaves the deprecated-no-successor holes dead,
+		// and the log must say so rather than leave it inferable only from a missing row.
+		progress("currency-backfill", "not configured — deprecated-no-successor holes stay dead (#1737)")
 	}
 
-	out.exec("COMMIT")
+	// --- pass 2: distinct normalized aliases from place_search.alt_names (explodeAliasBags owns the loop) ---
+	progress("aliases", "exploding alias bags")
+	const { nAlias, keyCounts } = explodeAliasBags(src, out, attrs, stageRow)
 	progress("aliases", `${nAlias.toLocaleString()} aliases`)
 
 	// --- pass 3: region abbreviations (place_abbr) ---
@@ -478,128 +460,37 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	out.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
-	/**
-	 * Pass 4 — fold ONE postcode shard (`spr` rows with `placetype='postalcode'`) in, then pass 4b: the delivery-city
-	 * aliases hanging off the same shard's `names` table.
-	 *
-	 * Extracted rather than inlined because the shard loop is self-contained — it shares only the staging statement and
-	 * the code dictionaries with the passes above, and nothing after it reads anything it produces except the two
-	 * counters it returns.
-	 */
-	const foldShard = (
-		pcDB: string,
-		shardPlacetype: "postalcode" | "locality"
-	): { primaries: number; aliases: number } => {
-		progress(shardPlacetype === "postalcode" ? "postcodes" : "localities", `reading ${pcDB}`)
+	// --- pass 3b: name roles (#1730 prototype — stampNameRoles owns the detectors) ---
+	// Independent of the sidecar below: this writes `cand_stage.name_role`, that writes the ancestor and
+	// interval tables, and neither reads the other's output. Ordered by label only.
+	const roles = stampNameRoles({
+		src,
+		out,
+		attrs,
+		keyCounts,
+		glossThreshold: opts.glossKeyThreshold ?? GLOSS_KEY_THRESHOLD,
+		ptcodes,
+		ccodes,
+		progress,
+	})
 
-		const pc = new DatabaseSync(pcDB, { readOnly: true })
-		const pcPtid = ptID(shardPlacetype)
-		// Per-shard, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
-		// below has nothing to join against unless this primary loop records what it staged.
-		const pcAttrs = new Map<number, PlaceAttrs>()
-		let primaries = 0
-		let aliases = 0
+	// --- pass 3c: the ancestors sidecar (candidate-ancestors-schema.ts owns the encoding decision) ---
+	const sidecar = await buildAncestorsSidecar({ src, out, kdb, attrs, ptID, progress })
 
-		out.exec("BEGIN")
-
-		for (const r of pc
-			.prepare(
-				`SELECT id, name, country, latitude, longitude,
-					min_latitude AS mnlat, min_longitude AS mnlon, max_latitude AS mxlat, max_longitude AS mxlon
-				 FROM spr WHERE placetype = '${shardPlacetype}' AND latitude != 0 AND longitude != 0`
-			)
-			.iterate()) {
-			const name = String(r.name ?? "")
-			const key = normalizeLocalityForKey(name)
-
-			if (!key) continue
-
-			const lat = r.latitude as number
-			const lon = r.longitude as number
-
-			// region_id 0 (a postcode is unique by name+country — no same-name disambiguation); neg_rank 0
-			// (no population). bbox = the postcode's own min/max (falls back to the centroid point).
-			const a: PlaceAttrs = {
-				cid: ccID(r.country as string | null),
-				rid: 0,
-				ptid: pcPtid,
-				name,
-				lat,
-				lon,
-				mnLat: (r.mnlat as number) || lat,
-				mnLon: (r.mnlon as number) || lon,
-				mxLat: (r.mxlat as number) || lat,
-				mxLon: (r.mxlon as number) || lon,
-				pop: 0,
-				neg: 0,
-				pkey: key,
-				// A postcode has no toponym fame — nobody writes an encyclopedia article about SW1A 2AA — and
-				// the score source carries no `postalcode` rows to join against anyway. NULL is the truthful
-				// value: unmeasured, so the ranking key leaves postcode rows exactly where they were.
-				imp: null,
-			}
-
-			pcAttrs.set(Number(r.id), a)
-			stageRow(key, a, Number(r.id), 1)
-
-			primaries++
-		}
-
-		out.exec("COMMIT")
-
-		// --- pass 4b: postcode ALIAS names (#1495) ---
-		//
-		// The delivery-city names GeoNames supplies for a ZIP ("Brooklyn" for 11201) are written into
-		// the shard's `names` table by `postcode/centroid-fills.ts`'s `geonamesNameFill`. Everything
-		// downstream of `names` picked them up EXCEPT this build: `fts.ts` unions `spr.name` with every
-		// `names` row into `place_search.alt_names`, so the FTS backend resolved "Brooklyn" → 11201
-		// while the candidate backend — whose every row IS an exact-tier row — had no key for it at
-		// all. Pass 2 does the equivalent fold for admin places, but reads the ADMIN `place_search`,
-		// and `attrs` holds admin ids only, so a postcode shard could never reach it.
-		//
-		// Same discipline as pass 2: `is_primary = 0` (so `rankByPrimaryPreference` treats it as an
-		// alias, not a canonical postcode name), the row stays denormalized onto the POSTCODE's own
-		// spr_id/coords/bbox, and the display `name` stays the postcode — resolving "brooklyn" answers
-		// with place 11201, it does not rename the place to its delivery city.
-		const hasNames = pc.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='names'").get() !== undefined
-
-		if (hasNames) {
-			out.exec("BEGIN")
-
-			for (const r of pc.prepare("SELECT id, name FROM names").iterate()) {
-				const a = pcAttrs.get(Number(r.id))
-
-				if (!a) continue
-
-				const k = normalizeLocalityForKey(String(r.name ?? ""))
-
-				// The postcode's own key is already staged as the primary; `INSERT OR IGNORE` at
-				// materialization dedupes repeats, so this only skips the obvious self-alias.
-				if (!k || k === a.pkey) continue
-
-				stageRow(k, a, Number(r.id), 0)
-
-				aliases++
-			}
-
-			out.exec("COMMIT")
-		} else {
-			// Never a silent zero: real shards come from `createUnifiedSchema`, which always creates
-			// `names`. A shard without it has no alias surface to lose, but say so rather than reporting
-			// "0 aliases" from a table that was never read.
-			progress("postcode-aliases", `${pcDB} has no \`names\` table — no delivery-city aliases to fold`)
-		}
-
-		pc.close()
-
-		return { primaries, aliases }
-	}
-
+	// --- pass 4 + 4b: postcode and locality shards (foldShard owns the per-shard loop) ---
 	let nPostcode = 0
 	let nPostcodeAlias = 0
 
 	for (const pcDB of opts.postcodes ?? []) {
-		const folded = foldShard(pcDB, "postalcode")
+		const folded = foldShard({
+			out,
+			shardPath: pcDB,
+			shardPlacetype: "postalcode",
+			ccID,
+			ptID,
+			stageRow,
+			progress,
+		})
 
 		nPostcode += folded.primaries
 		nPostcodeAlias += folded.aliases
@@ -612,7 +503,15 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	let nLocality = 0
 
 	for (const locDB of opts.localities ?? []) {
-		const folded = foldShard(locDB, "locality")
+		const folded = foldShard({
+			out,
+			shardPath: locDB,
+			shardPlacetype: "locality",
+			ccID,
+			ptID,
+			stageRow,
+			progress,
+		})
 
 		nLocality += folded.primaries
 	}
@@ -675,6 +574,10 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		abbrevs: nAbbr,
 		postcodes: nPostcode,
 		postcodeAliases: nPostcodeAlias,
+		ancestorRows: sidecar.ancestorRows,
+		ancestorPlaces: sidecar.ancestorPlaces,
+		intervalPlaces: sidecar.intervalPlaces,
+		...roles,
 		...(importance ? { importanceScored: importance.matched, importanceGated: importance.gated } : {}),
 	}
 }

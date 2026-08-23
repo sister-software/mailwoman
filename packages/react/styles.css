@@ -15,7 +15,7 @@
 	font-size: 0.95rem;
 }
 
-/* ── Field (label + input + button) ──────────────────────────────────────── */
+/* #region Field (label + input + button) */
 
 .mw-field {
 	display: flex;
@@ -60,7 +60,9 @@
 	cursor: not-allowed;
 }
 
-/* ── Preset chips ────────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Preset chips */
 
 .mw-presets {
 	margin-top: 0.75rem;
@@ -98,7 +100,9 @@
 	cursor: not-allowed;
 }
 
-/* ── Generic button (copy / search) ──────────────────────────────────────── */
+/* #endregion */
+
+/* #region Generic button (copy / search) */
 
 .mw-btn {
 	font-size: 0.8rem;
@@ -120,7 +124,9 @@
 	cursor: not-allowed;
 }
 
-/* ── Result panel + errors ───────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Result panel + errors */
 
 .mw-result {
 	margin-top: 1.5rem;
@@ -161,7 +167,9 @@
 	white-space: pre-wrap;
 }
 
-/* ── KindBadge ───────────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region KindBadge */
 
 .mw-kind {
 	margin-bottom: 0.5rem;
@@ -183,7 +191,9 @@
 	list-style: disc;
 }
 
-/* ── POI subject panel ───────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region POI subject panel */
 
 .mw-subject__row {
 	display: flex;
@@ -258,7 +268,9 @@
 	margin: 0;
 }
 
-/* ── OverpassQL block ────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region OverpassQL block */
 
 .mw-overpass {
 	margin-top: 0.75rem;
@@ -275,7 +287,9 @@
 	overflow-x: auto;
 }
 
-/* ── Live results ────────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Live results */
 
 .mw-live {
 	margin-top: 1rem;
@@ -317,7 +331,9 @@
 	white-space: nowrap;
 }
 
-/* ── Component table ─────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Component table */
 
 .mw-components {
 	width: 100%;
@@ -340,7 +356,9 @@
 	text-transform: uppercase;
 }
 
-/* ── Confidence cell ─────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Confidence cell */
 
 .mw-conf__dash {
 	color: var(--ifm-color-emphasis-500, #8c8c8c);
@@ -377,7 +395,9 @@
 	font-size: 0.8rem;
 }
 
-/* ── Resolved place ──────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Resolved place */
 
 .mw-resolved {
 	margin-top: 1rem;
@@ -416,7 +436,9 @@
 	font-size: 0.9rem;
 }
 
-/* ── Candidate picker ────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Candidate picker */
 
 .mw-candidates {
 	margin-top: 1rem;
@@ -471,7 +493,9 @@
 	color: var(--ifm-color-emphasis-600, #6e6e6e);
 }
 
-/* ── LoadingIndicator ────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region LoadingIndicator */
 
 .mw-loading {
 	display: flex;
@@ -647,7 +671,9 @@
 	transform: translateY(-60%) rotate(45deg);
 }
 
-/* ── Demo map (react-map-gl/maplibre shell) ──────────────────────────────── */
+/* #endregion */
+
+/* #region Demo map (react-map-gl/maplibre shell) */
 
 /*
  * The <DemoMap> wrapper. Sizing is the host's call (pass `style`/`className`), but a min-height keeps
@@ -660,8 +686,6 @@
 	min-height: 320px;
 	overflow: hidden;
 }
-
-/* ── Geocoder demo (composed: full-viewport map + floating control panel) ──── */
 
 /*
  * The demo fills its positioning context; the host sizes it (a full-viewport wrapper in docs). The map is the
@@ -705,7 +729,9 @@
 	}
 }
 
-/* ── Demo control field (version / compare-version selects) ──────────────── */
+/* #endregion */
+
+/* #region Demo control field (version / compare-version selects) */
 
 .mw-demo-control {
 	margin-bottom: 0.75rem;
@@ -732,7 +758,9 @@
 	opacity: 0.5;
 }
 
-/* ── Backend indicator + WASM toggle / compare toggle ────────────────────── */
+/* #endregion */
+
+/* #region Backend indicator + WASM toggle / compare toggle */
 
 .mw-demo-backend,
 .mw-demo-compare {
@@ -771,7 +799,9 @@
 	color: var(--ifm-color-emphasis-600, #6e6e6e);
 }
 
-/* ── Place autocomplete listbox (reuses .mw-chip) ────────────────────────── */
+/* #endregion */
+
+/* #region Place autocomplete listbox (reuses .mw-chip) */
 
 .mw-demo-suggest {
 	margin-top: 0.75rem;

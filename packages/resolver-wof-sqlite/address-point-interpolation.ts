@@ -35,11 +35,11 @@
 import { DatabaseSync } from "node:sqlite"
 
 import type { InterpolationLookup } from "@mailwoman/resolver"
+import { haversineKm } from "@mailwoman/spatial"
 
-import { haversineKm } from "./geo.ts"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.ts"
-import { hasTable } from "./sqlite-utils.ts"
-import { canonicalizeRouteKey, streetKeyVariants } from "./street-normalize.ts"
+import { hasTable, prepareAll, type PreparedAll } from "./sqlite-utils.ts"
+import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "./street-normalize.ts"
 
 /**
  * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known point (`t = 2`). Past
@@ -70,7 +70,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 	readonly #db: DatabaseSync
 	readonly #ownsDB: boolean
 	readonly #fallback: StreetInterpolator | undefined
-	readonly #byPostcode: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #byPostcode: PreparedAll<[postcode: string, street: RouteKey, number: number], PointRow> | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseSync; fallback?: StreetInterpolator }) {
 		if (opts.database) {
@@ -90,7 +90,8 @@ export class AddressPointInterpolator implements InterpolationLookup {
 		if (hasTable(this.#db, "address_point")) {
 			// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP. The
 			// queried number itself is excluded HERE (see module doc: non-circular by construction).
-			this.#byPostcode = this.#db.prepare(
+			this.#byPostcode = prepareAll(
+				this.#db,
 				`SELECT CAST(number AS INTEGER) AS n, lat, lon, source, release
 				 FROM address_point
 				 WHERE postcode = ? AND street_key = ?
@@ -115,7 +116,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 		for (const variant of streetKeyVariants(query.street)) {
 			const streetKey = canonicalizeRouteKey(variant)
 
-			rows = this.#byPostcode.all(query.postcode.trim(), streetKey, n) as unknown as PointRow[]
+			rows = this.#byPostcode(query.postcode.trim(), streetKey, n)
 
 			if (rows.length) break
 		}

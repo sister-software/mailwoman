@@ -35,7 +35,7 @@ finest-resolved tier across the 267 parity fixtures (admin + postcode DBs only):
 ```
 
 **The harness resolver had no street-level data.** I constructed it as
-`WOFSqlitePlaceLookup({ databasePath: [admin-global-priority.db, postcode-locality-intl.db] })` — no
+`WOFSQLitePlaceLookup({ databasePath: [admin-global-priority.db, postcode-locality-intl.db] })` — no
 situs, no interpolation, no BAN/OSM rooftop. It cannot distinguish a correct street parse from a
 wrong one because **it never resolves streets at all**.
 

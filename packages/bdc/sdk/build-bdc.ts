@@ -7,8 +7,7 @@
  *
  *   Mirrors `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s shape closely: the same build-tuning
  *   pragmas, the same single-pass `Map<number, number>` coverage aggregation taken during the load
- *   (no second scan), the same {@link asContractDB} Kysely-invariance cast for the shared
- *   `@mailwoman/core/layers` calls, and the same `writeLayerManifest` → `sealDatabase` tail.
+ *   (no second scan), and the same `writeLayerManifest` → `sealDatabase` tail.
  *
  *   Two differences from that precedent, both deliberate:
  *
@@ -51,7 +50,7 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "node:fs"
-import { readFile } from "node:fs/promises"
+import { open } from "node:fs/promises"
 import { basename, dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
@@ -64,7 +63,6 @@ import {
 	LayerTier,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { openBuiltDatabase, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
@@ -88,7 +86,7 @@ import {
 	type BDCProviderTable,
 } from "../schema.ts"
 import type { ProviderID } from "./common.ts"
-import { takeAvailabilityLine, type BDCAvailabilityRow } from "./parsing.ts"
+import { readAvailabilityRows, type BDCAvailabilityRow } from "./parsing.ts"
 
 /**
  * Rows committed per `BEGIN`/`COMMIT` batch during both the staging load and the materialize pass — matches
@@ -207,16 +205,6 @@ export interface BuildBDCResult {
 }
 
 /**
- * `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes `Kysely<DB>` INVARIANT
- * in `DB` — narrows a `DatabaseClient<BDCDatabase>` handle back down for the `@mailwoman/core/layers` calls. Exact
- * precedent: `build-poi.ts`'s own `asContractDB`; see that file for the full rationale (tried widening the shared
- * package's signatures first — breaks THEIR internal `insertInto`/`selectFrom` calls instead).
- */
-function asContractDB(kdb: DatabaseClient<BDCDatabase>): DatabaseClient<LayerContractDatabase> {
-	return kdb as unknown as DatabaseClient<LayerContractDatabase>
-}
-
-/**
  * Create the build-only `bdc_stage` table — deliberately NOT part of the public {@link BDCDatabase} interface (it's
  * dropped before the artifact seals, so it never appears in the shipped schema). Built via Kysely's schema builder per
  * the AGENTS.md DDL convention (`createTable` takes any string table name — it doesn't need to be a `keyof DB` to
@@ -308,17 +296,43 @@ export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID 
 }
 
 /**
- * Reads each of `csvPaths` fully into memory, peeks its `provider_id` ({@linkcode peekProviderID}, passing the path
- * through so a malformed file's error names it), then yields every row via `takeAvailabilityLine`. This is the
+ * Bytes read to peek the `provider_id`. Only the header row plus the first data row are needed and an FCC availability
+ * row is ~110 bytes, so this is three orders of magnitude of slack. A file shorter than this simply reads short —
+ * {@linkcode peekProviderID} already reports a header-only or empty file by message.
+ */
+const PROVIDER_ID_PEEK_BYTES = 64 * 1024
+
+/**
+ * Read the head of a CSV, for {@linkcode peekProviderID}.
+ *
+ * The point is what it does NOT do. `provider_id` is a constant per file, so establishing it needs the first data row
+ * and nothing else; `readFile(csvPath)` was resident-loading the entire file to read one column of one row. The
+ * measured file that motivated this is 920 MB for a single state × technology.
+ */
+async function readCSVHead(csvPath: string): Promise<Buffer> {
+	const handle = await open(csvPath)
+
+	try {
+		const buffer = Buffer.allocUnsafe(PROVIDER_ID_PEEK_BYTES)
+		const { bytesRead } = await handle.read(buffer, 0, PROVIDER_ID_PEEK_BYTES, 0)
+
+		return buffer.subarray(0, bytesRead)
+	} finally {
+		await handle.close()
+	}
+}
+
+/**
+ * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID}, passing the path through so a malformed
+ * file's error names it), then STREAMS every row via `readAvailabilityRows` — the file is never resident. This is the
  * production counterpart to the test seam's injected `rows` — exercised by `build-bdc.test.ts` only for the
  * malformed-provider-id rejection path, same as `build-poi.ts`'s `readParquetRows`.
  */
 async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): AsyncIterable<BDCAvailabilityRow> {
 	for (const csvPath of csvPaths) {
-		const buffer = await readFile(csvPath)
-		const providerID = peekProviderID(buffer, csvPath)
+		const providerID = peekProviderID(await readCSVHead(csvPath), csvPath)
 
-		yield* takeAvailabilityLine(buffer, providerID)
+		yield* readAvailabilityRows(csvPath, providerID)
 	}
 }
 
@@ -600,8 +614,8 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 	try {
 		progress("creating manifest/coverage/availability/provider/stage tables")
-		await createLayerManifestTable(asContractDB(kdb))
-		await createLayerCoverageTable(asContractDB(kdb))
+		await createLayerManifestTable(kdb)
+		await createLayerCoverageTable(kdb)
 		await createBDCAvailabilityTable(kdb)
 		await createBDCProviderTable(kdb)
 		await createBDCStageTable(kdb)
@@ -787,11 +801,11 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			observedRows,
 		}))
 
-		await writeLayerCoverage(asContractDB(kdb), coverageCells)
+		await writeLayerCoverage(kdb, coverageCells)
 
 		progress("writing layer manifest")
 
-		await writeLayerManifest(asContractDB(kdb), {
+		await writeLayerManifest(kdb, {
 			name: "bdc",
 			version: options.asOfDate,
 			schemaVersion: 1,

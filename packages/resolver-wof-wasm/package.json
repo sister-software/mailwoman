@@ -21,7 +21,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -35,6 +36,16 @@
 			"node": "./browser-cascade.ts",
 			"default": "./out/browser-cascade.js",
 			"types": "./out/browser-cascade.d.ts"
+		},
+		"./loader": {
+			"node": "./loader.ts",
+			"default": "./out/loader.js",
+			"types": "./out/loader.d.ts"
+		},
+		"./lookup": {
+			"node": "./lookup.ts",
+			"default": "./out/lookup.js",
+			"types": "./out/lookup.d.ts"
 		}
 	},
 	"publishConfig": {

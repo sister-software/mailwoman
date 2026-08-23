@@ -9,7 +9,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -34,7 +35,7 @@ interface Options {
 
 const GazetteerBuildFST: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildLocaleFSTs } = await import("../../../gazetteer-pipeline/fst.ts")
+		const { buildLocaleFSTs } = await import("#gazetteer/fst")
 
 		const built = buildLocaleFSTs({
 			locales: options.locales?.split(",").map((s) => s.trim()),

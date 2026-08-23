@@ -4,7 +4,7 @@
 /**
  *   `mailwoman gazetteer build fts <wof.db>... [--drop]` — add the `place_search` FTS5 +
  *   `place_bbox` R*Tree virtual tables to one or more WOF SQLite distributions so production
- *   `WOFSqlitePlaceLookup` instances skip the lazy-build cost at first open. Absorbs the retired
+ *   `WOFSQLitePlaceLookup` instances skip the lazy-build cost at first open. Absorbs the retired
  *   `mailwoman-wof-build-fts` bin.
  */
 
@@ -12,7 +12,8 @@ import { existsSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { Text } from "ink"
-import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.

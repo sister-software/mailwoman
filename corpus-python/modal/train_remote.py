@@ -177,6 +177,124 @@ def _required_train_seconds(max_steps: int) -> int:
     secrets=[r2_secret],
     timeout=3600,
 )
+def sync_assets(
+    corpus_versions: str = "",
+    tokenizer: str = "",
+    code: bool = True,
+    extras: str = "",
+):
+    """Pull named corpus versions, a tokenizer, the training code and arbitrary extra files from R2
+    into the volume, CONTAINER-SIDE.
+
+    Container-side is not a preference. On this volume the CLI write -> container read path is broken:
+    files written by ``modal volume put`` are visible to ``modal volume ls/get`` but NOT to a mounted
+    container, and ``vol.reload()`` does not bridge it. Container-side writes plus ``vol.commit()`` do
+    propagate, so every asset routes local -> R2 -> here.
+
+    ONE function, parameterized, replacing a per-version copy: the variation between corpus versions
+    is a manifest (which directories, which tokenizer, which extra files), not code, and cloning a
+    fifty-line Modal function per version is how the file reached 48 of them.
+
+    Layout contract, matching what ``mailwoman corpus upload`` writes:
+
+        :s3:{BUCKET}/corpus/<version>/  ->  {VOL_MOUNT}/corpus/versioned/<version>/corpus-<version>/
+
+    An overlay corpus ships only its own new shards; its MANIFEST names the base version's shards by
+    absolute ``/data/...`` path, so the base must already be on the volume. This function does not
+    check that -- ``audit_epoch_mixture`` does, and reports which shard is missing.
+
+    Args:
+        corpus_versions: comma-separated version names, e.g. ``v0.24.0-trailing-region-structured``.
+        tokenizer: tokenizer subdirectory under ``models/tokenizer/``; empty syncs the flat directory.
+        code: sync ``corpus-python/src/`` (default true -- a run reads the volume's copy, not git).
+        extras: comma-separated ``<r2-path>><vol-subdir>`` pairs for gazetteer files, eval fixtures.
+
+    Usage:
+        modal run corpus-python/modal/train_remote.py::sync_assets \
+            --corpus-versions v0.24.0-trailing-region-structured
+    """
+    import subprocess
+
+    vol.reload()
+
+    # R2 occasionally 501s on a PUT/GET; the retry flags ride through it, each op succeeding on a
+    # later attempt.
+    flags = "--low-level-retries 30 --retries 8 --transfers 12 --checkers 24 --stats 30s --stats-log-level NOTICE"
+
+    jobs: list[tuple[str, str, str]] = []
+
+    for version in [v.strip() for v in corpus_versions.split(",") if v.strip()]:
+        jobs.append(
+            (
+                f"corpus {version}",
+                f":s3:{BUCKET}/corpus/{version}/",
+                f"{VOL_MOUNT}/corpus/versioned/{version}/corpus-{version}/",
+            )
+        )
+
+    if tokenizer:
+        jobs.append(
+            (
+                f"tokenizer {tokenizer}",
+                f":s3:{BUCKET}/models/tokenizer/{tokenizer}/",
+                f"{VOL_MOUNT}/models/tokenizer/{tokenizer}/",
+            )
+        )
+
+    if code:
+        jobs.append(("training code", f":s3:{BUCKET}/corpus-python/src/", f"{VOL_MOUNT}/corpus-python/src/"))
+
+    for extra in [e.strip() for e in extras.split(",") if e.strip()]:
+        source, _, dest = extra.partition(">")
+        jobs.append((f"extra {source}", f":s3:{BUCKET}/{source}", f"{VOL_MOUNT}/{dest}"))
+
+    if not jobs:
+        raise RuntimeError("nothing selected -- pass --corpus-versions, --tokenizer or --extras")
+
+    for i, (label, source, dest) in enumerate(jobs):
+        print(f"\n[{i + 1}/{len(jobs)}] {label}: {source} -> {dest}")
+        result = subprocess.run(f"rclone copy {source} {dest} {flags}", shell=True, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"STDERR: {result.stderr[:800]}")
+            raise RuntimeError(f"rclone failed on {label}: {result.stderr[:200]}")
+
+        if result.stdout:
+            print(result.stdout[-300:])
+
+        # rclone EXITS 0 WHEN THE SOURCE PREFIX IS EMPTY. Without this the caller reads a clean run and
+        # a training job then fails much later on a missing shard, with nothing pointing back here.
+        landed = sum(len(files) for _, _, files in os.walk(dest))
+
+        if landed == 0:
+            raise RuntimeError(
+                f"{label}: rclone succeeded and {dest} holds no files. The R2 prefix {source} is empty "
+                "-- upload it first with `mailwoman corpus upload`."
+            )
+
+        print(f"  {label}: {landed} files present")
+
+    if code:
+        # A stale pyc shadows the freshly-synced loader, so the run imports the previous code and
+        # reports success against it.
+        pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
+
+        if os.path.isdir(pyc):
+            import shutil
+
+            shutil.rmtree(pyc)
+            print(f"  cleared {pyc}")
+
+    vol.commit()
+    print("\nSync complete. Volume committed.")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=3600,
+)
 def sync_corpus():
     """Pull corpus + tokenizer + training code from R2 into the Modal volume."""
     print("Syncing corpus from R2...")
@@ -2584,17 +2702,35 @@ def quantize_onnx(
     --fp32-path=/data/output-v097-unit-v3-s42/model.onnx
     --int8-path=/data/models/quantized/model-v097-step-20000-int8.onnx``
     """
+    import hashlib
     import sys
     from pathlib import Path
+
+    # RELOAD BEFORE READING. This function is almost always called right after `export_onnx` wrote its
+    # fp32 to the volume, and a container that started with an older view reads the PREVIOUS model —
+    # silently, since the path is the same. Two checkpoints exported to `model.onnx` in sequence and
+    # quantized in between produced byte-identical int8 artifacts because of this, which reads as "the
+    # two checkpoints are the same model" rather than as a stale mount.
+    vol.reload()
 
     sys.path.insert(0, "/data/corpus-python/src")
     from mailwoman_train.quantize import quantize_dynamic_int8
 
     fp32 = Path(fp32_path)
     int8 = Path(int8_path)
-    print(f"Quantizing {fp32} → {int8}")
+
+    if not fp32.is_file():
+        raise RuntimeError(f"no fp32 at {fp32} after vol.reload() — export it first")
+
+    # The INPUT's digest travels with the output. An int8 artifact is otherwise unattributable: nothing
+    # in the file says which checkpoint it came from, and the fp32 it was made from is usually
+    # overwritten by the next export.
+    fp32_md5 = hashlib.md5(fp32.read_bytes()).hexdigest()
+
+    print(f"Quantizing {fp32} (md5 {fp32_md5}) → {int8}")
     quantize_dynamic_int8(fp32, int8)
-    print(f"int8 written: {int8} ({int8.stat().st_size / 1e6:.1f} MB)")
+    int8_md5 = hashlib.md5(int8.read_bytes()).hexdigest()
+    print(f"int8 written: {int8} ({int8.stat().st_size / 1e6:.1f} MB, md5 {int8_md5})")
     vol.commit()
     print("Committed to volume.")
 

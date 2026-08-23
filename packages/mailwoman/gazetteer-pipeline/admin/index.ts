@@ -29,12 +29,15 @@ import {
 	geonamesAdminGapCountries,
 } from "../defaults.ts"
 import { buildFTS } from "../fts.ts"
+import { checkOvertureRelease } from "../overture-release.ts"
+import { buildSHA, stampLayerManifest } from "../stamp-manifest.ts"
 import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "../verify.ts"
 import { enrichAdmin } from "./enrich.ts"
 import { foldGeonames } from "./fold-geonames.ts"
 import { ingestOvertureDivisions } from "./fold-overture.ts"
 import { freezeAdmin } from "./freeze.ts"
 import { ingestWOF } from "./ingest-wof.ts"
+import { adminLayerManifest } from "./manifest.ts"
 
 export interface BuildAdminOptions {
 	/**
@@ -95,6 +98,14 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	if (existsSync(ingestPath)) {
 		unlinkSync(ingestPath)
 	}
+
+	// BEFORE the WOF ingest, not at `fold-overture` where the release is first read: a pruned pin is a one-request
+	// question, and discovering it after 2.9M records reads as a network fault rather than an expired pin.
+	const releaseCheck = await checkOvertureRelease(overtureRelease)
+
+	phase("preflight", releaseCheck.message)
+
+	if (!releaseCheck.present) throw new Error(releaseCheck.message)
 
 	phase("staging", ingestPath)
 	const db = new DatabaseSync(ingestPath)
@@ -189,6 +200,25 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			)
 		}
 	}
+
+	// BEFORE the seal — see `stampLayerManifest`, which owns that ordering and its reason.
+	phase("manifest")
+	const sha = buildSHA(String(repoRootPath()))
+
+	await stampLayerManifest(
+		out,
+		adminLayerManifest({
+			// The counts the build actually produced, not the lists it was given. A fold that ingested
+			// nothing must not appear as a source — see manifest.ts.
+			counts: { wof: ingest.placesIngested, overture: overtureIngested, geonames: folded.placesIngested },
+			buildSHA: sha,
+			vintages: { overture: overtureRelease },
+			version: new Date().toISOString().slice(0, 10),
+			createdAt: new Date().toISOString(),
+		})
+	)
+
+	phase("manifest", "layer_manifest written")
 
 	phase("seal")
 	sealDatabase(out)

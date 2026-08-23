@@ -39,13 +39,13 @@
  */
 
 import { existsSync } from "node:fs"
+import { parseArgs } from "node:util"
 
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
-import { cliArguments } from "@mailwoman/core/scripting/utils"
 import { wofShardPaths } from "@mailwoman/core/utils"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
-import { WOFCandidateTableLookup, WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { JSONSpliterator } from "spliterator"
 
 import { conventionCandidateDBPath } from "../resolver-backend.ts"
@@ -99,7 +99,12 @@ const PANELS: Record<string, { path: string; country: string; misScope: string; 
  */
 const IMPOSSIBLE_DEFAULT = "ZZ"
 
-const [panelName, backendName, limitArg] = cliArguments()
+const { positionals } = parseArgs({
+	allowPositionals: true,
+})
+
+const [panelName, backendName, limitArg] = positionals
+
 const panel = panelName ? PANELS[panelName] : undefined
 
 if (!panel || (backendName !== "fts" && backendName !== "candidate")) {
@@ -136,7 +141,7 @@ function makeBackend(): ResolverBackend {
 
 	console.error(`[probe] FTS backend over ${paths.length} shards: ${paths.join(", ")}`)
 
-	return new WOFSqlitePlaceLookup({ databasePath: paths })
+	return new WOFSQLitePlaceLookup({ databasePath: paths })
 }
 
 const backend = makeBackend()

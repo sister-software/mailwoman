@@ -35,6 +35,20 @@ hands.
    bar revision — grandfathered as a named violation with a standing remediation obligation, not a
    precedent.)
 
+   **The opt-in half: a default-OFF path must ship with tests that turn it ON.** "Ship it opt-in" is
+   one of the three compliant routes above, which makes default-OFF the most common landing place for
+   new mechanisms — and an untested one rots in place. Nothing exercises it, so nothing tells you
+   when a refactor breaks it, and the flag's first real use is also its first execution. A mechanism
+   parked behind a flag is still shipped code; the flag decides who runs it, not whether it works.
+   Every `ResolveOpts` / config gate therefore needs at least one test that sets it true and asserts
+   the mechanism's own behavior — not merely that the default path stays byte-stable, which is the
+   OTHER half and is separately required.
+
+   Most of the tree already does this: of 15 boolean `ResolveOpts` gates, 12 have a test that sets
+   them `true`. The posture is written down so the remaining three — `parentFallback`,
+   `addressPointBboxFallback`, `diagnoseUnreachable` — read as a gap rather than as a style, and so
+   the next mechanism parked behind a flag does not join them.
+
 ## Which tool for which tag (the lever-shape taxonomy)
 
 - **Open-vocab / distributional tags** (street, affixes, unit, locality): the model must learn the

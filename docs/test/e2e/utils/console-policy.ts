@@ -8,7 +8,7 @@
 /**
  * Real failures — the test SHOULD fail when one of these surfaces.
  */
-export const FAIL_PATTERNS: RegExp[] = [
+const FAIL_PATTERNS: RegExp[] = [
 	/style is not done loading/i,
 	/cannot read properties of null \(reading 'addsource'\)/i,
 	/cannot read properties of null \(reading 'addlayer'\)/i,
@@ -26,7 +26,7 @@ export const FAIL_PATTERNS: RegExp[] = [
 /**
  * Noise — never causes a failure, never appears in the captured event list.
  */
-export const IGNORE_PATTERNS: RegExp[] = [
+const IGNORE_PATTERNS: RegExp[] = [
 	/Removing initializer 'val_/, // onnxruntime cleanup
 	/WebGL.*GPU stall/i,
 	/^SQL TRACE/,

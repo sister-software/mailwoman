@@ -7,11 +7,12 @@
  *   CLI wires the real parse/geocode/resolve stack (phase 4b); tests inject fixtures.
  */
 
-import { OpenAPIHono, type z } from "@hono/zod-openapi"
-import { apiError, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
-import packageJson from "@mailwoman/api/package.json" with { type: "json" }
+import { OpenAPIHono } from "@hono/zod-openapi"
+import { errorResponse, attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
 import { bodyLimit } from "hono/body-limit"
 import { cors } from "hono/cors"
+
+import packageJson from "#package.json" with { type: "json" }
 
 import type { MailwomanAPIEngine } from "./engine.ts"
 import { DEFAULT_BATCH_MAX, registerMailwomanAPIRoutes } from "./routes.ts"
@@ -63,7 +64,7 @@ export const MAILWOMAN_API_DOC_INFO: OpenAPIDocInfo = {
 	version: packageJson.version,
 	description: packageJson.description,
 	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-	contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
+	contact: { name: "Sister Software", url: "https://mailwoman.ai" },
 	servers: [
 		{
 			url: "http://{host}:{port}",
@@ -95,7 +96,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		// just `/v1/format`).
 		defaultHook: (result, c) => {
 			if (!result.success) {
-				return apiError(c, 400, "invalid request body", summarizeValidationError(result.error))
+				return errorResponse(c, 400, "invalid request body", summarizeValidationError(result.error))
 			}
 
 			return undefined
@@ -115,10 +116,10 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		// validator throws before a route's own hook ever sees the body, so it lands here instead of the
 		// per-route 400s in routes.ts. Answer 400, not the 500 net (which stays reserved for engine faults).
 		if (error instanceof Error && error.message.includes("Malformed JSON")) {
-			return apiError(c, 400, "invalid request body", "malformed JSON")
+			return errorResponse(c, 400, "invalid request body", "malformed JSON")
 		}
 
-		return apiError(c, 500, "internal error", error instanceof Error ? error.message : String(error))
+		return errorResponse(c, 500, "internal error", error instanceof Error ? error.message : String(error))
 	})
 
 	// Ahead of the handlers (which buffer the body into memory) so an oversized POST is rejected before that
@@ -127,7 +128,7 @@ export function createMailwomanAPI<T extends Partial<GeocodeOutcomeLike> = Geoco
 		"/v1/*",
 		bodyLimit({
 			maxSize: options.bodyLimitBytes ?? DEFAULT_BODY_LIMIT_BYTES,
-			onError: (c) => apiError(c, 413, "request body too large"),
+			onError: (c) => errorResponse(c, 413, "request body too large"),
 		})
 	)
 

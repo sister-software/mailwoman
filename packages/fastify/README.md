@@ -1,6 +1,6 @@
 # @mailwoman/fastify
 
-A **Fastify plugin** that mounts the [Mailwoman](https://mailwoman.sister.software) pipeline as HTTP routes. Register it and your Fastify app parses, geocodes, and answers POI queries locally — no external geocoding service.
+A **Fastify plugin** that mounts the [Mailwoman](https://mailwoman.ai) pipeline as HTTP routes. Register it and your Fastify app parses, geocodes, and answers POI queries locally — no external geocoding service.
 
 ```bash
 npm i @mailwoman/fastify fastify

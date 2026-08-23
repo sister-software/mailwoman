@@ -106,6 +106,12 @@ export const spec = {
 			default: false,
 			description: "Opt into postcode-centroid locality reranking.",
 		},
+		"admin-containment-rerank": {
+			type: "boolean",
+			default: true,
+			description:
+				"Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.",
+		},
 		"place-country-threshold": {
 			type: "number",
 			default: 0.9,
@@ -189,6 +195,7 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		forkEntity: booleanValue(values, "fork-entity"),
 		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
+		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
 		format: stringValue(values, "format") as Format,
 		json: booleanValue(values, "json"),
@@ -295,7 +302,7 @@ async function formatResult(result: GeocodeResult, format: Format, compact: bool
 
 async function openSession(options: GeocodeOptions) {
 	const importStartedAt = performance.now()
-	const { createGeocodeSession } = await import("../../geocode-session.ts")
+	const { createGeocodeSession } = await import("#geocode-session")
 	const importedAt = performance.now()
 	const showProgress = process.stderr.isTTY === true && !options.timing
 
@@ -305,7 +312,7 @@ async function openSession(options: GeocodeOptions) {
 	})
 
 	if (options.timing) {
-		const cliStartedAt = (globalThis as { __mailwomanCLIStartedAt?: number }).__mailwomanCLIStartedAt
+		const cliStartedAt = globalThis.__mailwomanCLIStartedAt
 
 		if (cliStartedAt != null) {
 			console.error(`[timing] startup.command_and_router   ${(importStartedAt - cliStartedAt).toFixed(2)} ms`)
@@ -387,6 +394,7 @@ export async function run(args: readonly string[]): Promise<number> {
 		const [{ render }, { createElement }, { GeocodeDebugCommand }] = await Promise.all([
 			import("ink"),
 			import("react"),
+			// TODO: Do not use dynamic relative imports.
 			import("../../debug-view/command.tsx"),
 		])
 

@@ -14,8 +14,9 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { DEFAULT_FOLD_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -63,7 +64,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 			publishGazetteer,
 			resolvePostcodeShards,
 			wofDir,
-		} = await import("mailwoman/gazetteer-pipeline")
+		} = await import("#gazetteer-pipeline")
 
 		const root = mailwomanDataRoot()
 		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
@@ -73,7 +74,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
-					.filter(Boolean)
+					.filter((cc) => cc.length > 0)
 			: DEFAULT_FOLD_COUNTRIES
 
 		const lines: string[] = []

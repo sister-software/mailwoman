@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { ParseTraceLike } from "@mailwoman/docs/shared/resources"
 import type { Meta, StoryObj } from "@storybook/react-vite"
+
+import type { ParseTraceLike } from "#shared/resources"
 
 import fixture from "./fixtures/white-house.trace.json"
 import { ModelVisualizer } from "./ModelVisualizer.tsx"
@@ -18,7 +19,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const WhiteHouse: Story = {
-	args: { trace: fixture as unknown as ParseTraceLike },
+	args: { trace: fixture as ParseTraceLike },
 }
 
 export const EmptyInput: Story = {

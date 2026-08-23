@@ -5,7 +5,7 @@
  *   `WOFWasmPlaceLookup` — browser-side `PlaceLookup` backed by `@sqlite.org/sqlite-wasm`.
  *
  *   V1 scope: text + placetype + limit + country. The full ranking surface from
- *   `WOFSqlitePlaceLookup` (parentID descendant filter, near-proximity boost, bbox hard filter,
+ *   `WOFSQLitePlaceLookup` (parentID descendant filter, near-proximity boost, bbox hard filter,
  *   population-weighted ordering) is queued for v2 in the same PR series — see Phase B tracking
  *   issue #98. The v1 scope is the minimum that lets the public demo answer "type a US city /
  *   postcode, get a hit".
@@ -92,7 +92,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from `place_abbr`. The exact-abbrev tier
 	 * signal — see the `findPlace` call site. Empty on slim DBs without the table.
 	 */
-	#abbrExactIds(text: string): Set<number> {
+	#abbrExactIDs(text: string): Set<number> {
 		const t = text.trim()
 
 		if (!t || !this.#hasPlaceAbbr()) return new Set()
@@ -194,13 +194,13 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		// query is an EXACT match — same tier as an exact name match — so "VT" → Vermont outranks a
 		// foreign region that merely token-matches "VT" via a multilingual name fragment. No-op on slim
 		// DBs built before place_abbr (the table is absent → empty set). This is the data-driven
-		// replacement for the demo's hardcoded `expandUSRegion` map; it also generalizes beyond US.
-		const abbrIds = this.#abbrExactIds(text)
+		// replacement for the demo's hardcoded region-abbreviation map (since deleted); it also generalizes beyond US.
+		const abbrIDs = this.#abbrExactIDs(text)
 
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
 		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
 		const strictExact = (row: { name: string; id: number }): boolean =>
-			normalizeName(row.name) === normQuery || abbrIds.has(row.id)
+			normalizeName(row.name) === normQuery || abbrIDs.has(row.id)
 
 		const anyStrictExact = rows.some(strictExact)
 
@@ -212,7 +212,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				// artifact, boundaries lost) it falls back to padded containment gated on "no strictly
 				// exact candidate" so interior fragments ("York" inside "New York City") can't be
 				// false-promoted. Mirrors the Node resolver's alias tier
-				// (`WOFSqlitePlaceLookup.#exactMatchIds`).
+				// (`WOFSQLitePlaceLookup.#exactMatchIDs`).
 				const aliasExact = aliasBagExactMatch(row.alt_names, normQuery, anyStrictExact)
 				const exactTier = strictExact(row) || aliasExact ? 0 : 1
 
@@ -237,7 +237,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 				lon: row.longitude,
 				parent_id: row.parent_id ?? undefined,
 				// Surface the exact-match tier so a downstream country re-rank (#369) can keep the country
-				// pin from crossing it — parity with `WOFSqlitePlaceLookup`. See ResolvedPlace.exactMatch.
+				// pin from crossing it — parity with `WOFSQLitePlaceLookup`. See ResolvedPlace.exactMatch.
 				exactMatch: exactTier === 0,
 				bbox:
 					row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null
@@ -257,7 +257,7 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 	/**
 	 * Dual-role localities coincident with an admin id, from the `coincident_roles` relation (#403) carried into the slim
 	 * DB by build-slim. Backs the resolver's hierarchy completion (on by default) in the browser — mirrors
-	 * `WOFSqlitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates the relation. Loaded once +
+	 * `WOFSQLitePlaceLookup.coincidentLocalitiesFor`. Returns `[]` when the slim DB predates the relation. Loaded once +
 	 * memoized (the relation is ~hundreds of rows).
 	 */
 	coincidentLocalitiesFor(adminID: number | string): CoincidentLocality[] {
@@ -351,7 +351,7 @@ function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string
 
 		// Non-postcode queries SPLIT on intra-token punctuation — fusing made "Thiron-Gardais" an
 		// unmatchable single term while the FTS doc holds two (#945).
-		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter((part) => part.length > 0)
 
 		for (let i = 0; i < parts.length; i++) {
 			const body = parts[i]!.replaceAll("*", "")

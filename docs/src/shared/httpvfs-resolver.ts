@@ -25,19 +25,16 @@
  *   contract test pins the library's export name against this file.
  */
 
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
 // The SHARED candidate schema (build-candidate.ts writes it; the Node WOFCandidateTableLookup reads it
 // too) — so this browser reader's row accesses are type-checked against the same column contract.
 import type { CandidateTable } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 // Browser-safe subpath (fts.ts's only node:sqlite import is type-only; aliased in
-// docs/plugins/demo-assets/resolve.mjs) — the shared alias-bag parser keeps this backend's exact
+// docs/plugins/demo-assets/workspace-aliases.ts) — the shared alias-bag parser keeps this backend's exact
 // tier identical to the Node + WASM resolvers'.
 import { ALIAS_SEPARATOR, aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
-// THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
-// one-normalizer discipline that keeps the candidate table's keys reachable by construction.
-import { haversineKm } from "@mailwoman/resolver-wof-sqlite/geo"
 import {
 	rankByPrimaryPreference,
 	type RankedRow,
@@ -45,6 +42,8 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/primary-preference"
 import { applyProximityRerank } from "@mailwoman/resolver-wof-sqlite/proximity-rerank"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+// THE shared name_key normalizer — identical build-side (build-candidate.ts) and query-side, the
+// one-normalizer discipline that keeps the candidate table's keys reachable by construction.
 
 import type { DualRole, MailwomanLookupLike } from "./resources"
 
@@ -106,11 +105,13 @@ function sanitizeFTS(text: string): string {
 /**
  * Sql.js exec result → row objects.
  */
-function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
+function rowsFromExec<Row = Record<string, unknown>>(
+	res: Array<{ columns: string[]; values: unknown[][] }> | undefined
+): Row[] {
 	if (!res || !res.length) return []
 	const { columns, values } = res[0]
 
-	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
+	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])) as Row)
 }
 
 interface HTTPVFSWorker {
@@ -377,9 +378,10 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 	 * Ids whose region abbreviation exactly equals `text` (case-insensitive), from the slim DB's `place_abbr` table
 	 * (carried by build-slim, #189). Empty on DBs built before the table. Lets the demo resolver tier an exact-abbrev
 	 * match ("VT" → Vermont) above a foreign region that merely token-matches — the data-driven replacement for the
-	 * hardcoded `expandUSRegion` map. Mirrors `WOFWasmPlaceLookup.#abbrExactIds` (keep the two in lockstep).
+	 * hardcoded region-abbreviation map, which this replaced and which is now gone. Mirrors
+	 * `WOFWasmPlaceLookup.#abbrExactIDs` — keep the two in lockstep.
 	 */
-	async #abbrExactIds(text: string): Promise<Set<number>> {
+	async #abbrExactIDs(text: string): Promise<Set<number>> {
 		const t = text.trim()
 
 		if (!t || !(await this.#schema()).hasAbbr) return new Set()
@@ -407,7 +409,7 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 			// `borough` / `localadmin` rows — Brooklyn-the-borough is a borough, not a locality, and a
 			// strict filter made it unreachable (the "Brooklyn → Brooklyn Park, MN" bug).
 			const types = expandPlacetypeFilter(
-				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[]
+				(Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(isPresent)
 			)
 
 			if (types.length) {
@@ -444,13 +446,13 @@ export class WOFHTTPVFSPlaceLookup implements MailwomanLookupLike {
 		// token-matches "VT". Mirrors WOFWasmPlaceLookup; no-op on slim DBs without `place_abbr`.
 		// Issued together with the main query — the queries are independent and the worker pipelines
 		// them, saving a main-thread→worker round-trip gap per lookup.
-		const [rows, abbrIds] = await Promise.all([this.#worker.db.exec(sql).then(rowsFromExec), this.#abbrExactIds(text)])
+		const [rows, abbrIDs] = await Promise.all([this.#worker.db.exec(sql).then(rowsFromExec), this.#abbrExactIDs(text)])
 		const normQuery = normName(text)
 
 		// Strict exact = canonical name or region abbreviation equals the query. Computed for the whole
 		// pool FIRST because the ALIAS tier below only engages when no strict exact exists.
 		const strictExact = (row: Record<string, unknown>): boolean =>
-			normName(String(row.name)) === normQuery || abbrIds.has(Number(row.id))
+			normName(String(row.name)) === normQuery || abbrIDs.has(Number(row.id))
 
 		const anyStrictExact = rows.some(strictExact)
 
@@ -640,7 +642,7 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 		// common path is byte-identical, and inert on a candidate.db built without the side-index
 		// (today's production demo). Mirrors the Node WOFCandidateTableLookup probe.
 		const requestedPlacetypes = query.placetype
-			? ((Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(Boolean) as string[])
+			? (Array.isArray(query.placetype) ? query.placetype : [query.placetype]).filter(isPresent)
 			: []
 
 		const wantsLocality =
@@ -725,9 +727,9 @@ export class WOFCandidateTableLookup implements MailwomanLookupLike {
 				`SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank` +
 				`${optionalSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ${Math.max(limit, RERANK_FETCH)}`
 
-			const fetched = rowsFromExec(await this.#worker.db.exec(sql)) as unknown as CandidateProbeRow[]
+			const fetched = rowsFromExec<CandidateProbeRow>(await this.#worker.db.exec(sql))
 
-			return rankByPrimaryPreference(fetched, limit)
+			return rankByPrimaryPreference(fetched, limit, undefined, idToPlacetype)
 		}
 
 		let rows = await probe(nameKey)

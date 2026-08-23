@@ -12,7 +12,8 @@
 		"sentencepiece.mjs",
 		"index.d.ts",
 		"binding.cpp",
-		"build.sh"
+		"build.sh",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {

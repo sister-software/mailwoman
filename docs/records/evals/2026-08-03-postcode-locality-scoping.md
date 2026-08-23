@@ -7,7 +7,7 @@ The question: `12 Rue de Rivoli, 75001 Paris` parses correctly, including `postc
 the FTS resolver still puts the locality in Texas. Does the postcode reach the locality lookup, why
 does Texas win, and can a postcode-derived country scope fix it without breaking the confounds.
 
-Everything below is instrumented. The probes wrapped `WOFSqlitePlaceLookup.findPlace` and
+Everything below is instrumented. The probes wrapped `WOFSQLitePlaceLookup.findPlace` and
 `Resolver.resolveTree` and printed the queries and opts verbatim; nothing is inferred from an
 output coordinate.
 
@@ -59,7 +59,7 @@ Q {"text":"Paris","placetype":"locality","limit":5,"country":"US","postcode":"75
 because postcode and locality are siblings and the top-down walk would not otherwise let the
 locality lookup see it; `#lookupAndPick` (lines 981-983) attaches it to any `locality` query.
 
-It is the **backend** that drops it. `WOFSqlitePlaceLookup.findPlace` dispatches the resolved
+It is the **backend** that drops it. `WOFSQLitePlaceLookup.findPlace` dispatches the resolved
 convention's strategies in order — `[postcode_area_resolution, fallback_fuzzy_name_match]`:
 
 - `#postcodeAreaResolution` (`lookup.ts:528`) is gated on `this.#postcodeLocalityShard`. The repro
@@ -330,7 +330,7 @@ node mailwoman/out/cli.js geocode "12 Rue de Rivoli, 75001 Paris" --default-coun
 ```
 
 The probe scripts were scratch instrumentation and are not committed. Each wrapped
-`WOFSqlitePlaceLookup.findPlace` and `Resolver.resolveTree` to print queries and opts verbatim,
+`WOFSQLitePlaceLookup.findPlace` and `Resolver.resolveTree` to print queries and opts verbatim,
 loaded the classifier once, and looped in-process (a CLI spawn costs ~5.6 s).
 
 ## Files

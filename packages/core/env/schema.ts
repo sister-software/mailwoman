@@ -111,7 +111,7 @@ export const PublicEnvSchema = z.object({
 	RELEASE_IT_WORKSPACES_ACCESS: z.string().optional(),
 	RELEASE_IT_WORKSPACES_DRY_RUN: z.string().optional(),
 
-	// Demo resolver (`docs/plugins/demo-assets/resolve.ts`) + docs driver.
+	// Demo artifact staging (`docs/plugins/demo-assets/artifacts.ts`) + docs driver.
 	PLAYPEN_WOF_ADMIN_DB: z.string().optional(),
 	PLAYPEN_WOF_POSTCODE_DB: z.string().optional(),
 	SLIM_COUNTRIES: z.string().optional(),

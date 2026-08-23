@@ -6,7 +6,7 @@
  *   joined with `spr` for canonical names + centroids, ordered NEAREST-FIRST (deepest placetype
  *   first, country last).
  *
- *   Factored out of `WOFSqlitePlaceLookup.ancestors()` (#404) so the reverse geocoder (`reverse.ts`,
+ *   Factored out of `WOFSQLitePlaceLookup.ancestors()` (#404) so the reverse geocoder (`reverse.ts`,
  *   #484) reuses the SAME walk instead of growing a second one. The placetype-specificity ordering
  *   lives here as `PLACETYPE_DEPTH` — a single TS map instead of the previous SQL CASE, and
  *   extended below `localadmin` (locality/borough/neighbourhood/microhood now rank correctly
@@ -15,6 +15,8 @@
  */
 
 import type { DatabaseSync } from "node:sqlite"
+
+import { allRows } from "./sqlite-utils.ts"
 
 /**
  * WOF placetype → containment depth, coarsest = 1. Higher = finer. Placetypes we never resolve (continent, empire, …)
@@ -56,17 +58,18 @@ export interface AncestorPlaceRow {
 
 /**
  * The ancestor lineage of `id` — self excluded, nearest-first. Returns `[]` when the place has no recorded ancestry.
- * NOT memoized here; `WOFSqlitePlaceLookup` keeps its own per-id cache.
+ * NOT memoized here; `WOFSQLitePlaceLookup` keeps its own per-id cache.
  */
 export function ancestorLineage(db: DatabaseSync, id: number, schemaName = "main"): AncestorPlaceRow[] {
-	const rows = db
-		.prepare(
+	const rows = allRows<AncestorPlaceRow>(
+		db.prepare(
 			`SELECT a.ancestor_id AS id, a.ancestor_placetype AS placetype, s.name AS name,
 				s.country AS country, s.latitude AS lat, s.longitude AS lon
 			FROM ${schemaName}.ancestors a JOIN ${schemaName}.spr s ON s.id = a.ancestor_id
 			WHERE a.id = ? AND a.ancestor_id != a.id`
-		)
-		.all(id) as unknown as AncestorPlaceRow[]
+		),
+		id
+	)
 
 	rows.sort((a, b) => placetypeDepth(b.placetype) - placetypeDepth(a.placetype))
 

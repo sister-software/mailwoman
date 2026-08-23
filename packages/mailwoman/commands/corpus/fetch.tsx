@@ -10,11 +10,13 @@
 
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 const sources = [
 	"ban",
 	"nad",
+	"geonames-postal",
 	"hrsa",
 	"imls-pls",
 	"nppes",
@@ -43,6 +45,7 @@ export const spec = {
 		"start-oid": { type: "number", description: "First NAD OBJECTID" },
 		"end-oid": { type: "number", description: "Exclusive final NAD OBJECTID" },
 		country: { type: "string", description: "OpenAddresses country code" },
+		countries: { type: "string", description: "GeoNames postal ISO alpha-2 codes, comma-separated" },
 		"skip-state-fips": { type: "string", description: "TIGER state FIPS codes to skip" },
 		"rate-sleep": { type: "number", description: "TIGER delay between downloads" },
 		"max-parallel": { type: "number", description: "TIGER concurrent downloads" },
@@ -60,6 +63,7 @@ interface Options {
 	startOid?: number
 	endOid?: number
 	country?: string
+	countries?: string
 	skipStateFips?: string
 	rateSleep?: number
 	maxParallel?: number
@@ -71,6 +75,7 @@ const report = (line: string): void => console.error(line)
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
 	const {
 		fetchBan,
+		fetchGeonamesPostal,
 		fetchHRSA,
 		fetchIMLSPLS,
 		fetchNAD,
@@ -99,6 +104,19 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					concurrency: options.concurrency,
 					startOID: options.startOid,
 					endOID: options.endOid,
+				},
+				report
+			)
+		case "geonames-postal":
+			return fetchGeonamesPostal(
+				{
+					...base,
+					// Undefined, not an empty list, when the flag is absent — the module's own default set is the answer for
+					// 'fetch what the corpus wants', and an empty array would fetch nothing while looking deliberate.
+					countries: options.countries
+						?.split(",")
+						.map((code) => code.trim())
+						.filter(Boolean),
 				},
 				report
 			)

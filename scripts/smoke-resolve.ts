@@ -1,5 +1,5 @@
 /**
- * Smoke test: confirm WOFSqlitePlaceLookup works against our CUSTOM unified DB (admin-global-priority.db) now that
+ * Smoke test: confirm WOFSQLitePlaceLookup works against our CUSTOM unified DB (admin-global-priority.db) now that
  * ancestors + FTS are built. Tests plain text lookup AND ancestors-based parent-constraint scoping (the Springfield
  * problem).
  *
@@ -8,11 +8,11 @@
 import { parseArgs } from "node:util"
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { WOFSqlitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
 const { positionals } = parseArgs({ allowPositionals: true })
 const DB = positionals[0] ?? String(dataRootPath("wof", "admin-global-priority.db"))
-const lookup = new WOFSqlitePlaceLookup({ databasePath: DB })
+const lookup = new WOFSQLitePlaceLookup({ databasePath: DB })
 
 console.log("=== plain: 'New York' (locality) ===")
 console.log(

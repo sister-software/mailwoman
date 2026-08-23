@@ -40,9 +40,18 @@
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { assertDatabaseIntegrity, pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
+
+import {
+	createPostcodeLocalityIndex,
+	createPostcodeLocalityMetaTable,
+	createPostcodeLocalityTable,
+	POSTCODE_LOCALITY_INSERT_SQL,
+	type PostcodeLocalityDatabase,
+	type PostcodeLocalityInsertValues,
+} from "./schema.ts"
 
 /**
  * KR postcode points sit p50 ~1 km from the nearest locality; 20 km is a safe net.
@@ -195,21 +204,12 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	}
 
 	const db = new DatabaseSync(args.output)
-	const kdb = new DatabaseClient({ database: db })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
 
-	await kdb.schema
-		.createTable("postcode_locality")
-		.addColumn("postcode", "text", (c) => c.notNull())
-		.addColumn("country", "text", (c) => c.notNull())
-		.addColumn("locality_id", "integer", (c) => c.notNull())
-		.addColumn("locality_name", "text", (c) => c.notNull())
-		.addColumn("aliases", "text")
-		.addColumn("distance_km", "real", (c) => c.notNull())
-		.addColumn("is_containing", "integer", (c) => c.notNull())
-		.execute()
+	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
 
-	const rows: Array<[string, string, number, string, string, number, number]> = []
+	const rows: PostcodeLocalityInsertValues[] = []
 	let resolved = 0
 	let nameConfirmed = 0
 	let provinceOk = 0
@@ -230,8 +230,8 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 		// Hangul name confirmation: a name-matched locality that is ALSO nearby (two signals agreeing —
 		// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
-		const nameIds = nameIdx.get(bare(place)) ?? new Set<number>()
-		const named = nb.find(({ pid }) => nameIds.has(pid))
+		const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
+		const named = nb.find(({ pid }) => nameIDs.has(pid))
 
 		if (named) {
 			nameConfirmed++
@@ -246,7 +246,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		}
 	}
 
-	const insert = db.prepare("INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)")
+	const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
 	db.exec("BEGIN")
 
 	for (const r of rows) {
@@ -255,22 +255,13 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	db.exec("COMMIT")
 
-	await kdb.schema
-		.createIndex("postcode_locality_by_pc")
-		.on("postcode_locality")
-		.columns(["postcode", "country"])
-		.execute()
+	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
 
 	dists.sort((a, b) => a - b)
 	const p = (q: number): number => (dists.length ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0)
 	const total = postal.size
 
-	await kdb.schema
-		.createTable("meta")
-		.ifNotExists()
-		.addColumn("key", "text", (c) => c.primaryKey())
-		.addColumn("value", "text")
-		.execute()
+	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
 
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality-kr"],
@@ -308,13 +299,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 
 	db.exec("PRAGMA journal_mode=DELETE")
 	db.exec("ANALYZE")
-	const ok = (db.prepare("PRAGMA integrity_check").get() as Record<string, string>)["integrity_check"]
-
-	if (ok !== "ok") {
-		console.error(`integrity_check failed: ${ok}`)
-
-		process.exit(1)
-	}
+	assertDatabaseIntegrity(db, args.output)
 
 	db.exec("VACUUM")
 	db.close()

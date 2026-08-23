@@ -10,7 +10,7 @@ The docs serve three audiences — developers, the managers who pay, and investo
 
 ## Decisions (operator-approved)
 
-1. **One site, three tracks.** Developers, managers, and investors share mailwoman.sister.software with distinct doors. No separate marketing site.
+1. **One site, three tracks.** Developers, managers, and investors share mailwoman.ai with distinct doors. No separate marketing site.
 2. **Start over from scratch.** Every maintained page is written fresh. Old pages are raw material only.
 3. **Lab notebook: keep only the best, rewritten for clarity.** Curated benchmark/eval material returns as fresh evidence pages. Raw dated records leave the published site (git history and unpublished repo directories keep them).
 4. **Old links break.** No redirect infrastructure. The front page and search carry readers to the new material.

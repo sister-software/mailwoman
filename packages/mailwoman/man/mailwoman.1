@@ -132,6 +132,9 @@ Options:
                                               false)
   \-\-postcode\-containment\-coherence            Opt into postcode\-centroid locality reranking.
                                               (default: false)
+  \-\-[no\-]admin\-containment\-rerank             Region\-qualifier containment reranking of locality
+                                              candidates; \-\-no\-admin\-containment\-rerank disables it.
+                                              (default: true)
   \-\-place\-country\-threshold <probability>     Coarse\-placer abstention threshold. (default: 0.9)
   \-\-format <string>                           Output format. (default: json)
   \-\-json                                      Shorthand for \-\-format json. (default: false)
@@ -220,6 +223,6 @@ Root directory for the reference data artifacts (candidate gazetteer, POI layer,
 street shards). Defaults to a platform data directory; `mailwoman doctor \-\-verbose`
 prints every resolved path.
 .SH SEE ALSO
-Project documentation: https://mailwoman.sister.software
+Project documentation: https://mailwoman.ai
 .br
 Issues: https://github.com/sister-software/mailwoman

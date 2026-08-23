@@ -62,8 +62,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
 LABEL org.opencontainers.image.title="mailwoman" \
 	org.opencontainers.image.description="Mailwoman postal-address parser + geocoder — native /v1 HTTP API (parse, geocode, batch, format). Weights baked in; gazetteer volume-mounted at /data." \
 	org.opencontainers.image.source="https://github.com/sister-software/mailwoman" \
-	org.opencontainers.image.url="https://mailwoman.sister.software" \
-	org.opencontainers.image.documentation="https://mailwoman.sister.software/docs" \
+	org.opencontainers.image.url="https://mailwoman.ai" \
+	org.opencontainers.image.documentation="https://mailwoman.ai/docs" \
 	org.opencontainers.image.licenses="AGPL-3.0-only OR LicenseRef-Commercial" \
 	org.opencontainers.image.vendor="Sister Software"
 

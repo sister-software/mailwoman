@@ -3,7 +3,7 @@
 All notable changes are recorded here at a high level. For the full,
 authoritative mapping of **which npm version shipped which model and which
 capabilities**, see [`docs/articles/releases.mdx`](./docs/articles/releases.mdx)
-(rendered at https://mailwoman.sister.software/releases). Per-release detail
+(rendered at https://mailwoman.ai/releases). Per-release detail
 lives in the [GitHub releases](https://github.com/sister-software/mailwoman/releases)
 and the per-step eval reports under `docs/articles/evals/`.
 

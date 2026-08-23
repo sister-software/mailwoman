@@ -13,7 +13,8 @@
  *   lookup, the WASM lookup here, and any future one all satisfy it.
  */
 
-import { isUnitGradePostcodeHit } from "@mailwoman/codex"
+import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
+import type { AddressTree } from "@mailwoman/core/decoder/types"
 import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
@@ -128,18 +129,27 @@ const WOF_RANK_REGION = 4
  * How the demo picks THE pin from a resolved tree: prefer the most address-precise resolved node — under the
  * locality-first EPOCH CONVENTION the Node ladder follows (`extractGeocodeResult`): an AREA-class postcode (an FR
  * 5-digit zone, an SI 4-digit code) is coarser than the locality it sits in, so it ranks BELOW locality and pins only
- * when nothing finer resolved. A UNIT-GRADE exact hit (`isUnitGradePostcodeHit` — NL PC6, GB unit) is categorically
- * tighter than any locality centroid and keeps the top rank. Before 2026-08-11 this table put every postcode first (the
- * old cascade's tier order) — the staged-repoint e2e measured the demo pinning the SI `6250` AREA centroid where Node
- * pins the Zabiče locality, the exact drift the #861 convergence exists to prevent.
+ * when nothing finer resolved. Before 2026-08-11 this table put every postcode first (the old cascade's tier order) —
+ * the staged-repoint e2e measured the demo pinning the SI `6250` AREA centroid where Node pins the Zabiče locality, the
+ * exact drift the #861 convergence exists to prevent.
+ *
+ * The rows here are the demo's own ordering and deliberately NOT `PLACETYPE_SPECIFICITY`: `neighbourhood` sits below
+ * `locality` because that is the pin a viewer wants, where the shared scale ranks it above because it covers less
+ * ground. What is NOT the demo's own is where a postcode sits against the locality — that question has one answer, and
+ * it comes from `@mailwoman/codex` for both sides (see {@link PIN_RANK_POSTCODE_FIRST}).
  */
 const PIN_RANK: Record<string, number> = {
 	locality: 5,
-	// An AREA-class postcode: below locality, above the locality peers — it still pins a bare-postcode query.
-	postalcode: 4.5,
 	borough: 4,
 	localadmin: 4,
 	neighbourhood: 4,
+	// An AREA-class postcode sits below the whole locality TIER, not below `locality` alone. `borough` and `localadmin`
+	// are not peers OF that tier, they ARE it — `PLACETYPE_FILTER_GROUPS.locality` is `{locality, borough, localadmin}`
+	// because a New England civil town is `localadmin` in WOF. Ranked at 4.5 this pinned the postcode on 404 of 2,000 US
+	// panel rows where Node returns the town, and the town was closer on 65.6% of them: `344 East Sheldon Rd, Sheldon,
+	// VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. It still outranks `county`, so a
+	// bare-postcode query pins.
+	postalcode: 3.5,
 	county: 3,
 	macrocounty: 3,
 	region: 2,
@@ -148,9 +158,11 @@ const PIN_RANK: Record<string, number> = {
 }
 
 /**
- * The unit-grade exact hit's rank — above locality (the #977/#22 tier promotion, same as Node's ladder).
+ * The rank a postcode takes when it LEADS — above locality, the same position Node's `ADMIN_LADDER_POSTCODE_FIRST`
+ * gives it. Two routes reach it, exactly as on the Node side: a unit-grade exact hit (#977/#22), or an address system
+ * whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`, #1780).
  */
-const PIN_RANK_UNIT_POSTCODE = 6
+const PIN_RANK_POSTCODE_FIRST = 6
 
 export class CandidateResolverBackend implements ResolverBackend {
 	readonly #lookup: MailwomanLookupLike
@@ -226,14 +238,14 @@ export class CandidateResolverBackend implements ResolverBackend {
 
 export async function runCascade(
 	lookup: MailwomanLookupLike,
-	tree: { roots: unknown[] },
+	tree: AddressTree,
 	rawText: string,
 	bias?: ResolveBias
 ): Promise<CascadeHits> {
 	const usable = (cs: CascadeHits): CascadeHits => cs.filter((c) => !(c.lat === 0 && c.lon === 0))
 
 	const backend = new CandidateResolverBackend(lookup)
-	const resolver = createWOFResolver(backend as never)
+	const resolver = createWOFResolver(backend)
 
 	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
 	// spanRescore + hierarchyCompletion ride their shared defaults. No defaultCountry — the demo is
@@ -241,7 +253,7 @@ export async function runCascade(
 	// bias (#938): the map viewport (and optional geolocation) as SOFT proximity hints — an in-view
 	// namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays byte-identical
 	// (48026 → Fraser MI vs Russi IT, the rule the library gate pins). Omitted when empty.
-	const resolved = (await resolver.resolveTree(tree as never, {
+	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
 		...(bias && bias.length ? { bias } : {}),
 	})) as unknown as {
@@ -272,11 +284,15 @@ export async function runCascade(
 			}
 
 			if (!(hit.lat === 0 && hit.lon === 0)) {
-				const unitGrade =
+				// Both routes to the top rank are read here rather than one, because the Node ladder reads both and a
+				// demo that knew only about the shape would pin the locality where the server pins the postcode — the
+				// #861 drift, one country at a time.
+				const postcodeLeads =
 					placetype === "postalcode" &&
-					isUnitGradePostcodeHit(String(node.value ?? ""), String(node.metadata?.["resolver_name"] ?? ""))
+					(isUnitGradePostcodeHit(String(node.value ?? ""), String(node.metadata?.["resolver_name"] ?? "")) ||
+						areaPostcodeLeadsLocality(hit.country))
 
-				collected.push({ hit, rank: unitGrade ? PIN_RANK_UNIT_POSTCODE : (PIN_RANK[placetype] ?? 0) })
+				collected.push({ rank: postcodeLeads ? PIN_RANK_POSTCODE_FIRST : (PIN_RANK[placetype] ?? 0), hit })
 
 				const alts = (node.alternatives as Array<Record<string, unknown>> | undefined) ?? []
 

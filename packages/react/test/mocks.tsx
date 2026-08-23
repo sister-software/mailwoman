@@ -17,8 +17,8 @@ import type {
 	ParseResult,
 	PipelineRuntime,
 	Suggestion,
-} from "@mailwoman/react"
-import type { ResolvedMapPlace } from "@mailwoman/react/map"
+} from "#index"
+import type { ResolvedMapPlace } from "#map"
 
 const DRINKING_FOUNTAIN = { id: "drinking_water", label: "Drinking Fountain" } as unknown as CategoryRecord
 
@@ -100,7 +100,7 @@ export const mockBrandLiveSearchSuccess: POILiveSearch = async ({ brandWikidata 
 /**
  * An offline stub map style — one solid `background` layer, zero sources, zero network. Safe for headless Storybook.
  */
-export const STUB_MAP_STYLE: DemoMapStyle = {
+const STUB_MAP_STYLE: DemoMapStyle = {
 	version: 8,
 	name: "demo-runtime-stub",
 	sources: {},

@@ -15,7 +15,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -43,7 +44,7 @@ interface Options {
 
 const GazetteerBuildAnchorLookup: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildAnchorLookup } = await import("../../../gazetteer-pipeline/anchor-lookup.ts")
+		const { buildAnchorLookup } = await import("#gazetteer/anchor-lookup")
 
 		const stats = buildAnchorLookup({
 			output: options.output,
@@ -51,7 +52,7 @@ const GazetteerBuildAnchorLookup: ParsedCommandComponent<Options> = ({ options }
 			include: options.include
 				?.split(",")
 				.map((c) => c.trim())
-				.filter(Boolean),
+				.filter((code) => code.length > 0),
 			gbOutward: options.gbOutward,
 		})
 

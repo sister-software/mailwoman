@@ -8,8 +8,9 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { attachOpenAPIDocs, type OpenAPIDocInfo } from "@mailwoman/api-kit"
-import packageJson from "@mailwoman/nominatim/package.json" with { type: "json" }
 import { cors } from "hono/cors"
+
+import packageJson from "#package.json" with { type: "json" }
 
 import type { NominatimEngine } from "./engine.ts"
 import { registerNominatimRoutes } from "./routes.ts"
@@ -36,10 +37,10 @@ export const NOMINATIM_DOC_INFO: OpenAPIDocInfo = {
 	version: packageJson.version,
 	description: packageJson.description,
 	license: { name: "AGPL-3.0-only OR LicenseRef-Commercial", identifier: "AGPL-3.0-only" },
-	contact: { name: "Sister Software", url: "https://mailwoman.sister.software" },
+	contact: { name: "Sister Software", url: "https://mailwoman.ai" },
 	externalDocs: {
 		description: "What Mailwoman is",
-		url: "https://mailwoman.sister.software/docs/developers/get-started/what-mailwoman-is",
+		url: "https://mailwoman.ai/docs/developers/get-started/what-mailwoman-is",
 	},
 	servers: [
 		{

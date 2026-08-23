@@ -20,7 +20,7 @@ on:
       demo_url:
         description: "Deployed demo origin to smoke (default: production)"
         type: string
-        default: "https://mailwoman.sister.software"
+        default: "https://mailwoman.ai"
 
 permissions:
   contents: read
@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 15
     env:
       # workflow_dispatch override wins; the scheduled run uses production.
-      MAILWOMAN_DEMO_URL: ${{ inputs.demo_url || 'https://mailwoman.sister.software' }}
+      MAILWOMAN_DEMO_URL: ${{ inputs.demo_url || 'https://mailwoman.ai' }}
     steps:
       - uses: actions/checkout@v7
 

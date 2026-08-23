@@ -44,7 +44,6 @@ import {
 	LayerTier,
 	writeLayerCoverage,
 	writeLayerManifest,
-	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
@@ -206,7 +205,11 @@ export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPla
 
 	phase("probe", "DESCRIBE places schema")
 	const describeResult = await db.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${glob}') LIMIT 1`)
-	const describeRows = describeResult.getRowObjects() as unknown as DescribeColumn[]
+
+	const describeRows: DescribeColumn[] = describeResult
+		.getRowObjects()
+		.map((row) => ({ column_name: String(row["column_name"]) }))
+
 	const categoryColumn = chooseCategoryColumn(describeRows)
 	const hasBrand = hasBrandColumn(describeRows)
 	const countryExpression = chooseCountryExpression(describeRows)
@@ -295,7 +298,7 @@ async function* readParquetRows(parquetPaths: readonly string[]): AsyncIterable<
 			const colNames = stream.columnNames()
 
 			for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
-				const rows = chunk.getRowObjects(colNames) as unknown as Array<{
+				const rows = chunk.getRowObjects(colNames) as Array<{
 					name: string | null
 					category: string | null
 					brand_wikidata: string | null
@@ -479,20 +482,6 @@ export interface BuildPOIResult {
 }
 
 /**
- * `POIDatabase extends LayerContractDatabase` structurally (it has every layer-contract table plus its own), but
- * Kysely's `transaction()` method makes `Kysely<DB>` INVARIANT in `DB` — a `Kysely<POIDatabase>` handle is not directly
- * assignable to `Kysely<LayerContractDatabase>`, even though every query the contract helpers issue
- * (`layer_manifest`/`layer_coverage` only) is perfectly valid against a POI-backed connection. This narrows the view
- * back down for the four `@mailwoman/core/layers` calls below rather than widening the shared package's function
- * signatures to a generic `DB extends LayerContractDatabase` (tried first — that breaks the FUNCTIONS' OWN internal
- * `insertInto`/`selectFrom` calls, since Kysely can't resolve `DB["layer_manifest"]`'s concrete columns through an
- * unresolved generic bound).
- */
-function asContractDB(kdb: DatabaseClient<POIDatabase>): DatabaseClient<LayerContractDatabase> {
-	return kdb as unknown as DatabaseClient<LayerContractDatabase>
-}
-
-/**
  * Build `poi.db`: stage → dictionary-encode → materialize the clustered table → FTS → layer manifest/coverage →
  * ANALYZE/VACUUM → seal. See the module docstring for the two-phase split and the build-on-copy deviation from the task
  * brief.
@@ -520,8 +509,8 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 
 	progress("stage", "creating staging + dictionary tables")
 	await createPOIStagingTables(kdb)
-	await createLayerManifestTable(asContractDB(kdb))
-	await createLayerCoverageTable(asContractDB(kdb))
+	await createLayerManifestTable(kdb)
+	await createLayerCoverageTable(kdb)
 
 	const categoryCodes = new Map<string, number>()
 
@@ -635,7 +624,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	const source = opts.source ?? "overture-places"
 	const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
 
-	await writeLayerManifest(asContractDB(kdb), {
+	await writeLayerManifest(kdb, {
 		name: "poi",
 		version: opts.version ?? opts.release,
 		schemaVersion: 1,
@@ -677,7 +666,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 				observedRows,
 			}))
 
-	await writeLayerCoverage(asContractDB(kdb), coverageCells)
+	await writeLayerCoverage(kdb, coverageCells)
 
 	progress("finalize", "ANALYZE + VACUUM")
 	db.exec("ANALYZE")

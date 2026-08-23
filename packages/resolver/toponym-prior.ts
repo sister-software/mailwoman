@@ -40,7 +40,10 @@
  *      rank population gave it while the scored rows reorder among themselves. On a candidate.db built
  *      before the #28 `importance` column, nothing is scored, so {@link rankByImportance} is
  *      byte-stable by construction.
- *   3. **Stable.** Equal keys keep their incoming order, so the backend's own ranking survives underneath.
+ *   3. **Stable.** Equal keys keep their incoming order, so the backend's own ranking survives underneath. That order
+ *      carries decisions only the backend can make — the candidate backend's seat tiebreak
+ *      (`resolver-wof-sqlite/primary-preference.ts`) reaches an end-to-end answer solely through this stability
+ *      (#1729), so equal-key stability here is load-bearing, not cosmetic.
  */
 
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
@@ -75,7 +78,7 @@ export const DEFAULT_COUNTRY_PRIOR_WEIGHT = 2
  * policy (ROAD_TO_V9) says: within a country the geocoder ranks referentially; the blended prior's job is the
  * cross-country question — which country's bearer a bare query meant.
  */
-export const SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02
+const SAME_COUNTRY_IMPORTANCE_TIE_BAND = 0.02
 
 /**
  * The fields a ranking key reads. Structural rather than `ResolvedPlace` so the backend's own `PlaceCandidate` (a
@@ -96,7 +99,7 @@ function rankWithinTier<T extends Rankable>(candidates: readonly T[], compare: (
 
 	for (const c of candidates) {
 		// `exactMatch` is TRI-STATE: true / false / undefined (a backend path that stamps no flag —
-		// e.g. WOFSqlitePlaceLookup's postcode-area neighbours from #fetchLocalitiesByID). Only a
+		// e.g. WOFSQLitePlaceLookup's postcode-area neighbours from #fetchLocalitiesByID). Only a
 		// stated TRUE earns the exact tier; undefined must not outrank a real fuzzy name match
 		// (the 2026-08-10 de.native_locality incident: 75 Saxon towns lost to nameless neighbours).
 		;(c.exactMatch === true ? exact : rest).push(c)

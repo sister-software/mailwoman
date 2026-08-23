@@ -2,17 +2,80 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * Shared development tooling for building and validating placetype-pair indexes in weights overlays.
+ * Shared development tooling for weights overlays: the symlink primitives every overlay linker uses, and the
+ * placetype-pair index build.
  */
 
 import { spawnSync } from "node:child_process"
-import { existsSync, readFileSync } from "node:fs"
+import {
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	statSync,
+	symlinkSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs"
 import { resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, workspacePath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 
 import { fstFreshnessWarning } from "./fst-freshness.ts"
+
+/**
+ * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
+ * unlink-then-symlink leaves a no-file window that concurrent vitest workers can hit mid-suite — bit CI on 2026-07-24.
+ * rename(2) replaces the destination atomically.
+ */
+export function linkForce(src: string, dest: string): void {
+	const tmp = `${dest}.tmp-link`
+
+	if (existsSync(tmp)) {
+		unlinkSync(tmp)
+	}
+
+	symlinkSync(src, tmp)
+	renameSync(tmp, dest)
+}
+
+/**
+ * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
+ */
+export function removeIfPresent(dest: string): void {
+	try {
+		lstatSync(dest)
+	} catch {
+		return
+	}
+
+	unlinkSync(dest)
+
+	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
+}
+
+/**
+ * Symlink one soft-feed sibling into an overlay, warning rather than failing when the source is absent.
+ *
+ * Every one of these artifacts is OPTIONAL by design — the runtime has a fallback for each, so a fresh worktree that
+ * has not built the gazetteer still geocodes. That is why the miss prints the consequence instead of throwing: the
+ * operator needs to know which channel just resolved OFF, not to have the link step abort.
+ */
+export function linkSoftFeedSibling(source: string, destination: string, consequenceIfMissing: string): boolean {
+	if (!existsSync(source)) {
+		console.error(`WARNING: missing ${source} — ${consequenceIfMissing}`)
+
+		return false
+	}
+
+	linkForce(source, destination)
+
+	console.log(`linked ${destination} \u2190 ${source}`)
+
+	return true
+}
 
 /**
  * What one pair-index overlay has to say about itself. Everything else is shared.
@@ -86,6 +149,42 @@ export function peekPairIndexHeaderFields(path: string): PairIndexHeaderFields {
 		schemaVersion: header.schemaVersion,
 		sourceMD5s: header.sourceMD5s ?? [],
 	}
+}
+
+/**
+ * Hex characters in an md5 digest.
+ */
+const MD5_HEX_LENGTH = 32
+
+/**
+ * Md5 of `path`, cached in a standard `md5sum`-format sidecar (`<hash> <filename>`) beside it so a multi-gigabyte
+ * source is hashed once per change rather than once per linker run. The sidecar is trusted only when at least as new as
+ * the source; a missing or stale sidecar recomputes and rewrites, so the cache self-heals.
+ *
+ * The shared home for the copies the base linkers (`en-us`, `en-gb`, `en-nz`) each carry — new callers import this one.
+ */
+export async function md5FileWithSidecar(path: string): Promise<string> {
+	const sidecarPath = `${path}.md5`
+	const sourceStats = statSync(path)
+
+	if (existsSync(sidecarPath)) {
+		try {
+			if (statSync(sidecarPath).mtime >= sourceStats.mtime) {
+				const [hash] = readFileSync(sidecarPath, "utf8").trim().split(/\s+/)
+
+				if (hash && hash.length === MD5_HEX_LENGTH) return hash
+			}
+		} catch {
+			// Unreadable sidecar — recompute below.
+		}
+	}
+
+	const hash = await md5File(path)
+	const filename = path.split(/[/\\]/).pop() || path
+
+	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
+
+	return hash
 }
 
 /**
@@ -170,17 +269,35 @@ export function warnIfFSTStale(fstPath: string, locale: string): void {
 
 /**
  * Build `pair-index-<country>.bin` into the overlay, skipping the work when the artifact on disk was already built at
- * these magnitudes.
+ * these magnitudes FROM the admin database on disk.
+ *
+ * The skip requires both halves (#1734): the header magnitudes (`pairIndexStaleReason`) AND the header's `sourceMD5s`
+ * against the current admin DB's md5. Magnitudes alone read a source change as "current" whenever pair counts happen
+ * not to move the calibrated numbers — the R5 freshness-guard lesson, which resurfaced in the 2026-08-18 admin swap
+ * when all four overlay locales skipped while the md5-checking base linkers rebuilt. This build's ONE source is the
+ * admin DB it passes as `--borough-db`, so the comparison is exactly one md5; a linker with a different source list
+ * (fr's BAN directory) owns its own guard and must never be pointed at this one.
  *
  * Exits non-zero on a failed build. Missing INPUTS (an unbuilt CLI, an absent WOF database) warn and return instead: a
  * fresh clone has neither, and `yarn test` invokes this to verify auto-resolve, so a hard failure there would be a
  * failure to have run a build yet rather than a real fault.
  */
-export function buildPairIndexOverlay({ packageDir, country, delta, transitionBeta }: PairIndexOverlay): void {
-	const PKG_DIR = workspacePath(packageDir)
+export async function buildPairIndexOverlay({
+	packageDir,
+	country,
+	delta,
+	transitionBeta,
+}: PairIndexOverlay): Promise<void> {
 	const CLI = String(workspacePath("mailwoman", "out", "cli.js"))
 	const ARTIFACT = `pair-index-${country}.bin`
+	// Built into the data-root OVERLAY, not into the tracked package. The locale is recovered from the
+	// workspace name (`neural-weights-en-gb` → `en-gb`) so callers keep passing the one identifier they
+	// already had; the alternative was a second parameter every caller would have to keep in step with the
+	// first, which is the drift this whole rollout is removing.
+	const PKG_DIR = String(weightsOverlayPath(packageDir.replace(/^neural-weights-/, "")))
 	const DEST = resolve(PKG_DIR, ARTIFACT)
+
+	mkdirSync(PKG_DIR, { recursive: true })
 	/**
 	 * Checked-in WOF-derived admin pairs — the same posture as the GB secondary sources.
 	 */
@@ -204,14 +321,26 @@ export function buildPairIndexOverlay({ packageDir, country, delta, transitionBe
 			// parent bias — unmeasured there, and the D-rule's answer to an unmeasured locale is a per-locale
 			// gate, not an inherited magnitude. `PairIndexOverlay` therefore has no `parentDelta` field to pass;
 			// adding one is a deliberate act that should arrive with a board.
-			const reason = pairIndexStaleReason(peekPairIndexHeaderFields(DEST), { delta, transitionBeta })
+			const header = peekPairIndexHeaderFields(DEST)
+			const reason = pairIndexStaleReason(header, { delta, transitionBeta })
 
 			if (reason) {
 				console.log(`rebuilding ${ARTIFACT} — ${reason}`)
 			} else {
-				console.log(`skipped ${ARTIFACT} build — ${DEST} is current`)
+				// The source-md5 half (#1734). This build reads exactly one source, so one md5; an artifact that
+				// recorded none, or a different count, predates the stamp and is stale by that fact alone.
+				const adminMD5 = await md5FileWithSidecar(WOF_ADMIN_DB)
 
-				return
+				if (header.sourceMD5s.length === 1 && header.sourceMD5s[0] === adminMD5) {
+					console.log(`skipped ${ARTIFACT} build — ${DEST} is current (magnitudes + source md5 match)`)
+
+					return
+				}
+
+				console.log(
+					`rebuilding ${ARTIFACT} — header source md5s [${header.sourceMD5s.join(", ") || "(none recorded)"}] != ` +
+						`current admin DB [${adminMD5}]`
+				)
 			}
 		} catch (error) {
 			console.log(`rebuilding ${ARTIFACT} — header unreadable (${(error as Error).message})`)

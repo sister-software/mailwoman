@@ -41,7 +41,7 @@ import { lookupStreetSuffix } from "@mailwoman/codex/us"
 | **`fr`** | La Poste postcode format, CEDEX conventions, département codes                       |
 | **`gb`** | Royal Mail postcode format, post town conventions                                    |
 | **`de`** | Deutsche Post postcode format, Bundesland abbreviations                              |
-| **`ca`** | Canada Post postcode format, province abbreviations                                  |
+| **`ca`** | Canada Post postcode format, province abbreviations, the urban/rural FSA split       |
 | **`au`** | Australia Post postcode format, state abbreviations                                  |
 
 ## Cross-system utilities
@@ -49,14 +49,56 @@ import { lookupStreetSuffix } from "@mailwoman/codex/us"
 ```ts
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
 
-// Which systems could "94043" belong to?
-candidateSystemsForPostcode("94043") // → ["us"]
-candidateSystemsForPostcode("75008") // → ["fr"]
-candidateSystemsForPostcode("10115") // → ["de"]
+// Which systems could this shape belong to? A five-digit run is not evidence of one country.
+candidateSystemsForPostcode("94043") // → ["us", "de", "fr"]
+candidateSystemsForPostcode("SW1A 1AA") // → ["gb"]
 
 // Address system conventions (forbidden tags, expected shapes, etc.)
 import { ADDRESS_SYSTEM_CONVENTIONS, conventionsForSystem } from "@mailwoman/codex"
 ```
+
+Note the first answer. This is a **shape** test, not a gazetteer membership test, and
+returning all three is the correct answer rather than a hedge — the caller's country
+scope is what narrows it. Picking one locale here would be a guess wearing a fact's
+clothes.
+
+## Postcode granularity: three tiers, each earned by measurement
+
+One `postalcode` placetype covers systems that are not comparable. An Irish Eircode
+names a single address; an Australian postcode names a locality. Between them sit
+most of the world, and the distinction that actually changes an answer is narrower:
+**is this code finer than the locality that contains it?**
+
+That is a fact about a country's _administrative_ geography, not its postal system,
+and code length does not predict it. France and Germany are both five digits and land
+on opposite sides.
+
+```ts
+import { isUnitGradePostcodeHit, areaPostcodeLeadsLocality } from "@mailwoman/codex"
+
+isUnitGradePostcodeHit("N7 0BT", "n70bt") // → true  (GB unit, and the resolver hit the FULL code)
+isUnitGradePostcodeHit("N7 0BT", "n7") // → false (the resolver answered with the outward district)
+areaPostcodeLeadsLocality("DE") // → true  (a Gemeinde can be the size of Berlin)
+areaPostcodeLeadsLocality("FR") // → false (one code postal often spans several communes)
+```
+
+| Tier                                                                              | Members                           | What earned it                                                            |
+| --------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------- |
+| **unit-grade** (`UNIT_GRADE_POSTCODE`)                                            | NL PC6, GB unit, CA **urban** LDU | measured against rooftop truth — GB 38 m median, CA urban 78 m            |
+| **area, but still finer than the locality** (`AREA_POSTCODE_FINER_THAN_LOCALITY`) | DE                                | full-panel measurement: 5.84 km → 1.24 km p50, better on every percentile |
+| **area** (the default)                                                            | everything else                   | the locality-first convention                                             |
+
+Membership is earned by a measurement, never by a shape that looks tight. Canada is
+the case that shows why: its urban LDU is unit-grade, its **rural** LDU measures
+2.08 km against the locality's 929 m and is excluded — and Canada Post already marks
+the difference with a `0` in the second character, so the code says which before any
+lookup runs. The pooled Canadian number reads 0.10 km and looks like a uniform win;
+it is two populations, and a tier claim that averages two granularities is exactly
+what these tables exist to prevent.
+
+`@mailwoman/resolver`'s `admin-winner` consumes both predicates, and so does the
+browser demo's pin ranking — one definition, because the two once disagreed and
+nothing noticed.
 
 ## Design
 
@@ -92,6 +134,7 @@ questions, different tables.
 
 - [`@mailwoman/core`](../core) — `ComponentTag` schema, pipeline infrastructure
 - [`@mailwoman/address-id`](../address-id) — uses codex for stable address primary keys
+- [`@mailwoman/resolver`](../resolver) — consumes the granularity tiers to order a resolved tree
 - [Address system conventions](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/SCHEMA.mdx)
 
 ## License

@@ -59,11 +59,13 @@
  *        `JP` key. The JP extract is harvested and ready; the leg belongs to the JP shard.
  */
 
+import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
-import type { LocaleBaseTuple } from "@mailwoman/corpus/synthesizers/german"
-import type { SubVenueLexiconTable } from "@mailwoman/corpus/tools"
-import { alignRow } from "@mailwoman/corpus/utils"
+
+import type { LocaleBaseTuple } from "#synthesizers/german"
+import type { SubVenueLexiconTable } from "#tools"
+import { alignRow } from "#utils"
 
 import { makeMulberry32, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 import {
@@ -373,7 +375,7 @@ export function renderGroups(
 
 	const raw = groups
 		.map((group) => group.map((piece) => fold(piece.text)).join(" "))
-		.filter(Boolean)
+		.filter(isPresent)
 		.join(separator)
 
 	const components: Partial<Record<ComponentTag, string>> = {}

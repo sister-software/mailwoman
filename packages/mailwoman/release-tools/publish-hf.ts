@@ -36,6 +36,7 @@ import { existsSync, statSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, resolve } from "node:path"
 
+import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 
@@ -125,11 +126,18 @@ function run(cmd: string, args: string[]) {
 	}
 }
 
+/**
+ * Hugging Face throttles, and this runs a HEAD per published artifact during a release verification sweep. Retry keeps
+ * a throttled probe from reading as a MISSING artifact — the one answer that would have a release believe it failed to
+ * upload something it uploaded.
+ */
+const hfClient = new APIClient({ displayName: "publish-hf", retry: true })
+
 async function checkRemoteFileExists(url: string) {
 	try {
-		const res = await fetch(url, { method: "HEAD", redirect: "follow" })
+		await hfClient.fetch({ url, method: "head" })
 
-		return res.ok
+		return true
 	} catch {
 		return false
 	}
@@ -149,7 +157,7 @@ function stageBinaryList(spec: string | undefined, label: string): string[] {
 		? spec
 				.split(",")
 				.map((s: string) => s.trim())
-				.filter(Boolean)
+				.filter((path) => path.length > 0)
 		: []
 
 	for (const localPath of paths) {
@@ -424,13 +432,13 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 
 	// --- Phase 4: update releases.json ---
 	const releasesURL = `${BUCKET_RESOLVE}/${args.locale}/releases.json`
-	const res = await fetch(releasesURL, { redirect: "follow" })
+	const res = await hfClient.fetch<ReleaseManifest>({ url: releasesURL, validateStatus: () => true })
 
-	if (!res.ok) {
+	if (!isSuccessStatus(res.status)) {
 		fail(`failed to fetch ${releasesURL}`)
 	}
 
-	const releases = (await res.json()) as ReleaseManifest
+	const releases = res.data
 
 	const newEntry: Record<string, unknown> = {
 		version: args.version,
@@ -469,5 +477,5 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	console.error(`  ✓ releases.json updated, defaultVersion=${releases.defaultVersion}`)
 
 	console.error(`\n✓ ${args.version} (${args.locale}) published successfully.`)
-	console.error(`  Demo: https://mailwoman.sister.software/demo/`)
+	console.error(`  Demo: https://mailwoman.ai/demo/`)
 }

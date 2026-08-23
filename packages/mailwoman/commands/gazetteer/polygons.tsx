@@ -29,9 +29,13 @@
 import { existsSync, readFileSync, rmSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
-import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
+import { allRows, dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { Box, Text } from "ink"
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+import { resolvePath } from "path-ts"
+
+import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Vertices below which a ring cannot be simplified further without collapsing it.
@@ -91,13 +95,13 @@ interface RawGeometry {
 }
 
 /**
- * WOF shard path: id split into 3-char chunks, then the full id.
+ * Where a country's admin record sits under a repositories root.
+ *
+ * `--repos` defaults to the OWNER directory (`<data-root>/wof/repos/whosonfirst-data`), so the repository name is
+ * appended flat to whatever root the caller gave. The id-to-path rule itself belongs to `wofIDPathSegments`.
  */
 function geojsonPath(repos: string, country: string, id: number): string {
-	const s = String(id)
-	const shard = s.match(/.{1,3}/g)!.join("/")
-
-	return `${repos}/whosonfirst-data-admin-${country.toLowerCase()}/data/${shard}/${s}.geojson`
+	return resolvePath(repos, wofRepoName("admin", country), "data", ...wofIDPathSegments(id)).toString()
 }
 
 /**
@@ -179,7 +183,8 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
-		const { tryParsingJSON } = await import("@mailwoman/core/objects")
+		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
+		const { isPresent, tryParsingJSON } = await import("@mailwoman/core/objects")
 
 		const out = options.out
 		const points = options.points ?? ""
@@ -199,7 +204,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			? options.countries
 					.split(",")
 					.map((c) => c.trim().toUpperCase())
-					.filter(Boolean)
+					.filter(isPresent)
 			: null
 
 		const repos = options.repos
@@ -212,10 +217,9 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
 			: `placetype NOT IN ('postalcode')`
 
-		const rows = (
-			src
-				.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`)
-				.all(...(countries ?? [])) as unknown as SprRow[]
+		const rows = allRows<SprRow>(
+			src.prepare(`SELECT id, country, placetype FROM spr WHERE ${where} ORDER BY id`),
+			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
 		src.close()
@@ -233,13 +237,9 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const dbOut = new DatabaseSync(tmpOut)
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
-		const kdb = new DatabaseClient({ database: dbOut })
+		const kdb = new DatabaseClient<PolygonDatabase>({ database: dbOut })
 
-		await kdb.schema
-			.createTable("polygons")
-			.addColumn("id", "integer", (c) => c.primaryKey())
-			.addColumn("geom", "text", (c) => c.notNull())
-			.execute()
+		await createPolygonsTable(kdb)
 
 		const insert = dbOut.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
 

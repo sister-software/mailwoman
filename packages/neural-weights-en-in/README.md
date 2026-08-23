@@ -1,6 +1,6 @@
 # @mailwoman/neural-weights-en-in
 
-Indian English (`en-IN`) weights overlay for [mailwoman](https://mailwoman.sister.software).
+Indian English (`en-IN`) weights overlay for [mailwoman](https://mailwoman.ai).
 
 **Data-only.** Declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"` and shares that
 package's model and tokenizer. What it adds is the Indian **placetype-pair index** — 175,744

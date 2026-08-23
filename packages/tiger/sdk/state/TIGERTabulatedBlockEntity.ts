@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { smartSnakeCase } from "@mailwoman/core"
-import { TIGERProperty } from "@mailwoman/tiger"
+
+import { TIGERProperty } from "#index"
 
 /**
  * Default column selections for TIGER tabulated block entities.

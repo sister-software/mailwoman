@@ -24,9 +24,9 @@ export async function runIfScript(meta: ImportMeta, scriptCallback: ScriptCallba
 	if (!meta.main) return
 
 	const [{ $public }, { ConsoleLogger, stringifyLoggedObject }, { runScript }] = await Promise.all([
-		import("@mailwoman/core/env"),
-		import("@mailwoman/core/logging"),
-		import("@mailwoman/core/scripting/utils"),
+		import("#env"),
+		import("#logging"),
+		import("#scripting/utils"),
 	])
 
 	ConsoleLogger.info(

@@ -6,7 +6,8 @@
  * example-chip row (geo-bias), and the dev-mode model-visualizer drawer.
  * ============================================================================ */
 
-/* ── Root: fixed full-viewport layer behind Docusaurus navbar ──────────── */
+/* #region Root: fixed full-viewport layer behind Docusaurus navbar */
+
 .demoRoot {
 	position: fixed;
 	top: 0;
@@ -20,7 +21,10 @@
 	max-width: none;
 }
 
-/* ── Example-chip row (reused by the injected geo-bias row) ────────────── */
+/* #endregion */
+
+/* #region Example-chip row (reused by the injected geo-bias row) */
+
 .examples {
 	margin-top: 0.75rem;
 	display: flex;

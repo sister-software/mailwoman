@@ -23,8 +23,11 @@ interface AstNode {
 	value?: unknown
 	name?: string
 	callee?: AstNode
+	object?: AstNode
 	property?: AstNode
 	arguments?: AstNode[]
+	expression?: AstNode
+	typeAnnotation?: AstNode
 	quasis?: { value?: { cooked?: string } }[]
 	expressions?: AstNode[]
 }
@@ -32,6 +35,18 @@ interface AstNode {
 interface RuleContext {
 	options: unknown[]
 	report(descriptor: { node: unknown; message: string }): void
+	sourceCode?: SourceCode
+	getSourceCode?(): SourceCode
+}
+
+interface CommentNode {
+	type: string
+	range: [number, number]
+	value: string
+}
+
+interface SourceCode {
+	getAllComments(): CommentNode[]
 }
 
 interface Rule {
@@ -107,10 +122,186 @@ const preferSpliteratorRule: Rule = {
 	},
 }
 
+/**
+ * Kysely calls whose arguments are checked against the database schema.
+ */
+const DATABASE_BOUNDARY_METHODS = new Set([
+	"deleteFrom",
+	"insertInto",
+	"mergeInto",
+	"replaceInto",
+	"selectFrom",
+	"updateTable",
+	"values",
+])
+
+/**
+ * Whether an expression contains a cast through `never`, including a nested `as unknown as never`.
+ */
+function containsNeverCast(node: AstNode | undefined): boolean {
+	if (!node) return false
+
+	if (node.type === "TSAsExpression" || node.type === "TSTypeAssertion") {
+		if (node.typeAnnotation?.type === "TSNeverKeyword") return true
+
+		return containsNeverCast(node.expression)
+	}
+
+	return false
+}
+
+/**
+ * The identifier name of a non-computed member call, if this is one.
+ */
+function calledMethod(node: AstNode): string | null {
+	const callee = node.callee
+
+	if (!callee || (callee.type !== "MemberExpression" && callee.type !== "StaticMemberExpression")) return null
+
+	return callee.property?.type === "Identifier" ? (callee.property.name ?? null) : null
+}
+
+/**
+ * Type names whose whole purpose is to carry a database schema.
+ */
+const DATABASE_HANDLE_TYPES = new Set(["DatabaseClient", "Kysely", "Transaction"])
+
+/**
+ * The type name of a cast's target, when the target is a plain (possibly generic) type reference.
+ */
+function castTargetName(node: AstNode): string | null {
+	const annotation = node.typeAnnotation
+
+	if (annotation?.type !== "TSTypeReference") return null
+
+	return annotation.typeName?.type === "Identifier" ? (annotation.typeName.name ?? null) : null
+}
+
+const noDatabaseHandleCastRule: Rule = {
+	meta: {
+		name: "no-database-handle-cast",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			TSAsExpression(node: AstNode) {
+				const name = castTargetName(node)
+
+				if (!name || !DATABASE_HANDLE_TYPES.has(name)) return
+
+				context.report({
+					node,
+					message:
+						`Do not cast a database handle to \`${name}<…>\`. Kysely is INVARIANT in its schema parameter, so a ` +
+						"handle over a schema that EXTENDS the one a helper wants is not assignable to it — but the " +
+						"incompatibility lives in `transaction()` and `with()`, which such helpers do not call. Narrow the " +
+						'HELPER\'S PARAMETER to the members it actually uses (`Pick<Kysely<Schema>, "insertInto" | "schema" ' +
+						'| "selectFrom">`) and the caller passes its own handle with no cast at all; `LayerContractHandle` ' +
+						"in `@mailwoman/core/layers` is the worked example. A cast here does not skip one check — it disarms " +
+						"every column-level guarantee those tables carry, branded normalization keys included.",
+				})
+			},
+		}
+	},
+}
+
+const requireDatabaseSchemaArgumentRule: Rule = {
+	meta: {
+		name: "require-database-schema-argument",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			NewExpression(node: AstNode) {
+				const callee = node.callee
+
+				if (callee?.type !== "Identifier" || !DATABASE_HANDLE_TYPES.has(callee.name ?? "")) return
+
+				if (node.typeArguments?.params?.length) return
+
+				context.report({
+					node,
+					message:
+						`\`new ${callee.name}(…)\` without a schema type argument falls back to the EMPTY schema ` +
+						"(`Record<string, never>`), so every table name is `never` and the next writer reaches for a cast in " +
+						"order to compile. Pass the artifact's own `Database` interface. If none exists, declare it beside " +
+						"the reader together with its `createXTable` builder, so a column added to one is a compile error " +
+						"against the other.",
+				})
+			},
+		}
+	},
+}
+
+const noDatabaseBoundaryCastRule: Rule = {
+	meta: {
+		name: "no-database-boundary-cast",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			CallExpression(node: AstNode) {
+				const method = calledMethod(node)
+
+				if (!method || !DATABASE_BOUNDARY_METHODS.has(method)) return
+
+				for (const argument of node.arguments ?? []) {
+					if (!containsNeverCast(argument)) continue
+
+					context.report({
+						node: argument,
+						message:
+							`Do not cast through \`never\` at a database boundary (.${method}()). This disables every schema ` +
+							"guarantee, including branded normalization keys. Give `DatabaseClient`/`Kysely` its real database " +
+							"schema type instead.",
+					})
+				}
+			},
+		}
+	},
+}
+
+const OXLINT_DISABLE_DIRECTIVE = /\boxlint-disable(?:-next-line|-line)?\b/u
+
+const requireDisableReasonRule: Rule = {
+	meta: {
+		name: "require-disable-reason",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			Program() {
+				const sourceCode = context.sourceCode ?? context.getSourceCode?.()
+
+				if (!sourceCode) return
+
+				for (const comment of sourceCode.getAllComments()) {
+					if (!OXLINT_DISABLE_DIRECTIVE.test(comment.value) || comment.value.includes("--")) continue
+
+					context.report({
+						node: comment,
+						message:
+							"An oxlint suppression must explain why the forbidden shape is correct here. Add `-- reason` " +
+							"on the directive itself; a nearby comment can drift away or leave the disable behind.",
+					})
+				}
+			},
+		}
+	},
+}
+
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
+		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
+		"no-database-handle-cast": noDatabaseHandleCastRule,
 		"prefer-spliterator": preferSpliteratorRule,
+		"require-database-schema-argument": requireDatabaseSchemaArgumentRule,
+		"require-disable-reason": requireDisableReasonRule,
 	},
 }
 

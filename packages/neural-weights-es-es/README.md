@@ -1,6 +1,6 @@
 # @mailwoman/neural-weights-es-es
 
-es-ES weights overlay for [mailwoman](https://mailwoman.sister.software).
+es-ES weights overlay for [mailwoman](https://mailwoman.ai).
 
 **Data-only.** Declares `mailwoman.baseWeights` and shares the base model and tokenizer with
 `@mailwoman/neural-weights-en-us`; what it adds is `pair-index-es.bin`.

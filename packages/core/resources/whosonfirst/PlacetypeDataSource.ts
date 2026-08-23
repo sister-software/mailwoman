@@ -3,13 +3,14 @@
 
 import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "node:sqlite"
 
+import { PathBuilder, type PathBuilderLike } from "path-ts"
+
 import {
 	type Alpha2LanguageCode,
 	type Alpha3bLanguageCode,
 	Alpha3bToAlpha2,
 	isAlpha3bLanguageCode,
-} from "@mailwoman/core/resources/languages"
-import { PathBuilder, type PathBuilderLike } from "path-ts"
+} from "#resources/languages"
 
 import { tryWithBackoff } from "./backoff.ts"
 import type { WhosOnFirstPlacetype } from "./placetypes/definition.ts"
@@ -62,6 +63,36 @@ export interface PlacetypeRecord {
 	short: string | null
 }
 
+function sqlParameters(input: Partial<PlacetypeRecord>): Record<string, SQLInputValue> {
+	const parameters: Record<string, SQLInputValue> = {}
+
+	for (const [key, value] of Object.entries(input)) {
+		if (value !== undefined) {
+			parameters[key] = value
+		}
+	}
+
+	return parameters
+}
+
+function nullableString(value: unknown): string | null {
+	return value == null ? null : String(value)
+}
+
+function placetypeRecordFromRow(row: Record<string, SQLInputValue>): PlacetypeRecord {
+	return {
+		id: Number(row["id"]),
+		src: String(row["src"]),
+		parent_id: Number(row["parent_id"]),
+		name: String(row["name"]),
+		preferred: nullableString(row["preferred"]),
+		variant: nullableString(row["variant"]),
+		colloquial: nullableString(row["colloquial"]),
+		abbr: nullableString(row["abbr"]),
+		short: nullableString(row["short"]),
+	}
+}
+
 /**
  * A data source for WhosOnFirst placetype records.
  */
@@ -77,11 +108,7 @@ export class PlacetypeDataSource implements Disposable {
 			? Alpha3bToAlpha2.get(languageCode)
 			: languageCode
 
-		return PathBuilder.from(
-			dataDirectory,
-			placetype,
-			`${normalizedLanguageCode}.db`
-		) as unknown as PathBuilder<`/${P}/${L}.db`>
+		return PathBuilder.from(dataDirectory, placetype, `${normalizedLanguageCode}.db`)
 	}
 
 	public prepareTables(): void {
@@ -152,9 +179,7 @@ export class PlacetypeDataSource implements Disposable {
 
 		// node:sqlite's StatementSync.iterate() accepts named params via an object whose keys match
 		// the `@name` / `:name` / `$name` placeholders in the SQL.
-		return Iterator.from(
-			statement.iterate(criteria as unknown as Record<string, SQLInputValue>)
-		) as unknown as IteratorObject<PlacetypeRecord>
+		return Iterator.from(statement.iterate(sqlParameters(criteria))).map(placetypeRecordFromRow)
 	}
 
 	/**
@@ -188,7 +213,7 @@ export class PlacetypeDataSource implements Disposable {
 			parent_id = excluded.parent_id
 			`)
 
-			statement.run(record as unknown as Record<string, SQLInputValue>)
+			statement.run(sqlParameters(record))
 		}
 
 		await tryWithBackoff(5, perform)

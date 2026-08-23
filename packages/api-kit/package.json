@@ -21,7 +21,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -30,6 +31,11 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./metrics": {
+			"node": "./metrics.ts",
+			"default": "./out/metrics.js",
+			"types": "./out/metrics.d.ts"
 		}
 	},
 	"publishConfig": {

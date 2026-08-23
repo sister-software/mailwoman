@@ -28,7 +28,7 @@
 
 import { spawnSync } from "node:child_process"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { collectExportTargets } from "./publish-exports.ts"
@@ -44,6 +44,7 @@ export interface TarballContents {
 		name?: string
 		files?: unknown
 		exports?: unknown
+		imports?: unknown
 		bin?: unknown
 	}
 	/**
@@ -99,6 +100,13 @@ export function collectMissingExportTargets(exports: unknown, shipped: Set<strin
 }
 
 /**
+ * Which concrete package-import targets are absent from the tarball.
+ */
+export function collectMissingImportTargets(imports: unknown, shipped: Set<string>): string[] {
+	return collectExportTargets(imports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped))
+}
+
+/**
  * Every path a `bin` field promises — npm accepts both the string form (`"bin": "./out/cli.js"`) and the map form.
  */
 function collectBinTargets(bin: unknown): string[] {
@@ -142,7 +150,7 @@ export function readTarball(tarballPath: string): TarballContents {
 
 	const shipped = new Set(
 		[...TextSpliterator.from(listing.stdout)]
-			.filter(Boolean)
+			.filter(isPresent)
 			.map((line) => normalizeEntry(line.replace(/^package\//, "")))
 	)
 
@@ -176,9 +184,10 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 	const name = manifest.name ?? tarballPath
 	const missingFiles = collectMissingFileEntries(manifest.files, shipped)
 	const missingExports = collectMissingExportTargets(manifest.exports, shipped)
+	const missingImports = collectMissingImportTargets(manifest.imports, shipped)
 	const missingBins = collectMissingBinTargets(manifest.bin, shipped)
 
-	if (missingFiles.length || missingExports.length || missingBins.length) {
+	if (missingFiles.length || missingExports.length || missingImports.length || missingBins.length) {
 		const lines = [`verify-tarball: ${name} does not contain what its manifest promises — refusing to publish:`]
 
 		for (const entry of missingFiles) {
@@ -187,6 +196,10 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 
 		for (const target of missingExports) {
 			lines.push(`  - exports target ${target} is not in the tarball`)
+		}
+
+		for (const target of missingImports) {
+			lines.push(`  - imports target ${target} is not in the tarball`)
 		}
 
 		for (const target of missingBins) {

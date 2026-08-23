@@ -10,14 +10,15 @@
  *   here so the staging route exercises the compare seam without touching `_app.tsx`.
  */
 
-import { VersionCompare } from "@mailwoman/docs/components/VersionCompare/VersionCompare"
-import type { ReleaseInfo } from "@mailwoman/docs/shared/demo-helpers"
-import { DEFAULT_LOCALE, flattenTree } from "@mailwoman/docs/shared/demo-helpers"
-import type { DemoResult, MailwomanClassifierLike, ResultNode } from "@mailwoman/docs/shared/resources"
-import { neuralClassifierLoadURLs } from "@mailwoman/docs/shared/resources"
 import type { ParseResult } from "@mailwoman/react"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
+
+import { VersionCompare } from "#components/VersionCompare/VersionCompare"
+import type { ReleaseInfo } from "#shared/demo-helpers"
+import { DEFAULT_LOCALE, flattenTree } from "#shared/demo-helpers"
+import type { DemoResult, MailwomanClassifierLike, ResultNode } from "#shared/resources"
+import { neuralClassifierLoadURLs } from "#shared/resources"
 
 export interface DemoCompareProps {
 	/**
@@ -102,7 +103,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 						: "unknown"
 				)
 
-				setClassifier(cls as unknown as MailwomanClassifierLike)
+				setClassifier(cls as MailwomanClassifierLike)
 			} catch (caught) {
 				if (cancelled) return
 				setError(caught instanceof Error ? caught.message : String(caught))
@@ -149,7 +150,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 				const cPipelineResult = await runPipeline(primaryInput, {
 					computeQueryShape,
 					groupPhrases,
-					classifier: cls as unknown as Parameters<typeof runPipeline>[1]["classifier"],
+					classifier: cls as Parameters<typeof runPipeline>[1]["classifier"],
 				})
 
 				const cClassifyTime = performance.now() - cStart - cShapeTime
@@ -191,7 +192,7 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 			{error ? <p className="mw-error">{error}</p> : null}
 			{compareResult && primary ? (
 				<VersionCompare
-					primary={primary as unknown as DemoResult}
+					primary={primary as DemoResult}
 					compare={compareResult}
 					primaryVersion={primaryVersion}
 					compareVersion={compareVersion ?? "?"}

@@ -54,10 +54,10 @@ function score(hit: number, total: number): Score {
 }
 
 function tokenHits(expected: string, actual: string): number {
-	const remaining = actual.split(" ").filter(Boolean)
+	const remaining = actual.split(" ").filter((value) => value.length > 0)
 	let hits = 0
 
-	for (const token of expected.split(" ").filter(Boolean)) {
+	for (const token of expected.split(" ").filter((value) => value.length > 0)) {
 		const index = remaining.indexOf(token)
 
 		if (index === -1) continue

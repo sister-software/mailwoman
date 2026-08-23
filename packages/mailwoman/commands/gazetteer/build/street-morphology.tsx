@@ -10,7 +10,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -42,7 +43,7 @@ interface Options {
 
 const GazetteerBuildStreetMorphology: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { buildStreetMorphologyArtifact } = await import("../../../gazetteer-pipeline/street-morphology.ts")
+		const { buildStreetMorphologyArtifact } = await import("#gazetteer/street-morphology")
 
 		const built = buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,

@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { ResultNode } from "@mailwoman/docs/shared/resources"
 import type { Meta, StoryObj } from "@storybook/react-vite"
+
+import type { ResultNode } from "#shared/resources"
 
 import { BIOHighlight } from "./BIOHighlight.tsx"
 

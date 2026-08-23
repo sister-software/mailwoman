@@ -15,11 +15,11 @@ import { readFileSync } from "node:fs"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import { synthesizeAnchorAbsorptionRow } from "@mailwoman/corpus/synthesizers/anchor-absorption"
-import { alignRow } from "@mailwoman/corpus/utils"
 
-import { makeLcg, type ShardRecipe } from "./scaffold.ts"
+import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
+import { alignRow } from "#utils"
+
+import { makeLcg, shardSourceID, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * The leading-5-digit source: the real US ZIPs in the postcode anchor's pilot lookup. Resolved through the data-root
@@ -75,7 +75,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 				country,
 				locale: synth.locale,
 				source,
-				source_id: stableSourceID(source, `${i}` as unknown as Parameters<typeof stableSourceID>[1]),
+				source_id: shardSourceID(source, { v: String(i) }),
 			}
 
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])

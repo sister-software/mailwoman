@@ -37,13 +37,14 @@ import {
 	type QueryKindResult,
 	type FSTMatcherLike,
 } from "@mailwoman/core/pipeline"
-import type { Resolver } from "@mailwoman/core/resolver"
+import type { ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { CommandError } from "mailwoman/cli-kit"
 import { resolvePath } from "path-ts"
+
+import { CommandError } from "#cli-kit"
 
 import { resolverDefaultCountry } from "./country-scope.ts"
 import {
@@ -53,7 +54,6 @@ import {
 	parseForGeocode,
 	ShardProvider,
 	type GeocodeDeps,
-	type GeocodeParseInputs,
 	type GeocodeResult,
 	type ShardResolver,
 	type StateShards,
@@ -90,6 +90,18 @@ export interface GeocodeSessionOptions {
 	 */
 	gazetteerPrior?: boolean
 	locale: string
+	/**
+	 * Grade a CANDIDATE weights bundle instead of the installed one — a package-shaped directory
+	 * (`<root>/node_modules/@mailwoman/neural-weights-<locale>/`), as staged by an eval harness or `npm install
+	 * --prefix`. Unset loads whatever the resolution ladder finds, which is what production does.
+	 *
+	 * `resolveWeights` treats this rung as authoritative ONLY when the directory holds `model.onnx` and
+	 * `tokenizer.model`; a cache missing them falls through to the installed workspace package, which in this repo always
+	 * resolves. So a path typo does not fail here — it loads the SHIPPED model under the candidate's label. A caller that
+	 * cannot tolerate that must check the layout before constructing the session and read
+	 * {@link GeocodeSession.artifacts} back after; `missingWeightsCacheArtifacts` is the shared check.
+	 */
+	weightsCacheRoot?: string
 	bias?: string
 	defaultCountry?: string
 	countryScope: "auto" | "locale" | "none"
@@ -103,13 +115,22 @@ export interface GeocodeSessionOptions {
 	placeCountry: boolean
 	postcodeCountryCoherence: boolean
 	forkEntity: boolean
+	/**
+	 * The opt-in venue tier (#1684's POI half) — see `GeocodeDeps.poiVenueTier`. Default OFF.
+	 */
+	poiVenueTier?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
-	 * Whether a ZERO-HIT may be retried in the alternative input register (the Decision-A rider).
-	 *
-	 * Exposed so the lever is measurable: it changes answers on the default path, and a lever an A/B cannot reach is a
-	 * lever nobody can price. `undefined` keeps the production default, which is ON.
+	 * Admin-containment re-rank (#1717 stage 2) — a parsed region qualifier participates in locality-candidate selection
+	 * via the candidate gazetteer's ancestors sidecar. Default OFF (D-rule); `undefined` keeps the production default.
+	 */
+	adminContainmentRerank?: boolean
+	/**
+	 * DEPRECATED NO-OP, removed at the next major. The Decision-A retry rider it controlled was retired 2026-08-19 under
+	 * the #486 repair-retirement policy with a measured record of exactly zero effect (the board, its failure slice, and
+	 * 600 fresh register records — #1694 holds the receipts). Accepted so existing callers keep compiling; ignored,
+	 * because single-pass is now the only behavior.
 	 */
 	retryAlternateRegister?: boolean
 	placeCountryThreshold: number
@@ -121,6 +142,16 @@ export interface GeocodeSessionOptions {
 	 * resolver walks is still `parseForGeocode`'s.
 	 */
 	trace?: boolean
+	/**
+	 * When a lookup resolves NOTHING, re-probe the value across the other admin bands and record which hold it.
+	 *
+	 * DIAGNOSTIC ONLY and off by default: the answer is byte-identical either way, and what changes is that a miss can
+	 * say WHY. A key we hold under another placetype is a reachability failure the model's tag caused; a key held nowhere
+	 * is coverage. Both reach a caller as `null` without this, and they call for opposite work.
+	 *
+	 * Costs one extra backend call per band per miss and needs {@link trace}, since the record is the whole product.
+	 */
+	diagnoseUnreachable?: boolean
 	/**
 	 * Optional one-time initialization milestones for interactive callers.
 	 */
@@ -157,6 +188,12 @@ export interface GeocodeTrace {
 	 * The session's `--locale`, for the surface that shows the head's verdict next to the operator's assertion.
 	 */
 	locale: string
+	/**
+	 * #1721 — the resolver's interior: one record per backend lookup the walk performed, carrying the query as sent, the
+	 * candidate table with per-stage ranks, the gates that fired, and the pick's provenance. An EMPTY array means the
+	 * walk performed no lookups (nothing resolvable in the tree); the field is absent only when tracing was off.
+	 */
+	resolver: ResolveNodeTrace[]
 }
 
 /**
@@ -201,6 +238,13 @@ export interface GeocodeSession {
 	artifacts: {
 		fstPath?: string
 		streetMorphologyPath?: string
+		/**
+		 * The `model.onnx` the classifier loaded, and which rung of the resolution ladder produced it (`package:…`,
+		 * `overlay:…`, `cache:…`, `explicit`). The pair is what makes {@link GeocodeSessionOptions.weightsCacheRoot}
+		 * auditable: a candidate that fell through to the installed weights reports a `package:` source here while the
+		 * options object still reads as a candidate run.
+		 */
+		weights?: { modelPath: string; source: string }
 	}
 	geocode(input: string): Promise<GeocodeRun>
 	close(): void
@@ -234,7 +278,7 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 	return (raw ?? "")
 		.split(";")
 		.map((part: string) => part.trim())
-		.filter(Boolean)
+		.filter((part) => part.length > 0)
 		.map((part: string) => {
 			const [coords, w] = part.split(":")
 			const [lat, lon] = coords!.split(",").map(Number)
@@ -306,7 +350,17 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let classifier: NeuralAddressClassifier
 
 	try {
-		classifier = await NeuralAddressClassifier.loadFromWeights({ locale: options.locale })
+		// #1732 reach half: the session's dataRoot is authoritative for EVERYTHING it loads, weights and
+		// their FSTs included. Before this line threaded it, a data_root override moved the gazetteer but
+		// weights silently resolved from the process env — so a dev-mcp engine with data_root set measured
+		// a mixed configuration, and no A/B seam for a staged FST existed on the warm path at all.
+		classifier = await NeuralAddressClassifier.loadFromWeights({
+			locale: options.locale,
+			overlayRoot: resolvePath(options.dataRoot, "weights"),
+			// Ahead of the overlay in the ladder rather than beside it: a caller naming a candidate bundle is naming
+			// the thing under test, and an overlay silently winning would grade the artifact they were replacing.
+			...(options.weightsCacheRoot ? { cacheRoot: options.weightsCacheRoot } : {}),
+		})
 	} catch {
 		throw new CommandError(
 			"geocode requires the neural weights. Install @mailwoman/neural-weights-en-us (or pass --locale with installed weights)."
@@ -538,7 +592,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	 * `parseForGeocode` just used ({@link geocodeParseInputs} is the shared derivation), so the record describes this
 	 * input's decode rather than a re-derived one.
 	 */
-	const traceOf = async (input: string): Promise<GeocodeTrace | undefined> => {
+	const traceOf = async (input: string): Promise<Omit<GeocodeTrace, "resolver"> | undefined> => {
 		if (!options.trace) return undefined
 
 		const inputs = geocodeParseInputs(input, parseDeps)
@@ -569,6 +623,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		const parsedAt = performance.now()
 		const trace = await traceOf(input)
 		const tracedAt = performance.now()
+		// #1721: the resolver-interior records for THIS call. A fresh array per call (the deps spread below
+		// carries it), so concurrent geocodes on one session never interleave their records.
+		const resolverTrace: ResolveNodeTrace[] = []
 
 		// #1589, the #912 guard's sibling: a bare POSTCODE whose format implies countries that exclude
 		// the locale-inferred one must not be hard-scoped by the locale. `SW1A 1AA` under the default
@@ -611,9 +668,6 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		const result = await geocodeAddress(input, {
 			classifier,
-			...(options.retryAlternateRegister === undefined
-				? {}
-				: { retryAlternateRegister: options.retryAlternateRegister }),
 			...(fst ? { fst } : {}),
 			...(streetMorphology ? { streetMorphology } : {}),
 			resolver,
@@ -638,6 +692,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #31 opt-in mechanisms: default-OFF downstream, so only the explicit opt-in needs threading.
 			...(options.postcodeShapeCoherence === true ? { postcodeShapeCoherence: true } : {}),
 			...(options.postcodeContainmentCoherence === true ? { postcodeContainmentCoherence: true } : {}),
+			// #1717 stage 2, PROMOTED default-ON 2026-08-18 (evidence doc in docs/records/evals/). BOTH
+			// directions forwarded explicitly: the first draft's `!== false ? {true} : {}` dropped the
+			// opt-out on the floor, and geocode-core's own default-on resurrected it — the #1706
+			// one-sided-forwarding class, caught by the promotion's confirmation battery reading
+			// "0 of 558 differed" between the opt-out arm and the default.
+			adminContainmentRerank: options.adminContainmentRerank !== false,
 			// Explicit --interp-calibration forces a single multiplier; unset → the per-region table (#584).
 			interpCalibration: options.interpCalibration ?? INTERP_RADIUS_CALIBRATION,
 			// Enabled → our threshold-honoring placer; --no-place-country → `false` (disable the default-on prior).
@@ -645,6 +705,10 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #1649: the lexicon-aware kind classifier — a thing-query abstains instead of resolving nonsense.
 			classifyKind: poiKindClassifier,
 			...forkEntityDeps,
+			// The opt-in venue tier reuses the fork-entity wiring's poiLookup; the flag alone opts in.
+			...(options.poiVenueTier === true ? { poiVenueTier: true } : {}),
+			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
+			...(trace && options.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 		})
 
 		const finishedAt = performance.now()
@@ -662,7 +726,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 				resolve: finishedAt - tracedAt,
 				total: finishedAt - startedAt,
 			},
-			...(trace ? { trace } : {}),
+			...(trace ? { trace: { ...trace, resolver: resolverTrace } } : {}),
 		}
 	}
 
@@ -674,6 +738,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(streetMorphology && classifier.streetMorphologyPath
 				? { streetMorphologyPath: classifier.streetMorphologyPath }
 				: {}),
+			...(classifier.resolvedWeights ? { weights: classifier.resolvedWeights } : {}),
 		},
 		geocode,
 		close,

@@ -20,7 +20,9 @@
 
 import { writeFileSync } from "node:fs"
 
+import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+
 import {
 	addressFrequencyKey,
 	ingestRows,
@@ -31,7 +33,7 @@ import {
 	type GeocodeAddress,
 	type ResolvedEntity,
 	type SourceRecord,
-} from "@mailwoman/registry"
+} from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 import { norm } from "./shared.ts"
@@ -89,7 +91,7 @@ function composeAddress(row: Record<string, string>, columns: string | string[] 
 
 	return list
 		.map((c) => norm(row[c]))
-		.filter(Boolean)
+		.filter(isPresent)
 		.join(" ")
 		.trim()
 }
@@ -359,7 +361,7 @@ export async function crossDatasetCorrelation(
 
 	const repName = (e: ResolvedEntity) =>
 		e.representative.organization?.canonical ??
-		[e.representative.name?.given, e.representative.name?.family].filter(Boolean).join(" ") ??
+		[e.representative.name?.given, e.representative.name?.family].filter(isPresent).join(" ") ??
 		e.representative.id
 
 	// --- Report. ---
@@ -480,7 +482,7 @@ export async function crossDatasetCorrelation(
 	}
 
 	// --- The reconciliation artifact: a GeoJSON FeatureCollection of every resolved entity. Each feature
-	// carries `sources` + `sourceIds` (so an analyst filters the cross-dataset links by `sources` length ≥ 2)
+	// carries `sources` + `sourceIDs` (so an analyst filters the cross-dataset links by `sources` length ≥ 2)
 	// and the geocode tier. QGIS-ready; this is the operator-verifiable output of the matcher. ---
 	if (OUT_GEOJSON) {
 		const fc = toGeoJSON(entities)

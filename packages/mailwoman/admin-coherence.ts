@@ -7,8 +7,7 @@
  *   says, and report a per-component verdict. FLAG-ONLY: nothing reads these verdicts to rank,
  *   re-pick, or gate — they exist so a board run can count how often the resolver's answer ignores a
  *   qualifier the parse got right (`Weimar, Thüringen` → Weimar TX), and how often the winner
- *   carries no ancestry to check at all (the `unverifiable` count, which sizes the candidate.db
- *   ancestors-table work).
+ *   carries no ancestry to check at all (the `unverifiable` count).
  *
  *   Per-component verdicts, never one scalar (the Google-confirmation-levels / USPS-DPV pattern):
  *
@@ -37,22 +36,32 @@
  *     `Illinois` and `Deutschland` against a DE winner, but an uncurated endonym (`Alemania`)
  *     against a DE winner reads `contradicted` — the module never silently over-claims a match it
  *     cannot derive.
+ *   - The region verdict additionally carries the MISLABEL BRIDGE: a region slot holding a COUNTRY
+ *     name ("Batumi, Georgia" parses region="Georgia") confirms against the winner's country-class
+ *     evidence, because containment holds and `contradicted` would misdescribe the geography. It
+ *     runs after the region band, is monotone (`contradicted`/`unverifiable` → `confirmed` is the
+ *     only movement it can cause), and inherits the pure-codex bound above — parsed "Russia"
+ *     against an RU winner still reads `contradicted`, because codex holds only "Russian
+ *     Federation" for RU and the module never over-claims.
  *
- *   The winner's checkable ancestry at the assembly seam is thin today, on purpose reported rather
- *   than papered over: the candidate backend has no `ancestors()` table, so region-class ancestry
- *   exists only when the resolver stamped `metadata.ancestors` (WOF backend, opt-in #404), while
- *   country-class ancestry is nearly always available via the `resolver_country` stamp. Expect
- *   `region: unverifiable` to dominate on the candidate tier — that count is the finding.
+ *   The winner's checkable ancestry arrives as the resolver's `metadata.ancestors` stamp (#404 —
+ *   the geocode path opts in by default, and both backends serve it when their artifact carries an
+ *   ancestors table: the FTS shard's `ancestors`, candidate.db's `candidate_ancestor` sidecar),
+ *   while country-class ancestry is nearly always available via the `resolver_country` stamp.
+ *   `unverifiable` remains the faithful verdict wherever the stamp is absent — an artifact
+ *   predating the sidecar, a shard-fed winner with no recorded ancestry, or a caller that opted
+ *   out.
  */
 
-import { countrySurfaceForms, ISO2_TO_NAME, matchCountry, matchSubdivision } from "@mailwoman/codex/country"
+import { countrySurfaceForms, ISO2_TO_NAME, matchCountry } from "@mailwoman/codex/country"
+import { REGION_CLASS_PLACETYPES, regionKeys } from "@mailwoman/resolver-wof-sqlite/region-keys"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**
  * One admin-coherence verdict. See the module docstring for the exact meaning of each — in particular, `unverifiable`
  * is an absence-of-evidence claim about the WINNER, never about the parse.
  */
-export type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
+type AdminCoherenceVerdict = "confirmed" | "contradicted" | "unstated" | "unverifiable"
 
 /**
  * The per-component verdicts. Both members are always present when the report exists (the `intent_markers` discipline:
@@ -78,7 +87,7 @@ export interface ParsedAdminQualifiers {
  * One link of the winner's containment lineage, as the resolver stamped it (`metadata.ancestors`, the #404 opt-in) — a
  * structural slice of `@mailwoman/core`'s `Ancestor`.
  */
-export interface AdminAncestor {
+interface AdminAncestor {
 	placetype: string
 	name: string
 }
@@ -95,36 +104,15 @@ export interface AdminCoherenceWinner {
 }
 
 /**
- * The ancestry placetypes that answer for a parsed `region` qualifier — WOF's admin band between country and locality.
- * Deliberately the whole band: a qualifier stated at any grain ("Lancashire", a ceremonial county; "Thüringen", a Land)
- * may confirm against whichever level the backend stored, and `contradicted` requires the entire band to miss, so
- * widening the band only ever makes the check more conservative.
- */
-const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "macroregion", "county", "macrocounty"])
-
-/**
  * Fold both sides of every name comparison through the shared candidate.db `name_key` normalizer — one function, both
  * sides, so the check can never disagree with the index it's checking against.
+ *
+ * The region-side expansion ({@link regionKeys}) and the region band ({@link REGION_CLASS_PLACETYPES}) moved DOWN to
+ * `@mailwoman/resolver-wof-sqlite/region-keys` when the #1717 stage-2 containment re-rank became their second consumer
+ * — the dependency points that way, and the #861 rule wants one function, not a mirrored copy.
  */
 function foldKey(name: string): string {
 	return normalizeLocalityForKey(name)
-}
-
-/**
- * The comparable keys a region string expands to: its own fold, plus — when the codex subdivision table recognizes it
- * (US states + CA provinces) — the folds of the canonical name and the ISO 3166-2 code, so `IL` and `Illinois` land in
- * the same key set from either side.
- */
-function regionKeys(value: string): Set<string> {
-	const keys = new Set([foldKey(value)])
-	const subdivision = matchSubdivision(value)
-
-	if (subdivision) {
-		keys.add(foldKey(subdivision.name))
-		keys.add(foldKey(subdivision.code))
-	}
-
-	return keys
 }
 
 /**
@@ -159,39 +147,13 @@ function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
 	return false
 }
 
-function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
-	const parsed = parsedRegion?.trim()
-
-	if (!parsed) return "unstated"
-
-	// The winner IS a region resolution — the qualifier is the thing that resolved, so containment
-	// degenerates to identity. The resolver's own binding (alias-aware, unlike the fold) is the
-	// match evidence here; re-checking it under fold-equality would misread every alias hit as a
-	// contradiction.
-	if (winner.tag === "region") return "confirmed"
-
-	const regionAncestors = (winner.ancestry ?? []).filter((a) => REGION_CLASS_PLACETYPES.has(a.placetype))
-
-	if (!regionAncestors.length) return "unverifiable"
-
-	const parsedKeys = regionKeys(parsed)
-
-	for (const ancestor of regionAncestors) {
-		if (intersects(parsedKeys, regionKeys(ancestor.name))) return "confirmed"
-	}
-
-	return "contradicted"
-}
-
-function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
-	const parsed = parsedCountry?.trim()
-
-	if (!parsed) return "unstated"
-
-	if (winner.tag === "country") return "confirmed"
-
-	// Country-class evidence on the winner: the resolver-stamped alpha-2, expanded through the codex
-	// tables into every spelling the check can vouch for, plus any country-placetype ancestors.
+/**
+ * The winner's COUNTRY-class evidence keys: the resolver-stamped alpha-2 expanded through the codex tables into every
+ * spelling the check can vouch for, plus any country-placetype ancestors. One assembly, two consumers — the country
+ * verdict compares against it, and the region verdict's mislabel bridge (below) does too, so the two verdicts can never
+ * disagree about what counts as country-class evidence.
+ */
+function winnerCountryKeys(winner: AdminCoherenceWinner): Set<string> {
 	const winnerKeys = new Set<string>()
 	const iso = winner.countryCode?.trim().toUpperCase() || undefined
 
@@ -216,6 +178,48 @@ function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenc
 			winnerKeys.add(key)
 		}
 	}
+
+	return winnerKeys
+}
+
+function regionVerdict(parsedRegion: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
+	const parsed = parsedRegion?.trim()
+
+	if (!parsed) return "unstated"
+
+	// The winner IS a region resolution — the qualifier is the thing that resolved, so containment
+	// degenerates to identity. The resolver's own binding (alias-aware, unlike the fold) is the
+	// match evidence here; re-checking it under fold-equality would misread every alias hit as a
+	// contradiction.
+	if (winner.tag === "region") return "confirmed"
+
+	const regionAncestors = (winner.ancestry ?? []).filter((a) => REGION_CLASS_PLACETYPES.has(a.placetype))
+	const iso = winner.countryCode?.trim().toUpperCase() || undefined
+	const parsedKeys = regionKeys(parsed, iso)
+
+	for (const ancestor of regionAncestors) {
+		if (intersects(parsedKeys, regionKeys(ancestor.name, iso))) return "confirmed"
+	}
+
+	// The mislabel bridge: the region SLOT sometimes holds a COUNTRY name — "Moscow, Russia" parses
+	// region="Russia", "Batumi, Georgia" parses region="Georgia" (the shape the flag's own first
+	// triage counted at ~4 of 16 contradictions). Containment still holds when the winner's
+	// country-class evidence matches the qualifier, so `contradicted` would be the wrong claim about
+	// the geography. Checked AFTER the region band (a genuine region match never depends on it) and
+	// monotone by construction: it can only move `contradicted`/`unverifiable` → `confirmed`.
+	if (intersects(countryKeys(parsed), winnerCountryKeys(winner))) return "confirmed"
+
+	return regionAncestors.length ? "contradicted" : "unverifiable"
+}
+
+function countryVerdict(parsedCountry: string | undefined, winner: AdminCoherenceWinner): AdminCoherenceVerdict {
+	const parsed = parsedCountry?.trim()
+
+	if (!parsed) return "unstated"
+
+	if (winner.tag === "country") return "confirmed"
+
+	const winnerKeys = winnerCountryKeys(winner)
 
 	if (!winnerKeys.size) return "unverifiable"
 
@@ -272,11 +276,46 @@ export function adminCoherenceField(
 		{
 			tag: picked.tag,
 			countryCode: (picked.metadata?.["resolver_country"] as string | undefined)?.trim() || undefined,
-			// Stamped only on the #404 opt-in path (WOF backend); the candidate backend has no ancestors
-			// table, so this is usually absent — which the verdicts report as `unverifiable`.
+			// The resolver's #404 stamp — present when the geocode path opted in AND the backend's
+			// artifact carries an ancestors table; its absence is what the verdicts report as
+			// `unverifiable`.
 			ancestry: picked.metadata?.["ancestors"] as readonly AdminAncestor[] | undefined,
 		}
 	)
 
 	return { admin_coherence: report }
+}
+
+/**
+ * A node tree shaped like the decoder's `AddressNode` — structural rather than imported, so this module stays free of
+ * the decoder dependency.
+ */
+export interface AdminCoherenceTreeNode extends AdminCoherenceSourceNode {
+	children: readonly AdminCoherenceTreeNode[]
+}
+
+/**
+ * Coherence for a fork-to-entity answer (#1724): a forked answer carries a verdict like any other resolved answer --
+ * absence means "nothing resolved to check", and something did. The entity offers a country and no ancestor chain, so a
+ * stated region grades `unverifiable` rather than going silently unchecked.
+ */
+export function forkedEntityCoherenceField(
+	roots: readonly AdminCoherenceTreeNode[],
+	entity: { name: string; country: string }
+): { admin_coherence?: AdminCoherenceReport } {
+	const nodes: AdminCoherenceSourceNode[] = []
+	const stack: AdminCoherenceTreeNode[] = [...roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		nodes.push({ tag: n.tag, value: n.value, metadata: n.metadata })
+		stack.push(...n.children)
+	}
+
+	return adminCoherenceField(
+		nodes,
+		{ tag: "venue", value: entity.name, metadata: { resolver_country: entity.country } },
+		undefined
+	)
 }

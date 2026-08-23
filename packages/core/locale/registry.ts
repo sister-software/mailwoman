@@ -8,7 +8,7 @@
  *   §LocaleProfile validation rule).
  */
 
-import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
+import { COMPONENT_TAGS, type ComponentTag } from "#types"
 
 import type { LocaleProfile, LocaleRegistry } from "./locale.ts"
 

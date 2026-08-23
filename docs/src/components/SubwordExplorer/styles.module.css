@@ -11,9 +11,7 @@
 	font-size: 0.9rem;
 }
 
-/* ---------------------------------------------------------------------------
- * Pipeline flow diagram
- * --------------------------------------------------------------------------- */
+/* #region Pipeline flow diagram */
 
 .pipelineFlow {
 	display: flex;
@@ -66,9 +64,9 @@
 	color: var(--ifm-font-color-base);
 }
 
-/* ---------------------------------------------------------------------------
- * Stage details (collapsible)
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Stage details (collapsible) */
 
 .stageDetails {
 	margin-bottom: 0.75rem;
@@ -112,9 +110,9 @@
 	line-height: 1.45;
 }
 
-/* ---------------------------------------------------------------------------
- * Kind context + timing context
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Kind context + timing context */
 
 .kindContext,
 .timingContext {
@@ -143,9 +141,9 @@
 	font-size: 0.8rem;
 }
 
-/* ---------------------------------------------------------------------------
- * Word token grid
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Word token grid */
 
 .tokenGrid {
 	border: 1px solid var(--ifm-color-emphasis-200);
@@ -199,9 +197,9 @@
 	border-top: 1.5px solid var(--ifm-color-emphasis-300);
 }
 
-/* ---------------------------------------------------------------------------
- * Word cell
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Word cell */
 
 .wordCell {
 	display: inline-flex;
@@ -236,9 +234,9 @@
 	background: rgba(216, 80, 74, 0.15);
 }
 
-/* ---------------------------------------------------------------------------
- * BIO label cell
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region BIO label cell */
 
 .labelCell {
 	font-size: 0.72rem;
@@ -267,9 +265,9 @@
 	color: var(--ifm-color-emphasis-500);
 }
 
-/* ---------------------------------------------------------------------------
- * Confidence cell
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Confidence cell */
 
 .confCell {
 	display: flex;
@@ -309,9 +307,9 @@
 	font-family: var(--ifm-font-family-monospace);
 }
 
-/* ---------------------------------------------------------------------------
- * Summary footer
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Summary footer */
 
 .summary {
 	display: flex;
@@ -330,9 +328,9 @@
 	color: var(--ifm-color-emphasis-400);
 }
 
-/* ---------------------------------------------------------------------------
- * No-spans note
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region No-spans note */
 
 .noSpansNote {
 	margin-top: 0.4rem;
@@ -341,9 +339,9 @@
 	color: var(--ifm-color-emphasis-500);
 }
 
-/* ---------------------------------------------------------------------------
- * Responsive
- * --------------------------------------------------------------------------- */
+/* #endregion */
+
+/* #region Responsive */
 
 @media (max-width: 600px) {
 	.tokenGridHeader,

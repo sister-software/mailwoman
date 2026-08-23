@@ -30,6 +30,7 @@ import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk, latLngToCell } from "h3-js"
 
 import type { POICategoryCodeTable, POITable } from "./poi-schema.ts"
+import { allRows } from "./sqlite-utils.ts"
 
 /**
  * Resolution the `poi` table's `h3_cell` column is keyed at — matches the builder (spec §3.4).
@@ -140,7 +141,7 @@ type POIRow = Pick<
 /**
  * Node reader over `poi.db`. `implements Disposable` so callers can `using lookup = new POILookup(...)` (or call
  * `[Symbol.dispose]()` explicitly), the same precedent as {@link WOFCandidateTableLookup} /
- * {@link WOFSqlitePlaceLookup}.
+ * {@link WOFSQLitePlaceLookup}.
  */
 export class POILookup implements Disposable {
 	#db: DatabaseSync
@@ -174,9 +175,7 @@ export class POILookup implements Disposable {
 
 		// The category dictionary is tiny (poi-taxonomy's category count) — load it once at
 		// construction so `search` never round-trips to it.
-		for (const r of this.#db
-			.prepare("SELECT id, category FROM poi_category_codes")
-			.all() as unknown as POICategoryCodeTable[]) {
+		for (const r of allRows<POICategoryCodeTable>(this.#db.prepare("SELECT id, category FROM poi_category_codes"))) {
 			this.#categoryToID.set(String(r.category), Number(r.id))
 			this.#idToCategory.set(Number(r.id), String(r.category))
 		}
@@ -225,7 +224,7 @@ export class POILookup implements Disposable {
 	 * nearest at any distance — the reach ceiling k-ring hits on sparse brand rows is gone.
 	 */
 	#searchBrand(brandWikidata: string, center: { latitude: number; longitude: number }, limit: number): POISearchHit[] {
-		const rows = this.#brandProbe.all(brandWikidata) as unknown as POIRow[]
+		const rows = allRows<POIRow>(this.#brandProbe, brandWikidata)
 
 		return sortByDistance(rows, center)
 			.filter(
@@ -241,7 +240,7 @@ export class POILookup implements Disposable {
 	#searchKRing(query: POISearchQuery, limit: number): POISearchHit[] {
 		const center = query.center!
 		const maxRings = query.maxRings ?? DEFAULT_MAX_RINGS
-		const categoryIds: number[] = []
+		const categoryIDs: number[] = []
 
 		// `categoryIDs` (the fan-out list) supersedes the single `categoryID`; either way, resolve each id through the
 		// dictionary and drop the ones the db doesn't carry (Overture-taxonomy drift, or an identity id with no rows).
@@ -251,12 +250,12 @@ export class POILookup implements Disposable {
 			const resolved = this.#categoryToID.get(id)
 
 			if (resolved !== undefined) {
-				categoryIds.push(resolved)
+				categoryIDs.push(resolved)
 			}
 		}
 
 		// No resolvable leaf (every id unknown to the dictionary) can't have rows — a clean miss, not a throw.
-		if (!categoryIds.length) return []
+		if (!categoryIDs.length) return []
 
 		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION) as H3Cell
 		const seenCells = new Set<string>()
@@ -275,8 +274,8 @@ export class POILookup implements Disposable {
 
 				// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows. The
 				// post-ring distance sort + `slice(0, limit)` below dedupes the pool down to the nearest `limit`.
-				for (const categoryID of categoryIds) {
-					rows.push(...(this.#categoryCellProbe.all(shortCell, categoryID, limit) as unknown as POIRow[]))
+				for (const categoryID of categoryIDs) {
+					rows.push(...allRows<POIRow>(this.#categoryCellProbe, shortCell, categoryID, limit))
 				}
 			}
 
@@ -300,7 +299,7 @@ export class POILookup implements Disposable {
 
 		if (!matchQuery) return []
 
-		const ftsHits = this.#nameFTSProbe.all(matchQuery, limit) as unknown as Array<{ name_key: string | null }>
+		const ftsHits = allRows<{ name_key: string | null }>(this.#nameFTSProbe, matchQuery, limit)
 		const uniqueKeys: string[] = []
 		const seenKeys = new Set<string>()
 
@@ -349,7 +348,7 @@ export class POILookup implements Disposable {
 		const placeholders = nameKeys.map(() => "?").join(", ")
 		const stmt = this.#db.prepare(`SELECT ${columns} FROM poi WHERE name_key IN (${placeholders})`)
 
-		return stmt.all(...nameKeys) as unknown as POIRow[]
+		return allRows<POIRow>(stmt, ...nameKeys)
 	}
 
 	close(): void {
@@ -405,7 +404,7 @@ function sanitizePOINameQuery(text: string): string {
 		.replaceAll(/["*:]/g, "")
 		.trim()
 		.split(/\s+/u)
-		.filter(Boolean)
+		.filter((token) => token.length > 0)
 		.map((token) => `"${token.replaceAll('"', '""')}"`)
 		.join(" ")
 }

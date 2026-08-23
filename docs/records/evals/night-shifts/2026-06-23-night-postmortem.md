@@ -101,7 +101,7 @@ live effect; `cf-cache-status: DYNAMIC` so it propagated immediately).
   but we can show the one thing a search index can't — a confidence you route on. _Operator merge._
   Render-verified end-to-end with Playwright (intercepting the R2 fetch with the local table): the
   component draws 24 circles (14 reliability dots + 10 abstention markers) + 2 polylines, zero page
-  errors; and R2 serves `access-control-allow-origin: https://mailwoman.sister.software` on
+  errors; and R2 serves `access-control-allow-origin: https://mailwoman.ai` on
   calibration.json (same as the working model-card.json), so it renders live in production too.
   Also added an **opt-in "Calibrated confidence" toggle on the live demo** (default OFF — raw scores,
   so the default presentation is unchanged): flipping it maps each span's displayed `conf=` through the

@@ -47,11 +47,13 @@ export async function loadPOIWorker(sqljsBaseURL: string): Promise<POIHTTPVFSWor
 /**
  * Sql.js exec result → row objects. Kept local — `httpvfs-resolver.ts`'s equivalent helper isn't exported.
  */
-function rowsFromExec(res: Array<{ columns: string[]; values: unknown[][] }> | undefined): Record<string, unknown>[] {
+function rowsFromExec<Row = Record<string, unknown>>(
+	res: Array<{ columns: string[]; values: unknown[][] }> | undefined
+): Row[] {
 	if (!res || !res.length) return []
 	const { columns, values } = res[0]!
 
-	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])))
+	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])) as Row)
 }
 
 const categoryCodesCache = new WeakMap<POIHTTPVFSWorker, Promise<Map<string, number>>>()
@@ -124,10 +126,10 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 	// Fan the canonical seed id out over its Overture leaves (`supermarket` → grocery_store, …), resolving each through
 	// the db's dictionary and dropping the ones it doesn't carry. Absent list ⇒ the seed id itself (identity).
 	const seedIDs = opts.categoryIDs?.length ? opts.categoryIDs : [opts.categoryID]
-	const categoryIds = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
+	const categoryIDs = seedIDs.map((id) => codes.get(id)).filter((id): id is number => id !== undefined)
 
-	if (!categoryIds.length) return []
-	const categoryIDList = categoryIds.join(", ")
+	if (!categoryIDs.length) return []
+	const categoryIDList = categoryIDs.join(", ")
 
 	const origin = latLngToCell(opts.center.lat, opts.center.lon, POI_H3_RESOLUTION) as H3Cell
 	const seenCells = new Set<string>()
@@ -153,13 +155,13 @@ export async function searchPOICategory(worker: POIHTTPVFSWorker, opts: POISearc
 				`SELECT name, latitude, longitude, confidence, country FROM poi ` +
 				`WHERE h3_cell = ${shortCell} AND category_id IN (${categoryIDList}) ORDER BY neg_rank ASC LIMIT ${limit}`
 
-			const hits = rowsFromExec(await worker.db.exec(sql)) as unknown as Array<{
+			const hits = rowsFromExec<{
 				name: string | null
 				latitude: number
 				longitude: number
 				country: string | null
 				confidence: number
-			}>
+			}>(await worker.db.exec(sql))
 
 			for (const hit of hits) {
 				if (hit.name) {

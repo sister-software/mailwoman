@@ -10,7 +10,8 @@
  */
 
 import { Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Build Overture-derived postcode-centroid spr DBs (#474)"
 
@@ -27,7 +28,7 @@ export const spec = {
 			type: "string",
 			description: "Overture addresses parquet (default: the pinned release under the data root)",
 		},
-		out: { type: "string", description: "Output SQLite DB (default <data-root>/wof/postcode-<cc>-overture.db)" },
+		out: { type: "string", description: "Output SQLite DB (default <data-root>/wof/postalcode-<cc>-overture.db)" },
 	},
 } as const satisfies CommandSpec
 

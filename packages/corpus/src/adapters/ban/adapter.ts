@@ -30,10 +30,12 @@
  *   country !== FR).
  */
 
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
 import { CSVSpliterator } from "spliterator"
+
+import { stableSourceID } from "#adapters/utils"
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 import { decomposeFrStreet } from "./street-decompose.ts"
 
@@ -80,13 +82,13 @@ function composeHouseNumber(numero: string, rep: string): string {
  */
 function composeRaw(house: string, street: string, postcode: string, locality: string): string {
 	const parts: string[] = []
-	const streetPart = [house, street].filter(Boolean).join(" ").trim()
+	const streetPart = [house, street].filter(isPresent).join(" ").trim()
 
 	if (streetPart) {
 		parts.push(streetPart)
 	}
 
-	const cityPart = [postcode, locality].filter(Boolean).join(" ").trim()
+	const cityPart = [postcode, locality].filter(isPresent).join(" ").trim()
 
 	if (cityPart) {
 		parts.push(cityPart)

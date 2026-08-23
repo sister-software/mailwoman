@@ -33,9 +33,10 @@ import { parseArgs } from "node:util"
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { createRuntimePipeline } from "mailwoman"
-import { deriveGeocodeRegister } from "mailwoman/geocode-core"
 import { JSONSpliterator } from "spliterator"
+
+import { deriveGeocodeRegister } from "#geocode-core"
+import { createRuntimePipeline } from "#index"
 
 const REGISTERS = ["asis", "lower", "upper"] as const
 
@@ -90,7 +91,8 @@ const SHAPES = [
 	{
 		name: "street fragment",
 		tag: "street",
-		build: (c: Record<string, string>) => (c.street ? [c.house_number, c.street].filter(Boolean).join(" ") : undefined),
+		build: (c: Record<string, string>) =>
+			c.street ? [c.house_number, c.street].filter((part) => part != null && part.length > 0).join(" ") : undefined,
 		// The model emits the street as a FAMILY (prefix/name/particle/suffix); assemble it the way
 		// `score-anchor-v2-boards.run.ts` does before comparing to the whole-name gold.
 		emit: ["street_prefix", "street", "street_prefix_particle", "street_suffix"],

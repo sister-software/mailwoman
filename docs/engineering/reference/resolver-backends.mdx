@@ -7,7 +7,7 @@ Mailwoman resolves places through one of two SQLite backends. They rank differen
 different rows, and — until 2026-08-04 — choosing between them also silently chose a country policy,
 which made every comparison between them a comparison of four conditions instead of two.
 
-|             | `WOFSqlitePlaceLookup` (FTS)               | `WOFCandidateTableLookup` (candidate)     |
+|             | `WOFSQLitePlaceLookup` (FTS)               | `WOFCandidateTableLookup` (candidate)     |
 | ----------- | ------------------------------------------ | ----------------------------------------- |
 | Index       | FTS5 over the admin distribution           | byte-range candidate table, clustered     |
 | Ranking     | bm25 + exact-match tiering                 | population-first, country-agnostic        |
@@ -152,7 +152,7 @@ the absence is legible rather than inferred. Reading it is not a substitute for 
    and the drop-ins cannot serve ancestry.
 2. Port the remaining FTS-only paths: the NL postcode retry ladder, the `near`/`maxDistanceKm` hard
    filters, and the Geographic Rule Engine conventions.
-3. Retire the last hard pin. `commands/registry/run.tsx` constructs `WOFSqlitePlaceLookup` directly
+3. Retire the last hard pin. `commands/registry/run.tsx` constructs `WOFSQLitePlaceLookup` directly
    on purpose, so that migrated evals reproduce the retired scripts' numbers; it needs an explicit
    flag before the class disappears.
 

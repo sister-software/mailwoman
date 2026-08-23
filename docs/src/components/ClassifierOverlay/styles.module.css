@@ -15,7 +15,9 @@
  *   Grouper:      #14b8a6 (teal)
  * --------------------------------------------------------------------------- */
 
-/* ── Shared layout ─────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Shared layout */
 
 .staticLegend,
 .dynamicOverlay {
@@ -32,7 +34,9 @@
 	font-size: 0.9rem;
 }
 
-/* ── Static legend ─────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Static legend */
 
 .legendIntro {
 	margin-bottom: 0.75rem;
@@ -132,7 +136,9 @@
 	white-space: nowrap;
 }
 
-/* ── Dynamic overlay ───────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Dynamic overlay */
 
 .noSourceNote {
 	padding: 0.5rem 0.7rem;
@@ -200,7 +206,9 @@
 	white-space: nowrap;
 }
 
-/* ── Confidence badge ──────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Confidence badge */
 
 .confBadge {
 	display: inline-block;
@@ -231,7 +239,9 @@
 	color: var(--ifm-color-emphasis-400);
 }
 
-/* ── Origin badges ─────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Origin badges */
 
 .originCell {
 	display: flex;
@@ -269,7 +279,9 @@
 	font-style: italic;
 }
 
-/* ── Pipeline flags row ────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Pipeline flags row */
 
 .pipelineFlags {
 	display: flex;
@@ -284,7 +296,9 @@
 	font-weight: 500;
 }
 
-/* ── Responsive ────────────────────────────────────────────────────────── */
+/* #endregion */
+
+/* #region Responsive */
 
 @media (max-width: 700px) {
 	.stageGrid {

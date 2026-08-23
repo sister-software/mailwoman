@@ -363,7 +363,7 @@ try {
 			"  Install the weights package alongside the server:",
 			"    npm i @mailwoman/neural-weights-en-us",
 			"",
-			"  Docs: https://mailwoman.sister.software/docs/switching/libpostal",
+			"  Docs: https://mailwoman.ai/docs/switching/libpostal",
 		].join("\n")
 	)
 	process.exit(1)

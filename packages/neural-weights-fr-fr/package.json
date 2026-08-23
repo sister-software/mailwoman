@@ -27,8 +27,12 @@
 		"!*.test.tsx",
 		"!**/*.test.ts",
 		"!**/*.test.tsx",
-		"!scripts/**"
+		"!scripts/**",
+		"!test/**"
 	],
+	"exports": {
+		"./*": "./*"
+	},
 	"publishConfig": {
 		"access": "public"
 	},

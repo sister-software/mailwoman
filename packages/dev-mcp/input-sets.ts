@@ -13,11 +13,11 @@
  *   drawn from, because a denominator that travels with the number is the only kind that survives a relay.
  */
 
-import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, mulberry32, repoRootPath } from "@mailwoman/core/utils"
+import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
@@ -40,7 +40,11 @@ export type InputSetRef =
 	| { kind: "golden"; version?: string; split?: GoldenSplit }
 	| { kind: "parity"; country?: string }
 	| { kind: "holdout"; source?: HoldoutSource; n?: number; seed?: number }
-	| { kind: "literal"; inputs: string[]; why: string }
+	| {
+			kind: "literal"
+			inputs: Array<string | LiteralInputWithTruth>
+			why: string
+	  }
 
 /**
  * Held-out truth sources. `fr` is BAN, `us` is FDIC — the two `gauntlet/holdout.ts` defines, named here so a caller
@@ -48,7 +52,7 @@ export type InputSetRef =
  */
 export const HOLDOUT_SOURCES = ["fr", "us"] as const
 
-export type HoldoutSource = (typeof HOLDOUT_SOURCES)[number]
+type HoldoutSource = (typeof HOLDOUT_SOURCES)[number]
 
 /**
  * Default holdout draw size. Matches `runHoldoutLayer`'s own default, so a set drawn here is the size the gate is
@@ -60,17 +64,32 @@ export const HOLDOUT_DEFAULT_N = 300
  * Benchmark panels, by version. Each is a fixed file under `$MAILWOMAN_DATA_ROOT/pelias-rig/panel/`; v2 is the 420-row
  * set the head-to-head protocol was pre-registered against.
  */
-export const PANEL_VERSIONS = ["v1", "v2", "v2.1", "v3", "v3.1"] as const
+const PANEL_VERSIONS = ["v1", "v2", "v2.1", "v3", "v3.1"] as const
 
-export type PanelVersion = (typeof PANEL_VERSIONS)[number]
+type PanelVersion = (typeof PANEL_VERSIONS)[number]
 
 /**
  * Golden splits. `dev` is the tuning half and the one an iterating change may look at; the top-level files are the
  * held-back half, so reaching for them casually is how a held-out set stops being held out.
  */
-export const GOLDEN_SPLITS = ["dev", "full"] as const
+const GOLDEN_SPLITS = ["dev", "full"] as const
 
-export type GoldenSplit = (typeof GOLDEN_SPLITS)[number]
+type GoldenSplit = (typeof GOLDEN_SPLITS)[number]
+
+/**
+ * A hand-picked input that carries its own truth point.
+ *
+ * `lat`/`lon` are an ASSERTION by whoever wrote the call. Nothing here verifies them, so the set's `why` has to say
+ * where they came from — a resolved map link, an oracle, a survey. An invented pin grades nothing and looks identical
+ * to a real one in the output.
+ */
+export interface LiteralInputWithTruth {
+	input: string
+	lat: number
+	lon: number
+	tolerance_m?: number
+	truth_type?: string
+}
 
 export interface ResolvedInput {
 	/**
@@ -147,10 +166,6 @@ export interface ResolvedInputSet {
 	 */
 	corpusHash?: string
 	notes: string[]
-}
-
-function sha256(values: string[]): string {
-	return createHash("sha256").update(values.join("\n")).digest("hex")
 }
 
 function countStrata(cases: SeedCase[], pick: (c: SeedCase) => string | undefined): Map<string, number> {
@@ -281,7 +296,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		setID: `holdout:${source}/${n}${ref.seed === undefined ? "" : `/seed-${ref.seed}`}`,
 		inputs,
 		n: inputs.length,
-		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: "random-draw",
 		populationN: drawnFrom,
 		notCovered: [
@@ -313,17 +328,50 @@ async function resolveLiteral(ref: Extract<InputSetRef, { kind: "literal" }>): P
 		)
 	}
 
+	// A row may carry its own truth point. That is what turns this from an observation set into the AUTHORING loop
+	// for a new board row: measure the candidates against real coordinates first, then write the case file with the
+	// status you measured — rather than writing rows and discovering the score afterwards.
+	const rows: ResolvedInput[] = ref.inputs.map((entry, index) =>
+		typeof entry === "string"
+			? { id: String(index), input: entry }
+			: {
+					id: String(index),
+					input: entry.input,
+					truthLat: entry.lat,
+					truthLon: entry.lon,
+					...(entry.tolerance_m === undefined ? {} : { toleranceM: entry.tolerance_m }),
+					...(entry.truth_type === undefined ? {} : { truthType: entry.truth_type }),
+				}
+	)
+
+	const graded = rows.filter((row) => row.truthLat !== undefined).length
+	// The digest keys on what was MEASURED — input plus its truth point — so two sets that share inputs but pin
+	// different coordinates cannot collide on `setID` and be read as the same run.
+	const digest = rows.map((row) => `${row.input}\u0000${row.truthLat ?? ""}\u0000${row.truthLon ?? ""}`)
+
 	return {
-		setID: `literal:${sha256(ref.inputs).slice(0, 12)}`,
-		inputs: ref.inputs.map((input, index) => ({ id: String(index), input })),
-		n: ref.inputs.length,
-		sha256: sha256(ref.inputs),
+		setID: `literal:${sha256Hex(digest).slice(0, 12)}`,
+		inputs: rows,
+		n: rows.length,
+		sha256: sha256Hex(digest),
 		selection: "hand-picked",
 		why: ref.why,
 		notCovered: [],
-		hasTruth: { components: 0, coordinates: 0, tier: 0, any: 0, none: ref.inputs.length },
+		hasTruth: {
+			components: 0,
+			coordinates: graded,
+			tier: 0,
+			any: graded,
+			none: rows.length - graded,
+		},
 		notes: [
-			"Hand-picked inputs carry no expectations, so this set can be observed but not graded.",
+			graded === 0
+				? "Hand-picked inputs carry no expectations, so this set can be observed but not graded."
+				: graded === rows.length
+					? `All ${graded} rows carry a truth COORDINATE, so this set grades on distance. It carries no component or ` +
+						"tier truth — a row can be right to the metre and still have parsed the wrong thing."
+					: `${graded} of ${rows.length} rows carry a truth coordinate; the rest are observed only. Read the graded ` +
+						"fraction against its own denominator, never against n.",
 			"Results from this set report their confidence bound in the summary sentence — see power.ts.",
 		],
 	}
@@ -365,7 +413,7 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 		}
 	}
 
-	const slugParts = [ref.country, ref.address_kind, ref.status].filter(Boolean)
+	const slugParts = [ref.country, ref.address_kind, ref.status].filter(isPresent)
 
 	return {
 		setID: slugParts.length ? `board:${slugParts.join("/")}` : "board",
@@ -382,7 +430,7 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 			...(seed.expectToleranceM === undefined ? {} : { toleranceM: seed.expectToleranceM }),
 		})),
 		n: filtered.length,
-		sha256: sha256(filtered.map((r) => `${r.id}\t${r.input}`)),
+		sha256: sha256Hex(filtered.map((r) => `${r.id}\t${r.input}`)),
 		selection: isSlice ? "slice" : "full",
 		...(isSlice ? { populationN: all.length } : {}),
 		notCovered,
@@ -428,7 +476,7 @@ function readCorpus(path: string, what: string): CorpusRow[] {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a fixed operator artifact of a few hundred rows, read once
 	return readFileSync(path, "utf8")
 		.split("\n")
-		.filter(Boolean)
+		.filter(isPresent)
 		.map((line) => parseJSONStrict<CorpusRow>(line))
 }
 
@@ -506,13 +554,13 @@ async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promi
 		}
 	}
 
-	const slug = [version, ref.country, ref.truth_type].filter(Boolean).join("/")
+	const slug = [version, ref.country, ref.truth_type].filter(isPresent).join("/")
 
 	return {
 		setID: `panel:${slug}`,
 		inputs,
 		n: inputs.length,
-		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: isSlice ? "slice" : "full",
 		...(isSlice ? { populationN: all.length } : {}),
 		notCovered,
@@ -560,7 +608,7 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
 		setID: `golden:${version}/${split}`,
 		inputs,
 		n: inputs.length,
-		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: "full",
 		notCovered: split === "dev" ? ['the held-back split — `split: "full"` reaches it, deliberately separately'] : [],
 		hasTruth: coordinateTruthCounts(inputs),
@@ -603,7 +651,7 @@ async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Pro
 		setID: ref.country ? `parity:${ref.country}` : "parity",
 		inputs,
 		n: inputs.length,
-		sha256: sha256(inputs.map((row) => `${row.id}\t${row.input}`)),
+		sha256: sha256Hex(inputs.map((row) => `${row.id}\t${row.input}`)),
 		selection: isSlice ? "slice" : "full",
 		...(isSlice ? { populationN: all.length } : {}),
 		notCovered: isSlice

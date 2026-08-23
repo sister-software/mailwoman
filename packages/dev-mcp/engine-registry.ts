@@ -28,9 +28,10 @@
 
 import { createHash } from "node:crypto"
 
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession, type GeocodeSession, type GeocodeSessionOptions } from "mailwoman/geocode-session"
 
+import { missingWeightsCacheArtifacts } from "./gate-report.ts"
 import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "./tree-fingerprint.ts"
 
 /**
@@ -48,6 +49,14 @@ export interface EngineConfig {
 	candidate_db?: string
 	resolve_db?: string
 	data_root?: string
+	/**
+	 * Grade a CANDIDATE weights bundle rather than the installed one — the lever that turns a model question into a
+	 * comparison. Unset means whatever the resolution ladder finds, which is what production loads.
+	 *
+	 * Guarded by {@link assertWeightsCacheStaged} at {@link EngineRegistry.acquire} because the ladder's fall-through is
+	 * silent: see that function.
+	 */
+	weights_cache?: string
 	gazetteer_prior?: boolean
 	place_country?: boolean
 	place_country_threshold?: number
@@ -56,12 +65,25 @@ export interface EngineConfig {
 	locale_country_prior?: boolean
 	postcode_shape_coherence?: boolean
 	postcode_containment_coherence?: boolean
-	retry_alternate_register?: boolean
+	admin_containment_rerank?: boolean
+	/**
+	 * The opt-in venue tier (#1684's POI half) — default OFF in production; this lever exists so the promotion battery
+	 * measures it with the standard tooling.
+	 */
+	poi_venue_tier?: boolean
 	/**
 	 * Record the decode-path evidence on every run. OFF by default and left off by the measuring tools: the trace is kept
 	 * per run, so it is a per-row cost paid only where the evidence is the answer.
 	 */
 	trace?: boolean
+	/**
+	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it.
+	 *
+	 * NOT a lever and deliberately absent from the tool schemas: the answer is byte-identical either way, so declaring it
+	 * as a variable in a comparison would be declaring a variable that cannot move an outcome. The measuring tools that
+	 * read misses force it on, the same way they force `trace`.
+	 */
+	diagnose_unreachable?: boolean
 }
 
 /**
@@ -93,6 +115,7 @@ export const EFFECTIVE_KEY_FOR = {
 	candidate_db: "candidateDB",
 	resolve_db: "resolveDB",
 	data_root: "dataRoot",
+	weights_cache: "weightsCacheRoot",
 	gazetteer_prior: "gazetteerPrior",
 	place_country: "placeCountry",
 	place_country_threshold: "placeCountryThreshold",
@@ -101,8 +124,10 @@ export const EFFECTIVE_KEY_FOR = {
 	locale_country_prior: "localeCountryPrior",
 	postcode_shape_coherence: "postcodeShapeCoherence",
 	postcode_containment_coherence: "postcodeContainmentCoherence",
-	retry_alternate_register: "retryAlternateRegister",
+	admin_containment_rerank: "adminContainmentRerank",
+	poi_venue_tier: "poiVenueTier",
 	trace: "trace",
+	diagnose_unreachable: "diagnoseUnreachable",
 } as const satisfies Record<keyof EngineConfig, string>
 
 /**
@@ -116,35 +141,82 @@ export function effectiveKeyFor(declared: string): string {
 	return (EFFECTIVE_KEY_FOR as Record<string, string>)[declared] ?? declared
 }
 
+/**
+ * {@link GeocodeSessionOptions} in a form a JSON record accepts.
+ *
+ * Structurally the same type, field for field. It exists because TypeScript withholds an implicit index signature from
+ * an INTERFACE — declaration merging could add a member later — so an interface value is not assignable to
+ * `Record<string, unknown>` however plainly it is one. The mapping is checked property by property and keeps each
+ * field's own type, which a cast through `unknown` would discard.
+ */
+export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
+
 export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
+	// THE production defaults, from the geocode command's own factory — never re-typed here (#1732).
+	// The hand-copied table this replaces drifted on three values (postcodeShapeCoherence,
+	// postcodeContainmentCoherence, placeCountryThreshold: true/true/0.5 vs the shipped
+	// false/false/0.9), so every unset-lever measurement graded a configuration production does not
+	// ship. Comparisons where both arms shared the drift stayed internally valid; absolute numbers
+	// did not. `resolve-config.test.ts` pins this function against the factory field by field.
+	const production = createGeocodeCommandOptions()
+
 	return {
-		locale: config.locale ?? "en-US",
-		countryScope: config.country_scope ?? "auto",
-		dataRoot: config.data_root ?? String(mailwomanDataRoot()),
-		localeCountryPrior: config.locale_country_prior ?? false,
-		placeCountry: config.place_country ?? true,
-		postcodeCountryCoherence: config.postcode_country_coherence ?? true,
-		forkEntity: config.fork_entity ?? true,
-		postcodeShapeCoherence: config.postcode_shape_coherence ?? true,
-		postcodeContainmentCoherence: config.postcode_containment_coherence ?? true,
-		placeCountryThreshold: config.place_country_threshold ?? 0.5,
-		...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
-		...(config.retry_alternate_register === undefined
-			? {}
-			: { retryAlternateRegister: config.retry_alternate_register }),
+		locale: config.locale ?? production.locale,
+		countryScope: config.country_scope ?? production.countryScope,
+		dataRoot: config.data_root ?? String(production.dataRoot),
+		localeCountryPrior: config.locale_country_prior ?? production.localeCountryPrior,
+		placeCountry: config.place_country ?? production.placeCountry,
+		postcodeCountryCoherence: config.postcode_country_coherence ?? production.postcodeCountryCoherence,
+		forkEntity: config.fork_entity ?? production.forkEntity,
+		postcodeShapeCoherence: config.postcode_shape_coherence ?? production.postcodeShapeCoherence,
+		postcodeContainmentCoherence: config.postcode_containment_coherence ?? production.postcodeContainmentCoherence,
+		placeCountryThreshold: config.place_country_threshold ?? production.placeCountryThreshold,
+		gazetteerPrior: config.gazetteer_prior ?? production.gazetteerPrior,
+		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
+		...(config.poi_venue_tier === true ? { poiVenueTier: true } : {}),
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
 		...(config.resolve_db ? { resolveDB: config.resolve_db } : {}),
+		...(config.weights_cache ? { weightsCacheRoot: config.weights_cache } : {}),
 		...(config.trace ? { trace: true } : {}),
+		...(config.diagnose_unreachable ? { diagnoseUnreachable: true } : {}),
 	}
 }
 
-export function engineID(effective: GeocodeSessionOptions, fingerprint: TreeFingerprint): string {
+/**
+ * Refuse a candidate weights root that would not actually be loaded.
+ *
+ * `resolveWeights` honours an explicit `cacheRoot` only when that directory holds `model.onnx` and `tokenizer.model`,
+ * and otherwise walks on to the installed workspace package — which in this repo always resolves. So the failure mode
+ * of a mis-typed or half-staged candidate is not an error: it is a full run of the SHIPPED model, reported under the
+ * candidate's label, with every number plausible. `promotion-gate.ts` refuses the same way and for the same reason;
+ * this is that guard on the warm path, sharing its check rather than re-deriving the layout.
+ *
+ * Runs BEFORE the session build, so a bad path costs a `stat` rather than the ~1.4 s construction.
+ *
+ * @throws When the root is wrong-shaped (no binaries) or under-staged (binaries present, but siblings its own card
+ *   declares are missing — the #1516 shape, which degrades a channel silently and reads as a model regression).
+ */
+export function assertWeightsCacheStaged(cacheRoot: string, locale = "en-us"): void {
+	const { kind, paths } = missingWeightsCacheArtifacts(cacheRoot, locale)
+
+	if (kind === "ok") return
+
+	throw new Error(
+		kind === "wrong-shape"
+			? `weights_cache ${cacheRoot} is not a staged ${locale} bundle — missing ${paths.join(", ")}. ` +
+					"Refusing rather than falling through to the installed weights, which would grade the SHIPPED model " +
+					"under this candidate's label."
+			: `weights_cache ${cacheRoot} declares artifacts it does not ship — missing ${paths.join(", ")}. ` +
+					"A bundle short of its own card's files loads with those channels OFF and scores like a model " +
+					"regression, so it is refused rather than measured."
+	)
+}
+
+export function engineID(effective: EffectiveConfig, fingerprint: TreeFingerprint): string {
 	const canonical = JSON.stringify(
-		Object.fromEntries(
-			Object.entries(effective as unknown as Record<string, unknown>).toSorted(([a], [b]) => a.localeCompare(b))
-		)
+		Object.fromEntries(Object.entries(effective).toSorted(([a], [b]) => a.localeCompare(b)))
 	)
 
 	return createHash("sha256").update(`${canonical}\n${fingerprint.digest}`).digest("hex").slice(0, 16)
@@ -153,7 +225,7 @@ export function engineID(effective: GeocodeSessionOptions, fingerprint: TreeFing
 export interface Engine {
 	engineID: string
 	session: GeocodeSession
-	effective: GeocodeSessionOptions
+	effective: EffectiveConfig
 	fingerprint: TreeFingerprint
 	buildMs: number
 	lastUsed: number
@@ -168,6 +240,13 @@ export interface EngineSummary {
 	last_used_iso: string
 	uses: number
 	tree_fingerprint: string
+	/**
+	 * The model this engine actually loaded, and the ladder rung that produced it.
+	 *
+	 * Reported beside the config rather than derived from it, because the two can disagree in the one direction that
+	 * matters: `weights_cache` names what was ASKED FOR, and only this says what answered.
+	 */
+	weights: { model_path: string; source: string } | null
 }
 
 /**
@@ -182,14 +261,36 @@ export class EngineRegistry {
 	readonly #engines = new Map<string, Engine>()
 	readonly #maxResident: number
 	readonly #repoRoot: string
+	readonly #bootFingerprint: TreeFingerprint
 
 	constructor(repoRoot: string, maxResident = 2) {
 		this.#repoRoot = repoRoot
 		this.#maxResident = maxResident
+		// Captured once, at construction, because this is the tree the PROCESS imported — not the tree any
+		// individual engine was built from. Those differ after a reload, and the difference is load-bearing: a
+		// registry with no resident engine has nothing stale to compare against, so without this the first call
+		// after a reload builds happily and stamps the NEW fingerprint onto answers produced by the OLD modules.
+		this.#bootFingerprint = computeTreeFingerprint(repoRoot)
 	}
 
 	get repoRoot(): string {
 		return this.#repoRoot
+	}
+
+	/**
+	 * The tree this process imported its modules from. Equality with {@link fingerprint} is the only condition under which
+	 * any answer from this registry describes the source on disk.
+	 */
+	get bootFingerprint(): TreeFingerprint {
+		return this.#bootFingerprint
+	}
+
+	/**
+	 * Whether the working tree has moved since this process imported its modules. When true, every engine — resident or
+	 * not yet built — can only serve the old code, and no in-process action can change that.
+	 */
+	get sourceMoved(): boolean {
+		return this.fingerprint().digest !== this.#bootFingerprint.digest
 	}
 
 	fingerprint(): TreeFingerprint {
@@ -217,11 +318,19 @@ export class EngineRegistry {
 			return existing
 		}
 
-		// A resident engine under a DIFFERENT fingerprint means the tree moved since it was built. Its id can never
-		// match again, so it would simply leak; refuse loudly instead, and name both fingerprints.
-		const stale = [...this.#engines.values()].find((engine) => engine.fingerprint.digest !== current.digest)
+		// Refuse against the BOOT fingerprint, not merely against whatever is resident. A resident engine under a
+		// different digest is one symptom of a moved tree; an EMPTY registry under a moved tree is the other, and it
+		// is the dangerous one, because there is nothing stale left to notice. Both are the same fact — this process
+		// cannot import the new source — so both refuse here.
+		if (current.digest !== this.#bootFingerprint.digest) {
+			throw new Error(staleEngineMessage(this.#bootFingerprint, current))
+		}
 
-		if (stale) throw new Error(staleEngineMessage(stale.fingerprint, current))
+		// After the stale-tree refusal (a moved tree invalidates every answer, candidate or not) and before the build,
+		// so a mis-staged candidate costs a stat rather than a construction.
+		if (effective.weightsCacheRoot) {
+			assertWeightsCacheStaged(effective.weightsCacheRoot, effective.locale)
+		}
 
 		const startedAt = Date.now()
 		const session = await createGeocodeSession(effective)
@@ -264,8 +373,10 @@ export class EngineRegistry {
 	}
 
 	/**
-	 * Close every engine. Named `reload` at the tool surface because that is what a caller wants; what it actually does
-	 * is drop the sessions so the next call rebuilds. It cannot re-import source — see the class docstring.
+	 * Close every engine so the next call rebuilds them.
+	 *
+	 * This frees MEMORY and re-reads ARTIFACTS. It cannot re-import source, so the tool surface refuses to call it a
+	 * reload once the tree has moved — see {@link sourceMoved} and the class docstring.
 	 */
 	closeAll(): number {
 		const count = this.#engines.size
@@ -285,11 +396,17 @@ export class EngineRegistry {
 		return [...this.#engines.values()].map((engine) => ({
 			engine_id: engine.engineID,
 			locale: engine.effective.locale,
-			config_effective: engine.effective as unknown as Record<string, unknown>,
+			config_effective: engine.effective,
 			build_ms: engine.buildMs,
 			last_used_iso: new Date(engine.lastUsed).toISOString(),
 			uses: engine.uses,
 			tree_fingerprint: engine.fingerprint.digest,
+			weights: engine.session.artifacts.weights
+				? {
+						model_path: engine.session.artifacts.weights.modelPath,
+						source: engine.session.artifacts.weights.source,
+					}
+				: null,
 		}))
 	}
 

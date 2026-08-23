@@ -323,7 +323,7 @@ for await (const rec of geocodeStream(normalized, { mapping, geocode, concurrenc
 
 It parses once per row and shares the tree between the returned components and the geocode, which the
 hand-rolled pool above does not. One constraint decides whether it fits: its worker builds a
-`WOFSqlitePlaceLookup`, so it resolves against a full WOF SQLite distribution rather than against
+`WOFSQLitePlaceLookup`, so it resolves against a full WOF SQLite distribution rather than against
 `candidate.db`. If your setup is the `candidate.db` one the tutorials teach, the pool in step 3 is what
 you can run today.
 

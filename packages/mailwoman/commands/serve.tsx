@@ -11,9 +11,11 @@ import process from "node:process"
 
 import { Spinner, StatusMessage } from "@inkjs/ui"
 import type { ServerHandle } from "@mailwoman/api-kit"
+import { isPresent } from "@mailwoman/core/objects"
 import { Box, Text } from "ink"
-import type { CommandSpec, ParsedCommandComponent } from "mailwoman/cli-kit"
 import { useEffect, useState } from "react"
+
+import type { CommandSpec, ParsedCommandComponent } from "#cli-kit"
 
 interface ServerConfig {
 	port: number
@@ -73,7 +75,7 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 		// signal explicitly so each worker's serveNode drain actually runs, then exit once they're
 		// gone (bounded — a hung worker must not wedge the shutdown).
 		const forward = (signal: NodeJS.Signals) => {
-			const alive = Object.values(cluster.workers ?? {}).filter(Boolean) as Worker[]
+			const alive = Object.values(cluster.workers ?? {}).filter(isPresent)
 
 			if (!alive.length) {
 				process.exit(0)

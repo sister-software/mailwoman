@@ -17,7 +17,7 @@ tags:
 # mailwoman — neural address-parser weights (en-gb)
 
 The trained-model bundle (`@mailwoman/neural-weights-en-gb`) for
-[Mailwoman](https://mailwoman.sister.software), a postal-address parser. This
+[Mailwoman](https://mailwoman.ai), a postal-address parser. This
 package is **data only** — a `model-card.json`, the placetype-pair retrieval
 index, and the shared gazetteer lexicons. It has no JavaScript logic of its
 own; it is loaded at inference time by `@mailwoman/neural`.
@@ -109,7 +109,7 @@ in the current probe mode).
 open ship blocker (a Gauntlet metamorphic-layer regression, unrelated to GB).
 Until that resolves, treat the numbers above as graded-but-unshipped: real
 measurements against the actual candidate artifact, not yet the production
-default. [`docs/articles/evals/`](https://mailwoman.sister.software) carries
+default. [`docs/articles/evals/`](https://mailwoman.ai) carries
 the full scorecard once promoted.
 
 ## Calibration
@@ -138,7 +138,7 @@ output is byte-stable when calibration is omitted.
 ## License & links
 
 - **License:** [AGPL-3.0-only](https://www.gnu.org/licenses/agpl-3.0.html).
-- **Docs & concepts:** https://mailwoman.sister.software
+- **Docs & concepts:** https://mailwoman.ai
 - **Loader / scorer API:** `@mailwoman/neural` (`createScorer`).
 - The functional contract for this bundle is `model-card.json` (added
   2026-07-23, now that a GB-graded checkpoint exists); this `README.md` is the

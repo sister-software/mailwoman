@@ -14,8 +14,9 @@
  */
 
 import { Box, Text } from "ink"
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "mailwoman/cli-kit"
-import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
+
+import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -44,13 +45,13 @@ interface Options {
 
 const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB, buildPostcodeGeonamesTail } = await import("mailwoman/gazetteer-pipeline")
+		const { artifactSizeMB, buildPostcodeGeonamesTail } = await import("#gazetteer-pipeline")
 
 		const countries = options.countries
 			? options.countries
 					.split(",")
 					.map((s) => s.trim().toUpperCase())
-					.filter(Boolean)
+					.filter((cc) => cc.length > 0)
 			: undefined
 
 		const result = await buildPostcodeGeonamesTail({

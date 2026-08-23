@@ -4,27 +4,27 @@
  * packages, but ships only the shared model + tokenizer + calibration + lexicons; locale-specific data stays in each
  * overlay).
  */
-import { existsSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
 const PKG_DIR = workspacePath("neural-weights-base-latn")
+/**
+ * Where the artifacts LAND — the data-root overlay, never this tracked package.
+ *
+ * The binaries are not in git, so materializing them here made a fresh worktree unable to geocode, made `yarn test`
+ * mutate a tracked directory as a side effect, and put a symlink into a publish tarball (`YN0035`). PKG_DIR stays for
+ * what IS committed and must be read from the checkout.
+ */
+const DEST_DIR = String(weightsOverlayPath("base-latn"))
 
-function linkForce(src: string, dest: string): void {
-	const tmp = `${dest}.tmp-link`
-
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
-	}
-
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
-}
+mkdirSync(DEST_DIR, { recursive: true })
 
 /**
  * Model + tokenizer: same source as the en-us workspace uses ($MAILWOMAN_DEV_MODEL env override supported).
@@ -42,11 +42,11 @@ const SRC_TOKENIZER =
 /**
  * Where `model.onnx` is linked. `@mailwoman/neural` auto-resolves this path.
  */
-const MODEL_DEST = resolve(PKG_DIR, "model.onnx")
+const MODEL_DEST = resolve(DEST_DIR, "model.onnx")
 /**
  * Where `tokenizer.model` is linked. `@mailwoman/neural` auto-resolves this path.
  */
-const TOKENIZER_DEST = resolve(PKG_DIR, "tokenizer.model")
+const TOKENIZER_DEST = resolve(DEST_DIR, "tokenizer.model")
 
 linkForce(SRC_MODEL, MODEL_DEST)
 
@@ -90,7 +90,7 @@ for (const [src, name] of [
 		continue
 	}
 
-	const dest = resolve(PKG_DIR, name)
+	const dest = resolve(DEST_DIR, name)
 	linkForce(src, dest)
 
 	console.log(`linked ${name} ← ${src}`)

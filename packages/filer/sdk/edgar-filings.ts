@@ -175,7 +175,7 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
 export function parseCIKLookupData(text: string): CompanyTickerEntry[] {
 	const entries: CompanyTickerEntry[] = []
 
-	// oxlint-disable mailwoman/prefer-spliterator — 40 MB flat file, consumed inline by resolveCIKCandidates
+	// oxlint-disable mailwoman/prefer-spliterator -- 40 MB flat file, consumed inline by resolveCIKCandidates
 	// which does an O(n) canonicalization scan and needs every entry resident.
 	for (const line of text.split("\n")) {
 		// oxlint-enable mailwoman/prefer-spliterator

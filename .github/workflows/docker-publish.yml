@@ -93,8 +93,8 @@ jobs:
           labels: |
             org.opencontainers.image.title=mailwoman
             org.opencontainers.image.source=https://github.com/sister-software/mailwoman
-            org.opencontainers.image.url=https://mailwoman.sister.software
-            org.opencontainers.image.documentation=https://mailwoman.sister.software/docs
+            org.opencontainers.image.url=https://mailwoman.ai
+            org.opencontainers.image.documentation=https://mailwoman.ai/docs
             org.opencontainers.image.licenses=AGPL-3.0-only OR LicenseRef-Commercial
             org.opencontainers.image.vendor=Sister Software
             org.opencontainers.image.version=${{ steps.version.outputs.value }}

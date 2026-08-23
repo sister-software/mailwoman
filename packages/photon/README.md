@@ -1,6 +1,6 @@
 # @mailwoman/photon
 
-A **Photon-compatible autocomplete geocoding API** over the [Mailwoman](https://mailwoman.sister.software) engine — search-as-you-type, returning GeoJSON `FeatureCollection`s. Where [`@mailwoman/nominatim`](../nominatim) is structured lookup, this is the type-ahead front door. No Elasticsearch.
+A **Photon-compatible autocomplete geocoding API** over the [Mailwoman](https://mailwoman.ai) engine — search-as-you-type, returning GeoJSON `FeatureCollection`s. Where [`@mailwoman/nominatim`](../nominatim) is structured lookup, this is the type-ahead front door. No Elasticsearch.
 
 ```bash
 # One-time data fetch (worldwide candidate gazetteer, population-first ranking, ~1.65 GB):

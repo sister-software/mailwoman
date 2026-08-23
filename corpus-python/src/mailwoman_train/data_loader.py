@@ -214,6 +214,37 @@ def _shard_first_source(shard: Path) -> str:
     return rg["source"][0].as_py()
 
 
+def source_row_counts(corpus_dir: Path, split: str = "train") -> dict[str, int]:
+    """Rows per source, read from parquet METADATA only — no row groups touched.
+
+    Exists so the epoch audit can report DOSE rather than share. Share answers "what fraction of draws
+    came from this shard"; dose answers "how many times was each of its rows shown", and only the second
+    is the quantity a human picks a weight to control. #1677: the shard at the config's LOWEST weight
+    (1.0) got 165 reps per row, 33x the exposure of shards weighted six times higher, because 277 rows
+    divided into a 0.60% share is still 165 passes over every row. Nobody picks 165.
+
+    Metadata-only by construction: ``ParquetFile.metadata.num_rows`` reads the footer, so this costs a
+    stat and a seek per shard rather than a scan. Source identification still reads one row group per
+    shard, the same one-time cost ``_raw_row_stream`` already pays at index time.
+    """
+    counts: dict[str, int] = {}
+
+    for shard in _shard_paths(corpus_dir, split):
+        if not shard.exists():
+            continue
+        try:
+            src = _shard_first_source(shard)
+        except Exception:
+            # A shard whose source cannot be read is skipped rather than counted under a guessed name —
+            # an inflated row count understates dose, which is the direction that hides the defect.
+            continue
+        if src is None:
+            continue
+        counts[src] = counts.get(src, 0) + pq.ParquetFile(shard).metadata.num_rows
+
+    return counts
+
+
 def _shard_row_iter(
     shard: Path,
     *,
@@ -292,6 +323,18 @@ def _shard_row_iter(
                         f"corrupt row in {shard} (row-group {rg}, raw={row['raw']!r}): "
                         f"null span column(s) {nulls} in a span-schema shard — never a silent "
                         "fallback to token labels"
+                    )
+                # EMPTY is the other way a span-schema shard lies, and it is the quieter one. A writer
+                # that projects rows without the span triple emits `[]` for all three, which passes the
+                # null check above; `char_label_array_from_spans(raw, [], [], [])` then returns an
+                # all-`O` array and every such row trains as "nothing here is an address component".
+                # A row whose BIO labels carry a tag cannot honestly have no spans.
+                if all(not v for v in spans.values()) and any(lbl != "O" for lbl in bio_labels):
+                    raise ValueError(
+                        f"corrupt row in {shard} (row-group {rg}, raw={row['raw']!r}): "
+                        "every span column is EMPTY while the BIO labels carry a tag — the shard "
+                        "declares the span triple and its writer did not populate it, so this row "
+                        "would train as all-O"
                     )
                 row.update(spans)
             yield row

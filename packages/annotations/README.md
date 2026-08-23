@@ -1,6 +1,6 @@
 # @mailwoman/annotations
 
-The composer for [Mailwoman](https://mailwoman.sister.software)'s OpenCage-style enrichment block. A
+The composer for [Mailwoman](https://mailwoman.ai)'s OpenCage-style enrichment block. A
 resolved coordinate gets enriched with derived data — timezone, UN/LOCODE, ISO/NUTS, coordinate formats
 (DMS/MGRS/geohash/Maidenhead/Mercator), calling code, currency, sun times.
 

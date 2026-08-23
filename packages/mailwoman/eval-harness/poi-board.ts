@@ -39,8 +39,9 @@ import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
-import { createRuntimePipeline } from "mailwoman"
 import { JSONSpliterator } from "spliterator"
+
+import { createRuntimePipeline } from "#index"
 
 import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.ts"
 
@@ -221,7 +222,7 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 				!withinRange ? `nearest ${nearestKm.toFixed(2)} km > maxNearestKm ${expect.maxNearestKm}` : undefined,
 				!topMatches ? mismatchDetail : undefined,
 			]
-				.filter(Boolean)
+				.filter((reason) => reason != null)
 				.join("; ")
 
 	return {

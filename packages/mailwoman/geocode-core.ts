@@ -23,12 +23,11 @@
 
 import { existsSync } from "node:fs"
 
-import type { GeocodeOutcome, GeocodeOutcomeLike } from "@mailwoman/api"
-import { isUnitGradePostcodeHit } from "@mailwoman/codex"
+import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core"
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { decodeAsJSON, loneValueBearingNode } from "@mailwoman/core/decoder"
+import type { AddressNode, AddressTree, DroppedSpan } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
 	deriveInputMode,
@@ -46,27 +45,31 @@ import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwom
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
-import type {
-	AddressPointLookup,
-	InterpolationLookup,
-	PostcodePrefixIndexLike,
-	ResolveOpts,
-	Resolver,
-	StreetCentroidLookup,
+import {
+	adminLadderForNodes,
+	type AddressPointLookup,
+	type InterpolationLookup,
+	type PostcodePrefixIndexLike,
+	type ResolveOpts,
+	type Resolver,
+	type StreetCentroidLookup,
 } from "@mailwoman/resolver"
 
 import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherence.ts"
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
-import { probeForkEntity } from "./fork-entity.ts"
+import { applyEntityTiers } from "./fork-entity.ts"
+import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hierarchy-lineage.ts"
+import { shouldDropInferredScope } from "./inferred-scope.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
+import { repairPostcodeContradiction } from "./postcode-repair.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
 import { recognizeUSRegions } from "./region-recognition.ts"
+import { repairStrandedAffix } from "./stranded-affix-repair.ts"
 import { applyStreetMissFallback } from "./street-miss-fallback.ts"
 import { assembleStreetName } from "./street-name-assembly.ts"
-import { isStreetNameQuery } from "./street-name-query.ts"
 
 export { isUnitGradePostcodeHit, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
 
@@ -97,6 +100,14 @@ export interface GeocodeResult {
 	 * `prefecture` / `block` observable instead of silently dropping it at the geocoder boundary.
 	 */
 	components: Partial<Record<ComponentTag, string>>
+	/**
+	 * Spans the flat projection could not represent, present only when there were any (#1755).
+	 *
+	 * The flat map holds one value per tag, so a second `locality` span ceases to exist at the projection. Without this,
+	 * `region: null` means both "the input named no region" and "it named one and we deleted it" — the meaning-of-zero
+	 * rule applied to a component. A consumer rendering an answer can now say which happened.
+	 */
+	dropped_components?: DroppedSpan[]
 	lat: number | null
 	lon: number | null
 	resolution_tier: ResolutionTier
@@ -163,8 +174,13 @@ export interface GeocodeResult {
 	/**
 	 * Admin hierarchy from the resolver, locality → country (most specific first). `name` is the resolved gazetteer name
 	 * (proper-cased canonical, #1014) — distinct from `value`, the raw parsed input span.
+	 *
+	 * Entries are INDEPENDENTLY resolved parse nodes, not one containment walk — so the chain can compose places no
+	 * containment holds (#1731). `in_winner_lineage` states each entry's standing against the winner's stamped ancestor
+	 * chain: `true` = vouched, `false` = resolved outside the winner's lineage (the chimera fragment), absent =
+	 * unverifiable (no sidecar, or no place identity). See `hierarchy-lineage.ts`.
 	 */
-	hierarchy: Array<{ tag: string; value: string; name: string; lat?: number; lon?: number; placeID?: string }>
+	hierarchy: HierarchyEntry[]
 	/**
 	 * Ranked candidate resolutions for the query's primary place — the winning place first, then the resolver's
 	 * same-query alternatives (Springfield MO, MA, IL, …), each with its own coordinate + country. #1016 — lets a
@@ -265,6 +281,12 @@ export interface GeocodeDeps {
 	 */
 	poiLookup?: import("./poi-executor.ts").POIExecutorLookup
 	/**
+	 * OPT-IN venue tier (#1684's POI half): upgrade a venue-led address's admin/street answer to the poi.db entity
+	 * bearing the venue's exact name-key near the resolved anchor. Default OFF — the ceiling is measured (15 tracked
+	 * gb_venue rows are data-visible) but the D-rule promotion needs its own full-board battery.
+	 */
+	poiVenueTier?: boolean
+	/**
 	 * Street-morphology token test (the #1315 gate's matcher) — gate 2 of the fork→entity probe. Absent = no probe: an
 	 * ungated probe is the Savile Row hijack, so degrading the guard degrades the whole mechanism, never just the guard.
 	 */
@@ -305,13 +327,6 @@ export interface GeocodeDeps {
 	 * (`/v1/batch` + CSV → `"formatted"`, autocomplete drop-ins → `"fragmented"`).
 	 */
 	inputMode?: InputMode
-	/**
-	 * The Decision-A retry rider (operator-specced 2026-07-28): when a geocode ZERO-HITS (no coordinate AND no
-	 * candidates), re-parse ONCE in the alternative register and re-resolve. Fires only when the register was DERIVED (an
-	 * explicit {@link inputMode} is never second-guessed) and never loops. Default ON; pass `false` to pin single-pass
-	 * behavior.
-	 */
-	retryAlternateRegister?: boolean
 	/**
 	 * Per-state shard resolver. Omit for admin-only geocoding.
 	 */
@@ -444,6 +459,23 @@ export interface GeocodeDeps {
 	 */
 	adminCoherence?: boolean
 	/**
+	 * #1721 resolver-interior trace sink, forwarded verbatim to `ResolveOpts.traceSink`. Absent = zero bookkeeping.
+	 */
+	resolveTraceSink?: import("@mailwoman/core/resolver").ResolveOpts["traceSink"]
+	/**
+	 * Re-probe a resolved-nothing lookup across the other admin bands and record which hold it (#1741/#1756). DIAGNOSTIC
+	 * — the answer never changes, only the record of why it was not found. Requires `resolveTraceSink`.
+	 */
+	diagnoseUnreachable?: boolean
+	/**
+	 * Lineage attachment (#404, `ResolveOpts.includeAncestors`) — stamp each resolved node's containment chain onto
+	 * `metadata.ancestors`, which is what puts region-class ancestry in front of the admin-coherence verdicts (#1717):
+	 * without it `region` reads `unverifiable` on every winner. **Default-on** for the geocode path — the stamp is
+	 * flag-only metadata (no ranking or re-pick reads it) served from a per-id memoized backend probe, and it no-ops on a
+	 * backend/artifact without `ancestors()`. Pass `false` to opt out.
+	 */
+	includeAncestors?: boolean
+	/**
 	 * Postcode-country coherence (#42, `ResolveOpts.postcodeCountryCoherence`) — let a (postcode, locality) pair that is
 	 * geographically consistent in exactly ONE country override a wrong {@link defaultCountry}. `12 Rue de Rivoli, 75001
 	 * Paris` under the en-US locale otherwise lands in Texas, and with the postal shards attached in Addison. **Default
@@ -472,6 +504,13 @@ export interface GeocodeDeps {
 	 * **Default OFF**; pass `true` to opt in.
 	 */
 	postcodeContainmentCoherence?: boolean
+	/**
+	 * Admin-containment re-rank (#1717 stage 2, `ResolveOpts.adminContainmentRerank`) — a parsed region qualifier
+	 * participates in locality-candidate selection: candidates the ancestors sidecar vouches sit UNDER the qualifier rank
+	 * ahead of (and can be surfaced past a locale-inferred country scope over) the ones it cannot vouch for. **Default
+	 * OFF** (D-rule); pass `true` to opt in.
+	 */
+	adminContainmentRerank?: boolean
 	/**
 	 * Postcode-prefix prior (#31, Mechanism 3, `ResolveOpts.postcodePrefixPrior` + `.postcodePrefixIndex`) — on a
 	 * `postalcode` miss, resolve the code's PREFIX from the injected PFX1 index (GB outward / US section) so an
@@ -594,6 +633,7 @@ export function regionToStateSlug(
 export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
 	let regionResolverName: string | null = null
+	let resolvedCountry: string | null = null
 	const stack = [...tree.roots]
 
 	while (stack.length) {
@@ -604,8 +644,32 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 			regionResolverName = (node.metadata?.["resolver_name"] as string | undefined) ?? null
 		}
 
+		if (!resolvedCountry) {
+			const stamped = (node.metadata?.["resolver_country"] as string | undefined)?.trim()
+
+			if (stamped) {
+				resolvedCountry = stamped.toUpperCase()
+			}
+		}
+
 		stack.push(...node.children)
 	}
+
+	// A slug names a US shard and nothing else, but `regionToStateSlug` accepts ANY two-letter region, so a foreign
+	// subnational code that happens to spell a US state selects that state's rooftop shard. Measured against the shards
+	// on disk: 8 of 16 Italian province codes reach one (MI→Michigan, CO→Colorado, PA→Pennsylvania, VA→Virginia,
+	// CA→California, MO→Missouri, AL→Alabama, MT→Montana), 5 of 5 Spanish, 6 of 12 Brazilian, and AU's WA→Washington.
+	// IT and ES are tier-1 and write the code in ordinary postal form — `20121 Milano MI`.
+	//
+	// Nothing WRONG comes back today, and the reason is not structural: the lookup keys on (postcode, street, number) or
+	// (locality, street, number), and Milano's 20xxx simply does not collide with Michigan's 48xxx–49xxx. Cádiz province
+	// is `CA`, Cadiz is a real California locality and Calle Real a real California street, so the locality variant is one
+	// coincident house number away from a ROOFTOP-tier answer on the wrong continent — the highest-confidence thing this
+	// pipeline emits.
+	//
+	// An UNKNOWN country still passes: dropping the slug there would take the street tier away from every US address whose
+	// country never resolved, which is the failure #1787 exists to avoid, not to cause.
+	if (resolvedCountry !== null && resolvedCountry !== "US") return null
 
 	return regionToStateSlug(regionValue, regionResolverName)
 }
@@ -851,11 +915,24 @@ export async function parseForGeocode(
 	input: string,
 	deps: Pick<GeocodeDeps, "classifier" | "normalizeInput" | "normalizeCase" | "inputMode" | "fst" | "streetMorphology">
 ): Promise<AddressTree> {
-	const { parseInput, opts } = geocodeParseInputs(input, deps)
+	const { parseInput, opts, queryShape } = geocodeParseInputs(input, deps)
 
 	// #22: a bare unambiguous postcode the model read as a street ("N7 0BT" → `{ street: … }`) is retagged
 	// before the resolve — see recognizeBarePostcode for why nothing downstream can recover it.
-	return recognizeBarePostcode(recognizeUSRegions(await deps.classifier.parse(parseInput, opts)))
+	const tree = recognizeBarePostcode(recognizeUSRegions(await deps.classifier.parse(parseInput, opts)))
+
+	// #1735: the multi-node generalization of #22 — a letter-digit postcode span the model SPLIT into
+	// street + house_number ("KT2 6AB") is repaired from the shape stage's own span. Runs HERE, before
+	// any caller derives scope from the tree: the session's bare-postcode guard must see the repaired
+	// tree, or a locale-inferred country filter starves the lookup the repair exists to enable.
+	repairPostcodeContradiction(tree, queryShape)
+
+	// #1747: a `street_suffix` with no `street` anywhere, abutting a place name, belongs to that name — `Brixton Hill`
+	// parsed as locality `Brixton` + a floating `Hill` and resolved 300 km away. Runs after the postcode repairs so it
+	// judges the final tree, and its adjacency guard leaves a genuine one-word street untouched.
+	repairStrandedAffix(tree)
+
+	return tree
 }
 
 /**
@@ -873,7 +950,22 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		const refusal = await thingQueryRefusalMarkers(deps.classifyKind, parseInput)
 
 		if (refusal) {
-			const abstained = extractGeocodeResult(input, { raw: input, roots: [] })
+			// The parse SUCCEEDED and used to be thrown away: this built the outcome from an EMPTY tree, so a
+			// refused `Cafe at St Mary's, Oxford` reported `components: {}` while `parseForGeocode` had produced
+			// `locality: Oxford` › `dependent_locality: St Mary's` › `street: Cafe`. `intent_markers` said WHY we
+			// abstained; nothing said what we understood, and a caller could not tell a refusal from a parse that
+			// found nothing without reading the marker.
+			//
+			// No extra parse on any production path — the session computes the tree once and threads it as
+			// `parsedTree` (geocode-session.ts:679). The fallback only runs for a direct `geocodeAddress` caller
+			// on a refused input, and this branch RETURNS, so nothing can parse twice.
+			//
+			// The tree has not been resolved here, so no node carries a coordinate and the outcome is
+			// coordinate-free by construction rather than by nulling. The abstain contract is graded on the
+			// coordinate alone (`check-case.ts`'s `expect_abstain`), and none of the six abstain board rows
+			// declares `expectComponents` — so this adds what was understood without weakening the refusal.
+			const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
+			const abstained = extractGeocodeResult(input, tree)
 
 			abstained.intent_markers = refusal
 
@@ -881,80 +973,51 @@ export async function geocodeAddress(input: string, deps: GeocodeDeps): Promise<
 		}
 	}
 
-	const result = await geocodeAddressOnce(input, deps)
-
-	// Decision-A retry rider: a ZERO-HIT (no coordinate, no candidates) in a DERIVED register earns one
-	// attempt in the alternative register — a misrouted fragment/record can resolve on the flip; a
-	// second miss returns the original result. Explicit registers and caller-supplied trees are never
-	// second-guessed; the retry itself passes an explicit mode, so it cannot recurse.
-	const zeroHit = result.lat == null && (!result.candidates || result.candidates.length === 0)
-
-	if (
-		zeroHit &&
-		deps.retryAlternateRegister !== false &&
-		deps.inputMode === undefined &&
-		deps.parsedTree === undefined &&
-		!isStreetNameQuery(result.components)
-	) {
-		const parseInput =
-			deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
-
-		const used = deriveGeocodeRegister(parseInput)
-		const flipped: InputMode = used === "formatted" ? "fragmented" : "formatted"
-		const retried = await geocodeAddressOnce(input, { ...deps, inputMode: flipped })
-
-		if (retried.lat != null || (retried.candidates && retried.candidates.length)) {
-			return retried
-		}
-	}
-
-	return result
+	// The Decision-A retry rider (a zero-hit in a DERIVED register earned one attempt in the flipped one)
+	// lived here from 2026-07-28 to 2026-08-19 and was retired under the #486 repair-retirement policy with
+	// a measured record of exactly zero: no effect on the full board, none on its 199-row failure slice
+	// (counterfactual sweep), and none on 300 fresh BAN + 300 fresh FDIC register records — the misrouted-
+	// record class it was specced for. #1694 holds the receipts.
+	return geocodeAddressOnce(input, deps)
 }
 
-async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
-	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
-	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
-	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
-	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
-	const parseInput =
-		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
-
-	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
-	const stateSlug = regionSlugFromTree(tree)
-	const usShards = deps.shards?.(stateSlug) ?? {}
-	let addressPoints = usShards.addressPoints
-	const interpolation = usShards.interpolation
-
-	const opts: ResolveOpts = {
-		// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment
-		// graph. Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation
-		// here keeps `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would
-		// otherwise re-default ON downstream). Fixes the "Portland, ME → Messina IT" class structurally,
-		// without a prior or safelist.
-		adminCoherence: deps.adminCoherence !== false,
-	}
+/**
+ * Thread the address's COUNTRY EVIDENCE into the walk's options — one seam for the whole precedence chain: an explicit
+ * caller scope is supreme; an inferred scope yields to the #1684 gate; postcode-format countries (#1589) reach the
+ * scoped `postalcode` probe; the fuzzy tier's locale scope (#1585) and the soft locale prior (#27) thread beneath.
+ */
+function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: GeocodeDeps): void {
+	// #1589: the parsed postcode's format-implied countries. Computed BEFORE the scope block so the scope
+	// gate can read them; threaded to the resolver either way.
+	const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
 
 	if (deps.defaultCountry) {
-		opts.defaultCountry = deps.defaultCountry
+		// #1684 conditional scope: a locale-INFERRED scope yields to the model's own confident contrary
+		// read of the text, or to a postcode FORMAT that excludes the inferred country (see
+		// shouldDropInferredScope). The scope is DROPPED, never re-pointed — the worldwide race with
+		// cross-country primary preference + fame decides, which is the behavior the graded scope=none
+		// arm measured on exactly this class ("Nanjing Road, Huangpu, Shanghai" was a West Virginia
+		// namesake under the inferred filter). An explicit caller scope never enters here.
+		if (shouldDropInferredScope(tree, deps.defaultCountry, deps.defaultCountryIsInferred === true, formatCountries)) {
+			// No hard scope; the postcode-format block below may still scope, which is the documented
+			// order (format evidence outranks a locale hint).
+		} else {
+			opts.defaultCountry = deps.defaultCountry
 
-		// The resolver withholds an INFERRED scope from `country`-placetype lookups only (see
-		// `ResolveOpts.defaultCountryIsInferred`) — without this thread, bare "Germany" under the
-		// default locale filters out the DE country row and falls to a US alias locality.
-		if (deps.defaultCountryIsInferred === true) {
-			opts.defaultCountryIsInferred = true
+			// The resolver withholds an INFERRED scope from `country`-placetype lookups only (see
+			// `ResolveOpts.defaultCountryIsInferred`) — without this thread, bare "Germany" under the
+			// default locale filters out the DE country row and falls to a US alias locality.
+			if (deps.defaultCountryIsInferred === true) {
+				opts.defaultCountryIsInferred = true
+			}
 		}
 	}
 
-	// #1589: the parsed postcode's format-implied countries, for the resolver's scoped `postalcode`
-	// probe. Threaded unconditionally — the resolver applies it ONLY when no country constraint
-	// survives, which keeps an explicit defaultCountry supreme over format evidence, which in turn
-	// outranks a locale hint (the withheld-scope path in the CLI).
-	{
-		const formatCountries = countriesFromPostcodeFormat(treePostcodeValue(tree))
-
-		if (formatCountries.length) {
-			opts.postcodeFormatCountries = formatCountries
-		}
+	// #1589: the format-implied countries also reach the resolver's scoped `postalcode` probe. The
+	// resolver applies them ONLY when no country constraint survives — which keeps an explicit
+	// defaultCountry supreme over format evidence, which in turn outranks a locale hint.
+	if (formatCountries.length) {
+		opts.postcodeFormatCountries = formatCountries
 	}
 
 	// #1585: the locale hint's country scopes the typo-fuzzy tier — always threaded, never a filter on
@@ -972,6 +1035,40 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
 		}
 	}
+}
+
+async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<GeocodeOutcomeLike> {
+	// Stage 1 deterministic preprocessing (GeocodeDeps.normalizeInput) — drop-ins call geocodeAddress directly with no
+	// createRuntimePipeline wrapper, so without this a double-spaced / odd-punctuation query was fragile. `input` stays
+	// raw for the result; the parse + placer see the normalized form. A caller-supplied `parsedTree` (from
+	// parseForGeocode, same input + opts) skips the re-parse — the address's most expensive step.
+	const parseInput =
+		deps.normalizeInput === false ? input : normalize(input, { expandAbbreviations: true, locale: "und" }).normalized
+
+	const tree = deps.parsedTree ?? (await parseForGeocode(input, deps))
+	const queryShape = computeQueryShape(parseInput)
+	const stateSlug = regionSlugFromTree(tree)
+	const usShards = deps.shards?.(stateSlug) ?? {}
+	let addressPoints = usShards.addressPoints
+	const interpolation = usShards.interpolation
+
+	const opts: ResolveOpts = {
+		// Admin descendant-consistency (#263) — joint-consistency resolve over the gazetteer's containment
+		// graph. Default-ON at the core resolver too since #895 (drift D1 settled); the explicit propagation
+		// here keeps `deps.adminCoherence: false` an effective opt-out (an unset ResolveOpts field would
+		// otherwise re-default ON downstream). Fixes the "Portland, ME → Messina IT" class structurally,
+		// without a prior or safelist.
+		adminCoherence: deps.adminCoherence !== false,
+		// Lineage attachment (#404) — default-ON here so the admin-coherence verdicts (#1717) check the
+		// winner's REAL ancestry instead of reporting `unverifiable` wholesale. Explicit propagation for
+		// the same reason as `adminCoherence` above. The resolver still guards on the backend actually
+		// serving `ancestors()`, so an artifact predating the sidecar stays byte-identical.
+		includeAncestors: deps.includeAncestors !== false,
+		...(deps.resolveTraceSink ? { traceSink: deps.resolveTraceSink } : {}),
+		...(deps.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
+	}
+
+	applyCountryEvidence(opts, tree, deps)
 
 	if (deps.bias && deps.bias.length) {
 		opts.bias = deps.bias
@@ -1041,9 +1138,35 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		placedCountry = placed.country && placed.country !== "OTHER" ? placed.country : null
 
 		if (placed.country && placed.country !== "OTHER" && !opts.anchorPosterior) {
+			// #1738's disagreement test, hoisted. It used to sit inside the hardCountry branch below and
+			// gate the HARD filter only, which left the SOFT posterior ungated — and the soft posterior is
+			// enough on its own: the within-tier sort key is `(prominence ?? score) + w·posterior[country]`
+			// at w = 1, so on `Queen Street, Bristol` a 0.9261 posterior gap overturns GB Bristol's 0.884776
+			// prominence lead and the answer moves 5,274 km to Connecticut (#1751). The placer reads the
+			// STREET TOKEN — `King Street, Bristol` reads GB 0.5227 and survives, `Queen` does not — and
+			// nothing else in the tree names a country.
+			//
+			// One probe, read by both gates. An unknown or fuzzy bearer is not disagreement, and a resolver
+			// without the findPlace passthrough behaves exactly as before.
+			const localityValue = decodeAsJSON(tree).locality as string | undefined
+
+			const dominant =
+				localityValue && deps.resolver.findPlace
+					? (await deps.resolver.findPlace({ text: localityValue, placetype: "locality", limit: 1 }).catch(() => []))[0]
+					: undefined
+
+			const dominantBearer = dominant?.country !== undefined && dominant.exactMatch !== false ? dominant.country : null
+
+			const dominantDisagreesWithPlacer =
+				dominantBearer !== null && dominantBearer.toUpperCase() !== placed.country.toUpperCase()
+
 			// The full in-map distribution when supplied (resolver breaks ties); else the one-hot argmax.
-			opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
-			opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+			// Withheld entirely when the locality's own dominant bearer lives elsewhere: the placer is then
+			// contradicting retrieval about the one component that DOES name a place, and retrieval wins.
+			if (!dominantDisagreesWithPlacer) {
+				opts.anchorPosterior = placed.posterior ?? { [placed.country]: placed.confidence }
+				opts.anchorWeight = COARSE_PLACER_ANCHOR_WEIGHT
+			}
 
 			// #743/#194: default-on coverage-guarded HARD country filter (same gate as the runtime pipeline,
 			// via the shared helper so the two production paths can't drift). Same safelist precedence as
@@ -1057,7 +1180,21 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 			)
 
 			if (hardCountry) {
-				opts.hardCountry = hardCountry
+				// #1738: a language read is not a country verdict. The placer's languages are pluricentric —
+				// French text licenses {FR, CA, BE, CH, …} — and hardening on the language's home country
+				// exiled the francophone-CA class ("1001 Boulevard Saint-Laurent, Montréal" answered
+				// Montréal-la-Cluse, Ain: the FR hard filter excluded Québec before any race ran). The
+				// promotion therefore yields when the tree's own locality names a place whose DOMINANT
+				// bearer (population-first, unscoped, exact) lives in a different country: Paris under
+				// French text still hardens (the dominant Paris IS in FR); Montréal does not, and the
+				// placer's posterior stays the SOFT anchor the worldwide race weighs. An unknown or fuzzy
+				// bearer is not disagreement, and a resolver without the findPlace passthrough hardens
+				// exactly as before — absence degrades to the prior behavior, never to a crash.
+				const dominantDisagrees = dominantBearer !== null && dominantBearer.toUpperCase() !== hardCountry.toUpperCase()
+
+				if (!dominantDisagrees) {
+					opts.hardCountry = hardCountry
+				}
 			}
 		}
 	}
@@ -1168,6 +1305,13 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		opts.postcodeContainmentCoherence = true
 	}
 
+	// #1717 stage 2, PROMOTED default-ON 2026-08-18: an explicit `false` is the only thing that
+	// withholds it. The resolver core keeps its byte-stable `=== true` read, so the default lives
+	// HERE (and in the session), at the same layer every other promoted lever defaults.
+	if (deps.adminContainmentRerank !== false) {
+		opts.adminContainmentRerank = true
+	}
+
 	if (deps.postcodePrefixPrior === true) {
 		opts.postcodePrefixPrior = true
 	}
@@ -1178,13 +1322,16 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	let resolved = await deps.resolver.resolveTree(tree, opts)
 
-	// Second pass, ONLY when the coherence pass actually overrode the country. Rooftop + street-centroid shards are
-	// selected BEFORE the resolve (they have to be — they're resolver inputs), off a country that has now been shown
-	// wrong, so a corrected FR address would otherwise sit at its commune centroid with no BAN shard ever consulted.
-	// Re-select for the corrected country and resolve once more. `opts.defaultCountry` is deliberately left alone so
-	// the coherence pass re-derives the same verdict (2 lookups) and its `postcode_country_scope` receipt survives onto
-	// the returned tree. Bounded at one extra resolve, and unreachable unless an override fired.
-	const scopeCountry = postcodeCountryScopeOf(resolved)
+	// Second pass, whenever the RESOLVE settled a different country than the shards were selected for. Rooftop +
+	// street-centroid shards are selected BEFORE the resolve (they have to be — they're resolver inputs), off a
+	// country that can be corrected by any of several mechanisms mid-resolve: the #42 coherence override and the
+	// #1735 explicit pre-scope stamp receipts, but the placer and the #1684 dropped-scope worldwide race do not —
+	// `92 Laurell Road, Gander, NL A1V 0A9` resolved Gander CA with no receipt and sat at the city centroid while
+	// the CA rooftop shard held the exact point. So the trigger is the resolved tree's OWN country, with the
+	// receipt kept as the fallback for trees whose scope changed without a resolved carrier node.
+	// `opts.defaultCountry` is deliberately left alone so a receipt-driven verdict re-derives identically and
+	// survives onto the returned tree. Bounded at one extra resolve.
+	const scopeCountry = resolvedCountryOf(resolved) ?? postcodeCountryScopeOf(resolved)
 
 	if (scopeCountry && scopeCountry.toLowerCase() !== preResolveCountry && !usShards.addressPoints) {
 		const rooftop = rooftopFor(scopeCountry)
@@ -1210,7 +1357,7 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 
 	// ROAD_TO_V9 §4. One `classifyKindSync` over the text the parse actually saw — computed BEFORE the
 	// street-miss fallback below because that fallback stands down on a declared fork (see there).
-	const verdict = classifyKindSync({ raw: parseInput, normalized: parseInput }, computeQueryShape(parseInput))
+	const verdict = classifyKindSync({ raw: parseInput, normalized: parseInput }, queryShape)
 	const forkDeclared = (verdict.intentMarkers ?? []).some((m) => m.code === "declared_fork")
 
 	result = await applyStreetMissFallback(result, {
@@ -1238,33 +1385,9 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 		markers.push(ambiguity)
 	}
 
-	// The fork→entity probe (#1585's entity half; fork-entity.ts owns the three gates). Fires only on
-	// a DECLARED fork whose incumbent resolution produced no coordinate — a null is the only thing
-	// that can change, which is what makes this default-on under the D-rule. Positive evidence only:
-	// the probe adds an answer where there was none; it never contests one.
-	if (
-		result.lat === null &&
-		markers.some((m) => m.code === "declared_fork") &&
-		deps.poiLookup &&
-		deps.isStreetGeneric
-	) {
-		const entity = probeForkEntity(parseInput, { lookup: deps.poiLookup, isStreetGeneric: deps.isStreetGeneric })
-
-		if (entity) {
-			result.lat = entity.latitude
-			result.lon = entity.longitude
-			result.resolution_tier = "venue"
-			result.countryCode = entity.country
-			result.venue = entity.name
-
-			result.entity = {
-				name: entity.name,
-				categoryID: entity.categoryID,
-				confidence: entity.confidence,
-				country: entity.country,
-			}
-		}
-	}
+	// Entity answers (fork-entity.ts owns both probes and their gates): the declared-fork rescue and the
+	// opt-in venue tier, extracted as one unit — see applyEntityTiers.
+	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
 
 	result.intent_markers = markers
 
@@ -1276,12 +1399,34 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
  * `postcode_country_scope` stamp. `undefined` when the pass was off, abstained, or agreed with the caller's default —
  * i.e. whenever nothing was overridden.
  */
+/**
+ * The resolved tree's own country — the first `resolver_country` stamp on any node (constant across one address's
+ * resolved nodes), or undefined when nothing resolved with one. The rooftop second pass keys on this.
+ */
+function resolvedCountryOf(tree: AddressTree): string | undefined {
+	const stack: AddressNode[] = [...tree.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+		const c = (n.metadata?.["resolver_country"] as string | undefined)?.trim()
+
+		if (c) return c.toUpperCase()
+
+		stack.push(...n.children)
+	}
+
+	return undefined
+}
+
 function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 	const stack: AddressNode[] = [...tree.roots]
 
 	while (stack.length) {
 		const n = stack.pop()!
-		const scope = n.metadata?.["postcode_country_scope"]
+		// Either scope receipt re-triggers the shard-selection second pass: the #42 coherence override,
+		// or the #1735 explicit-country pre-scope (whose receipt exists precisely so a tree that was
+		// right from the start still gets its country's rooftop shard loaded).
+		const scope = n.metadata?.["postcode_country_scope"] ?? n.metadata?.["explicit_country_scope"]
 
 		if (typeof scope === "string" && scope.length) return scope
 
@@ -1296,7 +1441,11 @@ function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
 export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeOutcomeLike {
-	const components = decodeAsJSON(tree)
+	// `includeDropped` is not optional here even though the flag is: a span the projection deleted is the ONE thing a
+	// caller cannot reconstruct from the result, and #1755 is what its absence cost — the #1748 trailing region is
+	// parsed, mistagged `locality`, and deleted at this line, which is why no decode lever ever moved that class.
+	const projected = decodeAsJSON(tree, { includeDropped: true })
+	const { dropped, ...components } = projected
 	const allNodes: AddressNode[] = []
 
 	const flatten = (nodes: readonly AddressNode[]) => {
@@ -1368,29 +1517,17 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	}
 
 	if (tier === "admin") {
-		// `postcode` joins the ladder (after the locality tiers, before region): a lone-postcode
-		// query resolves the postcode node itself — without it here the result reported 0,0 despite
-		// a resolved coordinate (found building the proximity-bias feature's 48026 case).
+		// The ordering lives in `@mailwoman/resolver`'s `adminLadderFor`, beside the placetype scale the eval
+		// harnesses sort by, so the two cannot disagree about where a postcode sits without failing a test.
 		//
-		// #977 / #22: EXCEPT when the resolved postcode is an EXACT hit on a UNIT-GRADE code — an NL PC6 or a
-		// GB unit postcode is street-block-class (~8 and ~15 addresses respectively), categorically tighter
-		// than any locality centroid, so it leads the ladder. See {@link isUnitGradePostcodeHit} for the
-		// three-way guard that keeps the locality-first epoch convention (adopted for FR, where 5-digit zone
-		// centroids are COARSER than communes) untouched everywhere else.
-		//
-		// The GB half is what #22 fixed: `29 Brecknock Road, London, N7 0BT` resolved its unit postcode to
-		// 51.5500/-0.1307 — 38 m from the rooftop truth — and the ladder returned the London centroid 5.6 km
-		// away, on all 15 GB rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer
-		// and no lookup failed; the answer was on the tree and this list did not ask for it.
-		const pcNode = allNodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
-
-		const unitPostcodeExact =
-			pcNode !== undefined &&
-			isUnitGradePostcodeHit(pcNode.value, pcNode.metadata?.["resolver_name"] as string | undefined)
-
-		const adminPriority: ReadonlyArray<string> = unitPostcodeExact
-			? ["postcode", "locality", "dependent_locality", "region", "country"]
-			: ["locality", "dependent_locality", "postcode", "region", "country"]
+		// Two constraints this list carries and a reader cannot recover from the ordering alone. `postcode` has to
+		// be ON the ladder at all: a lone-postcode query resolves the postcode node and nothing else, and without
+		// the rung the result reported 0,0 despite a resolved coordinate (the proximity-bias feature's 48026 case).
+		// And a unit-grade hit has to LEAD it: `29 Brecknock Road, London, N7 0BT` resolves its unit postcode to
+		// 51.5500/-0.1307, 38 m from the rooftop truth, against a London centroid 5.6 km away — on all 15 GB
+		// rooftop rows of the 2026-08-09 panel run. Nothing was missing from the gazetteer and no lookup failed;
+		// the answer was on the tree and this list did not ask for it.
+		const adminPriority = adminLadderForNodes(allNodes)
 
 		for (const tag of adminPriority) {
 			const node = allNodes.find((n) => n.tag === tag && n.lat != null && n.lon != null)
@@ -1426,28 +1563,6 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	const houseNumber = allNodes.find((n) => n.tag === "house_number")?.value?.trim() || null
 	const street = streetNode ? assembleStreetName(streetNode) || null : null
 
-	const HIERARCHY_TAGS = ["locality", "dependent_locality", "subregion", "region", "country"]
-
-	const hierarchy = allNodes
-		.filter((n) => HIERARCHY_TAGS.includes(n.tag) && (n.lat != null || n.placeID))
-		.toSorted((a, b) => HIERARCHY_TAGS.indexOf(a.tag) - HIERARCHY_TAGS.indexOf(b.tag))
-		.map((n) => ({
-			tag: n.tag,
-			value: n.value.trim(),
-			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`; fall back to the raw
-			// parsed span when a node resolved without one. #1014: consumers should DISPLAY this, not `value`.
-			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
-			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
-			...(n.placeID ? { placeID: n.placeID } : {}),
-		}))
-
-	// #1058: the street tier's register commune fills the locality slot when no locality hierarchy entry
-	// exists (the span-rescored false locality was dropped, or the parse never emitted one) — a
-	// street-tier `city` must come from the register, not from the street's first token.
-	if (streetLocality && !hierarchy.some((h) => h.tag === "locality" || h.tag === "dependent_locality")) {
-		hierarchy.unshift({ tag: "locality", value: streetLocality, name: streetLocality })
-	}
-
 	// #1014: the resolved ISO-3166 alpha-2 country (`resolver_country`, stamped by decorateNode). Same for every
 	// resolved node of one address, so the first that carries it wins.
 	let countryCode: string | null = null
@@ -1469,6 +1584,11 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	const primaryNode =
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat === lat && n.lon === lon) ??
 		allNodes.find((n) => n.metadata?.["resolver_name"] && n.lat != null)
+
+	// #1731: lineage-graded against the admin-ladder pick when the admin tier answered, else the DEEPEST
+	// resolved admin node — never the first-in-tree-order one, whose chain cannot contain its own
+	// descendants (the 1600-Pennsylvania false flag the first mwdev_diagnose run caught).
+	const hierarchy = assembleHierarchy(allNodes, streetLocality, adminWinnerNode ?? lineageAnchorNode(allNodes))
 
 	const candidates: GeocodeResult["candidates"] = []
 
@@ -1522,6 +1642,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 	const extractedOutcome: GeocodeOutcomeLike = {
 		input,
 		components,
+		...(dropped?.length ? { dropped_components: dropped } : {}),
 		lat,
 		lon,
 		resolution_tier: tier,

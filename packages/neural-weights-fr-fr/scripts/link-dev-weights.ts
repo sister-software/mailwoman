@@ -28,14 +28,15 @@
  */
 
 import { spawnSync } from "node:child_process"
-import { existsSync, lstatSync, renameSync, symlinkSync, unlinkSync } from "node:fs"
+import { existsSync, mkdirSync, statSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import {
+	linkForce,
 	pairIndexStaleReason,
 	peekPairIndexHeaderFields,
+	removeIfPresent,
 	warnIfFSTStale,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
@@ -43,41 +44,19 @@ import {
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
 const PKG_DIR = workspacePath("neural-weights-fr-fr")
-
 /**
- * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
- * unlink-then-symlink leaves a no-file window that concurrent vitest workers (weights.test.ts + every other suite
- * resolving weights on the lab runners) can hit mid-suite — bit CI on 2026-07-24 (v1-parse-gate: "missing model files"
- * while the materialize step had verifiably succeeded). rename(2) replaces the destination atomically.
+ * Where the artifacts LAND — the data-root overlay, never this tracked package.
+ *
+ * The binaries are not in git, so materializing them here made a fresh worktree unable to geocode, made `yarn test`
+ * mutate a tracked directory as a side effect, and put a symlink into a publish tarball (`YN0035`). PKG_DIR stays for
+ * what IS committed and must be read from the checkout.
  */
-function linkForce(src: string, dest: string): void {
-	const tmp = `${dest}.tmp-link`
+const DEST_DIR = String(weightsOverlayPath("fr-fr"))
 
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
-	}
+mkdirSync(DEST_DIR, { recursive: true })
 
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
-}
-
-/**
- * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
- */
-function removeIfPresent(dest: string): void {
-	try {
-		lstatSync(dest)
-	} catch {
-		return
-	}
-
-	unlinkSync(dest)
-
-	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
-}
-
-removeIfPresent(resolve(PKG_DIR, "model.onnx"))
-removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
+removeIfPresent(resolve(DEST_DIR, "model.onnx"))
+removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree anchor-OFF gap) ----------------.
@@ -89,17 +68,17 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
-	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
 }
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
@@ -115,7 +94,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 /**
  * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
  */
-const POSTCODE_BIN_DEST = resolve(PKG_DIR, "postcode-fr.bin")
+const POSTCODE_BIN_DEST = resolve(DEST_DIR, "postcode-fr.bin")
 
 if (existsSync(POSTCODE_BIN_DEST)) {
 	console.log(`skipped postcode-fr.bin build — ${POSTCODE_BIN_DEST} already present`)
@@ -130,7 +109,7 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 } else {
 	const result = spawnSync(
 		process.execPath,
-		[CLI, "gazetteer", "postcode-binary", "--out", PKG_DIR, "--locale", `FR:${FR_WOF_DB}`],
+		[CLI, "gazetteer", "postcode-binary", "--out", DEST_DIR, "--locale", `FR:${FR_WOF_DB}`],
 		{ stdio: "inherit" }
 	)
 
@@ -153,7 +132,7 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-fr-fr.bin")
 /**
  * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
  */
-const FST_DEST = resolve(PKG_DIR, "fst-fr-fr.bin")
+const FST_DEST = resolve(DEST_DIR, "fst-fr-fr.bin")
 
 if (existsSync(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
@@ -176,7 +155,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 /**
  * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
  */
-const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
@@ -201,7 +180,7 @@ if (existsSync(MORPHOLOGY_SRC)) {
  * Unlike en-gb this does NOT md5 its source — BAN is a directory of 101 files, and hashing all of them costs more than
  * the guard saves; a BAN refresh is a deliberate act, so re-run with the artifact deleted after one.
  */
-const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-fr.bin")
+const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-fr.bin")
 /**
  * Calibrated soft-prior magnitudes — the pair the R6 bars were measured at (board 0/80 → 76/80, 0/60 confound FPs).
  */
@@ -235,8 +214,18 @@ if (!existsSync(CLI)) {
 				parentDelta: PAIR_INDEX_PARENT_DELTA,
 			})
 
+			// The BAN-derived index is ~6 MB; a pair-index built here from the WRONG source (the admin-DB borough
+			// recipe, whose FR neighbourhood tier is Paris quartiers) is ~1.9 kB and can carry matching magnitudes,
+			// which the header check then reads as current. Size is the one signal the header cannot fake.
+			const MINIMUM_PLAUSIBLE_BYTES = 1_000_000
+			const bytes = statSync(PAIR_INDEX_BIN_DEST).size
+
 			if (staleReason) {
 				console.log(`rebuilding pair-index-fr.bin — ${staleReason}`)
+			} else if (bytes < MINIMUM_PLAUSIBLE_BYTES) {
+				console.log(
+					`rebuilding pair-index-fr.bin — ${bytes.toLocaleString()} bytes is implausibly small for the BAN recipe (wrong-source clobber)`
+				)
 			} else {
 				needsRebuild = false
 			}
@@ -255,7 +244,7 @@ if (!existsSync(CLI)) {
 				"gazetteer",
 				"pair-index",
 				"--out",
-				PKG_DIR,
+				DEST_DIR,
 				"--country",
 				"fr",
 				"--delta",

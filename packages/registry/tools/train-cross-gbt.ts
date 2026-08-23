@@ -34,6 +34,7 @@ import { dirname } from "node:path"
 
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
+
 import {
 	addressFrequencyKey,
 	buildDefaultModel,
@@ -43,7 +44,7 @@ import {
 	streamRows,
 	type ColumnMapping,
 	type SourceRecord,
-} from "@mailwoman/registry"
+} from "#index"
 
 import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
 import { addr, norm, NPPES_COLUMNS as N, uniqueQuantiles } from "./shared.ts"
@@ -91,7 +92,7 @@ export interface TrainCrossSourceGBTOptions {
 	date?: string
 }
 
-interface MessyRow {
+interface MessyRow extends Record<string, string> {
 	npi: string
 	name: string
 	org: string
@@ -213,10 +214,10 @@ export async function trainCrossSourceGBT(
 	const opRows = rows.filter((r) => r.source === "openpayments")
 
 	const records: SourceRecord[] = [
-		...(await ingestRows(nppesRows as unknown as Record<string, string>[], mappingFor("nppes"), {
+		...(await ingestRows(nppesRows, mappingFor("nppes"), {
 			geocodeAddress: geocoder.seam,
 		})),
-		...(await ingestRows(opRows as unknown as Record<string, string>[], mappingFor("openpayments"), {
+		...(await ingestRows(opRows, mappingFor("openpayments"), {
 			geocodeAddress: geocoder.seam,
 		})),
 	]

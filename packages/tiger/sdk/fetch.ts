@@ -24,13 +24,11 @@
  */
 
 import { spawn } from "node:child_process"
-import { createWriteStream, existsSync } from "node:fs"
-import { mkdir, rename } from "node:fs/promises"
+import { mkdir } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
 
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
@@ -175,10 +173,11 @@ function buildRow(level: TIGERFetchLevel, p: Record<string, unknown>, geometry: 
  * Scrape the ADDRFEAT directory listing for a state's county FIPS codes.
  */
 async function discoverCounties(state: string, vintage: number): Promise<string[]> {
-	const res = await fetch(`${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, { redirect: "follow" })
+	// The LISTING only — a small HTML index. The per-county archives below stay on raw `fetch`, streaming to disk.
+	const html = await new APIClient({ displayName: "tiger-listing", retry: true })
+		.fetch<string>({ url: `${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, responseType: "text" })
+		.then(pluckResponseData)
 
-	if (!res.ok) throw new Error(`HTTP ${res.status} listing ADDRFEAT for vintage ${vintage}`)
-	const html = await res.text()
 	const re = new RegExp(`tl_${vintage}_${state}(\\d{3})_addrfeat\\.zip`, "g")
 	const counties = new Set<string>()
 
@@ -221,6 +220,11 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	const kdb = new DatabaseClient<TIGERDatabase>({ database: db })
 	await initializeTIGERSchema(kdb)
 
+	/**
+	 * `level` picks the table AND the row shape, but nothing ties them at the type level: {@link buildRow} returns the
+	 * union and Kysely needs the arm's concrete row. The narrowings below are sound only because `buildRow` switches on
+	 * the SAME `level` — keep the two switches in step, or a row shape reaches the wrong table.
+	 */
 	const insertBatch = async (rows: Row[]): Promise<void> => {
 		if (level === "tabblock20") {
 			await kdb

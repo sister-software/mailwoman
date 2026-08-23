@@ -14,7 +14,7 @@ import Layout from "@theme/Layout"
 import TOC from "@theme/TOC"
 import React, { useEffect, useMemo, useState } from "react"
 
-import type { GlossaryBacklinks, GlossaryTagMeta, TaggedGlossaryTerm } from "../../../plugins/glossary/plugin.ts"
+import type { GlossaryBacklinks, GlossaryTagMeta, TaggedGlossaryTerm } from "#glossary-plugin"
 
 import styles from "./styles.module.css"
 
@@ -98,7 +98,7 @@ export default function GlossaryPage({ glossaryData, tagMeta, backlinks }: Gloss
 			if (!lowerSearch) return true
 
 			const haystack = [term.term, term.definition, term.abbreviation, ...(term.aliases ?? [])]
-				.filter(Boolean)
+				.filter((field) => field !== undefined && field.length > 0)
 				.join(" ")
 				.toLowerCase()
 

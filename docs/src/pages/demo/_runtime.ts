@@ -22,28 +22,6 @@
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
 import { CoverageLayers, CoverageTileSetID, createCoverageSource } from "@mailwoman/cartographer/coverage"
-import type { ReleaseInfo, ResolveBias, StreetResolution } from "@mailwoman/docs/shared/demo-helpers"
-import {
-	DEFAULT_LOCALE,
-	normalizeReleasesManifest,
-	resolveDualRoles,
-	resolveStreet,
-	runCascade,
-	runClassifyStage,
-} from "@mailwoman/docs/shared/demo-helpers"
-import type { DocsDemoAssets } from "@mailwoman/docs/shared/demo-loader"
-import { loadDemoAssets } from "@mailwoman/docs/shared/demo-loader"
-import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/docs/shared/httpvfs-street"
-import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "@mailwoman/docs/shared/register-range-sw"
-import {
-	assetURL,
-	HOSTED_STREET_SLUGS,
-	NATIONAL_STREET_FALLBACK_SLUG,
-	NATIONAL_STREET_SLUGS,
-	regionToStateSlug,
-	streetShardURL,
-} from "@mailwoman/docs/shared/resources"
-import type { ParseTraceLike, ResolvedHit } from "@mailwoman/docs/shared/resources"
 import type {
 	DemoAssetsLoadContext,
 	DemoManifest,
@@ -62,6 +40,29 @@ import type {
 } from "@mailwoman/react/map"
 import type { Coordinates2D } from "@mailwoman/spatial"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+
+import type { ReleaseInfo, ResolveBias, StreetResolution } from "#shared/demo-helpers"
+import {
+	DEFAULT_LOCALE,
+	normalizeReleasesManifest,
+	resolveDualRoles,
+	resolveStreet,
+	runCascade,
+	runClassifyStage,
+} from "#shared/demo-helpers"
+import type { DocsDemoAssets } from "#shared/demo-loader"
+import { loadDemoAssets } from "#shared/demo-loader"
+import type { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "#shared/httpvfs-street"
+import { pruneDBRangeCache, registerRangeCacheServiceWorker } from "#shared/register-range-sw"
+import {
+	assetURL,
+	HOSTED_STREET_SLUGS,
+	NATIONAL_STREET_FALLBACK_SLUG,
+	NATIONAL_STREET_SLUGS,
+	regionToStateSlug,
+	streetShardURL,
+} from "#shared/resources"
+import type { ParseTraceLike, ResolvedHit } from "#shared/resources"
 
 import {
 	fetchBasemapSource,
@@ -213,7 +214,7 @@ export function useDemoMapRuntime({
 				if (cancelled) return
 				const composer = new StyleSpecificationComposer({ sources: { [MailwomanBaseTileSetID]: basemapSource } })
 
-				setMapStyle(composer.toJSON() as unknown as DemoMapStyle)
+				setMapStyle(composer.toJSON())
 			})
 			.catch((error) => {
 				console.error("Failed to compose basemap style", error)
@@ -283,10 +284,9 @@ export function useDemoMapRuntime({
 
 			if (!p) {
 				p = (async () => {
-					const { loadHTTPVFSDatabase } = await import("@mailwoman/docs/shared/httpvfs-resolver")
+					const { loadHTTPVFSDatabase } = await import("#shared/httpvfs-resolver")
 
-					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } =
-						await import("@mailwoman/docs/shared/httpvfs-street")
+					const { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } = await import("#shared/httpvfs-street")
 
 					if (NATIONAL_STREET_SLUGS.has(slug)) {
 						const situsW = await loadHTTPVFSDatabase(streetShardURL(slug, "situs"), sqljsBaseURL)
@@ -334,13 +334,16 @@ export function useDemoMapRuntime({
 				{ onClassifierStart: () => hooks.onStage(1) }
 			)
 
-			const localityNode = nodes.find((n) => n.tag === "locality" || n.tag === "city")
+			// `city`, `state`, `postal_code` and `house_number_prefix` are libpostal vocabulary, not `ComponentTag`s,
+			// so the `|| n.tag === "…"` arms that used to sit on these four finds could never match. They compiled
+			// only while the flattener returned `{ tag: string }`; against the real tag union they are type errors.
+			const localityNode = nodes.find((n) => n.tag === "locality")
 
 			const stateNode = nodes
-				.filter((n) => n.tag === "region" || n.tag === "state")
+				.filter((n) => n.tag === "region")
 				.toSorted((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
 
-			const postcodeNode = nodes.find((n) => n.tag === "postcode" || n.tag === "postal_code")
+			const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
 			// ── Street tier (#377): exact situs point / TIGER interpolation, ahead of the admin cascade. ──
 			let streetResolution: StreetResolution | null = null
@@ -350,7 +353,7 @@ export function useDemoMapRuntime({
 				.toSorted((a, b) => (a.start ?? 0) - (b.start ?? 0))
 
 			const streetValue = streetParts.map((n) => String(n.value).trim()).join(" ")
-			const houseNumberNode = nodes.find((n) => n.tag === "house_number" || n.tag === "house_number_prefix")
+			const houseNumberNode = nodes.find((n) => n.tag === "house_number")
 			const stateSlug = regionToStateSlug(stateNode?.value as string | undefined)
 
 			const streetSlug =
@@ -381,7 +384,13 @@ export function useDemoMapRuntime({
 			}
 
 			const asView = (nds: typeof nodes): ParsedComponent[] =>
-				nds.map((n) => ({ tag: n.tag, value: n.value, confidence: n.confidence, start: n.start, end: n.end }))
+				nds.map((n) => ({
+					tag: n.tag || "unknown",
+					value: n.value,
+					confidence: n.confidence,
+					start: n.start,
+					end: n.end,
+				}))
 
 			const wofLookup = assets?.lookup ?? null
 
@@ -430,7 +439,7 @@ export function useDemoMapRuntime({
 			}
 
 			const tBeforeResolve = performance.now()
-			const cascadeHits = await runCascade(wofLookup, tree as { roots: unknown[] }, input, resolveBias)
+			const cascadeHits = await runCascade(wofLookup, tree, input, resolveBias)
 			const tResolve = performance.now()
 
 			// Anchor-centroid fallback (postcode-only dead ends): synthesize an approximate hit from postcode-*.bin.
@@ -512,7 +521,9 @@ export function useDemoMapRuntime({
 		[runParseWithBias]
 	)
 
-	// ── FST autocomplete (the combobox's injected fetcher) ─────────────────────────────────────────────────
+	/**
+	 * FST autocomplete, the combobox's injected fetcher.
+	 */
 	const autocomplete = useCallback(async (query: string): Promise<Suggestion[]> => {
 		const fst = assetsRef.current?.fstMatcher
 
@@ -521,7 +532,7 @@ export function useDemoMapRuntime({
 		try {
 			const { autocomplete: fstAutocomplete } = await import("@mailwoman/resolver-wof-sqlite/fst-autocomplete")
 
-			const res = fstAutocomplete(fst as unknown as Parameters<typeof fstAutocomplete>[0], query, {
+			const res = fstAutocomplete(fst as Parameters<typeof fstAutocomplete>[0], query, {
 				maxSuggestions: 6,
 				dedupeByName: true,
 			})
@@ -532,7 +543,9 @@ export function useDemoMapRuntime({
 		}
 	}, [])
 
-	// ── Map-place enricher: candidate → ResolvedMapPlace (bbox / tier / lazily-fetched crisp polygon). ───────
+	/**
+	 * Map-place enricher: candidate → ResolvedMapPlace (bbox / tier / lazily-fetched crisp polygon).
+	 */
 	const resolveMapPlace = useCallback(
 		(candidate: ResolvedPlaceView): ResolvedMapPlace | null => {
 			const extras = extrasRef.current.get(candidate) ?? {}

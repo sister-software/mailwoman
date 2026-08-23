@@ -28,15 +28,13 @@ import { createReadStream } from "node:fs"
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
+import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { stableSourceID } from "@mailwoman/corpus/adapters/utils"
-import {
-	type LocaleBaseTuple,
-	type SynthesizedLocaleRow,
-	synthesizeLocaleRow,
-} from "@mailwoman/corpus/synthesizers/german"
-import { alignRow } from "@mailwoman/corpus/utils"
 import { CSVSpliterator } from "spliterator"
+
+import { stableSourceID } from "#adapters/utils"
+import { type LocaleBaseTuple, type SynthesizedLocaleRow, synthesizeLocaleRow } from "#synthesizers/german"
+import { alignRow } from "#utils"
 
 import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
@@ -295,7 +293,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			// pre-joined STREET column, so `cols.tipoVial === -1` and this is a no-op there.
 			const street =
 				cols.tipoVial >= 0
-					? [get(cells, cols.tipoVial), get(cells, cols.street)].filter(Boolean).join(" ")
+					? [get(cells, cols.tipoVial), get(cells, cols.street)].filter(isPresent).join(" ")
 					: get(cells, cols.street)
 
 			const rawCity = get(cells, cols.city)

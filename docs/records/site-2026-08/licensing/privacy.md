@@ -27,7 +27,7 @@ deployer's existing legal basis. We never become a processor of it.
 
 ## The surfaces we operate
 
-- **This website** (mailwoman.sister.software) is a static site. It sets no tracking cookies
+- **This website** (mailwoman.ai) is a static site. It sets no tracking cookies
   and runs no analytics.
 - **The browser demo** downloads model and data artifacts from our content delivery
   infrastructure, then runs locally. Demo queries are processed in your browser and are not

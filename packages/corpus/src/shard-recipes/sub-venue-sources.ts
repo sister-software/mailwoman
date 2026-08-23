@@ -30,14 +30,15 @@ import { fileURLToPath } from "node:url"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import type { LocaleBaseTuple } from "@mailwoman/corpus/synthesizers/german"
+
+import type { LocaleBaseTuple } from "#synthesizers/german"
 import {
 	classifyIdentifier,
 	readSubVenueJSONL,
 	type SubVenueLexiconTable,
 	SUBVENUE_PROMOTIONS,
 	type SubVenuePromotion,
-} from "@mailwoman/corpus/tools"
+} from "#tools"
 
 import { readTuples as readLocaleTuples, type LocalePart } from "./locale.ts"
 import { makeMulberry32, readTuples as readShardTuples } from "./scaffold.ts"
@@ -568,17 +569,6 @@ export const EMPTY_NAME_POOLS: NamePools = {
 }
 
 /**
- * An extract row, as `sub-venue-extract` writes it. `SubVenueHarvestRow` plus the `tier` the harvest does not need and
- * this recipe does: `venue` rows (station, airport, campus) fill the venue slot.
- */
-interface SubVenueExtractRow {
-	designatorID: string
-	tier?: string
-	name?: string | null
-	ref?: string | null
-}
-
-/**
  * What every pool reader needs to know about the leg it is reading for.
  */
 export interface PoolQuery {
@@ -601,7 +591,7 @@ function isLongerProperName(low: string, name: string, designatorPhrases: readon
  * Read one OSM extract and split it into name pools.
  */
 export function readExtractPools(path: string, query: PoolQuery): NamePools {
-	const rows = readSubVenueJSONL(path) as unknown as SubVenueExtractRow[]
+	const rows = readSubVenueJSONL(path)
 	const venues = new Set<string>()
 	const attested = new Set<string>()
 	const rejectedVenues = new Set<string>()

@@ -22,7 +22,7 @@ export function cfNormalize(s: string): string {
 /**
  * Padded character-trigram set (a leading/trailing space pads short tokens).
  */
-export function trigrams(s: string): Set<string> {
+function trigrams(s: string): Set<string> {
 	const t = ` ${s} `
 	const out = new Set<string>()
 
@@ -35,10 +35,12 @@ export function trigrams(s: string): Set<string> {
 
 /**
  * Character-trigram Jaccard ∈ [0,1] — tolerant of the swallowed-leading-char fragments ("auen" vs "plauen") and minor
- * misspellings without a heavyweight edit-distance pass. Shared with the candidate backend's FTS5-trigram fuzzy
- * fallback so both lookups rank typos identically.
+ * misspellings without a heavyweight edit-distance pass. The fuzzy component of {@link softNameScore}, and private to
+ * this module: the candidate backend scores typos with a WORD-level measure instead, on receipts that falsify trigram
+ * Jaccard for that job (see `candidate-lookup.ts`'s `FUZZY_FETCH`). A shared name here would assert a parity the two
+ * backends do not have.
  */
-export function trigramJaccard(a: string, b: string): number {
+function trigramJaccard(a: string, b: string): number {
 	const A = trigrams(a)
 	const B = trigrams(b)
 

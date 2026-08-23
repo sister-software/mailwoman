@@ -20,7 +20,8 @@
 		"!*.test.ts",
 		"!*.test.tsx",
 		"!**/*.test.ts",
-		"!**/*.test.tsx"
+		"!**/*.test.tsx",
+		"!test/**"
 	],
 	"type": "module",
 	"exports": {
@@ -47,7 +48,7 @@
 	"dependencies": {
 		"@fragaria/address-formatter": "^7.0.0",
 		"@mailwoman/core": "workspace:*",
-		"spliterator": "^6.1.0"
+		"spliterator": "^6.2.0"
 	},
 	"devDependencies": {
 		"@types/node": ">=26.1.2"

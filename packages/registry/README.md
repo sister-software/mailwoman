@@ -111,7 +111,7 @@ Fellegi-Sunter baseline rather than the bundled model's calibrated 2.8324, and `
 - [`@mailwoman/match`](../match) — the low-level block/score/cluster primitives
 - [`@mailwoman/record`](../record) — `SourceRecord` schema and normalizers
 - [`@mailwoman/address-id`](../address-id) — exact-match join key
-- [Match messy records to one entity each](https://mailwoman.sister.software/docs/developers/how-to/match-messy-records)
+- [Match messy records to one entity each](https://mailwoman.ai/docs/developers/how-to/match-messy-records)
 
 ## License
 

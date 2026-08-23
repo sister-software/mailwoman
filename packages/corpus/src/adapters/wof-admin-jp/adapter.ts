@@ -30,7 +30,10 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "@mailwoman/corpus/types"
+import { isPresent } from "@mailwoman/core/objects"
+import { allRows, getRow } from "@mailwoman/core/utils"
+
+import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
  * Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain.
@@ -124,7 +127,7 @@ export function synthesizeJpAddress(
 		components.dependent_locality = neighbourhoodName
 	}
 
-	const raw = [regionName, localityName, neighbourhoodName].filter(Boolean).join("")
+	const raw = [regionName, localityName, neighbourhoodName].filter(isPresent).join("")
 
 	return { raw, components }
 }
@@ -160,16 +163,16 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 				// seed; there are tens of thousands of neighbourhood seeds.
 				const byID = new Map<number, PlaceRow>()
 
-				for (const row of db
-					.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE country='JP'`)
-					.all() as unknown as PlaceRow[]) {
+				for (const row of allRows<PlaceRow>(
+					db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE country='JP'`)
+				)) {
 					byID.set(row.id, row)
 				}
 
 				const outsideStmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
 
 				const resolveOutside = (id: number): PlaceRow | undefined => {
-					const row = outsideStmt.get(id) as unknown as PlaceRow | undefined
+					const row = getRow<PlaceRow>(outsideStmt, id)
 
 					if (row) {
 						byID.set(id, row)

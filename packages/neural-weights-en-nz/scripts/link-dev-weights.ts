@@ -44,21 +44,16 @@
  */
 
 import { spawnSync } from "node:child_process"
-import {
-	existsSync,
-	lstatSync,
-	readFileSync,
-	renameSync,
-	statSync,
-	symlinkSync,
-	unlinkSync,
-	writeFileSync,
-} from "node:fs"
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath, dataRootPath, md5File, repoRootPath } from "@mailwoman/core/utils"
-import { pairIndexStaleReason, peekPairIndexHeaderFields } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import {
+	linkForce,
+	pairIndexStaleReason,
+	peekPairIndexHeaderFields,
+	removeIfPresent,
+} from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
  * Hex characters in an md5 digest.
@@ -69,38 +64,16 @@ const MD5_HEX_LENGTH = 32
  * Workspace root the artifacts are linked into. Everything below resolves against it.
  */
 const PKG_DIR = workspacePath("neural-weights-en-nz")
-
 /**
- * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
- * unlink-then-symlink leaves a no-file window that concurrent vitest workers (weights.test.ts + every other suite
- * resolving weights on the lab runners) can hit mid-suite — bit CI on 2026-07-24 (v1-parse-gate: "missing model files"
- * while the materialize step had verifiably succeeded). rename(2) replaces the destination atomically.
+ * Where the artifacts LAND — the data-root overlay, never this tracked package.
+ *
+ * The binaries are not in git, so materializing them here made a fresh worktree unable to geocode, made `yarn test`
+ * mutate a tracked directory as a side effect, and put a symlink into a publish tarball (`YN0035`). PKG_DIR stays for
+ * what IS committed and must be read from the checkout.
  */
-function linkForce(src: string, dest: string): void {
-	const tmp = `${dest}.tmp-link`
+const DEST_DIR = String(weightsOverlayPath("en-nz"))
 
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
-	}
-
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
-}
-
-/**
- * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
- */
-function removeIfPresent(dest: string): void {
-	try {
-		lstatSync(dest)
-	} catch {
-		return
-	}
-
-	unlinkSync(dest)
-
-	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
-}
+mkdirSync(DEST_DIR, { recursive: true })
 
 /**
  * Read or compute MD5 hash for a file, using a sidecar .md5 cache to avoid re-hashing large files. The sidecar is
@@ -141,8 +114,8 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	return hash
 }
 
-removeIfPresent(resolve(PKG_DIR, "model.onnx"))
-removeIfPresent(resolve(PKG_DIR, "tokenizer.model"))
+removeIfPresent(resolve(DEST_DIR, "model.onnx"))
+removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----.
@@ -154,17 +127,17 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (existsSync(SRC_GAZETTEER_LEXICON)) {
-	linkForce(SRC_GAZETTEER_LEXICON, resolve(PKG_DIR, "anchor-lexicon-v1.json"))
+	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/anchor-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
 }
 
 if (existsSync(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(PKG_DIR, "country-surface-lexicon-v1.json"))
+	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
-	console.log(`linked ${PKG_DIR}/country-surface-lexicon-v1.json`)
+	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
 	console.error(`WARNING: missing ${SRC_COUNTRY_LEXICON} — country channel will resolve OFF in this worktree.`)
 }
@@ -184,7 +157,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 /**
  * Where the placetype pair index is written — a soft-feed sibling, absent in a lean install.
  */
-const PAIR_INDEX_BIN_DEST = resolve(PKG_DIR, "pair-index-nz.bin")
+const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-nz.bin")
 /**
  * Decoder pair-index bonus baked into this artifact. Held in lockstep with the shipped binary's header — a mismatch
  * forces a loud rebuild rather than silently shipping a stale index.
@@ -276,7 +249,7 @@ if (pairIndexIsFresh) {
 			"gazetteer",
 			"pair-index",
 			"--out",
-			PKG_DIR,
+			DEST_DIR,
 			"--country",
 			"nz",
 			"--source",
@@ -309,7 +282,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 /**
  * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
  */
-const MORPHOLOGY_DEST = resolve(PKG_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
 if (existsSync(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
