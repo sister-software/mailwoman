@@ -73,7 +73,6 @@ import { readFile } from "node:fs/promises"
 import { basename, dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, tempRootPath } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
@@ -88,6 +87,7 @@ import { presetCompare } from "./preset-compare.ts"
 import { assemblePromotionVerdict } from "./promotion-gate-verdict.ts"
 import { scoreAffix, type ScoreAffixOptions } from "./score-affix.ts"
 import { scoreCountryHomograph } from "./score-country-homograph.ts"
+import { resolveWOFHotDB } from "./wof-hot-db.ts"
 
 /**
  * Render captured sink lines the way a child process's stdout arrived: one trailing newline per `report()` call. Every
@@ -426,7 +426,7 @@ async function runDemoCascadeLeg(env: {
 	gazetteerLexicon: string
 }): Promise<void> {
 	const { outDir, shipModel, tokenizer, card, gazetteerLexicon } = env
-	const HOT_DB = $public.MAILWOMAN_WOF_HOT_DB || tempRootPath("v440-stage", "en-us", "v4.4.0", "wof-hot.db")
+	const HOT_DB = resolveWOFHotDB()
 
 	if (!existsSync(HOT_DB)) {
 		const msg = `⚠ demo-cascade smoke SKIPPED — no wof-hot.db at ${HOT_DB} (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524).`

@@ -1,0 +1,80 @@
+name: Feature request
+description: A change with its evidence, its scope, and its tradeoff.
+title: "Feature: <one factual line>"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One change per issue. State what changes, the evidence it is needed,
+        and what it costs. Rules: `.claude/output-styles/mailwoman-development.md`.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: The glossary tag this issue belongs to. A GitHub label with the same name exists.
+      options:
+        - evals
+        - training
+        - resolver
+        - geocoding
+        - corpus
+        - infrastructure
+        - postcode
+        - tokenizer
+        - street
+        - venue
+        - locality
+        - gates
+        - multilingual
+        - architecture
+        - neural
+        - record-matching
+        - documentation
+        - Other
+  - type: input
+    id: change
+    attributes:
+      label: What changes
+      description: One sentence — the behavior after the change.
+      placeholder: "The resolver drops the country guess on disagreement instead of keeping it as a nudge."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence the change is needed
+      description: The failing example today, with measured scope where one exists.
+      placeholder: |
+        `1001 Boulevard Saint-Laurent, Montréal` resolves to Montréal-la-Cluse (FR)
+        when the input text is French. One example, reproduced at HEAD.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: |
+        Locales and tiers affected. Name any tested contract this changes and
+        any gate or board row it touches.
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoff
+    attributes:
+      label: Tradeoff
+      description: What the change costs — regression risk, corpus, compute, maintenance.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of done
+      description: |
+        A task list whose items are checkable assertions. The last item states
+        the claim this issue's completion is judged by.
+      placeholder: |
+        - [ ] A test asserts the guess is withheld on disagreement.
+        - [ ] Gate reads 384/384 including the new row.
+    validations:
+      required: true

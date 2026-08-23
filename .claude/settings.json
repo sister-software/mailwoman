@@ -12,6 +12,18 @@
 					}
 				]
 			}
+		],
+		"PostToolUse": [
+			{
+				"matcher": "TodoWrite",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "node \"$CLAUDE_PROJECT_DIR/packages/dev-mcp/hooks/todo-issue-sync.ts\"",
+						"timeout": 15
+					}
+				]
+			}
 		]
 	}
 }

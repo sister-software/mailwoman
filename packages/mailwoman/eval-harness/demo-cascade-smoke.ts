@@ -53,7 +53,6 @@ import { join } from "node:path"
 
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
-import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import { tempRootPath } from "@mailwoman/core/utils"
@@ -67,6 +66,7 @@ import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
 import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
+import { resolveWOFHotDB, wofHotStageDir } from "./wof-hot-db.ts"
 
 /**
  * Options for {@linkcode demoCascadeSmoke} — one field per flag the gate used to serialize into argv.
@@ -181,8 +181,8 @@ export async function demoCascadeSmoke(
 	// is dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually
 	// runs; in a clean install without the package the leg fails HERE, loudly, naming the import.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
-	const STAGE = options.stageDir || tempRootPath("v440-stage", "en-us", "v4.4.0")
-	const DB = options.db || ($public.MAILWOMAN_WOF_HOT_DB ?? join(STAGE, "wof-hot.db"))
+	const STAGE = options.stageDir || wofHotStageDir()
+	const DB = options.db || resolveWOFHotDB(String(STAGE))
 	const MODEL = options.model || join(STAGE, "model.onnx")
 	const TOK = options.tokenizer || join(STAGE, "tokenizer.model")
 	const CARD = options.card || join(STAGE, "model-card.json")

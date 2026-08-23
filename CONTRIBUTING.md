@@ -23,14 +23,11 @@ licenses. So, by submitting a contribution (a pull request, patch, or any change
 you agree to the following. **You keep the copyright in your contribution** — this
 is a license grant, not an assignment.
 
-1. **Developer Certificate of Origin.** You certify the DCO (version 1.1, full
-   text below) for every commit. Sign off each commit to indicate this:
-
-   ```bash
-   git commit -s          # appends a "Signed-off-by: Your Name <you@example.com>" trailer
-   ```
-
-   The sign-off name and email must be real and must match the commit author.
+1. **Developer Certificate of Origin.** By submitting a contribution you
+   certify the DCO (version 1.1, full text below) for every commit in it —
+   the submission itself is the certification. A `Signed-off-by` trailer
+   (`git commit -s`) is welcome but not required, and nothing in CI checks
+   for one.
 
 2. **License grant.** You grant Teffen Ellis (DBA Sister Software),
    a perpetual, worldwide, non-exclusive, royalty-free,
@@ -48,7 +45,7 @@ is a license grant, not an assignment.
    contribution, or your employer has waived those rights.
 
 If you are contributing on behalf of a company and need a signed corporate CLA
-rather than the DCO trailer, contact teffen@sister.software.
+rather than the DCO certification, contact teffen@sister.software.
 
 <details>
 <summary><strong>Developer Certificate of Origin 1.1</strong> (full text)</summary>
