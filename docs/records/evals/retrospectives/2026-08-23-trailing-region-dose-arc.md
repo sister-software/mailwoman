@@ -40,7 +40,7 @@ All fine-tunes off the v4.4.0 base (60k steps), 8,000 steps, EWC λ=1e4, A100-40
 | v4.7.0  | leading only          | 17,908 | 10.5% | DO-NOT-SHIP, 370/383           |
 | v4.8.0  | + `after_region` (IN) | 32,125 |  9.4% | **7 improved / 25 regressed**  |
 | v4.9.0  | + dependent locality  | 31,815 |  9.4% | **11 improved / 31 regressed** |
-| v4.10.0 | v4.9.0 shard, 1 rep   | 31,815 |  3.1% | see below                      |
+| v4.10.0 | v4.9.0 shard, 1 rep   | 31,815 |  3.1% | **9 improved / 22 regressed**  |
 
 ### v4.8.0 — the shard taught "the first named segment is the locality"
 
@@ -91,6 +91,23 @@ Adding a dependent locality moved the "first named segment" binding from `locali
 `dependent_locality`. Bare street names started reading as dependent localities, and venues did not
 recover.
 
+### v4.10.0 — dose is a lever, not a fix
+
+Same shard as v4.9.0, byte-identical, at a third the exposure. One variable.
+
+| run         |    share | improved | regressed |     net | venue-led regressions |
+| ----------- | -------: | -------: | --------: | ------: | --------------------: |
+| v4.8.0      |     9.4% |        7 |        25 |     −18 |                    12 |
+| v4.9.0      |     9.4% |       11 |        31 |     −20 |                    15 |
+| **v4.10.0** | **3.1%** |        9 |        22 | **−13** |                     9 |
+
+The damage scales with dose and does not vanish with it. A 3× cut bought back 7 net rows and 6 venue
+rows, and the arm is still net −13, still FR −3 / GB −5 / IE −3. Regressions fall sub-linearly (25 → 22
+for a 3× cut) because what remains is not over-exposure — it is that the shard's signal is wrong for
+the classes it does not contain, at any exposure that teaches anything.
+
+**All four runs are DO-NOT-SHIP. Nothing was promoted or published.**
+
 ## The cause, stated once
 
 **A shard containing only admin segments cannot be dosed at ~9% of the stream without damaging
@@ -99,9 +116,9 @@ shapes demonstrated it. Moving the taught position moved the damage; it did not 
 
 ## What this does and does not license
 
-- **It does not license a dose sweep as a general remedy.** v4.10.0 tests dose as the one variable
-  those three runs held constant, on a byte-identical shard. If regressions persist at a third the
-  exposure, dose is not the lever.
+- **Dose is not the remedy, and that is now measured rather than argued.** v4.10.0 held the shard
+  byte-identical and cut exposure 3×; net went −20 → −13 and stopped there. Extrapolating the observed
+  sub-linear fall, the dose that stops hurting is below the dose that teaches.
 - **It does license the corpus-authoring task**: this shard needs rows where a venue or a street
   precedes the locality before it can carry a meaningful dose. That is authoring, not tuning.
 - **VE remains unmoved and unmovable from here.** GeoNames does not publish Venezuela and nothing on
