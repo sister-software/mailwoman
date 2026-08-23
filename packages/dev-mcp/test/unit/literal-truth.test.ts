@@ -75,3 +75,20 @@ describe("a literal input set carrying truth", () => {
 		expect(a.sha256).not.toBe(b.sha256)
 	})
 })
+
+describe("mwdev_inputs `matching` — class size", () => {
+	it("counts and names the rows carrying a surface shape", async () => {
+		const set = await resolveInputSet({
+			kind: "literal",
+			why: WHY,
+			inputs: ["462 Queen St #101, Southington CT", "500 Queen St, Southington CT", "Coffee#1 Yeovil"],
+		})
+
+		const expression = new RegExp("#\\s?\\d", "iu")
+		const matched = set.inputs.filter((row) => expression.test(row.input))
+
+		// Two match the pattern; only ONE is a unit. That is the point of returning the rows and not just the count —
+		// `Coffee#1` is a brand name, and a bare count would have reported a class size of 2.
+		expect(matched.map((row) => row.input)).toEqual(["462 Queen St #101, Southington CT", "Coffee#1 Yeovil"])
+	})
+})
