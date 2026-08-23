@@ -64,12 +64,34 @@ For a **model release**, on a branch off current `main`:
    ```
 2. **`release.config.json`**: `weights.model` → the new filename, `version` → target, `weights.lineage`
    → the new model story + its int8 md5.
-3. **`neural-weights-en-us/model-card.json`**: `version` → target, plus reconcile `model_lineage`,
-   `phase`, `notes` (the `requires` ship-config stays UNCHANGED unless the channels changed). Validate
-   JSON: `jq -e .version <file>`.
-4. The `neural-weights-fr-fr` card version lags by long-standing convention (publish.yml cp's the
+3. **`neural-weights-en-us/model-card.json`**: `version` → target, **`files_md5["model.onnx"]` → the
+   new int8 md5**, plus reconcile `model_lineage`, `phase`, `notes` (the `requires` ship-config stays
+   UNCHANGED unless the channels changed). Validate JSON: `jq -e .version <file>`.
+
+   The card is the SOURCE OF TRUTH for the md5 — en-us's `DEFAULT_MODEL_MD5` derives from it, and
+   en-gb's linker reads THIS file to verify its own link. Skip `files_md5` and the en-gb guard fails
+   comparing new bytes against the old digest, which reads as a broken link rather than a missed edit.
+
+4. **Both dev linkers pin the model FILENAME and neither derives it.** A promotion that edits only
+   the card and `release.config.json` leaves a dev checkout resolving the previous model:
+
+   | file                                                            | constant                           |
+   | --------------------------------------------------------------- | ---------------------------------- |
+   | `packages/neural-weights-en-us/scripts/link-dev-weights.ts`     | `DEFAULT_MODEL`                    |
+   | `packages/neural-weights-en-gb/scripts/link-dev-weights.ts`     | `SRC_MODEL`                        |
+   | `packages/neural-weights-base-latn/scripts/link-dev-weights.ts` | source model — PARKED, unpublished |
+
+   Verify with `grep -rl "<old model basename>" --exclude-dir=node_modules .` before opening the PR;
+   every hit outside `scratchpad/` is a file that still has to move. Then run `link-dev-weights` for
+   en-us AND en-gb — en-gb's #397 guard is what proves the pair moved together.
+
+   `weights.tokenizer` / `weights.tokenizerVersion` change ONLY when the tokenizer actually changed.
+   Confirm by md5, not by run name: a from-scratch run usually reuses the shipped tokenizer, and
+   assuming otherwise stages the wrong one into the bundle.
+
+5. The `neural-weights-fr-fr` card version lags by long-standing convention (publish.yml cp's the
    en-us model into fr-fr) — leave it unless the operator says otherwise.
-5. Commit the build scripts + the recipe config + `sync_v0XX` for reproducibility. Push, open PR,
+6. Commit the build scripts + the recipe config + `sync_v0XX` for reproducibility. Push, open PR,
    let CI (`test`) go green, then **merge to main** (the publish runs off `main`).
 
 For a **code-only release**: skip the card/release.config/HF work entirely — just merge the code PRs;

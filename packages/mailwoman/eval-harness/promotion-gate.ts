@@ -815,6 +815,10 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 					model: shipModel,
 					tokenizer: EFF_TOK,
 					modelCard: EFF_CARD,
+					// The leg's anchor + lexicon siblings must come from the arm being graded, not from whatever the
+					// checkout happens to have linked. Without this it read the tracked workspace, which is bare on a dev
+					// checkout, and the ENOENT surfaced as a bare-street floor FAILURE.
+					...(WC ? { weightsCache: WC } : {}),
 					floor: String(bareStreetFloor),
 					json: `${OUT_DIR}/fr-bare-street.json`,
 				},
