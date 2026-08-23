@@ -299,6 +299,25 @@ That makes the VE question a product decision rather than a data-fetching task: 
 `house-venue` synthesizer now carries VE's tail ordering, so the shape has a home either way — see
 `packages/corpus/src/synthesizers/house-venue.ts`.
 
+## The control that licenses all of the above
+
+Every comparison in this arc reported `p = 0.86-1.00` — statistically indistinguishable at n = 649.
+Ten rows of 649 moving is exactly the size of thing that could be int8 quantization jitter near a
+decision boundary rather than learning damage, and if it were, every number here would be measuring
+the instrument.
+
+So the shipped model was staged through the identical candidate path — same directory shape, same
+dereferenced lexicons, same loader — and graded against itself.
+
+    0 of 649 inputs differed. supportsAbsenceClaim: true, upper bound 0.5%.
+
+Identical bytes give identical results, exactly. The harness is deterministic and the staging path
+adds nothing. **Every regression reported in this document is real.**
+
+Worth keeping as a habit rather than a one-off: a self-comparison costs one board run and is the only
+thing that separates "the candidate is worse" from "my rig is noisy". It should precede the first
+candidate of any arc, not follow the eighth.
+
 ## Method notes worth keeping
 
 - **Grade the board, not the val loss.** All three runs reported `macro_f1` between 0.9203 and 0.9212
