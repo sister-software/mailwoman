@@ -24,6 +24,7 @@
 
 import { buildSpawnTools } from "../spawn-tools.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import { arcTool } from "./arc.ts"
 import { benchTool } from "./bench.ts"
 import { censusTool } from "./census.ts"
 import { compareTool } from "./compare.ts"
@@ -59,6 +60,7 @@ const FACTORIES = [
 	lookupTool,
 	runTool,
 	compareTool,
+	arcTool,
 	parseCompareTool,
 	traceTool,
 	benchTool,

@@ -12,6 +12,23 @@ run eighth and ninth instead of first. The full ledger is
 
 Nothing below is style advice. Each step is a mistake that shipped.
 
+## The whole protocol is one call
+
+`mwdev_arc` runs steps 1, 2 and 5 in order and applies the arithmetic:
+
+```
+mwdev_arc candidate=<staged candidate dir> \
+          control=<staged copy of the SHIPPED weights> \
+          null=<the no-new-data fine-tune>
+```
+
+It refuses to attribute anything when the self-control is dirty, subtracts the null before reporting a
+regression count, checks the D-rule, and prints the regressed ADDRESSES rather than only their number.
+Omitting `control` or `null` does not skip the check quietly — the result says which control never ran
+and marks the number an upper bound.
+
+Read the rest of this file when a leg needs building, or when the tool's verdict needs auditing.
+
 ## Step 1 — the SELF-control, once per session
 
 Stage the SHIPPED model through the identical candidate path and grade it against itself.
