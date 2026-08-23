@@ -213,6 +213,46 @@ under NO intervention: **fine-tune the base corpus with no added shard at all, s
 It is one 4,000-step run, ~13 minutes and ~$1. **Run it before any further shard work.** Nothing in
 this arc should be trusted until it is answered, including the sections above.
 
+### v4.14.0 — steps is not the lever, and the tax is IMMEDIATE
+
+The null control suggested the last untested variable: if 4,000 steps costs ten rows, fewer steps
+should cost fewer. One variable against v4.11.0, `max_steps` 4000 -> 1000.
+
+**4 improved / 10 regressed, net -6.**
+
+Regressions fell 18 -> 10. But ten IS the null's tax, so the shard now costs nothing beyond it — and
+buys nothing either, the improvements falling 5 -> 4. `gb-venue-ye-three-lords` holds at this
+distance; `gb-lex-cafe-st-marys` and `gb-op2-four-seasons-cjk` do not.
+
+The finding is in the shape of the tax, not the net. **It is paid in the first 1,000 steps and barely
+grows to 4,000** — 10 rows at both. It is not proportional to how far the weights travel; it is a
+fixed cost of touching this base at all. No shorter run avoids it.
+
+### The fine-tune route is closed, on measurement
+
+Eight runs. Every lever that exists for an additive fine-tune, each isolated:
+
+| run         | lever                                | net vs shipped | regressed |
+| ----------- | ------------------------------------ | -------------: | --------: |
+| v4.8.0      | admin shard @ 9.4%                   |            -18 |        25 |
+| v4.9.0      | + dependent locality                 |            -20 |        31 |
+| v4.10.0     | dose -> 3.1%                         |            -13 |        22 |
+| v4.11.0     | venue-bearing, no new source or dose |            -13 |        18 |
+| v4.12.0     | EWC brake x10                        |            -12 |        19 |
+| v4.14.0     | steps -> 1,000                       |             -6 |        10 |
+| **v4.13.0** | **NULL — no added data at all**      |         **-5** |    **10** |
+
+The null is the best of them. Every arm that adds data is worse than adding none, and the arm that adds
+data most cautiously converges on the null rather than beating it.
+
+**No fine-tune of this base can ship an additive surface.** The tax is fixed, immediate, and larger
+than anything an additive shard has been able to buy back. That is not a judgement about these shards;
+it is a property of the starting point, and it holds across exposure, composition, regularization and
+distance.
+
+The next attempt is a from-scratch base that sees every tail convention at once, so the surface is
+learned rather than grafted. That is a different order of commitment and should be scoped as one.
+
 ## The cause, stated once
 
 **PROVISIONAL, pending the null-run control described above.** Adding non-US/FR admin tails to this
