@@ -14,13 +14,9 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { findRescoreCandidate, hasResolvedPlace } from "@mailwoman/resolver/span-rescore"
 import { describe, expect, it } from "vitest"
 
-const norm = (s: string): string =>
-	s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[^a-z0-9 ]/g, " ")
-		.replaceAll(/\s+/g, " ")
-		.trim()
+import { backendNameKey } from "../helpers/backend-name-key.ts"
+
+const norm = backendNameKey
 
 /**
  * A tiny gazetteer: exact-normalized-name matches only (so the walk can't fuzzy-resolve fragments), with an optional
