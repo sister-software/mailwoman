@@ -104,9 +104,11 @@ wrong**, recorded here because each was stated confidently before being checked:
    mixture stays proportional to row counts.
 
 What IS measured: four newly-admitted countries carry rows with **zero street rows** — CN 11,357,947,
-JP 2,092,821, KR 1,083,156, TW 678,660. That is 15,212,584 rows, **2.23%** of the admitted pool; the
-US share moves 73.13% → 71.50%. A 2.23% dose is small for the damage observed, so this is a
-hypothesis and not a finding.
+JP 2,092,821, KR 1,083,156, TW 678,660. That is 15,212,584 rows, **2.23%** of the admitted pool by ROW
+COUNT; the US row share moves 73.13% → 71.50%. The config's 34-source `source_weights` reweighting
+shifts effective sampler shares, so the row arithmetic is approximate — the falsification below
+rests on the config diff, not on these share numbers. A ~2% dose is small for the damage observed,
+so this was a hypothesis and not a finding.
 
 ## The isolation run
 
