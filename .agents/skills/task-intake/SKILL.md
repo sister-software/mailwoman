@@ -1,21 +1,20 @@
 ---
 name: task-intake
-description: Use when setting off on any multi-step work arc — a bug fix, a feature, a training run, a refactor expected to produce a PR or outlive the session. Creates the GitHub issue from the repo's issue-form fields, seeds its task list, and links the session so todo updates mirror into the issue. The todo list is the working plan; the ISSUE is the durable copy the operator reads.
+description: Use for an authorized implementation or training arc expected to produce a PR or require a handoff. Creates the GitHub issue from the repo's issue-form fields, seeds its task list, and links the session so todo updates mirror into the issue. Do not create an issue for review, diagnosis-only work, or local exploration unless the operator asks for one. The todo list is the working plan; the issue is the durable copy the operator reads.
 ---
 
 ## Why this exists
 
-A plan that lives in an agent's head — or in a session todo list — dies with the session, and the
-operator's window into an autonomous session is GitHub, not the transcript. Tonight's pattern is the
-argument: work arcs that opened an issue first (#1840) survived context resets and handoffs; plans
-that lived in scrollback had to be re-derived. The instinct this skill encodes: **before the work
-starts, the plan exists as an issue built from the repo's own template, and progress lands there
-without the agent spending turns on bookkeeping.**
+The operator follows autonomous work through GitHub rather than the session transcript. A plan kept only
+in the session must be reconstructed after a context reset or handoff. For authorized implementation and
+training work, create the issue and its task list before changing the repository. The hook then copies
+todo progress into that issue.
 
 ## When to use
 
-Any work expected to produce a PR, span more than two steps, or outlive the session. Skip it for
-one-command answers and conversational turns.
+Use this skill for an authorized implementation or training arc expected to produce a PR or require a
+handoff. Do not create an issue for review, diagnosis-only work, or local exploration unless the operator
+asks for one. The number of steps does not grant permission to write to GitHub.
 
 ## Step 1 — write the plan as a todo list FIRST
 

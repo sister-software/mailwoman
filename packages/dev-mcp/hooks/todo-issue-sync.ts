@@ -21,16 +21,17 @@
  *   - The issue body must already carry both markers. The hook never invents structure in an issue it did not shape;
  *     absent markers mean the issue was not created by the skill, and rewriting it would clobber someone's prose.
  *
- *   Concurrency: rapid TodoWrite bursts overwrite one payload file (last write wins) and the worker holds a lock
- *   directory while it syncs, re-reading the payload after each pass until it is stable — so reordered workers cannot
- *   publish a stale list over a newer one.
+ *   Concurrency: rapid TodoWrite bursts atomically replace one payload file (last write wins). A worker holds a lock
+ *   directory while it syncs and re-reads the payload after each pass. A worker that finds the lock waits for its turn,
+ *   so a payload written during the lock holder's final pass still gets published.
  *
  *   Register in `.claude/settings.json` under `hooks.PostToolUse` with a `TodoWrite` matcher.
  */
 
 import { execFileSync, spawn } from "node:child_process"
-import { existsSync, mkdirSync, readFileSync, rmdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
+import { existsSync, mkdirSync, readFileSync, renameSync, rmdirSync, writeFileSync } from "node:fs"
+import { join, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 import { parseArgs } from "node:util"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
@@ -39,15 +40,16 @@ const STDIN = 0
 
 /**
  * How many stabilization passes the worker makes before giving up. Each pass costs two `gh` round trips (~2s), so five
- * bounds a pathological burst at ~10s of background work; a list still churning past that syncs on the NEXT TodoWrite,
- * which is the event that would have re-fired the hook anyway.
+ * bounds one worker's `gh` calls at ~10s of background work. A waiting worker then reads the latest payload.
  */
 const MAX_SYNC_PASSES = 5
+const LOCK_RETRY_MS = 100
+const MAX_LOCK_ATTEMPTS = 300
 
 const SYNC_BEGIN = "<!-- todo-sync:begin -->"
 const SYNC_END = "<!-- todo-sync:end -->"
 
-interface TodoItem {
+export interface TodoItem {
 	content: string
 	status: string
 	activeForm?: string
@@ -67,7 +69,7 @@ function linkedIssue(cwd: string): number | null {
 	return Number.isInteger(parsed) && parsed > 0 ? parsed : null
 }
 
-function renderTaskList(todos: TodoItem[]): string {
+export function renderTaskList(todos: TodoItem[]): string {
 	const lines = todos.map((todo) => {
 		if (todo.status === "completed") return `- [x] ${todo.content}`
 
@@ -96,12 +98,16 @@ function hookMain(): void {
 
 	const todos = (payload.tool_input as { todos?: TodoItem[] } | undefined)?.todos
 
-	if (!Array.isArray(todos) || !todos.length) return
+	if (!Array.isArray(todos)) return
 
 	const dir = join(stateDir(cwd), "todo-sync")
 
 	mkdirSync(dir, { recursive: true })
-	writeFileSync(join(dir, "payload.json"), JSON.stringify({ issue, todos }))
+	const payloadPath = join(dir, "payload.json")
+	const pendingPath = join(dir, `payload.${process.pid}.json`)
+
+	writeFileSync(pendingPath, JSON.stringify({ issue, todos }))
+	renameSync(pendingPath, payloadPath)
 
 	const child = spawn(process.execPath, [import.meta.filename, "--worker", "--cwd", cwd], {
 		detached: true,
@@ -114,16 +120,41 @@ function hookMain(): void {
 /**
  * Worker mode: lock, then sync the LATEST payload until it stops changing under us.
  */
-function workerMain(cwd: string, dryRun: boolean): void {
+type SyncIssue = (issue: number, todos: TodoItem[], dryRun: boolean) => void
+
+type Delay = (milliseconds: number) => Promise<void>
+
+const delay: Delay = (milliseconds) =>
+	new Promise((done) => {
+		setTimeout(done, milliseconds)
+	})
+
+async function acquireLock(lock: string, wait: Delay): Promise<boolean> {
+	for (let attempt = 0; attempt < MAX_LOCK_ATTEMPTS; attempt++) {
+		try {
+			mkdirSync(lock)
+
+			return true
+		} catch {
+			await wait(LOCK_RETRY_MS)
+		}
+	}
+
+	return false
+}
+
+export async function workerMain(
+	cwd: string,
+	dryRun: boolean,
+	sync: SyncIssue = syncIssue,
+	wait: Delay = delay
+): Promise<void> {
 	const dir = join(stateDir(cwd), "todo-sync")
 	const lock = join(dir, "lock")
 
-	try {
-		mkdirSync(lock)
-	} catch {
-		// Another worker holds the lock; it will re-read the payload we just wrote before releasing.
-		return
-	}
+	// A worker that loses the lock must wait for its own turn. Its payload can arrive after the lock holder's final read;
+	// exiting here would leave that payload unpublished until another TodoWrite happened.
+	if (!(await acquireLock(lock, wait))) return
 
 	try {
 		let previous = ""
@@ -141,7 +172,7 @@ function workerMain(cwd: string, dryRun: boolean): void {
 
 			if (!payload) return
 
-			syncIssue(payload.issue, payload.todos, dryRun)
+			sync(payload.issue, payload.todos, dryRun)
 		}
 	} finally {
 		rmdirSync(lock)
@@ -176,22 +207,29 @@ function syncIssue(issue: number, todos: TodoItem[], dryRun: boolean): void {
 	})
 }
 
-const { values } = parseArgs({
-	options: {
-		worker: { type: "boolean", default: false },
-		cwd: { type: "string" },
-		"dry-run": { type: "boolean", default: false },
-	},
-})
+async function main(): Promise<void> {
+	const { values } = parseArgs({
+		options: {
+			worker: { type: "boolean", default: false },
+			cwd: { type: "string" },
+			"dry-run": { type: "boolean", default: false },
+		},
+	})
 
-try {
-	if (values.worker) {
-		workerMain(values.cwd ?? process.cwd(), values["dry-run"] ?? false)
-	} else {
-		hookMain()
+	try {
+		if (values.worker) {
+			await workerMain(values.cwd ?? process.cwd(), values["dry-run"] ?? false)
+		} else {
+			hookMain()
+		}
+	} catch {
+		// Silence on every failure path: a sync hook that can break a turn is a hook that gets switched off.
 	}
-} catch {
-	// Silence on every failure path: a sync hook that can break a turn is a hook that gets switched off.
 }
 
-process.exit(0)
+// oxlint-disable-next-line sister-software/no-process-globals -- executable-entry detection has no project helper.
+const entryPath = process.argv[1]
+
+if (entryPath && fileURLToPath(import.meta.url) === resolve(entryPath)) {
+	await main()
+}

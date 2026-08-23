@@ -13,7 +13,7 @@ body:
     id: area
     attributes:
       label: Area
-      description: The glossary tag this issue belongs to. A GitHub label with the same name exists.
+      description: The glossary tag this issue belongs to. Maintainers apply the matching GitHub label after submission.
       options:
         - evals
         - training

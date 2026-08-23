@@ -20,6 +20,11 @@
 			"default": "./out/cli.js",
 			"types": "./out/cli.d.ts"
 		},
+		"./hooks/todo-issue-sync": {
+			"node": "./hooks/todo-issue-sync.ts",
+			"default": "./out/hooks/todo-issue-sync.js",
+			"types": "./out/hooks/todo-issue-sync.d.ts"
+		},
 		".": {
 			"node": "./index.ts",
 			"default": "./out/index.js",

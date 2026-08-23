@@ -210,8 +210,8 @@ operator must make is stated with its evidence and its cost.
 
 ## Artifact absence claims
 
-`mwdev_provenance` is the one call for "does this artifact exist, and at which path" — it reports each
-artifact's presence, size, mtime, symlink target, and sealed state, wof-hot.db included (it resolves the
-same ladder the promotion gate probes: `$MAILWOMAN_WOF_HOT_DB`, then the staged demo sidecar). An
+`mwdev_provenance` answers "does this artifact exist, and at which path?" It reports each artifact's
+presence, size, mtime, symlink target, and sealed state, including `wof-hot.db`. For that database it uses
+the promotion gate's lookup order: `$MAILWOMAN_WOF_HOT_DB`, then the staged demo database. An
 absence claim for a known artifact cites that report; a fresh search is for artifacts the report does
 not carry — and finding one is a reason to add it there.
