@@ -24,6 +24,9 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#test/backend-name-key": "./test/helpers/backend-name-key.ts"
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {

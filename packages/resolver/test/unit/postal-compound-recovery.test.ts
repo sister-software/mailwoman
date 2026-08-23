@@ -17,7 +17,7 @@ import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { postcodeCodeSubset } from "@mailwoman/resolver/span-rescore"
 import { describe, expect, it } from "vitest"
 
-import { backendNameKey } from "../helpers/backend-name-key.ts"
+import { backendNameKey } from "#test/backend-name-key"
 
 const norm = backendNameKey
 
