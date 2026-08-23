@@ -43,9 +43,10 @@
  *   lever moves it — `postcodeShapeCoherence: true` leaves all eight VE board rows byte-identical.
  *
  *   So the tuple's `postcodePlacement` selects the surface, and it keeps apart two trailing conventions
- *   that are NOT the same shape: VE writes `Barcelona 6001, Anzoátegui` (same segment, ahead of the
- *   region) and ZA writes `…, Cape Town, 8001` (its own segment, last). A tuple with no placement means
- *   `leading`, so a tuples file written before the field existed produces the rows it always did.
+ *   that are NOT the same shape: VE writes `Barcelona 6001, Anzoátegui, Venezuela` (the code on the
+ *   LOCALITY segment) and IN writes `…, Bengaluru, Karnataka 560038, India` (on the REGION segment).
+ *   Each of the three placements matches a board row verbatim. A tuple with no placement means `leading`,
+ *   so a tuples file written before the field existed produces the rows it always did.
  *
  *   The (postcode, locality, region) triples are REAL — `postalcode-intl.db` parents joined to admin
  *   localities and their region ancestors — with one filter that had to be measured rather than assumed.
@@ -116,11 +117,14 @@ export const trailingRegionRecipe: ShardRecipe = {
 			}
 
 			const placement = (t.postcodePlacement as PostcodePlacement | undefined) ?? "leading"
-			// Both trailing placements put the code in the ADMIN tail; only `trailing_own_segment` gives it a field of
-			// its own, after the region.
-			const localitySegment = postcode && placement === "trailing_same_segment" ? `${locality} ${postcode}` : locality
-			const adminTail = withCountry ? `${localitySegment}, ${region}, ${country}` : `${localitySegment}, ${region}`
-			const tail = postcode && placement === "trailing_own_segment" ? `${adminTail}, ${postcode}` : adminTail
+			// Both trailing placements put the code inside the ADMIN tail; they differ in which segment carries it.
+			const localitySegment = postcode && placement === "after_locality" ? `${locality} ${postcode}` : locality
+			const regionSegment = postcode && placement === "after_region" ? `${region} ${postcode}` : region
+
+			const tail = withCountry
+				? `${localitySegment}, ${regionSegment}, ${country}`
+				: `${localitySegment}, ${regionSegment}`
+
 			// A leading postcode joins the head, ahead of the locality; the other two are already in the tail, so the
 			// head carries at most the house number.
 			const leadingPostcode = postcode && placement === "leading" ? `${postcode} ` : ""

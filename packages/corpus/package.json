@@ -162,6 +162,11 @@
 			"default": "./out/test-kit/shard-recipe.js",
 			"types": "./out/test-kit/shard-recipe.d.ts"
 		},
+		"./tools/postcode-triples": {
+			"node": "./src/tools/postcode-triples.ts",
+			"default": "./out/src/tools/postcode-triples.js",
+			"types": "./out/src/tools/postcode-triples.d.ts"
+		},
 		"./tools/audit": {
 			"node": "./src/tools/audit.ts",
 			"default": "./out/src/tools/audit.js",

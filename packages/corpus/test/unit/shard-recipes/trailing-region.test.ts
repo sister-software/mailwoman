@@ -48,19 +48,20 @@ describe("trailing-region postcode placement", () => {
 
 	it("writes the VE shape — postcode in the locality's own segment, AHEAD of the region", async () => {
 		const tuple = { locality: "Barcelona", region: "Anzoátegui", country: "Venezuela", cc: "VE", locale: "es-VE" }
-		const { rows } = await run(repeat({ ...tuple, postcode: "6001", postcodePlacement: "trailing_same_segment" }), [])
+		const { rows } = await run(repeat({ ...tuple, postcode: "6001", postcodePlacement: "after_locality" }), [])
 
 		expect(rows.some((row) => row.raw === "Barcelona 6001, Anzoátegui, Venezuela")).toBe(true)
 		// The failing board rows are exactly this string; a leading code here would teach the wrong country.
 		expect(rows.some((row) => row.raw.startsWith("6001 "))).toBe(false)
 	})
 
-	it("writes the ZA shape — postcode LAST, in a field of its own after the region", async () => {
-		const tuple = { locality: "Cape Town", region: "Western Cape", country: "South Africa", cc: "ZA", locale: "en-ZA" }
-		const { rows } = await run(repeat({ ...tuple, postcode: "8001", postcodePlacement: "trailing_own_segment" }), [])
+	it("writes the IN shape — postcode on the REGION segment, ahead of the country", async () => {
+		const tuple = { locality: "Bengaluru", region: "Karnataka", country: "India", cc: "IN", locale: "en-IN" }
+		const { rows } = await run(repeat({ ...tuple, postcode: "560038", postcodePlacement: "after_region" }), [])
 
-		expect(rows.some((row) => row.raw === "Cape Town, Western Cape, South Africa, 8001")).toBe(true)
-		expect(rows.some((row) => row.raw.includes("Cape Town 8001"))).toBe(false)
+		expect(rows.some((row) => row.raw === "Bengaluru, Karnataka 560038, India")).toBe(true)
+		// The `in_structured` board row reads exactly this. A code on the locality segment would be VE's shape.
+		expect(rows.some((row) => row.raw.includes("Bengaluru 560038"))).toBe(false)
 	})
 
 	it("still labels every postcode-carrying row as the STRUCTURED source, whatever the placement", async () => {
@@ -69,8 +70,8 @@ describe("trailing-region postcode placement", () => {
 		const { rows } = await run(
 			[
 				{ ...base, postcode: "07691", postcodePlacement: "leading" },
-				{ ...base, postcode: "6001", postcodePlacement: "trailing_same_segment" },
-				{ ...base, postcode: "8001", postcodePlacement: "trailing_own_segment" },
+				{ ...base, postcode: "6001", postcodePlacement: "after_locality" },
+				{ ...base, postcode: "560038", postcodePlacement: "after_region" },
 			],
 			[]
 		)
@@ -80,7 +81,7 @@ describe("trailing-region postcode placement", () => {
 
 	it("leaves a tuple with no postcode alone under every placement", async () => {
 		// The bare admin tail is the shard's original surface and the placements must not touch it.
-		for (const placement of ["leading", "trailing_same_segment", "trailing_own_segment"] as const) {
+		for (const placement of ["leading", "after_locality", "after_region"] as const) {
 			const { rows } = await run(repeat({ ...base, postcodePlacement: placement }), [])
 
 			expect(rows.every((row) => /^Portopetro, Illes Balears(, Spain)?$/.test(row.raw))).toBe(true)
