@@ -77,6 +77,14 @@ export interface FlatTreeNode {
 	confidence: number
 	start: number
 	end: number
+	/**
+	 * Where the assertion came from — `rule`, `neural`, `resolver`.
+	 *
+	 * Carried because a span that keeps its tag, its text and its confidence while its source moves from `resolver` to
+	 * `neural` has lost its gazetteer backing, and a projection that drops this reports that span as unchanged.
+	 */
+	source?: string
+	sourceID?: string
 }
 
 /**
@@ -113,6 +121,8 @@ export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 			confidence: node.confidence,
 			start: node.start,
 			end: node.end,
+			...(node.source === undefined ? {} : { source: node.source }),
+			...(node.sourceID === undefined ? {} : { sourceID: node.sourceID }),
 		}))
 		.toSorted((a, b) => a.start - b.start)
 }

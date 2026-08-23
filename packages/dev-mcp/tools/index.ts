@@ -32,6 +32,7 @@ import { contractTool } from "./contract.ts"
 import { coverageTool } from "./coverage.ts"
 import { daemonTool } from "./daemon.ts"
 import { diagnoseTool } from "./diagnose.ts"
+import { diffParseTool } from "./diff-parse.ts"
 import { inputsTool } from "./inputs.ts"
 import { lookupTool } from "./lookup.ts"
 import { minimalPairsTool } from "./minimal-pairs.ts"
@@ -70,6 +71,7 @@ const FACTORIES = [
 	rigTool,
 	provenanceTool,
 	coverageTool,
+	diffParseTool,
 	sourcesTool,
 	symbolTool,
 	vocabTool,
