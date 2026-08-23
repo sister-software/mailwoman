@@ -237,8 +237,12 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
  * Project a `ParquetRow` for `appendRow`. parquetjs treats `null` as "skip" for `optional` columns; passing it
  * explicitly is fine, but cleaner to omit so the on-disk Definition Levels match what PyArrow / DuckDB / etc. produce
  * for the same logical row.
+ *
+ * EXPORTED because it was not, and a second producer hand-rolled its own copy that predates the v0.5.0 span triple
+ * (#519). `LABELED_ROW_SCHEMA` declares those three columns `repeated` and NOT optional, so the copy wrote empty arrays
+ * under a schema promising values. Every new column has to arrive here once, not once per writer.
  */
-function appendShape(row: ParquetRow): ParquetRow {
+export function appendShape(row: ParquetRow): ParquetRow {
 	const out: ParquetRow = {
 		raw: row.raw,
 		tokens: row.tokens,
