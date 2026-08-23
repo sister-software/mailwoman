@@ -82,7 +82,7 @@ Before launching, write down:
 
 **A fine-tune cannot introduce a source the base never saw.** If the corpus adds a new source, the honest
 shapes are a from-scratch base or an explicitly-scoped additive fine-tune with the null in hand. The
-from-scratch recipe is `v4.4.0-suffix-boundary-v2-base-60k.yaml` — 60k steps, no `init_from`, no EWC,
+from-scratch recipe is `corpus-python/src/mailwoman_train/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml` — 60k steps, no `init_from`, no EWC,
 ~4.3 h and ~$9 on an A100-40GB.
 
 ## Step 4 — grade with the ADDRESS in view
