@@ -73,8 +73,11 @@ describe("fetchGeonamesPostal", () => {
 		// The durable half: a later reader learns VE is not published without spending the fetch to rediscover it.
 		expect(manifest.unavailable).toEqual(["VE"])
 		expect(manifest.files).toHaveLength(1)
-		expect(manifest.files[0].country).toBe("PT")
-		expect(manifest.files[0].bytes).toBe("pt-payload".length)
+
+		const [pt] = manifest.files
+
+		expect(pt?.country).toBe("PT")
+		expect(pt?.bytes).toBe("pt-payload".length)
 		expect(manifest.license).toBe("CC-BY-4.0")
 		expect(manifest.attribution).toBe("GeoNames")
 	})

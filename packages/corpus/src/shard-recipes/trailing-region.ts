@@ -34,6 +34,19 @@
  *   locality. So the added surfaces are postcode-prefixed and house-number-plus-postcode-prefixed, and
  *   the shard still needs no street names.
  *
+ *   POSTCODE PLACEMENT. The three surfaces above are the LEADING form, and for a long time they were the
+ *   only one, so this shard taught only the countries that write the postcode first. That is a real gap
+ *   and not a stylistic one, because the same digits change TAG with position. Measured on the shipped
+ *   model: `Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number` and loses the locality
+ *   into the street, while `6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers
+ *   `locality: Barcelona`. `Sandton 2196` vs `2196 Sandton` behaves the same way, and no decode-time
+ *   lever moves it — `postcodeShapeCoherence: true` leaves all eight VE board rows byte-identical.
+ *
+ *   So the tuple's `postcodePlacement` selects the surface, and it keeps apart two trailing conventions
+ *   that are NOT the same shape: VE writes `Barcelona 6001, Anzoátegui` (same segment, ahead of the
+ *   region) and ZA writes `…, Cape Town, 8001` (its own segment, last). A tuple with no placement means
+ *   `leading`, so a tuples file written before the field existed produces the rows it always did.
+ *
  *   The (postcode, locality, region) triples are REAL — `postalcode-intl.db` parents joined to admin
  *   localities and their region ancestors — with one filter that had to be measured rather than assumed.
  *   A handful of localities act as catch-all parents: `Schwedt/Oder` claims 9,222 postcodes, `Korb`
@@ -42,7 +55,14 @@
  *   fact about a place; the postcode is not, because it does.
  */
 
-import { alignAndWrite, makeMulberry32, readTuples, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import {
+	alignAndWrite,
+	makeMulberry32,
+	type PostcodePlacement,
+	readTuples,
+	type ShardRecipe,
+	shardSourceID,
+} from "./scaffold.ts"
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,
@@ -95,8 +115,16 @@ export const trailingRegionRecipe: ShardRecipe = {
 				components["house_number"] = houseNumber
 			}
 
-			const tail = withCountry ? `${locality}, ${region}, ${country}` : `${locality}, ${region}`
-			const head = withHouseNumber ? `${houseNumber}, ${postcode} ` : postcode ? `${postcode} ` : ""
+			const placement = (t.postcodePlacement as PostcodePlacement | undefined) ?? "leading"
+			// Both trailing placements put the code in the ADMIN tail; only `trailing_own_segment` gives it a field of
+			// its own, after the region.
+			const localitySegment = postcode && placement === "trailing_same_segment" ? `${locality} ${postcode}` : locality
+			const adminTail = withCountry ? `${localitySegment}, ${region}, ${country}` : `${localitySegment}, ${region}`
+			const tail = postcode && placement === "trailing_own_segment" ? `${adminTail}, ${postcode}` : adminTail
+			// A leading postcode joins the head, ahead of the locality; the other two are already in the tail, so the
+			// head carries at most the house number.
+			const leadingPostcode = postcode && placement === "leading" ? `${postcode} ` : ""
+			const head = withHouseNumber ? `${houseNumber}, ${leadingPostcode}` : leadingPostcode
 			const raw = `${head}${tail}`
 			// A DISTINCT source for the structured rows. The sampler buckets by `source` and weights each bucket,
 			// so emitting these under `synth-trailing-region` would pool them with the 88,904 bare rows and make

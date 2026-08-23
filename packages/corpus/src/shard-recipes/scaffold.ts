@@ -29,6 +29,22 @@ export function shardSourceID(adapterID: string, parts: Record<string, string | 
 }
 
 /**
+ * Where a country's convention writes the postcode relative to the locality.
+ *
+ * Load-bearing rather than cosmetic: the same digits change TAG with position. Measured on the shipped model,
+ * `Heladería Frappé Manía, Avenida Country Club, Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number`
+ * and loses the locality to the street, while the identical row written `… 6001 Barcelona, Anzoátegui, Venezuela` tags
+ * it `postcode` and recovers `locality: Barcelona`. Same for `Sandton 2196` vs `2196 Sandton`. So a shard that emits
+ * only one placement teaches only the countries that use it.
+ *
+ * - `leading` — `«postcode» «locality», «region»` (FR, DE, ES, IT). The default, and what every tuple written before this
+ *   field existed means.
+ * - `trailing_same_segment` — `«locality» «postcode», «region»` (VE: `Barcelona 6001, Anzoátegui, Venezuela`).
+ * - `trailing_own_segment` — `«locality», «postcode»`, the code last in a field of its own (ZA: `…, Cape Town, 8001`).
+ */
+export type PostcodePlacement = "leading" | "trailing_same_segment" | "trailing_own_segment"
+
+/**
  * A (locality, region, postcode, country) source tuple — the input to tuples-mode recipes.
  */
 export interface ShardTuple {
@@ -36,6 +52,11 @@ export interface ShardTuple {
 	region?: string
 	postcode?: string
 	country?: string
+	/**
+	 * Defaults to `leading` when absent, which is what every tuple file written before this field existed means — so an
+	 * old tuples file produces byte-identical rows.
+	 */
+	postcodePlacement?: PostcodePlacement
 	[k: string]: unknown
 }
 
