@@ -106,7 +106,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		const wanted = options.countries
 			?.split(",")
 			.map((c) => c.trim().toUpperCase())
-			.filter(Boolean)
+			.filter((c) => c.length > 0)
 
 		writeRawStdout(`${render(report, wanted)}\n`)
 
