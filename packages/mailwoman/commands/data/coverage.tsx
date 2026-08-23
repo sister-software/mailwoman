@@ -72,23 +72,24 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 			: undefined
 
 		const versioned = String(dataRootPath("corpus", "versioned"))
-		let manifestPath = ""
+		const manifests: Array<{ path: string; at: number }> = []
 
+		// By MTIME, not directory name. Corpus versions sort neither lexically (`v0.9.9` beats `v0.26.0`, because
+		// `9` > `2`) nor numerically (`v8-jp-full` beats both) — measured: the name sort picked `v0.9.9` and silently
+		// reported the coverage of a corpus nine versions old. The report always names the manifest it used.
 		if (existsSync(versioned)) {
-			for (const version of readdirSync(versioned).toSorted().toReversed()) {
+			for (const version of readdirSync(versioned)) {
 				for (const inner of readdirSync(`${versioned}/${version}`)) {
 					const candidate = `${versioned}/${version}/${inner}/MANIFEST.json`
 
 					if (existsSync(candidate)) {
-						manifestPath = candidate
-
-						break
+						manifests.push({ path: candidate, at: statSync(candidate).mtimeMs })
 					}
 				}
-
-				if (manifestPath) break
 			}
 		}
+
+		const manifestPath = manifests.toSorted((a, b) => b.at - a.at)[0]?.path ?? ""
 
 		const report = await censusCoverage({
 			configPath: options.config ?? (newest ? `${configDir}/${newest}` : ""),
