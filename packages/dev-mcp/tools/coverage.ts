@@ -40,22 +40,31 @@ function newestConfig(repoRoot: string): string {
 }
 
 /**
- * The newest corpus manifest — the corpus a run would train on.
+ * The newest corpus manifest, by MODIFICATION TIME.
+ *
+ * Not by directory name. Corpus versions are `v0.9.9-si-bare-village`, `v0.26.0-trailing-region-leftcontext`,
+ * `v8-jp-full-…` — a set that sorts neither lexically (`v0.9.9` beats `v0.26.0`, because `9` > `2`) nor numerically
+ * (`v8` beats both). Measured: the name sort picked `v0.9.9` and reported the coverage of a corpus nine versions old,
+ * with nothing in the output to say it had. The report always names the manifest it used.
  */
 function newestManifest(): string {
 	const root = String(dataRootPath("corpus", "versioned"))
 
 	if (!existsSync(root)) return ""
 
-	for (const version of readdirSync(root).toSorted().toReversed()) {
+	const found: Array<{ path: string; at: number }> = []
+
+	for (const version of readdirSync(root)) {
 		for (const inner of readdirSync(`${root}/${version}`)) {
 			const candidate = `${root}/${version}/${inner}/MANIFEST.json`
 
-			if (existsSync(candidate)) return candidate
+			if (existsSync(candidate)) {
+				found.push({ path: candidate, at: statSync(candidate).mtimeMs })
+			}
 		}
 	}
 
-	return ""
+	return found.toSorted((a, b) => b.at - a.at)[0]?.path ?? ""
 }
 
 /**
