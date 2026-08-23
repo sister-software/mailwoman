@@ -33,6 +33,11 @@
  *       Ouverte 2.0).
  *   - `nad` — US DOT National Address Database (~97M address points, ArcGIS FeatureServer). Tier A
  *       (US PD).
+ *   - `geonames-postal` — GeoNames per-country postal exports (~80 countries). Tier B (CC-BY-4.0,
+ *       attribute "GeoNames"). The only source in this family carrying `(postcode, locality, region)`
+ *       with the names INLINE, which is why it exists: the `parent_id` join route covers exactly five
+ *       countries and the nearest-centroid fallback measured under 50% agreement on four of those five.
+ *       GeoNames does not publish every country — Venezuela 404s.
  *   - `hrsa` — HRSA Health Center Service Delivery Sites (federal). Tier A (US PD).
  *   - `imls-pls` — IMLS Public Libraries Survey, outlet-level (~17K library branches, FY 2023).
  *       Tier A (US PD).
@@ -93,6 +98,7 @@
  */
 
 import { fetchBan } from "./ban.ts"
+import { fetchGeonamesPostal } from "./geonames-postal.ts"
 import { fetchHRSA } from "./hrsa.ts"
 import { fetchIMLSPLS } from "./imls-pls.ts"
 import { fetchNAD } from "./nad.ts"
@@ -105,6 +111,7 @@ import { fetchTigerFull } from "./tiger-full.ts"
 import { fetchWikidataSubVenue } from "./wikidata-subvenue.ts"
 
 export * from "./ban.ts"
+export * from "./geonames-postal.ts"
 export * from "./hrsa.ts"
 export * from "./imls-pls.ts"
 export * from "./nad.ts"
@@ -122,6 +129,7 @@ export * from "./wikidata-subvenue.ts"
 export const FETCH_SOURCES = {
 	ban: fetchBan,
 	nad: fetchNAD,
+	"geonames-postal": fetchGeonamesPostal,
 	hrsa: fetchHRSA,
 	"imls-pls": fetchIMLSPLS,
 	nppes: fetchNPPES,
