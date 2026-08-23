@@ -245,9 +245,21 @@ export function synthesizeHouseVenueRow(
 	// 75005 Paris" — the v4.0.0 gauntlet's venue-led failure family, the run-2 contingency's exact
 	// target shape). GB (#1366) renders locality-then-postcode with NO region and NO comma between
 	// them ("Ye Three Lords, 27 Minories, London EC3N 1DE" — the third tail the shard must teach).
-	// Every other country keeps the original US-order tail.
+	// VE (#1821) renders locality-then-postcode and KEEPS the region after it. Every other country
+	// keeps the original US-order tail, which is itself the `after_region` surface — `Springfield, IL
+	// 02101` and `Bengaluru, Karnataka 560038` are the same shape.
 	const frOrder = base.country === "FR"
 	const gbOrder = base.country === "GB"
+	// VE writes the code on the LOCALITY segment with the region still after it — `…, Barcelona 6001, Anzoátegui,
+	// Venezuela`, the four `ve_city_postcode_trailing_state` board rows. That is neither GB's form (which drops the
+	// region) nor the default (which puts the region before the code), so it needs its own branch.
+	//
+	// It belongs HERE rather than in a standalone admin shard, and that is measured: three trailing-region shards
+	// carrying only admin segments all graded DO-NOT-SHIP, and the way they failed was by damaging the classes they did
+	// not contain — v4.8.0 turned `Ye Three Lords, 27 Minories, London EC3N 1DE` into `locality: "Ye Three Lords"`,
+	// losing the venue and the street. Every row this synthesizer emits carries a venue, a street AND a house number,
+	// so the surface is taught with the alternatives present rather than against them.
+	const veOrder = base.country === "VE"
 
 	// GB rows draw from the GB pool 70% of the time (institutional/archaic/brand-dash-place forms,
 	// incl. directional-led names — the #1366 target class) and the shared pool otherwise; real GB
@@ -280,7 +292,9 @@ export function synthesizeHouseVenueRow(
 		? `${base.postcode} ${base.locality}`
 		: gbOrder
 			? `${base.locality} ${base.postcode}`
-			: `${base.locality}, ${base.region} ${base.postcode}`
+			: veOrder
+				? `${base.locality} ${base.postcode}, ${base.region}`
+				: `${base.locality}, ${base.region} ${base.postcode}`
 
 	// Trailing country surface (Addendum 3): appended AFTER the tail in every order, tagged.
 	const countrySurfaces = COUNTRY_SURFACES[base.country]

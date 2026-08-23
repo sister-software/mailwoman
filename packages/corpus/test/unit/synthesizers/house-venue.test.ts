@@ -112,6 +112,51 @@ describe("synthesizeHouseVenueRow", () => {
 		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
 	})
 
+	it("VE renders locality-then-postcode and KEEPS the region after it (#1821)", () => {
+		// `…, Barcelona 6001, Anzoátegui, Venezuela` — the four `ve_city_postcode_trailing_state` board rows, which the
+		// shipped model reads as `«street» «house_number»` and lands 573 km from. Neither GB's tail (which drops the
+		// region) nor the default (which puts the region BEFORE the code) is this shape.
+		const veTuple: HouseVenueBaseTuple = {
+			locality: "Barcelona",
+			region: "Anzoátegui",
+			postcode: "6001",
+			country: "VE",
+			street: "Avenida Country Club",
+			houseNumber: "15",
+		}
+
+		const row = synthesizeHouseVenueRow(veTuple, {
+			random: makeLcg(9),
+			forceTemplate: "venue-before-street",
+		})
+
+		expect(row).not.toBeNull()
+		expect(row!.raw).toMatch(/^.+, 15 Avenida Country Club, Barcelona 6001, Anzoátegui/)
+		// The region SURVIVES — that is what separates this tail from GB's.
+		expect(row!.components.region).toBe("Anzoátegui")
+		expect(row!.components.postcode).toBe("6001")
+		expect(row!.components.locality).toBe("Barcelona")
+		// And the classes the standalone admin-only shard destroyed are all present in the same row.
+		expect(hasHouseNumberAndVenue(row!.components)).toBe(true)
+		expect(row!.components.street).toBe("Avenida Country Club")
+	})
+
+	it("leaves every non-VE country's tail exactly as it was", () => {
+		// The branch is country-gated, and the shipped `house-venue` shard is FR + US only (116,244 rows, zero VE), so
+		// this addition cannot move an existing row. Pinned rather than asserted.
+		for (const [country, pattern] of [
+			["US", /Boston, MA 02101/],
+			["FR", /75005 Paris/],
+		] as const) {
+			const row = synthesizeHouseVenueRow(
+				country === "US" ? TUPLE : { locality: "Paris", region: "Île-de-France", postcode: "75005", country: "FR" },
+				{ random: makeLcg(3), forceTemplate: "venue-after-street" }
+			)
+
+			expect(row!.raw).toMatch(pattern)
+		}
+	})
+
 	it("GB venue-after-street keeps the GB tail", () => {
 		const row = synthesizeHouseVenueRow(
 			{
