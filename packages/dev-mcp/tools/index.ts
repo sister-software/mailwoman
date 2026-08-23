@@ -40,6 +40,7 @@ import { reliabilityTool } from "./reliability.ts"
 import { rigTool } from "./rig.ts"
 import { runTool } from "./run.ts"
 import { runsTool } from "./runs.ts"
+import { sourcesTool } from "./sources.ts"
 import { symbolTool } from "./symbol.ts"
 import { traceTool } from "./trace.ts"
 import { vocabTool } from "./vocab.ts"
@@ -67,6 +68,7 @@ const FACTORIES = [
 	reliabilityTool,
 	rigTool,
 	provenanceTool,
+	sourcesTool,
 	symbolTool,
 	vocabTool,
 	runsTool,

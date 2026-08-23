@@ -105,6 +105,11 @@
 			"default": "./out/compiled-tree.js",
 			"types": "./out/compiled-tree.d.ts"
 		},
+		"./source-census": {
+			"node": "./source-census.ts",
+			"default": "./out/source-census.js",
+			"types": "./out/source-census.d.ts"
+		},
 		"./tree-fingerprint": {
 			"node": "./tree-fingerprint.ts",
 			"default": "./out/tree-fingerprint.js",
