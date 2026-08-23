@@ -29,6 +29,7 @@ import { censusTool } from "./census.ts"
 import { compareTool } from "./compare.ts"
 import { constraintsTool } from "./constraints.ts"
 import { contractTool } from "./contract.ts"
+import { coverageTool } from "./coverage.ts"
 import { daemonTool } from "./daemon.ts"
 import { diagnoseTool } from "./diagnose.ts"
 import { inputsTool } from "./inputs.ts"
@@ -68,6 +69,7 @@ const FACTORIES = [
 	reliabilityTool,
 	rigTool,
 	provenanceTool,
+	coverageTool,
 	sourcesTool,
 	symbolTool,
 	vocabTool,
