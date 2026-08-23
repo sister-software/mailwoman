@@ -54,6 +54,11 @@
 			"default": "./out/sdk/census-types.js",
 			"types": "./out/sdk/census-types.d.ts"
 		},
+		"./sdk/map-link": {
+			"node": "./sdk/map-link.ts",
+			"default": "./out/sdk/map-link.js",
+			"types": "./out/sdk/map-link.d.ts"
+		},
 		"./sdk/google-client": {
 			"node": "./sdk/google-client.ts",
 			"default": "./out/sdk/google-client.js",
