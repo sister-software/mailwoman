@@ -12,7 +12,7 @@
  */
 
 import { diffParse, isChange, renderParseDiff } from "@mailwoman/core/decoder/parse-diff"
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
+import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder/types"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -20,16 +20,17 @@ import { describe, expect, it } from "vitest"
  */
 function tree(...nodes: Array<[string, string, number, number, number, string?]>): AddressTree {
 	return {
-		roots: nodes.map(([tag, value, start, end, confidence, source]) => {
-			const node = { tag, value, start, end, confidence, children: [] } as unknown as AddressNode
+		raw: INPUT,
+		roots: nodes.map(([tag, value, start, end, confidence, source]): AddressNode => {
+			const node: AddressNode = { tag: tag as ComponentTag, value, start, end, confidence, children: [] }
 
 			if (source) {
-				;(node as { source?: string }).source = source
+				node.source = source
 			}
 
 			return node
 		}),
-	} as unknown as AddressTree
+	}
 }
 
 const INPUT = "Ye Three Lords, 27 Minories, London EC3N 1DE"

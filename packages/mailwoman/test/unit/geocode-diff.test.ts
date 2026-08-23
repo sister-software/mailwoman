@@ -10,7 +10,7 @@
  *   no amount of model work touches.
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
 import { diffGeocode, renderGeocodeDiff, type GeocodeArm } from "mailwoman/geocode-diff"
 import { describe, expect, it } from "vitest"
 
@@ -21,25 +21,29 @@ function tree(
 	...nodes: Array<[string, string, number, number, number, string?, number?, number?, number?]>
 ): AddressTree {
 	return {
-		roots: nodes.map(([tag, value, start, end, confidence, placeID, lat, lon, candidates]) => {
-			const node = { tag, value, start, end, confidence, children: [] } as unknown as Record<string, unknown>
+		raw: INPUT,
+		roots: nodes.map(([tag, value, start, end, confidence, placeID, lat, lon, candidates]): AddressNode => {
+			const node: AddressNode = { tag: tag as ComponentTag, value, start, end, confidence, children: [] }
 
 			if (placeID) {
-				node["placeID"] = placeID
-			}
-			if (lat !== undefined) {
-				node["lat"] = lat
-			}
-			if (lon !== undefined) {
-				node["lon"] = lon
-			}
-			if (candidates !== undefined) {
-				node["alternatives"] = Array.from({ length: candidates }, () => ({}))
+				node.placeID = placeID
 			}
 
-			return node as unknown as AddressNode
+			if (lat !== undefined) {
+				node.lat = lat
+			}
+
+			if (lon !== undefined) {
+				node.lon = lon
+			}
+
+			if (candidates !== undefined) {
+				node.alternatives = Array.from({ length: candidates }, () => ({}))
+			}
+
+			return node
 		}),
-	} as unknown as AddressTree
+	}
 }
 
 const INPUT = "27 Minories, London EC3N 1DE"
