@@ -112,11 +112,17 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 
 	const dataRoot = String(mailwomanDataRoot())
 
+	// wof-hot.db is NOT a data-root artifact: it is the demo-stage sidecar the promotion gate's
+	// demo-cascade leg probes (and silently skips without, #524). Its ladder is shared with the gate so
+	// this report states the path the gate will actually look at.
+	const { resolveWOFHotDB } = await import("mailwoman/eval-harness/wof-hot-db")
+
 	const standard: Array<readonly [string, string]> = [
 		["admin", String(dataRootPath("wof", "admin-global-priority.db"))],
 		["candidate", String(dataRootPath("wof", "candidate.db"))],
 		["importance", String(dataRootPath("wof", "admin-global-priority-importance.db"))],
 		["poi", String(dataRootPath("poi", "poi.db"))],
+		["wof-hot", resolveWOFHotDB()],
 	]
 
 	const artifacts = [

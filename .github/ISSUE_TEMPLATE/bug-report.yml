@@ -1,0 +1,132 @@
+name: Bug report
+description: A measured defect. Expected vs observed, with the failing input in view.
+title: "Bug: <one factual line>"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lead with the observed result, not a greeting. State facts, not
+        judgments. Rules: `.claude/output-styles/mailwoman-development.md`. Preserve the
+        original spelling, punctuation, casing, and script of every address.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: The glossary tag this issue belongs to. A GitHub label with the same name exists.
+      options:
+        - evals
+        - training
+        - resolver
+        - geocoding
+        - corpus
+        - infrastructure
+        - postcode
+        - tokenizer
+        - street
+        - venue
+        - locality
+        - gates
+        - multilingual
+        - architecture
+        - neural
+        - record-matching
+        - documentation
+        - Other
+  - type: input
+    id: input
+    attributes:
+      label: Failing input
+      description: The exact address string or API surface. Original spelling preserved.
+      placeholder: "3 Mien, 64 Middlesex St, London E1 7EZ"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: The correct output, per component or coordinate.
+      placeholder: venue 3 Mien; street 64 Middlesex St; London E1 7EZ
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed result
+      description: What the system returned or emitted. Include the raw output.
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: First stage that diverges
+      description: The earliest stage where expected and observed part ways.
+      options:
+        - Parse (model)
+        - Decode / repair
+        - Phrase grouper
+        - Resolver / ranking
+        - Gazetteer / retrieval
+        - Other (state it under Evidence)
+        - Unknown
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and scope
+      description: |
+        The measured quantity with its denominator, threshold, artifact, and
+        comparison arm. Name the tool that produced it (the mwdev_* suite, or
+        the CLI command and version). A measured zero states the coverage it
+        was measured across; an unknown says the system did not measure.
+      placeholder: |
+        41/58 rows resolved on the board slice (baseline 40/58).
+        The one differing row is `07691 Portopetro, Illes Balears, Spain`.
+        Measured with mwdev_run over the full board.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Artifacts under test
+      description: Model or weights version, gazetteer artifact, WOF repo vintage (mwdev_provenance), commit.
+      placeholder: "@mailwoman/neural-weights-en-us v0.9.9; gazetteer candidate.db; HEAD abc1234"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: The exact command or steps. Long literal output goes in a code block.
+      placeholder: |
+        node packages/mailwoman/out/cli.js parse "07691 Portopetro, Illes Balears, Spain"
+    validations:
+      required: true
+  - type: textarea
+    id: whys
+    attributes:
+      label: Why chain (complete the rungs the evidence supports)
+      description: |
+        Tag each link observation / inference (LIKELY) / decision / unknown.
+        Stop at an actionable cause or an unverified assumption. Do not force
+        five levels.
+      value: |
+        1. Why did the final result fail?
+        2. Why did that stage choose the wrong value?
+        3. Why did its input or rule permit that choice?
+        4. Why did the test or pipeline fail to catch the condition?
+        5. Why does the system contract allow the condition?
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: The failing input appears verbatim in this report.
+          required: true
+        - label: Every number has its denominator.
+          required: true
+        - label: Every WOF id or row name carries the entity or address it names.
+          required: true
+        - label: No judgment word stands where a fact belongs.
+          required: true
