@@ -125,6 +125,27 @@ shapes demonstrated it. Moving the taught position moved the damage; it did not 
   disk carries a VE postcode. IN's `after_region` rows were the proxy and they did not generalize to
   VE's `after_locality` in any of the three runs.
 
+## The VE data question, closed
+
+"Get the data we're missing" deserves a definite answer for the country this arc was about. Every open
+source this project consumes was checked on 2026-08-23:
+
+| source                                                                               | VE postcodes                                       |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| WOF — every `postalcode-*.db` shard in the data root                                 | none                                               |
+| GeoNames postal (`download.geonames.org/export/zip/VE.zip`)                          | **HTTP 404** — not published                       |
+| OpenAddresses (`results.openaddresses.io/latest/run/ve/{countrywide,statewide}.zip`) | **HTTP 404**                                       |
+| Overture, local snapshot                                                             | `places` theme only; no addresses theme downloaded |
+
+So VE postcodes are not an acquisition someone forgot to run. They are absent from the open corpus this
+project is built on. The one avenue NOT checked is Overture's upstream `addresses` theme, which is not
+mirrored locally — worth one query before concluding it is unobtainable, not worth assuming it helps.
+
+That makes the VE question a product decision rather than a data-fetching task: either a synthetic
+4-digit code paired with a REAL (locality, region) pair from the WOF admin DB, or VE stays unfixed. The
+`house-venue` synthesizer now carries VE's tail ordering, so the shape has a home either way — see
+`packages/corpus/src/synthesizers/house-venue.ts`.
+
 ## Method notes worth keeping
 
 - **Grade the board, not the val loss.** All three runs reported `macro_f1` between 0.9203 and 0.9212
