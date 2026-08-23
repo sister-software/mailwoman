@@ -38,7 +38,9 @@ function commentReports(value: string): string[] {
 
 	const listeners = rule.create({
 		options: [],
-		sourceCode: { getAllComments: () => [comment] },
+		// `getText` is part of the shared `SourceCode` contract; `require-disable-reason` reads only the
+		// comment list, so the stub satisfies the type without pretending to carry a source buffer.
+		sourceCode: { getAllComments: () => [comment], getText: () => value },
 		report(descriptor) {
 			messages.push(descriptor.message)
 		},

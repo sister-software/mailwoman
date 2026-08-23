@@ -264,6 +264,13 @@ jobs:
       - name: Typecheck docs
         run: yarn typecheck:docs
 
+      # The repo-root tool configs belong to no build project: the root tsconfig is `"include": []`
+      # plus references, and a reference only reaches a workspace. So `oxlint.config.ts`, its plugin
+      # and that plugin's test were checked by nothing, and their errors showed in the editor alone —
+      # four of them, including a plugin reading AST fields its own private type mirror never declared.
+      - name: Typecheck lint config
+        run: yarn typecheck:lint-config
+
       # lint:python runs ruff via uvx — the runner image doesn't ship uv (bit 9ce83b40's push:
       # "command not found: uvx", exit 127).
       - name: Setup uv (ruff for lint:python)

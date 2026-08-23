@@ -13,51 +13,10 @@
  *   delimiters only; splitting on anything else is not a streaming shape and stays silent.
  */
 
-// The plugin-type declarations below mirror `@sister.software/oxlint-config`'s internal
-// `plugin-types.ts`, which the package deliberately does not export. Only the fields this rule
-// reads are declared.
-
-interface AstNode {
-	type: string
-	range: [number, number]
-	value?: unknown
-	name?: string
-	callee?: AstNode
-	object?: AstNode
-	property?: AstNode
-	arguments?: AstNode[]
-	expression?: AstNode
-	typeAnnotation?: AstNode
-	quasis?: { value?: { cooked?: string } }[]
-	expressions?: AstNode[]
-}
-
-interface RuleContext {
-	options: unknown[]
-	report(descriptor: { node: unknown; message: string }): void
-	sourceCode?: SourceCode
-	getSourceCode?(): SourceCode
-}
-
-interface CommentNode {
-	type: string
-	range: [number, number]
-	value: string
-}
-
-interface SourceCode {
-	getAllComments(): CommentNode[]
-}
-
-interface Rule {
-	meta: { name: string; type: string; schema: unknown[] }
-	create(context: RuleContext): Record<string, (node: AstNode) => void>
-}
-
-interface Plugin {
-	meta: { name: string }
-	rules: Record<string, Rule>
-}
+// The node shape is loose by design and a field is declared when a rule reads it — so a rule needing
+// one that is missing adds it THERE, not to a copy here. A private mirror lacks whatever the next
+// rule needs, and the gap surfaces as a type error inside the rule rather than as a missing field.
+import type { AstNode, Plugin, Rule, RuleContext } from "@sister.software/oxlint-config/plugin-types"
 
 /**
  * The delimiters the rule understands, each mapped to the spliterator entry point that streams it.

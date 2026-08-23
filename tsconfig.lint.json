@@ -1,0 +1,22 @@
+{
+	// Leaf type-check project for the repo-root tool configs — `oxlint.config.ts`, its plugin and that
+	// plugin's test, and `oxfmt.config.ts`. They belong to no build project: the root `tsconfig.json`
+	// is `"include": []` plus references, and a reference only reaches a workspace. So these four were
+	// checked by nothing, and their type errors appeared in the editor and nowhere else. Not part of
+	// the build graph (composite:false, noEmit) — invoked via `yarn typecheck:lint-config`.
+	"extends": "@sister.software/tsconfig/node",
+	"compilerOptions": {
+		"noEmit": true,
+		"erasableSyntaxOnly": true,
+		"emitDeclarationOnly": false,
+		"declaration": false,
+		"declarationMap": false,
+		"sourceMap": false,
+		"composite": false,
+		"incremental": false,
+		"checkJs": false,
+		"allowJs": false,
+		"rootDir": "."
+	},
+	"include": ["./oxlint.config.ts", "./oxlint.plugin.ts", "./oxlint.plugin.test.ts", "./oxfmt.config.ts"]
+}

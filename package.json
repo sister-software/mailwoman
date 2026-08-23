@@ -108,8 +108,9 @@
 		"test:coverage": "vitest --coverage",
 		"test:integration": "vitest --config vitest.slow.config.ts",
 		"test:unit": "vitest --config vitest.fast.config.ts",
-		"typecheck": "run-s compile typecheck:tests typecheck:docs",
+		"typecheck": "run-s compile typecheck:tests typecheck:docs typecheck:lint-config",
 		"typecheck:docs": "tsc -p docs/tsconfig.json --noEmit",
+		"typecheck:lint-config": "tsc -p tsconfig.lint.json",
 		"typecheck:scripts": "tsc -p scripts/tsconfig.json --noEmit",
 		"typecheck:tests": "node scripts/typecheck-tests.ts"
 	},
