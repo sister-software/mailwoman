@@ -43,6 +43,7 @@ import {
 } from "./candidate-ancestors-schema.ts"
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
 import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
+import { type CapitalIndex, capitalPreferenceLog10 } from "./capitals.ts"
 import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
 import { referentialFromPopulation } from "./place-importance-schema.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
@@ -65,6 +66,12 @@ export interface WOFCandidateTableLookupOpts {
 	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
 	 */
 	database?: DatabaseSync
+	/**
+	 * The capital-status ranking axis (#1880, `capitals.ts`) — bounded preference for a national capital / admin-1 seat
+	 * among same-name candidates on UNSCOPED lookups (no `near`, no `bias`). Absent → ranking is byte-identical to a
+	 * lookup constructed without it.
+	 */
+	capitals?: CapitalIndex
 }
 
 /**
@@ -157,6 +164,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	readonly #idToCountry = new Map<number, string>()
 	readonly #placetypeToID = new Map<string, number>()
 	readonly #idToPlacetype = new Map<number, string>()
+	readonly #capitals: CapitalIndex | undefined
 	/**
 	 * Prepared `(name_key, postcode)` probe for the #741 postal-city side-index — `undefined` when the
 	 * `postal_city_candidate` table isn't present, so a candidate.db built without it is byte-stable.
@@ -226,6 +234,8 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	readonly ancestors: ((id: number | string) => Ancestor[]) | undefined
 
 	constructor(opts: WOFCandidateTableLookupOpts) {
+		this.#capitals = opts.capitals
+
 		if (opts.database) {
 			this.#db = opts.database
 			this.#ownsDB = false
@@ -683,6 +693,20 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// ancestor), or a wrong parent degrades to today's behavior — never worse, recall-safe by construction.
 		const regionParentID = query.parentID || undefined
 
+		// The capital-status bonus (#1880) applies only on an UNSCOPED lookup: a `near`/`bias` query
+		// carries the user's own disambiguation signal, and the proximity re-rank downstream is the
+		// term that should answer it. `capitals` unset → undefined → `rankByPrimaryPreference` runs
+		// today's arithmetic bit for bit.
+		const capitals = this.#capitals
+
+		const capitalBonus =
+			capitals && !query.near && !(query.bias?.length ?? 0)
+				? (row: CandidateRow): number =>
+						capitalPreferenceLog10(
+							capitals.levelAt(this.#idToCountry.get(Number(row.country_id)), row.latitude, row.longitude)
+						)
+				: undefined
+
 		const probe = (nk: string, regionID: number | undefined, countryID?: number): Array<RankedRow<CandidateRow>> => {
 			const conds = ["name_key = ?", ...filters]
 			const params: Array<string | number> = [nk, ...filterParams]
@@ -716,7 +740,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 
 			const fetched = allRows<CandidateRow>(this.#db.prepare(sql), ...params, Math.max(limit, RERANK_FETCH))
 
-			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype)
+			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, capitalBonus)
 		}
 
 		// The exact → qualifier-strip → typo-fuzzy probe cascade, run at a fixed region scope. Region scoping

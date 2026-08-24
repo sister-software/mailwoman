@@ -69,6 +69,11 @@
 			"default": "./out/primary-preference.js",
 			"types": "./out/primary-preference.d.ts"
 		},
+		"./capitals": {
+			"node": "./capitals.ts",
+			"default": "./out/capitals.js",
+			"types": "./out/capitals.d.ts"
+		},
 		"./proximity-rerank": {
 			"node": "./proximity-rerank.ts",
 			"default": "./out/proximity-rerank.js",

@@ -17,6 +17,7 @@ import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#
 const sources = [
 	"ban",
 	"nad",
+	"geonames-dump",
 	"geonames-postal",
 	"hrsa",
 	"imls-pls",
@@ -76,6 +77,7 @@ const report = (line: string): void => console.error(line)
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
 	const {
 		fetchBan,
+		fetchGeonamesDumps,
 		fetchGeonamesPostal,
 		fetchHRSA,
 		fetchIMLSPLS,
@@ -105,6 +107,18 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					concurrency: options.concurrency,
 					startOID: options.startOid,
 					endOID: options.endOid,
+				},
+				report
+			)
+		case "geonames-dump":
+			return fetchGeonamesDumps(
+				{
+					...base,
+					// Undefined = every country the source's own countryInfo.txt catalogs; present dumps are skipped.
+					countries: options.countries
+						?.split(",")
+						.map((code) => code.trim())
+						.filter((code) => code.length > 0),
 				},
 				report
 			)

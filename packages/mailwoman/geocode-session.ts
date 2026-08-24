@@ -61,7 +61,12 @@ import {
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
-import { createResolverBackend, resolveCandidateDBPath, resolveWOFShardPaths } from "./resolver-backend.ts"
+import {
+	createResolverBackend,
+	loadCapitalIndex,
+	resolveCandidateDBPath,
+	resolveWOFShardPaths,
+} from "./resolver-backend.ts"
 
 //#region Contract
 
@@ -120,6 +125,12 @@ export interface GeocodeSessionOptions {
 	 * The opt-in venue tier (#1684's POI half) — see `GeocodeDeps.poiVenueTier`. Default OFF.
 	 */
 	poiVenueTier?: boolean
+	/**
+	 * The capital-status ranking axis (#1880) — bounded preference for a national capital / admin-1 seat among same-name
+	 * candidates on unscoped bare-name lookups. Candidate-backend only; loads `data/gazetteer/capitals-v1.json` and
+	 * THROWS if it is absent. Default OFF (D-rule).
+	 */
+	capitalTier?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
@@ -432,7 +443,13 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const resolverImportedAt = performance.now()
 
-	const lookup = createResolverBackend(mod, { candidateDB, dataRoot: options.dataRoot, wofPaths: wofPath })
+	const lookup = createResolverBackend(mod, {
+		candidateDB,
+		dataRoot: options.dataRoot,
+		wofPaths: wofPath,
+		...(options.capitalTier === true ? { capitals: loadCapitalIndex() } : {}),
+	})
+
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
