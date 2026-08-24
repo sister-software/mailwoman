@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/map-tui",
-	"version": "9.1.1",
+	"version": "9.1.0",
 	"description": "Terminal vector-tile map renderer — braille map frames for TUIs, from PMTiles.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"contributors": [
