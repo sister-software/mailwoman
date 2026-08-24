@@ -48,7 +48,7 @@ import { spawnSync } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { dataRootPath, md5File, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import {
 	linkForce,
 	pairIndexStaleReason,
