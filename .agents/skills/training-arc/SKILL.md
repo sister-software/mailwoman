@@ -133,6 +133,11 @@ measurement in this protocol.
   the loader's own gate (`country_weights.get(cc)`) first.
 - **`country_weights` is a hard admission filter.** A country absent from it trains on nothing
   regardless of how many rows exist. Check with `mwdev_coverage` before assuming a locale is taught.
+- **A hypothesis-bearing corpus change declares `data.required_corpus_receipts`.** Each receipt states
+  the minimum sampled rows and may constrain source, country, and a contiguous component sequence.
+  Run Modal's CPU-only `audit_epoch_mixture` before allocating a GPU; a missing source or a zero-dose
+  label order must stop the run. A source file or rendering branch is not evidence that the sampler
+  reaches the target rows (#1869).
 
 ## Reporting — the structure is part of the protocol
 
