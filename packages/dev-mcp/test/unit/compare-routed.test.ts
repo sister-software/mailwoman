@@ -66,7 +66,7 @@ describe("mwdev_compare — production board routing", () => {
 							components: {},
 							lat: null,
 							lon: null,
-							tier: "none",
+							tier: "admin",
 							locality: null,
 							region: null,
 							country: null,
