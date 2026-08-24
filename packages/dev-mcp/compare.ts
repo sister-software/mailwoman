@@ -44,7 +44,7 @@ import {
 	withheldVerdict,
 } from "./compare-helpers.ts"
 import { checkConfounds, crossEngineReading } from "./confound.ts"
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import { EFFECTIVE_KEY_FOR, type EngineConfig, type EngineRegistry } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
 import {
 	DISTANCE_THRESHOLDS_KM,
@@ -204,6 +204,16 @@ async function compareMailwomanArms(
 		throw new Error(
 			`Arms were built against different source trees (${engineA.fingerprint.digest} vs ` +
 				`${engineB.fingerprint.digest}). That is not a comparison. Call mwdev_restart and re-run.`
+		)
+	}
+
+	const declaredConfigKeys = options.declared.filter((key) => key in EFFECTIVE_KEY_FOR)
+
+	if (declaredConfigKeys.length && engineA.engineID === engineB.engineID) {
+		throw new Error(
+			`The comparison declares EngineConfig key${declaredConfigKeys.length === 1 ? "" : "s"} ` +
+				`${declaredConfigKeys.join(", ")} as variable, but both arms resolved to engine ${engineA.engineID}. ` +
+				"Refusing a comparison in which the declared configuration variable did not produce distinct engines."
 		)
 	}
 

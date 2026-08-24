@@ -149,12 +149,19 @@ interface CorpusCensus {
  * Arrow list columns arrive as `{list:[{element:v}]}`. Reading one as a plain array yields nothing and every
  * label-based count comes back zero — a false negative that looks exactly like a real absence.
  */
-function unwrapList(value: unknown): unknown[] {
-	if (Array.isArray(value)) return value
+export function normalizeArrowListColumn(value: unknown, column: string): string[] {
+	const entries = Array.isArray(value)
+		? value
+		: Array.isArray((value as { list?: unknown })?.list)
+			? (value as { list: unknown[] }).list.map((entry) => (entry as { element?: unknown })?.element ?? entry)
+			: null
 
-	const list = (value as { list?: unknown })?.list
+	if (entries?.every((entry): entry is string => typeof entry === "string")) return entries
 
-	return Array.isArray(list) ? list.map((entry) => (entry as { element?: unknown })?.element ?? entry) : []
+	throw new Error(
+		`Corpus Arrow reader requested ${column}, but the column was absent or unreadable; ` +
+			"refusing to report an empty count from a partial row."
+	)
 }
 
 const STREET_LABEL = /(^|-)street($|_)|house_number/
@@ -216,7 +223,7 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 
 				rows[country] = (rows[country] ?? 0) + 1
 
-				if (unwrapList(record["labels"]).some((label) => STREET_LABEL.test(String(label)))) {
+				if (normalizeArrowListColumn(record["labels"], "labels").some((label) => STREET_LABEL.test(String(label)))) {
 					streetRows[country] = (streetRows[country] ?? 0) + 1
 				}
 

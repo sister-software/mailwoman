@@ -74,6 +74,21 @@ describe("ARM_SPEC_SCHEMA", () => {
 	it("still accepts a bare config", () => {
 		expect(ARM_SPEC_SCHEMA.parse({ locale: "fr-FR" })).toMatchObject({ locale: "fr-FR" })
 	})
+
+	it("refuses an unknown bare-config key instead of stripping it", () => {
+		expect(() => ARM_SPEC_SCHEMA.parse({ weightsCacheRoot: "/tmp/candidate" })).toThrow(/Unrecognized key/)
+		expect(() => normalizeArmSpec({ weightsCacheRoot: "/tmp/candidate" }, "b")).toThrow(/Unrecognized key/)
+	})
+
+	it("refuses an unknown key in an explicit mailwoman config", () => {
+		expect(() => ARM_SPEC_SCHEMA.parse({ kind: "mailwoman", config: { weightsCacheRoot: "/tmp/candidate" } })).toThrow(
+			/Unrecognized key/
+		)
+
+		expect(() => normalizeArmSpec({ kind: "mailwoman", config: { weightsCacheRoot: "/tmp/candidate" } }, "b")).toThrow(
+			/Unrecognized key/
+		)
+	})
 })
 
 describe("armLabel", () => {

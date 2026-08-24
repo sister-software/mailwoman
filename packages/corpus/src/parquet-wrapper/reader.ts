@@ -67,6 +67,15 @@ export class ParquetReader<T extends ParquetRecordLike> extends BaseParquetReade
 	 * caller wanting the whole record should use.
 	 */
 	public async *project<K extends keyof T>(...columns: K[]): AsyncGenerator<Pick<T, K>, void, unknown> {
+		const missing = columns.filter((column) => !Object.hasOwn(this.schema.schema, column))
+
+		if (missing.length) {
+			throw new Error(
+				`Parquet projection requested column${missing.length === 1 ? "" : "s"} absent from the file schema: ` +
+					missing.map(String).join(", ")
+			)
+		}
+
 		const cursor = this.getCursor(columns.map((column) => [column as string]))
 
 		for (;;) {
