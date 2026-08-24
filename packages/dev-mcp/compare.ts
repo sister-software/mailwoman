@@ -43,8 +43,8 @@ import {
 	resolveGradeMode,
 	withheldVerdict,
 } from "./compare-helpers.ts"
-import { checkConfounds, crossEngineReading } from "./confound.ts"
-import { EFFECTIVE_KEY_FOR, type EngineConfig, type EngineRegistry } from "./engine-registry.ts"
+import { crossEngineReading } from "./confound.ts"
+import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
 import {
 	DISTANCE_THRESHOLDS_KM,
@@ -57,6 +57,7 @@ import {
 } from "./geo-grade.ts"
 import { gradeRow, significance } from "./grade.ts"
 import { resolveInputSet, type InputSetRef, type ResolvedInput, type ResolvedInputSet } from "./input-sets.ts"
+import { prepareMailwomanArms } from "./mailwoman-comparison-arms.ts"
 import {
 	answerFromOracle,
 	createOracleClient,
@@ -122,9 +123,11 @@ interface CompareOptions {
 	stratifyBy?: StratumKey
 	grade: GradeRequest
 	gradeThresholdKm: number
+	executionPath: "single-config" | "board-routed"
 }
 
 export interface CompareDeps {
+	buildRoutedMailwomanArm?: Parameters<typeof prepareMailwomanArms>[6]["buildRoutedMailwomanArm"]
 	/**
 	 * How an external arm's client is built.
 	 *
@@ -171,6 +174,7 @@ export async function runCompare(
 		...(args["stratify_by"] === undefined ? {} : { stratifyBy: assertedStratum(args["stratify_by"] as string) }),
 		grade: (args["grade"] as GradeRequest | undefined) ?? "auto",
 		gradeThresholdKm: (args["grade_threshold_km"] as number | undefined) ?? DEFAULT_GRADE_THRESHOLD_KM,
+		executionPath: (args["execution_path"] as CompareOptions["executionPath"] | undefined) ?? "single-config",
 	}
 
 	const armA = normalizeArmSpec(options.armA, "a")
@@ -195,29 +199,10 @@ async function compareMailwomanArms(
 	options: CompareOptions,
 	deps: CompareDeps
 ): Promise<unknown> {
-	// Both arms are acquired BEFORE either runs, so a source edit between them cannot go unnoticed. §3.4(d):
-	// a single run may transparently rebuild, but two arms under different trees are not a comparison.
-	const engineA = await registry.acquire(configA)
-	const engineB = await registry.acquire(configB)
+	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds, close } =
+		await prepareMailwomanArms(registry, set, configA, configB, options.declared, options.executionPath, deps)
 
-	if (engineA.fingerprint.digest !== engineB.fingerprint.digest) {
-		throw new Error(
-			`Arms were built against different source trees (${engineA.fingerprint.digest} vs ` +
-				`${engineB.fingerprint.digest}). That is not a comparison. Call mwdev_restart and re-run.`
-		)
-	}
-
-	const declaredConfigKeys = options.declared.filter((key) => key in EFFECTIVE_KEY_FOR)
-
-	if (declaredConfigKeys.length && engineA.engineID === engineB.engineID) {
-		throw new Error(
-			`The comparison declares EngineConfig key${declaredConfigKeys.length === 1 ? "" : "s"} ` +
-				`${declaredConfigKeys.join(", ")} as variable, but both arms resolved to engine ${engineA.engineID}. ` +
-				"Refusing a comparison in which the declared configuration variable did not produce distinct engines."
-		)
-	}
-
-	const confounds = checkConfounds(engineA.effective, engineB.effective, options.declared)
+	const fingerprint = registry.fingerprint()
 
 	const rows: ComparedRow[] = []
 	const errors: Array<{ id: string; input: string; arm: "a" | "b"; message: string }> = []
@@ -230,7 +215,7 @@ async function compareMailwomanArms(
 		let b
 
 		try {
-			a = toGauntletResult((await engineA.session.geocode(item.input)).result)
+			a = await geocodeA(item)
 		} catch (error) {
 			errors.push({ id: item.id, input: item.input, arm: "a", message: (error as Error).message })
 
@@ -238,7 +223,7 @@ async function compareMailwomanArms(
 		}
 
 		try {
-			b = toGauntletResult((await engineB.session.geocode(item.input)).result)
+			b = await geocodeB(item)
 		} catch (error) {
 			errors.push({ id: item.id, input: item.input, arm: "b", message: (error as Error).message })
 
@@ -324,8 +309,8 @@ async function compareMailwomanArms(
 		run_id: (deps.newRunID ?? randomUUID)(),
 		tool: "mwdev_compare",
 		created_at: now(deps).toISOString(),
-		tree_fingerprint: engineA.fingerprint.digest,
-		engine_id: engineA.engineID,
+		tree_fingerprint: fingerprint.digest,
+		engine_id: comparisonEngineID,
 		input_set_id: set.setID,
 		answers: { "mailwoman:a": recorded.a, "mailwoman:b": recorded.b },
 		payload: null,
@@ -337,13 +322,13 @@ async function compareMailwomanArms(
 		confounds.warnings.push(storeWarning)
 	}
 
-	return {
+	const result = {
 		run_id: run.run_id,
 		run_id_note:
 			`Stored for ${RETENTION_DAYS} days. Replay either side as an arm with ` +
 			`{kind:"recorded", run_id:"${run.run_id}", arm:"mailwoman:a"}.`,
-		provenance_a: provenanceFor(engineA, set),
-		provenance_b: provenanceFor(engineB, set),
+		provenance_a: provenanceA,
+		provenance_b: provenanceB,
 		summary,
 		grade_mode: mode,
 		...withheldVerdict(
@@ -373,6 +358,10 @@ async function compareMailwomanArms(
 		rows_changed: differed,
 		warnings: confounds.warnings,
 	}
+
+	close()
+
+	return result
 }
 
 /**

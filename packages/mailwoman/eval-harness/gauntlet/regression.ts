@@ -23,6 +23,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { checkCase } from "./check-case.ts"
 import { assertCorpusStampFresh } from "./corpus-stamp.ts"
 import { buildGauntletDeps, type GauntletDepsOptions, type GauntletResolverLevers, runOne } from "./harness.ts"
+import { routeCountry } from "./routing.ts"
 import type { GauntletDatabase } from "./schema.ts"
 
 /**
@@ -109,7 +110,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		// A row carrying `locale` runs under THAT locale's overlay instead of the truth country's: a
 		// #1585 locale-arm row like `Paris` under `en-US` is an FR row (country=FR pins the truth) whose
 		// production route goes through the US register. The region subtag is the overlay key.
-		const overlayCountry = c.locale?.split("-")[1] ?? c.country
+		const overlayCountry = routeCountry(c)
 
 		const geoOpts = {
 			...(c.default_country ? { defaultCountry: c.default_country } : {}),

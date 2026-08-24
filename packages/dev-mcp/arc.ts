@@ -240,6 +240,7 @@ export async function runArc(registry: EngineRegistry, options: ArcOptions): Pro
 	const inputs = options.inputs ?? { kind: "board" }
 	const locale = options.locale
 	const base = locale ? { locale } : {}
+	const executionPath = locale ? "single-config" : "board-routed"
 
 	const compare = async (label: string, weights: string): Promise<ArcLeg> => {
 		const result = (await runCompare(registry, {
@@ -248,6 +249,7 @@ export async function runArc(registry: EngineRegistry, options: ArcOptions): Pro
 			arm_b: { kind: "mailwoman", config: { ...base, weights_cache: weights } },
 			variable: ["weights_cache"],
 			grade: "auto",
+			execution_path: executionPath,
 		})) as Record<string, unknown>
 
 		return legFrom(label, weights, result)

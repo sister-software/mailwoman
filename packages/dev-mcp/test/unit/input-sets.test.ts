@@ -53,6 +53,15 @@ describe("resolveInputSet — board", () => {
 
 		expect(components + coordinates + tier + none).toBeGreaterThan(0)
 	})
+
+	it("carries the runtime route separately from truth country", async () => {
+		const set = await resolveInputSet({ kind: "board" })
+		const localeRow = set.inputs.find((row) => row.seed?.locale && row.seed.country !== row.seed.locale.split("-")[1])
+
+		expect(localeRow).toBeDefined()
+		expect(localeRow?.routeCountry).toBe(localeRow?.seed?.locale?.split("-")[1])
+		expect(localeRow?.country).toBe(localeRow?.seed?.country)
+	})
 })
 
 describe("resolveInputSet — literal", () => {
@@ -72,6 +81,7 @@ describe("resolveInputSet — literal", () => {
 
 		expect(set.hasTruth.none).toBe(1)
 		expect(set.notes.join(" ")).toContain("observed but not graded")
+		expect(set.inputs[0]).not.toHaveProperty("routeCountry")
 	})
 
 	it("rejects an empty set rather than measuring nothing", async () => {
