@@ -1,5 +1,18 @@
 # `corpus/data/` provenance
 
+## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
+
+Four geographic facts support the Venezuelan `locality postcode, region` convention. The Barcelona
+tuple comes from the Anzoátegui state government's contact address. The Caracas, Sanare, and Santa
+Elena de Guairén tuples come from the Universal Postal Union's Venezuela addressing guide. The file
+records the publisher, full source address, retrieval date, review status, and source-license note for
+each tuple.
+
+Only factual fields are stored. No source prose is copied, and the corpus rows do not claim that either
+source published the facts under CC0 or another open-data license. The recipe creates bounded synthetic
+case, punctuation, accent, country-tail, and left-context forms while keeping each reviewed
+postcode-to-place join unchanged.
+
 ## `sub-venue-lexicon.json` — the sub-venue designator lexicon (#35, waves 1–2)
 
 The vocabulary a corpus shard (and eventually the span proposer) reads to recognize `Terminal 5`,
