@@ -131,6 +131,12 @@ export interface GeocodeSessionOptions {
 	 * `data/gazetteer/capitals-v1.json` and THROWS if it is absent. Default OFF (D-rule).
 	 */
 	capitalTier?: boolean
+	/**
+	 * #1882 opt-in — exempt own-name `variant` aliases (the holder's primary name in another orthography, stamped by the
+	 * candidate build's own-name detector) from the cross-country primary-preference penalty. Candidate backend only;
+	 * no-ops on an artifact without the `name_role` column. Default OFF (D-rule).
+	 */
+	variantAliasExemption?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
@@ -443,7 +449,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const resolverImportedAt = performance.now()
 
-	const lookup = createResolverBackend(mod, { candidateDB, dataRoot: options.dataRoot, wofPaths: wofPath })
+	const lookup = createResolverBackend(mod, {
+		candidateDB,
+		dataRoot: options.dataRoot,
+		wofPaths: wofPath,
+		...(options.variantAliasExemption === true ? { variantAliasExemption: true } : {}),
+	})
 
 	// #1880: the capital-status reference, loaded once per session when the tier is switched on. The
 	// closure answers per candidate (name + country + coordinates) and threads into the resolver's

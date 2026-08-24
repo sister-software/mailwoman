@@ -65,6 +65,12 @@ export interface WOFCandidateTableLookupOpts {
 	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
 	 */
 	database?: DatabaseSync
+	/**
+	 * #1882 opt-in: exempt `name_role = 'variant'` aliases — the holder's own primary name in another orthography,
+	 * stamped by the build's own-name detector — from the cross-country primary-preference penalty. No-ops on an artifact
+	 * without the role column. Default OFF (D-rule).
+	 */
+	variantAliasExemption?: boolean
 }
 
 /**
@@ -193,6 +199,12 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 * filter degrades to a no-op rather than erroring on a missing column.
 	 */
 	readonly #hasNameRole: boolean
+	readonly #variantAliasExemption: boolean
+	/**
+	 * `", name_role"` when the artifact carries the column — the probe SELECT rides it so the #1882 exemption can read
+	 * the stamp off the row; empty on a pre-role build.
+	 */
+	readonly #roleSelect: string
 	/**
 	 * Prepared chain probe over the `candidate_ancestor` sidecar — `undefined` when the artifact predates it.
 	 */
@@ -270,6 +282,8 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 		// #28 fame column: probed ONCE here (it runs a PRAGMA, and `findPlace` is per-keystroke hot).
 		this.#importanceSelect = hasColumn(this.#db, "candidate", "importance") ? ", importance" : ""
 		this.#hasNameRole = hasColumn(this.#db, "candidate", "name_role")
+		this.#variantAliasExemption = opts.variantAliasExemption === true
+		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
 		// Ancestors sidecar (#1717): existence-gated like the probes above, and the CAPABILITY gates with
 		// it — see the `ancestors` property doc for why an older artifact must read as "no ancestors()"
@@ -712,11 +726,11 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 			// it to every lookup, including the qualified addresses the D-rule guard exists to protect.
 			const sql =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
-				`${this.#importanceSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
+				`${this.#importanceSelect}${this.#roleSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
 
 			const fetched = allRows<CandidateRow>(this.#db.prepare(sql), ...params, Math.max(limit, RERANK_FETCH))
 
-			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype)
+			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, this.#variantAliasExemption)
 		}
 
 		// The exact → qualifier-strip → typo-fuzzy probe cascade, run at a fixed region scope. Region scoping

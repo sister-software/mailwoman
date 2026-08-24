@@ -25,11 +25,13 @@ import type { ResolvedInput } from "./input-sets.ts"
 
 const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"weights_cache",
+	"candidate_db",
 	"default_country",
 	"postcode_country_coherence",
 	"gazetteer_prior",
 	"admin_containment_rerank",
 	"capital_tier",
+	"variant_alias_exemption",
 ])
 
 export interface RoutedArtifactProvenance {
@@ -182,6 +184,9 @@ export async function buildRoutedMailwomanArm(
 				? {}
 				: { adminContainmentRerank: config.admin_containment_rerank }),
 			...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
+			...(config.variant_alias_exemption === undefined
+				? {}
+				: { variantAliasExemption: config.variant_alias_exemption }),
 		},
 	})
 

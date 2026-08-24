@@ -47,6 +47,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 			admin_containment_rerank: true,
 			poi_venue_tier: true,
 			capital_tier: true,
+			variant_alias_exemption: true,
 			trace: true,
 			diagnose_unreachable: true,
 		})

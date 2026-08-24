@@ -147,14 +147,27 @@ interface ResolverLookupModule {
  */
 export function createResolverBackend(
 	mod: ResolverLookupModule,
-	opts: { candidateDB?: string; dataRoot?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
+	opts: {
+		candidateDB?: string
+		dataRoot?: string
+		wofPaths: string | string[]
+		postalCityAliasDB?: string
+		/**
+		 * #1882 opt-in — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Candidate
+		 * backend only (the penalty lives there); default OFF.
+		 */
+		variantAliasExemption?: boolean
+	}
 ): PlaceLookup {
 	const candidate = resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)
 
-		return new mod.WOFCandidateTableLookup({ databasePath: candidate })
+		return new mod.WOFCandidateTableLookup({
+			databasePath: candidate,
+			...(opts.variantAliasExemption === true ? { variantAliasExemption: true } : {}),
+		})
 	}
 
 	const wp = opts.wofPaths

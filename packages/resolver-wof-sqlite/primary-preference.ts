@@ -19,7 +19,7 @@ import type { CandidateTable } from "./candidate-schema.ts"
  * browser reader's vintage guard relies on.
  */
 export type PrimaryPreferenceRow = Pick<CandidateTable, "neg_rank" | "country_id"> &
-	Partial<Pick<CandidateTable, "is_primary" | "placetype_id" | "population">>
+	Partial<Pick<CandidateTable, "is_primary" | "placetype_id" | "population" | "name_role">>
 
 /**
  * Bounded PRIMARY-NAME preference across a CROSS-COUNTRY name collision (the `is_primary` ranking signal).
@@ -139,7 +139,8 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	rows: readonly R[],
 	limit: number,
 	delta = PRIMARY_PREFERENCE_LOG10,
-	placetypes?: ReadonlyMap<number, string>
+	placetypes?: ReadonlyMap<number, string>,
+	exemptVariantAliases = false
 ): Array<RankedRow<R>> {
 	// The primary the alias actually competes with for the top slot: highest population (min neg_rank). Undefined
 	// when the set has no primary → nothing to prefer, penalty is 0, order stays population-first (today's behavior).
@@ -155,8 +156,17 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 
 	// A cross-country alias (different country than the top primary) is penalized; it is DEMOTED when even after — i.e.
 	// the penalty leaves its effective rank behind the primary's raw rank (it lost the bounded population contest).
+	//
+	// #1882 exemption (opt-in): a `name_role = 'variant'` alias is the holder's OWN primary name in another
+	// orthography (`Брэст` → `brest`, `George Town` → `georgetown` — the build's own-name detector), so the
+	// query is naming THAT place, not colliding with it; the penalty exists for the coincidental-collision
+	// class ("Çançun"/`cancun`), which the detector's measured threshold keeps un-stamped. An artifact
+	// predating the role column carries no 'variant' rows, so the flag no-ops there by construction.
 	const isCrossCountryAlias = (r: R): boolean =>
-		typeof topCountry === "number" && r.is_primary !== 1 && r.country_id !== topCountry
+		typeof topCountry === "number" &&
+		r.is_primary !== 1 &&
+		r.country_id !== topCountry &&
+		!(exemptVariantAliases && r.name_role === "variant")
 
 	const annotate = (r: R): RankedRow<R> => {
 		const penalized = isCrossCountryAlias(r)
