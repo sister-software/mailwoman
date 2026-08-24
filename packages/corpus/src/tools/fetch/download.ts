@@ -50,6 +50,23 @@ export interface FetchSummary {
 /**
  * A status worth retrying: rate limiting or a server-side failure.
  */
+/**
+ * An HTTP failure that CARRIES its status, so callers branch on `error.status` rather than on message prose. The prose
+ * route shipped a real flake: a caller classified "not published upstream" with `message.includes("404")`, and the
+ * message contains the URL — an ephemeral test-server port such as `:40453` satisfies it while the actual status is
+ * 500. Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind of sometimes-failure that burns
+ * a CI run and vanishes locally.
+ */
+export class HTTPStatusError extends Error {
+	readonly status: number
+
+	constructor(status: number, message: string) {
+		super(message)
+		this.name = "HTTPStatusError"
+		this.status = status
+	}
+}
+
 export function isTransientStatus(status: number): boolean {
 	return status === HTTP_TOO_MANY_REQUESTS || (status >= HTTP_SERVER_ERROR_MIN && status <= HTTP_SERVER_ERROR_MAX)
 }
@@ -102,7 +119,7 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 		}
 
 		if (!res.ok) {
-			const error = new Error(`HTTP ${res.status} ${res.statusText} — ${url}`)
+			const error = new HTTPStatusError(res.status, `HTTP ${res.status} ${res.statusText} — ${url}`)
 
 			if (!isTransientStatus(res.status)) throw error
 			lastError = error

@@ -54,7 +54,12 @@ import { join } from "node:path"
 import { sha256File } from "@mailwoman/core/utils"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { downloadToFile, writeManifest } from "./download.ts"
+import { downloadToFile, HTTPStatusError, writeManifest } from "./download.ts"
+
+/**
+ * The one status that means "the source does not publish this country" rather than "the transfer failed".
+ */
+const HTTP_NOT_FOUND = 404
 
 const SLUG = "geonames-postal"
 
@@ -143,8 +148,10 @@ export async function fetchGeonamesPostal(
 			const message = error instanceof Error ? error.message : String(error)
 
 			// A 404 here means GeoNames does not publish the country at all, which is a different finding from a failed
-			// transfer and the one a caller planning a shard needs to see.
-			if (message.includes("404")) {
+			// transfer and the one a caller planning a shard needs to see. Branch on the TYPED status: matching message
+			// prose classified a 500 as "unpublished" whenever the URL happened to contain the substring 404 — an
+			// ephemeral test-server port did exactly that in CI.
+			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames does not publish a postal export for this country`)
 				unavailable.push(country)
 			} else {
