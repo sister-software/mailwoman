@@ -24,7 +24,7 @@
  */
 
 import { readFileSync, statSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
+import { basename, dirname, join } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
@@ -96,6 +96,24 @@ export interface OverlayManifestOptions {
 	note: string
 }
 
+/**
+ * Resolve a base manifest's shard path to the mounted corpus tree used by Modal.
+ */
+export function rerootBaseShardPath(path: string, baseManifestPath: string): string {
+	const versionedIndex = path.indexOf("/corpus/versioned/")
+
+	if (versionedIndex !== -1) return "/data" + path.slice(versionedIndex)
+
+	if (/^\/data\/(?:train|val|test)\//u.test(path)) {
+		const localBaseDir = dirname(baseManifestPath)
+		const baseModalRoot = `/data/corpus/versioned/${basename(dirname(localBaseDir))}/${basename(localBaseDir)}`
+
+		return baseModalRoot + path.slice("/data".length)
+	}
+
+	return path
+}
+
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
 	const base = parseJSONStrict<BaseManifest>(readFileSync(args.base, "utf8"))
 
@@ -103,13 +121,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		console.log(`WARN: base already contains source '${args.source}' — is this the right base?`)
 	}
 
-	const reroot = (p: string): string => {
-		const i = p.indexOf("/corpus/versioned/")
-
-		return i !== -1 ? "/data" + p.slice(i) : p
-	}
-
-	const kept = base.shards.map((s) => ({ ...s, path: reroot(s.path) }))
+	const kept = base.shards.map((s) => ({ ...s, path: rerootBaseShardPath(s.path, args.base) }))
 
 	const newTrain = await descriptor(
 		join(args.newDir, "train", args.shardParquet),

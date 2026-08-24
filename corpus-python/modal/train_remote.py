@@ -4650,6 +4650,52 @@ def sync_v460():
         raise RuntimeError(f"v4.6.0 sync verification failed: {', '.join(missing)}")
 
 
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v530_reviewed_postcode_tail():
+    """Stage the v5.3 reviewed Venezuela treatment inputs through R2 and verify mounted visibility."""
+    import shutil
+    import subprocess
+
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.28.0-reviewed-postcode-tail/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.28.0-reviewed-postcode-tail/corpus-v0.28.0-reviewed-postcode-tail/ {retry}",
+    ]
+    for command in commands:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.28.0-reviewed-postcode-tail/corpus-v0.28.0-reviewed-postcode-tail"
+    checks = {
+        "v5.3 treatment config": os.path.isfile(f"{package}/configs/v5.3.0-reviewed-ve-postcode-tail-60k.yaml"),
+        "overlay manifest": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        "reviewed shard": os.path.isfile(f"{corpus}/train/reviewed-postcode-tail-00000.parquet"),
+        "v0.27 base manifest": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
+        ),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v5.3 sync verification failed: {', '.join(missing)}")
+
+
 def _file_contains(path: str, needle: str) -> bool:
     with open(path, encoding="utf-8") as fh:
         return needle in fh.read()
