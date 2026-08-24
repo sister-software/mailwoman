@@ -21,6 +21,7 @@
 
 import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import { DatabaseSync } from "node:sqlite"
 
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
@@ -31,6 +32,7 @@ import type {
 	WOFPostalCityAliasLookup,
 	WOFSQLitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
+import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import { resolvePath } from "path-ts"
 
@@ -194,11 +196,40 @@ export function conventionCapitalsPath(): string {
 }
 
 /**
- * Load the capital-status reference into the ranking index. THROWS on a missing or wrong-shaped file: the caller only
- * asks for this when the capital tier is switched ON, and an opt-in lever that silently no-ops grades as "inert" when
- * it never ran.
+ * Load the capital-status reference into the ranking index, preferring the ARTIFACT copy: a `candidate.db` that carries
+ * the `capital` table (#1880's distribution home) serves npm consumers who never have the repo file; the repo's
+ * `data/gazetteer/capitals-v1.json` is the dev fallback. THROWS when neither source exists: the caller only asks for
+ * this when `capital_tier` is switched ON, and an opt-in config key that silently no-ops grades as "inert" when it
+ * never ran.
  */
-export function loadCapitalIndex(path: string = conventionCapitalsPath()): CapitalIndex {
+export function loadCapitalIndex(opts: { candidateDB?: string; path?: string } = {}): CapitalIndex {
+	if (opts.candidateDB && existsSync(opts.candidateDB)) {
+		const db = new DatabaseSync(opts.candidateDB, { readOnly: true })
+
+		try {
+			const points = readCapitalPoints(db)
+
+			// `null` = the artifact predates the table (fall through to the repo file); an EMPTY table is a
+			// built fact and is served as such.
+			if (points) {
+				console.error(`[resolver] capital reference: ${points.length} rows from the candidate artifact`)
+
+				return new CapitalIndex(points)
+			}
+		} finally {
+			db.close()
+		}
+	}
+
+	const path = opts.path ?? conventionCapitalsPath()
+
+	if (!existsSync(path)) {
+		throw new Error(
+			`capital_tier is on, but neither the candidate artifact nor ${path} carries the capitals reference — ` +
+				"pull a candidate.db that includes the `capital` table, or build the repo file with `mailwoman gazetteer capitals`"
+		)
+	}
+
 	const parsed = parseJSONStrict<{ version?: number; entries?: CapitalPoint[] }>(readFileSync(path, "utf8"))
 
 	if (parsed.version !== 1 || !Array.isArray(parsed.entries)) {

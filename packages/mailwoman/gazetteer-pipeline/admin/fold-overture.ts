@@ -126,6 +126,10 @@ const NAMES_COLUMNS = [
 
 const POPULATION_COLUMNS = ["id", "population"] as const satisfies ReadonlyArray<keyof WOFDatabase["place_population"]>
 
+const CONCORDANCE_COLUMNS = ["id", "other_id", "other_source", "lastmodified"] as const satisfies ReadonlyArray<
+	keyof WOFDatabase["concordances"]
+>
+
 /**
  * Compile a positional INSERT for one of the tuples above.
  *
@@ -158,6 +162,7 @@ export function prepareInserts(db: DatabaseSync): {
 	spr: StatementSync
 	names: StatementSync
 	population: StatementSync
+	concordances: StatementSync
 } {
 	// Wraps the caller's handle for statement compilation only — the same one-connection idiom
 	// `createUnifiedSchema` uses for its DDL. The caller owns `db`'s lifecycle, so this is not destroyed.
@@ -167,6 +172,7 @@ export function prepareInserts(db: DatabaseSync): {
 		spr: db.prepare(compileInsert(kdb, "spr", SPR_COLUMNS, true)),
 		names: db.prepare(compileInsert(kdb, "names", NAMES_COLUMNS)),
 		population: db.prepare(compileInsert(kdb, "place_population", POPULATION_COLUMNS, true)),
+		concordances: db.prepare(compileInsert(kdb, "concordances", CONCORDANCE_COLUMNS)),
 	}
 }
 
@@ -234,7 +240,8 @@ export async function ingestOvertureDivisions(
 			COALESCE(a.ymin, d.bbox.ymin) AS min_lat, COALESCE(a.ymax, d.bbox.ymax) AS max_lat,
 			COALESCE(a.xmin, d.bbox.xmin) AS min_lon, COALESCE(a.xmax, d.bbox.xmax) AS max_lon,
 			d.parent_division_id AS parent_division_id,
-			d.population AS population
+			d.population AS population,
+			d.wikidata AS wikidata
 		FROM read_parquet('${glob}') d
 		LEFT JOIN area a ON a.division_id = d.id
 		WHERE d.country IN (${inlist}) AND d.subtype IN (${subtypes})
@@ -250,7 +257,12 @@ export async function ingestOvertureDivisions(
 		idBase
 	)
 
-	const { spr: sprInsert, names: namesInsert, population: populationInsert } = prepareInserts(db)
+	const {
+		spr: sprInsert,
+		names: namesInsert,
+		population: populationInsert,
+		concordances: concordancesInsert,
+	} = prepareInserts(db)
 
 	const num = (v: unknown): number => (typeof v === "number" ? v : typeof v === "bigint" ? Number(v) : 0)
 	// Keep only Latin-script common-name aliases (English + major-language transliterations — the names a
@@ -261,6 +273,7 @@ export async function ingestOvertureDivisions(
 
 	db.exec("BEGIN")
 	let n = 0
+	let nWikidata = 0
 
 	for (const r of rows) {
 		const nid = idmap.get(String(r.id))!
@@ -314,6 +327,17 @@ export async function ingestOvertureDivisions(
 			}
 		}
 
+		// #1884: carry Overture's own Wikidata id into `concordances` under the SAME `wd:id` source the
+		// WOF ingest uses — the `gazetteer importance` join reads exactly that predicate, so an Overture
+		// row with a Wikidata id gets the encyclopedia channel through the existing join and its #1497
+		// fan-out guards. Before this, every Overture-origin city entered fame contests on the
+		// population proxy (measured: all 345 Cyrillic-named localities over 100k, Москва included).
+		if (typeof r.wikidata === "string" && r.wikidata.startsWith("Q")) {
+			concordancesInsert.run(nid, r.wikidata, "wd:id", 0)
+
+			nWikidata++
+		}
+
 		const pop = num(r.population)
 
 		if (pop > 0) {
@@ -324,6 +348,10 @@ export async function ingestOvertureDivisions(
 	}
 
 	db.exec("COMMIT")
+
+	console.error(
+		`  Overture divisions: ${nWikidata.toLocaleString()} of ${n.toLocaleString()} carry a Wikidata concordance`
+	)
 
 	return n
 }

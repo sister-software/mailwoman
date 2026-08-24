@@ -101,12 +101,13 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 	test("every prepared insert accepts a row", async () => {
 		const db = await openUnified()
-		const { spr, names, population } = prepareInserts(db)
+		const { spr, names, population, concordances } = prepareInserts(db)
 		const id = OVERTURE_ID_BASE + 1
 
 		spr.run(id, -1, "Testville", "locality", "US", 1.5, 2.5, 1, 2, 1.9, 2.9, 1, 0, 0, 0, 0, 0)
 		names.run(id, "Testville", "locality", "US", "", 0, 0)
 		population.run(id, 1234)
+		concordances.run(id, "Q140147", "wd:id", 0)
 
 		expect(db.prepare("SELECT name, placetype, country FROM spr WHERE id = ?").get(id)).toEqual({
 			name: "Testville",
@@ -116,6 +117,13 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 		expect(db.prepare("SELECT population FROM place_population WHERE id = ?").get(id)).toEqual({ population: 1234 })
 		expect(db.prepare("SELECT name FROM names WHERE id = ?").get(id)).toEqual({ name: "Testville" })
+
+		// #1884: the Wikidata concordance rides the SAME `wd:id` source the WOF ingest writes and the
+		// `gazetteer importance` join reads (`WHERE c.other_source = 'wd:id'`) — the predicate is the
+		// contract, so it is asserted literally.
+		expect(db.prepare("SELECT other_id FROM concordances WHERE id = ? AND other_source = 'wd:id'").get(id)).toEqual({
+			other_id: "Q140147",
+		})
 
 		db.close()
 	})

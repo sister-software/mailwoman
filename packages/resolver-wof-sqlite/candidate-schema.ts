@@ -18,6 +18,7 @@
 import { sql, type Kysely } from "kysely"
 
 import type { CandidateAncestorsDatabase } from "./candidate-ancestors-schema.ts"
+import type { CapitalTable } from "./capital-schema.ts"
 import type { NameKey } from "./street-normalize.ts"
 
 /**
@@ -135,6 +136,10 @@ export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	cand_stage: CandidateTable
 	country_codes: CountryCodeTable
 	placetype_codes: PlacetypeCodeTable
+	/**
+	 * The capital-status reference carried in-artifact (#1880's distribution home) — see capital-schema.ts.
+	 */
+	capital: CapitalTable
 }
 
 /**

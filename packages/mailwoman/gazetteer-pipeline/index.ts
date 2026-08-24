@@ -32,13 +32,15 @@ import {
 import { join } from "node:path"
 import { DatabaseSync } from "node:sqlite"
 
-import { repoRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath, repoRootPathBuilder, sealDatabase } from "@mailwoman/core/utils"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
 // when the peer isn't installed. Types are erased, so type-only imports are safe at module level.
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import { resolvePath } from "path-ts"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
@@ -379,6 +381,16 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 			? undefined
 			: (opts.currencyBackfillCountries ?? DEFAULT_WOF_PRIORITY_COUNTRIES)
 
+	// #1880's distribution home: carry the committed capitals reference in-artifact so `capital_tier`
+	// works for npm consumers who pulled candidate.db (published packages do not ship the repo file).
+	// A dev checkout that predates the reference simply builds without the table — the session loader
+	// says which source it used.
+	const capitalsPath = repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
+
+	const capitals = existsSync(String(capitalsPath))
+		? parseJSONStrict<{ entries?: CapitalPoint[] }>(readFileSync(String(capitalsPath), "utf8")).entries
+		: undefined
+
 	const result = await buildCandidateTable({
 		input: opts.adminDB,
 		output: opts.out,
@@ -386,6 +398,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		localities: [...(opts.localityShards ?? resolveLocalityShards())],
 		...(importance ? { importance } : {}),
 		...(backfillCountries ? { currencyBackfill: { geonamesDir: geonamesDir(), countries: backfillCountries } } : {}),
+		...(capitals?.length ? { capitals } : {}),
 		onProgress: opts.onProgress,
 	})
 
