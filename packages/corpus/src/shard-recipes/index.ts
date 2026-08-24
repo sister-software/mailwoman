@@ -28,6 +28,7 @@ import { noStreetLedRecipe } from "./no-street-led.ts"
 import { noStreetRecipe } from "./no-street.ts"
 import { poBoxCedexRecipe } from "./po-box-cedex.ts"
 import { poBoxRecipe } from "./po-box.ts"
+import { reviewedPostcodeTailRecipe } from "./reviewed-postcode-tail.ts"
 import type { ShardRecipe } from "./scaffold.ts"
 import { siBareVillageRecipe } from "./si-bare-village.ts"
 import { streetAffixRecipe, suffixBoundaryRecipe } from "./street-affix.ts"
@@ -45,6 +46,7 @@ export * from "./scaffold.ts"
 const RECIPES: readonly ShardRecipe[] = [
 	bareCountryRecipe,
 	trailingRegionRecipe,
+	reviewedPostcodeTailRecipe,
 	streetRecipe,
 	streetBareRecipe,
 	streetAffixRecipe,
