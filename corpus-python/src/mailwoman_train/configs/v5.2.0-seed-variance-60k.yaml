@@ -1,15 +1,17 @@
 # v5.2.0 — SEED-VARIANCE RUN. One variable against v5.0.0: seed 42 -> 43. Same corpus, same 134
 # country admission, same 60k cosine schedule, no init_from, no EWC.
 #
-# WHY. v5.0.0 vs v5.1.0 — two runs differing by 2.23% of the admitted pool — flipped ~40 board rows
-# (16 one way, 24 the other), concentrated in bare multi-word streets and GB venues near 0.5
-# confidence. That churn is confounded with the config delta. This run prices the floor cleanly:
-# every row that flips between v5.0.0 and THIS run flipped under an identical config, so the flip
-# set IS the one-seed variance floor, and any candidate whose regression count sits inside it is
-# unmeasurable by a single run.
+# WHY. v5.0.0 vs v5.1.0 — two seed-42 runs where v5.1.0 removes 15,212,584 training rows from four
+# of v5.0.0's 134 admitted countries, or 2.23% of its admitted training-row pool — changed the
+# regression outcome for 40 of 649 board rows (16 regress only under v5.0.0; 24 only under v5.1.0;
+# 16 + 24 = 40). That comparison cannot separate the admission change from training nondeterminism.
+# Comparing v5.0.0 with this seed-43 run holds the config fixed and measures one seed-pair's
+# row-level disagreement. One pair is an estimate, not a general variance floor; report the changed
+# rows and the 649-row denominator without using it to excuse a candidate regression.
 #
-# READ THE RESULT AS A MEASUREMENT, NOT A CANDIDATE. This model is not for promotion; it exists so
-# the D-rule can be graded against a run-pair envelope instead of one arm.
+# READ THE RESULT AS A MEASUREMENT, NOT A CANDIDATE. This model is not for promotion; it measures
+# how much row-level disagreement one fixed-config seed pair produces. The D-rule remains an absolute
+# comparison against the shipped model and this measurement cannot authorize a regression.
 data:
   corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice

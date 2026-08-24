@@ -2,8 +2,9 @@
 # null): the synth-suffix-boundary source upweighted. Targets the persistent 19-row fragmentation
 # core (St Mary Axe cluster, Passeig pair, Rua Augusta) that survived the CJK-admission toggle.
 # Attribution: candidate MINUS v5.0.1-null. Ship gate: against SHIPPED v4.4.0, D-rule absolute.
-# CAUTION: the one-seed variance floor is ~40 rows on this class — a single-run D-rule count near
-# that floor is not a verdict (2026-08-23 retrospective postscript).
+# CAUTION: v5.0.0 and v5.1.0 changed the regression outcome for 40 of 649 board rows, but those runs
+# differ in country admission and therefore do not measure seed variance. Do not discount a D-rule
+# regression using that count; the fixed-config seed-43 repeat is still pending.
 data:
   corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
