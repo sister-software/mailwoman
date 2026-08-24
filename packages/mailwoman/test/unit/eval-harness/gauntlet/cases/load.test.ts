@@ -31,7 +31,7 @@ import { canonicalizeSeedCase, SeedCaseSchema } from "mailwoman/eval-harness/gau
 import { describe, expect, it } from "vitest"
 
 /**
- * The corpus today — 538 curated regressions.
+ * The corpus today — 651 curated regressions.
  *
  * 192 at the 2026-08-05 JSONL migration, plus the 114 `operator:country-sweep-2026-08-05` promotions (the
  * country-coverage sweep's measured FAILs; see `batch-notes.md`), plus 14 Google-reviewed operator addresses added
@@ -43,7 +43,7 @@ import { describe, expect, it } from "vitest"
  * relative addressing). Country dirs went 29 → 121 in the country-sweep batch, and 121 → 125 with this one (gh, mn, ne,
  * ng are new).
  */
-const CORPUS_SIZE = 649
+const CORPUS_SIZE = 651
 
 /**
  * `regressionCorpusHash` of the corpus.
@@ -205,8 +205,13 @@ const CORPUS_SIZE = 649
  * rows, 36 gated) plus the #1764 accented-commune row. Truth is each place's own map pin, resolved from the supplied
  * short link. First VE and PG coverage the board has had, and the first rows for punctuation-led venue names
  * (`%ARABICA`, `¿Por Qué No?`, `@homePizza`, `Coffee#1`). 591 → 649, so the board id moves too.
+ *
+ * Moved 2026-08-24 — → this — by two same-day additions, the first of which shipped UNPINNED: the Brest referential
+ * split (#1886; `by-cs-brest` scoped to Belarus, `fr-cs-brest-bare` pinning the oracle-ratified bare answer; 649 → 650)
+ * merged with CI skipped, so nothing caught the stale pin until the next branch ran the suite. Then `gb-cs-whitby` (650
+ * → 651), the row that brackets `ENCYCLOPEDIC_BOOST_CAP` from below.
  */
-const CORPUS_HASH = "3151451bb04adc1910b901f700d0e7d781727a2c9a9629823ba6bd8fe81d091d"
+const CORPUS_HASH = "f25de393caadc303d36f006e0446a92daa7df7bbba2002574470da9abb4f0b9c"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -224,9 +229,10 @@ const CORPUS_HASH = "3151451bb04adc1910b901f700d0e7d781727a2c9a9629823ba6bd8fe81
  * for the 2-row ca_qc_street witness pair (`@570:7ec63e6affb2` → `@572:7e171ef0a6af`), for the Newport-Wales row
  * (`@572:7e171ef0a6af` → `@573:0037d08bc94a`), for the 2-row stranded-affix pair (`@573:0037d08bc94a` →
  * `@575:acce97708a29`), for the 5-row trailing-region cohort (`@575:acce97708a29` → `@580:7ff4bfccaa0e`), and for the
- * 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → this).
+ * 11-row lexical-boundary adversarial board (`@580:7ff4bfccaa0e` → `@649:3df68a3c428a`), and for the Brest split plus
+ * the Whitby cap-bound row (`@649:3df68a3c428a` → this).
  */
-const BOARD_ID = "gauntlet-regression@649:3df68a3c428a"
+const BOARD_ID = "gauntlet-regression@651:fa5092206aa4"
 
 /**
  * A minimal well-formed row, for the error-surface tests to mutate.
