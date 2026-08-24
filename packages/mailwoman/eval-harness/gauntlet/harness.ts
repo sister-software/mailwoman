@@ -16,17 +16,29 @@ import { resolve } from "node:path"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
+import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import type { AdminCoherenceReport } from "../../admin-coherence.ts"
-import { type GeocodeResult, geocodeAddress, ShardProvider, type GeocodeDeps } from "../../geocode-core.ts"
+import {
+	type GeocodeResult,
+	geocodeAddress,
+	geocodeParseInputs,
+	ShardProvider,
+	type GeocodeDeps,
+} from "../../geocode-core.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
 
 export interface GauntletDeps {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
+	/**
+	 * Report-only access to the exact classifier, overlay, parse options, and FST selected by the Gauntlet path. It
+	 * performs no resolution and does not alter the gate's geocode path.
+	 */
+	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
 	close(): void
 }
 
@@ -494,6 +506,17 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	}
 
 	return {
+		diagnoseParse: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
+			const { caseCountry } = geoOpts ?? {}
+			const caseClassifier = await classifierFor(caseCountry)
+			const priorDeps = await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")
+			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, priorDeps)
+
+			return {
+				trace: await caseClassifier.traceParse(parseInput, parseOpts),
+				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
+			}
+		},
 		geocode: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const { caseCountry, ...forwarded } = geoOpts ?? {}
 			const caseClassifier = await classifierFor(caseCountry)
