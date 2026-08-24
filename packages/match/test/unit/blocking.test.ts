@@ -14,7 +14,7 @@ interface Rec {
 	postcode?: string
 }
 
-const pairIds = (pairs: Array<[Rec, Rec]>) => pairs.map(([a, b]) => [a.id, b.id].toSorted().join("-")).toSorted()
+const pairIDs = (pairs: Array<[Rec, Rec]>) => pairs.map(([a, b]) => [a.id, b.id].toSorted().join("-")).toSorted()
 const intersects = (a: string[], b: string[]) => a.some((k) => b.includes(k))
 
 describe("geoCellKey", () => {
@@ -94,7 +94,7 @@ describe("block", () => {
 		]
 
 		expect(
-			pairIds(
+			pairIDs(
 				block(
 					records,
 					geoCellKey((r) => r.coord)
@@ -120,7 +120,7 @@ describe("block", () => {
 			{ id: "b", coord: { latitude: 19.4, longitude: -99.1 }, canonical: "shared" },
 		]
 
-		expect(pairIds(block(records, [geoCellKey((r) => r.coord), exactKey((r) => r.canonical)]).pairs)).toEqual(["a-b"])
+		expect(pairIDs(block(records, [geoCellKey((r) => r.coord), exactKey((r) => r.canonical)]).pairs)).toEqual(["a-b"])
 	})
 
 	it("reports an oversized block instead of scanning it", () => {

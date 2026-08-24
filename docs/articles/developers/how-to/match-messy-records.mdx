@@ -204,7 +204,7 @@ customer file is not; its own documentation says to A/B it or turn it off for a 
 
 ```bash
 jq -c '.features[] | select(.properties.recordCount > 1)
-       | {org: .properties.organization, n: .properties.recordCount, ids: .properties.sourceIds}' entities.geojson
+       | {org: .properties.organization, n: .properties.recordCount, ids: .properties.sourceIDs}' entities.geojson
 ```
 
 ```json
@@ -216,7 +216,7 @@ jq -c '.features[] | select(.properties.recordCount > 1)
 ```
 
 The properties are the matcher's normalized view of your row, not your row. Your own identifier column
-rides in `sourceIds`. And `toGeoJSON` skips an entity with no resolved coordinate, so the feature count
+rides in `sourceIDs`. And `toGeoJSON` skips an entity with no resolved coordinate, so the feature count
 can be lower than the entity count — compare the two before you treat the file as complete.
 
 ## Verify

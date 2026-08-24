@@ -41,7 +41,7 @@
 
 - [ ] `packages/neural/src/onnx-runner.ts`
 - [ ] Loads ONNX model via `onnxruntime-node`
-- [ ] Exposes `infer(tokenIds: number[]): Promise<number[][]>` returning logits per token
+- [ ] Exposes `infer(tokenIDs: number[]): Promise<number[][]>` returning logits per token
 - [ ] Handles batching (group multiple sections for one inference call)
 - [ ] Configurable execution provider (CPU default, CUDA via env var)
 - [ ] Lazy loading: model loads on first `infer` call, not on construction (unless `warmup: true`)

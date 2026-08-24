@@ -108,7 +108,7 @@ export class LayerToggleControl implements IControl {
 		// layers — they're transient resolver output, not part of the basemap.
 		interface Bucket {
 			name: string
-			layerIds: string[]
+			layerIDs: string[]
 			visible: boolean
 		}
 
@@ -121,11 +121,11 @@ export class LayerToggleControl implements IControl {
 			const group = LAYER_GROUP_PATTERNS.find((g) => g.match.test(id))?.name ?? "Other"
 
 			if (!buckets.has(group)) {
-				buckets.set(group, { name: group, layerIds: [], visible: true })
+				buckets.set(group, { name: group, layerIDs: [], visible: true })
 			}
 
 			const bucket = buckets.get(group)!
-			bucket.layerIds.push(id)
+			bucket.layerIDs.push(id)
 			// Group is "visible" if at least one of its layers is visible (default vs explicit none).
 			const vis = layer.layout && "visibility" in layer.layout ? layer.layout["visibility"] : "visible"
 
@@ -139,7 +139,7 @@ export class LayerToggleControl implements IControl {
 		// Re-compute bucket.visible — a group is visible iff ANY of its layers is currently
 		// visible. (Above loop's logic was lossy on the no-layout-visibility case; redo cleanly.)
 		for (const bucket of buckets.values()) {
-			bucket.visible = bucket.layerIds.some((id) => {
+			bucket.visible = bucket.layerIDs.some((id) => {
 				const lyr = style.layers.find((l) => l.id === id)
 				const v = lyr?.layout && "visibility" in lyr.layout ? lyr.layout["visibility"] : "visible"
 
@@ -169,7 +169,7 @@ export class LayerToggleControl implements IControl {
 			cb.addEventListener("change", () => {
 				const visibility = cb.checked ? "visible" : "none"
 
-				for (const layerID of bucket.layerIds) {
+				for (const layerID of bucket.layerIDs) {
 					try {
 						this.map?.setLayoutProperty(layerID, "visibility", visibility)
 					} catch {
@@ -181,7 +181,7 @@ export class LayerToggleControl implements IControl {
 			row.appendChild(cb)
 			const label = document.createElement("span")
 			label.className = styles.layerToggleLabel
-			label.textContent = `${name} (${bucket.layerIds.length})`
+			label.textContent = `${name} (${bucket.layerIDs.length})`
 			row.appendChild(label)
 			this.container.appendChild(row)
 		}

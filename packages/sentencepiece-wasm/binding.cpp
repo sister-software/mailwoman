@@ -21,7 +21,7 @@
  * - `encodeWithOffsets(text)` — returns { pieces: string[], ids: Int32Array-like, begins, ends }
  *   where begins/ends are UTF-8 BYTE offsets into the input. The TS layer owns the byte→UTF-16
  *   conversion (exact, via a code-point walk — see neural/tokenizer.ts).
- * - `decodeIds(ids)` — detokenize back to a string.
+ * - `decodeIDs(ids)` — detokenize back to a string.
  *
  * Build: `./build.sh` (fetches sentencepiece at the pinned tag, emcmake+emmake, links this file
  * with embind, emits the committed single-file ESM artifact `sentencepiece.mjs`).
@@ -96,7 +96,7 @@ public:
 	 * Detokenize ids back to text. Invalid ids surface as the empty string plus the error field on
 	 * the wrapper's contract being violated upstream — the TS layer validates lengths.
 	 */
-	std::string decodeIds(const std::vector<int>& ids) const {
+	std::string decodeIDs(const std::vector<int>& ids) const {
 		std::string out;
 		const auto status = processor_.Decode(ids, &out);
 		return status.ok() ? out : std::string();
@@ -115,5 +115,5 @@ EMSCRIPTEN_BINDINGS(sentencepiece_wasm) {
 		.constructor<>()
 		.function("loadFromSerializedProto", &SentencePieceWASM::loadFromSerializedProto)
 		.function("encodeWithOffsets", &SentencePieceWASM::encodeWithOffsets)
-		.function("decodeIds", &SentencePieceWASM::decodeIds);
+		.function("decodeIDs", &SentencePieceWASM::decodeIDs);
 }

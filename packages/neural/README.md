@@ -52,7 +52,7 @@ const session = await loadModel("path/to/model.onnx")
 export { createScorer, ProductionScorer, type Scorer } from "./scorer.js"
 
 // Tokenizer (SentencePiece unigram, byte_fallback)
-export { loadTokenizer, Tokenizer, tokenizeToIds } from "./tokenizer.js"
+export { loadTokenizer, Tokenizer, tokenizeToIDs } from "./tokenizer.js"
 
 // ONNX inference
 export { loadModel, createOrtSession, OnnxRunner } from "./onnx-runner.js"
