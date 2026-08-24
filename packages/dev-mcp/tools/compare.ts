@@ -18,9 +18,9 @@ import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
 export const compareTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_compare",
 	description:
-		"Run one input set through two arms and diff them. PATH CAVEAT (#1669): a mailwoman arm runs ONE config — " +
-		"the out-of-the-box path, not the gauntlet harness's per-row country-overlay wiring; foreign-row grades " +
-		"can differ from the board's. An arm is a mailwoman configuration, an ALREADY-RUNNING " +
+		"Run one input set through two arms and diff them. Board model grading should use execution_path " +
+		'"board-routed", which selects each row\'s production country overlay and refuses candidate artifacts outside ' +
+		"the supplied weights cache. An arm is a mailwoman configuration, an ALREADY-RUNNING " +
 		"external geocoder (Pelias / Photon / Nominatim — this server never starts one), a reference geocoder " +
 		"(Census free, Google billed and opt-in only), or a stored past run replayed by run_id. Reports what CHANGED " +
 		"separately from what IMPROVED, checks that only the declared lever moved, and states the smallest effect this " +
@@ -51,6 +51,13 @@ export const compareTool = ({ registry }: DevToolDeps): DevTool => ({
 			.positive()
 			.optional()
 			.describe("Cross-engine only: which distance threshold rows are graded at. Defaults to 25km."),
+		execution_path: z
+			.enum(["single-config", "board-routed"])
+			.default("single-config")
+			.describe(
+				'Use "board-routed" for board model grading so every row receives its production country overlay. ' +
+					"Candidate caches must contain every routed overlay and their shared base weights."
+			),
 		stratify_by: z.enum(["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]).optional(),
 	}),
 	handler: async (args) => runCompare(registry, args),

@@ -404,7 +404,11 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	// graded (eval harnesses laying out a candidate bundle). In-repo the workspace weights package
 	// always resolves, so a fallback-ordered cache could never be reached for grading; the explicit
 	// override exists precisely for that. The IMPLICIT default cache stays a fallback (step 2).
-	if (opts.cacheRoot && cacheHasBinaries()) {
+	// An explicit root is also authoritative for data-only overlays. Such a package deliberately has no binaries of its
+	// own: resolveFromPackageDir follows its `mailwoman.baseWeights` declaration to the base package beside it. Checking
+	// for binaries here used to skip that path and fall through to the installed package, mixing a candidate en-US model
+	// with shipped foreign-locale artifacts. Let the package resolver either complete wholly inside this root or fail.
+	if (opts.cacheRoot) {
 		return resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
@@ -485,7 +489,7 @@ function resolveFromPackageDir(
 	// tokenizer.model from its `files` and resolve them from the base package, while its OWN data siblings
 	// (model-card, postcode-<cc>.bin, lexicons) still resolve locally. Base takes precedence over any local
 	// model copy — that is also what closes #1117 (fr-fr's link-dev-weights pinned a stale model).
-	const baseDir = resolveBaseWeightsDir(packageDir, locale)
+	const baseDir = resolveBaseWeightsDir(packageDir, locale, opts.cacheRoot !== undefined)
 
 	if (!opts.modelPath) {
 		const baseModel = baseDir ? resolve(baseDir, "model.onnx") : undefined
@@ -877,7 +881,7 @@ export function loadPlacetypeCensus(country: string, explicitPath?: string): Pla
  * the base package can't be resolved (in which case the caller keeps the local model paths — no behavior change for a
  * self-contained package).
  */
-function resolveBaseWeightsDir(packageDir: string, locale?: string): string | undefined {
+function resolveBaseWeightsDir(packageDir: string, locale?: string, cacheRootIsExplicit = false): string | undefined {
 	try {
 		// An OVERLAY directory carries no package.json — it is a materialization target, not a package — so the
 		// `baseWeights` declaration is read from the WORKSPACE for the same locale. Without this the #1177 dedup
@@ -899,6 +903,15 @@ function resolveBaseWeightsDir(packageDir: string, locale?: string): string | un
 		const base = pkg?.mailwoman?.baseWeights
 
 		if (typeof base !== "string" || !base) return undefined
+
+		// npm installs scoped siblings beside one another. Prefer that sibling before global package resolution so an
+		// explicit cache remains an isolation boundary: a candidate overlay must share the candidate base in the same
+		// cache, never the installed/workspace base that happens to be visible to this process.
+		const siblingBaseDir = resolve(dirname(packageDir), base.split("/").at(-1)!)
+
+		if (existsSync(resolve(siblingBaseDir, "package.json"))) return siblingBaseDir
+
+		if (cacheRootIsExplicit) return undefined
 
 		const basePackageDir = tryResolvePackageDirectory(base)
 

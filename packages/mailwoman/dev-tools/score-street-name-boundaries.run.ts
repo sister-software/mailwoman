@@ -12,16 +12,10 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createRuntimePipeline } from "#index"
 
 import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
+import { overlayLocale, routeCountry } from "../eval-harness/gauntlet/routing.ts"
 
 const SOURCE = "operator:street-name-audit-2026-08-09"
 const STREET_FAMILY = ["street_prefix", "street_prefix_particle", "street", "street_suffix"] as const
-
-const OVERLAY_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
-	GB: "en-GB",
-	DE: "de-DE",
-	ES: "es-ES",
-	IT: "it-IT",
-}
 
 const fold = (value: string): string => value.normalize("NFKC").toLocaleLowerCase().replaceAll(/\s+/gu, " ").trim()
 const fixtures = (await loadRegressionCases()).filter((row) => row.source === SOURCE)
@@ -30,7 +24,7 @@ const scores = new Map<string, { hit: number; total: number }>()
 const failures: string[] = []
 
 for (const row of fixtures) {
-	const locale = OVERLAY_LOCALE_BY_COUNTRY[row.country] ?? "en-US"
+	const locale = overlayLocale(routeCountry(row))
 	let classifier = classifiers.get(locale)
 
 	if (!classifier) {

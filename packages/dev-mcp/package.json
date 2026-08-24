@@ -255,6 +255,11 @@
 			"default": "./out/worktree-arm.js",
 			"types": "./out/worktree-arm.d.ts"
 		},
+		"./routed-mailwoman-arm": {
+			"node": "./routed-mailwoman-arm.ts",
+			"default": "./out/routed-mailwoman-arm.js",
+			"types": "./out/routed-mailwoman-arm.d.ts"
+		},
 		"./symbol-index": {
 			"node": "./symbol-index.ts",
 			"default": "./out/symbol-index.js",

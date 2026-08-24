@@ -22,6 +22,7 @@ import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
+import { routeCountry } from "mailwoman/eval-harness/gauntlet/routing"
 
 import type { Selection } from "./power.ts"
 
@@ -99,6 +100,18 @@ export interface ResolvedInput {
 	id: string
 	input: string
 	country?: string
+	/**
+	 * Runtime overlay route. Board rows derive this from explicit locale region first, then truth country.
+	 */
+	routeCountry?: string
+	/**
+	 * Locale-region hint that scopes the fuzzy resolver tier on board rows.
+	 */
+	fuzzyCountryScope?: string
+	/**
+	 * Row-specific resolver country assertion from the board.
+	 */
+	defaultCountry?: string
 	addressKind?: string
 	status?: string
 	/**
@@ -422,6 +435,9 @@ async function resolveBoard(ref: Extract<InputSetRef, { kind: "board" }>): Promi
 			id: seed.id,
 			input: seed.input,
 			country: seed.country,
+			routeCountry: routeCountry(seed),
+			...(seed.locale?.split("-")[1] ? { fuzzyCountryScope: seed.locale.split("-")[1] } : {}),
+			...(seed.defaultCountry ? { defaultCountry: seed.defaultCountry } : {}),
 			addressKind: seed.addressKind,
 			status: seed.status,
 			seed,

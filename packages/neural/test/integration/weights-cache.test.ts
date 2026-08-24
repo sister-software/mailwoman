@@ -72,10 +72,10 @@ describe("resolveWeights cache fallback", () => {
 		expect(resolved.anchorLookupPath).toEqual({ path: join(packageDir, "postcode-br.bin"), binary: true })
 	})
 
-	test("a binary-less cache install (metadata-only tarball) does not resolve", () => {
+	test("a binary-less cache install without a base declaration does not resolve", () => {
 		layoutCachedPackage(["model-card.json"])
 
-		expect(() => resolveWeights({ locale: LOCALE, cacheRoot })).toThrow(/Could not resolve/)
+		expect(() => resolveWeights({ locale: LOCALE, cacheRoot })).toThrow(/missing model files/)
 	})
 
 	test("the not-found error names the probed cache path", () => {
@@ -98,6 +98,63 @@ describe("resolveWeights cache fallback", () => {
 
 		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-us")
 		expect(resolved.modelPath).toBe(join(packageDir, "model.onnx"))
+	})
+
+	test("a cached data-only overlay resolves the candidate base beside it", () => {
+		const scopeDir = join(cacheRoot, "node_modules", "@mailwoman")
+		const baseDir = join(scopeDir, "neural-weights-en-us")
+		const overlayDir = join(scopeDir, "neural-weights-en-gb")
+
+		mkdirSync(baseDir, { recursive: true })
+		mkdirSync(overlayDir, { recursive: true })
+		writeFileSync(join(baseDir, "package.json"), JSON.stringify({ name: "@mailwoman/neural-weights-en-us" }))
+		writeFileSync(join(baseDir, "model.onnx"), "candidate-model")
+		writeFileSync(join(baseDir, "tokenizer.model"), "candidate-tokenizer")
+		writeFileSync(join(baseDir, "model-card.json"), JSON.stringify({ version: "candidate" }))
+
+		writeFileSync(
+			join(overlayDir, "package.json"),
+			JSON.stringify({
+				name: "@mailwoman/neural-weights-en-gb",
+				mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
+			})
+		)
+
+		writeFileSync(join(overlayDir, "pair-index-gb.bin"), "overlay-pairs")
+
+		const resolved = resolveWeights({ locale: "en-GB", cacheRoot })
+
+		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-gb+base")
+		expect(resolved.modelPath).toBe(join(baseDir, "model.onnx"))
+		expect(resolved.tokenizerPath).toBe(join(baseDir, "tokenizer.model"))
+		expect(resolved.modelCardPath).toBe(join(baseDir, "model-card.json"))
+		expect(resolved.pairIndexPath).toBe(join(overlayDir, "pair-index-gb.bin"))
+	})
+
+	test("a cached data-only overlay refuses a missing cached base instead of falling through", () => {
+		const overlayDir = join(cacheRoot, "node_modules", "@mailwoman", "neural-weights-en-gb")
+
+		mkdirSync(overlayDir, { recursive: true })
+
+		writeFileSync(
+			join(overlayDir, "package.json"),
+			JSON.stringify({
+				name: "@mailwoman/neural-weights-en-gb",
+				mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
+			})
+		)
+
+		let message = ""
+
+		try {
+			resolveWeights({ locale: "en-GB", cacheRoot })
+		} catch (error) {
+			message = (error as Error).message
+		}
+
+		expect(message).toContain("missing model files")
+		expect(message).toContain(join(overlayDir, "model.onnx"))
+		expect(message).not.toContain("packages/neural-weights-en-us/model.onnx")
 	})
 
 	test("helpers: cache dir + package-name builder", () => {

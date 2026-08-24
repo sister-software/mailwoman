@@ -31,6 +31,7 @@ import {
 } from "../../geocode-core.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
 import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
+import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
 
 export interface GauntletDeps {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
@@ -336,15 +337,6 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// BASE en-US package, which carries no pair index for that country — so its dependent locality silently never
 	// fires and the row looks like a model failure. That exact artifact burned an afternoon in R1, when 53 operator
 	// probes read "dependent_locality never emitted" while the mechanism was fine and the INSTRUMENT was base-only.
-	const OVERLAY_LOCALE_BY_COUNTRY: Record<string, string> = {
-		GB: "en-GB",
-		NZ: "en-NZ",
-		DE: "de-DE",
-		IN: "en-IN",
-		ES: "es-ES",
-		IT: "it-IT",
-	}
-
 	// #1516 second half: a grading environment must STATE its artifact expectations, not discover them in a
 	// degraded number. A missing `postcode-us.bin` costs 3-4 baseline cases and produces no failure of its own —
 	// the run simply scores lower, and the operator reads a model regression. Checked for the base locale plus
