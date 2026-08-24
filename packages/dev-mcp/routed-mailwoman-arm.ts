@@ -29,6 +29,7 @@ const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"postcode_country_coherence",
 	"gazetteer_prior",
 	"admin_containment_rerank",
+	"capital_tier",
 ])
 
 export interface RoutedArtifactProvenance {
@@ -180,6 +181,7 @@ export async function buildRoutedMailwomanArm(
 			...(config.admin_containment_rerank === undefined
 				? {}
 				: { adminContainmentRerank: config.admin_containment_rerank }),
+			...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
 		},
 	})
 

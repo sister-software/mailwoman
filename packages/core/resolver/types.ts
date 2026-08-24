@@ -447,6 +447,13 @@ export interface ResolveOpts {
 	 */
 	localeCountryPriorWeight?: number
 	/**
+	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), answered by the caller's
+	 * reference against the candidate's own name + country + coordinates. Consumed by the resolver's bounded capital
+	 * promotion (`resolver/toponym-prior.ts` — the bare-toponym class only, after the fame key). Structural rather than a
+	 * named import because this package must not depend on the reference's home. Undefined → no promotion, byte-stable.
+	 */
+	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
+	/**
 	 * #743/#194 — a CONFIDENT coarse-placer country applied as a HARD candidate filter (`query.country`), not the soft
 	 * {@link anchorPosterior} boost. This collapses the off-continent tail for LOW-population places the soft prior can't
 	 * move (FI/PL — their towns lose to a high-pop namesake in the population-first gazetteer even when the country is

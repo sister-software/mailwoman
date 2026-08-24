@@ -30,7 +30,7 @@ import {
 	type GeocodeDeps,
 } from "../../geocode-core.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
-import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
+import { createResolverBackend, loadCapitalIndex, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
 import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
 
 export interface GauntletDeps {
@@ -103,6 +103,12 @@ export interface GauntletResolverLevers {
 	 * the one that carries evidence today; the `false` pin grades the production default explicitly.
 	 */
 	adminContainmentRerank?: boolean
+	/**
+	 * #1880 — the capital-status ranking axis: bounded NATIONAL-capital promotion on the bare-toponym class. Like
+	 * `gazetteerPrior` this pin carries an ARTIFACT (`data/gazetteer/capitals-v1.json`), so the harness loads it rather
+	 * than `resolverLeverDeps` (which stays pure). Library default OFF (D-rule) — the `true` pin is the evidence path.
+	 */
+	capitalTier?: boolean
 }
 
 /**
@@ -140,6 +146,10 @@ export function describeResolverLevers(levers: GauntletResolverLevers | undefine
 	// keeps "no flag" reading as "grade whatever production does".
 	if (levers?.gazetteerPrior !== undefined) {
 		entries.push(`gazetteerPrior=${levers.gazetteerPrior ? "ON" : "OFF"}`)
+	}
+
+	if (levers?.capitalTier !== undefined) {
+		entries.push(`capitalTier=${levers.capitalTier ? "ON" : "OFF"}`)
 	}
 
 	if (!entries.length) return "resolver levers: (none pinned — production defaults)"
@@ -395,6 +405,16 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
 
+	// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): the reference loads here
+	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it
+	// when its option is on. Absent pin → undefined → no promotion, byte-stable.
+	const capitalIndex = opts.levers?.capitalTier === true ? loadCapitalIndex() : undefined
+
+	const capitalLevel = capitalIndex
+		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
+		: undefined
+
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
 	// A static import here would break the
@@ -522,6 +542,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
 				...leverDeps,
+				...(capitalLevel ? { capitalLevel } : {}),
 				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 				...forkEntityDeps,
 				...forwarded,

@@ -61,7 +61,12 @@ import {
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
-import { createResolverBackend, resolveCandidateDBPath, resolveWOFShardPaths } from "./resolver-backend.ts"
+import {
+	createResolverBackend,
+	loadCapitalIndex,
+	resolveCandidateDBPath,
+	resolveWOFShardPaths,
+} from "./resolver-backend.ts"
 
 //#region Contract
 
@@ -120,6 +125,12 @@ export interface GeocodeSessionOptions {
 	 * The opt-in venue tier (#1684's POI half) — see `GeocodeDeps.poiVenueTier`. Default OFF.
 	 */
 	poiVenueTier?: boolean
+	/**
+	 * The capital-status ranking axis (#1880) — bounded promotion of a NATIONAL capital among same-name candidates on the
+	 * bare-toponym class (`promoteCapitals`, resolver/toponym-prior.ts — applied after the fame key, tier-safe). Loads
+	 * `data/gazetteer/capitals-v1.json` and THROWS if it is absent. Default OFF (D-rule).
+	 */
+	capitalTier?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
@@ -433,6 +444,17 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const resolverImportedAt = performance.now()
 
 	const lookup = createResolverBackend(mod, { candidateDB, dataRoot: options.dataRoot, wofPaths: wofPath })
+
+	// #1880: the capital-status reference, loaded once per session when the tier is switched on. The
+	// closure answers per candidate (name + country + coordinates) and threads into the resolver's
+	// bounded capital promotion via GeocodeDeps.capitalLevel.
+	const capitals = options.capitalTier === true ? loadCapitalIndex() : undefined
+
+	const capitalLevel = capitals
+		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
+		: undefined
+
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
@@ -682,6 +704,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// through the retry; a locale-inferred scope is withheld there like any bare-locality walk.
 			defaultCountryIsInferred: !options.defaultCountry,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
+			// #1880 opt-in: default-OFF downstream, so only the loaded closure needs threading.
+			...(capitalLevel ? { capitalLevel } : {}),
 			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
 			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).
 			...(resolverDefaultCountry(options, !!candidateDB)

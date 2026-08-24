@@ -19,17 +19,19 @@
  *   (or `--candidate-db none`) pins the FTS backend.
  */
 
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { mailwomanDataRoot, repoRootPathBuilder, wofShardPaths } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
 	WOFPostalCityAliasLookup,
 	WOFSQLitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
+import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import { resolvePath } from "path-ts"
 
 /**
@@ -167,4 +169,34 @@ export function createResolverBackend(
 		databasePath: Array.isArray(wp) && wp.length === 1 ? wp[0]! : wp,
 		postalCityAliases,
 	})
+}
+
+/**
+ * Where the committed capital-status reference lives (`mailwoman gazetteer capitals` writes it). Repo-relative because
+ * the file ships with the SOURCE tree, not the data root: it is small, committed, and versioned with the ranking code
+ * that interprets it. Baking it into `candidate.db` at the next gazetteer rebuild is the follow-up recorded on #1880.
+ */
+export function conventionCapitalsPath(): string {
+	return String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json"))
+}
+
+/**
+ * Load the capital-status reference into the ranking index. THROWS on a missing or wrong-shaped file: the caller only
+ * asks for this when the capital tier is switched ON, and an opt-in lever that silently no-ops grades as "inert" when
+ * it never ran.
+ */
+export function loadCapitalIndex(path: string = conventionCapitalsPath()): CapitalIndex {
+	const parsed = parseJSONStrict<{ version?: number; entries?: CapitalPoint[] }>(readFileSync(path, "utf8"))
+
+	if (parsed.version !== 1 || !Array.isArray(parsed.entries)) {
+		throw new Error(`${path} is not a v1 capitals reference — rebuild with \`mailwoman gazetteer capitals\``)
+	}
+
+	// An entry without its folded name set would never match anything — an index that silently answers
+	// `none` on every probe is the partial-reader lie, so a pre-name-set file is refused outright.
+	if (parsed.entries.length && !Array.isArray(parsed.entries[0]?.k)) {
+		throw new Error(`${path} predates the name-set field — rebuild with \`mailwoman gazetteer capitals\``)
+	}
+
+	return new CapitalIndex(parsed.entries)
 }
