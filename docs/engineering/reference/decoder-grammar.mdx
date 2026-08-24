@@ -228,7 +228,16 @@ parses it should forbid.
 2. **Ablation prediction**: suppressing the country-surface clue on tokens covered by a longer
    gazetteer locality entry flips `Port of Spain`-class rows without retraining. Expressible in the
    engine config; falsifies §4 if it fails.
-3. **FST maximal-match check**: whether `fst-prior.ts` prefers covering entries over nested ones is
-   UNKNOWN; read the code, record the answer here.
+3. **FST maximal-match check** — ANSWERED (2026-08-24, read from `buildFSTEmissionPriors` in
+   `packages/neural/fst-prior.ts`): there is NO maximal-match preference. The walk starts at every
+   word position, applies bias at the first accepting state, and applies bias AGAIN at every longer
+   accepting extension from the same start — nested and covering entries stack additively into the
+   emission matrix, and nothing ranks, deduplicates, or suppresses among overlapping spans
+   (`FSTAcceptedMatch`'s own docstring says the observability path "reports every accepted surface,
+   including nested matches"). So a covering `Port of Spain` locality entry cannot outrank the
+   nested `Spain` country hit at the FST layer: both land as per-token bias and the token-factorized
+   decoder resolves them token-locally — the §4 subsidy, confirmed at the code rather than presumed.
+   The §9.2 ablation therefore cannot be expressed as an FST-side switch; suppression of covered
+   sub-span clues would be NEW behavior, not the removal of an existing preference.
 4. **Schema decision**: admit or reject the venue→venue containment edge for the POI-under-POI
    production, with a board row as its acceptance test.
