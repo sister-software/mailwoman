@@ -175,6 +175,7 @@ export async function buildRoutedMailwomanArm(
 
 	const gauntletDeps = await deps.buildDeps({
 		...(cacheRoot ? { weightsCacheRoot: cacheRoot } : {}),
+		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
 		levers: {
 			...(config.postcode_country_coherence === undefined
 				? {}
