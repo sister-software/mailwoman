@@ -58,6 +58,70 @@ def test_known_keys_merge_unchanged(tmp_path):
     assert cfg.data.max_length == 96
 
 
+def test_corpus_receipts_load_as_typed_configs(tmp_path):
+    path = _write(
+        tmp_path,
+        "data:\n"
+        "  required_corpus_receipts:\n"
+        "    - name: ve-after-locality\n"
+        "      min_draws: 100\n"
+        "      source: synth-trailing-region-structured\n"
+        "      country: VE\n"
+        "      component_sequence: [locality, postcode, region]\n",
+    )
+
+    receipt = load_config(path).data.required_corpus_receipts[0]
+
+    assert receipt.name == "ve-after-locality"
+    assert receipt.min_draws == 100
+    assert receipt.component_sequence == ["locality", "postcode", "region"]
+
+
+def test_corpus_receipts_reject_duplicate_names(tmp_path):
+    path = _write(
+        tmp_path,
+        "data:\n"
+        "  required_corpus_receipts:\n"
+        "    - {name: duplicate, source: one}\n"
+        "    - {name: duplicate, source: two}\n",
+    )
+
+    with pytest.raises(ValueError, match="names must be unique"):
+        load_config(path)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("min_draws", "true", "min_draws must be an integer"),
+        ("min_draws", "1.5", "min_draws must be an integer"),
+        ("component_sequence", "locality", "component_sequence must be a list of strings"),
+        ("component_sequence", "[locality, 7]", "component_sequence must be a list of strings"),
+        ("name", "7", "name must be a string"),
+    ],
+)
+def test_corpus_receipts_reject_ambiguous_field_types(tmp_path, field, value, message):
+    path = _write(
+        tmp_path,
+        f"data:\n  required_corpus_receipts:\n    - name: receipt\n      {field}: {value}\n",
+    )
+
+    with pytest.raises(TypeError, match=message):
+        load_config(path)
+
+
+def test_lenient_config_skips_unknown_nested_receipt_keys(tmp_path):
+    path = _write(
+        tmp_path,
+        "data:\n  required_corpus_receipts:\n    - name: receipt\n      future_filter: value\n",
+    )
+
+    receipt = load_config(path, strict=False).data.required_corpus_receipts[0]
+
+    assert receipt.name == "receipt"
+    assert not hasattr(receipt, "future_filter")
+
+
 def test_lenient_mode_preserves_the_silent_skip(tmp_path):
     # strict=False is the escape hatch for tooling that intentionally consumes a
     # partial view of a config: unknown keys are skipped, known keys still merge.
