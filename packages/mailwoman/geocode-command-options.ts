@@ -29,6 +29,16 @@ export interface GeocodeCommandOptions {
 	 * — `--no-admin-containment-rerank` opts out.
 	 */
 	adminContainmentRerank: boolean
+	/**
+	 * Capital-status ranking axis (#1880). Deliberately TRI-STATE with no entry in {@link createGeocodeCommandOptions}:
+	 * unstated flows through as absent so the SESSION default (ON, with the missing-reference degrade) applies —
+	 * `--capital-tier` demands the reference loudly, `--no-capital-tier` opts out.
+	 */
+	capitalTier?: boolean
+	/**
+	 * Own-name variant-alias exemption (#1882). Tri-state for the same reason; `--no-variant-alias-exemption` opts out.
+	 */
+	variantAliasExemption?: boolean
 	placeCountryThreshold: number
 	format: "json" | "text" | "jsonld"
 	json: boolean

@@ -113,6 +113,15 @@ export const spec = {
 			description:
 				"Region-qualifier containment reranking of locality candidates; --no-admin-containment-rerank disables it.",
 		},
+		"capital-tier": {
+			type: "boolean",
+			description: "Bounded national-capital promotion on bare city names (default on); --no-capital-tier disables it.",
+		},
+		"variant-alias-exemption": {
+			type: "boolean",
+			description:
+				"Own-name variant aliases keep their holder's rank in cross-country contests (default on); --no-variant-alias-exemption disables it.",
+		},
 		"place-country-threshold": {
 			type: "number",
 			default: 0.9,
@@ -167,6 +176,16 @@ function booleanValue(values: Record<string, unknown>, name: string): boolean {
 	return values[name] === true
 }
 
+/**
+ * A boolean flag with NO schema default: unstated stays `undefined` so the library default applies downstream, and only
+ * a stated `--flag` / `--no-flag` reaches the session as an explicit value.
+ */
+function triStateValue(values: Record<string, unknown>, name: string): boolean | undefined {
+	const value = values[name]
+
+	return typeof value === "boolean" ? value : undefined
+}
+
 function numberValue(values: Record<string, unknown>, name: string): number | undefined {
 	const value = values[name]
 
@@ -175,6 +194,8 @@ function numberValue(values: Record<string, unknown>, name: string): number | un
 
 async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOptions> {
 	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/utils")).mailwomanDataRoot()
+	const capitalTier = triStateValue(values, "capital-tier")
+	const variantAliasExemption = triStateValue(values, "variant-alias-exemption")
 
 	return {
 		locale: stringValue(values, "locale")!,
@@ -197,6 +218,8 @@ async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOption
 		postcodeShapeCoherence: booleanValue(values, "postcode-shape-coherence"),
 		postcodeContainmentCoherence: booleanValue(values, "postcode-containment-coherence"),
 		adminContainmentRerank: booleanValue(values, "admin-containment-rerank"),
+		...(capitalTier === undefined ? {} : { capitalTier }),
+		...(variantAliasExemption === undefined ? {} : { variantAliasExemption }),
 		placeCountryThreshold: numberValue(values, "place-country-threshold")!,
 		format: stringValue(values, "format") as Format,
 		json: booleanValue(values, "json"),

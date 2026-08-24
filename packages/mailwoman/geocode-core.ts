@@ -370,8 +370,9 @@ export interface GeocodeDeps {
 	localeCountryPriorWeight?: number
 	/**
 	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), for the resolver's bounded
-	 * capital promotion on the bare-toponym class (`ResolveOpts.capitalLevel`). Built from the committed capitals
-	 * reference when `capitalTier` is switched on; undefined (the default) leaves resolution byte-identical.
+	 * capital promotion on the bare-toponym class (`ResolveOpts.capitalLevel`). The session builds it from the capitals
+	 * reference by default (`capitalTier`, ON); undefined — an opted-out session, or a reference-less artifact under the
+	 * degrade path — leaves resolution byte-identical.
 	 */
 	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
