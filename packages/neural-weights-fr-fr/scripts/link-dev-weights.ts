@@ -32,7 +32,7 @@ import { spawnSync } from "node:child_process"
 import { existsSync, mkdirSync, statSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { dataRootPath, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import {
 	linkForce,
 	pairIndexStaleReason,

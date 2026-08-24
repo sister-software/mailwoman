@@ -8,7 +8,7 @@ import { existsSync, mkdirSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
