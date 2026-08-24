@@ -25,7 +25,9 @@ export const contractTool = ({ registry }: DevToolDeps): DevTool => ({
 		"breaks on any row. A ZERO MEANS OPPOSITE THINGS FOR THE TWO CHECKS and they are never summed — `illegal-edge` " +
 		"is enforced by the tree builder at construction, so zero is the designed state and any count is a builder " +
 		"regression; `stranded-dependent` is real model behaviour, so its zero is ambiguous until you know the tag " +
-		"appeared at all, and every stranding count is therefore reported beside how many rows produced that tag.",
+		"appeared at all, and every stranding count is therefore reported beside how many rows produced that tag. " +
+		"Duplicate tags are diagnostic rather than violations: the report groups their row counts by tag and by " +
+		"sibling, nested, or separate-branch topology, with row IDs and full inputs, without changing validateTree.",
 	inputSchema: z.object({
 		inputs: INPUT_SET_SCHEMA.optional().describe(
 			"Defaults to the full board. Needs no truth of any kind — the contract is a claim a tree settles about " +

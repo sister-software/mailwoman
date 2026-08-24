@@ -88,4 +88,62 @@ describe("censusTrees", () => {
 
 		expect(census.classes[0]?.examples[0]).toMatchObject({ id: "orphan", input: "64 , Alburgh VT", value: "64" })
 	})
+
+	it("groups duplicate tags by sibling, nested, and separate-branch topology", () => {
+		const census = censusTrees([
+			row("sibling", "Portopetro, Illes Balears", [node("locality", "Portopetro"), node("locality", "Illes Balears")]),
+			row("nested", "St Mary's, Oxford", [node("locality", "Oxford", [node("locality", "St Mary's")])]),
+			row("branches", "Aravaca, Madrid", [
+				node("country", "Spain", [node("locality", "Madrid")]),
+				node("region", "Community of Madrid", [node("locality", "Aravaca")]),
+			]),
+		])
+
+		expect(census.duplicate_tags).toMatchObject({ rows: 3, rate: 1 })
+
+		expect(census.duplicate_tags.topologies).toEqual([
+			{ topology: "sibling", rows: 1 },
+			{ topology: "nested", rows: 1 },
+			{ topology: "separate-branches", rows: 1 },
+		])
+
+		expect(census.duplicate_tags.classes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({ tag: "locality", topology: "sibling", n: 1 }),
+				expect.objectContaining({ tag: "locality", topology: "nested", n: 1 }),
+				expect.objectContaining({ tag: "locality", topology: "separate-branches", n: 1 }),
+			])
+		)
+
+		expect(census.duplicate_tags.classes.find((entry) => entry.topology === "sibling")?.examples[0]).toEqual({
+			id: "sibling",
+			input: "Portopetro, Illes Balears",
+			values: ["Portopetro", "Illes Balears"],
+		})
+	})
+
+	it("counts one row once per duplicate topology instead of counting node pairs", () => {
+		const census = censusTrees([
+			row("three", "A, B, C", [node("locality", "A"), node("locality", "B"), node("locality", "C")]),
+		])
+
+		expect(census.duplicate_tags.rows).toBe(1)
+
+		expect(census.duplicate_tags.classes).toEqual([
+			expect.objectContaining({ tag: "locality", topology: "sibling", n: 1 }),
+		])
+	})
+
+	it("reports no duplicate-tag rate over an empty evaluation", () => {
+		expect(censusTrees([]).duplicate_tags).toMatchObject({
+			rows: 0,
+			rate: null,
+			topologies: [
+				{ topology: "sibling", rows: 0 },
+				{ topology: "nested", rows: 0 },
+				{ topology: "separate-branches", rows: 0 },
+			],
+			classes: [],
+		})
+	})
 })
