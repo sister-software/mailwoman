@@ -179,3 +179,36 @@ decision, none pre-authorized: a seed-variance measurement (same config, differe
 churn floor directly), or the v4.4.0 arc's own path applied forward (a suffix-boundary-style cure
 fine-tuned ON TOP of the v5.0.0 base rather than another base). Both candidates' artifacts and run
 IDs are retained; the board runs are replayable via `{kind:"recorded"}`.
+
+## Postscript 2 — the full three-leg arc: null + cure on the v5.0.0 base (2026-08-24)
+
+The first run of the complete protocol — self-control, null, candidate in one call:
+
+```
+leg                                  improved  regressed  net  differed
+self-control (shipped vs itself)            0          0    0     0/649
+null (v5.0.1 — base recipe, 1k)            38         34    4   182/649
+cure (v5.0.2 — suffix-boundary ×4)         37         31    6   175/649
+```
+
+**Verdict: HOLD** — D-rule FR 2 / GB 4 / DE 1, unchanged from the base.
+
+Three findings:
+
+1. **The fine-tune tax on this base is ~zero.** The null grades net +4 vs shipped where the v5.0.0
+   base graded +2 — continuing the base's own recipe for 1,000 steps costs nothing measurable, unlike
+   the v4.4.0 base's measured 10-row tax. A tax is a property of the base and its recipe, not a
+   universal constant.
+2. **The cure worked, on exactly its target class.** Candidate minus null: net +2, regressions −3 —
+   and the three healed rows are `Passeig de Gràcia`, `Passeig de Sant Joan`, and the
+   `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary shard
+   teaches. Mechanism-consistent, small, and honestly attributed. (Null↔cure share the same base
+   init, seed, and steps, so this comparison does not carry the ~40-row from-scratch churn floor.)
+3. **The D-rule core is base-inherited and dose-immune.** FR 2 / GB 4 / DE 1 are identical across
+   base, null, and cure: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
+   `Cafe at St Mary's…`, `Milford on Sea…`), `Unter den Linden`, and the bare-street coin flips. More
+   suffix-boundary dose is not the lever for these — the venue-boundary class needs its own treatment
+   (#1366's territory), or this lineage does not ship default-on.
+
+Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, cure int8 `f2d264f09b7d6f269158ab97d1843346`.
+Run IDs in the store: control `0bb3f465`, null `e0b9491c`, candidate `c85ef830`.
