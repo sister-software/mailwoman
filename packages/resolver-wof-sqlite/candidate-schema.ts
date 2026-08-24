@@ -18,6 +18,7 @@
 import { sql, type Kysely } from "kysely"
 
 import type { CandidateAncestorsDatabase } from "./candidate-ancestors-schema.ts"
+import type { CapitalTable } from "./capital-schema.ts"
 import type { NameKey } from "./street-normalize.ts"
 
 /**
@@ -69,8 +70,8 @@ export interface CandidateTable {
 	 * not of the name that reached it, which is what lets a bare `Moscow` inherit Москва's score through the alias row.
 	 *
 	 * **THIS IS THE PRE-SPLIT CONFLATION, AND THE NAME SAYS SO.** It is `place_importance.importance` copied verbatim
-	 * from the score source — a legacy blended importance whose own build already coalesced the concordance's
-	 * encyclopedia-derived channel with a population-derived fallback; `place-importance-schema.ts` calls that column
+	 * from the score source — the bounded blend `place-importance-schema.ts`'s `blendImportance` writes (the
+	 * concordance's encyclopedia-derived channel clamped around a population-derived base); that module calls the column
 	 * DEPRECATED. It is NOT the split `encyclopedic` channel, and the two must not be conflated in a future build:
 	 * writing the split value here instead was measured on 2026-08-10 and makes the ranking key INERT on three of the
 	 * four rows it exists to fix. The reason is coverage, not principle — the encyclopedia-concordance join in
@@ -135,6 +136,10 @@ export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	cand_stage: CandidateTable
 	country_codes: CountryCodeTable
 	placetype_codes: PlacetypeCodeTable
+	/**
+	 * The capital-status reference carried in-artifact (#1880's distribution home) — see capital-schema.ts.
+	 */
+	capital: CapitalTable
 }
 
 /**

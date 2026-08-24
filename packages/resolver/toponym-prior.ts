@@ -226,10 +226,10 @@ function orderMeasuredByImportance<T extends Rankable>(rows: readonly T[]): T[] 
  * fewer than two candidates are scored.
  *
  * The producer is the candidate build's `importance` column (#28) — the BLENDED prior (the concordance's
- * encyclopedia-derived channel where a concordance matched, a population-derived proxy elsewhere; see
- * `candidate-schema.ts` → `CandidateTable.importance` for why the strict channel is deliberately NOT what lands there).
- * On an artifact predating the column, `importance` is `undefined` on every candidate the backend produces and the
- * abstention below keeps the ranking byte-stable.
+ * encyclopedia-derived channel clamped around a population-derived base — `place-importance-schema.ts`'s
+ * `blendImportance`; see `candidate-schema.ts` → `CandidateTable.importance` for why the strict channel is deliberately
+ * NOT what lands there). On an artifact predating the column, `importance` is `undefined` on every candidate the
+ * backend produces and the abstention below keeps the ranking byte-stable.
  *
  * Flip decisions, ratified 2026-08-11: bare `Moscow`→Москва, `Manchester`→GB, `Fulda`→DE, `Cambridge`→GB are ACCEPTED
  * behavior — all cross-country contests, where this prior answers the question population cannot. Bare `Springfield`

@@ -30,7 +30,13 @@ import {
 	type GeocodeDeps,
 } from "../../geocode-core.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
-import { createResolverBackend, loadCapitalIndex, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
+import {
+	createResolverBackend,
+	loadCapitalIndex,
+	mailwomanDataRoot,
+	resolveCandidateDBPath,
+	wofShardPaths,
+} from "../../resolver-backend.ts"
 import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
 
 export interface GauntletDeps {
@@ -428,7 +434,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): the reference loads here
 	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it
 	// when its option is on. Absent pin → undefined → no promotion, byte-stable.
-	const capitalIndex = opts.levers?.capitalTier === true ? loadCapitalIndex() : undefined
+	const capitalIndex =
+		opts.levers?.capitalTier === true
+			? loadCapitalIndex({ candidateDB: resolveCandidateDBPath(opts.candidateDB) })
+			: undefined
 
 	const capitalLevel = capitalIndex
 		? (place: { name: string; country?: string; lat: number; lon: number }): number =>

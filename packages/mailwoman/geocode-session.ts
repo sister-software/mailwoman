@@ -459,7 +459,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// #1880: the capital-status reference, loaded once per session when the tier is switched on. The
 	// closure answers per candidate (name + country + coordinates) and threads into the resolver's
 	// bounded capital promotion via GeocodeDeps.capitalLevel.
-	const capitals = options.capitalTier === true ? loadCapitalIndex() : undefined
+	const capitals = options.capitalTier === true ? loadCapitalIndex({ candidateDB }) : undefined
 
 	const capitalLevel = capitals
 		? (place: { name: string; country?: string; lat: number; lon: number }): number =>

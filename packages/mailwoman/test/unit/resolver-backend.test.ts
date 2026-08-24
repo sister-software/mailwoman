@@ -7,6 +7,7 @@
 import { join, resolve } from "node:path"
 
 import { defaultMailwomanPaths } from "@mailwoman/core/env"
+import type { CapitalTable } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import {
 	conventionCandidateDBPath,
 	mailwomanDataRoot,
@@ -89,4 +90,55 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
 
 	expect(resolveCandidateDBPath(undefined, root)).toBe(join(root, "wof", "candidate.db"))
+})
+
+test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {
+	const { mkdtempSync, writeFileSync } = await import("node:fs")
+	const { tmpdir } = await import("node:os")
+	const { DatabaseSync } = await import("node:sqlite")
+	const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+	const { createCapitalTable } = await import("@mailwoman/resolver-wof-sqlite/capital-schema")
+	const { loadCapitalIndex } = await import("mailwoman/resolver-backend")
+
+	const dir = mkdtempSync(join(tmpdir(), "mw-capital-loader-"))
+
+	// An artifact carrying the table: the CR capital only.
+	const artifactPath = join(dir, "candidate.db")
+	const artifact = new DatabaseSync(artifactPath)
+
+	await createCapitalTable(new DatabaseClient<{ capital: CapitalTable }>({ database: artifact }))
+
+	artifact
+		.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
+		.run("CR", 9.9333, -84.0833, "national", JSON.stringify(["san jose"]))
+
+	artifact.close()
+
+	// A repo-style file carrying a DIFFERENT entry (GD), so which source served is observable.
+	const repoPath = join(dir, "capitals-v1.json")
+
+	writeFileSync(
+		repoPath,
+		JSON.stringify({
+			version: 1,
+			entries: [{ country: "GD", latitude: 12.0529, longitude: -61.7523, level: "national", k: ["st georges"] }],
+		})
+	)
+
+	// Artifact wins when present.
+	const fromArtifact = loadCapitalIndex({ candidateDB: artifactPath, path: repoPath })
+
+	expect(fromArtifact.levelOfPlace("San José", "CR", 9.93, -84.08)).toBe(2)
+	expect(fromArtifact.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(0)
+
+	// An artifact WITHOUT the table falls through to the repo file.
+	const barePath = join(dir, "bare.db")
+
+	new DatabaseSync(barePath).close()
+	const fromRepo = loadCapitalIndex({ candidateDB: barePath, path: repoPath })
+
+	expect(fromRepo.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)
+
+	// Neither source: the opt-in config key must fail loudly, not no-op.
+	expect(() => loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json") })).toThrow(/capital_tier/)
 })

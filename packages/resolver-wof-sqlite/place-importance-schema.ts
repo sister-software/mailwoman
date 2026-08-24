@@ -26,9 +26,9 @@
  *   ABOVE the place every user means. Referentially the suburb wins by 230x on population. One score
  *   cannot serve both readers, which is why there are two.
  *
- *   THE LEGACY COLUMN STAYS, AND IS DERIVED. `importance` remains as `COALESCE(encyclopedic,
- *   referential)` — byte-for-byte today's semantics — so every reader built against the old table
- *   keeps working while the split rolls out. It is the CONFLATION, and nothing new should read it.
+ *   THE LEGACY COLUMN STAYS, AND IS DERIVED. `importance` is written by {@link blendImportance} — the
+ *   bounded blend the bare-toponym fame consumer (#28) ranks on. It is the CONFLATION, and nothing new
+ *   should read it; new code reads the split columns.
  */
 
 import type { DatabaseSync } from "node:sqlite"
@@ -57,8 +57,8 @@ export interface PlaceImportanceTable {
 	 */
 	encyclopedic: number | null
 	/**
-	 * DEPRECATED — the pre-split conflation, written as `COALESCE(encyclopedic, referential)` so pre-split readers keep
-	 * working unchanged. New code reads {@link PlaceImportanceTable.referential} (to rank) or
+	 * DEPRECATED — the pre-split conflation, written by {@link blendImportance} so the bare-toponym fame consumer (#28)
+	 * keeps one cross-bearer scale. New code reads {@link PlaceImportanceTable.referential} (to rank) or
 	 * {@link PlaceImportanceTable.encyclopedic} (to display).
 	 */
 	importance: number
@@ -114,6 +114,55 @@ export {
 	REFERENTIAL_SATURATION_POPULATION,
 	referentialFromPopulation,
 } from "@mailwoman/core/resolver"
+
+//#endregion
+
+//#region The legacy blend
+
+/**
+ * The most the encyclopedic channel may raise a place's blended importance above its population-anchored referential
+ * score.
+ *
+ * In referential units 0.25 is 3.5 population doublings (the referential curve divides log2 by 14), so an article can
+ * promote a place as if it were up to ~11x its recorded population — never more. The bound exists because the two
+ * channels' scales CROSS at the article floor: merely having a Wikipedia article scores ~0.25–0.35, which exceeds the
+ * referential score of a mid-size town, so an unbounded blend ranks a 136-person village with an article above a
+ * 16,026-person town without one.
+ *
+ * The value is bracketed by two decided contests, measured on the 2026-08-24 staging build:
+ *
+ * - `> 0.2282`, or bare `Whitby` stops answering Whitby GB (pop 13,130, referential 0.2729, encyclopedic 0.5496) over
+ *   Whitby CA (pop 128,377, referential 0.5011) — the #28 design case the fame prior exists to serve.
+ * - `< 0.2790`, or bare `Tó`/`To` answers Tó PT (pop 136, referential 0.0131, encyclopedic 0.3375) over Tô BF (pop
+ *   16,026, no article) — the `bf-gloss-to-*` board pair.
+ *
+ * 0.25 sits mid-interval with ~0.02 margin to each bound.
+ */
+export const ENCYCLOPEDIC_BOOST_CAP = 0.25
+
+/**
+ * The legacy `importance` blend — one cross-bearer fame scale for the #28 consumer, derived from the two split
+ * channels:
+ *
+ * - No article → the referential score.
+ * - No population evidence (`referential` 0) → the encyclopedic score stands alone: there is nothing to bound the
+ *   article's claim against, and a constant cap would demote every famous place WOF records no population for
+ *   (meaning-of-zero: referential 0 is "unmeasured", not "tiny").
+ * - Both present → the encyclopedic value clamped to at most {@link ENCYCLOPEDIC_BOOST_CAP} above the referential score,
+ *   and never below it. The floor half repairs the downward inversion (the Seine-Saint-Denis suburb's weak article
+ *   scored 0.1173 and REPLACED its referential 0.4716 under the old `COALESCE`, so a 418-person Aude hamlet outranked
+ *   it 4.8x); the cap half repairs the upward one (`Tó`, above).
+ *
+ * Scale of the clamp on the 2026-08-24 staging build: of 628,202 article-bearing rows, 209,738 sit above the cap and
+ * 13,888 sit below their referential floor; the 305,168 article-without-population rows pass through unchanged.
+ */
+export function blendImportance(referential: number, encyclopedic: number | null | undefined): number {
+	if (encyclopedic === null || encyclopedic === undefined) return referential
+
+	if (referential <= 0) return encyclopedic
+
+	return Math.max(referential, Math.min(encyclopedic, referential + ENCYCLOPEDIC_BOOST_CAP))
+}
 
 //#endregion
 

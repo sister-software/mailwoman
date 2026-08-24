@@ -59,6 +59,8 @@ import { stageCountryDisplayNames } from "./candidate/country-display-names.ts"
 import { GLOSS_KEY_THRESHOLD, stampNameRoles } from "./candidate/name-roles.ts"
 import type { PlaceAttrs } from "./candidate/place-attrs.ts"
 import { foldShard } from "./candidate/shard-fold.ts"
+import { createCapitalTable } from "./capital-schema.ts"
+import type { CapitalPoint } from "./capitals.ts"
 import { resurrectCurrencyHoles } from "./currency-backfill.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
@@ -77,6 +79,12 @@ export interface BuildCandidateOptions {
 	 * Output candidate DB path (overwritten if present).
 	 */
 	output: string
+	/**
+	 * The capital-status reference entries (#1880) to carry in-artifact — the parsed `data/gazetteer/capitals-v1.json`
+	 * entries, passed by the CALLER because this module publishes to npm and must not read repo-root paths. Absent → the
+	 * `capital` table is not created, and the session loader falls back to the repo file where one exists.
+	 */
+	capitals?: readonly CapitalPoint[]
 	/**
 	 * Optional postcode shards (`spr` rows with `placetype='postalcode'` + real coords, e.g. postalcode-us.db) — folded
 	 * in as `postalcode` candidate rows so `findPlace(postalcode)` resolves a ZIP directly (the demo's primary postcode
@@ -534,6 +542,26 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			.insertInto("placetype_codes")
 			.values([...ptcodes].map(([placetype, id]) => ({ id, placetype })))
 			.execute()
+	}
+
+	// --- capital-status reference (#1880's distribution home) — cold, small (~3.7k rows), typed ---
+	if (opts.capitals?.length) {
+		await createCapitalTable<CandidateDatabase>(kdb)
+
+		await kdb
+			.insertInto("capital")
+			.values(
+				opts.capitals.map((entry) => ({
+					country: entry.country,
+					latitude: entry.latitude,
+					longitude: entry.longitude,
+					level: entry.level,
+					keys: JSON.stringify(entry.k),
+				}))
+			)
+			.execute()
+
+		progress("capitals", `${opts.capitals.length.toLocaleString()} capital-reference rows carried in-artifact`)
 	}
 
 	// --- materialize the clustered WITHOUT ROWID table (sorted insert → contiguous leaves) ---

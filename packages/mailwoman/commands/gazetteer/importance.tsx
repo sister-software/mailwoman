@@ -13,8 +13,8 @@
  *   importance became the de-facto ranking signal for a geocoder whose users are asking "which place
  *   do I mean". It now writes `referential` (population-anchored, the ranking backbone) and
  *   `encyclopedic` (the Wikipedia join, NULL when there is no article) in their own columns, plus
- *   the legacy `importance` column as `COALESCE(encyclopedic, referential)` so pre-split readers are
- *   byte-unaffected. Schema, DDL and the referential derivation live in
+ *   the legacy `importance` column via `blendImportance` — the bounded blend the #28 fame consumer
+ *   ranks on. Schema, DDL, the referential derivation and the blend live in
  *   `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing either score.
  *
  *   The table is added to the `--db` IN PLACE (the original `scripts/build-importance.ts` behavior):
@@ -120,7 +120,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 
-		const { createPlaceImportanceTable, referentialFromPopulation } =
+		const { blendImportance, createPlaceImportanceTable, referentialFromPopulation } =
 			await import("@mailwoman/resolver-wof-sqlite/place-importance-schema")
 
 		const { TextSpliterator } = await import("spliterator")
@@ -258,8 +258,9 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		// `INSERT OR IGNORE` population fallback for whatever Wikipedia missed. That made the column
 		// a conflation nothing downstream could take apart — which is how encyclopedic importance
 		// became the de-facto ranking signal. Now each place gets ONE row carrying both scores in
-		// their own columns, and the legacy `importance` column is written as
-		// `COALESCE(encyclopedic, referential)` so pre-split readers see exactly what they saw before.
+		// their own columns, and the legacy `importance` column is written by `blendImportance` — the
+		// bounded blend whose cap keeps an article-floor score from outranking a population-attested
+		// town (see the constant's docstring for the bracketing contests).
 		console.error("Building place_importance table (referential + encyclopedic)...")
 
 		await createPlaceImportanceTable(kdb)
@@ -328,7 +329,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 
 			// NULL, never 0, for a place with no article — the meaning-of-zero rule at the column level.
-			insertStmt.run(wofID, referential, encyclopedic ?? null, encyclopedic ?? referential)
+			insertStmt.run(wofID, referential, encyclopedic ?? null, blendImportance(referential, encyclopedic))
 		}
 
 		db.exec("COMMIT")
