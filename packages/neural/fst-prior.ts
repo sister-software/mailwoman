@@ -151,6 +151,86 @@ export interface WordGroup {
 	pieceIndices: number[]
 }
 
+/**
+ * One accepting contiguous FST path, before any emission-bias policy is applied.
+ *
+ * This is an observability shape: it reports every accepted surface, including nested matches. It does not deduplicate
+ * WOF ids, rank matches, or mutate decoder emissions.
+ */
+export interface FSTAcceptedMatch {
+	startPiece: number
+	endPiece: number
+	startWord: number
+	endWord: number
+	entries: FSTPlaceEntryLike[]
+}
+
+/**
+ * Enumerate every accepting contiguous FST path over the same reconstructed words used by
+ * {@link buildFSTEmissionPriors}.
+ *
+ * `endPiece` and `endWord` are exclusive. Empty normalized word groups remain transparent while walking, matching the
+ * prior's treatment of punctuation-only SentencePiece groups. The returned list preserves walk order: start word first,
+ * then increasing end word.
+ */
+export function findFSTAcceptedMatches(
+	fst: FSTMatcherLike,
+	pieces: ReadonlyArray<{ piece: string }>
+): FSTAcceptedMatch[] {
+	const groups = groupPiecesIntoWords(pieces)
+	const matches: FSTAcceptedMatch[] = []
+
+	for (let startWord = 0; startWord < groups.length; startWord++) {
+		const first = groups[startWord]!
+
+		if (first.fstToken === "") continue
+		const firstMatch = fst.walk([first.fstToken])
+
+		if (!firstMatch) continue
+
+		if (firstMatch.accepted) {
+			matches.push(acceptedMatch(startWord, startWord, [first], fst.accepting(firstMatch.stateID)))
+		}
+
+		let current = firstMatch
+
+		for (let endWord = startWord + 1; endWord < groups.length; endWord++) {
+			const nextGroup = groups[endWord]!
+
+			if (nextGroup.fstToken === "") continue
+			const next = fst.walkFrom(current, nextGroup.fstToken)
+
+			if (!next) break
+
+			if (next.accepted) {
+				const matchedGroups = groups.slice(startWord, endWord + 1).filter((group) => group.fstToken !== "")
+				matches.push(acceptedMatch(startWord, endWord, matchedGroups, fst.accepting(next.stateID)))
+			}
+
+			current = next
+		}
+	}
+
+	return matches
+}
+
+function acceptedMatch(
+	startWord: number,
+	endWord: number,
+	groups: ReadonlyArray<WordGroup>,
+	entries: FSTPlaceEntryLike[]
+): FSTAcceptedMatch {
+	const pieceIndices = groups.flatMap((group) => group.pieceIndices)
+
+	return {
+		startPiece: pieceIndices[0]!,
+		endPiece: pieceIndices.at(-1)! + 1,
+		startWord,
+		endWord: endWord + 1,
+		entries,
+	}
+}
+
 const SUPPRESS_WHEN_PLACE: readonly string[] = ["B-street", "I-street", "B-house_number", "I-house_number", "B-venue"]
 
 /**
