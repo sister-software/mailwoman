@@ -189,7 +189,7 @@ test("usePlaceAutocomplete suggests on type and rewrites the input on pick", asy
 	// Pick the first (New York) → input rewritten (no comma → whole value replaced), listbox closes.
 	await userEvent.click(container.querySelectorAll('[role="option"]')[0] as HTMLElement)
 	await vi.waitFor(() => expect(input.value).toBe("New York"))
-	expect(container.querySelectorAll('[role="option"]')).toHaveLength(0)
+	await vi.waitFor(() => expect(container.querySelectorAll('[role="option"]')).toHaveLength(0))
 })
 
 test("usePlaceAutocomplete stays closed for numeric input (postcode)", async () => {
