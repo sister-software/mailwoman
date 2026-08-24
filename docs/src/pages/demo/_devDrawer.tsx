@@ -43,21 +43,18 @@ export interface DemoDebugDrawerProps {
  * The model-visualizer drawer — mounts only in dev mode once a trace is ready.
  */
 export const DemoDebugDrawer: React.FC<DemoDebugDrawerProps> = ({ result, devMode, traceParse, onClose }) => {
-	const [trace, setTrace] = useState<ParseTraceLike | null>(null)
+	const [storedTrace, setStoredTrace] = useState<{ input: string; trace: ParseTraceLike | null } | null>(null)
 	const input = result?.input ?? null
+	const trace = storedTrace?.input === input ? storedTrace.trace : null
 
 	useEffect(() => {
-		if (!devMode || !input) {
-			setTrace(null)
-
-			return
-		}
+		if (!devMode || !input) return
 
 		let cancelled = false
 
 		void traceParse(input).then((t) => {
 			if (!cancelled) {
-				setTrace(t)
+				setStoredTrace({ input, trace: t })
 			}
 		})
 

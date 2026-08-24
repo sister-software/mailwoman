@@ -14,7 +14,7 @@ import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { staleEngineMessage } from "../tree-fingerprint.ts"
 
 export const daemonTool = (deps: DevToolDeps): DevTool => {
-	const { registry, jobs } = deps
+	const { registry } = deps
 
 	return {
 		name: "mwdev_daemon",

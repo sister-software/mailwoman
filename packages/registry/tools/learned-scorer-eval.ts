@@ -79,11 +79,6 @@ const STRONG_EVIDENCE_Z = 3
 const TRAIN_SPLIT_FRACTION = 0.67
 
 /**
- * Highest k swept when scanning cluster counts.
- */
-const MAX_K = 32
-
-/**
  * Options for {@linkcode scorerPairwiseEval}.
  */
 export interface ScorerPairwiseEvalOptions {
@@ -519,7 +514,6 @@ export async function scorerPairwiseEval(
 	const gbtF1s = splits.map((r) => bestF1(r.gbtScored).f1)
 	const gbtVsFs = splits.map((_, i) => gbtAucs[i]! - fsAucs[i]!)
 	const gbtVsLr = splits.map((_, i) => gbtAucs[i]! - lrAucs[i]!)
-	const gbtBeatsFs = gbtVsFs.filter((d) => d > 0).length
 	const gbtBeatsLr = gbtVsLr.filter((d) => d > 0).length
 	const meanGbtVsFs = mean(gbtVsFs)
 	const meanGbtVsLr = mean(gbtVsLr)

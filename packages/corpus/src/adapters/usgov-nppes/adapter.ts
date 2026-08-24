@@ -94,7 +94,6 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
 				const npi = (record.NPI ?? "").trim()
-				const entityType = (record["Entity Type Code"] ?? "").trim()
 				const orgName = (record["Provider Organization Name (Legal Business Name)"] ?? "").trim()
 				const lastName = (record["Provider Last Name (Legal Name)"] ?? "").trim()
 				const firstName = (record["Provider First Name"] ?? "").trim()

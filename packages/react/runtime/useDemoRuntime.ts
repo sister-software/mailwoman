@@ -189,15 +189,18 @@ export function useDemoRuntime<TAssets, TRelease extends DemoReleaseBase = DemoR
 	// Latest-ref the injected loaders: a host that re-creates them each render (an inline arrow) must NOT retrigger the
 	// load effects, which key ONLY on version/backend. The effects read `.current` at run time.
 	const loadManifestRef = useRef(config.loadManifest)
-	loadManifestRef.current = config.loadManifest
 	const loadAssetsRef = useRef(config.loadAssets)
-	loadAssetsRef.current = config.loadAssets
 
 	// Latest manifest for the version-load effect, so it can resolve the release WITHOUT depending on `manifest`
 	// identity — which would double-fire the load the instant the manifest first arrives (the selection transition
 	// null → defaultVersion already fires it once).
 	const manifestRef = useRef<DemoManifest<TRelease> | null>(null)
-	manifestRef.current = manifest
+
+	useEffect(() => {
+		loadManifestRef.current = config.loadManifest
+		loadAssetsRef.current = config.loadAssets
+		manifestRef.current = manifest
+	}, [config.loadAssets, config.loadManifest, manifest])
 
 	// Mount: fetch the manifest, then select the default version.
 	useEffect(() => {

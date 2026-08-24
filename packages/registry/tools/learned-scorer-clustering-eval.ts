@@ -433,7 +433,6 @@ export async function scorerClusteringEval(
 	}
 
 	const fsF1 = results.map((r) => r.fs.f1)
-	const lrF1 = results.map((r) => r.lr.f1)
 	const gbtF1 = results.map((r) => r.gbt.f1)
 	const dGbt = results.map((r) => r.gbt.f1 - r.fs.f1)
 	const dLr = results.map((r) => r.lr.f1 - r.fs.f1)

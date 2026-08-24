@@ -260,7 +260,6 @@ export async function dedupCeiling(
 	// of `mid`). Recall is NOT the binding constraint here (NPPES same-NPI records almost always share
 	// either address or org), so the F1 ceiling tracks the precision ceiling. ---
 	const pct = formatPercent
-	const collisionRate = pairs > 0 ? collide / pairs : 0
 
 	const lines: string[] = [
 		`# #625 — dedup ceiling: the irreducible over-merge of co-located providers`,

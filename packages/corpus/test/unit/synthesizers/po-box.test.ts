@@ -198,7 +198,6 @@ describe("maybeNoisifyBoxNumber", () => {
 	it("applies noise when random <= 0.1", () => {
 		// Force noise application; verify SOMETHING changes for a non-trivial number
 		let attempts = 0
-		const sawChange = false
 
 		const rng = (() => {
 			const seq = [0.05, 0.5, 0.05, 0.99, 0.05, 0.01]

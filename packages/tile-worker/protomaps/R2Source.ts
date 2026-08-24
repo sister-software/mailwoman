@@ -9,13 +9,6 @@ import { EtagMismatch, type RangeResponse, type Source } from "pmtiles"
 
 import { assertR2KeyMatch, assertR2ObjectBody } from "../storage.ts"
 
-class KeyNotFoundError extends Error {
-	constructor(message: string) {
-		super(message)
-		this.name = "KeyNotFoundError"
-	}
-}
-
 export interface R2SourceConfig {
 	bucket: R2Bucket
 	pathPrefix: string

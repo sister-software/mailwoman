@@ -105,12 +105,6 @@ describe("InMemoryPolicyRegistry — apply by mode", () => {
 		const registry = new InMemoryPolicyRegistry()
 		registry.set({ component: "country", mode: "neural_preferred" })
 
-		const cases = [
-			makeProposal({ component: "country", source: "neural", confidence: 0.9 }),
-			makeProposal({ component: "country", source: "rule", confidence: 0.9 }),
-			makeProposal({ component: "country", source: "merged", confidence: 0.9 }),
-		]
-
 		const out = registry.apply(proposals)
 		expect(out.map((p) => p.source).toSorted()).toEqual(["merged", "neural"])
 	})

@@ -241,7 +241,6 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	const createTableSQL = `CREATE TABLE IF NOT EXISTS "${opts.tableName}" (\n  ${colDefs}\n);`
 
 	const tempCols = columns.map((c) => `"${c.name}"`).join(", ")
-	const insertSQL = `INSERT INTO "${opts.tableName}" (${tempCols})\nSELECT ${tempCols} FROM temp."${opts.tableName}_source";`
 
 	process.stderr.write(`\nSchema inferred from ${sampleRows.length} sample rows:\n`)
 	process.stderr.write(`${createTableSQL}\n\n`)
@@ -264,17 +263,6 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 
 	// Use the .import approach via a temp table, then INSERT INTO ... SELECT to handle
 	// NULL normalization and type coercion.
-	const csvBasename = basename(opts.inputPath)
-
-	const importSQL = [
-		`CREATE TEMP TABLE "${opts.tableName}_source" (${colDefs});`,
-		`.mode csv`,
-		`.separator "${opts.separator}"`,
-		`.import "${csvBasename}" --skip ${opts.skipLines + (opts.hasHeader ? 1 : 0)} --schema temp ${opts.tableName}_source`,
-		insertSQL,
-		`DROP TABLE temp."${opts.tableName}_source";`,
-	]
-
 	// better-sqlite3 doesn't support .import natively, so we use a different approach:
 	// Read the CSV line-by-line and INSERT in a transaction.
 	process.stderr.write(`Importing rows...\n`)
@@ -373,7 +361,6 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	db.close()
 
 	// Write MANIFEST
-	const fileSize = (await import("node:fs/promises")).stat
 	const stat = await (await import("node:fs/promises")).stat(opts.outputPath)
 
 	const manifest = {

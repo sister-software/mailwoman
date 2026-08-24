@@ -228,11 +228,14 @@ export function useDemoMapRuntime({
 
 	// ── Mutable refs the stable parse/enrich callbacks read (avoids stale closures without churning identity) ──
 	const assetsRef = useRef<DocsDemoAssets | null>(rt.assets)
-	assetsRef.current = rt.assets
 	const releaseRef = useRef<ReleaseInfo | null>(rt.selectedRelease)
-	releaseRef.current = rt.selectedRelease
 	const versionRef = useRef<string | null>(rt.selectedVersion)
-	versionRef.current = rt.selectedVersion
+
+	useEffect(() => {
+		assetsRef.current = rt.assets
+		releaseRef.current = rt.selectedRelease
+		versionRef.current = rt.selectedVersion
+	}, [rt.assets, rt.selectedRelease, rt.selectedVersion])
 
 	// ── Device-location bias (#938): the "Use my location" button's soft proximity hint. A ref (not state) so
 	// granting it mid-session doesn't re-create the parse callback; `geoBiasActive` drives only the button's pressed
@@ -275,6 +278,7 @@ export function useDemoMapRuntime({
 	useEffect(() => {
 		polygonDBRef.current = null
 		polygonInflightRef.current = new Set()
+		// oxlint-disable-next-line react/set-state-in-effect -- Polygon IDs and cached geometry are scoped to the selected release.
 		setPolygonCache(new Map())
 	}, [rt.selectedVersion])
 

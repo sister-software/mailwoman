@@ -127,15 +127,13 @@ export const poiTaxonomyLookup: POIPhraseLookup = (phrase, locale) => {
 	const brandHits = lookupPOIBrand(phrase)
 
 	if (brandHits.length) {
-		return brandHits.map(
-			(m): POIPhraseMatch => ({
-				kind: "brand",
-				categoryID: m.brand.name,
-				wikidata: m.brand.wikidata,
-				matchedPhrase: m.matchedPhrase,
-				confidence: m.confidence,
-			})
-		)
+		return brandHits.map((m): POIPhraseMatch => ({
+			kind: "brand",
+			categoryID: m.brand.name,
+			wikidata: m.brand.wikidata,
+			matchedPhrase: m.matchedPhrase,
+			confidence: m.confidence,
+		}))
 	}
 
 	// Regional brand slang is locale-gated — nothing to chain without a detected/asserted locale.

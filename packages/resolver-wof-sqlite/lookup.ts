@@ -137,7 +137,6 @@ const CF_PC_DECAY_KM = 8
  * flagged, tight enough to catch a wrong city (hundreds of km).
  */
 const CF_MISMATCH_KM = 50
-const CF_MISMATCH_DELTA = 0.5
 
 export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #db: DatabaseSync

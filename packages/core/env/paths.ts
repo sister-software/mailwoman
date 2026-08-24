@@ -4,10 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { existsSync } from "node:fs"
-import { homedir } from "node:os"
-import { dirname } from "node:path"
-
 import envPaths from "env-paths"
 import { resolvePath } from "path-ts"
 
@@ -29,29 +25,4 @@ export const defaultMailwomanPaths = {
  */
 export function cwdPathBuilder(...paths: string[]): string {
 	return resolvePath(process.cwd(), ...paths)
-}
-
-/**
- * Find `.env` files from the current working directory up to the home directory or repository root.
- */
-function cwdEnvPaths(): string[] {
-	const found: string[] = []
-	let directory = process.cwd()
-	const home = homedir()
-
-	while (true) {
-		const candidate = resolvePath(directory, ".env")
-
-		if (existsSync(candidate)) {
-			found.push(candidate)
-		}
-
-		const parent = dirname(directory)
-		const atRepoRoot = existsSync(resolvePath(directory, ".git"))
-
-		if (atRepoRoot || directory === home || parent === directory) break
-		directory = parent
-	}
-
-	return found.toReversed()
 }

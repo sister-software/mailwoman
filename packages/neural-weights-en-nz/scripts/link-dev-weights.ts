@@ -48,7 +48,7 @@ import { spawnSync } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { dataRootPath, md5File, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
 import {
 	linkForce,
 	pairIndexStaleReason,
@@ -62,15 +62,10 @@ import {
 const MD5_HEX_LENGTH = 32
 
 /**
- * Workspace root the artifacts are linked into. Everything below resolves against it.
- */
-const PKG_DIR = workspacePath("neural-weights-en-nz")
-/**
  * Where the artifacts LAND — the data-root overlay, never this tracked package.
  *
  * The binaries are not in git, so materializing them here made a fresh worktree unable to geocode, made `yarn test`
- * mutate a tracked directory as a side effect, and put a symlink into a publish tarball (`YN0035`). PKG_DIR stays for
- * what IS committed and must be read from the checkout.
+ * mutate a tracked directory as a side effect, and put a symlink into a publish tarball (`YN0035`).
  */
 const DEST_DIR = String(weightsOverlayPath("en-nz"))
 

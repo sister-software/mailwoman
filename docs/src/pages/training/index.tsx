@@ -17,7 +17,7 @@ import { useSiteConfig } from "../../hooks/site.ts"
 import styles from "./styles.module.css"
 
 const TrainingPage: React.FC = () => {
-	const { buildCommit, buildTimeDisplay, baseURL } = useSiteConfig()
+	const { buildCommit, buildTimeDisplay } = useSiteConfig()
 
 	return (
 		<Layout

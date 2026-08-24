@@ -259,19 +259,17 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 		const rows = allRows<SprRow>(this.#lineageStatement, id)
 
 		const places = rows
-			.map(
-				(row): AblationPlace => ({
-					id: row.id,
-					name: row.name,
-					placetype: row.placetype,
-					country: row.country,
-					lat: row.latitude,
-					lon: row.longitude,
-					bbox: bboxOf(row.min_latitude, row.max_latitude, row.min_longitude, row.max_longitude),
-					negRank: 0,
-					population: null,
-				})
-			)
+			.map((row): AblationPlace => ({
+				id: row.id,
+				name: row.name,
+				placetype: row.placetype,
+				country: row.country,
+				lat: row.latitude,
+				lon: row.longitude,
+				bbox: bboxOf(row.min_latitude, row.max_latitude, row.min_longitude, row.max_longitude),
+				negRank: 0,
+				population: null,
+			}))
 			// Nearest-first: the ladder walks OUTWARD from the resolved place, so the chain must be deepest first.
 			.toSorted((a, b) => containmentDepth(b.placetype) - containmentDepth(a.placetype))
 

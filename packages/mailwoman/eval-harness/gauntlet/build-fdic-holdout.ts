@@ -40,16 +40,6 @@ const MIN_US_LONGITUDE = -180
  */
 const MAX_US_LONGITUDE = -64
 
-/**
- * Largest absolute latitude in WGS-84 degrees.
- */
-const MAX_ABS_LATITUDE = 90
-
-/**
- * Largest absolute longitude in WGS-84 degrees.
- */
-const MAX_ABS_LONGITUDE = 180
-
 const API = "https://banks.data.fdic.gov/api/locations"
 const PAGE = 10_000
 const FIELDS = "ADDRESS,CITY,STALP,ZIP,LATITUDE,LONGITUDE"

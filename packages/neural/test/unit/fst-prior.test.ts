@@ -55,7 +55,7 @@ function mockFST(entries: Map<string, FSTPlaceEntryLike[]>): FSTMatcherLike {
 			return null
 		},
 		walkFrom(prev: FSTMatchLike, token: string): FSTMatchLike | null {
-			for (const [path, state] of states) {
+			for (const [path] of states) {
 				const parts = path.split(" ")
 
 				if (parts.length > prev.depth && parts[prev.depth] === token) {

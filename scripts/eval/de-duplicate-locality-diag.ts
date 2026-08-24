@@ -172,3 +172,5 @@ async function main(): Promise<void> {
 	console.log(`| distinct (München/Bayern) | ${acc.distinct.n} | ${pct(acc.distinct)} |`)
 	console.error(`\nduplicate ${pct(acc.dup)} (n=${acc.dup.n}) vs distinct ${pct(acc.distinct)} (n=${acc.distinct.n})`)
 }
+
+await main()

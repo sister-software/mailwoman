@@ -33,30 +33,6 @@ export const STATE_NY_NOTARIES_ADAPTER_ID = "state-ny-notaries"
  */
 export const STATE_NY_NOTARIES_DEFAULT_LICENSE = "Public Domain"
 
-interface NyNotaryRow {
-	"Commission Holder Name": string
-	"Commission Number (UID)": string
-	"Business Name (if available)": string
-	"Business Address 1 (if available)": string
-	"Business Address 2 (if available)": string
-	" Business City (if available)": string
-	"Business State (if available)": string
-	"Business Zip (if available)": string
-	"Commissioned County": string
-}
-
-const RAW_NY_COLUMNS = [
-	"Commission Holder Name",
-	"Commission Number (UID)",
-	"Business Name (if available)",
-	"Business Address 1 (if available)",
-	"Business Address 2 (if available)",
-	" Business City (if available)",
-	"Business State (if available)",
-	"Business Zip (if available)",
-	"Commissioned County",
-] as const
-
 export function createStateNyNotariesAdapter(): CorpusAdapter {
 	return {
 		id: STATE_NY_NOTARIES_ADAPTER_ID,

@@ -216,33 +216,29 @@ export function buildSubVenueLexicon(input: BuildSubVenueLexiconInput): SubVenue
 	}))
 
 	const surfaces: SubVenueSurface[] = [
-		...designators.map(
-			(d): SubVenueSurface => ({
-				phrase: d.id,
-				recordID: d.id,
-				recordKind: "designator",
-				lang: "en",
-				region: "",
-				source: "seed",
-				// The English designator IS the shipped vocabulary — curated by construction.
-				curated: d.shipped,
-				observations: 0,
-				context: {},
-			})
-		),
-		...modifiers.map(
-			(m): SubVenueSurface => ({
-				phrase: m.id,
-				recordID: m.id,
-				recordKind: "modifier",
-				lang: "en",
-				region: "",
-				source: "seed",
-				curated: true,
-				observations: 0,
-				context: {},
-			})
-		),
+		...designators.map((d): SubVenueSurface => ({
+			phrase: d.id,
+			recordID: d.id,
+			recordKind: "designator",
+			lang: "en",
+			region: "",
+			source: "seed",
+			// The English designator IS the shipped vocabulary — curated by construction.
+			curated: d.shipped,
+			observations: 0,
+			context: {},
+		})),
+		...modifiers.map((m): SubVenueSurface => ({
+			phrase: m.id,
+			recordID: m.id,
+			recordKind: "modifier",
+			lang: "en",
+			region: "",
+			source: "seed",
+			curated: true,
+			observations: 0,
+			context: {},
+		})),
 	]
 
 	if (input.wikidata) {

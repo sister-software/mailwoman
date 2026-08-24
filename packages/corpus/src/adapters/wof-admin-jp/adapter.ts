@@ -55,12 +55,6 @@ interface PlaceRow {
 	country: string
 }
 
-interface NameRow {
-	id: number
-	name: string
-	language: string
-}
-
 /**
  * Walk parent chain up to 6 levels, over a place table already resident in memory.
  *

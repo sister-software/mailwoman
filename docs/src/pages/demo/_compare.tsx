@@ -13,7 +13,7 @@
 
 import type { ParseResult } from "@mailwoman/react"
 import type React from "react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 
 import { VersionCompare } from "#components/VersionCompare/VersionCompare"
 import type { ReleaseInfo } from "#shared/demo-helpers"
@@ -64,13 +64,13 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 	const [loading, setLoading] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [compareResult, setCompareResult] = useState<DemoResult | null>(null)
-	// The classifier is a ref too so the parse effect can read the latest without depending on identity churn.
-	const classifierRef = useRef<MailwomanClassifierLike | null>(null)
-	classifierRef.current = classifier
 
 	// Load the compare classifier when compare mode + a compare version are active.
+	// Resetting the load state is the lifecycle boundary for a different requested classifier.
+
 	useEffect(() => {
 		if (!compareMode || !compareVersion) {
+			// oxlint-disable-next-line react/set-state-in-effect -- A disabled comparison must release its version-scoped classifier immediately.
 			setClassifier(null)
 			setCompareResult(null)
 			setError(null)
@@ -124,9 +124,10 @@ export const DemoCompare: React.FC<DemoCompareProps> = ({
 	const primaryInput = primary?.input ?? null
 
 	useEffect(() => {
-		const cls = classifierRef.current
+		const cls = classifier
 
 		if (!compareMode || !cls || !primaryInput) {
+			// oxlint-disable-next-line react/set-state-in-effect -- The prior result belongs to a classifier or input that is no longer active.
 			setCompareResult(null)
 
 			return

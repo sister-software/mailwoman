@@ -33,27 +33,6 @@ class FakeRunner implements NeuralRunner {
 	}
 }
 
-/**
- * Build a uniform-noise logits matrix with a small boost on the named label for the given index.
- */
-function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string, boostMagnitude = 0.3): number[][] {
-	const numLabels = STAGE2_BIO_LABELS.length
-	const labelIdx = STAGE2_BIO_LABELS.indexOf(boostLabel as (typeof STAGE2_BIO_LABELS)[number])
-	const matrix: number[][] = []
-
-	for (let t = 0; t < numTokens; t++) {
-		const row = new Array<number>(numLabels).fill(0)
-
-		if (t === boostIdx && labelIdx !== -1) {
-			row[labelIdx] = boostMagnitude
-		}
-
-		matrix.push(row)
-	}
-
-	return matrix
-}
-
 describe("NeuralAddressClassifier — queryShape integration", () => {
 	it("no queryShape → labels driven purely by encoder", async () => {
 		const tokenizer = await MailwomanTokenizer.loadFromFile(TOKENIZER_PATH)

@@ -57,8 +57,6 @@ type ClientSurface = (typeof CLIENT_SURFACES)[number]
  */
 const FLAVORS = ["3.1", "3.0"] as const
 
-type Flavor = (typeof FLAVORS)[number]
-
 /**
  * Every surface's compiled CLI entry point, relative to the repo root — the emitters this pipeline shells out to.
  */

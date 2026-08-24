@@ -175,7 +175,6 @@ export function assemblePromotionVerdict(
 		const countryJ = sidecar(`${tag}-country.json`)
 		const poboxJ = sidecar(`${tag}-pobox.json`)
 		const intersectionJ = sidecar(`${tag}-intersection.json`)
-		const plJ = sidecar(`${tag}-per-locale.json`)
 		const pobox = maybeRead(`${tag}-pobox.md`)
 		const intersection = maybeRead(`${tag}-intersection.md`)
 		const deorder = read(`${tag}-deorder.md`)

@@ -31,13 +31,6 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 const REFUSAL_KINDS: ReadonlySet<string> = new Set(["poi_query", "poi_category", "near_me"])
 
 /**
- * Did a marker set come from this gate? Read by `geocodeAddress`'s retry rider.
- */
-function hasRefusalMarker(markers: readonly QueryIntentMarker[]): boolean {
-	return markers.some((m) => REFUSAL_KINDS.has(m.kind))
-}
-
-/**
  * The gate itself: the abstention's markers when the query is a thing-query, else null (geocode proceeds).
  */
 export async function thingQueryRefusalMarkers(

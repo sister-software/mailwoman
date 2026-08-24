@@ -14,9 +14,7 @@
  *   Reuses the exact docs components the live `/demo` uses, so the control chrome is identical.
  */
 
-import type { Map as MapLibreMap } from "maplibre-gl"
 import type React from "react"
-import { useEffect, useState } from "react"
 import { useControl, useMap } from "react-map-gl/maplibre"
 
 import { LayerToggleControl } from "../../components/LayerToggleControl/LayerToggleControl.tsx"
@@ -32,11 +30,7 @@ export const DemoMapControls: React.FC = () => {
 	// The feature inspector needs the raw maplibre map handle. `useMap().current` is set once the map instance exists;
 	// track it in state so `<DebugControl>` re-renders (and runs its `addControl` effect) when the map becomes ready.
 	const { current: mapRef } = useMap()
-	const [map, setMap] = useState<MapLibreMap | null>(null)
-
-	useEffect(() => {
-		setMap(mapRef?.getMap() ?? null)
-	}, [mapRef])
+	const map = mapRef?.getMap() ?? null
 
 	return <DebugControl map={map} />
 }

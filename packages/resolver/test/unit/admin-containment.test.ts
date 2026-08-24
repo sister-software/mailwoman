@@ -64,23 +64,21 @@ function makeBackend(
 
 			if (query.placetype !== "locality") return []
 
-			return specs.map(
-				(spec): ResolvedPlace => ({
-					id: spec.id,
-					name: "Marwei",
-					placetype: "locality",
-					country: spec.country,
-					lat: spec.id,
-					lon: spec.id,
-					score: 100 - spec.id,
-					prominence: 8 - spec.id,
-					exactMatch: spec.exactMatch ?? true,
-					...(spec.importance === undefined ? {} : { importance: spec.importance }),
-					...(query.regionQualifier === undefined || spec.contained === undefined
-						? {}
-						: { containedByQualifier: spec.contained }),
-				})
-			)
+			return specs.map((spec): ResolvedPlace => ({
+				id: spec.id,
+				name: "Marwei",
+				placetype: "locality",
+				country: spec.country,
+				lat: spec.id,
+				lon: spec.id,
+				score: 100 - spec.id,
+				prominence: 8 - spec.id,
+				exactMatch: spec.exactMatch ?? true,
+				...(spec.importance === undefined ? {} : { importance: spec.importance }),
+				...(query.regionQualifier === undefined || spec.contained === undefined
+					? {}
+					: { containedByQualifier: spec.contained }),
+			}))
 		},
 	}
 }
