@@ -73,8 +73,8 @@ export interface EngineConfig {
 	 */
 	poi_venue_tier?: boolean
 	/**
-	 * The capital-status ranking axis (#1880) — bounded capital/admin-1-seat preference on unscoped bare-name lookups.
-	 * Candidate-backend only, default OFF (D-rule).
+	 * The capital-status ranking axis (#1880) — bounded NATIONAL-capital promotion on the bare-toponym class. Default OFF
+	 * (D-rule).
 	 */
 	capital_tier?: boolean
 	/**

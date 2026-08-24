@@ -104,10 +104,9 @@ export interface GauntletResolverLevers {
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * #1880 — the capital-status ranking axis: bounded capital/admin-1-seat preference on unscoped bare-name lookups.
-	 * Like `gazetteerPrior` this pin carries an ARTIFACT (`data/gazetteer/capitals-v1.json`), so the harness loads it at
-	 * backend construction rather than `resolverLeverDeps` (which stays pure). Library default OFF (D-rule) — the `true`
-	 * pin is the evidence path.
+	 * #1880 — the capital-status ranking axis: bounded NATIONAL-capital promotion on the bare-toponym class. Like
+	 * `gazetteerPrior` this pin carries an ARTIFACT (`data/gazetteer/capitals-v1.json`), so the harness loads it rather
+	 * than `resolverLeverDeps` (which stays pure). Library default OFF (D-rule) — the `true` pin is the evidence path.
 	 */
 	capitalTier?: boolean
 }

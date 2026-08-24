@@ -126,9 +126,9 @@ export interface GeocodeSessionOptions {
 	 */
 	poiVenueTier?: boolean
 	/**
-	 * The capital-status ranking axis (#1880) — bounded preference for a national capital / admin-1 seat among same-name
-	 * candidates on unscoped bare-name lookups. Candidate-backend only; loads `data/gazetteer/capitals-v1.json` and
-	 * THROWS if it is absent. Default OFF (D-rule).
+	 * The capital-status ranking axis (#1880) — bounded promotion of a NATIONAL capital among same-name candidates on the
+	 * bare-toponym class (`promoteCapitals`, resolver/toponym-prior.ts — applied after the fame key, tier-safe). Loads
+	 * `data/gazetteer/capitals-v1.json` and THROWS if it is absent. Default OFF (D-rule).
 	 */
 	capitalTier?: boolean
 	postcodeShapeCoherence: boolean
