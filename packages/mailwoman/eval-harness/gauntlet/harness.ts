@@ -30,7 +30,7 @@ import {
 	type GeocodeDeps,
 } from "../../geocode-core.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
-import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
+import { createResolverBackend, loadCapitalIndex, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
 import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
 
 export interface GauntletDeps {
@@ -103,6 +103,13 @@ export interface GauntletResolverLevers {
 	 * the one that carries evidence today; the `false` pin grades the production default explicitly.
 	 */
 	adminContainmentRerank?: boolean
+	/**
+	 * #1880 — the capital-status ranking axis: bounded capital/admin-1-seat preference on unscoped bare-name lookups.
+	 * Like `gazetteerPrior` this pin carries an ARTIFACT (`data/gazetteer/capitals-v1.json`), so the harness loads it at
+	 * backend construction rather than `resolverLeverDeps` (which stays pure). Library default OFF (D-rule) — the `true`
+	 * pin is the evidence path.
+	 */
+	capitalTier?: boolean
 }
 
 /**
@@ -140,6 +147,10 @@ export function describeResolverLevers(levers: GauntletResolverLevers | undefine
 	// keeps "no flag" reading as "grade whatever production does".
 	if (levers?.gazetteerPrior !== undefined) {
 		entries.push(`gazetteerPrior=${levers.gazetteerPrior ? "ON" : "OFF"}`)
+	}
+
+	if (levers?.capitalTier !== undefined) {
+		entries.push(`capitalTier=${levers.capitalTier ? "ON" : "OFF"}`)
 	}
 
 	if (!entries.length) return "resolver levers: (none pinned — production defaults)"
@@ -392,7 +403,12 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
 
 	const resolver = createWOFResolver(
-		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
+		createResolverBackend(resolverMod, {
+			wofPaths: wofShardPaths().filter(existsSync),
+			// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): loaded here, where the
+			// backend is built, exactly as production's geocode-session does when its lever is on.
+			...(opts.levers?.capitalTier === true ? { capitals: loadCapitalIndex() } : {}),
+		})
 	)
 
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
