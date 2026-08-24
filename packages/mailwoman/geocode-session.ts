@@ -290,7 +290,7 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 		})
 }
 
-interface ForkEntityProbe {
+export interface ForkEntityProbe {
 	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 	/**
 	 * The poi.db handle behind {@link deps}' `poiLookup`, so the session can release it. Carried separately because
@@ -303,7 +303,7 @@ interface ForkEntityProbe {
  * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
  * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
-async function loadForkEntityDeps(
+export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
 ): Promise<ForkEntityProbe> {
 	const poiDBPath = resolvePath(options.dataRoot, "poi", "poi.db")
