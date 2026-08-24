@@ -59,6 +59,7 @@ export async function runContractCensus(registry: EngineRegistry, args: Record<s
 		stranding: census.stranding,
 		never_produced: census.never_produced,
 		illegal_edges: census.illegal_edges,
+		duplicate_tags: census.duplicate_tags,
 		notes: [
 			"validated on GeocodeRun.tree — AFTER the postcode and stranded-affix repairs, so this counts what survives " +
 				"them rather than what the raw decode emitted",
@@ -86,8 +87,13 @@ function summarize(census: ReturnType<typeof censusTrees>, powerSentence: string
 			"so their zero stranding counts measure nothing."
 		: ""
 
+	const duplicateSentence = census.duplicate_tags.rows
+		? ` ${census.duplicate_tags.rows} of ${census.n_evaluated} rows contained a duplicate tag ` +
+			`(${((census.duplicate_tags.rate ?? 0) * 100).toFixed(1)}%); see duplicate_tags for topology.`
+		: ` 0 of ${census.n_evaluated} rows contained a duplicate tag.`
+
 	return (
 		`${census.rows_violating} of ${census.n_evaluated} rows produced a structurally invalid tree. ` +
-		`${strandSentence}${blindSentence} ${census.illegal_edges.note} ${powerSentence}`
+		`${strandSentence}${blindSentence}${duplicateSentence} ${census.illegal_edges.note} ${powerSentence}`
 	)
 }
