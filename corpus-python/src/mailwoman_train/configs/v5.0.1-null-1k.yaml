@@ -267,7 +267,7 @@ train: # FINE-TUNE (B11 template): init_from the v4.4.0 base, fresh optimizer, E
   ewc_lambda: 1.0e4
   ewc_fisher_path: /data/output-v500-base-alltails-s42/checkpoints/step-060000/fisher-diag-v1.npz
   ewc_reference: /data/output-v500-base-alltails-s42/checkpoints/step-060000
-  output_dir: /data/output-v4140-house-venue-1k-s42/checkpoints
+  output_dir: /data/output-v501-null-1k-s42/checkpoints
   seed: 42
   batch_size: 128
   eval_batch_size: 128
@@ -288,7 +288,7 @@ train: # FINE-TUNE (B11 template): init_from the v4.4.0 base, fresh optimizer, E
   evidence_curriculum: true
   evidence_noise_prob: 0.15
   trackio_project: mailwoman
-  trackio_run_name: v4140-house-venue-1k-s42
+  trackio_run_name: v501-null-1k-s42
 
 eval:
   golden_dir: /data/eval/golden/v0.1.3
