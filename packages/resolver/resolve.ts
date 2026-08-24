@@ -59,7 +59,7 @@ import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcod
 import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "./postcode-shape-coherence.ts"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "./street-tier.ts"
-import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "./toponym-prior.ts"
+import { DEFAULT_COUNTRY_PRIOR_WEIGHT, promoteCapitals, rankByCountryPrior, rankByImportance } from "./toponym-prior.ts"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
@@ -331,6 +331,10 @@ interface ResolutionState {
 	 * Weight of that prior in log10-population units. Only consulted when `localeCountryPrior` is set.
 	 */
 	localeCountryPriorWeight: number
+	/**
+	 * #1880 capital status per candidate, from `ResolveOpts.capitalLevel`. Undefined → no promotion, byte-stable.
+	 */
+	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
 	/**
 	 * #743/#194 confident-placer country as a HARD filter (empty→unresolved, no global retry). Off = undefined.
 	 */
@@ -703,6 +707,7 @@ class WOFResolver implements Resolver {
 			anchorWeight: opts.anchorWeight ?? 2,
 			localeCountryPrior: opts.localeCountryPrior,
 			localeCountryPriorWeight: opts.localeCountryPriorWeight ?? DEFAULT_COUNTRY_PRIOR_WEIGHT,
+			capitalLevel: opts.capitalLevel,
 			hardCountry: opts.hardCountry,
 			// Default-ON (#402): completion only fires for a dual-role region whose locality the parser
 			// dropped, and no-ops entirely when the backend has no relation (the browser WASM resolver, or
@@ -1358,6 +1363,14 @@ class WOFResolver implements Resolver {
 		if (!state.anchorPosterior) {
 			ranked = rankByImportance(ranked)
 			rec.stage("importance", ranked)
+
+			// #1880 — bounded capital promotion, directly above the fame key it corrects and below the
+			// containment partition (the qualifier is the address's own text; evidence outranks a prior).
+			// Same stand-down as fame: an anchor posterior is postcode evidence and silences the prior.
+			if (state.capitalLevel) {
+				ranked = promoteCapitals(ranked, state.capitalLevel)
+				rec.stage("capital", ranked)
+			}
 		}
 
 		// Admin-containment partition (#1717 stage 2): the LAST soft re-rank, after the anchor/fame keys

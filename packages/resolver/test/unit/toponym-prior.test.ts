@@ -15,7 +15,13 @@
  */
 
 import type { ResolvedPlace } from "@mailwoman/core/resolver"
-import { DEFAULT_COUNTRY_PRIOR_WEIGHT, rankByCountryPrior, rankByImportance } from "@mailwoman/resolver/toponym-prior"
+import {
+	DEFAULT_COUNTRY_PRIOR_WEIGHT,
+	NATIONAL_CAPITAL_MARGIN_LOG10,
+	promoteCapitals,
+	rankByCountryPrior,
+	rankByImportance,
+} from "@mailwoman/resolver/toponym-prior"
 import { describe, expect, it } from "vitest"
 
 const place = (over: Partial<ResolvedPlace> & Pick<ResolvedPlace, "id" | "name" | "country">): ResolvedPlace => ({
@@ -265,5 +271,102 @@ describe("rankByCountryPrior", () => {
 
 	it("weights in log10-population units, matching the resolver's anchorWeight default", () => {
 		expect(DEFAULT_COUNTRY_PRIOR_WEIGHT).toBe(2)
+	})
+})
+
+describe("promoteCapitals (#1880 — bounded capital promotion after the fame key)", () => {
+	// Board populations, as prominence (log10(population + 1)): the promotion reads the same size the
+	// other keys do, so the margins mean the same thing everywhere.
+	const prom = (population: number): number => Math.log10(population + 1)
+
+	const capitalOf =
+		(levels: Record<string, number>) =>
+		(p: { name: string }): number =>
+			levels[p.name] ?? 0
+
+	it("promotes a national capital over a namesake within the 100x population margin (San José → CR)", () => {
+		// San Jose, California 969,655 vs San José, Costa Rica 342,188 — 2.8x, inside 10^2.
+		const ranked = promoteCapitals(
+			[
+				place({ id: "us", name: "San Jose", country: "US", prominence: prom(969_655), importance: 0.54 }),
+				place({ id: "cr", name: "San José", country: "CR", prominence: prom(342_188), importance: 0.31 }),
+			],
+			capitalOf({ "San José": 2 })
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["cr", "us"])
+	})
+
+	it("stops at the margin: a 100x-more-populous namesake keeps the lead (Hamilton → ON, not Bermuda)", () => {
+		// Hamilton, Ontario 519,949 vs Hamilton, Bermuda 902 — 576x, over 10^2.
+		const ranked = promoteCapitals(
+			[
+				place({ id: "ca", name: "Hamilton", country: "CA", prominence: prom(519_949) }),
+				place({ id: "bm", name: "Hamilton", country: "BM", prominence: prom(902) }),
+			],
+			(p) => (p.country === "BM" ? 2 : 0)
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["ca", "bm"])
+	})
+
+	it("never promotes an admin-1 seat — the ratified referential decisions hold (Springfield stays MO)", () => {
+		// Bare `Springfield` is ratified (2026-08-11) to the referential answer: a seat margin of even 1
+		// log10 unit flipped it to Springfield, Illinois, and sent bare `Hamilton` to the Waikato seat.
+		// Both measured on the shipped candidate.db; level 1 therefore promotes nothing.
+		const seat = (p: { lat: number }): number => (p.lat === 39.8 ? 1 : 0)
+
+		const ranked = promoteCapitals(
+			[
+				place({ id: "mo", name: "Springfield", country: "US", lat: 37.2, prominence: prom(169_176) }),
+				place({ id: "il", name: "Springfield", country: "US", lat: 39.8, prominence: prom(116_250) }),
+			],
+			seat
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["mo", "il"])
+	})
+
+	it("walks past several rows, stopping at the first over the margin", () => {
+		const level = (p: { country?: string }): number => (p.country === "GD" ? 2 : 0)
+
+		// Two small namesakes inside the margin, one metropolis over it: the capital rises to slot 1.
+		const ranked = promoteCapitals(
+			[
+				place({ id: "metro", name: "St. George", country: "US", prominence: prom(9_000_000) }),
+				place({ id: "town", name: "St. George", country: "US", prominence: prom(95_000) }),
+				place({ id: "village", name: "St. Georges", country: "GB", prominence: prom(4000) }),
+				place({ id: "gd", name: "Saint George's", country: "GD", prominence: prom(33_000) }),
+			],
+			level
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["metro", "gd", "town", "village"])
+	})
+
+	it("is tier-safe: a capital in the partial tier never crosses into the exact tier", () => {
+		const ranked = promoteCapitals(
+			[
+				place({ id: "exact", name: "Roseau", country: "US", prominence: prom(15_252), exactMatch: true }),
+				place({ id: "partial-capital", name: "Roseau", country: "DM", prominence: prom(16_571), exactMatch: false }),
+			],
+			(p) => (p.country === "DM" ? 2 : 0)
+		)
+
+		expect(ranked.map((p) => p.id)).toEqual(["exact", "partial-capital"])
+	})
+
+	it("is identity without a level function or without any capital in the list", () => {
+		const rows = [
+			place({ id: "a", name: "X", country: "US", prominence: 5 }),
+			place({ id: "b", name: "X", country: "GB", prominence: 4 }),
+		]
+
+		expect(promoteCapitals(rows, undefined).map((p) => p.id)).toEqual(["a", "b"])
+		expect(promoteCapitals(rows, () => 0).map((p) => p.id)).toEqual(["a", "b"])
+	})
+
+	it("holds the margin the sentences above rely on", () => {
+		expect(NATIONAL_CAPITAL_MARGIN_LOG10).toBe(2)
 	})
 })

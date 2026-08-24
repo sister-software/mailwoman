@@ -147,20 +147,14 @@ interface ResolverLookupModule {
  */
 export function createResolverBackend(
 	mod: ResolverLookupModule,
-	opts: {
-		candidateDB?: string
-		dataRoot?: string
-		wofPaths: string | string[]
-		postalCityAliasDB?: string
-		capitals?: CapitalIndex
-	}
+	opts: { candidateDB?: string; dataRoot?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
 ): PlaceLookup {
 	const candidate = resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)
 
-		return new mod.WOFCandidateTableLookup({ databasePath: candidate, capitals: opts.capitals })
+		return new mod.WOFCandidateTableLookup({ databasePath: candidate })
 	}
 
 	const wp = opts.wofPaths
@@ -169,12 +163,6 @@ export function createResolverBackend(
 
 	if (postalCityAliases) {
 		console.error(`[resolver] postal-city alias scorer enabled (#475): ${aliasDB}`)
-	}
-
-	if (opts.capitals) {
-		// Loud, not silent: a requested lever that cannot apply must say so (the weights_cache lesson —
-		// a dropped config key reads as "the lever is inert" when it never ran).
-		console.error("[resolver] capital tier (#1880) is candidate-backend only — the FTS backend ranking is unchanged")
 	}
 
 	return new mod.WOFSQLitePlaceLookup({
@@ -202,6 +190,12 @@ export function loadCapitalIndex(path: string = conventionCapitalsPath()): Capit
 
 	if (parsed.version !== 1 || !Array.isArray(parsed.entries)) {
 		throw new Error(`${path} is not a v1 capitals reference — rebuild with \`mailwoman gazetteer capitals\``)
+	}
+
+	// An entry without its folded name set would never match anything — an index that silently answers
+	// `none` on every probe is the partial-reader lie, so a pre-name-set file is refused outright.
+	if (parsed.entries.length && !Array.isArray(parsed.entries[0]?.k)) {
+		throw new Error(`${path} predates the name-set field — rebuild with \`mailwoman gazetteer capitals\``)
 	}
 
 	return new CapitalIndex(parsed.entries)

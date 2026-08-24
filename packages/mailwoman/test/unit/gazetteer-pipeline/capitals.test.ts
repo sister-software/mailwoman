@@ -43,24 +43,24 @@ describe("parseCapitalRows", () => {
 			].join("\n")
 		)
 
-		expect(rows.map((r) => [r.entry.id, r.entry.level])).toEqual([
+		expect(rows.map((r) => [r.id, r.level])).toEqual([
 			[1, "national"],
 			[2, "admin1"],
 		])
 	})
 
-	it("folds name, asciiname, and alternate names for the catalog cross-check", () => {
+	it("folds name, asciiname, and alternate names into the shipped name set", () => {
 		const [row] = parseCapitalRows(dumpRow(7, "San José", "P", "PPLC", "CR", "San Jose,Chepe"))
 
-		expect(row!.foldedNames.has("san jose")).toBe(true)
-		expect(row!.foldedNames.has("chepe")).toBe(true)
+		expect(row!.k).toContain("san jose")
+		expect(row!.k).toContain("chepe")
 	})
 
 	it("rounds coordinates to 4 decimals — the committed file matches at km radius, not survey precision", () => {
 		const [row] = parseCapitalRows(dumpRow(8, "Capital City", "P", "PPLC", "AA"))
 
-		expect(row!.entry.latitude).toBe(9.9333)
-		expect(row!.entry.longitude).toBe(-84.0833)
+		expect(row!.latitude).toBe(9.9333)
+		expect(row!.longitude).toBe(-84.0833)
 	})
 })
 
@@ -96,7 +96,15 @@ describe("buildCapitalsReference", () => {
 		expect(written.version).toBe(1)
 
 		expect(written.entries).toEqual([
-			{ id: 1, name: "Other Name", country: "AA", latitude: 9.9333, longitude: -84.0833, level: "national" },
+			{
+				id: 1,
+				name: "Other Name",
+				country: "AA",
+				latitude: 9.9333,
+				longitude: -84.0833,
+				level: "national",
+				k: ["other name"],
+			},
 		])
 	})
 

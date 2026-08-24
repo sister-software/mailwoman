@@ -403,13 +403,18 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
 
 	const resolver = createWOFResolver(
-		createResolverBackend(resolverMod, {
-			wofPaths: wofShardPaths().filter(existsSync),
-			// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): loaded here, where the
-			// backend is built, exactly as production's geocode-session does when its lever is on.
-			...(opts.levers?.capitalTier === true ? { capitals: loadCapitalIndex() } : {}),
-		})
+		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
 	)
+
+	// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): the reference loads here
+	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it
+	// when its option is on. Absent pin → undefined → no promotion, byte-stable.
+	const capitalIndex = opts.levers?.capitalTier === true ? loadCapitalIndex() : undefined
+
+	const capitalLevel = capitalIndex
+		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
+		: undefined
 
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
@@ -538,6 +543,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
 				...leverDeps,
+				...(capitalLevel ? { capitalLevel } : {}),
 				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 				...forkEntityDeps,
 				...forwarded,

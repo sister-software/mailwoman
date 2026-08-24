@@ -5,11 +5,12 @@
  *
  *   Build `data/gazetteer/capitals-v1.json` — the CAPITAL-STATUS reference (#1880): every national
  *   capital (`PPLC`) and first-order administrative seat (`PPLA`) in the GeoNames gazetteer dumps,
- *   as country-scoped coordinate points. The resolver's capital ranking tier
- *   (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate row against these points by
- *   country + proximity, never by name — the candidate row already matched the queried surface, so
- *   the capital question is IDENTITY, which a coordinate answers language-independently (no exonym
- *   list to fall out of date, no fold to disagree with the gazetteer's).
+ *   each carrying its coordinate AND its folded name set (name + romanization + alternate names).
+ *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country +
+ *   proximity + name membership — all three conjuncts, because the first board run matched on
+ *   coordinates alone and promoted capital-ADJACENT namesakes (North Salt Lake beside the Utah
+ *   seat) instead of capitals; the alternate names are what keep exonym rows ("Vienna" for Wien)
+ *   matching without a hand-kept exonym list.
  *
  *   Feature codes are matched EXACTLY: `PPLA2`–`PPLA4` (lower-order seats) and `PPLCH` (historical
  *   capital) stay out. `countryInfo.txt` — the same source's own catalog — grades the extraction:
@@ -41,6 +42,12 @@ export interface CapitalReferenceEntry {
 	latitude: number
 	longitude: number
 	level: "national" | "admin1"
+	/**
+	 * Folded name keys (name + romanization + alternate names) — the consumer's name-membership conjunct, which is what
+	 * keeps the coordinate radius from promoting a capital's same-name neighbours. Folded with the SAME
+	 * `normalizeLocalityForKey` the candidate gazetteer keys with.
+	 */
+	k: string[]
 }
 
 export interface CapitalsReference {
@@ -94,12 +101,11 @@ const roundCoord = (value: number): number => Number(value.toFixed(COORD_DECIMAL
 
 /**
  * Extract the capital/seat rows from ONE GeoNames dump (tab-separated, 19 columns; 0-indexed: 0 `geonameid`, 1 `name`,
- * 2 `asciiname`, 3 `alternatenames`, 4/5 lat/lon, 6 feature class, 7 feature code, 8 country code). Returns the entries
- * plus each entry's folded name set — the cross-check needs the alternate names, the reference file does not carry
- * them.
+ * 2 `asciiname`, 3 `alternatenames`, 4/5 lat/lon, 6 feature class, 7 feature code, 8 country code). The folded name set
+ * (`k`) covers name + asciiname + every alternate name, so exonym rows match at the consumer.
  */
-export function parseCapitalRows(text: string): Array<{ entry: CapitalReferenceEntry; foldedNames: Set<string> }> {
-	const rows: Array<{ entry: CapitalReferenceEntry; foldedNames: Set<string> }> = []
+export function parseCapitalRows(text: string): CapitalReferenceEntry[] {
+	const rows: CapitalReferenceEntry[] = []
 
 	// Walk lines by index rather than split("\n"): a dump runs to ~350 MB / millions of rows, and only
 	// the few carrying a capital code are worth a column split. The substring probes are the
@@ -146,8 +152,13 @@ export function parseCapitalRows(text: string): Array<{ entry: CapitalReferenceE
 		}
 
 		rows.push({
-			entry: { id, name, country, latitude: roundCoord(latitude), longitude: roundCoord(longitude), level },
-			foldedNames,
+			id,
+			name,
+			country,
+			latitude: roundCoord(latitude),
+			longitude: roundCoord(longitude),
+			level,
+			k: [...foldedNames].toSorted(),
 		})
 	}
 
@@ -210,11 +221,11 @@ export function buildCapitalsReference(options: BuildCapitalsOptions): BuildCapi
 
 		scanned++
 
-		const rows = parseCapitalRows(text).filter((r) => r.entry.country === country)
+		const rows = parseCapitalRows(text).filter((r) => r.country === country)
 
-		entries.push(...rows.map((r) => r.entry))
+		entries.push(...rows)
 
-		const nationals = rows.filter((r) => r.entry.level === "national")
+		const nationals = rows.filter((r) => r.level === "national")
 
 		if (!nationals.length) {
 			// A stated capital with no PPLC row is a gap; a catalog row with no capital (AQ, BV) is not.
@@ -225,7 +236,7 @@ export function buildCapitalsReference(options: BuildCapitalsOptions): BuildCapi
 			continue
 		}
 
-		if (capital && !nationals.some((r) => r.foldedNames.has(String(normalizeLocalityForKey(capital))))) {
+		if (capital && !nationals.some((r) => r.k.includes(String(normalizeLocalityForKey(capital))))) {
 			nameMismatches.push(`${country}: catalog says "${capital}"`)
 		}
 	}

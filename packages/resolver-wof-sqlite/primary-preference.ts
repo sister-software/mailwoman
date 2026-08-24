@@ -139,8 +139,7 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	rows: readonly R[],
 	limit: number,
 	delta = PRIMARY_PREFERENCE_LOG10,
-	placetypes?: ReadonlyMap<number, string>,
-	capitalBonus?: (row: R) => number
+	placetypes?: ReadonlyMap<number, string>
 ): Array<RankedRow<R>> {
 	// The primary the alias actually competes with for the top slot: highest population (min neg_rank). Undefined
 	// when the set has no primary → nothing to prefer, penalty is 0, order stays population-first (today's behavior).
@@ -159,19 +158,9 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	const isCrossCountryAlias = (r: R): boolean =>
 		typeof topCountry === "number" && r.is_primary !== 1 && r.country_id !== topCountry
 
-	// The capital-status bonus (#1880, `capitals.ts`) SUBTRACTS from the effective rank, in the same
-	// log10-population units the alias penalty adds — so a capital holds its name within the stated
-	// population margin, and the bonus rides `effectiveNegRank` into the emitted `prominence` (the
-	// value the resolver walk re-sorts by; a re-order that skipped it would be silently undone
-	// downstream — the #861 write-back lesson). Applied only to rows with a recorded population:
-	// population 0 is NO EVIDENCE, and a bonus there would promote whichever duplicate happens to
-	// sit at the capital's coordinates. Absent callback → every bonus is 0 → today's order, bit for bit.
-	const bonusOf = (r: R): number =>
-		capitalBonus != null && typeof r.population === "number" && r.population > 0 ? capitalBonus(r) : 0
-
 	const annotate = (r: R): RankedRow<R> => {
 		const penalized = isCrossCountryAlias(r)
-		const effectiveNegRank = r.neg_rank + (penalized ? delta : 0) - bonusOf(r)
+		const effectiveNegRank = r.neg_rank + (penalized ? delta : 0)
 
 		return { ...r, effectiveNegRank, demoted: penalized && effectiveNegRank > topPrimary!.neg_rank }
 	}

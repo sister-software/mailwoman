@@ -443,12 +443,17 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const resolverImportedAt = performance.now()
 
-	const lookup = createResolverBackend(mod, {
-		candidateDB,
-		dataRoot: options.dataRoot,
-		wofPaths: wofPath,
-		...(options.capitalTier === true ? { capitals: loadCapitalIndex() } : {}),
-	})
+	const lookup = createResolverBackend(mod, { candidateDB, dataRoot: options.dataRoot, wofPaths: wofPath })
+
+	// #1880: the capital-status reference, loaded once per session when the tier is switched on. The
+	// closure answers per candidate (name + country + coordinates) and threads into the resolver's
+	// bounded capital promotion via GeocodeDeps.capitalLevel.
+	const capitals = options.capitalTier === true ? loadCapitalIndex() : undefined
+
+	const capitalLevel = capitals
+		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
+		: undefined
 
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
@@ -699,6 +704,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// through the retry; a locale-inferred scope is withheld there like any bare-locality walk.
 			defaultCountryIsInferred: !options.defaultCountry,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
+			// #1880 opt-in: default-OFF downstream, so only the loaded closure needs threading.
+			...(capitalLevel ? { capitalLevel } : {}),
 			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
 			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).
 			...(resolverDefaultCountry(options, !!candidateDB)

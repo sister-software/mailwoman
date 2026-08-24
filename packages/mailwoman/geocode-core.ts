@@ -369,6 +369,12 @@ export interface GeocodeDeps {
 	 */
 	localeCountryPriorWeight?: number
 	/**
+	 * #1880 — capital status of a candidate (2 national capital, 1 admin-1 seat, 0 neither), for the resolver's bounded
+	 * capital promotion on the bare-toponym class (`ResolveOpts.capitalLevel`). Built from the committed capitals
+	 * reference when `capitalTier` is switched on; undefined (the default) leaves resolution byte-identical.
+	 */
+	capitalLevel?: (place: { name: string; country?: string; lat: number; lon: number }) => number
+	/**
 	 * #1585 — the locale hint's country, scoping the backend's TYPO-FUZZY tier only (`ResolveOpts.fuzzyCountryScope`).
 	 * Unlike {@link localeCountryPrior} this is NOT opt-in and NOT a ranking prior: exact matches stay worldwide, a typo
 	 * CORRECTION stays inside the hinted country, and a scoped-empty correction abstains instead of falling through to a
@@ -1035,6 +1041,12 @@ function applyCountryEvidence(opts: ResolveOpts, tree: AddressTree, deps: Geocod
 		if (deps.localeCountryPriorWeight !== undefined) {
 			opts.localeCountryPriorWeight = deps.localeCountryPriorWeight
 		}
+	}
+
+	// #1880: capital status for the resolver's bounded capital promotion. Threaded verbatim — the
+	// resolver applies its own stand-downs (bare-toponym class, no anchor posterior, exact tier).
+	if (deps.capitalLevel) {
+		opts.capitalLevel = deps.capitalLevel
 	}
 }
 

@@ -279,3 +279,89 @@ export function rankByCountryPrior<T extends Rankable>(
 
 	return rankWithinTier(candidates, (a, b) => key(b) - key(a))
 }
+
+/**
+ * Capital status of a resolved candidate, answered by the caller's reference (#1880 —
+ * `@mailwoman/resolver-wof-sqlite/capitals` is the shipped implementation): 2 for a national capital, 1 for an admin-1
+ * seat, 0 for neither. The resolver stays backend-agnostic — it never loads the reference, it only consumes the
+ * verdict.
+ */
+export type CapitalLevelFn = (place: Pick<ResolvedPlace, "name" | "country" | "lat" | "lon">) => number
+
+/**
+ * The level a candidate must hold to be PROMOTED: national capitals only. Admin-1 seats stay un-promoted, and that
+ * scope is forced by decided rows, not caution — a seat margin of even 1 log10 unit flips bare `Springfield` to
+ * Springfield, Illinois against the ratified 2026-08-11 referential decision
+ * ({@link SAME_COUNTRY_IMPORTANCE_TIE_BAND}), and sends bare `Hamilton` to the Waikato seat (Hamilton NZ, 2.8x smaller
+ * than Hamilton, Ontario), both measured on the shipped `candidate.db`. The reference still records seats; no consumer
+ * promotes on them.
+ */
+const PROMOTABLE_CAPITAL_LEVEL = 2
+
+/**
+ * Margin a national capital may give away, in log10-population units: a namesake must be more than 10^2 = 100x more
+ * populous to hold the lead. Bare "San José" reaches the Costa Rican capital (342,188) over San Jose, California
+ * (969,655 — 2.8x); bare "Hamilton" stays on Hamilton, Ontario (519,949) over Bermuda's 902-person capital (576x).
+ */
+export const NATIONAL_CAPITAL_MARGIN_LOG10 = 2
+
+/**
+ * Bounded capital promotion (#1880) — the third soft key for the bare-toponym class, applied AFTER
+ * {@link rankByImportance} because the fame prior is what decides this class and a capital signal parked below the
+ * deciding stage measurably never reaches an answer (the iteration-1 board run: the candidate-order bonus reordered
+ * `findPlace` on every target row and moved 0 of the 12).
+ *
+ * The rule: within the exact tier, take the first NATIONAL-capital row and walk it upward past each row it is within
+ * {@link NATIONAL_CAPITAL_MARGIN_LOG10} of, stopping at the first row over the margin or at another national capital.
+ * Same three house rules as the other keys — tier-safe (never crosses the exact/partial boundary; the cost is real and
+ * accepted: a capital that only PARTIALLY matched the query — Saint George's, Grenada for the abbreviated "St.
+ * George's" — stays behind every exact match, because crossing that line is how iteration 1 answered bare "Djibouti"
+ * with the capital city instead of the country), positive evidence only (no capital in the list → identity, and the
+ * margin reads the same `prominence ?? score` size every other key does), and stable (non-promoted rows keep their
+ * order).
+ *
+ * The margin deliberately re-uses log10-population units rather than the importance scale: the ratified importance flip
+ * decisions (Whitby/Windsor/Springfield) sit on gaps of 0.004–0.02, while the capital contests this key exists for sit
+ * on gaps of 0.21–0.24 — an importance-scale bonus big enough to win them would dwarf every ratified decision on the
+ * same scale.
+ */
+export function promoteCapitals<T extends Rankable & Pick<ResolvedPlace, "name" | "country" | "lat" | "lon">>(
+	candidates: readonly T[],
+	level: CapitalLevelFn | undefined
+): T[] {
+	if (!level || candidates.length < 2) return [...candidates]
+
+	const exact: T[] = []
+	const rest: T[] = []
+
+	for (const c of candidates) {
+		// Tri-state exactMatch, same reading as rankWithinTier: only a stated TRUE earns the tier.
+		;(c.exactMatch === true ? exact : rest).push(c)
+	}
+
+	const tier = exact.length ? exact : rest
+	const best = tier.findIndex((c) => level(c) >= PROMOTABLE_CAPITAL_LEVEL)
+
+	if (best <= 0) return [...candidates]
+
+	let target = best
+
+	while (target > 0) {
+		const above = tier[target - 1]!
+
+		if (level(above) >= PROMOTABLE_CAPITAL_LEVEL) break
+
+		if (size(tier[best]!) + NATIONAL_CAPITAL_MARGIN_LOG10 < size(above)) break
+
+		target--
+	}
+
+	if (target === best) return [...candidates]
+
+	const reordered = [...tier]
+	const [capital] = reordered.splice(best, 1)
+
+	reordered.splice(target, 0, capital!)
+
+	return exact.length ? [...reordered, ...rest] : reordered
+}
