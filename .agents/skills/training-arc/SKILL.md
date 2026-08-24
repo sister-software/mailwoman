@@ -119,18 +119,13 @@ publishing costs a user the difference from what they have today.
 ## Measurement invariants
 
 An aggregate from a broken reader is indistinguishable from a finding. These invariants bind every
-measurement in this protocol; the ones not yet enforced in code are tracked in #1858.
+measurement in this protocol.
 
-- **A reader that can return a partial result declares what it got, or throws.** A projection that
-  drops a field reports the dropped field as "unchanged" — carry the whole payload or name the drop.
-  (#1858)
-- **A zero can mean the change under test never ran.** `EngineConfig` drops a mistyped key in silence
-  and both arms run the same weights. Assert the engine ids DIFFER before believing a small
-  difference. (#1858 adds the strict schema.)
-- **Corpus `labels` arrives in two Arrow shapes.** `Array.isArray` reads the nested shape as zero
-  labels. Probe the first record. (#1858 moves the normalization into one reader.)
-- **Column projection can drop a requested column without error.** Probe the first record. (#1858
-  makes the absence an error.)
+- **Declared `EngineConfig` variables must produce distinct engine IDs.** Unknown configuration
+  keys and identical resolved engines are rejected at the dev-MCP boundary (#1858).
+- **Requested measurement data must be present and readable.** Parquet projections reject absent
+  columns, and the corpus census accepts both supported Arrow list shapes while rejecting malformed
+  label values (#1858).
 - **Artifact resolution sorts by mtime and prints the artifact chosen** — enforced in
   `packages/dev-mcp/compiled-tree.ts`. Never resolve by name sort: `v0.9.9` beats `v0.26.0`
   lexically.
