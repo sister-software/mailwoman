@@ -686,7 +686,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
 
 ## Client packages
 
-Three workflows share the client story. `publish.yml`'s `clients` job (runs after `publish` succeeds)
+Three workflows build and publish the API clients. `publish.yml`'s `clients` job (runs after `publish` succeeds)
 regenerates the Python (`mailwoman-client` on PyPI) and Rust (`mailwoman-client` on crates.io) API
 clients — typed wrappers over the Photon / Nominatim / libpostal drop-ins plus the native `/v1/*`
 surface, generated from the OpenAPI documents those surfaces already emit — and uploads them as

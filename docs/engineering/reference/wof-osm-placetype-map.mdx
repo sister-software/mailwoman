@@ -41,7 +41,7 @@ sub-venue parsing lives in OSM's _indoor_ scheme, not its _place_ scheme.
 | `address`       | `addr:*` tag cluster on a node/way — no object type of its own                                                | firm                       |
 | `arcade`        | none in the place scheme; a shopping arcade is usually `shop=mall`, the architectural sense is indoor tagging | weak                       |
 | `borough`       | `boundary=administrative` at a country-relative `admin_level` (London: 8)                                     | firm shape, variable level |
-| `building`      | `building=*` — the cleanest 1:1 in the whole table                                                            | firm                       |
+| `building`      | `building=*` — an exact 1:1, the only one in the table                                                        | firm                       |
 | `campus`        | no single tag; `amenity=university\|college\|school` plus `landuse=education`, sometimes a `site` relation    | moderate                   |
 | `concourse`     | none; concourses live inside `aeroway=terminal` as indoor areas                                               | weak                       |
 | `continent`     | `place=continent`                                                                                             | firm                       |

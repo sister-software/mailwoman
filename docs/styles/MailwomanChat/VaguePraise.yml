@@ -1,0 +1,19 @@
+## Mailwoman chat style: praise without a property.
+##
+## Vale existence rule (warning). "Powerful", "elegant", "intuitive" grade
+## the work without naming what it does. The shared BannedWords rule already
+## errors on "robust", "seamless", "comprehensive", "crucial"; this file
+## holds the warning-tier remainder — each of these has occasional
+## legitimate technical use ("a flexible schema" describing an actual degree
+## of freedom), which is why it warns rather than errors and the agent
+## judges.
+extends: existence
+message: "Prefer a concrete property over '%s' — say what it does, not how it rates."
+level: warning
+ignorecase: true
+tokens:
+  - powerful
+  - flexible
+  - intuitive
+  - elegant(ly)?
+  - straightforward

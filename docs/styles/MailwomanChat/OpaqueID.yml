@@ -1,0 +1,22 @@
+## Mailwoman chat style: bare numeric IDs in prose.
+##
+## Vale existence rule (warning). A WOF ID is effectively arbitrary — a reply
+## that records `parentID=9000000119609` tells the reader nothing until the
+## entity's name sits beside it. Warning rather than error because the regex
+## cannot see whether the name IS beside it; the agent judges.
+##
+## Only the assignment shape (`parentID=…`, `place_id: …`) matches. The
+## recommended prose form — "Five Star Island (WOF 9000000119609)" — must NOT
+## match, so there is no bare `wof \d+` token: that pattern flags the
+## compliant usage too (measured on clean-chat.md before it was cut).
+##
+## Known escape, by construction: Vale's markdown parser skips inline code
+## and fences, so a backticked ID or a trace block never reaches this rule.
+## The fixture (dirty-chat.md) pins that as a negative assertion so the gap
+## stays documented rather than rediscovered.
+extends: existence
+message: "A bare numeric ID names nothing — state the entity it identifies beside it (e.g. 'Five Star Island, WOF 9000000119609')."
+level: warning
+ignorecase: true
+tokens:
+  - '\w*id\s*[=:]\s*\d{4,}'

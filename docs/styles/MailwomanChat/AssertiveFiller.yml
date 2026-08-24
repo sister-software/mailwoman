@@ -1,0 +1,16 @@
+## Mailwoman chat style: unsupported confidence.
+##
+## Vale existence rule. Each token asserts certainty without carrying the
+## reason for it. The shared BannedWords rule already errors on "clearly",
+## "obviously", "actually", "basically", "simply"; this file holds ONLY the
+## confidence markers BannedWords lacks, so no token fires twice.
+extends: existence
+message: "Remove '%s' or replace it with the concrete reason for the confidence."
+level: error
+ignorecase: true
+tokens:
+  - undoubtedly
+  - needless to say
+  - it goes without saying
+  - of course
+  - without a doubt

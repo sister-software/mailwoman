@@ -1,0 +1,19 @@
+## Mailwoman chat style: attribution to nobody.
+##
+## Vale existence rule. "Many developers believe", "it is widely accepted",
+## "according to some" — each asserts a claim while hiding who holds it, so
+## the reader can verify neither the claim nor the source. Name the source or
+## state the claim directly as your own, with its evidence.
+##
+## The shared Weasel rule warns separately on bare "many"/"various"/
+## "numerous"; a sentence can trip both, which is duplication, not a false
+## positive (same precedent as effortless/effortlessly in StockPhrases).
+extends: existence
+message: "Name the source or state the claim directly — '%s' hides attribution."
+level: error
+ignorecase: true
+tokens:
+  - '(?:many|some|most|various|numerous) (?:people|users|developers|experts|researchers|critics|observers) (?:say|believe|think|argue|claim|consider|regard)'
+  - '(?:widely|generally|commonly) (?:believed|considered|regarded|thought|accepted|understood|known)'
+  - 'it is (?:believed|thought|said|claimed|considered|generally accepted|widely accepted)'
+  - 'according to (?:some|many|various|numerous)'

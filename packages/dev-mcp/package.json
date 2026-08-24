@@ -274,5 +274,8 @@
 		"path-ts": "^2.1.0",
 		"spliterator": "^6.2.0",
 		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@vvago/vale": "^3.17.0"
 	}
 }

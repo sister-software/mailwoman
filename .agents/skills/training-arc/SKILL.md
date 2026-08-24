@@ -1,13 +1,13 @@
 ---
 name: training-arc
-description: Protocol for grading a model change. Control FIRST, run-shape as an explicit decision, attribution against the null rather than the shipped model. Use before launching any training run, and before reporting any candidate's board result. Written after eight runs that measured the wrong thing.
+description: Protocol for grading a model change. Control FIRST, run-shape as an explicit decision, attribution against the placebo fine-tune rather than the shipped model. Use before launching any training run, and before reporting any candidate's board result.
 ---
 
 ## Why this exists
 
-On 2026-08-23 eight training runs were graded candidate-vs-shipped and every one reported a regression
-that was, in substantial part, the cost of fine-tuning at all. The controls that would have said so were
-run eighth and ninth instead of first. The full ledger is
+Eight training runs in one session were graded candidate-vs-shipped, and every one reported a regression
+that was, in substantial part, the cost of fine-tuning at all. The controls that would have said so ran
+eighth and ninth instead of first. The full ledger is
 `docs/records/evals/retrospectives/2026-08-23-trailing-region-dose-arc.md`.
 
 Nothing below is style advice. Each step is a mistake that shipped.
@@ -22,8 +22,8 @@ mwdev_arc candidate=<staged candidate dir> \
           null=<the no-new-data fine-tune>
 ```
 
-It refuses to attribute anything when the self-control is dirty, subtracts the null before reporting a
-regression count, checks the D-rule, and prints the regressed ADDRESSES rather than only their number.
+It refuses to attribute anything when the self-control is dirty, subtracts the placebo (the `null=` arm)
+before reporting a regression count, checks the D-rule, and prints the regressed ADDRESSES rather than only their number.
 Omitting `control` or `null` does not skip the check quietly — the result says which control never ran
 and marks the number an upper bound.
 
@@ -52,22 +52,23 @@ cp -f <candidate int8> "$CAND/model.onnx"
 md5sum "$CAND/model.onnx"     # MUST differ from the shipped md5
 ```
 
-## Step 2 — the NULL run, once per BASE
+## Step 2 — the PLACEBO run, once per BASE
 
-Fine-tune the base corpus with **no added shard**, same steps, same seed, same brake. Export, quantize,
+Fine-tune the base corpus with **no added data**, same steps, same seed, same brake. Export, quantize,
 grade it against shipped exactly as you would a candidate.
 
-This is the placebo. Measured on `v440-step-060000`: **10 of 649 rows regress with no new data**, paid in the
-first 1,000 steps and flat to 4,000 — a fixed cost of touching the base, charged before the shard is read.
+This is the placebo — pass it to `mwdev_arc` as `null=`. Measured on `v440-step-060000`: **10 of 649 rows
+regress with no new data**. The loss appears in the first 1,000 steps and is flat to 4,000: touching the
+base costs those rows before the new data is read.
 
 Consequences, both load-bearing:
 
-- **A candidate's regressions are `candidate − null`, not `candidate − shipped`.** Eighteen regressions where
-  the null has ten is eight attributable, not eighteen.
-- **A fine-tune must buy back the null's net before it breaks even.** If the null is −5, a candidate at −5 has
+- **A candidate's regressions are `candidate − placebo`, not `candidate − shipped`.** Eighteen regressions
+  where the placebo has ten is eight attributable, not eighteen.
+- **A fine-tune must first recover the placebo's net loss.** If the placebo nets −5, a candidate at −5 has
   achieved nothing and a candidate at −3 is an improvement.
 
-One 4,000-step run, ~13 minutes, ~$1, amortised over every candidate on that base.
+One 4,000-step run, ~13 minutes, ~$1; the one run covers every candidate on that base.
 
 ## Step 3 — state the RUN SHAPE, do not inherit it
 
@@ -78,10 +79,10 @@ Before launching, write down:
 
 - `kind`: from-scratch or fine-tune
 - `why`: one sentence that would survive being questioned
-- `control_run`: the null arm for this base, or `none — first of lineage`
+- `control_run`: the placebo arm (`null=`) for this base, or `none — first of lineage`
 
-**A fine-tune cannot introduce a source the base never saw.** If the corpus adds a new source, the honest
-shapes are a from-scratch base or an explicitly-scoped additive fine-tune with the null in hand. The
+**A fine-tune cannot introduce a source the base never saw.** If the corpus adds a new source, the valid
+shapes are a from-scratch base or an explicitly-scoped additive fine-tune with the placebo in hand. The
 from-scratch recipe is `corpus-python/src/mailwoman_train/configs/v4.4.0-suffix-boundary-v2-base-60k.yaml` — 60k steps, no `init_from`, no EWC,
 ~4.3 h and ~$9 on an A100-40GB.
 
@@ -98,7 +99,7 @@ mwdev_diff_geocode inputs=[…] weights_cache=<candidate>
 `mwdev_diff_parse` separates the four span events — `retagged`, `moved`, `added`/`removed`, `confidence` —
 which a component-map comparison reports identically. Read the **per-span confidence**: the shipped model
 holds `venue "Ye Three Lords"` at 0.50 and `venue "Le Colimaçon"` at 0.45, so those rows were never confident
-and a candidate that flips them tipped a coin rather than broke an answer.
+and a candidate that flips them changed a low-confidence answer rather than broke a confident one.
 
 `mwdev_diff_geocode` states which of three problems moved the answer: `parse-changed` (model),
 `retrieval-repointed` (ranking or gazetteer), `tier-changed` (**data coverage — no model change touches it**).
@@ -106,32 +107,51 @@ Grading a tier fall-through against a model wastes a run.
 
 ## Step 5 — the gate is against SHIPPED, and it is not the attribution
 
-The null is the right baseline for _attributing_ a regression. It is never a licence to ship one: publishing
-costs a user the difference from what they have today.
+The placebo is the right baseline for _attributing_ a regression. It never authorizes shipping one:
+publishing costs a user the difference from what they have today.
 
 - net improved-minus-regressed ≥ 0 on the 649-row board
 - FR, GB and DE show no regression anywhere — iron rule 6, the D-rule
 - the promotion battery `mwdev_gate --gate v9.0.0-base` passes 17/17
 
-## Pitfalls that produced a confident wrong answer
+## Measurement invariants
 
-- **A zero can mean the lever never ran.** `EngineConfig` is a plain object; a mistyped key is dropped in
-  silence and both arms run the same weights. Assert the engine ids DIFFER before believing a small delta.
-- **A projection reports what it lost as "unchanged."** `flattenTreeNodes` dropped `source` and then the
-  resolver payload; both times the affected spans read as identical. A reader that can return a partial
-  result must declare what it got, or throw.
-- **A nested Arrow column is not an array.** Corpus `labels` arrives as `{list:[{element:…}]}` on some shards
-  and plain on others; `Array.isArray` is false for the first and every label count reads zero.
-- **Column projection can silently drop a column.** `getCursor(["country","labels"])` returns `{country}`
-  alone on some writers' shards. Probe the first record.
-- **Artifact resolvers must not sort by name.** `v0.9.9` beats `v0.26.0` lexically and `v8-jp-full` beats both
-  numerically. Sort by mtime and PRINT the artifact chosen.
-- **A smoke run proves the config loads, not that the shard is reached.** A mixed shard's other arm keeps the
-  zero-rows guard from firing. Read the shard through the loader's own gate (`country_weights.get(cc)`) first.
-- **`country_weights` is a hard admission filter.** A country absent from it trains on nothing regardless of
-  how many rows exist. Check with `mwdev_coverage` before assuming a locale is being taught.
+An aggregate from a broken reader is indistinguishable from a finding. These invariants bind every
+measurement in this protocol; the ones not yet enforced in code are tracked in #1858.
 
-## Reporting
+- **A reader that can return a partial result declares what it got, or throws.** A projection that
+  drops a field reports the dropped field as "unchanged" — carry the whole payload or name the drop.
+  (#1858)
+- **A zero can mean the change under test never ran.** `EngineConfig` drops a mistyped key in silence
+  and both arms run the same weights. Assert the engine ids DIFFER before believing a small
+  difference. (#1858 adds the strict schema.)
+- **Corpus `labels` arrives in two Arrow shapes.** `Array.isArray` reads the nested shape as zero
+  labels. Probe the first record. (#1858 moves the normalization into one reader.)
+- **Column projection can drop a requested column without error.** Probe the first record. (#1858
+  makes the absence an error.)
+- **Artifact resolution sorts by mtime and prints the artifact chosen** — enforced in
+  `packages/dev-mcp/compiled-tree.ts`. Never resolve by name sort: `v0.9.9` beats `v0.26.0`
+  lexically.
+- **A smoke run proves the config loads, not that the new rows are reached.** Read the file through
+  the loader's own gate (`country_weights.get(cc)`) first.
+- **`country_weights` is a hard admission filter.** A country absent from it trains on nothing
+  regardless of how many rows exist. Check with `mwdev_coverage` before assuming a locale is taught.
+
+## Reporting — the structure is part of the protocol
 
 Lead with the addresses that changed and the attribution. Give the aggregate as a footer. If a control was
 not run, say so — an unattributed regression count is not a finding.
+
+- Name runs by version and role: "the control run (v5.0.1)", "the treatment run (v5.0.2)". Never a
+  minted name — the operator has banned `the null` and `the cure` from reports; `null=` survives only
+  as the literal `mwdev_arc` parameter.
+- Every table names its comparison arm in its header ("vs shipped v4.4.0"), and every count carries its
+  denominator.
+- A derived figure states its arithmetic where it appears: "net +2 = treatment net +6 − placebo net +4".
+  This rule shipped once already (commit aa6f149b2, the share figures) and recurred — in place, not in a
+  footnote.
+- Define each project term at first use or link the doc that does. Name the corpus recipe file, config
+  key, or weight — the words `shard` and `lever` are banned in reports.
+- Denominate spend: "$29 of the $40 Modal budget for this experiment", never a bare dollar figure.
+- State the next action and stop. No scheduling (`tomorrow`), no wind-down narration — the operator sets
+  cadence, and completion is acceptance criteria, not elapsed turns.

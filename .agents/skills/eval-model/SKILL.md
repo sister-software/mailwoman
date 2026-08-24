@@ -46,7 +46,7 @@ scripts keep concluding that nothing changed.
 | Did the board move, and is the number attributable?      | `mwdev_arc`          |
 | What changed on these specific addresses?                | `mwdev_diff_parse`   |
 | Why did the coordinate move — parse, retrieval, or tier? | `mwdev_diff_geocode` |
-| Two configs, one lever                                   | `mwdev_compare`      |
+| Two configs, one changed setting                         | `mwdev_compare`      |
 | The promotion battery                                    | `mwdev_gate`         |
 | What does the corpus actually contain?                   | `mwdev_coverage`     |
 | Where did this span come from?                           | `mwdev_trace`        |
