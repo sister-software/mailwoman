@@ -41,7 +41,17 @@ function resolved(
 }
 
 function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwomanArmDeps {
-	const gauntlet = { close: vi.fn() } as unknown as GauntletDeps
+	// Typed throwing stubs, not a cast: the arm under test drives `runOne`, so the gauntlet's own
+	// geocode/diagnoseParse must never be reached — and reaching one should fail the test loudly.
+	const gauntlet: GauntletDeps = {
+		geocode: vi.fn(async () => {
+			throw new Error("routed-arm tests drive runOne, never deps.geocode")
+		}),
+		diagnoseParse: vi.fn(async () => {
+			throw new Error("routed-arm tests drive runOne, never deps.diagnoseParse")
+		}),
+		close: vi.fn(),
+	}
 
 	return {
 		buildDeps: vi.fn(async () => gauntlet),

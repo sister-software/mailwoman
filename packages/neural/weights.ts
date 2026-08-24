@@ -409,6 +409,22 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	// for binaries here used to skip that path and fall through to the installed package, mixing a candidate en-US model
 	// with shipped foreign-locale artifacts. Let the package resolver either complete wholly inside this root or fail.
 	if (opts.cacheRoot) {
+		// A cache with NO install for this package gets its own error: resolveFromPackageDir's
+		// "resolved at … but is missing model files" is written for a real-but-bare package dir (the
+		// ordinary dev-checkout state), and is a false claim about a directory that does not exist.
+		// The refusal itself is the point — an explicit cache never falls back — so say that.
+		if (!existsSync(cacheDir)) {
+			tried.push(cacheDir)
+
+			throw new Error(
+				`Could not resolve ${packageName} from the explicit weights cache.\n` +
+					`The cache carries no ${packageName} install at ${cacheDir}, and an explicit cache is an ` +
+					`isolation boundary — resolution never falls back to installed or workspace packages.\n` +
+					`Install into the cache (npm --prefix layout, e.g. \`mailwoman parse --download-weights\`), ` +
+					`or drop the explicit cache root.`
+			)
+		}
+
 		return resolveFromPackageDir(cacheDir, locale, opts, `cache:${packageName}`, tried)
 	}
 
