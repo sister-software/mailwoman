@@ -89,4 +89,62 @@ describe("checkCompiledFreshness", () => {
 
 		expect(checkCompiledFreshness(root).fresh).toBe(true)
 	})
+
+	it.each(["thing.test.ts", "thing.test.tsx"])("ignores non-emitting colocated test source %s", (testName) => {
+		const { root, workspace } = checkout()
+		const source = join(workspace, "thing.ts")
+		const compiled = join(workspace, "out", "thing.js")
+
+		writeFileSync(source, "export const x = 1\n")
+		writeFileSync(compiled, "export const x = 1\n")
+		writeFileSync(join(workspace, testName), "export const testOnly = true\n")
+		touch(source, -60_000)
+		touch(compiled, 0)
+		touch(join(workspace, testName), 30_000)
+
+		const freshness = checkCompiledFreshness(root)
+
+		expect(freshness.fresh).toBe(true)
+		expect(freshness.newestSource?.path).toBe(source)
+	})
+
+	it("ignores the workspace-root test tree excluded by tsconfig", () => {
+		const { root, workspace } = checkout()
+		const source = join(workspace, "thing.ts")
+		const compiled = join(workspace, "out", "thing.js")
+		const testHelper = join(workspace, "test", "unit", "helper.ts")
+
+		mkdirSync(join(workspace, "test", "unit"), { recursive: true })
+		writeFileSync(source, "export const x = 1\n")
+		writeFileSync(compiled, "export const x = 1\n")
+		writeFileSync(testHelper, "export const helper = true\n")
+		touch(source, -60_000)
+		touch(compiled, 0)
+		touch(testHelper, 30_000)
+
+		const freshness = checkCompiledFreshness(root)
+
+		expect(freshness.fresh).toBe(true)
+		expect(freshness.newestSource?.path).toBe(source)
+	})
+
+	it.each(["debug-view/test/input-probe.ts", "thing.spec.ts", "contest/thing.ts"])(
+		"keeps emitting source %s in the freshness comparison",
+		(sourcePath) => {
+			const { root, workspace } = checkout()
+			const source = join(workspace, sourcePath)
+			const compiled = join(workspace, "out", "thing.js")
+
+			mkdirSync(join(source, ".."), { recursive: true })
+			writeFileSync(source, "export const x = 2\n")
+			writeFileSync(compiled, "export const x = 1\n")
+			touch(compiled, -60_000)
+			touch(source, 0)
+
+			const freshness = checkCompiledFreshness(root)
+
+			expect(freshness.fresh).toBe(false)
+			expect(freshness.newestSource?.path).toBe(source)
+		}
+	)
 })

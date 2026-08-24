@@ -17,11 +17,26 @@
  */
 
 import { readdirSync, statSync } from "node:fs"
-import { join } from "node:path"
+import { basename, join, relative, sep } from "node:path"
 
 import { FINGERPRINTED_WORKSPACES } from "./tree-fingerprint.ts"
 
 const SKIP_DIRECTORIES = new Set(["node_modules", ".git", "__pycache__"])
+
+/**
+ * Whether a TypeScript source can contribute to a workspace's compiled output. Mirrors the workspace tsconfig
+ * exclusions without treating every directory named `test` as non-emitting: production modules such as
+ * `debug-view/test/input-probe.ts` compile and must still make the guard stale.
+ */
+function isEmittingSource(workspaceRoot: string, path: string): boolean {
+	const name = basename(path)
+
+	if (/\.test\.tsx?$/.test(name)) return false
+
+	const [firstSegment] = relative(workspaceRoot, path).split(sep)
+
+	return firstSegment !== "test"
+}
 
 /**
  * Newest mtime under a directory, restricted to files matching a predicate. Returns `null` when the directory does not
@@ -96,7 +111,7 @@ export function checkCompiledFreshness(repoRoot: string): CompiledFreshness {
 		const source = newestMtime(
 			workspaceRoot,
 			(name) => /\.tsx?$/.test(name) && !name.endsWith(".d.ts"),
-			(path) => !path.includes(`${workspace}/out/`)
+			(path) => !path.includes(`${workspace}/out/`) && isEmittingSource(workspaceRoot, path)
 		)
 
 		const compiled = newestMtime(join(workspaceRoot, "out"), (name) => name.endsWith(".js"))
