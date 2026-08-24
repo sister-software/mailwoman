@@ -155,8 +155,9 @@ export function createResolverBackend(
 		wofPaths: string | string[]
 		postalCityAliasDB?: string
 		/**
-		 * #1882 opt-in — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Candidate
-		 * backend only (the penalty lives there); default OFF.
+		 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Candidate backend
+		 * only (the penalty lives there). Default ON; pass `false` to disable. On an artifact without the `name_role`
+		 * column the exemption matches no row and resolution is byte-identical, so the default is old-artifact-safe.
 		 */
 		variantAliasExemption?: boolean
 	}
@@ -168,7 +169,7 @@ export function createResolverBackend(
 
 		return new mod.WOFCandidateTableLookup({
 			databasePath: candidate,
-			...(opts.variantAliasExemption === true ? { variantAliasExemption: true } : {}),
+			...(opts.variantAliasExemption !== false ? { variantAliasExemption: true } : {}),
 		})
 	}
 
@@ -198,11 +199,19 @@ export function conventionCapitalsPath(): string {
 /**
  * Load the capital-status reference into the ranking index, preferring the ARTIFACT copy: a `candidate.db` that carries
  * the `capital` table (#1880's distribution home) serves npm consumers who never have the repo file; the repo's
- * `data/gazetteer/capitals-v1.json` is the dev fallback. THROWS when neither source exists: the caller only asks for
- * this when `capital_tier` is switched ON, and an opt-in config key that silently no-ops grades as "inert" when it
- * never ran.
+ * `data/gazetteer/capitals-v1.json` is the dev fallback.
+ *
+ * When NEITHER source exists, `missing` decides. `"throw"` (the default) is for an EXPLICIT `capital_tier: true` — a
+ * config key the caller asked for that silently no-ops grades as "inert" when it never ran. `"degrade"` returns
+ * `undefined` with one stderr line and is for the default-ON path: a consumer running an older artifact keeps working
+ * with no capital promotion rather than failing at session construction (positive evidence only). A reference that
+ * EXISTS but is malformed throws under both modes — a corrupt file is a defect, never an absence.
  */
-export function loadCapitalIndex(opts: { candidateDB?: string; path?: string } = {}): CapitalIndex {
+export function loadCapitalIndex(opts: {
+	candidateDB?: string
+	path?: string
+	missing?: "throw" | "degrade"
+}): CapitalIndex | undefined {
 	if (opts.candidateDB && existsSync(opts.candidateDB)) {
 		const db = new DatabaseSync(opts.candidateDB, { readOnly: true })
 
@@ -224,6 +233,14 @@ export function loadCapitalIndex(opts: { candidateDB?: string; path?: string } =
 	const path = opts.path ?? conventionCapitalsPath()
 
 	if (!existsSync(path)) {
+		if (opts.missing === "degrade") {
+			console.error(
+				`[resolver] capital reference: none in the candidate artifact or at ${path} — capital promotion degrades to a no-op`
+			)
+
+			return undefined
+		}
+
 		throw new Error(
 			`capital_tier is on, but neither the candidate artifact nor ${path} carries the capitals reference — ` +
 				"pull a candidate.db that includes the `capital` table, or build the repo file with `mailwoman gazetteer capitals`"

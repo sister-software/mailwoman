@@ -128,8 +128,8 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	// Artifact wins when present.
 	const fromArtifact = loadCapitalIndex({ candidateDB: artifactPath, path: repoPath })
 
-	expect(fromArtifact.levelOfPlace("San José", "CR", 9.93, -84.08)).toBe(2)
-	expect(fromArtifact.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(0)
+	expect(fromArtifact!.levelOfPlace("San José", "CR", 9.93, -84.08)).toBe(2)
+	expect(fromArtifact!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(0)
 
 	// An artifact WITHOUT the table falls through to the repo file.
 	const barePath = join(dir, "bare.db")
@@ -137,8 +137,19 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	new DatabaseSync(barePath).close()
 	const fromRepo = loadCapitalIndex({ candidateDB: barePath, path: repoPath })
 
-	expect(fromRepo.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)
+	expect(fromRepo!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)
 
-	// Neither source: the opt-in config key must fail loudly, not no-op.
+	// Neither source: the explicitly-asked-for key must fail loudly, not no-op.
 	expect(() => loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json") })).toThrow(/capital_tier/)
+
+	// The DEFAULT-ON path degrades on the same absence instead of failing session construction.
+	expect(
+		loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json"), missing: "degrade" })
+	).toBeUndefined()
+
+	// A reference that EXISTS but is malformed throws under BOTH modes — corruption is a defect, never an absence.
+	const corruptPath = join(dir, "corrupt.json")
+
+	writeFileSync(corruptPath, JSON.stringify({ version: 99, entries: [] }))
+	expect(() => loadCapitalIndex({ candidateDB: barePath, path: corruptPath, missing: "degrade" })).toThrow(/v1/)
 })

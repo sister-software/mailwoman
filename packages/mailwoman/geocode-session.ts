@@ -127,14 +127,16 @@ export interface GeocodeSessionOptions {
 	poiVenueTier?: boolean
 	/**
 	 * The capital-status ranking axis (#1880) — bounded promotion of a NATIONAL capital among same-name candidates on the
-	 * bare-toponym class (`promoteCapitals`, resolver/toponym-prior.ts — applied after the fame key, tier-safe). Loads
-	 * `data/gazetteer/capitals-v1.json` and THROWS if it is absent. Default OFF (D-rule).
+	 * bare-toponym class (`promoteCapitals`, resolver/toponym-prior.ts — applied after the fame key, tier-safe). Reads
+	 * the artifact's `capital` table, falling back to the repo's `data/gazetteer/capitals-v1.json`. Default ON (board-651
+	 * receipt on PR #1888: +6/−0 with the exemption's +1 beside it); `false` disables. Unset, a missing reference
+	 * degrades to no promotion; an EXPLICIT `true` throws instead, so an asked-for key can never no-op silently.
 	 */
 	capitalTier?: boolean
 	/**
-	 * #1882 opt-in — exempt own-name `variant` aliases (the holder's primary name in another orthography, stamped by the
+	 * #1882 — exempt own-name `variant` aliases (the holder's primary name in another orthography, stamped by the
 	 * candidate build's own-name detector) from the cross-country primary-preference penalty. Candidate backend only;
-	 * no-ops on an artifact without the `name_role` column. Default OFF (D-rule).
+	 * no-ops on an artifact without the `name_role` column. Default ON (same PR #1888 receipt); `false` disables.
 	 */
 	variantAliasExemption?: boolean
 	postcodeShapeCoherence: boolean
@@ -453,13 +455,17 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		candidateDB,
 		dataRoot: options.dataRoot,
 		wofPaths: wofPath,
-		...(options.variantAliasExemption === true ? { variantAliasExemption: true } : {}),
+		...(options.variantAliasExemption !== false ? { variantAliasExemption: true } : {}),
 	})
 
-	// #1880: the capital-status reference, loaded once per session when the tier is switched on. The
-	// closure answers per candidate (name + country + coordinates) and threads into the resolver's
-	// bounded capital promotion via GeocodeDeps.capitalLevel.
-	const capitals = options.capitalTier === true ? loadCapitalIndex({ candidateDB }) : undefined
+	// #1880: the capital-status reference, loaded once per session. Explicit `true` demands the
+	// reference (throw on absence); the default tolerates an older artifact by degrading to no
+	// promotion. The closure answers per candidate (name + country + coordinates) and threads into
+	// the resolver's bounded capital promotion via GeocodeDeps.capitalLevel.
+	const capitals =
+		options.capitalTier === false
+			? undefined
+			: loadCapitalIndex({ candidateDB, missing: options.capitalTier === true ? "throw" : "degrade" })
 
 	const capitalLevel = capitals
 		? (place: { name: string; country?: string; lat: number; lon: number }): number =>

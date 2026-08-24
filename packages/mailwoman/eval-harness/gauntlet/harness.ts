@@ -117,14 +117,16 @@ export interface GauntletResolverLevers {
 	adminContainmentRerank?: boolean
 	/**
 	 * #1880 — the capital-status ranking axis: bounded NATIONAL-capital promotion on the bare-toponym class. Like
-	 * `gazetteerPrior` this pin carries an ARTIFACT (`data/gazetteer/capitals-v1.json`), so the harness loads it rather
-	 * than `resolverLeverDeps` (which stays pure). Library default OFF (D-rule) — the `true` pin is the evidence path.
+	 * `gazetteerPrior` this pin carries an ARTIFACT (the candidate `capital` table, repo-file fallback), so the harness
+	 * loads it rather than `resolverLeverDeps` (which stays pure). Library default ON (PR #1888's board-651 receipt);
+	 * unset follows it, `false` pins the off arm, and an unset pin degrades on a reference-less artifact exactly as the
+	 * session does.
 	 */
 	capitalTier?: boolean
 	/**
 	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. The stamp lives in the
-	 * ARTIFACT (the candidate build's own-name detector), so this pin only has effect against a candidate.db that carries
-	 * it — pin `candidate_db` to the staged artifact in BOTH arms and vary only this. Default OFF (D-rule).
+	 * ARTIFACT (the candidate build's own-name detector), so against a candidate.db without it the exemption matches no
+	 * row — vary it against a stamped artifact. Library default ON (same receipt); `false` pins the off arm.
 	 */
 	variantAliasExemption?: boolean
 }
@@ -427,17 +429,21 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		createResolverBackend(resolverMod, {
 			wofPaths: wofShardPaths().filter(existsSync),
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
-			...(opts.levers?.variantAliasExemption === true ? { variantAliasExemption: true } : {}),
+			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
 		})
 	)
 
 	// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): the reference loads here
-	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it
-	// when its option is on. Absent pin → undefined → no promotion, byte-stable.
+	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it.
+	// The tri-state mirrors the session: `false` pins the off arm; explicit `true` demands the
+	// reference; unset follows the ON default and degrades on a reference-less artifact.
 	const capitalIndex =
-		opts.levers?.capitalTier === true
-			? loadCapitalIndex({ candidateDB: resolveCandidateDBPath(opts.candidateDB) })
-			: undefined
+		opts.levers?.capitalTier === false
+			? undefined
+			: loadCapitalIndex({
+					candidateDB: resolveCandidateDBPath(opts.candidateDB),
+					missing: opts.levers?.capitalTier === true ? "throw" : "degrade",
+				})
 
 	const capitalLevel = capitalIndex
 		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
