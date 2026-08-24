@@ -216,3 +216,54 @@ Three findings:
 
 Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, cure int8 `f2d264f09b7d6f269158ab97d1843346`.
 Run IDs in the store: control `0bb3f465`, null `e0b9491c`, candidate `c85ef830`.
+
+## Postscript 3 — the routed re-grading supersedes this document's board numbers (2026-08-24)
+
+Every board figure in this retrospective and its first two postscripts was measured through ONE
+en-US session per arm (`mwdev_compare` before PR #1875). Great Britain rows never loaded the en-GB
+FST, postcode binary, or placetype-pair index — while still producing a country-stratified score.
+The stratification made the numbers LOOK per-country; the execution path was not. PR #1875 routes
+each board row through its production overlay and records the resolved artifacts; the corrected
+measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
+
+**What survives from postscripts 1–2, and why:**
+
+- The self-controls (0 differed of 649) — the rig was quiet on the path it measured.
+- The CJK-admission falsification — v5.0.0 vs v5.1.0 ran the SAME single-config path on both arms,
+  so the matched comparison stands: dropping CN/JP/KR/TW did not clear the regressions.
+- The ~40-row churn floor — a same-path variance measurement between two matched arms.
+- The gate-vs-board divergence — the promotion gate is package-shaped en-US by design.
+
+**What is superseded:**
+
+- Every absolute net/regressed count. Grades apply to the **372 of 649 rows carrying coordinate
+  truth**, not to 649; and foreign-row grades from the unrouted path are not production behavior.
+- The D-rule row identities. Under production routing the blocking set is **FR 2 of 45 graded rows
+  (`COMER parís.méxico` in its two board contracts, `fr-fork-entity-comer` and
+  `venue-toponym-comer-bare`) + GB 2 of 51 (`Biggin Hill, United Kingdom` and
+  `Brixton Hill, United Kingdom`); DE 0 of 6.** The GB venue-cluster blocking story
+  (`St Andrew Undershaft Church…`, `30 St Mary Axe…`) was an artifact of grading GB rows without
+  their overlay.
+- The v5.0.1-null / v5.0.2-cure row-level readings, including "the cure healed exactly its 3 target
+  rows" — same unrouted path. The parse-level diffs (the deleted `locality="London"`, the Passeig
+  retags) remain real observations of the SINGLE-CONFIG en-US parse and stay useful as mechanism
+  illustrations of the grammar contract; they are not statements about the production route.
+
+**The corrected campaign table** (board SHA-256 `e3063ff5faebdf2f…`, fingerprint `ddc60394d5c41471`,
+commit `ff4bb076c`):
+
+```
+leg                                        md5        improved/372  regressed/372  net  changed/649
+self-control (shipped vs staged shipped)   98a49b5c…       0             0           0       0
+seed-42 placebo fine-tune                  5f34dda7…       6            12          −6      67
+reviewed VE postcode-tail treatment        87543df0…      13             9          +4      68
+```
+
+Attribution vs the matched placebo: −3 regressions, +10 net. Five of the 13 improvements are the
+reviewed Venezuela target class. HOLD stands on two separate grounds the handoff keeps apart: the
+D-rule (4 blocking rows, shared with the placebo — inherited, not treatment-caused), and
+measurement power (296 vs 292 of 372 at 25 km, p = 0.7187 — no global-accuracy claim).
+
+The lesson worth keeping beside the D-rule itself: **a per-country breakdown of a score is not
+evidence that the per-country path ran.** This session audited corpus identity, artifact identity,
+and rig quietness — and graded five models through a route production never uses.
