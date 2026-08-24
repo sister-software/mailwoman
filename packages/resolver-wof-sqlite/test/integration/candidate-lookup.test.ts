@@ -725,6 +725,64 @@ describe("rankByPrimaryPreference — exonym-collision band (δ=1.0 population-r
 	})
 })
 
+describe("rankByPrimaryPreference — variant-alias exemption (#1882, opt-in)", () => {
+	const IT = 3
+	const BY = 5
+	const FR = 6
+	const MX = 7
+	const CN = 8
+
+	const pop = (population: number, is_primary: number, country_id: number, name_role: string | null = null) => ({
+		neg_rank: -Math.log10(population + 1),
+		is_primary,
+		country_id,
+		population,
+		name_role,
+	})
+
+	test("an own-name variant alias escapes the penalty when the exemption is ON (Brest → Belarus)", () => {
+		// Брэст BY 340,521 (alias keyed `brest`, stamped `variant` by the build) vs Brest FR 144,899
+		// (primary). OFF: the 2.35x gap is under the 10x margin → FR wins and BY is demoted. ON: the
+		// stamp says the alias IS the holder's own name → population order stands.
+		const rows = [pop(340_521, 0, BY, "variant"), pop(144_899, 1, FR)]
+
+		const off = rankByPrimaryPreference(rows, 5)
+		expect(off[0]!.country_id).toBe(FR)
+		expect(off.find((r) => r.country_id === BY)!.demoted).toBe(true)
+
+		const on = rankByPrimaryPreference(rows, 5, undefined, undefined, true)
+		expect(on[0]!.country_id).toBe(BY)
+		expect(on[0]!.demoted).toBe(false)
+	})
+
+	test("an UN-stamped alias keeps the penalty even with the exemption ON (Cancún stays protected)", () => {
+		// Changchun CN 4.19M holding the coincidental alias `cancun` (no stamp — the own-name detector
+		// refuses it) vs Cancún MX 890k primary. The exemption must not touch this class.
+		const rows = [pop(4_190_000, 0, CN), pop(890_000, 1, MX)]
+		const on = rankByPrimaryPreference(rows, 5, undefined, undefined, true)
+
+		expect(on[0]!.country_id).toBe(MX)
+		expect(on.find((r) => r.country_id === CN)!.demoted).toBe(true)
+	})
+
+	test("a pre-role artifact no-ops by construction — no name_role on any row, ON output equals OFF", () => {
+		const rows = [pop(340_521, 0, BY), pop(144_899, 1, FR), pop(20_000, 1, IT)]
+		const off = rankByPrimaryPreference(rows, 5)
+		const on = rankByPrimaryPreference(rows, 5, undefined, undefined, true)
+
+		expect(on.map((r) => [r.country_id, r.effectiveNegRank, r.demoted])).toEqual(
+			off.map((r) => [r.country_id, r.effectiveNegRank, r.demoted])
+		)
+	})
+
+	test("with the exemption OFF (the default), a stamped row still takes the penalty — the stamp alone changes nothing", () => {
+		const rows = [pop(340_521, 0, BY, "variant"), pop(144_899, 1, FR)]
+		const off = rankByPrimaryPreference(rows, 5)
+
+		expect(off[0]!.country_id).toBe(FR)
+	})
+})
+
 describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 	// The B2-2 board: three same-name US localities whose POPULATION order disagrees with their
 	// distance from postcode 94101's centroid (37.75, -122.42): big (720, 1.0 M, ~550 km away),

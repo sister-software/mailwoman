@@ -106,6 +106,39 @@ describe("buildRoutedMailwomanArm", () => {
 		})
 	})
 
+	it("forwards every SUPPORTED config key into buildDeps — a key accepted but dropped grades the wrong configuration silently", async () => {
+		// The #1882 incident this pins: `candidate_db` joined the SUPPORTED list without joining this
+		// spread, so both arms of a staged-artifact comparison ran the LIVE artifact and reported
+		// 0 of 649 rows differed — a zero indistinguishable from a real no-effect.
+		const deps = fakeDeps()
+
+		await buildRoutedMailwomanArm(
+			{
+				weights_cache: "/candidate",
+				candidate_db: "/staging/candidate-variant.db",
+				postcode_country_coherence: false,
+				gazetteer_prior: false,
+				admin_containment_rerank: true,
+				capital_tier: true,
+				variant_alias_exemption: true,
+			},
+			[{ id: "us", input: "1 Main St", country: "us" }],
+			deps
+		)
+
+		expect(deps.buildDeps).toHaveBeenCalledWith({
+			weightsCacheRoot: "/candidate",
+			candidateDB: "/staging/candidate-variant.db",
+			levers: {
+				postcodeCountryCoherence: false,
+				gazetteerPrior: false,
+				adminContainmentRerank: true,
+				capitalTier: true,
+				variantAliasExemption: true,
+			},
+		})
+	})
+
 	it("prefers the board's runtime route over its truth country", async () => {
 		const deps = fakeDeps()
 		const row = { id: "route", input: "Douglas, Isle of Man", country: "GB", routeCountry: "IM" }

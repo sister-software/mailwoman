@@ -64,6 +64,12 @@ export interface GauntletDepsOptions {
 	 */
 	weightsCacheRoot?: string
 	/**
+	 * Candidate GAZETTEER artifact (a staged candidate.db) — the resolver-side twin of `weightsCacheRoot`: grade against
+	 * a rebuilt artifact without touching the live one. Unset resolves the convention path, which is what production
+	 * loads.
+	 */
+	candidateDB?: string
+	/**
 	 * Resolver-side lever pins applied to every geocode this deps object performs.
 	 */
 	levers?: GauntletResolverLevers
@@ -109,6 +115,12 @@ export interface GauntletResolverLevers {
 	 * than `resolverLeverDeps` (which stays pure). Library default OFF (D-rule) — the `true` pin is the evidence path.
 	 */
 	capitalTier?: boolean
+	/**
+	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. The stamp lives in the
+	 * ARTIFACT (the candidate build's own-name detector), so this pin only has effect against a candidate.db that carries
+	 * it — pin `candidate_db` to the staged artifact in BOTH arms and vary only this. Default OFF (D-rule).
+	 */
+	variantAliasExemption?: boolean
 }
 
 /**
@@ -150,6 +162,10 @@ export function describeResolverLevers(levers: GauntletResolverLevers | undefine
 
 	if (levers?.capitalTier !== undefined) {
 		entries.push(`capitalTier=${levers.capitalTier ? "ON" : "OFF"}`)
+	}
+
+	if (levers?.variantAliasExemption !== undefined) {
+		entries.push(`variantAliasExemption=${levers.variantAliasExemption ? "ON" : "OFF"}`)
 	}
 
 	if (!entries.length) return "resolver levers: (none pinned — production defaults)"
@@ -402,7 +418,11 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
 
 	const resolver = createWOFResolver(
-		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
+		createResolverBackend(resolverMod, {
+			wofPaths: wofShardPaths().filter(existsSync),
+			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
+			...(opts.levers?.variantAliasExemption === true ? { variantAliasExemption: true } : {}),
+		})
 	)
 
 	// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): the reference loads here

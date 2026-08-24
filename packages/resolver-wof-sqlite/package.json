@@ -74,6 +74,11 @@
 			"default": "./out/capitals.js",
 			"types": "./out/capitals.d.ts"
 		},
+		"./candidate/own-name": {
+			"node": "./candidate/own-name.ts",
+			"default": "./out/candidate/own-name.js",
+			"types": "./out/candidate/own-name.d.ts"
+		},
 		"./proximity-rerank": {
 			"node": "./proximity-rerank.ts",
 			"default": "./out/proximity-rerank.js",
