@@ -159,6 +159,23 @@ describe("mwdev_job", () => {
 })
 
 describe("mwdev_compare", () => {
+	it("refuses identical engine ids when the declared variable is an EngineConfig key", async () => {
+		const same = (input: string) => input
+
+		const tools = tableWith([
+			stubEngine("same", { locale: "en-US" }, same),
+			stubEngine("same", { locale: "en-US" }, same),
+		])
+
+		await expect(
+			tools.get("mwdev_compare")!.handler({
+				inputs: LITERAL,
+				arm_b: { locale: "en-US" },
+				variable: ["locale"],
+			})
+		).rejects.toThrow(/both arms resolved to engine same/)
+	})
+
 	it("caveats a zero-difference result, because that is also what an unfired lever looks like", async () => {
 		// Learned on 2026-08-16: this tool's first real run reported "0 of 558 differed — tight enough to read as a
 		// real absence" for a lever that never reached a decode. The number could not tell the two apart, so the

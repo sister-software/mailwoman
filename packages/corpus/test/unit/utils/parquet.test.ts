@@ -168,6 +168,25 @@ describe("LABELED_ROW_SCHEMA", () => {
 })
 
 describe("writeShards", () => {
+	it("refuses a projection that requests a column absent from the file schema", async () => {
+		const m = await writeShards(
+			{ train: asyncFrom([labeled({ source_id: "t-projection" })]) },
+			{ outputDir: scratch, corpusVersion: "0.1.0" }
+		)
+
+		await using reader = await ParquetReader.openFile<ParquetRow & { missing_measurement_column: string }>(
+			m.shards[0]!.path
+		)
+
+		const consume = async () => {
+			for await (const _row of reader.project("country", "missing_measurement_column")) {
+				// The schema check runs before the first row can be yielded.
+			}
+		}
+
+		await expect(consume()).rejects.toThrow(/absent from the file schema: missing_measurement_column/)
+	})
+
 	it("PARQUET_COLUMNS lists every emitted column in order", () => {
 		const cols: string[] = [...PARQUET_COLUMNS]
 

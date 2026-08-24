@@ -160,14 +160,18 @@ core survives the CJK toggle, so it is attributable to what the two runs share: 
 (`v0.19.0-suffix-boundary-v2` → `v0.27.0-house-venue-intl`) and from-scratch-ness itself — still two
 confounded variables against the shipped model, and no run so far separates them.
 
-**2. The one-seed variance floor is ~40 rows.** Two runs whose configs differ by 2.23% of the
-admitted pool flip 40 rows between them (16 regress only under v5.0.0, 24 only under v5.1.0). The
-churn concentrates in a fragile class — bare multi-word streets and GB venues, the rows the shipped
-model holds near 0.5 confidence: `Calle de Alcalá`, `Paseo de la Castellana`, `Via Laietana`, `Corso
-Vittorio Emanuele II` regress under v5.1.0 while `Bloor Street West`, `Rambla de Catalunya`,
-`Connaught Road Central`, `Des Voeux Road Central` improve. **Row-level D-rule counts from a single
-from-scratch run are under-powered against this floor.** GB 4 → 13 is mostly churn: 7 of the 13 are
-v5.1.0-only venue rows.
+**2. The admission change coincides with 40 changed regression outcomes among 649 board rows.** The
+two runs use seed 42, but v5.1.0 removes 15,212,584 training rows from four of v5.0.0's 134 admitted
+countries. Those rows are 2.23% of v5.0.0's admitted training-row pool. Sixteen board rows regress
+only under v5.0.0 and 24 regress only under v5.1.0, for 16 + 24 = 40 rows whose regression outcome differs.
+That comparison measures the admission change plus any training nondeterminism; it does not measure
+seed-to-seed variance. The changed outcomes concentrate in bare multi-word streets and GB venues,
+including rows the shipped model holds near 0.5 confidence: `Calle de Alcalá`, `Paseo de la
+Castellana`, `Via Laietana`, and `Corso Vittorio Emanuele II` regress under v5.1.0 while `Bloor Street
+West`, `Rambla de Catalunya`, `Connaught Road Central`, and `Des Voeux Road Central` improve. GB
+regressions rise from 4 under v5.0.0 to 13 under v5.1.0; 7 of those 13 regress only under v5.1.0.
+The pending seed-43 repeat of the v5.0.0 config is required before assigning any part of this
+40-of-649 disagreement to the seed.
 
 Real wins bought by the corpus change, for the record: the standing `es-op3` failure
 (`Southeast, Carrer Passeig d'es Port, 15, 07691 Portopetro, Illes Balears, Spain`) improves under
@@ -175,8 +179,8 @@ v5.1.0, as does #1744's Bangladesh row (`London College of Legal Studies (South)
 The D-rule still holds both candidates.
 
 **Where this leaves the line:** shipped v4.4.0 stays. The open next questions, each a run and a
-decision, none pre-authorized: a seed-variance measurement (same config, different seed — prices the
-churn floor directly), or the v4.4.0 arc's own path applied forward (a suffix-boundary-style cure
+decision, none pre-authorized: a seed-disagreement measurement (same config, different seed — estimates
+row-level instability for one seed pair), or the v4.4.0 arc's own path applied forward (a suffix-boundary treatment
 fine-tuned ON TOP of the v5.0.0 base rather than another base). Both candidates' artifacts and run
 IDs are retained; the board runs are replayable via `{kind:"recorded"}`.
 
@@ -203,7 +207,7 @@ Three findings:
    and the three healed rows are `Passeig de Gràcia`, `Passeig de Sant Joan`, and the
    `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary shard
    teaches. Mechanism-consistent, small, and honestly attributed. (Null↔cure share the same base
-   init, seed, and steps, so this comparison does not carry the ~40-row from-scratch churn floor.)
+   init, seed, and steps, so the treatment comparison is not confounded by the separate country-admission change.)
 3. **The D-rule core is base-inherited and dose-immune.** FR 2 / GB 4 / DE 1 are identical across
    base, null, and cure: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
    `Cafe at St Mary's…`, `Milford on Sea…`), `Unter den Linden`, and the bare-street coin flips. More

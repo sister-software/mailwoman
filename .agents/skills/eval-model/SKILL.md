@@ -18,7 +18,9 @@ Three floors, all of which must hold:
 
 1. **Net improved-minus-regressed ≥ 0 on the 649-row board.**
 2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not buy one.
-3. **The promotion battery passes 17/17** (`mwdev_gate --gate v9.0.0-base`).
+3. **The promotion battery passes every floor declared by the gate spec**
+   (`mwdev_gate --gate v9.0.0-base`). The command reports the passed and total floor counts; do not
+   copy a count into this runbook because adding a floor would make it stale.
 
 Run the first two with `mwdev_arc`, which also runs the controls that make the number mean anything:
 
