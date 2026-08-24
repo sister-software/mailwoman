@@ -1,0 +1,234 @@
+---
+title: Decoder grammar contract — the objective we decode, the one we mean, and the measurement between them
+role: reference
+audience: maintainer
+owner: model
+source-of-truth: docs/engineering/reference/decoder-grammar.mdx
+tags:
+  - model
+  - decoder
+---
+
+# Decoder grammar contract
+
+**Status.** Design record and standing contract, from the 2026-08-24 design session. It fixes four
+things in one place: the objective the shipped decoder actually maximizes, the objective the failing
+board rows imply we mean, a constraint taxonomy stated as **measurable predicates** rather than
+intuitions, and the toponymy vocabulary the rest of the docs should use. Companions:
+[`SCHEMA.mdx`](./SCHEMA.mdx) (the `ComponentTag` union and `PARENT_OF`),
+[`2026-08-16-autodecoder-coherence.md`](../../records/research/2026-08-16-autodecoder-coherence.md)
+(the resolver-side coherence ladder this contract mirrors on the parser side), and #727 (the span
+head).
+
+## Position: where the rules live
+
+An explicit rules engine places every newly observed address format into a hand-written case. The
+maintenance cost of that position is documented by every long-lived rules-based geocoder: the rule
+base grows monotonically with observed formats, and each addition risks the previous ones. A pure
+sequence labeler takes the opposite position: the rules are implicit in the weights, which removes
+the case analysis and with it the ability to read, test, or falsify any single rule.
+
+This contract takes a third position. **Structure is declared in the objective — the factorization
+of the score and two small typed grammars carried as data. Content is learned.** A rule here is a
+term in a score with a measurable firing census, never a case in code and never only a tendency in
+the weights.
+
+## 1. The grammar we decode today, exactly
+
+The shipped model emits per-token scores over a BIO vocabulary (Begin/Inside/Outside markers over
+`ComponentTag`). The decoder (`packages/neural/viterbi.ts`) solves:
+
+```
+ŷ = argmax over y ∈ L_BIO of   Σₖ e(k, yₖ)  +  Σₖ M[yₖ₋₁][yₖ]
+```
+
+- `e(k, yₖ)` — the **emission**: the model logit for label `yₖ` at token `k`, plus the soft priors
+  that add into it: the anchor channel, the FST gazetteer prior, the country-surface clues, and the
+  placetype-pair `parentDelta` with its header-baked β on an index hit.
+- `M` — the transition matrix. In the shipped bundle this is the **structural mask only**: score 0
+  for every legal BIO transition, −∞ for `O → I-X`, `B-X → I-Y (X ≠ Y)`, and start → `I-X`.
+  Learned transitions are added only when a bundle ships them (`classifier.ts:126`); the shipped
+  `en-us` overlay ships neither `crf-transitions.json` nor `semi-crf-transitions.json`
+  (verified 2026-08-24).
+- After the argmax, outside the objective: local repairs (word-consistency heal, postcode
+  consistency), greedy overlap resolution (`resolve-proposal-overlaps.ts` — confidence descending,
+  then shorter span first), tree assembly under `PARENT_OF` (`build-tree.ts`), and
+  `validate-tree.ts`'s two checks (illegal-edge, stranded-dependent). These are checks and local
+  rewrites. They cannot move the decode to a different global optimum.
+
+**Consequence, provable from the form.** Every term has arity ≤ 2 over adjacent tokens, and the
+arity-2 terms are 0/−∞ almost everywhere. Two parses that differ by re-labeling the tail of a
+delimiter-free phrase — `street="Unter den Linden"` versus `street="Unter" + locality="den Linden"`
+— differ in score only through the emissions on the affected tokens; the one transition that
+changes is legal, score 0. No term in the objective represents _this phrase is one constituent_.
+Phrase cohesion, segment structure, and cardinality exist in the system only to the degree the
+encoder's contextual token emissions happen to encode them.
+
+## 2. The grammar we mean
+
+A parse is a triple `(S, T, H)`: a segmentation `S` into spans, types `T : S → ComponentTag`, and
+typed headed edges `H` over the spans. The target objective:
+
+```
+score(S, T, H | x)  =  Σ_{(i,j,t) ∈ S} φ(i, j, t)   +   Σ_{(h,d,r) ∈ H} ψ(h, d, r)
+```
+
+maximized **jointly**. The stages of the intuitive pipeline — lexical cues, candidate spans,
+protected entities, inter-span grammar, address semantics — are the _terms of one objective_, not
+sequential decisions: the overlapping name candidates in
+`Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` cannot be
+committed before the inter-span grammar runs, because which candidates are real is decided by which
+segmentation makes the whole address cohere.
+
+**Atomicity is a signature restriction, not a prohibition on internal grammar.** `φ(i, j, t)` may
+read anything inside `x[i..j]`, internal syntax included. `ψ` reads spans only as atoms. No term
+crosses a span boundary. A parser is free to know that `of` in `Port of Spain` is an adposition;
+that knowledge raises `φ` for the whole span as a well-formed toponym and contributes nothing to any
+attachment across its boundary.
+
+**The dependency reading and the existing tree are the same object.** The `HEAD/REL` view — a
+venue or street as root, `address`-typed edges to locality, postcode, region — is the `AddressTree`
+under `PARENT_OF`, with `REL=address` equal to the resolver's containment set and
+`number → street` an existing `PARENT_OF` edge. One production is currently missing from the
+containment contract: a POI under a POI (`Cafe at St Mary's` located at
+`Church of St Mary the Virgin`). `containment.ts:61` gives `venue` the parents
+`["street", "locality"]` only; the Heathrow sub-venue case was handled by widening `unit`'s
+parents, not by a venue→venue edge. Adding that production is schema work and is tracked here
+rather than assumed.
+
+## 3. Toponym-internal grammar, and the vocabulary for it
+
+Standard toponymy decomposes a place name into:
+
+- **specific element** — the distinctive name: `York`, `China`, `Spain`, `Gràcia`
+- **generic element** — the feature or type term: `Republic`, `Mount`, `Lake`, `Port`, `Church`
+- **modifier / qualifier** — `New`, `North`, `Greater`, `People's`
+
+Under this vocabulary: `New York` is modifier + specific. `People's Republic of China` is
+modifier + generic + `of` + specific — real internal grammatical structure, and **not** one opaque
+prefix lexeme. `Port of Spain` is generic + `of` + specific. `Elephant and Castle Road` carries a
+coordinator inside its specific element, which is exactly why a token-level reading misparses it as
+a junction.
+
+This internal grammar is a small typed grammar, `G_name`, and its place in the objective is fixed by
+the atomicity restriction: **`G_name` scores the inside of `φ` and nothing else.** A span coheres as
+a name partly _because_ its internal parse under `G_name` is well-formed — that is how an
+out-of-registry pub name like `Ye Three Lords` earns protection from shape alone — and that
+well-formedness never licenses an external attachment into the span's interior.
+
+What exists today, mapped to this vocabulary: the street domain has real generic-element inventories
+(the street-type lexicon, the street morphology FST, the `street_prefix`/`street_suffix` tags). The
+toponym domain has none — no modifier inventory, no generic-element inventory for administrative
+names. The FST gazetteer prior knows whole surfaces but applies them as per-token emission biases.
+
+## 4. The greediness dial — current and target form
+
+The question "where is a toponym's internal cohesion provided to the decoder — a boost, a
+greediness dial?" has a precise current answer: **the dial exists, as scattered scalar constants
+patching sub-span leakage.** `fst-prior.ts` discounts one- and two-token FST matches ("far likelier
+to be coincidental than a three-token one", the #1142 length-scaling), and the pair-index β is a
+second scoped constant. Both are global, hand-tuned, and act on symptoms of the same defect,
+established next.
+
+**Proposition (token factorization leaks registry evidence to sub-spans).** The country-surface
+lexicon hits `Spain` inside `Port of Spain`. That evidence lands as an emission bias on the token.
+The objective sums per-token terms, so the split parse (`locality="Port of" + country="Spain"`)
+collects the bias as support for `B-country`, while the cohesive parse must overcome the same bias
+arguing against `I-locality` on that token. A registry hit on a sub-span raises the wrong parse's
+score mechanically. A length discount shrinks the subsidy; it cannot change its sign.
+
+**Proposition (span factorization removes the defect by construction).** When evidence attaches to
+span terms, a gazetteer entry for `Spain` contributes only to parses containing exactly the span
+`(Spain, country)`, and the entry for `Port of Spain` contributes only to parses containing that
+whole span. The split parse never collects the maximal entry's evidence. Registry maximality stops
+being a constraint anyone enforces and becomes a corollary of where evidence may bind.
+
+Under span factorization the greediness dial collapses to **one interpretable parameter**: the
+weight of shape-based protection (`G_name` well-formedness in `φ`) relative to registry evidence —
+the protection strength for names the gazetteer does not know. That parameter is calibratable and
+D-rule-testable. The scattered discounts it replaces are the current system's implicit, global
+setting of the same quantity.
+
+## 5. Constraints as measurable predicates — not intuitions
+
+The taxonomy below was **induced from the 19 board rows that regress under every candidate of the
+v5.0.0 line** (see the [2026-08-23 retrospective](../../records/evals/retrospectives/2026-08-23-v500-from-scratch-base.md)).
+Until each constraint exists as a detector with a measured census, it is a hypothesis. The standing
+rule, mirrored from the coherence record's ladder: **no constraint graduates to a decode-time term
+before it runs as a deterministic detector over the board, and its census is read** — rows it
+explains, rows it would flag falsely. Detectors are graded against truth-graded failures, never
+against the model's agreement with itself (the same echo-chamber rule the coherence record fixes
+for the resolver-side checker).
+
+| id  | predicate over `(x, parse)`                                                                                                                         | inputs required                             | status                                                                                                                                           |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| C1  | spans disjoint; uncovered tokens are O                                                                                                              | parse                                       | implemented (post-hoc, greedy)                                                                                                                   |
+| C2  | tags nest as a tree under `PARENT_OF`                                                                                                               | parse, containment table                    | implemented (build + validator)                                                                                                                  |
+| C3  | BIO well-formedness                                                                                                                                 | label sequence                              | implemented (structural mask)                                                                                                                    |
+| C4  | a span boundary interior to a delimiter-free phrase is licensed by a delimiter, an affix lexeme, a character-class change, or a registry match edge | parse, phrase-grouper units, affix lexicons | **detector buildable today** — the grouper computes the units and does not bind the decode                                                       |
+| C5  | the segment-label sequence belongs to the address system's template `G_c`                                                                           | parse, per-country templates                | **needs inventory** — `packages/codex/address-system-conventions.ts` is the natural home; templates not yet stated as machine-readable sequences |
+| C6  | no sub-span registry hit licenses a boundary inside a span a longer registry entry covers                                                           | parse, FST maximal matches                  | **detector buildable today** — walk the FST for covering entries over every decoded boundary                                                     |
+
+The proposed instrument is a constraint-violation census over the board — an extension of
+`mwdev_diagnose`'s mechanism accounts — so that every board failure carries the predicate(s) it
+violates, and the taxonomy is thereafter read from evaluation rather than argued from examples.
+
+## 6. The board rows, mapped
+
+| address                                                                             | failure under the v5.0.0 line                                                                            | predicate                              |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `Unter den Linden`                                                                  | `street="Unter" + locality="den Linden"` — unlicensed interior boundary                                  | C4                                     |
+| `Port of Spain`                                                                     | `locality="Port of" + country="Spain"` — sub-span country hit outranked the whole-phrase gazetteer entry | C6                                     |
+| `Andorra la Vella`, `Tel Aviv-Yafo`, `Petaling Jaya`                                | city split in half, tail promoted to region                                                              | C4 + C6                                |
+| `St Andrew Undershaft Church, St Mary Axe, London EC3A 8BN`                         | two labels inside segment 1; `locality="London"` deleted while its postcode survives                     | C4 + C5                                |
+| `Cafe at St Mary's, Church of St Mary the Virgin, St Mary's St, Shrewsbury SY1 1BX` | mid-phrase `region`/`locality` fragments; no POI-under-POI production                                    | C4 + C5 + the missing venue→venue edge |
+| `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India`                       | `Indiranagar → venue`; note the candidate's `Karnataka → region` is the template-conformant reading      | C5                                     |
+| `Rua Augusta`                                                                       | whole-span retag `street → locality` — not a split; the Lisbon-street / São-Paulo-street ambiguity       | C6, not C4                             |
+
+## 7. Empirical support
+
+1. **The flipping rows are the rows the objective cannot separate.** The changed spans sit at
+   0.4–0.6 shipped confidence (`Rua Augusta` 0.61, `Port of Spain` 0.47, `Andorra la Vella` 0.42).
+   The 40 of 649 board rows that flip between v5.0.0 and v5.1.0 — two 60,000-step trainings
+   differing in 2.23% of admitted rows — concentrate in this class.
+2. **Training on instances of C4 moved only the taught surface family.** Raising the
+   `synth-suffix-boundary` sampler weight 2.5 → 10.0 for 1,000 steps healed exactly
+   `Passeig de Gràcia`, `Passeig de Sant Joan`, and the `Unit 1` swallow in
+   `Somewhere In Bangkok Thai Restaurant, 1103 Queen St Unit 1, Southington, CT 06489` — 3 rows,
+   attributed against a placebo run sharing base, seed, and steps — while `Unter den Linden`, the
+   city splits, and the GB venue cluster (the same abstract constraint, other surface families)
+   did not move. Emissions memorize constraint instances; the transfer radius is representational
+   similarity, not the rule's scope.
+3. **The data route also over-generalizes along the wrong axis.** The trailing-region corpus rows
+   taught _text in the trailing position is administrative_; v4.8.0 applied that along the
+   positional axis and destroyed venues (`Ye Three Lords, 27 Minories, London EC3N 1DE` →
+   `locality="Ye Three Lords"`). Four dose adjustments could not separate the teaching from the
+   damage, because both travel on the same representational axis.
+
+## 8. Machinery map
+
+| target-grammar object           | existing artifact                                                                | status                                      |
+| ------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------- |
+| span + type + confidence decode | the #727 span head; `semi-crf-transitions.json` parse path (`classifier.ts:132`) | trained experimentally; not shipped         |
+| candidate spans                 | phrase-grouper (pipeline stage 2.7)                                              | exists; output does not bind the decode     |
+| `HEAD/REL` tree                 | `AddressTree` + `PARENT_OF` (`build-tree.ts`, `containment.ts`)                  | built post-decode, unscored                 |
+| POI-under-POI (`located_at`)    | none — `venue` parents are `["street", "locality"]`                              | schema decision open                        |
+| `G_c` segment templates         | `packages/codex/address-system-conventions.ts`                                   | home exists; templates not machine-readable |
+| `G_name` toponym grammar        | street domain only (street-type lexicon, morphology FST, affix tags)             | toponym modifier/generic inventories absent |
+| registry evidence               | FST prior, country-surface clues, anchor channel                                 | present — token-granular, hence the §4 leak |
+
+Every cue the target grammar consumes is already computed. The single delta is the **output space**:
+per-token labels smear span-shaped evidence into token space, where §4 shows it can subsidize the
+parses it should forbid.
+
+## 9. Registered next measurements
+
+1. **Constraint-violation census** (C4 and C6 detectors are buildable from existing artifacts):
+   label every board failure with its violated predicates; read the census before any decode change.
+2. **Ablation prediction**: suppressing the country-surface clue on tokens covered by a longer
+   gazetteer locality entry flips `Port of Spain`-class rows without retraining. Expressible in the
+   engine config; falsifies §4 if it fails.
+3. **FST maximal-match check**: whether `fst-prior.ts` prefers covering entries over nested ones is
+   UNKNOWN; read the code, record the answer here.
+4. **Schema decision**: admit or reject the venue→venue containment edge for the POI-under-POI
+   production, with a board row as its acceptance test.
