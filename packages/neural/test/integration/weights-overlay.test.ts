@@ -97,7 +97,7 @@ describe("resolveWeights — the data-root overlay rung", () => {
 		expect(resolved.source).toContain("cache")
 	})
 
-	it("names every probe it tried when nothing resolves", () => {
+	it("treats an explicit cache root as authoritative when nothing resolves", () => {
 		const overlay = scratch()
 		const cache = scratch()
 
@@ -109,11 +109,11 @@ describe("resolveWeights — the data-root overlay rung", () => {
 			message = (error as Error).message
 		}
 
-		// The whole point of the ladder is that a miss says what was checked. A message naming one probe
-		// reads as "the gazetteer lacks this" when the truth is "I looked in one place".
-		expect(message).toContain(join(overlay, ABSENT))
+		// An explicit candidate cache is an isolation boundary. It must name the failed cache package and must not report
+		// an overlay probe, because consulting that overlay would mix installed artifacts into the candidate run.
 		expect(message).toContain(cache)
 		expect(message).toContain(`@mailwoman/neural-weights-${ABSENT}`)
+		expect(message).not.toContain(join(overlay, ABSENT))
 	})
 })
 
