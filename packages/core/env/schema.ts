@@ -183,6 +183,13 @@ export const PrivateEnvSchema = z.object({
 	// UK EPC bulk-download API token (en-GB acquisition — EPC certificates, UPRN-joinable).
 	UK_EPC_TOKEN: z.string().optional(),
 
+	/**
+	 * Per-run secret salting the published case identifiers of a controlled premise-linkage evaluation (`mailwoman eval
+	 * premise-linkage`). A secret rather than config: two reports salted alike can be joined row for row into a longer
+	 * record of the same premises, which is the linkage the identifier exists to prevent.
+	 */
+	MAILWOMAN_PREMISE_LINKAGE_SALT: z.string().optional(),
+
 	// LLM API keys for the corpus golden-expansion tooling.
 	DEEPSEEK_API_KEY: z.string().optional(),
 	ANTHROPIC_API_KEY: z.string().optional(),
