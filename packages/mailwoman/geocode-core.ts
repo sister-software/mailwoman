@@ -60,6 +60,7 @@ import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherenc
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { applyEntityTiers } from "./fork-entity.ts"
+import { capitalPromotionOf, postcodeCountryScopeOf, resolvedCountryOf } from "./geocode-tree-reads.ts"
 import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hierarchy-lineage.ts"
 import { shouldDropInferredScope } from "./inferred-scope.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
@@ -207,6 +208,13 @@ export interface GeocodeResult {
 	 * absence, so the pass reports its own count instead of leaving the reader to infer it.
 	 */
 	postcode_country_scope: string | null
+	/**
+	 * The #1880 capital promotion's firing receipt, in the same posture as {@link postcode_country_scope}: the promoted
+	 * candidate's country, PRESENT only when the promotion changed some node's leading candidate. Absent means it never
+	 * spoke — off, no capital in any race, or the capital already led. A lever-pinned comparison counts this instead of
+	 * inferring activity from moved rows.
+	 */
+	capital_promotion?: string
 	/**
 	 * Query-intent advisories (ROAD_TO_V9 §4) — what the intent vocabulary had to say about the QUESTION, alongside the
 	 * answer. **Always present**; an empty array is this path stating that the vocabulary looked and found nothing, which
@@ -1409,48 +1417,6 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 }
 
 /**
- * The country #42's postcode-country coherence pass scoped the walk to, read back off the resolved tree's
- * `postcode_country_scope` stamp. `undefined` when the pass was off, abstained, or agreed with the caller's default —
- * i.e. whenever nothing was overridden.
- */
-/**
- * The resolved tree's own country — the first `resolver_country` stamp on any node (constant across one address's
- * resolved nodes), or undefined when nothing resolved with one. The rooftop second pass keys on this.
- */
-function resolvedCountryOf(tree: AddressTree): string | undefined {
-	const stack: AddressNode[] = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-		const c = (n.metadata?.["resolver_country"] as string | undefined)?.trim()
-
-		if (c) return c.toUpperCase()
-
-		stack.push(...n.children)
-	}
-
-	return undefined
-}
-
-function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
-	const stack: AddressNode[] = [...tree.roots]
-
-	while (stack.length) {
-		const n = stack.pop()!
-		// Either scope receipt re-triggers the shard-selection second pass: the #42 coherence override,
-		// or the #1735 explicit-country pre-scope (whose receipt exists precisely so a tree that was
-		// right from the start still gets its country's rooftop shard loaded).
-		const scope = n.metadata?.["postcode_country_scope"] ?? n.metadata?.["explicit_country_scope"]
-
-		if (typeof scope === "string" && scope.length) return scope
-
-		stack.push(...n.children)
-	}
-
-	return undefined
-}
-
-/**
  * Walk the resolved tree and extract the geocode result: the street node's address-point / interpolation coordinate
  * (whichever tier won), else the best admin centroid (locality → region → country).
  */
@@ -1678,6 +1644,11 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 		// resolved admin node — the resolution context the coordinate was scoped by). No winner → the field is absent.
 		...adminCoherenceField(allNodes, adminWinnerNode, primaryNode),
 		postcode_country_scope: postcodeCountryScopeOf(tree) ?? null,
+		...((): { capital_promotion?: string } => {
+			const promoted = capitalPromotionOf(tree)
+
+			return promoted === undefined ? {} : { capital_promotion: promoted }
+		})(),
 		// `extractGeocodeResult` is a pure tree->result projection and has no access to the kind verdict, so it states
 		// the empty case. `geocodeAddressOnce` is the caller that classifies and fills this in.
 		intent_markers: [],

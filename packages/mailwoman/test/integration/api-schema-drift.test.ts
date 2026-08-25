@@ -130,6 +130,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	candidates: true,
 	rooftop: true,
 	postcode_country_scope: true,
+	capital_promotion: true,
 	intent_markers: true,
 	admin_coherence: true,
 	dropped_components: true,

@@ -59,7 +59,13 @@ import { type CoordinateOptionalPlace, postcodePrefixResolvedPlace, probePostcod
 import { applyPostcodeShapeCoherence, isShapeExcludedPostcode } from "./postcode-shape-coherence.ts"
 import { findRescoreCandidate, hasResolvedPlace, postcodeCodeSubset } from "./span-rescore.ts"
 import { applyAddressPoint, applyInterpolation, applyStreetCentroid } from "./street-tier.ts"
-import { DEFAULT_COUNTRY_PRIOR_WEIGHT, promoteCapitals, rankByCountryPrior, rankByImportance } from "./toponym-prior.ts"
+import {
+	type CapitalLevelFn,
+	DEFAULT_COUNTRY_PRIOR_WEIGHT,
+	promoteCapitals,
+	rankByCountryPrior,
+	rankByImportance,
+} from "./toponym-prior.ts"
 
 /**
  * Build a `Resolver` backed by a `ResolverBackend`. The backend can be any concrete impl structurally compatible with
@@ -1368,7 +1374,7 @@ class WOFResolver implements Resolver {
 			// containment partition (the qualifier is the address's own text; evidence outranks a prior).
 			// Same stand-down as fame: an anchor posterior is postcode evidence and silences the prior.
 			if (state.capitalLevel) {
-				ranked = promoteCapitals(ranked, state.capitalLevel)
+				ranked = promoteCapitalsWithReceipt(ranked, state.capitalLevel, node)
 				rec.stage("capital", ranked)
 			}
 		}
@@ -1461,4 +1467,23 @@ class WOFResolver implements Resolver {
 			...(containmentEligible ? { metadata: { admin_containment: adminContainmentVerdict(ranked) } } : {}),
 		}
 	}
+}
+
+/**
+ * #1880's promotion plus its firing receipt, in one seam: when the promotion changes the race's leading candidate, the
+ * node is stamped `capital_promotion` with the promoted candidate's country — the same posture as
+ * `postcode_country_scope`, a mechanism reporting that it SPOKE apart from whether the outcome moved, so an unchanged
+ * verdict downstream can never mean either "harmless" or "never ran". Metadata-only; nothing reads it to rank.
+ */
+function promoteCapitalsWithReceipt<
+	T extends Pick<ResolvedPlace, "score" | "name" | "country" | "lat" | "lon"> &
+		Partial<Pick<ResolvedPlace, "exactMatch" | "importance" | "prominence">>,
+>(ranked: readonly T[], level: CapitalLevelFn, node: { metadata?: Record<string, unknown> }): T[] {
+	const promoted = promoteCapitals(ranked, level)
+
+	if (promoted[0] !== ranked[0]) {
+		node.metadata = { ...node.metadata, capital_promotion: promoted[0]!.country ?? true }
+	}
+
+	return promoted
 }

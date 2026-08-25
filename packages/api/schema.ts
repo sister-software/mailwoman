@@ -246,6 +246,9 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
 	// evidence bought the change instead of reading it as a bug.
 	postcode_country_scope: z.string().nullable(),
+	// #1880: the capital promotion's firing receipt — the promoted candidate's country, present only when the
+	// promotion changed some node's leading candidate. Advisory, same posture as postcode_country_scope.
+	capital_promotion: z.string().optional(),
 	// ROAD_TO_V9 §4: query-intent advisories. Always present; empty means the vocabulary looked and had nothing to
 	// say. Advisory ONLY — no marker changed which answer won, and a client is free to ignore the array entirely.
 	intent_markers: z.array(QueryIntentMarkerSchema),

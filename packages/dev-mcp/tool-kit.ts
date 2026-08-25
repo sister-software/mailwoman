@@ -412,10 +412,17 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 	const scoped = (row: ComparedRow, arm: "a" | "b"): boolean =>
 		Boolean((row[arm] as { postcode_country_scope?: string | null }).postcode_country_scope)
 
+	const promoted = (row: ComparedRow, arm: "a" | "b"): boolean =>
+		Boolean((row[arm] as { capital_promotion?: string }).capital_promotion)
+
 	return {
 		postcode_country_scope: {
 			a: rows.filter((row) => scoped(row, "a")).length,
 			b: rows.filter((row) => scoped(row, "b")).length,
+		},
+		capital_promotion: {
+			a: rows.filter((row) => promoted(row, "a")).length,
+			b: rows.filter((row) => promoted(row, "b")).length,
 		},
 	}
 }

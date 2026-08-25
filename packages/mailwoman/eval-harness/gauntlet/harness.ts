@@ -625,6 +625,13 @@ export interface GauntletResult {
 	 */
 	postcode_country_scope: string | null
 	/**
+	 * The #1880 capital promotion's firing receipt, projected verbatim: the promoted candidate's country, present only
+	 * when the promotion changed some node's leading candidate. The same firing-count posture as
+	 * {@linkcode postcode_country_scope} — carried so a lever-pinned comparison counts activity instead of inferring it
+	 * from moved rows.
+	 */
+	capital_promotion?: string
+	/**
 	 * The RESOLVED admin chain, locality → country, verbatim from {@linkcode GeocodeResult.hierarchy}. Not asserted by any
 	 * case: it carries the gazetteer `placeID`s, which is what the ablation layer's graceful-degradation ladder is
 	 * synthesized FROM (the undeleted case's resolved place → its WOF ancestry). Only entries the resolver actually
@@ -667,6 +674,7 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		dependent_locality: g.dependent_locality,
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
+		...(g.capital_promotion === undefined ? {} : { capital_promotion: g.capital_promotion }),
 		...(g.admin_coherence ? { admin_coherence: g.admin_coherence } : {}),
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,
