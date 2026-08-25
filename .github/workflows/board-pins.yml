@@ -1,0 +1,67 @@
+# The cheap board-pin guard (#1895): the committed regression corpus's three pins (row count,
+# corpus hash, board id) must match the constants the pin test carries. This runs WITHOUT the
+# model/data stack — install + a JSONL load, ~2 s of measurement — so it is the check that stays
+# affordable when the full suite is being deliberately skipped.
+#
+# Three triggers, three roles:
+#   pull_request (path-filtered): the fast pre-merge signal on exactly the changes that can move
+#     the pins. The full `test` workflow still runs the pin test; this one exists to be CHEAP.
+#   push to main (path-filtered): the synchronous backstop for admin-merges that bypassed
+#     scripts/merge-admin.ts — a stale pin on main opens/updates ONE deduplicated issue.
+#   schedule (daily): the audit for the case a commit-message skip directive suppressed the push
+#     workflows entirely, or a web edit landed outside every local guard.
+name: Board Pins
+
+on:
+  pull_request:
+    paths:
+      - "packages/mailwoman/eval-harness/gauntlet/cases/**"
+      - "packages/mailwoman/eval-harness/gauntlet/ablation.ts"
+      - "packages/mailwoman/test/unit/eval-harness/gauntlet/cases/load.test.ts"
+  push:
+    branches: [main]
+    paths:
+      - "packages/mailwoman/eval-harness/gauntlet/cases/**"
+      - "packages/mailwoman/eval-harness/gauntlet/ablation.ts"
+      - "packages/mailwoman/test/unit/eval-harness/gauntlet/cases/load.test.ts"
+  schedule:
+    # Daily, off-peak for the lab fleet (UTC).
+    - cron: "17 4 * * *"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  ONNXRUNTIME_NODE_INSTALL: skip
+
+jobs:
+  pins:
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write # the deduplicated stale-pin issue on main/schedule
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      - name: Enable Corepack (yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Check the board pins
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: | # shell
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node scripts/check-board-pins.ts
+          else
+            node scripts/check-board-pins.ts --report-issue
+          fi
