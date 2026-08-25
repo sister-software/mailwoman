@@ -131,6 +131,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	rooftop: true,
 	postcode_country_scope: true,
 	capital_promotion: true,
+	variant_alias_exemption: true,
 	intent_markers: true,
 	admin_coherence: true,
 	dropped_components: true,

@@ -415,6 +415,9 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 	const promoted = (row: ComparedRow, arm: "a" | "b"): boolean =>
 		Boolean((row[arm] as { capital_promotion?: string }).capital_promotion)
 
+	const exempted = (row: ComparedRow, arm: "a" | "b"): boolean =>
+		(row[arm] as { variant_alias_exemption?: true }).variant_alias_exemption === true
+
 	return {
 		postcode_country_scope: {
 			a: rows.filter((row) => scoped(row, "a")).length,
@@ -423,6 +426,10 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 		capital_promotion: {
 			a: rows.filter((row) => promoted(row, "a")).length,
 			b: rows.filter((row) => promoted(row, "b")).length,
+		},
+		variant_alias_exemption: {
+			a: rows.filter((row) => exempted(row, "a")).length,
+			b: rows.filter((row) => exempted(row, "b")).length,
 		},
 	}
 }

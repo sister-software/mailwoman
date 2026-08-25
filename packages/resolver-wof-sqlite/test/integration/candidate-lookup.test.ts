@@ -625,6 +625,71 @@ describe("WOFCandidateTableLookup", () => {
 	})
 })
 
+describe("rankByPrimaryPreference #1893 firing mark (variantExempted)", () => {
+	const row = (neg_rank: number, is_primary: number, country_id: number, name_role?: string) => ({
+		neg_rank,
+		is_primary,
+		country_id,
+		...(name_role === undefined ? {} : { name_role }),
+	})
+
+	test("a cross-country variant the exemption spares carries the mark and no penalty", () => {
+		// primary BY (neg -5.53) vs its own romanized name riding a foreign key set: variant alias, country 2,
+		// more populous than the competing primary. Exemption ON: no penalty, mark present.
+		const ranked = rankByPrimaryPreference(
+			[row(-6.1, 0, 2, "variant"), row(-5.53, 1, 1)],
+			5,
+			undefined,
+			undefined,
+			true
+		)
+
+		const variant = ranked.find((r) => r.country_id === 2)!
+
+		expect(variant.variantExempted).toBe(true)
+		expect(variant.effectiveNegRank).toBeCloseTo(-6.1, 5)
+		expect(ranked[0]!.country_id).toBe(2)
+	})
+
+	test("the same rows with the exemption OFF carry no mark and take the penalty", () => {
+		const ranked = rankByPrimaryPreference([row(-6.1, 0, 2, "variant"), row(-5.53, 1, 1)], 5)
+
+		const variant = ranked.find((r) => r.country_id === 2)!
+
+		expect("variantExempted" in variant).toBe(false)
+		expect(variant.effectiveNegRank).toBeCloseTo(-5.1, 5)
+	})
+
+	test("an in-country variant never fires — no cross-country penalty was eligible", () => {
+		const ranked = rankByPrimaryPreference(
+			[row(-6.1, 0, 1, "variant"), row(-5.53, 1, 1)],
+			5,
+			undefined,
+			undefined,
+			true
+		)
+
+		const variant = ranked.find((r) => r.is_primary === 0)!
+
+		expect("variantExempted" in variant).toBe(false)
+	})
+
+	test("an exempted variant that still loses keeps its candidate-level mark below the winner", () => {
+		// The variant is LESS populous than the foreign primary, so it loses on population alone. The
+		// candidate-level mark stays (the exemption did change its treatment); the winner-level receipt's
+		// absence is the resolver pick's job — it stamps only when the marked candidate IS the winner.
+		const ranked = rankByPrimaryPreference([row(-6.4, 1, 1), row(-4.9, 0, 2, "variant")], 5, undefined, undefined, true)
+
+		expect(ranked[0]!.is_primary).toBe(1)
+		expect(ranked[0]!.country_id).toBe(1)
+
+		const variant = ranked.find((r) => r.country_id === 2)!
+
+		expect(variant.variantExempted).toBe(true)
+		expect(variant.effectiveNegRank).toBeCloseTo(-4.9, 5)
+	})
+})
+
 describe("rankByPrimaryPreference (bounded cross-country primary preference)", () => {
 	// Synthetic rows (population-ordered, neg_rank ASC) — the pure re-rank contract, no DB.
 	const row = (neg_rank: number, is_primary: number, country_id: number) => ({ neg_rank, is_primary, country_id })

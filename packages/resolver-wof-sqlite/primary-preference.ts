@@ -93,6 +93,14 @@ export type RankedRow<R> = R & {
 	 * was never asked, never "not contained".
 	 */
 	containedByQualifier?: boolean
+	/**
+	 * The #1882 exemption's firing mark (#1893): this row would have taken the cross-country alias penalty and
+	 * `exemptVariantAliases` prevented it. PRESENT only when the exemption changed this row's treatment; absent on every
+	 * row it merely inspected — an in-country variant, a primary, a set with no foreign top primary. The winner-level
+	 * receipt downstream (`mechanism_fired_on.variant_alias_exemption`) counts this mark only when it survives onto the
+	 * selected candidate.
+	 */
+	variantExempted?: true
 }
 
 /**
@@ -162,17 +170,28 @@ export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	// query is naming THAT place, not colliding with it; the penalty exists for the coincidental-collision
 	// class ("Çançun"/`cancun`), which the detector's measured threshold keeps un-stamped. An artifact
 	// predating the role column carries no 'variant' rows, so the flag no-ops there by construction.
+	const wouldPenalize = (r: R): boolean =>
+		typeof topCountry === "number" && r.is_primary !== 1 && r.country_id !== topCountry
+
 	const isCrossCountryAlias = (r: R): boolean =>
-		typeof topCountry === "number" &&
-		r.is_primary !== 1 &&
-		r.country_id !== topCountry &&
-		!(exemptVariantAliases && r.name_role === "variant")
+		wouldPenalize(r) && !(exemptVariantAliases && r.name_role === "variant")
 
 	const annotate = (r: R): RankedRow<R> => {
 		const penalized = isCrossCountryAlias(r)
 		const effectiveNegRank = r.neg_rank + (penalized ? delta : 0)
 
-		return { ...r, effectiveNegRank, demoted: penalized && effectiveNegRank > topPrimary!.neg_rank }
+		// The firing mark (#1893): this row WOULD have taken the cross-country penalty and the exemption
+		// prevented it — conditions the winner-level receipt needs, computed where the decision is made. A
+		// variant row that was in-country, primary, or keyed under a set with no foreign primary never
+		// fired, and stays unmarked.
+		const exempted = !penalized && exemptVariantAliases && r.name_role === "variant" && wouldPenalize(r)
+
+		return {
+			...r,
+			effectiveNegRank,
+			demoted: penalized && effectiveNegRank > topPrimary!.neg_rank,
+			...(exempted ? { variantExempted: true as const } : {}),
+		}
 	}
 
 	// 1 for a populated-place row that can BE a district's seat, 0 for everything else — no code map, no
