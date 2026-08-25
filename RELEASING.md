@@ -779,6 +779,15 @@ the assembled crate). That half runs unconditionally: it's the same local, recei
 `progenitor`/`openapi-python-client` fails the job and shows up on every dispatch, not just the runs
 where someone remembers to check. Nothing in `publish.yml` ever reaches a registry.
 
+**A red `clients` job concludes the release run FAILED, and that is a receipt — not a rollback**
+(#1892). The job carries no `continue-on-error`, so its failure is the workflow run's conclusion. The
+npm packages are already published when it runs (`needs: publish`, and published versions are
+immutable), so read that conclusion as "the release shipped; the generated Python + Rust surface for
+it did not". The remedy is to fix the generator and dispatch `publish-clients.yml` — never to
+unpublish or re-cut the release. This was ambient for two releases: the job had been failing on every
+run since the workspace regroup, and the workflow comment beside it said its failure could not turn a
+release red.
+
 To actually publish, dispatch `Publish API clients` (`publish-clients.yml`) from the Actions UI. It
 builds once from `main` (the same composite the release-run inspection artifacts use), then:
 

@@ -39,7 +39,9 @@
 # A `clients` job runs after `publish` succeeds: it regenerates the Python + Rust API clients as
 # workflow artifacts — inspection copies only. This workflow NEVER publishes clients: registry
 # publishing lives in publish-python.yml (PyPI Trusted Publishing) and publish-cargo.yml,
-# dispatched separately by the operator. See RELEASING.md "Client packages".
+# dispatched separately by the operator. Its failure DOES conclude this workflow failed, as a
+# receipt on the release run — the npm packages stay published either way. See the job's own
+# comment and RELEASING.md "Client packages".
 name: NPM Publish
 
 on:
@@ -385,8 +387,19 @@ jobs:
 
   # Regenerate the Python + Rust API clients (Phase 5 Task 4) as INSPECTION ARTIFACTS — this job
   # never publishes anything (registry publishing = publish-python.yml / publish-cargo.yml, each
-  # bound to its GitHub environment). Additive: it only starts once `publish` has already succeeded
-  # (`needs: publish`), so it can't turn a working npm release red.
+  # bound to its GitHub environment).
+  #
+  # ITS FAILURE IS THE RELEASE RUN'S CONCLUSION, AND THAT MEANS A RECEIPT — NOT A ROLLBACK (#1892).
+  # The job carries no `continue-on-error`, so a red client generation makes the whole workflow run
+  # conclude failed, on purpose and by the only mechanism Actions offers. Read that conclusion as: the
+  # npm packages ARE published (this job runs after `publish` by `needs:`, and published versions are
+  # immutable), and what failed is the generated Python + Rust surface for that version. The remedy is
+  # to fix the generator and dispatch publish-clients.yml — never to unpublish or re-cut the release.
+  #
+  # Written down because the earlier note here said the opposite ("it can't turn a working npm release
+  # red"), which is how a job that had been failing since the workspace regroup — every release run,
+  # the emitter preflight resolving pre-regroup paths — stayed ambient for two releases while its
+  # failure was in plain sight on the run page.
   clients:
     needs: publish
     runs-on:
