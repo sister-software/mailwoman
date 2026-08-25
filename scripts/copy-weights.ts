@@ -519,4 +519,4 @@ async function removeIfPresent(path: PathLike) {
 	}
 }
 
-runIfScript(import.meta, copyWeights)
+runIfScript(import.meta, () => copyWeights())
