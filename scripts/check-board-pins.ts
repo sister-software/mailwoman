@@ -15,19 +15,14 @@
  *   issue per commit.
  */
 
-import { execFileSync } from "node:child_process"
 import { parseArgs } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-
-import { checkBoardPins, PIN_TEST_PATH } from "../packages/mailwoman/eval-harness/gauntlet/cases/pins.ts"
+import { checkBoardPins, PIN_TEST_PATH } from "mailwoman/eval-harness/gauntlet/cases/pins"
+import { $ } from "zx"
 
 const ISSUE_TITLE = "board pins are stale on main"
-
-function gh(args: string[]): string {
-	return execFileSync("gh", args, { encoding: "utf8" })
-}
 
 async function checkBoardPinsCLI(): Promise<void> {
 	const { values } = parseArgs({
@@ -44,7 +39,7 @@ async function checkBoardPinsCLI(): Promise<void> {
 		return
 	}
 
-	const commit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim()
+	const commit = (await $`git rev-parse HEAD`.quiet()).stdout.trim()
 
 	const drift = check.stale
 		.map((key) => `- ${key}: committed ${String(check.committed[key])} → measured ${String(check.measured[key])}`)
@@ -57,24 +52,16 @@ async function checkBoardPinsCLI(): Promise<void> {
 			`The board-pin audit found the committed constants stale at ${commit}:\n\n${drift}\n\n` +
 			`Run \`mailwoman eval pins --update\`, commit ${PIN_TEST_PATH}, and this issue closes on the next green audit.`
 
-		const existing = parseJSONStrict<Array<{ number: number }>>(
-			gh([
-				"issue",
-				"list",
-				"--state",
-				"open",
-				"--search",
-				`in:title ${JSON.stringify(ISSUE_TITLE)}`,
-				"--json",
-				"number",
-			])
-		)
+		const search = `in:title ${JSON.stringify(ISSUE_TITLE)}`
+		const issueList = await $`gh issue list --state open --search ${search} --json number`.quiet()
+
+		const existing = parseJSONStrict<Array<{ number: number }>>(issueList.stdout)
 
 		if (existing.length) {
-			gh(["issue", "comment", String(existing[0]!.number), "--body", body])
+			await $`gh issue comment ${existing[0]!.number} --body ${body}`.quiet()
 			process.stderr.write(`updated issue #${existing[0]!.number}\n`)
 		} else {
-			gh(["issue", "create", "--title", ISSUE_TITLE, "--body", body])
+			await $`gh issue create --title ${ISSUE_TITLE} --body ${body}`.quiet()
 			process.stderr.write("opened the audit issue\n")
 		}
 	}

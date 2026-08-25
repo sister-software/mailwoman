@@ -17,11 +17,11 @@
  *   Usage: `node scripts/merge-admin.ts <pr-number> [--method merge|squash|rebase]`
  */
 
-import { execFileSync } from "node:child_process"
 import { parseArgs } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { $ } from "zx"
 
 /**
  * The paths whose change makes the board-pin guard mandatory: the corpus rows themselves, the loader/fingerprint
@@ -32,10 +32,6 @@ const BOARD_PIN_PATHS = [
 	/^packages\/mailwoman\/eval-harness\/gauntlet\/ablation\.ts$/,
 	/^packages\/mailwoman\/test\/unit\/eval-harness\/gauntlet\/cases\/load\.test\.ts$/,
 ]
-
-function gh(args: string[]): string {
-	return execFileSync("gh", args, { encoding: "utf8" })
-}
 
 async function mergeAdmin(): Promise<void> {
 	const { values, positionals } = parseArgs({
@@ -55,18 +51,20 @@ async function mergeAdmin(): Promise<void> {
 		throw new Error(`--method ${JSON.stringify(values.method)} is not merge|squash|rebase`)
 	}
 
+	const prView = await $`gh pr view ${prNumber} --json state,title,headRefOid,files`.quiet()
+
 	const pr = parseJSONStrict<{
 		state: string
 		title: string
 		headRefOid: string
 		files: Array<{ path: string }>
-	}>(gh(["pr", "view", prNumber, "--json", "state,title,headRefOid,files"]))
+	}>(prView.stdout)
 
 	if (pr.state !== "OPEN") {
 		throw new Error(`PR #${prNumber} is ${pr.state}, not OPEN.`)
 	}
 
-	const localHead = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim()
+	const localHead = (await $`git rev-parse HEAD`.quiet()).stdout.trim()
 
 	if (localHead !== pr.headRefOid) {
 		throw new Error(
@@ -80,7 +78,7 @@ async function mergeAdmin(): Promise<void> {
 	const ranChecks: string[] = []
 
 	if (changed.some((path) => BOARD_PIN_PATHS.some((pattern) => pattern.test(path)))) {
-		const { checkBoardPins } = await import("../packages/mailwoman/eval-harness/gauntlet/cases/pins.ts")
+		const { checkBoardPins } = await import("mailwoman/eval-harness/gauntlet/cases/pins")
 		const check = await checkBoardPins()
 
 		ranChecks.push(`board-pins (${check.measured.CORPUS_SIZE} rows)`)
@@ -103,7 +101,9 @@ async function mergeAdmin(): Promise<void> {
 
 	process.stderr.write(`merging PR #${prNumber} (${pr.title}) with --admin --${values.method}\n`)
 
-	execFileSync("gh", ["pr", "merge", prNumber, "--admin", `--${values.method}`], { stdio: "inherit" })
+	const methodFlag = `--${values.method}`
+
+	await $({ stdio: "inherit" })`gh pr merge ${prNumber} --admin ${methodFlag}`
 }
 
 runIfScript(import.meta, mergeAdmin)
