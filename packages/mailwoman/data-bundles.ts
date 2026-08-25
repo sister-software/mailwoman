@@ -221,13 +221,13 @@ export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
 		name: "candidate",
 		description:
-			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries (~1.65 GB).",
+			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries (~2.88 GB).",
 		artifacts: [
 			{
-				remotePath: "gazetteer/2026-07-07a/candidate.db",
+				remotePath: "gazetteer/2026-08-25a/candidate.db",
 				localPath: "wof/candidate.db",
 				md5Sidecar: false,
-				approxBytes: 1_652_916_224,
+				approxBytes: 2_880_929_792,
 			},
 		],
 	},
