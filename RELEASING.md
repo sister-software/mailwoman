@@ -55,20 +55,34 @@ The v9.2.0 cut needed four publish dispatches because nothing could exercise the
 way CI publishes it without a tag or a registry write. This can:
 
 ```bash
-yarn compile                # the audit packs compiled out/ trees
-yarn release:preflight      # --source repo; add --keep or --staging <dir> to inspect the tree
+yarn compile                             # the audit packs compiled out/ trees
+yarn release:preflight                   # --source repo (default): weights from this machine's data root
+yarn release:preflight --source hf       # weights from the public HF bucket — what CI publishes
 ```
 
 It stages the TRACKED tree (`git archive`) into an isolated root, materializes the weights
-artifacts there via the same `copyWeights` recipe the release runs, then packs and audits every
-`.release-it.json` workspace with the exact `packWorkspaceForPublish` + `verifyTarball` path the
-publish workflow uses — collecting every failure in one sweep, plus the named-absence identity
-(root workspaces minus the release list must equal the six sanctioned absences by name; see
-`scripts/release-stage.ts`). Zero git/GitHub/npm/R2/HF writes; an interrupted run cannot dirty the
-checkout. Measured 2026-08-25: 51/51 packed and audited in 37.4 s.
+artifacts there, then packs and audits every `.release-it.json` workspace with the exact
+`packWorkspaceForPublish` + `verifyTarball` path the publish workflow uses — collecting every
+failure in one sweep, plus the named-absence identity (root workspaces minus the release list must
+equal the six sanctioned absences by name; see `scripts/release-stage.ts`). Add `--keep` or
+`--staging <dir>` to inspect the tree afterwards. Zero git/GitHub/npm/R2/HF writes; an interrupted
+run cannot dirty the checkout.
 
-`--source hf --version <model-card version>` (the CI fetch recipe as typed code) is the next phase
-of #1894; the flag currently names its own absence.
+The two sources differ only in where the bytes come from:
+
+- `--source repo` runs `scripts/copy-weights.ts` against `$MAILWOMAN_DATA_ROOT` — the recipe a local
+  `yarn release` uses. Measured 2026-08-25: PASS, 51/51 in 37.4 s.
+- `--source hf` runs `scripts/fetch-hf-weights.ts` against the PUBLIC bucket — the recipe
+  `publish.yml` runs, and the same call the workflow makes. No credentials. `--version <model-card
+version>` overrides the version, which otherwise comes from the base package's `model-card.json`
+  exactly as CI reads it.
+
+What `--source hf` materializes is DERIVED, not listed: each `neural-weights-<locale>` package's
+`files` array minus what `git ls-files` already reports, which is the same predicate
+`verify-tarball.ts` refuses a publish over. Each download is checked against the md5s the model
+cards declare, and the filenames no card declares one for are named in the receipt rather than
+counted as verified. The Fisher pair (`fisher_artifact.file` + `.sidecar`) is HEAD-probed and never
+fetched — it rides the bucket, the runtime never reads it, npm never ships it.
 
 ## Admin merges — the one sanctioned bypass
 
@@ -419,6 +433,11 @@ HF_TOKEN=$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli.js re
 set -a; . ./.env; set +a; python3 scripts/publish-demo-assets-to-r2.py --src <src>
 ```
 
+The flag list above is not the authority on what a release must stage, and prose here has gone stale before.
+After staging, run `yarn release:preflight --source hf` (see the preflight section above): it derives the
+required object set from the weights packages' own `files` arrays and names every one that is not readable,
+so an incomplete staging is a local failure rather than a burnt publish dispatch.
+
 Pass `--postcodes` + `--polygons` to the HF script too, or its `releases.json` gets `hasAnchor:false`
 /`hasPolygons:false` (it probes R2 for them, and R2 isn't staged yet). `--pair-indexes` (placetype-pair-prior
 arc, Task 8) is COUNTRY-SPECIFIC BY DESIGN — omit it entirely for a release where no locale ships one; today
@@ -759,6 +778,15 @@ the assembled crate). That half runs unconditionally: it's the same local, recei
 `mailwoman clients generate` (below), so a broken generator or a spec that drifted out from under
 `progenitor`/`openapi-python-client` fails the job and shows up on every dispatch, not just the runs
 where someone remembers to check. Nothing in `publish.yml` ever reaches a registry.
+
+**A red `clients` job concludes the release run FAILED, and that is a receipt — not a rollback**
+(#1892). The job carries no `continue-on-error`, so its failure is the workflow run's conclusion. The
+npm packages are already published when it runs (`needs: publish`, and published versions are
+immutable), so read that conclusion as "the release shipped; the generated Python + Rust surface for
+it did not". The remedy is to fix the generator and dispatch `publish-clients.yml` — never to
+unpublish or re-cut the release. This was ambient for two releases: the job had been failing on every
+run since the workspace regroup, and the workflow comment beside it said its failure could not turn a
+release red.
 
 To actually publish, dispatch `Publish API clients` (`publish-clients.yml`) from the Actions UI. It
 builds once from `main` (the same composite the release-run inspection artifacts use), then:

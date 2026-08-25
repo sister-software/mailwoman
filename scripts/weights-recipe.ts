@@ -61,6 +61,53 @@ export interface ReleaseConfig {
 	locales: string[]
 	weights: { model: string; tokenizer: string; lineage?: string }
 	softFeed?: SoftFeedRecipe
+	/**
+	 * Where a model release lives for the demo and the CI weights pull. `hfBucket` is the bucket half of the resolve URL
+	 * `fetch-hf-weights.ts` builds; the R2 keys are the gazetteer publisher's and are not read here.
+	 */
+	assets?: { hfBucket?: string; [key: string]: unknown }
+}
+
+/**
+ * Read `release.config.json`. The one parse, so a second reader cannot invent a different shape for the same file.
+ */
+export function readReleaseConfig(repoRoot: string): ReleaseConfig {
+	return parseJSONStrict<ReleaseConfig>(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
+}
+
+/**
+ * The soft-feed channels whose `release.config.json` path is REPO-relative: generated files that are COMMITTED, so a
+ * checkout already carries them and no bucket has to.
+ *
+ * `localitySurfaceLexicon` is deliberately absent — it is BUILT (~8.6 MB) and never in git, so it resolves against the
+ * data root. That per-key asymmetry is the whole reason this module exists; see the file docstring.
+ */
+const REPO_COMMITTED_SOFT_FEED_CHANNELS = [
+	["anchor-lexicon-v1.json", "gazetteerLexicon"],
+	["country-surface-lexicon-v1.json", "countryLexicon"],
+	["street-type-lexicon-v3.json", "streetTypeLexicon"],
+] as const satisfies ReadonlyArray<readonly [string, keyof SoftFeedRecipe]>
+
+/**
+ * The repo-committed soft-feed artifacts this release names, keyed by the filename a weights package ships them as.
+ *
+ * Shared with `fetch-hf-weights.ts`, which needs the same answer from the other side: an artifact in this table is
+ * copied out of the checkout and everything else a weights package declares is fetched from the bucket. Two readers
+ * disagreeing would ship a lexicon of a different generation than the checkout's, and nothing downstream compares
+ * them.
+ */
+export function repoCommittedSoftFeedSources(repoRoot: string, softFeed: SoftFeedRecipe): Map<string, string> {
+	const sources = new Map<string, string>()
+
+	for (const [shippedName, key] of REPO_COMMITTED_SOFT_FEED_CHANNELS) {
+		const rel = softFeed[key]
+
+		if (typeof rel === "string") {
+			sources.set(shippedName, resolve(repoRoot, rel))
+		}
+	}
+
+	return sources
 }
 
 /**
@@ -128,7 +175,7 @@ export function readWeightsRecipe(
 	dataRoot: string,
 	overrides: { model?: string; tokenizer?: string } = {}
 ): WeightsRecipe {
-	const config = parseJSONStrict<ReleaseConfig>(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
+	const config = readReleaseConfig(repoRoot)
 	const softFeed = config.softFeed ?? {}
 
 	const model = overrides.model ?? resolve(dataRoot, config.weights.model)
@@ -146,16 +193,8 @@ export function readWeightsRecipe(
 		]
 
 		// Repo-relative: generated and COMMITTED, so they travel with the checkout.
-		const repoRelative = [
-			["anchor-lexicon-v1.json", softFeed.gazetteerLexicon],
-			["country-surface-lexicon-v1.json", softFeed.countryLexicon],
-			["street-type-lexicon-v3.json", softFeed.streetTypeLexicon],
-		] as const
-
-		for (const [shippedName, rel] of repoRelative) {
-			if (rel) {
-				out.push({ shippedName, sourcePath: resolve(repoRoot, rel) })
-			}
+		for (const [shippedName, sourcePath] of repoCommittedSoftFeedSources(repoRoot, softFeed)) {
+			out.push({ shippedName, sourcePath })
 		}
 
 		// Data-root-relative: BUILT, ~7 MB, never in git. The asymmetry with the three above is the reason this

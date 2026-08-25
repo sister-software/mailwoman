@@ -25,15 +25,23 @@
 #
 # Publishes ALL packages — code AND the neural-weights-* — entirely from CI via OIDC, so no npm
 # credentials live anywhere. The weights workspaces ship real model.onnx + tokenizer.model
-# binaries; the "Fetch weight binaries from Hugging Face" step pulls them from the PUBLIC HF bucket
-# (the same files the demo loads, no auth) before publish. Prerequisite for a real publish run: the
-# model for the card version must already be staged on HF — push it with `mailwoman release hf`
-# (HF token, run on the operator's host) first.
+# binaries; the "Materialize weight artifacts from Hugging Face" step pulls them from the PUBLIC HF
+# bucket (the same files the demo loads, no auth) before publish. Prerequisite for a real publish
+# run: the model for the card version must already be staged on HF — push it with `mailwoman release
+# hf` (HF token, run on the operator's host) first.
+#
+# THE ARTIFACT RECIPE IS NOT IN THIS FILE (#1894). Materialization lives in
+# scripts/fetch-hf-weights.ts and the tarball audit in scripts/verify-tarball.ts; this workflow
+# orchestrates them, and `yarn release:preflight --source hf` runs the same two locally with no
+# dispatch. Every path that was a hand-maintained list of shell copies here went stale at least once
+# — most recently at the workspace regroup, which cost the v9.2.0 cut three of its four dispatches.
 #
 # A `clients` job runs after `publish` succeeds: it regenerates the Python + Rust API clients as
 # workflow artifacts — inspection copies only. This workflow NEVER publishes clients: registry
 # publishing lives in publish-python.yml (PyPI Trusted Publishing) and publish-cargo.yml,
-# dispatched separately by the operator. See RELEASING.md "Client packages".
+# dispatched separately by the operator. Its failure DOES conclude this workflow failed, as a
+# receipt on the release run — the npm packages stay published either way. See the job's own
+# comment and RELEASING.md "Client packages".
 name: NPM Publish
 
 on:
@@ -245,154 +253,40 @@ jobs:
 
       # The release PR must have merged: every workspace manifest on main must agree with the root.
       # A drifted tree means phase 1 hasn't landed (or landed partially) — publishing it would ship
-      # mixed versions.
+      # mixed versions. The comparison lives in scripts/verify-version-sync.ts rather than in a
+      # heredoc: embedded JS in YAML is the one code in this repo no compiler, linter or test reads,
+      # which is how this workflow's other hand-maintained paths went stale after the workspace
+      # regroup. Same `RESOLVED_VERSION=` output contract as prepare-release-version.ts above.
       - name: Verify version sync on main
         id: version
-        run: |
-          set -euo pipefail
-          node - <<'NODE'
-          const { readFileSync } = require("node:fs")
-          const root = JSON.parse(readFileSync("package.json", "utf8")).version
-          const workspaces = JSON.parse(readFileSync(".release-it.json", "utf8")).plugins["@release-it-plugins/workspaces"].workspaces
-          const drift = workspaces
-            .map((ws) => [ws, JSON.parse(readFileSync(`${ws}/package.json`, "utf8")).version])
-            .filter(([, v]) => v !== root)
-          if (drift.length) {
-            console.error(`version drift vs root ${root}:`, drift)
-            process.exit(1)
-          }
-          console.log(`main is version-synced at ${root} (root + ${workspaces.length} workspaces)`)
-          NODE
-          echo "version=$(node -p "require('./package.json').version")" >> "${GITHUB_OUTPUT}"
-
-      # Fetch the weight binaries from the PUBLIC Hugging Face bucket (the same
-      # files the demo loads at runtime — no auth needed). The whole release, weights included,
-      # publishes from CI via OIDC: no npm credentials anywhere. Requires the model AND the #718
-      # soft-feed postcode binaries AND the placetype-pair-index binaries (en-us + en-gb + en-nz)
-      # to be staged on HF for this version (push them with `mailwoman release hf
-      # <version> --postcodes postcode-us.bin,postcode-fr.bin --pair-indexes
-      # pair-index-us.bin,pair-index-gb.bin,pair-index-nz.bin` before dispatching a real run; the gazetteer
-      # lexicon is a checked-in repo file). NOTE: en-nz ships NO postcode binary — no WOF NZ
-      # postcode shard exists (see packages/neural-weights-en-nz/model-card.json's no_postcode_bin
-      # follow-up). NOTE: postcode-gb.bin RETURNED 2026-08-06 (9.0.0, ROAD_TO_V9 A4) — the
-      # v4.2.0 base trained the GB anchor slot, so the 2026-08-05 removal (#1467, untrained-slot
-      # mitigation) is over. The bin is Code-Point-derived and card-gated: en-gb's card declares
-      # span_mode "shaped" and its files[] names the bin (weights.test.ts pins the coupling).
-      # Skipped on dry runs so a preview doesn't depend on HF staging.
-      - name: Fetch weight binaries from Hugging Face
-        if: ${{ !inputs.dry_run }}
         run: | # shell
           set -euo pipefail
-          MODEL_VERSION=$(node -e "console.log(JSON.parse(require('fs').readFileSync('packages/neural-weights-en-us/model-card.json','utf8')).version)")
-          BASE="https://huggingface.co/buckets/sister-software/mailwoman/resolve/en-us/v${MODEL_VERSION}"
-          # PREFLIGHT — fail fast + actionable. Without this, an unstaged version means the retry
-          # loop below spends 6×5s PER FILE and then dies on a cryptic `curl (22) 404`. On 2026-07-16
-          # a v6.4.0 publish failed here because the promote bumped the model card but the HF upload —
-          # a SEPARATE operator-host step (RELEASING.md §3) — was skipped. HEAD-check every file this
-          # step will fetch and, if any is missing, print the exact remediation and stop immediately.
-          echo "Preflight: verifying v${MODEL_VERSION} is staged on Hugging Face…"
-          MISSING=0
-          for a in model.onnx tokenizer.model postcode-us.bin postcode-fr.bin postcode-gb.bin pair-index-us.bin pair-index-fr.bin pair-index-de.bin pair-index-in.bin pair-index-es.bin pair-index-it.bin pair-index-gb.bin pair-index-nz.bin fst-en-us.bin fst-fr-fr.bin fst-en-gb.bin fst-street-morphology.bin street-type-lexicon-v3.json locality-surface-lexicon-v7.json; do
-            if ! curl -fsI "${BASE}/${a}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${a}"; MISSING=1; else echo "  ✓ ${a}"; fi
-          done
-          # Fisher consolidation artifact (#1354, model 7.0.0+): the bundle contract says the weights
-          # ship their Fisher on HF/R2 (never in the npm tarball, never fetched below — runtime never
-          # reads it). Card-derived so the versioned basename never goes stale here: HEAD-check it
-          # whenever the card declares fisher_artifact, and stage it via `release hf --fisher …`.
-          FISHER_FILE=$(node -e "const c=JSON.parse(require('fs').readFileSync('packages/neural-weights-en-us/model-card.json','utf8')); console.log(c.fisher_artifact?.file ?? '')")
-          if [ -n "$FISHER_FILE" ]; then
-            if ! curl -fsI "${BASE}/${FISHER_FILE}" >/dev/null 2>&1; then echo "  ✗ MISSING ${BASE}/${FISHER_FILE} (card fisher_artifact — stage with release hf --fisher)"; MISSING=1; else echo "  ✓ ${FISHER_FILE}"; fi
-          fi
-          if [ "$MISSING" = 1 ]; then
-            echo "::error::v${MODEL_VERSION} weights are NOT fully staged on Hugging Face — the promote bumped the model card but the HF upload was skipped. Stage them, then re-dispatch:"
-            echo "::error::  HF_TOKEN=\$(cat ~/.cache/huggingface/token) node packages/mailwoman/out/cli.js release hf v${MODEL_VERSION} --locale en-us --model <int8.onnx> --tokenizer <tokenizer.model> --model-card packages/neural-weights-en-us/model-card.json --fst <fst-en-US.bin> --postcodes packages/neural-weights-en-us/postcode-us.bin,packages/neural-weights-fr-fr/postcode-fr.bin,packages/neural-weights-en-gb/postcode-gb.bin --pair-indexes packages/neural-weights-en-us/pair-index-us.bin,packages/neural-weights-fr-fr/pair-index-fr.bin,packages/neural-weights-de-de/pair-index-de.bin,packages/neural-weights-en-in/pair-index-in.bin,packages/neural-weights-es-es/pair-index-es.bin,packages/neural-weights-it-it/pair-index-it.bin,packages/neural-weights-en-gb/pair-index-gb.bin,packages/neural-weights-en-nz/pair-index-nz.bin --fsts packages/neural-weights-en-us/fst-en-us.bin,packages/neural-weights-fr-fr/fst-fr-fr.bin,packages/neural-weights-en-gb/fst-en-gb.bin --gazetteer-lexicon data/gazetteer/anchor-lexicon-v1.json --country-lexicon data/gazetteer/country-surface-lexicon-v1.json --street-type-lexicon data/gazetteer/street-type-lexicon-v3.json --locality-surface-lexicon <locality-surface-lexicon-v7.json> --set-default   (RELEASING.md §3)"
-            exit 1
-          fi
-          echo "Fetching weights for v${MODEL_VERSION} from ${BASE}"
-          # --retry-all-errors covers HF's transient 429 throttling of the public bucket on CI.
-          CURL="curl -fSL --retry 6 --retry-delay 5 --retry-all-errors"
-          $CURL "${BASE}/model.onnx" -o packages/neural-weights-en-us/model.onnx
-          $CURL "${BASE}/tokenizer.model" -o packages/neural-weights-en-us/tokenizer.model
-          # Soft-feed artifacts (#718/#720): the anchor channels loadFromWeights feeds by DEFAULT —
-          # without them the published package warns + runs anchor-OFF (the #566/#685 OOD crater). The
-          # per-country PCB1 postcode binaries are built from the WOF shard (not buildable on CI), so
-          # they ride the bucket; all land under en-us/v<version>/ by basename via
-          # `mailwoman release hf <version> --postcodes postcode-us.bin,postcode-fr.bin,postcode-gb.bin`.
-          # postcode-gb.bin returned 2026-08-06 (9.0.0): the v4.2.0 base trained the GB slot, the
-          # en-gb card declares span_mode "shaped", and files[] names the bin again (the 2026-08-05
-          # anchor-OFF mitigation is recorded in that card's gb_artifacts history).
-          $CURL "${BASE}/postcode-us.bin" -o packages/neural-weights-en-us/postcode-us.bin
-          $CURL "${BASE}/postcode-fr.bin" -o packages/neural-weights-fr-fr/postcode-fr.bin
-          $CURL "${BASE}/postcode-gb.bin" -o packages/neural-weights-en-gb/postcode-gb.bin
-          # The placetype-pair-index binary (placetype-pair-prior arc, Task 8): built from the HM Land
-          # Registry PPD tuples CSV (not buildable on CI, same story as the postcode binaries above),
-          # so it rides the bucket too, via `mailwoman release hf <version> --pair-indexes
-          # pair-index-us.bin,pair-index-gb.bin,pair-index-nz.bin`. COUNTRY-SPECIFIC BY DESIGN — no base-package
-          # fallback (unlike model.onnx/tokenizer.model below), so each overlay MUST have its own
-          # copy staged. en-nz's is built from the LINZ-derived OpenAddresses countrywide CSV;
-          # en-nz ships NO postcode binary (no WOF NZ shard — see its model-card follow-up).
-          $CURL "${BASE}/pair-index-us.bin" -o packages/neural-weights-en-us/pair-index-us.bin
-          $CURL "${BASE}/pair-index-fr.bin" -o packages/neural-weights-fr-fr/pair-index-fr.bin
-          $CURL "${BASE}/pair-index-de.bin" -o packages/neural-weights-de-de/pair-index-de.bin
-          $CURL "${BASE}/pair-index-in.bin" -o packages/neural-weights-en-in/pair-index-in.bin
-          $CURL "${BASE}/pair-index-es.bin" -o packages/neural-weights-es-es/pair-index-es.bin
-          $CURL "${BASE}/pair-index-it.bin" -o packages/neural-weights-it-it/pair-index-it.bin
-          $CURL "${BASE}/pair-index-gb.bin" -o packages/neural-weights-en-gb/pair-index-gb.bin
-          $CURL "${BASE}/pair-index-nz.bin" -o packages/neural-weights-en-nz/pair-index-nz.bin
-          # Per-locale FST gazetteers (#1318 FST-distribution): each weights package declares its own
-          # fst-<locale>.bin in files[]; copy-weights is SKIPPED on CI (MAILWOMAN_SKIP_WEIGHTS_COPY=1)
-          # so — like the postcode/pair-index binaries — they ride the HF bucket and are fetched by
-          # their LOWERCASE npm basename. Staged via `mailwoman release hf <version> --fsts …`. en-nz
-          # ships no FST (no gazetteer bias for NZ — byte-stable).
-          $CURL "${BASE}/fst-en-us.bin" -o packages/neural-weights-en-us/fst-en-us.bin
-          $CURL "${BASE}/fst-fr-fr.bin" -o packages/neural-weights-fr-fr/fst-fr-fr.bin
-          $CURL "${BASE}/fst-en-gb.bin" -o packages/neural-weights-en-gb/fst-en-gb.bin
-          # Street-morphology FST (locale-GENERAL, survey #1 2026-07-26): one artifact, copied into
-          # every weights package that lists it in files[] (the loader resolves via baseWeights, but
-          # each package ships its own copy so a standalone install carries the browser gate).
-          $CURL "${BASE}/fst-street-morphology.bin" -o packages/neural-weights-en-us/fst-street-morphology.bin
-          cp packages/neural-weights-en-us/fst-street-morphology.bin packages/neural-weights-fr-fr/fst-street-morphology.bin
-          cp packages/neural-weights-en-us/fst-street-morphology.bin packages/neural-weights-en-gb/fst-street-morphology.bin
-          cp packages/neural-weights-en-us/fst-street-morphology.bin packages/neural-weights-en-nz/fst-street-morphology.bin
-          # Evidence-bundle lexicons (Option-A, 6.7.0-bundle): street-type (repo-derived, small) +
-          # locality-surface (data-root artifact, ~7 MB). Every locale package ships both — the shared
-          # base model carries the channels, and the card's requires would fail closed on a missing
-          # sibling. Staged via `mailwoman release hf <version> --street-type-lexicon … --locality-surface-lexicon …`.
-          $CURL "${BASE}/street-type-lexicon-v3.json" -o packages/neural-weights-en-us/street-type-lexicon-v3.json
-          $CURL "${BASE}/locality-surface-lexicon-v7.json" -o packages/neural-weights-en-us/locality-surface-lexicon-v7.json
-          for ws in neural-weights-fr-fr neural-weights-en-gb neural-weights-en-nz neural-weights-en-au; do
-            cp packages/neural-weights-en-us/street-type-lexicon-v3.json "packages/$ws/street-type-lexicon-v3.json"
-            cp packages/neural-weights-en-us/locality-surface-lexicon-v7.json "packages/$ws/locality-surface-lexicon-v7.json"
-          done
-          # fr-fr, en-gb, and en-nz share the en-us model for now (locale-specific weights are future work).
-          cp packages/neural-weights-en-us/model.onnx packages/neural-weights-fr-fr/model.onnx
-          cp packages/neural-weights-en-us/tokenizer.model packages/neural-weights-fr-fr/tokenizer.model
-          cp packages/neural-weights-en-us/model.onnx packages/neural-weights-en-gb/model.onnx
-          cp packages/neural-weights-en-us/tokenizer.model packages/neural-weights-en-gb/tokenizer.model
-          cp packages/neural-weights-en-us/model.onnx packages/neural-weights-en-nz/model.onnx
-          cp packages/neural-weights-en-us/tokenizer.model packages/neural-weights-en-nz/tokenizer.model
-          # The gazetteer-anchor lexicon is a checked-in repo artifact — copy it into every package
-          # (no bucket dependency); matches release.config.json softFeed.gazetteerLexicon + copy-weights.
-          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-us/anchor-lexicon-v1.json
-          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-fr-fr/anchor-lexicon-v1.json
-          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-gb/anchor-lexicon-v1.json
-          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-nz/anchor-lexicon-v1.json
-          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-au/anchor-lexicon-v1.json
-          # The country-surface lexicon (#1104) — same story: a checked-in repo artifact the country channel
-          # feeds when the card carries requires.country. Copy into every package (matches softFeed.countryLexicon).
-          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-us/country-surface-lexicon-v1.json
-          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-fr-fr/country-surface-lexicon-v1.json
-          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-gb/country-surface-lexicon-v1.json
-          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-nz/country-surface-lexicon-v1.json
-          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-au/country-surface-lexicon-v1.json
-          for f in packages/neural-weights-en-us/model.onnx packages/neural-weights-fr-fr/model.onnx packages/neural-weights-en-gb/model.onnx packages/neural-weights-en-nz/model.onnx \
-                   packages/neural-weights-en-us/postcode-us.bin packages/neural-weights-fr-fr/postcode-fr.bin \
-                   packages/neural-weights-en-us/pair-index-us.bin packages/neural-weights-fr-fr/pair-index-fr.bin packages/neural-weights-de-de/pair-index-de.bin packages/neural-weights-en-in/pair-index-in.bin packages/neural-weights-es-es/pair-index-es.bin packages/neural-weights-it-it/pair-index-it.bin packages/neural-weights-en-gb/pair-index-gb.bin packages/neural-weights-en-nz/pair-index-nz.bin \
-                   packages/neural-weights-en-us/anchor-lexicon-v1.json packages/neural-weights-fr-fr/anchor-lexicon-v1.json packages/neural-weights-en-gb/anchor-lexicon-v1.json packages/neural-weights-en-nz/anchor-lexicon-v1.json \
-                   packages/neural-weights-en-us/country-surface-lexicon-v1.json packages/neural-weights-fr-fr/country-surface-lexicon-v1.json packages/neural-weights-en-gb/country-surface-lexicon-v1.json packages/neural-weights-en-nz/country-surface-lexicon-v1.json; do
-              [ -s "$f" ] || { echo "::error::missing/empty $f — is v${MODEL_VERSION} fully staged on HF (model + tokenizer + --postcodes postcode-us.bin,postcode-fr.bin --pair-indexes pair-index-us.bin,pair-index-fr.bin,pair-index-de.bin,pair-index-in.bin,pair-index-es.bin,pair-index-it.bin,pair-index-gb.bin,pair-index-nz.bin)?"; exit 1; }
-          done
-          ls -lh packages/neural-weights-en-us/model.onnx packages/neural-weights-en-us/postcode-us.bin packages/neural-weights-en-us/pair-index-us.bin packages/neural-weights-fr-fr/pair-index-fr.bin packages/neural-weights-de-de/pair-index-de.bin packages/neural-weights-en-in/pair-index-in.bin packages/neural-weights-es-es/pair-index-es.bin packages/neural-weights-it-it/pair-index-it.bin packages/neural-weights-en-gb/pair-index-gb.bin packages/neural-weights-en-nz/pair-index-nz.bin
+          OUT=$(node scripts/verify-version-sync.ts)
+          echo "${OUT}"
+          echo "version=$(echo "${OUT}" | grep -oP '(?<=^RESOLVED_VERSION=).+')" >> "${GITHUB_OUTPUT}"
+
+      # Materialize the weight artifacts from the PUBLIC Hugging Face bucket (the same files the demo
+      # loads at runtime — no auth needed, and none is wanted: a credential here would only hide the
+      # day the bucket stops being public). The whole release, weights included, publishes from CI via
+      # OIDC, so no npm credentials live anywhere.
+      #
+      # The recipe is scripts/fetch-hf-weights.ts, shared byte for byte with
+      # `yarn release:preflight --source hf` (#1894). It derives WHAT to materialize from each weights
+      # package's `files` array minus what git already tracks — the same predicate verify-tarball.ts
+      # refuses a publish over — so it cannot fall behind a manifest the way this step's hand-written
+      # copy list did: the v9.2.0 cut published 49 of 51 workspaces before the audit refused
+      # @mailwoman/neural-weights-en-au over four declared lexicons the list never named. It
+      # HEAD-probes the whole remote set (the Fisher pair included, which rides the bucket but is
+      # never fetched) so an unstaged version fails in one pass with every missing object named, and
+      # verifies each download against the md5s the model cards declare.
+      #
+      # Prerequisite for a real publish run: the model for the card version must already be staged on
+      # HF — push it with `mailwoman release hf` (HF token, run on the operator's host) first. Skipped
+      # on dry runs, where the preflight leg at the end of this job materializes into a staging tree
+      # instead of the checkout.
+      - name: Materialize weight artifacts from Hugging Face
+        if: ${{ !inputs.dry_run }}
+        run: node scripts/fetch-hf-weights.ts
 
       # The FETCHED pair indexes must agree with the model cards that describe them. The step above proves each file
       # EXISTS and is non-empty; this one proves it is the RIGHT one. Both are needed: a stale artifact left on the
@@ -400,8 +294,13 @@ jobs:
       # pair-index-gb.bin, whose staged copy sat three increments behind the repo (19,209 pairs vs 20,126) while the
       # en-gb card described neither. The fetch above wrote these binaries into the weights workspaces, so the same
       # parity test CI already runs against locally-built artifacts now grades the STAGED ones for free.
+      #
+      # Selected through a package script, never by physical filename: the v9.2.0 cut's SECOND dispatch died here
+      # because this line still named the pre-regroup path and Vitest matched zero files. The script's filter is the
+      # test's NAME, so the suite survives a move; Vitest exits 1 on an empty selection, so a rename fails loudly
+      # rather than passing vacuously.
       - name: Verify staged pair indexes match their model cards
-        run: yarn vitest run packages/neural/test/integration/pair-index-card-parity.test.ts
+        run: yarn ci:test:pair-index-parity
 
       # The full-scale locality-surface build. On the PR path this is behind a path filter
       # (test.yml's `lexicon-full`), so most PRs merge with it deliberately unrun — the four laws are
@@ -467,16 +366,40 @@ jobs:
           fi
           echo "All workspaces published at v${{ steps.version.outputs.version }}."
 
-      - name: "Dry run: compile only"
+      # THE DRY RUN IS THE PREFLIGHT (#1894). It stages the tracked tree in an isolated root, materializes
+      # the same Hugging Face artifacts a real publish fetches, then packs and audits ALL 51 release
+      # tarballs through the same packWorkspaceForPublish + verifyTarball path the publish loop above
+      # uses — one dry-run contract, identical to the real one but for the destination. It writes nothing
+      # outside its own staging root: no tag, no release, no registry write, and the checkout is left
+      # byte-identical.
+      #
+      # Unlike the compile-only leg it replaces, this DOES require the version's weights to be staged on
+      # HF. That is the point: a preview that skipped the dependency the real run has is precisely the
+      # weaker contract #1894 was opened over — the old leg finished with `yarn compile` and passed
+      # through all three of the v9.2.0 failures.
+      - name: "Dry run: materialize from Hugging Face + audit every release tarball"
         if: ${{ inputs.dry_run }}
         run: | # shell
+          set -euo pipefail
           yarn compile
-          echo "Dry run: version sync + compile verified for v${{ steps.version.outputs.version }}. No tag, no release, no publish."
+          node scripts/release-preflight.ts --source hf
+          echo "Dry run: v${{ steps.version.outputs.version }} staged, packed and audited. No tag, no release, no publish."
 
   # Regenerate the Python + Rust API clients (Phase 5 Task 4) as INSPECTION ARTIFACTS — this job
   # never publishes anything (registry publishing = publish-python.yml / publish-cargo.yml, each
-  # bound to its GitHub environment). Additive: it only starts once `publish` has already succeeded
-  # (`needs: publish`), so it can't turn a working npm release red.
+  # bound to its GitHub environment).
+  #
+  # ITS FAILURE IS THE RELEASE RUN'S CONCLUSION, AND THAT MEANS A RECEIPT — NOT A ROLLBACK (#1892).
+  # The job carries no `continue-on-error`, so a red client generation makes the whole workflow run
+  # conclude failed, on purpose and by the only mechanism Actions offers. Read that conclusion as: the
+  # npm packages ARE published (this job runs after `publish` by `needs:`, and published versions are
+  # immutable), and what failed is the generated Python + Rust surface for that version. The remedy is
+  # to fix the generator and dispatch publish-clients.yml — never to unpublish or re-cut the release.
+  #
+  # Written down because the earlier note here said the opposite ("it can't turn a working npm release
+  # red"), which is how a job that had been failing since the workspace regroup — every release run,
+  # the emitter preflight resolving pre-regroup paths — stayed ambient for two releases while its
+  # failure was in plain sight on the run page.
   clients:
     needs: publish
     runs-on:

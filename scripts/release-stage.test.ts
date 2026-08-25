@@ -2,21 +2,26 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The #1894 preflight's regression fixtures: the release-list identity names every discrepancy instead of
- *   counting, and the tarball audit refuses the two v9.2.0 classes — an exports target no build produces (the
- *   `@mailwoman/corpus` class) and a declared file never materialized (the `@mailwoman/neural-weights-en-au` class).
+ * @file The #1894 preflight's regression fixtures — one per v9.2.0 publish failure, plus the release-list identity.
+ *
+ *   The four dispatches that cut v9.2.0 died on: a materialization destination that lost its `packages/` prefix, a
+ *   parity-test selector left empty by a moved file, an exports target no build produces (the `@mailwoman/corpus`
+ *   class), and declared files never materialized (the `@mailwoman/neural-weights-en-au` class). Each is pinned here.
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 import { $ } from "zx"
 
+import { planWeightsMaterialization } from "./fetch-hf-weights.ts"
 import { checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "./release-stage.ts"
-import { verifyTarball } from "./verify-tarball.ts"
+import { literalFilesEntries, verifyTarball } from "./verify-tarball.ts"
 
 describe("checkReleaseListIdentity", () => {
 	it("holds on the current tree: 51 published, every absence sanctioned by name", () => {
@@ -123,5 +128,98 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 		expect(audit.name).toBe("@fixture/clean")
 		expect(audit.literalFiles).toBe(1)
 		expect(audit.exportTargets).toBe(1)
+	})
+})
+
+describe("the Hugging Face materialization plan", () => {
+	const repoRoot = String(repoRootPath())
+
+	/**
+	 * The release's weights workspaces, read the way the recipe reads them.
+	 */
+	function weightsWorkspaces(): string[] {
+		const config = parseJSONStrict<{ locales: string[] }>(readFileSync(join(repoRoot, "release.config.json"), "utf8"))
+
+		return config.locales.map((locale) => `packages/neural-weights-${locale}`)
+	}
+
+	function trackedPaths(): Set<string> {
+		const listing = $.sync({ cwd: repoRoot })`git ls-files -- packages`
+
+		return new Set([...TextSpliterator.from(listing.stdout)].filter(isPresent))
+	}
+
+	it("puts every destination under packages/ — the lost-prefix class", () => {
+		// The v9.2.0 cut's FIRST dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
+		// moved under `packages/`. Destinations are now derived from one prefix in one function, and this pins it.
+		const plans = planWeightsMaterialization(repoRoot)
+
+		expect(plans.length).toBeGreaterThan(0)
+		expect(plans.filter((plan) => !plan.workspace.startsWith("packages/neural-weights-"))).toEqual([])
+	})
+
+	it("accounts for every declared artifact a checkout cannot supply — the en-au class", () => {
+		// What this proves: no literal `files` entry of a release weights package is BOTH untracked and unplanned.
+		// That is precisely the state `verify-tarball.ts` refuses at publish time, and precisely what
+		// @mailwoman/neural-weights-en-au was in when the audit stopped v9.2.0 after 49 of 51 packages had
+		// published. The manifests and the git listing are read here independently of the recipe, so a planner
+		// rewritten around a hand-kept list fails this the first time a manifest gains an entry.
+		const tracked = trackedPaths()
+		const planned = new Set(planWeightsMaterialization(repoRoot).map((plan) => `${plan.workspace}/${plan.filename}`))
+		const unaccounted: string[] = []
+
+		for (const workspace of weightsWorkspaces()) {
+			const manifest = parseJSONStrict<{ files?: unknown }>(
+				readFileSync(join(repoRoot, workspace, "package.json"), "utf8")
+			)
+
+			for (const entry of literalFilesEntries(manifest.files)) {
+				const path = `${workspace}/${entry}`
+
+				if (!tracked.has(path) && !planned.has(path)) {
+					unaccounted.push(path)
+				}
+			}
+		}
+
+		expect(unaccounted).toEqual([])
+	})
+
+	it("never plans over a file git already tracks", () => {
+		// The other direction: a recipe that materialized `model-card.json` or `calibration.json` would overwrite
+		// committed content in the checkout on the publish path, where the destination root IS the checkout.
+		const tracked = trackedPaths()
+
+		const clobbered = planWeightsMaterialization(repoRoot)
+			.map((plan) => `${plan.workspace}/${plan.filename}`)
+			.filter((path) => tracked.has(path))
+
+		expect(clobbered).toEqual([])
+	})
+})
+
+describe("the pair-index parity selector", () => {
+	it("still matches a test file — the empty-selection class", () => {
+		// The v9.2.0 cut's SECOND dispatch died because publish.yml named the parity test's pre-regroup path and
+		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's NAME, and
+		// this asserts the filter is not empty-handed — the same answer a dispatch would return several minutes in.
+		const repoRoot = String(repoRootPath())
+
+		const manifest = parseJSONStrict<{ scripts: Record<string, string> }>(
+			readFileSync(join(repoRoot, "package.json"), "utf8")
+		)
+
+		const script = manifest.scripts["ci:test:pair-index-parity"]
+
+		expect(script).toBeDefined()
+
+		const filter = script!.split(/\s+/).at(-1)!
+		const listing = $.sync({ cwd: repoRoot })`git ls-files`
+
+		const matches = [...TextSpliterator.from(listing.stdout)]
+			.filter(isPresent)
+			.filter((path) => path.endsWith(".test.ts") && path.includes(filter))
+
+		expect(matches.length).toBeGreaterThan(0)
 	})
 })

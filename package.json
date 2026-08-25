@@ -81,6 +81,7 @@
 		"ci:test:fast": "vitest --run --config vitest.fast.config.ts",
 		"ci:test:slow": "vitest --run --config vitest.slow.config.ts",
 		"ci:test:lexicon-full": "vitest --run --config vitest.full.config.ts",
+		"ci:test:pair-index-parity": "vitest --run pair-index-card-parity",
 		"ci:tile-worker": "run-s compile",
 		"compile": "NODE_OPTIONS=\"--max-old-space-size=3000\" tsc -b",
 		"compile:clean": "tsc -b --clean",
