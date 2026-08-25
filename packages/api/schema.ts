@@ -194,6 +194,21 @@ const QueryIntentMarkerSchema = z
 	.openapi("QueryIntentMarker")
 
 /**
+ * One authoritative-provider match on the wire (#1901) — hoisted so the outcome schema below stays inside the
+ * call-nesting bound. Field-for-field mirror of `mailwoman/authoritative.ts`'s `AuthoritativeAssertionMatch`.
+ */
+const AuthoritativeMatchSchema = z.object({
+	provider_place_id: z.string(),
+	object_ids: z.record(z.string(), z.string()).optional(),
+	canonical_fields: z.record(z.string(), z.string()).optional(),
+	lat: z.number().optional(),
+	lon: z.number().optional(),
+	precision: z.string().optional(),
+	match_status: z.enum(["exact", "approximate"]),
+	provider_score: z.number().optional(),
+})
+
+/**
  * `POST /v1/geocode` response — a hand-modeled mirror of `GeocodeResult`'s wire shape (`mailwoman/geocode-core.ts`),
  * `.loose()` so a field the engine adds that this schema doesn't yet know about still rides through undocumented rather
  * than being stripped or rejected. DOC-ACCURACY ONLY: the route passes `engine.geocode()`'s outcome through verbatim
@@ -263,6 +278,23 @@ export const GeocodeOutcomeLikeSchema = z.object({
 		.object({
 			region: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
 			country: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
+		})
+		.optional(),
+	// #1901: a configured authoritative provider's answer, carried BESIDE the open result — every value inside is
+	// the PROVIDER'S assertion, hand-modeled here to match `mailwoman/authoritative.ts`'s wire shape (the
+	// engine-agnosticism boundary forbids importing it). Absent when no provider is configured; `refused` is the
+	// provider declining (distinct from a parse failure or a gazetteer miss); `transport_error` is the provider
+	// being unreachable, reported rather than silently dropped. An `ambiguous` status carries EVERY candidate.
+	authoritative: z
+		.object({
+			provider: z.string(),
+			status: z.enum(["matched", "ambiguous", "refused", "transport_error"]),
+			matches: z.array(AuthoritativeMatchSchema).optional(),
+			attribution: z.string().optional(),
+			license: z.string().optional(),
+			retrieved_at: z.string().optional(),
+			dataset_version: z.string().optional(),
+			error: z.string().optional(),
 		})
 		.optional(),
 	// #1755: spans the flat `components` map could not represent. `components` holds one value per tag, so a second

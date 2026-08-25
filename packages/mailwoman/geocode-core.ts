@@ -43,6 +43,7 @@ import {
 	streetContextGateFor,
 } from "@mailwoman/core/pipeline"
 import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwoman/core/resolver"
+import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
@@ -57,6 +58,7 @@ import {
 } from "@mailwoman/resolver"
 
 import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherence.ts"
+import { type AuthoritativeAssertion, authoritativeQueryFrom, consultAuthoritativeProvider } from "./authoritative.ts"
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { applyEntityTiers } from "./fork-entity.ts"
@@ -248,6 +250,14 @@ export interface GeocodeResult {
 	 * fold-equality bounds.
 	 */
 	admin_coherence?: AdminCoherenceReport
+	/**
+	 * A configured authoritative provider's answer (#1901), carried BESIDE Mailwoman's own — nothing above this field
+	 * changes when it is present, and the field is absent (never null, never empty) when no provider is configured. Every
+	 * value inside is the PROVIDER'S assertion, including a `refused` status (the provider spoke and said no — distinct
+	 * from a parse failure and from an open-gazetteer miss) and a `transport_error` (the provider could not be reached,
+	 * which absence would silently impersonate).
+	 */
+	authoritative?: AuthoritativeAssertion
 }
 
 /**
@@ -367,6 +377,13 @@ export interface GeocodeDeps {
 	 * `OSMShardProvider`; absent = no OSM tier. ODbL — see `osm/README.md`.
 	 */
 	osmShards?: (country: string) => StateShards
+	/**
+	 * A configured authoritative provider (#1901) — OS Places, an OS NGD-backed service, or any adapter implementing
+	 * `@mailwoman/core/resolver`'s contract. Absent = the geocode result is byte-identical to a run without the field
+	 * existing (the consult never happens, the `authoritative` block never appears). When present, the provider is
+	 * consulted AFTER the open result is assembled and its answer is carried beside that result, never merged into it.
+	 */
+	authoritativeProvider?: AuthoritativeProvider
 	/**
 	 * Country constraint passed to the resolver (e.g. `"US"`).
 	 */
@@ -1424,6 +1441,14 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
 
 	result.intent_markers = markers
+
+	// #1901: the authoritative consult runs LAST, over the finished result's evidence, and attaches its answer
+	// beside it. Nothing above this line reads the block, so an unconfigured session skips it byte-identically.
+	if (deps.authoritativeProvider) {
+		const query = authoritativeQueryFrom(input, parseInput, result)
+
+		result.authoritative = await consultAuthoritativeProvider(deps.authoritativeProvider, query)
+	}
 
 	return result
 }

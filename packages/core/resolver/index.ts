@@ -23,6 +23,23 @@ export type { ReferentiallyRankable } from "./referential.ts"
 
 export { countriesFromPostcodeFormat, countryFromPostcodeFormat, POSTCODE_FORMAT_COUNTRY } from "./postcode-format.ts"
 
+export { AuthoritativeMatchStatus, AuthoritativeResponseStatus } from "./authoritative-provider.ts"
+
+export type {
+	AuthoritativeMatch,
+	AuthoritativeProvider,
+	AuthoritativeQuery,
+	AuthoritativeQueryComponent,
+	AuthoritativeResponse,
+} from "./authoritative-provider.ts"
+
+export {
+	createFixtureAuthoritativeProvider,
+	fixtureExactMatch,
+	type FixtureAuthoritativeProviderOptions,
+	type FixtureAuthoritativeRule,
+} from "./fixture-authoritative-provider.ts"
+
 export {
 	DEFAULT_PLACETYPE_MAP,
 	PLACETYPE_FILTER_GROUPS,

@@ -134,6 +134,7 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	variant_alias_exemption: true,
 	intent_markers: true,
 	admin_coherence: true,
+	authoritative: true,
 	dropped_components: true,
 } satisfies Record<keyof GeocodeResult, true>
 
