@@ -101,7 +101,7 @@ function biasOf(matcher: unknown, surface: string): Map<string, number> {
 
 	// Collapsed by the decoder's OWN function: a bias measured over placetypes the decoder cannot see would overstate
 	// every delta on this board.
-	return collapseFSTBias(entries)
+	return collapseFSTBias(entries, normalizeTokens(surface))
 }
 
 const round4 = (n: number): number => Math.round(n * 1e4) / 1e4

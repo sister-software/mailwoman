@@ -106,6 +106,10 @@ export interface FSTMatcherLike {
  * `street_suffix: Hill`). `localadmin` is WOF's administrative twin of a locality — the resolver's placetype filter
  * groups already treat the pair as one contest class. The bias stays soft (referential-scaled), so a dependent-locality
  * reading can still win where the model's own emissions say so.
+ *
+ * The two mapped tiers carry ONE surface-conditional exception (#1903): a street-shaped surface — see
+ * {@link isStreetShapedSurface} — draws no locality bias from a neighbourhood/localadmin entry. Direct `locality`
+ * entries are never suppressed; a real locality named after a street keeps its bias.
  */
 export const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["country", "country"],
@@ -115,6 +119,40 @@ export const PLACETYPE_TO_BIO: ReadonlyMap<string, string> = new Map([
 	["neighbourhood", "locality"],
 	["postalcode", "postcode"],
 ])
+
+/**
+ * The placetypes whose BIO mapping is borrowed (`→ locality`) rather than their own tier — the C4 pair, and the only
+ * entries {@link isStreetShapedSurface} can suppress.
+ */
+const MAPPED_TIER_PLACETYPES: ReadonlySet<string> = new Set(["localadmin", "neighbourhood"])
+
+/**
+ * A surface whose final tokens read as a street name: a hard street generic (`street`, `road`, `avenue`, `boulevard`,
+ * `square`), optionally followed by one directional (`east`/`west`/`north`/`south`/`upper`/`lower`).
+ *
+ * Gates the C4 mapped tiers only. Census over the 2026-08-25 candidate gazetteer (279,513 distinct
+ * neighbourhood/localadmin surfaces): this predicate covers the three classes that collide with bare street names — 79
+ * generic+directional ("King Street East" is a Hamilton, Ontario neighbourhood), 442 hard-generic-final, 235
+ * square-final ("Madison Square") — 756 surfaces, 0.27% of the mapped class. The covering-surface classes the mapping
+ * exists for are untouched: `hill`-final alone is 866 surfaces ("Biggin Hill") and no other generic (`green`, `park`,
+ * `common`, …) is in the list. Tokens arrive FST-normalized (lowercase), so the match is exact, not case-folded here.
+ */
+export function isStreetShapedSurface(tokens: readonly string[]): boolean {
+	if (!tokens.length) return false
+
+	let last = tokens.length - 1
+
+	if (STREET_SHAPE_DIRECTIONALS.has(tokens[last]!)) {
+		if (last === 0) return false
+		last -= 1
+	}
+
+	// The generic must not be the whole surface: a bare "square" or "street" token is not a street NAME.
+	return last > 0 && STREET_SHAPE_GENERICS.has(tokens[last]!)
+}
+
+const STREET_SHAPE_GENERICS: ReadonlySet<string> = new Set(["street", "road", "avenue", "boulevard", "square"])
+const STREET_SHAPE_DIRECTIONALS: ReadonlySet<string> = new Set(["east", "west", "north", "south", "upper", "lower"])
 
 /**
  * An FST entry as both the decoder and the probes read it.
@@ -134,17 +172,28 @@ export interface FSTEntryLike {
  * The per-place ranking INSIDE a name is invisible to the decoder; only the per-tag max is not. A caller reporting
  * anything finer would overstate what an importance change can do.
  *
+ * `surfaceTokens` is the FST-normalized matched surface, and it is REQUIRED because the collapse is
+ * surface-conditional: a street-shaped surface draws nothing from the mapped tiers ({@link isStreetShapedSurface},
+ * #1903). A probe that omitted it would answer for a decoder that does not exist — the same hazard this function's
+ * export guards against for the placetype map.
+ *
  * An EMPTY result is not a zero bias: it means the surface was accepted but carries no BIO-mapped placetype, so the
  * decoder sees nothing. A caller must keep that apart from "the FST does not accept this surface at all", which is
  * absence, and from a tag present with value `0`, which is a measured zero.
  */
-export function collapseFSTBias(entries: ReadonlyArray<FSTEntryLike>): Map<string, number> {
+export function collapseFSTBias(
+	entries: ReadonlyArray<FSTEntryLike>,
+	surfaceTokens: readonly string[]
+): Map<string, number> {
 	const byTag = new Map<string, number>()
+	const streetShaped = isStreetShapedSurface(surfaceTokens)
 
 	for (const entry of entries) {
 		const tag = PLACETYPE_TO_BIO.get(entry.placetype)
 
 		if (!tag) continue
+
+		if (streetShaped && MAPPED_TIER_PLACETYPES.has(entry.placetype)) continue
 
 		byTag.set(tag, Math.max(byTag.get(tag) ?? 0, entry.importance))
 	}
@@ -616,6 +665,10 @@ function applyBias(
 	const { biasScale, maxBias, suppressionScale, seenWOFIDs, lengthMode } = tuning
 	const seenTags = new Map<string, number>()
 
+	// Surface-conditional gate on the C4 mapped tiers (#1903): a street-shaped surface draws no locality
+	// bias from a neighbourhood/localadmin entry. Computed once — the groups are this call's matched surface.
+	const streetShaped = isStreetShapedSurface(groups.map((group) => group.fstToken))
+
 	// Match-length scaling (#1142). A single-token place match ("Sweeney", "Tower", "Rome") is weak
 	// evidence — surnames, street heads, and everyday words are place names *somewhere*; a multi-token
 	// match ("New York", "Saint Louis") is far more reliable. Without this, real gazetteer importance
@@ -634,6 +687,9 @@ function applyBias(
 		const bioTag = PLACETYPE_TO_BIO.get(entry.placetype)
 
 		if (!bioTag) continue
+
+		if (streetShaped && MAPPED_TIER_PLACETYPES.has(entry.placetype)) continue
+
 		// The referential bias. Named `impBias` since #1142 and left alone: renaming it would churn every
 		// tuning comment that cites it, and the field it reads is now unambiguous.
 		const impBias = entry.referential * biasScale * maxBias * posScale * contextScale

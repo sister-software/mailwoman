@@ -92,7 +92,7 @@ for (const surface of positionals) {
 			continue
 		}
 
-		const byTag = collapseFSTBias(entries)
+		const byTag = collapseFSTBias(entries, normalizeTokens(surface))
 
 		cells.push(
 			byTag.size
