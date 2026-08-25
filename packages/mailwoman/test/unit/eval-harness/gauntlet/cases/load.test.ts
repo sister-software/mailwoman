@@ -211,7 +211,7 @@ const CORPUS_SIZE = 651
  * merged with CI skipped, so nothing caught the stale pin until the next branch ran the suite. Then `gb-cs-whitby` (650
  * → 651), the row that brackets `ENCYCLOPEDIC_BOOST_CAP` from below.
  */
-const CORPUS_HASH = "f25de393caadc303d36f006e0446a92daa7df7bbba2002574470da9abb4f0b9c"
+const CORPUS_HASH = "d691278aba7f3f728dfc513adab56928c7c0465b5edcc49d34042e9b11173936"
 
 /**
  * `ablationBoardID` of the corpus.
