@@ -17,12 +17,12 @@
  *   same tree is a no-op by construction (the generators are deterministic over the compiled CLI).
  */
 
-import { execFileSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { $ } from "zx"
 
 /**
  * The generated surfaces, each with the generator that owns it. Adding a version-stamped generated document means
@@ -48,13 +48,12 @@ async function releaseGeneratedSurfaces(): Promise<void> {
 
 	for (const generator of generators) {
 		process.stderr.write(`$ node ${generator}\n`)
-		execFileSync(process.execPath, [resolve(repoRoot, generator)], { cwd: repoRoot, stdio: "inherit" })
+		await $({ cwd: repoRoot, stdio: "inherit" })`${process.execPath} ${resolve(repoRoot, generator)}`
 	}
 
 	for (const surface of GENERATED_SURFACES) {
-		const changed =
-			execFileSync("git", ["status", "--porcelain", "--", surface.file], { cwd: repoRoot, encoding: "utf8" }).trim()
-				.length > 0
+		const status = await $({ cwd: repoRoot })`git status --porcelain -- ${surface.file}`.quiet()
+		const changed = status.stdout.trim().length > 0
 
 		process.stderr.write(`${changed ? "changed  " : "unchanged"} ${surface.file}\n`)
 	}

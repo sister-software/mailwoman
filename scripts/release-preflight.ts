@@ -78,7 +78,7 @@ async function releasePreflight(): Promise<void> {
 
 	// 2. Stage + materialize + audit.
 	process.stderr.write(`staging tracked tree → ${stagingRoot}\n`)
-	stageReleaseTree(repoRoot, stagingRoot)
+	await stageReleaseTree(repoRoot, stagingRoot)
 	await copyWeights(stagingRoot)
 
 	const results = auditStagedWorkspaces(stagingRoot, releaseWorkspaces(repoRoot))

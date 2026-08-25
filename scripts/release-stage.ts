@@ -18,11 +18,11 @@
  *   sibling version exactly as the publish path does.
  */
 
-import { execFileSync } from "node:child_process"
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "node:fs"
 import { join, resolve } from "node:path"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { $ } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
 import { verifyTarball } from "./verify-tarball.ts"
@@ -101,14 +101,11 @@ export function checkReleaseListIdentity(repoRoot: string): ReleaseListIdentity 
  *
  * The caller owns `stagingRoot`'s lifecycle; an existing tree at that path is replaced.
  */
-export function stageReleaseTree(repoRoot: string, stagingRoot: string): void {
+export async function stageReleaseTree(repoRoot: string, stagingRoot: string): Promise<void> {
 	rmSync(stagingRoot, { recursive: true, force: true })
 	mkdirSync(stagingRoot, { recursive: true })
 
-	execFileSync("bash", ["-c", `git archive HEAD | tar -x -C ${JSON.stringify(stagingRoot)}`], {
-		cwd: repoRoot,
-		stdio: "pipe",
-	})
+	await $({ cwd: repoRoot })`git archive HEAD`.pipe($`tar -x -C ${stagingRoot}`)
 
 	for (const workspace of releaseWorkspaces(repoRoot)) {
 		const compiled = resolve(repoRoot, workspace, "out")

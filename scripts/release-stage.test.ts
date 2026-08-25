@@ -7,13 +7,13 @@
  *   `@mailwoman/corpus` class) and a declared file never materialized (the `@mailwoman/neural-weights-en-au` class).
  */
 
-import { execFileSync } from "node:child_process"
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
+import { $ } from "zx"
 
 import { checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "./release-stage.ts"
 import { verifyTarball } from "./verify-tarball.ts"
@@ -72,7 +72,11 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 
 		const tarball = join(dir, "fixture.tgz")
 
-		execFileSync("tar", ["czf", tarball, "-C", dir, "package"], { stdio: "pipe" })
+		const packed = $.sync({ nothrow: true })`tar czf ${tarball} -C ${dir} package`
+
+		if (packed.exitCode !== 0) {
+			throw new Error(`tar czf failed: ${packed.stderr}`)
+		}
 
 		return tarball
 	}
