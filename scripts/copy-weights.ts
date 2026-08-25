@@ -231,7 +231,12 @@ async function exists(path: PathLike) {
 	}
 }
 
-async function main() {
+/**
+ * Materialize every weights workspace's binaries and evidence artifacts under `destRoot` — the source checkout by
+ * default (the release path), or a #1894 preflight's staging tree. Sources always resolve against THIS checkout's data
+ * root and release.config.json; only destinations move.
+ */
+export async function copyWeights(destRoot: string = repoRoot) {
 	// CI release workflow sets MAILWOMAN_SKIP_WEIGHTS_COPY=1 when release_weights
 	// input is false (the default). Weights binaries live at /mnt/playpen on the
 	// operator's host and aren't fetchable from CI; the workflow excludes the
@@ -252,7 +257,7 @@ async function main() {
 	}
 
 	for (const workspace of TARGETS) {
-		const dir = resolve(repoRoot, workspace)
+		const dir = resolve(destRoot, workspace)
 		await mkdir(dir, { recursive: true })
 		const modelDest = resolve(dir, "model.onnx")
 		const tokenizerDest = resolve(dir, "tokenizer.model")
@@ -514,4 +519,4 @@ async function removeIfPresent(path: PathLike) {
 	}
 }
 
-runIfScript(import.meta, main)
+runIfScript(import.meta, copyWeights)
