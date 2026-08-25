@@ -26,9 +26,10 @@ import type { ComponentTag } from "@mailwoman/core/types"
 
 /**
  * One provider match on the wire — the snake_case projection of {@link AuthoritativeMatch}, field for field. Absent
- * fields were absent from the provider's answer; nothing is defaulted in.
+ * fields were absent from the provider's answer; nothing is defaulted in. Unexported: consumers reach it as
+ * `AuthoritativeAssertion["matches"]`, and the export-hygiene guard holds the surface to actual importers.
  */
-export interface AuthoritativeAssertionMatch {
+interface AuthoritativeAssertionMatch {
 	provider_place_id: string
 	object_ids?: Record<string, string>
 	canonical_fields?: Record<string, string>
