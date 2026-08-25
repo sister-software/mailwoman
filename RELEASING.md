@@ -70,6 +70,23 @@ checkout. Measured 2026-08-25: 51/51 packed and audited in 37.4 s.
 `--source hf --version <model-card version>` (the CI fetch recipe as typed code) is the next phase
 of #1894; the flag currently names its own absence.
 
+## Admin merges — the one sanctioned bypass
+
+Branch protection requires a green `test` run, and `gh pr merge --admin` bypasses it. Four PRs
+merged that way on 2026-08-24 and two board rows shipped with stale pins that surfaced a day later
+on the first branch that ran the suite. The bypass stays available for slow-fleet nights, through
+exactly one route:
+
+```bash
+node scripts/merge-admin.ts <pr-number> [--method merge|squash|rebase]
+```
+
+It verifies the local checkout is at the PR's head, runs the sub-second guards relevant to the
+changed paths (today: the board-pin check for anything touching the gauntlet cases, loader, or pin
+test), prints which checks ran, and refuses to merge over a failure. A bare `gh pr merge --admin`
+is not a sanctioned route. The `Board Pins` workflow is the backstop: path-filtered on PRs and main
+pushes, plus a daily audit that opens one deduplicated issue on a stale pin reaching `main`.
+
 ## Pre-ship gate — the Gauntlet
 
 Before shipping a model (or any change that can move a coordinate), run the full-pipeline integration gate.
