@@ -142,7 +142,8 @@ export function lookupFST(
 		const raw = fst.accepting(match.stateID)
 
 		const collapsed = collapseFSTBias(
-			raw.map((e) => ({ placetype: e.placetype, importance: e.referential ?? e.importance ?? 0 }))
+			raw.map((e) => ({ placetype: e.placetype, importance: e.referential ?? e.importance ?? 0 })),
+			normalizeTokens(query)
 		)
 
 		const entries = [...collapsed].map(([tag, importance]) => ({ tag, importance, fires: importance > 0 }))
