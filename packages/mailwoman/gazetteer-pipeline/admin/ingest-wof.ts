@@ -18,6 +18,8 @@ import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whoson
 import FastGlob from "fast-glob"
 import { parallelMap } from "spliterator"
 
+import { choosePoint, type GeoNamesAnchorLookup, type PointChoice } from "./label-point-adjudicator.ts"
+
 /**
  * Arity of a 2D bounding box: `[west, south, east, north]`.
  */
@@ -73,10 +75,15 @@ interface ParsedFeature {
 	isSuperseding: number
 	lastmodified: number
 	concordances: Record<string, string | number>
+	pointChoice?: PointChoice
 	names: Array<{ name: string; language: string; privateuse: string; official: number }>
 }
 
-function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeature | null {
+function parseFeature(
+	text: string,
+	placetypes: ReadonlySet<string>,
+	anchorLookup?: GeoNamesAnchorLookup
+): ParsedFeature | null {
 	// Typed against the schema `@mailwoman/core/resources/whosonfirst` already owns (`WOFFeature`/`WOFProperties`,
 	// admin.ts) rather than reading `any`. This file used to name all seventeen `wof:`/`geom:`/`edtf:`/`mz:` keys as
 	// bare strings, which meant a typo — `wof:superceded_by` — would have compiled, read `undefined`, and silently
@@ -101,14 +108,36 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 	// off the mainland entirely (France's geom: point is in Spain; lbl: is metropolitan France). Both coordinates are
 	// taken from the SAME source or neither: a lbl:latitude paired with a geom:longitude would be a point on neither
 	// centroid.
+	//
+	// The label point carries its own upstream defects (#1905: WOF's lbl: for Washington DC is 7.8 km out), so when
+	// BOTH pairs exist and disagree widely, the record's GeoNames concordance adjudicates — see choosePoint's rule
+	// and the census in label-point-adjudicator.ts. No anchor, no disagreement, or no decisive separation → the
+	// label preference, byte-identical to before.
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
-	const lat = hasLbl ? props["lbl:latitude"]! : typeof props["geom:latitude"] === "number" ? props["geom:latitude"] : 0
+	const hasGeom = typeof props["geom:latitude"] === "number" && typeof props["geom:longitude"] === "number"
 
-	const lon = hasLbl
-		? props["lbl:longitude"]!
-		: typeof props["geom:longitude"] === "number"
-			? props["geom:longitude"]
-			: 0
+	let lat = hasLbl ? props["lbl:latitude"]! : hasGeom ? props["geom:latitude"]! : 0
+	let lon = hasLbl ? props["lbl:longitude"]! : hasGeom ? props["geom:longitude"]! : 0
+	let pointChoice: PointChoice | undefined
+
+	// Settlement records only: a GeoNames LOCALITY anchor marks the urban seat, but its records for
+	// regions/counties are centroids, so consulting them there re-imports the very defect class this
+	// exists to fix (measured: the anchor moved the Texas region 172 km off its label placement).
+	// The census the rule is sized against is locality-scoped; so is the gate.
+	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
+		const gnID = props["wof:concordances"]?.["gn:id"]
+		const anchor = gnID !== undefined && props["wof:country"] ? anchorLookup(props["wof:country"], gnID) : undefined
+
+		const chosen = choosePoint(
+			{ latitude: props["geom:latitude"]!, longitude: props["geom:longitude"]! },
+			{ latitude: props["lbl:latitude"]!, longitude: props["lbl:longitude"]! },
+			anchor
+		)
+
+		lat = chosen.latitude
+		lon = chosen.longitude
+		pointChoice = chosen.choice
+	}
 
 	// WOF `geom:bbox` is "minLon,minLat,maxLon,maxLat". Fall back to the centroid (a point bbox) when
 	// absent — still correct for point-in-box proximity, the resolver's main bbox use.
@@ -165,6 +194,7 @@ function parseFeature(text: string, placetypes: ReadonlySet<string>): ParsedFeat
 		isSuperseding: (props["wof:supersedes"]?.length ?? 0) > 0 ? 1 : 0,
 		lastmodified: typeof props["wof:lastmodified"] === "number" ? props["wof:lastmodified"] : 0,
 		concordances: props["wof:concordances"] ?? {},
+		...(pointChoice ? { pointChoice } : {}),
 		names,
 	}
 }
@@ -190,12 +220,23 @@ export interface IngestWOFOptions {
 	 * Progress callback — invoked every 25,000 processed files.
 	 */
 	onProgress?: (processed: number, skipped: number, total: number) => void
+	/**
+	 * GeoNames anchor lookup for the label-point adjudication (#1905) — see `label-point-adjudicator.ts`. Absent = the
+	 * plain label preference, byte-identical to a build before the adjudicator existed.
+	 */
+	anchorLookup?: GeoNamesAnchorLookup
 }
 
 export interface IngestWOFResult {
 	filesFound: number
 	placesIngested: number
 	skipped: number
+	/**
+	 * Records whose stored point is the GEOMETRIC centroid because the GeoNames anchor overrode the label preference
+	 * (`choice === "geom-by-anchor"`). Zero with no anchor lookup configured; a build that expected the adjudicator to
+	 * run reads this instead of assuming.
+	 */
+	labelPointOverrides: number
 }
 
 /**
@@ -237,6 +278,7 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 
 	let processed = 0
 	let skipped = 0
+	let labelPointOverrides = 0
 	let inTransaction = false
 
 	const beginIfNeeded = () => {
@@ -256,12 +298,16 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 	const readResults = parallelMap(filePaths, (filePath) => readFile(filePath, "utf8"), { concurrency })
 
 	for await (const text of readResults) {
-		const feature = parseFeature(text, placetypes)
+		const feature = parseFeature(text, placetypes, opts.anchorLookup)
 
 		if (!feature) {
 			skipped++
 
 			continue
+		}
+
+		if (feature.pointChoice === "geom-by-anchor") {
+			labelPointOverrides++
 		}
 
 		beginIfNeeded()
@@ -317,5 +363,5 @@ export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promi
 
 	commitIfNeeded(true)
 
-	return { filesFound: filePaths.length, placesIngested: processed, skipped }
+	return { filesFound: filePaths.length, placesIngested: processed, skipped, labelPointOverrides }
 }
