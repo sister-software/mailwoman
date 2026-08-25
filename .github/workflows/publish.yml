@@ -342,8 +342,8 @@ jobs:
           $CURL "${BASE}/street-type-lexicon-v3.json" -o packages/neural-weights-en-us/street-type-lexicon-v3.json
           $CURL "${BASE}/locality-surface-lexicon-v7.json" -o packages/neural-weights-en-us/locality-surface-lexicon-v7.json
           for ws in neural-weights-fr-fr neural-weights-en-gb neural-weights-en-nz; do
-            cp packages/neural-weights-en-us/street-type-lexicon-v3.json "$ws/street-type-lexicon-v3.json"
-            cp packages/neural-weights-en-us/locality-surface-lexicon-v7.json "$ws/locality-surface-lexicon-v7.json"
+            cp packages/neural-weights-en-us/street-type-lexicon-v3.json "packages/$ws/street-type-lexicon-v3.json"
+            cp packages/neural-weights-en-us/locality-surface-lexicon-v7.json "packages/$ws/locality-surface-lexicon-v7.json"
           done
           # fr-fr, en-gb, and en-nz share the en-us model for now (locale-specific weights are future work).
           cp packages/neural-weights-en-us/model.onnx packages/neural-weights-fr-fr/model.onnx
