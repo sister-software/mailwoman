@@ -17,6 +17,7 @@
  *   the strata, the provenance block. A number that differs between the paths differs because the measurement does.
  */
 
+import { execFileSync } from "node:child_process"
 import { randomUUID } from "node:crypto"
 
 import { formatPercent } from "@mailwoman/core/utils"
@@ -43,7 +44,7 @@ import {
 	resolveGradeMode,
 	withheldVerdict,
 } from "./compare-helpers.ts"
-import { crossEngineReading } from "./confound.ts"
+import { crossEngineReading, worktreePairReading, type WorktreeTreeDelta } from "./confound.ts"
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
 import {
@@ -723,7 +724,15 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		...(set.populationN === undefined ? {} : { populationN: set.populationN }),
 	})
 
-	const confounds = crossEngineReading(armLabel(armA), armLabel(armB), options.declared)
+	const confounds =
+		armA.kind === "worktree" && armB.kind === "worktree"
+			? worktreePairReading(
+					armLabel(armA),
+					armLabel(armB),
+					options.declared,
+					worktreeTreeDelta(registry.repoRoot, runnerA.provenance, runnerB.provenance)
+				)
+			: crossEngineReading(armLabel(armA), armLabel(armB), options.declared)
 
 	const noResult = {
 		a: rows.filter((row) => row.a.lat === null).length,
@@ -959,4 +968,41 @@ function stratumValue(row: GeoRow, by: StratumKey): string {
 	if (by === "address_kind") return row.address_kind ?? "unknown"
 
 	return row.status ?? "unknown"
+}
+
+/**
+ * Measure what separates two worktree arms' trees, from the commits their provenance names. Answers `null` — the
+ * unbounded cross-engine wording — when either commit is dirty (`+dirty`: the tree is not reproducible from the sha, so
+ * a diff against the sha under-counts it) or when git refuses the range (a sha from a since-pruned worktree).
+ */
+function worktreeTreeDelta(
+	repoRoot: string,
+	provenanceA: Record<string, unknown>,
+	provenanceB: Record<string, unknown>
+): WorktreeTreeDelta | null {
+	const commitA = typeof provenanceA["commit"] === "string" ? provenanceA["commit"] : null
+	const commitB = typeof provenanceB["commit"] === "string" ? provenanceB["commit"] : null
+
+	if (!commitA || !commitB || commitA.endsWith("+dirty") || commitB.endsWith("+dirty")) return null
+
+	try {
+		const commits = Number(
+			execFileSync("git", ["rev-list", "--count", `${commitA}...${commitB}`], {
+				cwd: repoRoot,
+				encoding: "utf8",
+			}).trim()
+		)
+
+		const diff = execFileSync("git", ["diff", "--name-only", commitA, commitB], {
+			cwd: repoRoot,
+			encoding: "utf8",
+		}).trim()
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One `git diff --name-only` between two commits: bounded, and only the count is read.
+		const files = diff ? diff.split("\n").length : 0
+
+		return { commits, files, range: `${commitA.slice(0, 12)} ${commitB.slice(0, 12)}` }
+	} catch {
+		return null
+	}
 }

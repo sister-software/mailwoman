@@ -170,6 +170,52 @@ export function crossEngineReading(armA: string, armB: string, declared: string[
 }
 
 /**
+ * The measured source difference between two worktree arms: what `git rev-list --count` and `git diff --name-only` say
+ * separates the two commits. `range` is the exact ref pair the numbers came from, so the warning is re-runnable.
+ */
+export interface WorktreeTreeDelta {
+	commits: number
+	files: number
+	range: string
+}
+
+/**
+ * The reading for a comparison whose two arms are BOTH worktree arms with clean commits.
+ *
+ * {@link crossEngineReading}'s "different geocoders over different indexes" is written for Pelias-vs-mailwoman, where
+ * nothing in either arm's provenance can bound the difference. A worktree pair is the opposite case: both arms name a
+ * commit, so the tool can MEASURE what separates them and say it, instead of disclaiming an attribution the caller set
+ * the comparison up to make. The isolation verdict stays {@link VariableIsolation.CrossEngine} — the config-key checker
+ * still has nothing to check across two processes — but the warning carries the bounded surface: every difference lives
+ * inside the named commits, and a reader can `git diff` the printed range.
+ *
+ * `delta: null` means a commit was dirty (`+dirty` suffix) or the git probe failed — the unbounded wording applies and
+ * the runner's own not-reproducible caveat stands beside it.
+ */
+export function worktreePairReading(
+	armA: string,
+	armB: string,
+	declared: string[],
+	delta: WorktreeTreeDelta | null
+): ConfoundReading {
+	if (!delta) return crossEngineReading(armA, armB, declared)
+
+	return {
+		variable_isolation: VariableIsolation.CrossEngine,
+		variable_effective: ["engine"],
+		declared: [...declared].toSorted(),
+		declared_but_unmoved: [],
+		moved_but_undeclared: declared.includes("engine") ? [] : ["engine"],
+		warnings: [
+			`${armA} and ${armB} ran different source trees in separate processes. Measured delta: ${delta.commits} ` +
+				`commit${delta.commits === 1 ? "" : "s"} touching ${delta.files} file${delta.files === 1 ? "" : "s"} ` +
+				`(git diff ${delta.range}). Everything in those commits is inside this comparison — the attribution is ` +
+				"exactly as narrow as that diff, no narrower.",
+		],
+	}
+}
+
+/**
  * Fields that must never be compared across backends, with the reason.
  *
  * `resolver_score` is bm25-derived on FTS (≈19–41) and population-derived on the candidate table (≈5–7), so a

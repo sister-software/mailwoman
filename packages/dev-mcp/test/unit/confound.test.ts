@@ -4,7 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import { assertComparableField, VariableIsolation, checkConfounds } from "@mailwoman/dev-mcp/confound"
+import {
+	assertComparableField,
+	VariableIsolation,
+	checkConfounds,
+	worktreePairReading,
+} from "@mailwoman/dev-mcp/confound"
 import { describe, expect, it } from "vitest"
 
 describe("checkConfounds", () => {
@@ -102,5 +107,27 @@ describe("the declared vocabulary", () => {
 
 		expect(reading.variable_isolation).toBe("ambiguous")
 		expect(reading.moved_but_undeclared).toEqual(["countryScope"])
+	})
+})
+
+describe("worktreePairReading", () => {
+	it("states the measured tree delta instead of the unbounded cross-engine wording", () => {
+		const reading = worktreePairReading("worktree:main", "worktree:fix", ["capital_tier"], {
+			commits: 1,
+			files: 9,
+			range: "3e6a3bf75041 643c92b7787b",
+		})
+
+		expect(reading.variable_isolation).toBe("cross_engine")
+		expect(reading.warnings).toHaveLength(1)
+		expect(reading.warnings[0]).toContain("1 commit touching 9 files")
+		expect(reading.warnings[0]).toContain("git diff 3e6a3bf75041 643c92b7787b")
+		expect(reading.warnings[0]).not.toContain("different geocoders")
+	})
+
+	it("falls back to the unbounded wording when the delta could not be measured", () => {
+		const reading = worktreePairReading("worktree:main", "worktree:WORKTREE", [], null)
+
+		expect(reading.warnings[0]).toContain("different geocoders over different indexes")
 	})
 })
