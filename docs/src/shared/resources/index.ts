@@ -241,7 +241,7 @@ export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
  * Cache-Control means a fresh DB needs a fresh URL). See RELEASING.md "Rebuilding + swapping the canonical admin
  * gazetteer".
  */
-export const ADMIN_GAZETTEER_VERSION = "2026-08-25a"
+export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
 
 /**
  * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~1.39 GB; US + intl postcodes + the GeoNames fold

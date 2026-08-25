@@ -224,10 +224,10 @@ export const BUNDLES: Record<string, DataBundle> = {
 			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries (~2.88 GB).",
 		artifacts: [
 			{
-				remotePath: "gazetteer/2026-08-25a/candidate.db",
+				remotePath: "gazetteer/2026-08-25b/candidate.db",
 				localPath: "wof/candidate.db",
 				md5Sidecar: false,
-				approxBytes: 2_880_929_792,
+				approxBytes: 2_880_921_600,
 			},
 		],
 	},
