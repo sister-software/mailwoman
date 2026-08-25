@@ -82,15 +82,27 @@ function isShipped(entry: string, shipped: Set<string>): boolean {
 }
 
 /**
- * Which literal `files` entries the tarball does not contain. Exported for tests.
+ * A manifest's LITERAL `files` entries — the ones whose author is stating a file exists, with the globs and the
+ * `!`-negations dropped.
+ *
+ * Shared with `fetch-hf-weights.ts`, which materializes exactly the entries this audit later refuses a publish over.
+ * Sharing the predicate rather than restating it is what keeps the two from disagreeing about what counts as a promise:
+ * a materializer with a looser rule stages files nothing checks, and one with a stricter rule leaves a declared
+ * artifact for the audit to find at publish time.
  */
-export function collectMissingFileEntries(files: unknown, shipped: Set<string>): string[] {
+export function literalFilesEntries(files: unknown): string[] {
 	if (!Array.isArray(files)) return []
 
 	return files
 		.filter((entry): entry is string => typeof entry === "string")
 		.filter((entry) => !entry.startsWith("!") && !GLOB_PATTERN.test(entry))
-		.filter((entry) => !isShipped(normalizeEntry(entry), shipped))
+}
+
+/**
+ * Which literal `files` entries the tarball does not contain. Exported for tests.
+ */
+export function collectMissingFileEntries(files: unknown, shipped: Set<string>): string[] {
+	return literalFilesEntries(files).filter((entry) => !isShipped(normalizeEntry(entry), shipped))
 }
 
 /**

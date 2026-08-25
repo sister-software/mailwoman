@@ -11,10 +11,12 @@
  *   every tracked file byte-identical because nothing ever writes into the checkout (see
  *   `release-stage.ts` for why staging, not try/finally, is the mechanism).
  *
- *   `--source repo` (the default, and the only mode this phase implements) materializes weights from
- *   the machine's data root via the SAME `copyWeights` recipe the release path runs — pointed at the
- *   staging tree instead of the checkout. `--source hf` (the CI recipe as typed code) is the next
- *   phase of #1894; until it lands, the flag names its own absence rather than half-running.
+ *   Two sources, one audit. `--source repo` (the default) materializes weights from the machine's data
+ *   root via the SAME `copyWeights` recipe the release path runs; `--source hf` reads the public
+ *   Hugging Face bucket via the SAME `fetchHFWeights` recipe the publish workflow runs. Both are
+ *   pointed at the staging tree instead of the checkout, and both hand the identical tree to the
+ *   identical audit — that sharing is the point. `--source hf` needs no credentials and reads the
+ *   version from the base package's model card unless `--version` names another.
  */
 
 import { mkdtempSync, rmSync } from "node:fs"
@@ -26,6 +28,7 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
 
 import { copyWeights } from "./copy-weights.ts"
+import { fetchHFWeights, reportHFMaterialization } from "./fetch-hf-weights.ts"
 import {
 	auditStagedWorkspaces,
 	checkReleaseListIdentity,
@@ -33,20 +36,38 @@ import {
 	stageReleaseTree,
 } from "./release-stage.ts"
 
+/**
+ * Where the staged weights artifacts come from. `repo` reads this machine's data root, `hf` reads the public bucket CI
+ * publishes from.
+ */
+const WEIGHTS_SOURCES = ["repo", "hf"] as const
+
+type WeightsSource = (typeof WEIGHTS_SOURCES)[number]
+
+function assertWeightsSource(source: string): asserts source is WeightsSource {
+	if (!(WEIGHTS_SOURCES as readonly string[]).includes(source)) {
+		throw new Error(
+			`--source ${JSON.stringify(source)} is not a weights source — expected one of: ${WEIGHTS_SOURCES.join(", ")}.`
+		)
+	}
+}
+
 async function releasePreflight(): Promise<void> {
 	const { values } = parseArgs({
 		options: {
 			source: { type: "string", default: "repo" },
+			version: { type: "string" },
 			staging: { type: "string" },
 			keep: { type: "boolean", default: false },
 		},
 	})
 
-	if (values.source !== "repo") {
-		throw new Error(
-			`--source ${JSON.stringify(values.source)} is not implemented yet — this phase of #1894 ships repo mode; ` +
-				"the hf mode (the CI fetch recipe as typed code) is the next phase."
-		)
+	const source = values.source ?? "repo"
+
+	assertWeightsSource(source)
+
+	if (source === "repo" && values.version) {
+		throw new Error("--version names a Hugging Face bucket directory and applies to --source hf only.")
 	}
 
 	const startedAt = performance.now()
@@ -76,10 +97,21 @@ async function releasePreflight(): Promise<void> {
 
 	process.stderr.write(`release list: ${identity.publishCount} workspaces\n`)
 
-	// 2. Stage + materialize + audit.
+	// 2. Stage + materialize + audit. Both sources write into the staging tree ONLY, so the two legs differ
+	// in where the bytes come from and in nothing the audit can see.
 	process.stderr.write(`staging tracked tree → ${stagingRoot}\n`)
 	await stageReleaseTree(repoRoot, stagingRoot)
-	await copyWeights(stagingRoot)
+
+	if (source === "repo") {
+		await copyWeights(stagingRoot)
+	} else {
+		const materialization = await fetchHFWeights(stagingRoot, {
+			repoRoot,
+			...(values.version ? { version: values.version } : {}),
+		})
+
+		reportHFMaterialization(materialization)
+	}
 
 	const results = auditStagedWorkspaces(stagingRoot, releaseWorkspaces(repoRoot))
 	const failed = results.filter((result) => !result.ok)
@@ -109,8 +141,9 @@ async function releasePreflight(): Promise<void> {
 	const verdict = identityProblems.length === 0 && failed.length === 0
 
 	process.stderr.write(
-		`${verdict ? "PASS" : "FAIL"}: ${results.length - failed.length}/${results.length} workspaces packed and ` +
-			`audited${identityProblems.length ? `, ${identityProblems.length} release-list problem(s)` : ""} in ${elapsed}s\n`
+		`${verdict ? "PASS" : "FAIL"} (--source ${source}): ${results.length - failed.length}/${results.length} workspaces ` +
+			`packed and audited${identityProblems.length ? `, ${identityProblems.length} release-list problem(s)` : ""} in ` +
+			`${elapsed}s\n`
 	)
 
 	if (!verdict) {
