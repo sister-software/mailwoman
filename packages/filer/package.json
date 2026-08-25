@@ -183,9 +183,9 @@
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
-		"kysely": "^0.29.4",
-		"read-excel-file": "^9.3.5",
-		"spliterator": "^6.2.0",
+		"kysely": "^0.29.5",
+		"read-excel-file": "^9.3.10",
+		"spliterator": "^6.3.0",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {
