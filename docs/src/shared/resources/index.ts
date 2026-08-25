@@ -244,14 +244,13 @@ export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
 export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
 
 /**
- * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~1.39 GB; US + intl postcodes + the GeoNames fold
- * grown to 244 countries by the #266 village-level + #267 admin-hierarchy coverage expansion as of 2026-06-30a) — the
- * single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` AND the full-DB FTS. A resolve
- * touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full DB), with GLOBAL coverage and no
- * `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted ONLY on an exact-name
- * miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched. Resolved by
- * {@link WOFCandidateTableLookup} (build-candidate.ts). Hosted at `mailwoman/gazetteer/<date>/candidate.db`,
- * version-independent like the street shards.
+ * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~2.88 GB; US + intl postcodes + the GeoNames fold
+ * across 244 countries) — the single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` AND the
+ * full-DB FTS. A resolve touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full DB), with
+ * GLOBAL coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted
+ * ONLY on an exact-name miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched.
+ * Resolved by {@link WOFCandidateTableLookup} (build-candidate.ts). Hosted at
+ * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street shards.
  */
 export function adminGazetteerURL(): string {
 	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
