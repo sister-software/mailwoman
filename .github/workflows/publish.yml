@@ -135,6 +135,15 @@ jobs:
           yarn oxfmt package.json '**/package.json'
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
 
+      # The man page embeds the release version in its .TH line, so EVERY bump stales it — v9.2.0's
+      # release PR failed its test run on exactly that and needed a manual regeneration push (#1891).
+      # Compile first: the generators spawn the compiled CLI, and a clean checkout has no out/ to
+      # trust. Runs on dry runs too, so the dry-run diff below shows the generated surfaces.
+      - name: Compile + regenerate version-stamped surfaces
+        run: | # shell
+          yarn compile
+          node scripts/release-generated-surfaces.ts
+
       - name: "Dry run: show the bump and stop"
         if: ${{ inputs.dry_run }}
         run: | # shell
@@ -160,7 +169,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "${BRANCH}"
-          git add package.json '*/package.json'
+          # The explicit release allowlist (#1891): version-bearing manifests + the generated
+          # surfaces the bump stales. Anything else dirty is a fault to surface, never to ship —
+          # a release commit that silently carries an unexpected file is how drift hides.
+          git add package.json '*/package.json' release.config.json \
+            packages/mailwoman/man/mailwoman.1 docs/articles/developers/reference/cli.mdx
+          UNEXPECTED=$(git status --porcelain --untracked-files=no | grep -v '^[AMDR]' || true)
+          if [ -n "${UNEXPECTED}" ]; then
+            echo "::error::changed files outside the release allowlist — refusing to commit them silently:"
+            echo "${UNEXPECTED}"
+            exit 1
+          fi
           git commit -m "release: v${VERSION}"
           # Push with the same identity that opens the PR (the PAT when present) — a PAT-authored
           # PR whose branch was pushed by the bot still counts the pusher as the triggering actor

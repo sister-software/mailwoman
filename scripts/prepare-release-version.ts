@@ -35,6 +35,8 @@ import { parseArgs } from "node:util"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import semver from "semver"
 
+import { bumpReleaseConfigVersion } from "./release-config-version.ts"
+
 const { values } = parseArgs({
 	options: {
 		version: { type: "string" },
@@ -113,13 +115,33 @@ for (const { path, manifest } of parsed) {
 	}
 }
 
+// `release.config.json#version` carries the SAME unified release number (RELEASING.md, its own $comment) and
+// lagged two releases running (#1024, then v9.2.0 shipping while it read 9.1.0) because nothing bumped it. It is
+// validated with the sync set but written by a one-line textual replacement — the file is oxfmt-formatted, and
+// the stringify write path used for the manifests would reformat it wholesale, moving the `weights` block a
+// code-only release must never touch (release-config-bump.test.ts pins the exact-one-line contract).
+const releaseConfigPath = resolve(repoRoot, "release.config.json")
+const releaseConfigText = readFileSync(releaseConfigPath, "utf8")
+const releaseConfig = parseJSONStrict<{ version?: string }>(releaseConfigText)
+
+if (releaseConfig.version !== rootManifest.version) {
+	fail(
+		`release.config.json is at ${String(releaseConfig.version)} but the root is at ${rootManifest.version} — ` +
+			`the tree is not version-synced; refusing to bump on top of drift`
+	)
+}
+
 if (!values["check-only"]) {
 	for (const { path, manifest } of parsed) {
 		manifest.version = targetVersion
 		writeFileSync(path, `${JSON.stringify(manifest, null, "\t")}\n`)
 	}
 
-	console.log(`bumped ${parsed.length} manifests (root + ${workspaces.length} workspaces) to ${targetVersion}`)
+	writeFileSync(releaseConfigPath, bumpReleaseConfigVersion(releaseConfigText, rootManifest.version, targetVersion))
+
+	console.log(
+		`bumped ${parsed.length + 1} version-bearing files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`
+	)
 }
 
 console.log(`RESOLVED_VERSION=${targetVersion}`)
