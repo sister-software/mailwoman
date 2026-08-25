@@ -87,13 +87,32 @@ export const NominatimFeatureCollectionSchema = z
 	.openapi("NominatimFeatureCollection")
 
 /**
- * The `/status` payload.
+ * One database the deployment is serving from, and what its embedded `layer_manifest` says about it. `manifest:
+ * "absent"` is an artifact built before the layer contract — it is listed rather than dropped, so a reader can tell an
+ * unstamped artifact from one nobody opened.
+ */
+const NominatimStatusArtifactSchema = z
+	.object({
+		name: z.string(),
+		path: z.string(),
+		manifest: z.enum(["present", "absent", "unreadable"]),
+		reason: z.string().optional(),
+		built: z.string().optional(),
+		version: z.string().optional(),
+		sources: z.array(z.string()).optional(),
+	})
+	.openapi("NominatimStatusArtifact")
+
+/**
+ * The `/status` payload. `mailwoman` is a native extension block — upstream Nominatim has no equivalent, and a client
+ * that does not know it ignores it.
  */
 export const NominatimStatusSchema = z
 	.object({
 		status: z.number(),
 		message: z.string(),
 		data_updated: z.string().optional(),
+		mailwoman: z.object({ artifacts: z.array(NominatimStatusArtifactSchema) }).optional(),
 	})
 	.openapi("NominatimStatus")
 

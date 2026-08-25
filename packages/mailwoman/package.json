@@ -292,6 +292,11 @@
 			"default": "./out/data-inventory.js",
 			"types": "./out/data-inventory.d.ts"
 		},
+		"./freshness": {
+			"node": "./freshness.ts",
+			"default": "./out/freshness.js",
+			"types": "./out/freshness.d.ts"
+		},
 		"./fork-entity": {
 			"node": "./fork-entity.ts",
 			"default": "./out/fork-entity.js",
