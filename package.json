@@ -103,6 +103,7 @@
 		"health:manifests": "sherif -i @duckdb/node-api -i @types/node",
 		"health:test-contract": "node scripts/verify-test-contract.ts",
 		"prepare": "husky",
+		"release:preflight": "node scripts/release-preflight.ts",
 		"release": "release-it",
 		"test": "vitest",
 		"test:coverage": "vitest --coverage",

@@ -49,6 +49,27 @@ This will:
 
 Inspect the output. If it looks wrong, fix and re-run.
 
+## Release preflight — pack and audit all 51 tarballs without publishing (#1894)
+
+The v9.2.0 cut needed four publish dispatches because nothing could exercise the release tree the
+way CI publishes it without a tag or a registry write. This can:
+
+```bash
+yarn compile                # the audit packs compiled out/ trees
+yarn release:preflight      # --source repo; add --keep or --staging <dir> to inspect the tree
+```
+
+It stages the TRACKED tree (`git archive`) into an isolated root, materializes the weights
+artifacts there via the same `copyWeights` recipe the release runs, then packs and audits every
+`.release-it.json` workspace with the exact `packWorkspaceForPublish` + `verifyTarball` path the
+publish workflow uses — collecting every failure in one sweep, plus the named-absence identity
+(root workspaces minus the release list must equal the six sanctioned absences by name; see
+`scripts/release-stage.ts`). Zero git/GitHub/npm/R2/HF writes; an interrupted run cannot dirty the
+checkout. Measured 2026-08-25: 51/51 packed and audited in 37.4 s.
+
+`--source hf --version <model-card version>` (the CI fetch recipe as typed code) is the next phase
+of #1894; the flag currently names its own absence.
+
 ## Admin merges — the one sanctioned bypass
 
 Branch protection requires a green `test` run, and `gh pr merge --admin` bypasses it. Four PRs

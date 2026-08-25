@@ -58,10 +58,12 @@ type ClientSurface = (typeof CLIENT_SURFACES)[number]
 const FLAVORS = ["3.1", "3.0"] as const
 
 /**
- * Every surface's compiled CLI entry point, relative to the repo root — the emitters this pipeline shells out to.
+ * Every surface's compiled CLI entry point — the emitters this pipeline shells out to. Resolved through
+ * `workspacePath`, never by treating the workspace name as a repo-root segment: that shape pointed at the pre-regroup
+ * layout and read every emitter as missing after a clean, successful compile.
  */
-function emitterCLIPath(surface: ClientSurface): string {
-	return repoRootPath(surface, "out", "cli.js")
+export function emitterCLIPath(surface: ClientSurface): string {
+	return workspacePath(surface, "out", "cli.js")
 }
 
 /**

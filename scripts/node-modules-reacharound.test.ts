@@ -81,6 +81,10 @@ const ALLOWED: Record<string, string> = {
 	// makes the cache rung's test independent of the helper it is exercising.
 	"packages/neural/test/integration/weights-overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
+	// LINKS the checkout's node_modules into the staging tree rather than reading a package's layout — `yarn pack`
+	// needs the project context there, and the link target is the checkout root's own directory, not another
+	// package's install dir. Same principle as worktree-arm: nothing package-owned is being addressed by hand.
+	"scripts/release-stage.ts": "symlinks the checkout's node_modules into the staging tree; not a package lookup",
 }
 
 /**
