@@ -22,6 +22,8 @@
  *   survives the relay; a refusal only helps if the agent stays inside the tool.
  */
 
+import { execFileSync } from "node:child_process"
+
 import { effectiveKeyFor } from "./engine-registry.ts"
 
 /**
@@ -232,5 +234,42 @@ export function assertComparableField(field: string): void {
 				`(bm25 ≈19–41 on FTS, population ≈5–7 on candidate), and within either backend the wrong answers' range ` +
 				`sits inside the correct answers' range with a higher mean. There is no threshold on it that means anything.`
 		)
+	}
+}
+
+/**
+ * Measure what separates two worktree arms' trees, from the commits their provenance names. Answers `null` — the
+ * unbounded cross-engine wording — when either commit is dirty (`+dirty`: the tree is not reproducible from the sha, so
+ * a diff against the sha under-counts it) or when git refuses the range (a sha from a since-pruned worktree).
+ */
+export function worktreeTreeDelta(
+	repoRoot: string,
+	provenanceA: Record<string, unknown>,
+	provenanceB: Record<string, unknown>
+): WorktreeTreeDelta | null {
+	const commitA = typeof provenanceA["commit"] === "string" ? provenanceA["commit"] : null
+	const commitB = typeof provenanceB["commit"] === "string" ? provenanceB["commit"] : null
+
+	if (!commitA || !commitB || commitA.endsWith("+dirty") || commitB.endsWith("+dirty")) return null
+
+	try {
+		const commits = Number(
+			execFileSync("git", ["rev-list", "--count", `${commitA}...${commitB}`], {
+				cwd: repoRoot,
+				encoding: "utf8",
+			}).trim()
+		)
+
+		const diff = execFileSync("git", ["diff", "--name-only", commitA, commitB], {
+			cwd: repoRoot,
+			encoding: "utf8",
+		}).trim()
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One `git diff --name-only` between two commits: bounded, and only the count is read.
+		const files = diff ? diff.split("\n").length : 0
+
+		return { commits, files, range: `${commitA.slice(0, 12)} ${commitB.slice(0, 12)}` }
+	} catch {
+		return null
 	}
 }
