@@ -96,6 +96,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 		writeFileSync(
 			join(dataDir, "9.geojson"),
 			feature(9, {
+				"wof:placetype": "locality",
 				"wof:country": "US",
 				"wof:concordances": { "gn:id": 4_140_963 },
 				"geom:latitude": 38.904831,
@@ -137,5 +138,49 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 		expect(result.labelPointOverrides).toBe(0)
 
 		db.close()
+	})
+})
+
+describe("ingestWOF adjudication scope (#1905)", () => {
+	it("a REGION with an anchor near its geometric centroid keeps the label point — the Texas shape", async () => {
+		const root = mkdtempSync(join(tmpdir(), "mw-ingest-region-"))
+		const dataDir = join(root, "whosonfirst-data-admin-us", "data", "000", "000")
+
+		mkdirSync(dataDir, { recursive: true })
+
+		// Modeled on wof:85688753 (Texas): lbl at the label placement, geom at the polygon centroid,
+		// and the GeoNames admin1 record sitting near the CENTROID — the anchor premise inverted.
+		writeFileSync(
+			join(dataDir, "8.geojson"),
+			feature(8, {
+				"wof:placetype": "region",
+				"wof:country": "US",
+				"wof:concordances": { "gn:id": 4_736_286 },
+				"geom:latitude": 31.447215,
+				"geom:longitude": -99.317137,
+				"lbl:latitude": 31.030974,
+				"lbl:longitude": -98.326329,
+			})
+		)
+
+		const db = new DatabaseSync(":memory:")
+
+		await createUnifiedSchema(db)
+
+		const result = await ingestWOF(db, {
+			dataDir: root,
+			anchorLookup: () => ({ latitude: 31.25, longitude: -99.25 }),
+		})
+
+		const row = db.prepare("SELECT latitude, longitude FROM spr WHERE id = 8").get() as {
+			latitude: number
+			longitude: number
+		}
+
+		expect(row).toEqual({ latitude: 31.030974, longitude: -98.326329 })
+		expect(result.labelPointOverrides).toBe(0)
+
+		db.close()
+		rmSync(root, { recursive: true, force: true })
 	})
 })
