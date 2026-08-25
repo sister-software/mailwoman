@@ -25,8 +25,8 @@ export const spec = {
 
 const EvalPins: ParsedCommandComponent<Record<string, never>> = () => {
 	const state = useCommandTask(async () => {
-		const { loadRegressionCases, regressionCorpusHash } = await import("mailwoman/eval-harness/gauntlet/cases/load")
-		const { ablationBoardID } = await import("mailwoman/eval-harness/gauntlet/ablation")
+		const { loadRegressionCases, regressionCorpusHash } = await import("../../eval-harness/gauntlet/cases/load.ts")
+		const { ablationBoardID } = await import("../../eval-harness/gauntlet/ablation.ts")
 
 		const cases = await loadRegressionCases()
 
