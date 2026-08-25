@@ -133,7 +133,8 @@ const lookupResponses = {
 
 const statusResponses = {
 	200: {
-		description: 'Engine health. Absent `engine.status` answers `{status: 0, message: "OK"}` — never 501.',
+		description:
+			'Engine health, plus the provenance of the artifacts this deployment opened. Absent `engine.status` answers `{status: 0, message: "OK"}` — never 501. `data_updated` and the native `mailwoman` block appear only when the engine supplies them.',
 		content: { "application/json": { schema: NominatimStatusSchema } },
 	},
 	500: errorContent("An unexpected engine fault. A clean JSON error, never a stack trace.", ErrorSchema),

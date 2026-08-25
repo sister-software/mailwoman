@@ -55,6 +55,37 @@ Maidenhead, Mercator), qibla bearing, sun times, country flag, calling code, and
 timezone, UN/LOCODE, and EU NUTS codes when their data bundles are present. Plain Nominatim returns none
 of these.
 
+## Data freshness
+
+You cannot tell how stale a geocoder's data is from its answers, so `/status` reports it. `data_updated` is the
+Nominatim-compatible field — the newest build date across the databases this process opened — and the native
+`mailwoman` block names each one:
+
+```jsonc
+{
+	"status": 0,
+	"message": "OK",
+	"data_updated": "2026-08-25T17:21:58.254Z",
+	"mailwoman": {
+		"artifacts": [
+			{
+				"name": "gazetteer",
+				"path": "…/wof/candidate.db",
+				"manifest": "present",
+				"version": "candidate@2026-08-25",
+				"built": "2026-08-25T17:21:58.254Z",
+				"sources": ["admin-global-priority@2026-08-25", "admin=… postcode-shards=23 locality-shards=2 importance=yes"],
+			},
+		],
+	},
+}
+```
+
+Every date comes out of the artifact itself — the `layer_manifest` row its builder wrote before sealing it — never
+from a file's timestamp or a record kept alongside. An artifact built before that contract carries no manifest, and
+says so (`"manifest": "absent"`) rather than being left out; when none of them carries one, `data_updated` is omitted
+instead of guessed. A Nominatim client ignores the `mailwoman` key.
+
 ## Status
 
 Shipped. `/search` and `/reverse` resolve over the live engine and return the enriched block; `/lookup`

@@ -28,6 +28,7 @@ import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-look
 import {
 	corsBannerLine,
 	gazetteerBannerLines,
+	gazetteerFreshness,
 	loadClassifierOrExit,
 	parseOpenAPIFlags,
 	resolveGazetteerOrExit,
@@ -40,6 +41,7 @@ import {
 	createNominatimApp,
 	type NominatimAddressDetails,
 	type NominatimEngine,
+	nominatimStatus,
 	NOMINATIM_DOC_INFO,
 	type ResolvedAddress,
 	toNominatimResult,
@@ -163,6 +165,11 @@ async function serve(): Promise<void> {
 	}
 
 	const annotate = composeAnnotators(annotators)
+
+	// Read once, at boot, from the artifacts THEMSELVES (#997). The handles above are held for the life of
+	// the process, so this describes what the endpoint is serving from for as long as it serves — and every
+	// artifact appears, including one carrying no manifest, which says so rather than being left out.
+	const status = nominatimStatus(gazetteerFreshness(gazetteer))
 
 	const engine: NominatimEngine = {
 		async search(params) {
@@ -297,7 +304,7 @@ async function serve(): Promise<void> {
 		},
 
 		async status() {
-			return { status: 0, message: "OK" }
+			return status
 		},
 	}
 
