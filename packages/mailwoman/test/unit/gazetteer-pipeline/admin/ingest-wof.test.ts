@@ -85,3 +85,57 @@ describe("ingestWOF centroids (#1726)", () => {
 		db.close()
 	})
 })
+
+describe("ingestWOF label-point adjudication (#1905)", () => {
+	it("a Washington-shaped record stores the geometric point when the anchor overrides, and reports the count", async () => {
+		const root = mkdtempSync(join(tmpdir(), "mw-ingest-anchor-"))
+		const dataDir = join(root, "whosonfirst-data-admin-us", "data", "000", "000")
+
+		mkdirSync(dataDir, { recursive: true })
+
+		writeFileSync(
+			join(dataDir, "9.geojson"),
+			feature(9, {
+				"wof:country": "US",
+				"wof:concordances": { "gn:id": 4_140_963 },
+				"geom:latitude": 38.904831,
+				"geom:longitude": -77.016216,
+				"lbl:latitude": 38.82652,
+				"lbl:longitude": -77.01712,
+			})
+		)
+
+		const db = new DatabaseSync(":memory:")
+
+		await createUnifiedSchema(db)
+
+		const result = await ingestWOF(db, {
+			dataDir: root,
+			anchorLookup: (country, gnID) =>
+				country === "US" && String(gnID) === "4140963" ? { latitude: 38.89511, longitude: -77.03637 } : undefined,
+		})
+
+		const row = db.prepare("SELECT latitude, longitude FROM spr WHERE id = 9").get() as {
+			latitude: number
+			longitude: number
+		}
+
+		expect(row).toEqual({ latitude: 38.904831, longitude: -77.016216 })
+		expect(result.labelPointOverrides).toBe(1)
+
+		db.close()
+		rmSync(root, { recursive: true, force: true })
+	})
+
+	it("without a lookup the label preference is unchanged and the override count is a measured zero", async () => {
+		const db = new DatabaseSync(":memory:")
+
+		await createUnifiedSchema(db)
+
+		const result = await ingestWOF(db, { dataDir: ROOT })
+
+		expect(result.labelPointOverrides).toBe(0)
+
+		db.close()
+	})
+})

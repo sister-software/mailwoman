@@ -38,6 +38,7 @@ import { foldGeonames } from "./fold-geonames.ts"
 import { ingestOvertureDivisions } from "./fold-overture.ts"
 import { freezeAdmin } from "./freeze.ts"
 import { ingestWOF } from "./ingest-wof.ts"
+import { createGeoNamesAnchorLookup } from "./label-point-adjudicator.ts"
 import { adminLayerManifest } from "./manifest.ts"
 
 export interface BuildAdminOptions {
@@ -128,6 +129,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		dataDir,
 		concurrency: opts.concurrency,
 		batchCommitSize: opts.batchCommitSize,
+		// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames
+		// consumes; a data root without them degrades to the plain label preference.
+		anchorLookup: createGeoNamesAnchorLookup(String(dataRootPath("geonames"))),
 		onProgress: (processed, skipped, total) =>
 			phase(
 				"ingest-wof",
@@ -135,7 +139,10 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			),
 	})
 
-	phase("ingest-wof", `${ingest.placesIngested.toLocaleString()} places`)
+	phase(
+		"ingest-wof",
+		`${ingest.placesIngested.toLocaleString()} places (${ingest.labelPointOverrides} label points overridden by anchor)`
+	)
 
 	phase("fold-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
 	const overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
