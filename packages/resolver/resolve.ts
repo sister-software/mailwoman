@@ -1457,14 +1457,21 @@ class WOFResolver implements Resolver {
 
 		rec.emit({ id: top.id, name: top.name, source: "ranked" })
 
-		// The lever's trace stamp (#1717 stage 2 / #1719's rule): an opted-in mechanism that cannot fire
-		// — a pre-sidecar artifact, an incapable backend — must say so in the result, not degrade
-		// silently. The parse-side census cannot see resolver levers, so this stamp is its census
-		// surface. Only under the lever: the stamp asserts a question was asked.
+		// The trace stamps (#1717 stage 2 / #1719's rule): an opted-in mechanism that cannot fire — a
+		// pre-sidecar artifact, an incapable backend — must say so in the result, not degrade silently.
+		// The parse-side census cannot see resolver mechanisms, so these stamps are its census surface.
+		// admin_containment asserts a question was asked; variant_alias_exemption (#1893) asserts the
+		// winning candidate reached the top BECAUSE the exemption spared it the cross-country penalty —
+		// the winner-level firing receipt, same posture as capital_promotion.
+		const pickMetadata = {
+			...(containmentEligible ? { admin_containment: adminContainmentVerdict(ranked) } : {}),
+			...(top.variantAliasExempted === true ? { variant_alias_exemption: true } : {}),
+		}
+
 		return {
 			top,
 			alternatives: ranked.slice(1),
-			...(containmentEligible ? { metadata: { admin_containment: adminContainmentVerdict(ranked) } } : {}),
+			...(Object.keys(pickMetadata).length ? { metadata: pickMetadata } : {}),
 		}
 	}
 }

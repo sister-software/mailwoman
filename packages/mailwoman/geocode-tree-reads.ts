@@ -52,6 +52,25 @@ export function capitalPromotionOf(tree: AddressTree): string | undefined {
 }
 
 /**
+ * The #1882 variant-alias exemption's stamp (#1893), read back off the resolved tree — `true` when some node's winning
+ * candidate reached the top because the exemption spared it the cross-country alias penalty, `undefined` when it never
+ * spoke: off, no variant row in any race, the variant lost, or a backend that never runs the ranker.
+ */
+export function variantAliasExemptionOf(tree: AddressTree): true | undefined {
+	const stack: AddressNode[] = [...tree.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		if (n.metadata?.["variant_alias_exemption"] === true) return true
+
+		stack.push(...n.children)
+	}
+
+	return undefined
+}
+
+/**
  * The country #42's postcode-country coherence pass scoped the walk to, read back off the resolved tree's
  * `postcode_country_scope` stamp — or the #1735 explicit-country pre-scope, whose receipt exists precisely so a tree
  * that was right from the start still gets its country's rooftop shard loaded. `undefined` whenever nothing was

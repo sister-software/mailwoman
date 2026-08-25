@@ -130,6 +130,13 @@ export interface PlaceCandidate {
 	 * as `unavailable`, never as "not contained".
 	 */
 	containedByQualifier?: boolean
+	/**
+	 * The #1882 exemption's firing mark (#1893), mirroring `ResolvedPlace.variantAliasExempted` in `@mailwoman/core`:
+	 * present only when this candidate's row would have taken the cross-country alias penalty and the exemption prevented
+	 * it. Emitted by the candidate-table backend alone — the WASM FTS lookup never runs the ranker, and its candidates
+	 * omit the field (not evaluated, never "did not fire").
+	 */
+	variantAliasExempted?: true
 }
 
 /**

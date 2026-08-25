@@ -180,6 +180,13 @@ export interface ResolvedPlace {
 	 * resolver-interior trace (#1721) surfaces it as a gate.
 	 */
 	regionScopeMiss?: boolean
+	/**
+	 * The #1882 variant-alias exemption's firing mark (#1893): this candidate's row would have taken the cross-country
+	 * alias penalty and the exemption prevented it. PRESENT only when the exemption changed the row's treatment; absent
+	 * everywhere else — including on backends that never run the primary-preference ranker (the WASM FTS lookup), where
+	 * absence means the mechanism was not evaluated, never that it declined to fire.
+	 */
+	variantAliasExempted?: true
 }
 
 /**

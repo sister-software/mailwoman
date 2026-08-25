@@ -249,6 +249,9 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// #1880: the capital promotion's firing receipt — the promoted candidate's country, present only when the
 	// promotion changed some node's leading candidate. Advisory, same posture as postcode_country_scope.
 	capital_promotion: z.string().optional(),
+	// #1893: the variant-alias exemption's firing receipt — present (true) only when the winning candidate reached
+	// the top because the exemption spared it the cross-country alias penalty. Advisory, same posture again.
+	variant_alias_exemption: z.literal(true).optional(),
 	// ROAD_TO_V9 §4: query-intent advisories. Always present; empty means the vocabulary looked and had nothing to
 	// say. Advisory ONLY — no marker changed which answer won, and a client is free to ignore the array entirely.
 	intent_markers: z.array(QueryIntentMarkerSchema),

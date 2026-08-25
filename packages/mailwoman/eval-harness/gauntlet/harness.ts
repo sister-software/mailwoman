@@ -632,6 +632,11 @@ export interface GauntletResult {
 	 */
 	capital_promotion?: string
 	/**
+	 * The #1882 exemption's firing receipt (#1893), projected verbatim — present (`true`) only when the winning candidate
+	 * reached the top because the exemption spared it the cross-country alias penalty.
+	 */
+	variant_alias_exemption?: true
+	/**
 	 * The RESOLVED admin chain, locality → country, verbatim from {@linkcode GeocodeResult.hierarchy}. Not asserted by any
 	 * case: it carries the gazetteer `placeID`s, which is what the ablation layer's graceful-degradation ladder is
 	 * synthesized FROM (the undeleted case's resolved place → its WOF ancestry). Only entries the resolver actually
@@ -675,6 +680,7 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
 		...(g.capital_promotion === undefined ? {} : { capital_promotion: g.capital_promotion }),
+		...(g.variant_alias_exemption === true ? { variant_alias_exemption: true as const } : {}),
 		...(g.admin_coherence ? { admin_coherence: g.admin_coherence } : {}),
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,

@@ -60,7 +60,12 @@ import { adminCoherenceField, type AdminCoherenceReport } from "./admin-coherenc
 import { type DataReleaseManifest, readReleaseManifest, resolveShardPath } from "./data-release.ts"
 import { loadDefaultPlaceCountry, type PlaceCountryFn } from "./default-placer.ts"
 import { applyEntityTiers } from "./fork-entity.ts"
-import { capitalPromotionOf, postcodeCountryScopeOf, resolvedCountryOf } from "./geocode-tree-reads.ts"
+import {
+	capitalPromotionOf,
+	postcodeCountryScopeOf,
+	resolvedCountryOf,
+	variantAliasExemptionOf,
+} from "./geocode-tree-reads.ts"
 import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hierarchy-lineage.ts"
 import { shouldDropInferredScope } from "./inferred-scope.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
@@ -215,6 +220,13 @@ export interface GeocodeResult {
 	 * inferring activity from moved rows.
 	 */
 	capital_promotion?: string
+	/**
+	 * The #1882 variant-alias exemption's firing receipt (#1893), same posture as {@link capital_promotion}: PRESENT
+	 * (`true`) only when some node's winning candidate reached the top because the exemption spared it the cross-country
+	 * alias penalty. Absent means it never spoke — off, no variant row in any race, the variant lost, or a backend that
+	 * never runs the primary-preference ranker.
+	 */
+	variant_alias_exemption?: true
 	/**
 	 * Query-intent advisories (ROAD_TO_V9 §4) — what the intent vocabulary had to say about the QUESTION, alongside the
 	 * answer. **Always present**; an empty array is this path stating that the vocabulary looked and found nothing, which
@@ -1649,6 +1661,7 @@ export function extractGeocodeResult(input: string, tree: AddressTree): GeocodeO
 
 			return promoted === undefined ? {} : { capital_promotion: promoted }
 		})(),
+		...(variantAliasExemptionOf(tree) === true ? { variant_alias_exemption: true as const } : {}),
 		// `extractGeocodeResult` is a pure tree->result projection and has no access to the kind verdict, so it states
 		// the empty case. `geocodeAddressOnce` is the caller that classifies and fills this in.
 		intent_markers: [],

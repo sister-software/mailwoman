@@ -921,6 +921,9 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 				// asked (a `regionQualifier` query over a sidecar-bearing artifact); its absence is what
 				// the resolver walk reports as `unavailable` (meaning-of-zero).
 				...(row.containedByQualifier === undefined ? {} : { containedByQualifier: row.containedByQualifier }),
+				// #1893 — the exemption's firing mark, carried only when the ranker actually spared this row
+				// the cross-country penalty (see RankedRow.variantExempted).
+				...(row.variantExempted ? { variantAliasExempted: true as const } : {}),
 				// The two-score split's carry (ROAD_TO_V9 §2). `referential` names the prominence this
 				// backend has always ordered by — `neg_rank` IS `-log10(population + 1)`, so the score and
 				// the sort key are two readings of the same number.
