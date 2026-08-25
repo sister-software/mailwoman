@@ -380,7 +380,7 @@ jobs:
       # en-gb card described neither. The fetch above wrote these binaries into the weights workspaces, so the same
       # parity test CI already runs against locally-built artifacts now grades the STAGED ones for free.
       - name: Verify staged pair indexes match their model cards
-        run: yarn vitest run packages/neural/test/pair-index-card-parity.test.ts
+        run: yarn vitest run packages/neural/test/integration/pair-index-card-parity.test.ts
 
       # The full-scale locality-surface build. On the PR path this is behind a path filter
       # (test.yml's `lexicon-full`), so most PRs merge with it deliberately unrun — the four laws are
