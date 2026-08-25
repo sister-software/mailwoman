@@ -19,8 +19,9 @@
 import { writeFileSync } from "node:fs"
 
 import { noStreetLedRecipe } from "@mailwoman/corpus/shard-recipes/no-street-led"
-import { scratch, shardRunner } from "@mailwoman/corpus/test-kit/shard-recipe"
 import { describe, expect, it } from "vitest"
+
+import { scratch, shardRunner } from "../../../test-kit/shard-recipe.ts"
 
 const run = shardRunner("no-street-led", noStreetLedRecipe, 901)
 

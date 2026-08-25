@@ -17,8 +17,9 @@ import { gzipSync } from "node:zlib"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { frLieuditRecipe } from "@mailwoman/corpus/shard-recipes/fr-lieudit"
 import type { ShardRecipeOpts } from "@mailwoman/corpus/shard-recipes/scaffold"
-import type { ShardRow } from "@mailwoman/corpus/test-kit/shard-recipe"
 import { afterEach, describe, expect, it } from "vitest"
+
+import type { ShardRow } from "../../../test-kit/shard-recipe.ts"
 
 const HEADER =
 	"id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune;code_insee_ancienne_commune;nom_ancienne_commune;x;y;lon;lat;type_position;alias;nom_ld;libelle_acheminement;nom_afnor;source_position;source_nom_voie;certification_commune;cad_parcelles"

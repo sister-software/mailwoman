@@ -15,8 +15,9 @@
  */
 
 import { noFragmentRecipe } from "@mailwoman/corpus/shard-recipes/no-fragment"
-import { scratch, shardRunner } from "@mailwoman/corpus/test-kit/shard-recipe"
 import { describe, expect, it } from "vitest"
+
+import { scratch, shardRunner } from "../../../test-kit/shard-recipe.ts"
 
 const run = shardRunner("no-fragment", noFragmentRecipe, 901)
 

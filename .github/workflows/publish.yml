@@ -341,7 +341,7 @@ jobs:
           # sibling. Staged via `mailwoman release hf <version> --street-type-lexicon … --locality-surface-lexicon …`.
           $CURL "${BASE}/street-type-lexicon-v3.json" -o packages/neural-weights-en-us/street-type-lexicon-v3.json
           $CURL "${BASE}/locality-surface-lexicon-v7.json" -o packages/neural-weights-en-us/locality-surface-lexicon-v7.json
-          for ws in neural-weights-fr-fr neural-weights-en-gb neural-weights-en-nz; do
+          for ws in neural-weights-fr-fr neural-weights-en-gb neural-weights-en-nz neural-weights-en-au; do
             cp packages/neural-weights-en-us/street-type-lexicon-v3.json "packages/$ws/street-type-lexicon-v3.json"
             cp packages/neural-weights-en-us/locality-surface-lexicon-v7.json "packages/$ws/locality-surface-lexicon-v7.json"
           done
@@ -358,12 +358,14 @@ jobs:
           cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-fr-fr/anchor-lexicon-v1.json
           cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-gb/anchor-lexicon-v1.json
           cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-nz/anchor-lexicon-v1.json
+          cp data/gazetteer/anchor-lexicon-v1.json packages/neural-weights-en-au/anchor-lexicon-v1.json
           # The country-surface lexicon (#1104) — same story: a checked-in repo artifact the country channel
           # feeds when the card carries requires.country. Copy into every package (matches softFeed.countryLexicon).
           cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-us/country-surface-lexicon-v1.json
           cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-fr-fr/country-surface-lexicon-v1.json
           cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-gb/country-surface-lexicon-v1.json
           cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-nz/country-surface-lexicon-v1.json
+          cp data/gazetteer/country-surface-lexicon-v1.json packages/neural-weights-en-au/country-surface-lexicon-v1.json
           for f in packages/neural-weights-en-us/model.onnx packages/neural-weights-fr-fr/model.onnx packages/neural-weights-en-gb/model.onnx packages/neural-weights-en-nz/model.onnx \
                    packages/neural-weights-en-us/postcode-us.bin packages/neural-weights-fr-fr/postcode-fr.bin \
                    packages/neural-weights-en-us/pair-index-us.bin packages/neural-weights-fr-fr/pair-index-fr.bin packages/neural-weights-de-de/pair-index-de.bin packages/neural-weights-en-in/pair-index-in.bin packages/neural-weights-es-es/pair-index-es.bin packages/neural-weights-it-it/pair-index-it.bin packages/neural-weights-en-gb/pair-index-gb.bin packages/neural-weights-en-nz/pair-index-nz.bin \

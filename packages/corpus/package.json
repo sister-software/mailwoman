@@ -157,11 +157,6 @@
 			"default": "./out/src/utils/parquet.js",
 			"types": "./out/src/utils/parquet.d.ts"
 		},
-		"./test-kit/shard-recipe": {
-			"node": "./test-kit/shard-recipe.ts",
-			"default": "./out/test-kit/shard-recipe.js",
-			"types": "./out/test-kit/shard-recipe.d.ts"
-		},
 		"./tools/postcode-triples": {
 			"node": "./src/tools/postcode-triples.ts",
 			"default": "./out/src/tools/postcode-triples.js",
