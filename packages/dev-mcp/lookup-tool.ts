@@ -16,9 +16,9 @@
  *   server spends its resident memory, and it spends it on sessions.
  */
 
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { basename } from "node:path"
-import type { DatabaseSync } from "node:sqlite"
+import { DatabaseSync } from "node:sqlite"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
@@ -32,6 +32,8 @@ import { resolvePath } from "path-ts"
 
 import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
 import {
+	type CandidateDelta,
+	diffCandidateRows,
 	lookupCandidate,
 	lookupCodex,
 	lookupPOI,
@@ -53,6 +55,15 @@ import {
 import { syntheticIDNote } from "./place-id-provenance.ts"
 
 /**
+ * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare artifact's rows for the SAME
+ * queries, and the per-query delta between the returned sets.
+ */
+export interface CandidateCompareResult extends LookupResult {
+	rows_compare: LookupRow[]
+	deltas: CandidateDelta[]
+}
+
+/**
  * Everything a caller can pass, beyond the source and the queries.
  */
 export interface LookupArgs {
@@ -66,6 +77,12 @@ export interface LookupArgs {
 	country?: string
 	limit?: number
 	config?: EngineConfig
+	/**
+	 * `candidate` only — a SECOND candidate.db to run the same queries against, answering both row sets plus a per-query
+	 * delta (rows only one artifact holds; shared rows whose ranking fields moved). The two-artifact probe every staged
+	 * gazetteer diagnosis previously scripted by hand.
+	 */
+	compareCandidateDB?: string
 }
 
 /**
@@ -75,7 +92,10 @@ export interface LookupArgs {
  * — is the same shape a genuine absence has, and a caller reading it would conclude the gazetteer lacks fifty places
  * when what it lacks is a file.
  */
-export async function runLookup(registry: EngineRegistry, args: LookupArgs): Promise<LookupResult> {
+export async function runLookup(
+	registry: EngineRegistry,
+	args: LookupArgs
+): Promise<LookupResult | CandidateCompareResult> {
 	const { source, queries } = args
 	const config = args.config ?? {}
 	const dataRoot = config.data_root ?? String(mailwomanDataRoot())
@@ -105,26 +125,93 @@ export async function runLookup(registry: EngineRegistry, args: LookupArgs): Pro
 
 		case LookupSource.Candidate: {
 			return withArtifact(source, resolveCandidateDB(config, dataRoot), (db, path) => {
-				const rows = lookupCandidate(db, queries, {
-					...(args.country ? { country: args.country } : {}),
-					...(args.limit ? { limit: args.limit } : {}),
-				})
+				// The score source's split channels ride along whenever the conventional importance DB exists beside the
+				// artifacts — the join every fame-contest diagnosis needs, attached rather than scripted.
+				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
 
-				const idNote = syntheticIDNote(
-					rows.flatMap((row) => (row.entries ?? []).map((e) => Number((e as { spr_id: number }).spr_id)))
-				)
+				const importanceDB = existsSync(importancePath) ? new DatabaseSync(importancePath, { readOnly: true }) : null
 
-				return {
-					source,
-					provenance: { artifact: path },
-					rows,
-					notes: [
-						"Keyed on `name_key` — the shared fold applied at build AND at query time. Every row reports the key " +
-							"that reached it beside the stored `name`, because those differ far more often than they agree.",
-						"`importance: null` is UNMEASURED (the score source had no row for that place), never an importance of " +
-							"zero. A (0, 0) centroid is the build's unlocated sentinel.",
-						...(idNote ? [idNote] : []),
-					],
+				try {
+					const candidateOptions = {
+						...(args.country ? { country: args.country } : {}),
+						...(args.limit ? { limit: args.limit } : {}),
+						...(importanceDB ? { importance: { db: importanceDB, artifact: importancePath } } : {}),
+					}
+
+					const rows = lookupCandidate(db, queries, candidateOptions)
+
+					const idNote = syntheticIDNote(
+						rows.flatMap((row) => (row.entries ?? []).map((e) => Number((e as { spr_id: number }).spr_id)))
+					)
+
+					const entries = rows.flatMap((row) => (row.entries ?? []) as Array<{ importance_split?: unknown }>)
+
+					const joined = entries.filter(
+						(entry) => entry.importance_split !== undefined && entry.importance_split !== null
+					).length
+
+					const splitNote = importanceDB
+						? `importance_split joined for ${joined} of ${entries.length} returned row(s) by spr_id from ` +
+							`${basename(importancePath)}. A LOW rate against rows whose blended importance IS measured means ` +
+							"the id spaces diverged (a cross-era pair re-keys Overture-minted ids) — not missing scores."
+						: "No admin-global-priority-importance.db under the data root, so entries carry no importance_split — " +
+							"the split channels are UNREAD here, not absent from the world."
+
+					if (args.compareCandidateDB) {
+						const comparePath = resolveCandidateDB({ ...config, candidate_db: args.compareCandidateDB }, dataRoot)
+						const openedB = openSealedArtifact(comparePath)
+
+						if ("unavailable" in openedB || !comparePath) {
+							return {
+								source,
+								provenance: { artifact: path },
+								rows,
+								notes: [
+									`compare_candidate_db did not open (${"unavailable" in openedB ? openedB.unavailable : "no path resolved"}) — ` +
+										"single-artifact rows only, and this line is the reason there are no deltas.",
+									splitNote,
+									...(idNote ? [idNote] : []),
+								],
+							}
+						}
+
+						try {
+							const rowsCompare = lookupCandidate(openedB.db, queries, candidateOptions)
+
+							return {
+								source,
+								provenance: { artifact: path, compare_artifact: comparePath },
+								rows,
+								rows_compare: rowsCompare,
+								deltas: diffCandidateRows(rows, rowsCompare),
+								notes: [
+									"Two artifacts, same queries: `rows` is the primary, `rows_compare` the compare_candidate_db, " +
+										"and `deltas` the per-query difference — computed over the RETURNED rows only, so raise " +
+										"`limit` before reading a delta over a deep key population.",
+									splitNote,
+									...(idNote ? [idNote] : []),
+								],
+							}
+						} finally {
+							openedB.db.close()
+						}
+					}
+
+					return {
+						source,
+						provenance: { artifact: path },
+						rows,
+						notes: [
+							"Keyed on `name_key` — the shared fold applied at build AND at query time. Every row reports the key " +
+								"that reached it beside the stored `name`, because those differ far more often than they agree.",
+							"`importance: null` is UNMEASURED (the score source had no row for that place), never an importance of " +
+								"zero. A (0, 0) centroid is the build's unlocated sentinel.",
+							splitNote,
+							...(idNote ? [idNote] : []),
+						],
+					}
+				} finally {
+					importanceDB?.close()
 				}
 			})
 		}
@@ -185,11 +272,11 @@ function resolveCandidateDB(config: EngineConfig, dataRoot: string): string | un
  * Open one sealed artifact, hand it to `build`, and close it whatever happens. An unopenable path short-circuits to the
  * unavailable envelope with no rows.
  */
-function withArtifact(
+function withArtifact<T extends LookupResult>(
 	source: LookupSource,
 	path: string | undefined,
-	build: (db: DatabaseSync, path: string) => LookupResult
-): LookupResult {
+	build: (db: DatabaseSync, path: string) => T
+): T | LookupResult {
 	const opened = openSealedArtifact(path)
 
 	if ("unavailable" in opened || !path) {

@@ -14,6 +14,7 @@ import { DatabaseSync } from "node:sqlite"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { openSealedArtifact, type LookupRow } from "@mailwoman/dev-mcp/lookup"
 import {
+	diffCandidateRows,
 	lookupCandidate,
 	lookupCodex,
 	lookupPOI,
@@ -447,5 +448,91 @@ describe("openSealedArtifact", () => {
 		expect(openSealedArtifact(undefined)).toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})
+	})
+})
+
+describe("lookupCandidate fame-diagnosis extras", () => {
+	it("carries name_role on artifacts that stamp it, null on unstamped rows", async () => {
+		const db = await candidateFixture()
+
+		db.prepare("UPDATE candidate SET name_role = 'variant' WHERE spr_id = ?").run(1)
+
+		const [row] = lookupCandidate(db, ["Porto Petro"])
+		const entries = (row!.entries ?? []) as Array<{ spr_id: number; name_role?: string | null }>
+
+		expect(entries.length).toBeGreaterThan(0)
+
+		for (const entry of entries) {
+			expect(entry.name_role).toBe(entry.spr_id === 1 ? "variant" : null)
+		}
+
+		db.close()
+	})
+
+	it("joins importance_split by spr_id when an importance DB is given, and reports a missing row as null", async () => {
+		const db = await candidateFixture()
+		const importance = new DatabaseSync(":memory:")
+
+		importance.exec(
+			"CREATE TABLE place_importance (id INTEGER PRIMARY KEY, referential REAL NOT NULL, encyclopedic REAL, importance REAL NOT NULL)"
+		)
+
+		importance
+			.prepare("INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)")
+			.run(1, 0.2921, 0.3375, 0.3375)
+
+		const [row] = lookupCandidate(db, ["Porto Petro"], { importance: { db: importance, artifact: "importance.db" } })
+
+		const entries = (row!.entries ?? []) as Array<{
+			spr_id: number
+			importance_split?: { referential: number; encyclopedic: number | null } | null
+		}>
+
+		for (const entry of entries) {
+			if (entry.spr_id === 1) {
+				expect(entry.importance_split).toEqual({ referential: 0.2921, encyclopedic: 0.3375 })
+			} else {
+				// The source holds no row for this place: null, never a fabricated zero.
+				expect(entry.importance_split).toBeNull()
+			}
+		}
+
+		// Without the option the property is ABSENT — unread, not measured-empty.
+		const [bare] = lookupCandidate(db, ["Porto Petro"])
+		const bareEntries = (bare!.entries ?? []) as Array<{ importance_split?: unknown }>
+
+		expect(bareEntries.every((entry) => !("importance_split" in entry))).toBe(true)
+
+		importance.close()
+		db.close()
+	})
+
+	it("diffs two artifacts' returned rows: presence both ways plus moved ranking fields", async () => {
+		const dbA = await candidateFixture()
+		const dbB = await candidateFixture()
+
+		// B re-scores one shared row and holds one extra bearer under the same key.
+		dbB.prepare("UPDATE candidate SET importance = 0.5 WHERE spr_id = ?").run(1)
+
+		dbB
+			.prepare(
+				"INSERT INTO candidate (name_key, country_id, region_id, placetype_id, neg_rank, spr_id, name, latitude, " +
+					"longitude, population, is_primary, importance) VALUES (?, 2, 0, 1, 99, 999, ?, 0, 0, 5, 1, NULL)"
+			)
+			.run(nameKey("Porto Petro"), "Porto Petro")
+
+		const rowsA = lookupCandidate(dbA, ["Porto Petro"])
+		const rowsB = lookupCandidate(dbB, ["Porto Petro"])
+		const [delta] = diffCandidateRows(rowsA, rowsB)
+
+		expect(delta!.only_in_a).toEqual([])
+		expect(delta!.only_in_b.map((entry) => entry.spr_id)).toEqual([999])
+
+		const moved = delta!.changed.find((entry) => entry.spr_id === 1)
+
+		expect(moved!.fields["importance"]).toEqual([null, 0.5])
+
+		dbA.close()
+		dbB.close()
 	})
 })

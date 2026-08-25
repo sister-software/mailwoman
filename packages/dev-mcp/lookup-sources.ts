@@ -77,6 +77,14 @@ export interface CandidateLookupOptions {
 	 */
 	country?: string
 	limit?: number
+	/**
+	 * An open `admin-global-priority-importance.db` handle plus the path it came from. When present, every returned entry
+	 * carries `importance_split` — the score source's `referential` / `encyclopedic` columns joined by `spr_id` — so a
+	 * fame-contest diagnosis reads both channels beside the blend instead of scripting the join. The id join is
+	 * same-generation only: a cross-era pair re-keys Overture-minted ids, and the miss surfaces as `importance_split:
+	 * null` on rows whose blended `importance` is measured — which is why the caller's note reports the join rate.
+	 */
+	importance?: { db: DatabaseSync; artifact: string }
 }
 
 interface CandidateEntry extends PlaceIDProvenance {
@@ -91,6 +99,17 @@ interface CandidateEntry extends PlaceIDProvenance {
 	is_primary: number | null
 	importance: number | null
 	/**
+	 * The #1730 name-role stamp (`abbr` / `gloss` / `variant`), `null` for an unstamped row. ABSENT (not null) when the
+	 * artifact predates the column — the same tri-state the runtime reader uses.
+	 */
+	name_role?: string | null
+	/**
+	 * The score source's split channels for this place, joined by `spr_id` when {@link CandidateLookupOptions.importance}
+	 * was provided: an object when the source holds a row, `null` when it does not. ABSENT when no importance DB was
+	 * given — never conflate the two.
+	 */
+	importance_split?: { referential: number; encyclopedic: number | null } | null
+	/**
 	 * The place id this row points at, named for WOF's `spr` table (Standard Place Response) because that is the schema
 	 * it came from. It is a real WOF id only when {@link PlaceIDProvenance.wof_id} is non-null — roughly half the
 	 * gazetteer is Overture- or GeoNames-minted and carries an id in a reserved synthetic range that looks identical.
@@ -98,11 +117,18 @@ interface CandidateEntry extends PlaceIDProvenance {
 	spr_id: number
 }
 
-const CANDIDATE_SELECT =
-	"SELECT c.name_key, c.name, pc.placetype AS placetype, cc.code AS country, c.latitude, c.longitude, " +
-	"c.population, c.is_primary, c.importance, c.spr_id FROM candidate c " +
-	"JOIN placetype_codes pc ON pc.id = c.placetype_id JOIN country_codes cc ON cc.id = c.country_id " +
-	"WHERE c.name_key = ?"
+/**
+ * The candidate probe's SELECT, built per artifact because `name_role` (#1730) is generation-dependent: a pre-role
+ * artifact simply omits the property rather than faking a NULL stamp.
+ */
+function candidateSelect(hasNameRole: boolean): string {
+	return (
+		"SELECT c.name_key, c.name, pc.placetype AS placetype, cc.code AS country, c.latitude, c.longitude, " +
+		`c.population, c.is_primary, c.importance${hasNameRole ? ", c.name_role" : ""}, c.spr_id FROM candidate c ` +
+		"JOIN placetype_codes pc ON pc.id = c.placetype_id JOIN country_codes cc ON cc.id = c.country_id " +
+		"WHERE c.name_key = ?"
+	)
+}
 
 /**
  * Probe `candidate.db` on `name_key`, the key the build writes and the reader probes.
@@ -133,10 +159,33 @@ export function lookupCandidate(
 
 	const carriedCountries = (db.prepare("SELECT count(*) AS n FROM country_codes").get() as { n: number }).n
 
+	const hasNameRole = (
+		db.prepare("SELECT count(*) AS n FROM pragma_table_info('candidate') WHERE name = 'name_role'").get() as {
+			n: number
+		}
+	).n
+
+	const select = candidateSelect(hasNameRole > 0)
 	const countAll = db.prepare("SELECT count(*) AS n FROM candidate WHERE name_key = ?")
 	const countScoped = db.prepare("SELECT count(*) AS n FROM candidate WHERE name_key = ? AND country_id = ?")
-	const rowsAll = db.prepare(`${CANDIDATE_SELECT} ORDER BY c.neg_rank ASC LIMIT ?`)
-	const rowsScoped = db.prepare(`${CANDIDATE_SELECT} AND c.country_id = ? ORDER BY c.neg_rank ASC LIMIT ?`)
+	const rowsAll = db.prepare(`${select} ORDER BY c.neg_rank ASC LIMIT ?`)
+	const rowsScoped = db.prepare(`${select} AND c.country_id = ? ORDER BY c.neg_rank ASC LIMIT ?`)
+
+	// The split-channel probe against the score source, prepared once. Null when the caller gave no importance DB OR the
+	// handle predates the split schema — the entries then omit `importance_split` entirely.
+	const splitProbe = (() => {
+		if (!options.importance) return null
+
+		const hasSplit = (
+			options.importance.db
+				.prepare("SELECT count(*) AS n FROM pragma_table_info('place_importance') WHERE name = 'referential'")
+				.get() as { n: number }
+		).n
+
+		if (!hasSplit) return null
+
+		return options.importance.db.prepare("SELECT referential, encyclopedic FROM place_importance WHERE id = ?")
+	})()
 
 	const probe = (key: string): { total: number; totalUnscoped: number; rows: Array<Omit<CandidateEntry, "route">> } => {
 		const totalUnscoped = (countAll.get(key) as { n: number }).n
@@ -265,7 +314,23 @@ export function lookupCandidate(
 			}
 		}
 
-		const entries: CandidateEntry[] = found.rows.map((row) => ({ route, ...row, ...placeIDProvenance(row.spr_id) }))
+		const entries: CandidateEntry[] = found.rows.map((row) => ({
+			route,
+			...row,
+			...placeIDProvenance(row.spr_id),
+			...(splitProbe
+				? {
+						importance_split: (() => {
+							const split = splitProbe.get(row.spr_id) as
+								| { referential: number; encyclopedic: number | null }
+								| undefined
+
+							return split ? { referential: split.referential, encyclopedic: split.encyclopedic } : null
+						})(),
+					}
+				: {}),
+		}))
+
 		const unmeasured = entries.filter((entry) => entry.importance === null).length
 		const unlocated = entries.filter((entry) => entry.latitude === 0 && entry.longitude === 0).length
 		const top = entries[0]!
@@ -300,6 +365,85 @@ export function lookupCandidate(
 				(wantCountry ? ` in ${wantCountry}` : "") +
 				`; the ${entries.length} above are the first by neg_rank (population-first). ` +
 				notes.join(" "),
+		}
+	})
+}
+
+/**
+ * The fields {@link diffCandidateRows} compares on a row present in both artifacts — the ranking-relevant columns, not
+ * the identity ones (those ARE the match key).
+ */
+const CANDIDATE_DELTA_FIELDS = ["importance", "population", "is_primary", "name_role"] as const
+
+/**
+ * One query's difference between two artifacts' candidate rows.
+ */
+export interface CandidateDelta {
+	query: string
+	/**
+	 * Rows the primary artifact returned that the compare artifact did not, and the reverse. Identity is `(spr_id, name)`
+	 * — several names ride one key per place, and a refolded artifact re-keys Overture-minted ids, so a twin appearing on
+	 * both sides of this pair is usually the SAME settlement under a new id, not two places.
+	 */
+	only_in_a: Array<{ spr_id: number; name: string | null; country: string; placetype: string }>
+	only_in_b: Array<{ spr_id: number; name: string | null; country: string; placetype: string }>
+	/**
+	 * Rows present in both whose ranking-relevant fields moved: `fields` maps each moved column to `[a, b]`.
+	 */
+	changed: Array<{ spr_id: number; name: string | null; country: string; fields: Record<string, [unknown, unknown]> }>
+}
+
+/**
+ * Diff two artifacts' answers to the SAME queries, row-aligned by query index. Covers the RETURNED rows only — both
+ * sides truncate at the caller's limit, so a delta over deep key populations needs the limit raised to cover them; the
+ * tool's note says so beside the numbers.
+ */
+export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): CandidateDelta[] {
+	return rowsA.map((rowA, index) => {
+		const rowB = rowsB[index]
+		const entriesA = (rowA.entries ?? []) as CandidateEntry[]
+		const entriesB = (rowB?.entries ?? []) as CandidateEntry[]
+		const identity = (entry: CandidateEntry): string => `${entry.spr_id} ${entry.name ?? ""}`
+		const byIDA = new Map(entriesA.map((entry) => [identity(entry), entry]))
+		const byIDB = new Map(entriesB.map((entry) => [identity(entry), entry]))
+
+		const summarize = (
+			entry: CandidateEntry
+		): { spr_id: number; name: string | null; country: string; placetype: string } => ({
+			spr_id: entry.spr_id,
+			name: entry.name,
+			country: entry.country,
+			placetype: entry.placetype,
+		})
+
+		const changed: CandidateDelta["changed"] = []
+
+		for (const [id, entryA] of byIDA) {
+			const entryB = byIDB.get(id)
+
+			if (!entryB) continue
+
+			const fields: Record<string, [unknown, unknown]> = {}
+
+			for (const field of CANDIDATE_DELTA_FIELDS) {
+				const a = entryA[field] ?? null
+				const b = entryB[field] ?? null
+
+				if (a !== b) {
+					fields[field] = [a, b]
+				}
+			}
+
+			if (Object.keys(fields).length) {
+				changed.push({ spr_id: entryA.spr_id, name: entryA.name, country: entryA.country, fields })
+			}
+		}
+
+		return {
+			query: rowA.query,
+			only_in_a: entriesA.filter((entry) => !byIDB.has(identity(entry))).map(summarize),
+			only_in_b: entriesB.filter((entry) => !byIDA.has(identity(entry))).map(summarize),
+			changed,
 		}
 	})
 }
