@@ -14,7 +14,7 @@
 import { trailingRegionRecipe } from "@mailwoman/corpus/shard-recipes/trailing-region"
 import { describe, expect, it } from "vitest"
 
-import { shardRunner } from "../../../test-kit/shard-recipe.ts"
+import { shardRunner } from "../../shard-recipe-kit.ts"
 
 const run = shardRunner("trailing-region", trailingRegionRecipe, 901)
 

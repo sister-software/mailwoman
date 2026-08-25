@@ -465,8 +465,6 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 		for (const entry of entries) {
 			expect(entry.name_role).toBe(entry.spr_id === 1 ? "variant" : null)
 		}
-
-		db.close()
 	})
 
 	it("joins importance_split by spr_id when an importance DB is given, and reports a missing row as null", async () => {
@@ -504,7 +502,6 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 		expect(bareEntries.every((entry) => !("importance_split" in entry))).toBe(true)
 
 		importance.close()
-		db.close()
 	})
 
 	it("diffs two artifacts' returned rows: presence both ways plus moved ranking fields", async () => {
@@ -531,8 +528,5 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 		const moved = delta!.changed.find((entry) => entry.spr_id === 1)
 
 		expect(moved!.fields["importance"]).toEqual([null, 0.5])
-
-		dbA.close()
-		dbB.close()
 	})
 })
