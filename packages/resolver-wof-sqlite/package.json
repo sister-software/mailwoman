@@ -1,6 +1,6 @@
 {
 	"name": "@mailwoman/resolver-wof-sqlite",
-	"version": "9.1.0",
+	"version": "9.2.0",
 	"description": "Who's On First SQLite resolver — FTS5-backed PlaceLookup that resolves text queries to WOF place IDs + coordinates. Optional dependency for callers who want geocoding.",
 	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
 	"repository": {
@@ -68,6 +68,21 @@
 			"node": "./primary-preference.ts",
 			"default": "./out/primary-preference.js",
 			"types": "./out/primary-preference.d.ts"
+		},
+		"./capitals": {
+			"node": "./capitals.ts",
+			"default": "./out/capitals.js",
+			"types": "./out/capitals.d.ts"
+		},
+		"./capital-schema": {
+			"node": "./capital-schema.ts",
+			"default": "./out/capital-schema.js",
+			"types": "./out/capital-schema.d.ts"
+		},
+		"./candidate/own-name": {
+			"node": "./candidate/own-name.ts",
+			"default": "./out/candidate/own-name.js",
+			"types": "./out/candidate/own-name.d.ts"
 		},
 		"./proximity-rerank": {
 			"node": "./proximity-rerank.ts",

@@ -1,0 +1,21 @@
+## Mailwoman chat style: monetary metaphors for non-monetary costs.
+##
+## Vale existence rule. "The fine-tune tax", "nearly free", "costs nothing" —
+## nothing is free: every decision costs time, rows, or opportunity, and the
+## metaphor hides which one. State the actual cost with its unit. A REAL
+## dollar figure ("$29 of the $40 Modal budget") is not a metaphor and no
+## token here matches it.
+extends: existence
+message: "'%s' is a monetary metaphor — state the actual cost and its unit (rows regressed, minutes, dollars of which budget)."
+level: error
+ignorecase: true
+tokens:
+  - '\w+[- ]tax\b'
+  - pay(s|ing)? the tax
+  - paid the tax
+  - nearly free
+  - for free
+  - costs? (?:approximately |almost )?nothing
+  - free lunch
+  - free win
+  - cheap win

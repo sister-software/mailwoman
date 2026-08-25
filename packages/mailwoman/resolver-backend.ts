@@ -18,17 +18,21 @@
  *   (or `--candidate-db none`) pins the FTS backend.
  */
 
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import { DatabaseSync } from "node:sqlite"
 
 import { $public } from "@mailwoman/core/env"
-import { mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { mailwomanDataRoot, repoRootPathBuilder, wofShardPaths } from "@mailwoman/core/utils"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
 	WOFPostalCityAliasLookup,
 	WOFSQLitePlaceLookup,
 } from "@mailwoman/resolver-wof-sqlite"
+import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
+import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import { resolvePath } from "path-ts"
 
 /**
@@ -144,14 +148,28 @@ interface ResolverLookupModule {
  */
 export function createResolverBackend(
 	mod: ResolverLookupModule,
-	opts: { candidateDB?: string; dataRoot?: string; wofPaths: string | string[]; postalCityAliasDB?: string }
+	opts: {
+		candidateDB?: string
+		dataRoot?: string
+		wofPaths: string | string[]
+		postalCityAliasDB?: string
+		/**
+		 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Candidate backend
+		 * only (the penalty lives there). Default ON; pass `false` to disable. On an artifact without the `name_role`
+		 * column the exemption matches no row and resolution is byte-identical, so the default is old-artifact-safe.
+		 */
+		variantAliasExemption?: boolean
+	}
 ): PlaceLookup {
 	const candidate = resolveCandidateDBPath(opts.candidateDB, opts.dataRoot)
 
 	if (candidate) {
 		console.error(`[resolver] candidate-table backend (demo-parity, population-first): ${candidate}`)
 
-		return new mod.WOFCandidateTableLookup({ databasePath: candidate })
+		return new mod.WOFCandidateTableLookup({
+			databasePath: candidate,
+			...(opts.variantAliasExemption !== false ? { variantAliasExemption: true } : {}),
+		})
 	}
 
 	const wp = opts.wofPaths
@@ -166,4 +184,79 @@ export function createResolverBackend(
 		databasePath: Array.isArray(wp) && wp.length === 1 ? wp[0]! : wp,
 		postalCityAliases,
 	})
+}
+
+/**
+ * Where the committed capital-status reference lives (`mailwoman gazetteer capitals` writes it). Repo-relative because
+ * the file ships with the SOURCE tree, not the data root: it is small, committed, and versioned with the ranking code
+ * that interprets it. Baking it into `candidate.db` at the next gazetteer rebuild is the follow-up recorded on #1880.
+ */
+export function conventionCapitalsPath(): string {
+	return String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json"))
+}
+
+/**
+ * Load the capital-status reference into the ranking index, preferring the ARTIFACT copy: a `candidate.db` that carries
+ * the `capital` table (#1880's distribution home) serves npm consumers who never have the repo file; the repo's
+ * `data/gazetteer/capitals-v1.json` is the dev fallback.
+ *
+ * When NEITHER source exists, `missing` decides. `"throw"` (the default) is for an EXPLICIT `capital_tier: true` — a
+ * config key the caller asked for that silently no-ops grades as "inert" when it never ran. `"degrade"` returns
+ * `undefined` with one stderr line and is for the default-ON path: a consumer running an older artifact keeps working
+ * with no capital promotion rather than failing at session construction (positive evidence only). A reference that
+ * EXISTS but is malformed throws under both modes — a corrupt file is a defect, never an absence.
+ */
+export function loadCapitalIndex(opts: {
+	candidateDB?: string
+	path?: string
+	missing?: "throw" | "degrade"
+}): CapitalIndex | undefined {
+	if (opts.candidateDB && existsSync(opts.candidateDB)) {
+		const db = new DatabaseSync(opts.candidateDB, { readOnly: true })
+
+		try {
+			const points = readCapitalPoints(db)
+
+			// `null` = the artifact predates the table (fall through to the repo file); an EMPTY table is a
+			// built fact and is served as such.
+			if (points) {
+				console.error(`[resolver] capital reference: ${points.length} rows from the candidate artifact`)
+
+				return new CapitalIndex(points)
+			}
+		} finally {
+			db.close()
+		}
+	}
+
+	const path = opts.path ?? conventionCapitalsPath()
+
+	if (!existsSync(path)) {
+		if (opts.missing === "degrade") {
+			console.error(
+				`[resolver] capital reference: none in the candidate artifact or at ${path} — capital promotion degrades to a no-op`
+			)
+
+			return undefined
+		}
+
+		throw new Error(
+			`capital_tier is on, but neither the candidate artifact nor ${path} carries the capitals reference — ` +
+				"pull a candidate.db that includes the `capital` table, or build the repo file with `mailwoman gazetteer capitals`"
+		)
+	}
+
+	const parsed = parseJSONStrict<{ version?: number; entries?: CapitalPoint[] }>(readFileSync(path, "utf8"))
+
+	if (parsed.version !== 1 || !Array.isArray(parsed.entries)) {
+		throw new Error(`${path} is not a v1 capitals reference — rebuild with \`mailwoman gazetteer capitals\``)
+	}
+
+	// An entry without its folded name set would never match anything — an index that silently answers
+	// `none` on every probe is the partial-reader lie, so a pre-name-set file is refused outright.
+	if (parsed.entries.length && !Array.isArray(parsed.entries[0]?.k)) {
+		throw new Error(`${path} predates the name-set field — rebuild with \`mailwoman gazetteer capitals\``)
+	}
+
+	return new CapitalIndex(parsed.entries)
 }

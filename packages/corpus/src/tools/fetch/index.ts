@@ -97,6 +97,7 @@
  */
 
 import { fetchBan } from "./ban.ts"
+import { fetchGeonamesDumps } from "./geonames-dump.ts"
 import { fetchGeonamesPostal } from "./geonames-postal.ts"
 import { fetchHRSA } from "./hrsa.ts"
 import { fetchIMLSPLS } from "./imls-pls.ts"
@@ -110,6 +111,7 @@ import { fetchTigerFull } from "./tiger-full.ts"
 import { fetchWikidataSubVenue } from "./wikidata-subvenue.ts"
 
 export * from "./ban.ts"
+export * from "./geonames-dump.ts"
 export * from "./geonames-postal.ts"
 export * from "./hrsa.ts"
 export * from "./imls-pls.ts"
@@ -128,6 +130,7 @@ export * from "./wikidata-subvenue.ts"
 export const FETCH_SOURCES = {
 	ban: fetchBan,
 	nad: fetchNAD,
+	"geonames-dump": fetchGeonamesDumps,
 	"geonames-postal": fetchGeonamesPostal,
 	hrsa: fetchHRSA,
 	"imls-pls": fetchIMLSPLS,

@@ -140,7 +140,7 @@ returns HTTP 200 before dispatching.
 
 The "Production Integrity" ruleset requires the release commit to land via a PR with a green
 `test` check, so the ship is TWO dispatches around an auto-merging release PR (the direct
-release-it push was retired 2026-07-23 after GH013 — see the gotcha below):
+release-it push is retired — the GH013 gotcha below states why):
 
 ```bash
 # Optional preview — shows the bump diff without pushing anything:
@@ -204,7 +204,7 @@ R2 side is incomplete). This is its own task — surface it, don't assume it.
 - **The FST is model-independent** → reuse the prior version's; don't rebuild it for a model bump.
 - **Demo ≠ npm** → `--set-default` + R2 + demo constant are a separate repoint.
 - **Stage binaries BESIDE the canonical** (new filename); the operator gates the actual swap = the merge + dispatch.
-- **Branch rulesets reject direct pushes to main** (v7.6.0, 2026-07-23: the "Production Integrity"
+- **Branch rulesets reject direct pushes to main** (the "Production Integrity"
   ruleset — PR + `test` required, bypass = OrganizationAdmin only — rejected the old release-it
   direct push with GH013 AFTER a green dry-run; dry-run doesn't exercise the push). That incident
   produced the current two-phase PR flow (Step 3). If a ruleset change ever blocks the flow again,

@@ -10,6 +10,7 @@ import type { DatabaseSync } from "node:sqlite"
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 
 import { normalizeLocalityForKey } from "../street-normalize.ts"
+import { isOwnNameVariant } from "./own-name.ts"
 import type { PlaceAttrs } from "./place-attrs.ts"
 
 /**
@@ -62,7 +63,7 @@ export function stampNameRoles(ctx: {
 	ptcodes: Map<string, number>
 	ccodes: Map<string, number>
 	progress: (phase: string, message: string) => void
-}): { roleGloss: number; roleAbbr: number; keyTailPlaces: number; keyTailWithRole: number } {
+}): { roleGloss: number; roleAbbr: number; roleVariant: number; keyTailPlaces: number; keyTailWithRole: number } {
 	const { src, out, attrs, keyCounts, glossThreshold, progress } = ctx
 	progress("roles", "stamping name roles (gloss anomaly + abbr provenance)")
 
@@ -127,7 +128,8 @@ export function stampNameRoles(ctx: {
 		progress("roles", "source carries no `names` table — abbr detector skipped (gloss still runs)")
 	}
 
-	// Stamp order is precedence: the provenance-based abbr first, then gloss fills what abbr did not claim.
+	// Stamp order is precedence: the provenance-based abbr first, then the own-name variant verdict,
+	// then gloss fills what neither claimed.
 	const roleAbbr = Number(
 		out
 			.prepare(
@@ -136,6 +138,53 @@ export function stampNameRoles(ctx: {
 					SELECT 1 FROM role_key rk WHERE rk.spr_id = cand_stage.spr_id AND rk.name_key = cand_stage.name_key)`
 			)
 			.run().changes
+	)
+
+	// --- variant detector (#1882): the alias surface is the holder's OWN primary name in another
+	// orthography — romanization, spacing/diacritic variant, or abbreviation expansion. The verdict
+	// is per (alias key, primary key) pair, so it runs in JS over the still-unstamped alias rows;
+	// an uncovered script answers no-verdict and stamps nothing (own-name.ts owns the predicate and
+	// its measured threshold). Runs BEFORE gloss on purpose: a surface that IS the place's own name
+	// is not a translation, whatever the key volume says.
+	out.exec(
+		"CREATE TEMP TABLE variant_key (spr_id INTEGER NOT NULL, name_key TEXT NOT NULL, PRIMARY KEY (spr_id, name_key)) WITHOUT ROWID"
+	)
+
+	const insVariantKey = out.prepare("INSERT OR IGNORE INTO variant_key VALUES (?, ?)")
+	let variantScanned = 0
+
+	out.exec("BEGIN")
+
+	for (const r of out
+		.prepare("SELECT DISTINCT spr_id, name_key FROM cand_stage WHERE is_primary = 0 AND name_role IS NULL")
+		.iterate()) {
+		variantScanned++
+		const a = attrs.get(Number(r.spr_id))
+
+		if (!a?.pkey) continue
+
+		if (isOwnNameVariant(String(a.pkey), String(r.name_key))) {
+			insVariantKey.run(Number(r.spr_id), String(r.name_key))
+		}
+	}
+
+	out.exec("COMMIT")
+
+	const roleVariant = Number(
+		out
+			.prepare(
+				`UPDATE cand_stage SET name_role = 'variant'
+				 WHERE is_primary = 0 AND name_role IS NULL AND EXISTS (
+					SELECT 1 FROM variant_key vk WHERE vk.spr_id = cand_stage.spr_id AND vk.name_key = cand_stage.name_key)`
+			)
+			.run().changes
+	)
+
+	out.exec("DROP TABLE variant_key")
+
+	progress(
+		"roles",
+		`variant: ${roleVariant.toLocaleString()} of ${variantScanned.toLocaleString()} unstamped alias keys are own-name variants`
 	)
 
 	out.exec("CREATE TEMP TABLE role_place (spr_id INTEGER PRIMARY KEY) WITHOUT ROWID")
@@ -184,5 +233,5 @@ export function stampNameRoles(ctx: {
 			`key tail (>= ${glossThreshold} keys): ${keyTailWithRole.toLocaleString()} of ${keyTailPlaces.toLocaleString()} places carry a role`
 	)
 
-	return { roleGloss, roleAbbr, keyTailPlaces, keyTailWithRole }
+	return { roleGloss, roleAbbr, roleVariant, keyTailPlaces, keyTailWithRole }
 }

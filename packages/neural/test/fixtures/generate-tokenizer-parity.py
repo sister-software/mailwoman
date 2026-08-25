@@ -118,7 +118,7 @@ def main() -> int:
         inputs = CURATED_INPUTS
         sys.stderr.write(f"using {len(inputs)} curated inputs\n")
 
-    out = [{"raw": raw, "pieces": sp.EncodeAsPieces(raw), "ids": sp.EncodeAsIds(raw)} for raw in inputs]
+    out = [{"raw": raw, "pieces": sp.EncodeAsPieces(raw), "ids": sp.EncodeAsIDs(raw)} for raw in inputs]
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

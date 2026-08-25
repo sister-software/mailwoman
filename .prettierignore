@@ -13,6 +13,11 @@
 docs/static/benchmarks/fr-ban-sample.json
 docs/static/benchmarks/*-results.json
 
+## Builder-written reference artifacts (`mailwoman gazetteer capitals`) — one entry per line so the
+## file diffs like a table; the same JSON.stringify-vs-formatter mismatch as the benchmark artifacts
+## above, so formatting it makes every rebuild fail `yarn lint:oxfmt` on its own output.
+data/gazetteer/capitals-v1.json
+
 ## Build asset directories
 /build
 docs/build

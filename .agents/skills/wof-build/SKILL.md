@@ -33,12 +33,12 @@ Downloads wikimedia-importance.csv.gz, joins WOF concordances, writes `place_imp
 node packages/mailwoman/out/cli.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
 ```
 
-**This step must precede step 3, and as of 2026-08-05 it has never run against the live admin DB.**
-`admin-global-priority.db` carries `place_population` and no `place_importance`, so the FST builder
-takes its documented fallback and every shipped FST's `importance` is population-scaled. Verified by
-rebuilding: the 2026-08-05 artifacts' importance values are bit-identical to the 2026-07-26 ones, and
-`place_population` row counts (743,268 → 1,519,518) match the provenance field both builds recorded
-as `importanceMatches`. See #1142.
+**This step must precede step 3. Check whether it has ever run against the live admin DB:** while
+`admin-global-priority.db` carries `place_population` and no `place_importance`, the FST builder
+takes its documented fallback and every shipped FST's `importance` is population-scaled. In that
+state a rebuild reproduces importance values bit-identically across admin swaps, and the
+`place_population` row counts match the provenance field both builds record as `importanceMatches`.
+See #1142.
 
 ### 3. Build the per-locale FST gazetteers (~4 min, mostly the shared ambiguity scan)
 
@@ -72,8 +72,8 @@ node resolver-wof-sqlite/out/build-slim-cli.js \
 ### 5. Verify
 
 The FST freshness section of `gazetteer verify` answers "which artifacts were built from THIS
-database" — the question nothing could answer before 2026-08-05, which is how the 2026-08-04 admin
-swap left every FST pointing at a gazetteer that no longer existed:
+database" — the question that, while unanswerable, once left every FST pointing at a gazetteer
+that no longer existed after an admin swap:
 
 ```bash
 node packages/mailwoman/out/cli.js gazetteer verify --no-reverse-panel
@@ -109,7 +109,7 @@ live DB, that is what the number means.
 
 ## Expected output
 
-Measured against `admin-global-priority.db` md5 `1e963a54` (2026-08-04), build 2026-08-05:
+Measured against `admin-global-priority.db` md5 `1e963a54`:
 
 | Artifact      | Size    | States  | Places  | Insertions | Excluded |
 | ------------- | ------- | ------- | ------- | ---------- | -------- |
@@ -120,7 +120,7 @@ Measured against `admin-global-priority.db` md5 `1e963a54` (2026-08-04), build 2
 | wof-hot.db    | ~35 MB  | —       | —       | —          | —        |
 
 A rebuild that reproduces those five numbers per locale is a no-op except for parent chains and the
-stamp — the counts held exactly across the 2026-08-04 admin swap, because `macrohood`/`microhood` are
+stamp — the counts held exactly across the admin swap that added macrohood records, because `macrohood`/`microhood` are
 not in the builder's `DEFAULT_PLACETYPES`. The ingest still reaches the artifact, but only as ancestry:
 2,602 US / 67 GB / 19 FR neighbourhood chains grew from one hop to the full walk once their macrohood
 parents existed to walk through.

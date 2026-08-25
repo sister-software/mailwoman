@@ -32,16 +32,78 @@ Typical volume-side run (see ``train_remote.py::audit_epoch_mixture``)::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import random
 from collections import Counter
 from itertools import islice
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from .augment import augment_row
 from .data_loader import _raw_row_stream, source_row_counts
 
+if TYPE_CHECKING:
+    from .config import CorpusReceiptConfig
+
 _AUGMENT_KEYS = ("directional", "region", "glue", "case", "punct_drop", "upper_case", "ordinal")
+
+
+class CorpusReceiptError(ValueError):
+    """A failed receipt audit with its complete report attached for persistence."""
+
+    def __init__(self, message: str, report: dict):
+        super().__init__(message)
+        self.report = report
+
+
+def corpus_receipt_binding(config_path: Path, corpus_dir: Path) -> str:
+    """Bind a passing receipt audit to the exact config and corpus manifest bytes."""
+    manifest_path = corpus_dir / "MANIFEST.json"
+    if not manifest_path.is_file():
+        raise FileNotFoundError(f"required corpus receipt binding needs {manifest_path}")
+    digest = hashlib.sha256()
+    for path in (config_path, manifest_path):
+        contents = path.read_bytes()
+        digest.update(len(contents).to_bytes(8, "big"))
+        digest.update(contents)
+    return digest.hexdigest()
+
+
+def verify_corpus_receipt_binding(
+    config_path: Path,
+    corpus_dir: Path,
+    required_receipts: list[CorpusReceiptConfig],
+    token: str,
+) -> None:
+    """Refuse a receipt-bearing GPU run unless the CPU audit bound these bytes."""
+    if not required_receipts:
+        return
+    if token != corpus_receipt_binding(config_path, corpus_dir):
+        raise RuntimeError(
+            "required corpus receipts were not audited against these config and manifest bytes; "
+            "run the CPU receipt preflight before allocating a GPU"
+        )
+
+
+def verify_corpus_receipt_report(
+    config_path: Path,
+    corpus_dir: Path,
+    required_receipts: list[CorpusReceiptConfig],
+    token: str,
+    report_path: Path,
+) -> None:
+    """Verify that the bound CPU audit persisted a passing report."""
+    if not required_receipts:
+        return
+    verify_corpus_receipt_binding(config_path, corpus_dir, required_receipts, token)
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"required passing corpus receipt report is unreadable: {report_path}") from exc
+    meta = report.get("meta", {})
+    if meta.get("corpus_receipt_status") != "pass" or meta.get("corpus_receipt_binding") != token:
+        raise RuntimeError(f"required corpus receipt report is not a passing audit for these bytes: {report_path}")
 
 
 def audit_mixture(
@@ -54,6 +116,7 @@ def audit_mixture(
     source_weights: dict[str, float] | None,
     coarse_filter: bool,
     augment: dict[str, float] | None = None,
+    required_receipts: list[CorpusReceiptConfig] | None = None,
 ) -> dict:
     """Run both passes over one epoch of ``draws`` rows and return the report dict."""
     augment = dict.fromkeys(_AUGMENT_KEYS, 0.0) | (augment or {})
@@ -82,9 +145,13 @@ def audit_mixture(
     n_windows = (draws + window - 1) // window
     window_counts: list[Counter] = [Counter() for _ in range(n_windows)]
     draw_countries: Counter = Counter()
+    receipt_counts: Counter = Counter()
     for i, row in enumerate(islice(_stream(random.Random(seed)), draws)):
         window_counts[i // window][row["source"]] += 1
         draw_countries[row["country"]] += 1
+        for receipt in required_receipts or []:
+            if _matches_receipt(row, receipt):
+                receipt_counts[receipt.name] += 1
     draw_totals = sum(window_counts, Counter())
     total_draws = sum(draw_totals.values())
 
@@ -112,6 +179,19 @@ def audit_mixture(
             "rows": rows,
             "reps_per_row": (draws_for_src / rows) if rows else None,
         }
+
+    receipts = [
+        {
+            "name": receipt.name,
+            "required_draws": receipt.min_draws,
+            "observed_draws": receipt_counts[receipt.name],
+            "source": receipt.source,
+            "country": receipt.country,
+            "component_sequence": receipt.component_sequence,
+        }
+        for receipt in required_receipts or []
+    ]
+    failures = [r for r in receipts if r["observed_draws"] < r["required_draws"]]
 
     # Pass 2 — emitted level: the same stream expanded through the augmentation policy,
     # counting what fills the trainer's row_limit budget.
@@ -161,7 +241,7 @@ def audit_mixture(
             "distortion_vs_draw_share": (e_share / d_share) if d_share else None,
         }
 
-    return {
+    report = {
         "requested": requested,
         "draw_level": {
             "totals": dict(draw_totals),
@@ -183,7 +263,51 @@ def audit_mixture(
             "full_windows": len(full_windows),
             "corpus_dir": str(corpus_dir),
         },
+        "required_corpus_receipts": receipts,
     }
+    report["meta"]["corpus_receipt_status"] = "fail" if failures else "pass"
+    if failures:
+        details = "; ".join(
+            f"{r['name']}: observed {r['observed_draws']:,} of required {r['required_draws']:,} draws" for r in failures
+        )
+        raise CorpusReceiptError(f"required corpus receipts failed: {details}", report)
+    return report
+
+
+def _component_sequence(labels: list[str]) -> list[str]:
+    """Collapse BIO token labels to their ordered component-span sequence."""
+    sequence: list[str] = []
+    active: str | None = None
+    for label in labels:
+        if label == "O":
+            active = None
+            continue
+        if "-" not in label:
+            raise ValueError(f"malformed BIO label {label!r}: expected O, B-<component>, or I-<component>")
+        prefix, component = label.split("-", 1)
+        if prefix not in {"B", "I"} or not component:
+            raise ValueError(f"malformed BIO label {label!r}: expected O, B-<component>, or I-<component>")
+        if prefix == "I" and active != component:
+            raise ValueError(f"orphan BIO label {label!r}: active component is {active!r}")
+        if prefix == "B":
+            sequence.append(component)
+        active = component
+    return sequence
+
+
+def _contains_contiguous(sequence: list[str], expected: list[str]) -> bool:
+    if not expected:
+        return True
+    width = len(expected)
+    return any(sequence[start : start + width] == expected for start in range(len(sequence) - width + 1))
+
+
+def _matches_receipt(row: dict, receipt: CorpusReceiptConfig) -> bool:
+    if receipt.source is not None and row.get("source") != receipt.source:
+        return False
+    if receipt.country is not None and row.get("country") != receipt.country:
+        return False
+    return _contains_contiguous(_component_sequence(row.get("labels", [])), receipt.component_sequence)
 
 
 def run(
@@ -204,34 +328,45 @@ def run(
 
     cfg = load_config(config_path)
     d = cfg.data
+    resolved_corpus_dir = corpus_dir or Path(d.corpus_dir)
     epoch_rows = draws or getattr(d, "train_rows_per_epoch", None)
     if not epoch_rows:
         raise ValueError("config has no train_rows_per_epoch — pass --draws for the epoch length")
-    report = audit_mixture(
-        corpus_dir or Path(d.corpus_dir),
-        seed=cfg.train.seed + epoch,
-        draws=int(epoch_rows),
-        window=window,
-        country_weights=d.country_weights,
-        source_weights=d.source_weights,
-        coarse_filter=d.coarse_filter,
-        augment={
-            "directional": d.augment_directional_prob,
-            "region": d.augment_region_prob,
-            "glue": getattr(d, "augment_glue_prob", 0.0),
-            "case": getattr(d, "augment_case_prob", 0.0),
-            "punct_drop": getattr(d, "augment_punct_drop_prob", 0.0),
-            "upper_case": getattr(d, "augment_upper_case_prob", 0.0),
-            "ordinal": getattr(d, "augment_ordinal_prob", 0.0),
-        },
-    )
+    failure: CorpusReceiptError | None = None
+    try:
+        report = audit_mixture(
+            resolved_corpus_dir,
+            seed=cfg.train.seed + epoch,
+            draws=int(epoch_rows),
+            window=window,
+            country_weights=d.country_weights,
+            source_weights=d.source_weights,
+            coarse_filter=d.coarse_filter,
+            augment={
+                "directional": d.augment_directional_prob,
+                "region": d.augment_region_prob,
+                "glue": getattr(d, "augment_glue_prob", 0.0),
+                "case": getattr(d, "augment_case_prob", 0.0),
+                "punct_drop": getattr(d, "augment_punct_drop_prob", 0.0),
+                "upper_case": getattr(d, "augment_upper_case_prob", 0.0),
+                "ordinal": getattr(d, "augment_ordinal_prob", 0.0),
+            },
+            required_receipts=d.required_corpus_receipts,
+        )
+    except CorpusReceiptError as exc:
+        report = exc.report
+        failure = exc
     report["meta"]["config"] = str(config_path)
     report["meta"]["epoch"] = epoch
+    if d.required_corpus_receipts:
+        report["meta"]["corpus_receipt_binding"] = corpus_receipt_binding(config_path, resolved_corpus_dir)
     if json_path is not None:
         json_path.parent.mkdir(parents=True, exist_ok=True)
         json_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(f"wrote {json_path}")
     _print_summary(report)
+    if failure is not None:
+        raise failure
     return report
 
 
@@ -263,6 +398,12 @@ def _print_summary(report: dict) -> None:
             f"{dist if dist is not None else float('nan'):>9.3f}"
         )
     print(f"augmented share of emitted rows: {report['emitted_level']['augmented_share']:.3f}")
+
+    receipts = report.get("required_corpus_receipts", [])
+    if receipts:
+        print(f"\nrequired corpus receipts ({report['meta']['draws_realized']:,} sampled rows):")
+        for receipt in receipts:
+            print(f"  {receipt['name']}: {receipt['observed_draws']:,} observed; minimum {receipt['required_draws']:,}")
 
     # The guard #1677 asks for. Loud, at the point a human is looking at the mixture, because the whole
     # failure was that the number nobody printed was the number that mattered.

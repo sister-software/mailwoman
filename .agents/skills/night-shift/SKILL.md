@@ -72,20 +72,20 @@ pre-flight, not an optional optimization.
 
 **Default: Modal for heavy work, local for light work.**
 
-| Work                                   | Where        | Why                                                           |
-| -------------------------------------- | ------------ | ------------------------------------------------------------- |
-| Model training                         | Modal (A100) | GPU required                                                  |
-| ONNX export                            | **Modal**    | Loads PyTorch model, runs graph optimization — minutes of CPU |
-| int8 quantization                      | **Modal**    | onnxruntime quantizer — seconds but adds up across iterations |
-| Full golden eval (4500+ rows)          | **Modal**    | ~20s per run, ~3K ONNX inferences                             |
-| Demo presets (6-11 addresses)          | Local        | Trivially small                                               |
-| File edits, git operations             | Local        | Network-bound regardless                                      |
-| Build script development + tests       | Local        | Iteration speed                                               |
-| Single-shard parquet builds (<1M rows) | Local        | Bound by Python parquet, not GPU                              |
+| Work                                  | Where        | Why                                                           |
+| ------------------------------------- | ------------ | ------------------------------------------------------------- |
+| Model training                        | Modal (A100) | GPU required                                                  |
+| ONNX export                           | **Modal**    | Loads PyTorch model, runs graph optimization — minutes of CPU |
+| int8 quantization                     | **Modal**    | onnxruntime quantizer — seconds but adds up across iterations |
+| Full golden eval (4500+ rows)         | **Modal**    | ~20s per run, ~3K ONNX inferences                             |
+| Demo presets (6-11 addresses)         | Local        | Trivially small                                               |
+| File edits, git operations            | Local        | Network-bound regardless                                      |
+| Build script development + tests      | Local        | Iteration speed                                               |
+| Single-file parquet builds (<1M rows) | Local        | Bound by Python parquet, not GPU                              |
 
 **Heat rule:** in summer (May–September) or when the lab `sensors` reports any core ≥85°C, treat ALL "either-place" work as Modal-first.
 
-**Modal pyc cache gotcha** (observed 2026-05-28): `export_onnx` can fail with stale label dict imports after a `labels.py` change, even after `modal volume put --force`. Workaround: clear cache before invoking:
+**Modal pyc cache gotcha:** `export_onnx` can fail with stale label dict imports after a `labels.py` change, even after `modal volume put --force`. Workaround: clear cache before invoking:
 
 ```bash
 modal volume rm mailwoman-training corpus-python/src/mailwoman_train/__pycache__ -r 2>&1 | tail -1
@@ -103,7 +103,7 @@ When training diverges:
 4. **Document** the hypothesis in the config YAML as a comment, not just the commit message. The next iteration needs to see what's already been tried.
 5. **Retry.** If it diverges again with the same root, escalate: drop the feature entirely (CE-only fallback) or schedule a deeper investigation as a separate issue.
 
-**Specifically learned (2026-05-28):**
+**Known constraints (bf16 CRF):**
 
 - CRF training on a 33×33 transition table in bf16 NaN'd twice. Fix was to disable CRF training entirely. The bf16 hypothesis remains unconfirmed — needs a fp32 follow-up.
 - Both NaN attempts happened post-warmup at peak LR. Warmup + LR adjustments alone don't fix the root cause.
@@ -113,7 +113,7 @@ When training diverges:
 When a run regresses or a tag underperforms, the next action is **the cheapest
 experiment that could falsify your hypothesis** — not a code change, not a
 structural retrain. The pattern that adjudicated the consolidation affix fork
-(2026-06-10) is the template:
+(the PR #468 diagnostic, below) is the template:
 
 1. **State the hypothesis in one sentence.** "Affix collapsed because feature X
    interferes with feature Y" vs "Affix collapsed because the schedule starved
@@ -168,9 +168,9 @@ result.
 
 **Rule: decide the SHAPE before you decide between these two.** Both rows above
 presuppose a base, so copying last night's config carries `init_from` forward and
-the shape then never gets re-decided — six consecutive runs on 2026-08-23 were
-fine-tunes for that reason alone, and the null control later showed the fine-tune
-itself cost 10 of 649 board rows before the new shard was read. **A fine-tune
+the shape then never gets re-decided — six consecutive runs in one session were
+fine-tunes for that reason alone, and the placebo control later showed the fine-tune
+itself cost 10 of 649 board rows before the new data was read. **A fine-tune
 cannot introduce a source the base never saw.** Write down `kind`, `why`, and
 which null run backs it, then pick a row.
 
@@ -183,7 +183,7 @@ with the weights and delete the _next_ checkpoint, not the resume target.
 **A candidate number means nothing until the controls have run.** Before the per-tag
 analysis below, run `mwdev_arc` — self-control, then null, then candidate. It refuses
 to attribute a result when the shipped model disagrees with itself, and it subtracts
-the fine-tune tax rather than charging it to the lever. The protocol and its rationale
+the fine-tune's own row loss rather than attributing it to the change under test. The protocol and its rationale
 are the `training-arc` skill; the gate floors are the `eval-model` skill. Neither is
 optional, and the per-tag check below is in addition to them, not instead.
 
@@ -223,7 +223,7 @@ When writing a scorecard or comparison table in `docs/records/evals/`:
    `*` with a footnote stating the relaxation and rationale). Don't re-baseline
    silently.
 
-The 2026-06-10 consolidation doc relaxed `affix 78/67 → 72/64` and dropped the
+A consolidation doc once relaxed `affix 78/67 → 72/64` and dropped the
 US-street row from one table; the operator caught it on review. No decision
 flipped on the relaxed numbers (luck), but ~2h of detection lag is the kind of
 friction that ends with "did we just ship a regression?" The
@@ -245,7 +245,7 @@ When training is running:
 
 | What's running            | Background work to pick up                                             |
 | ------------------------- | ---------------------------------------------------------------------- |
-| First training of session | Build the next iteration's config + corpus shards                      |
+| First training of session | Build the next iteration's config + corpus recipe files                |
 | Second training           | Address backlog issues (#-labeled GitHub items with empirical context) |
 | Final training            | Draft the shift report, update docs, prep ship pipeline                |
 | All training done         | Continue with backlog OR launch the next iteration                     |
@@ -333,4 +333,4 @@ At the very end of an autonomous shift, send the operator a chat-friendly summar
 3. **The numbers (1–2 sentences)** — headline result + the cost (Modal $, GPU hours).
 4. **Where the detailed report lives** — link to the committed postmortem.
 
-This is _additional to_ the committed shift artifact — the chat summary is what gets read first thing in the morning; the artifact is the deep dive. The morning-shift skill consumes this; if you want the handoff to feel smooth, write it the way you'd want to read it half-awake.
+This is _additional to_ the committed shift artifact — the chat summary is what gets read first thing in the morning; the artifact holds the full detail. The morning-shift skill consumes this; if you want the handoff to feel smooth, write it the way you'd want to read it half-awake.

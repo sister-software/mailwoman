@@ -350,7 +350,7 @@ test("countrycodes and osm_ids comma-split; limit defaults to 10 on absent/inval
 	await app.request("/lookup?osm_ids=N1,W2,R3")
 	expect(seenSearch[0]?.countrycodes).toEqual(["de", "fr"])
 	expect(seenSearch[1]?.limit).toBe(10)
-	expect(seenLookup[0]?.osmIds).toEqual(["N1", "W2", "R3"])
+	expect(seenLookup[0]?.osmIDs).toEqual(["N1", "W2", "R3"])
 })
 
 test("an engine fault answers the clean legacy 500 envelope", async () => {

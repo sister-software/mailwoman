@@ -17,7 +17,7 @@ weighted automaton with per-entry payloads is "top-k completion" (Hsu & Ottavian
 ships in Lucene's suggest module — but every one of those systems treats the payload as an opaque
 byte string handed back to the caller [S]. Materializing a place's parent chain into the index entry
 so a hit returns its ancestry with zero joins is _standard shipped practice_ in geocoders —
-Foursquare's twofishes (2012) is nearly an exact match for our `chain [u32;8]` (a `parentIds:
+Foursquare's twofishes (2012) is nearly an exact match for our `chain [u32;8]` (a `parentIDs:
 list<i64>` on every serving feature, used at autocomplete time to render "Rego Park, Queens, NY")
 [S], and Pelias, Photon, WOF, Overture, and GeoNames all denormalize the chain at index/build time
 [S]. The encoding itself has textbook names: materialized path / Dewey labels [S]. Embedding
@@ -142,7 +142,7 @@ no counterpart in this family.
 
 - Coarse splitting geocoder over GeoNames: _"In one pass, we can build a database where each entry
   is a feature with a list of names for indexing, names for display, and a list of parents"_ [S].
-  The thrift schema has `ScoringFeatures.parentIds: list<i64>` on every serving feature, response
+  The thrift schema has `ScoringFeatures.parentIDs: list<i64>` on every serving feature, response
   options `PARENTS` / `PARENT_ALL_NAMES`, and a comment: _"controls if we should fetch parents to
   construct a string like 'New York, NY'"_ [S]. Autocomplete mode returns highlighted names and
   uses the parent lists for display and containment during scoring [S]. This is a per-entry
@@ -423,7 +423,7 @@ Search-verified [S]:
 9. Nominatim: place_addressline = per-place materialized ancestor rows with fromarea/isaddress; built in rank order — Nominatim dev docs. nominatim-suggest exports prebuilt addresses to ES — its README.
 10. Google Places Autocomplete: terms[]/types[]/structured_formatting public contract; internals not public — Google docs.
 11. Algolia Places: OSM-based, administrative field in records, retired May 2022, quality-cited — Algolia sunset post, docs.
-12. Twofishes: per-feature `parentIds: list<i64>`, PARENTS/PARENT_ALL_NAMES response options, "construct a string like 'New York, NY'", one-pass build "feature with … a list of parents" — geocoder.thrift + README (primary).
+12. Twofishes: per-feature `parentIDs: list<i64>`, PARENTS/PARENT_ALL_NAMES response options, "construct a string like 'New York, NY'", one-pass build "feature with … a list of parents" — geocoder.thrift + README (primary).
 13. Roy & Chakrabarti SIGMOD 2011: index named "materialized trie", spatial info in trie nodes for pruning — ACM DL/MSR page + TASK (VLDB 2023) related-work characterization.
 14. IR-tree family = R-tree nodes + textual summaries; TASK VLDB 2023 current — EDBT/VLDB papers.
 15. Hsu & Ottaviano WWW 2013: RMQ trie / completion trie / score-decomposed trie — the "top-k completion" name — paper.

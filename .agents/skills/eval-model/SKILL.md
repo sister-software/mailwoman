@@ -18,7 +18,9 @@ Three floors, all of which must hold:
 
 1. **Net improved-minus-regressed ≥ 0 on the 649-row board.**
 2. **No regression on FR, GB or DE** — iron rule 6, the D-rule. A winning net does not buy one.
-3. **The promotion battery passes 17/17** (`mwdev_gate --gate v9.0.0-base`).
+3. **The promotion battery passes every floor declared by the gate spec**
+   (`mwdev_gate --gate v9.0.0-base`). The command reports the passed and total floor counts; do not
+   copy a count into this runbook because adding a floor would make it stale.
 
 Run the first two with `mwdev_arc`, which also runs the controls that make the number mean anything:
 
@@ -46,7 +48,7 @@ scripts keep concluding that nothing changed.
 | Did the board move, and is the number attributable?      | `mwdev_arc`          |
 | What changed on these specific addresses?                | `mwdev_diff_parse`   |
 | Why did the coordinate move — parse, retrieval, or tier? | `mwdev_diff_geocode` |
-| Two configs, one lever                                   | `mwdev_compare`      |
+| Two configs, one changed setting                         | `mwdev_compare`      |
 | The promotion battery                                    | `mwdev_gate`         |
 | What does the corpus actually contain?                   | `mwdev_coverage`     |
 | Where did this span come from?                           | `mwdev_trace`        |

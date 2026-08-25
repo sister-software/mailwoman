@@ -1,0 +1,28 @@
+## Mailwoman chat style: conversational stock forms.
+##
+## Vale existence rule. These are the chat-register stock openers and closers
+## the output style (.claude/output-styles/mailwoman-development.md) bans —
+## they never appear in published docs, which is why they live here rather
+## than in Mailwoman/StockPhrases.yml. "The real question is…" is covered by
+## JudgmentJargon's rhetorical-noun pattern, not repeated here.
+extends: existence
+message: "Cut the stock form '%s' — agreement must carry information, and openers/closers carry none."
+level: error
+ignorecase: true
+tokens:
+  - you're absolutely right
+  - absolutely right
+  - absolutely correct
+  - great question
+  - good question
+  - smoking gun
+  - let's dive
+  - let me know if
+  - happy to help
+  - hope (?:this|that) helps
+  - worth noting
+  - worth mentioning
+  - keep in mind
+  - deep dive
+  - at the end of the day
+  - that(?:'s| is) [^,.\n]{1,40}, not

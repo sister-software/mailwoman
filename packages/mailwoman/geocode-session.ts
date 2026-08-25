@@ -60,7 +60,12 @@ import {
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
-import { createResolverBackend, resolveCandidateDBPath, resolveWOFShardPaths } from "./resolver-backend.ts"
+import {
+	createResolverBackend,
+	loadCapitalIndex,
+	resolveCandidateDBPath,
+	resolveWOFShardPaths,
+} from "./resolver-backend.ts"
 
 //#region Contract
 
@@ -119,6 +124,20 @@ export interface GeocodeSessionOptions {
 	 * The opt-in venue tier (#1684's POI half) — see `GeocodeDeps.poiVenueTier`. Default OFF.
 	 */
 	poiVenueTier?: boolean
+	/**
+	 * The capital-status ranking axis (#1880) — bounded promotion of a NATIONAL capital among same-name candidates on the
+	 * bare-toponym class (`promoteCapitals`, resolver/toponym-prior.ts — applied after the fame key, tier-safe). Reads
+	 * the artifact's `capital` table, falling back to the repo's `data/gazetteer/capitals-v1.json`. Default ON (board-651
+	 * receipt on PR #1888: +6/−0 with the exemption's +1 beside it); `false` disables. Unset, a missing reference
+	 * degrades to no promotion; an EXPLICIT `true` throws instead, so an asked-for key can never no-op silently.
+	 */
+	capitalTier?: boolean
+	/**
+	 * #1882 — exempt own-name `variant` aliases (the holder's primary name in another orthography, stamped by the
+	 * candidate build's own-name detector) from the cross-country primary-preference penalty. Candidate backend only;
+	 * no-ops on an artifact without the `name_role` column. Default ON (same PR #1888 receipt); `false` disables.
+	 */
+	variantAliasExemption?: boolean
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
@@ -289,7 +308,7 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 		})
 }
 
-interface ForkEntityProbe {
+export interface ForkEntityProbe {
 	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 	/**
 	 * The poi.db handle behind {@link deps}' `poiLookup`, so the session can release it. Carried separately because
@@ -302,7 +321,7 @@ interface ForkEntityProbe {
  * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
  * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
-async function loadForkEntityDeps(
+export async function loadForkEntityDeps(
 	options: Pick<GeocodeSessionOptions, "dataRoot" | "forkEntity">
 ): Promise<ForkEntityProbe> {
 	const poiDBPath = resolvePath(options.dataRoot, "poi", "poi.db")
@@ -431,7 +450,27 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const resolverImportedAt = performance.now()
 
-	const lookup = createResolverBackend(mod, { candidateDB, dataRoot: options.dataRoot, wofPaths: wofPath })
+	const lookup = createResolverBackend(mod, {
+		candidateDB,
+		dataRoot: options.dataRoot,
+		wofPaths: wofPath,
+		...(options.variantAliasExemption !== false ? { variantAliasExemption: true } : {}),
+	})
+
+	// #1880: the capital-status reference, loaded once per session. Explicit `true` demands the
+	// reference (throw on absence); the default tolerates an older artifact by degrading to no
+	// promotion. The closure answers per candidate (name + country + coordinates) and threads into
+	// the resolver's bounded capital promotion via GeocodeDeps.capitalLevel.
+	const capitals =
+		options.capitalTier === false
+			? undefined
+			: loadCapitalIndex({ candidateDB, missing: options.capitalTier === true ? "throw" : "degrade" })
+
+	const capitalLevel = capitals
+		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
+		: undefined
+
 	const shardProvider = new ShardProvider(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
@@ -681,6 +720,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// through the retry; a locale-inferred scope is withheld there like any bare-locality walk.
 			defaultCountryIsInferred: !options.defaultCountry,
 			...(options.localeCountryPrior && withheldCountry ? { localeCountryPrior: withheldCountry } : {}),
+			// #1880 opt-in: default-OFF downstream, so only the loaded closure needs threading.
+			...(capitalLevel ? { capitalLevel } : {}),
 			// #1585: the locale hint's country scopes the typo-fuzzy tier — threaded UNCONDITIONALLY, including where
 			// the #912 guard withholds the hard scope (the withheld case is the one the restriction exists for).
 			...(resolverDefaultCountry(options, !!candidateDB)

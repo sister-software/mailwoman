@@ -67,7 +67,7 @@ input.
 
 ```ts
 // neural/onnx-runner.ts:197
-const seqLen = Math.min(tokenIds.length, this.fixedSeqLen) // fixedSeqLen defaults to 128
+const seqLen = Math.min(tokenIDs.length, this.fixedSeqLen) // fixedSeqLen defaults to 128
 ```
 
 `logits` and `emissions` come back with exactly `seqLen` rows. `pieces` — from

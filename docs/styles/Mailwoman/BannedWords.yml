@@ -6,6 +6,11 @@
 ## token because an unpadded token also matches inside `justice`/`adjust`;
 ## the padding is an approximation, not a word-boundary guarantee, and misses
 ## `just` at the very start/end of a sentence next to punctuation.
+##
+## `harness` is scoped to the verb phrase (`harness the …`): the bare noun is
+## precise repo vocabulary (the parser test harness in `test-kit`, the eval
+## harness), and the token exists for the marketing verb ("harness the power
+## of"). A bare-noun token flagged the vocabulary itself.
 extends: existence
 message: "'%s' is filler — cut it or replace it with the concrete claim."
 level: error
@@ -31,7 +36,7 @@ tokens:
   - vibrant
   - elevate
   - unlock
-  - harness
+  - harness(es|ed|ing)? the
   - foster
   - facilitate
   - honest(ly)?

@@ -104,9 +104,11 @@ wrong**, recorded here because each was stated confidently before being checked:
    mixture stays proportional to row counts.
 
 What IS measured: four newly-admitted countries carry rows with **zero street rows** — CN 11,357,947,
-JP 2,092,821, KR 1,083,156, TW 678,660. That is 15,212,584 rows, **2.23%** of the admitted pool; the
-US share moves 73.13% → 71.50%. A 2.23% dose is small for the damage observed, so this is a
-hypothesis and not a finding.
+JP 2,092,821, KR 1,083,156, TW 678,660. That is 15,212,584 rows, **2.23%** of the admitted pool by ROW
+COUNT; the US row share moves 73.13% → 71.50%. The config's 34-source `source_weights` reweighting
+shifts effective sampler shares, so the row arithmetic is approximate — the falsification below
+rests on the config diff, not on these share numbers. A ~2% dose is small for the damage observed,
+so this was a hypothesis and not a finding.
 
 ## The isolation run
 
@@ -158,14 +160,18 @@ core survives the CJK toggle, so it is attributable to what the two runs share: 
 (`v0.19.0-suffix-boundary-v2` → `v0.27.0-house-venue-intl`) and from-scratch-ness itself — still two
 confounded variables against the shipped model, and no run so far separates them.
 
-**2. The one-seed variance floor is ~40 rows.** Two runs whose configs differ by 2.23% of the
-admitted pool flip 40 rows between them (16 regress only under v5.0.0, 24 only under v5.1.0). The
-churn concentrates in a fragile class — bare multi-word streets and GB venues, the rows the shipped
-model holds near 0.5 confidence: `Calle de Alcalá`, `Paseo de la Castellana`, `Via Laietana`, `Corso
-Vittorio Emanuele II` regress under v5.1.0 while `Bloor Street West`, `Rambla de Catalunya`,
-`Connaught Road Central`, `Des Voeux Road Central` improve. **Row-level D-rule counts from a single
-from-scratch run are under-powered against this floor.** GB 4 → 13 is mostly churn: 7 of the 13 are
-v5.1.0-only venue rows.
+**2. The admission change coincides with 40 changed regression outcomes among 649 board rows.** The
+two runs use seed 42, but v5.1.0 removes 15,212,584 training rows from four of v5.0.0's 134 admitted
+countries. Those rows are 2.23% of v5.0.0's admitted training-row pool. Sixteen board rows regress
+only under v5.0.0 and 24 regress only under v5.1.0, for 16 + 24 = 40 rows whose regression outcome differs.
+That comparison measures the admission change plus any training nondeterminism; it does not measure
+seed-to-seed variance. The changed outcomes concentrate in bare multi-word streets and GB venues,
+including rows the shipped model holds near 0.5 confidence: `Calle de Alcalá`, `Paseo de la
+Castellana`, `Via Laietana`, and `Corso Vittorio Emanuele II` regress under v5.1.0 while `Bloor Street
+West`, `Rambla de Catalunya`, `Connaught Road Central`, and `Des Voeux Road Central` improve. GB
+regressions rise from 4 under v5.0.0 to 13 under v5.1.0; 7 of those 13 regress only under v5.1.0.
+The pending seed-43 repeat of the v5.0.0 config is required before assigning any part of this
+40-of-649 disagreement to the seed.
 
 Real wins bought by the corpus change, for the record: the standing `es-op3` failure
 (`Southeast, Carrer Passeig d'es Port, 15, 07691 Portopetro, Illes Balears, Spain`) improves under
@@ -173,7 +179,91 @@ v5.1.0, as does #1744's Bangladesh row (`London College of Legal Studies (South)
 The D-rule still holds both candidates.
 
 **Where this leaves the line:** shipped v4.4.0 stays. The open next questions, each a run and a
-decision, none pre-authorized: a seed-variance measurement (same config, different seed — prices the
-churn floor directly), or the v4.4.0 arc's own path applied forward (a suffix-boundary-style cure
+decision, none pre-authorized: a seed-disagreement measurement (same config, different seed — estimates
+row-level instability for one seed pair), or the v4.4.0 arc's own path applied forward (a suffix-boundary treatment
 fine-tuned ON TOP of the v5.0.0 base rather than another base). Both candidates' artifacts and run
 IDs are retained; the board runs are replayable via `{kind:"recorded"}`.
+
+## Postscript 2 — the full three-leg arc: null + cure on the v5.0.0 base (2026-08-24)
+
+The first run of the complete protocol — self-control, null, candidate in one call:
+
+```
+leg                                  improved  regressed  net  differed
+self-control (shipped vs itself)            0          0    0     0/649
+null (v5.0.1 — base recipe, 1k)            38         34    4   182/649
+cure (v5.0.2 — suffix-boundary ×4)         37         31    6   175/649
+```
+
+**Verdict: HOLD** — D-rule FR 2 / GB 4 / DE 1, unchanged from the base.
+
+Three findings:
+
+1. **The fine-tune tax on this base is ~zero.** The null grades net +4 vs shipped where the v5.0.0
+   base graded +2 — continuing the base's own recipe for 1,000 steps costs nothing measurable, unlike
+   the v4.4.0 base's measured 10-row tax. A tax is a property of the base and its recipe, not a
+   universal constant.
+2. **The cure worked, on exactly its target class.** Candidate minus null: net +2, regressions −3 —
+   and the three healed rows are `Passeig de Gràcia`, `Passeig de Sant Joan`, and the
+   `…Queen St Unit 1…` unit-swallow: the street-prefix/boundary class the suffix-boundary shard
+   teaches. Mechanism-consistent, small, and honestly attributed. (Null↔cure share the same base
+   init, seed, and steps, so the treatment comparison is not confounded by the separate country-admission change.)
+3. **The D-rule core is base-inherited and dose-immune.** FR 2 / GB 4 / DE 1 are identical across
+   base, null, and cure: the GB venue cluster (`St Andrew Undershaft…`, `30 St Mary Axe…`,
+   `Cafe at St Mary's…`, `Milford on Sea…`), `Unter den Linden`, and the bare-street coin flips. More
+   suffix-boundary dose is not the lever for these — the venue-boundary class needs its own treatment
+   (#1366's territory), or this lineage does not ship default-on.
+
+Artifacts: null int8 `f52ceaf164c4e01d1682dd80f3c6ac8c`, cure int8 `f2d264f09b7d6f269158ab97d1843346`.
+Run IDs in the store: control `0bb3f465`, null `e0b9491c`, candidate `c85ef830`.
+
+## Postscript 3 — the routed re-grading supersedes this document's board numbers (2026-08-24)
+
+Every board figure in this retrospective and its first two postscripts was measured through ONE
+en-US session per arm (`mwdev_compare` before PR #1875). Great Britain rows never loaded the en-GB
+FST, postcode binary, or placetype-pair index — while still producing a country-stratified score.
+The stratification made the numbers LOOK per-country; the execution path was not. PR #1875 routes
+each board row through its production overlay and records the resolved artifacts; the corrected
+measurements live in `scratchpad/HANDOFF-2026-08-24.md` and the run store.
+
+**What survives from postscripts 1–2, and why:**
+
+- The self-controls (0 differed of 649) — the rig was quiet on the path it measured.
+- The CJK-admission falsification — v5.0.0 vs v5.1.0 ran the SAME single-config path on both arms,
+  so the matched comparison stands: dropping CN/JP/KR/TW did not clear the regressions.
+- The ~40-row churn floor — a same-path variance measurement between two matched arms.
+- The gate-vs-board divergence — the promotion gate is package-shaped en-US by design.
+
+**What is superseded:**
+
+- Every absolute net/regressed count. Grades apply to the **372 of 649 rows carrying coordinate
+  truth**, not to 649; and foreign-row grades from the unrouted path are not production behavior.
+- The D-rule row identities. Under production routing the blocking set is **FR 2 of 45 graded rows
+  (`COMER parís.méxico` in its two board contracts, `fr-fork-entity-comer` and
+  `venue-toponym-comer-bare`) + GB 2 of 51 (`Biggin Hill, United Kingdom` and
+  `Brixton Hill, United Kingdom`); DE 0 of 6.** The GB venue-cluster blocking story
+  (`St Andrew Undershaft Church…`, `30 St Mary Axe…`) was an artifact of grading GB rows without
+  their overlay.
+- The v5.0.1-null / v5.0.2-cure row-level readings, including "the cure healed exactly its 3 target
+  rows" — same unrouted path. The parse-level diffs (the deleted `locality="London"`, the Passeig
+  retags) remain real observations of the SINGLE-CONFIG en-US parse and stay useful as mechanism
+  illustrations of the grammar contract; they are not statements about the production route.
+
+**The corrected campaign table** (board SHA-256 `e3063ff5faebdf2f…`, fingerprint `ddc60394d5c41471`,
+commit `ff4bb076c`):
+
+```
+leg                                        md5        improved/372  regressed/372  net  changed/649
+self-control (shipped vs staged shipped)   98a49b5c…       0             0           0       0
+seed-42 placebo fine-tune                  5f34dda7…       6            12          −6      67
+reviewed VE postcode-tail treatment        87543df0…      13             9          +4      68
+```
+
+Attribution vs the matched placebo: −3 regressions, +10 net. Five of the 13 improvements are the
+reviewed Venezuela target class. HOLD stands on two separate grounds the handoff keeps apart: the
+D-rule (4 blocking rows, shared with the placebo — inherited, not treatment-caused), and
+measurement power (296 vs 292 of 372 at 25 km, p = 0.7187 — no global-accuracy claim).
+
+The lesson worth keeping beside the D-rule itself: **a per-country breakdown of a score is not
+evidence that the per-country path ran.** This session audited corpus identity, artifact identity,
+and rig quietness — and graded five models through a route production never uses.

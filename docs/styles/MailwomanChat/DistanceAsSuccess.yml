@@ -1,0 +1,20 @@
+## Mailwoman chat style: distance presented as the success measure.
+##
+## Vale existence rule. Parsing and geocoding are about identifying the right
+## place, not about kilometres: correctness is conformance, span coherence to
+## a gazetteer ancestry, currency, and provenance. "5,274 km recovered" grades
+## a fix by how far the wrong answer moved, which says nothing about whether
+## the new answer is the right place with the right lineage.
+##
+## The board's own "@1km" tier vocabulary must NOT match — there the distance
+## IS the pre-registered metric, not a claim minted for one reply — so the
+## tokens target the recovery/gain framing, never a bare distance.
+extends: existence
+message: "Distance is not the success measure — name the place that is now correct and the criterion it satisfies (conformance, ancestry, currency, provenance). Give distance only when the claim itself is about distance."
+level: error
+ignorecase: true
+tokens:
+  - recover(s|ed|ing)? [\d.,]+ ?k?m\b
+  - '[\d.,]+ ?k?m (?:recover|regain)(?:s|ed|ing)?'
+  - regain(s|ed|ing)? [\d.,]+ ?k?m\b
+  - buy(s)? [\d.,]+ ?k?m\b

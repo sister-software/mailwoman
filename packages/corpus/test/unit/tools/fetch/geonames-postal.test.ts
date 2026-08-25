@@ -41,6 +41,12 @@ beforeAll(async () => {
 		} else if (req.url === "/VE.zip") {
 			res.writeHead(404)
 			res.end("not found")
+		} else if (req.url === "/v404/ZZ.zip") {
+			// The regression route: a 500 whose URL contains the substring "404". CI drew an ephemeral server
+			// port containing "404" and the prose-matching classifier filed a transfer failure as "GeoNames
+			// does not publish this country". The path plants the same substring deterministically.
+			res.writeHead(500)
+			res.end("boom")
 		} else {
 			res.writeHead(500)
 			res.end("boom")
@@ -86,6 +92,15 @@ describe("fetchGeonamesPostal", () => {
 		const summary = await fetchGeonamesPostal({ outRoot, baseURL, countries: ["  pt  "] })
 
 		expect(summary.fetched).toBe(1)
+	})
+
+	it("classifies by STATUS, not by message prose — a 500 from a URL containing '404' stays a transfer failure", async () => {
+		// ~1-2% of ephemeral ports contain the substring "404"; this pins the failure mode with the substring in
+		// the path instead, where it is deterministic.
+		const summary = await fetchGeonamesPostal({ outRoot, baseURL: `${baseURL}/v404`, countries: ["ZZ"] })
+
+		expect(summary.failedCodes).toEqual(["ZZ"])
+		expect(readManifest().unavailable).toEqual([])
 	})
 
 	it("keeps a transfer failure OUT of `unavailable` — it is a retry, not a coverage gap", async () => {

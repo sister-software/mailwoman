@@ -1,0 +1,14 @@
+## Mailwoman chat style: transitions that claim importance without paying
+## for it.
+##
+## Vale existence rule (warning). "Importantly," / "Notably," / an
+## "interestingly" aside each tell the reader a fact matters without saying
+## why. State the consequence, or let the fact stand on its own.
+extends: existence
+message: "'%s' is an empty transition — state why the fact matters, or drop it."
+level: warning
+ignorecase: true
+tokens:
+  - notably
+  - importantly
+  - interestingly

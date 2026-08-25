@@ -2086,16 +2086,52 @@ def push_artifact_r2(volume_path: str, r2_subpath: str):
 @app.function(
     image=training_image,
     volumes={VOL_MOUNT: vol},
+    timeout=7200,
+    memory=16384,
+)
+def preflight_corpus_receipts(config_name: str) -> str:
+    """Run declared corpus receipts on CPU and return their config+manifest binding."""
+    import sys
+    from pathlib import Path
+
+    vol.reload()
+    sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
+
+    config_path = Path(f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs/{config_name}")
+    if not config_path.is_file():
+        raise RuntimeError(f"Config not found: {config_path}")
+
+    from mailwoman_train.audit_epoch_mixture import CorpusReceiptError, run
+    from mailwoman_train.config import load_config
+
+    cfg = load_config(config_path)
+    if not cfg.data.required_corpus_receipts:
+        return ""
+
+    json_path = Path(f"{VOL_MOUNT}/audits/epoch-mixture-{config_path.stem}.json")
+    try:
+        report = run(config_path, json_path=json_path)
+    except CorpusReceiptError:
+        vol.commit()
+        raise
+    vol.commit()
+    return str(report["meta"]["corpus_receipt_binding"])
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
     secrets=[hf_secret],  # HF_TOKEN for optional Trackio Space upload (empty/no-op when unset)
     gpu="A100",
     timeout=TRAIN_TIMEOUT_SECONDS,  # 6h — see the TRAIN_TIMEOUT_SECONDS derivation above
     memory=32768,  # 32GB RAM
 )
-def train(
+def _train_gpu(
     config_name: str = "v0_5_0-classifier-ce-only-full.yaml",
     resume: str = "auto",
     trackio: bool = False,
     trackio_space: str = "",
+    corpus_receipt_token: str = "",
 ):
     """Run the CE-only classifier training on an A100.
 
@@ -2152,6 +2188,21 @@ def train(
         )
     shard_count = len([f for f in os.listdir(train_dir) if f.endswith(".parquet")])
     print(f"Corpus: {cfg.data.corpus_dir} ({shard_count} train shards)")
+
+    if cfg.data.required_corpus_receipts:
+        from pathlib import Path
+
+        from mailwoman_train.audit_epoch_mixture import verify_corpus_receipt_report
+
+        receipt_report = Path(f"{VOL_MOUNT}/audits/epoch-mixture-{Path(config_path).stem}.json")
+        verify_corpus_receipt_report(
+            Path(config_path),
+            Path(cfg.data.corpus_dir),
+            cfg.data.required_corpus_receipts,
+            corpus_receipt_token,
+            receipt_report,
+        )
+        print(f"Corpus receipts: verified ({len(cfg.data.required_corpus_receipts)} requirements)")
 
     # Preflight the wall-clock budget (2026-08-09 P1): a recipe whose step count cannot fit
     # this function's timeout must fail HERE, not die at the wire like the 60k predecessor
@@ -2290,8 +2341,16 @@ def main(
         print(f"  modal run scripts/modal/train_remote.py --config {config}")
         return
 
+    print(f"Preflighting corpus receipts for config={config}...")
+    corpus_receipt_token = preflight_corpus_receipts.remote(config_name=config)
     print(f"Training with config={config}, resume={resume}, trackio={trackio}...")
-    train.remote(config_name=config, resume=resume, trackio=trackio, trackio_space=trackio_space)
+    _train_gpu.remote(
+        config_name=config,
+        resume=resume,
+        trackio=trackio,
+        trackio_space=trackio_space,
+        corpus_receipt_token=corpus_receipt_token,
+    )
     print("\nTraining complete!")
     print("\nDownload results with:\n  modal volume get mailwoman-training /output/ ./output/")
 
@@ -4218,6 +4277,7 @@ def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml
     would sample it (seed = train.seed + 1) and writes the JSON receipt to
     /data/audits/epoch-mixture-<config-stem>.json. Pull it with
     `modal volume get mailwoman-training /audits/<name>.json scratchpad/<name>.json`.
+    Configured ``required_corpus_receipts`` fail this function before a GPU run is launched.
     """
     import sys
     from pathlib import Path
@@ -4229,11 +4289,15 @@ def audit_epoch_mixture(config_name: str = "v4.3.3-suffix-boundary-base-60k.yaml
     if not config_path.is_file():
         raise RuntimeError(f"Config not found: {config_path}")
 
-    from mailwoman_train.audit_epoch_mixture import run
+    from mailwoman_train.audit_epoch_mixture import CorpusReceiptError, run
 
     stem = config_path.stem
     json_path = Path(f"{VOL_MOUNT}/audits/epoch-mixture-{stem}.json")
-    run(config_path, json_path=json_path, window=window)
+    try:
+        run(config_path, json_path=json_path, window=window)
+    except CorpusReceiptError:
+        vol.commit()
+        raise
     vol.commit()
     print(f"\nAudit committed to volume: {json_path}")
 
@@ -4584,6 +4648,52 @@ def sync_v460():
     missing = [label for label, present in checks.items() if not present]
     if missing:
         raise RuntimeError(f"v4.6.0 sync verification failed: {', '.join(missing)}")
+
+
+@app.function(
+    image=training_image,
+    volumes={VOL_MOUNT: vol},
+    secrets=[r2_secret],
+    timeout=1800,
+)
+def sync_v530_reviewed_postcode_tail():
+    """Stage the v5.3 reviewed Venezuela treatment inputs through R2 and verify mounted visibility."""
+    import shutil
+    import subprocess
+
+    vol.reload()
+    retry = "--low-level-retries 30 --retries 8 --transfers 8 --checkers 16"
+    commands = [
+        f"rclone copy :s3:{BUCKET}/corpus-python/src/ {VOL_MOUNT}/corpus-python/src/ {retry}",
+        f"rclone copy :s3:{BUCKET}/corpus/v0.28.0-reviewed-postcode-tail/ "
+        f"{VOL_MOUNT}/corpus/versioned/v0.28.0-reviewed-postcode-tail/corpus-v0.28.0-reviewed-postcode-tail/ {retry}",
+    ]
+    for command in commands:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"rclone failed: {result.stderr[:300]}")
+
+    package = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train"
+    for pyc in (f"{package}/__pycache__", f"{package}/configs/__pycache__"):
+        if os.path.isdir(pyc):
+            shutil.rmtree(pyc)
+
+    vol.commit()
+    corpus = f"{VOL_MOUNT}/corpus/versioned/v0.28.0-reviewed-postcode-tail/corpus-v0.28.0-reviewed-postcode-tail"
+    checks = {
+        "v5.3 treatment config": os.path.isfile(f"{package}/configs/v5.3.0-reviewed-ve-postcode-tail-60k.yaml"),
+        "overlay manifest": os.path.isfile(f"{corpus}/MANIFEST.json"),
+        "reviewed shard": os.path.isfile(f"{corpus}/train/reviewed-postcode-tail-00000.parquet"),
+        "v0.27 base manifest": os.path.isfile(
+            f"{VOL_MOUNT}/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl/MANIFEST.json"
+        ),
+        "tokenizer": os.path.isfile(f"{VOL_MOUNT}/models/tokenizer/v0.9.0-multisplice/tokenizer.model"),
+    }
+    for label, present in checks.items():
+        print(f"  {label}: {present}")
+    missing = [label for label, present in checks.items() if not present]
+    if missing:
+        raise RuntimeError(f"v5.3 sync verification failed: {', '.join(missing)}")
 
 
 def _file_contains(path: str, needle: str) -> bool:

@@ -17,6 +17,7 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildCorpusCensus,
+	normalizeArrowListColumn,
 	readAdmittedCountries,
 	readBoardCoverage,
 	readConfiguredCorpusVersion,
@@ -27,6 +28,23 @@ let root: string
 
 beforeAll(() => {
 	root = mkdtempSync(join(tmpdir(), "mw-coverage-"))
+})
+
+describe("normalizeArrowListColumn", () => {
+	it("normalizes both plain and nested Arrow list representations", () => {
+		expect(normalizeArrowListColumn(["B-street", "I-street"], "labels")).toEqual(["B-street", "I-street"])
+
+		expect(normalizeArrowListColumn({ list: [{ element: "B-street" }, { element: "I-street" }] }, "labels")).toEqual([
+			"B-street",
+			"I-street",
+		])
+	})
+
+	it("refuses an absent or unreadable requested column", () => {
+		expect(() => normalizeArrowListColumn(undefined, "labels")).toThrow(/absent or unreadable/)
+		expect(() => normalizeArrowListColumn({ list: {} }, "labels")).toThrow(/partial row/)
+		expect(() => normalizeArrowListColumn({ list: [{ value: "B-street" }] }, "labels")).toThrow(/partial row/)
+	})
 })
 
 describe("readAdmittedCountries", () => {

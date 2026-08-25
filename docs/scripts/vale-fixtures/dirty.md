@@ -38,6 +38,9 @@ the mistake, and the drop rate is significant near the tile boundary.
 Enter your ZIP Code and postal code below; we also see geo-code and lat/long typos.
 
 Setting this up is as simple as pasting an access token.
+
+Harness the power of geocoding, and harnessing the pipeline unlocks more. The
+test harness in this sentence must stay quiet — the noun is repo vocabulary.
 The effortless installer handles the rest, and after that it just works.
 
 Point the datalayer at a data-layer alias, run a text search, then a coordinate lookup.

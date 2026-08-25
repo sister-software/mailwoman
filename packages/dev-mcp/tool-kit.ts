@@ -216,7 +216,10 @@ export const ENGINE_CONFIG_SCHEMA = z
 		postcode_containment_coherence: z.boolean().optional(),
 		admin_containment_rerank: z.boolean().optional(),
 		poi_venue_tier: z.boolean().optional(),
+		capital_tier: z.boolean().optional(),
+		variant_alias_exemption: z.boolean().optional(),
 	})
+	.strict()
 	.describe("Every lever, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
 
 export interface DevToolDeps {

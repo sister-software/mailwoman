@@ -75,7 +75,6 @@ export function createUsgovImlsPlsAdapter(): CorpusAdapter {
 				const city = (record.CITY ?? "").trim()
 				const zip = (record.ZIP ?? "").trim()
 				const stateAbbr = (record.STABR ?? "").trim()
-				const county = (record.CNTY ?? "").trim()
 
 				if (!libName || !city || !zip) continue
 

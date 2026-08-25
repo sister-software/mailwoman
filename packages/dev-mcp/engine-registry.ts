@@ -72,6 +72,16 @@ export interface EngineConfig {
 	 */
 	poi_venue_tier?: boolean
 	/**
+	 * The capital-status ranking axis (#1880) — bounded NATIONAL-capital promotion on the bare-toponym class. Default OFF
+	 * (D-rule).
+	 */
+	capital_tier?: boolean
+	/**
+	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. Effective only against
+	 * an artifact whose `name_role` column carries the stamp. Default OFF (D-rule).
+	 */
+	variant_alias_exemption?: boolean
+	/**
 	 * Record the decode-path evidence on every run. OFF by default and left off by the measuring tools: the trace is kept
 	 * per run, so it is a per-row cost paid only where the evidence is the answer.
 	 */
@@ -126,6 +136,8 @@ export const EFFECTIVE_KEY_FOR = {
 	postcode_containment_coherence: "postcodeContainmentCoherence",
 	admin_containment_rerank: "adminContainmentRerank",
 	poi_venue_tier: "poiVenueTier",
+	capital_tier: "capitalTier",
+	variant_alias_exemption: "variantAliasExemption",
 	trace: "trace",
 	diagnose_unreachable: "diagnoseUnreachable",
 } as const satisfies Record<keyof EngineConfig, string>
@@ -174,6 +186,8 @@ export function resolveConfig(config: EngineConfig): GeocodeSessionOptions {
 		gazetteerPrior: config.gazetteer_prior ?? production.gazetteerPrior,
 		adminContainmentRerank: config.admin_containment_rerank ?? production.adminContainmentRerank,
 		...(config.poi_venue_tier === true ? { poiVenueTier: true } : {}),
+		...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
+		...(config.variant_alias_exemption === undefined ? {} : { variantAliasExemption: config.variant_alias_exemption }),
 		...(config.default_country ? { defaultCountry: config.default_country } : {}),
 		...(config.bias ? { bias: config.bias } : {}),
 		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),

@@ -82,6 +82,7 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 	it("handles region abbreviations", () => {
 		const q = matcher.query("NY")
 		const ny = matcher.query("New York")
+		expect(q.accepting.length).toBeGreaterThan(0)
 		expect(ny.accepting.length).toBeGreaterThanOrEqual(2)
 	})
 

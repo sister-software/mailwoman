@@ -1,0 +1,24 @@
+## Mailwoman chat style: banned project shorthand.
+##
+## Vale existence rule. Operator-banned terms (2026-08-24): each one is a name
+## an agent minted for something that already has a plain name, and the
+## operator has had to decode them for weeks. `the null` / `the cure` were
+## invented for two fine-tune runs — say "the control run (v5.0.1)" / "the
+## treatment run (v5.0.2)". `lever` means a specific change — name the config
+## key, corpus recipe, or weight. `shard` means a training-data subset — say
+## that, or name the recipe file. `three-leg` names a comparison protocol —
+## say which systems or runs the legs are.
+##
+## A backticked artifact name (`synth-suffix-boundary`,
+## `packages/corpus/src/shard-recipes/`) survives, because inline code is
+## exempt — mention the artifact by its real name instead of the shorthand.
+extends: existence
+message: "'%s' is banned project shorthand — name the concrete artifact or change in plain words (the config key, the corpus recipe file, the run version, the systems compared)."
+level: error
+ignorecase: true
+tokens:
+  - the null
+  - the cure
+  - lever(s)?
+  - shard(s)?
+  - three-leg

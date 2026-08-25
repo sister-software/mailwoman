@@ -235,7 +235,7 @@ record matcher, so what it writes is an entity set rather than a row dump.
 Two things about it before you run it. Unlike `geocode`, it will not start without a `--resolve-db` or
 `$MAILWOMAN_WOF_DB`, even though the candidate gazetteer is what answers — so pass the
 gazetteer's own path to satisfy the check. And its output properties are the record matcher's normalized
-view of your row, not your row: your `customer_id` rides in `sourceIds`.
+view of your row, not your row: your `customer_id` rides in `sourceIDs`.
 
 ```bash
 npx mailwoman registry run customers.csv --infer-mapping \
@@ -263,7 +263,7 @@ jq '.features[0]' customers.geojson
 		"entityID": "entity-0",
 		"recordCount": 1,
 		"cohesion": null,
-		"sourceIds": ["C-1001"],
+		"sourceIDs": ["C-1001"],
 		"sources": [],
 		"name": null,
 		"organization": "harbor and vine catering",

@@ -15,6 +15,22 @@ import yaml
 
 
 @dataclass
+class CorpusReceiptConfig:
+    """Minimum sampled-corpus evidence a training hypothesis requires.
+
+    ``component_sequence`` is matched as a contiguous subsequence after BIO labels are
+    collapsed to component spans. This lets a receipt assert a tail such as
+    locality -> postcode -> region while allowing venue/street context before it.
+    """
+
+    name: str = ""
+    min_draws: int = 1
+    source: str | None = None
+    country: str | None = None
+    component_sequence: list[str] = field(default_factory=list)
+
+
+@dataclass
 class DataConfig:
     corpus_dir: str = "/data/corpus/versioned/v0.1.0/corpus-v0.1.0"
     tokenizer_dir: str = "/data/models/tokenizer/v0.1.0"
@@ -26,6 +42,9 @@ class DataConfig:
     # When set: rows from unlisted sources are dropped. Weight / max_weight acceptance
     # multiplies with country_weights — a row must pass both filters to survive.
     source_weights: dict[str, float] | None = None
+    # Hypothesis-bearing corpus receipts enforced by ``audit_epoch_mixture``. Empty keeps
+    # historical configs unchanged. A run must not start until its audit passes.
+    required_corpus_receipts: list[CorpusReceiptConfig] = field(default_factory=list)
     # Hard cap on how many rows the streaming loader yields per epoch (None = unlimited).
     train_rows_per_epoch: int | None = None
     val_rows: int | None = 4096
@@ -505,10 +524,18 @@ def _merge(
         if hasattr(cur, "__dataclass_fields__") and isinstance(v, dict):
             _merge(cur, v, strict=strict, _path=dotted, _source=_source)
         else:
-            setattr(dst, k, _coerce(dst, k, v))
+            setattr(dst, k, _coerce(dst, k, v, strict=strict, path=dotted, source=_source))
 
 
-def _coerce(dst: Any, key: str, value: Any) -> Any:
+def _coerce(
+    dst: Any,
+    key: str,
+    value: Any,
+    *,
+    strict: bool = True,
+    path: str = "",
+    source: str = "<mapping>",
+) -> Any:
     """Coerce ``value`` to the dataclass field's declared type when an obvious conversion
     is safe. Targets one specific footgun: PyYAML's default loader parses ``5e-4`` as a
     string (YAML 1.1 spec requires a dot for floats), so a YAML config that writes
@@ -521,6 +548,49 @@ def _coerce(dst: Any, key: str, value: Any) -> Any:
     fields = getattr(dst.__class__, "__dataclass_fields__", None)
     if not fields or key not in fields:
         return value
+    if isinstance(dst, DataConfig) and key == "required_corpus_receipts":
+        if not isinstance(value, list):
+            raise TypeError("data.required_corpus_receipts must be a list")
+        receipts: list[CorpusReceiptConfig] = []
+        for index, item in enumerate(value):
+            if not isinstance(item, dict):
+                raise TypeError(f"data.required_corpus_receipts[{index}] must be a mapping")
+            receipt = CorpusReceiptConfig()
+            _merge(
+                receipt,
+                item,
+                strict=strict,
+                _path=f"{path}[{index}]",
+                _source=source,
+            )
+            receipts.append(receipt)
+        for receipt in receipts:
+            if not isinstance(receipt.name, str):
+                raise TypeError("corpus receipt name must be a string")
+            if type(receipt.min_draws) is not int:
+                raise TypeError(f"receipt {receipt.name!r} min_draws must be an integer")
+            if receipt.source is not None and not isinstance(receipt.source, str):
+                raise TypeError(f"receipt {receipt.name!r} source must be a string or null")
+            if receipt.country is not None and not isinstance(receipt.country, str):
+                raise TypeError(f"receipt {receipt.name!r} country must be a string or null")
+            if not isinstance(receipt.component_sequence, list) or not all(
+                isinstance(tag, str) for tag in receipt.component_sequence
+            ):
+                raise TypeError(f"receipt {receipt.name!r} component_sequence must be a list of strings")
+        names = [receipt.name for receipt in receipts]
+        if any(not name.strip() for name in names):
+            raise ValueError("every data.required_corpus_receipts entry needs a non-empty name")
+        if len(names) != len(set(names)):
+            raise ValueError("data.required_corpus_receipts names must be unique")
+        for receipt in receipts:
+            if receipt.min_draws <= 0:
+                raise ValueError(f"receipt {receipt.name!r} min_draws must be positive")
+            invalid = [tag for tag in receipt.component_sequence if not tag or tag == "O" or "-" in tag]
+            if invalid:
+                raise ValueError(
+                    f"receipt {receipt.name!r} component_sequence must contain bare component tags, got {invalid!r}"
+                )
+        return receipts
     declared = fields[key].type
     if not isinstance(value, str):
         return value

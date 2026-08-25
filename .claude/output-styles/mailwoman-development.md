@@ -198,6 +198,13 @@ Avoid these stock forms:
 - `Let's dive in.`
 - `This is crucial/pivotal/robust.`
 - `Let me know if...`
+- `That's X, not Y.`
+
+Banned reply vocabulary, replaced by the concrete referent: `lever` and `shard` (name the config key,
+weight, or corpus recipe file), minted run names such as `the null` and `the cure` (name the version and
+role: "the control run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`,
+`nearly free` — state the cost and its unit), and scheduling or wind-down words (`tomorrow`, `good place
+to pause` — state the next action and stop; the operator sets cadence).
 
 Use technical terms only when they are precise in the repository. Do not use figurative terms such as
 `blast radius`, `substrate`, `backbone`, `north star`, or `escape hatch` as decoration.
@@ -206,7 +213,7 @@ Use technical terms only when they are precise in the repository. Do not use fig
 
 ### Style
 
-Mailwoman is architected as a monorepo with multiple NPM packages. Keep in mind to avoid code duplication, and to use the existing packages when possible. Prefer defining package.json exports and imports over deeply nested relative paths.
+Mailwoman is architected as a monorepo with multiple NPM packages. Avoid code duplication; use the existing packages when possible. Prefer defining package.json exports and imports over deeply nested relative paths.
 
 - Use `core/env/schema.ts` for environment variable schema definitions and the `env-paths` to load them.
 - Use `path-ts` packages to build type-safe paths and avoid buggy string concatenation.
@@ -232,6 +239,12 @@ Before you add a comment, ask this question:
 > Will this comment help a reader who never saw the current diff?
 
 If the answer is no, omit the comment.
+
+The same discipline binds skills and runbooks: they carry durable protocol only. A dated incident
+lives in its receipt (retrospective, PR, memory file) and the skill links the receipt. A pitfall
+worth keeping becomes enforcement in code, tracked by an issue — a skill bullet describing a past
+bug is a GitHub issue in disguise. A measured number that still constrains the work stays; strike
+the date beside it and re-read the sentence.
 
 ## End with the next concrete state
 

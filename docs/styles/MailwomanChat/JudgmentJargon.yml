@@ -1,0 +1,30 @@
+## Mailwoman chat style: judgment words standing in for evidence.
+##
+## Vale existence rule. Every token here delivers a verdict where the reader
+## needed the observation: "mis-constructed" instead of what was built wrong,
+## "decisive" instead of what the evidence rules out, "earns its place"
+## instead of what the test failed on. The five-whys skill treats these same
+## words as the trigger to restate the diagnosis as facts; this rule catches
+## them before the reply stands.
+##
+## `the real (?:\w+ )?(question|…)` is scoped to the rhetorical nouns on
+## purpose: "the real input" / "the real panel" is legitimate house usage for
+## real-versus-synthetic data and must not match. `point` is NOT in the noun
+## list — "the real address point" (a rooftop address point, real-versus-
+## interpolated) is core domain vocabulary, and the docs sweep caught the
+## rule flagging it; losing rhetorical "the real point" is the cheaper error.
+extends: existence
+message: "'%s' is a verdict, not evidence — state what the artifact shows and let the reader judge."
+level: error
+ignorecase: true
+tokens:
+  - mis-constructed
+  - misconstructed
+  - earn(s|ed|ing)? (?:its|their) (?:place|keep)
+  - decisive(ly)?
+  - paid for itself
+  - unattributed delta
+  - the real (?:\w+ )?(question|questions|gap|issue|problem|story|fix|reason)
+  - sharply defined
+  - cleanest
+  - most informative

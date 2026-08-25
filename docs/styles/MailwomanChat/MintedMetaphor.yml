@@ -1,0 +1,26 @@
+## Mailwoman chat style: metaphors minted mid-reply.
+##
+## Vale existence rule (warning). A compound coined for one reply
+## ("geocode-killer", "dose-immune", "coin-flip territory", "the
+## variance-floor story") reads as an established concept the reader is
+## expected to know, when it names nothing in the repository. Warning rather
+## than error because hyphenated compounds are productive in legitimate house
+## vocabulary ("street-shaped tokens"); the tokens target the metaphor
+## families that have actually shipped in replies, not hyphenation generally.
+extends: existence
+message: "'%s' is a metaphor minted for this reply — name the mechanism in repository terms instead."
+level: warning
+ignorecase: true
+tokens:
+  - '\w+-killer'
+  - '\w+-immune'
+  - '\w+-proof'
+  - coin-flip
+  - the [\w-]+ story
+  - acid test
+  - battle-tested
+  - bulletproof
+  - game-changer
+  - silver bullet
+  - low-hanging fruit
+  - move(s|d)? the needle

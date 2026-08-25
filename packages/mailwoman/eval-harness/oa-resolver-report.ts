@@ -57,7 +57,6 @@ export function renderOaResolverReport(input: OaReportInput): string {
 		neuralPrecond,
 		asmPrecond,
 		diagMisses,
-		rows,
 		wofPaths,
 		runAssembled,
 		runAddrPt,

@@ -1,0 +1,20 @@
+## Mailwoman chat style: scheduling and wind-down narration.
+##
+## Vale existence rule. Wall-clock gaps between turns are invisible to the
+## agent, and the operator sets cadence — a reply schedules nothing and never
+## narrates a pause. "Tomorrow's work if you want it" defers a named next
+## action into imagined calendar time; the correct form states the next
+## action and stops. Relative dates convert to absolute dates when a real
+## date matters.
+extends: existence
+message: "'%s' schedules or narrates a wind-down — state the next action and stop; the operator sets cadence, and relative dates become absolute."
+level: error
+ignorecase: true
+tokens:
+  - tomorrow('s)?
+  - good place to (?:pause|stop)
+  - pick (?:this|it) up (?:later|tomorrow)
+  - "we've accomplished"
+  - let's pick this up
+  - call it a (?:day|night)
+  - wind(?:ing)? down

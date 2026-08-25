@@ -1,0 +1,24 @@
+## Mailwoman chat style: agreement openers that carry no information.
+##
+## Vale existence rule, sentence scope so `^` anchors at each sentence start.
+## "Perfect." / "Excellent!" / "Got it." open a reply with a grade instead of
+## the result. The output style's rule is that agreement must carry
+## information; these sentences carry none, and the result-first opening the
+## style asks for replaces them at no cost. Sentence-anchored on purpose: "a
+## perfect hash" mid-sentence is legitimate vocabulary.
+##
+## `nonword: true` is REQUIRED here (measured on @vvago/vale 3.17.0): the
+## default wraps every token in \b…\b, and the trailing \b can never match
+## after the closing punctuation, so the rule silently fires on nothing. The
+## sentence scope keeps the terminal punctuation in the matched text, which
+## is what lets `[.!,]` distinguish "Perfect." from "Perfect forwarding".
+extends: existence
+message: "'%s' opens with a grade, not the result — lead with what happened."
+level: error
+ignorecase: true
+scope: sentence
+nonword: true
+tokens:
+  - '^(?:perfect|excellent|awesome|fantastic|amazing|great)[.!,]'
+  - '^got it[.!,]'
+  - '^understood[.!,]'

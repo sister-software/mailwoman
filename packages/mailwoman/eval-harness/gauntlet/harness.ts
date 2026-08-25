@@ -15,17 +15,36 @@ import { resolve } from "node:path"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { createScorer, NeuralAddressClassifier } from "@mailwoman/neural"
+import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import type { AdminCoherenceReport } from "../../admin-coherence.ts"
-import { type GeocodeResult, geocodeAddress, ShardProvider, type GeocodeDeps } from "../../geocode-core.ts"
+import {
+	type GeocodeResult,
+	geocodeAddress,
+	geocodeParseInputs,
+	ShardProvider,
+	type GeocodeDeps,
+} from "../../geocode-core.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
-import { createResolverBackend, mailwomanDataRoot, wofShardPaths } from "../../resolver-backend.ts"
+import {
+	createResolverBackend,
+	loadCapitalIndex,
+	mailwomanDataRoot,
+	resolveCandidateDBPath,
+	wofShardPaths,
+} from "../../resolver-backend.ts"
+import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
 
 export interface GauntletDeps {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
+	/**
+	 * Report-only access to the exact classifier, overlay, parse options, and FST selected by the Gauntlet path. It
+	 * performs no resolution and does not alter the gate's geocode path.
+	 */
+	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
 	close(): void
 }
 
@@ -49,6 +68,12 @@ export interface GauntletDepsOptions {
 	 * Package-shaped candidate weights dir — the #718-safe path.
 	 */
 	weightsCacheRoot?: string
+	/**
+	 * Candidate GAZETTEER artifact (a staged candidate.db) — the resolver-side twin of `weightsCacheRoot`: grade against
+	 * a rebuilt artifact without touching the live one. Unset resolves the convention path, which is what production
+	 * loads.
+	 */
+	candidateDB?: string
 	/**
 	 * Resolver-side lever pins applied to every geocode this deps object performs.
 	 */
@@ -89,6 +114,20 @@ export interface GauntletResolverLevers {
 	 * the one that carries evidence today; the `false` pin grades the production default explicitly.
 	 */
 	adminContainmentRerank?: boolean
+	/**
+	 * #1880 — the capital-status ranking axis: bounded NATIONAL-capital promotion on the bare-toponym class. Like
+	 * `gazetteerPrior` this pin carries an ARTIFACT (the candidate `capital` table, repo-file fallback), so the harness
+	 * loads it rather than `resolverLeverDeps` (which stays pure). Library default ON (PR #1888's board-651 receipt);
+	 * unset follows it, `false` pins the off arm, and an unset pin degrades on a reference-less artifact exactly as the
+	 * session does.
+	 */
+	capitalTier?: boolean
+	/**
+	 * #1882 — exempt own-name `variant` aliases from the cross-country primary-preference penalty. The stamp lives in the
+	 * ARTIFACT (the candidate build's own-name detector), so against a candidate.db without it the exemption matches no
+	 * row — vary it against a stamped artifact. Library default ON (same receipt); `false` pins the off arm.
+	 */
+	variantAliasExemption?: boolean
 }
 
 /**
@@ -126,6 +165,14 @@ export function describeResolverLevers(levers: GauntletResolverLevers | undefine
 	// keeps "no flag" reading as "grade whatever production does".
 	if (levers?.gazetteerPrior !== undefined) {
 		entries.push(`gazetteerPrior=${levers.gazetteerPrior ? "ON" : "OFF"}`)
+	}
+
+	if (levers?.capitalTier !== undefined) {
+		entries.push(`capitalTier=${levers.capitalTier ? "ON" : "OFF"}`)
+	}
+
+	if (levers?.variantAliasExemption !== undefined) {
+		entries.push(`variantAliasExemption=${levers.variantAliasExemption ? "ON" : "OFF"}`)
 	}
 
 	if (!entries.length) return "resolver levers: (none pinned — production defaults)"
@@ -323,15 +370,6 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// BASE en-US package, which carries no pair index for that country — so its dependent locality silently never
 	// fires and the row looks like a model failure. That exact artifact burned an afternoon in R1, when 53 operator
 	// probes read "dependent_locality never emitted" while the mechanism was fine and the INSTRUMENT was base-only.
-	const OVERLAY_LOCALE_BY_COUNTRY: Record<string, string> = {
-		GB: "en-GB",
-		NZ: "en-NZ",
-		DE: "de-DE",
-		IN: "en-IN",
-		ES: "es-ES",
-		IT: "it-IT",
-	}
-
 	// #1516 second half: a grading environment must STATE its artifact expectations, not discover them in a
 	// degraded number. A missing `postcode-us.bin` costs 3-4 baseline cases and produces no failure of its own —
 	// the run simply scores lower, and the operator reads a model regression. Checked for the base locale plus
@@ -387,8 +425,29 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
 
 	const resolver = createWOFResolver(
-		createResolverBackend(resolverMod, { wofPaths: wofShardPaths().filter(existsSync) })
+		createResolverBackend(resolverMod, {
+			wofPaths: wofShardPaths().filter(existsSync),
+			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
+			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
+		})
 	)
+
+	// #1880 — artifact-carrying pin (see GauntletResolverLevers.capitalTier): the reference loads here
+	// and becomes the per-candidate capitalLevel closure, exactly as `createGeocodeSession` builds it.
+	// The tri-state mirrors the session: `false` pins the off arm; explicit `true` demands the
+	// reference; unset follows the ON default and degrades on a reference-less artifact.
+	const capitalIndex =
+		opts.levers?.capitalTier === false
+			? undefined
+			: loadCapitalIndex({
+					candidateDB: resolveCandidateDBPath(opts.candidateDB),
+					missing: opts.levers?.capitalTier === true ? "throw" : "degrade",
+				})
+
+	const capitalLevel = capitalIndex
+		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
+				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
+		: undefined
 
 	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
@@ -493,6 +552,17 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	}
 
 	return {
+		diagnoseParse: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
+			const { caseCountry } = geoOpts ?? {}
+			const caseClassifier = await classifierFor(caseCountry)
+			const priorDeps = await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")
+			const { parseInput, opts: parseOpts } = geocodeParseInputs(input, priorDeps)
+
+			return {
+				trace: await caseClassifier.traceParse(parseInput, parseOpts),
+				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
+			}
+		},
 		geocode: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const { caseCountry, ...forwarded } = geoOpts ?? {}
 			const caseClassifier = await classifierFor(caseCountry)
@@ -506,6 +576,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				nationalShards: banProvider.for,
 				osmShards: osmProvider.for,
 				...leverDeps,
+				...(capitalLevel ? { capitalLevel } : {}),
 				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
 				...forkEntityDeps,
 				...forwarded,

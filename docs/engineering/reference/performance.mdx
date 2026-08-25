@@ -72,7 +72,7 @@ It peaks at 1.12x and then goes backwards. fp32 behaves the same way (1.24x at B
 arithmetic intensity, which helps when cores sit idle waiting on memory, and ours don't. Past B=8 the
 working set stops fitting and you pay for the privilege.
 
-**On CPU, don't build a batching path.** On GPU or WebGPU the arithmetic-intensity story differs and
+**On CPU, don't build a batching path.** On GPU or WebGPU the arithmetic intensity differs and
 batching plausibly pays, but nobody has measured it. Treat that as an open question.
 
 ## A `batch` axis that isn't
