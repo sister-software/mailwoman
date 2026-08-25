@@ -20,7 +20,7 @@ import { writeFileSync } from "node:fs"
 import { frFragmentRecipe, frTitleCase } from "@mailwoman/corpus/shard-recipes/fr-fragment"
 import { describe, expect, it } from "vitest"
 
-import { scratch, shardRunner, type ShardRow } from "../../shard-recipe-kit.ts"
+import { scratch, shardRunner, type ShardRow } from "#test-kit/shard-recipe"
 
 const run = shardRunner("fr-fragment", frFragmentRecipe, 727)
 
