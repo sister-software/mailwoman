@@ -43,6 +43,7 @@
 			"types": "./out/src/synthesizers/utils.d.ts"
 		},
 		"#test-kit": "./test-kit/index.ts",
+		"#test-kit/shard-recipe": "./test-kit/shard-recipe.ts",
 		"#types": {
 			"node": "./src/types.ts",
 			"default": "./out/src/types.js",
