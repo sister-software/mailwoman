@@ -25,6 +25,12 @@ import {
 } from "./case-folding.ts"
 import type { ConformanceFixture } from "./fixture.ts"
 import {
+	auditPunctuationSuite,
+	describePunctuationTransformation,
+	PUNCTUATION_LAW,
+	PUNCTUATION_SUITE_PATH,
+} from "./punctuation.ts"
+import {
 	auditWhitespaceSuite,
 	describeWhitespaceTransformation,
 	WHITESPACE_LAW,
@@ -43,7 +49,7 @@ export interface ConformanceSuite {
 	 */
 	audit: (fixtures: readonly ConformanceFixture[]) => string[]
 	/**
-	 * The extra line a finding prints under its head. Both shipped laws name the TRANSFORMATION, without which a
+	 * The extra line a finding prints under its head. Every shipped law names the TRANSFORMATION, without which a
 	 * violation reads as "these two strings disagreed" rather than "uppercasing broke it".
 	 */
 	detail: (fixture: ConformanceFixture) => string
@@ -64,6 +70,12 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 		path: WHITESPACE_SUITE_PATH,
 		audit: auditWhitespaceSuite,
 		detail: (fixture) => `    xform   : ${describeWhitespaceTransformation(fixture)}`,
+	},
+	{
+		law: PUNCTUATION_LAW,
+		path: PUNCTUATION_SUITE_PATH,
+		audit: auditPunctuationSuite,
+		detail: (fixture) => `    xform   : ${describePunctuationTransformation(fixture)}`,
 	},
 ]
 
