@@ -32,9 +32,38 @@ describe("collapseWhitespace", () => {
 		expect(r.runs).toBe(1)
 	})
 
+	it("normalizes a LONE tab to a space, as it does a doubled one (#1943)", () => {
+		const one = collapseWhitespace("350\t5th")
+		expect(one.text).toBe("350 5th")
+		expect(one.runs).toBe(1)
+		expect(one.map).toHaveLength(one.text.length)
+
+		expect(collapseWhitespace("350\t\t5th").text).toBe(one.text)
+	})
+
+	it("normalizes a mixed tab/space run to one space", () => {
+		expect(collapseWhitespace("350 \t5th").text).toBe("350 5th")
+		expect(collapseWhitespace("350\t 5th").text).toBe("350 5th")
+		expect(collapseWhitespace("350 \t \t5th").text).toBe("350 5th")
+	})
+
+	it("normalizes every tab in a wholly tab-separated line (#1943)", () => {
+		const r = collapseWhitespace("Rue\tdu\tFaubourg\tSaint-Honoré")
+		expect(r.text).toBe("Rue du Faubourg Saint-Honoré")
+		expect(r.runs).toBe(3)
+		expect(r.map).toHaveLength(r.text.length)
+	})
+
 	it("preserves newlines", () => {
 		const r = collapseWhitespace("line 1\nline 2")
 		expect(r.text).toBe("line 1\nline 2")
+		expect(r.runs).toBe(0)
+	})
+
+	it("preserves a newline beside a normalized tab", () => {
+		const r = collapseWhitespace("line\t1\nline\t2")
+		expect(r.text).toBe("line 1\nline 2")
+		expect(r.map).toHaveLength(r.text.length)
 	})
 
 	it("trims leading whitespace", () => {
@@ -45,6 +74,12 @@ describe("collapseWhitespace", () => {
 	it("trims trailing whitespace", () => {
 		const r = collapseWhitespace("350 5th   ")
 		expect(r.text).toBe("350 5th")
+	})
+
+	it("trims leading and trailing tabs rather than leaving a space behind", () => {
+		const r = collapseWhitespace("\t350 5th\t")
+		expect(r.text).toBe("350 5th")
+		expect(r.map).toEqual([1, 2, 3, 4, 5, 6, 7])
 	})
 
 	it("trims trailing sentence-punctuation noise (#829 tail): . , ; :", () => {

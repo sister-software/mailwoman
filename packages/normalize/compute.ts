@@ -56,7 +56,9 @@ export function normalize(raw: string, opts?: NormalizeOpts): NormalizedInput {
 	{
 		const r = collapseWhitespace(text)
 
-		if (r.runs > 0 || r.text.length !== text.length) {
+		// Compare the TEXT, not its length: folding a lone tab to a space is length-preserving, and a
+		// length test reads that edit as no edit at all.
+		if (r.text !== text) {
 			text = r.text
 			map = composeMaps(map, r.map)
 			transforms.push({ kind: "collapse_whitespace", runs: r.runs })
