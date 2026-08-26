@@ -11,14 +11,16 @@
  *   outcomes are expected to stand in. The comparators themselves live in `comparators.ts`; the runner in
  *   `run.ts`. This module owns the vocabulary and the refusal.
  *
- *   TWO CLOSED VOCABULARIES, and closing them is the point. `outcomeComparator` names one of five
+ *   THREE CLOSED VOCABULARIES, and closing them is the point. `outcomeComparator` names one of five
  *   instruments, because "did the answer change" is not one question: a stable entity identity, an
  *   assembled coordinate, a strict parse, a component map and a mechanism-account shape are different
  *   observable contracts, and a universal equality function would either reject a legitimate
  *   transformation or hide a changed identity behind a nearby coordinate. `expect` names one of three
- *   relations. A fixture that omits the comparator, or names one that does not exist, is REFUSED at load
- *   with its own id in the message — never skipped, never defaulted. A skipped row reports as an absence,
- *   and an absence is what a law suite is measuring.
+ *   relations, and `status` one of three verdict roles — a violated row is TRACKED rather than deleted, and
+ *   never re-stated as `expect: diverges`, which would make the suite assert the defect. A fixture that
+ *   omits the comparator, or names one that does not exist, is REFUSED at load with its own id in the
+ *   message — never skipped, never defaulted. A skipped row reports as an absence, and an absence is what a
+ *   law suite is measuring.
  *
  *   ONE CONTEXT, NOT TWO. A law varies the QUERY and holds the configuration fixed. Two contexts would let
  *   a row vary the country prior and the surface form at once, and the comparator could not say which one
@@ -65,6 +67,22 @@ export type OutcomeComparatorName = (typeof OUTCOME_COMPARATORS)[number]
 export const CONFORMANCE_RELATIONS = ["equivalent", "refines", "diverges"] as const
 
 export type ConformanceRelation = (typeof CONFORMANCE_RELATIONS)[number]
+
+/**
+ * What a row's outcome is allowed to mean for the verdict — the Gauntlet regression layer's own `CaseStatus`, spelled
+ * again here because a law suite grades relations rather than cases and must not import the corpus schema to say so.
+ *
+ * - `pass` — the default, and the only status that GATES. A `pass` row whose law is violated fails the run.
+ * - `known_fail` / `improvement_target` — the row is run and REPORTED, and does not block. A tracked row that starts
+ *   holding is printed as a promotion instruction, which is what keeps the tracked list from becoming a place rows go
+ *   to be forgotten.
+ *
+ * A red row is never deleted to make a run green, and it is never re-stated as `expect: diverges` either: that would
+ * make the suite assert the defect, so fixing the defect would fail the suite.
+ */
+export const CONFORMANCE_STATUSES = ["pass", "known_fail", "improvement_target"] as const
+
+export type ConformanceStatus = (typeof CONFORMANCE_STATUSES)[number]
 
 /**
  * Which relations each comparator can actually express.
@@ -134,6 +152,16 @@ export interface ConformanceFixture {
 	 */
 	expect: ConformanceRelation
 	/**
+	 * Whether this row gates the run. Absent means {@linkcode CONFORMANCE_STATUSES}'s `pass` — a row says nothing about
+	 * its status only when it is expected to hold.
+	 */
+	status?: ConformanceStatus
+	/**
+	 * Issue or record this row's tracked status points at, e.g. `#1919`. Free-form and never graded; it exists so a
+	 * tracked row names where its diagnosis lives.
+	 */
+	bugRef?: string
+	/**
 	 * The committed row or input set this fixture was drawn from, e.g. `parity-corpus.jsonl#fr-0042`. Carried into the
 	 * failure line so a violation names the population it came from rather than only the synthetic pair.
 	 */
@@ -161,6 +189,8 @@ const FIXTURE_KEYS = new Set<string>([
 	"context",
 	"outcomeComparator",
 	"expect",
+	"status",
+	"bugRef",
 	"rowRef",
 	"toleranceM",
 	"note",
@@ -188,6 +218,10 @@ function isOutcomeComparator(value: unknown): value is OutcomeComparatorName {
 
 function isConformanceRelation(value: unknown): value is ConformanceRelation {
 	return typeof value === "string" && (CONFORMANCE_RELATIONS as readonly string[]).includes(value)
+}
+
+function isConformanceStatus(value: unknown): value is ConformanceStatus {
+	return typeof value === "string" && (CONFORMANCE_STATUSES as readonly string[]).includes(value)
 }
 
 function requireNonEmptyString(record: Record<string, unknown>, key: string, label: string): string {
@@ -286,6 +320,29 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		)
 	}
 
+	const rawStatus = record["status"]
+
+	if (rawStatus !== undefined && !isConformanceStatus(rawStatus)) {
+		throw new Error(`${label}: unknown status ${JSON.stringify(rawStatus)} — known: ${CONFORMANCE_STATUSES.join(", ")}`)
+	}
+
+	const status = rawStatus
+
+	const bugRef = record["bugRef"]
+
+	if (bugRef !== undefined && (typeof bugRef !== "string" || !bugRef.trim())) {
+		throw new Error(`${label}: "bugRef" must be a non-empty string when present (got ${JSON.stringify(bugRef)})`)
+	}
+
+	// A `bugRef` on a gating row points at a diagnosis for a row that is expected to hold, which reads as a tracked
+	// row to everyone but the verdict. Refused for the same reason `toleranceM` is refused off its comparator.
+	if (bugRef !== undefined && (status === undefined || status === "pass")) {
+		throw new Error(
+			`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
+				`"${status ?? "pass"}" — a gating row that names a defect asserts the defect is fixed.`
+		)
+	}
+
 	const tolerance = record["toleranceM"]
 
 	if (tolerance !== undefined) {
@@ -322,6 +379,8 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		variant,
 		outcomeComparator,
 		expect,
+		...(status ? { status } : {}),
+		...(typeof bugRef === "string" ? { bugRef } : {}),
 		...(context ? { context } : {}),
 		...(typeof rowRef === "string" ? { rowRef } : {}),
 		...(typeof tolerance === "number" ? { toleranceM: tolerance } : {}),

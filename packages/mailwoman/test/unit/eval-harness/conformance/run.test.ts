@@ -21,6 +21,7 @@ import {
 	formatConformanceFinding,
 	gauntletObserver,
 	runConformanceFixtures,
+	summarizeConformanceRun,
 } from "mailwoman/eval-harness/conformance/run"
 import type { GeocodeResult } from "mailwoman/geocode-core"
 import { describe, expect, it } from "vitest"
@@ -136,6 +137,85 @@ describe("runConformanceFixtures", () => {
 		await runConformanceFixtures([fixture({ context: { caseCountry: "GB" } })], observe)
 
 		expect(seen).toEqual([{ caseCountry: "GB" }, { caseCountry: "GB" }])
+	})
+})
+
+describe("summarizeConformanceRun", () => {
+	const brokenTable = {
+		...HELD_TABLE,
+		"10 DOWNING STREET, LONDON": { house_number: "10", street: "Whitehall" },
+	}
+
+	it("gates on pass rows only, and reports tracked violations without blocking", async () => {
+		const { observe } = tableObserver(brokenTable)
+
+		const { findings } = await runConformanceFixtures(
+			[fixture(), fixture({ id: "cnf-tracked-01", status: "improvement_target", bugRef: "#1919" })],
+			observe
+		)
+
+		const summary = summarizeConformanceRun(findings)
+
+		expect(summary.gated).toBe(1)
+		expect(summary.failures.map((finding) => finding.fixture.id)).toEqual(["cnf-sample-01"])
+		expect(summary.tracked.map((finding) => finding.fixture.id)).toEqual(["cnf-tracked-01"])
+		expect(summary.pass).toBe(false)
+	})
+
+	it("passes when the only violations are tracked", async () => {
+		const { observe } = tableObserver(brokenTable)
+
+		const { findings } = await runConformanceFixtures(
+			[
+				fixture({ id: "cnf-ok-01", base: "10 Downing Street, London", variant: "10 Downing Street, London" }),
+				fixture({ id: "cnf-tracked-01", status: "known_fail", bugRef: "#1919" }),
+			],
+			observe
+		)
+
+		const summary = summarizeConformanceRun(findings)
+
+		expect(summary.pass).toBe(true)
+		expect(summary.tracked).toHaveLength(1)
+	})
+
+	it("reports a tracked row whose law now holds instead of leaving it tracked forever", async () => {
+		const { observe } = tableObserver(HELD_TABLE)
+
+		const { findings } = await runConformanceFixtures(
+			[fixture(), fixture({ id: "cnf-tracked-01", status: "improvement_target", bugRef: "#1919" })],
+			observe
+		)
+
+		const summary = summarizeConformanceRun(findings)
+
+		expect(summary.newlyHolding.map((finding) => finding.fixture.id)).toEqual(["cnf-tracked-01"])
+		expect(summary.tracked).toHaveLength(0)
+		expect(summary.pass).toBe(true)
+	})
+
+	it("refuses to pass a run with no gating row at all", async () => {
+		const { observe } = tableObserver(HELD_TABLE)
+
+		const { findings } = await runConformanceFixtures(
+			[fixture({ status: "improvement_target", bugRef: "#1919" })],
+			observe
+		)
+
+		expect(summarizeConformanceRun(findings).pass).toBe(false)
+	})
+
+	it("marks a tracked violation apart from a gated one in the rendered line", async () => {
+		const { observe } = tableObserver(brokenTable)
+
+		const { findings } = await runConformanceFixtures(
+			[fixture({ status: "improvement_target", bugRef: "#1919" })],
+			observe
+		)
+
+		const rendered = formatConformanceFinding(findings[0]!)
+
+		expect(rendered).toContain("~ [case-folding-invariance] cnf-sample-01 [improvement_target #1919]")
 	})
 })
 

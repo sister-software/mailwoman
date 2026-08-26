@@ -157,6 +157,36 @@ describe("parseConformanceFixture", () => {
 		expect(() => parseConformanceFixture(raw, "inline")).toThrow(/must be a positive finite number/)
 	})
 
+	it("defaults an unstated status to gating rather than to tracked", () => {
+		const fixture = parseConformanceFixture(record(), "inline")
+
+		expect(fixture.status).toBeUndefined()
+		expect(fixture.bugRef).toBeUndefined()
+	})
+
+	it("rejects an unknown status rather than reading it as tracked", () => {
+		expect(() => parseConformanceFixture(record({ status: "xfail" }), "inline")).toThrow(
+			/cnf-sample-01.*unknown status "xfail".*pass, known_fail, improvement_target/s
+		)
+	})
+
+	it.each(["known_fail", "improvement_target"])("carries the tracked status %s with its reference", (status) => {
+		const fixture = parseConformanceFixture(record({ status, bugRef: "#1919" }), "inline")
+
+		expect(fixture.status).toBe(status)
+		expect(fixture.bugRef).toBe("#1919")
+	})
+
+	it("rejects a bugRef on a gating row — a row expected to hold cannot also name a defect", () => {
+		expect(() => parseConformanceFixture(record({ bugRef: "#1919" }), "inline")).toThrow(
+			/only meaningful on a tracked row, and this row's status is "pass"/
+		)
+
+		expect(() => parseConformanceFixture(record({ status: "pass", bugRef: "#1919" }), "inline")).toThrow(
+			/only meaningful on a tracked row/
+		)
+	})
+
 	it.each(["id", "law", "base", "variant"])("rejects a blank %s", (key) => {
 		expect(() => parseConformanceFixture(record({ [key]: "   " }), "inline")).toThrow(
 			new RegExp(`"${key}" must be a non-empty string`)

@@ -84,6 +84,62 @@ export async function runConformanceFixtures(
 }
 
 /**
+ * A run split by what each finding means for the verdict.
+ */
+export interface ConformanceSummary {
+	/**
+	 * Findings from `status: pass` rows that were violated. These, and only these, decide {@linkcode pass}.
+	 */
+	failures: ConformanceFinding[]
+	/**
+	 * Findings from tracked rows still violated — reported, never blocking.
+	 */
+	tracked: ConformanceFinding[]
+	/**
+	 * Tracked rows whose law now holds. Printed as a promotion instruction: a tracked list nobody prunes stops being a
+	 * record of known defects and becomes a place rows go to be forgotten.
+	 */
+	newlyHolding: ConformanceFinding[]
+	/**
+	 * How many rows GATED — the denominator a reader needs before the pass count means anything.
+	 */
+	gated: number
+	pass: boolean
+}
+
+/**
+ * Split a run by row status, mirroring the Gauntlet regression layer's own three-way reading.
+ *
+ * `pass` is false on an EMPTY findings list for the same reason {@linkcode runConformanceFixtures} refuses an empty
+ * suite, and false on a suite with no gating rows at all: a run whose every row is tracked has measured nothing that
+ * could fail, and reporting it as a pass is how a suite quietly stops holding anything.
+ */
+export function summarizeConformanceRun(findings: readonly ConformanceFinding[]): ConformanceSummary {
+	const failures: ConformanceFinding[] = []
+	const tracked: ConformanceFinding[] = []
+	const newlyHolding: ConformanceFinding[] = []
+	let gated = 0
+
+	for (const finding of findings) {
+		const gates = (finding.fixture.status ?? "pass") === "pass"
+
+		if (gates) {
+			gated += 1
+
+			if (!finding.held) {
+				failures.push(finding)
+			}
+		} else if (finding.held) {
+			newlyHolding.push(finding)
+		} else {
+			tracked.push(finding)
+		}
+	}
+
+	return { failures, tracked, newlyHolding, gated, pass: gated > 0 && failures.length === 0 }
+}
+
+/**
  * Render one finding as the line a law suite prints.
  *
  * Names, in this order: the law, the fixture id, the committed row it was drawn from when it has one, the comparator,
@@ -94,9 +150,12 @@ export async function runConformanceFixtures(
 export function formatConformanceFinding(finding: ConformanceFinding): string {
 	const { fixture, reading, held } = finding
 	const rowRef = fixture.rowRef ? ` (row ${fixture.rowRef})` : ""
+	const tracked = fixture.status && fixture.status !== "pass"
+	const status = tracked ? ` [${fixture.status}${fixture.bugRef ? ` ${fixture.bugRef}` : ""}]` : ""
+	const mark = held ? "✓" : tracked ? "~" : "✗"
 
 	const head =
-		`${held ? "✓" : "✗"} [${fixture.law}] ${fixture.id}${rowRef} · ${fixture.outcomeComparator} ` +
+		`${mark} [${fixture.law}] ${fixture.id}${status}${rowRef} · ${fixture.outcomeComparator} ` +
 		`expected ${fixture.expect}, observed ${reading.observed}`
 
 	const lines = [

@@ -1,0 +1,54 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   The case-folding law against the LIVE pipeline — the leg that actually geocodes.
+ *
+ *   It lives in `test/integration/` because that is the suite the `mailwoman-data` runner runs, with
+ *   `MAILWOMAN_DATA_ROOT` set and the weights materialized; the fast leg is portable by construction and a
+ *   data-dependent test placed there would skip its way to green. The guard is the resolver-based
+ *   `weightsPresent()` idiom the other integration suites use: ASK THE RESOLVER for the model the loader will
+ *   open, never a path literal, because a skip-guard that stops matching does not fail — it skips, and the
+ *   suite disappears from the run reporting success.
+ *
+ *   THIS LEG CANNOT GO RED ON A KNOWN DEFECT. `runConformanceCommand` gates on `status: pass` rows and
+ *   reports tracked ones without blocking, so a case-folding violation the pipeline currently has is printed
+ *   in full and does not fail CI — and a tracked row that starts holding prints a promotion instruction
+ *   rather than sitting in the list forever. What it DOES fail on is a new violation on a row that held, or
+ *   a suite that stopped stating this law, which is the whole point of running it here.
+ *
+ *   Cheap enough to belong: measured 6.2 s end to end for 29 rows — two geocodes each plus one engine load.
+ */
+
+import { existsSync } from "node:fs"
+
+import { dataRootPath } from "@mailwoman/core/utils"
+import { resolveWeights } from "@mailwoman/neural/weights"
+import { auditCaseFoldingSuite, CASE_FOLDING_SUITE_PATH } from "mailwoman/eval-harness/conformance/case-folding"
+import { runConformanceCommand } from "mailwoman/eval-harness/conformance/command"
+import { loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
+import { describe, expect, it } from "vitest"
+
+function weightsPresent(): boolean {
+	try {
+		// ASK THE RESOLVER — see the module docstring, and `v1-parse-gate.test.ts`, which carries the incident.
+		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
+	} catch {
+		return false
+	}
+}
+
+const gazetteerPresent = (): boolean =>
+	existsSync(String(dataRootPath("wof", "admin-global-priority.db"))) &&
+	existsSync(String(dataRootPath("wof", "postcode-locality-intl.db")))
+
+describe.skipIf(!weightsPresent() || !gazetteerPresent())("case-folding invariance — live pipeline", () => {
+	it("audits the committed suite before anything is geocoded", async () => {
+		expect(auditCaseFoldingSuite(await loadConformanceFixtures(CASE_FOLDING_SUITE_PATH))).toEqual([])
+	})
+
+	it("holds on every gating row, and prints the tracked ones", async () => {
+		expect(await runConformanceCommand()).toBe(0)
+	}, 600_000)
+})
