@@ -14,6 +14,7 @@
 				"packages/locale-gate",
 				"packages/phrase-grouper",
 				"packages/poi-taxonomy",
+				"packages/geographic-model",
 				"packages/codex",
 				"packages/resolver",
 				"packages/resolver-wof-sqlite",
