@@ -25,6 +25,13 @@ import {
 } from "./case-folding.ts"
 import type { ConformanceFixture } from "./fixture.ts"
 import {
+	auditCanonicalFormSuite,
+	CANONICAL_FORM_LAW,
+	describeCanonicalFormCoverage,
+	describeCanonicalTransformation,
+	NFC_NFD_SUITE_PATH,
+} from "./nfc-nfd.ts"
+import {
 	auditPunctuationSuite,
 	describePunctuationTransformation,
 	PUNCTUATION_LAW,
@@ -53,6 +60,16 @@ export interface ConformanceSuite {
 	 * violation reads as "these two strings disagreed" rather than "uppercasing broke it".
 	 */
 	detail: (fixture: ConformanceFixture) => string
+	/**
+	 * How much of the population the suite reached, printed beside the law's own hold count.
+	 *
+	 * Optional because most laws can be stated over any row: the arms a query refuses are reported per row by the
+	 * applicability rules, and the verdict already names the denominator that decides it. A law whose ELIGIBILITY is a
+	 * property of the text — canonical form is the one shipped example, where 83 of 651 committed rows carry a character
+	 * either form can act on — needs the second denominator as well, or its hold count implies a breadth it never
+	 * exercised. `corpusInputs` is every committed board row's query text, supplied by the runner.
+	 */
+	coverage?: (fixtures: readonly ConformanceFixture[], corpusInputs: readonly string[]) => string
 }
 
 /**
@@ -76,6 +93,13 @@ export const CONFORMANCE_SUITES: readonly ConformanceSuite[] = [
 		path: PUNCTUATION_SUITE_PATH,
 		audit: auditPunctuationSuite,
 		detail: (fixture) => `    xform   : ${describePunctuationTransformation(fixture)}`,
+	},
+	{
+		law: CANONICAL_FORM_LAW,
+		path: NFC_NFD_SUITE_PATH,
+		audit: auditCanonicalFormSuite,
+		detail: (fixture) => `    xform   : ${describeCanonicalTransformation(fixture)}`,
+		coverage: describeCanonicalFormCoverage,
 	},
 ]
 

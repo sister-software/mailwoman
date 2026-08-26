@@ -20,8 +20,14 @@
  *   A TRACKED ROW IS RUN. The verdict splits by status the way the Gauntlet regression layer splits: `pass`
  *   rows gate, tracked rows report, and a tracked row that starts holding prints a promotion instruction. A
  *   red row is never removed to make the exit code zero.
+ *
+ *   A LAW MAY REPORT ITS OWN BREADTH. A hold count answers "did the rows the suite states hold", never "how
+ *   much of the population could the suite have stated" — and for a law whose eligibility is a property of the
+ *   query text those are different numbers. `ConformanceSuite.coverage` prints the second one beside the
+ *   first; the committed corpus is read only for a run that includes such a law.
  */
 
+import { loadRegressionCases } from "../gauntlet/cases/load.ts"
 import { buildGauntletDeps, type GauntletDepsOptions } from "../gauntlet/harness.ts"
 import { type ConformanceFixture, loadConformanceFixtures } from "./fixture.ts"
 import {
@@ -113,6 +119,12 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 
 	console.error(`[conformance] suite audit clean (${laws.join(", ")})`)
 
+	// The corpus is read only when a law in THIS run registers a coverage reading. It is the population every law
+	// draws from, so a law whose eligibility is a property of the query text measures its own breadth against it —
+	// see `ConformanceSuite.coverage`.
+	const wantsCoverage = laws.some((law) => suiteForLaw(law)?.coverage)
+	const corpusInputs = wantsCoverage ? (await loadRegressionCases()).map((seedCase) => seedCase.input) : []
+
 	const deps = await buildGauntletDeps(depsOptions)
 
 	try {
@@ -127,11 +139,20 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 		// Per law as well as pooled: a run that merges two suites into one verdict says WHETHER something broke and not
 		// WHICH law stopped holding, and the pooled count moves whenever either suite grows.
 		for (const law of laws) {
-			const perLaw = summarizeConformanceRun(findings.filter((finding) => finding.fixture.law === law))
+			const ofLaw = findings.filter((finding) => finding.fixture.law === law)
+			const perLaw = summarizeConformanceRun(ofLaw)
 
 			console.log(
 				`  ${law}: ${perLaw.gated - perLaw.failures.length}/${perLaw.gated} gated hold, ${perLaw.tracked.length} tracked`
 			)
+
+			const coverage = suiteForLaw(law)?.coverage
+
+			if (coverage) {
+				const stated = ofLaw.map((finding) => finding.fixture)
+
+				console.log(`    ${coverage(stated, corpusInputs)}`)
+			}
 		}
 
 		report(findings.filter((finding) => finding.held && (finding.fixture.status ?? "pass") === "pass"))
