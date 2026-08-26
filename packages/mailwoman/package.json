@@ -45,6 +45,7 @@
 		"eval-harness/gates/*.json",
 		"eval-harness/baselines.json",
 		"eval-harness/gauntlet/cases/*/*.jsonl",
+		"eval-harness/conformance/*.jsonl",
 		"skills",
 		"*.ts",
 		"*.tsx",
