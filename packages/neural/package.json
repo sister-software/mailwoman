@@ -236,10 +236,10 @@
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
-		"spliterator": "^6.2.0"
+		"spliterator": "^6.3.0"
 	},
 	"devDependencies": {
-		"esbuild": "0.28.1",
+		"esbuild": "0.28.2",
 		"onnxruntime-node": "^1.26.0",
 		"onnxruntime-web": "1.25.0-dev.20260327-722743c0e2",
 		"playwright": "^1.62.1"
