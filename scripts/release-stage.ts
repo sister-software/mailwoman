@@ -28,9 +28,9 @@ import { packWorkspaceForPublish } from "./pack-workspace.ts"
 import { verifyTarball } from "./verify-tarball.ts"
 
 /**
- * The six root workspaces that are OUTSIDE `.release-it.json`'s publish list, each with the reason a reader can state.
- * The identity check below fails on any absence NOT in this record — "expected 51, found 50" sends someone counting;
- * naming the unexpected workspace is the actionable version, and this record is the data the check owns.
+ * The root workspaces that are OUTSIDE `.release-it.json`'s publish list, each with the reason a reader can state. The
+ * identity check below fails on any absence NOT in this record — "expected 51, found 50" sends someone counting; naming
+ * the unexpected workspace is the actionable version, and this record is the data the check owns.
  */
 export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	docs: "private Docusaurus site — never publishes",
@@ -39,6 +39,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
 	"packages/dev-mcp": "private maintainer MCP server — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
+	"packages/geographic-model":
+		"public but not yet on npm — Trusted Publishing cannot create a package that does not exist, so it joins the list after its bless-package first publish (packages/geographic-model/README.md)",
 }
 
 /**
