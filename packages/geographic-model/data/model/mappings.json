@@ -1,0 +1,18 @@
+{
+	"mappings": [
+		{
+			"id": "poi-taxonomy-pharmacy",
+			"concept": "pharmacy",
+			"vocabulary": "poi-taxonomy",
+			"externalID": "pharmacy",
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceVersion": "poi-taxonomy table 0.4.0",
+				"sourceRecord": "packages/poi-taxonomy/data/curated-overlay.json categories[pharmacy]",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927",
+				"authoredAt": "2026-08-26",
+				"notes": "Read from the committed table at version 0.4.0 (Overture schema v1.17.0): `{ id: pharmacy, label: Pharmacy, hierarchy: [health_and_medical, pharmacy], basicLabel: Pharmacy, osmTag: amenity=pharmacy, source: overture }`. The category declares no `overtureCategories`, so `resolveOvertureCategories(\"pharmacy\")` is the identity `[\"pharmacy\"]`. The mapping states that the external identifier names this concept, and nothing else — the containment hierarchy, the Overture-leaf translation and the phrase lexicon stay owned by `@mailwoman/poi-taxonomy`."
+			}
+		}
+	]
+}

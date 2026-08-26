@@ -2,7 +2,7 @@
 
 The **world-semantic layer**: stable geographic concepts, the relations between them, mappings from external vocabularies into those concepts, source observations, derived facts, and the provenance of every one of them — authored as records, compiled deterministically into runtime artifacts.
 
-> **Status: schema, validator, and compiler — no data.** The record types and their deterministic validator are here (#1925), along with the loader and compiler that turn authored files into a runtime artifact (#1926). The first authored document — the pharmacy slice — arrives with #1927.
+> **Status: one authored proposition.** The record types and their deterministic validator are here (#1925), along with the loader and compiler that turn authored files into a runtime artifact (#1926) and the first authored document — `pharmacy affords obtain_medication` (#1927). Nothing consumes the artifact at runtime: no resolver integration, no ordering change, no POI behavior change. Whether the proposition is worth anything to a user is what #1928's pre-registered probe measures, and #1930 records the decision.
 
 The ownership boundary is fixed by the record at [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](../../docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md) (#1917), under program parent #1916. That document is authoritative for everything below; this README is the package-local summary.
 
@@ -87,6 +87,34 @@ Nothing records when compilation ran: `modelVersion` is the authored document's 
 A committed artifact is these bytes run through `oxfmt`, which inlines short arrays — the same convention `taxonomy.json` follows. So a freshness check compares the **parsed** artifact against a fresh compile, and a byte comparison compares two compiles.
 
 `createGeographicModelIndex(model)` (the `./lookup` subpath) is the read surface: `concept`, `relation`, `ancestorsOf`, `derivedFactsAbout`, `conceptsForExternalID`. Lookups only — no walk, no cursor, no query language, because removing query-time traversal is the reason the artifact exists. Two absences stay distinguishable throughout: a concept the artifact does not carry answers `undefined`, and a concept it carries with nothing derived about it answers an empty list.
+
+## The authored slice
+
+One proposition, frozen by §4 of the boundary record and authored under [`data/model/`](./data/model/):
+
+```text
+place
+establishment          isA place
+healthcare_facility    isA establishment
+pharmacy               isA healthcare_facility          affords obtain_medication   (necessary)
+activity
+obtain_medication      isA activity
+
+affords                establishment → activity, hard, not transitive, not symmetric
+poi-taxonomy pharmacy  → the pharmacy concept
+```
+
+Every concept, assertion and mapping carries `provenance` naming the boundary record and #1927 — the two authorities this slice has. `RelationRecord` carries none, because a relation is vocabulary rather than a claim: it says what `affords` means, and stands behind nothing in particular.
+
+Deliberately absent, and each absence is a statement rather than an omission: no source observations, no hand-authored derived facts, no `countries` scope, and no second establishment class. `isA` inheritance materializes nothing here, because the one assertion sits on `pharmacy` and `pharmacy` has no descendants.
+
+[`data/geographic-model.json`](./data/geographic-model.json) is the committed compilation of those records. **Do not hand-edit it** — regenerate:
+
+```bash
+node packages/geographic-model/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
+```
+
+[`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states, where the external category id was read from, and why the freshness check compares parsed values. `test/unit/pharmacy-slice.test.ts` asserts all of it against the committed artifact, and names that command when the artifact goes stale.
 
 ## What this package must never own
 
