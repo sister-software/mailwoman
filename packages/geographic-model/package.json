@@ -40,6 +40,26 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./artifact": {
+			"node": "./artifact.ts",
+			"default": "./out/artifact.js",
+			"types": "./out/artifact.d.ts"
+		},
+		"./compile": {
+			"node": "./compile.ts",
+			"default": "./out/compile.js",
+			"types": "./out/compile.d.ts"
+		},
+		"./load": {
+			"node": "./load.ts",
+			"default": "./out/load.js",
+			"types": "./out/load.d.ts"
+		},
+		"./lookup": {
+			"node": "./lookup.ts",
+			"default": "./out/lookup.js",
+			"types": "./out/lookup.d.ts"
+		},
 		"./schema": {
 			"node": "./schema.ts",
 			"default": "./out/schema.js",
