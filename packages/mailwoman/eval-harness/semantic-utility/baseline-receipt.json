@@ -1,0 +1,209 @@
+{
+	"probeID": "semantic-utility-probe-1928",
+	"definitionVersion": "1.0.0",
+	"definitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
+	"arm": "baseline",
+	"generatedAt": "2026-08-26T06:23:36.396Z",
+	"gitCommit": "2b5fa6193",
+	"artifact": {
+		"poiDatabasePath": "/mnt/playpen/mailwoman-data/poi/poi.db",
+		"poiLayerManifest": {
+			"name": "poi",
+			"version": "2026-07-22.0",
+			"schema_version": 1,
+			"tier": "shipped",
+			"license": "CDLA-Permissive-2.0",
+			"attribution": "Overture Maps Foundation",
+			"source": "overture-places",
+			"source_vintage": "2026-07-22.0",
+			"build_cmd": "mailwoman gazetteer build poi",
+			"build_sha": "3610771ec",
+			"freshness_policy": "sealed",
+			"spine_keys": "{\"h3\":{\"column\":\"h3_cell\",\"resolution\":9}}",
+			"created_at": "2026-08-19T01:22:43.545Z"
+		},
+		"resolverBackend": "candidate",
+		"weightsLocale": "en-US",
+		"weightsModelPath": "/mnt/playpen/mailwoman-data/weights/en-us/model.onnx",
+		"weightsVersion": "9.1.0"
+	},
+	"rows": [
+		{
+			"id": "sem-act-us-01",
+			"role": "target",
+			"query": "where can i pick up a prescription near Denver CO",
+			"shape": "no_poi_branch",
+			"grade": {
+				"id": "sem-act-us-01",
+				"query": "where can i pick up a prescription near Denver CO",
+				"expectKind": "results",
+				"pass": false,
+				"detail": "expected a poi outcome (results), got path=full (no poi intent)"
+			}
+		},
+		{
+			"id": "sem-act-us-02",
+			"role": "target",
+			"query": "prescription near Denver CO",
+			"shape": "no_poi_branch",
+			"grade": {
+				"id": "sem-act-us-02",
+				"query": "prescription near Denver CO",
+				"expectKind": "results",
+				"pass": false,
+				"detail": "expected a poi outcome (results), got path=full (no poi intent)"
+			}
+		},
+		{
+			"id": "sem-act-fr-01",
+			"role": "target",
+			"query": "somewhere to fill a prescription near Toulouse",
+			"shape": "poi_intent_results",
+			"grade": {
+				"id": "sem-act-fr-01",
+				"query": "somewhere to fill a prescription near Toulouse",
+				"expectKind": "results",
+				"pass": false,
+				"detail": "nearest 211.75 km > maxNearestKm 25; top category womens_clothing_store !== expected pharmacy",
+				"nearestKm": 211.74797550223374,
+				"resultCount": 20
+			}
+		},
+		{
+			"id": "sem-act-mx-01",
+			"role": "target",
+			"query": "i need my prescription refilled near Tijuana",
+			"shape": "no_poi_branch",
+			"grade": {
+				"id": "sem-act-mx-01",
+				"query": "i need my prescription refilled near Tijuana",
+				"expectKind": "results",
+				"pass": false,
+				"detail": "expected a poi outcome (results), got path=full (no poi intent)"
+			}
+		},
+		{
+			"id": "cat-us-05",
+			"role": "control",
+			"query": "pharmacy near Denver CO",
+			"shape": "poi_intent_results",
+			"grade": {
+				"id": "cat-us-05",
+				"query": "pharmacy near Denver CO",
+				"expectKind": "results",
+				"pass": true,
+				"detail": "20 results, nearest 0.41 km, top category pharmacy",
+				"nearestKm": 0.4133111320732349,
+				"resultCount": 20
+			},
+			"group": "same_category"
+		},
+		{
+			"id": "cat-mx-02",
+			"role": "control",
+			"query": "pharmacy near Tijuana",
+			"shape": "poi_intent_results",
+			"grade": {
+				"id": "cat-mx-02",
+				"query": "pharmacy near Tijuana",
+				"expectKind": "results",
+				"pass": true,
+				"detail": "20 results, nearest 1.05 km, top category pharmacy",
+				"nearestKm": 1.04514306684864,
+				"resultCount": 20
+			},
+			"group": "same_category"
+		},
+		{
+			"id": "cat-fr-03",
+			"role": "control",
+			"query": "pharmacy near Toulouse",
+			"shape": "poi_intent_results",
+			"grade": {
+				"id": "cat-fr-03",
+				"query": "pharmacy near Toulouse",
+				"expectKind": "results",
+				"pass": true,
+				"detail": "20 results, nearest 0.12 km, top category pharmacy",
+				"nearestKm": 0.12350631080461341,
+				"resultCount": 20
+			},
+			"group": "same_category"
+		},
+		{
+			"id": "syn-01",
+			"role": "control",
+			"query": "er near Denver CO",
+			"shape": "poi_intent_results",
+			"grade": {
+				"id": "syn-01",
+				"query": "er near Denver CO",
+				"expectKind": "results",
+				"pass": true,
+				"detail": "20 results, nearest 1.12 km, top category hospital",
+				"nearestKm": 1.1154310129736977,
+				"resultCount": 20
+			},
+			"group": "adjacent"
+		},
+		{
+			"id": "cat-us-04",
+			"role": "control",
+			"query": "bank near Seattle WA",
+			"shape": "poi_intent_results",
+			"grade": {
+				"id": "cat-us-04",
+				"query": "bank near Seattle WA",
+				"expectKind": "results",
+				"pass": true,
+				"detail": "20 results, nearest 3.04 km, top category bank",
+				"nearestKm": 3.0384822261093425,
+				"resultCount": 20
+			},
+			"group": "adjacent"
+		},
+		{
+			"id": "abstain-05",
+			"role": "control",
+			"query": "hospital",
+			"shape": "poi_abstain",
+			"abstainReason": "anchor_required",
+			"grade": {
+				"id": "abstain-05",
+				"query": "hospital",
+				"expectKind": "abstain",
+				"pass": true,
+				"detail": "abstain: anchor_required"
+			},
+			"group": "adjacent"
+		}
+	],
+	"counts": {
+		"primaryNumerator": 0,
+		"primaryDenominator": 4,
+		"diagnosticNumerator": 1,
+		"diagnosticDenominator": 4,
+		"controlHoldNumerator": 6,
+		"controlDenominator": 6
+	},
+	"verdict": {
+		"decision": "STOP-REDESIGN",
+		"counts": {
+			"primaryNumerator": 0,
+			"primaryDenominator": 4,
+			"diagnosticNumerator": 1,
+			"diagnosticDenominator": 4,
+			"controlHoldNumerator": 6,
+			"controlDenominator": 6
+		},
+		"primaryDelta": 0,
+		"diagnosticDelta": 0,
+		"controlRegressions": 0,
+		"reasons": [
+			"primary 0/4 (baseline 0, delta +0; bars 3 and +3)",
+			"diagnostic 1/4 (baseline 1, delta +0; bars 3 and +2)",
+			"control 6/6 (baseline 6, regressions 0; tolerance 0)",
+			"neither the primary nor the diagnostic bar was reached"
+		]
+	}
+}
