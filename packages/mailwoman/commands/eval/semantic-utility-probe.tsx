@@ -12,6 +12,11 @@
  *   from `probe-definition.json`, which the loader refuses to hand over if its content hash has moved.
  *   `--arm` labels which run a receipt describes; `--out` writes the receipt for the decision record.
  *
+ *   `--semantic-observation` is what makes the second arm a second arm: it builds the one route (#1929)
+ *   and injects it into the pipeline this run constructs. Without it the run is the un-injected pipeline,
+ *   whatever `--arm` is called — and the receipt records which of the two actually happened, because a
+ *   route dropped on the way in and a route that changed nothing produce the same numbers.
+ *
  *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
  *   unresolved control row, a missing database. A recorded STOP-REDESIGN is a result, not a failure.
  */
@@ -37,6 +42,11 @@ export const spec = {
 		"resolve-db": { type: "string", description: "WOF admin shards" },
 		"candidate-db": { type: "string", description: "Byte-range candidate.db" },
 		arm: { type: "string", default: "baseline", description: "Arm label written into the receipt" },
+		"semantic-observation": {
+			type: "boolean",
+			default: false,
+			description: "Inject the one semantic observation route (#1929)",
+		},
 		out: { type: "string", description: "Write the receipt JSON here" },
 		json: { type: "boolean", default: false, description: "Print JSON" },
 	},
@@ -49,6 +59,7 @@ interface Options {
 	resolveDB?: string
 	candidateDB?: string
 	arm: string
+	semanticObservation: boolean
 	out?: string
 	json: boolean
 }
@@ -65,6 +76,7 @@ const EvalSemanticUtilityProbe: ParsedCommandComponent<Options> = ({ options }) 
 				resolveDB: options.resolveDB,
 				candidateDB: options.candidateDB,
 				arm: options.arm,
+				semanticObservation: options.semanticObservation,
 			})
 
 			if (options.out) {

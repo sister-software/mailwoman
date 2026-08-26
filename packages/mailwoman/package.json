@@ -46,6 +46,7 @@
 		"eval-harness/baselines.json",
 		"eval-harness/gauntlet/cases/*/*.jsonl",
 		"eval-harness/conformance/*.jsonl",
+		"eval-harness/semantic-utility/*.json",
 		"eval-harness/invariance/*.jsonl",
 		"skills",
 		"*.ts",
@@ -426,6 +427,7 @@
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {
+		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/osm": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@types/yauzl-promise": "^4.0.1"

@@ -1,0 +1,63 @@
+{
+	"tableID": "semantic-utility-probe-activity-phrases",
+	"version": "1.0.0",
+	"provenance": {
+		"source": "authored-for-the-probe",
+		"authoredAt": "2026-08-26",
+		"sourceRecord": "packages/mailwoman/eval-harness/semantic-utility/activity-phrases.json",
+		"sourceURL": "https://github.com/sister-software/mailwoman/issues/1929",
+		"notes": "AUTHORED FOR ONE EXPERIMENT. These are surface forms an English speaker uses for the activity, written by hand so the probe has a way to reach `obtain_medication` from query text at all. They are not evidence about the world, they are not a measurement, and nothing downstream may read them as either. Four of them — `pick up a prescription`, `prescription`, `fill a prescription`, `prescription refilled` — are the `activityPhrase` values the pre-registration itself states for its four target rows; the rest are further phrasings of the same activity, and they exist so the table is a statement about the activity rather than an index of the registered rows. The table declares SURFACE FORMS only: every `activity` here must be an `activity`-kind concept the compiled geographic model carries, and which entity kinds afford it, in which country, with what modality and on whose authority all come from that artifact. It is deliberately NOT a `@mailwoman/poi-taxonomy` synonym table: that package's phrases are venue nouns, each naming a single category, and an activity is afforded by a set of kinds — the distinction the boundary record's section 5.3 states."
+	},
+	"phrases": [
+		{
+			"phrase": "prescription",
+			"activity": "obtain_medication",
+			"note": "The bare activity noun, the form sem-act-us-02 registers."
+		},
+		{
+			"phrase": "prescriptions",
+			"activity": "obtain_medication",
+			"note": "The plural of the bare noun. No registered row uses it."
+		},
+		{
+			"phrase": "pick up a prescription",
+			"activity": "obtain_medication",
+			"note": "The form sem-act-us-01 registers."
+		},
+		{
+			"phrase": "fill a prescription",
+			"activity": "obtain_medication",
+			"note": "The form sem-act-fr-01 registers."
+		},
+		{
+			"phrase": "prescription refilled",
+			"activity": "obtain_medication",
+			"note": "The inflected form sem-act-mx-01 registers."
+		},
+		{
+			"phrase": "refill a prescription",
+			"activity": "obtain_medication",
+			"note": "The uninflected phrasing of the same request. No registered row uses it."
+		},
+		{
+			"phrase": "prescription refill",
+			"activity": "obtain_medication",
+			"note": "The noun phrase for the same request. No registered row uses it."
+		},
+		{
+			"phrase": "collect a prescription",
+			"activity": "obtain_medication",
+			"note": "The British phrasing of `pick up a prescription`. No registered row uses it."
+		},
+		{
+			"phrase": "buy medicine",
+			"activity": "obtain_medication",
+			"note": "Obtaining medication over the counter, which the concept's own description admits. No registered row uses it."
+		},
+		{
+			"phrase": "pick up my medication",
+			"activity": "obtain_medication",
+			"note": "A first-person phrasing naming the medication rather than the prescription. No registered row uses it."
+		}
+	]
+}

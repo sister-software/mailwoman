@@ -16,6 +16,12 @@
  *   same ones. So the receipt records the poi.db path with its own `layer_manifest` row, the resolver
  *   backend that answered, and the weights package version — and when one of those cannot be read it says
  *   so in place rather than omitting the field.
+ *
+ *   AN ARM LABEL IS NOT A MEASUREMENT OF WHAT RAN. `semanticRoute` records whether the injected route was
+ *   actually built, and what it was built from — a route dropped on the way in produces exactly the numbers
+ *   a route that changed nothing produces, and the two are opposite findings. Every firing is recorded
+ *   beside its row as an observation carrying the assertion, its modality and every provenance record
+ *   behind it, so the receipt states on whose authority each answered row's category was chosen.
  */
 
 import { readFileSync } from "node:fs"
@@ -36,6 +42,12 @@ import {
 	type POIBoardOutcome,
 	type POIBoardResolverBackend,
 } from "../poi-board.ts"
+import {
+	createSemanticObservationRoute,
+	type SemanticObservation,
+	type SemanticObservationRoute,
+	type SemanticRouteIdentity,
+} from "./observation-route.ts"
 import {
 	computeProbeCounts,
 	decideProbe,
@@ -69,6 +81,24 @@ export interface ProbeArtifactIdentity {
 	weightsVersion: string
 }
 
+/**
+ * One recorded firing of the injected route, addressed to the row it happened on.
+ */
+export interface ProbeRowObservation extends SemanticObservation {
+	rowID: string
+}
+
+/**
+ * What the run did about the injected semantic route — read from the route that was BUILT, never from the arm label.
+ */
+export interface ProbeSemanticRouteRecord extends Partial<SemanticRouteIdentity> {
+	/**
+	 * Whether a route was constructed and injected at all. `false` is the un-injected pipeline, whatever the arm is
+	 * called.
+	 */
+	enabled: boolean
+}
+
 export interface ProbeReceipt {
 	probeID: string
 	definitionVersion: string
@@ -77,7 +107,16 @@ export interface ProbeReceipt {
 	generatedAt: string
 	gitCommit: string
 	artifact: ProbeArtifactIdentity
+	/**
+	 * The injected route as built. Present on every receipt, including a run with no route: an omitted field would make
+	 * "no route was asked for" and "this receipt predates the field" the same reading.
+	 */
+	semanticRoute: ProbeSemanticRouteRecord
 	rows: ProbeRowOutcome[]
+	/**
+	 * Every firing of the injected route, in row order. Empty on an un-injected run.
+	 */
+	semanticObservations: ProbeRowObservation[]
 	counts: ProbeCounts
 	verdict: ProbeVerdict
 }
@@ -101,6 +140,11 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 * Commit sha recorded in the receipt. Defaults to the checkout's own short HEAD.
 	 */
 	gitCommit?: string
+	/**
+	 * Build the one semantic observation route (#1929) and inject it into the pipeline this run constructs. Absent or
+	 * `false` — the default — runs the un-injected pipeline, which is what the frozen baseline was measured against.
+	 */
+	semanticObservation?: boolean
 }
 
 interface ModelCard {
@@ -156,18 +200,27 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 	const controls = resolveControlRows(definition, committed)
 	const groupByID = new Map(definition.controlRows.map((row) => [row.id, row.group]))
 
-	const { pipeline, db, backend, close } = await createPOIBoardPipeline(options)
+	const route = options.semanticObservation ? await createSemanticObservationRoute() : undefined
+
+	const { pipeline, db, backend, close } = await createPOIBoardPipeline({
+		...options,
+		...(route ? { poiSemanticLookup: route.lookup } : {}),
+	})
+
 	const rows: ProbeRowOutcome[] = []
+	const semanticObservations: ProbeRowObservation[] = []
 
 	try {
 		for (const target of definition.targetRows) {
 			rows.push(await gradeRow(pipeline, definition, target, "target"))
+			semanticObservations.push(...drainObservations(route, target.id))
 		}
 
 		for (const control of controls) {
 			const outcome = await gradeRow(pipeline, definition, control, "control")
 
 			rows.push({ ...outcome, group: groupByID.get(control.id) })
+			semanticObservations.push(...drainObservations(route, control.id))
 		}
 	} finally {
 		close()
@@ -183,10 +236,21 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 		generatedAt: new Date().toISOString(),
 		gitCommit: options.gitCommit ?? buildSHA(String(repoRootPath())),
 		artifact: readArtifactIdentity(db, backend, options),
+		semanticRoute: route ? { enabled: true, ...route.identity } : { enabled: false },
 		rows,
+		semanticObservations,
 		counts,
 		verdict: decideProbe(definition, counts),
 	}
+}
+
+/**
+ * Take everything the route recorded while one row ran, addressed to that row. Empty when no route was injected.
+ */
+function drainObservations(route: SemanticObservationRoute | undefined, rowID: string): ProbeRowObservation[] {
+	if (!route) return []
+
+	return route.takeObservations().map((observation) => ({ rowID, ...observation }))
 }
 
 async function gradeRow(
@@ -228,7 +292,15 @@ export function printProbeReceipt(receipt: ProbeReceipt): void {
 	)
 
 	console.log(
-		`weights: ${receipt.artifact.weightsLocale} ${receipt.artifact.weightsVersion} · resolver: ${receipt.artifact.resolverBackend}\n`
+		`weights: ${receipt.artifact.weightsLocale} ${receipt.artifact.weightsVersion} · resolver: ${receipt.artifact.resolverBackend}`
+	)
+
+	console.log(
+		`semantic route: ${
+			receipt.semanticRoute.enabled
+				? `${receipt.semanticRoute.phraseTableID} v${receipt.semanticRoute.phraseTableVersion} (${receipt.semanticRoute.declaredPhrases} declared phrases) → geographic model ${receipt.semanticRoute.modelVersion} → ${receipt.semanticRoute.reachableCategoryIDs?.join(", ")}`
+				: "not injected"
+		}\n`
 	)
 
 	console.log("  role     id               shape                  pass  detail")
@@ -237,6 +309,24 @@ export function printProbeReceipt(receipt: ProbeReceipt): void {
 		console.log(
 			`  ${row.role.padEnd(8)} ${row.id.padEnd(16)} ${row.shape.padEnd(22)} ${row.grade.pass ? " ✓  " : " ✗  "}  ${row.grade.detail}`
 		)
+	}
+
+	if (receipt.semanticObservations.length) {
+		console.log("\nobservations recorded beside the answers — on whose authority the category was chosen:")
+
+		for (const observation of receipt.semanticObservations) {
+			console.log(
+				`  ${observation.rowID.padEnd(16)} ${JSON.stringify(observation.matchedPhrase)} → ${observation.activity} → ${observation.concept} → ${observation.mapping.vocabulary}:${observation.categoryID}`
+			)
+
+			console.log(
+				`  ${" ".repeat(16)} ${observation.assertion.id} (${observation.assertion.relation}, ${observation.assertion.modality}) · ${observation.assertion.provenance.source} · ${observation.assertion.provenance.sourceRecord ?? "no source record"}`
+			)
+
+			console.log(
+				`  ${" ".repeat(16)} phrase from ${observation.phraseTableID} v${observation.phraseTableVersion} · ${observation.phraseProvenance.source}`
+			)
+		}
 	}
 
 	console.log("")
