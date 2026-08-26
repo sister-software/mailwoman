@@ -37,6 +37,7 @@
 import { existsSync } from "node:fs"
 
 import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -262,6 +263,15 @@ export interface POIBoardOptions {
 	 * Enforce the pre-registered floors: return a non-zero exit code on any breach (floors are always printed).
 	 */
 	enforce?: boolean
+	/**
+	 * An additional positive-evidence phrase rung for the constructed pipeline, consulted only after the committed
+	 * lexicon and the POI name lookup have both returned nothing (`CreateRuntimePipelineOpts.poiSemanticLookup`, #1929).
+	 *
+	 * Carried on the board's own options so a probe measuring an injected route runs through the SAME construction the
+	 * board does. Absent — the default, and what `runPOIBoard` always passes — constructs the pipeline the board has
+	 * always constructed.
+	 */
+	poiSemanticLookup?: POIPhraseLookup
 }
 
 /**
@@ -514,6 +524,7 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 		classifier,
 		resolver: resolverHandle?.resolver,
 		poiQueryKind: { poiDatabasePath: db },
+		...(options.poiSemanticLookup ? { poiSemanticLookup: options.poiSemanticLookup } : {}),
 	})
 
 	return { pipeline, db, backend: resolverHandle?.backend ?? "none", close: () => resolverHandle?.close() }

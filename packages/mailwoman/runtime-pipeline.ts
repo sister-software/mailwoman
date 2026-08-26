@@ -201,6 +201,19 @@ export interface CreateRuntimePipelineOpts {
 	 * - `false` — disabled: the pipeline is byte-identical to pre-flag builds.
 	 */
 	poiQueryKind?: boolean | { poiDatabasePath?: string }
+	/**
+	 * An ADDITIONAL positive-evidence phrase rung, consulted only after the committed category lexicon and the POI name
+	 * lookup have both returned nothing (#1929). Absent — the default everywhere — leaves the subject lookup exactly the
+	 * two rungs it has always been, and every query resolves as before.
+	 *
+	 * It exists so an experiment can supply a route the shipped lexicon does not have (an activity phrase reaching a
+	 * category through the compiled geographic model) without that route being reachable by default, and without the
+	 * pipeline learning anything about where the evidence came from: what arrives here is a plain {@link POIPhraseLookup},
+	 * the same contract the committed lexicon satisfies, so a match is served by the existing executor exactly as if the
+	 * category had been typed. It supplies POSITIVE EVIDENCE ONLY — a miss returns `[]` and changes nothing — and it can
+	 * never displace a committed hit, because it is asked last.
+	 */
+	poiSemanticLookup?: POIPhraseLookup
 }
 
 /**
@@ -323,10 +336,19 @@ export function createRuntimePipeline(
 
 	let poiNameLookup: POIPhraseLookup | undefined
 
+	// Rung order is the whole of the containment: the committed lexicon answers first, the POI name lookup second, and an
+	// injected semantic rung — absent by default — only where both returned nothing. Asked last, it can add a subject
+	// where there was none and can never take one away.
 	const poiSubjectLookup: POIPhraseLookup = (phrase, locale) => {
 		const lexical = poiTaxonomyLookup(phrase, locale)
 
-		return lexical.length ? lexical : (poiNameLookup?.(phrase, locale) ?? [])
+		if (lexical.length) return lexical
+
+		const named = poiNameLookup?.(phrase, locale) ?? []
+
+		if (named.length) return named
+
+		return opts.poiSemanticLookup?.(phrase, locale) ?? []
 	}
 
 	const stages: RuntimePipelineStages = {
