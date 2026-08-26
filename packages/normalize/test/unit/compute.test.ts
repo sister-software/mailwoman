@@ -20,6 +20,19 @@ describe("normalize — defaults", () => {
 		expect(r.transforms.some((t) => t.kind === "collapse_whitespace")).toBe(true)
 	})
 
+	it("carries the length-preserving lone-tab rewrite through Stage 1 (#1943)", () => {
+		const r = normalize("Rue\tdu\tFaubourg\tSaint-Honoré")
+		expect(r.normalized).toBe("Rue du Faubourg Saint-Honoré")
+		expect(r.normalized).not.toContain("\t")
+		expect(r.transforms.some((t) => t.kind === "collapse_whitespace")).toBe(true)
+		expect(r.offsetMap).toHaveLength(r.normalized.length)
+	})
+
+	it("preserves newlines while normalizing tabs", () => {
+		const r = normalize("350\t5th Ave\nNew York")
+		expect(r.normalized).toBe("350 5th Ave\nNew York")
+	})
+
 	it("normalizes fancy quotes", () => {
 		const r = normalize("“hello”")
 		expect(r.normalized).toBe('"hello"')
