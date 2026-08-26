@@ -54,12 +54,12 @@ both a rooftop register and a national street-segment file. It has its own page:
 One layer is global and the rest are per country, which is the split that makes "planet" two claims instead
 of one.
 
-| Layer                  | Scope                       | Published today                                       |
-| ---------------------- | --------------------------- | ----------------------------------------------------- |
-| Candidate gazetteer    | 244 countries, one database | `candidate.db`, 1.65 GB                               |
-| Rooftop address points | Per country                 | US (30.3 GB, 52 shards) and France (6.95 GB, 1 shard) |
-| Street interpolation   | Per country                 | US only (11.0 GB, 51 shards)                          |
-| POI                    | Per country                 | US, Canada, Mexico, France in one 3.89 GB layer       |
+| Layer                  | Scope                       | Published today                                             |
+| ---------------------- | --------------------------- | ----------------------------------------------------------- |
+| Candidate gazetteer    | 244 countries, one database | `candidate.db`, 1.65 GB                                     |
+| Rooftop address points | Per country                 | US (30.3 GB, 52 databases) and France (6.95 GB, 1 database) |
+| Street interpolation   | Per country                 | US only (11.0 GB, 51 databases)                             |
+| POI                    | Per country                 | US, Canada, Mexico, France in one 3.89 GB layer             |
 
 That is the complete published set — `mailwoman data pull` offers four bundles and no others. Everything
 else on this page you build yourself.
@@ -123,7 +123,7 @@ unfiltered sync for that reason, so narrow it with `--countries` or `--repos` un
 
 France publishes the Base Adresse Nationale — 26 million addresses under the Licence Ouverte 2.0, which
 asks for attribution and imposes no share-alike. That makes it the same licensing shape as the permissive
-core, and it is why France is the one non-US country with a published shard.
+core, and it is why France is the one non-US country with a published rooftop database.
 
 Take three départements, not the whole country, so the step finishes while you watch:
 
@@ -162,7 +162,7 @@ node node_modules/@mailwoman/ban/out/scripts/build-address-point-shard.js \
 6.84 s, 200,406 points, and **zero rows skipped**: every row in these three départements carries both a
 street and a number, which is what a government register buys you and what step 3 does not have. The build
 streams the CSV instead of loading it, so the national set is the same command with a longer file list —
-26 million rows, and 6.95 GB in the published shard.
+26 million rows, and 6.95 GB in the published database.
 
 Two things about that invocation. It is a script inside the installed package, not a `mailwoman`
 subcommand — there is no `mailwoman ban` group, the fetch is a `curl` against a documented URL pattern,
@@ -175,8 +175,8 @@ npm; if you are working from a checkout instead, the same file is at
 For a country with no open register, OpenStreetMap is the fallback. Two constraints come before the
 command, because both of them stop the step rather than complicate it.
 
-**The license.** OSM is ODbL, which is share-alike on a derived database, and a shard built here is a
-derived database. Mailwoman publishes no OSM shard to npm, R2 or the demo, and will not until counsel has
+**The license.** OSM is ODbL, which is share-alike on a derived database, and what you build here is a
+derived database. Mailwoman publishes no OSM rooftop database to npm, R2 or the demo, and will not until counsel has
 reviewed how share-alike applies to serving a coordinate from one. If you build one, the obligation is
 yours and it rides on the file.
 
@@ -204,7 +204,7 @@ cd mailwoman && yarn install && yarn compile
 ```
 
 The two `node osm/out/scripts/...` commands in this section run from that checkout's root. Step 4 goes
-back to the npm CLI and does not care where the shard was built.
+back to the npm CLI and does not care where the database was built.
 
 Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. Adding
 a fourth means registering the country and writing its branch in the street normalizer in the same commit,
@@ -262,8 +262,8 @@ does not trust a geometric guess can filter them out with one predicate.
 
 ## 4. See which one answers
 
-You now hold two shards over overlapping ground. Ask both for the same address — `--address-points-db`
-points the geocoder at an explicit shard instead of the per-state US convention:
+You now hold two databases over overlapping ground. Ask both for the same address — `--address-points-db`
+points the geocoder at an explicit file instead of the per-state US convention:
 
 ```bash
 npx mailwoman geocode "12 Cours Napoléon, 20000 Ajaccio" --default-country FR \
@@ -339,22 +339,22 @@ Postcode-level resolution for GB still works, out of the gazetteer.
 
 **Korea has no adopted open data path**, and that is a data-licensing constraint, not an
 engineering one. **Australia's G-NAF** is in the repository, but as a training-corpus adapter
-(`mailwoman gnaf assemble` emits labeled JSONL), not a shard builder — there is no
+(`mailwoman gnaf assemble` emits labeled JSONL), not a rooftop-database builder — there is no
 `address-points-au` to build today. **New Hampshire** is a hole inside the country that does have a tier:
-its published rooftop shard is 20,480 bytes and holds zero rows, because the state appears in neither
+its published rooftop database is 20,480 bytes and holds zero rows, because the state appears in neither
 Overture nor the OpenAddresses set the build falls back to.
 
 Two closing notes on the word "coverage". A missing row is not a measured zero, and newer mailwoman
 artifacts make that distinction structural: the spatial-layer contract the POI layer follows stores
 per-cell survey completeness beside the data, so a consumer can tell "surveyed and empty" from "never
-surveyed". The address shards on this page predate it and carry no such table, which is why the New
+surveyed". The address databases on this page predate it and carry no such table, which is why the New
 Hampshire case above has to be stated in prose. And a locale claim on the [status page](../status.mdx) is
 a claim about parsing, not about street-level coordinates: France and the US are tier 1 for both, and every
 other claimed locale parses against a coordinate panel while resolving at the admin tier.
 
 ## What you have now
 
-Two rooftop shards over Corsica built from different sources under different licenses, a global gazetteer
+Two rooftop databases over Corsica built from different sources under different licenses, a global gazetteer
 under both of them, and a row count for what each source holds instead of an assumption about it.
 The same two commands, given a country code the normalizer knows and an extract or a register dump,
 produce the next one.
@@ -363,5 +363,5 @@ produce the next one.
 
 - [Build the US address dataset](./build-the-us-dataset.mdx) — the one country with both a rooftop
   register and a national street-segment file, and the fifty-state numbers.
-- [Improve geocode precision](./improve-geocode-precision.mdx) — the published French shard, downloaded
+- [Improve geocode precision](./improve-geocode-precision.mdx) — the published French rooftop database, downloaded
   rather than built, and what the four resolution tiers mean.

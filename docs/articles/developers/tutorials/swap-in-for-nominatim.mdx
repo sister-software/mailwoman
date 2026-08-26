@@ -30,7 +30,7 @@ Read the last two before you start. They decide whether this page can answer the
   Nominatim, 8081 for libpostal — the same ports the servers you already run are bound to. This page
   moves two of them with `--port`, because the machine it was verified on had 2322 and 8080 taken.
   Running the drop-in beside the original on a spare port is the right shape for a swap anyway: you
-  can diff the two answers before you cut over.
+  can diff the two answers before you switch over.
 - **`/reverse` needs a database this page does not download.** Reverse geocoding on the Photon and
   Nominatim drop-ins runs point-in-polygon over a full WOF distribution at
   `<data-root>/wof/admin-global-priority.db`. `mailwoman data pull` does not ship one, so `/reverse`

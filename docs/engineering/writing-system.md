@@ -232,7 +232,7 @@ structural, and a rule that matched them would also match correct prose.
    fact, and let the reader judge its weight.
 2. **Rule-of-three padding.** Two short clauses then a longer one, or three adjectives where the third
    restates the first two. Fix: keep the one precise descriptor.
-3. **Vague attribution.** "Developers find", "it is widely considered". Fix: name who, or cut the sentence.
+3. **Vague attribution.** "Developers find", "it is widely considered". Fix: name who, or remove the sentence.
 4. **Filler intensifiers.** Words that prop up a claim the evidence does not carry. Vale catches the common
    ones; the pattern is the target, not the token list.
 5. **Contrastive negation.** Introducing a topic by what it is not, especially when nobody proposed the
@@ -240,15 +240,15 @@ structural, and a rule that matched them would also match correct prose.
 6. **Manufactured cadence.** Strings of clipped sentences, or a paragraph ending on a quotable line rather
    than an informative one. Fix: end on the sentence that carries information.
 7. **Superficial participial analysis.** A trailing "-ing" clause that narrates rather than explains
-   ("reflecting the system's flexibility"). Fix: cut it, or replace it with the mechanism.
+   ("reflecting the system's flexibility"). Fix: remove it, or replace it with the mechanism.
 8. **Uniform paragraph shape.** Every paragraph the same length, topic sentence plus three supports plus a
    kicker. Fix: let a short thought be one line.
 9. **Restatement.** The same point in a heading, the first sentence, and a summary box. Fix: keep one.
-10. **Expansion.** A draft that is longer than the facts require. Fix: cut. This is the most reliable
+10. **Expansion.** A draft that is longer than the facts require. Fix: shorten it. This is the most reliable
     single improvement available to any draft on this list.
 
 Two habits sit under the checklist. Rewrite the thought rather than swapping the flagged word, because a
-synonym leaves the structure that produced the tell. And prefer cutting to rewording: a sentence that adds
+synonym leaves the structure that produced the tell. And prefer removal to rewording: a sentence that adds
 rhythm and no information should go.
 
 ## How Vale enforces the mechanical subset
@@ -271,24 +271,34 @@ Run it two ways:
 # Lint the published pages.
 yarn workspace @mailwoman/docs lint:prose
 
+# Lint the ambiguous-shorthand ban over the root markdown, docs/engineering and every package README.
+yarn workspace @mailwoman/docs lint:prose:vocab
+
 # Lint the rules themselves against their fixtures.
 yarn workspace @mailwoman/docs lint:prose:fixtures
 ```
 
+`lint:prose:vocab` reads `.vale-vocab.ini`, which switches every rule off except
+`Mailwoman.AmbiguousShorthand` — the ban on `seam`, `shard`, `cut` and `gate`. Those four surfaces have
+never been under the rest of the house style, and turning it all on at once would fail on 175 unrelated
+alerts. `yarn lint` runs this one, so it reports in the required `test` CI context rather than only in the
+docs job. Dated point-in-time records are out of its path list.
+
 The full-corpus run is not green and is not expected to be: as of 2026-08-03 it reports 1355 errors and 237
 warnings across 458 files, because those pages predate these rules and are what the rewrite replaces. CI
 therefore lints only the pages a pull request touches under `docs/articles/` and `docs/src/pages/`; the
-fixture check runs unconditionally. The full-corpus run becomes the gate once the rewrite lands.
+fixture check runs unconditionally. The full-corpus run becomes the blocking CI check once the rewrite lands.
 
 Inline code spans and fenced code blocks are excluded from linting, so a banned token can be named in
 backticks — which is how the canonical terms table above states the spellings it forbids. Frontmatter is
 stripped before linting, so a `source-of-truth:` key is not read as prose.
 
 Adding a rule means adding a fixture. `docs/scripts/vale-fixtures/dirty.md` carries one hit per token and
-`clean.md` must stay at zero alerts; `docs/scripts/check-vale-rules.sh` asserts both, plus a minimum error
-count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries one
-negative assertion: `full-text search` in plain prose must stay quiet, because the `text search` swap is
-guarded so the FTS vocabulary this repo ships survives the rule.
+`clean.md` must stay at zero alerts; `docs/scripts/check-vale-rules.ts` asserts both, plus a minimum error
+count and at least one hit from every rule file, and it runs in the docs CI job. That script also carries
+negative assertions: `full-text search` in plain prose must stay quiet, because the `text search` swap is
+guarded so the FTS vocabulary this repo ships survives the rule, and a backticked `promotion-gate.ts` or
+`mailwoman eval gate` must stay quiet, because a contract-bearing name in backticks is exempt by design.
 
 ## Templates
 

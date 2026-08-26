@@ -108,9 +108,9 @@ boarding process would ever finish.
    must never _forbid_ borough — gazetteer absence is usually coverage, not fact (WOF Japan is
    point-geometry; the meaning-of-zero rule).
 2. **Bias, never mask.** The model owns segmentation; the hierarchy contributes soft evidence.
-   Hard matching is where venue-confound false positives live (window-mode measured 52% FP; gated
-   segment mode is why the shipped floor is sub-2%).
-3. **Per-locale conventions still gate expectations.** One model serves every locale; what a
+   Hard matching is where venue-confound false positives live (window-mode measured 52% FP; the
+   constrained segment mode is why the shipped floor is sub-2%).
+3. **Per-locale conventions still decide expectations.** One model serves every locale; what a
    locale _expects_ to emit stays governed by its conventions (codex address-system conventions).
 4. **Locale-scoped artifacts must be provably inert elsewhere.** en-us ships no pair index and a
    dedicated test asserts GB-shaped input takes NO pair bias through en-us — a packaging seatbelt,
@@ -128,7 +128,7 @@ no such line — USPS routes city/state/ZIP — so there is no postal register t
 -correctness stake. But the schema's umbrella term means US dependent localities exist (NYC's five
 boroughs), and WOF supplies the pairs directly (211 boroughs with parents, globally).
 
-**Corrected 2026-08-01 (campaign R5).** This section previously said the US instance was gated on
+**Corrected 2026-08-01 (campaign R5).** This section previously said the US instance was conditioned on
 "the tag's _contextual_ aliveness for US". That was wrong, and it was wrong about GB too. Three
 measurements, in the order that settles it:
 
@@ -190,7 +190,7 @@ Two register-vs-writer distinctions the GB rungs had to make explicit, both gene
   dropping the pair — 1,545 Welsh pairs would otherwise have been discarded.
 
 **Every locale on the original wave 2–4 list has now shipped.** The blocker was never data — the
-pair index is hard-gated on the resolved locale's country, so an artifact inside another locale's
+pair index is hard-limited to the resolved locale's country, so an artifact inside another locale's
 package can never fire, and each locale needed its own **carrier package**: a ~6-file data-only
 overlay declaring `baseWeights`. Once that was understood the rest was mechanical.
 

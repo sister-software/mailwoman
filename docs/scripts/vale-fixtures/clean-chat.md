@@ -11,7 +11,7 @@ grouper. The resolver never receives `3 Mien`, so more rooftop data cannot
 fix this case. Add the case to the phrase-boundary board before changing the
 resolver.
 
-The gate reads 383 of 384 rows resolved. The one failure is the Portopetro
+The promotion eval reads 383 of 384 rows resolved. The one failure is the Portopetro
 row, which asserts that a southeast bearing narrows the candidate set; the
 bearing is dropped at tokenization, before the resolver runs. The fix
 belongs in the tokenizer, and the row stays red until then.

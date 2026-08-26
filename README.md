@@ -160,7 +160,7 @@ A locale appears here only when a coordinate-graded eval backs it.
 
 | Tier                                 | Locales                                                | What backs the claim                                                                                         |
 | ------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| **1 — first-class, floor-gated**     | US, FR                                                 | Per-tag eval floors gate every release. FR coordinate panel (n=3000): 100% resolve, resolved-p90 6.6 km      |
+| **1 — first-class, floor-enforced**  | US, FR                                                 | Per-tag eval floors block every release. FR coordinate panel (n=3000): 100% resolve, resolved-p90 6.6 km     |
 | **2 — trained + coordinate-paneled** | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Per-locale coordinate panels (n=1000 each), resolved-p90 ≤ 10 km across the set; NL resolved-p50 0.05 km     |
 | **3 — trained, thinly measured**     | NO, SE                                                 | Coordinate panels exist, but residual misses are not yet fully characterized. Claims beyond this: unverified |
 
@@ -258,7 +258,7 @@ the published package interact with the neural pipeline exclusively.
 ### Contributing
 
 Fork and open a pull request against `main` on a feature branch. Please include unit tests.
-The model-work runbook (which evals gate a change, how to add a shard) is
+The model-work runbook (which evals a change must pass, how to add a training-data subset) is
 [`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx).
 
 ## Acknowledgements

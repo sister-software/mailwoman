@@ -11,7 +11,7 @@ whoever fixed the bug. This gives that person a second opinion in the same vocab
 answer with `@mailwoman/record`'s `PostalAddress` — a `ComponentTag`-keyed dict, the formatter's
 `canonicalKey`, a coordinate, and a `ResolutionTier` — so the comparison is field-to-field.
 
-It is **not** truth and **not** a gate. Google and the Census Bureau disagree with each other, with the
+It is **not** truth and **not** a check that anything must pass. Google and the Census Bureau disagree with each other, with the
 postal authority, and with the address as written; both will confidently return a coordinate for an
 address that does not exist. A human reads the answer and decides what to pin.
 `OracleGeocodeResult.raw` always carries the provider's untouched response for that reading.
@@ -50,7 +50,7 @@ coordinate is routinely 20–100 m from the building and further on a long rural
 `expectToleranceM` against that, not against a rooftop assumption.
 
 **Google's errors arrive under HTTP 200.** `REQUEST_DENIED`, `OVER_QUERY_LIMIT`, `INVALID_REQUEST` and
-`UNKNOWN_ERROR` are 200s carrying a `status` field, invisible to every gate `core/api` provides. The
+`UNKNOWN_ERROR` are 200s carrying a `status` field, invisible to every check `core/api` provides. The
 client maps them onto the normal `ResourceError` contract and refuses to cache any body that is not a
 real answer — a `REQUEST_DENIED` persisted under a 30-day TTL would make an unbilled key look like a
 permanently broken address.

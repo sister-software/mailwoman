@@ -65,5 +65,5 @@ await writeFile("clinics.geojson", JSON.stringify(toGeoJSON(entities)))
 - Every command in the page was executed, and the pasted output is what it printed.
 - Every constraint that can stop a reader is stated before the step it stops.
 - Each caveat gives a ceiling and a next action in the same sentence pair.
-- Every superlative is cashed out by a checkable action in the same breath, or it is cut.
+- Every superlative is cashed out by a checkable action in the same breath, or it is removed.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

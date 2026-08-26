@@ -60,11 +60,11 @@ mailwoman doctor [options]
 | Flag        | Type    | Default | Description                                                                                                                                                                                                                                                                                                                                         |
 | ----------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `--json`    | boolean | `false` | Emit the report as JSON instead of a checklist: &#123; checks: [&#123; id, label, status, detail, consequence?, fix?, core &#125;], exitCode &#125; — a superset of &#123; id, status, detail, fix? &#125; (label + core + consequence aid machine consumers). With --verbose, an `environment` array of &#123; key, value, source &#125; is added. |
-| `--verbose` | boolean | `false` | Also print every path and environment variable the checks resolved (data root, candidate.db, WOF shards, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.                                                                                                    |
+| `--verbose` | boolean | `false` | Also print every path and environment variable the checks resolved (data root, candidate.db, WOF databases, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.                                                                                                 |
 
 ### `mailwoman geocode`
 
-Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and rooftop/interpolation shards.
+Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and the rooftop/interpolation databases.
 
 ```
 mailwoman geocode [options] [address...]
@@ -82,9 +82,9 @@ mailwoman geocode [options] [address...]
 | `--country-scope [country-scope]`                     | `auto` \| `locale` \| `none` | `auto`   | Apply the locale-inferred resolver scope automatically, always, or never.                                                           |
 | `--resolve-db [resolve-db]`                           | string                       | —        | WOF admin SQLite distribution.                                                                                                      |
 | `--candidate-db [candidate-db]`                       | string                       | —        | Demo-parity byte-range candidate database.                                                                                          |
-| `--data-root [data-root]`                             | string                       | —        | Root containing address-point, interpolation, WOF, POI, and other data shards.                                                      |
-| `--address-points-db [address-points-db]`             | string                       | —        | Explicit address-point SQLite shard, bypassing region selection.                                                                    |
-| `--interpolation-db [interpolation-db]`               | string                       | —        | Explicit interpolation SQLite shard, bypassing region selection.                                                                    |
+| `--data-root [data-root]`                             | string                       | —        | Root containing the address-point, interpolation, WOF, POI, and other data databases.                                               |
+| `--address-points-db [address-points-db]`             | string                       | —        | Explicit address-point SQLite database, bypassing region selection.                                                                 |
+| `--interpolation-db [interpolation-db]`               | string                       | —        | Explicit interpolation SQLite database, bypassing region selection.                                                                 |
 | `--interp-calibration [interp-calibration]`           | number                       | —        | Force one interpolation uncertainty calibration multiplier.                                                                         |
 | `--locale-country-prior`                              | boolean                      | `false`  | Use a withheld locale country as a soft resolver ranking prior.                                                                     |
 | `--no-gazetteer-prior`                                | boolean                      | `true`   | Feed the gazetteer FST prior to the parse; --no-gazetteer-prior disables it.                                                        |
@@ -410,7 +410,7 @@ mailwoman registry run [options] [csv...]
 | `--default-country [default-country]` | string  | —                     | Resolver country scope                  |
 | `--no-place-country`                  | boolean | `true`                | Enable coarse country prior             |
 | `--resolve-db [resolve-db]`           | string  | —                     | WOF admin database                      |
-| `--data-root [data-root]`             | string  | environment-dependent | State-shard root                        |
+| `--data-root [data-root]`             | string  | environment-dependent | Per-state database root                 |
 
 ### `mailwoman registry scorer-eval`
 
@@ -428,7 +428,7 @@ mailwoman registry scorer-eval [options] <kind>
 | ------------------------------------- | ------- | ------- | -------------------------------- |
 | `--sources [sources]`                 | string  | —       | Record-matcher sources directory |
 | `--wof [wof]`                         | string  | —       | WOF admin SQLite path            |
-| `--data-root [data-root]`             | string  | —       | Per-state shard root             |
+| `--data-root [data-root]`             | string  | —       | Per-state database root          |
 | `--out-md [out-md]`                   | string  | —       | Markdown report path             |
 | `--state [state]`                     | string  | —       | State filter                     |
 | `--npis [npis]`                       | number  | —       | NPIs sampled                     |
@@ -466,19 +466,19 @@ mailwoman registry train-scorer [options] <variant>
 | ----------- | -------- | ------------- |
 | `<variant>` | Yes      | Model variant |
 
-| Flag                              | Type   | Default | Description            |
-| --------------------------------- | ------ | ------- | ---------------------- |
-| `--sources [sources]`             | string | —       | Record-matcher sources |
-| `--state [state]`                 | string | —       | State filter           |
-| `--npis [npis]`                   | number | —       | NPIs sampled           |
-| `--cap [cap]`                     | number | —       | Facility cap           |
-| `--cost [cost]`                   | number | —       | Negative-class weight  |
-| `--precision-bar [precision-bar]` | number | —       | Held-out precision bar |
-| `--out [out]`                     | string | —       | Output module          |
-| `--locale [locale]`               | string | `en-US` | Weights locale         |
-| `--date [date]`                   | string | —       | Training date          |
-| `--wof [wof]`                     | string | —       | WOF database           |
-| `--data-root [data-root]`         | string | —       | Shard root             |
+| Flag                              | Type   | Default | Description             |
+| --------------------------------- | ------ | ------- | ----------------------- |
+| `--sources [sources]`             | string | —       | Record-matcher sources  |
+| `--state [state]`                 | string | —       | State filter            |
+| `--npis [npis]`                   | number | —       | NPIs sampled            |
+| `--cap [cap]`                     | number | —       | Facility cap            |
+| `--cost [cost]`                   | number | —       | Negative-class weight   |
+| `--precision-bar [precision-bar]` | number | —       | Held-out precision bar  |
+| `--out [out]`                     | string | —       | Output module           |
+| `--locale [locale]`               | string | `en-US` | Weights locale          |
+| `--date [date]`                   | string | —       | Training date           |
+| `--wof [wof]`                     | string | —       | WOF database            |
+| `--data-root [data-root]`         | string | —       | Per-state database root |
 
 ### `mailwoman registry viz`
 
@@ -532,13 +532,13 @@ tutorials under [See also](#see-also) run the ones a self-hosting reader needs.
 | `mailwoman corpus`    | 19       | Builds and audits the BIO-labeled training corpus.                            |
 | `mailwoman coverage`  | 1        | Builds the demo map's address-coverage overlay tiles.                         |
 | `mailwoman dev`       | 11       | Repository maintenance: source generation, fixture capture, lint passes.      |
-| `mailwoman eval`      | 20       | Runs the evaluation gates that decide whether a model ships.                  |
+| `mailwoman eval`      | 20       | Runs the evaluations that decide whether a model ships.                       |
 | `mailwoman filer`     | 2        | Record-linkage evaluation over regulatory filings.                            |
 | `mailwoman gazetteer` | 52       | Builds every gazetteer artifact, including the candidate and admin databases. |
 | `mailwoman gnaf`      | 1        | Assembles the Australian G-NAF address register.                              |
 | `mailwoman placer`    | 5        | Trains and evaluates the coarse country placer.                               |
 | `mailwoman release`   | 1        | Stages model weights for a release.                                           |
-| `mailwoman situs`     | 5        | Builds the US rooftop address-point and interpolation shards.                 |
+| `mailwoman situs`     | 5        | Builds the US rooftop address-point and interpolation databases.              |
 | `mailwoman tiger`     | 4        | Processes US Census TIGER/Line road and boundary data.                        |
 | `mailwoman tiles`     | 1        | Publishes vector tiles to the demo map's bucket.                              |
 | `mailwoman wof`       | 5        | Prepares and inspects the Who's On First gazetteer source tree.               |

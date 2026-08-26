@@ -212,8 +212,8 @@ done
 {"resolution_tier":"admin","uncertainty_m":null,"lat":38.904831,"lon":-77.016216}
 ```
 
-That run had `candidate.db` plus the DC address-point shard on disk (the setup
-[Improve geocode precision](../tutorials/improve-geocode-precision.mdx) builds). Without the shard both
+That run had `candidate.db` plus the DC address-point database on disk (the setup
+[Improve geocode precision](../tutorials/improve-geocode-precision.mdx) builds). Without that file both
 rows answer `admin`, and the check below cannot distinguish them — precision data is what makes this
 test meaningful, not the parse.
 

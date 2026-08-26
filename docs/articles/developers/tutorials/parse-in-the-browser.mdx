@@ -216,7 +216,7 @@ the local number is reading 39.4 MB into an inference session and running the wa
 
 Two consequences worth designing around. You serve these files, so an immutable `Cache-Control` on
 them turns every visit after the first into a cache read. And sixty-odd megabytes is a real download
-on a phone — gate the load behind the interaction that needs it rather than starting it on first
+on a phone — start the load on the interaction that needs it rather than on first
 paint.
 
 ## Where it runs

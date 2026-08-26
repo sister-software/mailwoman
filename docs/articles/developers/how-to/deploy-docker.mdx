@@ -72,7 +72,7 @@ Two mount details decide whether this works on the first try.
   paths, and discovery follows the link, so a dangling one reads as absent — the container boots with
   geocoding off rather than reporting a broken path. Mount the real file, or point
   `-e MAILWOMAN_CANDIDATE_DB=` at its real filename inside the mount.
-- **Per-state rooftop shards are WAL-mode.** Their `-wal` and `-shm` siblings have to be in the same
+- **Per-state rooftop databases are WAL-mode.** Their `-wal` and `-shm` siblings have to be in the same
   mount. A missing sidecar drops that address to a coarser resolution tier rather than failing the
   request, which makes it a quiet failure worth checking for.
 

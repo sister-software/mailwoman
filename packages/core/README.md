@@ -14,16 +14,16 @@ const result = pipeline.parse("1600 Amphitheatre Parkway, Mountain View, CA 9404
 
 ## What's inside
 
-| Module                | Purpose                                                                                                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **`types/`**          | Core type system: `ComponentTag`, `Span`, `Classification`, `ClassificationMap`, `LocaleTag`                                            |
-| **`tokenization/`**   | Tokenizer primitives, whitespace/punctuation rules, token classification                                                                |
-| **`classification/`** | `Classification` data structure, `ClassificationMap`, span overlap resolution                                                           |
-| **`decoder/`**        | Span proposal → tree projection, BIO decoding, reconcile/merge strategies, confidence calibration                                       |
-| **`pipeline/`**       | `createRuntimePipeline` — the staged pipeline coordinator that wires normalize → query-shape → locale-gate → ... → classifier → decoder |
-| **`solver/`**         | Rule-based solver (the v0 rules engine), `Solution`, `Solver`                                                                           |
-| **`parser/`**         | `AddressParser` — high-level parse entry point (consumed by `mailwoman` CLI)                                                            |
-| **`resources/`**      | ~9 MB of shipped reference data: libpostal dictionaries, WOF place data, chromium-i18n address formats                                  |
+| Module                | Purpose                                                                                                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **`types/`**          | Core type system: `ComponentTag`, `Span`, `Classification`, `ClassificationMap`, `LocaleTag`                                              |
+| **`tokenization/`**   | Tokenizer primitives, whitespace/punctuation rules, token classification                                                                  |
+| **`classification/`** | `Classification` data structure, `ClassificationMap`, span overlap resolution                                                             |
+| **`decoder/`**        | Span proposal → tree projection, BIO decoding, reconcile/merge strategies, confidence calibration                                         |
+| **`pipeline/`**       | `createRuntimePipeline` — the staged pipeline coordinator that wires normalize → query-shape → `locale-gate` → ... → classifier → decoder |
+| **`solver/`**         | Rule-based solver (the v0 rules engine), `Solution`, `Solver`                                                                             |
+| **`parser/`**         | `AddressParser` — high-level parse entry point (consumed by `mailwoman` CLI)                                                              |
+| **`resources/`**      | ~9 MB of shipped reference data: libpostal dictionaries, WOF place data, chromium-i18n address formats                                    |
 
 ## Key exports
 

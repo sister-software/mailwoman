@@ -143,10 +143,10 @@ jobs:
       # Fixture regression test for docs/styles/Mailwoman/*.yml (the Vale prose-lint rules): a rule
       # that stops firing, or a TokenIgnores/BlockIgnores change that starts leaking banned words
       # out of a code fence/import/JSX/`<details>` block, fails loudly here instead of silently
-      # drifting. See docs/scripts/check-vale-rules.sh for what it checks.
+      # drifting. See docs/scripts/check-vale-rules.ts for what it checks.
       - name: Vale rule fixtures
         if: github.event_name != 'pull_request' || steps.changes.outputs.docs == 'true'
-        run: docs/scripts/check-vale-rules.sh
+        run: node docs/scripts/check-vale-rules.ts
 
       # Whole-corpus run — every page under docs/articles plus the writing system + templates under
       # docs/engineering (see lint:prose's targets in docs/package.json). Measured at head: 85 files

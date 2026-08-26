@@ -7,10 +7,10 @@
  *   rules and render one verdict. The platform adapters — `vale-response-check.ts` (Claude Code)
  *   and `vale-response-check-codex.ts` (Codex) — own payload parsing, the loop guard, and the
  *   output JSON; the POLICY (which config, which severities block, how findings read) lives here
- *   so the two gates cannot drift apart the way parallel copies do.
+ *   so the two hooks cannot drift apart the way parallel copies do.
  *
  *   The rule set is `docs/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
- *   additions, fixture-tested by `docs/scripts/check-vale-rules.sh`. The config path resolves
+ *   additions, fixture-tested by `docs/scripts/check-vale-rules.ts`. The config path resolves
  *   relative to THIS module, so a worktree checkout lints with its own rules.
  *
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict — that tier is

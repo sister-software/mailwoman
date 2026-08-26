@@ -3,7 +3,7 @@
 **BIO-labeled training-corpus pipeline** for the Mailwoman address parser.
 
 Generates sequence-labeling training data from reference sources
-(OpenAddresses, libpostal dictionaries, synthetic shards) and assembles them into
+(OpenAddresses, libpostal dictionaries, synthetic training-data subsets) and assembles them into
 the TSV format consumed by the Modal training pipeline. This package produces
 the data that trains `@mailwoman/neural-weights-*`.
 
@@ -11,7 +11,7 @@ the data that trains `@mailwoman/neural-weights-*`.
 // The corpus pipeline is primarily build-time CLI tooling.
 // Key entry points:
 import { expandGolden } from "@mailwoman/corpus" // Expand reference addresses
-import { synthesizeShard } from "@mailwoman/corpus" // Generate synthetic training shards
+import { synthesizeShard } from "@mailwoman/corpus" // Generate synthetic training rows
 import { alignRow } from "@mailwoman/corpus" // Align raw address → BIO tokens
 import { validateCorpus } from "@mailwoman/corpus" // Validate corpus integrity
 ```
@@ -20,28 +20,28 @@ import { validateCorpus } from "@mailwoman/corpus" // Validate corpus integrity
 
 The corpus pipeline assembles training data from multiple sources:
 
-| Source               | Description                                                              |
-| -------------------- | ------------------------------------------------------------------------ |
-| **OpenAddresses**    | Real government address point data (US, FR, DE, …)                       |
-| **NAD**              | National Address Database (US-specific)                                  |
-| **libpostal**        | Multilingual street/place name dictionaries                              |
-| **Synthetic shards** | Generated address variations (boundary stress, order variants, all-caps) |
-| **Overture Maps**    | Address theme ingestion (alpha)                                          |
+| Source             | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| **OpenAddresses**  | Real government address point data (US, FR, DE, …)                       |
+| **NAD**            | National Address Database (US-specific)                                  |
+| **libpostal**      | Multilingual street/place name dictionaries                              |
+| **Synthetic rows** | Generated address variations (boundary stress, order variants, all-caps) |
+| **Overture Maps**  | Address theme ingestion (alpha)                                          |
 
 Output format: TSV rows with `raw<TAB>BIO_labels` consumed by the Python
 training pipeline (`corpus-python/`).
 
 ## Key modules
 
-| Module                  | Purpose                                                            |
-| ----------------------- | ------------------------------------------------------------------ |
-| **`expand-golden.ts`**  | Expand reference addresses into training rows with alignment       |
-| **`align.ts`**          | Tokenize raw address → BIO label sequence                          |
-| **`validate.ts`**       | Validate corpus integrity, label coverage, shard balance           |
-| **`synthesizers/*.ts`** | Synthetic shard generators (boundary stress, order variants, etc.) |
-| **`ingest/`**           | Overture Maps + NAD ingestion                                      |
-| **`shard-registry.ts`** | Shard metadata and composition                                     |
-| **`stats.ts`**          | Per-shard and per-tag statistics                                   |
+| Module                  | Purpose                                                          |
+| ----------------------- | ---------------------------------------------------------------- |
+| **`expand-golden.ts`**  | Expand reference addresses into training rows with alignment     |
+| **`align.ts`**          | Tokenize raw address → BIO label sequence                        |
+| **`validate.ts`**       | Validate corpus integrity, label coverage, subset balance        |
+| **`synthesizers/*.ts`** | Synthetic row generators (boundary stress, order variants, etc.) |
+| **`ingest/`**           | Overture Maps + NAD ingestion                                    |
+| **`shard-registry.ts`** | Subset metadata and composition                                  |
+| **`stats.ts`**          | Per-subset and per-tag statistics                                |
 
 ## Build-time tooling
 
@@ -63,7 +63,7 @@ node scripts/corpus-stats.mjs
 - **BIO (Begin/Inside/Outside) labeling** over SentencePiece tokens.
 - **Character-offset aligned** — labels track the raw string, not the
   normalized form, so the model learns real input distributions.
-- **Source-homogeneous shards** — each shard comes from one source, ordered by
+- **Source-homogeneous subsets** — each training-data subset comes from one source, ordered by
   type, so eval splits are honest (no bleed between train and held-out).
 
 ## Related

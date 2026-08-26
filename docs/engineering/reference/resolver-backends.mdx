@@ -11,7 +11,7 @@ which made every comparison between them a comparison of four conditions instead
 | ----------- | ------------------------------------------ | ----------------------------------------- |
 | Index       | FTS5 over the admin distribution           | byte-range candidate table, clustered     |
 | Ranking     | bm25 + exact-match tiering                 | population-first, country-agnostic        |
-| Postcodes   | none in the admin shard                    | 3.66 M rows                               |
+| Postcodes   | none in the admin distribution             | 3.66 M rows                               |
 | Exonyms     | literal string match only                  | `name_key` aliases (`Munich` → `München`) |
 | Selected by | fallback when no candidate.db is reachable | **the default** — see below               |
 
@@ -111,7 +111,7 @@ on the coordinate candidate is equal or better at every threshold on both tier-1
 ### A trap when you measure this yourself
 
 Do not grade "the deepest coordinated node". The candidate table carries 3.66 M postcodes the FTS
-admin shard has none of, so "deepest" silently means _postcode_ on one arm and _locality_ on the
+admin distribution has none of, so "deepest" silently means _postcode_ on one arm and _locality_ on the
 other. Grading that way on the FR set reports a 54-row sub-km collapse that is really a commune
 centroid (0.5 km from the address) being compared against a postcode-area centroid (7 km) — French
 communes are small and postcodes span several of them. Pick a named tier and grade both arms at it.
@@ -164,7 +164,7 @@ caller — who would lose all resolution rather than fall back.
 `node.metadata.resolver_score` is bm25-derived on FTS (≈19–41) and population/`neg_rank`-derived on
 candidate (≈5–7). A consumer must not carry a hardcoded threshold across a backend switch.
 
-Within either backend the score also **cannot gate errors**: measured on 40 gold rows, the wrong
+Within either backend the score also **cannot screen out errors**: measured on 40 gold rows, the wrong
 answers' range sits inside the correct answers' range and their mean is _higher_ (FTS 25.67 wrong vs
 24.33 correct; candidate 6.52 vs 6.07). There is no threshold that discards errors without discarding
 correct answers, so no abstention surface can be built on this field as it stands.

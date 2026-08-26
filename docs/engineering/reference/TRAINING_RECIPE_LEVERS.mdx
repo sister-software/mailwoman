@@ -172,14 +172,14 @@ Written after v0.5.0 (CE-only, h256, 50K steps) and v0.5.1 ("unchained," h384, 1
 
 Current values are carried from v0.4.0's §4 source rebalance (the only recipe lever that shipped clean in v0.4.0):
 
-| Source         | Weight  | Why                                                                                                                                                      |
-| -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| tiger          | 4.0     | TIGER carries structured US address patterns. Highest weight to compensate for its small raw shard count.                                                |
-| ban            | 3.0     | French address patterns. Second-highest weight.                                                                                                          |
-| wof-admin      | 2.0     | WOF admin names (locality, region, country).                                                                                                             |
-| wof-postalcode | 2.0     | Postcode patterns.                                                                                                                                       |
-| usgov-nad      | 1.0     | NAD was previously at 2.0 but dominated the sample (52% of shards). v0.4.0 dropped it to 1.0 to recover postcode positional exposure from other sources. |
-| state-\*       | 1.5-2.0 | State-level government sources (Iowa contractors, Texas/NY notaries).                                                                                    |
+| Source         | Weight  | Why                                                                                                                                                     |
+| -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tiger          | 4.0     | TIGER carries structured US address patterns. Highest weight to compensate for its small raw file count.                                                |
+| ban            | 3.0     | French address patterns. Second-highest weight.                                                                                                         |
+| wof-admin      | 2.0     | WOF admin names (locality, region, country).                                                                                                            |
+| wof-postalcode | 2.0     | Postcode patterns.                                                                                                                                      |
+| usgov-nad      | 1.0     | NAD was previously at 2.0 but dominated the sample (52% of files). v0.4.0 dropped it to 1.0 to recover postcode positional exposure from other sources. |
+| state-\*       | 1.5-2.0 | State-level government sources (Iowa contractors, Texas/NY notaries).                                                                                   |
 
 **How we got here.** v0.4.0's postcode regression (F1 0.76 → 0.69) was traced to NAD's downweight removing "postcode comes first" positional patterns. The current weights are a compromise. Not re-validated since v0.4.0 — the corpus-v0.4.0 additions (kryptonite + transliteration) may shift the optimal mix.
 

@@ -32,10 +32,10 @@ Lead with what was measured and against which baseline, in one sentence, before 
 
 ## Exemplar paragraph
 
-> The pre-publish gate compares a candidate model's per-tag output against a baseline and exits non-zero if
+> The pre-publish eval compares a candidate model's per-tag output against a baseline and exits non-zero if
 > any tag violates either of two dimensions: a recall drop on a tag that had recall to lose, or a
 > hallucination spike on a tag whose false-positive count runs away. Both dimensions are needed, and the
-> v0.6.1 release is the receipt. A recall-only gate would have passed it: `dependent_locality` went from 0
+> v0.6.1 release is the receipt. A recall-only check would have passed it: `dependent_locality` went from 0
 > hallucinated spans to 1066, while its nominal recall improved from 0% to 30%. The recall dimension alone
 > would have caught the `locality` drop (39.7% → 31.1%, −8.6pp) and the `house_number` drop (79.0% → 75.9%,
 > −3.1pp) and shipped the third failure anyway.

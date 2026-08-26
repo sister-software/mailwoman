@@ -18,7 +18,7 @@ surprising tag, and the places the resolver ranked second and third. About fifte
 - **The first-parse install.** `mailwoman`, `@mailwoman/neural` and `@mailwoman/neural-weights-en-us`,
   in an ESM project on Node.js 24.18.0 or later. The full reasoning is in
   [Install and first parse](../get-started/install-and-first-parse.mdx#prerequisites).
-- **`jq`, for steps 4 and 5.** Both pipe CLI output through it to cut the fences down to the part under
+- **`jq`, for steps 4 and 5.** Both pipe CLI output through it to reduce the fenced blocks to the part under
   discussion. Drop the pipe if you'd rather read the whole object.
 - **`candidate.db` on disk, for step 5 only.** Steps 1 through 4 need no gazetteer. Step 5 resolves place
   names against one, so run [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it)
@@ -119,7 +119,7 @@ the reason the first-parse page gives.
 ## 4. Ask the pipeline what it decided
 
 The tree is the answer. `--debug` is the record of the stages that produced it — normalization, the
-structural query shape, the locale gate, the kind classifier, then the model.
+structural query shape, the `locale-gate` stage, the kind classifier, then the model.
 
 ```bash
 npx mailwoman parse --debug "1 madison ave madison wi 53703" | jq '{path, locale, kind, knownFormats: .queryShape.knownFormats, timing}'
@@ -197,7 +197,7 @@ Four things in there answer "why did that token go where it went".
 ZIP Code shape, the French postcode shape and the German postcode shape, all at 0.6, because a bare
 five-digit run is all three. This stage proposes; it does not pick.
 
-**`locale.source: "caller"` means the gate was not consulted.** `mailwoman parse` defaults `--locale` to
+**`locale.source: "caller"` means the `locale-gate` stage was not consulted.** `mailwoman parse` defaults `--locale` to
 `en-US`, and a caller-pinned locale is taken as given — which is why the confidence reads 1 while the
 sole alternative sits at 0.5. Pass a different `--locale` and this is the field that records it.
 

@@ -35,14 +35,14 @@ for (const c of candidates) {
 lookup.close()
 ```
 
-## A shard that cannot answer says so on construction
+## A database that cannot answer says so on construction
 
-Shards are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail quietly, and both now throw when you build the lookup:
+Databases are `ATTACH`ed by a schema name **derived from the filename**, and queries route to them by matching that name against the requested placetype — `postalcode_us` serves `postalcode`. Two ways that used to fail quietly, and both now throw when you build the lookup:
 
 - The name does not route. `postcode-ca-overture.db` derives `postcode_ca_overture`, and the router tests `startsWith("postalcode_")` — **"postcode" is not "postalcode"**. It held 843,739 Canadian codes and answered every query with zero hits, which is indistinguishable from "this country has no places".
-- The shard carries `spr` but no `place_search`. It routes, then dies mid-`SELECT`.
+- The database carries `spr` but no `place_search`. It routes, then dies mid-`SELECT`.
 
-The predicate is the **table, not the filename**: a shard carrying `spr` is claiming to be a place shard, and every lookup path here reaches the FTS index. A relation-table shard like `postcode-locality-<cc>.db` carries no `spr`, never makes that claim, and is exempt — which is what keeps the documented default shard list working.
+The predicate is the **table, not the filename**: a database carrying `spr` is claiming to be a place database, and every lookup path here reaches the FTS index. A relation-table database like `postcode-locality-<cc>.db` carries no `spr`, never makes that claim, and is exempt — which is what keeps the documented default database list working.
 
 ```
 WOFSQLitePlaceLookup: …/postcode-ca-overture.db carries "spr" but no "place_search" table, so it
@@ -54,13 +54,13 @@ locality, region, county, country, venue), so it would never have been queried e
 
 The second sentence appears only when the name routes nowhere. It is the half that turns zero hits into a diagnosis.
 
-## Multi-shard (admin + postcode in one connection)
+## Multiple databases (admin + postcode in one connection)
 
-Pass an array of paths to open multiple WOF shards on a single connection — each is opened as a
+Pass an array of paths to open multiple WOF databases on a single connection — each is opened as a
 separate SQLite schema via `ATTACH DATABASE`. Schema names auto-derive from filenames
 (`whosonfirst-data-admin-us-latest.db` → `admin_us`, `whosonfirst-data-postalcode-us-latest.db` →
 `postalcode_us`). Queries route by `placetype` — a `postalcode` query goes to the
-`postalcode_us` shard automatically, everything else hits main.
+`postalcode_us` database automatically, everything else hits main.
 
 ```ts
 const lookup = new WOFSQLitePlaceLookup({
@@ -79,13 +79,13 @@ new WOFSQLitePlaceLookup({
 })
 ```
 
-Cross-shard `UNION` queries are not supported in one `findPlace` call — BM25 scores aren't
+Cross-database `UNION` queries are not supported in one `findPlace` call — BM25 scores aren't
 comparable across separately-indexed corpora. Issue two `findPlace` calls and merge in your
 caller if you need that.
 
 ## Getting the WOF SQLite distribution
 
-The Geocode Earth team mirrors WOF SQLite distributions at <https://data.geocode.earth/wof/dist/sqlite/>. The two relevant shards for v1:
+The Geocode Earth team mirrors WOF SQLite distributions at <https://data.geocode.earth/wof/dist/sqlite/>. The two relevant distributions for v1:
 
 | Distribution                                   | Size (bz2) | Use                                                               |
 | ---------------------------------------------- | ---------- | ----------------------------------------------------------------- |
@@ -102,7 +102,7 @@ bunzip2 whosonfirst-data-admin-us-latest.db.bz2
 
 Upstream WOF SQLite distributions ship a `places` table but **not** an FTS5 index. The resolver needs FTS5 to do fast prefix + token-bag matching. Two options:
 
-1. **`buildFTS: true` on construction** — builds the index lazily on first open. Cost is one-time but expensive (~minutes on the full US admin shard). Use for prototyping.
+1. **`buildFTS: true` on construction** — builds the index lazily on first open. Cost is one-time but expensive (~minutes on the full US admin database). Use for prototyping.
 2. **Pre-build the index with `mailwoman gazetteer build fts`** — ship the DB with the index included so first-open is fast. Recommended for production.
 
 ### `mailwoman gazetteer build fts`
@@ -261,7 +261,7 @@ This package itself is AGPL-3.0; the WOF data it indexes is CC-BY 4.0. The two l
 
 `resolver-wof-sqlite/integration.test.ts` exercises the resolver against a real WOF SQLite distribution. The suite is **skipped** when no DB is present — set `MAILWOMAN_WOF_DB` to override the lookup path, otherwise it defaults to `/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location). CI runs against the fixture-only suites; operators with real WOF data locally get an extra layer of validation.
 
-Coverage includes: placetype filtering, country filtering, the empty-result case, FTS5 special-character sanitization, Japanese alt-name resolution, parent-constrained lookup, and a performance budget (`findPlace` < 250 ms against the 142 k-row US admin shard).
+Coverage includes: placetype filtering, country filtering, the empty-result case, FTS5 special-character sanitization, Japanese alt-name resolution, parent-constrained lookup, and a performance budget (`findPlace` < 250 ms against the 142 k-row US admin database).
 
 ## Concurrency model
 

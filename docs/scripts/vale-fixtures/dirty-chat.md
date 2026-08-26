@@ -54,8 +54,11 @@ deep dive matters at the end of the day.
 
 Perfect. Got it! Understood, the fix landed. Excellent, all tests pass.
 
-The null and the cure differ on one lever; the shard drives the three-leg
-comparison.
+The null and the cure differ on one lever; the three-leg comparison decides.
+
+The seam between the two runs is where the shard was cut, and the gate read it;
+the seams are what sharding produced, the gates fire on the sharded rows, and
+cutting the run short left the gated step gating nothing.
 
 The fine-tune tax means the run pays the tax twice; yesterday paid the tax,
 but this one is nearly free — it costs nothing: a free lunch, a free win, a
@@ -101,5 +104,9 @@ Spend was $29 of the $40 Modal budget. (EconomyMetaphor: a real dollar
 figure with its budget named is not a metaphor.)
 
 The recipe sits in `packages/corpus/src/shard-recipes/` as
-`synth-suffix-boundary`. (ProjectShorthand: backticked artifact names are
-exempt — that is the replacement the rule asks for.)
+`synth-suffix-boundary`. (ProjectShorthand and AmbiguousShorthand: backticked
+artifact names are exempt — that is the replacement both rules ask for.)
+
+The promotion eval ran from `promotion-gate.ts` after `mailwoman eval gate`
+printed the append command. (AmbiguousShorthand: a backticked script name and a
+backticked CLI command are contracts, not prose, so neither may match.)

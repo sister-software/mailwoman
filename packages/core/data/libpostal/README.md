@@ -15,7 +15,7 @@ this list across major refactors).
 | `<lang>/directionals.txt`                                               | `mailwoman/gazetteer-pipeline/evidence-lexicons.ts` (curation languages)                                | The **law-1 directional closure**: locality evidence may never paint onto a directional-ish surface (the v3.19 lesson — US neighbourhoods literally named "Northeast" truncated "3rd Ave NE"). Reaches the model through the locality-surface evidence channel. |
 | `en/directionals.txt`, `en/street_types.txt`                            | `corpus/src/adapters/tiger/street-decompose.ts`                                                         | Splitting raw TIGER street strings into prefix/name/suffix for BIO training gold.                                                                                                                                                                               |
 | `fr/street_types.txt`                                                   | `corpus/src/adapters/ban/street-decompose.ts`                                                           | Same, for BAN.                                                                                                                                                                                                                                                  |
-| `<lang>/street_types.txt` (all 60 locales that ship one)                | `mailwoman/gazetteer-pipeline/street-morphology.ts` (+ the `gazetteer build street-morphology` command) | `fst-street-morphology.bin` — the browser street-affix gate (survey #1, shipped v8.1.0).                                                                                                                                                                        |
+| `<lang>/street_types.txt` (all 60 locales that ship one)                | `mailwoman/gazetteer-pipeline/street-morphology.ts` (+ the `gazetteer build street-morphology` command) | `fst-street-morphology.bin` — the browser street-affix filter (survey #1, shipped v8.1.0).                                                                                                                                                                      |
 | `all/given_names.txt`, `all/surnames.txt`, `<lang>/personal_titles.txt` | `evidence-lexicons.ts`                                                                                  | The **person-name tier**: 1-token person-name surfaces blocked as locality evidence.                                                                                                                                                                            |
 | `<lang>/stopwords.txt`                                                  | `mailwoman/gazetteer-pipeline/fst.ts`                                                                   | FST gazetteer curation.                                                                                                                                                                                                                                         |
 
@@ -30,7 +30,7 @@ explicit migration audit: only 66 of its 504 legacy rows had any exact phrase re
 modern, poi.db-derived brand table, while 438 lacked current source evidence. Importing those rows
 would have promoted a stale global chain list into runtime truth and erased market scope — notably
 the distinction between a UK pharmacy brand and an ordinary US retail/name query. Brand candidates
-are derived from `poi.db`; category spelling recovery comes from the locale-gated taxonomy. The
+are derived from `poi.db`; category spelling recovery comes from the taxonomy scoped by locale. The
 remaining vestigial files stay
 byte-comparable with the upstream lineage, and several vestigial classes are plausible inputs to
 named future work (the `unit_types_*`/`level_types_*`/`staircases.txt` families are libpostal's
@@ -54,7 +54,7 @@ They answer different questions and live in different places on purpose:
 The old allow/block semantics didn't die with the rules parser — they migrated up a level into
 the **lexicon curation laws** (law-1: directionals never carry locality evidence; the person-name
 tier) and the graded surface-ambiguity classes in the FST rows. Blocking became a condition on
-_evidence painting_ instead of a hard token gate: the open-world version of the same intent.
+_evidence painting_ instead of a hard rejection at the token: the open-world version of the same intent.
 
 ## Descriptive here, normative in codex
 

@@ -167,7 +167,7 @@ A single FST with per-edge locale bitsets is space-efficient but query-slower. F
 
 **Admin only (Phase 1):** ~8-12 MB for US. Smaller than the current 35 MB WOF slim DB but encodes more structural information (parent chains, population, valid continuations).
 
-**With streets (Phase 2+):** ~200-500 MB for full US streets (3-5M unique street names). Too large for browser — shard per metro area (~5 MB each) for browser deployment. Server-side loads the full set.
+**With streets (Phase 2+):** ~200-500 MB for full US streets (3-5M unique street names). Too large for browser — split into per-metro-area files (~5 MB each) for browser deployment. Server-side loads the full set.
 
 ---
 

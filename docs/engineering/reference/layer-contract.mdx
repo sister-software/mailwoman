@@ -125,7 +125,7 @@ coverage_confidence }`, never a bare score. A sparse-coverage cell degrades a sc
 
 ## The TypeScript API
 
-`@mailwoman/core/layers` is the single seam. A layer's build script and its readers both go
+`@mailwoman/core/layers` is the single module boundary. A layer's build script and its readers both go
 through it; the domain tables are the layer's own business.
 
 ```ts

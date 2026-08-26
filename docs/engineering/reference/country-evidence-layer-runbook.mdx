@@ -186,7 +186,7 @@ Two structural findings worth internalizing before you design a new country's ge
 - **The model's weak heads can't be a veto signal.** v385's venue head is itself starved on GB
   (measured inert, 0/20 candidate positions), so "veto where the model reads venue" buys nothing.
   The child-side _street_ veto (fail-open) survives only as a contingency for the residual
-  street-verbatim-child class, gated behind a pre-registered FP>5% trigger.
+  street-verbatim-child class, switched on only by a pre-registered FP>5% trigger.
 
 ## 4. Calibrate — the Option-A δ-sweep on the shipped model
 
@@ -270,7 +270,7 @@ borrowed-cache number in the same record it was published in, dated — measurem
 and gets documented, not buried.
 
 Byte-stability is the doctrine's teeth: a shipped pair prior is auto-wired **only** when the
-resolved locale's country matches the index header's country (a hard gate in
+resolved locale's country matches the index header's country (a hard check in
 `NeuralAddressClassifier.loadFromWeights`), so `en-us` / `fr-fr` parses are byte-identical by
 construction — assert it, then measure it anyway.
 
@@ -299,7 +299,7 @@ all of them, and a missed one ships a broken or inert overlay:
   is present.
 - **`scripts/link-dev-weights.ts`** in the new workspace — the freshness guard (see below).
 - **`neural-weights-en-<cc>/model-card.json`** — carries the overlay's provenance. If the country
-  ships no postcode binary (NZ has no WOF NZ shard), record a `no_postcode_bin` note so the publish
+  ships no postcode binary (NZ has no WOF NZ postcode extract), record a `no_postcode_bin` note so the publish
   guard's absence is expected, not a failure.
 
 ### The freshness guard (δ + β lockstep)
@@ -341,7 +341,7 @@ pair-index-gb.bin,pair-index-nz.bin …` uploads the built binaries alongside th
 3. **Verify the PUBLISHED tarball md5.** Grade by explicit md5-pinned path against the published npm
    tarball's binary, never the dev symlink.
 4. **The demo is a separate follow-up (#1278).** The browser runtime fetches `pair-index-<cc>.bin`
-   per parse, selected by the locale gate (`neural-web` phases 1–3): the loader takes
+   per parse, selected by `locale-gate` (`neural-web` phases 1–3): the loader takes
    `pairIndexURLs`, a 404 leaves `placetypePair` undefined (inert, not an error), and the preset
    country-pin routes the right index. Repoint the demo after the npm publish lands, not with it.
 
@@ -380,7 +380,7 @@ Porirua 5026`). Strip a trailing postcode-shaped run from a parent-candidate seg
 - **Provenance is loud or it lies.** Per-country self-check probes (#1283), the `serializePairIndex`
   duplicate throw, the header md5s, and the freshness guard all exist because a reassuring-looking
   `PROBE MISS` / silent skip / stale byte-identical artifact verified nothing. Loud beats silent at
-  every seam.
+  every hand-off.
 
 ## The shipped mechanism (file map)
 
@@ -388,7 +388,7 @@ Porirua 5026`). Strip a trailing postcode-shaped run from a parent-candidate seg
 | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `neural/pair-index-resolver.ts`                                                                          | PIX1 format — `serializePairIndex` writer + `PairIndexResolver` reader in one file; header carries `country`/`delta`/`transitionBeta`/`foldVersion`/`sourceMD5s` |
 | `neural/placetype-pair-prior.ts`                                                                         | the decode prior — segment / anchored / window / auto chain, the `(x,x)` identity rule, transition-β, `{at,of}` suppression, the #1308 postcode strip            |
-| `mailwoman/commands/gazetteer/pair-index.tsx`                                                            | the builder + per-country self-check probes + the GB cross-check count gate                                                                                      |
+| `mailwoman/commands/gazetteer/pair-index.tsx`                                                            | the builder + per-country self-check probes + the GB cross-check count assertion                                                                                 |
 | `neural-weights-en-<cc>/scripts/link-dev-weights.ts`                                                     | the dev-materialize + freshness guard (δ + β + source-md5 lockstep)                                                                                              |
 | `release.config.json` · `.release-it.json` · `.github/workflows/publish.yml` · `scripts/copy-weights.ts` | the release wiring — every list an overlay touches                                                                                                               |
 

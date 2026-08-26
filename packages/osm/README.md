@@ -1,12 +1,12 @@
 # @mailwoman/osm
 
 OpenStreetMap rooftop ingestion. This package reads a Geofabrik `.osm.pbf` extract and builds a
-per-country **address-point shard** on the same situs schema the US rooftop tier already uses — so the
+per-country **address-point database** on the same situs schema the US rooftop tier already uses — so the
 existing `AddressPointSqliteLookup` reads it with zero changes, and the resolver gains street/rooftop
 precision in countries the permissive gazetteer only covers at the admin level.
 
 It is **address-point-first**: we write the exact `addr:housenumber` coordinate (a node, or a building
-polygon's centroid). Interpolation is a separate, confidence-gated tier built only from OSM's explicit
+polygon's centroid). Interpolation is a separate tier conditioned on confidence, built only from OSM's explicit
 `addr:interpolation` ways — we never synthesise a house-number line from scattered points, because that
 produces confident wrong answers worse than the admin centroid.
 
@@ -18,26 +18,26 @@ keep it that way. So the OSM precision tier is quarantined:
 
 - **This package is code, and code only.** It contains no OSM bytes. You can depend on it, read it, and
   ship it under the same terms as the rest of Mailwoman.
-- **The ODbL obligation rides on the built shard.** Each `address-points-<cc>-<slug>.db` this package
+- **The ODbL obligation rides on the built database.** Each `address-points-<cc>-<slug>.db` this package
   produces is an OSM Derived Database. It is a separately-distributed, opt-in data artifact — you download
   the countries you want, and you take the share-alike obligation only on those.
 - **The permissive core never touches an OSM byte.** OSM points are not folded into the WOF-keyed
-  gazetteer; they live in their own shards beside it. The `source` on every OSM point is
+  gazetteer; they live in their own per-country databases beside it. The `source` on every OSM point is
   `openstreetmap:<cc>`, so attribution and licence are attributable per-row, and the resolver surfaces
   "© OpenStreetMap contributors (ODbL)" on any result that resolved through one.
 
-### ⚠ Lawyer sign-off gate
+### ⚠ Lawyer sign-off required
 
-No OSM shard ships to npm, R2, or the public demo until counsel has reviewed how ODbL share-alike applies
-to our distribution model (the opt-in-per-country shard, the attribution surface, and whether serving a
+No OSM database ships to npm, R2, or the public demo until counsel has reviewed how ODbL share-alike applies
+to our distribution model (the opt-in-per-country database, the attribution surface, and whether serving a
 resolved coordinate from one constitutes a Produced Work or a Derived Database hand-off). The build and the
 local benchmark below are fine to run now; **publishing is blocked on that review.**
 
 The full boundary doc (the per-source license matrix, the attribution requirements, and the counsel sign-off
-gate) is [`docs/articles/licensing/data-provenance.md`](../docs/articles/licensing/data-provenance.md); this
+requirement) is [`docs/articles/licensing/data-provenance.md`](../docs/articles/licensing/data-provenance.md); this
 section is the package-local summary.
 
-## Building a shard
+## Building a per-country database
 
 You need GDAL (`ogr2ogr`) on the path — the same dependency `@mailwoman/tiger` uses. GDAL's OSM driver
 resolves node and way/polygon geometries for us, so building-tagged addresses (the dominant German shape)
@@ -70,10 +70,10 @@ For the address scope key, an observed `addr:suburb` outranks `addr:city`. This 
 where queries commonly name the suburb while `addr:city` names the wider metropolitan authority. City-only
 queries still reach the same row through the resolved locality bbox fallback.
 
-## Contract migration gate
+## Contract migration requirements
 
-The builder extends the shared legacy `address_point` table so the existing lookup can consume a local
-shard immediately. Every OSM row also carries a res-9 H3 spine, and the database embeds `layer_manifest`
+The builder extends the shared legacy `address_point` table so the existing lookup can consume a locally
+built database immediately. Every OSM row also carries a res-9 H3 spine, and the database embeds `layer_manifest`
 and `layer_coverage`. It builds on a temporary file, swaps atomically, and seals the result read-only.
 
 The coverage table initially remains empty by design. OSM is an incomplete survey, and a Geofabrik
@@ -94,11 +94,11 @@ The repaired 420-row Mailwoman/Pelias/Photon panel says to acquire coverage befo
 4. **France is not the first OSM target.** BAN already gives Mailwoman 47/60 at 1 km versus Photon’s 38/60.
 
 These comparisons prioritize investigation; they are not promises that every Photon hit came from an OSM
-rooftop. Each country still needs a source-composition census and a held-out precision gate before a full build.
+rooftop. Each country still needs a source-composition census and a held-out precision measurement before a full build.
 
 The first local NZ build (Geofabrik source vintage 2026-08-06) contains 2,325,228 directly tagged address
 points; only 548 housenumber features lacked a usable street. On the repaired panel, through the production
 `OSMShardProvider` path, it moved Mailwoman from 3/20/30 to 56/58/59 at 1/5/25 km, produced 56
 `address_point` results, eliminated all 17 no-results, and caused no regression. Photon remains stronger at
-1 km (60/60); Mailwoman with the local shard exceeds the frozen Pelias NZ arm (45/45/46). This is a
+1 km (60/60); Mailwoman with the locally built database exceeds the frozen Pelias NZ arm (45/45/46). This is a
 build-local result, not a shipped-data claim.
