@@ -18,6 +18,14 @@
  *   `undecidable` IS A VIOLATION. A comparator that could not read its axis has not found a law holding; it
  *   has found nothing, and a suite that counted it as a pass would report the same total as a suite that
  *   genuinely held.
+ *
+ *   `unmeasured` IS NEITHER, AND LEAVES THE DENOMINATOR. It is the reading of a comparator that DID read its
+ *   axis and found the observation too small to decide — `candidate_admissibility` is the only one that can
+ *   report it, when a candidate left a table already sitting at its fetch window. Counting it as a failure
+ *   would report the observer's blind spot as the pipeline's defect; counting it as a hold would report a
+ *   blind spot as evidence. So {@linkcode summarizeConformanceRun} puts it in its own bucket, removes it from
+ *   the row count the verdict is stated over, and a suite that can measure nothing at all reports `pass:
+ *   false` for the same reason an empty suite does.
  */
 
 import type { GauntletDeps } from "../gauntlet/harness.ts"
@@ -61,6 +69,22 @@ export function gauntletObserver(geocode: GauntletDeps["geocode"]): ConformanceO
 }
 
 /**
+ * The same observer with the resolver's interior attached — one trace record per backend lookup, which is what
+ * `candidate_admissibility` reads.
+ *
+ * A SECOND observer rather than a flag on the first, because the walk's trace bookkeeping is a real cost the four
+ * answer-axis laws have no use for. `command.ts` chooses between them by reading the comparators the loaded rows
+ * actually name, so a run that states no candidate law pays nothing.
+ */
+export function tracedGauntletObserver(geocodeTraced: GauntletDeps["geocodeTraced"]): ConformanceObserver {
+	return async (query, context) => {
+		const { result, resolver } = await geocodeTraced(query, context)
+
+		return { result: toGauntletResult(result), candidates: resolver }
+	}
+}
+
+/**
  * Run every fixture and report which laws held.
  *
  * `pass` is true only when every fixture held. A suite with no fixtures returns `pass: false`: an empty run is not a
@@ -101,7 +125,17 @@ export interface ConformanceSummary {
 	 */
 	newlyHolding: ConformanceFinding[]
 	/**
-	 * How many rows GATED — the denominator a reader needs before the pass count means anything.
+	 * Rows whose comparator read its axis and could not decide — today only `candidate_admissibility`, when a candidate
+	 * left a table that was sitting at its fetch window.
+	 *
+	 * These leave {@linkcode gated} rather than joining {@linkcode failures}: the run has no evidence the law broke, and
+	 * no evidence it held. Reported in full, never blocking, and never counted toward the hold ratio — a suite whose
+	 * every row goes unmeasured therefore reports `pass: false`, which is the reading that keeps a blind instrument from
+	 * looking like a clean one.
+	 */
+	unmeasured: ConformanceFinding[]
+	/**
+	 * How many rows GATED and were DECIDED — the denominator a reader needs before the pass count means anything.
 	 */
 	gated: number
 	pass: boolean
@@ -118,12 +152,21 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 	const failures: ConformanceFinding[] = []
 	const tracked: ConformanceFinding[] = []
 	const newlyHolding: ConformanceFinding[] = []
+	const unmeasured: ConformanceFinding[] = []
 	let gated = 0
 
 	for (const finding of findings) {
-		const gates = (finding.fixture.status ?? "pass") === "pass"
+		const blocking = (finding.fixture.status ?? "pass") === "pass"
 
-		if (gates) {
+		// Read BEFORE the status split, and on tracked rows too: a tracked row that went unmeasured has not started
+		// holding, and printing it as a promotion instruction would ask someone to promote a row nobody measured.
+		if (finding.reading.observed === "unmeasured") {
+			unmeasured.push(finding)
+
+			continue
+		}
+
+		if (blocking) {
 			gated += 1
 
 			if (!finding.held) {
@@ -136,7 +179,7 @@ export function summarizeConformanceRun(findings: readonly ConformanceFinding[])
 		}
 	}
 
-	return { failures, tracked, newlyHolding, gated, pass: gated > 0 && failures.length === 0 }
+	return { failures, tracked, newlyHolding, unmeasured, gated, pass: gated > 0 && failures.length === 0 }
 }
 
 /**
@@ -152,7 +195,7 @@ export function formatConformanceFinding(finding: ConformanceFinding): string {
 	const rowRef = fixture.rowRef ? ` (row ${fixture.rowRef})` : ""
 	const tracked = fixture.status && fixture.status !== "pass"
 	const status = tracked ? ` [${fixture.status}${fixture.bugRef ? ` ${fixture.bugRef}` : ""}]` : ""
-	const mark = held ? "✓" : tracked ? "~" : "✗"
+	const mark = reading.observed === "unmeasured" ? "?" : held ? "✓" : tracked ? "~" : "✗"
 
 	const head =
 		`${mark} [${fixture.law}] ${fixture.id}${status}${rowRef} · ${fixture.outcomeComparator} ` +

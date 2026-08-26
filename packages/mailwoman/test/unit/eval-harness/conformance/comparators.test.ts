@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The five outcome comparators, one axis at a time.
+ *   The six outcome comparators, one axis at a time.
  *
  *   Two cases carry the design and the rest are coverage. `resolution_identity` must report `diverges` for two
  *   DIFFERENT places 90 metres apart — an identity law that could see a coordinate would call that pair
@@ -13,6 +13,7 @@
  *   whose laws genuinely held.
  */
 
+import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { compareOutcomes, type ConformanceOutcome } from "mailwoman/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "mailwoman/eval-harness/conformance/fixture"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
@@ -278,6 +279,67 @@ describe("mechanism_shape", () => {
 
 		expect(reading.observed).toBe("undecidable")
 		expect(reading.basis).toContain("no mechanism account attached to variant")
+	})
+})
+
+describe("candidate_admissibility", () => {
+	const REFINEMENT = fixture({
+		law: "refinement-monotonicity",
+		base: "Springfield",
+		variant: "Springfield, IL",
+		outcomeComparator: "candidate_admissibility",
+		expect: "refines",
+	})
+
+	function traced(candidates: ReadonlyArray<ResolveNodeTrace>): ConformanceOutcome {
+		return { result: result(), candidates }
+	}
+
+	function lookup(ids: number[], over: Partial<ResolveNodeTrace["query"]> = {}): ResolveNodeTrace {
+		return {
+			tag: "locality",
+			value: "Springfield",
+			placetype: "locality",
+			query: { limit: 5, ...over },
+			gates: [],
+			candidates: ids.map((id) => ({
+				id,
+				name: "Springfield",
+				country: "US",
+				placetype: "locality",
+				score: 1,
+				ranks: {},
+			})),
+			candidatesTruncated: 0,
+			picked: null,
+		}
+	}
+
+	it("delegates to the accounting instrument and carries its basis", () => {
+		const reading = compareOutcomes(REFINEMENT, traced([lookup([1, 2])]), traced([lookup([2, 1])]))
+
+		expect(reading.comparator).toBe("candidate_admissibility")
+		expect(reading.observed).toBe("refines")
+		expect(reading.basis).toContain("paired lookup(s)")
+	})
+
+	it("reports undecidable when no trace is attached, naming which side and why", () => {
+		const reading = compareOutcomes(REFINEMENT, traced([lookup([1])]), outcome())
+
+		expect(reading.observed).toBe("undecidable")
+		expect(reading.basis).toContain("no resolver trace attached to variant")
+		expect(reading.differences[0]).toContain("tracing being off")
+	})
+
+	// The distinction the mechanism-shape comparator keeps for its own axis: an empty walk is a reading, an
+	// absent trace is not. Two runs that performed no lookup share no pool, so they are undecidable — not the
+	// absence of a trace, and not agreement.
+	it("keeps an empty walk apart from an absent trace", () => {
+		const reading = compareOutcomes(REFINEMENT, traced([]), traced([]))
+
+		expect(reading.observed).toBe("undecidable")
+		expect(reading.basis).not.toContain("no resolver trace attached")
+		expect(reading.differences[0]).toContain("no lookup ran on both sides")
 	})
 })
 

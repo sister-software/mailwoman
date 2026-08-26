@@ -47,6 +47,9 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 		geocode: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.geocode")
 		}),
+		geocodeTraced: vi.fn(async () => {
+			throw new Error("routed-arm tests drive runOne, never deps.geocodeTraced")
+		}),
 		diagnoseParse: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.diagnoseParse")
 		}),

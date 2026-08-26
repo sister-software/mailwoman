@@ -14,6 +14,7 @@
  *   `toGauntletResult`, the same projection the board's grader and the warm-engine tools already read.
  */
 
+import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import type { ConformanceOutcome } from "mailwoman/eval-harness/conformance/comparators"
 import type { ConformanceFixture } from "mailwoman/eval-harness/conformance/fixture"
 import {
@@ -22,6 +23,7 @@ import {
 	gauntletObserver,
 	runConformanceFixtures,
 	summarizeConformanceRun,
+	tracedGauntletObserver,
 } from "mailwoman/eval-harness/conformance/run"
 import type { GeocodeResult } from "mailwoman/geocode-core"
 import { describe, expect, it } from "vitest"
@@ -293,5 +295,160 @@ describe("gauntletObserver", () => {
 		// No mechanism account: the shape vocabulary lives in the private dev-mcp workspace, so a shape-carrying
 		// observer is the caller's to supply. Absent, not empty.
 		expect(outcome.mechanismShapes).toBeUndefined()
+		// And no resolver trace either: the walk records nothing unless a sink asks it to, and this observer does
+		// not ask. Absent, not an empty walk — the distinction `candidate_admissibility` reads.
+		expect(outcome.candidates).toBeUndefined()
+	})
+})
+
+describe("tracedGauntletObserver", () => {
+	const tracedGeocode = async (input: string): Promise<{ result: GeocodeResult; resolver: ResolveNodeTrace[] }> => ({
+		result: {
+			input,
+			components: { locality: "Springfield" },
+			lat: 39.797328,
+			lon: -89.645547,
+			resolution_tier: "admin",
+			uncertainty_m: 25_000,
+			locality: "Springfield",
+			region: null,
+			countryCode: "US",
+			intent_markers: [],
+			postcode: null,
+			house_number: null,
+			street: null,
+			venue: null,
+			dependent_locality: null,
+			unit: null,
+			hierarchy: [],
+			candidates: [],
+			postcode_country_scope: null,
+		},
+		resolver: [
+			{
+				tag: "locality",
+				value: "Springfield",
+				placetype: "locality",
+				query: { limit: 5 },
+				gates: ["bare_race"],
+				candidates: [
+					{
+						id: 85_940_429,
+						name: "Springfield",
+						country: "US",
+						placetype: "locality",
+						score: 5,
+						ranks: { initial: 1 },
+					},
+				],
+				candidatesTruncated: 0,
+				picked: { id: 85_940_429, name: "Springfield", source: "ranked" },
+			},
+		],
+	})
+
+	it("attaches the resolver's own records, projecting the result through the same mapping", async () => {
+		const outcome = await tracedGauntletObserver(tracedGeocode)("Springfield", { caseCountry: "US" })
+
+		expect(outcome.result.locality).toBe("Springfield")
+		expect(outcome.candidates).toHaveLength(1)
+		expect(outcome.candidates![0]!.candidates[0]!.id).toBe(85_940_429)
+		expect(outcome.candidates![0]!.query.limit).toBe(5)
+	})
+
+	it("reads a refinement pair end to end, through the closed comparator set", async () => {
+		const { findings } = await runConformanceFixtures(
+			[
+				fixture({
+					id: "cnf-candidate-01",
+					law: "refinement-monotonicity",
+					base: "Springfield",
+					variant: "Springfield",
+					outcomeComparator: "candidate_admissibility",
+					expect: "refines",
+				}),
+			],
+			tracedGauntletObserver(tracedGeocode)
+		)
+
+		expect(findings[0]!.reading.observed).toBe("refines")
+		expect(findings[0]!.held).toBe(true)
+		expect(formatConformanceFinding(findings[0]!)).toContain("1 paired lookup(s)")
+	})
+})
+
+describe("the unmeasured verdict bucket", () => {
+	/**
+	 * A pair whose refined table sits at its window with a base candidate missing — the one shape that reads `unmeasured`
+	 * rather than deciding.
+	 */
+	const unmeasuredObserver: ConformanceObserver = async (query) => ({
+		result: (await tableObserver(HELD_TABLE).observe(query, undefined)).result,
+		candidates: [
+			{
+				tag: "locality",
+				value: "Springfield",
+				placetype: "locality",
+				query: { limit: query === "Springfield" ? 5 : 1 },
+				gates: [],
+				candidates:
+					query === "Springfield"
+						? [
+								{ id: 1, name: "a", country: "US", placetype: "locality", score: 1, ranks: {} },
+								{ id: 2, name: "b", country: "US", placetype: "locality", score: 1, ranks: {} },
+							]
+						: [{ id: 1, name: "a", country: "US", placetype: "locality", score: 1, ranks: {} }],
+				candidatesTruncated: 0,
+				picked: null,
+			},
+		],
+	})
+
+	const unmeasuredFixture = fixture({
+		law: "refinement-monotonicity",
+		base: "Springfield",
+		variant: "Springfield, IL",
+		outcomeComparator: "candidate_admissibility",
+		expect: "refines",
+	})
+
+	it("leaves the row out of the count the verdict is stated over", async () => {
+		const { findings } = await runConformanceFixtures([unmeasuredFixture], unmeasuredObserver)
+		const summary = summarizeConformanceRun(findings)
+
+		expect(findings[0]!.reading.observed).toBe("unmeasured")
+		expect(summary.unmeasured).toHaveLength(1)
+		expect(summary.failures).toHaveLength(0)
+		expect(summary.gated).toBe(0)
+		// A suite that could measure nothing at all is not a clean suite — the same refusal an empty suite gets.
+		expect(summary.pass).toBe(false)
+	})
+
+	it("never reports an unmeasured tracked row as newly holding", async () => {
+		const { findings } = await runConformanceFixtures(
+			[{ ...unmeasuredFixture, status: "known_fail", bugRef: "#1923" }],
+			unmeasuredObserver
+		)
+
+		const summary = summarizeConformanceRun(findings)
+
+		expect(summary.unmeasured).toHaveLength(1)
+		expect(summary.newlyHolding).toHaveLength(0)
+		expect(summary.tracked).toHaveLength(0)
+	})
+
+	it("marks the line so a reader cannot mistake it for a hold or a failure", async () => {
+		const { findings } = await runConformanceFixtures([unmeasuredFixture], unmeasuredObserver)
+
+		expect(formatConformanceFinding(findings[0]!).startsWith("? ")).toBe(true)
+	})
+
+	it("leaves the four answer-axis laws exactly as they were", async () => {
+		const { findings } = await runConformanceFixtures([fixture()], tableObserver(HELD_TABLE).observe)
+		const summary = summarizeConformanceRun(findings)
+
+		expect(summary.unmeasured).toEqual([])
+		expect(summary.gated).toBe(1)
+		expect(summary.pass).toBe(true)
 	})
 })
