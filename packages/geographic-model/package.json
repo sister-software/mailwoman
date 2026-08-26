@@ -39,10 +39,24 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./schema": {
+			"node": "./schema.ts",
+			"default": "./out/schema.js",
+			"types": "./out/schema.d.ts"
+		},
+		"./validate": {
+			"node": "./validate.ts",
+			"default": "./out/validate.js",
+			"types": "./out/validate.d.ts"
 		}
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/poi-taxonomy": "workspace:*",
+		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*"

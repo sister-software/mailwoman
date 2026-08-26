@@ -2,7 +2,7 @@
 
 The **world-semantic layer**: stable geographic concepts, the relations between them, mappings from external vocabularies into those concepts, source observations, derived facts, and the provenance of every one of them — authored as records, compiled deterministically into runtime artifacts.
 
-> **Status: scaffold.** The public entry point is empty on purpose. The authored-record schema arrives with #1925 and the deterministic compiler with #1926. Ownership is settled here; shape is not.
+> **Status: schema and validator, no data.** The record types and their deterministic validator are here (#1925). The compiler that turns a validated document into a runtime artifact arrives with #1926, and the first authored document — the pharmacy slice — with #1927.
 
 The ownership boundary is fixed by the record at [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](../../docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md) (#1917), under program parent #1916. That document is authoritative for everything below; this README is the package-local summary.
 
@@ -14,6 +14,36 @@ The ownership boundary is fixed by the record at [`docs/superpowers/specs/2026-0
 - Source observations, kept separate from derived facts.
 - Derivation provenance on every mapping and every derived fact.
 - Deterministic compilation of the authored records into runtime artifacts, and the validation that refuses a record set which does not compile.
+
+## The schema
+
+One document holds six tables, and all six are required — a hand-authored file writes `"derivedFacts": []` rather than leaving the table out, because an absent table and an empty table are different claims.
+
+| Table          | Record                                  | What it is                                                                                                                            |
+| -------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `relations`    | `RelationRecord`                        | Vocabulary: what a relation means, which concept kinds may stand on each side, whether it is transitive or symmetric, and its inverse |
+| `concepts`     | `ConceptRecord` + `RelationAssertion[]` | Authored semantics: a concept, its broader concepts, and the claims a curator states about it                                         |
+| `mappings`     | `ExternalMappingRecord`                 | Translation into an external vocabulary — today `@mailwoman/poi-taxonomy` category identifiers                                        |
+| `observations` | `SourceObservationRecord`               | What a named external source states, recorded in this vocabulary and kept out of the concept table                                    |
+| `derivedFacts` | `DerivedFactRecord`                     | What a named procedure computed, with every record it read listed as an input. Written by the compiler, never by hand                 |
+
+Three properties hold by construction:
+
+- **No numeric field exists anywhere.** Not a strength, not a confidence, not a count. `Modality` is an ordinal vocabulary of words (`necessary`, `prohibited`, `strongly_expected`, … `strongly_unusual`) and the package exports no order over it, because a number on an authored relationship is a ranking weight whatever it is called.
+- **Authored, observed, and derived are three types, not three uses of one type.** Their identifiers carry separate brands, so one is not assignable where another is expected, and they live in separate tables so a curation decision has to be made deliberately rather than by a record sitting in a convenient place.
+- **A derived fact carries its provenance structurally.** It has no `source` field: its `derivation` plus its `inputs` are the provenance, and every input carries source provenance in turn. A source string can be copied onto a record that did not come from it; an input list either resolves or the document does not validate.
+
+Identifiers are branded through `type-fest`'s `Tagged` and converted explicitly — `toConceptID`, `toRelationID`, `toRuleID`, `toMappingID`, `toObservationID`, `toDerivedFactID` — the same idiom as `toPOICategoryID` in `@mailwoman/poi-taxonomy`. The brands are compile-time only; the strings survive JSON untouched.
+
+## The validator
+
+`validateGeographicModelDocument(input)` returns the whole document or every reason it is not one. `parseGeographicModelDocument(input)` is the throwing form, and its `GeographicModelValidationError` states every violation in `error.message` as well as on `error.issues`, so a caller that only prints the message still sees all of them.
+
+It reports **every** violation, each addressed by a JSONPath-style location such as `$.concepts[0].assertions[1].modality`. It never returns a partial document: a validator that quietly drops the records it could not read is a validator whose output is indistinguishable from a world that does not contain them.
+
+Two passes, both of which always run. **Shape** covers field presence and types, closed-vocabulary membership, and unknown keys — with a field whose name announces ranking policy (`score`, `boost`, `penalty`, `rankWeight`, `relevanceWeight`, `affinityWeight`, and anything else matching the same fragments) reported under its own code rather than as an anonymous stray field. **Whole-table references** covers duplicate identifiers, `isA` self-reference and cycles, relation and concept resolution, relation domain and range kinds, inverse reciprocity, and derivation inputs.
+
+It is plain deterministic TypeScript with no I/O and no dependencies beyond the two type imports: no reasoner, no query engine, no schema library.
 
 ## What this package must never own
 

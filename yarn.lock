@@ -4788,6 +4788,8 @@ __metadata:
   resolution: "@mailwoman/geographic-model@workspace:packages/geographic-model"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/poi-taxonomy": "workspace:*"
+    type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
 

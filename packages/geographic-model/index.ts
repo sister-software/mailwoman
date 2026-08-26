@@ -8,8 +8,10 @@
  *   observations, derived facts, derivation provenance, deterministic compilation and validation,
  *   and mappings from external vocabularies into world concepts.
  *
- *   The public surface is deliberately empty. The authored-record schema arrives with #1925 and the
- *   deterministic compiler with #1926; ownership is settled, shape is not.
+ *   The public surface is the authored-record schema (`./schema.ts`) and its deterministic validator
+ *   (`./validate.ts`), both re-exported here and both reachable as curated subpaths. The
+ *   deterministic compiler arrives with #1926 and the first authored document with #1927; this entry
+ *   point carries the types and the validation they will both be written against, and no data.
  *
  *   Four things this package must never hold, each owned elsewhere and each a rule the review
  *   applies rather than a preference:
@@ -36,4 +38,5 @@
  *   Program parent: #1916.
  */
 
-export {}
+export * from "./schema.ts"
+export * from "./validate.ts"
