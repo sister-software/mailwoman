@@ -96,7 +96,9 @@ export type ConformanceContext = GauntletGeocodeOpts
  * The keys {@linkcode ConformanceContext} accepts. Kept beside the alias because a structural type has no runtime
  * membership test, and the loader needs one to refuse a misspelled key.
  */
-const CONTEXT_KEYS = new Set<string>(["defaultCountry", "caseCountry", "fuzzyCountryScope"])
+const CONTEXT_KEYS = ["defaultCountry", "caseCountry", "fuzzyCountryScope"] as const
+
+type ContextKey = (typeof CONTEXT_KEYS)[number]
 
 /**
  * One conformance-law fixture.
@@ -164,6 +166,30 @@ const FIXTURE_KEYS = new Set<string>([
 	"note",
 ])
 
+/**
+ * The four narrowings this loader performs, each in one named place.
+ *
+ * Every one widens the KNOWN-GOOD LIST and never the value: `readonly ["a", "b"]` refuses `.includes` on anything
+ * outside its own element type, so a membership test has to widen one side, and widening the list is the direction that
+ * cannot assert something false about the value under test. The alternative idiom — `list.includes(value as Member)` —
+ * asserts the membership it is about to check, so the assertion stands whether or not the check passes.
+ */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function isContextKey(key: string): key is ContextKey {
+	return (CONTEXT_KEYS as readonly string[]).includes(key)
+}
+
+function isOutcomeComparator(value: unknown): value is OutcomeComparatorName {
+	return typeof value === "string" && (OUTCOME_COMPARATORS as readonly string[]).includes(value)
+}
+
+function isConformanceRelation(value: unknown): value is ConformanceRelation {
+	return typeof value === "string" && (CONFORMANCE_RELATIONS as readonly string[]).includes(value)
+}
+
 function requireNonEmptyString(record: Record<string, unknown>, key: string, label: string): string {
 	const value = record[key]
 
@@ -177,25 +203,25 @@ function requireNonEmptyString(record: Record<string, unknown>, key: string, lab
 function readContext(raw: unknown, label: string): ConformanceContext | undefined {
 	if (raw === undefined) return undefined
 
-	if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+	if (!isPlainObject(raw)) {
 		throw new Error(`${label}: "context" must be an object (got ${JSON.stringify(raw)})`)
 	}
 
-	const context: Record<string, unknown> = { ...(raw as Record<string, unknown>) }
+	const context: ConformanceContext = {}
 
-	for (const [key, value] of Object.entries(context)) {
-		if (!CONTEXT_KEYS.has(key)) {
-			const known = [...CONTEXT_KEYS].join(", ")
-
-			throw new Error(`${label}: unknown context key "${key}" — known: ${known}`)
+	for (const [key, value] of Object.entries(raw)) {
+		if (!isContextKey(key)) {
+			throw new Error(`${label}: unknown context key "${key}" — known: ${CONTEXT_KEYS.join(", ")}`)
 		}
 
 		if (typeof value !== "string" || !value.trim()) {
 			throw new Error(`${label}: context.${key} must be a non-empty string (got ${JSON.stringify(value)})`)
 		}
+
+		context[key] = value
 	}
 
-	return context as ConformanceContext
+	return context
 }
 
 /**
@@ -205,11 +231,11 @@ function readContext(raw: unknown, label: string): ConformanceContext | undefine
  * to edit even when the record has no usable id of its own.
  */
 export function parseConformanceFixture(raw: unknown, origin: string): ConformanceFixture {
-	if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+	if (!isPlainObject(raw)) {
 		throw new Error(`${origin}: conformance fixture must be an object (got ${JSON.stringify(raw)})`)
 	}
 
-	const record = raw as Record<string, unknown>
+	const record = raw
 	const rawID = typeof record["id"] === "string" ? record["id"].trim() : ""
 	const label = rawID ? `${origin}: fixture "${rawID}"` : `${origin}: fixture (no id)`
 
@@ -233,24 +259,24 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
 		)
 	}
 
-	if (typeof comparator !== "string" || !OUTCOME_COMPARATORS.includes(comparator as OutcomeComparatorName)) {
+	if (!isOutcomeComparator(comparator)) {
 		throw new Error(
 			`${label}: unknown outcomeComparator ${JSON.stringify(comparator)} — known: ${OUTCOME_COMPARATORS.join(", ")}`
 		)
 	}
 
-	const outcomeComparator = comparator as OutcomeComparatorName
+	const outcomeComparator = comparator
 	const expected = record["expect"]
 
 	if (expected === undefined) {
 		throw new Error(`${label}: "expect" is required — known: ${CONFORMANCE_RELATIONS.join(", ")}`)
 	}
 
-	if (typeof expected !== "string" || !CONFORMANCE_RELATIONS.includes(expected as ConformanceRelation)) {
+	if (!isConformanceRelation(expected)) {
 		throw new Error(`${label}: unknown expect ${JSON.stringify(expected)} — known: ${CONFORMANCE_RELATIONS.join(", ")}`)
 	}
 
-	const expect = expected as ConformanceRelation
+	const expect = expected
 	const supported = RELATIONS_BY_COMPARATOR[outcomeComparator]
 
 	if (!supported.includes(expect)) {
