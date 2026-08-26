@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval conformance` — run a CONFORMANCE-LAW suite: pairs of queries that differ by one
+ *   `mailwoman eval conformance` — run the CONFORMANCE-LAW suites: pairs of queries that differ by one
  *   declared transformation, each graded on the axis its own row names (entity identity, assembled
- *   coordinate, strict parse, component map, mechanism shape). Default suite is the case-folding
- *   invariance law, whose rows are drawn from committed board cases and whose variants are the upper-,
- *   lower- and title-case renderings of those same queries.
+ *   coordinate, strict parse, component map, mechanism shape). Every committed suite runs by default —
+ *   case-folding invariance and whitespace invariance today — with rows drawn from committed board cases
+ *   and variants derived from those same queries by the named transformation.
  *
  *   Runs through the Gauntlet's own deps, so the pipeline under test is the one the board grades, not a
  *   second assembly of it. Rows are audited before the engine loads; `status: pass` rows gate the exit
@@ -19,7 +19,7 @@ import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
-export const description = "Conformance-law suites (case-folding invariance) through the Gauntlet's deps"
+export const description = "Conformance-law suites (case-folding, whitespace) through the Gauntlet's deps"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -28,7 +28,7 @@ export const spec = {
 	name: "conformance",
 	description,
 	options: {
-		suite: { type: "string", description: "Alternate law suite JSONL (default: the case-folding suite)" },
+		suite: { type: "string", description: "One law suite JSONL to run (default: every committed suite)" },
 		candidate: { type: "string", description: "Candidate ONNX" },
 		tokenizer: { type: "string", description: "Candidate tokenizer" },
 		card: { type: "string", description: "Candidate model card" },

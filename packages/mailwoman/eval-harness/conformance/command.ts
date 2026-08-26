@@ -3,9 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   CLI-facing orchestration for `mailwoman eval conformance` — load a law suite, audit it, run every row
- *   through the Gauntlet's own deps, and report. Thin on purpose: it narrates and owns only the exit code,
- *   matching `eval invariance` and `eval gate`.
+ *   CLI-facing orchestration for `mailwoman eval conformance` — load the law suites, audit them, run every
+ *   row through the Gauntlet's own deps, and report. Thin on purpose: it narrates and owns only the exit
+ *   code, matching `eval invariance` and `eval gate`.
+ *
+ *   EVERY COMMITTED SUITE RUNS BY DEFAULT. {@linkcode CONFORMANCE_SUITES} is the register, and a default run
+ *   is all of it: a default that named ONE suite would leave every later law executable only by someone who
+ *   remembered to point `--suite` at it, and a law nobody runs reports as an absence rather than a failure.
+ *   `--suite` narrows to a single file for an author iterating on one.
  *
  *   THE AUDIT RUNS BEFORE THE ENGINE LOADS. A law suite's rows can be wrong in ways no amount of geocoding
  *   reveals — a pair that differs by more than case still runs, still produces a reading, and still reports a
@@ -18,12 +23,6 @@
  */
 
 import { buildGauntletDeps, type GauntletDepsOptions } from "../gauntlet/harness.ts"
-import {
-	auditCaseFoldingSuite,
-	CASE_FOLDING_LAW,
-	CASE_FOLDING_SUITE_PATH,
-	describeCaseTransformation,
-} from "./case-folding.ts"
 import { type ConformanceFixture, loadConformanceFixtures } from "./fixture.ts"
 import {
 	type ConformanceFinding,
@@ -32,24 +31,36 @@ import {
 	runConformanceFixtures,
 	summarizeConformanceRun,
 } from "./run.ts"
+import { CONFORMANCE_SUITES, describeLaw, suiteForLaw } from "./suites.ts"
 
 /**
- * Per-law suite audits, keyed by the `law` a row carries.
+ * Load every named suite into one fixture list, refusing an id that two files both claim.
  *
- * A law that declares one has its rows checked for free wherever a suite is run; a law that declares none is run as
- * written. Each law suite registers here rather than owning a runner of its own — the alternative is four commands that
- * load the same engine four ways.
+ * The per-file loader already refuses a duplicate within its own file; ids name rows in failure output, so two suites
+ * sharing one would produce a report line a reader cannot trace back to a file.
  */
-const LAW_AUDITS: Record<string, (fixtures: readonly ConformanceFixture[]) => string[]> = {
-	[CASE_FOLDING_LAW]: auditCaseFoldingSuite,
-}
+async function loadSuites(paths: readonly string[]): Promise<ConformanceFixture[]> {
+	const fixtures: ConformanceFixture[] = []
+	const originByID = new Map<string, string>()
 
-/**
- * Law-specific detail appended to a finding's head line. Case folding names the TRANSFORMATION, without which a
- * violation reads as "these two strings disagreed" rather than "uppercasing broke it".
- */
-function describeLaw(fixture: ConformanceFixture): string {
-	return fixture.law === CASE_FOLDING_LAW ? `    xform   : ${describeCaseTransformation(fixture)}` : ""
+	for (const path of paths) {
+		const loaded = await loadConformanceFixtures(path)
+
+		console.error(`[conformance] loaded ${loaded.length} rows from ${path}`)
+
+		for (const fixture of loaded) {
+			const origin = originByID.get(fixture.id)
+
+			if (origin) {
+				throw new Error(`${path}: fixture id "${fixture.id}" is already used by ${origin} — ids name rows in output`)
+			}
+
+			originByID.set(fixture.id, path)
+			fixtures.push(fixture)
+		}
+	}
+
+	return fixtures
 }
 
 function report(findings: readonly ConformanceFinding[]): void {
@@ -62,34 +73,32 @@ function report(findings: readonly ConformanceFinding[]): void {
 
 export interface ConformanceCommandOptions extends GauntletDepsOptions {
 	/**
-	 * Suite JSONL path. Default the shipped case-folding suite.
+	 * Suite JSONL path. Absent runs every suite in {@linkcode CONFORMANCE_SUITES}.
 	 */
 	suite?: string
 }
 
 /**
- * Run a conformance-law suite from CLI-shaped options. Returns the process exit code (0 = PASS).
+ * Run the conformance-law suites from CLI-shaped options. Returns the process exit code (0 = PASS).
  */
 export async function runConformanceCommand(options: ConformanceCommandOptions = {}): Promise<number> {
 	const { suite, ...depsOptions } = options
-	const path = suite ?? CASE_FOLDING_SUITE_PATH
-	const fixtures = await loadConformanceFixtures(path)
-
-	console.error(`[conformance] loaded ${fixtures.length} rows from ${path}`)
+	const paths = suite ? [suite] : CONFORMANCE_SUITES.map((registered) => registered.path)
+	const fixtures = await loadSuites(paths)
 
 	const laws = [...new Set(fixtures.map((fixture) => fixture.law))].toSorted()
 	const problems: string[] = []
 
 	for (const law of laws) {
-		const audit = LAW_AUDITS[law]
+		const registered = suiteForLaw(law)
 
-		if (!audit) {
+		if (!registered) {
 			console.error(`[conformance] law "${law}" declares no suite audit — its rows run as written`)
 
 			continue
 		}
 
-		problems.push(...audit(fixtures.filter((fixture) => fixture.law === law)))
+		problems.push(...registered.audit(fixtures.filter((fixture) => fixture.law === law)))
 	}
 
 	if (problems.length) {
@@ -114,6 +123,16 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 			`\n=== conformance (${summary.gated - summary.failures.length}/${summary.gated} gated rows hold, ` +
 				`${summary.tracked.length} tracked) ===`
 		)
+
+		// Per law as well as pooled: a run that merges two suites into one verdict says WHETHER something broke and not
+		// WHICH law stopped holding, and the pooled count moves whenever either suite grows.
+		for (const law of laws) {
+			const perLaw = summarizeConformanceRun(findings.filter((finding) => finding.fixture.law === law))
+
+			console.log(
+				`  ${law}: ${perLaw.gated - perLaw.failures.length}/${perLaw.gated} gated hold, ${perLaw.tracked.length} tracked`
+			)
+		}
 
 		report(findings.filter((finding) => finding.held && (finding.fixture.status ?? "pass") === "pass"))
 
