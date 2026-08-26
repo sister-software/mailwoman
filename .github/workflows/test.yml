@@ -28,6 +28,14 @@
 # and populated": unit-slow reads ~10 GB of WOF/address-point databases, and smoke needs the weights
 # materialized from that same root.
 #
+# The label supplies the variable as well as the data. Each runner exports MAILWOMAN_DATA_ROOT from
+# the runner application's own `.env`, which the listener loads into every job it runs, so no job
+# here declares it. Do NOT reintroduce a job-level `env: MAILWOMAN_DATA_ROOT: ${{ secrets.… }}`: an
+# `env:` block always wins over the inherited value, and a `secrets` expression expands to the EMPTY
+# STRING on any event whose secrets come from a store that lacks the name. An empty root is not an
+# absent root — it resolves relative to the checkout, so the failure arrives as a missing model file
+# inside `_work/` rather than as a missing secret.
+#
 # The split matters beyond placement: `runs-on` states what a job NEEDS, so a data-dependent test
 # added to unit-fast fails on a hosted runner immediately instead of silently skipIf-ing to green.
 # It also keeps the lab box carrying two legs rather than five, which is what the fleet's four slots
@@ -381,8 +389,6 @@ jobs:
   unit-slow:
     needs: data-fleet
     if: needs.data-fleet.outputs.up == 'true'
-    env:
-      MAILWOMAN_DATA_ROOT: ${{ secrets.MAILWOMAN_DATA_ROOT }}
     runs-on:
       - self-hosted
       - mailwoman-data
@@ -685,8 +691,6 @@ jobs:
   smoke:
     needs: data-fleet
     if: needs.data-fleet.outputs.up == 'true'
-    env:
-      MAILWOMAN_DATA_ROOT: ${{ secrets.MAILWOMAN_DATA_ROOT }}
     runs-on:
       - self-hosted
       - mailwoman-data
