@@ -136,13 +136,9 @@ The operating rule for the whole boundary is one sentence, verbatim from the rec
 
 Architecturally excluded for the life of the program, not merely deferred: an OWL/DL reasoner, a SPARQL endpoint, a triplestore, a general-purpose knowledge-graph service, and any query-time traversal of the authoring JSON. Authored records are source material compiled into artifacts — artifacts, not a service.
 
-## Why this is not in the release list
+## Release posture
 
-`@mailwoman/geographic-model` is a public, publishable-shaped workspace, and it is deliberately absent from `.release-it.json`'s workspace list. The reason is mechanical rather than editorial: **npm Trusted Publishing cannot create a package that does not exist yet.** A brand-new `@mailwoman/*` name returns `E404` from OIDC, so it needs a one-time manual first publish plus a Trusted Publisher configuration — `scripts/bless-package.ts`, an interactive second-factor step an operator runs — before CI can ever publish it. Adding the name to the release list ahead of that blessing does not publish the package; it fails the next coordinated release at this workspace. `RELEASING.md`'s "Adding a NEW package: it can't be first-published from CI" is the full account.
-
-The absence is therefore recorded, not silent: `SANCTIONED_RELEASE_ABSENCES` in [`scripts/release-stage.ts`](../../scripts/release-stage.ts) carries it with that reason, and `checkReleaseListIdentity` fails on any absence missing from that record. The version stays at `0.0.0` — nothing bumps a workspace outside the release list, and `0.0.0` reads as never published, which is the true statement.
-
-When the package is blessed and its Trusted Publisher is on file, the change is three edits in one commit: add `packages/geographic-model` to `.release-it.json`, remove its entry from `SANCTIONED_RELEASE_ABSENCES`, and update the arithmetic in `AGENTS.md` and `scripts/release-stage.test.ts`.
+`@mailwoman/geographic-model` is in `.release-it.json`'s workspace list and releases with its siblings. The npm name exists (a token `0.0.0` first publish plus a Trusted Publisher configuration, the `scripts/bless-package.ts` flow — required because npm Trusted Publishing cannot create a package that does not exist yet; `RELEASING.md`'s "Adding a NEW package: it can't be first-published from CI" is the full account). The version reads `0.0.0` until the next coordinated release bumps it — consumers should depend on the first released version, not the token publish, which carries no compiled `out/`.
 
 ## Layout
 
