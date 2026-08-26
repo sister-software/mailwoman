@@ -2,7 +2,7 @@
 
 The **world-semantic layer**: stable geographic concepts, the relations between them, mappings from external vocabularies into those concepts, source observations, derived facts, and the provenance of every one of them — authored as records, compiled deterministically into runtime artifacts.
 
-> **Status: schema and validator, no data.** The record types and their deterministic validator are here (#1925). The compiler that turns a validated document into a runtime artifact arrives with #1926, and the first authored document — the pharmacy slice — with #1927.
+> **Status: schema, validator, and compiler — no data.** The record types and their deterministic validator are here (#1925), along with the loader and compiler that turn authored files into a runtime artifact (#1926). The first authored document — the pharmacy slice — arrives with #1927.
 
 The ownership boundary is fixed by the record at [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](../../docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md) (#1917), under program parent #1916. That document is authoritative for everything below; this README is the package-local summary.
 
@@ -44,6 +44,49 @@ It reports **every** violation, each addressed by a JSONPath-style location such
 Two passes, both of which always run. **Shape** covers field presence and types, closed-vocabulary membership, and unknown keys — with a field whose name announces ranking policy (`score`, `boost`, `penalty`, `rankWeight`, `relevanceWeight`, `affinityWeight`, and anything else matching the same fragments) reported under its own code rather than as an anonymous stray field. **Whole-table references** covers duplicate identifiers, `isA` self-reference and cycles, relation and concept resolution, relation domain and range kinds, inverse reciprocity, and derivation inputs.
 
 It is plain deterministic TypeScript with no I/O and no dependencies beyond the two type imports: no reasoner, no query engine, no schema library.
+
+## The loader
+
+`loadGeographicModelDirectory(root)` (the `./load` subpath, the one module here that touches a filesystem) reads every `*.json` file under a directory and merges them into one document.
+
+**The layout is authoring convenience and carries no meaning.** A concept means the same thing whichever file it was written in, and a file may hold any subset of the tables. One file is special: `model.json`, holding the document's `version` — a version assembled from whichever fragment happened to declare one is a version nobody chose.
+
+Two properties make it safe to build an artifact from:
+
+- **Enumeration order cannot reach the output.** The files are sorted by path before any of them is read, so the merged tables are a function of the file names and their contents, never of `readdir` order. `mergeGeographicModelFiles(files)` states the same property without a filesystem, which is how it is tested: any order in, one document out.
+- **Every issue names the file it came from.** The validator addresses a record by its position in the merged table (`$.concepts[7].kind`) — the one address an author cannot see — so the loader keeps a per-record origin and re-addresses each issue. A duplicate identifier names **both** files, the one that claimed it and the one that claimed it first, because "already used" is unactionable without the other half.
+
+What the loader checks on its own is only what the validator cannot see: whether a file parses, whether it is an object, and whether the keys it uses are tables. Everything else is delegated whole.
+
+## The compiler
+
+`compileGeographicModel(input)` validates by delegation — `parseGeographicModelDocument` decides whether a document is well formed, and throws with every violation before a byte is computed — then compiles it into a `CompiledGeographicModel`. There is no second validator, and no partial artifact: a compile produces the whole thing or produces nothing.
+
+**`isA` alone defines semantic inheritance**, and two derivations follow from it:
+
+| In the artifact      | What it is                                                                                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `inheritanceClosure` | Every concept's transitive `isA` ancestors, deduplicated and ordered. One entry per concept, empty list included — a concept that is a kind of nothing says so |
+| `derivedFacts`       | Every ancestor's assertions materialized onto its descendants as `DerivedFactRecord`s, naming the derivation and every record it read                          |
+
+Materializing the assertions is what makes the artifact answer a question rather than point at one: the closure alone would tell a consumer which concepts to go and read, which is the traversal it was supposed to be spared. A descendant that states the same relation and target itself inherits nothing for that pair — the authored record is the more specific one, which is what `isA` means.
+
+A relation declaring `transitive` or `inverse` is **not** closed over. Those fields say what the relation means; materializing them is a reasoning step no executable need has asked for, and general reasoning is excluded from this package. The day one is needed it arrives as its own named derivation beside this one.
+
+Compilation refuses two things the validator cannot see, both about records the compiler is about to write, and both reported with every offending record named: an inherited assertion whose subject kind the relation does not accept, and two derived facts claiming one identifier.
+
+## The artifact
+
+`serializeCompiledModel(model)` produces the canonical bytes. Two rules define them:
+
+- **Every object's keys are emitted in code-point order**, at every depth. A rule that canonicalizes by itself beats a hand-kept field order, which drifts the first time the schema gains a field.
+- **Every table is ordered by identifier**, under `compareIdentifiers` — code point, never `localeCompare`, whose answer depends on the machine's collation. Arrays inside a record keep the order they were authored in.
+
+Nothing records when compilation ran: `modelVersion` is the authored document's own version, so two builds of one document are byte-identical and a regenerate is a diff only when the records changed. `schemaVersion` is the artifact FORMAT version, and `parseCompiledGeographicModel` refuses an artifact declaring another one rather than reading fields that may have moved.
+
+A committed artifact is these bytes run through `oxfmt`, which inlines short arrays — the same convention `taxonomy.json` follows. So a freshness check compares the **parsed** artifact against a fresh compile, and a byte comparison compares two compiles.
+
+`createGeographicModelIndex(model)` (the `./lookup` subpath) is the read surface: `concept`, `relation`, `ancestorsOf`, `derivedFactsAbout`, `conceptsForExternalID`. Lookups only — no walk, no cursor, no query language, because removing query-time traversal is the reason the artifact exists. Two absences stay distinguishable throughout: a concept the artifact does not carry answers `undefined`, and a concept it carries with nothing derived about it answers an empty list.
 
 ## What this package must never own
 
