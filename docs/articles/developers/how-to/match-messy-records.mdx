@@ -22,7 +22,7 @@ link "11 W 53rd St" to "11 West 53rd Street" without a string rule for every abb
   `<data root>/wof/candidate.db`. Every transcript below found it there, with nothing exported.
 - [customers-messy.csv](/examples/customers-messy.csv) — twenty rows, in which five organizations appear
   two or three times each with different spellings. Thirteen distinct organizations, twenty rows.
-- Per-state rooftop shards, at your data root, for the states in your file. Every transcript below ran
+- Per-state rooftop databases, at your data root, for the states in your file. Every transcript below ran
   against a data root that has them, which is why the geocode tiers in step 2 are `address_point` rather
   than `admin`. [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) covers pulling
   one. The entity counts on this page are the same either way — the tier changes the coordinates, not
@@ -47,7 +47,7 @@ for a file this size, and the rest of this page is about why and what to do.
 Note `--resolve-db` in that command, and note what it is doing, because it is not what it looks like.
 `mailwoman registry` discovers the candidate gazetteer at the convention path like everything else —
 the banner above says which file it opened, and nothing on the command line named it. What the flag
-satisfies is a separate boot gate: registry refuses to start without a WOF admin path from
+satisfies is a separate boot check: registry refuses to start without a WOF admin path from
 `--resolve-db` or `$MAILWOMAN_WOF_DB`, and then discards it whenever a candidate gazetteer is reachable.
 
 You can watch both halves. Without the flag and without `$MAILWOMAN_WOF_DB`, it will not boot even though
@@ -57,7 +57,7 @@ the candidate gazetteer is right there:
 registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.
 ```
 
-And a path that does not exist satisfies the gate perfectly, because nothing ever opens it:
+And a path that does not exist satisfies the check perfectly, because nothing ever opens it:
 
 ```bash
 npx mailwoman registry run customers-messy.csv --infer-mapping --resolve-db /nonexistent/wof.db --out entities.geojson
@@ -70,7 +70,7 @@ wrote 20 features → entities.geojson
 ```
 
 So the recipe is: **have `candidate.db` where the resolver looks, and pass anything to `--resolve-db` to
-get past the gate.** Passing the gazetteer's own path is the tidiest thing to pass, which is why this
+get past the boot check.** Passing the gazetteer's own path is the tidiest thing to pass, which is why this
 page and the tutorial both do it — but it is satisfying a check, not selecting a backend.
 
 There is one shape where the flag is believed, and it got narrower in `8.7.0`. If no candidate gazetteer
@@ -84,7 +84,7 @@ resolver-wof-sqlite/README.md).
 ```
 
 Before the convention-path fallback, that was the outcome whenever the variable was merely unset, which
-made it easy to hit. Now it takes a data root with no gazetteer in it. The gate itself is unchanged: a
+made it easy to hit. Now it takes a data root with no gazetteer in it. The requirement itself is unchanged: a
 command that demands an argument and then ignores it is a defect in this command, not a convention to
 learn. It is recorded here because the workaround is needed today.
 

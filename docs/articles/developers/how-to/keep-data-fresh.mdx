@@ -20,7 +20,7 @@ reports it as already present and downloads nothing.
   `/tmp/mw-fresh-demo`.
 - At least one bundle already pulled. [Your first ten minutes](../get-started/ten-minute-trial.mdx)
   pulls `candidate`; [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) pulls the
-  per-state shards.
+  per-state databases.
 - `mailwoman` 8.7.0 or later. `data pull` and `data status` do not exist before it.
 
 ## 1. Read what you have
@@ -50,8 +50,8 @@ mailwoman data status candidate
 FAIL (0/1 checks)
 ```
 
-The exit code is 0 only when every artifact is present and matches. That makes it usable as a deploy
-gate.
+The exit code is 0 only when every artifact is present and matches. That makes it usable as a check
+that blocks a deploy.
 
 ## 2. Refresh what has moved
 
@@ -130,7 +130,7 @@ without downloading anything.
 
 ## 5. Pin a version, and switch without a restart
 
-The per-state shards support a second addressing scheme. Instead of one file per state, publish
+The per-state databases support a second addressing scheme. Instead of one file per state, publish
 `<family>/<family>-us-<slug>-<version>.db` alongside the old one and put a `releases.json` at the data
 root naming the current version per family:
 
@@ -173,7 +173,7 @@ versions: {"address-points":"2026-06-01.0"}
 dc address points open: true
 ```
 
-The shard opened. It is the legacy file, not the pinned one. Remove the legacy file and the same pin
+The database opened. It is the legacy file, not the pinned one. Remove the legacy file and the same pin
 resolves to nothing at all:
 
 ```
@@ -184,9 +184,9 @@ dc address points open: false
 So a typo in `releases.json` degrades to the old data rather than to an error. Assert on `versions()`
 after deploy rather than assuming the pin took.
 
-The reason to run the manifest at all is `reload()`. Write the new shard files alongside the old, then
-write `releases.json` — one atomic file write — then call `shards.reload()`. Any shard whose resolved
-path changed is reopened; any shard whose path is unchanged keeps its open handle. Retired handles close
+The reason to run the manifest at all is `reload()`. Write the new database files alongside the old, then
+write `releases.json` — one atomic file write — then call `shards.reload()`. Any database whose resolved
+path changed is reopened; any whose path is unchanged keeps its open handle. Retired handles close
 on the _next_ reload, which gives in-flight reads a generation of grace.
 
 ```js
@@ -212,14 +212,14 @@ data OK
 
 ## Limits
 
-- **`data status` compares against the published artifact, not against validity.** A shard you built
+- **`data status` compares against the published artifact, not against validity.** A database you built
   yourself from [the US dataset tutorial](../tutorials/build-the-us-dataset.mdx) fails the check by
   construction, because its byte count is not the published one. That page explains the case.
 - **The four bundles are the whole published set.** There is no timezone, NUTS or UN/LOCODE artifact in
   the bucket; those packages build their data locally. `mailwoman data pull` with any other name exits 1
   and lists the four.
 - **`releases.json` addresses the per-state families only.** The versioned scheme covers
-  `address-points` and `interpolation`. `candidate.db`, `poi.db` and the French shard are addressed by
+  `address-points` and `interpolation`. `candidate.db`, `poi.db` and the French rooftop register are addressed by
   their dated remote path instead, so refreshing one of those means upgrading `mailwoman` to a release
   that registers a newer path, then pulling again.
 - **`--check-remote` needs network egress to `public.sister.software`.** In an air-gapped deploy the
@@ -230,6 +230,6 @@ data OK
 - [Improve geocode precision](../tutorials/improve-geocode-precision.mdx) — which bundle buys which
   resolution tier.
 - [Build the US address dataset from public sources](../tutorials/build-the-us-dataset.mdx) — what to do
-  instead when you build shards rather than pull them.
+  instead when you build the databases yourself rather than pull them.
 - [Deploy on a serverless runtime](./deploy-serverless.mdx) — how the same artifacts behave on a
   read-only, short-lived filesystem.

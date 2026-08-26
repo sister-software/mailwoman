@@ -191,7 +191,7 @@ Two mount details that bite. If `wof/candidate.db` is a symlink on the host, poi
 `$MAILWOMAN_CANDIDATE_DB` at the real file — an absolute-path symlink dangles inside a container.
 Discovery uses `existsSync`, which follows the link, so a dangling one reads as absent: the convention
 path finds nothing, the instance silently falls back to the FTS backend, and with no WOF distribution
-mounted your geocode route answers 503 instead of failing at boot. And the per-state shards are
+mounted your geocode route answers 503 instead of failing at boot. And the per-state databases are
 WAL-mode: their `-wal` and `-shm` siblings have to be in the same mount, or that address falls back to
 a coarser tier rather than failing.
 

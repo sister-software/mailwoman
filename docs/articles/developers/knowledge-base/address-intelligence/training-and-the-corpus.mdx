@@ -1,6 +1,6 @@
 ---
 title: Training and the corpus
-description: Where labeled address data comes from, what a training run optimizes, and why an evaluation gate stands between a better number and a release.
+description: Where labeled address data comes from, what a training run optimizes, and why an evaluation stands between a better number and a release.
 role: explanation
 ---
 
@@ -117,16 +117,16 @@ were meant to be unseen.
 
 A training run produces a checkpoint and a number. Neither is a reason to ship.
 
-The gate is per tag and per locale, not aggregate. An aggregate score moves when one large category
+The evaluation is per tag and per locale, not aggregate. An aggregate score moves when one large category
 moves, and it is unmoved when a small one collapses — which means shipping on an aggregate is
 shipping without having looked at the categories the aggregate is made of. First-class locales carry
 per-tag floors that block a release when a tag falls below them; other locales are measured, recorded
-and argued about rather than gating.
+and argued about rather than blocking a release.
 [Locales and tiers](../../reference/locales-and-tiers.mdx) states which locales are in which tier and
 what the tier means, and the distinction it draws is the one that matters here: a locale is claimed
 when there is a graded evaluation behind it, not when there is training data for it.
 
-Two habits go with the gate.
+Two habits go with the evaluation.
 
 **Every shipped model carries its own numbers.** The model card inside the weights package publishes
 the label set, the architecture, the calibration measurements, the data attribution, and per-tag
@@ -149,7 +149,7 @@ how the region is spelled, whether the postcode leads or trails — and those co
 expectations the model brings to inputs that do not share them.
 
 **Improvement is not monotonic.** Adding a locale can interfere with an existing one; adding a
-category can trade one confusion for another. This is the reason the gate is per tag and per locale
+category can trade one confusion for another. This is the reason the evaluation is per tag and per locale
 rather than a single score with a threshold on it, and the reason a run that improves the headline
 number can still be the wrong thing to ship.
 

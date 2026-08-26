@@ -33,7 +33,7 @@ Three things, and the second one will stop you partway through if it isn't done.
   script.
 
 `candidate.db` on its own answers at the admin tier: each row resolves to its city's centroid rather
-than to its building, which is what every transcript below shows. The loop asks for street shards too,
+than to its building, which is what every transcript below shows. The loop asks for street databases too,
 finds none at this point in the sequence, and degrades to admin without complaining. Step 6 pulls one
 state and runs the same script again, so you can see what changes and what does not.
 
@@ -126,7 +126,7 @@ console.log(
 
 Five decisions in there are worth naming.
 
-**The classifier, the lookup, the resolver and the shard provider are built once, outside the loop.**
+**The classifier, the lookup, the resolver and the `ShardProvider` are built once, outside the loop.**
 Loading the model is the expensive part of a geocode, and hoisting it out is why the row count barely
 moves the clock: the same script over one row runs in 1.35 s and over twenty in 1.53 s.
 
@@ -168,7 +168,7 @@ head -3 customers.geocoded.jsonl
 Twenty rows in 1.53 s wall on the machine this page was verified on, model load included. The three DC
 rows share a coordinate because they share a city, and `resolution_tier: "admin"` says so — three
 different buildings, one centroid, and `uncertainty_m: null` because the admin tier has no radius to
-report. The shard provider was asked for DC and had nothing to give.
+report. The `ShardProvider` was asked for DC and had nothing to give.
 
 JSON lines rather than one JSON array: the file is appendable, streamable, and survives a crash halfway
 through with the rows written so far still readable.
@@ -323,7 +323,7 @@ want the calibrated figure from the library — the per-region table lives in
 Two files: `customers.geocoded.jsonl`, one line per input row with your ids intact, and
 `customers.geojson`, a FeatureCollection you can drag into QGIS or hand to a map library. Both carry
 `resolution_tier`, the field that tells you whether a coordinate is a city centroid or a building — and
-a loop wired to pick up every street shard you ever download without an edit.
+a loop wired to pick up every street database you ever download without an edit.
 
 ## Next
 

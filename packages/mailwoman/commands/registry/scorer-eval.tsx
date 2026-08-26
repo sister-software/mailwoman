@@ -45,7 +45,7 @@ export const spec = {
 		// shared data wiring
 		sources: stringOption("Record-matcher sources directory"),
 		wof: stringOption("WOF admin SQLite path"),
-		"data-root": stringOption("Per-state shard root"),
+		"data-root": stringOption("Per-state database root"),
 		"out-md": stringOption("Markdown report path"),
 		// sampling
 		state: stringOption("State filter"),

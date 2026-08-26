@@ -21,7 +21,7 @@ const debugSizePattern = /^\d+x\d+$/u
 export const spec = {
 	name: "geocode",
 	description:
-		"Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and rooftop/interpolation shards.",
+		"Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and the rooftop/interpolation databases.",
 	positionals: [
 		{ name: "address", description: "A formatted postal address to geocode. Omit when using --stdin.", multiple: true },
 	],
@@ -55,17 +55,17 @@ export const spec = {
 		"data-root": {
 			type: "string",
 			hint: "path",
-			description: "Root containing address-point, interpolation, WOF, POI, and other data shards.",
+			description: "Root containing the address-point, interpolation, WOF, POI, and other data databases.",
 		},
 		"address-points-db": {
 			type: "string",
 			hint: "path",
-			description: "Explicit address-point SQLite shard, bypassing region selection.",
+			description: "Explicit address-point SQLite database, bypassing region selection.",
 		},
 		"interpolation-db": {
 			type: "string",
 			hint: "path",
-			description: "Explicit interpolation SQLite shard, bypassing region selection.",
+			description: "Explicit interpolation SQLite database, bypassing region selection.",
 		},
 		"interp-calibration": {
 			type: "number",

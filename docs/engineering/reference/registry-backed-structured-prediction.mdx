@@ -57,7 +57,7 @@ locale family** rather than once globally.
 
 ### 2. Synthetic coverage
 
-Phenomenon shards at a capped ratio, split source-disjoint by normalized street surface.
+Phenomenon slices at a capped ratio, split source-disjoint by normalized street surface.
 If the model has never seen a bare street, no amount of inference-time evidence fixes the
 prior — that's a training-distribution problem and it gets a training-distribution fix.
 
@@ -157,7 +157,7 @@ places. So the trap's _ingredients_ are unambiguously present.
 by nothing: 33/63 off, 33/63 on, two fixtures changing in opposite directions. So the
 feedback loop is not what fails these addresses today — the model's locality reading is
 its own, learned from a corpus where bare street fragments are rare and bare localities
-are not. That is a training-distribution problem, which is why the BAN shard outranks
+are not. That is a training-distribution problem, which is why the BAN corpus slice outranks
 every inference-time lever.
 
 Keep the tier rule anyway. It does not rest on a measured harm — it rests on the
@@ -167,13 +167,13 @@ it did.
 
 Tier C answers locality/region/country. It does not answer "is this a street."
 
-### Tier D — licensing gates product use
+### Tier D — licensing decides product use
 
 OSM's coverage is the best available for gap analysis and for experiments that need
-breadth. Source quality, licensing, and attribution gate anything that ships. Note
+breadth. Source quality, licensing, and attribution decide what can ship. Note
 `@mailwoman/osm` is itself unpublished pending ODbL counsel sign-off.
 
-## Training: phenomenon shards
+## Training: phenomenon slices
 
 Per locale, sampled from the Tier A register:
 
@@ -184,12 +184,12 @@ Per locale, sampled from the Tier A register:
 5. **date-name** — `Rue du 11-Novembre-1918`
 6. **alphanumeric house number**
 
-**Shard ratios stay capped** so full-address performance doesn't regress. The cap is the
+**Slice ratios stay capped** so full-address performance doesn't regress. The cap is the
 mechanism; the contextful regression guard is the check that the mechanism worked. A
-shard that fixes fragments by degrading normal addresses hasn't fixed anything — it moved
+slice that fixes fragments by degrading normal addresses hasn't fixed anything — it moved
 the failure somewhere the fragment board can't see.
 
-Label policy for street shards: the **full street phrase** is `street`, including affix,
+Label policy for street slices: the **full street phrase** is `street`, including affix,
 particle, apostrophe, hyphenated compound, and date-name material.
 
 ## Eval: two boards, three questions

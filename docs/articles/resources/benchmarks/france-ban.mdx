@@ -10,7 +10,7 @@ role: evidence
 
 On **2026-08-04** we drew 100 addresses from the Base Adresse Nationale release dated 2026-05-18,
 rendered each one twice, and geocoded all 200 strings against a local install: the base weights under
-the `fr-FR` overlay, the 1.65 GB global candidate gazetteer, and the French BAN rooftop shard. The
+the `fr-FR` overlay, the 1.65 GB global candidate gazetteer, and the French BAN rooftop database. The
 grading target is BAN's own coordinate for the row the address came from. There is no second
 geocoder in this measurement and no third-party reference set — this compares the pipeline against
 the register the pipeline reads.
@@ -42,7 +42,7 @@ Three numbers need their definitions stated before you read them:
   the BAN points sharing that postcode. French postcodes are not one size — a Paris arrondissement
   spans about 2 km, a rural postcode can span 20 — so this is a check against gross misrouting and
   not a precision claim. The precision claim is the distance row above it.
-- **Tier** is which artifact answered: `address_point` is the BAN rooftop shard, `admin` is the
+- **Tier** is which artifact answered: `address_point` is the BAN rooftop database, `admin` is the
   gazetteer centroid the cascade falls back to when the rooftop probe finds nothing.
 
 The country is pinned to `FR`. This panel is a French dataset run through a French pipeline, so it
@@ -120,7 +120,7 @@ Both defects were found by this panel and neither is fixed here. They are record
 ## Caveats
 
 **The circularity, stated plainly.** The French rooftop tier _is_ the BAN. `mailwoman data pull fr`
-downloads a shard built from the same register this panel grades against, so a within-one-meter hit
+downloads a database built from the same register this panel grades against, so a within-one-meter hit
 means the pipeline found the row it was looking for in the table it was looking in. The claim this
 panel supports is **"a French address that exists in BAN resolves to its BAN rooftop"** — a statement
 about parsing and routing, not about coordinate accuracy. It cannot tell you whether BAN's coordinate
@@ -133,7 +133,7 @@ is zero by construction. Read the count of exact rows and the count of misses; t
 no information this panel earned.
 
 **The commune strings are accent-stripped.** BAN's `locality_norm` column is lowercased and
-unaccented by the shard builder, so the panel asks for `Orleans` where the commune is `Orléans` and
+unaccented by the database builder, so the panel asks for `Orleans` where the commune is `Orléans` and
 `45140 Ingre` where it is `Ingré`. Every row is affected. This makes the panel slightly harder than a
 correctly-accented input set and it is not corrected, because unaccented input is what a keyboard
 produces.
@@ -155,7 +155,7 @@ The script is [`fr-ban-panel.mjs`](/benchmarks/fr-ban-panel.mjs), the panel is
 every address in both arms.
 
 That file's `versions` block records what this run used: Mailwoman 8.7.0,
-`neural-weights-fr-fr@6.5.0` resolving to `model.onnx`, `candidate-global-1026.db`, and the BAN shard.
+`neural-weights-fr-fr@6.5.0` resolving to `model.onnx`, `candidate-global-1026.db`, and the BAN database.
 The script writes those from the resolved artifact paths rather than from a constant, so a re-run
 stamps its own — which is how the model filename on this page changed without the model changing. It
 used to read `model-v401-base-step-060000-int8.onnx`, the training-side name a development symlink was

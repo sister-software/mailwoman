@@ -10,7 +10,7 @@ and `tokenizer.model`. What it adds is the German **placetype-pair index**: 85,6
 
 ## Why an overlay exists at all
 
-The pair index is hard-gated on the resolved locale's country, so a German artifact shipped inside
+The pair index is conditioned on the resolved locale's country, so a German artifact shipped inside
 another locale's package could never fire. A carrier package is the only way the prior reaches
 German input — which is what blocked this locale until now, rather than any shortage of data.
 

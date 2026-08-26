@@ -4720,6 +4720,7 @@ __metadata:
     unist-util-visit: "npm:^5.1.0"
     vite: "npm:^8.2.0"
     webpack: "npm:^5.102.1"
+    zx: "npm:^8.8.5"
   languageName: unknown
   linkType: soft
 

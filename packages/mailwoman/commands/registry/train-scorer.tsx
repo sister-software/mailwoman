@@ -33,7 +33,7 @@ export const spec = {
 		locale: { type: "string", default: "en-US", description: "Weights locale" },
 		date: { type: "string", description: "Training date" },
 		wof: { type: "string", description: "WOF database" },
-		"data-root": { type: "string", description: "Shard root" },
+		"data-root": { type: "string", description: "Per-state database root" },
 	},
 } as const satisfies CommandSpec
 

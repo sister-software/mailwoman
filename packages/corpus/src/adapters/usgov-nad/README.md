@@ -22,10 +22,10 @@ single training-data upgrade available.
 
 ## Input
 
-The adapter consumes NDJSON shards produced by `fetch-nad.ts`'s featureserver
-mode. Each shard is `oids_<start>-<end>.ndjson` with a sibling `.manifest.json`.
+The adapter consumes NDJSON files produced by `fetch-nad.ts`'s featureserver
+mode. Each file is `oids_<start>-<end>.ndjson` with a sibling `.manifest.json`.
 
-Point `--input` at the directory of shards:
+Point `--input` at the directory of those files:
 
 ```sh
 npx mailwoman corpus run usgov-nad \

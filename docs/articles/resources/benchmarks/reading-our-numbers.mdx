@@ -113,7 +113,7 @@ Three mechanisms break the extrapolation:
   [Geocode a large file at volume](../../developers/how-to/batch-geocode-at-volume.mdx) has the
   measurements.
 - **The gazetteer is read from disk.** A warm page cache and a cold one give different numbers for the
-  same query, and our panels run warm — the same shards were open moments earlier.
+  same query, and our panels run warm — the same databases were open moments earlier.
 
 Timing here is a sanity check on the order of magnitude, not a throughput specification. Measure on
 your own hardware, with your own data root, at your own concurrency.

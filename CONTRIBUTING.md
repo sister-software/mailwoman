@@ -6,8 +6,8 @@ resolver — and there's plenty to do at every layer: the model, the resolver, t
 CLI, the docs, the data pipelines.
 
 This guide covers the general flow. If you're touching the **model** (training,
-shards, evals), read [`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
-first — model work has its own gates and discipline.
+corpus subsets, evals), read [`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
+first — model work has its own required checks and discipline.
 
 ## Before you start
 
@@ -114,7 +114,7 @@ before anything else; it'll otherwise hide behind every later step.
 The trained model binaries (`model.onnx`, `tokenizer.model`) are **not committed
 to git** — they're large, and they version on a different cadence than the code.
 Most contributions (parser logic, the resolver, the CLI, docs, data pipelines)
-don't need them. The handful of tests that do are gated and will skip cleanly
+don't need them. The handful of tests that do are conditional and will skip cleanly
 without them.
 
 If you do need the weights — to run the neural classifier locally or work on the
@@ -183,7 +183,7 @@ node packages/mailwoman/out/cli.js --help
 - [`AGENTS.md`](./AGENTS.md) — architecture, workspace conventions, the release
   pipeline, and the load-bearing gotchas.
 - [`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
-  — the model-work runbook: which evals gate a change, how to add a shard.
+  — the model-work runbook: which evals a change must pass, how to add a training-data subset.
 - [`docs/records/site-2026-08/concepts/what-mailwoman-is.mdx`](./docs/records/site-2026-08/concepts/what-mailwoman-is.mdx)
   — what the system _is_, if you're new to the project.
 

@@ -32,7 +32,7 @@ reproduced here. The table below is the declaration of 2026-07-02; several packa
 
 | Tier | Locales                                                | What the tier means                                                            |
 | ---- | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| 1    | US, FR                                                 | Per-tag floors gated in the release process, plus real-world evaluation slices |
+| 1    | US, FR                                                 | Per-tag floors the release process enforces, plus real-world evaluation slices |
 | 2    | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Trained, with a per-locale coordinate panel behind the claim                   |
 | 3    | NO, SE                                                 | Trained exposure, thinly measured. Claims beyond the panel are unverified      |
 | 4    | CZ, PL, SK, SI                                         | Covered by the diacritic tokenizer splice shipped in release 5.1.0             |
@@ -41,13 +41,13 @@ reproduced here. The table below is the declaration of 2026-07-02; several packa
 A locale appearing in two tiers is not an error. Tier 4 records a tokenizer capability rather than an
 evaluation, so CZ and PL hold both a coordinate panel and a splice.
 
-Tier 1 is the only tier whose numbers gate a release. A regression on US or FR blocks a ship; a
+Tier 1 is the only tier whose numbers can stop a release. A regression on US or FR blocks a ship; a
 regression on a tier-2 locale is recorded and argued about.
 
 ### Queued
 
 Queued behind an external constraint rather than an engineering one: GB, IE, SE, HU and RO corpora via
-OpenStreetMap, which is gated on the share-alike review; and KR, which has no adopted open data path.
+OpenStreetMap, which is waiting on the share-alike review; and KR, which has no adopted open data path.
 The constraint on Korean is data licensing. There is no engineering estimate to give, because there is
 nothing to estimate until a corpus is available.
 
@@ -98,7 +98,7 @@ than the full 41.3 GB. The French bundle ships rooftop points with no interpolat
 address whose exact point is absent falls straight through to `admin` rather than to a house-number
 estimate along the street.
 
-The US Virgin Islands ship a rooftop shard and no interpolation shard. That is a data gap, not an
+The US Virgin Islands ship a rooftop database and no interpolation database. That is a data gap, not an
 omission from this table.
 
 ### The combination

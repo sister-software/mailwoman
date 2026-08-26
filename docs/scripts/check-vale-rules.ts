@@ -1,0 +1,233 @@
+#!/usr/bin/env node
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Fixture test for `docs/styles/Mailwoman/*.yml` (the published-prose rules) and
+ *   `docs/styles/MailwomanChat/*.yml` (the agent-reply rules the Stop hook runs through
+ *   `.vale-chat.ini` — see `packages/dev-mcp/hooks/vale-response-check.ts`).
+ *
+ *   There is no vitest harness for a set of Vale YAML rule files, so this is the test. Each style
+ *   has two fixtures. The dirty one is written to trip every rule file at least once, and also
+ *   embeds a code fence, a JSX tag, an import line and a `<details>` block full of the same banned
+ *   words, none of which may be flagged — that is the TokenIgnores/BlockIgnores coverage. The clean
+ *   one must pass with zero alerts. A rule that stops firing, or an ignore pattern that starts
+ *   leaking banned words out of a fence/import/JSX/details block into real alerts, shows up here as
+ *   the wrong fixture producing the wrong verdict.
+ *
+ *   `dirty.md` also carries NEGATIVE assertions, each checked only by its line staying quiet:
+ *
+ *   - The phrase "full-text search" sits in plain prose and must NOT trip `Terms.yml`'s
+ *     `text search` swap. That swap is guarded precisely so the FTS5 vocabulary this repo ships
+ *     survives it.
+ *   - A backticked `neighbourhood` (a real Who's On First placetype) and a backticked `licence`
+ *     (Nominatim's response field) must NOT trip `Spelling.yml`, nor must the JSON fence carrying
+ *     both. Vale's markdown parser skips inline code and fences natively, which is the whole reason
+ *     those two en-GB-looking identifiers can stay on the swap list.
+ *   - `promotion-gate.ts`, `packages/corpus/src/shard-recipes/` and `mailwoman eval gate` are
+ *     backticked, so `AmbiguousShorthand` must stay quiet on all three — that is how a
+ *     contract-bearing name survives the vocabulary ban without being renamed.
+ *
+ *   Run from anywhere:
+ *
+ *       node docs/scripts/check-vale-rules.ts
+ *       yarn workspace @mailwoman/docs lint:prose:fixtures
+ *
+ *   Wired into the docs CI job (`.github/workflows/docs-build.yml`) so a rule regression fails
+ *   loudly instead of silently drifting.
+ */
+
+import { createRequire } from "node:module"
+import { dirname, join, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
+
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { $ } from "zx"
+
+/**
+ * One Vale alert, as emitted by `--output=JSON`. Only the fields this check reads are typed.
+ */
+interface ValeAlert {
+	Check: string
+	Severity: string
+	Line: number
+	Message: string
+}
+
+/**
+ * Vale's `--output=JSON` document: file path -> alerts. An entirely clean run emits `{}`.
+ */
+type ValeReport = Record<string, ValeAlert[]>
+
+/**
+ * A dirty/clean fixture pair plus the rule files their config is expected to exercise.
+ */
+interface StyleLeg {
+	/**
+	 * Human label for the leg's output lines.
+	 */
+	label: string
+	/**
+	 * Vale config, relative to the docs directory.
+	 */
+	config: string
+	/**
+	 * The fixture written to trip every rule, relative to the docs directory.
+	 */
+	dirtyFixture: string
+	/**
+	 * The fixture that must produce no alerts, relative to the docs directory.
+	 */
+	cleanFixture: string
+	/**
+	 * The error-severity count the dirty fixture produces today (measured, not estimated). It is a `>=` bar, so adding a
+	 * rule plus its fixture line passes without a bump; only a rule that STOPS firing fails.
+	 */
+	minDirtyErrors: number
+	/**
+	 * Every rule file that must fire at least once, as `Style.Rule` check names.
+	 */
+	ruleChecks: string[]
+	/**
+	 * Read the clean fixture's verdict from the JSON rather than the exit code when the style carries warning-severity
+	 * rules: Vale's exit code only reflects errors, so a plain run would pass a clean file that trips a warning.
+	 */
+	cleanCountsEverySeverity: boolean
+}
+
+const DOCS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+
+const LEGS: StyleLeg[] = [
+	{
+		label: "docs",
+		config: ".vale.ini",
+		dirtyFixture: "scripts/vale-fixtures/dirty.md",
+		cleanFixture: "scripts/vale-fixtures/clean.md",
+		minDirtyErrors: 67,
+		ruleChecks: [
+			"Mailwoman.AmbiguousShorthand",
+			"Mailwoman.Anthropomorphism",
+			"Mailwoman.BannedWords",
+			"Mailwoman.Spelling",
+			"Mailwoman.StockPhrases",
+			"Mailwoman.Terms",
+			"Mailwoman.Weasel",
+		],
+		cleanCountsEverySeverity: false,
+	},
+	{
+		label: "chat",
+		config: ".vale-chat.ini",
+		dirtyFixture: "scripts/vale-fixtures/dirty-chat.md",
+		cleanFixture: "scripts/vale-fixtures/clean-chat.md",
+		minDirtyErrors: 77,
+		ruleChecks: [
+			"Mailwoman.AmbiguousShorthand",
+			"MailwomanChat.AgreementOpeners",
+			"MailwomanChat.AssertiveFiller",
+			"MailwomanChat.ChatStockForms",
+			"MailwomanChat.DistanceAsSuccess",
+			"MailwomanChat.EconomyMetaphor",
+			"MailwomanChat.EmptyTransitions",
+			"MailwomanChat.JudgmentJargon",
+			"MailwomanChat.MintedMetaphor",
+			"MailwomanChat.OpaqueID",
+			"MailwomanChat.ProjectShorthand",
+			"MailwomanChat.UnsupportedAttribution",
+			"MailwomanChat.VaguePraise",
+			"MailwomanChat.WindDown",
+		],
+		cleanCountsEverySeverity: true,
+	},
+]
+
+/**
+ * Locate the Vale binary through Node's own resolution algorithm.
+ *
+ * `@vvago/vale` is a devDependency of this workspace, but yarn's node-modules linker hoists it to whichever install
+ * directory has no conflicting version — the repo root here, not `docs/`. Asking `require.resolve` for the package
+ * manifest and joining from its directory finds it wherever the linker put it, and keeps this file clear of the
+ * hand-assembled install path that `scripts/node-modules-reacharound.test.ts` refuses.
+ */
+function resolveValeBinary(): string {
+	const manifest = createRequire(import.meta.url).resolve("@vvago/vale/package.json")
+
+	return join(dirname(manifest), "bin", "vale")
+}
+
+const VALE_BIN = resolveValeBinary()
+const $vale = $({ cwd: DOCS_DIR, nothrow: true })
+
+/**
+ * A single Vale run: its parsed alerts plus the exit code, which the dirty legs assert on.
+ */
+async function runVale(config: string, fixture: string): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
+	const result = await $vale`${VALE_BIN} --config ${config} --output=JSON ${fixture}`.quiet()
+	const report = parseJSONStrict<ValeReport>(result.stdout)
+
+	return { alerts: Object.values(report).flat(), exitCode: result.exitCode ?? 0 }
+}
+
+function fail(message: string): never {
+	process.stderr.write(`${message}\n`)
+	process.exit(1)
+}
+
+async function checkLeg(leg: StyleLeg): Promise<void> {
+	process.stdout.write(
+		`== ${leg.dirtyFixture}: expect failure, >= ${leg.minDirtyErrors} errors, every rule file represented ==\n`
+	)
+
+	const dirty = await runVale(leg.config, leg.dirtyFixture)
+
+	if (dirty.exitCode === 0) {
+		fail(`FAIL: ${leg.dirtyFixture} exited 0 (expected a non-zero exit from error-severity hits)`)
+	}
+
+	const errorCount = dirty.alerts.filter((alert) => alert.Severity === "error").length
+
+	if (errorCount < leg.minDirtyErrors) {
+		fail(`FAIL: ${leg.dirtyFixture} produced ${errorCount} error-severity hits, expected >= ${leg.minDirtyErrors}`)
+	}
+
+	for (const check of leg.ruleChecks) {
+		if (!dirty.alerts.some((alert) => alert.Check === check)) {
+			fail(`FAIL: rule ${check} did not fire on ${leg.dirtyFixture} (regression)`)
+		}
+	}
+
+	process.stdout.write(
+		`OK: ${leg.dirtyFixture} — ${errorCount} error-severity hits, all ${leg.ruleChecks.length} rule files fired\n`
+	)
+
+	const severityLabel = leg.cleanCountsEverySeverity ? "zero alerts of any severity" : "success"
+
+	process.stdout.write(`== ${leg.cleanFixture}: expect ${severityLabel} ==\n`)
+
+	const clean = await runVale(leg.config, leg.cleanFixture)
+
+	if (leg.cleanCountsEverySeverity) {
+		if (clean.alerts.length) {
+			for (const alert of clean.alerts) {
+				process.stderr.write(`  ${leg.cleanFixture}:${alert.Line}  ${alert.Check}  ${alert.Message}\n`)
+			}
+
+			fail(`FAIL: ${leg.cleanFixture} tripped ${clean.alerts.length} alert(s) (false positive)`)
+		}
+	} else if (clean.exitCode !== 0) {
+		for (const alert of clean.alerts) {
+			process.stderr.write(`  ${leg.cleanFixture}:${alert.Line}  ${alert.Check}  ${alert.Message}\n`)
+		}
+
+		fail(`FAIL: ${leg.cleanFixture} tripped a rule (false positive)`)
+	}
+
+	process.stdout.write(`OK: ${leg.cleanFixture} — 0 alerts\n`)
+}
+
+for (const leg of LEGS) {
+	await checkLeg(leg)
+}
+
+process.stdout.write("All Vale rule fixture checks passed.\n")

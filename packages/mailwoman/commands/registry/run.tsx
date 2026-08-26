@@ -69,7 +69,7 @@ export const spec = {
 		"default-country": { type: "string", description: "Resolver country scope" },
 		"place-country": { type: "boolean", default: true, description: "Enable coarse country prior" },
 		"resolve-db": { type: "string", description: "WOF admin database" },
-		"data-root": { type: "string", default: mailwomanDataRoot(), description: "State-shard root" },
+		"data-root": { type: "string", default: mailwomanDataRoot(), description: "Per-state database root" },
 	},
 } as const satisfies CommandSpec
 

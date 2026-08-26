@@ -1,14 +1,14 @@
 ---
 title: Build the US address dataset from public sources
-description: Ingest Overture's US address slice, build one state's rooftop and interpolation shards from it and from Census TIGER, then geocode against what you built. Vermont end to end.
+description: Ingest Overture's US address slice, build one state's rooftop and interpolation databases from it and from Census TIGER, then geocode against what you built. Vermont end to end.
 role: tutorial
 verified-with: mailwoman 8.7.0
 ---
 
 # Build the US address dataset from public sources
 
-Let's say the hosted shards are not an option for you — an air-gapped deployment, a license review that
-wants provenance per row, or a state whose published shard is stale. By the end of this page you'll have
+Let's say the hosted databases are not an option for you — an air-gapped deployment, a license review that
+wants provenance per row, or a state whose published database is stale. By the end of this page you'll have
 built one state's address data yourself, from Overture's US address slice and Census TIGER, and geocoded
 a real street address against it at the rooftop tier. Vermont takes about half an hour, and 21 minutes of
 that is one download you make once for all fifty states.
@@ -22,7 +22,7 @@ Read the first two before you start anything. They are the ones that stop a run 
 
 - **9 GB of free disk for Vermont.** The parts, in decimal GB as your disk vendor counts them: a 6.93 GB
   national Overture parquet you need even for one state (the ingest has no per-state mode), 215 MB of
-  Census TIGER archives for Vermont's 14 counties, 140 MB of finished shards, and a 1.65 GB gazetteer.
+  Census TIGER archives for Vermont's 14 counties, 140 MB of finished databases, and a 1.65 GB gazetteer.
   That sums to 8.94 GB, which `du -sh` will report back to you as `8.4G` because `du` counts in GiB.
   Step 9 gives the national figures.
 - **8 GB of free RAM.** The ingest peaked at 7.62 GB resident (`/usr/bin/time -v` reports "maximum
@@ -43,7 +43,7 @@ Read the first two before you start anything. They are the ones that stop a run 
 
 If what you want is the data rather than the build, stop here and read
 [Improve geocode precision](./improve-geocode-precision.mdx) instead: `mailwoman data pull us --only vt`
-downloads the same two Vermont shards in a couple of minutes. This page is for when you need to produce
+downloads the same two Vermont databases in a couple of minutes. This page is for when you need to produce
 them yourself.
 
 ## The Overture release pin, before it bites you
@@ -73,8 +73,8 @@ Prefix>release/2026-07-22.0/
 ```
 
 Two on 2026-08-03. Everything below pins `2026-06-17.0`. Pin the same release across the ingest and every
-shard built from it — rows churn between monthly releases, and a shard whose provenance column disagrees
-with the parquet it came from is a shard you cannot audit.
+database built from it — rows churn between monthly releases, and a database whose provenance column disagrees
+with the parquet it came from is one you cannot audit.
 
 ## 1. Point everything at one data root
 
@@ -135,7 +135,7 @@ downstream issue proceeds on a country whose relevant field fills <80% without a
 | US | 126,672,517 | 93.5% | 99.2% | 98.9% | 14.3% | 61.8% | 100% | 32.5% |
 ```
 
-Street fills at 99.2% and number at 98.9%, which is what a rooftop shard keys on. `unit` at 14.3% is the
+Street fills at 99.2% and number at 98.9%, which is what a rooftop database keys on. `unit` at 14.3% is the
 number to plan around: apartment and suite detail is present for one row in seven, so a build on this
 source resolves buildings, not doors. Below the table the report lists every contributing dataset by row
 count — 120 of them. `NAD`, the US National Address Database, supplies 85,482,422 rows; the other 119
@@ -146,7 +146,7 @@ parquet already on disk. It took 9.67 s here against the 21 minutes of the full 
 report each time — a second ingest for a different country replaces it rather than appending, so keep a
 copy if you need to compare two countries.
 
-## 3. Build one state's rooftop shard
+## 3. Build one state's rooftop database
 
 ```bash
 npx mailwoman situs address-points --state VT --release 2026-06-17.0
@@ -163,13 +163,13 @@ npx mailwoman situs address-points --state VT --release 2026-06-17.0
 7.32 s over the 6.93 GB parquet, and 81.9 MB on disk. That ratio is the reason step 2 is a one-time cost:
 the parquet is scanned once per state and every state after the first is seconds.
 
-The provenance block is per-row, not per-file. Every Vermont point traces to `NAD`, so this shard carries
+The provenance block is per-row, not per-file. Every Vermont point traces to `NAD`, so this database carries
 one license. A California build prints 57 OpenAddresses county sources under that heading, and each of
 them wants credit — which is what step 5 is for.
 
-## 4. Build the same state's interpolation shard
+## 4. Build the same state's interpolation database
 
-The rooftop shard answers a house number it holds. The interpolation shard answers one it does not, by
+The rooftop database answers a house number it holds. The interpolation database answers one it does not, by
 walking the Census TIGER street segment its number falls on. That is a separate source and a separate
 command:
 
@@ -210,7 +210,7 @@ Building VT…
 ```
 
 17 s end to end — 14 county archives downloaded and unpacked to 215 MB, then 6.0 s of build — for a
-58.5 MB shard holding 137,256 segment-sides. The command downloads its own TIGER data, so there is nothing
+58.5 MB database holding 137,256 segment-sides. The command downloads its own TIGER data, so there is nothing
 to fetch first.
 
 Three lines in that output are worth knowing. **Parity** splits the segment-sides into odd and even runs,
@@ -219,7 +219,7 @@ sides are the ones TIGER records as carrying both, and the lookup accepts them f
 fails to find an exact side. **146 skipped non-numeric ranges** are segments whose house numbers are not
 numbers at all, so they are dropped rather than guessed. And the **baked radius calibration of ×1.95** is
 what turns the raw half-segment radius into the `uncertainty_m` you read at query time; it travels inside
-the shard, so the number does not depend on which client opens it.
+the database, so the number does not depend on which client opens it.
 
 If you were reaching for `mailwoman tiger fetch` here, don't — that command loads census blocks, places
 and address features for demographic work, into a different database. The interpolation tier is built by
@@ -239,14 +239,14 @@ vt            333,610 points · 1 sources
     NAD                                      333,610
 ```
 
-This reads every shard in the directory and aggregates the per-row `source` column into one ledger. Run it
+This reads every database in the directory and aggregates the per-row `source` column into one ledger. Run it
 after the last state you build, not after each one: it counts what is on disk, so a partial run undercounts
 and a rerun fixes it. NAD is US public domain; the OpenAddresses sources named in `ATTRIBUTION.json` are
-the ones you owe credit to when you redistribute a shard.
+the ones you owe credit to when you redistribute a database.
 
 ## 6. Add the gazetteer
 
-The two shards you built hold streets and house numbers, and nothing in either resolves the word
+The two databases you built hold streets and house numbers, and nothing in either resolves the word
 "Burlington". That comes from the candidate gazetteer, which mailwoman publishes as a download rather than
 asking you to build it — the build needs the Who's On First data repositories cloned first, and the
 database it produces is over 5 GB before the query-time one is derived from it.
@@ -304,7 +304,7 @@ npx mailwoman data status us 2>&1 | grep -i vt
 
 Both files are correct and both report `stale`, so know what that word means before you act on it.
 `data status` compares each file's byte count against the size recorded for the **published** bundle; it is
-a "does your download match ours" check, not a validity check on a shard you built. A locally-built shard
+a "does your download match ours" check, not a validity check on a database you built. A locally-built one
 fails it by construction. The rooftop file is 81,903,616 bytes against the bucket's 72,945,664 because you
 built it from a newer Overture release; the interpolation file is 58,511,360 against 58,507,264, one
 4 KB SQLite page apart, and both round to 58.5 MB in the message — which is why that second line reads as a
@@ -312,7 +312,7 @@ contradiction and is not one. After a build, `doctor` plus a real geocode is the
 
 ## 8. Geocode against what you built
 
-Three addresses, one per tier, against the two shards and the gazetteer now on your disk.
+Three addresses, one per tier, against the two databases and the gazetteer now on your disk.
 
 ```bash
 npx mailwoman geocode "149 Church St, Burlington, VT 05401" --format text
@@ -332,7 +332,7 @@ hierarchy:
   region               VT [wof:85688763] (44.0753, -72.6625)
 ```
 
-`address_point` with `uncertainty_m: 1` — a rooftop hit out of the shard you built in step 3. The
+`address_point` with `uncertainty_m: 1` — a rooftop hit out of the database you built in step 3. The
 `hierarchy` block underneath comes from the gazetteer, and it is the reason to keep both: Burlington's own
 centroid is 1,942 m from this building, which is the error you would have carried without step 3.
 
@@ -352,8 +352,8 @@ region:           VT
 postcode:         05401
 ```
 
-`interpolated`, from the TIGER shard in step 4, with 90 m of reported uncertainty — the half-segment radius
-already multiplied by the ×1.95 calibration baked into the shard.
+`interpolated`, from the TIGER database in step 4, with 90 m of reported uncertainty — the half-segment radius
+already multiplied by the ×1.95 calibration baked into that file.
 
 Then ask for a state you did not build:
 
@@ -371,7 +371,7 @@ postcode:         03301
 ```
 
 `admin`, and no `uncertainty_m` at all: the coordinate is Concord's centroid, because no New Hampshire
-shard exists in this data root. Precision is bought per state. Branch on `resolution_tier` and you can tell
+database exists in this data root. Precision is bought per state. Branch on `resolution_tier` and you can tell
 the three apart in code without guessing from the coordinate.
 
 ## 9. Scale to fifty states
@@ -391,15 +391,15 @@ Those two are the only commands on this page that were not run to produce it —
 wall clock, not an afternoon. So the numbers below are the published national tier's, which was built by
 these same two commands, read off the bundle registry the CLI ships:
 
-| Artifact                      | Files | Size    |
-| ----------------------------- | ----- | ------- |
-| Rooftop shards (50 + DC + VI) | 52    | 30.3 GB |
-| Interpolation shards          | 51    | 11.0 GB |
-| Both                          | 103   | 41.3 GB |
+| Artifact                         | Files | Size    |
+| -------------------------------- | ----- | ------- |
+| Rooftop databases (50 + DC + VI) | 52    | 30.3 GB |
+| Interpolation databases          | 51    | 11.0 GB |
+| Both                             | 103   | 41.3 GB |
 
 Vermont's 140 MB is a three-hundredth of that, and the spread between states is wide: California's rooftop
-shard is 3.47 GB and Alaska's is 78.6 MB. Two things scale and one does not. The parquet is a fixed
-6.93 GB whatever you build from it. Shard build time scales with rows, so plan against the population of
+database is 3.47 GB and Alaska's is 78.6 MB. Two things scale and one does not. The parquet is a fixed
+6.93 GB whatever you build from it. Build time scales with rows, so plan against the population of
 the states you want rather than their count. And the TIGER working set scales with counties — 215 MB
 bought Vermont's 14, against the 3,144 in the ranking — so give the interpolation step room well beyond
 the finished 11.0 GB.
@@ -407,13 +407,13 @@ the finished 11.0 GB.
 Two states do not come out of the Overture path at all, and this is the part to check before you promise
 coverage:
 
-- **Hawaii is absent from Overture's US addresses theme.** The published shard was built from
+- **Hawaii is absent from Overture's US addresses theme.** The published database was built from
   OpenAddresses instead, with `situs address-points --state HI --oa-csv <conformed.csv>`, and holds 348,377
   points.
-- **New Hampshire is absent from both, and its published shard holds zero rows.** The file exists — 20,480
+- **New Hampshire is absent from both, and its published database holds zero rows.** The file exists — 20,480
   bytes, the schema and no data — so a lookup against it opens, succeeds, and returns nothing. An empty
-  shard and an absent shard read the same way at the call site and mean different things, so if you serve
-  New Hampshire, treat the rooftop tier there as unbuilt. Its interpolation shard is unaffected: 57.6 MB
+  database and an absent one read the same way at the call site and mean different things, so if you serve
+  New Hampshire, treat the rooftop tier there as unbuilt. Its interpolation database is unaffected: 57.6 MB
   and 156,620 segment-sides, built from TIGER like every other state's.
 
 ## What you have now

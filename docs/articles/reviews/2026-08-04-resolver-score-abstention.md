@@ -1,4 +1,4 @@
-# resolver_score cannot gate garbage — a characterization
+# resolver_score cannot reject garbage — a characterization
 
 **Date:** 2026-08-04 · **Issue:** #40, mailfail finding 5 · **Scope:** what `metadata.resolver_score` is, what it can
 and cannot decide, and what an abstention surface would have to be built on instead.
@@ -83,9 +83,9 @@ This is confirmed by measurement: every postcode node the candidate backend reso
 
 ### Who consumes it today
 
-Almost nobody, and nothing gates on it by default.
+Almost nobody, and nothing blocks on it by default.
 
-- `resolve.ts:1076` — `if (top.score < state.minWinningScore) return null`. This is the one true gate.
+- `resolve.ts:1076` — `if (top.score < state.minWinningScore) return null`. This is the one site that can reject a result.
   `minWinningScore` defaults to `0` (`resolve.ts:757`) and **no production caller sets it** (grep: only
   `resolver/resolve.test.ts:311`). Its own docstring says _"Score scale is implementation-defined; tune per backend."_
 - `resolver-wof-wasm/browser-cascade.ts:302` — a tiebreak _within_ a placetype-rank tier
@@ -109,7 +109,7 @@ Two runs per backend (105 garbage probes + 150 control addresses each), through 
 coordinates: its tag, value, resolved place name, `resolver_score`, classifier confidence, alternatives count, the
 distinct tags present in the whole parse, and (for the control) the great-circle error to the government point.
 
-- FTS backend: `admin-global-priority.db` (5.3 GB, sealed, md5-stamped 2026-08-02). No postcode shard, so postcode
+- FTS backend: `admin-global-priority.db` (5.3 GB, sealed, md5-stamped 2026-08-02). No postcode database, so postcode
   nodes never resolve on this leg.
 - Candidate backend: `candidate.db` → `candidate-global-1026.db` (1.65 GB, sealed).
 
@@ -217,14 +217,14 @@ violations  n=14  min=0.062  p50=0.500  max=0.964
 correct     n=149 min=0.918  p50=0.928  max=0.945
 ```
 
-At a 0.918 cut, 13 of 14 violations drop and no correct control locality is lost. The single survivor is
+At a 0.918 threshold, 13 of 14 violations drop and no correct control locality is lost. The single survivor is
 `+1 (555) 867-5309` → `1` → Zona 1 at **0.964**, the highest-confidence violation in the set — a phone number that
 the model is more sure about than any real address it read.
 
 **Three caveats, because the numbers above are seductive:**
 
 1. The correct-control confidence band is _absurdly_ tight (0.918–0.945 across 149 addresses). A signal that
-   near-constant on clean structured US input will spread on a harder control, and the 0.918 cut is nothing more than
+   near-constant on clean structured US input will spread on a harder control, and the 0.918 threshold is nothing more than
    the minimum of that cluster. Any threshold work must re-derive this on a multi-locale, fragment-shaped control
    before it means anything.
 2. Corroboration costs "0 of 149" only because every control row is a full street address. `Springfield` — a bare
@@ -233,7 +233,7 @@ the model is more sure about than any real address it read.
    is aimed at.
 3. n=14 and n=12. These are directional results on a small violation set, not calibrated numbers.
 
-Fields already on `ResolvedPlace` that nothing currently reads at the gate site, and that a design could use:
+Fields already on `ResolvedPlace` that nothing currently reads at `resolve.ts:1076`, and that a design could use:
 `exactMatch` (match-quality tier — already the primary sort key elsewhere), `prominence` (bounded ~`[0, 8]`, defined
 the same way on both backends, and therefore a far better candidate for a shared threshold than `score`), `mismatch`
 (an explicit postcode/locality conflict flag), `resolutionQuality` (an explicit fallback-tier flag), and the
@@ -246,7 +246,7 @@ top-vs-runner-up score _margin_, which is computed nowhere today even though `al
 Presented in ascending order of cost. None of them is a recommendation; each carries what would have to be measured
 to promote it.
 
-### Design A — per-backend calibration of the existing gate
+### Design A — per-backend calibration of the existing `minWinningScore`
 
 Keep `resolver_score` as-is. Give `minWinningScore` a per-backend default, sourced from the backend rather than the
 caller: a `scoreProfile` on the `PlaceLookup`/`ResolverBackend` interface declaring `{ scale: "bm25" | "log10pop" |
@@ -324,7 +324,7 @@ well-calibrated number that still cannot abstain.
 - **One control shape.** All 150 control rows are full US street addresses. No bare localities, no fragments, no
   non-Latin script in the _control_ (there is some in the garbage set). The corroboration signal's zero measured cost
   is an artifact of that shape and should not be quoted without this caveat.
-- **No FTS postcode shard.** The FTS leg ran against the admin database alone, so it produced no postcode nodes and
+- **No FTS postcode database.** The FTS leg ran against the admin database alone, so it produced no postcode nodes and
   never exercised the coordinate-first Regime B scorer. The `[0, 1]` regime is read from source, not measured.
 - **No calibration fitting.** Design C's mappings are sketches. No logistic was fitted, no reliability curve drawn.
 - **No `prominence` measurement.** It is argued for on the strength of its definition (bounded, same meaning on both

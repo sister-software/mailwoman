@@ -29,7 +29,7 @@ Every variable below is read by shipped runtime code. Each has no default unless
 
 | Variable                         | Default                                        | Effect                                                                                      | Set it when                                                                                |
 | -------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `MAILWOMAN_DATA_ROOT`            | platform data directory                        | The root directory for every downloaded artifact: gazetteers, shards, POI layer             | Your data lives anywhere but the default. Run `mailwoman doctor` to see the resolved value |
+| `MAILWOMAN_DATA_ROOT`            | platform data directory                        | The root directory for every downloaded artifact: gazetteers, address databases, POI layer  | Your data lives anywhere but the default. Run `mailwoman doctor` to see the resolved value |
 | `MAILWOMAN_CONFIG_ROOT`          | platform config directory                      | Configuration files owned by Mailwoman                                                      | You need a deployment-specific configuration location                                      |
 | `MAILWOMAN_CACHE_ROOT`           | platform cache directory                       | Reusable downloaded and generated caches                                                    | You need caches on a different volume                                                      |
 | `MAILWOMAN_LOG_ROOT`             | platform log directory                         | Persistent Mailwoman logs                                                                   | Your service manager expects another log location                                          |
@@ -92,7 +92,7 @@ of it, so an exported variable beats a `.env` entry.
 
 ## Behavior defaults
 
-Every mechanism below is on by default. Each cleared a gate against the shipped model on the
+Every mechanism below is on by default. Each cleared an evaluation against the shipped model on the
 first-class locales before it was promoted, so the defaults are the measured configuration and turning
 one off is the change that needs a reason. Each is an option, not an environment variable.
 
@@ -117,9 +117,9 @@ Two mechanisms are off by default and worth knowing about:
 | Mechanism                        | Where         | Effect                                                         | Turn it on when                                                              |
 | -------------------------------- | ------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | `calibrate`                      | `ParseOpts`   | Maps raw span confidence through the shipped calibration table | You threshold on confidence. See [Library API](./library-api.mdx#confidence) |
-| `addressPoints`, `interpolation` | `ResolveOpts` | The rooftop and interpolation coordinate tiers                 | You have pulled the street shards for your region                            |
+| `addressPoints`, `interpolation` | `ResolveOpts` | The rooftop and interpolation coordinate tiers                 | You have pulled the street databases for your region                         |
 
-The coordinate tiers are gated on data rather than on a measurement. They stay off because the shards
+The coordinate tiers are conditioned on data rather than on a measurement. They stay off because the databases
 are a 41.3 GB download for the United States, not because they cost accuracy.
 
 For every boolean option above, `false` is the disable signal and it is not the same as omitting the
@@ -143,7 +143,7 @@ gap.
 
 ## Rationale
 
-The parsing and geocoding commands gate resolution on an environment variable rather than on a file
+The parsing and geocoding commands condition resolution on an environment variable rather than on a file
 existing at a conventional path, because adopting a database silently would change every result on
 the machine that downloaded it. A geocoder that answers differently depending on what happens to be
 on disk is not one you can reason about. The cost is the step this page keeps repeating: download,
@@ -151,7 +151,7 @@ then export. The two drop-in servers take the opposite trade and read the conven
 a drop-in that needs a second setup step is not a drop-in.
 
 The behavior defaults are on rather than opt-in because a default nobody turns on is a mechanism that
-does not exist. Each one shipped on by default only after clearing a gate against the shipped model,
+does not exist. Each one shipped on by default only after clearing an evaluation against the shipped model,
 and turning one off takes `false` rather than a rebuild.
 
 The environment schema is broader than this page because its split is about logging safety — a

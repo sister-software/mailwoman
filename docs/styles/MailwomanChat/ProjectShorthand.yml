@@ -1,13 +1,17 @@
 ## Mailwoman chat style: banned project shorthand.
 ##
-## Vale existence rule. Operator-banned terms (2026-08-24): each one is a name
-## an agent minted for something that already has a plain name, and the
-## operator has had to decode them for weeks. `the null` / `the cure` were
-## invented for two fine-tune runs — say "the control run (v5.0.1)" / "the
-## treatment run (v5.0.2)". `lever` means a specific change — name the config
-## key, corpus recipe, or weight. `shard` means a training-data subset — say
-## that, or name the recipe file. `three-leg` names a comparison protocol —
-## say which systems or runs the legs are.
+## Vale existence rule. Each token is a name an agent minted for something that
+## already has a plain name, and the reader has to decode it. `the null` /
+## `the cure` were invented for two fine-tune runs — say "the control run
+## (v5.0.1)" / "the treatment run (v5.0.2)". `lever` means a specific change —
+## name the config key, corpus recipe, or weight. `three-leg` names a
+## comparison protocol — say which systems or runs the legs are.
+##
+## This file holds the CHAT-ONLY shorthand: words that appear in replies and
+## never in published prose. The four words banned on BOTH surfaces —
+## seam, shard, cut, gate — live in Mailwoman/AmbiguousShorthand.yml, which
+## .vale-chat.ini loads through the shared Mailwoman style, so chat coverage
+## of `shard` is unchanged by its move out of this file.
 ##
 ## A backticked artifact name (`synth-suffix-boundary`,
 ## `packages/corpus/src/shard-recipes/`) survives, because inline code is
@@ -20,5 +24,4 @@ tokens:
   - the null
   - the cure
   - lever(s)?
-  - shard(s)?
   - three-leg

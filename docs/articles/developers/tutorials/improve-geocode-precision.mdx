@@ -16,7 +16,7 @@ which; and you'll know what `uncertainty_m` is measuring in each one. About twen
 
 - **`candidate.db` on disk**, at `<data root>/wof/candidate.db`.
   [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) covers the download.
-- **About 127 MB of free disk** for the street shards this page pulls, and `$MAILWOMAN_DATA_ROOT`
+- **About 127 MB of free disk** for the street databases this page pulls, and `$MAILWOMAN_DATA_ROOT`
   pointing where you want them. The full US street tier is 103 files and about 41.3 GB, so this page
   pulls one jurisdiction — the District of Columbia, small on disk and dense enough in rooftop coverage
   to show both street tiers inside one state.
@@ -78,16 +78,16 @@ https://public.sister.software/mailwoman/street/us/dc/interp.db →
 Two files, two tiers. `situs.db` is the rooftop register: address points with a coordinate each.
 `interp.db` is the TIGER street network, which carries a house-number range per segment and estimates a
 position along it. Every state ships both, except the US Virgin Islands, which has no interpolation
-shard.
+database.
 
 `--only` matches on the slug, the remote path or the local path, so `--only dc` picks the two DC files
 out of the 103. Drop it and you get the whole 41.3 GB tier.
 
 A small download is not a cheap state, and the plan is where you can tell the two apart. New Hampshire's
 rooftop register downloads, verifies and installs at 20,480 bytes — and holds 0 rows. The file exists;
-the tier it should serve does not, and nothing reports an error, because a shard with no matching row
-and a shard with no rows at all look identical from the lookup. NH addresses fall through to its
-interpolation shard, which is a real 57.6 MB. Read the sizes in the dry-run as a coverage signal before
+the tier it should serve does not, and nothing reports an error, because a database with no matching row
+and a database with no rows at all look identical from the lookup. NH addresses fall through to its
+interpolation database, which is a real 57.6 MB. Read the sizes in the dry-run as a coverage signal before
 you plan around a state.
 
 ## 3. Pull it
@@ -113,7 +113,7 @@ file is before it starts; `content-length verified` is that same number checked 
 There is no checksum in that check, because the bucket publishes no checksum sidecar — a truncated
 transfer is caught, a corrupted one of the right length is not.
 
-No configuration follows. The shards are found by filename under the data root, keyed to the region the
+No configuration follows. The databases are found by filename under the data root, keyed to the region the
 parse resolved.
 
 ## 4. See the tier you have now
@@ -160,7 +160,7 @@ hierarchy:
   region               DC [wof:85688741] (38.9048, -77.0163)
 ```
 
-`interpolated`, and a radius you can act on. The second shard found the H St NE segment whose
+`interpolated`, and a radius you can act on. The second database found the H St NE segment whose
 house-number range contains 620 and placed the point proportionally along it.
 
 ## 5. Read the four tiers
@@ -188,7 +188,7 @@ for roughly a 90% bound. The measured factors run 1.44 for DC, the densest, to 3
 [`interp-calibration.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/interp-calibration.ts)
 and states its own source.
 
-**The `street` tier needs a shard no published bundle carries today.** It comes from a national
+**The `street` tier needs a database no published bundle carries today.** It comes from a national
 register's derived street-centroid database, built locally; the `fr` bundle ships the rooftop register
 alone, and the per-state US provider never opens one. Until that changes, a street-only query falls to
 `admin`.
@@ -234,14 +234,14 @@ postcode:         20004
 ```
 
 Still `admin`, because a postcode centroid is an admin coordinate — but 102 m from the rooftop in step 4
-rather than 1,521 m. When the street shards are missing, a resolved postcode is a much better answer
+rather than 1,521 m. When the street databases are missing, a resolved postcode is a much better answer
 than a resolved city, and the tier label does not distinguish them. Read `hierarchy` when you need to
 know which one you got.
 
 ## 7. Outside the US
 
 The street tier is per country, and France is the one with a published national register: `data pull fr`
-stages the BAN rooftop shard, 26 million points under the Licence Ouverte.
+stages the BAN rooftop register, 26 million points under the Licence Ouverte.
 
 ```bash
 npx mailwoman data pull fr --dry-run
@@ -255,7 +255,7 @@ https://public.sister.software/mailwoman/street/fr/2026-07-10/situs.db →
 
 Nearly 7 GB, against 127 MB for the District of Columbia — check that number against your free disk
 before you start it.
-With the shard in place, French addresses answer at the rooftop tier with no locale flag and no other
+With that register in place, French addresses answer at the rooftop tier with no locale flag and no other
 change:
 
 ```bash
@@ -277,7 +277,7 @@ The `hierarchy` block survives the tier change here exactly as it did in DC: Par
 centroid, underneath a rooftop coordinate 1,257 m away from it.
 
 One gap to plan around, and it is structural rather than temporary. France ships a rooftop register and
-no interpolation shard, so a house number BAN does not carry falls straight to `admin` — there is no
+no interpolation database, so a house number BAN does not carry falls straight to `admin` — there is no
 middle tier to catch it, the way `620 H St NE` was caught in DC. Rue de Rivoli runs to number 258 in
 BAN, so 500 is off the end of it:
 

@@ -32,7 +32,7 @@ That doc carries the source capability tiers and the positive-evidence-only rule
 ## Why not a deterministic overlay — the reasoning
 
 **The over-firing was a data artifact, not a model limitation.** The night-9 `country`
-shard was almost entirely _trailing-country_ rows, so the model learned one cheap
+slice was almost entirely _trailing-country_ rows, so the model learned one cheap
 shortcut — "trailing token ⇒ country" — and tagged cities and regions as countries (49
 F1, 23% precision). That is a skewed training distribution, not a transformer+CRF ceiling.
 Context-sensitive token classifiers (BERT+CRF, LUKE, BLINK) routinely resolve gazetteer
@@ -64,9 +64,9 @@ partition that matters is by _what the field needs to learn_:
 
 | Tier                                                 | Fields                                   | Treatment                                                                                                                                            |
 | ---------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage shard + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                                 |
-| **Closed-vocab, no homographs, just starved**        | `po_box`, `cedex`                        | also just a coverage shard — they were starved, not unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit` |
-| **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage shard **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature     |
+| **Open-vocab, starved**                              | `unit`, `street_prefix`, `street_suffix` | coverage slice + retrain (proven: `unit` 0→92%, sharpened neighbors)                                                                                 |
+| **Closed-vocab, no homographs, just starved**        | `po_box`, `cedex`                        | also just a coverage slice — they were starved, not unlearnable. "PO Box"/"CEDEX" carry no ambiguity, so no anchor is needed; train them like `unit` |
+| **Closed-vocab, large set + homographs + long tail** | `country`                                | balanced coverage slice **plus** a soft gazetteer anchor feature (long-tail recall floor + homograph flag). The only tier that needs the feature     |
 
 The deterministic _override_ appears in none of them.
 
@@ -121,7 +121,7 @@ US-order artifact; the number under homograph stress is unknown). It must contai
   hallucination).
 - a handful of **long-tail countries** (Eswatini, Timor-Leste, São Tomé) for recall.
 
-**Gate (per-tag no-regression):** `country` up, `region`/`locality` flat. Run DeepSeek's
+**Acceptance (per-tag no-regression):** `country` up, `region`/`locality` flat. Run DeepSeek's
 A/B/C control — current model, soft-feature-on-old-corpus, soft-feature-on-balanced-corpus
 — so we learn whether the _feature_ or the _data_ does the work and don't pay for the
 feature if balanced data alone suffices.

@@ -184,8 +184,8 @@ then move to the evidence.
 Do not use praise as a transition. Avoid greetings, pleasantries, canned enthusiasm, and sycophantic
 openers. Do not imitate the operator's profanity unless a quoted string requires it.
 
-Avoid consultant language, inflated claims, and manufactured conclusions. Cut filler before cutting
-the explanation.
+Avoid consultant language, inflated claims, and manufactured conclusions. Remove filler before you
+shorten the explanation.
 
 Avoid these stock forms:
 
@@ -200,11 +200,26 @@ Avoid these stock forms:
 - `Let me know if...`
 - `That's X, not Y.`
 
-Banned reply vocabulary, replaced by the concrete referent: `lever` and `shard` (name the config key,
-weight, or corpus recipe file), minted run names such as `the null` and `the cure` (name the version and
+Banned reply vocabulary, replaced by the concrete referent: `lever` (name the config key, weight, or
+corpus recipe file), minted run names such as `the null` and `the cure` (name the version and
 role: "the control run (v5.0.1)"), monetary metaphors for non-monetary cost (`the fine-tune tax`,
 `nearly free` — state the cost and its unit), and scheduling or wind-down words (`tomorrow`, `good place
 to pause` — state the next action and stop; the operator sets cadence).
+
+Four more words are banned in replies AND in every committed prose surface, because each stands for
+four or five different things here and the reader cannot tell which one you mean:
+
+- `gate` — name the check: the promotion eval, the verify step, the D-rule, the required `test` CI
+  context. As a verb, use a plain one: blocks, requires, refuses, admits.
+- `shard` — name the artifact: the corpus recipe output, the per-country postcode database, the WOF
+  extract, or the filename itself.
+- `seam` — name the boundary: the package boundary, the `PlaceLookup` interface, the call site.
+- `cut` — publish (a release), branch (from `origin/main`), reduce, remove.
+
+A contract-bearing name keeps its spelling: `@mailwoman/locale-gate`, `mailwoman eval gate`,
+`mwdev_gate`, `promotion-gate.ts`, `packages/corpus/src/shard-recipes/`, `sharding.ts`,
+`ShardProvider`. Inline code is exempt from the rule, so backtick the identifier and the sentence
+passes. Renaming one is a separate change the operator approves.
 
 Use technical terms only when they are precise in the repository. Do not use figurative terms such as
 `blast radius`, `substrate`, `backbone`, `north star`, or `escape hatch` as decoration.

@@ -34,7 +34,7 @@ Backends differ in what they can answer, and that is visible rather than silent:
 
 Two rules run through this package, and both exist because their opposites shipped bugs.
 
-**A coordinate the gazetteer cannot supply is absent, never `0,0`.** `0,0` is the unlocated sentinel in every WOF-lineage shard, and the shards carry a great deal of it — 48,216 of 142,604 Japanese postcodes, 86,377 GB, 414 US. `decorateNode` leaves `lat`/`lon` unset for such a row, so the place still resolves and identifies itself while stating that it cannot say where it is. A consumer's `lat != null` check then means what it looks like it means.
+**A coordinate the gazetteer cannot supply is absent, never `0,0`.** `0,0` is the unlocated sentinel in every WOF-lineage database, and those databases carry a great deal of it — 48,216 of 142,604 Japanese postcodes, 86,377 GB, 414 US. `decorateNode` leaves `lat`/`lon` unset for such a row, so the place still resolves and identifies itself while stating that it cannot say where it is. A consumer's `lat != null` check then means what it looks like it means.
 
 **A missing answer is not a wrong answer.** An unresolvable span is returned as parsed. Nothing here invents a centroid to fill a hole.
 

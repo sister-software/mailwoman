@@ -96,10 +96,10 @@ Three levers, held behind the five-arm benchmark's per-query-class latency and f
    postcode receipt above is the evidence base; landing estimate 40–60 B/point, taking the
    world spine from ~150 GB to ~30–50 GB. Decode must stay fixed-stride trivial — the
    resolver ladder is synchronous and per-keystroke.
-2. **Admin-keyed shard distribution** ([#1548](https://github.com/sister-software/mailwoman/issues/1548)) —
-   deployment scope becomes a fetch list of country shards, each carrying its own coverage
+2. **Admin-keyed distribution by country file** ([#1548](https://github.com/sister-software/mailwoman/issues/1548)) —
+   deployment scope becomes a fetch list of per-country files, each carrying its own coverage
    manifest (the meaning-of-zero rule). Differential updates: a register rev re-fetches one
-   shard. The candidate gazetteer stays global and monolithic — namesake resolution is
+   country file. The candidate gazetteer stays global and monolithic — namesake resolution is
    inherently global (#1546 is what candidate-set gaps do).
 3. **Targeted precompute** ([#1549](https://github.com/sister-software/mailwoman/issues/1549)) —
    build-time artifacts that make hot, stable queries single lookups (H3-ring KNN lists,

@@ -24,7 +24,7 @@ export const spec = {
 			type: "boolean",
 			default: false,
 			description:
-				"Also print every path and environment variable the checks resolved (data root, candidate.db, WOF shards, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.",
+				"Also print every path and environment variable the checks resolved (data root, candidate.db, WOF databases, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.",
 		},
 	},
 } as const satisfies CommandSpec
