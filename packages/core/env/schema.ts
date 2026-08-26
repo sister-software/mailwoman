@@ -59,11 +59,18 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)),
 
 	// Platform-native application directories. Environment values override these defaults.
-	MAILWOMAN_DATA_ROOT: z.string().default(defaultMailwomanPaths.data),
-	MAILWOMAN_CONFIG_ROOT: z.string().default(defaultMailwomanPaths.config),
-	MAILWOMAN_CACHE_ROOT: z.string().default(defaultMailwomanPaths.cache),
-	MAILWOMAN_LOG_ROOT: z.string().default(defaultMailwomanPaths.log),
-	MAILWOMAN_TEMP_ROOT: z.string().default(defaultMailwomanPaths.temp),
+	//
+	// `blankAsAbsent` is load-bearing, not cosmetic. A bare `.default()` fires only on `undefined`, so a
+	// present-but-empty variable passes validation intact — and an empty root is NOT an absent root:
+	// `resolvePath("", …)` resolves against the process cwd, so every path builder silently answers with a
+	// cwd-relative path and the caller reports the ARTIFACT missing rather than the root unset. Anything
+	// that expands an unset name to `""` (a CI expression, an exported-but-empty shell variable) produces
+	// that shape, so blank must mean absent here.
+	MAILWOMAN_DATA_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.data)),
+	MAILWOMAN_CONFIG_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.config)),
+	MAILWOMAN_CACHE_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.cache)),
+	MAILWOMAN_LOG_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.log)),
+	MAILWOMAN_TEMP_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.temp)),
 
 	// Corpus source-fetch tools (`corpus/src/tools/fetch/*` — env knobs are now command flags; these remain for compat). Callers do their own numeric/boolean parsing on these,
 	// so they stay raw strings — the schema only gates which keys surface, not how they're coerced.
