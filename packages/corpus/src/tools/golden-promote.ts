@@ -158,17 +158,6 @@ function isSuspicious(entry: GoldenEntry): boolean {
 	return false
 }
 
-// ── IO ─────────────────────────────────────────────────────────────────────
-
-/**
- * Read a JSONL, tolerating a missing file (returns `[]`) — prior golden dirs may lack a bucket.
- */
-async function readJSONLIfPresent<T>(path: string): Promise<T[]> {
-	if (!existsSync(path)) return []
-
-	return Array.fromAsync(JSONSpliterator.fromAsync<T>(path))
-}
-
 // ── Main ───────────────────────────────────────────────────────────────────
 
 export async function promoteGolden(
@@ -181,7 +170,15 @@ export async function promoteGolden(
 	const dryRun = options.dryRun ?? false
 
 	report?.(`reading candidates: ${options.input}`)
-	const candidates = await readJSONLIfPresent<GoldenEntry>(options.input)
+
+	// The candidates file is the REQUIRED input, so its absence must not read as "zero candidates" —
+	// that promotes the prior version unchanged and reports success. `JSONSpliterator.fromAsync`
+	// reports a missing path as a bare `TypeError` naming its own internals, so name the path here.
+	if (!existsSync(options.input)) {
+		throw new Error(`Candidates file not found: ${options.input}`)
+	}
+
+	const candidates = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenEntry>(options.input))
 	report?.(`  ${candidates.length} candidates loaded`)
 
 	// Forward-copy base: existing entries from the prior golden version go forward verbatim,
@@ -193,7 +190,7 @@ export async function promoteGolden(
 	if (existsSync(priorDir)) {
 		for (const f of readdirSync(priorDir).filter((n) => n.endsWith(".jsonl"))) {
 			const country = f.replace(".jsonl", "").toUpperCase()
-			const entries = await readJSONLIfPresent<GoldenEntry>(join(priorDir, f))
+			const entries = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenEntry>(join(priorDir, f)))
 			priorEntries.push({ country, entries })
 
 			for (const e of entries) {
