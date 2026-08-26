@@ -1,0 +1,9 @@
+{
+	// Non-emitting companion to ./tsconfig.json — see ../../tsconfig.test-base.json for why it exists.
+	"extends": ["./tsconfig.json", "../../tsconfig.test-base.json"],
+	"include": ["./**/*.test.ts", "./**/*.test.tsx", "./test/**/*"],
+	"exclude": ["./out/**/*"],
+	// `../core` is referenced by the TEST project only: the boundary test reads core's manifest, and the
+	// build project deliberately declares no dependency on it in either direction.
+	"references": [{ "path": "./tsconfig.json" }, { "path": "../core" }]
+}

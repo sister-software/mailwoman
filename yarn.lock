@@ -4783,6 +4783,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/geographic-model@workspace:packages/geographic-model":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/geographic-model@workspace:packages/geographic-model"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/kind-classifier@workspace:*, @mailwoman/kind-classifier@workspace:packages/kind-classifier":
   version: 0.0.0-use.local
   resolution: "@mailwoman/kind-classifier@workspace:packages/kind-classifier"

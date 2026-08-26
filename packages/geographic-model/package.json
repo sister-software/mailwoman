@@ -1,0 +1,53 @@
+{
+	"name": "@mailwoman/geographic-model",
+	"version": "0.0.0",
+	"description": "Stable geographic concepts, relations, mappings, source observations, derived facts, and their provenance — authored records compiled deterministically into runtime artifacts.",
+	"keywords": [
+		"affordance",
+		"geographic",
+		"ontology",
+		"provenance"
+	],
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/geographic-model"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"data/**/*.json",
+		"*.ts",
+		"**/*.ts",
+		"!*.test.ts",
+		"!**/*.test.ts",
+		"!test/**"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}
