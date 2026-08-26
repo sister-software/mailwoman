@@ -269,7 +269,9 @@ export interface POIBoardOptions {
  * else the FTS admin shard set, else no resolver at all (anchored category cases then abstain `anchor_required`,
  * exactly like the CLI probe degrades). Caller owns closing the returned handle.
  */
-async function loadResolver(options: POIBoardOptions): Promise<{ resolver: Resolver; close: () => void } | undefined> {
+async function loadResolver(
+	options: POIBoardOptions
+): Promise<{ resolver: Resolver; close: () => void; backend: POIBoardResolverBackend } | undefined> {
 	const wofPaths = options.candidateDB
 		? []
 		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
@@ -289,13 +291,24 @@ async function loadResolver(options: POIBoardOptions): Promise<{ resolver: Resol
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
-		return { resolver: createWOFResolver(lookup), close: () => lookup.close() }
+		return {
+			resolver: createWOFResolver(lookup),
+			close: () => lookup.close(),
+			backend: lookup instanceof mod.WOFCandidateTableLookup ? "candidate" : "wof-fts",
+		}
 	} catch {
 		console.error("note: `@mailwoman/resolver-wof-sqlite` is not installed — anchor localities will not resolve.")
 
 		return undefined
 	}
 }
+
+/**
+ * Which lookup answered anchor resolution. Reported rather than re-derived: `createResolverBackend` falls back to the
+ * convention candidate path, so a caller that reads only its own options names the wrong backend on any box where that
+ * file exists.
+ */
+export type POIBoardResolverBackend = "candidate" | "wof-fts" | "none"
 
 export interface QuantileStats {
 	count: number
@@ -462,17 +475,32 @@ function computeStats(values: number[]): QuantileStats | null {
 }
 
 /**
- * Build the runtime pipeline once (classifier + resolver + poi executor), run every fixture through it, grade, and
- * aggregate. Mirrors `commands/poi.tsx`'s construction: `NeuralAddressClassifier.loadFromWeights` + the same
- * resolver-backend selector (`resolver-backend.ts`) + `createRuntimePipeline({ poiQueryKind: { poiDatabasePath } })`.
+ * One constructed board pipeline, with the database it queries and the handle that closes its resolver.
  */
-export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoardRunResult> {
-	const fixturesPath = options.fixturesPath ?? POI_BOARD_FIXTURES
+export interface POIBoardPipelineHandle {
+	pipeline: (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
+	/**
+	 * The sealed poi.db the executor queries — carried here so a caller reporting artifact identity reads the path the
+	 * pipeline actually opened rather than re-deriving the default.
+	 */
+	db: string
+	/**
+	 * Which lookup answered anchor resolution, as built rather than as requested.
+	 */
+	backend: POIBoardResolverBackend
+	close: () => void
+}
 
-	const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(fixturesPath))
-
-	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
-
+/**
+ * Construct the board's pipeline: classifier + resolver + poi executor, exactly as `commands/poi.tsx` builds it
+ * (`NeuralAddressClassifier.loadFromWeights` + the shared resolver-backend selector + `createRuntimePipeline({
+ * poiQueryKind: { poiDatabasePath } })`).
+ *
+ * Extracted so a probe that grades with {@link gradeCase} runs against the SAME construction the board does. A second
+ * copy of these four calls would let the two drift — a different backend or a different weights locale would change
+ * what the probe measures while the grader stayed identical, and the difference would read as a pipeline result.
+ */
+export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Promise<POIBoardPipelineHandle> {
 	const db = options.db ?? dataRootPath("poi", "poi.db")
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
@@ -487,6 +515,22 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 		resolver: resolverHandle?.resolver,
 		poiQueryKind: { poiDatabasePath: db },
 	})
+
+	return { pipeline, db, backend: resolverHandle?.backend ?? "none", close: () => resolverHandle?.close() }
+}
+
+/**
+ * Build the runtime pipeline once (classifier + resolver + poi executor), run every fixture through it, grade, and
+ * aggregate.
+ */
+export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoardRunResult> {
+	const fixturesPath = options.fixturesPath ?? POI_BOARD_FIXTURES
+
+	const fixtures = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(fixturesPath))
+
+	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
+
+	const { pipeline, db, close } = await createPOIBoardPipeline(options)
 
 	const cases: CaseGrade[] = []
 	const nearestKms: number[] = []
@@ -521,7 +565,7 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 			}
 		}
 	} finally {
-		resolverHandle?.close()
+		close()
 	}
 
 	const byExpectKind: POIBoardReport["byExpectKind"] = {}
