@@ -80,10 +80,6 @@ function register(text: string, reg: Register): string {
 	return reg === "lower" ? text.toLowerCase() : reg === "upper" ? text.toUpperCase() : text
 }
 
-function readJSONL<T>(path: string): Promise<T[]> {
-	return Array.fromAsync(JSONSpliterator.fromAsync<T>(path))
-}
-
 const classifier = await NeuralAddressClassifier.loadFromWeights({
 	locale,
 	...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
@@ -152,8 +148,10 @@ function reportBoard(name: string, b: Board): void {
 }
 
 if (board === "gb") {
-	const rows = await readJSONL<{ raw: string; components: Record<string, string> }>(
-		"packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl"
+	const rows = await Array.fromAsync(
+		JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
+			"packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl"
+		)
 	)
 
 	const postcode = emptyBoard()
@@ -213,8 +211,10 @@ if (board === "gb") {
 	const country = board.toUpperCase()
 
 	const rows = (
-		await readJSONL<{ id: string; input: string; country: string; expect?: Record<string, string[]> }>(
-			"packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
+		await Array.fromAsync(
+			JSONSpliterator.fromAsync<{ id: string; input: string; country: string; expect?: Record<string, string[]> }>(
+				"packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
+			)
 		)
 	).filter((row) => row.country === country)
 

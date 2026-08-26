@@ -3,36 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   JSON Lines helpers, all three DEPRECATED — `spliterator` covers the whole surface, and a thin
- *   wrapper in front of it only hides which half you are getting.
+ *   JSON Lines helpers, both DEPRECATED — `spliterator` covers the whole surface, and a thin wrapper
+ *   in front of it only hides which half you are getting.
  *
- *   - `readJSONL` → `Array.fromAsync(JSONSpliterator.fromAsync<T>(path))`
  *   - `iterateJSONL` → `JSONSpliterator.fromAsync<T>(path)`
  *   - `writeJSONL` → `createNewlineWriter(path)`
  *
  *   Kept exported because `@mailwoman/core` is published; they go in the next major.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
+import { writeFileSync } from "node:fs"
 
 import { TextSpliterator } from "spliterator"
-
-/**
- * Read an entire JSONL file into memory. Blank and whitespace-only lines are skipped.
- *
- * @deprecated Use `Array.fromAsync(JSONSpliterator.fromAsync<T>(path))` from `spliterator`. This buffers the whole file
- *   as one string, which throws `ERR_STRING_TOO_LONG` past V8's 512 MiB cap.
- */
-export function readJSONL<T>(path: string): T[] {
-	// The whole-buffer read and the throw-on-corrupt parse are both part of the shipped contract this
-	// function is deprecated FOR; rewriting either would change what remaining callers get.
-	return (
-		[...TextSpliterator.from(readFileSync(path, "utf8"))]
-			.filter((line) => line.trim().length > 0)
-			// oxlint-disable-next-line no-restricted-properties -- deprecated helper's throw-on-corrupt contract is preserved
-			.map((line) => JSON.parse(line) as T)
-	)
-}
 
 /**
  * Write rows as JSONL (one `JSON.stringify` per line, trailing newline). Returns the row count.

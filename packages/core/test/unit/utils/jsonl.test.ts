@@ -8,7 +8,7 @@ import { mkdtempSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { iterateJSONL, readJSONL, writeJSONL } from "@mailwoman/core/utils/jsonl"
+import { iterateJSONL, writeJSONL } from "@mailwoman/core/utils/jsonl"
 import { describe, expect, it } from "vitest"
 
 describe("jsonl", () => {
@@ -18,18 +18,10 @@ describe("jsonl", () => {
 		const rows = [{ a: 1 }, { b: "two" }]
 
 		expect(writeJSONL(path, rows)).toBe(2)
-		expect(readJSONL(path)).toEqual(rows)
+		expect(await Array.fromAsync(iterateJSONL(path))).toEqual(rows)
 
 		// Blank + whitespace-only lines are skipped, trailing newline tolerated.
 		writeFileSync(path, '{"a":1}\n\n  \n{"b":"two"}\n', "utf8")
-		expect(readJSONL(path)).toEqual(rows)
-
-		const streamed: unknown[] = []
-
-		for await (const row of iterateJSONL(path)) {
-			streamed.push(row)
-		}
-
-		expect(streamed).toEqual(rows)
+		expect(await Array.fromAsync(iterateJSONL(path))).toEqual(rows)
 	})
 })
