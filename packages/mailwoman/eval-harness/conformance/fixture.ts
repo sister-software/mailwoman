@@ -44,6 +44,9 @@ import type { GauntletGeocodeOpts } from "../gauntlet/harness.ts"
  * - `parse_whole_strict` — the whole component map, key set included, under the Gauntlet's exact case-folded equality.
  * - `component_map` — the invariance suite's critical/non-critical severity reading over the same map.
  * - `mechanism_shape` — the mechanism-account shapes the two runs matched.
+ * - `candidate_admissibility` — which candidates the resolver's own lookups held, read from the recorded candidate tables
+ *   with their fetch windows. The only comparator that reads the pipeline's INTERIOR rather than its answer, and the
+ *   only one whose observation can fail to decide: see `candidate-admissibility.ts`.
  */
 export const OUTCOME_COMPARATORS = [
 	"resolution_identity",
@@ -51,6 +54,7 @@ export const OUTCOME_COMPARATORS = [
 	"parse_whole_strict",
 	"component_map",
 	"mechanism_shape",
+	"candidate_admissibility",
 ] as const
 
 export type OutcomeComparatorName = (typeof OUTCOME_COMPARATORS)[number]
@@ -92,6 +96,12 @@ export type ConformanceStatus = (typeof CONFORMANCE_STATUSES)[number]
  * for `refines` is refused at load rather than graded against a relation the instrument cannot report — an unreachable
  * expectation is a row that can only ever fail, which reads as a defect in the pipeline instead of a defect in the
  * fixture.
+ *
+ * `candidate_admissibility` is two-valued for the opposite reason: it reads a candidate POOL, where "unchanged" is the
+ * degenerate case of "nothing admissible was lost" rather than a separate finding. Splitting the two would make a
+ * fixture's expectation a claim about whether the added text reaches the resolver at all, which is behaviour rather
+ * than law — so an identical pool reports `refines` and says so in its basis, and only a lost or unexplained candidate
+ * reports `diverges`.
  */
 export const RELATIONS_BY_COMPARATOR: Record<OutcomeComparatorName, readonly ConformanceRelation[]> = {
 	resolution_identity: ["equivalent", "refines", "diverges"],
@@ -99,6 +109,7 @@ export const RELATIONS_BY_COMPARATOR: Record<OutcomeComparatorName, readonly Con
 	parse_whole_strict: ["equivalent", "diverges"],
 	component_map: ["equivalent", "refines", "diverges"],
 	mechanism_shape: ["equivalent", "diverges"],
+	candidate_admissibility: ["refines", "diverges"],
 }
 
 /**

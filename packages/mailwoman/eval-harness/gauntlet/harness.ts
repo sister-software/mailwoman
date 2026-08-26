@@ -14,6 +14,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
@@ -41,6 +42,22 @@ import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
 
 export interface GauntletDeps {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
+	/**
+	 * The same geocode, with the resolver's interior recorded (#1721): one {@linkcode ResolveNodeTrace} per backend lookup
+	 * the walk performed, carrying the query as sent, the candidate table with its per-stage rank vector, the gates that
+	 * fired and the pick's provenance.
+	 *
+	 * A SEPARATE METHOD rather than a field on {@linkcode GauntletGeocodeOpts}, because a trace sink is not a per-query
+	 * PRIOR: the opts object is what a conformance-law row is allowed to pin, and a law that could pin an observer would
+	 * be varying the instrument along with the query. The walk does zero trace bookkeeping when nobody asks, so the plain
+	 * {@linkcode GauntletDeps.geocode} stays exactly as costly as it was.
+	 *
+	 * `resolver` is `[]` when the walk performed no lookup — a measured absence, not a missing record.
+	 */
+	geocodeTraced(
+		input: string,
+		opts?: GauntletGeocodeOpts
+	): Promise<{ result: GeocodeResult; resolver: ResolveNodeTrace[] }>
 	/**
 	 * Report-only access to the exact classifier, overlay, parse options, and FST selected by the Gauntlet path. It
 	 * performs no resolution and does not alter the gate's geocode path.
@@ -552,6 +569,36 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		}
 	}
 
+	/**
+	 * The one geocode call both public entry points make. `extra` is spread LAST so a trace sink cannot be shadowed by a
+	 * lever pin, and so the two entry points cannot drift into two different dependency assemblies — the reason the
+	 * Gauntlet builds its deps once at all.
+	 */
+	const runGeocode = async (
+		input: string,
+		geoOpts: GauntletGeocodeOpts | undefined,
+		extra: Pick<GeocodeDeps, "resolveTraceSink">
+	): Promise<GeocodeResult> => {
+		const { caseCountry, ...forwarded } = geoOpts ?? {}
+		const caseClassifier = await classifierFor(caseCountry)
+
+		return geocodeAddress(input, {
+			classifier: caseClassifier,
+			// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
+			classifyKind: poiKindClassifier,
+			resolver,
+			shards: shardProvider.for,
+			nationalShards: banProvider.for,
+			osmShards: osmProvider.for,
+			...leverDeps,
+			...(capitalLevel ? { capitalLevel } : {}),
+			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
+			...forkEntityDeps,
+			...forwarded,
+			...extra,
+		})
+	}
+
 	return {
 		diagnoseParse: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
 			const { caseCountry } = geoOpts ?? {}
@@ -564,24 +611,15 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
 			}
 		},
-		geocode: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
-			const { caseCountry, ...forwarded } = geoOpts ?? {}
-			const caseClassifier = await classifierFor(caseCountry)
+		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts, {}),
+		geocodeTraced: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
+			const resolverTrace: ResolveNodeTrace[] = []
 
-			return geocodeAddress(input, {
-				classifier: caseClassifier,
-				// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
-				classifyKind: poiKindClassifier,
-				resolver,
-				shards: shardProvider.for,
-				nationalShards: banProvider.for,
-				osmShards: osmProvider.for,
-				...leverDeps,
-				...(capitalLevel ? { capitalLevel } : {}),
-				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
-				...forkEntityDeps,
-				...forwarded,
+			const result = await runGeocode(input, geoOpts, {
+				resolveTraceSink: (record) => resolverTrace.push(record),
 			})
+
+			return { result, resolver: resolverTrace }
 		},
 		close: () => {
 			shardProvider.close()

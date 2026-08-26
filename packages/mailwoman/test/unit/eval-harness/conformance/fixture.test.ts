@@ -52,14 +52,23 @@ function writeSuite(rows: ReadonlyArray<Record<string, unknown>>): string {
 }
 
 describe("conformance fixture vocabulary", () => {
-	it("closes the comparator set at five named instruments", () => {
+	it("closes the comparator set at six named instruments", () => {
 		expect([...OUTCOME_COMPARATORS]).toEqual([
 			"resolution_identity",
 			"assembled_coordinate",
 			"parse_whole_strict",
 			"component_map",
 			"mechanism_shape",
+			"candidate_admissibility",
 		])
+	})
+
+	it("refuses candidate_admissibility the relation it cannot report", () => {
+		expect(RELATIONS_BY_COMPARATOR["candidate_admissibility"]).toEqual(["refines", "diverges"])
+
+		expect(() =>
+			parseConformanceFixture(record({ outcomeComparator: "candidate_admissibility", expect: "equivalent" }), "inline")
+		).toThrow(/cannot express the relation "equivalent"/)
 	})
 
 	it("declares supported relations for every comparator", () => {

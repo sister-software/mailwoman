@@ -21,6 +21,15 @@
  *   rows gate, tracked rows report, and a tracked row that starts holding prints a promotion instruction. A
  *   red row is never removed to make the exit code zero.
  *
+ *   THE OBSERVER IS CHOSEN FROM THE ROWS. `candidate_admissibility` reads the resolver's interior, which the
+ *   walk records only when a sink asks it to; the other five comparators read the assembled answer and would
+ *   pay for bookkeeping nobody reads. So the run picks the traced observer exactly when a loaded row names
+ *   that comparator, and says which one it picked.
+ *
+ *   AN UNMEASURED ROW IS NOT A QUIET PASS. It is printed in its own section with the window that stopped the
+ *   reading, and it is removed from the row count the verdict is stated over — so the headline is a ratio of
+ *   rows that were actually DECIDED, and a suite that stops being able to decide anything reports FAIL.
+ *
  *   A LAW MAY REPORT ITS OWN BREADTH. A hold count answers "did the rows the suite states hold", never "how
  *   much of the population could the suite have stated" — and for a law whose eligibility is a property of the
  *   query text those are different numbers. `ConformanceSuite.coverage` prints the second one beside the
@@ -36,6 +45,7 @@ import {
 	gauntletObserver,
 	runConformanceFixtures,
 	summarizeConformanceRun,
+	tracedGauntletObserver,
 } from "./run.ts"
 import { CONFORMANCE_SUITES, describeLaw, suiteForLaw } from "./suites.ts"
 
@@ -125,15 +135,24 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 	const wantsCoverage = laws.some((law) => suiteForLaw(law)?.coverage)
 	const corpusInputs = wantsCoverage ? (await loadRegressionCases()).map((seedCase) => seedCase.input) : []
 
+	// The resolver's trace bookkeeping is opt-in and the four answer-axis laws have no use for it, so the observer is
+	// chosen from the comparators the loaded rows actually name rather than turned on for every run.
+	const wantsTrace = fixtures.some((fixture) => fixture.outcomeComparator === "candidate_admissibility")
+
+	if (wantsTrace) {
+		console.error("[conformance] resolver trace ON — a loaded row reads the candidate tables")
+	}
+
 	const deps = await buildGauntletDeps(depsOptions)
 
 	try {
-		const { findings } = await runConformanceFixtures(fixtures, gauntletObserver(deps.geocode))
+		const observer = wantsTrace ? tracedGauntletObserver(deps.geocodeTraced) : gauntletObserver(deps.geocode)
+		const { findings } = await runConformanceFixtures(fixtures, observer)
 		const summary = summarizeConformanceRun(findings)
 
 		console.log(
-			`\n=== conformance (${summary.gated - summary.failures.length}/${summary.gated} gated rows hold, ` +
-				`${summary.tracked.length} tracked) ===`
+			`\n=== conformance (${summary.gated - summary.failures.length}/${summary.gated} decided rows hold, ` +
+				`${summary.tracked.length} tracked, ${summary.unmeasured.length} unmeasured) ===`
 		)
 
 		// Per law as well as pooled: a run that merges two suites into one verdict says WHETHER something broke and not
@@ -143,7 +162,8 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 			const perLaw = summarizeConformanceRun(ofLaw)
 
 			console.log(
-				`  ${law}: ${perLaw.gated - perLaw.failures.length}/${perLaw.gated} gated hold, ${perLaw.tracked.length} tracked`
+				`  ${law}: ${perLaw.gated - perLaw.failures.length}/${perLaw.gated} decided hold, ` +
+					`${perLaw.tracked.length} tracked, ${perLaw.unmeasured.length} unmeasured`
 			)
 
 			const coverage = suiteForLaw(law)?.coverage
@@ -167,6 +187,15 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 			console.log(`\ntracked (known_fail / improvement_target, non-blocking):`)
 
 			report(summary.tracked)
+		}
+
+		if (summary.unmeasured.length) {
+			console.log(
+				`\nunmeasured — the comparator read its axis and the observation could not decide (never blocking, ` +
+					`never counted as holding):`
+			)
+
+			report(summary.unmeasured)
 		}
 
 		if (summary.newlyHolding.length) {

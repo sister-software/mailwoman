@@ -3,13 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The five outcome comparators, and the one rule they all obey.
+ *   The six outcome comparators, and the one rule they all obey.
  *
  *   **This module owns no equality of its own.** Every judgment here is delegated to a grader that already
  *   exists and is already tested: `componentMatches` and `DEFAULT_TOL_M` from the Gauntlet's `check-case.ts`,
- *   `haversineKm` from `@mailwoman/spatial`, `compareComponents` from the invariance mini-suite. What lives
- *   here is the part none of them has an opinion about — which AXIS a given law is stated on, and what
- *   `equivalent` / `refines` / `diverges` mean on that axis.
+ *   `haversineKm` from `@mailwoman/spatial`, `compareComponents` from the invariance mini-suite,
+ *   `accountRefinement` from `candidate-admissibility.ts`. What lives here is the part none of them has an
+ *   opinion about — which AXIS a given law is stated on, and what `equivalent` / `refines` / `diverges` mean on
+ *   that axis.
  *
  *   THE AXES ARE DISJOINT ON PURPOSE. `resolution_identity` never reads a coordinate and
  *   `assembled_coordinate` never reads a place id. That separation is the whole reason the comparator set is
@@ -30,11 +31,13 @@
  *   empty lookup list apart from a null one.
  */
 
+import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { componentMatches, DEFAULT_TOL_M } from "../gauntlet/check-case.ts"
 import type { GauntletResult } from "../gauntlet/harness.ts"
 import { compareComponents } from "../invariance/compare.ts"
+import { accountRefinement } from "./candidate-admissibility.ts"
 import type { ConformanceFixture, ConformanceRelation, OutcomeComparatorName } from "./fixture.ts"
 
 /**
@@ -57,13 +60,30 @@ export interface ConformanceOutcome {
 	 * `undefined` means no account was attached — see the module docstring for why that is not an empty account.
 	 */
 	mechanismShapes?: readonly string[]
+	/**
+	 * The resolver's interior for this run (#1721): one record per backend lookup, carrying the candidate table, the
+	 * fetch window it ran under, the `gates` that fired and the pick's provenance.
+	 *
+	 * Supplied by an observer that asked for a trace — the walk does zero bookkeeping otherwise, so a comparator cannot
+	 * turn one on for itself. `[]` is a real reading (the walk performed no lookup); `undefined` is the absence of a
+	 * trace, and {@linkcode compareOutcomes} keeps them apart the way `mechanismShapes` does.
+	 */
+	candidates?: readonly ResolveNodeTrace[]
 }
 
 /**
- * What a comparator observed. `undecidable` is a first-class reading: the comparator could not read its axis, and says
- * so rather than reporting the agreement of two absences.
+ * What a comparator observed.
+ *
+ * `undecidable` is a first-class reading: the comparator could not read its axis, and says so rather than reporting the
+ * agreement of two absences.
+ *
+ * `unmeasured` is the narrower one, and only `candidate_admissibility` can report it. The comparator READ its axis and
+ * found nothing that violates the law — but the observation window was too small to prove the law either, so the
+ * reading is neither a hold nor a failure. Both are counted apart from the verdict by `summarizeConformanceRun`: an
+ * unmeasured row leaves the denominator rather than joining the numerator, so a suite that stops being able to measure
+ * anything reports as an absence instead of a pass.
  */
-export type ObservedRelation = ConformanceRelation | "undecidable"
+export type ObservedRelation = ConformanceRelation | "undecidable" | "unmeasured"
 
 /**
  * One comparator's reading of a pair of outcomes.
@@ -394,6 +414,38 @@ function compareMechanismShape(base: ConformanceOutcome, variant: ConformanceOut
 
 //#endregion
 
+//#region candidate_admissibility
+
+function compareCandidateAdmissibility(base: ConformanceOutcome, variant: ConformanceOutcome): ComparatorReading {
+	const a = base.candidates
+	const b = variant.candidates
+
+	if (!a || !b) {
+		const missing = [!a ? "base" : null, !b ? "variant" : null].filter((side) => side !== null)
+
+		return {
+			comparator: "candidate_admissibility",
+			observed: "undecidable",
+			basis: `no resolver trace attached to ${missing.join(" and ")}`,
+			differences: [
+				`the observer attached no resolver trace to ${missing.join(" and ")} — the walk records nothing unless a ` +
+					`sink asks it to, so this is tracing being off rather than a run with no lookups (that reads as an empty list)`,
+			],
+		}
+	}
+
+	const reading = accountRefinement(a, b)
+
+	return {
+		comparator: "candidate_admissibility",
+		observed: reading.relation,
+		basis: reading.basis,
+		differences: reading.differences,
+	}
+}
+
+//#endregion
+
 /**
  * Read a pair of outcomes on the axis the fixture named.
  *
@@ -416,6 +468,8 @@ export function compareOutcomes(
 			return compareComponentMap(base, variant)
 		case "mechanism_shape":
 			return compareMechanismShape(base, variant)
+		case "candidate_admissibility":
+			return compareCandidateAdmissibility(base, variant)
 		default: {
 			const unknown: never = fixture.outcomeComparator
 
