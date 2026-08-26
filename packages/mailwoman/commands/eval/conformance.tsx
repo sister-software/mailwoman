@@ -5,9 +5,10 @@
  *
  *   `mailwoman eval conformance` — run the CONFORMANCE-LAW suites: pairs of queries that differ by one
  *   declared transformation, each graded on the axis its own row names (entity identity, assembled
- *   coordinate, strict parse, component map, mechanism shape). Every committed suite runs by default —
- *   case-folding invariance and whitespace invariance today — with rows drawn from committed board cases
- *   and variants derived from those same queries by the named transformation.
+ *   coordinate, strict parse, component map, mechanism shape). Every suite in the register runs by default,
+ *   with rows drawn from committed board cases and variants derived from those same queries by the named
+ *   transformation. The laws are named by the register (`conformance/suites.ts`) rather than here: a list in
+ *   this file is a second copy of it, and the copy is what goes stale.
  *
  *   Runs through the Gauntlet's own deps, so the pipeline under test is the one the board grades, not a
  *   second assembly of it. Rows are audited before the engine loads; `status: pass` rows gate the exit
@@ -19,7 +20,7 @@ import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
-export const description = "Conformance-law suites (case-folding, whitespace) through the Gauntlet's deps"
+export const description = "Every committed conformance-law suite, through the Gauntlet's deps"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
