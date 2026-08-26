@@ -1,0 +1,14 @@
+{
+	"relations": [
+		{
+			"id": "affords",
+			"label": "affords",
+			"description": "The establishment class makes the activity available to a person who goes there. It states what a person can do at premises of that class, and nothing about how a candidate of that class should be ordered, scored, or preferred.",
+			"domainKinds": ["establishment"],
+			"rangeKinds": ["activity"],
+			"transitive": false,
+			"symmetric": false,
+			"semantics": "hard"
+		}
+	]
+}
