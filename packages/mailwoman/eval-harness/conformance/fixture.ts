@@ -28,7 +28,7 @@
  *   taxonomy grows with the suites, and each suite owns the names it uses. Blank is still refused.
  */
 
-import { readJSONL } from "@mailwoman/core/utils"
+import { JSONSpliterator } from "spliterator"
 
 import type { GauntletGeocodeOpts } from "../gauntlet/harness.ts"
 
@@ -335,8 +335,8 @@ export function parseConformanceFixture(raw: unknown, origin: string): Conforman
  * Loud on the first bad row rather than collecting the good ones: a partially-loaded suite reports fewer violations
  * than it has rows, and a smaller violation count is indistinguishable from a law that holds.
  */
-export function loadConformanceFixtures(path: string): ConformanceFixture[] {
-	const rows = readJSONL<unknown>(path)
+export async function loadConformanceFixtures(path: string): Promise<ConformanceFixture[]> {
+	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<unknown>(path))
 	const fixtures: ConformanceFixture[] = []
 	const seen = new Set<string>()
 

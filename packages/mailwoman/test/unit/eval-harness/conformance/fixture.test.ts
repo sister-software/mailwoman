@@ -169,39 +169,39 @@ describe("parseConformanceFixture", () => {
 })
 
 describe("loadConformanceFixtures", () => {
-	it("loads the worked example, exercising every comparator once", () => {
-		const fixtures = loadConformanceFixtures(EXAMPLE_SUITE)
+	it("loads the worked example, exercising every comparator once", async () => {
+		const fixtures = await loadConformanceFixtures(EXAMPLE_SUITE)
 		const used = fixtures.map((fixture) => fixture.outcomeComparator)
 
 		expect(fixtures).toHaveLength(OUTCOME_COMPARATORS.length)
 		expect(used.toSorted()).toEqual([...OUTCOME_COMPARATORS].toSorted())
 	})
 
-	it("carries the optional row reference and per-row context through", () => {
-		const fixtures = loadConformanceFixtures(EXAMPLE_SUITE)
+	it("carries the optional row reference and per-row context through", async () => {
+		const fixtures = await loadConformanceFixtures(EXAMPLE_SUITE)
 		const identity = fixtures.find((fixture) => fixture.id === "cnf-identity-01") as ConformanceFixture
 
 		expect(identity.rowRef).toBe("gb-golden.jsonl#1")
 		expect(identity.context).toEqual({ caseCountry: "GB" })
 	})
 
-	it("holds a genuine NFC/NFD pair — the two sides differ by code point and agree after normalization", () => {
-		const fixtures = loadConformanceFixtures(EXAMPLE_SUITE)
+	it("holds a genuine NFC/NFD pair — the two sides differ by code point and agree after normalization", async () => {
+		const fixtures = await loadConformanceFixtures(EXAMPLE_SUITE)
 		const nfc = fixtures.find((fixture) => fixture.id === "cnf-parse-strict-01") as ConformanceFixture
 
 		expect(nfc.base).not.toBe(nfc.variant)
 		expect(nfc.base).toBe(nfc.variant.normalize("NFC"))
 	})
 
-	it("refuses a duplicate id", () => {
+	it("refuses a duplicate id", async () => {
 		const path = writeSuite([record(), record({ law: "whitespace-invariance" })])
 
-		expect(() => loadConformanceFixtures(path)).toThrow(/duplicate fixture id "cnf-sample-01"/)
+		await expect(loadConformanceFixtures(path)).rejects.toThrow(/duplicate fixture id "cnf-sample-01"/)
 	})
 
-	it("refuses the whole suite on one bad row rather than loading the good ones", () => {
+	it("refuses the whole suite on one bad row rather than loading the good ones", async () => {
 		const path = writeSuite([record(), record({ id: "cnf-sample-02", outcomeComparator: "vibes" })])
 
-		expect(() => loadConformanceFixtures(path)).toThrow(/cnf-sample-02.*unknown outcomeComparator/s)
+		await expect(loadConformanceFixtures(path)).rejects.toThrow(/cnf-sample-02.*unknown outcomeComparator/s)
 	})
 })
