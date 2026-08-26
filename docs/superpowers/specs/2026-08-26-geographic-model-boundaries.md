@@ -152,6 +152,13 @@ would be authoring policy at the one place where the system is supposed to learn
 | Warm-engine measuring tools                                       | `packages/dev-mcp/tools/`                                              |
 | Mechanism-account shapes                                          | `packages/dev-mcp/diagnose.ts` (`DIAGNOSE_SHAPES`, `SHAPE_PREDICATES`) |
 | Diagnosis conventions                                             | `docs/superpowers/specs/2026-08-17-mechanism-accounts.md`              |
+| Conformance-law fixture contract (#1918)                          | `packages/mailwoman/eval-harness/conformance/`                         |
+
+The conformance module is the seam a law suite plugs into: a fixture names a base query, one context, a
+variant query, a law, one of five closed outcome comparators, and the relation the two outcomes must
+stand in. Its `mechanism_shape` comparator reads the `DIAGNOSE_SHAPES` vocabulary in the row above but
+does not import it — `@mailwoman/dev-mcp` depends on `mailwoman`, so the labels travel as an observer's
+output rather than as a second copy of the vocabulary.
 
 One bound worth stating now, because #1928 will hit it: `DIAGNOSE_SHAPES` is a vocabulary of
 **address-path** mechanism states — parse, evidence, retrieval, ranking, outcome. It contains no state
