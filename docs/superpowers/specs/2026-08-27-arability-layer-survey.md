@@ -29,14 +29,15 @@ was filled in with a plausible reading.
 ## 1. What this record settles, and what it deliberately does not
 
 Settled here: the verified inventory (§2), what each source's own coverage statement licenses a
-`layer_coverage` row to say (§3), the two-consumer schema with its aggregation choice and the
-information that choice discards (§4), the pilot's source, region and verification ladder (§5), and the
-product requirement (§6).
+`layer_coverage` row to say (§3), which storage shape each source takes and why (§4.3), the two-consumer
+schema with its aggregation choice and the information that choice discards (§4.4–§4.6), the pilot's
+source, region and verification ladder (§5), and the product requirement (§6).
 
 Not settled here, and named so nobody reads silence as a decision: the H3 resolution the layer is built
-at (§4.6 — the pilot measures it; §4.4 establishes only that no affordable resolution removes the
-mixture); the spine-key declaration for a polygon-derived cell layer (§4.5, the same open question the
-flood survey left, and the same answer will serve both); whether the observation's advisory code extends
+at — **§4.7 names the four candidates and the two numbers the pilot must report at each, and the pilot
+picks from that measurement**; §4.4 establishes only that no affordable resolution removes the mixture;
+the spine-key declaration for a polygon-derived cell layer (§4.7, the same open question the flood
+survey left, and the same answer will serve both); whether the observation's advisory code extends
 the existing query-intent vocabulary or widens the carrier (§5.5, likewise shared with the flood
 survey); and the fitting question of whether an arability signal carries information beyond the signals
 #1683 already names, which is #1684's measurement and not this record's.
@@ -63,12 +64,15 @@ did in the flood survey. **The USDA soil hosts do not.** Measured from this lab 
 | `websoilsurvey.sc.egov.usda.gov` | HTTP 200, served a real 25 MB archive |
 | `gdg.sc.egov.usda.gov`           | HTTP 301                              |
 | `nrcs.app.box.com`               | HTTP 302                              |
-| `www.nrcs.usda.gov`              | **intermittent** — see below          |
+| `www.nrcs.usda.gov`              | needs browser headers — see below     |
 
-`www.nrcs.usda.gov` is the one soft spot and it is the content site, not a distribution host: an
-HTTP/2 request returned 200 on retry while `--http1.1` timed out at 25 s, against an Akamai edge
-(`e11492.dscb.akamaiedge.net`, 184.87.188.132). Intermittent, not blocked. **No distribution endpoint
-an ingest would call was unreachable.**
+`www.nrcs.usda.gov` is the one soft spot and it is the content site, not a distribution host. It first
+looked intermittent — an HTTP/2 request returned 200 on retry while `--http1.1` timed out at 25 s,
+against an Akamai edge (`e11492.dscb.akamaiedge.net`, 184.87.188.132) — but the behavior is
+deterministic once the cause is named: **the host requires a browser-like header set** (a normal
+`User-Agent` plus `Accept` and `Sec-Fetch-*`), and a plain client hangs after the TLS handshake rather
+than being refused. Not blocked, and not a network problem. **No distribution endpoint an ingest would
+call was unreachable.**
 
 **Soil Data Access is a live SQL service, anonymous, and it answers.** `POST` to
 `https://sdmdataaccess.nrcs.usda.gov/Tabular/post.rest` with
@@ -146,18 +150,42 @@ any consumer may do with a point:
 And one governs freshness: "Digital data files are periodically updated. Files are dated, and users are
 responsible for obtaining the latest version of the data."
 
-**Extent, measured through SDA.** `SELECT COUNT(*) FROM sacatalog` returns **3,380 soil survey areas**
-across **61 state and territory prefixes** — Texas 232, Alaska 137, California 120, down to single
+**Extent, measured through SDA — and the count is off by one against NRCS's own figure, which is
+reported rather than reconciled.** `SELECT COUNT(*) FROM sacatalog` returns **3,380 rows**, and the
+soil survey availability map's categories also sum to 3,380 (3,342 + 23 + 15). But NRCS's **2025 Annual
+Soils Refresh** document states **3,379 soil survey areas published**, and that figure is corroborated
+independently by SDA itself: 3,379 legends of type `Non-MLRA Soil Survey Area`. Two of the three paths
+agree at 3,379. The difference is one area and nothing in this record turns on it, but a builder
+counting survey areas should expect 3,379 published and know that `sacatalog` holds one row more. Below,
+3,380 is used where the figure is a `sacatalog` measurement, because that is what was measured.
+
+Those rows span **61 state and territory prefixes** — Texas 232, Alaska 137, California 120, down to single
 areas for Guam, American Samoa, Palau, the Marshall Islands and the Federated States of Micronesia (4).
 `SELECT COUNT(*) FROM mapunit` returns **339,191 map units**, confirmed twice by two independent
 aggregations that each summed to the same figure. `component` holds **1,288,808 rows**.
 
-**Cadence — one coordinated annual refresh, and the refresh date is not the survey date.** Grouping
-`sacatalog` by `YEAR(saverest)` returns **2016: 1, 2025: 3,323, 2026: 56**. So 98.3% of survey areas
-carry a single version-established date from one refresh, not a per-area drift. That makes the layer's
-manifest vintage easy and it makes the currency claim dangerous, because the underlying survey is far
-older. Measured on one real survey area — Polk County, Iowa (`IA153`), whose `sacatalog.saverest` is
-**2025-09-09**, version 28 — the shipped metadata's own source citations are:
+**Cadence — one coordinated annual refresh on a fixed date, and the refresh date is not the survey
+date.** NRCS states the schedule in its own words on the
+[Annual Soils Refresh page](https://www.nrcs.usda.gov/conservation-basics/natural-resource-concerns/soil/annual-soils-refresh):
+
+> "Each year on October 1, the USDA NRCS Soil and Plant Science Division performs an Annual Soils
+> Refresh (ASR) of the publicly available soil survey database…"
+
+> "The most recent ASR made new and updated data available on October 1, 2025."
+
+and it says how much moves: "approximately 10 to 20 percent of soil survey areas will have more
+significant changes". The 2025 refresh added 41,974,803 acres of new soil data, 116,727 new polygons and
+2,227 new map units.
+
+The measurement agrees with the statement, which is the useful part. Grouping `sacatalog` by
+`YEAR(saverest)` returns **2016: 1, 2025: 3,323, 2026: 56** — 98.3 % of areas carrying a single
+version-established date from one refresh rather than a per-area drift. **The current vintage is the
+October 1, 2025 refresh.** NRCS uses no fiscal-year label for it; five primary sources were checked for
+one and none appears, so a manifest must not invent an `FY` string.
+
+A uniform refresh makes the manifest vintage easy and makes the currency claim dangerous, because the
+underlying survey is far older. Measured on one real survey area — Polk County, Iowa (`IA153`), whose
+`sacatalog.saverest` is **2025-09-09**, version 28 — the shipped metadata's own source citations are:
 
 | source                                  | scale    | date       |
 | --------------------------------------- | -------- | ---------- |
@@ -184,12 +212,18 @@ which lists `GET /{CacheName}/{FileName}` and `GET /{CacheName}/{SubFolder}/{Fil
 embeds the survey area's version date, **and SDA supplies that date** — `sacatalog.saverest` for `IA153`
 is 2025-09-09, and both of these then return HTTP 200:
 
-| URL under `…/DSD/Download/Cache/SSA/`           | bytes          |
-| ----------------------------------------------- | -------------- |
-| `wss_SSA_IA153_[2025-09-09].zip`                | **25,474,922** |
-| `wss_SSA_IA153_soildb_IA_2003_[2025-09-09].zip` | **27,598,377** |
+| URL under `…/DSD/Download/Cache/SSA/`           | bytes          | difference                       |
+| ----------------------------------------------- | -------------- | -------------------------------- |
+| `wss_SSA_IA153_[2025-09-09].zip`                | **25,474,922** | data only                        |
+| `wss_SSA_IA153_soildb_IA_2003_[2025-09-09].zip` | **27,598,377** | adds the `soildb_*.mdb` template |
 
-A wrong date returns HTTP 400. The square brackets need `--globoff` or `%5B`/`%5D`. The archive holds
+**The two filename shapes are two cache variants of the same survey area, differing by the Access
+template database.** Confirmed on a second area: `wss_SSA_IA015_soildb_IA_2003_[2025-09-08].zip` is
+41,104,724 bytes with 98 entries including `soildb_IA_2003.mdb`, against 38,981,269 bytes for the bare
+form; and `wss_SSA_TX299_[2025-09-04].zip` is 13,455,641 bytes with 97 files and no `.mdb` at all. **A
+builder wants the bare form** — the template is an empty Access container for a workflow we do not use.
+
+A wrong date returns HTTP 400, not 404. The square brackets need `--globoff` or `%5B`/`%5D`. The archive holds
 ESRI shapefiles under `spatial/` (`soilmu_a` map-unit polygons, `soilmu_l`/`soilmu_p` lines and points,
 `soilsa_a` survey-area outline, `soilsf_*` special features), the full NASIS tabular export as
 pipe-delimited `.txt` under `tabular/`, and both `.txt` and `.xml` FGDC metadata. The projection file
@@ -200,8 +234,9 @@ One acquisition trap, and it is the same one the flood survey found on the Envir
 **`HEAD` returns HTTP 405 (`allow: GET`) and `Range` is ignored.** A request with `Range: bytes=0-0`
 returned HTTP 200 and transferred the whole 27,598,377 bytes in 7.23 s at 3.8 MB/s. A builder cannot
 probe freshness by content length — but here it does not need to, because `sacatalog.saverest` answers
-the freshness question directly through the tabular service. The server is `Microsoft-IIS/10.0` behind
-an AWS load balancer.
+the freshness question directly through the tabular service. The `Range` behavior is **path-specific**,
+not host-wide: the `/DataAvailability/` path does honour it (HTTP 206), so a client must probe per path
+rather than conclude from one. The server is `Microsoft-IIS/10.0` behind an AWS load balancer.
 
 **The arability attributes, with their measured shape.** Column names verified by querying them
 successfully through SDA:
@@ -219,9 +254,9 @@ sodium`, `Prime farmland if subsoiled, completely removing the root inhibiting s
 - `component.irrcapcl` / `component.irrcapscl` — the irrigated rating. **NULL on 1,097,370 components
   (85.1%)** — it is populated only where irrigation is a considered use, which makes its absence a
   statement about the rating's applicability rather than about the land.
-- `component.comppct_r` — the component's percentage of the map unit. This is the weight §4.3 uses.
+- `component.comppct_r` — the component's percentage of the map unit. This is the weight §4.4 uses.
 - `muaggatt.niccdcd` / `muaggatt.niccdcdpct` — NRCS's **own** aggregation of the capability class to the
-  map unit by dominant condition, **shipped with the share that class actually covers**. §4.3 adopts
+  map unit by dominant condition, **shipped with the share that class actually covers**. §4.4 adopts
   this pattern; it is the single most useful precedent in the source.
 - `cointerp` — the National Commodity Crop Productivity Index. Measured rule names and row counts:
   `NCCPI - National Commodity Crop Productivity Index (Ver 3.0)` (7,111,314), plus submodels for small
@@ -250,10 +285,40 @@ that pooled them into one rank would be doing what the EU flood viewer warns aga
 states. Prime and Unique travel; statewide and local importance do not. That distinction has to survive
 into the stored vocabulary, not only into this document.
 
-**gSSURGO, STATSGO2 and the Geospatial Data Gateway** are the other NRCS distribution products. Their
-formats, sizes and per-product terms were **not** verified here and are in §8; the pilot does not need
-them, because the SSURGO survey-area download plus SDA is a complete acquisition path that was
-exercised.
+**The raster and coarse siblings, and why the pilot does not take them.** The SSURGO survey-area download
+plus SDA is a complete acquisition path that was exercised, so none of the following is needed — but each
+was checked far enough to keep a builder from reaching for the wrong one.
+
+- **gSSURGO** is the gridded derivative, and its resolution depends on which file you take: "The raster
+  map data have a 10-meter cell size that approximates the vector polygons in an Albers Equal Area
+  projection" **per state**, while "Due to file size, the raster layer for the conterminous United States
+  is only available in a 30-meter resolution." **gNATSGO** matches — "The map unit grid is 10 meters for
+  State databases and 30 meters for large databases". Both are **raster**, so §4.3's raster rule would
+  govern them, and both are in a projected CRS, unlike the WGS84 vector product.
+- **gNATSGO's container changed** and older descriptions are stale: "The gNATSGO database uses the
+  GeoPackage version of the SQLite SSURGO Template schema … The spatial soils data are delivered as
+  raster files but exist outside of the database as GeoTIFFs", with "no vectorized version of the soil
+  map unit included in gNATSGO". A builder written against the ESRI file-geodatabase description would be
+  writing against a format that is no longer shipped.
+- **These are distributed through Box, which refuses anonymous programmatic download (HTTP 403).** The
+  sizes available are Box's own `itemSize` metadata rather than HTTP measurements, and are labeled as
+  such: gSSURGO CONUS 24.44 GB, the all-SSURGO GeoPackage 35.75 GB, gNATSGO 7.90 GB, per-state gSSURGO
+  from 25.5 MB (Rhode Island) to 1.74 GB (Minnesota). The gridded products trail the October 1 refresh —
+  observed artifact dates run 2025-11-19 to 2026-02-17, so roughly six weeks to four months.
+- **STATSGO2** is the 1:250,000 coarse companion: "Spatial data are available in ESRI shapefile format.
+  … Tabular data are available as ASCII text files (.txt). Fields are pipe delimited". Every distributed
+  STATSGO2 file on both hosts is pinned at `[2016-10-13]`. One provenance finding worth carrying: **the
+  two hosts serve different byte streams for the nominally same national file** — 446,108,728 bytes per
+  Box metadata against 445,366,221 bytes measured on the Web Soil Survey cache. Whichever a builder
+  takes, it must record which host it came from.
+- **The Geospatial Data Gateway** answers HTTP 301 and was not driven; its ordering flow is unverified
+  (§8).
+
+One acquisition detail that also explains a measurement above: **`www.nrcs.usda.gov` requires
+browser-like request headers.** A plain `curl` or fetcher hangs after the TLS handshake; adding a normal
+browser `User-Agent`, `Accept` and `Sec-Fetch-*` set makes it answer. That is the real explanation for
+the "intermittent" row in the reachability table, and it is a constraint on any automated ingest that
+reads NRCS content pages — the distribution hosts themselves have no such requirement.
 
 ### 2.2 United States — USDA NASS Cropland Data Layer
 
@@ -484,7 +549,7 @@ There is no European shortcut, which is the same answer the flood survey reached
 | license                 | **"This is public information"** in the shipped FGDC metadata; acknowledgement requested | **CC0 1.0**, and the link resolves to the real deed              | CLMS: **Reg. (EU) 1159/2013**, not CC BY. ESDAC: "**not passed to third parties**" |
 | extent                  | 3,380 survey areas, 61 state/territory prefixes; genuine gaps (§3.2)                     | 18 CONUS years, 2008–2025                                        | EEA39 for CLC; EU for ESDAC                                                        |
 | vocabulary              | LCC 1–8 + subclass c/e/s/w; 23 Farmland Classification values, **conditional**           | crop classes per pixel (class table unverified, §8)              | CLC 44 classes, arable = 211/212/213; no capability vocabulary anywhere            |
-| resolution / scale      | source scales 1:12,000–1:15,840; median delineation 24,863 m² (§4.3)                     | 30 m pixels                                                      | CLC **25 ha** minimum unit; ESDB **1:1,000,000**; property maps 500 m models       |
+| resolution / scale      | source scales 1:12,000–1:15,840; median delineation 24,863 m² (§4.4)                     | 30 m pixels                                                      | CLC **25 ha** minimum unit; ESDB **1:1,000,000**; property maps 500 m models       |
 | vintage                 | refresh 2025 for 3,323 of 3,380 areas; **field survey far older — 1960 for `IA153`**     | one file per season; 2025 current                                | CLC2018 current; **CLC2024 scheduled, not published**                              |
 | cadence                 | one coordinated annual refresh; metadata says `As needed`                                | annual, published the following calendar year                    | CLC roughly six-yearly; ESDAC ad hoc                                               |
 | format                  | shapefile + pipe-delimited tabular, **WGS84**; `IA153` = 25.5 MB / 27.6 MB               | 30 m raster zip; 2025 = 1.89 GB (measured)                       | CLC raster/vector EPSG:3035; ESDAC per-request archives                            |
@@ -646,7 +711,43 @@ layer's**: the layer stores class shares, and the signal consumer chooses the pr
 That keeps the layer honest under a later change of mind about the projection, and it keeps the
 observation consumer reading the authority rather than reading our arithmetic.
 
-### 4.3 The aggregation choice, and the information it discards
+### 4.3 Which shape each source takes
+
+Two storage shapes are settled for this layer stack, and **which one applies is decided by the source's
+own geometry, not by the layer's subject.** Stating it per source is this section's first job.
+
+| source                                         | geometry                     | shape that applies                                                                                     |
+| ---------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **SSURGO map units — the pilot**               | vector polygons              | **the polygon rule** (#1989): unsimplified geometry as truth, an H3 `whole`/`partial` summary above it |
+| **gSSURGO / gNATSGO** (the raster derivatives) | 10 m state / 30 m CONUS grid | **the raster rule**: never raster-in-database — per-cell class summaries at the signal resolution      |
+| **Cropland Data Layer**                        | 30 m grid                    | **the raster rule**, same as above                                                                     |
+
+**The polygon rule, for the pilot.** SSURGO ships vector polygons, so the delineation geometry is the
+truth and is stored unsimplified with a precomputed bounding box, exactly as the flood layer stores its
+rings. Above it sits an H3 containment index recording `whole` or `partial` per cell, `compactCells`
+collapsing uniform interiors, and the resolution chosen from the **measured** `partial` share rather
+than argued. A cell lying wholly inside one map unit is answered by the index alone; a cell a boundary
+crosses names every map unit reaching into it, and the ray-cast against the few named candidates is the
+bounded runtime geometry SCOPE invariant 6 permits at an irreducibly geometric edge.
+`pointInPolygonRings` and `bboxAround` in `@mailwoman/spatial` are the primitives; nothing new is needed.
+
+**The raster rule, for anything grid-shaped.** A raster never enters the database as a raster. It is
+binned at build time into per-cell class summaries at the signal resolution — a top class with its
+fraction, or a small class histogram — with the minority-class loss stated. That is the whole size
+strategy for those sources: it turns national 30 m grids from gigabytes into a per-cell table, and it is
+already the shape #1683's vector consumer wants, so one aggregation serves both consumers.
+
+**Absence is no row, under both shapes.** A cell with no survey behind it gets no `layer_coverage` row
+and no summary row — never a zero, never an empty histogram. For a sparse layer that is also the size
+strategy, and §4.5's meaning-of-zero rule is what makes it safe.
+
+**Where the two shapes converge, and it is the reason this layer needs both.** The polygon rule alone
+would leave Consumer B — which reads whole cell populations in bulk — doing a ray-cast per cell forever.
+So the pilot carries the containment index **and** a per-cell summary derived from it, which is the same
+object the raster rule produces. The summary is not a second acquisition or a second aggregation: it is
+the polygon index reduced once at build time, and §4.4 is the reduction.
+
+### 4.4 The aggregation choice, and the information it discards
 
 **The choice: store the area-weighted distribution over capability classes per cell, plus an explicit
 share for each kind of non-rating. Do not store a winner.**
@@ -733,7 +834,7 @@ the paragraph:
    `other` share** carrying the truncated remainder, so the shares always sum to 1 and a reader can see
    how much was folded away rather than inferring it from a gap.
 
-### 4.4 "No signal here" versus "signal says no", carried structurally
+### 4.5 "No signal here" versus "signal says no", carried structurally
 
 #1683 states the requirement and §3.2 shows the source is unusually rich in ways to violate it. The
 schema keeps them apart by **never letting an absence be represented by a small number**. Each cell
@@ -745,7 +846,7 @@ class:
 | `unrated_share`     | mapped soil components with a NULL rating — the survey did not rate them         |
 | `notrateable_share` | miscellaneous areas (rock outcrop, water) the rating does not apply to           |
 | `nodata_share`      | `NOTCOM` and access-denied map units — mapped polygon, no soil mapping behind it |
-| `other_share`       | the truncated minority tail from §4.3, loss 3                                    |
+| `other_share`       | the truncated minority tail from §4.4, loss 3                                    |
 
 Class 8 is **not** among them. It is a class share like any other, because it is a determination.
 Together with the absent-row rule for land outside a survey area, that gives a reader five
@@ -765,12 +866,30 @@ was made. Here it is not a corner case: **17.1 % of components carry no capabili
 irrigated rating the figure is 85.1 %. The frequency in FEMA's data was not measured, so no ratio between
 the two is claimed.
 
-### 4.5 Tables
+### 4.6 Tables
 
-Four domain tables plus the two contract tables, written as Kysely schema modules with the typed
-interface co-located with its `createXTable`, per the house database discipline.
+Six domain tables plus the two contract tables, written as Kysely schema modules with the typed
+interface co-located with its `createXTable`, per the house database discipline. The pilot is
+polygon-shaped, so §4.3's polygon rule governs: `soil_map_unit_area` is the truth, `soil_map_unit_cell`
+is the containment summary above it, and `soil_capability_cell` is the reduction both consumers read.
 
 ```
+soil_map_unit_area         -- THE TRUTH: one row per delineation polygon, plain rowid (it holds a blob)
+  area_id          TEXT PRIMARY KEY
+  mukey            TEXT      -- the map unit this delineation belongs to
+  areasymbol       TEXT
+  min_lat, min_lon, max_lat, max_lon  REAL   -- precomputed bbox, the ray-cast prefilter
+  rings            BLOB      -- the authority's ring coordinates, UNSIMPLIFIED
+                             -- 17,966 delineations for IA153 alone; median 24,863 m² (§4.4)
+
+soil_map_unit_cell         -- the build-time containment index, WITHOUT ROWID
+  h3_cell          INTEGER   -- 48-bit short cell at the declared resolution
+  area_id          TEXT
+  containment      TEXT      -- 'whole' | 'partial'
+  PRIMARY KEY (h3_cell, area_id)
+                             -- compactCells collapses uniform interiors; see §4.7 for why the
+                             -- compaction yield here is far below the flood layer's
+
 soil_map_unit              -- one row per SSURGO map unit, plain rowid table
   mukey            TEXT PRIMARY KEY   -- NRCS's own key
   areasymbol       TEXT      -- the survey area, e.g. 'IA153'
@@ -785,7 +904,7 @@ soil_map_unit              -- one row per SSURGO map unit, plain rowid table
 soil_component             -- the map unit's components, because the map unit is a mixture
   cokey            TEXT PRIMARY KEY
   mukey            TEXT
-  comppct_r        INTEGER   -- the weight §4.3 aggregates by
+  comppct_r        INTEGER   -- the weight §4.4 aggregates by
   compkind         TEXT?     -- 'Miscellaneous area' is what separates not-rateable from unrated
   nirrcapcl        TEXT?     -- '1'..'8'; NULL means NOT RATED, never class 8
   nirrcapscl       TEXT?     -- 'c' | 'e' | 's' | 'w'
@@ -794,13 +913,13 @@ soil_component             -- the map unit's components, because the map unit is
 soil_capability_cell       -- THE SHARED ARTIFACT BOTH CONSUMERS READ, WITHOUT ROWID
   h3_cell          INTEGER   -- 48-bit short cell at the declared resolution
   class_shares     TEXT      -- JSON: the authority's class codes -> area-weighted share
-  unrated_share    REAL      -- §4.4, each stored apart; the five never collapse into one number
+  unrated_share    REAL      -- §4.5, each stored apart; the five never collapse into one number
   notrateable_share REAL
   nodata_share     REAL
   other_share      REAL      -- the declared truncation floor's remainder
   top_class        TEXT?     -- consumer A's reading: the largest class share
   top_class_share  REAL?     -- and the share it rests on, NRCS's own pattern at cell grain
-  weighting        TEXT      -- which weighting produced the shares (§4.3 loss 2)
+  weighting        TEXT      -- which weighting produced the shares (§4.4 loss 2)
   PRIMARY KEY (h3_cell)
 
 soil_survey_area           -- the authority's mapped footprint, NOT the union of rated polygons
@@ -813,8 +932,16 @@ soil_survey_area           -- the authority's mapped footprint, NOT the union of
 layer_manifest / layer_coverage   -- the contract tables, from @mailwoman/core/layers
 ```
 
-`WITHOUT ROWID` on `soil_capability_cell` and not on `soil_map_unit` follows the contract's own
-guidance — small fixed-width rows probed by their exact primary key belong in the B-tree.
+`WITHOUT ROWID` on `soil_map_unit_cell` and `soil_capability_cell` and not on `soil_map_unit_area`
+follows the contract's own guidance — small fixed-width rows probed by their exact primary key belong in
+the B-tree; a row carrying a geometry blob does not.
+
+**The three cell-facing tables are one pipeline, not three sources.** `soil_map_unit_area` holds what
+the authority drew. `soil_map_unit_cell` says which cells each delineation reaches and whether it fills
+them. `soil_capability_cell` is that index reduced once, at build time, into the per-cell distribution.
+A `partial` cell's contribution to the reduction is weighted by the area it actually covers, which is
+why the truth table must keep unsimplified rings: simplify them and the weights change silently, and
+the reduction is the thing both consumers read.
 
 `soil_survey_area` exists as a table of its own for the same reason the flood survey gives
 `flood_map_extent` one: deriving the mapped footprint from the rated polygons would be exactly the error
@@ -827,7 +954,7 @@ rating. It also carries the two dates §3.2 requires be kept apart.
 provenance rows, and no possibility of the two consumers disagreeing about what the ground is — which is
 the failure two separate acquisitions would guarantee.
 
-### 4.6 Manifest fields, and the resolution the pilot measures
+### 4.7 Manifest fields, and the resolution the pilot measures
 
 | field                       | pilot value                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------- |
@@ -842,11 +969,34 @@ the failure two separate acquisitions would guarantee.
 | `spine_keys`                | `{ h3: { column: "h3_cell", resolution: … } }` — see below and §1                 |
 | `created_at`                | caller-supplied, per the contract                                                 |
 
-**The resolution is a measurement the pilot takes, and §4.3 has already bounded it.** The candidates are
-res 8 and res 9; res 10 costs about nine times res 9 for a third of the mixture and res 11 is out of
-reach at national scale. What must be reported at each candidate is the share of cells whose top class
-holds less than half the cell — the cell-grain analogue of the `niccdcdpct` distribution above — because
-that number, not cell count, is what tells a consumer whether the layer is answering or hedging.
+**The resolution is a measurement the pilot takes, and §4.4 has already bounded it. Run the
+`partial`-share measurement at res 7, 8, 9 and 10** — four candidates, on the pilot region, over the
+real delineations. Res 11 is named only to be excluded: it would leave 2.1 % of delineations sub-cell
+and costs roughly 49× res 9, which is out of reach at national scale. Two numbers get reported at each
+candidate, because they answer different questions:
+
+1. **The `partial` cell share** — what fraction of cells a delineation boundary crosses. This is the
+   #1989 number, and it decides whether the containment index answers most probes alone or whether the
+   ray-cast is the common path.
+2. **The share of cells whose top class holds less than half the cell** — the cell-grain analogue of the
+   `niccdcdpct` distribution in §4.4. This decides whether the layer is answering or hedging, and it is
+   what Consumer B's fit will actually feel.
+
+**Expect the `partial` share to invert relative to the flood layer, and design for that rather than be
+surprised by it.** The flood layer's polygons are large against its cells, so most cells fall wholly
+inside one zone and `compactCells` collapses long uniform interiors. Soil delineations are the opposite:
+measured on `IA153`, **85.4 % of them are smaller than one res-9 cell** (§4.4). Small polygons against
+large cells means most cells are crossed by a boundary, so at res 9 the `partial` share should be high,
+`compactCells` should yield little, and the index alone will rarely answer a point probe. That is not an
+argument against the polygon rule — the unsimplified geometry is still the truth and the ray-cast is
+still bounded to the candidates one cell names — but it **is** the argument for why this layer carries
+the reduced `soil_capability_cell` alongside the index rather than relying on the index the way the
+flood layer can. Going coarser makes the `partial` share better and the mixture worse; the two numbers
+above move in opposite directions, and picking between them is what the measurement is for.
+
+The same measurement is what would decide a future raster layer's signal resolution, with one
+difference: a raster has no `partial` cells to count, because a 30 m pixel either falls in a cell or
+does not. For the raster rule the only number is the second one — the class-mixture share per cell.
 
 Two known traps carry over from the flood survey and `build-poi.ts`, both already commented in place
 there: `polygonToCells` from h3-js takes `[lat, lng]` per vertex in its default mode, and a coverage
@@ -898,13 +1048,24 @@ survey behind a 2025 refresh — is the smoke rung.
 
 ### 5.3 The verification ladder
 
-**Fixtures.** Hand-built geometry and hand-built components, no network. A cell wholly inside one
-consociation; a cell straddling two map units with known areas, asserting the shares are the area
-weighting and nothing else; a map unit whose components are 45/35/20 across three capability classes,
+**Fixtures.** Hand-built geometry and hand-built components, no network.
+
+On the polygon rule (§4.3): a cell wholly inside one delineation, asserting `containment = 'whole'` and
+that the probe resolves from the index **without** touching geometry; a cell a boundary crosses,
+asserting `containment = 'partial'`, that every delineation reaching into it is named, and that the
+ray-cast runs only against those; a run of uniform interior cells, asserting `compactCells` collapses
+them and that expansion round-trips; and a delineation whose ring is deliberately re-ordered, asserting
+the stored rings are byte-identical to the source rather than normalized.
+
+On the reduction (§4.4/§4.5): a cell straddling two map units with known areas, asserting the shares are
+the area weighting and nothing else; a `partial` cell, asserting its contribution is weighted by covered
+area rather than counted whole; a map unit whose components are 45/35/20 across three capability classes,
 asserting no winner is invented; a `NOTCOM` polygon, asserting `nodata_share` and **not** a low class; a
 miscellaneous area, asserting `notrateable_share`; a rated class-8 component, asserting it lands in
-`class_shares` and not in any absence share; a point outside every survey area, asserting **no coverage
-row** rather than a zero; and an undeclared capability code, asserting a throw rather than a coercion.
+`class_shares` and not in any absence share; a truncated minority tail, asserting the shares still sum to
+1 and the remainder is in `other_share`; a point outside every survey area, asserting **no coverage row
+and no summary row** rather than a zero; and an undeclared capability code, asserting a throw rather than
+a coercion.
 
 **Smoke.** `IA153` alone, from the real archive. This verifies what fixtures structurally cannot: the
 actual shapefile field names, that `.prj` really is WGS84, that the pipe-delimited tabular export parses,
@@ -1004,17 +1165,28 @@ place, as `osm/sdk/fetch.ts` and `tiger/sdk/download.ts` do. Two behaviors to wr
 parser mis-reads it; and the download host answers `HEAD` with 405 and ignores `Range`, so freshness
 comes from `sacatalog.saverest` rather than from a length probe.
 
-**Build.** Ingest the shapefiles with `ogr2ogr` (already a dependency of the TIGER path) and the
-pipe-delimited tabular export; build `soil_map_unit` and `soil_component`; polyfill each map-unit
-delineation to the candidate resolutions; compute the per-cell area-weighted class distribution and the
-four absence shares of §4.4, recording the weighting used; derive `soil_survey_area` from the survey-area
-outline and each area's own metadata rather than from the rated polygons; write `layer_coverage` at
-`basis = designated`, `completeness = 1.0` for cells inside a published, digitized survey area and **no
-row** outside; write the manifest; seal 0444; build-then-swap.
+**Build — the polygon rule, because SSURGO is polygon-shaped (§4.3).** Ingest the shapefiles with
+`ogr2ogr` (already a dependency of the TIGER path) and the pipe-delimited tabular export. Build
+`soil_map_unit_area` with precomputed bounding boxes and **unsimplified** rings as the truth, plus
+`soil_map_unit` and `soil_component` for the attributes. Polyfill each delineation to the candidate
+resolutions and record `whole` or `partial` per cell in `soil_map_unit_cell`, running `compactCells`
+over uniform interiors. Reduce that index once into `soil_capability_cell`: the per-cell area-weighted
+class distribution plus the four absence shares of §4.5, weighting each `partial` cell by the area it
+actually covers, and recording which weighting produced the shares. Derive `soil_survey_area` from the
+survey-area outline and each area's own metadata rather than from the rated polygons. Write
+`layer_coverage` at `basis = designated`, `completeness = 1.0` for cells inside a published, digitized
+survey area and **no row** outside — absence is no row here and in every table. Write the manifest; seal
+0444; build-then-swap.
 
-**Measure and report** the share of cells whose top class covers less than half the cell, at each
-candidate resolution, and pick from the measurement (§4.6). Report it beside NRCS's own `niccdcdpct`
-distribution so the two are comparable.
+**Do not put a raster in the database**, here or in any successor. Should a builder reach for gSSURGO or
+gNATSGO instead of the vector product, the raster rule of §4.3 applies: bin at build time to the same
+per-cell class summary shape and store that, never the grid.
+
+**Measure and report both resolution numbers at res 7, 8, 9 and 10** (§4.7): the `partial` cell share,
+and the share of cells whose top class covers less than half the cell. Pick from the measurement, and
+report the second beside NRCS's own `niccdcdpct` distribution so the two are comparable. Expect the
+`partial` share to be high at the finer candidates and `compactCells` to yield little — the delineations
+are small against the cells, which is the opposite of the flood layer's geometry.
 
 **Verify** on the fixtures → smoke → full ladder in §5.3, ending with the SDA agreement check and its
 negative half.
@@ -1044,11 +1216,20 @@ its search half does not.
 
 **NRCS / SSURGO.**
 
-- **gSSURGO and STATSGO2 were not verified** — raster resolution, per-state file geodatabase sizes, the
-  Box-hosted download paths, and whether their terms differ from SSURGO's. The pilot does not need them
-  because the survey-area path was exercised end to end, but a builder reaching for the national raster
-  must read them first.
+- **gSSURGO and gNATSGO file sizes were not measured over HTTP** — Box returns HTTP 403 to anonymous
+  programmatic download, so every size in §2.1 for those products is Box's own `itemSize` metadata and is
+  labeled as such. Their shipped FGDC metadata was likewise not read (it is inside the archive), and
+  **gSSURGO has no data.gov dataset page** — 13 candidate slugs each returned 404 — so its licence rests
+  on SSURGO's rather than on a statement of its own. Whether their terms differ from SSURGO's is
+  therefore **unverified**.
+- **Whether gSSURGO CONUS is one file or several** — the product page says it "has been split into
+  smaller files" while the distribution folder holds a single 24.44 GB archive. Reported, not resolved.
+- **The complete Box folder listings** — pagination stopped at roughly 20 of about 50 state files.
 - **The Geospatial Data Gateway's ordering mechanism** — the host answers HTTP 301 and was not driven.
+- **The SSURGO Portal's own page** timed out on six attempts; the Portal is verified only indirectly,
+  through the Annual Soils Refresh document and the Portal user guide PDF.
+- **A national SSURGO download volume** — four survey areas were measured (13.5 MB to 41.1 MB) and no
+  extrapolation to the full set is offered.
 - **A published figure for SDA's server-side query timeout, and any rate limit or quota.** A timeout was
   observed and no documented number was found; no rate-limit header was returned on any request.
 - **A national count of unsurveyed area.** The four absence categories in §3.2 are verified and counted
@@ -1070,6 +1251,11 @@ its search half does not.
 - **The NCCPI rule's own definition and interpretation guidance.** Its rule names, row counts and
   observed range (0.001–0.991) are measured; what the index means and how NRCS says it may be used were
   not read.
+- **The one-off between 3,379 and 3,380 survey areas** (§2.1). The Annual Soils Refresh document and
+  SDA's `Non-MLRA Soil Survey Area` legend count agree at 3,379; `sacatalog` and the availability map
+  agree at 3,380. Both figures are reported with their sources rather than one being chosen.
+- **Whether the two hosts' differing STATSGO2 national files** (446,108,728 vs 445,366,221 bytes) differ
+  in content or only in packaging. Only the byte counts were compared; neither archive was opened.
 
 **NASS / Cropland Data Layer.**
 
@@ -1121,7 +1307,7 @@ its search half does not.
 **This repository.**
 
 - **Whether the res-8/res-9 choice survives at national scale** is not settled and cannot be settled by
-  this record. §4.3's delineation-size distribution is measured on **one county in Iowa**, which is dense
+  this record. §4.4's delineation-size distribution is measured on **one county in Iowa**, which is dense
   prime farmland and therefore finely delineated. A rangeland or forest county will have larger
-  delineations and a different mixture share, and §4.6's measurement must be taken per region rather than
+  delineations and a different mixture share, and §4.7's measurement must be taken per region rather than
   assumed from `IA153`.
