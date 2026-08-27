@@ -3,21 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the POI query board's grading core (`gradeCase`) and the committed fixture contract.
+ *   Tests for the POI query board's grading core (`gradeCase`), the committed fixture contract, and the
+ *   tracked-row convention that lets a known failure class sit on the board without reaching the floors.
  *   No db, no classifier, no resolver — `gradeCase` is graded against synthetic `POIBoardOutcome`
  *   fakes, matching the "no db needed" discipline `fragment-board.test.ts` set for the interval math.
  */
 
-import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
+import type { POIIntent, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import {
+	auditFixtures,
 	evaluateFloors,
 	type FloorInput,
 	gradeCase,
+	isCountedFixture,
+	partitionCases,
 	POI_BOARD_FIXTURES,
 	POI_BOARD_FLOORS,
 	type POIBoardFixture,
 	type POIBoardOutcome,
 } from "mailwoman/eval-harness/poi-board"
+import { canonicalJSON, loadProbeDefinition } from "mailwoman/eval-harness/semantic-utility/probe"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
@@ -288,9 +293,17 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	it("carries ~51 cases (v1's 45 + v1.1's 6 brand cases)", () => {
-		expect(fixtures.length).toBeGreaterThanOrEqual(48)
-		expect(fixtures.length).toBeLessThanOrEqual(56)
+	// The composition register. Exact rather than a range, because the floors were re-registered against these
+	// numbers (#1960): 55 committed rows, 51 of them counted, and the four promoted activity rows tracked. A row
+	// added or a status flipped without this test moving is a floor denominator changing in silence.
+	it("carries 55 cases — 51 counted toward the floors, plus the 4-row tracked activity family", () => {
+		expect(fixtures).toHaveLength(55)
+		expect(fixtures.filter((f) => isCountedFixture(f))).toHaveLength(51)
+		expect(fixtures.filter((f) => !isCountedFixture(f))).toHaveLength(4)
+	})
+
+	it("audits clean", () => {
+		expect(auditFixtures(fixtures)).toEqual([])
 	})
 
 	it("has unique ids", () => {
@@ -493,5 +506,160 @@ describe("evaluateFloors — breach detection", () => {
 
 	it("exposes the pre-registered floor thresholds", () => {
 		expect(POI_BOARD_FLOORS).toEqual({ overall: 0.9, abstain: 1, address: 1 })
+	})
+
+	// The #1960 re-registration, as arithmetic rather than prose. The live standing at promotion is 35/37 results
+	// (`cat-ca-02` and `brand-us-02`), 8/8 abstain, 6/6 address.
+	describe("the 55-row composition (#1960)", () => {
+		it("reads the same 49/51 = 96.1% it read at 51 rows, because the four promoted rows are tracked", () => {
+			const evaluation = evaluateFloors(
+				report({
+					results: { total: 37, pass: 35 },
+					abstain: { total: 8, pass: 8 },
+					address: { total: 6, pass: 6 },
+				})
+			)
+
+			expect(evaluation.breached).toBe(false)
+
+			const overall = evaluation.lines.find((l) => l.key === "overall")!
+			expect(overall.fraction).toBe("49/51")
+			expect(overall.observed).toBeCloseTo(49 / 51, 5)
+		})
+
+		it("would breach at 49/55 = 89.1% if the four counted — the reason the tracked convention carries them", () => {
+			const evaluation = evaluateFloors(
+				report({
+					results: { total: 41, pass: 35 },
+					abstain: { total: 8, pass: 8 },
+					address: { total: 6, pass: 6 },
+				})
+			)
+
+			expect(evaluation.breached).toBe(true)
+
+			const overall = evaluation.lines.find((l) => l.key === "overall")!
+			expect(overall.met).toBe(false)
+			expect(overall.fraction).toBe("49/55")
+			expect(overall.observed).toBeCloseTo(49 / 55, 5)
+			expect(evaluation.lines.find((l) => l.key === "abstain")!.met).toBe(true)
+			expect(evaluation.lines.find((l) => l.key === "address")!.met).toBe(true)
+		})
+	})
+})
+
+describe("the tracked-row convention", () => {
+	function tracked(overrides: Partial<POIBoardFixture> = {}): POIBoardFixture {
+		return { ...resultsFixture, id: "t-tracked", status: "known_fail", bugRef: "#1039", ...overrides }
+	}
+
+	it("defaults an absent status to pass, so a row counts toward the floors without carrying a field", () => {
+		expect(isCountedFixture(resultsFixture)).toBe(true)
+		expect(isCountedFixture(tracked())).toBe(false)
+		expect(isCountedFixture(tracked({ status: "improvement_target", bugRef: "#1966" }))).toBe(false)
+	})
+
+	it("refuses an unknown status rather than defaulting it", () => {
+		const problems = auditFixtures([tracked({ status: "known-fail" as POIBoardFixture["status"] })])
+
+		expect(problems.join("\n")).toMatch(/unknown status/u)
+	})
+
+	it("refuses an unknown key rather than dropping it", () => {
+		const problems = auditFixtures([{ ...resultsFixture, bugref: "#1039" } as POIBoardFixture])
+
+		expect(problems.join("\n")).toMatch(/unknown key "bugref"/u)
+	})
+
+	it("refuses a bugRef on a counted row — it would assert the defect is repaired", () => {
+		const problems = auditFixtures([{ ...resultsFixture, bugRef: "#1039" }])
+
+		expect(problems.join("\n")).toMatch(/only meaningful on a tracked row/u)
+	})
+
+	it("refuses a tracked row that names no live issue", () => {
+		expect(auditFixtures([tracked({ bugRef: undefined })]).join("\n")).toMatch(/must name the live issue/u)
+		expect(auditFixtures([tracked({ bugRef: "  " })]).join("\n")).toMatch(/must name the live issue/u)
+	})
+
+	it("refuses a duplicate id", () => {
+		expect(auditFixtures([resultsFixture, resultsFixture]).join("\n")).toMatch(/used twice/u)
+	})
+
+	it("splits grades by status and reports a tracked row that started passing", () => {
+		const trackedFixture = tracked({ rowRef: "semantic-utility/probe-definition.json#x", note: "why" })
+		const set = [resultsFixture, trackedFixture]
+		const subject: POIIntent = { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } }
+
+		const grades = [
+			gradeCase(resultsFixture, { path: "full" }),
+			gradeCase(trackedFixture, intentOutcome({ type: "intent", intent: subject, results: [] })),
+		]
+
+		const partition = partitionCases(set, grades)
+
+		expect(partition.counted.map((g) => g.id)).toEqual(["t-results"])
+		expect(partition.tracked).toHaveLength(1)
+		expect(partition.tracked[0]!.status).toBe("known_fail")
+		expect(partition.tracked[0]!.bugRef).toBe("#1039")
+		expect(partition.tracked[0]!.rowRef).toBe("semantic-utility/probe-definition.json#x")
+		expect(partition.tracked[0]!.note).toBe("why")
+		expect(partition.tracked[0]!.holding).toBe(false)
+
+		const holdingGrade = gradeCase(
+			trackedFixture,
+			intentOutcome({
+				type: "intent",
+				intent: subject,
+				results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
+			})
+		)
+
+		expect(partitionCases(set, [holdingGrade]).tracked[0]!.holding).toBe(true)
+	})
+
+	it("refuses a grade whose id names no committed fixture, rather than dropping it from the floors", () => {
+		const orphan = gradeCase({ ...resultsFixture, id: "t-orphan" }, { path: "full" })
+
+		expect(() => partitionCases([resultsFixture], [orphan])).toThrow(/names no committed fixture/u)
+	})
+})
+
+describe("the promoted semantic-utility family (#1960)", () => {
+	const definition = loadProbeDefinition()
+	const promoted = fixtures.filter((f) => f.rowRef?.startsWith("semantic-utility/probe-definition.json#"))
+
+	it("promotes all four frozen target rows, and nothing else", () => {
+		expect(promoted.map((f) => f.id).toSorted()).toEqual(definition.targetRows.map((r) => r.id).toSorted())
+	})
+
+	it("copies each row from the frozen definition byte-for-byte, so the board grades the row that was registered", () => {
+		const byID = new Map(definition.targetRows.map((row) => [row.id, row]))
+
+		for (const fixture of promoted) {
+			const frozen = byID.get(fixture.rowRef!.split("#")[1]!)
+
+			expect(frozen, `${fixture.id} names ${fixture.rowRef}`).toBeDefined()
+			expect(fixture.id).toBe(frozen!.id)
+			expect(fixture.query).toBe(frozen!.query)
+			expect(fixture.locale).toBe(frozen!.locale)
+			expect(canonicalJSON(fixture.expect)).toBe(canonicalJSON(frozen!.expect))
+		}
+	})
+
+	it("tracks every row against a live issue, and none of them reaches the floors", () => {
+		for (const fixture of promoted) {
+			expect(isCountedFixture(fixture), fixture.id).toBe(false)
+			expect(fixture.bugRef, fixture.id).toMatch(/^#\d+$/u)
+		}
+
+		// The route-dependent three await the integration decision; the French row is tracked as a defect, because its
+		// baseline is a confident wrong answer rather than a miss.
+		const byRef = new Map(promoted.map((f) => [f.id, f]))
+
+		expect(byRef.get("sem-act-us-01")).toMatchObject({ status: "improvement_target", bugRef: "#1966" })
+		expect(byRef.get("sem-act-us-02")).toMatchObject({ status: "improvement_target", bugRef: "#1966" })
+		expect(byRef.get("sem-act-mx-01")).toMatchObject({ status: "improvement_target", bugRef: "#1966" })
+		expect(byRef.get("sem-act-fr-01")).toMatchObject({ status: "known_fail", bugRef: "#1039" })
 	})
 })

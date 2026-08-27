@@ -21,8 +21,18 @@
  *   `@mailwoman/poi-taxonomy`'s locale gating — exact-locale, cross-language, and ungated phrases),
  *   ~6 abstains (3 build-local infra categories that poi.db structurally can't answer, 3 bare
  *   shipped categories with no anchor to search from), ~6 address-guards (full addresses + the
- *   venue-led "category, address" shape — the poi branch must NOT claim these), and ~6
- *   near-miss/robustness cases (comma anchors, multiword synonyms, multi-segment anchors).
+ *   venue-led "category, address" shape — the poi branch must NOT claim these), ~6
+ *   near-miss/robustness cases (comma anchors, multiword synonyms, multi-segment anchors), and the
+ *   4-row activity-phrased family promoted from the semantic-utility pre-registration.
+ *
+ *   TRACKED ROWS. A fixture may carry `status` + `bugRef`, the conformance layer's own convention
+ *   ({@linkcode POI_BOARD_STATUSES}). A tracked row is run and REPORTED and its grade never reaches the
+ *   floors, so a failure class can live on the surface every candidate is graded on before the work that
+ *   answers it exists. Two rules keep the tracked list from becoming a place rows go to be forgotten: a
+ *   tracked row must name a live issue, and a tracked row that starts passing is printed as a promotion
+ *   instruction. A red row is never deleted to make a run green, and it is never re-stated as a weaker
+ *   expectation either — a row rewritten to assert the current wrong answer would fail the moment the
+ *   defect is repaired.
  *
  *   Only REACHABLE behavior is scored — no brand/name-subject cases; that detection doesn't exist yet
  *   (spec §3.1 Phase 2). A `results` expectation's `maxNearestKm` is deliberately city-scale (25 km):
@@ -76,11 +86,123 @@ export interface POIBoardAddressExpect {
 
 export type POIBoardExpect = POIBoardResultsExpect | POIBoardAbstainExpect | POIBoardAddressExpect
 
+/**
+ * What a row's grade is allowed to mean for the floors — the conformance layer's own `ConformanceStatus` vocabulary
+ * (`conformance/fixture.ts`), restated here because this board grades an assembled answer rather than a law relation
+ * and must not import a law schema to say so.
+ *
+ * - `pass` — the default, and the only status the floors read. A `pass` row that fails lowers the floor rates.
+ * - `known_fail` — the row fails because of a live DEFECT: the default path answers, and the answer is wrong.
+ * - `improvement_target` — the row fails because a capability it needs is not on the default path at all.
+ *
+ * The difference between the two tracked statuses is what would move the row: a repair for `known_fail`, a capability
+ * for `improvement_target`. Both are run and reported, and neither reaches the floors.
+ */
+export const POI_BOARD_STATUSES = ["pass", "known_fail", "improvement_target"] as const
+
+export type POIBoardStatus = (typeof POI_BOARD_STATUSES)[number]
+
 export interface POIBoardFixture {
 	id: string
 	query: string
 	locale?: string
 	expect: POIBoardExpect
+	/**
+	 * Whether this row's grade is counted toward the floors. Absent means `pass` — a row says nothing about its status
+	 * only when it is expected to hold.
+	 */
+	status?: POIBoardStatus
+	/**
+	 * The live issue a tracked row's diagnosis lives on, e.g. `#1039`. Required on a tracked row, and refused on a
+	 * counted one: a counted row that names a defect asserts the defect is already repaired.
+	 */
+	bugRef?: string
+	/**
+	 * The committed record this row was promoted from, as `file#id` — e.g.
+	 * `semantic-utility/probe-definition.json#sem-act-us-01`, relative to `packages/mailwoman/eval-harness/`. Carried so
+	 * a promoted row names the population it came from rather than reading as authored here.
+	 */
+	rowRef?: string
+	/**
+	 * Free-form authoring note. Never graded.
+	 */
+	note?: string
+}
+
+/**
+ * Every key a fixture record may carry. An unknown key is refused rather than dropped: a plain object silently discards
+ * a misspelled field, so a row meant to be tracked would reach the floors while reading as authored — and the board
+ * would then turn red for a reason nobody wrote.
+ */
+const FIXTURE_KEYS = new Set<string>(["id", "query", "locale", "expect", "status", "bugRef", "rowRef", "note"])
+
+/**
+ * The status a row grades under. Absent is `pass`, so every committed row before the tracked convention existed keeps
+ * counting toward the floors without carrying a field.
+ */
+function fixtureStatus(fixture: POIBoardFixture): POIBoardStatus {
+	return fixture.status ?? "pass"
+}
+
+/**
+ * Whether this row's grade reaches the floors.
+ */
+export function isCountedFixture(fixture: POIBoardFixture): boolean {
+	return fixtureStatus(fixture) === "pass"
+}
+
+/**
+ * Everything that must be true of the committed fixture set, checked without running anything. One message per problem,
+ * each naming the row id. Empty means the set is loadable.
+ *
+ * Pure, so `poi-board.test.ts` exercises every refusal against synthetic rows, and `runPOIBoard` refuses the real file
+ * before it builds a pipeline.
+ */
+export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
+	const problems: string[] = []
+	const seen = new Set<string>()
+
+	for (const fixture of fixtures) {
+		const label = `poi board fixture ${JSON.stringify(fixture.id)}`
+
+		if (seen.has(fixture.id)) {
+			problems.push(`${label}: id is used twice — ids name rows in output`)
+		}
+
+		seen.add(fixture.id)
+
+		for (const key of Object.keys(fixture)) {
+			if (!FIXTURE_KEYS.has(key)) {
+				problems.push(`${label}: unknown key ${JSON.stringify(key)} — known: ${[...FIXTURE_KEYS].join(", ")}`)
+			}
+		}
+
+		const rawStatus: unknown = fixture.status
+
+		if (rawStatus !== undefined && !(POI_BOARD_STATUSES as readonly unknown[]).includes(rawStatus)) {
+			problems.push(`${label}: unknown status ${JSON.stringify(rawStatus)} — known: ${POI_BOARD_STATUSES.join(", ")}`)
+
+			continue
+		}
+
+		const counted = isCountedFixture(fixture)
+
+		if (counted && fixture.bugRef !== undefined) {
+			problems.push(
+				`${label}: "bugRef" is only meaningful on a tracked row, and this row's status is ` +
+					`"${fixtureStatus(fixture)}" — a counted row that names a defect asserts the defect is repaired.`
+			)
+		}
+
+		if (!counted && !fixture.bugRef?.trim()) {
+			problems.push(
+				`${label}: a tracked row must name the live issue its diagnosis lives on in "bugRef" — a tracked row ` +
+					`with nowhere to read is a failure nobody can act on.`
+			)
+		}
+	}
+
+	return problems
 }
 
 /**
@@ -238,6 +360,69 @@ export function gradeCase(fixture: POIBoardFixture, outcome: POIBoardOutcome): C
 	}
 }
 
+/**
+ * One tracked row's grade, carried with the record that says why it is tracked.
+ */
+export interface TrackedCase {
+	grade: CaseGrade
+	status: POIBoardStatus
+	/**
+	 * The live issue this row's diagnosis lives on. Never blank — {@linkcode auditFixtures} refuses a tracked row without
+	 * one.
+	 */
+	bugRef: string
+	rowRef?: string
+	note?: string
+	/**
+	 * True when a tracked row passed. Printed as a promotion instruction rather than silently absorbed.
+	 */
+	holding: boolean
+}
+
+/**
+ * The two populations a run produces: the rows the floors read, and the rows that only report.
+ */
+export interface CasePartition {
+	counted: CaseGrade[]
+	tracked: TrackedCase[]
+}
+
+/**
+ * Split graded cases by their fixture's status. Pure, and keyed by id rather than by position — a grade whose id names
+ * no fixture is REFUSED rather than dropped, because a dropped grade leaves the floors reading a smaller board and
+ * reports as a higher pass rate.
+ */
+export function partitionCases(fixtures: readonly POIBoardFixture[], grades: readonly CaseGrade[]): CasePartition {
+	const byID = new Map(fixtures.map((fixture) => [fixture.id, fixture]))
+	const counted: CaseGrade[] = []
+	const tracked: TrackedCase[] = []
+
+	for (const grade of grades) {
+		const fixture = byID.get(grade.id)
+
+		if (!fixture) {
+			throw new Error(`poi board: graded case ${JSON.stringify(grade.id)} names no committed fixture`)
+		}
+
+		if (isCountedFixture(fixture)) {
+			counted.push(grade)
+
+			continue
+		}
+
+		tracked.push({
+			grade,
+			status: fixtureStatus(fixture),
+			bugRef: fixture.bugRef ?? "",
+			...(fixture.rowRef ? { rowRef: fixture.rowRef } : {}),
+			...(fixture.note ? { note: fixture.note } : {}),
+			holding: grade.pass,
+		})
+	}
+
+	return { counted, tracked }
+}
+
 export interface POIBoardOptions {
 	locale?: string
 	weightsCacheRoot?: string
@@ -332,8 +517,15 @@ export interface QuantileStats {
  * Pre-registered pass-rate floors for the board (spec §3.6). Set in the follow-up PR after the v1 baseline
  * (`docs/articles/evals/2026-07-19-poi-query-board-v1-baseline.md`) established numbers to hold against.
  *
- * - `overall` ≥ 0.90 — the whole board's assembled-answer pass rate. A soft floor: coverage gaps in poi.db (the
- *   `trail`/`supermarket` holdouts) are allowed to cost a few points without failing the board.
+ * RE-REGISTERED over the 55-row composition (#1960), and the three numbers are the whole argument. Before: 51 rows, 49
+ * pass, 96.1% against a 0.90 floor. After, with the four promoted activity rows tracked: the floors read 51 rows, 49
+ * pass, 96.1% — the same denominator, the same numerator, the same comparison. The counterfactual is why the tracked
+ * convention is what carries them: had the four counted, 49/55 = 89.1% would sit BELOW the 0.90 floor, so committing a
+ * known failure class would have turned the board red without any candidate changing, and lowering the floor to admit
+ * them would have loosened the bar every other row is held to.
+ *
+ * - `overall` ≥ 0.90 — the assembled-answer pass rate over the rows the floors read. A soft floor: coverage gaps in
+ *   poi.db (the `trail`/`supermarket` holdouts) are allowed to cost a few points without failing the board.
  * - `abstain` = 1.00 — every abstain case must abstain for the right reason. A hard floor: an abstain miss means the poi
  *   branch claimed a query poi.db structurally cannot answer, the exact false-positive this board guards.
  * - `address` = 1.00 — every address-guard case must stay on the address path. A hard floor for the same reason: the poi
@@ -428,13 +620,40 @@ export function evaluateFloors(report: FloorInput): FloorEvaluation {
 export interface POIBoardReport {
 	generatedAt: string
 	db: string
+	/**
+	 * Every committed row, tracked ones included.
+	 */
 	totalCases: number
+	/**
+	 * The rows the floors read — {@linkcode totalCases} minus {@linkcode trackedCases}.
+	 */
+	countedCases: number
+	/**
+	 * Rows carrying a tracked status. Run, graded, reported, and never counted toward the floors.
+	 */
+	trackedCases: number
+	/**
+	 * Per-expect-kind slices over the COUNTED rows only, which is what the floors read.
+	 */
 	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
+	/**
+	 * Pass rate over the counted rows — the number the `overall` floor is compared against.
+	 */
 	overallPassRate: number
+	/**
+	 * Pass rate over every committed row. Report-only, and deliberately reported beside the floor number: a reader
+	 * comparing the two sees what the tracked rows cost, rather than a single rate that hides them.
+	 */
+	allCasesPassRate: number
 	/**
 	 * Pre-registered floors graded against this report (spec §3.6). Printed on every run; enforced under `--enforce`.
 	 */
 	floors: FloorEvaluation
+	/**
+	 * Tracked rows with the record that says why. A tracked row whose `holding` is true is printed as a promotion
+	 * instruction.
+	 */
+	tracked: TrackedCase[]
 	/**
 	 * Report-only metrics over every `POIResult` row returned across ALL cases (any expect kind).
 	 */
@@ -541,6 +760,14 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 
 	if (!fixtures.length) throw new Error(`poi board: no fixtures found at ${fixturesPath}`)
 
+	const fixtureProblems = auditFixtures(fixtures)
+
+	if (fixtureProblems.length) {
+		throw new Error(
+			[`poi board: ${fixturesPath} is not loadable:`, ...fixtureProblems.map((p) => `  - ${p}`)].join("\n")
+		)
+	}
+
 	const { pipeline, db, close } = await createPOIBoardPipeline(options)
 
 	const cases: CaseGrade[] = []
@@ -579,9 +806,10 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 		close()
 	}
 
+	const { counted, tracked } = partitionCases(fixtures, cases)
 	const byExpectKind: POIBoardReport["byExpectKind"] = {}
 
-	for (const grade of cases) {
+	for (const grade of counted) {
 		const bucket = byExpectKind[grade.expectKind] ?? { total: 0, pass: 0, rate: 0 }
 
 		bucket.total++
@@ -597,16 +825,21 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 		bucket.rate = bucket.total > 0 ? bucket.pass / bucket.total : 0
 	}
 
-	const totalPass = cases.filter((c) => c.pass).length
-	const overallPassRate = cases.length ? totalPass / cases.length : 0
+	const countedPass = counted.filter((c) => c.pass).length
+	const overallPassRate = counted.length ? countedPass / counted.length : 0
+	const allPass = cases.filter((c) => c.pass).length
 
 	const report: POIBoardReport = {
 		generatedAt: new Date().toISOString(),
 		db,
 		totalCases: cases.length,
+		countedCases: counted.length,
+		trackedCases: tracked.length,
 		byExpectKind,
 		overallPassRate,
+		allCasesPassRate: cases.length ? allPass / cases.length : 0,
 		floors: evaluateFloors({ overallPassRate, byExpectKind }),
+		tracked,
 		resultRowCount,
 		gersIDPresentRate: resultRowCount > 0 ? gersIDPresent / resultRowCount : 0,
 		ancestryPresentRate: resultRowCount > 0 ? ancestryPresent / resultRowCount : 0,
@@ -624,8 +857,17 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 
 function printReport(report: POIBoardReport): void {
 	console.log(`\nPOI query board (spec §3.6) — floors enforced under --enforce — db: ${report.db}`)
-	console.log(`${report.totalCases} cases, ${(report.overallPassRate * 100).toFixed(1)}% overall pass rate\n`)
-	console.log("  expect kind     n     pass    rate")
+
+	console.log(
+		`${report.totalCases} cases: ${report.countedCases} counted toward the floors, ${report.trackedCases} tracked`
+	)
+
+	console.log(
+		`${(report.overallPassRate * 100).toFixed(1)}% counted pass rate · ` +
+			`${(report.allCasesPassRate * 100).toFixed(1)}% over every committed row\n`
+	)
+
+	console.log("  expect kind     n     pass    rate   (counted rows)")
 
 	for (const [kind, bucket] of Object.entries(report.byExpectKind).toSorted()) {
 		console.log(
@@ -661,14 +903,53 @@ function printReport(report: POIBoardReport): void {
 			: "  → all floors met"
 	)
 
-	const failures = report.cases.filter((c) => !c.pass)
+	const trackedIDs = new Set(report.tracked.map((entry) => entry.grade.id))
 
-	if (failures.length) {
-		console.log(`\n--- ${failures.length} failing cases ---`)
+	if (report.tracked.length) {
+		const stillFailing = report.tracked.filter((entry) => !entry.holding)
 
-		for (const f of failures) {
-			console.log(`  [${f.expectKind}] ${f.id}: ${JSON.stringify(f.query)}`)
-			console.log(`      ${f.detail}`)
+		console.log(
+			`\n--- ${report.tracked.length} tracked rows (reported, never counted toward the floors): ` +
+				`${stillFailing.length} still failing ---`
+		)
+
+		for (const entry of report.tracked) {
+			const mark = entry.holding ? "✓" : "~"
+			const rowRef = entry.rowRef ? ` (row ${entry.rowRef})` : ""
+
+			console.log(
+				`  ${mark} [${entry.grade.expectKind}] ${entry.grade.id} [${entry.status} ${entry.bugRef}]${rowRef}: ` +
+					JSON.stringify(entry.grade.query)
+			)
+
+			console.log(`      ${entry.grade.detail}`)
 		}
+
+		const holding = report.tracked.filter((entry) => entry.holding)
+
+		if (holding.length) {
+			console.log(`\n⚠ ${holding.length} tracked rows now pass — promote to status=pass and drop their bugRef:`)
+
+			for (const entry of holding) {
+				console.log(`  ${entry.grade.id} (${entry.bugRef})`)
+			}
+		}
+	}
+
+	printFailures(report.cases.filter((grade) => !grade.pass && !trackedIDs.has(grade.id)))
+}
+
+/**
+ * The failing COUNTED rows — the ones a floor breach is made of. Tracked failures print in their own block above, so a
+ * reader never has to subtract one list from the other to see what actually moved.
+ */
+function printFailures(failures: readonly CaseGrade[]): void {
+	if (!failures.length) return
+
+	console.log(`\n--- ${failures.length} failing cases ---`)
+
+	for (const f of failures) {
+		console.log(`  [${f.expectKind}] ${f.id}: ${JSON.stringify(f.query)}`)
+		console.log(`      ${f.detail}`)
 	}
 }
