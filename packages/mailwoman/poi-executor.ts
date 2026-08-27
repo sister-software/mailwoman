@@ -95,12 +95,16 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 		}
 
 		if (subject.kind === "name") {
-			const results = lookup.search({ name: subject.text, center: resolveCenter(intent), limit: intent.limit })
+			const results = lookup.search({
+				name: subject.text,
+				center: resolvePOISearchCenter(intent),
+				limit: intent.limit,
+			})
 
 			return { type: "intent", intent, results: results.map(toResult) }
 		}
 
-		const center = resolveCenter(intent)
+		const center = resolvePOISearchCenter(intent)
 
 		if (!center) {
 			return { type: "abstain", reason: "anchor_required" }
@@ -156,8 +160,13 @@ function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["re
  * Spatial anchor for the search: the anchor tree's DEEPEST node carrying a resolved centroid (walking roots + one level
  * of children — the resolver decorates `lat`/`lon` on the nodes it wins, Phase 4.3), else the caller-supplied
  * `biasPoint` ("near me"), else undefined (category/brand callers abstain on this; name callers search un-anchored).
+ *
+ * Exported because an observer reading a finished outcome has to name the point the search was CENTRED ON, and the
+ * outcome does not carry it. A second copy of this walk would answer a neighbouring coordinate whenever the anchor tree
+ * carries more than one geo node, and the observer would then attribute the answer to the wrong cell — a wrong reading
+ * of a correct search, which is indistinguishable downstream from a correct reading.
  */
-function resolveCenter(intent: POIIntent): { latitude: number; longitude: number } | undefined {
+export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; longitude: number } | undefined {
 	const tree = intent.anchor?.tree
 
 	if (tree) {
