@@ -24,10 +24,10 @@ import { checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "./release
 import { literalFilesEntries, verifyTarball } from "./verify-tarball.ts"
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 52 published, every absence sanctioned by name", () => {
+	it("holds on the current tree: 53 published, every absence sanctioned by name", () => {
 		const identity = checkReleaseListIdentity(String(repoRootPath()))
 
-		expect(identity.publishCount).toBe(52)
+		expect(identity.publishCount).toBe(53)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
