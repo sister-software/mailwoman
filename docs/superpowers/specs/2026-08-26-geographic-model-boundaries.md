@@ -1,18 +1,25 @@
 # Geographic-model boundaries and the pharmacy first slice
 
-**Date:** 2026-08-26 · **Status:** design of record; no code lands with it · **Issue:** #1917 ·
+**Date:** 2026-08-26 · **Status:** design of record; the first slice has since landed · **Issue:** #1917 ·
 **Epic:** #1916 (program parent #1680) · **Companions:** #1683 (empirical activity-affordance
 vector), #1928 (the semantic-utility probe this record supplies a target for).
+
+**Amendments:** [§4.1 — mapping-breadth wave 1](#41-amendment-1-mapping-breadth-wave-1-2026-08-27)
+(2026-08-27, #1961).
 
 This record does two things and nothing else. It **names the current owner** of every seam the
 world-model program would otherwise re-create, each against a path that exists on HEAD; and it
 **freezes one vertical slice** — `pharmacy affords obtain_medication` — so that every later issue in
 the program has a fixed target to be judged against.
 
-No package is created here. `@mailwoman/geographic-model` appears throughout as a **recorded
-ownership boundary**, not as a workspace: it does not exist in the root `workspaces` array, in
-`.release-it.json`, or under `packages/`, and this record does not add it. The first issue that
-scaffolds it inherits the responsibilities named in §3 and nothing beyond them.
+No package was created by this record. `@mailwoman/geographic-model` appeared throughout as a
+**recorded ownership boundary** rather than a workspace, and the issue that scaffolded it inherited
+the responsibilities named in §3 and nothing beyond them.
+
+> **Corrected 2026-08-27 (#1961).** The workspace exists now, at `packages/geographic-model/`. It is
+> in the root `workspaces` array (58 entries) and in `.release-it.json`'s publish list (52 of those
+> 58); its `package.json` reads `version: 0.0.0` and carries no `private` flag. §3's ownership row is
+> updated to match. What the package owns and must not own is unchanged by its existing.
 
 ---
 
@@ -153,10 +160,16 @@ would be authoring policy at the one place where the system is supposed to learn
 | Mechanism-account shapes                                          | `packages/dev-mcp/diagnose.ts` (`DIAGNOSE_SHAPES`, `SHAPE_PREDICATES`) |
 | Diagnosis conventions                                             | `docs/superpowers/specs/2026-08-17-mechanism-accounts.md`              |
 | Conformance-law fixture contract (#1918)                          | `packages/mailwoman/eval-harness/conformance/`                         |
-| Case-folding invariance law (#1919)                               | `packages/mailwoman/eval-harness/conformance/case-folding.{ts,jsonl}`  |
-| Whitespace invariance law (#1920)                                 | `packages/mailwoman/eval-harness/conformance/whitespace.{ts,jsonl}`    |
 | Law-suite register (what a default run covers)                    | `packages/mailwoman/eval-harness/conformance/suites.ts`                |
 | Law-suite runner (`mailwoman eval conformance`)                   | `packages/mailwoman/eval-harness/conformance/command.ts`               |
+
+**Updated 2026-08-27 (#1961).** When this record was written the register held two laws, case folding
+(#1919) and whitespace (#1920). `CONFORMANCE_SUITES` holds **five** on HEAD, each a `{ts,jsonl}` pair
+in that directory: `case-folding`, `whitespace`, `punctuation`, `nfc-nfd` (the canonical-form law) and
+`refinement-monotonicity`. The last of those reads the resolver's own candidate tables through
+`packages/mailwoman/eval-harness/conformance/candidate-admissibility.ts` (#1923), which is a set of
+candidate accounts rather than a sixth suite. The paragraph below describes the fixture contract, and
+it is unchanged.
 
 The conformance module is the seam a law suite plugs into: a fixture names a base query, one context, a
 variant query, a law, one of five closed outcome comparators, and the relation the two outcomes must
@@ -182,14 +195,14 @@ by it.
 
 ## 3. The package boundary
 
-| Owner                                                                                              | Owns                                                                                                                                                                                                                                                                     | Must not own                                                                                                         |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `@mailwoman/poi-taxonomy`                                                                          | External and curated POI category vocabulary; category hierarchy; the Overture-leaf translation; query phrase → category lexicon; brands                                                                                                                                 | Relations other than containment; activities; affordances; per-assertion provenance                                  |
-| `@mailwoman/geographic-model` **(future; recorded ownership only — the workspace does not exist)** | Stable concepts beyond the POI vocabulary; relation definitions; activities and affordances; rule modality; source observations; derived facts; derivation provenance; deterministic compilation and validation; mappings from external vocabularies into world concepts | Ranking weights, boosts, penalties, or any candidate-ordering API; a second POI taxonomy; a second coverage register |
-| `@mailwoman/core/layers`                                                                           | Dataset identity (`layer_manifest`); coverage epistemics (`layer_coverage`, `CoverageBasis`, `supportsExclusion`)                                                                                                                                                        | World semantics of any kind                                                                                          |
-| Mailwoman runtime / resolver                                                                       | Candidate lookup, anchor resolution, POI execution, and the join of candidates with layer evidence and (later) world facts; candidate ordering                                                                                                                           | Authored world knowledge                                                                                             |
-| Learned decoding (`@mailwoman/neural`, `@mailwoman/core/decoder`)                                  | Interpretation of observations; the decode objective                                                                                                                                                                                                                     | Authored imperatives that bypass interpretation                                                                      |
-| #1683                                                                                              | Empirical, spatial activity-affordance statistics fitted from data                                                                                                                                                                                                       | The stable activity/affordance identifiers themselves — those come from the geographic model                         |
+| Owner                                                             | Owns                                                                                                                                                                                                                                                                     | Must not own                                                                                                         |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `@mailwoman/poi-taxonomy`                                         | External and curated POI category vocabulary; category hierarchy; the Overture-leaf translation; query phrase → category lexicon; brands                                                                                                                                 | Relations other than containment; activities; affordances; per-assertion provenance                                  |
+| `@mailwoman/geographic-model` (`packages/geographic-model/`)      | Stable concepts beyond the POI vocabulary; relation definitions; activities and affordances; rule modality; source observations; derived facts; derivation provenance; deterministic compilation and validation; mappings from external vocabularies into world concepts | Ranking weights, boosts, penalties, or any candidate-ordering API; a second POI taxonomy; a second coverage register |
+| `@mailwoman/core/layers`                                          | Dataset identity (`layer_manifest`); coverage epistemics (`layer_coverage`, `CoverageBasis`, `supportsExclusion`)                                                                                                                                                        | World semantics of any kind                                                                                          |
+| Mailwoman runtime / resolver                                      | Candidate lookup, anchor resolution, POI execution, and the join of candidates with layer evidence and (later) world facts; candidate ordering                                                                                                                           | Authored world knowledge                                                                                             |
+| Learned decoding (`@mailwoman/neural`, `@mailwoman/core/decoder`) | Interpretation of observations; the decode objective                                                                                                                                                                                                                     | Authored imperatives that bypass interpretation                                                                      |
+| #1683                                                             | Empirical, spatial activity-affordance statistics fitted from data                                                                                                                                                                                                       | The stable activity/affordance identifiers themselves — those come from the geographic model                         |
 
 Two dependency rules follow, and both are load-bearing:
 
@@ -201,6 +214,10 @@ Two dependency rules follow, and both are load-bearing:
   `obtain_medication` as a stable identifier with provenance; #1683 owns whatever numbers get fitted
   against it. Neither re-declares the other's half. That split is what keeps an authored relationship
   from turning into a weight by adjacency.
+- **The ownership row states a category of record, not a licence to author freely** (added 2026-08-27,
+  #1961). Which concepts, activities, assertions and mappings the compiled model may actually carry is
+  the frozen set in §4 plus whatever an amendment to it admits — today that is §4.1's wave-1 set and
+  nothing else. A record outside both widens this table in passing, which stop condition 5 refuses.
 
 The operating rule for the whole boundary is one sentence: **knowledge creates observations; it never
 overrides learned interpretation.** A world-model record may create a fact, an anomaly, a
@@ -247,7 +264,127 @@ What each line binds:
 
 Deferred by name, even where convenient during implementation: roads, utilities and electrification,
 population context, environmental statistics, water/land compatibility, mapping breadth beyond the one
-category above, and any production decoder integration.
+category above **and §4.1's wave-1 set**, and any production decoder integration.
+
+### 4.1 Amendment 1: mapping-breadth wave 1 (2026-08-27)
+
+**Issue:** #1961 · **Permitted by:** #1930's recorded GO · **Required by:** stop condition 5 ·
+**Authored by:** #1963 (the semantics) — the query-phrase surface is #1962's and is not admitted here.
+
+§4 froze one proposition. #1930 recorded GO, which allows mapping breadth to be _proposed_; stop
+condition 5 requires the boundary to be widened here, in a reviewed change, before a record is authored
+against it. This section is that widening, and it is exhaustive. #1963 may author what the admitted
+table names and nothing else; a later entry arrives as amendment 2, not as a second row appearing in
+the data.
+
+Stop condition 4 binds every admitted row individually. Each names an attested target — a committed
+record, a measured gap with its receipt, or a filed defect with a reproduction. Candidates that had
+only a plausible use are in the excluded table with the reason, and that table is longer than the
+admitted one on purpose.
+
+#### What wave 1 admits
+
+Three records and one vocabulary correction. All three records concern the same activity §4 already
+froze; wave 1 mints no activity.
+
+| Entry    | Record                                                                                      | Country scope                                     | Attested target                                                                                                                                                                                                                                                                                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **W1-1** | `ConceptRecord` `drugstore` — `kind: establishment`, `isA: ["establishment"]`               | none on the concept; the claim in W1-2 carries it | §5.3's measured recall gap: **7,168 of the 89,336** rows under the two pharmacy-adjacent leaves sit under `retail > drugstore` and are structurally out of reach of the shipped `pharmacy` query — 8.0% overall, 12.9% within the US — measured on `poi.db` manifest `2026-07-22.0`                                                                                          |
+| **W1-2** | `RelationAssertion` on W1-1: `affords` → `obtain_medication`, `modality: strongly_expected` | `["US"]`                                          | The committed curator statement in `packages/poi-taxonomy/data/curated-overlay.json`: `{ "phrase": "drugstore", "categoryID": "pharmacy", "locales": ["en-US"] }` — already in the repository, and it says that in en-US this class names the pharmacy category. Together with the US half of the §5.3 count, **6,679 of the 7,168**                                         |
+| **W1-3** | `ExternalMappingRecord` `drugstore` → `poi-taxonomy` external id `drugstore`                | none                                              | Same measured gap as W1-1, plus a read-back verified on HEAD: `getPOICategory("drugstore")` returns `{ id: "drugstore", label: "Drugstore", hierarchy: ["retail", "drugstore"], source: "overture" }` at table version `0.4.0`, Overture release `v1.17.0`. It declares no `overtureCategories`, so `resolveOvertureCategories("drugstore")` is the identity `["drugstore"]` |
+
+Taken together W1-1 to W1-3 are the multi-target affording set §5.3 asked for, and **the schema already
+expresses it with no new field**: one activity, two establishment concepts, one mapping each, one
+assertion each. `ExternalMappingRecord` gains nothing multi-valued, and no field states a preference
+between `pharmacy` and `drugstore` — the schema has none to state one with.
+
+`drugstore` is a kind of `establishment` **directly**, not of `healthcare_facility`. The external
+hierarchy puts it under `retail`, disjoint from `health_and_medical`; `healthcare_facility` is defined
+as premises that exist to provide healthcare, which retail premises with a dispensing counter do not;
+and placing it there would give every later healthcare class a retail ancestor.
+
+#### The one vocabulary correction: `affords` becomes defeasible
+
+W1-2 cannot be `necessary`. The attested material says a US drugstore characteristically dispenses; it
+does not say every premises under `retail > drugstore` does, and neither a locale-scoped synonym nor a
+row count is a census of dispensing. `strongly_expected` is what the evidence supports.
+
+Under the `affords` relation as §4 froze it that modality has no defined reading. `RelationSemantics.Hard`
+means an exception is a defect in the record set, which is a claim only `necessary` and `prohibited`
+make. So admitting W1-2 requires the relation record in
+`packages/geographic-model/data/model/relations.json` to read `semantics: "defeasible"`, and this
+amendment admits that change. Three things about it:
+
+- **The pharmacy claim's strength does not move.** `Modality.Necessary` is a per-record claim — holds in
+  every instance, a counter-example falsifies the record rather than qualifying it — and it stays on the
+  pharmacy assertion unchanged. What changes is the relation-level statement about whether this
+  relation's assertions admit exceptions at all, which is what lets a `strongly_expected` record sit
+  beside a `necessary` one coherently.
+- **One provenance note goes stale, and #1963 must rewrite it.** The `pharmacy-affords-obtain-medication`
+  assertion's note currently grounds its `necessary` modality in "the same claim `affords` makes by
+  declaring `hard` semantics". Once the relation is defeasible that sentence is wrong. Re-ground it in the
+  concept instead: dispensing medication to the public is what makes premises a pharmacy. No test reads
+  that prose, which is exactly why it has to be changed deliberately.
+- **Nothing executable depends on the field.** `semantics` is validated as a closed-vocabulary member
+  (`ValidationIssueCode.UnknownRelationSemantics`) and read by nothing else in the package —
+  `compile.ts` closes over `isA` alone, and says in place that `transitive` and `inverse` are vocabulary
+  it does not materialize. The correction changes what the record means to a reader and to a reviewer,
+  and changes no compiled byte beyond the field itself.
+
+#### What the closed vocabularies do NOT need
+
+- **`ConceptKind` gains no member, and `packages/geographic-model/schema.ts` is not touched by this
+  review.** `drugstore` is a class of premises a person can go to, which is `establishment` — already the
+  kind `affords` accepts on the asserting side. Wave 1 authors no `place`-kind concept and no
+  `activity`-kind concept beyond the two §4 froze.
+- **`ExternalVocabulary` gains no member.** W1-3 points into `poi-taxonomy`, the one member there is. A
+  second vocabulary turns `ExternalMappingRecord` into a union discriminated on `vocabulary`, which is a
+  real schema revision; nothing in wave 1 asks for one.
+- **`Modality` and `RelationSemantics` gain no member.** `strongly_expected` and `defeasible` are both
+  already in those vocabularies.
+
+#### Considered and excluded
+
+| Candidate                                                            | Excluded because                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A second activity, any                                               | No committed input set holds an activity-phrased query for any activity but `obtain_medication`; the four rows that exist (`sem-act-us-01`, `sem-act-us-02`, `sem-act-fr-01`, `sem-act-mx-01`) all register that one. §5.5's first bound therefore still stands for every other activity: there is nothing committed to measure against. |
+| Concept `hospital`, from board row `syn-01` (`er near Denver CO`)    | The row **passes** today. A passing row is a control, not a target — stop condition 4 wants a mechanism the observation can address, and nothing measures a missing `obtain_medication` affordance for a hospital.                                                                                                                       |
+| Concept `chemist` for en-GB / en-AU / en-NZ                          | Not a class. `curated-overlay.json` carries `{ "phrase": "chemist", "categoryID": "pharmacy", "locales": ["en-GB", "en-AU", "en-NZ"] }`, and §5.2 measured `chemist near London` under `en-GB` reaching `cat=pharmacy` at confidence 1. The existing `pharmacy` concept and W1-3's sibling mapping already carry it.                     |
+| `chemist` with no locale supplied — §5.2 measured `NO SUBJECT MATCH` | A real measured gap and not a semantic one. The phrase index is locale-scoped and the miss is in recognition; the phrase surface belongs to `@mailwoman/poi-taxonomy` and to #1962. Minting a concept would not change that result.                                                                                                      |
+| Concepts `supermarket` / `convenience_store` as further afforders    | Plausible and unattested. Both ids exist in the table; neither has a committed row, a measurement, or a filed defect saying a dispensing counter is unreachable. Plausibility is the thing stop condition 4 exists to refuse.                                                                                                            |
+| W1-2's claim extended to `CA`, `GB` or `MX`                          | §5.3's counts there (CA 369, GB 117, MX 3) bound a population and assert nothing about what those premises afford — the record says so in place. No committed curator statement scopes the class to those countries the way the en-US entry does.                                                                                        |
+| W1-2's claim extended to `FR`                                        | Additionally refuted by the data: §5.3's FR `drugstore` count is a **measured zero**, from a group-by that scanned every row. There is nothing for the mapping to reach.                                                                                                                                                                 |
+| Board row `cat-ca-02` (`gas station near Ottawa ON`) as a target     | A pre-existing board failure with no affordance content. `docs/records/evals/2026-08-03-backend-parity.md` traces it: the candidate backend anchors on Ottawa, **Illinois**, 1,151 km out, while `Ottawa, ON` with the comma passes. An anchor-resolution defect on the POI path, owned by the runtime and resolver per §3.              |
+| Board row `brand-us-02` (`applebee's near Dallas TX`) as a target    | The other pre-existing failure, also without affordance content. `docs/records/evals/2026-07-20-poi-query-board-v1.1-brand-lexicon.md` traces it: subject match and anchor both succeed, and the miss is `#searchKRing`'s `DEFAULT_MAX_RINGS = 12` (≈ 4 km) against a nearest matching row at 13.2 km. A reader search radius.           |
+| Probe row `sem-act-fr-01` as a target for new semantics              | Its blocker is not semantic. #1930's caveat 1 and #1039 both record it: a `poi.db` entry named `Somewhere` claims the prefix before the `near` split is considered, so `matchPOISubject` never reaches the activity phrase. No concept, assertion or mapping changes that.                                                               |
+| A second relation — `isa` as a relation record, `partOf`, `sells`    | §4 keeps relations unminted until an executable need names one. Wave 1's need is one further asserting concept under the relation that already exists.                                                                                                                                                                                   |
+| A second external vocabulary — Wikidata QIDs, OSM tags               | The board's `brandWikidata` values identify **brands**, not concept classes, and the one brand row that fails does so on search radius. No attested target, and the member addition is a schema revision.                                                                                                                                |
+| Concept `retail_establishment` as an intermediate above `drugstore`  | Symmetry with `healthcare_facility` is not a target. That intermediate exists because §4's frozen slice named one; nothing names this one, and an intermediate carrying no assertion adds a review obligation and states nothing.                                                                                                        |
+
+#### What this amendment does not change
+
+- **Ranking behavior**, exactly as §4 froze it. No wave-1 record emits an ordering, a score term, a boost
+  or a penalty, and the schema carries no numeric field one could hide in.
+- **Retrieval.** #1933 owns the defect in this same territory — the en-US `drugstore` synonym that can
+  never be reached, because the category's own id-as-phrase is inserted into the index first and both
+  score `1.0`. That is the retrieval half, it stays owned outside this program, and wave 1 admits the
+  **semantic half only**: that the class exists, what it affords, where, and on whose authority.
+- **The coverage rule.** §4's rule binds every wave-1 record unchanged — absence becomes negative
+  evidence only where `supportsExclusion(...)` permits, which §2.3 measured as nothing against today's
+  `poi.db`.
+- **The default path.** #1930's caveat 3 verified the semantic route is default-off everywhere. Wave 1
+  changes what the compiled artifact carries, not what the shipped pipeline reads.
+
+#### Re-measure before authoring
+
+§8's instruction binds this amendment's numbers too, and they were not all re-taken. The §5.3 row counts
+quoted above are that section's measurement at `poi.db` manifest `2026-07-22.0`; **no `poi.db` was
+reachable from the checkout this amendment was written in**, so they are carried forward rather than
+re-verified. Two of them decide something, so #1963 re-runs §8's `group by category_id, country` pass
+and compares the manifest version before freezing any wave-1 provenance: an FR count that is no longer
+zero reopens the FR exclusion, and a US count that has moved changes what W1-2's target attests. The
+taxonomy read-back in W1-3 and both `curated-overlay.json` quotations **were** verified on HEAD and are
+current at table `0.4.0` / Overture `v1.17.0`.
 
 ---
 
@@ -396,8 +533,8 @@ relation type, no country scope and no per-assertion provenance.
   and no second affordance vocabulary independent of #1683.
 
 **Deferred by name:** roads, utilities and electrification, population context, environmental
-statistics, water/land compatibility, coverage inference, spatial statistics, mapping breadth, and
-production decoder integration.
+statistics, water/land compatibility, coverage inference, spatial statistics, mapping breadth beyond
+§4.1's wave-1 set, and production decoder integration.
 
 **Stop conditions.**
 
@@ -432,7 +569,8 @@ production decoder integration.
   capability.
 - The `drugstore`/`pharmacy` retrieval split in §5.3. It is recorded as evidence. Ranking and retrieval
   behavior are unchanged by this record, and any repair is separate work with its own D-rule
-  obligations.
+  obligations. That repair is now filed as **#1933**, and it stays owned outside this program; §4.1
+  admits only the semantic half of the same territory.
 
 ---
 
