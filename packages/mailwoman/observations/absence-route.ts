@@ -30,6 +30,14 @@
  *   unless that set is exactly one class and the answered category IS it. A layer holding many classes has
  *   a pooled completeness that cannot support a per-class exclusion, and saying so is the refusal.
  *
+ *   A SEARCHED UNION MUST BE COVERED WHOLE. The POI branch searches every category the subject reaches, so
+ *   an activity afforded by two establishment classes puts two classes in one search. The layer surveys
+ *   ONE, and its completeness says nothing about the other — so "no establishment affording this activity
+ *   is here" would be a claim about premises the survey never looked for, which is the unsupported
+ *   negative evidence this route exists to refuse. The refusal is `category_not_surveyed`, and it is the
+ *   same reading as the single-class case: the searched set has to BE the surveyed class. Widening the
+ *   layer to survey the second class is what would make such a cell decidable again.
+ *
  *   THE COVERAGE RESOLUTION IS DERIVED, NOT ASSUMED. `layer_manifest.spine_keys.h3.resolution` states the
  *   resolution the layer's ROWS are keyed at (res 9 for `poi.db`); the coverage cells are coarser (res 6).
  *   A reader that probed coverage at the manifest's resolution would miss every cell and read the misses
@@ -495,14 +503,19 @@ async function decide(outcome: POIIntentOutcome | undefined, context: DecisionCo
 
 	if (intent.subject.kind !== "category") return { fired: false, refusal: "subject_not_a_category" }
 
-	const categoryID = intent.subject.categoryID
-	const afforded = context.affording.get(categoryID)
+	const { categoryIDs } = intent.subject
+	const afforded = categoryIDs.map((id) => context.affording.get(id)).find((entry) => entry !== undefined)
 
 	if (!afforded) return { fired: false, refusal: "no_affordance_assertion" }
 
-	if (categoryID !== context.identity.surveyedCategoryID) {
+	// EVERY searched category must be the surveyed one. The coverage layer surveys a single category, so a union
+	// reaching past it has no survey behind the classes it added — "nothing here" would then be a claim about premises
+	// nobody looked for, which is the one thing a coverage-qualified absence exists to refuse.
+	if (!categoryIDs.every((id) => id === context.identity.surveyedCategoryID)) {
 		return { fired: false, refusal: "category_not_surveyed" }
 	}
+
+	const categoryID = context.identity.surveyedCategoryID
 
 	const searchCenter = resolvePOISearchCenter(intent)
 

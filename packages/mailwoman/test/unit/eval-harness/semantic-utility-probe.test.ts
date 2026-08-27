@@ -77,7 +77,7 @@ function scratchPair(
 	return { definitionPath, freezePath }
 }
 
-const pharmacyIntent: POIIntent = { subject: { kind: "category", categoryID: "pharmacy", matched: "pharmacy" } }
+const pharmacyIntent: POIIntent = { subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy" } }
 
 const pharmacyResult: POIResult = {
 	name: "Some Pharmacy",

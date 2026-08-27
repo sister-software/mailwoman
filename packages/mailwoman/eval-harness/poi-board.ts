@@ -26,6 +26,12 @@
  *   4-row activity-phrased family promoted from the semantic-utility pre-registration, and one further
  *   activity-phrased row committed for the US drugstore recall gap the wave-1 semantics address.
  *
+ *   THE ACTIVITY FAMILY NEEDS THE `--semantic-observation` ARM. Its five subjects reach no committed
+ *   lexicon entry, so with the opt-in rung absent the query takes no POI branch at all and every one of
+ *   them reads as `path=full`. They are tracked for that reason, and the floors are registered against
+ *   the arm-OFF construction — the one that ships. Turning the arm on measures the capability; it does
+ *   not move the floors, and a row that would move them is a row being counted.
+ *
  *   TRACKED ROWS. A fixture may carry `status` + `bugRef`, the conformance layer's own convention
  *   ({@linkcode POI_BOARD_STATUSES}). A tracked row is run and REPORTED and its grade never reaches the
  *   floors, so a failure class can live on the surface every candidate is graded on before the work that
@@ -454,10 +460,18 @@ export interface POIBoardOptions {
 	 * lexicon and the POI name lookup have both returned nothing (`CreateRuntimePipelineOpts.poiSemanticLookup`).
 	 *
 	 * Carried on the board's own options so a probe measuring an injected route runs through the SAME construction the
-	 * board does. Absent — the default, and what `runPOIBoard` always passes — constructs the pipeline the board has
-	 * always constructed.
+	 * board does. Absent — the default — constructs the pipeline the board has always constructed.
 	 */
 	poiSemanticLookup?: POIPhraseLookup
+	/**
+	 * Build `mailwoman/observations`' semantic route and inject it as {@linkcode poiSemanticLookup}.
+	 *
+	 * DEFAULT OFF, and the floors are registered against the off arm: the board grades the construction that ships, and a
+	 * floor measured under an opt-in rung would describe a pipeline no caller runs. On, it measures the activity-phrase
+	 * family — the rows whose subject reaches no committed lexicon entry, and which therefore take no POI branch at all
+	 * with the rung absent. Ignored when {@linkcode poiSemanticLookup} is supplied directly.
+	 */
+	semanticObservation?: boolean
 }
 
 /**
@@ -743,15 +757,32 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 	})
 
 	const resolverHandle = await loadResolver(options)
+	// A caller-supplied rung wins: the probe hands one in AND drains it afterwards, so building a second here would give
+	// it a route whose firings nobody reads.
+	const semanticLookup = options.poiSemanticLookup ?? (await buildBoardSemanticLookup(options.semanticObservation))
 
 	const pipeline = createRuntimePipeline({
 		classifier,
 		resolver: resolverHandle?.resolver,
 		poiQueryKind: { poiDatabasePath: db },
-		...(options.poiSemanticLookup ? { poiSemanticLookup: options.poiSemanticLookup } : {}),
+		...(semanticLookup ? { poiSemanticLookup: semanticLookup } : {}),
 	})
 
 	return { pipeline, db, backend: resolverHandle?.backend ?? "none", close: () => resolverHandle?.close() }
+}
+
+/**
+ * The semantic route as a phrase rung, or nothing when the arm was not asked for.
+ *
+ * Dynamically imported so a board run with the arm off never loads the compiled artifact reader — the same containment
+ * `createRuntimePipeline` gets from taking the rung as an argument rather than constructing one.
+ */
+async function buildBoardSemanticLookup(semanticObservation?: boolean): Promise<POIPhraseLookup | undefined> {
+	if (!semanticObservation) return undefined
+
+	const { createSemanticObservationRoute } = await import("../observations/index.ts")
+
+	return (await createSemanticObservationRoute()).lookup
 }
 
 /**

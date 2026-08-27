@@ -84,7 +84,9 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 
 	return (intent: POIIntent): POIIntentOutcome => {
 		const { subject } = intent
-		const buildLocalCategory = subject.kind === "category" && requiresBuildLocal(subject.categoryID)
+		// EVERY category in the union, not any: a set with one member the shipped layer can answer is answerable, and
+		// abstaining on it would report a build-local gap the search does not have.
+		const buildLocalCategory = subject.kind === "category" && subject.categoryIDs.every(requiresBuildLocal)
 
 		if (buildLocalCategory && !lookup) {
 			return { type: "abstain", reason: "requires_build_local_layer" }
@@ -119,11 +121,14 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 			return { type: "intent", intent, results: lookup.search(query).map(toResult) }
 		}
 
-		// Category branch: fan the canonical seed id out over its Overture leaves (`supermarket` → grocery_store, …),
-		// then re-tag every hit back to the canonical id — the search was scoped to this ONE canonical category, so
-		// every row belongs to it, and the board grades `results[0].categoryID` against the canonical seed id.
+		// Category branch: fan EVERY canonical seed id in the union out over its Overture leaves (`supermarket` →
+		// grocery_store, …) and probe the lot in one search — `#searchKRing` unions the rows per cell and distance-sorts
+		// the pool, so the answer is decided by the candidate ordering the reader already owns and no weight, boost or
+		// per-category preference is applied here.
+		const canonicalByLeaf = resolveCanonicalByLeaf(subject.categoryIDs, resolveOvertureCategories)
+
 		const results = lookup.search({
-			categoryIDs: resolveOvertureCategories(subject.categoryID),
+			categoryIDs: [...canonicalByLeaf.keys()],
 			center,
 			limit: intent.limit,
 		})
@@ -135,9 +140,42 @@ export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) =>
 		return {
 			type: "intent",
 			intent,
-			results: results.map((hit) => ({ ...toResult(hit), categoryID: subject.categoryID })),
+			// Re-tag every hit back to the canonical seed whose fan-out reached it, so a caller reads the id it could have
+			// typed rather than the Overture leaf, and the board grades `results[0].categoryID` against a canonical seed.
+			// A leaf the map does not carry keeps the id the reader gave it: the search probed only mapped leaves, so this
+			// cannot fire on a real hit, and inventing a canonical id for one would report a category nothing searched.
+			results: results.map((hit) => {
+				const canonical = hit.categoryID === null ? undefined : canonicalByLeaf.get(hit.categoryID)
+
+				return canonical === undefined ? toResult(hit) : { ...toResult(hit), categoryID: canonical }
+			}),
 		}
 	}
+}
+
+/**
+ * Overture leaf id → the canonical seed id whose fan-out reached it, over the whole union.
+ *
+ * Insertion order is the probe order, so the map's keys are the search's `categoryIDs` with duplicates removed — two
+ * seeds rolling up into a shared leaf probe it once. That shared leaf keeps the FIRST seed that reached it, which is a
+ * label for a row genuinely belonging to both and not a preference between them: the row is returned either way, and
+ * its position in the answer is the distance sort's.
+ */
+function resolveCanonicalByLeaf(
+	categoryIDs: ReadonlyArray<string>,
+	resolveOvertureCategories: (categoryID: string) => string[]
+): Map<string, string> {
+	const canonicalByLeaf = new Map<string, string>()
+
+	for (const canonical of categoryIDs) {
+		for (const leaf of resolveOvertureCategories(canonical)) {
+			if (!canonicalByLeaf.has(leaf)) {
+				canonicalByLeaf.set(leaf, canonical)
+			}
+		}
+	}
+
+	return canonicalByLeaf
 }
 
 /**

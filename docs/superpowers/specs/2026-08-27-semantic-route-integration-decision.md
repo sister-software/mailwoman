@@ -433,6 +433,15 @@ reaches more than one mapped kind refuses at construction, naming the phrase and
 refusal is a finding; a silent alphabetical winner is not. #1963 lands the first plural case, so
 this refusal must exist before it merges or the collapse ships unobserved.
 
+**Landed 2026-08-28 (#1980), and the interim refusal is gone.** `POIPhraseMatch` gained one field
+saying whether a lookup's several hits are one set to search together or a preference list whose head
+is the subject — the committed phrase index keeps the second reading, which is #1933's territory and is
+unchanged. `matchPOISubject` carries the whole set, `POIIntent`'s category subject holds
+`categoryIDs`, and the executor probes them in ONE `#searchKRing` call, so the reader's own
+distance sort ranks the union and nothing on the path authors a weight or a per-category preference.
+W1-3 landed behind it and the compiled model reads `0.3.0`. Measured at the Coalinga anchor: `pharmacy`
+returns zero rows, `drugstore` returns two, and the union answers `drugstore` at 0.77 km.
+
 ### 8.2 The two existing scopes must be consulted
 
 `reachKinds` must read `RelationAssertion.countries`, and the route's `lookup` must take and use its

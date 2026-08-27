@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the semantic observation route: the phrase rule, the locale scope, the assertion's country
- *   scope, the plural-affordance refusal, the authority an observation carries, and every other
- *   construction refusal.
+ *   scope, the plural affordance, the authority an observation carries, and every construction refusal.
  *
  *   No model, no database, no pipeline. The route is a `POIPhraseLookup` over a compiled artifact and a
  *   reviewed lexicon, and both are injectable — so the refusals are exercised against synthetic
@@ -15,16 +14,14 @@
  *   phrase whose activity nothing affords would match a query and answer nothing, which reads at the
  *   probe as the class being unanswerable rather than as the route being unwired.
  *
- *   THE WAVE-1 PLURAL CASE IS HALF COMMITTED NOW. Its concept and its US-scoped assertion are authored in
- *   the artifact; its `poi-taxonomy` mapping is not, because one activity reaching two MAPPED kinds refuses
- *   this route at construction and the query surface still carries a single category id. So
- *   {@linkcode withHeldOutDrugstoreMapping} adds exactly the one held-out record to the committed artifact
- *   and asserts the refusal that holding it out is what avoids — the collision measured against the real
- *   records rather than against a clone of them.
+ *   THE WAVE-1 PLURAL CASE IS FULLY COMMITTED. The `drugstore` concept, its US-scoped assertion and its
+ *   `poi-taxonomy` mapping are all in the artifact, so `obtain_medication` reaches two mapped kinds and the
+ *   route returns both — the case that used to refuse at construction is now the committed behaviour, and
+ *   it is asserted against the real records rather than against a clone of them.
  *
  *   {@linkcode withAffordingKind} stays for the shapes the committed set cannot express: a class sorting
- *   AFTER `pharmacy`, because a refusal that only fires when the new class sorts first is not a refusal, and
- *   a second activity nobody carries yet.
+ *   AFTER `pharmacy`, because a set whose members are returned in code-point order has to be shown to be
+ *   returned whole from both sides of that order, and a second activity nobody carries yet.
  */
 
 import type { ActivityPhraseEntry, ActivityPhraseLexicon } from "@mailwoman/activity-lexicon"
@@ -91,10 +88,10 @@ function brand<Branded>(value: string): Branded {
  * the assertion's country scope as the caller states it. A `see_a_doctor`-style activity nobody carries yet is cloned
  * from the committed one.
  *
- * Used only for the shapes the committed records cannot express. The narrowing the route refuses was decided by
- * code-point order over concept ids, so a class sorting BEFORE `pharmacy` and one sorting after are the two sides of
- * the same defect and the refusal has to hold on both — the committed `drugstore` covers the first side, and a
- * synthetic `retail_pharmacy` is what covers the second.
+ * Used only for the shapes the committed records cannot express. The set is enumerated in code-point order over concept
+ * ids, so a class sorting BEFORE `pharmacy` and one sorting after are the two sides of the same question — whether the
+ * whole set comes back or only its head. The committed `drugstore` covers the first side, and a synthetic
+ * `retail_pharmacy` is what covers the second.
  */
 function withAffordingKind(conceptID: string, options: { activity?: string; countries?: string[] } = {}) {
 	const activity = options.activity ?? "obtain_medication"
@@ -136,24 +133,6 @@ function withAffordingKind(conceptID: string, options: { activity?: string; coun
 }
 
 /**
- * The one wave-1 record the artifact deliberately withholds: the `poi-taxonomy` mapping from the committed `drugstore`
- * concept onto the external id of the same name.
- *
- * Adding it is the whole difference between a route that builds and a route that refuses, which is why the test adds
- * exactly this and nothing else. The concept and its US-scoped assertion are already in the artifact this clones.
- */
-function withHeldOutDrugstoreMapping(model: CompiledGeographicModel): void {
-	const pharmacyMapping = model.mappings.find((mapping) => String(mapping.concept) === "pharmacy")!
-	const mapping = structuredClone(pharmacyMapping)
-
-	mapping.id = brand("poi-taxonomy-drugstore")
-	mapping.concept = brand("drugstore")
-	mapping.externalID = brand("drugstore")
-
-	model.mappings = [...model.mappings, mapping]
-}
-
-/**
  * Take the country scope off the committed `drugstore` assertion, so the plural case can be run with the claim scoped
  * to nowhere in particular as well as to the US.
  */
@@ -182,8 +161,11 @@ describe("the committed lexicon against the committed artifact", () => {
 		await expect(createSemanticObservationRoute()).resolves.toBeDefined()
 	})
 
-	it("reaches exactly the POI category the frozen slice maps", () => {
-		expect(committedRoute.identity.reachableCategoryIDs).toEqual(["pharmacy"])
+	// Both wave-1 kinds, in code-point order. The identity enumerates what the declared activities CAN reach through
+	// the artifact, before any country scope is applied — a receipt that named only the kind a given query admitted
+	// could not tell a scope refusing a class from an artifact never carrying it.
+	it("reaches both POI categories wave 1 maps", () => {
+		expect(committedRoute.identity.reachableCategoryIDs).toEqual(["drugstore", "pharmacy"])
 	})
 
 	it("reports what it was built from, so a receipt never has to name it twice", () => {
@@ -219,9 +201,18 @@ describe("the committed lexicon against the committed artifact", () => {
 })
 
 describe("the phrase rule", () => {
+	// No locale, so the US-scoped drugstore assertion is not admitted and the set is `pharmacy` alone. `searchAsSet` is
+	// on it anyway: it says what the array MEANS, not how long it happens to be, and a caller that read it as a length
+	// signal would narrow the moment a second kind arrived.
 	it("claims a candidate that ends in a declared phrase", () => {
 		expect(committedRoute.lookup("where can i pick up a prescription")).toEqual([
-			{ kind: "category", categoryID: "pharmacy", matchedPhrase: "pick up a prescription", confidence: 1 },
+			{
+				kind: "category",
+				categoryID: "pharmacy",
+				matchedPhrase: "pick up a prescription",
+				confidence: 1,
+				searchAsSet: true,
+			},
 		])
 	})
 
@@ -389,83 +380,110 @@ describe("the observation", () => {
 })
 
 describe("a plural affordance", () => {
-	// The committed `drugstore` concept sorts BEFORE `pharmacy`: the order that would make `drugstore` win on `d`
-	// preceding `p`, so the class reaching 6,679 US rows would beat the class reaching 44,945, and a
-	// `strongly_expected` assertion would beat a `necessary` one. The only record standing between the artifact and
-	// that collapse is the mapping this adds.
-	it("refuses at construction the moment the held-out drugstore mapping is added", async () => {
-		await expect(scratchRoute(withHeldOutDrugstoreMapping)).rejects.toThrow(
-			/reaches 2 mapped kinds \(drugstore → drugstore, pharmacy → pharmacy\)/
-		)
+	// The committed records, at the locale that admits both: `drugstore` sorts before `pharmacy` on `d` preceding `p`,
+	// and BOTH come back. Narrowing to the head would hand the query the class reaching 6,679 US rows and drop the one
+	// reaching 44,945, on a sort key nobody authored as a preference.
+	it("returns every mapped kind the activity reaches, in concept code-point order", () => {
+		expect(committedRoute.lookup("prescription", "en-US")).toEqual([
+			{ kind: "category", categoryID: "drugstore", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+			{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+		])
 	})
 
-	// The other half of the same statement, and the one that says the hold is doing the work: without the mapping the
-	// committed concept and its assertion are carried, reach nothing, and the route builds.
-	it("builds over the committed artifact, which carries the concept but not the mapping", async () => {
-		const model = await readCommittedModel()
+	// Every member carries the same confidence, so nothing in the set can be ranked off the value the query surface
+	// reads. The number selects a query KIND; it orders no candidate.
+	it("gives every member of the set the same confidence", () => {
+		const confidences = new Set(committedRoute.lookup("prescription", "en-US").map((hit) => hit.confidence))
 
-		expect(model.concepts.map((concept) => String(concept.id))).toContain("drugstore")
-		expect(model.mappings.map((mapping) => String(mapping.concept))).not.toContain("drugstore")
-		expect(committedRoute.identity.reachableCategoryIDs).toEqual(["pharmacy"])
+		expect(confidences).toEqual(new Set([1]))
 	})
 
-	// The losing order, run because a refusal that only fires when the new class sorts first is not a refusal: it is the
-	// same collapse with the other winner, and reading `hits[0]` would take `pharmacy` here and report nothing wrong.
-	it("refuses at construction when the added class sorts last", async () => {
-		await expect(scratchRoute(withAffordingKind("retail_pharmacy", { countries: ["US"] }))).rejects.toThrow(
-			/reaches 2 mapped kinds \(pharmacy → pharmacy, retail_pharmacy → retail_pharmacy\)/
-		)
+	// The losing order, run because a set that only survives when the new class sorts first is not a set: it is the
+	// head with the other winner, and reading `hits[0]` would take `pharmacy` here and report nothing wrong.
+	it("returns the whole set when the added class sorts last", async () => {
+		const route = await scratchRoute(withAffordingKind("retail_pharmacy", { countries: ["US"] }))
+
+		expect(route.lookup("prescription", "en-US").map((hit) => hit.categoryID)).toEqual([
+			"drugstore",
+			"pharmacy",
+			"retail_pharmacy",
+		])
 	})
 
-	it("names the phrase, so the refusal says which record to look at", async () => {
-		await expect(scratchRoute(withHeldOutDrugstoreMapping)).rejects.toThrow(
-			/phrase "prescription" names activity "obtain_medication"/
-		)
-	})
-
-	// What the refusal prevents, measured at the surface it would have happened on rather than argued: two matches go in
-	// and `matchPOISubject` returns one, the first, and `POIIntent` carries a single category id afterwards. The winner is
-	// whichever concept sorts first, which is the ordering nobody authored.
-	it("would narrow to the first match at the query surface, which is what construction refuses", () => {
+	// The set reaching the query surface, measured where the narrowing used to happen rather than argued: two matches go
+	// in, `matchPOISubject` carries both, and the POI branch searches their union.
+	it("carries the whole set through the query surface", () => {
 		const plural: ReturnType<POIPhraseLookup> = [
-			{ kind: "category", categoryID: "drugstore", matchedPhrase: "prescription", confidence: 1 },
-			{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1 },
+			{ kind: "category", categoryID: "drugstore", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
+			{ kind: "category", categoryID: "pharmacy", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
 		]
 
 		const matched = matchPOISubject("prescription near Denver CO", "en-US", (phrase) =>
 			phrase === "prescription" ? plural : []
 		)
 
-		expect(matched?.match.categoryID).toBe("drugstore")
+		expect(matched?.matches.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
+		expect(matched?.remainder).toBe("Denver CO")
 	})
 
-	// The scope does not rescue it. A set that is singular in France and plural in the US would answer in one country and
-	// collapse in the other, which makes the narrowing a property of the query rather than of the lexicon. The committed
-	// drugstore assertion IS US-scoped, so the first arm is the real record and the second strips the scope off it.
-	it("refuses over the union, not per country", async () => {
-		await expect(scratchRoute(withHeldOutDrugstoreMapping)).rejects.toThrow(/reaches 2 mapped kinds/)
+	// The committed route driven through the surface that used to narrow, at both locales. France reaches one category
+	// because the drugstore assertion is scoped to the US and the layer holds zero drugstore rows there; the US reaches
+	// two, and the POI branch searches both.
+	it("reaches the query surface as one category in France and two in the US", () => {
+		const fr = matchPOISubject("prescription near Toulouse", "fr-FR", committedRoute.lookup)
+		const us = matchPOISubject("prescription near Denver CO", "en-US", committedRoute.lookup)
 
-		await expect(
-			scratchRoute((model) => {
-				withHeldOutDrugstoreMapping(model)
-				withoutDrugstoreCountryScope(model)
-			})
-		).rejects.toThrow(/reaches 2 mapped kinds/)
+		expect(fr?.matches.map((hit) => hit.categoryID)).toEqual(["pharmacy"])
+		expect(us?.matches.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
+	})
+
+	// One observation per member, each naming its OWN assertion and mapping. Folding them into one would lose which
+	// authority put which class in the set, and every one of them reports the size of the set it belongs to.
+	it("records one observation per member, each with its own authority", () => {
+		committedRoute.takeObservations()
+		committedRoute.lookup("prescription", "en-US")
+
+		const observations = committedRoute.takeObservations()
+
+		expect(observations.map((observation) => observation.concept)).toEqual(["drugstore", "pharmacy"])
+
+		expect(observations.map((observation) => observation.assertion.id)).toEqual([
+			"drugstore-affords-obtain-medication",
+			"pharmacy-affords-obtain-medication",
+		])
+
+		expect(observations.map((observation) => observation.mappedKindCount)).toEqual([2, 2])
+	})
+
+	// The scope narrows the SET, which is the one narrowing that is a reading of the records rather than of a sort key:
+	// the committed drugstore assertion is US-scoped, so France reaches `pharmacy` alone and the observation says so.
+	// Strip the scope off and France reaches both, which is what says the scope did the work.
+	it("narrows the set by the assertion's country scope, and by nothing else", async () => {
+		expect(committedRoute.lookup("prescription", "fr-FR").map((hit) => hit.categoryID)).toEqual(["pharmacy"])
+
+		committedRoute.takeObservations()
+		committedRoute.lookup("prescription", "fr-FR")
+
+		expect(committedRoute.takeObservations().map((observation) => observation.mappedKindCount)).toEqual([1])
+
+		const unscoped = await scratchRoute(withoutDrugstoreCountryScope)
+
+		expect(unscoped.lookup("prescription", "fr-FR").map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
 	})
 })
 
 describe("the assertion's country scope", () => {
 	/**
-	 * The COMMITTED US-scoped assertion, made reachable: its mapping added and the unscoped pharmacy affordance taken
-	 * away, so `drugstore` is the only mapped kind affording the activity and the plural refusal does not stand in front
-	 * of what these tests measure.
+	 * The COMMITTED US-scoped assertion, alone in the set: the unscoped pharmacy affordance is taken away, so `drugstore`
+	 * is the only mapped kind affording the activity and a scope refusing it empties the answer rather than shortening
+	 * it. That is what makes silence readable here — with `pharmacy` still in the set, every one of these queries would
+	 * answer something and the scope's effect would be a length.
 	 *
-	 * Nothing about the scope itself is synthetic here — `countries: ["US"]` is the value the artifact carries, so a
-	 * curator who widened or dropped it would move these tests rather than leave them agreeing with a clone.
+	 * Nothing about the scope itself is synthetic — `countries: ["US"]` is the value the artifact carries, so a curator
+	 * who widened or dropped it would move these tests rather than leave them agreeing with a clone.
 	 */
 	async function usScopedRoute(): Promise<ReturnType<typeof createSemanticObservationRoute>> {
 		return scratchRoute((model, lexicon) => {
-			withHeldOutDrugstoreMapping(model)
 			withoutPharmacyAffordance(model)
 
 			lexicon.phrases = [entry({ phrase: "prescription" })]
@@ -483,7 +501,7 @@ describe("the assertion's country scope", () => {
 		const route = await usScopedRoute()
 
 		expect(route.lookup("prescription", "en-US")).toEqual([
-			{ kind: "category", categoryID: "drugstore", matchedPhrase: "prescription", confidence: 1 },
+			{ kind: "category", categoryID: "drugstore", matchedPhrase: "prescription", confidence: 1, searchAsSet: true },
 		])
 	})
 
@@ -503,9 +521,15 @@ describe("the assertion's country scope", () => {
 		expect(route.lookup("prescription")).toEqual([])
 	})
 
+	// The committed pharmacy assertion is unscoped, so it is in the set under both locales. The US-scoped drugstore
+	// assertion joins it only where the locale names the US, which is the whole difference between the two lengths.
 	it("leaves an unscoped assertion answering everywhere, including at Toulouse", () => {
-		expect(committedRoute.lookup("prescription", "fr-FR")).toHaveLength(1)
-		expect(committedRoute.lookup("prescription", "en-US")).toHaveLength(1)
+		expect(committedRoute.lookup("prescription", "fr-FR").map((hit) => hit.categoryID)).toEqual(["pharmacy"])
+
+		expect(committedRoute.lookup("prescription", "en-US").map((hit) => hit.categoryID)).toEqual([
+			"drugstore",
+			"pharmacy",
+		])
 	})
 
 	it("records the scope and the country it met, so a receipt can be checked", async () => {
@@ -520,14 +544,20 @@ describe("the assertion's country scope", () => {
 		expect(observation!.assertion.modality).toBe("strongly_expected")
 	})
 
+	// Two members, and each observation states its OWN scope: the drugstore one names the list it is scoped to, the
+	// pharmacy one carries `null` rather than an empty list. Read off one observation alone the distinction would be
+	// invisible, which is why both are asserted from the same firing.
 	it("carries null for an unscoped assertion rather than an empty list", () => {
 		committedRoute.takeObservations()
 		committedRoute.lookup("prescription", "en-US")
 
-		const [observation] = committedRoute.takeObservations()
+		const byConcept = new Map(
+			committedRoute.takeObservations().map((observation) => [observation.concept, observation])
+		)
 
-		expect(observation!.assertion.countries).toBeNull()
-		expect(observation!.localeCountry).toBe("US")
+		expect(byConcept.get("drugstore")!.assertion.countries).toEqual(["US"])
+		expect(byConcept.get("pharmacy")!.assertion.countries).toBeNull()
+		expect(byConcept.get("pharmacy")!.localeCountry).toBe("US")
 	})
 
 	// The country check sits INSIDE the phrase search for the same reason the locale check does: a longer phrase whose
@@ -535,7 +565,6 @@ describe("the assertion's country scope", () => {
 	// would silence a phrase it does not cover.
 	it("lets a shorter phrase answer where the longer one's assertion is out of scope", async () => {
 		const route = await scratchRoute((model, lexicon) => {
-			withHeldOutDrugstoreMapping(model)
 			withAffordingKind("walk_in_clinic", { activity: "see_a_doctor" })(model)
 			withoutPharmacyAffordance(model)
 
@@ -546,11 +575,23 @@ describe("the assertion's country scope", () => {
 		})
 
 		expect(route.lookup("collect a prescription", "en-US")).toEqual([
-			{ kind: "category", categoryID: "drugstore", matchedPhrase: "collect a prescription", confidence: 1 },
+			{
+				kind: "category",
+				categoryID: "drugstore",
+				matchedPhrase: "collect a prescription",
+				confidence: 1,
+				searchAsSet: true,
+			},
 		])
 
 		expect(route.lookup("collect a prescription", "fr-FR")).toEqual([
-			{ kind: "category", categoryID: "walk_in_clinic", matchedPhrase: "prescription", confidence: 1 },
+			{
+				kind: "category",
+				categoryID: "walk_in_clinic",
+				matchedPhrase: "prescription",
+				confidence: 1,
+				searchAsSet: true,
+			},
 		])
 	})
 })

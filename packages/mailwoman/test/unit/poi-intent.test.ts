@@ -193,7 +193,7 @@ describe("createPOIIntentStage", () => {
 
 		if (outcome?.type !== "intent") throw new Error("unreachable")
 
-		expect(outcome.intent.subject).toEqual({ kind: "category", categoryID: "hospital", matched: "hospital" })
+		expect(outcome.intent.subject).toEqual({ kind: "category", categoryIDs: ["hospital"], matched: "hospital" })
 		expect(outcome.intent.anchor?.text).toBe("Springfield IL")
 		expect(outcome.intent.relation).toBe("near")
 		expect(parsed).toEqual(["Springfield IL"])
@@ -290,7 +290,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 		expect(result.poiIntent.intent.subject).toEqual({
 			kind: "category",
-			categoryID: "hospital",
+			categoryIDs: ["hospital"],
 			matched: "hospital",
 		})
 
@@ -318,7 +318,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 		if (result.poiIntent.intent.subject.kind !== "category") throw new Error("unreachable")
 
-		expect(result.poiIntent.intent.subject.categoryID).toBe(categoryID)
+		expect(result.poiIntent.intent.subject.categoryIDs).toEqual([categoryID])
 		expect(result.poiIntent.intent.relation).toBe(relation)
 		expect(result.poiIntent.intent.anchor?.text).toBe(anchor)
 	})
@@ -340,7 +340,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 			throw new Error("unreachable")
 		}
 
-		expect(result.poiIntent.intent.subject.categoryID).toBe(categoryID)
+		expect(result.poiIntent.intent.subject.categoryIDs).toEqual([categoryID])
 		expect(result.poiIntent.intent.anchor?.text).toBe(anchor)
 	})
 

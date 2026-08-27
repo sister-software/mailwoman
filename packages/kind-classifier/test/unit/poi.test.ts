@@ -110,6 +110,73 @@ describe("matchPOISubject", () => {
 })
 
 /**
+ * What a lookup's SECOND hit means, which decides whether narrowing to the first is an answer or an invented ordering.
+ *
+ * The committed phrase index returns the categories one typed phrase could name, most specific first, and the first
+ * entry IS the subject — which category a typed phrase reaches is #1933's question and is unchanged here. An affordance
+ * rung returns every kind that affords one activity, in an enumeration that is not a preference, and flags each member
+ * `searchAsSet`; the whole set is then carried and the POI branch searches their union.
+ */
+describe("a lookup returning several hits", () => {
+	const preferenceList: POIPhraseLookup = (phrase) =>
+		phrase.trim().toLowerCase() === "credit union"
+			? [
+					{ kind: "category", categoryID: "credit_union", matchedPhrase: "credit union", confidence: 1 },
+					{ kind: "category", categoryID: "bank", matchedPhrase: "credit union", confidence: 1 },
+				]
+			: []
+
+	const affordedSet: POIPhraseLookup = (phrase) =>
+		phrase.trim().toLowerCase() === "prescription"
+			? [
+					{
+						kind: "category",
+						categoryID: "drugstore",
+						matchedPhrase: "prescription",
+						confidence: 1,
+						searchAsSet: true,
+					},
+					{
+						kind: "category",
+						categoryID: "pharmacy",
+						matchedPhrase: "prescription",
+						confidence: 1,
+						searchAsSet: true,
+					},
+				]
+			: []
+
+	it("keeps the first hit alone when the hits are a preference list", () => {
+		const m = matchPOISubject("credit union near Boston MA", "en-US", preferenceList)
+
+		expect(m?.matches.map((hit) => hit.categoryID)).toEqual(["credit_union"])
+		expect(m?.match.categoryID).toBe("credit_union")
+	})
+
+	it("carries every hit when they are one afforded set", () => {
+		const m = matchPOISubject("prescription near Denver CO", "en-US", affordedSet)
+
+		expect(m?.matches.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
+		expect(m?.remainder).toBe("Denver CO")
+	})
+
+	it("carries the set on a whole-input hit too, not only after an anchor split", () => {
+		const m = matchPOISubject("prescription", "en-US", affordedSet)
+
+		expect(m?.matches.map((hit) => hit.categoryID)).toEqual(["drugstore", "pharmacy"])
+		expect(m?.remainder).toBe("")
+	})
+
+	// `match` is the hit the subject SCORES under, and it is always the head of `matches` — two names for one value, so
+	// a scorer reading the kind and a branch reading the set can never disagree about which subject was matched.
+	it("scores under the head of the set", () => {
+		const m = matchPOISubject("prescription near Denver CO", "en-US", affordedSet)
+
+		expect(m?.match).toBe(m?.matches[0])
+	})
+})
+
+/**
  * ANCHOR_SEPARATOR behaviour-preservation + ReDoS safety.
  *
  * The separator regex was linearized (`\s*,\s*|\s+(?:…)\s+` → `,\s*|\s(?:…)\s+`) to clear CodeQL's
@@ -165,8 +232,11 @@ describe("ANCHOR_SEPARATOR split behaviour (byte-identical across the linearizat
 	it("resolves the whole input when it hits, without scanning for a separator", () => {
 		const m = matchPOISubject("cafe", "en-US", subjectLookup)
 
+		const hit = { kind: "category", categoryID: "cafe", matchedPhrase: "cafe", confidence: 1 }
+
 		expect(m).toEqual({
-			match: { kind: "category", categoryID: "cafe", matchedPhrase: "cafe", confidence: 1 },
+			match: hit,
+			matches: [hit],
 			subject: "cafe",
 			subjectSpan: { text: "cafe", start: 0, end: 4 },
 			remainder: "",

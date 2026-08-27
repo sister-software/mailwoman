@@ -247,9 +247,18 @@ const deps: MCPToolDeps = {
 		}
 
 		const { subject } = outcome.intent
-		const osmTag = subject.kind === "category" ? getPOICategory(subject.categoryID)?.osmTag : undefined
 
-		return emitOverpassQL(outcome.intent, osmTag ? { osmTag } : {})
+		// One tag per category the subject reaches, and only when EVERY member carries one: a union emitted from the
+		// subset that happens to have an `osmTag` is a narrower query than the POI branch ran.
+		const osmTags =
+			subject.kind === "category"
+				? subject.categoryIDs.map((id) => getPOICategory(id)?.osmTag).filter((tag) => tag !== undefined)
+				: []
+
+		return emitOverpassQL(
+			outcome.intent,
+			subject.kind === "category" && osmTags.length === subject.categoryIDs.length ? { osmTags } : {}
+		)
 	},
 
 	async layerManifest(databasePath) {

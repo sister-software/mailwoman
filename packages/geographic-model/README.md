@@ -74,7 +74,7 @@ poi-taxonomy pharmacy  → the pharmacy concept
 node packages/geographic-model/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
 ```
 
-[`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states and where the external category id was read from. A reviewed amendment has admitted a first breadth wave (a `drugstore` concept with a US-scoped assertion and its mapping); the records land under the same provenance discipline.
+[`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states and where each external category id was read from. A reviewed amendment admitted a first breadth wave — a `drugstore` concept, a US-scoped `affords` assertion on it, and a second `poi-taxonomy` mapping — and all three are authored, under the same provenance discipline. One activity therefore reaches two establishment classes, which is what the schema was shaped to express and what the POI branch searches as a union.
 
 Measured, not promised: with this one proposition injected behind an off-by-default flag, activity-phrased queries against the live geocoder moved from 0 of 4 answered to 3 of 4 (a pharmacy 0.41 km from the Denver anchor), with all 6 control queries unchanged. That measurement — pre-registered before the code existed, frozen by hash, decided against committed thresholds — is why the package continues to grow.
 

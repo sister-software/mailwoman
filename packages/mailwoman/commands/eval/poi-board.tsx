@@ -12,6 +12,11 @@
  *   (the CI-gate mode). Without `--enforce` the command stays report-only — it exits 0 on case
  *   failures, and a non-zero exit means the HARNESS broke (missing fixtures, missing db, a pipeline
  *   construction error), never a graded case failing.
+ *
+ *   `--semantic-observation` injects `mailwoman/observations`' semantic route as an additional phrase
+ *   rung, which is the only arm the committed activity-phrased rows are reachable in. It is OFF by
+ *   default and the floors are registered against the OFF arm: the board grades the construction that
+ *   ships.
  */
 
 import { Text } from "ink"
@@ -33,6 +38,11 @@ export const spec = {
 		db: { type: "string", description: "Sealed poi.db" },
 		"resolve-db": { type: "string", description: "WOF admin shards" },
 		"candidate-db": { type: "string", description: "Byte-range candidate.db" },
+		"semantic-observation": {
+			type: "boolean",
+			default: false,
+			description: "Inject the semantic observation route as an extra phrase rung",
+		},
 		json: { type: "boolean", default: false, description: "Print JSON" },
 		enforce: { type: "boolean", default: false, description: "Enforce registered floors" },
 	},
@@ -45,6 +55,7 @@ interface Options {
 	db?: string
 	resolveDB?: string
 	candidateDB?: string
+	semanticObservation: boolean
 	json: boolean
 	enforce: boolean
 }
@@ -61,6 +72,7 @@ const EvalPoiBoard: ParsedCommandComponent<Options> = ({ options }) => {
 				db: options.db,
 				resolveDB: options.resolveDB,
 				candidateDB: options.candidateDB,
+				semanticObservation: options.semanticObservation,
 				quiet: options.json,
 				enforce: options.enforce,
 			})

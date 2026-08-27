@@ -2,8 +2,8 @@
 
 ## `model/` — the authored records
 
-The authoring source for the frozen pharmacy slice. Six concepts, one relation, one external mapping, one assertion.
-Authored by hand; edit these and regenerate the artifact below.
+The authoring source for the frozen pharmacy slice and the wave-1 breadth records amended onto it. Seven concepts, one
+relation, two external mappings, two assertions. Authored by hand; edit these and regenerate the artifact below.
 
 - **Authority:** [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](../../../docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md)
   §4 — the frozen vertical slice (#1917), and issue #1927, whose Scope block lists the concepts and the relation
@@ -17,22 +17,24 @@ Authored by hand; edit these and regenerate the artifact below.
 
 ### What each record states
 
-| File             | Record                                                                                       | Reading                                                                                                        |
-| ---------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `relations.json` | `affords`                                                                                    | `establishment` → `activity`, not transitive, not symmetric, `hard` semantics — an exception is a defect       |
-| `concepts.json`  | `place`, `establishment`, `healthcare_facility`, `pharmacy`, `activity`, `obtain_medication` | the `isA` chain the slice names, and one assertion: `pharmacy affords obtain_medication`, modality `necessary` |
-| `mappings.json`  | `poi-taxonomy-pharmacy`                                                                      | `@mailwoman/poi-taxonomy` category `pharmacy` names the `pharmacy` concept                                     |
+| File             | Record                                                                                                    | Reading                                                                                                                                                                                           |
+| ---------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `relations.json` | `affords`                                                                                                 | `establishment` → `activity`, not transitive, not symmetric, `defeasible` semantics — an exception qualifies a record rather than falsifying the set                                              |
+| `concepts.json`  | `place`, `establishment`, `healthcare_facility`, `pharmacy`, `drugstore`, `activity`, `obtain_medication` | the `isA` chain the slice names, and two assertions: `pharmacy affords obtain_medication` (`necessary`, unscoped) and `drugstore affords obtain_medication` (`strongly_expected`, scoped to `US`) |
+| `mappings.json`  | `poi-taxonomy-pharmacy`, `poi-taxonomy-drugstore`                                                         | `@mailwoman/poi-taxonomy` categories `pharmacy` and `drugstore` name the concepts of the same names                                                                                               |
 
 Identifiers are bare (`pharmacy`, not `mw:pharmacy`). The issue writes the `mw:` prefix as namespace notation in prose;
 a literal colon inside a concept identifier would collide with the separator `compileGeographicModel` builds derived
 identifiers from, which is a collision its `duplicate_derived_fact_id` refusal exists to catch.
 
-`modality: "necessary"` pairs with the relation's `hard` semantics: dispensing medication to the public is what makes
-premises a pharmacy, so a counter-example falsifies the record instead of qualifying it. No `countries` scope is
-authored — the country-conditional part of the question is which OTHER establishment classes afford the activity, and
-the slice authors no second class.
+`modality: "necessary"` on the pharmacy assertion is grounded in the concept: dispensing medication to the public is
+what makes premises a pharmacy, so a counter-example falsifies that record instead of qualifying it. It carries no
+`countries` scope, which is the weaker statement the schema says it is. The drugstore assertion is the other half of
+the country-conditional question — which OTHER establishment classes afford the activity, and where — and it is
+`strongly_expected` and scoped to `US`, which is why the relation reads `defeasible`: a `strongly_expected` record can
+only sit beside a `necessary` one under a relation whose assertions admit exceptions at all.
 
-### The external mapping
+### The external mappings
 
 Read from `../../poi-taxonomy/data/taxonomy.json` at table version `0.4.0` (Overture schema `v1.17.0`):
 
@@ -53,6 +55,13 @@ that the external identifier names this concept and nothing more: the containmen
 translation, the phrase lexicon and the brand table stay owned by `@mailwoman/poi-taxonomy`.
 `test/unit/pharmacy-slice.test.ts` resolves the identifier through `getPOICategory` on every run, so a mapping onto a
 category the taxonomy no longer carries fails there rather than translating into nothing.
+
+The wave-1 sibling `poi-taxonomy-drugstore` reads the same way, onto `{ "id": "drugstore", "hierarchy": ["retail",
+"drugstore"], "source": "overture" }` at the same table version. Its leaf is DISJOINT from
+`health_and_medical > pharmacy`, which is the whole reason the second mapping reaches rows the first cannot: 7,168 rows
+under `retail > drugstore` against 82,168 under the pharmacy leaf, 6,679 of them in the US, measured on `poi.db` at
+manifest `2026-07-22.0`. Two mappings for one activity is not a preference — the schema has no field to state one
+with, and the POI branch searches the union rather than choosing between them.
 
 ## `geographic-model.json` — the generated, committed artifact
 

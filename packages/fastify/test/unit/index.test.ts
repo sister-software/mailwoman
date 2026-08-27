@@ -97,7 +97,7 @@ describe("@mailwoman/fastify", () => {
 	it("POST /poi returns the pipeline's POI intent when a database is configured", async () => {
 		const poiIntent = {
 			type: "intent" as const,
-			intent: { subject: { kind: "category" as const, categoryID: "eat_and_drink.coffee", matched: "coffee" } },
+			intent: { subject: { kind: "category" as const, categoryIDs: ["eat_and_drink.coffee"], matched: "coffee" } },
 			results: [],
 		}
 
