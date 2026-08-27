@@ -233,11 +233,18 @@ not a grant**, and this record does not treat it as one.
 
 **One statewide government product outweighs all of the above for usability.** California's Office of
 Land Use and Climate Innovation publishes _Statewide Zoning North_ and _Statewide Zoning South_ on
-`data.ca.gov`: **264,417 + 304,324 = 568,741 zoning polygons covering 535 of California's 539
-jurisdictions**, in CSV, shapefile, GeoJSON, GeoPackage and file geodatabase, with a 14-value normalized
-`ucd_description` vocabulary. Its CKAN `license_id` is **null**, its ArcGIS `licenseInfo` is **empty**,
+`data.ca.gov`. **The two feature counts were re-measured for this record and are 264,417 and 304,324 —
+568,741 zoning polygons**, published in CSV, shapefile, GeoJSON, GeoPackage and file geodatabase, with a
+14-value normalized `ucd_description` vocabulary beside the local `Code` and `Descriptio` fields. The
+publisher claims 535 of California's 539 jurisdictions; a distinct-value count over both halves resolves
+to **534** after de-duplication. Its CKAN `license_id` is **null**, its ArcGIS `licenseInfo` is **empty**,
 and its rights field reads "No restrictions on public use". That is a stated non-restriction rather than
-a grant, and §7.2 treats it as such.
+a grant, and §7.2 treats it as such. Its own dataset description is candid about method: where "zoning
+maps were not available in a GIS format, maps were converted from PDF or image maps using geo-referencing
+techniques and then transposing map information to parcel geometries sourced from county assessor data",
+with collection "begun in late 2021 and… mostly finished in late 2022". The `Date` column is free text —
+grouping by it returns 61 distinct values, nothing later than 2023, plus an unconverted spreadsheet serial
+and 4,605 features dated `7/11/1905`.
 
 **Every commercial assembly forbids redistribution, and they are one supply chain rather than four.**
 Regrid's zoning is Zoneomics's, stated in Regrid's own documentation — "Our zoning data partner Zoneomics
@@ -292,6 +299,11 @@ the attributes are hyperlinks to each town's PDF zoning map. The Department says
 > contact information** known to the Department of Community Affairs as of March 23, 2026… **The
 > Department of Community Affairs cannot confirm the currentness or accuracy of these documents** and
 > provides these links as an information resource for the public."
+
+**And California publishes a near-identical companion that is the other subject.** `California General
+Plan Land Use` holds **534,346** features across 532 of 539 jurisdictions in a schema close enough to the
+zoning layer's to be mistaken for it. It is future land use (§2.1). **The only thing separating them is
+the service name.**
 
 **Three further near-misses, all of which share vocabulary with zoning and none of which is zoning.**
 NJDEP's Land Use/Land Cover 2020 is **699,777** imagery-derived Anderson-code polygons carrying labels
