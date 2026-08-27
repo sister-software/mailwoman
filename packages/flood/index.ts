@@ -191,7 +191,8 @@ export class FloodZoneLookup {
 	readonly #database: DatabaseSync
 	readonly #selectCell: ReturnType<DatabaseSync["prepare"]>
 	readonly #selectCandidates: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectArea: ReturnType<DatabaseSync["prepare"]>
+	readonly #selectAreaBounds: ReturnType<DatabaseSync["prepare"]>
+	readonly #selectAreaRings: ReturnType<DatabaseSync["prepare"]>
 	readonly #selectCoverage: ReturnType<DatabaseSync["prepare"]>
 	readonly #definitions: Map<string, FloodZoneDefinition>
 
@@ -213,9 +214,14 @@ export class FloodZoneLookup {
 			"SELECT area_id FROM flood_zone_cell_area WHERE h3_cell = ? ORDER BY area_id"
 		)
 
-		this.#selectArea = this.#database.prepare(
-			"SELECT zone_code, min_lat, min_lon, max_lat, max_lon, rings FROM flood_zone_area WHERE area_id = ?"
+		// TWO STATEMENTS, AND THE SPLIT IS THE POINT. The bbox is the prefilter, so it is read WITHOUT the blob: the
+		// largest features in this product carry hundreds of thousands of vertices, and pulling one off disk only to
+		// reject it on a rectangle would make the prefilter cost more than the test it replaces.
+		this.#selectAreaBounds = this.#database.prepare(
+			"SELECT zone_code, min_lat, min_lon, max_lat, max_lon FROM flood_zone_area WHERE area_id = ?"
 		)
+
+		this.#selectAreaRings = this.#database.prepare("SELECT rings FROM flood_zone_area WHERE area_id = ?")
 
 		this.#selectCoverage = this.#database.prepare(
 			"SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage WHERE h3_cell = ?"
@@ -333,15 +339,8 @@ export class FloodZoneLookup {
 		const candidates = partialCells.flatMap((short) => this.#selectCandidates.all(short) as Array<{ area_id: string }>)
 
 		for (const { area_id: areaID } of candidates) {
-			const area = this.#selectArea.get(areaID) as
-				| {
-						zone_code: string
-						min_lat: number
-						min_lon: number
-						max_lat: number
-						max_lon: number
-						rings: Uint8Array
-				  }
+			const area = this.#selectAreaBounds.get(areaID) as
+				| { zone_code: string; min_lat: number; min_lon: number; max_lat: number; max_lon: number }
 				| undefined
 
 			if (!area) continue
@@ -352,7 +351,11 @@ export class FloodZoneLookup {
 				continue
 			}
 
-			if (pointInEncodedRings(area.rings, longitude, latitude)) {
+			const geometry = this.#selectAreaRings.get(areaID) as { rings: Uint8Array } | undefined
+
+			if (!geometry) continue
+
+			if (pointInEncodedRings(geometry.rings, longitude, latitude)) {
 				return { zoneCode: area.zone_code, areaID, containment: FloodContainmentPath.RayCast }
 			}
 		}
