@@ -660,9 +660,9 @@ describe("the promoted semantic-utility family (#1960)", () => {
 		// tracked as a defect, because its baseline is a confident wrong answer rather than a miss.
 		const byRef = new Map(promoted.map((f) => [f.id, f]))
 
-		expect(byRef.get("sem-act-us-01")).toMatchObject({ status: "improvement_target", bugRef: "#1967" })
-		expect(byRef.get("sem-act-us-02")).toMatchObject({ status: "improvement_target", bugRef: "#1967" })
-		expect(byRef.get("sem-act-mx-01")).toMatchObject({ status: "improvement_target", bugRef: "#1967" })
+		expect(byRef.get("sem-act-us-01")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
+		expect(byRef.get("sem-act-us-02")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
+		expect(byRef.get("sem-act-mx-01")).toMatchObject({ status: "improvement_target", bugRef: "#1997" })
 		expect(byRef.get("sem-act-fr-01")).toMatchObject({ status: "known_fail", bugRef: "#1039" })
 	})
 })
