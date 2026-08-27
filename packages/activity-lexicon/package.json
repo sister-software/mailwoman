@@ -1,0 +1,60 @@
+{
+	"name": "@mailwoman/activity-lexicon",
+	"version": "0.0.0",
+	"description": "Reviewed surface forms for activity concepts — the phrases a person types for what they want to do, each carrying the record that attests it and the locales it is used in.",
+	"keywords": [
+		"activity",
+		"lexicon",
+		"phrases",
+		"provenance"
+	],
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/activity-lexicon"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"data/**/*.json",
+		"*.ts",
+		"**/*.ts",
+		"!*.test.ts",
+		"!**/*.test.ts",
+		"!test/**"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./lexicon": {
+			"node": "./lexicon.ts",
+			"default": "./out/lexicon.js",
+			"types": "./out/lexicon.d.ts"
+		},
+		"./types": {
+			"node": "./types.ts",
+			"default": "./out/types.js",
+			"types": "./out/types.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

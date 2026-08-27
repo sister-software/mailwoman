@@ -4,26 +4,24 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the one semantic observation route the utility probe injects (#1929): the phrase rule, the
- *   authority an observation carries, and every construction refusal.
+ *   locale scope, the authority an observation carries, and every construction refusal.
  *
  *   No model, no database, no pipeline. The route is a `POIPhraseLookup` over a compiled artifact and a
- *   declared phrase table, and both are injectable — so the refusals are exercised against synthetic
- *   models rather than by breaking the committed one.
+ *   reviewed lexicon, and both are injectable — so the refusals are exercised against synthetic
+ *   models rather than by breaking the committed ones.
  *
  *   The committed pair is asserted too, and that is the check with the shortest half-life: a declared
  *   phrase whose activity nothing affords would match a query and answer nothing, which reads at the
  *   probe as the class being unanswerable rather than as the route being unwired.
  */
 
+import type { ActivityPhraseEntry, ActivityPhraseLexicon } from "@mailwoman/activity-lexicon"
+import { readActivityLexicon } from "@mailwoman/activity-lexicon"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
-import {
-	type ActivityPhraseTable,
-	createSemanticObservationRoute,
-	readActivityPhraseTable,
-} from "mailwoman/eval-harness/semantic-utility/observation-route"
+import { createSemanticObservationRoute } from "mailwoman/eval-harness/semantic-utility/observation-route"
 import { describe, expect, it } from "vitest"
 
-const committedTable = readActivityPhraseTable()
+const committedLexicon = readActivityLexicon()
 const committedRoute = await createSemanticObservationRoute()
 const committedModel = await readCommittedModel()
 
@@ -37,20 +35,35 @@ async function readCommittedModel(): Promise<CompiledGeographicModel> {
 }
 
 /**
+ * A well-formed synthetic entry, so a test provoking ONE refusal does not trip a different one on the way.
+ */
+function entry(overrides: Partial<ActivityPhraseEntry> & Pick<ActivityPhraseEntry, "phrase">): ActivityPhraseEntry {
+	const activity = overrides.activity ?? "obtain_medication"
+
+	return {
+		activity,
+		source: "curated",
+		attestation: { kind: "concept-description", reference: activity, detail: "obtaining medication" },
+		note: "test",
+		...overrides,
+	}
+}
+
+/**
  * A route over a mutated copy of the committed pair, so a refusal is provoked without touching either committed file.
  */
 async function scratchRoute(
-	mutate: (model: CompiledGeographicModel, table: ActivityPhraseTable) => void
+	mutate: (model: CompiledGeographicModel, lexicon: ActivityPhraseLexicon) => void
 ): Promise<ReturnType<typeof createSemanticObservationRoute>> {
 	const model = structuredClone(committedModel)
-	const table = structuredClone(committedTable)
+	const lexicon = structuredClone(committedLexicon)
 
-	mutate(model, table)
+	mutate(model, lexicon)
 
-	return createSemanticObservationRoute({ model, phraseTable: table })
+	return createSemanticObservationRoute({ model, lexicon })
 }
 
-describe("the committed declared table against the committed artifact", () => {
+describe("the committed lexicon against the committed artifact", () => {
 	it("resolves — every declared phrase reaches a mapped entity kind", async () => {
 		await expect(createSemanticObservationRoute()).resolves.toBeDefined()
 	})
@@ -60,22 +73,24 @@ describe("the committed declared table against the committed artifact", () => {
 	})
 
 	it("reports what it was built from, so a receipt never has to name it twice", () => {
-		expect(committedRoute.identity.phraseTableID).toBe(committedTable.tableID)
-		expect(committedRoute.identity.phraseTableVersion).toBe(committedTable.version)
-		expect(committedRoute.identity.declaredPhrases).toBe(committedTable.phrases.length)
+		expect(committedRoute.identity.phraseLexiconID).toBe(committedLexicon.lexiconID)
+		expect(committedRoute.identity.phraseLexiconVersion).toBe(committedLexicon.version)
+		expect(committedRoute.identity.declaredPhrases).toBe(committedLexicon.phrases.length)
 		expect(committedRoute.identity.modelVersion).toBe(committedModel.modelVersion)
 	})
 
-	it("marks its phrases authored rather than measured", () => {
-		expect(committedTable.provenance.source).toBe("authored-for-the-probe")
-		expect(committedTable.provenance.notes).toBeTruthy()
+	it("marks its phrases curated and names a record behind each one", () => {
+		expect(committedLexicon.provenance.source).toBe("mailwoman-curated")
+		expect(committedLexicon.provenance.notes).toBeTruthy()
 
-		for (const entry of committedTable.phrases) {
-			expect(entry.note.trim()).not.toBe("")
+		for (const declared of committedLexicon.phrases) {
+			expect(declared.source).toBe("curated")
+			expect(declared.note.trim()).not.toBe("")
+			expect(declared.attestation.kind).toBeTruthy()
 		}
 	})
 
-	it("declares phrases no registered target row uses, so the table is about the activity", () => {
+	it("declares phrases no registered target row uses, so the lexicon is about the activity", () => {
 		const registered = new Set([
 			"pick up a prescription",
 			"prescription",
@@ -83,7 +98,7 @@ describe("the committed declared table against the committed artifact", () => {
 			"prescription refilled",
 		])
 
-		const beyond = committedTable.phrases.filter((entry) => !registered.has(entry.phrase))
+		const beyond = committedLexicon.phrases.filter((declared) => !registered.has(declared.phrase))
 
 		expect(beyond.length).toBeGreaterThan(0)
 	})
@@ -112,8 +127,8 @@ describe("the phrase rule", () => {
 	})
 
 	it("requires a word boundary — a longer word ending in a declared phrase is not that phrase", async () => {
-		const route = await scratchRoute((_model, table) => {
-			table.phrases = [{ phrase: "medication", activity: "obtain_medication", note: "test" }]
+		const route = await scratchRoute((_model, lexicon) => {
+			lexicon.phrases = [entry({ phrase: "medication" })]
 		})
 
 		expect(route.lookup("premedication")).toEqual([])
@@ -128,6 +143,60 @@ describe("the phrase rule", () => {
 
 	it("normalizes case and whitespace without consulting the host locale", () => {
 		expect(committedRoute.lookup("  WHERE CAN I   Pick Up A Prescription  ")).toHaveLength(1)
+	})
+})
+
+describe("the locale scope", () => {
+	it("answers a scoped phrase at full strength under a locale it declares", () => {
+		const [hit] = committedRoute.lookup("collect a prescription", "en-GB")
+
+		expect(hit?.confidence).toBe(1)
+	})
+
+	it("answers a scoped phrase at half strength when only the language agrees", () => {
+		const [hit] = committedRoute.lookup("collect my prescription", "en-IE")
+
+		expect(hit?.confidence).toBe(0.5)
+	})
+
+	it("stays silent on a scoped phrase under an unrelated locale", async () => {
+		const route = await scratchRoute((_model, lexicon) => {
+			lexicon.phrases = [entry({ phrase: "collect a prescription", locales: ["en-GB"] })]
+		})
+
+		expect(route.lookup("collect a prescription", "fr-FR")).toEqual([])
+	})
+
+	it("stays silent on a scoped phrase when the locale is unknown", async () => {
+		const route = await scratchRoute((_model, lexicon) => {
+			lexicon.phrases = [entry({ phrase: "collect a prescription", locales: ["en-GB"] })]
+		})
+
+		expect(route.lookup("collect a prescription")).toEqual([])
+	})
+
+	it("leaves an unscoped phrase answering under every locale, and under none", () => {
+		expect(committedRoute.lookup("prescription", "fr-FR")).toHaveLength(1)
+		expect(committedRoute.lookup("prescription")).toHaveLength(1)
+	})
+
+	it("falls through to the unscoped phrase the candidate also ends in, rather than going silent", () => {
+		const [hit] = committedRoute.lookup("collect a prescription", "fr-FR")
+
+		expect(hit?.matchedPhrase).toBe("prescription")
+	})
+
+	it("lets a shorter admissible phrase answer where a longer scoped one is refused", async () => {
+		const route = await scratchRoute((_model, lexicon) => {
+			lexicon.phrases = [
+				entry({ phrase: "prescription" }),
+				entry({ phrase: "collect a prescription", locales: ["en-GB"] }),
+			]
+		})
+
+		const [hit] = route.lookup("collect a prescription", "fr-FR")
+
+		expect(hit?.matchedPhrase).toBe("prescription")
 	})
 })
 
@@ -148,8 +217,36 @@ describe("the observation", () => {
 		expect(observation!.assertion.provenance.source).toBe("mailwoman-curated")
 		expect(observation!.mapping.vocabulary).toBe("poi-taxonomy")
 		expect(observation!.mapping.provenance.source).toBe("mailwoman-curated")
-		expect(observation!.phraseProvenance.source).toBe("authored-for-the-probe")
+		expect(observation!.phraseProvenance.source).toBe("mailwoman-curated")
 		expect(observation!.mappedKindCount).toBe(1)
+	})
+
+	it("names what attests the surface form, which the assertion's own provenance does not cover", () => {
+		committedRoute.takeObservations()
+		committedRoute.lookup("where can i pick up a prescription")
+
+		const [observation] = committedRoute.takeObservations()
+
+		expect(observation!.phraseLexiconID).toBe(committedLexicon.lexiconID)
+		expect(observation!.phraseAttestation.kind).toBe("committed-query")
+		expect(observation!.phraseAttestation.reference).toContain("poi-board.jsonl#sem-act-us-01")
+	})
+
+	it("records which scope admitted the phrase, so a receipt can tell an exact locale from a relaxed one", () => {
+		committedRoute.takeObservations()
+		committedRoute.lookup("collect a prescription", "en-AU")
+
+		const [scoped] = committedRoute.takeObservations()
+
+		expect(scoped!.localeScope).toBe("exact")
+		expect(scoped!.declaredLocales).toEqual(["en-GB", "en-AU", "en-NZ"])
+
+		committedRoute.lookup("prescription", "en-AU")
+
+		const [unscoped] = committedRoute.takeObservations()
+
+		expect(unscoped!.localeScope).toBe("unscoped")
+		expect(unscoped!.declaredLocales).toBeNull()
 	})
 
 	it("deduplicates a drain — one query drives the rung several times", () => {
@@ -180,16 +277,16 @@ describe("the observation", () => {
 describe("construction refusals", () => {
 	it("refuses an activity the artifact does not carry", async () => {
 		await expect(
-			scratchRoute((_model, table) => {
-				table.phrases = [{ phrase: "get a haircut", activity: "get_haircut", note: "test" }]
+			scratchRoute((_model, lexicon) => {
+				lexicon.phrases = [entry({ phrase: "get a haircut", activity: "get_haircut" })]
 			})
 		).rejects.toThrow(/which the compiled model does not carry/)
 	})
 
 	it("refuses a concept that is not an activity", async () => {
 		await expect(
-			scratchRoute((_model, table) => {
-				table.phrases = [{ phrase: "prescription", activity: "pharmacy", note: "test" }]
+			scratchRoute((_model, lexicon) => {
+				lexicon.phrases = [entry({ phrase: "prescription", activity: "pharmacy" })]
 			})
 		).rejects.toThrow(/concept kind is "establishment" rather than `activity`/)
 	})
@@ -222,28 +319,46 @@ describe("construction refusals", () => {
 
 	it("refuses a phrase declared twice", async () => {
 		await expect(
-			scratchRoute((_model, table) => {
-				table.phrases = [
-					{ phrase: "prescription", activity: "obtain_medication", note: "test" },
-					{ phrase: "  Prescription ", activity: "obtain_medication", note: "test" },
-				]
+			scratchRoute((_model, lexicon) => {
+				lexicon.phrases = [entry({ phrase: "prescription" }), entry({ phrase: "  Prescription " })]
 			})
 		).rejects.toThrow(/is declared twice/)
 	})
 
-	it("refuses an empty table", async () => {
+	it("refuses an empty lexicon", async () => {
 		await expect(
-			scratchRoute((_model, table) => {
-				table.phrases = []
+			scratchRoute((_model, lexicon) => {
+				lexicon.phrases = []
 			})
-		).rejects.toThrow(/a route with no surface form can never fire/)
+		).rejects.toThrow(/a vocabulary with no surface form can never fire/)
 	})
 
 	it("refuses a phrase that normalizes to nothing", async () => {
 		await expect(
-			scratchRoute((_model, table) => {
-				table.phrases = [{ phrase: "   ", activity: "obtain_medication", note: "test" }]
+			scratchRoute((_model, lexicon) => {
+				lexicon.phrases = [entry({ phrase: "   " })]
 			})
 		).rejects.toThrow(/normalizes to nothing/)
+	})
+
+	it("refuses a phrase scoped to no locale at all", async () => {
+		await expect(
+			scratchRoute((_model, lexicon) => {
+				lexicon.phrases = [entry({ phrase: "prescription", locales: [] })]
+			})
+		).rejects.toThrow(/scoped to nowhere/)
+	})
+
+	it("refuses a derived form whose base the lexicon does not declare", async () => {
+		await expect(
+			scratchRoute((_model, lexicon) => {
+				lexicon.phrases = [
+					entry({
+						phrase: "prescriptions",
+						attestation: { kind: "derived-form", base: "prescription", derivation: "plural" },
+					}),
+				]
+			})
+		).rejects.toThrow(/which the lexicon does not declare/)
 	})
 })

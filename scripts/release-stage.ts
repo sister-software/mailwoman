@@ -39,6 +39,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/neural-weights-base-latn": "parked shared base for #1177 — publish wiring deliberately not landed",
 	"packages/dev-mcp": "private maintainer MCP server — never publishes",
 	"packages/osm": "public but held out of the release — ODbL counsel sign-off pending (packages/osm/README.md)",
+	"packages/activity-lexicon":
+		"public but not yet on npm — Trusted Publishing cannot create a package that does not exist, so it joins the list after its bless-package first publish (packages/activity-lexicon/README.md)",
 }
 
 /**

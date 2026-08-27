@@ -1,0 +1,121 @@
+{
+	"lexiconID": "mailwoman-activity-phrases",
+	"version": "1.0.0",
+	"provenance": {
+		"source": "mailwoman-curated",
+		"authoredAt": "2026-08-27",
+		"sourceRecord": "packages/activity-lexicon/data/PROVENANCE.md",
+		"sourceURL": "https://github.com/sister-software/mailwoman/issues/1962",
+		"notes": "Reviewed surface forms, curated the way @mailwoman/poi-taxonomy's synonyms are curated: an entry is admitted only when something already committed attests it, and the attestation names that record and quotes the text it rests on. Four classes are admissible and each is checkable — a committed query row, a regular transformation of another entry, a register split a committed vocabulary already records, and a clause of the activity concept's own description. No entry rests on observed traffic; this vocabulary carries no measurement and nothing downstream may read it as one. Every phrase names an activity concept some other artifact owns, and this file states nothing about the world: which entity kinds afford the activity, in which country, with what modality and on whose authority all come from that artifact."
+	},
+	"phrases": [
+		{
+			"phrase": "prescription",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": {
+				"kind": "committed-query",
+				"reference": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl#sem-act-us-02",
+				"detail": "prescription near Denver CO"
+			},
+			"note": "The bare activity noun. Unscoped because the row that attests it carries no locale, and scoping a committed form past its own attestation would make the entry say more than the record does."
+		},
+		{
+			"phrase": "prescriptions",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": { "kind": "derived-form", "base": "prescription", "derivation": "plural" },
+			"note": "The plural of the bare noun. A person asking for the thing in general writes it as often as the singular."
+		},
+		{
+			"phrase": "pick up a prescription",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": {
+				"kind": "committed-query",
+				"reference": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl#sem-act-us-01",
+				"detail": "where can i pick up a prescription near Denver CO"
+			},
+			"note": "The verb phrase for collecting a dispensed prescription."
+		},
+		{
+			"phrase": "pick up my medication",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": {
+				"kind": "concept-description",
+				"reference": "obtain_medication",
+				"detail": "obtaining medication"
+			},
+			"note": "The same request naming the medication rather than the paperwork. The head noun is the concept's own; the verb phrase is the one `pick up a prescription` already carries."
+		},
+		{
+			"phrase": "fill a prescription",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": {
+				"kind": "committed-query",
+				"reference": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl#sem-act-fr-01",
+				"detail": "somewhere to fill a prescription near Toulouse"
+			},
+			"note": "The verb phrase for having a prescription dispensed."
+		},
+		{
+			"phrase": "prescription refilled",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": {
+				"kind": "committed-query",
+				"reference": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl#sem-act-mx-01",
+				"detail": "i need my prescription refilled near Tijuana"
+			},
+			"note": "The inflected form, as it appears inside a first-person sentence."
+		},
+		{
+			"phrase": "refill a prescription",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": { "kind": "derived-form", "base": "prescription refilled", "derivation": "verb-phrase" },
+			"note": "The uninflected phrasing of the same request."
+		},
+		{
+			"phrase": "prescription refill",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": { "kind": "derived-form", "base": "prescription refilled", "derivation": "nominalization" },
+			"note": "The noun phrase for the same request, which is how a person writes it when the query has no verb."
+		},
+		{
+			"phrase": "collect a prescription",
+			"activity": "obtain_medication",
+			"locales": ["en-GB", "en-AU", "en-NZ"],
+			"source": "curated",
+			"attestation": {
+				"kind": "regional-register",
+				"reference": "packages/poi-taxonomy/data/curated-overlay.json#chemist",
+				"base": "pick up a prescription",
+				"detail": "chemist → pharmacy, locales en-GB, en-AU, en-NZ"
+			},
+			"note": "The British-register verb for collecting a dispensed prescription. Its locales are copied from the committed `chemist` synonym rather than decided here, so the two records cannot drift into disagreeing about where the register applies."
+		},
+		{
+			"phrase": "collect my prescription",
+			"activity": "obtain_medication",
+			"locales": ["en-GB", "en-AU", "en-NZ"],
+			"source": "curated",
+			"attestation": { "kind": "derived-form", "base": "collect a prescription", "derivation": "possessive" },
+			"note": "The first-person phrasing of the British-register form, carrying its base's locale scope."
+		},
+		{
+			"phrase": "buy medicine",
+			"activity": "obtain_medication",
+			"source": "curated",
+			"attestation": {
+				"kind": "concept-description",
+				"reference": "obtain_medication",
+				"detail": "bought over the counter"
+			},
+			"note": "Obtaining medication without a prescription, which the concept's own description admits as part of the activity."
+		}
+	]
+}

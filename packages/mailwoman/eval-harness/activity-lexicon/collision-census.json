@@ -1,0 +1,6190 @@
+{
+	"censusID": "activity-phrase-collision-census",
+	"generatedAt": "2026-08-27T02:30:44.364Z",
+	"lexicon": {
+		"lexiconID": "mailwoman-activity-phrases",
+		"version": "1.0.0",
+		"declaredPhrases": 11
+	},
+	"poiDatabase": {
+		"path": "/mnt/playpen/mailwoman-data/poi/poi.db",
+		"layerManifest": {
+			"name": "poi",
+			"version": "2026-07-22.0",
+			"schema_version": 1,
+			"tier": "shipped",
+			"license": "CDLA-Permissive-2.0",
+			"attribution": "Overture Maps Foundation",
+			"source": "overture-places",
+			"source_vintage": "2026-07-22.0",
+			"build_cmd": "mailwoman gazetteer build poi",
+			"build_sha": "3610771ec",
+			"freshness_policy": "sealed",
+			"spine_keys": "{\"h3\":{\"column\":\"h3_cell\",\"resolution\":9}}",
+			"created_at": "2026-08-19T01:22:43.545Z"
+		}
+	},
+	"probes": {
+		"distinct": 19,
+		"byFamily": {
+			"declared-phrase": 11,
+			"phrase-prefix": 0,
+			"carrier-prefix": 9
+		},
+		"strings": [
+			{
+				"probe": "buy medicine",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "collect a prescription",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "collect my prescription",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "fill a prescription",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "i need my prescription refilled",
+				"families": ["carrier-prefix"]
+			},
+			{
+				"probe": "i need my prescription refilled near tijuana",
+				"families": ["carrier-prefix"]
+			},
+			{
+				"probe": "pick up a prescription",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "pick up my medication",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"]
+			},
+			{
+				"probe": "prescription near denver co",
+				"families": ["carrier-prefix"]
+			},
+			{
+				"probe": "prescription refill",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "prescription refilled",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "refill a prescription",
+				"families": ["declared-phrase"]
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"]
+			},
+			{
+				"probe": "somewhere to fill a prescription",
+				"families": ["carrier-prefix"]
+			},
+			{
+				"probe": "somewhere to fill a prescription near toulouse",
+				"families": ["carrier-prefix"]
+			},
+			{
+				"probe": "where can i pick up a prescription",
+				"families": ["carrier-prefix"]
+			},
+			{
+				"probe": "where can i pick up a prescription near denver co",
+				"families": ["carrier-prefix"]
+			}
+		]
+	},
+	"committedInputs": {
+		"scanned": 17135,
+		"routeClaimable": 4,
+		"files": 210
+	},
+	"categoryLexicon": {
+		"collisions": []
+	},
+	"nameLexicon": {
+		"exactCollisions": [
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere",
+				"categoryID": "clothing_store",
+				"country": "FR",
+				"verdict": {
+					"class": "query-shaped",
+					"tell": "function-word"
+				},
+				"reachedByShippedRung": true
+			}
+		],
+		"containment": [
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "15toKnow | COVID-19 Testing Location | Rapid PCR COVID Testing without Prescription",
+				"categoryID": "b2b_clinical_lab",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "A Plant Prescription",
+				"categoryID": "nursery_and_gardening_store",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Aberdeen Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Acadiana Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Active Arch Orthotics (Custom Molded Foot Prescription Insoles) *Order at ActiveArch.com",
+				"categoryID": "sportswear_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Aesthetics by Prescription",
+				"categoryID": "medical_spa",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Affordable Rx Meds - Prescription Drugs Online",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Agtegra Cooperative - Prescription Agronomics",
+				"categoryID": "farming_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Amazon Counter - 2222 Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "ARH Prescription Division",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Arlington Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Arrow Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Arrow Prescription Center #15",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Art Jacob Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Ascension Rx - Appleton Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Ascension Rx - Brown Deer Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Ascension Rx - Elmbrook Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Ascension Rx - Mount Pleasant Prescription Center",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Ashburton Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Aurora Prescription Dispensing Center",
+				"categoryID": "hospital",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "B and K Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Barbell Prescription",
+				"categoryID": "fitness_trainer",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Barbourville Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Bartlett Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Batten's Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Battlefords Prescription Centre",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Beacon Prescription",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Beauty By Prescription",
+				"categoryID": "skin_care_and_makeup",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Beckman's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Bender's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "beverly prescription centre",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Beyond The Prescription",
+				"categoryID": "naturopathic_medicine",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Bill's Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Boswell Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Bowers Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Breathitt Prescription Center",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Brown Prescription Drug",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Buffalo Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Burns Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Canada Prescription Services",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Canadian Prescription Drugstore",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Candler Prescription Center at Candler Hospital",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Carmel Prescription Shop",
+				"categoryID": "vitamin_and_supplement_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Casey's Prescription Pad",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Cathy's Kitchen Prescription , Plant-Based Nutrition for Life",
+				"categoryID": "cooking_school",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Cave City Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Cliffe's and the Prescription Center",
+				"categoryID": "vitamin_and_supplement_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Cloney's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Compounding Prescription",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Custom Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Dallas Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Dave's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "DeGoler's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Delta Prescription Clinic",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Denton Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Dicus Prescription Drugs",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Dille's Discount Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Discount Prescription Services / Canada Med Services",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Dr. John's Lawn Prescription, LLC",
+				"categoryID": "contractor",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Duncan Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "East Village Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Evans Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Exercise Prescription - Personal Training",
+				"categoryID": null,
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Eyeglasses, Sunglasses, Prescription Lenses - Lensntrends",
+				"categoryID": "sunglasses_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Fall River Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Family Health and Prescription",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Family Prescription Center",
+				"categoryID": "beauty_product_supplier",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Family Prescription Counter",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Family Prescription Ctr",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Farmer's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Fort Myers Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Four Way Prescription Shop Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Frank's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Fry's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Garfield Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Gibson Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Glasgow Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Glenn's Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Golf Swing Prescription",
+				"categoryID": "golf_club",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Goodale Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Grandin Prescription Centre Inc",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Green's Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Hayat Prescription Dispensing Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Health and Prescription Services",
+				"categoryID": "social_or_community_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Health Smart Rx Prescription",
+				"categoryID": "insurance_agency",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Hepps Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Hill's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Hines Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Hollis Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Hometown Prescription Services",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Hoosiers Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "IDA Prescription Centre",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Integrated Prescription Management",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Island Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Jeff's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "JJ's Prescription Specialties and Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Joelton Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Jones Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Knoll's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Knott Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Larson's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Leff Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Lexington Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "LTC Prescription Providers - Proctor Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "M & R Prescription Center",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Maag Prescription and Medical Supply",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Mac Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Maloney Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "MAPS Medicare And Prescription Services",
+				"categoryID": "insurance_agency",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Marion Prescription",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "McCallum's Prescription Shop Inc",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "McEwen Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "McGee's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Medallion Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Medical Center Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Michael's Prescription Corner",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Muecke Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "My Prescription Coach Compounding Pharmacy",
+				"categoryID": "neurology",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "My Prescription Plan",
+				"categoryID": "pharmaceutical_company",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "National Prescription Assistance",
+				"categoryID": "financial_advising",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "New Rochelle Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Nichols Hill Prescription",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "North Fort Myers Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "North Park Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "North Pole Prescription Laboratory",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Nurses by Prescription",
+				"categoryID": "nursing",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Okefenokee Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Oklahoma Bureau of Narcotics Prescription Monitoring Program",
+				"categoryID": "police_station",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Online Psychiatrist Prescription NYC",
+				"categoryID": "psychiatry",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Optical Prescription Lab (OPL)",
+				"categoryID": "eyewear_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Optical Prescription Service",
+				"categoryID": "eyewear_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Palacios Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Palmetto Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Pelvic Prescription Physical Therapy & Wellness",
+				"categoryID": "physical_therapy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "pH Prescription",
+				"categoryID": "b2b_water_treatment_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Pharmacy Lite Prescription Packaging",
+				"categoryID": "rubber_and_plastics_manufacturer",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "PharmaPlus Pharmacy - Prescription and Compounding Pharmacy",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "PharmDirect - Repeat Prescription Delivery",
+				"categoryID": "pharmacy",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Phil's Prescription Drugs",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Pinney's Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Plumbrook Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Porter's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Portland Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription 2 You",
+				"categoryID": "pharmacy",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription 2000 Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Aesthetic and Wellness Spa",
+				"categoryID": "medical_spa",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Analytics",
+				"categoryID": "b2b_marketing_consultant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Art",
+				"categoryID": "art_gallery",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Beauty",
+				"categoryID": "medical_spa",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Beauty Medical Aesthetics",
+				"categoryID": "beauty_salon",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Benefit Solutions",
+				"categoryID": "professional_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Bliss",
+				"categoryID": "financial_advising",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription BodywoRx LLC.",
+				"categoryID": "massage_therapy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Builders",
+				"categoryID": "contractor",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Care Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Center",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Center Homecare",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Center Of Li",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Center of Ossining",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Center of Ridgway",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Center Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Center Plus",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Centre and Surgicals",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Centre West Ltd",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Chicken",
+				"categoryID": "soup_restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Chicken and Chix Soup Co",
+				"categoryID": "chicken_restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Cocktail Club",
+				"categoryID": "cocktail_bar",
+				"country": "FR",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Compounding Specialists Of Ri",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Compounds",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Counter & Travel Clinic",
+				"categoryID": null,
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Delivery Plus",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Den Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Depot",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Design Hearing Aid and Audiology Center",
+				"categoryID": "audiology",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Dive Masks",
+				"categoryID": "eyewear_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Drug Foundation",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Drug Store",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Drug Store II",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Earth Acupuncture & Herbal Medicine",
+				"categoryID": "acupuncture",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Exclusive",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Exercise LLC",
+				"categoryID": "gym",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Eyewear",
+				"categoryID": "eyewear_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Fertilizer and Chem",
+				"categoryID": "agriculture",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Fitness",
+				"categoryID": "life_coach",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Fitness Physical Therapy",
+				"categoryID": "physical_therapy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Fitness | Broadview Heights",
+				"categoryID": "gym",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Footwear Associates Ltd.",
+				"categoryID": "shoe_store",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Health Resources",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Hearing - Orland Hearing Aid Center",
+				"categoryID": "hearing_aid_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Heating and Cooling LLC",
+				"categoryID": "hvac_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Help Center",
+				"categoryID": "health_coaching",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Hope",
+				"categoryID": "social_or_community_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Kitchen",
+				"categoryID": "smoothie_juice_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Lab",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Lab Compounding Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Landscape",
+				"categoryID": "landscaping",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Lawn Care",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "PRESCRIPTION MED ONLINE",
+				"categoryID": "health_and_wellness_club",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Nutrition",
+				"categoryID": "nutrition_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Optical",
+				"categoryID": "shopping",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Outdoors",
+				"categoryID": "clothing_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Oxygen Services",
+				"categoryID": "b2b_surgical_appliances_and_supplies",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Pad",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Pad of Burnsville",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Pad of Marion",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Pad Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Pest",
+				"categoryID": "pest_control_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Pills Online",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Place",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Plus",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription PR",
+				"categoryID": "b2b_marketing_consultant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Ready",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Roofing",
+				"categoryID": "roofing",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Services",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Sewing",
+				"categoryID": "sewing_and_alterations",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shared Space",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shop & Gifts",
+				"categoryID": "flowers_and_gifts_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shop & Home Medical",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shop inside St. Joseph's Hospital",
+				"categoryID": null,
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shop Marfa",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shop of Stuart",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Shoppe Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Specialties",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Station Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Tillage Technology LLC.",
+				"categoryID": "farming_equipment_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription To Charter Inc",
+				"categoryID": "boat_rental_and_training",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Warehouse Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Weight Loss",
+				"categoryID": "weight_loss_center",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Weight Loss Clinic",
+				"categoryID": "weight_loss_center",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Weight Loss Inc",
+				"categoryID": "nutrition_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Weight Loss of Zanesville",
+				"categoryID": "weight_loss_center",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Wellness",
+				"categoryID": "spa",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Works Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription Youth",
+				"categoryID": "personal_or_beauty_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prescription-Air Conditioning & Heating",
+				"categoryID": "hvac_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prices Prescription Shop Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Prince Prescription Glasses & Optician",
+				"categoryID": "eyewear_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Professional Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "R & R Prescription Services",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "R-X Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Renown Health Prescription Pantry Program",
+				"categoryID": "food_bank",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "RX Safety Prescription Eyewear",
+				"categoryID": "occupational_medicine",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Safety Prescription Glasses UK",
+				"categoryID": "shopping",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Sansum Clinic Pueblo Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Scheffe Prescription Shops",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Seaside Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Seip Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Seven Lakes Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Skelton's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Smartmed Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Smithtown Prescription Center",
+				"categoryID": "outpatient_care_facility",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Spencer's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "SSM Health Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Ssm Health Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Stovalls Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Strathcona Prescription Centre",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Synergy Optometry Eye exams | Prescription glasses | Designer Sunglasses",
+				"categoryID": "optometry",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "T & M Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Exercise Prescription",
+				"categoryID": "life_coach",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Fitness Prescription",
+				"categoryID": "gym",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Glow Prescription - Skincare & Wellness Studio -",
+				"categoryID": "beauty_product_supplier",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Naked Pharmacy - Natural Pharmacy (Non-Prescription)",
+				"categoryID": "pharmacy",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Center - Concord Hospital",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Centre",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Pad",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Pad Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Place",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Service",
+				"categoryID": "pharmacy",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Real Estate Prescription",
+				"categoryID": "fitness_trainer",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "The Yogic Prescription",
+				"categoryID": "yoga_studio",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Thinlenses - Online Glasses | Glasses | Prescription Glasses",
+				"categoryID": "sunglasses_store",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Thomaston Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Total Remedy And Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Tyler Brothers Prescription Shoppe",
+				"categoryID": "medical_supply_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "UMass Memorial Medical Center - Prescription Center Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Union Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Union Prescription Center and Medical Supplies",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "UPMC Presbyterian Prescription Shop",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Valley Prescription and Compounding Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Valley Prescription Centre",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Van Wyck Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Vaughn Prescription Drug Store",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Veracity Pharmacy Prescription And Compounding",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Vicco Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Village Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Wakefield Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Walhalla Prescription Shop Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Warfield Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "West 14 Apothecary ( Also Known As West 14 Street Prescription Center)",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "West Prescription Shop",
+				"categoryID": "medical_supply_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Westlock Prescription Centre",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Whispering Pines Prescription Shoppe",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Whitebluff Prescription",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Winships Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Wolfe Prescription Center",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Woodhull Prescription Center, Inc.",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Yee's Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Yees Prescription Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescription",
+				"families": ["carrier-prefix", "declared-phrase"],
+				"name": "Your Skin Prescription",
+				"categoryID": "medical_spa",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Band Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Beacon Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Beacon Prescriptions Compounding Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Beacon Prescriptions Terryville",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Catching's Prescriptions Ltd",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Cost Less Prescriptions",
+				"categoryID": "cards_and_stationery_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Custom Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Custom Prescriptions LLC",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Florida Avenue Prescriptions Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Glander Prescriptions Plus",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Hair Prescriptions Beauty Salon",
+				"categoryID": "beauty_salon",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "HAIR Prescriptions RX",
+				"categoryID": "hair_replacement",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Hamilton Prescriptions Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Health and Exercise Prescriptions",
+				"categoryID": "fitness_trainer",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Kiowa's Prescriptions Plus Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Lancaster Medical Supplies and Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Larry's Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Laurel Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Macdonald's Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Main Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Medical Centre Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Miracle Prescriptions Remedy'sRx Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "My Online Pharmacy Prescriptions, Clinic & Travel",
+				"categoryID": "pharmacy",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Nature's Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Northwest Prescriptions & Medical Supply",
+				"categoryID": "outpatient_care_facility",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Parentini's Prescriptions Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "PCR TEST - R3 Prescriptions Ltd.",
+				"categoryID": "pharmacy",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Pest Prescriptions",
+				"categoryID": "shopping",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Corner Drug",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions for Change NYC",
+				"categoryID": "outpatient_care_facility",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions for Enlightening Paths",
+				"categoryID": "psychiatry",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions For Fitness",
+				"categoryID": "fitness_trainer",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Inc",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Plus",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Plus & Gifts",
+				"categoryID": "drugstore",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Plus Ltd",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Plus Pharmacy",
+				"categoryID": "medical_supply_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions R US Compounding Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Salon & Spa",
+				"categoryID": "day_spa",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions To Geaux",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions to Geaux",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Unlimited",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Prescriptions Unlimited Pharmacy",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Public Drug Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Regency Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Surf Prescriptions",
+				"categoryID": "surf_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Tang's Prescriptions Remedy's Rx",
+				"categoryID": "pharmacy",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Tayler Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Thrive Medical Cannabis | Texas Medical Marijuana Prescriptions",
+				"categoryID": "complementary_and_alternative_medicine",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Warren Prescriptions (Sav-Mor)",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "prescriptions",
+				"families": ["declared-phrase"],
+				"name": "Welcare Pharmacy Compounding & Prescriptions",
+				"categoryID": "pharmacy",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O'clock Somewhere",
+				"categoryID": "wine_bar",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O'Clock Somewhere",
+				"categoryID": "restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O’Clock Somewhere",
+				"categoryID": "tiki_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O'Clock Somewhere at The Lookout",
+				"categoryID": "holiday_rental_home",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O'Clock Somewhere Bar",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 o'Clock Somewhere Bar",
+				"categoryID": "cocktail_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 o'clock Somewhere Bar",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 o'Clock Somewhere Bar & Grill",
+				"categoryID": "bar_and_grill_restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 o'Clock Somewhere Bar - Miramar Beach",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O'clock Somewhere Bar And Grill",
+				"categoryID": "restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 o'Clock Somewhere Bar and Grill",
+				"categoryID": "bar_and_grill_restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O'Clock Somewhere Liquor Store",
+				"categoryID": "liquor_store",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 o'Clock Somewhere Rooftop Bar",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O'clock Somewhere SF",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 O'Clock Somewhere Travel and Cruise",
+				"categoryID": "travel_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "5 OClock Somewhere Wine & Liquor",
+				"categoryID": "liquor_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "530 Somewhere",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "7AM Somewhere",
+				"categoryID": "cafe",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "A Beach Somewhere In Maui",
+				"categoryID": "beach",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "After 5 Somewhere",
+				"categoryID": "liquor_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Alabaster Somewhere In Time Antiques",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Around Somewhere",
+				"categoryID": "cocktail_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Coast Of Somewhere Beautiful",
+				"categoryID": "beach",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Five O'Clock Somewhere",
+				"categoryID": "convenience_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Going Somewhere Sportswear",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It Is 5 O'clock Somewhere",
+				"categoryID": "gift_shop",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It’s 4:20 Somewhere",
+				"categoryID": "cannabis_dispensary",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It's 4:20 Somewhere - Hay River",
+				"categoryID": "cannabis_dispensary",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It's 5 o clock somewhere Margaritas",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It's 5 o'clock Somewhere",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It's 5 O'Clock Somewhere",
+				"categoryID": "liquor_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It's 5 O'Clock Somewhere Bar",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It's Fade O'Clock Somewhere",
+				"categoryID": "barber",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It's Five O'Clock Somewhere",
+				"categoryID": "tea_room",
+				"country": "FR",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "It's Noon Somewhere",
+				"categoryID": "sports_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "On The Coast Of Somewhere Beautiful",
+				"categoryID": "beach",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Saint Somewhere Brewing Company",
+				"categoryID": "brewery",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Saint Somewhere Charters",
+				"categoryID": "fishing_charter",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Shoppe Somewhere",
+				"categoryID": "candy_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Some Beach Somewhere",
+				"categoryID": "hotel",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Some Beach, Somewhere",
+				"categoryID": "beach",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "SomeBeach Somewhere on Somerset",
+				"categoryID": "holiday_rental_home",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Someone Somewhere",
+				"categoryID": "clothing_store",
+				"country": "MX",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "SOMEWHERE Agency",
+				"categoryID": "b2b_service",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Along The Us/Mexico Border",
+				"categoryID": "arts_and_entertainment",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Along The Way",
+				"categoryID": "art_gallery",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere AZ",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Back in Time",
+				"categoryID": "second_hand_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere bar",
+				"categoryID": "lounge",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Bar",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Beerhouse",
+				"categoryID": "beer_bar",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Behind Knowhere",
+				"categoryID": "pub",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Between Here And There",
+				"categoryID": "cabin",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Café at Harrods",
+				"categoryID": "wine_bar",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere CLT",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Dark And Cold",
+				"categoryID": "arts_and_entertainment",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Different",
+				"categoryID": "cafe",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Dispensary PDX",
+				"categoryID": "shopping",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Else",
+				"categoryID": "christian_place_of_worship",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Else Cafe",
+				"categoryID": "cafe",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Else Experience",
+				"categoryID": "canoe_and_kayak_hire_service",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Else Lounge",
+				"categoryID": "lounge",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere else pizza",
+				"categoryID": "pizza_restaurant",
+				"country": "FR",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Else Pub & Grill",
+				"categoryID": "bar_and_grill_restaurant",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Else Sports Bar & Grill",
+				"categoryID": "sports_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Else Tavern",
+				"categoryID": "pub",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Else Weymouth",
+				"categoryID": "bar",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Far Far Away",
+				"categoryID": "hotel",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Farm",
+				"categoryID": "horse_riding",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Farm Riding Lessons and Horse Shows",
+				"categoryID": "sport_or_fitness_facility",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Haus",
+				"categoryID": "professional_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere House",
+				"categoryID": "abuse_and_addiction_treatment_center",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Akron",
+				"categoryID": "arcade",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In America LLC",
+				"categoryID": "graphic_designer",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Arizona",
+				"categoryID": "farm",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Augusta",
+				"categoryID": "restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Bangkok Avon",
+				"categoryID": "ramen_restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Bangkok Thai Restaurant",
+				"categoryID": "thai_restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Between",
+				"categoryID": "behavioral_or_mental_health_clinic",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Brum",
+				"categoryID": "restaurant",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Cali",
+				"categoryID": "travel_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Carmel",
+				"categoryID": "home_goods_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Florida....",
+				"categoryID": "travel_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Georgia",
+				"categoryID": "dog_park",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Illinois",
+				"categoryID": "travel_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Iowa",
+				"categoryID": "arts_and_entertainment",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "somewhere in LA",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in La Mancha Farm",
+				"categoryID": "farm",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Los Altos",
+				"categoryID": "hair_salon",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Middle America",
+				"categoryID": "music_venue",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Missouri",
+				"categoryID": "park",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Nashville",
+				"categoryID": "hotel_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In New Mexico",
+				"categoryID": "historic_site",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "somewhere in Ohio",
+				"categoryID": "travel_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Particular Brewing",
+				"categoryID": "brewery",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Pennsylvania",
+				"categoryID": "historic_site",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Philadelphia",
+				"categoryID": "historic_site",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Texas",
+				"categoryID": "arts_and_entertainment",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In The Hood",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In The Middle Coffee Shop",
+				"categoryID": "coffee_shop",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In The Middle Of The Desert",
+				"categoryID": "sports_and_recreation",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In The Mountains",
+				"categoryID": "mountain",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In The Woods",
+				"categoryID": "arts_and_entertainment",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Thyme",
+				"categoryID": "home_goods_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Thyme B & B",
+				"categoryID": "bed_and_breakfast",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Time",
+				"categoryID": "holiday_rental_home",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Antique Gallery",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Antique Mall",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Antiques",
+				"categoryID": null,
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Time antiques",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Antiques and Estate Sales",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Antiques Emporium",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Antiquities",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Assisted Living",
+				"categoryID": "retirement_home",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Assisted Living Center",
+				"categoryID": "retirement_home",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Time Auction House",
+				"categoryID": "auction_house",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Time Barber Shop",
+				"categoryID": "barber",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Time Bed & Breakfast",
+				"categoryID": "bed_and_breakfast",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Bed & Breakfast",
+				"categoryID": "bed_and_breakfast",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Bed And Breakfast",
+				"categoryID": "bed_and_breakfast",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time CMP",
+				"categoryID": "historic_site",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Time Denver",
+				"categoryID": "flowers_and_gifts_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time General Store",
+				"categoryID": "shopping",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Time Photography",
+				"categoryID": "professional_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Resale & Collectables",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Time Sports Collectibles",
+				"categoryID": "gift_shop",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere in Time Vintage Rentals",
+				"categoryID": "party_supply_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Tyme Antiques",
+				"categoryID": "antique_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Virginia",
+				"categoryID": "travel_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere In Wyoming",
+				"categoryID": "arts_and_entertainment",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Inn",
+				"categoryID": "hotel",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Inn Calabogie",
+				"categoryID": "motel",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Inn Time",
+				"categoryID": "lodge",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Inn Time Bed & Breakfast",
+				"categoryID": "bed_and_breakfast",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Landing Cabins",
+				"categoryID": "cabin",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Liquors",
+				"categoryID": "liquor_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere LOUD",
+				"categoryID": "music_venue",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Lounge",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Music School",
+				"categoryID": "school",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Neighborhood Bar",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Nowhere NYC - Lounge, Nightclub & Rooftop Pool",
+				"categoryID": "lounge",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere on 47th Terrace",
+				"categoryID": "hair_salon",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere On A Beach Tanning & Boutique",
+				"categoryID": "tanning_salon",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere on A1A",
+				"categoryID": "food_truck_stand",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere on Earth",
+				"categoryID": "restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere On Mars",
+				"categoryID": "travel_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere On The Lake",
+				"categoryID": "lake",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere On The Mountain Cannabis Dispensary Rutland",
+				"categoryID": "cannabis_dispensary",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere On The River",
+				"categoryID": "river",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Out There",
+				"categoryID": "social_and_human_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Out West",
+				"categoryID": "clothing_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere over the rainbow..",
+				"categoryID": "arts_and_entertainment",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Over The Rainbow",
+				"categoryID": "park",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Over the Spectrum",
+				"categoryID": "naturopathic_medicine",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "SomeWhere Private Events",
+				"categoryID": "caterer",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Pub",
+				"categoryID": "pub",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere RV Park",
+				"categoryID": "rv_park",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "SomeWhere Saloon",
+				"categoryID": "barbecue_restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Saloon",
+				"categoryID": "sports_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Secret Escape Game",
+				"categoryID": "escape_room",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Sewing",
+				"categoryID": "fabric_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Someplace",
+				"categoryID": "art_gallery",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere SOS",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Special",
+				"categoryID": "home_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Sports Bar and Grill",
+				"categoryID": "sports_bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Sports Bar And Restaurant",
+				"categoryID": "restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Studio",
+				"categoryID": "event_or_party_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Texas",
+				"categoryID": "american_restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere That's Green Indoor Plant Shoppe",
+				"categoryID": "nursery_and_gardening_store",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere To Be Salon",
+				"categoryID": "hair_stylist",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere To Go",
+				"categoryID": "charity_organization",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere To Go Cafe",
+				"categoryID": "cafe",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere to Go charity shop",
+				"categoryID": "home_health_care",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere To Grow Montessori Childcare",
+				"categoryID": "home_service",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere To Grow Montessori Preschool and Kindergarten",
+				"categoryID": "preschool",
+				"country": "CA",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere To Stay",
+				"categoryID": "bed_and_breakfast",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Travel",
+				"categoryID": "travel_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Uncharted Ltd.",
+				"categoryID": "b2b_business_management_service",
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Up In Montana",
+				"categoryID": "lodge",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere Up In The Sky",
+				"categoryID": "flight_school",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere West of Laramie",
+				"categoryID": "art_gallery",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere with you <3",
+				"categoryID": "park",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Somewhere You Cant Find Me",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "St Somewhere Cafe-a Coffeehouse",
+				"categoryID": "restaurant",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "St. Somewhere Resorts, LLC",
+				"categoryID": "holiday_rental_home",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "St. Somewhere Spa",
+				"categoryID": "day_spa",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "St. Somewhere Spa at Margaritaville Hollywood Beach",
+				"categoryID": "spa",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Sun Somewhere Real Estate Station",
+				"categoryID": "real_estate_service",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "The Bar SomeWhere Else",
+				"categoryID": "bar",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "The Somewhere Sauna (Mothecombe)",
+				"categoryID": null,
+				"country": "GB",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			},
+			{
+				"probe": "somewhere",
+				"families": ["carrier-prefix"],
+				"name": "Ymca Camp Somewhere",
+				"categoryID": "gym",
+				"country": "US",
+				"verdict": {
+					"class": "legitimate",
+					"tell": "distinguishing-element"
+				}
+			}
+		],
+		"foldOnlyMatches": [
+			{
+				"probe": "somewhere",
+				"name": "SOMEWHERE®"
+			}
+		],
+		"counts": {
+			"exactQueryShaped": 1,
+			"exactLegitimate": 0,
+			"containmentQueryShaped": 0,
+			"containmentLegitimate": 549
+		}
+	}
+}

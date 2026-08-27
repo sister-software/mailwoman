@@ -57,6 +57,8 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/ban": "packages/ban",
 	"@mailwoman/codex": "packages/codex",
 	"@mailwoman/poi-taxonomy": "packages/poi-taxonomy",
+	// `mailwoman`'s activity-phrase vocabulary — a hard dependency, so the closure guard requires it here.
+	"@mailwoman/activity-lexicon": "packages/activity-lexicon",
 	"@mailwoman/kind-classifier": "packages/kind-classifier",
 	// @mailwoman/react — bare root import must be node-safe (no CSS/DOM eagerly imported); its deps
 	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is

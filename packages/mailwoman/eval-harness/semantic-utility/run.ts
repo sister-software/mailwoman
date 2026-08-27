@@ -298,7 +298,7 @@ export function printProbeReceipt(receipt: ProbeReceipt): void {
 	console.log(
 		`semantic route: ${
 			receipt.semanticRoute.enabled
-				? `${receipt.semanticRoute.phraseTableID} v${receipt.semanticRoute.phraseTableVersion} (${receipt.semanticRoute.declaredPhrases} declared phrases) → geographic model ${receipt.semanticRoute.modelVersion} → ${receipt.semanticRoute.reachableCategoryIDs?.join(", ")}`
+				? `${receipt.semanticRoute.phraseLexiconID} v${receipt.semanticRoute.phraseLexiconVersion} (${receipt.semanticRoute.declaredPhrases} declared phrases) → geographic model ${receipt.semanticRoute.modelVersion} → ${receipt.semanticRoute.reachableCategoryIDs?.join(", ")}`
 				: "not injected"
 		}\n`
 	)
@@ -324,7 +324,7 @@ export function printProbeReceipt(receipt: ProbeReceipt): void {
 			)
 
 			console.log(
-				`  ${" ".repeat(16)} phrase from ${observation.phraseTableID} v${observation.phraseTableVersion} · ${observation.phraseProvenance.source}`
+				`  ${" ".repeat(16)} phrase from ${observation.phraseLexiconID} v${observation.phraseLexiconVersion} · ${observation.phraseProvenance.source} · attested by ${observation.phraseAttestation.kind} ${observation.phraseAttestation.reference}`
 			)
 		}
 	}
