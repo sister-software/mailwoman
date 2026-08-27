@@ -22,6 +22,7 @@
 		{ "path": "../corpus" },
 		{ "path": "../kind-classifier" },
 		{ "path": "../locale-gate" },
+		{ "path": "../match" },
 		{ "path": "../neural" },
 		{ "path": "../normalize" },
 		{ "path": "../phrase-grouper" },

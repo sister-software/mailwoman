@@ -22,14 +22,14 @@
  *   {@link TELECOM_TAG_RULES}.
  *
  *   Promoted vs. hstore tag columns: GDAL's default `osmconf.ini` (`/usr/share/gdal/osmconf.ini` on
- *   this box) promotes `name` and `man_made` to real OGR fields for BOTH the `points` and
- *   `multipolygons` layers this extractor queries — they're selected as bare columns. `telecom`,
- *   `street_cabinet`, and `tower:type` are NOT in either layer's `attributes=` list, so they land in
- *   the `other_tags` hstore and are read via `hstore_get_value`, exactly as `extract.ts` reads
- *   `addr:*`. This split was verified against the installed `osmconf.ini` and a hand-built `.osm` XML
- *   fixture (GDAL's OSM driver reads plain OSM XML the same way it reads `.pbf`).
- *   A custom `OSM_CONFIG_FILE` that un-promotes `man_made` would break the bare-column
- *   assumption; not a concern for the shipped default.
+ *   this box) promotes a DIFFERENT key list per layer to real OGR fields — selected as bare columns —
+ *   and drops each promoted key from that layer's `other_tags` hstore. `name` and `man_made` are on
+ *   both lists; `amenity`, `shop` and `building` are on `multipolygons` only. Keys on neither list
+ *   (`telecom`, `street_cabinet`, `tower:type`) are read via `hstore_get_value`, exactly as
+ *   `extract.ts` reads `addr:*`. {@link PROMOTED_KEYS_BY_LAYER} carries both lists, because reading a
+ *   promoted key through `hstore_get_value` returns NULL for every feature of that layer — a silent
+ *   empty result rather than an error. A custom `OSM_CONFIG_FILE` that un-promotes a key on either
+ *   list would break the bare-column assumption; not a concern for the shipped default.
  *
  *   `POISourceRow` is declared LOCALLY here (structurally identical to the exported interface of the
  *   same name in `mailwoman/gazetteer-pipeline/poi/build-poi.ts`) rather than imported: `@mailwoman/osm`
@@ -112,16 +112,65 @@ export const TELECOM_TAG_RULES: OSMPOITagRule[] = [
 ]
 
 /**
+ * Turn a taxonomy record's scalar `osmTag` (`amenity=pharmacy`) into a single-conjunct rule table entry.
+ *
+ * Hard-splits on one `=`, the same reading `poi-taxonomy/overpass.ts` gives the field, so a category extracted here and
+ * the Overpass query emitted for it cannot come to disagree about what the category means.
+ */
+export function tagRuleFromOSMTag(categoryID: string, osmTag: string): OSMPOITagRule {
+	const parts = osmTag.split("=")
+
+	if (parts.length !== 2 || !parts[0] || !parts[1]) {
+		throw new Error(`tagRuleFromOSMTag: malformed osmTag ${JSON.stringify(osmTag)} — expected key=value`)
+	}
+
+	return { categoryID, all: [[parts[0], parts[1]]] }
+}
+
+/**
  * The OSM driver layers that can carry telecom infrastructure: nodes and building-ish ways/relations. Mirrors
  * `extract.ts`'s `ADDR_LAYERS`.
  */
 const POI_LAYERS = ["points", "multipolygons"] as const
 
 /**
- * Tag keys GDAL's default `osmconf.ini` promotes to real OGR fields for both `points` and `multipolygons` — selected as
- * bare columns rather than via `hstore_get_value`. See the module docstring's "Promoted vs. hstore tag columns" note.
+ * Tag keys GDAL's default `osmconf.ini` promotes to real OGR fields, PER LAYER — selected as bare columns rather than
+ * via `hstore_get_value`. See the module docstring's "Promoted vs. hstore tag columns" note.
+ *
+ * The two lists differ, and the difference is not cosmetic: a promoted key is REMOVED from `other_tags`, so reading it
+ * with `hstore_get_value` on a layer that promotes it returns NULL for every feature — a whole layer of real matches
+ * reported as an empty result. Measured on the Île-de-France extract with `amenity=pharmacy` (promoted on
+ * `multipolygons`, hstore on `points`): the hstore expression answered 0 on `multipolygons` where the bare column
+ * answered 178, against 3,130 from `points` — 5.4% of the class silently absent, in the direction that inflates a
+ * completeness estimate.
  */
-const PROMOTED_KEYS = new Set(["name", "man_made"])
+const PROMOTED_KEYS_BY_LAYER: Readonly<Record<string, ReadonlySet<string>>> = {
+	points: new Set(["name", "barrier", "highway", "ref", "address", "is_in", "place", "man_made"]),
+	multipolygons: new Set([
+		"name",
+		"type",
+		"aeroway",
+		"amenity",
+		"admin_level",
+		"barrier",
+		"boundary",
+		"building",
+		"craft",
+		"geological",
+		"historic",
+		"land_area",
+		"landuse",
+		"leisure",
+		"man_made",
+		"military",
+		"natural",
+		"office",
+		"place",
+		"shop",
+		"sport",
+		"tourism",
+	]),
+}
 
 /**
  * OGRSQL column aliases can't contain `:` — launder it the same way GDAL's own `attribute_name_laundering` would
@@ -132,11 +181,23 @@ function tagAlias(key: string): string {
 }
 
 /**
- * The SQL expression reading a tag's value: a bare column for a {@link PROMOTED_KEYS} member, or an `other_tags` hstore
- * lookup otherwise.
+ * The SQL expression reading a tag's value on `layer`: a bare column when that layer promotes the key (see
+ * {@link PROMOTED_KEYS_BY_LAYER}), an `other_tags` hstore lookup otherwise.
+ *
+ * Throws on a layer with no promoted-key list. Falling back to the hstore expression for an unknown layer would produce
+ * SQL that runs and matches nothing, which is the failure this table exists to prevent.
  */
-function tagSelectExpr(key: string): string {
-	return PROMOTED_KEYS.has(key) ? key : `hstore_get_value(other_tags,'${key}')`
+function tagSelectExpr(layer: string, key: string): string {
+	const promoted = PROMOTED_KEYS_BY_LAYER[layer]
+
+	if (!promoted) {
+		throw new Error(
+			`buildTelecomPOISQL: no promoted-key list for OSM layer ${JSON.stringify(layer)} — known layers are ` +
+				`${Object.keys(PROMOTED_KEYS_BY_LAYER).join(", ")}`
+		)
+	}
+
+	return promoted.has(key) ? key : `hstore_get_value(other_tags,'${key}')`
 }
 
 /**
@@ -205,10 +266,10 @@ function assertSafeTagRules(rules: readonly OSMPOITagRule[]): void {
 export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[] = TELECOM_TAG_RULES): string {
 	assertSafeTagRules(rules)
 
-	const tagCols = distinctTagKeys(rules).map((key) => `${tagSelectExpr(key)} AS ${tagAlias(key)}`)
+	const tagCols = distinctTagKeys(rules).map((key) => `${tagSelectExpr(layer, key)} AS ${tagAlias(key)}`)
 
 	const whereGroups = rules.map(
-		(rule) => "(" + rule.all.map(([key, value]) => `${tagSelectExpr(key)}='${value}'`).join(" AND ") + ")"
+		(rule) => "(" + rule.all.map(([key, value]) => `${tagSelectExpr(layer, key)}='${value}'`).join(" AND ") + ")"
 	)
 
 	return `SELECT name, ${tagCols.join(", ")} FROM ${layer} WHERE ${whereGroups.join(" OR ")}`

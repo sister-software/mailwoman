@@ -78,6 +78,34 @@ export function supportsExclusion(cell: Pick<CoverageCell, "basis">): boolean {
 	return cell.basis === CoverageBasis.Designated || cell.basis === CoverageBasis.Surveyed
 }
 
+const BASES = new Set<string>(Object.values(CoverageBasis))
+
+/**
+ * Reject a malformed coverage cell at BOTH ends, the way {@link assertManifestInvariants} does for the manifest.
+ *
+ * The magnitudes here are read as epistemics, so a well-formed wrong one is worse than a throw: a `completeness` above
+ * 1 or an unknown `basis` reaching {@link supportsExclusion} turns into confident negative evidence, and a negative
+ * `observedRows` reads as a survey that found less than nothing. None of that is distinguishable downstream from a real
+ * measurement.
+ */
+function assertCoverageCellInvariants(cell: CoverageCell): void {
+	if (!Number.isFinite(cell.completeness) || cell.completeness < 0 || cell.completeness > 1) {
+		throw new Error(`layer coverage: completeness must be a finite value in [0, 1], got ${cell.completeness}`)
+	}
+
+	if (cell.basis !== undefined && !BASES.has(cell.basis)) {
+		throw new Error(`layer coverage: unknown basis ${JSON.stringify(cell.basis)}`)
+	}
+
+	if (!Number.isSafeInteger(cell.observedRows) || cell.observedRows < 0) {
+		throw new Error(`layer coverage: observedRows must be a non-negative integer, got ${cell.observedRows}`)
+	}
+
+	if (!Number.isSafeInteger(cell.h3Cell) || cell.h3Cell < 0) {
+		throw new Error(`layer coverage: h3Cell must be a non-negative 48-bit short cell, got ${cell.h3Cell}`)
+	}
+}
+
 const TIERS = new Set<string>(Object.values(LayerTier))
 const POLICIES = new Set<string>(Object.values(LayerFreshnessPolicy))
 
@@ -173,6 +201,10 @@ export const COVERAGE_INSERT_BATCH = 5000
 export async function writeLayerCoverage(db: LayerContractHandle, cells: CoverageCell[]): Promise<void> {
 	if (!cells.length) return
 
+	for (const cell of cells) {
+		assertCoverageCellInvariants(cell)
+	}
+
 	for (let i = 0; i < cells.length; i += COVERAGE_INSERT_BATCH) {
 		const batch = cells.slice(i, i + COVERAGE_INSERT_BATCH)
 
@@ -199,7 +231,7 @@ export async function readLayerCoverage(db: LayerContractHandle, h3Cell: number)
 
 	if (!row) return undefined
 
-	return {
+	const cell: CoverageCell = {
 		h3Cell: row.h3_cell,
 		completeness: row.completeness,
 		// A NULL basis is an artifact built before the column existed. It was recording source presence,
@@ -207,4 +239,8 @@ export async function readLayerCoverage(db: LayerContractHandle, h3Cell: number)
 		basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
 		observedRows: row.observed_rows,
 	}
+
+	assertCoverageCellInvariants(cell)
+
+	return cell
 }

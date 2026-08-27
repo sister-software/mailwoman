@@ -15,6 +15,7 @@ import {
 	buildTelecomPOISQL,
 	extractOSMPOIs,
 	matchOSMPOITagRule,
+	tagRuleFromOSMTag,
 	TELECOM_TAG_RULES,
 } from "@mailwoman/osm/sdk/extract-poi"
 import { expect, test } from "vitest"
@@ -144,4 +145,37 @@ test("extractOSMPOIs: also rejects a hostile rule table before ever spawning ogr
 	const it = extractOSMPOIs("/nonexistent.pbf", hostileRules)[Symbol.asyncIterator]()
 
 	await expect(it.next()).rejects.toThrow(/tag-token allowlist/)
+})
+
+test("buildTelecomPOISQL: a key promoted on one layer only is read the right way on each", () => {
+	// GDAL's default osmconf.ini promotes `amenity` on `multipolygons` and NOT on `points`, and a promoted
+	// key is dropped from that layer's `other_tags`. Reading it through hstore on `multipolygons` returned 0
+	// rows against 178 real ones on the Île-de-France extract — a whole layer of matches reported as absent.
+	const rules = [{ categoryID: "pharmacy", all: [["amenity", "pharmacy"] as [string, string]] }]
+
+	expect(buildTelecomPOISQL("points", rules)).toBe(
+		"SELECT name, hstore_get_value(other_tags,'amenity') AS amenity FROM points WHERE " +
+			"(hstore_get_value(other_tags,'amenity')='pharmacy')"
+	)
+
+	expect(buildTelecomPOISQL("multipolygons", rules)).toBe(
+		"SELECT name, amenity AS amenity FROM multipolygons WHERE (amenity='pharmacy')"
+	)
+})
+
+test("buildTelecomPOISQL: refuses a layer it has no promoted-key list for", () => {
+	expect(() => buildTelecomPOISQL("lines", TELECOM_TAG_RULES)).toThrow(/no promoted-key list/)
+})
+
+test("tagRuleFromOSMTag: splits a taxonomy osmTag into a single-conjunct rule", () => {
+	expect(tagRuleFromOSMTag("pharmacy", "amenity=pharmacy")).toEqual({
+		categoryID: "pharmacy",
+		all: [["amenity", "pharmacy"]],
+	})
+})
+
+test("tagRuleFromOSMTag: refuses a malformed osmTag rather than guessing at it", () => {
+	expect(() => tagRuleFromOSMTag("x", "amenity")).toThrow(/malformed osmTag/)
+	expect(() => tagRuleFromOSMTag("x", "amenity=")).toThrow(/malformed osmTag/)
+	expect(() => tagRuleFromOSMTag("x", "a=b=c")).toThrow(/malformed osmTag/)
 })

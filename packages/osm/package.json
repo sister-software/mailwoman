@@ -52,6 +52,11 @@
 			"default": "./out/sdk/street-locale.js",
 			"types": "./out/sdk/street-locale.d.ts"
 		},
+		"./sdk/extract-boundary": {
+			"node": "./sdk/extract-boundary.ts",
+			"default": "./out/sdk/extract-boundary.js",
+			"types": "./out/sdk/extract-boundary.d.ts"
+		},
 		"./sdk/extract-poi": {
 			"node": "./sdk/extract-poi.ts",
 			"default": "./out/sdk/extract-poi.js",

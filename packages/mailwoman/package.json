@@ -400,6 +400,7 @@
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
+		"@mailwoman/match": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
