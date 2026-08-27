@@ -128,9 +128,16 @@ const BOUNDARY_TOLERANCE_DEGREES = 0.00001
  */
 const SERVICE_FEATURE_LIMIT = 200
 
+/**
+ * The slice of {@link EAFloodClient} the verification touches — the same reasoning `LayerContractHandle` carries. Naming
+ * only the member it calls lets a test drive the comparison against a scripted service without standing up an HTTP
+ * client, which is what makes the check's own logic testable rather than only observable on a live run.
+ */
+export type ServiceHandle = Pick<EAFloodClient, "fetch">
+
 export interface VerifyFloodOptions {
 	databasePath: string
-	client: EAFloodClient
+	client: ServiceHandle
 	/**
 	 * Points to re-ask the service about. A caller samples them from the artifact — see {@link sampleAgreementPoints}.
 	 */
@@ -199,7 +206,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
  * verdict against a bare "the service returned something here" would pass on any polygon within eleven metres.
  */
 async function readServiceZone(
-	client: EAFloodClient,
+	client: ServiceHandle,
 	latitude: number,
 	longitude: number
 ): Promise<{ zone: string | null; nearestEdgeDegrees?: number }> {

@@ -108,6 +108,11 @@
 			"node": "./sdk/ingest.ts",
 			"default": "./out/sdk/ingest.js",
 			"types": "./out/sdk/ingest.d.ts"
+		},
+		"./sdk/verify": {
+			"node": "./sdk/verify.ts",
+			"default": "./out/sdk/verify.js",
+			"types": "./out/sdk/verify.d.ts"
 		}
 	},
 	"publishConfig": {
