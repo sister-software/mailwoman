@@ -5,7 +5,9 @@
 vector), #1928 (the semantic-utility probe this record supplies a target for).
 
 **Amendments:** [§4.1 — mapping-breadth wave 1](#41-amendment-1-mapping-breadth-wave-1-2026-08-27)
-(2026-08-27, #1961).
+(2026-08-27, #1961). **Companion decision:**
+[the semantic-route integration decision](./2026-08-27-semantic-route-integration-decision.md)
+(2026-08-27, #1966) — stop condition 2, answered; §6's `@mailwoman/core` exclusion left standing.
 
 This record does two things and nothing else. It **names the current owner** of every seam the
 world-model program would otherwise re-create, each against a path that exists on HEAD; and it
@@ -522,7 +524,10 @@ relation type, no country scope and no per-assertion provenance.
 - No authored relevance weights, boosts, penalties, or candidate-ordering APIs anywhere in the
   geographic model.
 - No `@mailwoman/core` dependency on `@mailwoman/geographic-model` without a later integration
-  decision.
+  decision. **That decision was taken on 2026-08-27 (#1966) and DECLINED the permission** — see
+  [the integration decision](./2026-08-27-semantic-route-integration-decision.md) §3.2 and §10. The
+  dependency direction is `mailwoman` → `@mailwoman/geographic-model`; this exclusion stands
+  unamended, and a future proposal to weaken it amends both records.
 - Source observations stay separate from derived facts, and every mapping and derivation preserves
   provenance.
 - Missing data becomes negative evidence only through exclusion-grade coverage supplied by
