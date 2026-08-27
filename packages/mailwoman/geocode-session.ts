@@ -60,6 +60,7 @@ import {
 	type StateShards,
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
+import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
 import {
 	createResolverBackend,
@@ -319,6 +320,32 @@ export interface ForkEntityProbe {
 }
 
 /**
+ * The authority-designation route, opened when the sealed flood layer is on disk (#1989).
+ *
+ * PRESENCE OF THE LAYER FILE IS THE SWITCH — there is no boolean, because a boolean would have to construct the reader
+ * itself and would put a sealed database open on the default construction path. No `flood.db` in the data root, no
+ * route, and the geocode result is byte-identical to a build without the field.
+ *
+ * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * manifest naming a different product — must not take the geocoder down over an advisory it was never asked for.
+ */
+export async function loadAuthorityDesignationRoute(
+	options: Pick<GeocodeSessionOptions, "dataRoot">
+): Promise<AuthorityDesignationRoute | undefined> {
+	const floodDBPath = resolvePath(options.dataRoot, "flood", "flood.db")
+
+	if (!existsSync(floodDBPath)) return undefined
+
+	try {
+		const { createAuthorityDesignationRoute } = await import("./observations/flood-route.ts")
+
+		return createAuthorityDesignationRoute({ databasePath: String(floodDBPath) })
+	} catch {
+		return undefined
+	}
+}
+
+/**
  * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
  * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
@@ -526,6 +553,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const optionalProvidersLoadedAt = performance.now()
 
 	let poiHandle: { close(): void } | undefined
+	let designationRoute: AuthorityDesignationRoute | undefined
 
 	const closeQuietly = (handle: { close(): void } | undefined): void => {
 		try {
@@ -542,6 +570,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		closeQuietly(osmProvider)
 		closeQuietly(lookup)
 		closeQuietly(poiHandle)
+		closeQuietly(designationRoute)
 	}
 
 	// Everything past this point can THROW while the handles above are already open, so it runs behind the
@@ -588,6 +617,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		forkEntityDeps = probe.deps
 		poiHandle = probe.handle
+		designationRoute = await loadAuthorityDesignationRoute(options)
 	} catch (error) {
 		close()
 
@@ -749,6 +779,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...forkEntityDeps,
 			// The opt-in venue tier reuses the fork-entity wiring's poiLookup; the flag alone opts in.
 			...(options.poiVenueTier === true ? { poiVenueTier: true } : {}),
+			// #1989: present only when the sealed flood layer is on disk, so a data root without one produces the identical
+			// marker list.
+			...(designationRoute ? { authorityDesignationRoute: designationRoute } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
 			...(trace && options.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 		})

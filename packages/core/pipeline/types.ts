@@ -223,6 +223,17 @@ export const QueryIntentCode = {
 	 * an unsurveyed cell is unknown and never absence.
 	 */
 	CoverageQualifiedAbsence: "coverage_qualified_absence",
+	/**
+	 * An authority publishes a designation for the resolved coordinate, and this is it — the code in that authority's own
+	 * vocabulary, with the product and vintage it was read from and the coverage record stating that the authority made a
+	 * determination there. `evidence.layer` names the artifact; `evidence.coverage` carries the cell and its basis.
+	 *
+	 * The code is raised at RESOLVE time and names the verdict's own top kind rather than a kind of its own: the marker
+	 * is about the coordinate an answer reached, not about how the query was read, so there is no intent kind to name. A
+	 * reading the authority does not make raises NOTHING — outside its footprint there is no coverage row, and an
+	 * advisory there would report a determination nobody made.
+	 */
+	AuthorityDesignation: "authority_designation",
 } as const
 
 export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentCode]

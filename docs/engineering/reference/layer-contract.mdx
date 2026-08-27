@@ -56,6 +56,67 @@ The manifest declares column names and the H3 resolution in its `spine_keys` fie
 `writeLayerManifest` throws at build time and `readLayerManifest` throws at open time if a
 manifest declares none.
 
+### A polygon layer declares `h3` naming its INDEX, and the column name says so
+
+Settled for the EA flood-zone layer and inherited by every later overlay of the same shape. A
+polygon is not addressable by one cell — it spans many — so a two-tier polygon layer stores the
+authority's unsimplified rings as the truth table and an H3 cell table above them as the summary,
+and the question is which of the two `spine_keys.h3` names.
+
+**It names the index, and the `column` value is qualified with the table:**
+`{ "h3": { "column": "flood_zone_cell.h3_cell", "resolution": 9 } }`. Three reasons, in the order
+they bind.
+
+1. **It is the true statement.** The layer IS addressable by cell; the geometry table is not. A
+   manifest naming a column that does not exist — `flood_zone_area.h3_cell` — is worse than either
+   candidate, because a consumer joins on the field a manifest names.
+2. **The qualified column name is the whole fix.** The objection to declaring `h3` was that it
+   points a consumer at the index rather than at the domain table. Naming `flood_zone_cell.h3_cell`
+   rather than a bare `h3_cell` says exactly that, in the field a consumer already reads, and it
+   costs nothing: `SpineKeys.h3.column` was always author-named free text.
+3. **A fourth spine-key kind would buy nothing this one does not.** `street` was added because the
+   situs `address_point` and `street_segment` tables carry no cell, no WOF id and no address-id — a
+   genuine absence. A polygon layer has
+   a cell key; what it has in addition is a second tier, and a tier is not an addressing scheme.
+
+Two consequences a consumer must carry, and neither is optional.
+
+**The declared `resolution` is the index's TARGET, and the stored rows carry their own.** The whole
+tier is compacted parent-ward (`compactCells`), and a polygon whose bounding box would overrun
+h3's allocator at the target is indexed coarser — so `flood_zone_cell.resolution` is per row, and a
+probe walks its own `cellToParent` chain over every resolution the table holds. A reader that
+probed only the manifest's resolution would read every row at the others as an absence, which is
+the false-negative shape this contract exists to prevent.
+
+**`layer_coverage` stays SINGLE-resolution and is a different number again.** `recoverCoverageResolution`
+recovers one resolution from the stored coverage cells and throws on a table that mixes them, so
+the coverage tier is never compacted. Three resolutions therefore coexist in one artifact — the
+manifest's index target, the per-row cell resolutions, and the coverage resolution — and each is
+read from where it is stored rather than inferred from another.
+
+### An authority's designation rides the query-intent carrier and names the verdict's own kind
+
+Also settled here, for the same reason: it is a property of the contract rather than of one layer.
+
+A layer that reports what an authority designates at a resolved coordinate reaches a caller as a
+`QueryIntentMarker` with `code: "authority_designation"`, `mechanism` in the `family:rule` form with
+`layer` as the family and the layer as the rule (`layer:flood_zone`), and `evidence` carrying the
+code, the authority's own definition of it, the containment path, the coverage row and the layer's
+manifest identity.
+
+**The marker names the verdict's own top kind.** `QueryIntentMarker.kind` is contractually a kind the
+verdict carries, and a designation is not raised by intent at all — nothing about an address asks
+for a flood zone — so there is no kind of its own to name, and naming the top kind satisfies the
+contract literally. `declared_ambiguity` is the precedent for a marker raised at resolve time rather
+than by the classifier; this one goes one step further and names no kind of its own. That is
+accepted in writing rather than worked around, because the alternative — widening the carrier with
+an optional-kind marker variant — would create a second advisory shape for no gain a reader can use.
+
+**A reading the authority does not make raises nothing.** Outside the authority's footprint there is
+no coverage row, and an advisory there would report a determination nobody made. That silence is the
+same asymmetry `supportsExclusion` carries: positive evidence needs no coverage row, an absence
+does.
+
 ## The manifest — `layer_manifest`
 
 A single-row table holding the layer's identity, provenance, and licensing. The `name` column
@@ -201,6 +262,10 @@ Building a new layer? The contract obligations, in order:
 
 - [POI layer runbook](./poi-layer-runbook.mdx) — the worked example: the poi.db build/verify/publish
   path, the Overture schema gotchas, the fixtures→smoke→full-scale verification ladder.
+- [`@mailwoman/flood`](../../../packages/flood/README.md) — the worked POLYGON example: the two-tier
+  shape, the authority-designation reading, and the traps a polygon layer meets that a point layer
+  does not (a centre-containment polyfill that drops small features, an allocator sized from the
+  bounding box, a datum grid whose absence shifts the whole layer).
 - [The meaning of zero](./the-meaning-of-zero.mdx) — the general epistemics principle behind the
   coverage rule.
 - [Address-data sources](./address-data-sources.mdx) — the source catalog the shipped layers draw from.

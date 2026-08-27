@@ -1,0 +1,360 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   The two-path agreement check, and its negative half.
+ *
+ *   POSITIVE HALF. A sample of points is answered from the sealed artifact and then re-asked of the EA's
+ *   OGC API Features service — the same authority, a different distribution channel, and geometry this
+ *   package has never touched. The point test is run again on the service's own rings, so what is compared
+ *   is a verdict against a verdict rather than a file against itself. That is what makes it a check on OUR
+ *   CONVERSION rather than on the authority.
+ *
+ *   NEGATIVE HALF, AND IT MATTERS AS MUCH. A sample of points in Wales and Scotland must come back
+ *   `unknown` — no coverage row at all — and never Zone 1. Wales is a different authority under a
+ *   four-zone TAN15 scheme that is not interchangeable with England's, and Scotland is a third; reporting
+ *   either as the EA's low-probability zone would be the exact defect this layer was built to make
+ *   impossible. The positive half alone would pass on an artifact that answered Zone 1 for the whole
+ *   planet.
+ *
+ *   THE CHANNELS DIFFER IN COORDINATE PRECISION AND THAT IS WHY A BOUNDARY POINT IS NOT A FAILURE. The
+ *   geodatabase publishes nine decimals through this package's ingest; the OGC service publishes six. Six
+ *   decimals is about 10 cm, so a point within roughly a metre of a zone boundary can land on opposite
+ *   sides of two renderings of the same edge. Those are reported as `boundary_tolerance` rather than as
+ *   disagreements, with their distance to the nearest edge, and the count is part of the receipt.
+ */
+
+import { DatabaseSync } from "node:sqlite"
+
+import { expandH3Cell, pointInPolygonRings, type H3CellShort } from "@mailwoman/spatial"
+import { cellToLatLng } from "h3-js"
+
+import { FloodReadingKind, FloodZoneLookup, type FloodZoneReading } from "../index.ts"
+import { pointInEncodedRings } from "../rings.ts"
+import { EA_FLOOD_LAYER } from "../vocabulary.ts"
+import { EA_SPATIAL_BASE_URL, type EAFloodClient } from "./client.ts"
+
+/**
+ * One point, both verdicts, and whether they agree.
+ */
+export interface AgreementRow {
+	label: string
+	latitude: number
+	longitude: number
+	/**
+	 * The artifact's answer.
+	 */
+	local: FloodZoneReading
+	/**
+	 * The zone the service's own geometry assigns, or `null` where no service polygon contains the point.
+	 */
+	service: string | null
+	outcome: "agree" | "disagree" | "boundary_tolerance"
+	/**
+	 * Degrees from the point to the nearest service-polygon vertex, on a `boundary_tolerance` row.
+	 */
+	nearestEdgeDegrees?: number
+}
+
+/**
+ * The negative half: a point the authority's statement does not reach.
+ */
+export interface OutsideRow {
+	label: string
+	latitude: number
+	longitude: number
+	kind: FloodReadingKind
+	/**
+	 * True when the artifact answered `unknown` — the only acceptable reading outside England.
+	 */
+	passed: boolean
+}
+
+export interface VerifyFloodResult {
+	agreement: AgreementRow[]
+	agreed: number
+	disagreed: number
+	boundaryTolerance: number
+	outside: OutsideRow[]
+	outsidePassed: number
+}
+
+/**
+ * Points outside England, named. Each is a place, not a bare pair of numbers: a coordinate a reader cannot name is a
+ * coordinate nobody can check.
+ *
+ * Wales and Scotland are the cases that matter, because both border England and both publish flood maps of their own
+ * under schemes that are not interchangeable with the EA's. Northern Ireland and the Republic are included because a
+ * footprint accidentally clipped to "the British Isles" would pass a Wales-and-Scotland-only check.
+ */
+export const OUTSIDE_ENGLAND_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
+	{ label: "Cardiff, Wales", latitude: 51.4816, longitude: -3.1791 },
+	{ label: "Swansea, Wales", latitude: 51.6214, longitude: -3.9436 },
+	{ label: "Wrexham, Wales", latitude: 53.0466, longitude: -2.9931 },
+	{ label: "Edinburgh, Scotland", latitude: 55.9533, longitude: -3.1883 },
+	{ label: "Glasgow, Scotland", latitude: 55.8642, longitude: -4.2518 },
+	{ label: "Dumfries, Scotland", latitude: 55.0709, longitude: -3.6033 },
+	{ label: "Belfast, Northern Ireland", latitude: 54.5973, longitude: -5.9301 },
+	{ label: "Dublin, Ireland", latitude: 53.3498, longitude: -6.2603 },
+]
+
+/**
+ * Half-width of the bbox the service is asked for, in degrees. About 11 m at this latitude — wide enough that a polygon
+ * containing the point is certainly returned, narrow enough that the response stays small.
+ */
+const PROBE_HALF_WIDTH_DEGREES = 0.0001
+
+/**
+ * How close to a service-polygon edge a disagreement is attributed to the channels' differing coordinate precision
+ * rather than to the conversion. The service publishes six decimals — about 10 cm — so a metre is an order of magnitude
+ * of headroom over the rendering difference and still far below any real polygon.
+ */
+const BOUNDARY_TOLERANCE_DEGREES = 0.00001
+
+/**
+ * Features per service request. The probe bbox is metres wide, so this is a ceiling rather than a page size.
+ */
+const SERVICE_FEATURE_LIMIT = 200
+
+export interface VerifyFloodOptions {
+	databasePath: string
+	client: EAFloodClient
+	/**
+	 * Points to re-ask the service about. A caller samples them from the artifact — see {@link sampleAgreementPoints}.
+	 */
+	points: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
+	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
+	onProgress?: (message: string) => void
+}
+
+/**
+ * Run both halves.
+ */
+export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<VerifyFloodResult> {
+	const lookup = new FloodZoneLookup({ databasePath: options.databasePath })
+
+	try {
+		const agreement: AgreementRow[] = []
+
+		for (const point of options.points) {
+			const local = lookup.lookup(point.latitude, point.longitude)
+			const service = await readServiceZone(options.client, point.latitude, point.longitude)
+
+			const localZone = local.kind === FloodReadingKind.Designated ? (local.zoneCode ?? null) : null
+
+			if (localZone === service.zone) {
+				agreement.push({ ...point, local, service: service.zone, outcome: "agree" })
+			} else if (service.nearestEdgeDegrees !== undefined && service.nearestEdgeDegrees <= BOUNDARY_TOLERANCE_DEGREES) {
+				agreement.push({
+					...point,
+					local,
+					service: service.zone,
+					outcome: "boundary_tolerance",
+					nearestEdgeDegrees: service.nearestEdgeDegrees,
+				})
+			} else {
+				agreement.push({ ...point, local, service: service.zone, outcome: "disagree" })
+			}
+
+			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
+		}
+
+		const outside: OutsideRow[] = []
+
+		for (const point of options.outsidePoints ?? OUTSIDE_ENGLAND_POINTS) {
+			const reading = lookup.lookup(point.latitude, point.longitude)
+
+			outside.push({ ...point, kind: reading.kind, passed: reading.kind === FloodReadingKind.Unknown })
+		}
+
+		return {
+			agreement,
+			agreed: agreement.filter((row) => row.outcome === "agree").length,
+			disagreed: agreement.filter((row) => row.outcome === "disagree").length,
+			boundaryTolerance: agreement.filter((row) => row.outcome === "boundary_tolerance").length,
+			outside,
+			outsidePassed: outside.filter((row) => row.passed).length,
+		}
+	} finally {
+		lookup.close()
+	}
+}
+
+/**
+ * Ask the OGC API Features service what zone its own geometry assigns at a point.
+ *
+ * The service answers a BBOX, not a point, so the containment decision is made here — against the service's rings, with
+ * the same even-odd rule the artifact's reader uses. Comparing the two verdicts is the point; comparing the artifact's
+ * verdict against a bare "the service returned something here" would pass on any polygon within eleven metres.
+ */
+async function readServiceZone(
+	client: EAFloodClient,
+	latitude: number,
+	longitude: number
+): Promise<{ zone: string | null; nearestEdgeDegrees?: number }> {
+	const { data } = await client.fetch<{
+		features?: Array<{
+			properties?: { flood_zone?: string }
+			geometry?: { type: string; coordinates: unknown }
+		}>
+	}>({
+		method: "GET",
+		url: `${EA_SPATIAL_BASE_URL}/ogc/features/v1/collections/${EA_FLOOD_LAYER}/items`,
+		params: {
+			bbox: [
+				longitude - PROBE_HALF_WIDTH_DEGREES,
+				latitude - PROBE_HALF_WIDTH_DEGREES,
+				longitude + PROBE_HALF_WIDTH_DEGREES,
+				latitude + PROBE_HALF_WIDTH_DEGREES,
+			].join(","),
+			limit: SERVICE_FEATURE_LIMIT,
+			f: "application/json",
+		},
+	})
+
+	let nearest = Infinity
+	let zone: string | null = null
+
+	for (const feature of data.features ?? []) {
+		const geometry = feature.geometry
+
+		if (!geometry) continue
+
+		const polygons =
+			geometry.type === "MultiPolygon"
+				? (geometry.coordinates as number[][][][])
+				: [geometry.coordinates as number[][][]]
+
+		for (const rings of polygons) {
+			for (const ring of rings) {
+				for (const position of ring) {
+					const distance = Math.hypot(position[0]! - longitude, position[1]! - latitude)
+
+					if (distance < nearest) {
+						nearest = distance
+					}
+				}
+			}
+
+			if (zone === null && pointInPolygonRings(longitude, latitude, rings as [number, number][][])) {
+				zone = feature.properties?.flood_zone ?? null
+			}
+		}
+	}
+
+	return Number.isFinite(nearest) ? { zone, nearestEdgeDegrees: nearest } : { zone }
+}
+
+/**
+ * Draw a reproducible sample of points from the artifact: some inside polygons, some inside the footprint and outside
+ * every polygon.
+ *
+ * BOTH KINDS ARE REQUIRED. A sample drawn only from inside polygons never exercises the designated-absence reading,
+ * which is the reading this product's Zone-1-as-absence design turns on — and an artifact that answered `unknown`
+ * everywhere except inside a polygon would pass a polygon-only sample.
+ *
+ * The draw is a deterministic stride over `rowid` and over the coverage cells, not a random one, so a re-run compares
+ * the same points and a disagreement can be looked at rather than re-rolled.
+ */
+export function sampleAgreementPoints(
+	databasePath: string,
+	options: { insideCount?: number; absenceCount?: number } = {}
+): Array<{ label: string; latitude: number; longitude: number }> {
+	const insideCount = options.insideCount ?? 40
+	const absenceCount = options.absenceCount ?? 20
+	const database = new DatabaseSync(databasePath, { readOnly: true })
+
+	try {
+		const points: Array<{ label: string; latitude: number; longitude: number }> = []
+		const areaCount = (database.prepare("SELECT count(*) AS n FROM flood_zone_area").get() as { n: number }).n
+		const stride = Math.max(1, Math.floor(areaCount / Math.max(1, insideCount)))
+
+		const areas = database
+			.prepare(
+				"SELECT area_id, zone_code, min_lat, min_lon, max_lat, max_lon, rings FROM flood_zone_area " +
+					"WHERE rowid % ? = 0 ORDER BY rowid LIMIT ?"
+			)
+			.all(stride, insideCount) as Array<{
+			area_id: string
+			zone_code: string
+			min_lat: number
+			min_lon: number
+			max_lat: number
+			max_lon: number
+			rings: Uint8Array
+		}>
+
+		for (const area of areas) {
+			const interior = interiorPointOf(area)
+
+			if (!interior) continue
+
+			points.push({ label: `${area.zone_code} polygon ${area.area_id}`, ...interior })
+		}
+
+		// A designated absence is a coverage cell the authority determined and no polygon reaches — exactly the cells whose
+		// `observed_rows` is zero, which is the storable form of a Zone 1 designation.
+		const emptyCount = (
+			database.prepare("SELECT count(*) AS n FROM layer_coverage WHERE observed_rows = 0").get() as { n: number }
+		).n
+
+		const emptyStride = Math.max(1, Math.floor(emptyCount / Math.max(1, absenceCount)))
+
+		const emptyCells = database
+			.prepare("SELECT h3_cell FROM layer_coverage WHERE observed_rows = 0 ORDER BY h3_cell")
+			.all() as Array<{ h3_cell: number }>
+
+		const coverageResolution = (
+			database.prepare("SELECT coverage_resolution AS r FROM flood_map_extent").get() as { r: number }
+		).r
+
+		for (let index = 0; index < emptyCells.length && points.length < insideCount + absenceCount; index += emptyStride) {
+			const short = emptyCells[index]!.h3_cell.toString(16).padStart(13, "0") as H3CellShort
+			const cell = expandH3Cell(short, coverageResolution)
+			const [latitude, longitude] = cellToLatLng(cell)
+
+			points.push({ label: `designated absence in ${cell}`, latitude, longitude })
+		}
+
+		return points
+	} finally {
+		database.close()
+	}
+}
+
+/**
+ * A point inside one stored polygon.
+ *
+ * The bbox centre is tried first and is inside for the overwhelming majority of these features; where it is not — a
+ * crescent, a ring, a polygon with a hole through its middle — a small deterministic grid over the bbox is scanned. A
+ * feature no grid point lands inside is skipped rather than approximated, because a sample point that is not actually
+ * inside the polygon turns the agreement check into a check on the sampler.
+ */
+function interiorPointOf(area: {
+	min_lat: number
+	min_lon: number
+	max_lat: number
+	max_lon: number
+	rings: Uint8Array
+}): { latitude: number; longitude: number } | undefined {
+	const centreLat = (area.min_lat + area.max_lat) / 2
+	const centreLon = (area.min_lon + area.max_lon) / 2
+
+	if (pointInEncodedRings(area.rings, centreLon, centreLat)) {
+		return { latitude: centreLat, longitude: centreLon }
+	}
+
+	const steps = 7
+
+	for (let row = 1; row < steps; row++) {
+		for (let column = 1; column < steps; column++) {
+			const latitude = area.min_lat + ((area.max_lat - area.min_lat) * row) / steps
+			const longitude = area.min_lon + ((area.max_lon - area.min_lon) * column) / steps
+
+			if (pointInEncodedRings(area.rings, longitude, latitude)) return { latitude, longitude }
+		}
+	}
+
+	return undefined
+}

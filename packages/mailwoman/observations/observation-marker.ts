@@ -32,6 +32,7 @@
 import { type QueryIntentMarker, QueryIntentCode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
 
 import type { AbsenceObservation } from "./absence-route.ts"
+import type { AuthorityDesignationObservation, AuthorityDesignationRoute } from "./flood-route.ts"
 import type { SemanticObservation } from "./semantic-route.ts"
 
 /**
@@ -43,6 +44,14 @@ export const SEMANTIC_AFFORDS_MECHANISM = "semantic:affords"
  * `family:rule` for an absence qualified by exclusion-grade coverage.
  */
 export const SEMANTIC_ABSENCE_MECHANISM = "semantic:absence"
+
+/**
+ * `family:rule` for a designation read out of the EA flood-zone layer.
+ *
+ * The RULE half names the layer rather than the shape of the claim, so a reader meeting two designation markers on one
+ * answer can tell which authority spoke. A later overlay writes its own rule under the same `layer` family.
+ */
+export const FLOOD_ZONE_DESIGNATION_MECHANISM = "layer:flood_zone"
 
 /**
  * The kinds a POI observation may name. Both route as the POI branch, and the classifier reports whichever one its
@@ -135,6 +144,67 @@ export function absenceObservationMarker(
 			searchCenter: observation.searchCenter,
 			resultsReturned: observation.resultsReturned,
 			resultsInCell: observation.resultsInCell,
+		},
+	}
+}
+
+/**
+ * Turn one authority designation into a marker on a geocode verdict.
+ *
+ * THE KIND IS THE VERDICT'S OWN TOP KIND, and that is the settled answer to the survey's open question rather than an
+ * omission. `QueryIntentMarker.kind` is contractually a kind the verdict carries; a designation is not raised by intent
+ * at all — nothing about "10 Downing Street" asks for a flood zone — so there is no kind of its own to name and naming
+ * the top kind satisfies the contract literally. `declared_ambiguity` is the precedent for a marker raised at resolve
+ * time rather than by the classifier; this one goes one step further and names no kind of its own, which is why the
+ * distinction is written down here and in the layer contract instead of being inferred from the code.
+ *
+ * The message reports WHAT THE AUTHORITY'S MAP ASSIGNS, never whether the location will flood. The authority itself
+ * declines the second statement, and a wording that blurred them would be this program's invention rather than the
+ * authority's.
+ */
+export function authorityDesignationMarkers(
+	route: AuthorityDesignationRoute | undefined,
+	latitude: number | null | undefined,
+	longitude: number | null | undefined,
+	verdict: QueryKindResult
+): QueryIntentMarker[] {
+	if (!route) return []
+
+	const decision = route.observe(latitude, longitude)
+
+	return decision.fired ? [authorityDesignationMarker(decision.observation, verdict)] : []
+}
+
+/**
+ * The conversion proper — see {@link authorityDesignationMarkers} for the caller-facing shape.
+ */
+export function authorityDesignationMarker(
+	observation: AuthorityDesignationObservation,
+	verdict: QueryKindResult
+): QueryIntentMarker {
+	const assigned = observation.code
+		? `assigns ${observation.code}`
+		: `assigns no zone — which its own guidance defines as ${observation.definition?.label ?? "the absent case"}`
+
+	return {
+		kind: verdict.kind,
+		code: QueryIntentCode.AuthorityDesignation,
+		mechanism: FLOOD_ZONE_DESIGNATION_MECHANISM,
+		message:
+			`${observation.extent.authority}'s ${observation.layer.name} (${observation.layer.sourceVintage}) ${assigned} ` +
+			`at the resolved coordinate. This states what the authority's map assigns at a location, not whether a property will flood.`,
+		evidence: {
+			reading: observation.reading,
+			...(observation.code ? { code: observation.code } : {}),
+			...(observation.definition ? { definition: observation.definition } : {}),
+			...(observation.areaID ? { areaID: observation.areaID } : {}),
+			containment: observation.containment,
+			...(observation.coverage ? { coverage: observation.coverage } : {}),
+			indexCellIndex: observation.indexCellIndex,
+			extent: observation.extent,
+			limits: observation.limits,
+			layer: observation.layer,
+			coordinate: observation.coordinate,
 		},
 	}
 }

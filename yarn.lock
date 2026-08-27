@@ -4763,6 +4763,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/flood@workspace:*, @mailwoman/flood@workspace:packages/flood":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/flood@workspace:packages/flood"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    h3-js: "npm:^4.5.0"
+    kysely: "npm:^0.29.4"
+    spliterator: "npm:^6.2.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/formatter@workspace:*, @mailwoman/formatter@workspace:packages/formatter":
   version: 0.0.0-use.local
   resolution: "@mailwoman/formatter@workspace:packages/formatter"
@@ -16990,6 +17002,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"
     "@mailwoman/filer": "workspace:*"
+    "@mailwoman/flood": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
     "@mailwoman/geographic-model": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
