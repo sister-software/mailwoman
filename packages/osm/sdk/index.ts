@@ -13,6 +13,7 @@
 export * from "./fetch.ts"
 export * from "./address-point-schema.ts"
 export * from "./extract.ts"
+export * from "./extract-boundary.ts"
 export * from "./extract-poi.ts"
 export * from "./extract-subvenue.ts"
 export * from "./street-locale.ts"

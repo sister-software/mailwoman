@@ -105,11 +105,32 @@ A layer derived from an incomplete survey (OSM above all) **must** carry a `laye
 table: per-H3-cell (coarse resolution) survey completeness, so a consumer can tell "mapped and
 absent" apart from "unmapped."
 
-| column          | meaning                                                       |
-| --------------- | ------------------------------------------------------------- |
-| `h3_cell`       | 48-bit short H3 cell at the resolution the manifest declares  |
-| `completeness`  | estimated completeness of the source survey in the cell, 0..1 |
-| `observed_rows` | rows this layer actually holds in the cell                    |
+| column          | meaning                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
+| `h3_cell`       | 48-bit short H3 cell at the resolution the manifest declares                   |
+| `completeness`  | estimated completeness of the source survey in the cell, 0..1                  |
+| `basis`         | what that `completeness` RESTS ON — `designated`, `surveyed`, `source_present` |
+| `observed_rows` | rows this layer actually holds in the cell                                     |
+
+**Never read `completeness` without reading `basis`.** The magnitude alone cannot be acted on: a cell
+recorded at `1.0` because an authority designates the set complete, and a cell recorded at `1.0`
+because the source happened to return rows there, license entirely different conclusions. Only
+`designated` (an authority declares the set complete) and `surveyed` (we measured completeness against
+an independent reference) can support an **exclusion** — a claim that the thing asked for is not
+there. `source_present` supports presence and nothing else: the source looked, which is not the same
+as the source found everything. A caller building negative evidence asks `supportsExclusion(cell)`
+first and stops when it answers false, never reading `completeness` alone — otherwise the exclusion
+fires identically on a genuinely empty cell and on one nobody ever surveyed. A NULL `basis` is an artifact built before the column existed and reads back as
+`source_present` — the weakest reading, which is what those builders were in fact recording.
+
+`writeLayerCoverage` and `readLayerCoverage` both refuse a malformed cell: a `completeness` outside
+`[0, 1]`, an unknown `basis`, a negative or fractional `observed_rows`. The magnitudes here are read
+as epistemics, so a well-formed wrong one is worse than a throw.
+
+The worked example of a `surveyed` basis — one class, one region, the arithmetic and what it does not
+establish — is
+[`docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md`](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md),
+built by `mw gazetteer build poi-coverage`.
 
 **The meaning-of-zero rule.** A _missing_ `layer_coverage` row means **UNKNOWN — unmapped**,
 never "surveyed and found empty." `readLayerCoverage` returns `undefined` for an unsurveyed
@@ -169,7 +190,9 @@ Building a new layer? The contract obligations, in order:
 3. Pick a spine: carry every id space your source gives you, declare them in `spine_keys`, and
    key every domain row by at least one.
 4. Populate `layer_coverage` from your source's actual survey extent — one row per surveyed
-   cell, `completeness` honest, unsurveyed cells left absent (not zero-filled).
+   cell, `completeness` honest, unsurveyed cells left absent (not zero-filled). Declare a `basis`,
+   and default to `source_present` unless you can name the data the completeness was measured
+   against — a stronger basis is earned, never assumed.
 5. Write the manifest with real provenance: `source` + `source_vintage` + `build_cmd` +
    `build_sha`, the correct `tier` and `license`, and a caller-supplied `created_at`.
 6. Build to a temp path, verify, then swap into place under `$MAILWOMAN_DATA_ROOT` and seal 0444. Never mutate a shipped or live layer — rebuild it.

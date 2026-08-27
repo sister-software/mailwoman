@@ -11,8 +11,10 @@ import {
 	COVERAGE_INSERT_BATCH,
 	readLayerCoverage,
 	readLayerManifest,
+	supportsExclusion,
 	writeLayerCoverage,
 	writeLayerManifest,
+	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers/manifest"
 import {
@@ -21,6 +23,7 @@ import {
 	createLayerManifestTable,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers/schema"
+import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
 const MANIFEST: LayerManifest = {
@@ -157,6 +160,87 @@ describe("layer coverage IO", () => {
 
 		// Missing cell.
 		expect(await readLayerCoverage(db, cellCount + 1000)).toBeUndefined()
+	})
+})
+
+describe("coverage cell invariants", () => {
+	it("round-trips an exclusion-grade cell and answers supportsExclusion for it", async () => {
+		using db = await openContractDB()
+
+		await writeLayerCoverage(db, [
+			{ h3Cell: 7, completeness: 0.6665, basis: CoverageBasis.Surveyed, observedRows: 0 },
+			{ h3Cell: 8, completeness: 1, basis: CoverageBasis.Designated, observedRows: 3 },
+			{ h3Cell: 9, completeness: 1, basis: CoverageBasis.SourcePresent, observedRows: 3 },
+		])
+
+		expect(supportsExclusion((await readLayerCoverage(db, 7))!)).toBe(true)
+		expect(supportsExclusion((await readLayerCoverage(db, 8))!)).toBe(true)
+		expect(supportsExclusion((await readLayerCoverage(db, 9))!)).toBe(false)
+	})
+
+	it("refuses a completeness outside [0, 1] at write time", async () => {
+		using db = await openContractDB()
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: 1.5, observedRows: 1 }])).rejects.toThrow(
+			/completeness/
+		)
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: -0.1, observedRows: 1 }])).rejects.toThrow(
+			/completeness/
+		)
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: Number.NaN, observedRows: 1 }])).rejects.toThrow(
+			/completeness/
+		)
+	})
+
+	it("refuses an unknown basis at write time", async () => {
+		using db = await openContractDB()
+
+		const offContract: Omit<CoverageCell, "basis"> & { basis: string } = {
+			h3Cell: 1,
+			completeness: 1,
+			basis: "vibes",
+			observedRows: 1,
+		}
+
+		await expect(writeLayerCoverage(db, [offContract as CoverageCell])).rejects.toThrow(/unknown basis/)
+	})
+
+	it("refuses a negative or fractional observed-row count", async () => {
+		using db = await openContractDB()
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: 1, observedRows: -1 }])).rejects.toThrow(
+			/observedRows/
+		)
+
+		await expect(writeLayerCoverage(db, [{ h3Cell: 1, completeness: 1, observedRows: 1.5 }])).rejects.toThrow(
+			/observedRows/
+		)
+	})
+
+	it("refuses the whole batch rather than writing the well-formed half", async () => {
+		using db = await openContractDB()
+
+		await expect(
+			writeLayerCoverage(db, [
+				{ h3Cell: 1, completeness: 1, observedRows: 1 },
+				{ h3Cell: 2, completeness: 9, observedRows: 1 },
+			])
+		).rejects.toThrow(/completeness/)
+
+		expect(await readLayerCoverage(db, 1)).toBeUndefined()
+	})
+
+	it("refuses a corrupted row at READ time too", async () => {
+		using db = await openContractDB()
+
+		await writeLayerCoverage(db, [{ h3Cell: 5, completeness: 0.5, basis: CoverageBasis.Surveyed, observedRows: 2 }])
+
+		// Corruption an in-contract writer cannot produce, standing in for a hand-built layer.
+		await sql`update layer_coverage set completeness = 4.2 where h3_cell = 5`.execute(db)
+
+		await expect(readLayerCoverage(db, 5)).rejects.toThrow(/completeness/)
 	})
 })
 
