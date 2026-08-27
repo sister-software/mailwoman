@@ -4491,6 +4491,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mailwoman/activity-lexicon@workspace:*, @mailwoman/activity-lexicon@workspace:packages/activity-lexicon":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/activity-lexicon@workspace:packages/activity-lexicon"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/address-id@workspace:*, @mailwoman/address-id@workspace:packages/address-id":
   version: 0.0.0-use.local
   resolution: "@mailwoman/address-id@workspace:packages/address-id"
@@ -16974,6 +16980,7 @@ __metadata:
   dependencies:
     "@inkjs/ui": "npm:^2.0.0"
     "@isaacs/cliui": "npm:^9.0.0"
+    "@mailwoman/activity-lexicon": "workspace:*"
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/api": "workspace:*"
     "@mailwoman/api-kit": "workspace:*"

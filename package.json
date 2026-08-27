@@ -72,7 +72,8 @@
 		"packages/neural-weights-base-latn",
 		"packages/dev-mcp",
 		"packages/ancestrie",
-		"packages/geographic-model"
+		"packages/geographic-model",
+		"packages/activity-lexicon"
 	],
 	"type": "module",
 	"scripts": {

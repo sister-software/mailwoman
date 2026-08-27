@@ -387,6 +387,7 @@
 	"dependencies": {
 		"@inkjs/ui": "^2.0.0",
 		"@isaacs/cliui": "^9.0.0",
+		"@mailwoman/activity-lexicon": "workspace:*",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",

@@ -14,18 +14,18 @@
  *   assert `affords` against that activity; a committed external mapping translates each of those
  *   concepts into a `@mailwoman/poi-taxonomy` category id; the category id goes back as positive
  *   evidence. No ordering, no weight, no boost, no penalty is authored anywhere along it — the value the
- *   match reports as its `confidence` is the `1` the committed exact-phrase rung reports for an exact
- *   hit, because the recognition IS an exact match against a declared phrase, and it decides which query
- *   KIND is chosen rather than how any candidate is ordered.
+ *   match reports as its `confidence` is the one the committed exact-phrase rung reports for the same
+ *   kind of hit, and it decides which query KIND is chosen rather than how any candidate is ordered.
  *
  *   WHERE THE PHRASES COME FROM, AND WHY THEY ARE NOT DATA. The compiled artifact carries concepts,
  *   relations, mappings and provenance; it carries no phrase lexicon, and minting one as though it were
- *   data is what the boundary record's section 5.5 refuses. So the surface forms are authored, in
- *   `activity-phrases.json`, and that file's provenance says in the first sentence that it was authored
- *   for one experiment. They stay out of `@mailwoman/poi-taxonomy` because that package's phrases are
- *   venue nouns, each naming ONE category, and an activity is afforded by a SET of kinds. The table
- *   declares surface forms and an activity identifier; everything a reader would call knowledge —
- *   which kinds afford the activity, under what modality, on whose authority — comes from the artifact.
+ *   data is what the boundary record's section 5.5 refuses. So the surface forms are a reviewed vocabulary
+ *   of their own — `@mailwoman/activity-lexicon`, where every entry names the committed record that attests
+ *   it and the locales the phrasing is used in. They stay out of `@mailwoman/poi-taxonomy` because that
+ *   package's phrases are venue nouns, each naming ONE category, and an activity is afforded by a SET of
+ *   kinds. The lexicon declares surface forms and an activity identifier; everything a reader would call
+ *   knowledge — which kinds afford the activity, under what modality, on whose authority — comes from the
+ *   artifact.
  *
  *   THE PHRASE MUST END THE CANDIDATE. `matchPOISubject` probes the whole input first and then each
  *   prefix before an anchor separator, so a rung that matched an activity phrase ANYWHERE in its
@@ -45,10 +45,15 @@
  *   loads it unless a caller builds a route.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import {
+	type ActivityPhraseEntry,
+	type ActivityPhraseLexicon,
+	type ActivityPhraseLocaleScope,
+	auditActivityLexicon,
+	normalizeActivityPhrase,
+	readActivityLexicon,
+	resolveActivityPhraseLocale,
+} from "@mailwoman/activity-lexicon"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,
@@ -72,35 +77,12 @@ const AFFORDS_RELATION = "affords"
 const POI_TAXONOMY_VOCABULARY = "poi-taxonomy"
 
 /**
- * One declared surface form: the text a person types, and the activity concept it names.
- */
-export interface ActivityPhraseEntry {
-	phrase: string
-	/**
-	 * A concept identifier the compiled artifact carries, of kind `activity`. The route refuses an entry naming anything
-	 * else.
-	 */
-	activity: string
-	note: string
-}
-
-/**
- * The declared table, with the provenance that marks it authored rather than measured.
- */
-export interface ActivityPhraseTable {
-	tableID: string
-	version: string
-	provenance: SourceProvenance
-	phrases: ActivityPhraseEntry[]
-}
-
-/**
  * One firing of the route, recorded beside the answer rather than inside it.
  *
- * Everything a reader needs to say on whose authority the category was chosen is here: the declared phrase and the
- * table that declared it, the activity it names, the concept whose assertion carries the affordance, that assertion's
- * own modality and provenance, and the external mapping — with its provenance — that translated the concept into a POI
- * category id.
+ * Everything a reader needs to say on whose authority the category was chosen is here: the declared phrase, the lexicon
+ * that declared it and the record that attests the phrase itself, the activity it names, the concept whose assertion
+ * carries the affordance, that assertion's own modality and provenance, and the external mapping — with its provenance
+ * — that translated the concept into a POI category id.
  */
 export interface SemanticObservation {
 	/**
@@ -111,9 +93,26 @@ export interface SemanticObservation {
 	 * The declared surface form that matched it.
 	 */
 	matchedPhrase: string
-	phraseTableID: string
-	phraseTableVersion: string
+	phraseLexiconID: string
+	phraseLexiconVersion: string
 	phraseProvenance: SourceProvenance
+	/**
+	 * What attests the surface form itself — the class of record and the record. A category chosen from a phrase nobody
+	 * can trace is the failure this program exists to avoid, and the assertion's provenance does not cover it: that one
+	 * says why a pharmacy affords the activity, not why this string names it.
+	 */
+	phraseAttestation: {
+		kind: string
+		reference: string
+	}
+	/**
+	 * How the entry's locale scope met the locale the query was read under.
+	 */
+	localeScope: ActivityPhraseLocaleScope
+	/**
+	 * The tags the entry declares, or `null` when it is unscoped.
+	 */
+	declaredLocales: string[] | null
 	activity: string
 	concept: string
 	assertion: {
@@ -142,14 +141,14 @@ export interface SemanticObservation {
 }
 
 /**
- * What the route is, stated for a receipt: which artifact and which table it was built from, and what it can reach.
+ * What the route is, stated for a receipt: which artifact and which lexicon it was built from, and what it can reach.
  *
  * A receipt that recorded only an arm LABEL would be unable to tell a run with the route from a run whose route was
  * dropped on the way in, and those produce the same numbers for opposite reasons.
  */
 export interface SemanticRouteIdentity {
-	phraseTableID: string
-	phraseTableVersion: string
+	phraseLexiconID: string
+	phraseLexiconVersion: string
 	declaredPhrases: number
 	modelVersion: string
 	/**
@@ -163,7 +162,7 @@ export interface SemanticRouteIdentity {
  */
 export interface SemanticObservationRoute {
 	/**
-	 * The lexicon rung. Returns `[]` for every phrase that does not end in a declared activity form.
+	 * The lexicon rung. Returns `[]` for every phrase that does not end in a declared activity form the locale admits.
 	 */
 	lookup: POIPhraseLookup
 	identity: SemanticRouteIdentity
@@ -183,9 +182,9 @@ export interface SemanticObservationRouteOptions {
 	 */
 	model?: CompiledGeographicModel
 	/**
-	 * Override the declared phrase table. Absent reads the committed one.
+	 * Override the declared lexicon. Absent reads the committed one.
 	 */
-	phraseTable?: ActivityPhraseTable
+	lexicon?: ActivityPhraseLexicon
 }
 
 /**
@@ -201,39 +200,6 @@ function byCodePoint(left: string, right: string): number {
 	if (left > right) return 1
 
 	return 0
-}
-
-function sourceRelative(name: string): string {
-	// `tsc` emits no `.json` into `out/`, so a compiled caller reads the source-tree copy — the same bridge
-	// `probe.ts` uses for the pre-registration.
-	const sibling = fileURLToPath(new URL(name, import.meta.url))
-
-	if (existsSync(sibling)) return sibling
-
-	return fileURLToPath(new URL(`../../../eval-harness/semantic-utility/${name}`, import.meta.url))
-}
-
-/**
- * The committed declared phrase table.
- */
-export const ACTIVITY_PHRASE_TABLE_PATH = sourceRelative("activity-phrases.json")
-
-/**
- * Read the committed declared phrase table.
- */
-export function readActivityPhraseTable(path: string = ACTIVITY_PHRASE_TABLE_PATH): ActivityPhraseTable {
-	return parseJSONStrict<ActivityPhraseTable>(readFileSync(path, "utf8"))
-}
-
-/**
- * Normalize a phrase for comparison: NFKC, trimmed, whitespace collapsed, lowercased.
- *
- * `toLowerCase` rather than `toLocaleLowerCase`, deliberately: the locale-sensitive form folds a dotted capital `I` to
- * `i̇` under a Turkish host locale, which would make the route answer differently on two machines running the same
- * query.
- */
-function normalizePhrase(phrase: string): string {
-	return phrase.normalize("NFKC").trim().replaceAll(/\s+/g, " ").toLowerCase()
 }
 
 /**
@@ -289,13 +255,21 @@ function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKi
 }
 
 /**
- * Everything wrong with a table read against an artifact, one message per problem.
+ * Everything wrong with a lexicon read against an artifact, one message per problem.
  *
  * Each of these is a route that would answer NOTHING while looking like a route that found nothing, which is the shape
  * of failure a probe cannot distinguish from a real absence. So they refuse at construction rather than at query time.
+ *
+ * The vocabulary's own audit runs first and is not restated here: an injected lexicon never passed through
+ * `readActivityLexicon`, so a route built from one would otherwise accept a duplicate, an empty list or a phrase that
+ * normalizes away.
  */
-function auditRoute(model: CompiledGeographicModel, table: ActivityPhraseTable, resolved: ResolvedPhrase[]): string[] {
-	const problems: string[] = []
+function auditRoute(
+	model: CompiledGeographicModel,
+	lexicon: ActivityPhraseLexicon,
+	resolved: ResolvedPhrase[]
+): string[] {
+	const problems: string[] = auditActivityLexicon(lexicon)
 
 	if (!model.relations.some((relation) => String(relation.id) === AFFORDS_RELATION)) {
 		problems.push(
@@ -303,24 +277,8 @@ function auditRoute(model: CompiledGeographicModel, table: ActivityPhraseTable, 
 		)
 	}
 
-	if (!table.phrases.length) {
-		problems.push("the declared phrase table is empty — a route with no surface form can never fire")
-	}
-
-	const seen = new Set<string>()
-
 	for (const { entry, normalized, reached } of resolved) {
-		if (seen.has(normalized)) {
-			problems.push(`phrase ${JSON.stringify(entry.phrase)} is declared twice`)
-		}
-
-		seen.add(normalized)
-
-		if (!normalized) {
-			problems.push(`phrase ${JSON.stringify(entry.phrase)} normalizes to nothing`)
-
-			continue
-		}
+		if (!normalized) continue
 
 		const concept = model.concepts.find((candidate) => String(candidate.id) === entry.activity)
 
@@ -354,11 +312,26 @@ function auditRoute(model: CompiledGeographicModel, table: ActivityPhraseTable, 
  * The observation key a drain deduplicates on: one authority reached from one candidate phrase.
  */
 function observationKey(observation: SemanticObservation): string {
-	return [observation.phrase, observation.matchedPhrase, observation.assertion.id, observation.categoryID].join(" ")
+	return [observation.phrase, observation.matchedPhrase, observation.assertion.id, observation.categoryID].join(" ")
 }
 
 /**
- * Build the route from the committed artifact and the committed declared phrase table.
+ * The record that attests one declared phrase, flattened to the two fields a receipt reads.
+ *
+ * `derived-form` points at another entry rather than at an outside record, so its reference is that base — which is
+ * what a reader following the chain needs next.
+ */
+function attestationOf(entry: ActivityPhraseEntry): { kind: string; reference: string } {
+	const { attestation } = entry
+
+	return {
+		kind: attestation.kind,
+		reference: attestation.kind === "derived-form" ? attestation.base : attestation.reference,
+	}
+}
+
+/**
+ * Build the route from the committed artifact and the committed activity lexicon.
  *
  * Asynchronous because the artifact reader is reached by dynamic import — see the module header for why this package
  * holds no runtime dependency on `@mailwoman/geographic-model`.
@@ -367,52 +340,64 @@ export async function createSemanticObservationRoute(
 	options: SemanticObservationRouteOptions = {}
 ): Promise<SemanticObservationRoute> {
 	const model = options.model ?? (await readCommittedModel())
-	const table = options.phraseTable ?? readActivityPhraseTable()
+	const lexicon = options.lexicon ?? readActivityLexicon()
 
-	const resolved: ResolvedPhrase[] = table.phrases.map((entry) => ({
+	const resolved: ResolvedPhrase[] = lexicon.phrases.map((entry) => ({
 		entry,
-		normalized: normalizePhrase(entry.phrase),
+		normalized: normalizeActivityPhrase(entry.phrase),
 		reached: reachKinds(model, entry.activity),
 	}))
 
-	const problems = auditRoute(model, table, resolved)
+	const problems = auditRoute(model, lexicon, resolved)
 
 	if (problems.length) {
 		throw new Error(
-			["semantic observation route: the declared table does not resolve against the compiled model:"]
+			["semantic observation route: the declared lexicon does not resolve against the compiled model:"]
 				.concat(problems.map((problem) => `  - ${problem}`))
 				.join("\n")
 		)
 	}
 
 	// Longest declared phrase first, so `pick up a prescription` beats the bare `prescription` it ends with. Ties break on
-	// the phrase itself, so the winner is a property of the table rather than of the order it was written in.
+	// the phrase itself, so the winner is a property of the lexicon rather than of the order it was written in.
 	const ordered = resolved.toSorted(
 		(left, right) => right.normalized.length - left.normalized.length || byCodePoint(left.normalized, right.normalized)
 	)
 
 	const recorded: SemanticObservation[] = []
 
-	const lookup: POIPhraseLookup = (phrase) => {
-		const candidate = normalizePhrase(phrase)
+	const lookup: POIPhraseLookup = (phrase, locale) => {
+		const candidate = normalizeActivityPhrase(phrase)
 
 		if (!candidate) return []
 
-		const hit = ordered.find(
-			(declared) => candidate === declared.normalized || candidate.endsWith(` ${declared.normalized}`)
-		)
+		// The locale check belongs INSIDE the search rather than after it: a longer phrase the locale refuses must not
+		// stand in front of a shorter one it admits, or a scope would silence a phrase it does not cover.
+		let matched: ReturnType<typeof resolveActivityPhraseLocale> = null
 
-		if (!hit) return []
+		const hit = ordered.find((declared) => {
+			if (candidate !== declared.normalized && !candidate.endsWith(` ${declared.normalized}`)) return false
 
+			matched = resolveActivityPhraseLocale(declared.entry, locale)
+
+			return Boolean(matched)
+		})
+
+		if (!hit || !matched) return []
+
+		const localeMatch: NonNullable<ReturnType<typeof resolveActivityPhraseLocale>> = matched
 		const matches: POIPhraseMatch[] = []
 
 		for (const { concept, assertion, mapping } of hit.reached) {
 			recorded.push({
 				phrase: candidate,
 				matchedPhrase: hit.entry.phrase,
-				phraseTableID: table.tableID,
-				phraseTableVersion: table.version,
-				phraseProvenance: table.provenance,
+				phraseLexiconID: lexicon.lexiconID,
+				phraseLexiconVersion: lexicon.version,
+				phraseProvenance: lexicon.provenance,
+				phraseAttestation: attestationOf(hit.entry),
+				localeScope: localeMatch.scope,
+				declaredLocales: hit.entry.locales ? [...hit.entry.locales] : null,
 				activity: hit.entry.activity,
 				concept: String(concept.id),
 				assertion: {
@@ -436,9 +421,11 @@ export async function createSemanticObservationRoute(
 				kind: "category",
 				categoryID: String(mapping.externalID),
 				matchedPhrase: hit.entry.phrase,
-				// The confidence the committed exact-phrase rung reports for an exact hit. It selects a query KIND; it
-				// orders no candidate, and no number here was chosen to make one win.
-				confidence: 1,
+				// The confidence the committed exact-phrase rung reports for the same kind of hit: `1` for a phrase used
+				// everywhere or one the locale names outright, and the halved value `@mailwoman/variant-aliases` reports when
+				// only the language agrees. It selects a query KIND; it orders no candidate, and no number here was chosen to
+				// make one win.
+				confidence: localeMatch.confidence,
 			})
 		}
 
@@ -452,9 +439,9 @@ export async function createSemanticObservationRoute(
 	return {
 		lookup,
 		identity: {
-			phraseTableID: table.tableID,
-			phraseTableVersion: table.version,
-			declaredPhrases: table.phrases.length,
+			phraseLexiconID: lexicon.lexiconID,
+			phraseLexiconVersion: lexicon.version,
+			declaredPhrases: lexicon.phrases.length,
 			modelVersion: model.modelVersion,
 			reachableCategoryIDs,
 		},
