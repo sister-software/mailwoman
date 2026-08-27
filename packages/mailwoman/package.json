@@ -271,6 +271,11 @@
 			"default": "./out/data-release.js",
 			"types": "./out/data-release.d.ts"
 		},
+		"./observations": {
+			"node": "./observations/index.ts",
+			"default": "./out/observations/index.js",
+			"types": "./out/observations/index.d.ts"
+		},
 		"./poi-intent": {
 			"node": "./poi-intent.ts",
 			"default": "./out/poi-intent.js",
@@ -399,6 +404,7 @@
 		"@mailwoman/corpus": "workspace:*",
 		"@mailwoman/filer": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
+		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
@@ -430,7 +436,6 @@
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {
-		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/osm": "workspace:*",
 		"@mailwoman/resolver-wof-wasm": "workspace:*",
 		"@types/yauzl-promise": "^4.0.1"

@@ -51,7 +51,7 @@ import {
 	describeAbsenceObservation,
 	recoverCoverageResolution,
 	type AbsenceObservationRoute,
-} from "mailwoman/eval-harness/absence-observation/route"
+} from "mailwoman/observations"
 import { afterAll, describe, expect, it } from "vitest"
 
 const COVERAGE_RESOLUTION = 6

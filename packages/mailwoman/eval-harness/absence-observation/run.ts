@@ -33,8 +33,16 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 
 import { type LayerManifest, probeManifest } from "../../data-inventory.ts"
 import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"
+import {
+	type AbsenceObservation,
+	type AbsenceObservationRoute,
+	type AbsenceRouteIdentity,
+	createAbsenceObservationRoute,
+	createSemanticObservationRoute,
+	describeAbsenceObservation,
+	type SemanticObservationRoute,
+} from "../../observations/index.ts"
 import { createPOIBoardPipeline, type POIBoardOptions, type POIBoardResolverBackend } from "../poi-board.ts"
-import { createSemanticObservationRoute, type SemanticObservationRoute } from "../semantic-utility/observation-route.ts"
 import {
 	type AbsenceCounts,
 	type AbsenceExpectedOutcome,
@@ -46,13 +54,6 @@ import {
 	decideAbsenceProbe,
 	loadAbsenceProbeDefinition,
 } from "./probe.ts"
-import {
-	type AbsenceObservation,
-	type AbsenceObservationRoute,
-	type AbsenceRouteIdentity,
-	createAbsenceObservationRoute,
-	describeAbsenceObservation,
-} from "./route.ts"
 
 export interface AbsenceArtifactIdentity {
 	poiDatabasePath: string

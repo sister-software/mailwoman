@@ -203,15 +203,21 @@ export interface CreateRuntimePipelineOpts {
 	poiQueryKind?: boolean | { poiDatabasePath?: string }
 	/**
 	 * An ADDITIONAL positive-evidence phrase rung, consulted only after the committed category lexicon and the POI name
-	 * lookup have both returned nothing (#1929). Absent — the default everywhere — leaves the subject lookup exactly the
-	 * two rungs it has always been, and every query resolves as before.
+	 * lookup have both returned nothing. Absent — the default everywhere — leaves the subject lookup exactly the two
+	 * rungs it has always been, and every query resolves as before.
 	 *
-	 * It exists so an experiment can supply a route the shipped lexicon does not have (an activity phrase reaching a
-	 * category through the compiled geographic model) without that route being reachable by default, and without the
-	 * pipeline learning anything about where the evidence came from: what arrives here is a plain {@link POIPhraseLookup},
-	 * the same contract the committed lexicon satisfies, so a match is served by the existing executor exactly as if the
-	 * category had been typed. It supplies POSITIVE EVIDENCE ONLY — a miss returns `[]` and changes nothing — and it can
-	 * never displace a committed hit, because it is asked last.
+	 * It is how a caller reaches a subject the shipped lexicon cannot name: `mailwoman/observations` builds one, where an
+	 * activity phrase reaches a category through the compiled geographic model. PRESENCE IS THE SWITCH, and deliberately
+	 * so — a boolean would make this factory construct the artifact reader itself, putting world semantics on the default
+	 * construction path and giving the pipeline knowledge of where the evidence came from. What arrives here is a plain
+	 * {@link POIPhraseLookup}, the same contract the committed lexicon satisfies, so a match is served by the existing
+	 * executor exactly as if the category had been typed. It supplies POSITIVE EVIDENCE ONLY — a miss returns `[]` and
+	 * changes nothing — and it can never displace a committed hit, because it is asked last.
+	 *
+	 * A change that ever made this rung auto-construct must widen the option to `… | false` in the SAME commit, with a
+	 * test that sets it `false` and asserts byte-stability against the composition before the change — the pattern
+	 * {@link fst} and {@link streetMorphology} already carry. A rollback that arrives after the change is not a
+	 * rollback.
 	 */
 	poiSemanticLookup?: POIPhraseLookup
 }

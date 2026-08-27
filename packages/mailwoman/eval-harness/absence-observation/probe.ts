@@ -35,10 +35,10 @@ import { fileURLToPath } from "node:url"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
 
+import { ABSENCE_REFUSALS } from "../../observations/index.ts"
 // The canonical-JSON encoder is IMPORTED rather than re-typed: two freeze records hashing the same content
 // through two encoders would drift at the first key ordering either one changed.
 import { canonicalJSON } from "../semantic-utility/probe.ts"
-import { ABSENCE_REFUSALS } from "./route.ts"
 
 /**
  * The outcome a registered row must produce: the observation, or one named refusal.

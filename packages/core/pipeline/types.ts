@@ -216,6 +216,13 @@ export const QueryIntentCode = {
 	 * The query resolved to a POI taxonomy category. `evidence.categoryID` carries it.
 	 */
 	POICategory: "poi_category",
+	/**
+	 * The answer holds nothing of the asked-for kind, and a coverage layer surveyed the searched cell for exactly that
+	 * kind — so the emptiness is a statement about the world rather than about retrieval. `evidence.coverage` carries the
+	 * cell, its basis and the layer that measured it; without exclusion-grade coverage this code is never raised, because
+	 * an unsurveyed cell is unknown and never absence.
+	 */
+	CoverageQualifiedAbsence: "coverage_qualified_absence",
 } as const
 
 export type QueryIntentCode = (typeof QueryIntentCode)[keyof typeof QueryIntentCode]

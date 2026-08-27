@@ -35,6 +35,12 @@ import { JSONSpliterator } from "spliterator"
 import { type LayerManifest, probeManifest } from "../../data-inventory.ts"
 import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"
 import {
+	createSemanticObservationRoute,
+	type SemanticObservation,
+	type SemanticObservationRoute,
+	type SemanticRouteIdentity,
+} from "../../observations/index.ts"
+import {
 	createPOIBoardPipeline,
 	POI_BOARD_FIXTURES,
 	type POIBoardFixture,
@@ -42,12 +48,6 @@ import {
 	type POIBoardOutcome,
 	type POIBoardResolverBackend,
 } from "../poi-board.ts"
-import {
-	createSemanticObservationRoute,
-	type SemanticObservation,
-	type SemanticObservationRoute,
-	type SemanticRouteIdentity,
-} from "./observation-route.ts"
 import {
 	computeProbeCounts,
 	decideProbe,
