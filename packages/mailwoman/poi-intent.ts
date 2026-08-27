@@ -196,7 +196,9 @@ export function createPOIIntentStage(
 							}
 						: {
 								kind: "category",
-								categoryID: matched.match.categoryID,
+								// Every category the subject reached, deduplicated and left in the lookup's own enumeration order —
+								// the executor searches their union, so a repeated id would probe the same leaves twice.
+								categoryIDs: [...new Set(matched.matches.map((hit) => hit.categoryID))],
 								matched: matched.match.matchedPhrase,
 							},
 		}

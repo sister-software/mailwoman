@@ -39,15 +39,13 @@
  *   the POI name lookup have both returned nothing. With no route injected the pipeline is the one that
  *   shipped.
  *
- *   ONE AFFORDED KIND, OR NOTHING. An activity is afforded by a SET of entity kinds, and the query surface
- *   carries one category id: `matchPOISubject` returns `hits[0]` and `POIIntent`'s evidence names a single
- *   `categoryID`. So a set arriving here narrows to whichever concept sorts first by code point, which is
- *   an ordering nobody authored and nobody can read off the answer. Until the POI branch searches the union
- *   and lets the resolver rank it, a declared phrase whose activity reaches more than one mapped kind
- *   REFUSES AT CONSTRUCTION, naming the phrase and the kinds. The refusal is over the union rather than
- *   per-country on purpose: a route that answered where the set happens to be singular and refused
- *   elsewhere would make the collapse a property of the query, and it exists to be a finding about the
- *   lexicon and the artifact.
+ *   EVERY AFFORDED KIND, AND THE RESOLVER RANKS THEM. An activity is afforded by a SET of entity kinds, and
+ *   every kind the artifact admits for the caller's country is returned — each match flagged
+ *   `searchAsSet`, which is what tells `matchPOISubject` to carry the whole set rather than its first
+ *   member. The POI branch then searches the union of those categories and the candidate ordering the
+ *   resolver already owns decides the answer. Nothing here picks a winner: the enumeration is in concept
+ *   code-point order, which is a stable listing and not a preference, and a reader who takes the first
+ *   entry as the best one is reading rank into a sort key.
  *
  *   COUNTRY SCOPE IS THE ASSERTION'S, LOCALE SCOPE IS THE PHRASE'S, AND BOTH ARE READ HERE. A
  *   `RelationAssertion` may scope its claim to a country list; an assertion so scoped is admitted only when
@@ -163,8 +161,9 @@ export interface SemanticObservation {
 	 */
 	categoryID: string
 	/**
-	 * How many mapped entity kinds the activity reached on this firing. Always one: a phrase reaching more than one
-	 * refuses at construction. Carried anyway, because a receipt showing the count was measured is what distinguishes a
+	 * How many mapped entity kinds the activity reached on this firing, after the assertion's country scope was applied —
+	 * the size of the set the POI branch searched. One observation is recorded per member, each naming its own assertion
+	 * and mapping, and every one of them carries this same count. A receipt showing it is what distinguishes a genuinely
 	 * singular reach from a set that collapsed quietly.
 	 */
 	mappedKindCount: number
@@ -254,13 +253,13 @@ interface ReachedKind {
 /**
  * Which entity kinds assert `affords` against this activity AND map into a POI category, in concept code-point order.
  *
- * The order is a stable enumeration and not a preference, and it is never used to choose: a phrase reaching more than
- * one kind refuses at construction rather than taking the first. Deciding which of several kinds answers best would be
- * the candidate ordering this program does not author.
+ * The order is a stable enumeration and not a preference, and it is never used to choose: every member is returned and
+ * the POI branch searches their union. Deciding which of several kinds answers best would be the candidate ordering
+ * this program does not author.
  *
  * Country scope is NOT applied here. The assertion's scope is met by the caller's locale, which is a per-query fact,
- * while this enumeration is what construction audits — and the audit has to see the whole set, or a phrase would refuse
- * in one country and answer in another.
+ * while this enumeration is what construction audits — and the audit has to see the whole set, or a phrase would be
+ * audited against one country's reach and used in another's.
  */
 function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKind[] {
 	const mappings = new Map<string, ExternalMappingRecord>()
@@ -337,18 +336,6 @@ function auditRoute(
 		if (!reached.length) {
 			problems.push(
 				`phrase ${JSON.stringify(entry.phrase)} names activity ${JSON.stringify(entry.activity)}, which no concept both affords and maps into \`${POI_TAXONOMY_VOCABULARY}\` — the phrase would match and answer nothing`
-			)
-
-			continue
-		}
-
-		if (reached.length > 1) {
-			const kinds = reached
-				.map(({ concept: reachedConcept, mapping }) => `${String(reachedConcept.id)} → ${String(mapping.externalID)}`)
-				.join(", ")
-
-			problems.push(
-				`phrase ${JSON.stringify(entry.phrase)} names activity ${JSON.stringify(entry.activity)}, which reaches ${reached.length} mapped kinds (${kinds}) — the query surface carries one category id, so the set would narrow to whichever concept sorts first by code point`
 			)
 		}
 	}
@@ -479,8 +466,10 @@ export async function createSemanticObservationRoute(
 				// The confidence the committed exact-phrase rung reports for the same kind of hit: `1` for a phrase used
 				// everywhere or one the locale names outright, and the halved value `@mailwoman/variant-aliases` reports when
 				// only the language agrees. It selects a query KIND; it orders no candidate, and no number here was chosen to
-				// make one win.
+				// make one win. Every member of a set carries the SAME value, so the set cannot be ranked by it either.
 				confidence: localeMatch.confidence,
+				// These matches are one afforded set, not a preference list: the POI branch searches their union.
+				searchAsSet: true,
 			})
 		}
 

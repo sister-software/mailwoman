@@ -178,7 +178,7 @@ function answered(
 	const tree: AddressTree = { raw: "anchor", roots: [node] }
 
 	const intent: POIIntent = {
-		subject: { kind: "category", categoryID, matched: categoryID },
+		subject: { kind: "category", categoryIDs: [categoryID], matched: categoryID },
 		relation: "near",
 		anchor: { text: "anchor", tree },
 	}
@@ -256,33 +256,34 @@ describe("the conjunction's other half — the artifact", () => {
 		expect(decision).toEqual({ fired: false, refusal: "no_affordance_assertion" })
 	})
 
+	// The committed artifact affords `obtain_medication` from both wave-1 classes; the pilot layer surveys `pharmacy`.
+	// So `drugstore` is a class the artifact CAN speak about and the layer cannot, which is a different refusal from
+	// a class the artifact never heard of.
 	it("refuses a category the artifact affords but the layer never surveyed", async () => {
-		const model = structuredClone(committedModel)
-		const pharmacy = model.concepts.find((concept) => String(concept.id) === "pharmacy")!
-		const mapping = model.mappings.find((entry) => String(entry.concept) === "pharmacy")!
-
-		model.concepts = [
-			...model.concepts,
-			{ ...structuredClone(pharmacy), id: "drugstore" as (typeof pharmacy)["id"], label: "drugstore" },
-		]
-
-		model.mappings = [
-			...model.mappings,
-			{
-				...structuredClone(mapping),
-				id: "poi-taxonomy-drugstore" as (typeof mapping)["id"],
-				concept: "drugstore" as (typeof mapping)["concept"],
-				externalID: "drugstore" as (typeof mapping)["externalID"],
-			},
-		]
-
-		const route = await routeOver({}, model)
+		const route = await routeOver()
 
 		expect(route.identity.affordingCategoryIDs).toEqual(["drugstore", "pharmacy"])
 
 		const decision = await route.observe(answered("drugstore", POINTS.surveyedEmpty))
 
 		expect(decision).toEqual({ fired: false, refusal: "category_not_surveyed" })
+	})
+
+	// The union: an activity afforded by two classes puts two classes in one search, and the layer's completeness
+	// covers one of them. "No establishment affording this activity is here" would then be a claim about premises the
+	// survey never looked for, so the whole searched set has to be the surveyed class or the cell is not decidable.
+	it("refuses a searched union that reaches past the surveyed class", async () => {
+		const route = await routeOver()
+		const outcome = answered("pharmacy", POINTS.surveyedEmpty)
+
+		if (outcome.type !== "intent" || outcome.intent.subject.kind !== "category") throw new Error("unreachable")
+
+		// The same cell and the same answer, with the second class added to the SEARCH — the one difference.
+		expect(await route.observe(outcome)).toMatchObject({ fired: true })
+
+		outcome.intent.subject.categoryIDs = ["drugstore", "pharmacy"]
+
+		expect(await route.observe(outcome)).toEqual({ fired: false, refusal: "category_not_surveyed" })
 	})
 })
 
@@ -323,7 +324,7 @@ describe("the silences that are about the answer rather than the world", () => {
 
 		const outcome: POIIntentOutcome = {
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "pharmacy", matched: "pharmacy" } },
+			intent: { subject: { kind: "category", categoryIDs: ["pharmacy"], matched: "pharmacy" } },
 			results: [],
 		}
 

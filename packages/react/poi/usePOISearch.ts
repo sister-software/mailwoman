@@ -84,12 +84,12 @@ function buildOverpass(
 	}
 
 	const intent: OverpassIntentLike = {
-		subject: { kind: "category", categoryID, matched: matchedPhrase },
+		subject: { kind: "category", categoryIDs: [categoryID], matched: matchedPhrase },
 		...(remainder ? { anchor: { text: remainder } } : {}),
 	}
 
 	try {
-		return { overpassQL: emitOverpassQL(intent, category.osmTag ? { osmTag: category.osmTag } : {}) }
+		return { overpassQL: emitOverpassQL(intent, category.osmTag ? { osmTags: [category.osmTag] } : {}) }
 	} catch (error) {
 		return { overpassError: error instanceof Error ? error.message : String(error) }
 	}

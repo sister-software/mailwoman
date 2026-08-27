@@ -40,6 +40,21 @@ export interface POIPhraseMatch {
 	 * Wikidata QID, when known. `kind: "brand"` only — absent when a brand resolved by name alone (no QID match).
 	 */
 	wikidata?: string
+	/**
+	 * Whether this hit is one member of a set the caller must search TOGETHER, rather than one candidate in a preference
+	 * list.
+	 *
+	 * A lookup returning several hits means two different things, and the difference decides whether narrowing to the
+	 * first is an answer or an invented ordering. A phrase index returns the categories one typed phrase could name, most
+	 * specific first (`credit union` → `credit_union`, then the `bank` rollup that absorbed the leaf), and the first
+	 * entry IS the subject. An affordance rung returns every entity kind that affords ONE activity, in a stable
+	 * enumeration that is not a preference, and taking the first picks a winner nobody authored.
+	 *
+	 * Set on every member of such a set. {@link matchPOISubject} then carries them all, the POI branch searches their
+	 * union, and the candidate ordering the resolver already owns decides the answer. Absent — the committed lexicon's
+	 * shape — keeps the first-hit reading unchanged.
+	 */
+	searchAsSet?: boolean
 }
 
 /**
@@ -62,7 +77,19 @@ export interface POIQuerySpan {
  * Which lexicon this hit came from. Existing category lookups set `"category"` (backward-compatible default).
  */
 export interface POISubjectMatch {
+	/**
+	 * The hit the subject SCORES under — its kind and its confidence. Always `matches[0]`; the two are built together in
+	 * one place so they cannot disagree.
+	 */
 	match: POIPhraseMatch
+	/**
+	 * Every category the subject reaches, `match` first.
+	 *
+	 * One entry unless the lookup returned a {@link POIPhraseMatch.searchAsSet} set, in which case it holds the whole set
+	 * and the POI branch searches their union. The order is the order the lookup returned and states no preference:
+	 * nothing downstream may read position as rank.
+	 */
+	matches: POIPhraseMatch[]
 	/**
 	 * The matched subject text as it appeared in the query.
 	 */
@@ -106,10 +133,25 @@ const ANCHOR_SEPARATOR = /,\s*|\s(near|in|at|around|to)\s+/gi
 const MAX_SUBJECT_TOKENS = 8
 
 /**
+ * The categories one candidate subject reaches, from the hits the lookup returned for it.
+ *
+ * The whole array when the first hit declares {@link POIPhraseMatch.searchAsSet} — carried as the lookup returned it,
+ * never filtered, so a rung that flagged only some of its members loses nothing here and the inconsistency stays
+ * visible to whoever reads the set. Otherwise the first hit alone, which is the preference-list reading the committed
+ * phrase index has always had.
+ */
+function reachedMatches(hits: ReadonlyArray<POIPhraseMatch>): POIPhraseMatch[] {
+	return hits[0]!.searchAsSet ? [...hits] : [hits[0]!]
+}
+
+/**
  * Match a POI subject: the whole input, or the text before the FIRST anchor separator WHOSE PREFIX HITS THE LEXICON (≤
  * 8 tokens). Scans separator occurrences left-to-right — a lexicon phrase may itself contain a bare separator word
  * (e.g. "walk in clinic"), so the first separator isn't necessarily the right split point. Returns null when the
  * lexicon never fires — including comma-ridden full addresses whose leading segment isn't a lexicon phrase.
+ *
+ * The winning candidate's hits are carried per {@link reachedMatches}: the first hit, or the whole set when the lookup
+ * declared one.
  */
 export function matchPOISubject(
 	text: string,
@@ -124,8 +166,11 @@ export function matchPOISubject(
 	const whole = lookup(trimmed, locale)
 
 	if (whole.length) {
+		const matches = reachedMatches(whole)
+
 		return {
-			match: whole[0]!,
+			match: matches[0]!,
+			matches,
 			subject: trimmed,
 			subjectSpan: { text: trimmed, start: inputStart, end: inputStart + trimmed.length },
 			remainder: "",
@@ -152,9 +197,11 @@ export function matchPOISubject(
 		const anchorOffset = trimmed.indexOf(remainder, separator.index + separator[0].length)
 		const relationText = separator[1] ?? ","
 		const relationOffset = separator[1] ? separator.index + separator[0].indexOf(separator[1]) : separator.index
+		const matches = reachedMatches(hits)
 
 		return {
-			match: hits[0]!,
+			match: matches[0]!,
+			matches,
 			subject,
 			subjectSpan: {
 				text: subject,

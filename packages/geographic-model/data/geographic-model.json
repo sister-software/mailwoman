@@ -41,7 +41,7 @@
 			"label": "drugstore",
 			"provenance": {
 				"authoredAt": "2026-08-27",
-				"notes": "Admitted by the wave-1 amendment against a measured recall gap, re-taken on the shipped layer before this record was frozen: one `group by category_id, country` pass over `poi.db` at manifest 2026-07-22.0 counts 7,168 rows under `retail > drugstore` against 82,168 under `health_and_medical > pharmacy` — 8.0% of the two leaves overall and 12.9% within the US (6,679 of 51,624), all of them out of reach of a `pharmacy` query because the branches are disjoint. A kind of `establishment` directly and not of `healthcare_facility`: the external hierarchy puts it under `retail`, and `healthcare_facility` is premises that exist to provide healthcare, which retail premises with a dispensing counter do not. The `poi-taxonomy` mapping the amendment admits as W1-3 is deliberately NOT authored yet — with it, the one activity would reach two mapped kinds and the query surface carries one category id, so the semantic route refuses at construction. Issue #1980 owns the union search that makes the mapping safe to land.",
+				"notes": "Admitted by the wave-1 amendment against a measured recall gap, re-taken on the shipped layer before this record was frozen: one `group by category_id, country` pass over `poi.db` at manifest 2026-07-22.0 counts 7,168 rows under `retail > drugstore` against 82,168 under `health_and_medical > pharmacy` — 8.0% of the two leaves overall and 12.9% within the US (6,679 of 51,624), all of them out of reach of a `pharmacy` query because the branches are disjoint. A kind of `establishment` directly and not of `healthcare_facility`: the external hierarchy puts it under `retail`, and `healthcare_facility` is premises that exist to provide healthcare, which retail premises with a dispensing counter do not. The `poi-taxonomy` mapping the amendment admits as W1-3 is authored beside this record in `mappings.json`, so `obtain_medication` reaches two mapped kinds and the POI branch searches both.",
 				"source": "mailwoman-curated",
 				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4.1 W1-1",
 				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1963",
@@ -177,6 +177,20 @@
 	],
 	"mappings": [
 		{
+			"concept": "drugstore",
+			"externalID": "drugstore",
+			"id": "poi-taxonomy-drugstore",
+			"provenance": {
+				"authoredAt": "2026-08-28",
+				"notes": "W1-3 of the wave-1 amendment, read back from the committed table at version 0.4.0 (Overture schema v1.17.0): `{ id: drugstore, hierarchy: [retail, drugstore], source: overture }`. The category declares no `overtureCategories`, so `resolveOvertureCategories(\"drugstore\")` is the identity `[\"drugstore\"]`, and the leaf is disjoint from `health_and_medical > pharmacy` — which is why 7,168 rows were out of reach of a `pharmacy` query. With this record `obtain_medication` reaches two mapped kinds; that is the SET the POI branch searches, and no field here states a preference between them. The mapping states that the external identifier names this concept and nothing else.",
+				"source": "mailwoman-curated",
+				"sourceRecord": "packages/poi-taxonomy/data/taxonomy.json categories[drugstore]",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1980",
+				"sourceVersion": "poi-taxonomy table 0.4.0"
+			},
+			"vocabulary": "poi-taxonomy"
+		},
+		{
 			"concept": "pharmacy",
 			"externalID": "pharmacy",
 			"id": "poi-taxonomy-pharmacy",
@@ -191,7 +205,7 @@
 			"vocabulary": "poi-taxonomy"
 		}
 	],
-	"modelVersion": "0.2.0",
+	"modelVersion": "0.3.0",
 	"observations": [],
 	"relations": [
 		{

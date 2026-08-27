@@ -389,7 +389,7 @@ zero reopens the FR exclusion, and a US count that has moved changes what W1-2's
 taxonomy read-back in W1-3 and both `curated-overlay.json` quotations **were** verified on HEAD and are
 current at table `0.4.0` / Overture `v1.17.0`.
 
-#### Authored 2026-08-27 (#1963): W1-1 and W1-2 landed, W1-3 waits on #1980
+#### Authored 2026-08-27 (#1963) and completed 2026-08-28 (#1980): all three records landed
 
 **The census was re-run and every figure above stands.** One `group by category_id, country` pass over the
 shipped `poi.db` — manifest `2026-07-22.0`, `build_sha` `3610771ec`, sealed `2026-08-19` — reproduces §5.3
@@ -405,22 +405,28 @@ plus the vocabulary correction — `affords` now reads `semantics: "defeasible"`
 assertion's provenance note is re-grounded in the concept as this section requires. The compiled model
 moves to `0.2.0`.
 
-**What waits: W1-3, the `poi-taxonomy` mapping.** The interim rule the companion decision record's §8.1
-authorizes — a declared phrase whose activity reaches more than one MAPPED kind refuses at construction —
-merged ahead of this work in PR #1979. With W1-3 authored, `obtain_medication` reaches two mapped kinds,
-all eleven declared phrases refuse, the semantic route becomes unbuildable and the capability #1930
-recorded GO on goes to zero. Since `reachKinds` counts MAPPED kinds, an asserted-but-unmapped `drugstore`
-states the semantics in full while leaving the route intact, which is why the mapping alone is held.
-**#1980 owns the union search that makes it safe to land**, per §8.1's own assignment of that work to the
-runtime and resolver; W1-3 is authored behind it, and this note closes out then. Wave 1 is not widened by
-the deferral — nothing outside the admitted table is authored, and nothing admitted is withdrawn.
+**W1-3, the `poi-taxonomy` mapping, landed on 2026-08-28 behind #1980 and this note closes out.** It was
+held for one release cycle because the interim rule the companion decision record's §8.1 authorizes — a
+declared phrase whose activity reaches more than one MAPPED kind refuses at construction — merged ahead
+of the semantics in PR #1979, and with W1-3 authored all eleven declared phrases would have refused, the
+semantic route would have become unbuildable, and the capability #1930 recorded GO on would have gone to
+zero. Since `reachKinds` counts MAPPED kinds, an asserted-but-unmapped `drugstore` stated the semantics
+in full while leaving the route intact, which is why the mapping alone was held. #1980 replaced the
+interim refusal with §8.1's decided shape — **the POI branch searches the union of the categories the
+subject reaches and the resolver's existing candidate ordering ranks it** — so a plural affordance is now
+answered rather than refused. The compiled model moves to `0.3.0`. Wave 1 was not widened by the
+deferral: nothing outside the admitted table was authored, and nothing admitted was withdrawn.
 
-**Attested target for the pair:** board row `sem-act-us-03` (`where can i pick up a prescription near
-Coalinga CA`), committed as `improvement_target` against #1980. The board grades outcomes and never
-recall, so the row is the anchor where the two readings coincide: measured through the board's own
-pipeline, `pharmacy near Coalinga CA` resolves the anchor and returns zero rows while `drugstore near
-Coalinga CA` returns two at 0.77 km and 1.71 km. It states no preference between the classes, because at
-that anchor there is only one class to return.
+**Attested target for the set:** board row `sem-act-us-03` (`where can i pick up a prescription near
+Coalinga CA`). The board grades outcomes and never recall, so the row is the anchor where the two
+readings coincide: measured through the board's own pipeline, `pharmacy near Coalinga CA` resolves the
+anchor and returns zero rows while `drugstore near Coalinga CA` returns two at 0.77 km and 1.71 km. With
+the union searching both classes the row answers `drugstore` at 0.77 km, which is what W1-3 makes
+reachable. It states no preference between the classes, because at that anchor there is only one class to
+return. The row stays TRACKED and is re-pointed from #1980 to #1967: its subject reaches no committed
+lexicon entry, so with the opt-in route un-injected the query takes no POI branch at all, and whether the
+route reaches the default path is #1967's question rather than this record's. The POI board's floors are
+registered against the route-OFF construction and are unmoved.
 
 ---
 

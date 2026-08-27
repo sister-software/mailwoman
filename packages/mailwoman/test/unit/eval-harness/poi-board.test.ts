@@ -86,7 +86,7 @@ describe("gradeCase — results expectation", () => {
 	it("passes when ≥1 result, nearest within range, top category matches", () => {
 		const outcome = intentOutcome({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } },
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
 			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
 		})
 
@@ -100,7 +100,7 @@ describe("gradeCase — results expectation", () => {
 	it("uses the NEAREST result's distance, not necessarily the top-ranked one", () => {
 		const outcome = intentOutcome({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } },
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
 			results: [
 				poiResult({ latitude: 10, longitude: 10 }), // top-ranked, far away
 				poiResult({ latitude: 39.7817, longitude: -89.6501 }), // second, right on the gold point
@@ -117,7 +117,7 @@ describe("gradeCase — results expectation", () => {
 	it("fails when the nearest result is outside maxNearestKm", () => {
 		const outcome = intentOutcome({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } },
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
 			results: [poiResult({ latitude: 10, longitude: 10 })], // far from Springfield IL
 		})
 
@@ -130,7 +130,7 @@ describe("gradeCase — results expectation", () => {
 	it("fails when the top result's category doesn't match, even if in range", () => {
 		const outcome = intentOutcome({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } },
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
 			results: [poiResult({ latitude: 39.7817, longitude: -89.6501, categoryID: "restaurant" })],
 		})
 
@@ -143,7 +143,7 @@ describe("gradeCase — results expectation", () => {
 	it("fails on zero results", () => {
 		const outcome = intentOutcome({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } },
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
 			results: [],
 		})
 
@@ -227,7 +227,7 @@ describe("gradeCase — brand results expectation", () => {
 	it("category grading is unaffected by the brandWikidata branch (regression guard)", () => {
 		const outcome = intentOutcome({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } },
+			intent: { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } },
 			results: [poiResult({ latitude: 39.7817, longitude: -89.6501 })],
 		})
 
@@ -256,7 +256,7 @@ describe("gradeCase — abstain expectation", () => {
 	it("fails when the outcome carries results instead of an abstain", () => {
 		const outcome = intentOutcome({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "fire_hydrant", matched: "fire hydrant" } },
+			intent: { subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant" } },
 			results: [poiResult({ categoryID: "fire_hydrant" })],
 		})
 
@@ -282,7 +282,7 @@ describe("gradeCase — address expectation", () => {
 	it("fails when the poi branch wrongly claims a full address", () => {
 		const outcome = intentOutcome({
 			type: "intent",
-			intent: { subject: { kind: "category", categoryID: "hospital", matched: "hospital" } },
+			intent: { subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } },
 		})
 
 		const grade = gradeCase(addressFixture, outcome)
@@ -592,7 +592,7 @@ describe("the tracked-row convention", () => {
 	it("splits grades by status and reports a tracked row that started passing", () => {
 		const trackedFixture = tracked({ rowRef: "semantic-utility/probe-definition.json#x", note: "why" })
 		const set = [resultsFixture, trackedFixture]
-		const subject: POIIntent = { subject: { kind: "category", categoryID: "cafe", matched: "cafe" } }
+		const subject: POIIntent = { subject: { kind: "category", categoryIDs: ["cafe"], matched: "cafe" } }
 
 		const grades = [
 			gradeCase(resultsFixture, { path: "full" }),

@@ -127,7 +127,7 @@ async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; 
 function formatSubject(subject: POIIntent["subject"]): string {
 	switch (subject.kind) {
 		case "category":
-			return `category ${subject.categoryID} (matched "${subject.matched}")`
+			return `category ${subject.categoryIDs.join(" + ")} (matched "${subject.matched}")`
 		case "brand":
 			return `brand ${subject.name}${subject.wikidata ? ` [${subject.wikidata}]` : ""} (matched "${subject.matched}")`
 		case "name":
@@ -143,13 +143,16 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
-		const category = getPOICategory(intent.subject.categoryID)
+		const { categoryIDs } = intent.subject
+		// EVERY member needs a tag, not just one: a union emitted from the subset that happens to carry `osmTag` is a
+		// narrower query than the one the POI branch ran, and the difference would be invisible in the printed result.
+		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)
 
-		if (!category?.osmTag) {
-			return `(no OverpassQL export — category '${intent.subject.categoryID}' has no osmTag mapping in @mailwoman/poi-taxonomy)`
+		if (untagged.length) {
+			return `(no OverpassQL export — ${untagged.length === 1 ? "category" : "categories"} '${untagged.join("', '")}' ${untagged.length === 1 ? "has" : "have"} no osmTag mapping in @mailwoman/poi-taxonomy)`
 		}
 
-		return emitOverpassQL(intent, { osmTag: category.osmTag })
+		return emitOverpassQL(intent, { osmTags: categoryIDs.map((id) => getPOICategory(id)!.osmTag!) })
 	}
 
 	return emitOverpassQL(intent)

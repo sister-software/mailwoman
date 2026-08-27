@@ -9,13 +9,13 @@ import { emitOverpassQL } from "mailwoman/poi-overpass"
 import { describe, expect, it } from "vitest"
 
 const category = (anchor?: POIIntent["anchor"]): POIIntent => ({
-	subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+	subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
 	...(anchor ? { anchor } : {}),
 })
 
 describe("emitOverpassQL", () => {
 	it("emits a global tag query for a bare category", () => {
-		const ql = emitOverpassQL(category(), { osmTag: "amenity=hospital" })
+		const ql = emitOverpassQL(category(), { osmTags: ["amenity=hospital"] })
 		expect(ql).toContain('nwr["amenity"="hospital"]')
 		expect(ql).toContain("[out:json]")
 		expect(ql).toContain("out center")
@@ -33,11 +33,35 @@ describe("emitOverpassQL", () => {
 					],
 				},
 			}),
-			{ osmTag: "amenity=hospital" }
+			{ osmTags: ["amenity=hospital"] }
 		)
 
 		expect(ql).toContain('area["name"="Springfield"]->.anchor')
 		expect(ql).toContain('nwr["amenity"="hospital"](area.anchor)')
+	})
+
+	// A subject reaching several categories asks Overpass for the same set the POI branch searched. The union block is
+	// the language's own way of saying it, and the members sit inside it in the subject's order with no preference
+	// between them.
+	it("emits a union block for a category subject reaching several categories", () => {
+		const ql = emitOverpassQL(
+			{ subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" } },
+			{ osmTags: ["shop=chemist", "amenity=pharmacy"] }
+		)
+
+		expect(ql).toContain('(nwr["shop"="chemist"];nwr["amenity"="pharmacy"];);')
+	})
+
+	it("scopes every member of a union to the anchor area", () => {
+		const ql = emitOverpassQL(
+			{
+				subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
+				anchor: { text: "Coalinga CA", tree: { roots: [{ tag: "locality", value: "Coalinga" }] } },
+			},
+			{ osmTags: ["shop=chemist", "amenity=pharmacy"] }
+		)
+
+		expect(ql).toContain('(nwr["shop"="chemist"](area.anchor);nwr["amenity"="pharmacy"](area.anchor););')
 	})
 
 	it("falls back to a name regex for name subjects, with escaping", () => {
@@ -60,9 +84,9 @@ describe("emitOverpassQL", () => {
 	})
 
 	it("throws on a malformed osmTag", () => {
-		const intent: POIIntent = { subject: { kind: "category", categoryID: "x", matched: "x" } }
-		expect(() => emitOverpassQL(intent, { osmTag: "amenity" })).toThrow(/malformed osmTag/)
-		expect(() => emitOverpassQL(intent, { osmTag: "a=b=c" })).toThrow(/malformed osmTag/)
-		expect(() => emitOverpassQL(intent, { osmTag: "=value" })).toThrow(/malformed osmTag/)
+		const intent: POIIntent = { subject: { kind: "category", categoryIDs: ["x"], matched: "x" } }
+		expect(() => emitOverpassQL(intent, { osmTags: ["amenity"] })).toThrow(/malformed osmTag/)
+		expect(() => emitOverpassQL(intent, { osmTags: ["a=b=c"] })).toThrow(/malformed osmTag/)
+		expect(() => emitOverpassQL(intent, { osmTags: ["=value"] })).toThrow(/malformed osmTag/)
 	})
 })

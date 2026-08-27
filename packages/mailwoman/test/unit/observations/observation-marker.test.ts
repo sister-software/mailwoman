@@ -124,8 +124,11 @@ describe("a semantic observation as a marker", () => {
 		expect(marker!.message).toContain("obtain_medication")
 	})
 
+	// The `pharmacy` member of the set, picked by its concept rather than by position: en-US admits both wave-1 kinds,
+	// and a marker read off `[0]` would be asserting whichever concept sorts first.
 	it("carries the whole authority, so the marker can be checked rather than taken", () => {
-		const [marker] = semanticMarkers(POI_VERDICT)
+		const markers = semanticMarkers(POI_VERDICT)
+		const marker = markers.find(({ evidence }) => evidence?.["concept"] === "pharmacy")
 		const evidence = marker!.evidence!
 
 		expect(evidence["categoryID"]).toBe("pharmacy")
@@ -142,8 +145,21 @@ describe("a semantic observation as a marker", () => {
 		expect(evidence["mapping"]).toMatchObject({ vocabulary: "poi-taxonomy", externalID: "pharmacy" })
 		expect(evidence["phraseAttestation"]).toMatchObject({ kind: "committed-query" })
 		expect(evidence["localeCountry"]).toBe("US")
-		expect(evidence["mappedKindCount"]).toBe(1)
+		expect(evidence["mappedKindCount"]).toBe(2)
 		expect(evidence["modelVersion"]).toBeTruthy()
+	})
+
+	// One marker per member, each naming its own concept and its own assertion. Folding the set into one marker would
+	// lose which authority put which class in it, which is the one thing this carrier exists to keep.
+	it("emits one marker per member of a plural set, each with its own authority", () => {
+		const markers = semanticMarkers(POI_VERDICT)
+
+		expect(markers.map(({ evidence }) => evidence?.["concept"])).toEqual(["drugstore", "pharmacy"])
+
+		expect(markers.map(({ evidence }) => (evidence!["assertion"] as { id: string }).id)).toEqual([
+			"drugstore-affords-obtain-medication",
+			"pharmacy-affords-obtain-medication",
+		])
 	})
 
 	it("produces no marker on a verdict carrying no POI kind, rather than inventing one", () => {

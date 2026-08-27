@@ -11,11 +11,11 @@
  *   the compiler works, which `compile.test.ts` already covers; what is unproven until here is that the
  *   records someone actually authored say what the frozen slice says they say.
  *
- *   THE HELD-OUT MAPPING IS ASSERTED, not left to read as an omission. Wave 1 admits a `drugstore`
- *   concept, its US-scoped assertion AND a `poi-taxonomy` mapping; the first two are authored and the
- *   third is not, because one activity reaching two mapped kinds refuses the semantic route at
- *   construction while the query surface still carries a single category id. An absent mapping and a
- *   forgotten one look identical in the artifact, so the tests below state which of the two this is.
+ *   WAVE 1 IS COMPLETE. All three records are authored — the `drugstore` concept, its US-scoped
+ *   assertion, and the `poi-taxonomy` mapping that was held back until the POI branch could search a
+ *   union rather than narrow to one id (#1980). So `obtain_medication` reaches two mapped kinds, and the
+ *   tests below assert that the SECOND one is reachable through the same external-identifier lookup the
+ *   first is: a mapping nothing can translate through would state the semantics and reach no rows.
  *
  *   The freshness check compares PARSED values rather than bytes. A committed artifact is the
  *   generator's output run through `oxfmt`, which inlines short arrays, so a byte comparison against
@@ -64,8 +64,8 @@ const AFFORDS = toRelationID("affords")
 const POI_CATEGORY = toPOICategoryID("pharmacy")
 
 /**
- * The external category wave 1's held-out mapping would name. Nothing maps onto it today, and the read-back below is
- * what keeps that a decision rather than a dead identifier.
+ * The external category wave 1's second mapping names. Read back through the vocabulary's owner below, because a
+ * mapping onto an identifier the taxonomy stopped carrying looks exactly like a working one from inside this package.
  */
 const DRUGSTORE_CATEGORY = toPOICategoryID("drugstore")
 
@@ -77,7 +77,7 @@ describe("the authored pharmacy records", () => {
 	it("loads and compiles", () => {
 		const model = compileAuthoredGeographicModel()
 
-		expect(model.modelVersion).toBe("0.2.0")
+		expect(model.modelVersion).toBe("0.3.0")
 
 		expect(model.concepts.map((concept) => concept.id)).toEqual([
 			"activity",
@@ -235,22 +235,27 @@ describe("the wave-1 records", () => {
 		expect(assertion?.provenance.sourceRecord).toContain("curated-overlay.json")
 	})
 
-	it("authors no mapping for it, and says so where a reader will look", () => {
+	it("maps it into the POI vocabulary, which is what makes the second afforded kind searchable", () => {
 		const model = compileAuthoredGeographicModel()
-		const concept = model.concepts.find((entry) => entry.id === DRUGSTORE)
+		const mapping = model.mappings.find((entry) => entry.concept === DRUGSTORE)
 
-		// The whole mapping table, so a mapping added anywhere trips this rather than only one added under the id
-		// this test happened to guess.
-		expect(model.mappings.map((mapping) => mapping.concept)).toEqual([PHARMACY])
-		expect(concept?.provenance.notes).toContain("NOT authored")
+		// The whole mapping table, so a mapping added anywhere trips this rather than only the two this test names.
+		expect(model.mappings.map((entry) => entry.concept)).toEqual([DRUGSTORE, PHARMACY])
+		expect(mapping?.id).toBe("poi-taxonomy-drugstore")
+		expect(mapping?.vocabulary).toBe(ExternalVocabulary.POITaxonomy)
+		expect(mapping?.externalID).toBe(DRUGSTORE_CATEGORY)
+		expect(mapping?.provenance.source).toBe("mailwoman-curated")
+		expect(mapping?.provenance.sourceRecord).toContain("taxonomy.json")
 
-		// The category the held-out mapping would name, read back through the vocabulary's owner. An identifier that
-		// stopped resolving would make the hold a dead reference rather than a deferred one, and nothing else would
-		// notice until the mapping landed.
+		// The category the mapping names, read back through the vocabulary's owner. An identifier that stopped
+		// resolving would leave the mapping translating into nothing, and nothing else would notice.
 		const category = getPOICategory(String(DRUGSTORE_CATEGORY))
 
 		expect(category?.id).toBe(DRUGSTORE_CATEGORY)
 		expect(category?.hierarchy).toEqual(["retail", "drugstore"])
+
+		// Disjoint from the pharmacy leaf, which is the whole reason the second mapping reaches rows the first cannot.
+		expect(getPOICategory(String(POI_CATEGORY))?.hierarchy).toEqual(["health_and_medical", "pharmacy"])
 	})
 })
 
@@ -287,16 +292,32 @@ describe("reading the slice through the runtime lookups", () => {
 		expect(index.derivedFactsAbout(toConceptID("chemist"))).toBeUndefined()
 	})
 
-	// Three empty answers about `drugstore` that mean three different things, asserted together because the lookups
-	// return the same value for all of them and a reader meeting one alone would take it for the others. The model
-	// CARRIES the concept and states what it affords; nothing has been DERIVED about it; and no external identifier
-	// translates into it, which is the held-out mapping and not an absent class.
-	it("carries `drugstore` while answering nothing for its external identifier", () => {
+	// The empty answer and the two non-empty ones asserted together, because `derivedFactsAbout` returning `[]` reads
+	// like the external lookup returning `[]` and a reader meeting one alone would take it for the other. The model
+	// CARRIES the concept and states what it affords, its external identifier DOES translate into it since W1-3
+	// landed, and nothing has been DERIVED about it — which is an empty derivation, not an unmapped class.
+	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", () => {
 		const index = createGeographicModelIndex(readCompiledGeographicModel())
 
 		expect(index.concept(DRUGSTORE)).toBeDefined()
 		expect(index.concept(DRUGSTORE)?.assertions).toHaveLength(1)
+		expect(index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, DRUGSTORE_CATEGORY)).toEqual([DRUGSTORE])
 		expect(index.derivedFactsAbout(DRUGSTORE)).toEqual([])
-		expect(index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, DRUGSTORE_CATEGORY)).toEqual([])
+	})
+
+	// The two kinds `obtain_medication` reaches, read off the committed artifact rather than off the route. Each
+	// external identifier translates into ITS OWN concept and not into the other: the mapping table states which id
+	// names which class, and nothing in it states a preference between the two.
+	it("reaches two mapped kinds for one activity, each from its own external identifier", () => {
+		const index = createGeographicModelIndex(readCompiledGeographicModel())
+
+		expect(index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, POI_CATEGORY)).toEqual([PHARMACY])
+		expect(index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, DRUGSTORE_CATEGORY)).toEqual([DRUGSTORE])
+
+		const affording = [PHARMACY, DRUGSTORE].filter((id) =>
+			index.concept(id)?.assertions.some((entry) => entry.relation === AFFORDS && entry.target === OBTAIN_MEDICATION)
+		)
+
+		expect(affording).toEqual([PHARMACY, DRUGSTORE])
 	})
 })

@@ -58,7 +58,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const intent: POIIntent = {
-			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		}
 
@@ -103,7 +103,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const outcome = executor({
-			subject: { kind: "category", categoryID: "supermarket", matched: "grocery" },
+			subject: { kind: "category", categoryIDs: ["supermarket"], matched: "grocery" },
 			anchor: { text: "Chicago IL", tree: SPRINGFIELD_TREE },
 		})
 
@@ -137,7 +137,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const outcome = executor({
-			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		})
 
@@ -152,13 +152,141 @@ describe("createPOIExecutor", () => {
 		expect(outcome.results![0]!.categoryID).toBe("hospital")
 	})
 
+	// The union: every category the subject reached goes into ONE search, so the reader's own k-ring walk unions the
+	// rows and distance-sorts the pool. Two searches taken in turn would need something here to decide which set of
+	// results wins, and that decision is the candidate ordering this path does not author.
+	it("union: probes every category the subject reached in a single search", () => {
+		const seenQueries: POISearchQuery[] = []
+
+		const executor = createPOIExecutor({
+			lookup: stubLookup((query) => {
+				seenQueries.push(query)
+
+				return []
+			}),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+		})
+
+		executor({
+			subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
+			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(seenQueries).toEqual([
+			{
+				categoryIDs: ["drugstore", "pharmacy"],
+				center: { latitude: 39.78, longitude: -89.65 },
+				limit: undefined,
+			},
+		])
+	})
+
+	// Each hit keeps the identity of the category it came from, so a caller reading `results[0].categoryID` is told
+	// which class answered rather than which class was asked for first.
+	it("union: re-tags each hit to the canonical seed whose fan-out reached it", () => {
+		const drugstoreHit: POISearchHit = { ...HOSPITAL_HIT, name: "Rite Aid", categoryID: "drugstore", distanceM: 770 }
+		const pharmacyHit: POISearchHit = { ...HOSPITAL_HIT, name: "Walgreens Rx", categoryID: "rx", distanceM: 1710 }
+
+		const executor = createPOIExecutor({
+			lookup: stubLookup(() => [drugstoreHit, pharmacyHit]),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+			resolveOvertureCategories: (id) => (id === "pharmacy" ? ["rx"] : [id]),
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
+			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE },
+		})
+
+		if (outcome.type !== "intent") throw new Error("unreachable")
+
+		expect(outcome.results!.map((result) => [result.name, result.categoryID])).toEqual([
+			["Rite Aid", "drugstore"],
+			["Walgreens Rx", "pharmacy"],
+		])
+	})
+
+	// The order the reader returned, kept exactly. The executor sorts nothing and applies no per-category weight, so
+	// the nearest row leads whichever category it came from.
+	it("union: leaves the reader's ordering alone", () => {
+		const far: POISearchHit = { ...HOSPITAL_HIT, name: "far pharmacy", categoryID: "pharmacy", distanceM: 4000 }
+		const near: POISearchHit = { ...HOSPITAL_HIT, name: "near drugstore", categoryID: "drugstore", distanceM: 770 }
+
+		const executor = createPOIExecutor({
+			lookup: stubLookup(() => [near, far]),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
+			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE },
+		})
+
+		if (outcome.type !== "intent") throw new Error("unreachable")
+
+		expect(outcome.results!.map((result) => result.name)).toEqual(["near drugstore", "far pharmacy"])
+	})
+
+	// Two seeds rolling up into a shared leaf probe it ONCE — a repeated leaf would return the same rows twice and read
+	// as two premises at one coordinate.
+	it("union: probes a leaf two seeds share exactly once", () => {
+		const seenQueries: POISearchQuery[] = []
+
+		const executor = createPOIExecutor({
+			lookup: stubLookup((query) => {
+				seenQueries.push(query)
+
+				return []
+			}),
+			requiresBuildLocal: NEVER_BUILD_LOCAL,
+			resolveOvertureCategories: (id) => (id === "drugstore" ? ["drugstore", "rx"] : ["rx"]),
+		})
+
+		executor({
+			subject: { kind: "category", categoryIDs: ["drugstore", "pharmacy"], matched: "prescription" },
+			anchor: { text: "Coalinga CA", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(seenQueries[0]!.categoryIDs).toEqual(["drugstore", "rx"])
+	})
+
+	// The abstain is about what the shipped layer CAN answer, so it needs every member to be build-local. One member
+	// the layer carries makes the search answerable, and abstaining would report a gap the search does not have.
+	it("union: does not abstain when one member of the set is not build-local", () => {
+		const executor = createPOIExecutor({
+			lookup: stubLookup(() => []),
+			requiresBuildLocal: (categoryID) => categoryID === "fire_hydrant",
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryIDs: ["fire_hydrant", "hospital"], matched: "water" },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(outcome.type).toBe("intent")
+	})
+
+	it("union: abstains when EVERY member is build-local and the search comes back empty", () => {
+		const executor = createPOIExecutor({
+			lookup: stubLookup(() => []),
+			requiresBuildLocal: () => true,
+		})
+
+		const outcome = executor({
+			subject: { kind: "category", categoryIDs: ["fire_hydrant", "drinking_water"], matched: "water" },
+			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
+		})
+
+		expect(outcome).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
+	})
+
 	it("anchor_required: category subject, lookup present, no resolvable center", () => {
 		const executor = createPOIExecutor({
 			lookup: stubLookup(() => [HOSPITAL_HIT]),
 			requiresBuildLocal: NEVER_BUILD_LOCAL,
 		})
 
-		const outcome = executor({ subject: { kind: "category", categoryID: "hospital", matched: "hospital" } })
+		const outcome = executor({ subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } })
 
 		expect(outcome).toEqual({ type: "abstain", reason: "anchor_required" })
 	})
@@ -170,7 +298,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const outcome = executor({
-			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
 			anchor: { biasPoint: { latitude: 1, longitude: 2 } },
 		})
 
@@ -184,7 +312,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const intent: POIIntent = {
-			subject: { kind: "category", categoryID: "fire_hydrant", matched: "fire hydrant" },
+			subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		}
 
@@ -199,7 +327,7 @@ describe("createPOIExecutor", () => {
 			requiresBuildLocal: (categoryID) => categoryID === "fire_hydrant",
 		})
 
-		const outcome = executor({ subject: { kind: "category", categoryID: "fire_hydrant", matched: "fire hydrant" } })
+		const outcome = executor({ subject: { kind: "category", categoryIDs: ["fire_hydrant"], matched: "fire hydrant" } })
 
 		expect(outcome).toEqual({ type: "abstain", reason: "requires_build_local_layer" })
 	})
@@ -207,7 +335,7 @@ describe("createPOIExecutor", () => {
 	it("intent-only passthrough: no lookup configured, non-build-local category", () => {
 		const executor = createPOIExecutor({ lookup: undefined, requiresBuildLocal: NEVER_BUILD_LOCAL })
 
-		const intent: POIIntent = { subject: { kind: "category", categoryID: "hospital", matched: "hospital" } }
+		const intent: POIIntent = { subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" } }
 		const outcome = executor(intent)
 
 		expect(outcome).toEqual({ type: "intent", intent })
@@ -265,7 +393,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const outcome = executor({
-			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		})
 
@@ -295,7 +423,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const outcome = executor({
-			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		})
 
@@ -315,7 +443,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const outcome = executor({
-			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		})
 
@@ -333,7 +461,7 @@ describe("createPOIExecutor", () => {
 		})
 
 		const outcome = executor({
-			subject: { kind: "category", categoryID: "hospital", matched: "hospital" },
+			subject: { kind: "category", categoryIDs: ["hospital"], matched: "hospital" },
 			anchor: { text: "Springfield IL", tree: SPRINGFIELD_TREE },
 		})
 

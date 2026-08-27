@@ -24,7 +24,7 @@
  */
 export interface OverpassIntentLike {
 	subject:
-		| { kind: "category"; categoryID: string; matched: string }
+		| { kind: "category"; categoryIDs: string[]; matched: string }
 		| { kind: "brand"; name: string; wikidata?: string; matched: string }
 		| { kind: "name"; text: string }
 	/**
@@ -58,9 +58,11 @@ function escapeQLRegex(value: string): string {
 
 export interface EmitOverpassOpts {
 	/**
-	 * `key=value` OSM tag for category subjects (from `CategoryRecord.osmTag`).
+	 * One `key=value` OSM tag per category the subject reaches (from `CategoryRecord.osmTag`), in the subject's own
+	 * order. A subject reaching several categories emits an OverpassQL union over them — Overpass answers the same set
+	 * the POI branch searches, and the emitter states no preference between the members.
 	 */
-	osmTag?: string
+	osmTags?: string[]
 	/**
 	 * Radius for around-filters when the anchor is a bias point (future); default 10000.
 	 */
@@ -68,47 +70,53 @@ export interface EmitOverpassOpts {
 }
 
 /**
- * Render an OverpassQL query for the intent. Category subjects need `opts.osmTag`; name/brand subjects render a
+ * Render an OverpassQL query for the intent. Category subjects need `opts.osmTags`; name/brand subjects render a
  * case-insensitive name regex. A resolved anchor locality becomes an area scope; otherwise the query is global
  * (Overpass-turbo users add their own bbox).
+ *
+ * Several filters become an OverpassQL union block — `( … ; … ; );` — which is the language's own way of saying "the
+ * rows under either tag", and is what a category subject reaching several categories asks for. One filter renders
+ * exactly as it always has, with no block around it.
  */
 export function emitOverpassQL(intent: OverpassIntentLike, opts: EmitOverpassOpts = {}): string {
-	let filter: string
+	let filters: string[]
 
 	switch (intent.subject.kind) {
 		case "category": {
-			if (!opts.osmTag) {
-				throw new Error(`emitOverpassQL: category subject ${intent.subject.categoryID} requires opts.osmTag`)
+			if (!opts.osmTags?.length) {
+				throw new Error(
+					`emitOverpassQL: category subject ${intent.subject.categoryIDs.join(", ")} requires opts.osmTags`
+				)
 			}
 
-			const parts = opts.osmTag.split("=")
+			filters = opts.osmTags.map((osmTag) => {
+				const parts = osmTag.split("=")
 
-			if (parts.length !== 2 || !parts[0] || !parts[1]) {
-				throw new Error(`emitOverpassQL: malformed osmTag ${JSON.stringify(opts.osmTag)} — expected key=value`)
-			}
+				if (parts.length !== 2 || !parts[0] || !parts[1]) {
+					throw new Error(`emitOverpassQL: malformed osmTag ${JSON.stringify(osmTag)} — expected key=value`)
+				}
 
-			filter = `nwr["${escapeQL(parts[0])}"="${escapeQL(parts[1])}"]`
+				return `nwr["${escapeQL(parts[0])}"="${escapeQL(parts[1])}"]`
+			})
 
 			break
 		}
 		case "brand":
-			filter = `nwr["name"~"${escapeQLRegex(intent.subject.name)}",i]`
+			filters = [`nwr["name"~"${escapeQLRegex(intent.subject.name)}",i]`]
 			break
 		case "name":
-			filter = `nwr["name"~"${escapeQLRegex(intent.subject.text)}",i]`
+			filters = [`nwr["name"~"${escapeQLRegex(intent.subject.text)}",i]`]
 			break
 	}
 
 	const locality = intent.anchor?.tree?.roots.find((r) => r.tag === "locality")?.value
+	const scope = locality ? "(area.anchor)" : ""
+	const statements = filters.map((filter) => `${filter}${scope};`)
+	const body = statements.length === 1 ? statements[0]! : `(${statements.join("")});`
 
 	if (locality) {
-		return [
-			"[out:json][timeout:25];",
-			`area["name"="${escapeQL(locality)}"]->.anchor;`,
-			`${filter}(area.anchor);`,
-			"out center;",
-		].join("\n")
+		return ["[out:json][timeout:25];", `area["name"="${escapeQL(locality)}"]->.anchor;`, body, "out center;"].join("\n")
 	}
 
-	return ["[out:json][timeout:25];", `${filter};`, "out center;"].join("\n")
+	return ["[out:json][timeout:25];", body, "out center;"].join("\n")
 }

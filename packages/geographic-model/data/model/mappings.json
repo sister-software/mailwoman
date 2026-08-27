@@ -13,6 +13,20 @@
 				"authoredAt": "2026-08-26",
 				"notes": "Read from the committed table at version 0.4.0 (Overture schema v1.17.0): `{ id: pharmacy, label: Pharmacy, hierarchy: [health_and_medical, pharmacy], basicLabel: Pharmacy, osmTag: amenity=pharmacy, source: overture }`. The category declares no `overtureCategories`, so `resolveOvertureCategories(\"pharmacy\")` is the identity `[\"pharmacy\"]`. The mapping states that the external identifier names this concept, and nothing else — the containment hierarchy, the Overture-leaf translation and the phrase lexicon stay owned by `@mailwoman/poi-taxonomy`."
 			}
+		},
+		{
+			"id": "poi-taxonomy-drugstore",
+			"concept": "drugstore",
+			"vocabulary": "poi-taxonomy",
+			"externalID": "drugstore",
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceVersion": "poi-taxonomy table 0.4.0",
+				"sourceRecord": "packages/poi-taxonomy/data/taxonomy.json categories[drugstore]",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1980",
+				"authoredAt": "2026-08-28",
+				"notes": "W1-3 of the wave-1 amendment, read back from the committed table at version 0.4.0 (Overture schema v1.17.0): `{ id: drugstore, hierarchy: [retail, drugstore], source: overture }`. The category declares no `overtureCategories`, so `resolveOvertureCategories(\"drugstore\")` is the identity `[\"drugstore\"]`, and the leaf is disjoint from `health_and_medical > pharmacy` — which is why 7,168 rows were out of reach of a `pharmacy` query. With this record `obtain_medication` reaches two mapped kinds; that is the SET the POI branch searches, and no field here states a preference between them. The mapping states that the external identifier names this concept and nothing else."
+			}
 		}
 	]
 }
