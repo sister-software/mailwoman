@@ -31,6 +31,12 @@
  *   estimate fits {@link CELL_ESTIMATE_BUDGET}, and the resolution it got is stored on the row. That is not
  *   a compromise bolted on: a coarse cell wholly inside a large polygon is exactly what `compactCells` would
  *   have produced anyway, so the whole tier is unchanged in meaning and only the fringe is coarser.
+ *
+ *   AND THE ESTIMATE IS A PREDICTION, SO THE FAILURE IS RECOVERED RATHER THAN FATAL. The same feature that
+ *   threw after 350,000 others classified cleanly when run on its own, which says the ceiling depends on
+ *   what the WASM heap already holds and not only on the polygon. {@linkcode classifyFeatureCells} therefore
+ *   steps the resolution down and retries; only a feature that fails at {@linkcode MIN_INDEX_RESOLUTION} is
+ *   refused. Nothing is ever skipped, because a skipped feature is an invented absence.
  */
 
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -166,31 +172,57 @@ export function classifyFeatureCells(
 	targetResolution: number,
 	areaID: string
 ): FeatureCells {
-	const resolution = resolutionForFeature(polygons, targetResolution)
-	const touched = new Set<string>()
-	const full = new Set<string>()
+	let resolution = resolutionForFeature(polygons, targetResolution)
+	let touched = new Set<string>()
+	let full = new Set<string>()
 
-	for (const rings of polygons) {
-		// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order the ingest emits. Converting instead
-		// would put a transposition between the geometry and the index that nothing downstream could see.
-		const geoJSONRings = rings as number[][][]
+	// THE BUDGET IS A PREDICTION AND THE RETRY IS WHAT MAKES IT NON-FATAL. `estimateCellCount` is a bounding-box
+	// approximation of what h3 will reserve, and h3's own reservation depends on the polygon's shape and on what the WASM
+	// heap already holds — measured over the real product, a run that had classified 350,000 features threw `Memory
+	// allocation failed (code: 13)` on a feature that classified cleanly on its own. So an allocation failure steps the
+	// resolution down and tries again rather than ending the build, and only a feature that fails at
+	// {@link MIN_INDEX_RESOLUTION} is refused: a coarser cell is a real answer, and a skipped feature is an invented
+	// absence.
+	for (;;) {
+		try {
+			touched = new Set<string>()
+			full = new Set<string>()
 
-		for (const cell of polygonToCellsExperimental(
-			geoJSONRings,
-			resolution,
-			POLYGON_TO_CELLS_FLAGS.containmentOverlapping,
-			true
-		)) {
-			touched.add(cell)
-		}
+			for (const rings of polygons) {
+				// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order the ingest emits. Converting
+				// instead would put a transposition between the geometry and the index that nothing downstream could see.
+				const geoJSONRings = rings as number[][][]
 
-		for (const cell of polygonToCellsExperimental(
-			geoJSONRings,
-			resolution,
-			POLYGON_TO_CELLS_FLAGS.containmentFull,
-			true
-		)) {
-			full.add(cell)
+				for (const cell of polygonToCellsExperimental(
+					geoJSONRings,
+					resolution,
+					POLYGON_TO_CELLS_FLAGS.containmentOverlapping,
+					true
+				)) {
+					touched.add(cell)
+				}
+
+				for (const cell of polygonToCellsExperimental(
+					geoJSONRings,
+					resolution,
+					POLYGON_TO_CELLS_FLAGS.containmentFull,
+					true
+				)) {
+					full.add(cell)
+				}
+			}
+
+			break
+		} catch (error) {
+			if (resolution <= MIN_INDEX_RESOLUTION) {
+				throw new Error(
+					`flood cells: feature ${areaID} could not be indexed at any resolution down to ${MIN_INDEX_RESOLUTION} — ${String(
+						(error as Error).message
+					)}`
+				)
+			}
+
+			resolution--
 		}
 	}
 
