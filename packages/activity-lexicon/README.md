@@ -10,7 +10,7 @@ Every entry belongs to one of four attestation classes — a committed query, a 
 
 ## Release posture
 
-**Do not depend on this package yet.** Its npm name has not been published; it joins the coordinated mailwoman release after the one-time first publish establishes the name (`scripts/bless-package.ts` in the repository — an operator step). Until then it is a sanctioned release absence, recorded in `scripts/release-stage.ts`. When blessed, the change is the same three edits `@mailwoman/geographic-model` made: the `.release-it.json` entry, the sanctioned-absence removal, and the arithmetic in `AGENTS.md` and `scripts/release-stage.test.ts`.
+**Do not depend on version `0.0.0`.** It exists to establish the package name. The first supported release ships with the next coordinated mailwoman release, and the API is unstable until a `1.x`.
 
 ## License
 
