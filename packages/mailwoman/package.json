@@ -47,6 +47,7 @@
 		"eval-harness/gauntlet/cases/*/*.jsonl",
 		"eval-harness/conformance/*.jsonl",
 		"eval-harness/semantic-utility/*.json",
+		"eval-harness/absence-observation/*.json",
 		"eval-harness/invariance/*.jsonl",
 		"skills",
 		"*.ts",
