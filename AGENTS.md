@@ -2,7 +2,7 @@
 
 Mailwoman is a postal-address parser shipped as the unscoped entry package `mailwoman` (CLI + library) plus **58 scoped `@mailwoman/*` workspaces** — **59 entries in the root `workspaces` array**, which is the list to trust. The repo root is the private orchestration package `@mailwoman/universe` (not published).
 
-**53 of the 59 publish to npm.** The publish set is `.release-it.json`'s `@release-it-plugins/workspaces` list, and it is not derivable from the `private` flag alone: five workspaces are `private: true` and can never publish (`docs`, `tile-worker`, `geocode-oracle`, `neural-weights-base-latn`, `dev-mcp`), while **`osm` is public but deliberately held OUT of the release list** — ODbL counsel sign-off pending (`packages/osm/README.md`). That is six, and 59 − 53 = **six**, so every absence currently has a reason someone can state. Trust the subtraction over the story: run the check in the release-list pitfall below whenever you add or move a workspace, and when the number stops matching the workspaces you can name a reason for, one has fallen out of the release. The table groups them by role:
+**52 of the 59 publish to npm.** The publish set is `.release-it.json`'s `@release-it-plugins/workspaces` list, and it is not derivable from the `private` flag alone: five workspaces are `private: true` and can never publish (`docs`, `tile-worker`, `geocode-oracle`, `neural-weights-base-latn`, `dev-mcp`), while two are public and deliberately held OUT of the release list — **`osm`**, ODbL counsel sign-off pending (`packages/osm/README.md`), and **`activity-lexicon`**, whose npm name has never been published, so it joins the list after its `bless-package` first publish (`packages/activity-lexicon/README.md`). That is seven, and 59 − 52 = **seven**, so every absence currently has a reason someone can state. Trust the subtraction over the story: run the check in the release-list pitfall below whenever you add or move a workspace, and when the number stops matching the workspaces you can name a reason for, one has fallen out of the release. The table groups them by role:
 
 | Workspace                                                                    | npm package                                     | Purpose                                                                                                                                                                                                                                                                                                                                                              |
 | ---------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -189,13 +189,18 @@ node -e "const w=require('./package.json').workspaces,r=require('./.release-it.j
 Every name it prints needs a reason you can state. `scripts/scaffold-weights-overlay.ts` registers a
 new overlay in both lists for exactly this reason — a locale added by hand skips that step.
 
-A new workspace joins FIVE registers, and only the first one fails loudly. The root `workspaces` array is
-what `yarn install` reads, so missing it breaks immediately. The other four do not: the release list
+A new workspace joins SIX registers, and only the first one fails loudly. The root `workspaces` array is
+what `yarn install` reads, so missing it breaks immediately. The other five do not: the release list
 above, or — when the workspace is held out — `SANCTIONED_RELEASE_ABSENCES` in
 `scripts/release-stage.ts`, which is where "a reason you can state" stops being prose and starts being
 data (`checkReleaseListIdentity` refuses an absence that is in neither, and names it rather than
-reporting a count); and BOTH root `tsconfig.json` reference entries — `./packages/<name>`
-and `./packages/<name>/tsconfig.test.json`. Skip the tsconfig pair and `tsc -b` never builds the
+reporting a count — its `publishCount` pin in `scripts/release-stage.test.ts` moves with either edit);
+BOTH root `tsconfig.json` reference entries — `./packages/<name>`
+and `./packages/<name>/tsconfig.test.json`; and `scripts/smoke-clean-install.ts`'s pack set, which
+enumerates the workspaces the clean-install smoke packs and silently skips one it does not name.
+A brand-new npm name has a seventh obligation before it may enter the release list at all: the
+`bless-package` first publish (see the pitfall below — an unblessed name fails the whole release
+at that workspace with a bare `E404`). Skip the tsconfig pair and `tsc -b` never builds the
 workspace at all, so `out/` stays empty and every test-project reference to it fails with `TS6305:
 Output file has not been built from source file` — which reads as a broken test rather than an
 unregistered project, and which a local run hides completely if you happened to build that workspace
