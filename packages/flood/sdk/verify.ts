@@ -23,6 +23,13 @@
  *   decimals is about 10 cm, so a point within roughly a metre of a zone boundary can land on opposite
  *   sides of two renderings of the same edge. Those are reported as `boundary_tolerance` rather than as
  *   disagreements, with their distance to the nearest edge, and the count is part of the receipt.
+ *
+ *   THIS CHECK HAS ALREADY EARNED ITS KEEP, and what it caught is the reason to keep running it. A missing
+ *   PROJ datum grid put the whole layer 3.4 m from where the authority puts it — coordinates that pass
+ *   every structural check there is, because they are ordinary WGS84 numbers inside the declared extent.
+ *   It showed up here and nowhere else, as eight disagreements out of 59, each a point that had fallen
+ *   into a neighbouring sliver. With the grid installed the same sample reads 59/59. See
+ *   `assessDatumTransformation` in `ingest.ts` for the guard that now refuses the build instead.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -52,7 +59,11 @@ export interface AgreementRow {
 	service: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Degrees from the point to the nearest service-polygon vertex, on a `boundary_tolerance` row.
+	 * Degrees from the point to the nearest vertex of any polygon the service returned nearby.
+	 *
+	 * Carried on every row rather than only the tolerated ones, because it is what separates a real conversion defect
+	 * from the two channels rendering the same edge differently — and a receipt that omits it forces a re-run.
+	 * `undefined` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeDegrees?: number
 }
@@ -143,19 +154,18 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 			const localZone = local.kind === FloodReadingKind.Designated ? (local.zoneCode ?? null) : null
 
-			if (localZone === service.zone) {
-				agreement.push({ ...point, local, service: service.zone, outcome: "agree" })
-			} else if (service.nearestEdgeDegrees !== undefined && service.nearestEdgeDegrees <= BOUNDARY_TOLERANCE_DEGREES) {
-				agreement.push({
-					...point,
-					local,
-					service: service.zone,
-					outcome: "boundary_tolerance",
-					nearestEdgeDegrees: service.nearestEdgeDegrees,
-				})
-			} else {
-				agreement.push({ ...point, local, service: service.zone, outcome: "disagree" })
-			}
+			const nearEdge =
+				service.nearestEdgeDegrees !== undefined && service.nearestEdgeDegrees <= BOUNDARY_TOLERANCE_DEGREES
+
+			// The distance rides on EVERY row, not only the tolerated ones: it is the first thing anyone wants when a
+			// disagreement appears, and carrying it only where it was already acted on means re-running the check to see it.
+			agreement.push({
+				...point,
+				local,
+				service: service.zone,
+				outcome: localZone === service.zone ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
+				...(service.nearestEdgeDegrees === undefined ? {} : { nearestEdgeDegrees: service.nearestEdgeDegrees }),
+			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
 		}

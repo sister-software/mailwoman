@@ -35,7 +35,7 @@
  *   every point in it.
  */
 
-import { statSync } from "node:fs"
+import { rmSync, statSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
@@ -271,6 +271,10 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 	} catch (error) {
 		await kdb.destroy().catch(() => undefined)
 
+		// A failed build leaves a partial multi-gigabyte file whose name carries this process's pid, so nothing will ever
+		// pick it up again. Removing it is the difference between a retry loop that fails and one that fills a disk.
+		rmSync(tmpPath, { force: true })
+
 		throw error
 	}
 }
@@ -392,7 +396,14 @@ async function streamFeatures(database: DatabaseSync, options: BuildFloodOptions
 
 		database.exec("COMMIT")
 	} catch (error) {
-		database.exec("ROLLBACK")
+		// Best-effort, and it must never replace the real error: the build runs with the journal OFF (nothing here is ever
+		// published without the swap), so SQLite may refuse to unwind. What matters is that the caller sees WHY the ingest
+		// stopped, not that a scratch file was tidied.
+		try {
+			database.exec("ROLLBACK")
+		} catch {
+			// The temp artifact is discarded either way.
+		}
 
 		throw error
 	}

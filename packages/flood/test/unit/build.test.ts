@@ -15,12 +15,9 @@ import { mkdtempSync, rmSync, statSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { latLngToCell } from "h3-js"
-import { afterAll, beforeAll, describe, expect, it } from "vitest"
-
-import { FloodContainmentPath, FloodReadingKind, FloodZoneLookup } from "../../index.ts"
-import { buildFloodDatabase, type BuildFloodResult } from "../../sdk/build-flood.ts"
-import { realizeFloodMapExtent } from "../../sdk/extent.ts"
+import { FloodContainmentPath, FloodReadingKind, FloodZoneLookup } from "@mailwoman/flood"
+import { buildFloodDatabase, type BuildFloodResult } from "@mailwoman/flood/sdk/build-flood"
+import { realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
 import {
 	fixtureExtentGeometry,
 	fixtureFeature,
@@ -29,8 +26,10 @@ import {
 	rectangleRing,
 	FIXTURE_ORIGIN,
 	FIXTURE_SIDE,
-} from "../../test-kit.ts"
-import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL, EA_FLOOD_LAYER_NAME } from "../../vocabulary.ts"
+} from "@mailwoman/flood/test-kit"
+import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL, EA_FLOOD_LAYER_NAME } from "@mailwoman/flood/vocabulary"
+import { latLngToCell } from "h3-js"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 9
 const COVERAGE_RESOLUTION = 6

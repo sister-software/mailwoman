@@ -7,11 +7,15 @@
  *   the adaptive resolution that keeps a continental polygon inside h3's allocator.
  */
 
+import {
+	classifyFeatureCells,
+	estimateCellCount,
+	resolutionForFeature,
+	CELL_ESTIMATE_BUDGET,
+} from "@mailwoman/flood/sdk/cells"
+import { rectangleRing } from "@mailwoman/flood/test-kit"
 import { polygonToCells } from "h3-js"
 import { describe, expect, it } from "vitest"
-
-import { classifyFeatureCells, estimateCellCount, resolutionForFeature, CELL_ESTIMATE_BUDGET } from "../../sdk/cells.ts"
-import { rectangleRing } from "../../test-kit.ts"
 
 /**
  * The first feature of the real EA product, verbatim from the published geodatabase: a 128 m² square off Great

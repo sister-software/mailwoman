@@ -10,9 +10,8 @@
  *   six words; the difference in the artifact is 3.4 metres over every coordinate in England.
  */
 
+import { assessDatumTransformation } from "@mailwoman/flood/sdk/ingest"
 import { describe, expect, it } from "vitest"
-
-import { assessDatumTransformation } from "../../sdk/ingest.ts"
 
 /**
  * `projinfo -s EPSG:27700 -t EPSG:4326 --summary`, with the OSTN15 grid ABSENT.

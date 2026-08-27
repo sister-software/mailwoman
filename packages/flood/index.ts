@@ -424,6 +424,18 @@ function readIdentity(database: DatabaseSync, databasePath: string): FloodLayerI
 		}>
 	).map((r) => r.resolution)
 
+	const indexResolution = spineKeys.h3.resolution
+	const finerThanIndex = cellResolutions.filter((resolution) => resolution > indexResolution)
+
+	// A stored cell finer than the manifest's declared index resolution has no ancestor chain from the probe's own cell,
+	// so `cellToParent` would throw mid-query on some coordinates and not others. Refused here instead: it means the
+	// manifest and the rows disagree about what the layer is, which is a build defect rather than a runtime condition.
+	if (finerThanIndex.length) {
+		throw new Error(
+			`flood reader: ${databasePath} stores cells at resolution(s) ${finerThanIndex.join(", ")}, finer than the manifest's declared index resolution ${indexResolution} — the manifest and the rows disagree`
+		)
+	}
+
 	const zoneCodes = (
 		database.prepare("SELECT zone_code FROM flood_zone_vocabulary ORDER BY zone_code").all() as Array<{
 			zone_code: string
@@ -436,7 +448,7 @@ function readIdentity(database: DatabaseSync, databasePath: string): FloodLayerI
 
 	return {
 		manifest,
-		indexResolution: spineKeys.h3.resolution,
+		indexResolution,
 		coverageResolution: Number(extentRow.coverage_resolution),
 		cellResolutions,
 		extent: {

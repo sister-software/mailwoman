@@ -6,11 +6,16 @@
  *   The ring blob: round-trip, containment with holes, and the two area readings the build compares.
  */
 
+import {
+	decodeRings,
+	encodeRings,
+	pointInEncodedRings,
+	ringAreaReadings,
+	ringSignedAreaM2,
+} from "@mailwoman/flood/rings"
+import { holeRing, rectangleRing } from "@mailwoman/flood/test-kit"
 import { pointInPolygonRings } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
-
-import { decodeRings, encodeRings, pointInEncodedRings, ringAreaReadings, ringSignedAreaM2 } from "../../rings.ts"
-import { holeRing, rectangleRing } from "../../test-kit.ts"
 
 describe("ring blob", () => {
 	it("round-trips a multi-polygon's rings, keeping the polygon grouping", () => {
