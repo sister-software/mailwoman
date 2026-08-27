@@ -48,6 +48,7 @@
 		"eval-harness/conformance/*.jsonl",
 		"eval-harness/semantic-utility/*.json",
 		"eval-harness/absence-observation/*.json",
+		"eval-harness/phase-2-decision/*.json",
 		"eval-harness/invariance/*.jsonl",
 		"skills",
 		"*.ts",

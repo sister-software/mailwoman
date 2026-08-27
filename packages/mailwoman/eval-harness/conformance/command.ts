@@ -41,6 +41,7 @@ import { buildGauntletDeps, type GauntletDepsOptions } from "../gauntlet/harness
 import { type ConformanceFixture, loadConformanceFixtures } from "./fixture.ts"
 import {
 	type ConformanceFinding,
+	type ConformanceSummary,
 	formatConformanceFinding,
 	gauntletObserver,
 	runConformanceFixtures,
@@ -95,9 +96,46 @@ export interface ConformanceCommandOptions extends GauntletDepsOptions {
 }
 
 /**
- * Run the conformance-law suites from CLI-shaped options. Returns the process exit code (0 = PASS).
+ * One law's own counts, split the way the verdict splits.
  */
-export async function runConformanceCommand(options: ConformanceCommandOptions = {}): Promise<number> {
+export interface ConformanceLawMeasurement {
+	law: string
+	decided: number
+	holds: number
+	tracked: number
+	unmeasured: number
+	/**
+	 * The law's breadth line, when its suite registers one. A hold count answers whether the stated rows held, never how
+	 * much of the population the suite could have stated.
+	 */
+	coverage?: string
+}
+
+/**
+ * What one conformance run measured.
+ *
+ * `measured` is ABSENT exactly when `problems` is non-empty — a refused run has no findings, and reporting it as zero
+ * findings would read as a suite that passed nothing rather than a suite that ran nothing.
+ */
+export interface ConformanceMeasurement {
+	laws: string[]
+	problems: string[]
+	measured?: {
+		findings: ConformanceFinding[]
+		summary: ConformanceSummary
+		perLaw: ConformanceLawMeasurement[]
+		tracedObserver: boolean
+	}
+}
+
+/**
+ * Load, audit and run the law suites, and return the counts without printing a verdict.
+ *
+ * Extracted so a second consumer — the phase-2 decision ruler (#1967), which reads the laws as an inertness measurement
+ * — takes the NUMBERS from the same run this command narrates, rather than re-deriving them from a second orchestration
+ * free to load a different suite set or a different observer.
+ */
+export async function measureConformance(options: ConformanceCommandOptions = {}): Promise<ConformanceMeasurement> {
 	const { suite, ...depsOptions } = options
 	const paths = suite ? [suite] : CONFORMANCE_SUITES.map((registered) => registered.path)
 	const fixtures = await loadSuites(paths)
@@ -117,15 +155,7 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 		problems.push(...registered.audit(fixtures.filter((fixture) => fixture.law === law)))
 	}
 
-	if (problems.length) {
-		console.error(`[conformance] refusing to run — ${problems.length} suite problem(s):`)
-
-		for (const problem of problems) {
-			console.error(`  ✗ ${problem}`)
-		}
-
-		return 1
-	}
+	if (problems.length) return { laws, problems }
 
 	console.error(`[conformance] suite audit clean (${laws.join(", ")})`)
 
@@ -148,66 +178,104 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 	try {
 		const observer = wantsTrace ? tracedGauntletObserver(deps.geocodeTraced) : gauntletObserver(deps.geocode)
 		const { findings } = await runConformanceFixtures(fixtures, observer)
-		const summary = summarizeConformanceRun(findings)
 
-		console.log(
-			`\n=== conformance (${summary.gated - summary.failures.length}/${summary.gated} decided rows hold, ` +
-				`${summary.tracked.length} tracked, ${summary.unmeasured.length} unmeasured) ===`
-		)
-
-		// Per law as well as pooled: a run that merges two suites into one verdict says WHETHER something broke and not
-		// WHICH law stopped holding, and the pooled count moves whenever either suite grows.
-		for (const law of laws) {
+		const perLaw = laws.map((law) => {
 			const ofLaw = findings.filter((finding) => finding.fixture.law === law)
-			const perLaw = summarizeConformanceRun(ofLaw)
-
-			console.log(
-				`  ${law}: ${perLaw.gated - perLaw.failures.length}/${perLaw.gated} decided hold, ` +
-					`${perLaw.tracked.length} tracked, ${perLaw.unmeasured.length} unmeasured`
-			)
-
+			const summarized = summarizeConformanceRun(ofLaw)
 			const coverage = suiteForLaw(law)?.coverage
 
-			if (coverage) {
-				const stated = ofLaw.map((finding) => finding.fixture)
-
-				console.log(`    ${coverage(stated, corpusInputs)}`)
+			return {
+				law,
+				decided: summarized.gated,
+				holds: summarized.gated - summarized.failures.length,
+				tracked: summarized.tracked.length,
+				unmeasured: summarized.unmeasured.length,
+				...(coverage
+					? {
+							coverage: coverage(
+								ofLaw.map((finding) => finding.fixture),
+								corpusInputs
+							),
+						}
+					: {}),
 			}
+		})
+
+		return {
+			laws,
+			problems,
+			measured: { findings, summary: summarizeConformanceRun(findings), perLaw, tracedObserver: wantsTrace },
 		}
-
-		report(findings.filter((finding) => finding.held && (finding.fixture.status ?? "pass") === "pass"))
-
-		if (summary.failures.length) {
-			console.log(`\nviolations (gated):`)
-
-			report(summary.failures)
-		}
-
-		if (summary.tracked.length) {
-			console.log(`\ntracked (known_fail / improvement_target, non-blocking):`)
-
-			report(summary.tracked)
-		}
-
-		if (summary.unmeasured.length) {
-			console.log(
-				`\nunmeasured — the comparator read its axis and the observation could not decide (never blocking, ` +
-					`never counted as holding):`
-			)
-
-			report(summary.unmeasured)
-		}
-
-		if (summary.newlyHolding.length) {
-			console.log(`\n⚠ tracked rows whose law now holds — promote to status=pass:`)
-
-			report(summary.newlyHolding)
-		}
-
-		console.log(`\nverdict: ${summary.pass ? "PASS" : "FAIL"}`)
-
-		return summary.pass ? 0 : 1
 	} finally {
 		deps.close()
 	}
+}
+
+/**
+ * Run the conformance-law suites from CLI-shaped options. Returns the process exit code (0 = PASS).
+ */
+export async function runConformanceCommand(options: ConformanceCommandOptions = {}): Promise<number> {
+	const { problems, measured } = await measureConformance(options)
+
+	if (!measured) {
+		console.error(`[conformance] refusing to run — ${problems.length} suite problem(s):`)
+
+		for (const problem of problems) {
+			console.error(`  ✗ ${problem}`)
+		}
+
+		return 1
+	}
+
+	const { findings, summary, perLaw } = measured
+
+	console.log(
+		`\n=== conformance (${summary.gated - summary.failures.length}/${summary.gated} decided rows hold, ` +
+			`${summary.tracked.length} tracked, ${summary.unmeasured.length} unmeasured) ===`
+	)
+
+	// Per law as well as pooled: a run that merges two suites into one verdict says WHETHER something broke and not
+	// WHICH law stopped holding, and the pooled count moves whenever either suite grows.
+	for (const law of perLaw) {
+		console.log(
+			`  ${law.law}: ${law.holds}/${law.decided} decided hold, ${law.tracked} tracked, ${law.unmeasured} unmeasured`
+		)
+
+		if (law.coverage) {
+			console.log(`    ${law.coverage}`)
+		}
+	}
+
+	report(findings.filter((finding) => finding.held && (finding.fixture.status ?? "pass") === "pass"))
+
+	if (summary.failures.length) {
+		console.log(`\nviolations (gated):`)
+
+		report(summary.failures)
+	}
+
+	if (summary.tracked.length) {
+		console.log(`\ntracked (known_fail / improvement_target, non-blocking):`)
+
+		report(summary.tracked)
+	}
+
+	if (summary.unmeasured.length) {
+		console.log(
+			`\nunmeasured — the comparator read its axis and the observation could not decide (never blocking, ` +
+				`never counted as holding):`
+		)
+
+		report(summary.unmeasured)
+	}
+
+	if (summary.newlyHolding.length) {
+		console.log(`\n⚠ tracked rows whose law now holds — promote to status=pass:`)
+
+		report(summary.newlyHolding)
+	}
+
+	console.log(`\nverdict: ${summary.pass ? "PASS" : "FAIL"}`)
+
+	return summary.pass ? 0 : 1
 }
