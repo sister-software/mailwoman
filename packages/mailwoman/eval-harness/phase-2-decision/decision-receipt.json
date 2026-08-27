@@ -1,0 +1,712 @@
+{
+	"decisionID": "phase-2-decision-1967",
+	"definitionVersion": "1.0.0",
+	"definitionSHA256": "6742d42c1f6545c00e2ac7a80e27cc5c1cc22e4e9040bde9425f1a5f717d0662",
+	"generatedAt": "2026-08-27T05:16:07.426Z",
+	"gitCommit": "41e308c05",
+	"artifact": {
+		"poiDatabasePath": "/mnt/playpen/mailwoman-data/poi/poi.db",
+		"poiLayerManifestVersion": "2026-07-22.0",
+		"poiLayerBuildSHA": "3610771ec",
+		"weightsLocale": "en-US",
+		"weightsVersion": "9.1.0",
+		"resolverBackend": "candidate",
+		"geographicModelVersion": "0.2.0",
+		"phraseLexiconID": "mailwoman-activity-phrases",
+		"phraseLexiconVersion": "1.0.0",
+		"declaredPhrases": 11,
+		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
+		"absenceDefinitionSHA256": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1",
+		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
+		"coverageLayerVersion": "260627"
+	},
+	"artifactPins": {
+		"poiLayerManifestVersion": "2026-07-22.0",
+		"poiLayerBuildSHA": "3610771ec",
+		"weightsLocale": "en-US",
+		"weightsVersion": "9.1.0",
+		"resolverBackend": "candidate",
+		"geographicModelVersion": "0.2.0",
+		"phraseLexiconID": "mailwoman-activity-phrases",
+		"phraseLexiconVersion": "1.0.0",
+		"declaredPhrases": 11,
+		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
+		"absenceDefinitionSHA256": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1",
+		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
+		"coverageLayerVersion": "260627"
+	},
+	"artifactPinDeviations": [],
+	"instruments": [
+		{
+			"instrument": "semantic_utility_probe",
+			"identity": "#1928 ruler df32f00d · both arms · route mailwoman-activity-phrases v1.0.0 (11 phrases) → model 0.2.0"
+		},
+		{
+			"instrument": "activity_lexicon",
+			"identity": "mailwoman-activity-phrases v1.0.0 · 11 entries"
+		},
+		{
+			"instrument": "committed_collision_census",
+			"identity": "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json · 19 probes · lexicon mailwoman-activity-phrases v1.0.0 · poi 2026-07-22.0"
+		},
+		{
+			"instrument": "absence_observation_probe",
+			"identity": "#1965 ruler 3b265bc7 · coverage poi-coverage-pharmacy-ile-de-france.db (poi 260627, 290 cells at res 6, 88 exclusion-grade and empty) · model 0.2.0"
+		},
+		{
+			"instrument": "poi_board",
+			"identity": "/mnt/playpen/mailwoman-data/poi/poi.db · 56 committed rows, 51 counted, 5 tracked"
+		},
+		{
+			"instrument": "conformance_laws",
+			"identity": "5 laws (canonical-form-invariance, case-folding-invariance, punctuation-invariance, refinement-monotonicity, whitespace-invariance) · resolver trace ON"
+		},
+		{
+			"instrument": "observation_marker",
+			"identity": "\"where can i pick up a prescription near Denver CO\" → marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion pharmacy-affords-obtain-medication"
+		}
+	],
+	"readings": [
+		{
+			"measurement": "semantic_utility.baseline.primary_passes",
+			"observed": 0,
+			"detail": "un-injected arm: 0/4 target rows answered, verdict STOP-REDESIGN"
+		},
+		{
+			"measurement": "semantic_utility.baseline.control_holds",
+			"observed": 6,
+			"detail": "un-injected arm: 6/6 controls hold"
+		},
+		{
+			"measurement": "semantic_utility.treatment.primary_passes",
+			"observed": 3,
+			"detail": "route-injected arm: 3/4 target rows answered on the board's own comparator"
+		},
+		{
+			"measurement": "semantic_utility.treatment.diagnostic_reaches",
+			"observed": 4,
+			"detail": "route-injected arm: 4/4 target rows reached the POI branch"
+		},
+		{
+			"measurement": "semantic_utility.treatment.frozen_verdict_is_go",
+			"observed": 1,
+			"detail": "the frozen #1928 ruler reads GO on the route-injected arm"
+		},
+		{
+			"measurement": "semantic_utility.treatment.control_holds",
+			"observed": 6,
+			"detail": "route-injected arm: 6/6 controls hold"
+		},
+		{
+			"measurement": "semantic_utility.definition_hash_matches_pin",
+			"observed": 1,
+			"detail": "both arms read #1928 ruler df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c"
+		},
+		{
+			"measurement": "semantic_utility.route_identity_matches_pins",
+			"observed": 1,
+			"detail": "built from mailwoman-activity-phrases v1.0.0 (11 declared phrases) → geographic model 0.2.0 → pharmacy"
+		},
+		{
+			"measurement": "activity_lexicon.declared_phrases",
+			"observed": 11,
+			"detail": "mailwoman-activity-phrases v1.0.0 declares 11 surface forms"
+		},
+		{
+			"measurement": "activity_lexicon.attestation_classes",
+			"observed": 4,
+			"detail": "attestation classes in use: committed-query, concept-description, derived-form, regional-register"
+		},
+		{
+			"measurement": "activity_lexicon.locale_scoped_entries",
+			"observed": 2,
+			"detail": "2 entries carry a locale scope: \"collect a prescription\" en-GB/en-AU/en-NZ, \"collect my prescription\" en-GB/en-AU/en-NZ"
+		},
+		{
+			"measurement": "collision_census.category_lexicon_collisions",
+			"observed": 0,
+			"detail": "claimed by the committed category lexicon: 0 of 19 probes"
+		},
+		{
+			"measurement": "collision_census.name_exact_legitimate_collisions",
+			"observed": 0,
+			"detail": "claimed by a POI name adjudicated legitimate: 0 of 19 probes"
+		},
+		{
+			"measurement": "collision_census.name_exact_query_shaped_collisions",
+			"observed": 1,
+			"detail": "claimed by a POI name adjudicated query-shaped: 1 of 19 probes"
+		},
+		{
+			"measurement": "collision_census.identity_matches_pins",
+			"observed": 1,
+			"detail": "census taken at the pinned lexicon and layer"
+		},
+		{
+			"measurement": "absence_probe.rows_holding",
+			"observed": 11,
+			"detail": "11/11 registered rows produced the outcome registered for them, verdict HOLDS"
+		},
+		{
+			"measurement": "absence_probe.targets_fired",
+			"observed": 5,
+			"detail": "5/5 targets carry a coverage-qualified absence observation"
+		},
+		{
+			"measurement": "absence_probe.controls_silent",
+			"observed": 6,
+			"detail": "6/6 controls stayed silent"
+		},
+		{
+			"measurement": "absence_probe.definition_hash_matches_pin",
+			"observed": 1,
+			"detail": "#1965 ruler 3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1"
+		},
+		{
+			"measurement": "poi_board.floors_unmet",
+			"observed": 0,
+			"detail": "all 3 floors met: overall 49/51, abstain 8/8, address-guard 6/6"
+		},
+		{
+			"measurement": "poi_board.counted_rows",
+			"observed": 51,
+			"detail": "51 of 56 committed rows are counted toward the floors"
+		},
+		{
+			"measurement": "poi_board.counted_passing",
+			"observed": 49,
+			"detail": "49/51 counted rows pass (96.1%)"
+		},
+		{
+			"measurement": "poi_board.tracked_rows",
+			"observed": 5,
+			"detail": "tracked rows: 5 of 56 committed — run, graded, reported, never counted"
+		},
+		{
+			"measurement": "conformance.decided_rows",
+			"observed": 183,
+			"detail": "183 rows gated and decided across 5 laws"
+		},
+		{
+			"measurement": "conformance.decided_failures",
+			"observed": 0,
+			"detail": "every decided row holds; 5 tracked"
+		},
+		{
+			"measurement": "conformance.unmeasured_rows",
+			"observed": 1,
+			"detail": "unmeasured rows: 1 — the comparator read its axis and the observation could not decide"
+		},
+		{
+			"measurement": "observation_marker.semantic_marker_reaches_caller",
+			"observed": 1,
+			"detail": "marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion pharmacy-affords-obtain-medication"
+		}
+	],
+	"lanes": [
+		{
+			"id": "recognition",
+			"status": "measurable",
+			"issue": "https://github.com/sister-software/mailwoman/issues/1962",
+			"claim": "A query naming what a person wants to do reaches the entity kinds that afford it, through a reviewed phrase vocabulary whose every surface form points at a committed record, and without the vocabulary claiming a phrase the category or name lexicons already answer.",
+			"landed": "PR #1977 replaced the ten-entry experiment table with `@mailwoman/activity-lexicon` — 11 reviewed entries, 4 attestation classes, 2 locale-scoped — and committed the phrase-collision census. PR #1979 made the two existing scopes (per-entry locales and `RelationAssertion.countries`) actually reachable inside the phrase search.",
+			"registeredChecks": 15,
+			"checksMet": 15
+		},
+		{
+			"id": "semantic_breadth",
+			"status": "blocked",
+			"issue": "https://github.com/sister-software/mailwoman/issues/1963",
+			"claim": "The compiled artifact carries the wave-1 semantics the §4.1 amendment admits, and a phrase whose activity is afforded by more than one mapped kind reaches every one of them rather than whichever concept sorts first by code point.",
+			"landed": "PR #1981 authored W1-1 (the `drugstore` concept) and W1-2 (its US-scoped `affords` assertion) into model 0.2.0 with full provenance, re-ran the recall census against the shipped `poi.db`, corrected the relation-semantics note, and committed board row `sem-act-us-03` as an `improvement_target`.",
+			"registeredChecks": 0,
+			"checksMet": 0,
+			"blockedBy": "https://github.com/sister-software/mailwoman/issues/1980",
+			"blockedReason": "W1-3, the `poi-taxonomy` mapping the amendment also admits, is deliberately held. With it the one activity `obtain_medication` reaches two mapped kinds, and the merged §8.1 interim rule refuses such a phrase at construction — measured on PR #1981's branch, all eleven declared phrases refuse, the route becomes unbuildable and the recognition capability goes from 3/4 to 0/4. #1980 widens `matchPOISubject` and `POIIntent.evidence` to carry a set so the union can be searched and the resolver's existing ordering can rank it; W1-3 is authored behind it. Until then the lane's operational half cannot be measured at all, and a number reported for it would describe a route that is not the one this phase would ship.",
+			"plannedChecks": [
+				{
+					"id": "brd-p-01",
+					"measures": "Board row `sem-act-us-03` (`where can i pick up a prescription near Coalinga CA`) answers `pharmacy`-or-`drugstore` within 25 km and is promoted from `improvement_target` to a COUNTED `pass`.",
+					"todayReads": "Tracked and failing as registered: `expected a poi outcome (results), got path=full (no poi intent)`. At that anchor `pharmacy near Coalinga CA` returns zero rows while `drugstore near Coalinga CA` returns two, at 0.77 km and 1.71 km."
+				},
+				{
+					"id": "brd-p-02",
+					"measures": "`conceptsForExternalID(\"poi-taxonomy\", \"drugstore\")` answers the `drugstore` concept on the committed artifact — W1-3 authored.",
+					"todayReads": "`[]`. The identifier is read back in `pharmacy-slice.test.ts` so the held mapping cannot rot into a dead reference; `getPOICategory(\"drugstore\")` answers `{ id: \"drugstore\", hierarchy: [\"retail\", \"drugstore\"] }`."
+				},
+				{
+					"id": "brd-p-03",
+					"measures": "All 11 declared phrases build with W1-3 present — the §8.1 plural-affordance construction refusal is lifted because the query surface carries a set.",
+					"todayReads": "Every one of the 11 refuses when the mapping is added, with the refusal naming the phrase and both kinds. Pinned by a test that adds the held-out mapping and asserts the refusal."
+				},
+				{
+					"id": "brd-p-04",
+					"measures": "US drugstore recall: the 6,679 US rows under `retail > drugstore` become reachable from a query the shipped `pharmacy` branch answers.",
+					"todayReads": "Out of reach by construction — the two Overture leaves are disjoint and `pharmacy` declares no `overtureCategories`. Re-measured on `poi.db` `2026-07-22.0`: 7,168 of 89,336 rows under the two leaves (8.0%) overall, 6,679 of 51,624 (12.9%) within the US."
+				}
+			]
+		},
+		{
+			"id": "absence",
+			"status": "measurable",
+			"issue": "https://github.com/sister-software/mailwoman/issues/1965",
+			"claim": "Where the compiled artifact asserts that the answered category affords an activity AND the coverage layer surveyed the searched cell and holds nothing there, the answer carries a coverage-qualified absence observation. Everywhere else the route is silent.",
+			"landed": "PR #1976 shipped the negative-evidence route against the #1964 pilot layer, with both provenances on every observation line and three refusals that would otherwise have presented as a route that simply never fires.",
+			"registeredChecks": 4,
+			"checksMet": 4
+		},
+		{
+			"id": "surface_inertness",
+			"status": "measurable",
+			"issue": "https://github.com/sister-software/mailwoman/issues/1972",
+			"claim": "Both observation routes live in the runtime tree as a supported opt-in surface, an observation reaches a caller as a `QueryIntentMarker`, and with no route handed in the default path is what shipped — floors, laws and composition unmoved.",
+			"landed": "PR #1979 moved both routes to `mailwoman/observations`, added the marker carrier, implemented the §8.1 interim refusal in both code-point orders, made the two scopes reachable, moved `@mailwoman/geographic-model` to a real dependency, and re-pointed the three promoted board rows at #1967.",
+			"registeredChecks": 8,
+			"checksMet": 8
+		}
+	],
+	"checks": [
+		{
+			"id": "rec-c-01",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.baseline.primary_passes",
+			"observed": 0,
+			"denominator": 4,
+			"baselineValue": 0,
+			"bar": {
+				"kind": "at_most",
+				"value": 0
+			},
+			"met": true,
+			"detail": "un-injected arm: 0/4 target rows answered, verdict STOP-REDESIGN"
+		},
+		{
+			"id": "rec-c-02",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.baseline.control_holds",
+			"observed": 6,
+			"denominator": 6,
+			"baselineValue": 6,
+			"bar": {
+				"kind": "at_least",
+				"value": 6
+			},
+			"met": true,
+			"detail": "un-injected arm: 6/6 controls hold"
+		},
+		{
+			"id": "rec-t-01",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "resolution",
+			"measurement": "semantic_utility.treatment.primary_passes",
+			"observed": 3,
+			"denominator": 4,
+			"baselineValue": 3,
+			"bar": {
+				"kind": "at_least",
+				"value": 3
+			},
+			"met": true,
+			"detail": "route-injected arm: 3/4 target rows answered on the board's own comparator"
+		},
+		{
+			"id": "rec-t-02",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "resolution",
+			"measurement": "semantic_utility.treatment.diagnostic_reaches",
+			"observed": 4,
+			"denominator": 4,
+			"baselineValue": 4,
+			"bar": {
+				"kind": "at_least",
+				"value": 4
+			},
+			"met": true,
+			"detail": "route-injected arm: 4/4 target rows reached the POI branch"
+		},
+		{
+			"id": "rec-t-03",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "resolution",
+			"measurement": "semantic_utility.treatment.frozen_verdict_is_go",
+			"observed": 1,
+			"denominator": 1,
+			"baselineValue": 1,
+			"bar": {
+				"kind": "at_least",
+				"value": 1
+			},
+			"met": true,
+			"detail": "the frozen #1928 ruler reads GO on the route-injected arm"
+		},
+		{
+			"id": "rec-c-03",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.treatment.control_holds",
+			"observed": 6,
+			"denominator": 6,
+			"baselineValue": 6,
+			"bar": {
+				"kind": "at_least",
+				"value": 6
+			},
+			"met": true,
+			"detail": "route-injected arm: 6/6 controls hold"
+		},
+		{
+			"id": "rec-c-04",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.definition_hash_matches_pin",
+			"observed": 1,
+			"denominator": 1,
+			"baselineValue": 1,
+			"bar": {
+				"kind": "at_least",
+				"value": 1
+			},
+			"met": true,
+			"detail": "both arms read #1928 ruler df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c"
+		},
+		{
+			"id": "rec-c-05",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.route_identity_matches_pins",
+			"observed": 1,
+			"denominator": 1,
+			"baselineValue": 1,
+			"bar": {
+				"kind": "at_least",
+				"value": 1
+			},
+			"met": true,
+			"detail": "built from mailwoman-activity-phrases v1.0.0 (11 declared phrases) → geographic model 0.2.0 → pharmacy"
+		},
+		{
+			"id": "rec-t-04",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "activity_lexicon.declared_phrases",
+			"observed": 11,
+			"denominator": 11,
+			"baselineValue": 11,
+			"bar": {
+				"kind": "at_least",
+				"value": 11
+			},
+			"met": true,
+			"detail": "mailwoman-activity-phrases v1.0.0 declares 11 surface forms"
+		},
+		{
+			"id": "rec-t-05",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "activity_lexicon.attestation_classes",
+			"observed": 4,
+			"denominator": 4,
+			"baselineValue": 4,
+			"bar": {
+				"kind": "at_least",
+				"value": 4
+			},
+			"met": true,
+			"detail": "attestation classes in use: committed-query, concept-description, derived-form, regional-register"
+		},
+		{
+			"id": "rec-t-06",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "activity_lexicon.locale_scoped_entries",
+			"observed": 2,
+			"denominator": 11,
+			"baselineValue": 2,
+			"bar": {
+				"kind": "at_least",
+				"value": 2
+			},
+			"met": true,
+			"detail": "2 entries carry a locale scope: \"collect a prescription\" en-GB/en-AU/en-NZ, \"collect my prescription\" en-GB/en-AU/en-NZ"
+		},
+		{
+			"id": "rec-c-06",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "collision_census.category_lexicon_collisions",
+			"observed": 0,
+			"denominator": 19,
+			"baselineValue": 0,
+			"bar": {
+				"kind": "at_most",
+				"value": 0
+			},
+			"met": true,
+			"detail": "claimed by the committed category lexicon: 0 of 19 probes"
+		},
+		{
+			"id": "rec-c-07",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "collision_census.name_exact_legitimate_collisions",
+			"observed": 0,
+			"denominator": 19,
+			"baselineValue": 0,
+			"bar": {
+				"kind": "at_most",
+				"value": 0
+			},
+			"met": true,
+			"detail": "claimed by a POI name adjudicated legitimate: 0 of 19 probes"
+		},
+		{
+			"id": "rec-c-08",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "collision_census.name_exact_query_shaped_collisions",
+			"observed": 1,
+			"denominator": 19,
+			"baselineValue": 1,
+			"bar": {
+				"kind": "at_most",
+				"value": 1
+			},
+			"met": true,
+			"detail": "claimed by a POI name adjudicated query-shaped: 1 of 19 probes"
+		},
+		{
+			"id": "rec-c-09",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "collision_census.identity_matches_pins",
+			"observed": 1,
+			"denominator": 1,
+			"baselineValue": 1,
+			"bar": {
+				"kind": "at_least",
+				"value": 1
+			},
+			"met": true,
+			"detail": "census taken at the pinned lexicon and layer"
+		},
+		{
+			"id": "abn-t-01",
+			"lane": "absence",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "absence_probe.rows_holding",
+			"observed": 11,
+			"denominator": 11,
+			"baselineValue": 11,
+			"bar": {
+				"kind": "at_least",
+				"value": 11
+			},
+			"met": true,
+			"detail": "11/11 registered rows produced the outcome registered for them, verdict HOLDS"
+		},
+		{
+			"id": "abn-t-02",
+			"lane": "absence",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "absence_probe.targets_fired",
+			"observed": 5,
+			"denominator": 5,
+			"baselineValue": 5,
+			"bar": {
+				"kind": "at_least",
+				"value": 5
+			},
+			"met": true,
+			"detail": "5/5 targets carry a coverage-qualified absence observation"
+		},
+		{
+			"id": "abn-c-01",
+			"lane": "absence",
+			"role": "control",
+			"measurement": "absence_probe.controls_silent",
+			"observed": 6,
+			"denominator": 6,
+			"baselineValue": 6,
+			"bar": {
+				"kind": "at_least",
+				"value": 6
+			},
+			"met": true,
+			"detail": "6/6 controls stayed silent"
+		},
+		{
+			"id": "abn-c-02",
+			"lane": "absence",
+			"role": "control",
+			"measurement": "absence_probe.definition_hash_matches_pin",
+			"observed": 1,
+			"denominator": 1,
+			"baselineValue": 1,
+			"bar": {
+				"kind": "at_least",
+				"value": 1
+			},
+			"met": true,
+			"detail": "#1965 ruler 3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1"
+		},
+		{
+			"id": "srf-c-01",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "poi_board.floors_unmet",
+			"observed": 0,
+			"denominator": 3,
+			"baselineValue": 0,
+			"bar": {
+				"kind": "at_most",
+				"value": 0
+			},
+			"met": true,
+			"detail": "all 3 floors met: overall 49/51, abstain 8/8, address-guard 6/6"
+		},
+		{
+			"id": "srf-c-02",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "poi_board.counted_rows",
+			"observed": 51,
+			"denominator": 56,
+			"baselineValue": 51,
+			"bar": {
+				"kind": "exactly",
+				"value": 51
+			},
+			"met": true,
+			"detail": "51 of 56 committed rows are counted toward the floors"
+		},
+		{
+			"id": "srf-c-03",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "poi_board.counted_passing",
+			"observed": 49,
+			"denominator": 51,
+			"baselineValue": 49,
+			"bar": {
+				"kind": "at_least",
+				"value": 49
+			},
+			"met": true,
+			"detail": "49/51 counted rows pass (96.1%)"
+		},
+		{
+			"id": "srf-c-04",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "poi_board.tracked_rows",
+			"observed": 5,
+			"denominator": 56,
+			"baselineValue": 5,
+			"bar": {
+				"kind": "at_most",
+				"value": 5
+			},
+			"met": true,
+			"detail": "tracked rows: 5 of 56 committed — run, graded, reported, never counted"
+		},
+		{
+			"id": "srf-c-05",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "conformance.decided_rows",
+			"observed": 183,
+			"denominator": 183,
+			"baselineValue": 183,
+			"bar": {
+				"kind": "at_least",
+				"value": 183
+			},
+			"met": true,
+			"detail": "183 rows gated and decided across 5 laws"
+		},
+		{
+			"id": "srf-c-06",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "conformance.decided_failures",
+			"observed": 0,
+			"denominator": 183,
+			"baselineValue": 0,
+			"bar": {
+				"kind": "at_most",
+				"value": 0
+			},
+			"met": true,
+			"detail": "every decided row holds; 5 tracked"
+		},
+		{
+			"id": "srf-c-07",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "conformance.unmeasured_rows",
+			"observed": 1,
+			"denominator": 183,
+			"baselineValue": 1,
+			"bar": {
+				"kind": "at_most",
+				"value": 1
+			},
+			"met": true,
+			"detail": "unmeasured rows: 1 — the comparator read its axis and the observation could not decide"
+		},
+		{
+			"id": "srf-t-01",
+			"lane": "surface_inertness",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "observation_marker.semantic_marker_reaches_caller",
+			"observed": 1,
+			"denominator": 1,
+			"baselineValue": 1,
+			"bar": {
+				"kind": "at_least",
+				"value": 1
+			},
+			"met": true,
+			"detail": "marker kind poi_query, code poi_category, mechanism semantic:affords, evidence names assertion pharmacy-affords-obtain-medication"
+		}
+	],
+	"verdict": {
+		"decision": "PROCEED-AS-AUTHORIZED",
+		"counts": {
+			"resolutionChecks": 3,
+			"resolutionMet": 3,
+			"evidenceChecks": 6,
+			"evidenceMet": 6,
+			"controlChecks": 18,
+			"controlMet": 18,
+			"controlMisses": 0
+		},
+		"coverage": "partial",
+		"blockedLanes": ["semantic_breadth"],
+		"comparability": "pinned",
+		"pinDeviations": [],
+		"defaultChangeBarUnmetRows": [1, 2, 3, 4, 5, 6, 7, 9],
+		"misses": [],
+		"reasons": [
+			"control 18/18 (misses 0; tolerance 0)",
+			"resolution 3/3 (bar 3)",
+			"evidence 6/6 (bar 6)",
+			"lanes reporting 3/3",
+			"blocked lanes not measured by this ruler: semantic_breadth (https://github.com/sister-software/mailwoman/issues/1980)",
+			"the integration record's default-change bar is NOT met: rows 1, 2, 3, 4, 5, 6, 7, 9 — this decision authorizes no default change"
+		]
+	},
+	"recorded": false,
+	"recordingNote": "This receipt states what the ruler maps to. The RECORDING is the operator's — #1967 closes with the recorded verdict, and nothing in this harness writes one."
+}

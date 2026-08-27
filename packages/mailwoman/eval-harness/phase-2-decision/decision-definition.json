@@ -1,0 +1,614 @@
+{
+	"decisionID": "phase-2-decision-1967",
+	"version": "1.0.0",
+	"issue": "https://github.com/sister-software/mailwoman/issues/1967",
+	"program": "Geographic world model — facts and derivations for learned resolution (#1916), phase 2",
+	"authorizedOutcome": "PROCEED-AS-AUTHORIZED means the supported OPT-IN surface the integration record (#1966, docs/superpowers/specs/2026-08-27-semantic-route-integration-decision.md) authorizes, and nothing beyond it: `createRuntimePipeline`'s `poiSemanticLookup` option, default OFF, presence as the switch, `mailwoman` → `@mailwoman/geographic-model` as the dependency direction. That record states in §4.1 that a default change is not authorized by it and cannot be authorized by #1967 alone, and its §5 bar is recorded separately in `defaultChangeBar` below with what each row reads today.",
+	"scopeNote": "This ruler measures the end state of phase 2 across four registered lanes. Three are measurable now; mapping breadth is blocked by #1980 and is registered, described and NOT scored — `auditPhase2Definition` refuses a check that names it, and every verdict carries `coverage: partial` plus the blocked lane in its reasons. A ruler that scored the blocked lane would report a number about nothing; one that omitted it would report full coverage over three quarters of the phase.",
+	"baselineNote": "Every phase-2 implementation issue closed before this pre-registration was written (#1962/PR #1977, #1963/PR #1981, #1965/PR #1976, #1972/PR #1979, #1966/PR #1971, #1960/PR #1969), so no arm of this ruler ran before the measured code merged. The issue's own text governs that case: where a lane merged first, the recorded per-PR receipts are the baseline and the ruler says so explicitly. Each check therefore carries `baseline.source: merged-pr-receipt` naming the PR that recorded the number, or `committed-artifact` where the number is read out of a file in this repository. The run reproduces every one of them.",
+	"artifactPins": {
+		"poiLayerManifestVersion": "2026-07-22.0",
+		"poiLayerBuildSHA": "3610771ec",
+		"weightsLocale": "en-US",
+		"weightsVersion": "9.1.0",
+		"resolverBackend": "candidate",
+		"geographicModelVersion": "0.2.0",
+		"phraseLexiconID": "mailwoman-activity-phrases",
+		"phraseLexiconVersion": "1.0.0",
+		"declaredPhrases": 11,
+		"semanticUtilityDefinitionSHA256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
+		"absenceDefinitionSHA256": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1",
+		"coverageLayerFile": "poi-coverage-pharmacy-ile-de-france.db",
+		"coverageLayerVersion": "260627"
+	},
+	"markerProbe": {
+		"query": "where can i pick up a prescription near Denver CO",
+		"expectedCode": "poi_category",
+		"expectedMechanism": "semantic:affords",
+		"note": "The integration record's §8.3 prerequisite, measured end to end rather than asserted: run one registered activity phrase through a route-injected pipeline, drain what the route recorded, and convert it on the finished query-kind verdict. The query is `sem-act-us-01`, a committed board row, so the marker is measured on an input the phase already grades rather than on one written for this check. A verdict carrying no POI kind yields no marker, which reads as 0 here — the same refusal the carrier makes rather than inventing a kind."
+	},
+	"lanes": [
+		{
+			"id": "recognition",
+			"status": "measurable",
+			"issue": "https://github.com/sister-software/mailwoman/issues/1962",
+			"claim": "A query naming what a person wants to do reaches the entity kinds that afford it, through a reviewed phrase vocabulary whose every surface form points at a committed record, and without the vocabulary claiming a phrase the category or name lexicons already answer.",
+			"landed": "PR #1977 replaced the ten-entry experiment table with `@mailwoman/activity-lexicon` — 11 reviewed entries, 4 attestation classes, 2 locale-scoped — and committed the phrase-collision census. PR #1979 made the two existing scopes (per-entry locales and `RelationAssertion.countries`) actually reachable inside the phrase search.",
+			"note": "Graded on the frozen #1928 ruler, both arms. The un-injected arm is registered as a CONTROL here rather than as a second measurement of the same thing: the route is opt-in, so a baseline arm that started answering would mean the route had reached the default construction path."
+		},
+		{
+			"id": "semantic_breadth",
+			"status": "blocked",
+			"issue": "https://github.com/sister-software/mailwoman/issues/1963",
+			"claim": "The compiled artifact carries the wave-1 semantics the §4.1 amendment admits, and a phrase whose activity is afforded by more than one mapped kind reaches every one of them rather than whichever concept sorts first by code point.",
+			"landed": "PR #1981 authored W1-1 (the `drugstore` concept) and W1-2 (its US-scoped `affords` assertion) into model 0.2.0 with full provenance, re-ran the recall census against the shipped `poi.db`, corrected the relation-semantics note, and committed board row `sem-act-us-03` as an `improvement_target`.",
+			"blockedBy": "https://github.com/sister-software/mailwoman/issues/1980",
+			"blockedReason": "W1-3, the `poi-taxonomy` mapping the amendment also admits, is deliberately held. With it the one activity `obtain_medication` reaches two mapped kinds, and the merged §8.1 interim rule refuses such a phrase at construction — measured on PR #1981's branch, all eleven declared phrases refuse, the route becomes unbuildable and the recognition capability goes from 3/4 to 0/4. #1980 widens `matchPOISubject` and `POIIntent.evidence` to carry a set so the union can be searched and the resolver's existing ordering can rank it; W1-3 is authored behind it. Until then the lane's operational half cannot be measured at all, and a number reported for it would describe a route that is not the one this phase would ship.",
+			"plannedChecks": [
+				{
+					"id": "brd-p-01",
+					"measures": "Board row `sem-act-us-03` (`where can i pick up a prescription near Coalinga CA`) answers `pharmacy`-or-`drugstore` within 25 km and is promoted from `improvement_target` to a COUNTED `pass`.",
+					"todayReads": "Tracked and failing as registered: `expected a poi outcome (results), got path=full (no poi intent)`. At that anchor `pharmacy near Coalinga CA` returns zero rows while `drugstore near Coalinga CA` returns two, at 0.77 km and 1.71 km."
+				},
+				{
+					"id": "brd-p-02",
+					"measures": "`conceptsForExternalID(\"poi-taxonomy\", \"drugstore\")` answers the `drugstore` concept on the committed artifact — W1-3 authored.",
+					"todayReads": "`[]`. The identifier is read back in `pharmacy-slice.test.ts` so the held mapping cannot rot into a dead reference; `getPOICategory(\"drugstore\")` answers `{ id: \"drugstore\", hierarchy: [\"retail\", \"drugstore\"] }`."
+				},
+				{
+					"id": "brd-p-03",
+					"measures": "All 11 declared phrases build with W1-3 present — the §8.1 plural-affordance construction refusal is lifted because the query surface carries a set.",
+					"todayReads": "Every one of the 11 refuses when the mapping is added, with the refusal naming the phrase and both kinds. Pinned by a test that adds the held-out mapping and asserts the refusal."
+				},
+				{
+					"id": "brd-p-04",
+					"measures": "US drugstore recall: the 6,679 US rows under `retail > drugstore` become reachable from a query the shipped `pharmacy` branch answers.",
+					"todayReads": "Out of reach by construction — the two Overture leaves are disjoint and `pharmacy` declares no `overtureCategories`. Re-measured on `poi.db` `2026-07-22.0`: 7,168 of 89,336 rows under the two leaves (8.0%) overall, 6,679 of 51,624 (12.9%) within the US."
+				}
+			]
+		},
+		{
+			"id": "absence",
+			"status": "measurable",
+			"issue": "https://github.com/sister-software/mailwoman/issues/1965",
+			"claim": "Where the compiled artifact asserts that the answered category affords an activity AND the coverage layer surveyed the searched cell and holds nothing there, the answer carries a coverage-qualified absence observation. Everywhere else the route is silent.",
+			"landed": "PR #1976 shipped the negative-evidence route against the #1964 pilot layer, with both provenances on every observation line and three refusals that would otherwise have presented as a route that simply never fires.",
+			"note": "The claim is a conjunction over a frozen row set, so this lane's own ruler admits no tolerance and neither does this one: its target checks bar the full registered counts. The `source_present` arm cannot be stated against the pilot layer — all 290 of its cells are `surveyed` — and is held in the route's unit suite instead."
+		},
+		{
+			"id": "surface_inertness",
+			"status": "measurable",
+			"issue": "https://github.com/sister-software/mailwoman/issues/1972",
+			"claim": "Both observation routes live in the runtime tree as a supported opt-in surface, an observation reaches a caller as a `QueryIntentMarker`, and with no route handed in the default path is what shipped — floors, laws and composition unmoved.",
+			"landed": "PR #1979 moved both routes to `mailwoman/observations`, added the marker carrier, implemented the §8.1 interim refusal in both code-point orders, made the two scopes reachable, moved `@mailwoman/geographic-model` to a real dependency, and re-pointed the three promoted board rows at #1967.",
+			"note": "Seven of this lane's eight checks are controls, and that is the shape of the claim rather than a gap: an opt-in surface's obligation to the default path is that nothing moved. Its one target is the marker, which is the half of the surface that is a capability — an answer arriving with the authority that chose it. The recognition lane's treatment arm is what shows the option is reachable at all, since it reaches the route through this same `createRuntimePipeline` option."
+		}
+	],
+	"checks": [
+		{
+			"id": "rec-c-01",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.baseline.primary_passes",
+			"numerator": "Target rows the UN-INJECTED pipeline answers on the board's own comparator.",
+			"denominator": 4,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — probe, baseline arm",
+				"value": 0,
+				"note": "0/4, verdict STOP-REDESIGN. Reproduced identically in PR #1977 and PR #1979."
+			},
+			"bar": { "kind": "at_most", "value": 0 },
+			"guards": "The route reaching the default construction path. The surface is opt-in and presence is the switch, so an un-injected pipeline that started answering an activity phrase would mean the default posture had moved without anyone changing a default."
+		},
+		{
+			"id": "rec-c-02",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.baseline.control_holds",
+			"numerator": "Control rows holding their committed grade on the un-injected pipeline.",
+			"denominator": 6,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — probe, baseline arm",
+				"value": 6,
+				"note": "6/6: three venue-noun forms of the same intent, two adjacent categories, one bare-category abstain."
+			},
+			"bar": { "kind": "at_least", "value": 6 },
+			"guards": "A pipeline whose ordinary POI answers moved for reasons unrelated to this program, which would make the treatment arm's delta unreadable."
+		},
+		{
+			"id": "rec-t-01",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "resolution",
+			"measurement": "semantic_utility.treatment.primary_passes",
+			"numerator": "Target rows the route-injected pipeline answers on the board's own comparator — top category and nearest returned coordinate, nothing else.",
+			"denominator": 4,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — probe, treatment arm on model 0.2.0",
+				"value": 3,
+				"note": "3/4. The fourth, `sem-act-fr-01`, fails on #1039 — a POI literally named `Somewhere` claims the query prefix — which is structural and outside this program."
+			},
+			"bar": { "kind": "at_least", "value": 3 },
+			"guards": "The capability itself going backwards. This is the number the recorded #1930 GO rests on, re-measured against the shipping lexicon and the wave-1 model."
+		},
+		{
+			"id": "rec-t-02",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "resolution",
+			"measurement": "semantic_utility.treatment.diagnostic_reaches",
+			"numerator": "Target rows that reached the POI branch at all — a shape other than `no_poi_branch`.",
+			"denominator": 4,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — probe, treatment arm on model 0.2.0",
+				"value": 4,
+				"note": "4/4, against 1/4 un-injected."
+			},
+			"bar": { "kind": "at_least", "value": 4 },
+			"guards": "Recognition silently narrowing. A row can stop being answered for a retrieval reason while still being recognized; a row that stops reaching the branch is the phrase vocabulary itself losing it."
+		},
+		{
+			"id": "rec-t-03",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "resolution",
+			"measurement": "semantic_utility.treatment.frozen_verdict_is_go",
+			"numerator": "The frozen #1928 ruler reading GO on the route-injected arm.",
+			"denominator": 1,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — probe, treatment arm on model 0.2.0",
+				"value": 1,
+				"note": "GO. The phase-1 ruler's own thresholds are primary ≥ 3 and delta ≥ +3, diagnostic ≥ 3 and delta ≥ +2, control regressions 0."
+			},
+			"bar": { "kind": "at_least", "value": 1 },
+			"guards": "This ruler and the phase-1 ruler disagreeing without anyone noticing. The two counts above could each clear their bar while the earlier ruler's own delta condition stopped holding, so its verdict is read rather than reconstructed."
+		},
+		{
+			"id": "rec-c-03",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.treatment.control_holds",
+			"numerator": "Control rows holding their committed grade with the route injected.",
+			"denominator": 6,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — probe, treatment arm",
+				"value": 6,
+				"note": "6/6, no regression against the un-injected arm."
+			},
+			"bar": { "kind": "at_least", "value": 6 },
+			"guards": "The capability being bought by breaking the venue-noun form of the same intent, or by a route that answers everything. Both control groups decide: the first would catch a route that broke what works, the second a route that claims queries it has no business claiming."
+		},
+		{
+			"id": "rec-c-04",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.definition_hash_matches_pin",
+			"numerator": "Both arms reading the pinned #1928 definition hash.",
+			"denominator": 1,
+			"baseline": {
+				"source": "committed-artifact",
+				"reference": "packages/mailwoman/eval-harness/semantic-utility/probe-freeze.json",
+				"value": 1,
+				"note": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c, unmoved across PRs #1969, #1977, #1979 and #1981."
+			},
+			"bar": { "kind": "at_least", "value": 1 },
+			"guards": "The phase-1 ruler moving underneath this one. Its loader already refuses a moved hash, so this check is what makes the refusal a recorded measurement rather than an exception nobody sees in the receipt."
+		},
+		{
+			"id": "rec-c-05",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "semantic_utility.route_identity_matches_pins",
+			"numerator": "The injected route built from the pinned lexicon and the pinned compiled model.",
+			"denominator": 1,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — route identity on the treatment arm",
+				"value": 1,
+				"note": "mailwoman-activity-phrases v1.0.0, 11 declared phrases, geographic model 0.2.0, reachable categories [pharmacy]."
+			},
+			"bar": { "kind": "at_least", "value": 1 },
+			"guards": "An arm label standing in for a measurement of what ran. A route dropped on the way in produces exactly the numbers a route that changed nothing produces, and the two are opposite findings."
+		},
+		{
+			"id": "rec-t-04",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "activity_lexicon.declared_phrases",
+			"numerator": "Reviewed surface forms the shipped vocabulary declares.",
+			"denominator": 11,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1977 — the entry inventory",
+				"value": 11,
+				"note": "11, replacing a 10-entry table whose provenance read AUTHORED FOR ONE EXPERIMENT. Breadth was deliberately held so that PR graded a provenance change rather than a breadth change."
+			},
+			"bar": { "kind": "at_least", "value": 11 },
+			"guards": "The vocabulary shrinking back toward the four registered target phrasings, which is the state that made recognition breadth untested by construction."
+		},
+		{
+			"id": "rec-t-05",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "activity_lexicon.attestation_classes",
+			"numerator": "Distinct attestation classes in use across the declared entries.",
+			"denominator": 4,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1977 — provenance classes",
+				"value": 4,
+				"note": "committed-query 4, derived-form 4, concept-description 2, regional-register 1. Nothing rests on observed traffic; `source` admits only `curated`."
+			},
+			"bar": { "kind": "at_least", "value": 4 },
+			"guards": "The vocabulary collapsing onto one class of evidence. Each class points at something committed and quotes the text it rests on; a lexicon that kept only the weakest would still read as attested."
+		},
+		{
+			"id": "rec-t-06",
+			"lane": "recognition",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "activity_lexicon.locale_scoped_entries",
+			"numerator": "Entries carrying a locale scope, out of the declared forms.",
+			"denominator": 11,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1977 — locale scoping",
+				"value": 2,
+				"note": "`collect a prescription` and `collect my prescription`, both en-GB/en-AU/en-NZ, following the `@mailwoman/variant-aliases` semantics. An empty `locales` list is refused as a record that can never fire."
+			},
+			"bar": { "kind": "at_least", "value": 2 },
+			"guards": "The recognition half of the admission control disappearing. #1966 §4.3 makes per-entry locale scoping one of the two admission mechanisms; a vocabulary with no scoped entry left would leave that half untested."
+		},
+		{
+			"id": "rec-c-06",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "collision_census.category_lexicon_collisions",
+			"numerator": "Census probes the committed POI category lexicon already claims.",
+			"denominator": 19,
+			"baseline": {
+				"source": "committed-artifact",
+				"reference": "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json — categoryLexicon.collisions",
+				"value": 0,
+				"note": "0 of 19 distinct probe strings, at any locale the lexicon declares and at none."
+			},
+			"bar": { "kind": "at_most", "value": 0 },
+			"guards": "A phrase the category rung answers first. The activity route is asked last, so a claimed phrase never reaches it — and the shortfall reads as the activity being unanswerable rather than as the phrase being taken."
+		},
+		{
+			"id": "rec-c-07",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "collision_census.name_exact_legitimate_collisions",
+			"numerator": "Census probes claimed by a POI name adjudicated legitimate — a real venue whose name simply is the probe.",
+			"denominator": 19,
+			"baseline": {
+				"source": "committed-artifact",
+				"reference": "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json — nameLexicon.counts.exactLegitimate",
+				"value": 0,
+				"note": "0 exact collisions of this class. 549 names CONTAIN a probe (`Arlington Prescription Pharmacy` and its kind, 233 of them pharmacies) and none collides under the shipped exact-equality rung."
+			},
+			"bar": { "kind": "at_most", "value": 0 },
+			"guards": "The vocabulary growing into names people actually search for. This is the class no adjudication can excuse: a phrase that takes a real venue's name away from the person typing it is a defect in the vocabulary, not in the query."
+		},
+		{
+			"id": "rec-c-08",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "collision_census.name_exact_query_shaped_collisions",
+			"numerator": "Census probes claimed by a POI name adjudicated query-shaped.",
+			"denominator": 19,
+			"baseline": {
+				"source": "committed-artifact",
+				"reference": "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json — nameLexicon.counts.exactQueryShaped",
+				"value": 1,
+				"note": "Exactly one, named: the probe `somewhere` against the FR `clothing_store` called `Somewhere`, tell `function-word`. It is `sem-act-fr-01`'s whole defect reproduced from the vocabulary's side, tracked as #1039, and outside this program."
+			},
+			"bar": { "kind": "at_most", "value": 1 },
+			"guards": "A second collision of this class arriving unadjudicated. The bar is 1 rather than 0 because the one is committed, named and tracked; a second would be a new finding riding in behind an old allowance."
+		},
+		{
+			"id": "rec-c-09",
+			"lane": "recognition",
+			"role": "control",
+			"measurement": "collision_census.identity_matches_pins",
+			"numerator": "The committed census recording the pinned lexicon identity and the pinned layer.",
+			"denominator": 1,
+			"baseline": {
+				"source": "committed-artifact",
+				"reference": "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json — lexicon and poiDatabase.layerManifest",
+				"value": 1,
+				"note": "mailwoman-activity-phrases v1.0.0, 11 declared phrases, against poi 2026-07-22.0 (13.68M names)."
+			},
+			"bar": { "kind": "at_least", "value": 1 },
+			"guards": "Three counts read out of a census taken against a different vocabulary or a different layer. The census is read rather than re-run — a complete `name_key` scan takes about eleven minutes and its reader header says why the fast path is wrong — so its identity is what makes the three numbers current."
+		},
+		{
+			"id": "abn-t-01",
+			"lane": "absence",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "absence_probe.rows_holding",
+			"numerator": "Registered rows producing the outcome registered for them — the observation on a target, one named refusal on a control.",
+			"denominator": 11,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1976 — the asymmetry receipts",
+				"value": 11,
+				"note": "11/11, verdict HOLDS. Re-run and unchanged in PR #1979 and PR #1981."
+			},
+			"bar": { "kind": "at_least", "value": 11 },
+			"guards": "A partial asymmetry. The claim is a conjunction over the row set, so a row that stayed silent for a reason nobody registered fails even though it stayed silent — which is the failure a hold-rate would hide."
+		},
+		{
+			"id": "abn-t-02",
+			"lane": "absence",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "absence_probe.targets_fired",
+			"numerator": "Target rows whose answer carries a coverage-qualified absence observation.",
+			"denominator": 5,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1976 — the asymmetry receipts",
+				"value": 5,
+				"note": "5/5 across four zero-observed surveyed cells, two of them reached through the activity phrase."
+			},
+			"bar": { "kind": "at_least", "value": 5 },
+			"guards": "A route that has gone entirely silent. Silence passes every control at once, so the firing half needs its own bar — otherwise a route that could no longer read the layer would report as a clean asymmetry."
+		},
+		{
+			"id": "abn-c-01",
+			"lane": "absence",
+			"role": "control",
+			"measurement": "absence_probe.controls_silent",
+			"numerator": "Control rows on which no absence observation appears.",
+			"denominator": 6,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1976 — the asymmetry receipts",
+				"value": 6,
+				"note": "6/6: three outside the surveyed cell set (one of them metres from it), one different class at the exact cell a target fires on, two inside exclusion-grade coverage on populated cells."
+			},
+			"bar": { "kind": "at_least", "value": 6 },
+			"guards": "An absence claim made where the coverage does not support exclusion. This is the most confident statement a geocoder can make and the most damaging when wrong; the control groups put the same query and the same empty answer on the silent side of the line."
+		},
+		{
+			"id": "abn-c-02",
+			"lane": "absence",
+			"role": "control",
+			"measurement": "absence_probe.definition_hash_matches_pin",
+			"numerator": "The absence pre-registration reading the pinned hash.",
+			"denominator": 1,
+			"baseline": {
+				"source": "committed-artifact",
+				"reference": "packages/mailwoman/eval-harness/absence-observation/probe-freeze.json",
+				"value": 1,
+				"note": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1, unmoved across PRs #1979 and #1981."
+			},
+			"bar": { "kind": "at_least", "value": 1 },
+			"guards": "The absence ruler moving underneath this one — the same reason `rec-c-04` exists for the phase-1 ruler."
+		},
+		{
+			"id": "srf-c-01",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "poi_board.floors_unmet",
+			"numerator": "Pre-registered POI board floors NOT met.",
+			"denominator": 3,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — POI board --enforce, exit 0",
+				"value": 0,
+				"note": "All three met: overall 96.1% (49/51) against 0.90, abstain 8/8 against 1.00, address-guard 6/6 against 1.00."
+			},
+			"bar": { "kind": "at_most", "value": 0 },
+			"guards": "The default POI path moving. The board never injects a route, so any movement here is the shipped path changing while an opt-in surface was being built beside it. The two hard floors are the ones that matter most: an abstain miss means the branch claimed a query the layer cannot answer, and an address miss means it hijacked a full address."
+		},
+		{
+			"id": "srf-c-02",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "poi_board.counted_rows",
+			"numerator": "Committed rows counted toward the floors.",
+			"denominator": 56,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — board composition",
+				"value": 51,
+				"note": "51 counted of 56 committed, 5 tracked. Unchanged across the promotion (#1960) and the wave-1 row (#1963), which is what the tracked convention is for."
+			},
+			"bar": { "kind": "exactly", "value": 51 },
+			"guards": "The floors quietly reading a smaller board. A row moved from counted to tracked lowers the denominator every other row is held to, and the pass RATE would not move — which is why the composition is checked as a number rather than inferred from the rate."
+		},
+		{
+			"id": "srf-c-03",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "poi_board.counted_passing",
+			"numerator": "Counted rows passing.",
+			"denominator": 51,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — POI board --enforce",
+				"value": 49,
+				"note": "49/51. The two failures are pre-existing and named: `cat-ca-02` (1150.98 km) and `brand-us-02` (85.84 km)."
+			},
+			"bar": { "kind": "at_least", "value": 49 },
+			"guards": "A row-for-row regression the overall floor would absorb. 0.90 over 51 rows tolerates five failures; the committed number tolerates none beyond the two already named."
+		},
+		{
+			"id": "srf-c-04",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "poi_board.tracked_rows",
+			"numerator": "Rows carrying a tracked status — run, graded, reported, never counted.",
+			"denominator": 56,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — board composition",
+				"value": 5,
+				"note": "5: three `improvement_target` rows naming #1967, `sem-act-fr-01` naming #1039, and `sem-act-us-03` naming #1980."
+			},
+			"bar": { "kind": "at_most", "value": 5 },
+			"guards": "The tracked list becoming a place rows go to be forgotten. A sixth tracked row would mean a failure was admitted without this ruler seeing it; the board's own loader already refuses a tracked row that names no live issue."
+		},
+		{
+			"id": "srf-c-05",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "conformance.decided_rows",
+			"numerator": "Rows across the five conformance laws that gated AND were decided.",
+			"denominator": 183,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — conformance, five laws",
+				"value": 183,
+				"note": "183 decided: canonical-form 43, case-folding 27, punctuation 25, refinement-monotonicity 26, whitespace 62."
+			},
+			"bar": { "kind": "at_least", "value": 183 },
+			"guards": "A law quietly stopping being decidable. An unmeasured row is not a quiet pass — it leaves the denominator — so a suite losing its ability to decide would report a smaller board rather than a failure."
+		},
+		{
+			"id": "srf-c-06",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "conformance.decided_failures",
+			"numerator": "Decided rows that violated their law.",
+			"denominator": 183,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — conformance, five laws",
+				"value": 0,
+				"note": "0 violations, verdict PASS, with 5 tracked rows reported and not blocking."
+			},
+			"bar": { "kind": "at_most", "value": 0 },
+			"guards": "The shared caller path moving. Only two files on it were touched across the whole phase — an exported search-centre resolver and a docstring — and these laws read the assembled answer, so they are what would notice if that claim were wrong."
+		},
+		{
+			"id": "srf-c-07",
+			"lane": "surface_inertness",
+			"role": "control",
+			"measurement": "conformance.unmeasured_rows",
+			"numerator": "Rows whose comparator read its axis and could not decide.",
+			"denominator": 183,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1981 — conformance, five laws",
+				"value": 1,
+				"note": "1, in refinement-monotonicity: a candidate left a table sitting at its fetch window, so the run has no evidence the law broke and none that it held."
+			},
+			"bar": { "kind": "at_most", "value": 1 },
+			"guards": "A growing blind spot. Rows drifting into unmeasured raise the hold RATE while lowering what was actually read, which is the shape a clean instrument and a blind one share."
+		},
+		{
+			"id": "srf-t-01",
+			"lane": "surface_inertness",
+			"role": "target",
+			"tier": "evidence",
+			"measurement": "observation_marker.semantic_marker_reaches_caller",
+			"numerator": "Markers reaching the caller on the frozen marker query with the registered code and mechanism.",
+			"denominator": 1,
+			"baseline": {
+				"source": "merged-pr-receipt",
+				"reference": "https://github.com/sister-software/mailwoman/pull/1979 — §8.3, the carrier",
+				"value": 1,
+				"note": "PR #1979 shipped the carrier with 36 tests over it and printed no count of its own, so this check is the first receipt to state the number. A marker never changes which answer wins; its `evidence` carries the assertion with its modality and provenance, the mapping with its own, and both scopes."
+			},
+			"bar": { "kind": "at_least", "value": 1 },
+			"guards": "An opt-in surface that serves a category with no authority attached — the one thing this program exists to avoid. Before the carrier, observations existed only inside the eval harness and `POIIntentOutcome` had no field for them."
+		}
+	],
+	"thresholds": {
+		"controlRegressionTolerance": 0,
+		"minimumResolutionChecks": 3,
+		"minimumEvidenceChecks": 6,
+		"requiredMeasurableLanes": 3
+	},
+	"thresholdsNote": "Zero control tolerance, and both target tiers at their full registered counts. The two tiers are not two ways to reach one outcome: `resolution` is the recognition capability graded on assembled answers, `evidence` is the observation surface — the phrase attestations, the coverage-qualified absence rows and the marker that carries an observation to a caller. #1966 §7 names the second half exactly as what a diagnostic-strength result would justify on its own, which is what makes EVIDENCE-ONLY a real outcome rather than a softer word for the same one. PROCEED-AS-AUTHORIZED needs BOTH, because the surface that record authorizes serves a category together with the authority that chose it.",
+	"defaultChangeBar": [
+		{
+			"row": 1,
+			"check": "The promoted POI board family — the three reachable rows at `status: pass` and COUNTED, `sem-act-fr-01` no worse than its committed `known_fail`, all three floors met over the re-registered composition.",
+			"state": "unmet",
+			"satisfiedBy": ["srf-c-01", "srf-c-02", "srf-c-03", "srf-c-04"],
+			"note": "The floors and the composition hold (the checks named), and the three rows do NOT: they are tracked `improvement_target` rows naming #1967, because the route is default-off and the board never injects it. Counting them requires a default change, which is what this row would then measure."
+		},
+		{
+			"row": 2,
+			"check": "The full regression board — `mailwoman eval gauntlet`, regression AND metamorphic — with no new violation beyond the tracked expected failures in either layer.",
+			"state": "not_measured_here",
+			"satisfiedBy": [],
+			"note": "The instrument is committed and runs in CI. This ruler does not run it: phase 2 changes no default path, so the inertness surface here is the POI board plus the five laws, both of which read the assembled answer. A default change runs the gauntlet."
+		},
+		{
+			"row": 3,
+			"check": "The five conformance laws, every decided row holding and tracked/unmeasured counts unchanged or reduced — PLUS new rows, because the route normalizes NFKC, case and whitespace and no committed row makes that claim about an activity phrase.",
+			"state": "unmet",
+			"satisfiedBy": ["srf-c-05", "srf-c-06", "srf-c-07"],
+			"note": "The existing half holds on this run: 183/183 decided, 0 violations, 1 unmeasured. The new half does not exist — the case-folding, whitespace and punctuation laws each have a claim to make about an activity phrase and none makes it today."
+		},
+		{
+			"row": 4,
+			"check": "The parse promotion eval — `mailwoman eval gate` — the D-rule: no regression against the shipped model on any tier-1 locale, measured on the address side.",
+			"state": "not_measured_here",
+			"satisfiedBy": [],
+			"note": "The D-rule binds a default-on mechanism. The route is default-off and the address path is unchanged, so there is nothing on the address side for this phase to have moved; the record's own reason for the row is that a query-kind change moves inputs off the address path, which is a property of a default change rather than of an opt-in surface."
+		},
+		{
+			"row": 5,
+			"check": "The false-claim census re-run at the shipping phrase lexicon: zero subject-match changes on the board's address-guard rows, every change elsewhere adjudicated, positive control in the same run.",
+			"state": "no_committed_instrument",
+			"satisfiedBy": [],
+			"note": "The record says so itself — row 5 exists only as its own §11 instrument, run once over 9,324 committed inputs against the EXPERIMENT table. The nearest committed measurement is #1962's phrase-collision census (`rec-c-06` to `rec-c-09`), and it answers a different question: which phrases the name and category lexicons already claim, not which subject matches the route changes."
+		},
+		{
+			"row": 6,
+			"check": "Multi-kind adjudication — `mappedKindCount > 1` answered without an authored preference. A default change while `hits[0]` decides by code point is refused outright.",
+			"state": "unmet",
+			"satisfiedBy": [],
+			"note": "`matchPOISubject` still returns `hits[0]!` at both return points, so the narrowing the record forbids is still the behavior. The interim rule is implemented and tested in both code-point orders — a plural affordance refuses at construction — and the long-term answer is #1980, which is also what blocks this ruler's breadth lane. The two are the same blocker seen from two sides."
+		},
+		{
+			"row": 7,
+			"check": "Country admission — a committed row anchored outside an assertion's `countries` stays silent, and the receipt says which scope refused it.",
+			"state": "no_committed_instrument",
+			"satisfiedBy": [],
+			"note": "The mechanism landed in PR #1979: `reachKinds` reads `RelationAssertion.countries`, the lookup reads its `locale`, an unknown region admits nothing, and the Toulouse arm is tested silent. What does not exist is a committed ROW, which is what the record's bar asks for — the only country-scoped assertion today is W1-2's, and the phrase that would reach it is the one held behind #1980."
+		},
+		{
+			"row": 8,
+			"check": "Artifact identity on every receipt: `poi.db` manifest version, weights version, resolver backend, `modelVersion`, phrase-lexicon id and version.",
+			"state": "met",
+			"satisfiedBy": ["rec-c-04", "rec-c-05", "rec-c-09", "abn-c-02"],
+			"note": "Every instrument this ruler runs records its own artifacts, this receipt records the observed set beside the pins, and each difference is named. The four checks are the identity half made decidable rather than descriptive."
+		},
+		{
+			"row": 9,
+			"check": "The recorded phase-2 decision (#1967): the ruler contains rows 1–8, both arms run, the operator records the verdict.",
+			"state": "unmet",
+			"satisfiedBy": [],
+			"note": "The first two halves are what this pre-registration and this run are. The third has not happened and is not this run's to do — see `recordingNote`."
+		}
+	],
+	"defaultChangeBarNote": "The integration record's §5 bar for a DEFAULT change, recorded with what each row reads today. It is never an input to the decision: `decidePhase2` reports the unmet row numbers in its reasons and computes nothing from them. It is here because PROCEED-AS-AUTHORIZED is a claim about a specific authorization — the opt-in surface — and a reader must be able to see the separate default bar unmet rather than infer it from the absence of a claim. Rows 5 and 7 having no committed instrument is the record's own finding, and its §5 says the bar deliberately contains no prevalence number: that absence is not a check that can be waived, it is the reason the default posture is what it is.",
+	"decisionRule": [
+		"Checked in this order, and the order is load-bearing.",
+		"1. Control misses. More than `controlRegressionTolerance` control checks missing their bar records STOP-REDESIGN under every other reading. A capability bought by moving something that already worked is not a result this program can act on.",
+		"2. Lanes reporting. Fewer than `requiredMeasurableLanes` lanes producing checks records STOP-REDESIGN. An instrument that could not run leaves a lane unreported, and an unreported lane is not a passing one.",
+		"3. PROCEED-AS-AUTHORIZED — at least `minimumResolutionChecks` resolution-tier checks AND at least `minimumEvidenceChecks` evidence-tier checks hold. Authorizes the opt-in surface named in `authorizedOutcome` and nothing beyond it.",
+		"4. EVIDENCE-ONLY — the evidence bar holds and the resolution bar does not. This is #1966 §7's outcome: the observation surface without the recognition change.",
+		"5. STOP-REDESIGN — the evidence bar does not hold. Per §7 that ends the opt-in surface too, not merely a default change; the route reverts to experiment machinery behind a frozen pre-registration, and the compiled artifact with its conformance instruments is retained as the durable product of the phase.",
+		"A blocked lane changes no arithmetic. It sets `coverage: partial` and is named in the reasons on every run, so no decision this ruler produces can be read as covering the whole phase.",
+		"Artifact pin deviations change no arithmetic either. They set `comparability: deviated` and are named: a decision measured on other artifacts is still a decision, about those artifacts."
+	],
+	"recordingNote": "This receipt states what the ruler maps to. The RECORDING is the operator's — #1967 closes with the recorded verdict, and nothing in this harness writes one."
+}
