@@ -9,7 +9,7 @@ The design problem it exists to solve: a geocoder benefits from knowing that a p
 Probably not directly — not yet.
 
 - If you want a geocoder, install [`mailwoman`](https://www.npmjs.com/package/mailwoman). It consumes this package where its experiments call for it.
-- **Version `0.0.0` on npm is a name reservation**, published to establish the package for npm Trusted Publishing. It carries no compiled output. The first usable release ships with the next coordinated mailwoman release, and the API is unstable until a `1.x`.
+- **Version `0.0.0` on npm is a pre-release snapshot**, published to establish the package for npm Trusted Publishing. Its tarball is complete (source, compiled output, and the data artifact), but the version number is the hazard: a package packed against `0.0.0` pins that number permanently, and the API is unstable until a `1.x`. Depend on the first coordinated mailwoman release instead.
 - What you can evaluate today: the schema, the validator, the compiler, and the committed artifact — all shipped as readable TypeScript source and JSON in this repository.
 
 ## The shape of the data
