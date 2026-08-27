@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The negative-evidence route (#1965), observation-only: where the compiled artifact asserts that the
+ *   The negative-evidence route, observation-only: where the compiled artifact asserts that the
  *   answered category affords an activity AND the coverage layer surveyed the cell the search was centred
  *   on, an answer holding nothing in that cell may be recorded as an ABSENCE — a coverage-qualified
  *   statement that the thing asked for is not there, carrying the assertion's provenance and the coverage
@@ -38,15 +38,15 @@
  *   own resolution to `7`, which no valid digit is, so exactly one resolution expands it into a valid
  *   index. Measured over the pilot layer: 290 of 290 cells expand at resolution 6 and at no other.
  *
- *   `mailwoman` must not carry a RUNTIME dependency on `@mailwoman/geographic-model`: the artifact reader
- *   is reached by dynamic import, and the package is a devDependency here — the same constraint the
- *   semantic route states in its own header.
+ *   WHERE THE OBSERVATION GOES. Through the one carrier both routes share — `observation-marker.ts` turns
+ *   an absence observation into a `QueryIntentMarker`, the additive advisory whose contract states that a
+ *   marker never changes which answer wins. A second private path from here to the caller would be the
+ *   duplication that carrier exists to prevent.
  *
- *   WHERE THE OBSERVATION GOES NEXT. An absence observation rides a receipt today, because there is no
- *   carrier to the caller yet. When one exists it is the `QueryIntentMarker` the semantic observation rides
- *   — one carrier for both, never a second — and both routes move out of the eval harness together. #1972
- *   owns that move; adding a private path from here to the caller would be the duplication it exists to
- *   prevent.
+ *   `mailwoman` and `@mailwoman/geographic-model` must bump in ONE coordinated release. `yarn pack` freezes
+ *   `workspace:*` to whatever the sibling reads at pack time, so a `mailwoman` packed ahead of the sibling's
+ *   bump pins a version that will never be republished. The artifact reader stays behind a dynamic import
+ *   so a caller who never builds a route never loads it.
  */
 
 import { DatabaseSync } from "node:sqlite"
@@ -72,7 +72,7 @@ import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { expandH3Cell, H3_MAX_RESOLUTION, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 
-import { resolvePOISearchCenter } from "../../poi-executor.ts"
+import { resolvePOISearchCenter } from "../poi-executor.ts"
 
 /**
  * The relation an affordance is asserted under — the one the frozen vertical slice defines, and the only one this route

@@ -35,7 +35,7 @@ where those artifacts are held —
   a phrase naming an activity no entity kind both affords and maps into a searchable category would
   match a query and answer nothing, which reads as the query being unanswerable rather than as the
   vocabulary being wrong. The consumer refuses at construction — see
-  `packages/mailwoman/eval-harness/semantic-utility/observation-route.ts`.
+  `packages/mailwoman/observations/semantic-route.ts`.
 - **Say anything about the world.** Which entity kinds afford the activity, in which country, with
   what modality and on whose authority come from `@mailwoman/geographic-model`. An entry that
   restated any of it would be a second copy of a claim with no provenance behind it.

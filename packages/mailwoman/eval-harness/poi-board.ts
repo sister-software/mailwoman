@@ -450,7 +450,7 @@ export interface POIBoardOptions {
 	enforce?: boolean
 	/**
 	 * An additional positive-evidence phrase rung for the constructed pipeline, consulted only after the committed
-	 * lexicon and the POI name lookup have both returned nothing (`CreateRuntimePipelineOpts.poiSemanticLookup`, #1929).
+	 * lexicon and the POI name lookup have both returned nothing (`CreateRuntimePipelineOpts.poiSemanticLookup`).
 	 *
 	 * Carried on the board's own options so a probe measuring an injected route runs through the SAME construction the
 	 * board does. Absent — the default, and what `runPOIBoard` always passes — constructs the pipeline the board has
