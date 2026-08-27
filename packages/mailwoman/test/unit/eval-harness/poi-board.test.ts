@@ -293,13 +293,16 @@ describe("gradeCase — address expectation", () => {
 })
 
 describe("the committed poi-board fixture set", () => {
-	// The composition register. Exact rather than a range, because the floors were re-registered against these
-	// numbers (#1960): 55 committed rows, 51 of them counted, and the four promoted activity rows tracked. A row
-	// added or a status flipped without this test moving is a floor denominator changing in silence.
-	it("carries 55 cases — 51 counted toward the floors, plus the 4-row tracked activity family", () => {
-		expect(fixtures).toHaveLength(55)
+	// The composition register. Exact rather than a range, because the floors were re-registered against the COUNTED
+	// number (#1960) and that is the one that must not move without an argument: 51 counted rows. The committed total
+	// and the tracked count move whenever a failure class is committed to the surface every candidate is graded on,
+	// which is what the tracked convention is for. A row added or a status flipped without this test moving is a floor
+	// denominator changing in silence — so the counted assertion is the load-bearing one, and the other two say which
+	// kind of change happened.
+	it("carries 56 cases — 51 counted toward the floors, plus 5 tracked", () => {
+		expect(fixtures).toHaveLength(56)
 		expect(fixtures.filter((f) => isCountedFixture(f))).toHaveLength(51)
-		expect(fixtures.filter((f) => !isCountedFixture(f))).toHaveLength(4)
+		expect(fixtures.filter((f) => !isCountedFixture(f))).toHaveLength(5)
 	})
 
 	it("audits clean", () => {

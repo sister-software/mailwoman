@@ -8,7 +8,7 @@
 			"rangeKinds": ["activity"],
 			"transitive": false,
 			"symmetric": false,
-			"semantics": "hard"
+			"semantics": "defeasible"
 		}
 	]
 }
