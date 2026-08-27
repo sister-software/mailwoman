@@ -15,16 +15,21 @@
  *   phrase whose activity nothing affords would match a query and answer nothing, which reads at the
  *   probe as the class being unanswerable rather than as the route being unwired.
  *
- *   THE WAVE-1 SIMULATION IS BUILT HERE, not read from a file: the mapping-breadth wave that lands a second
- *   pharmacy-adjacent class has not been authored, and the two defects it makes live are the two this route
- *   now refuses. {@linkcode withAffordingKind} reproduces it — one added concept, one `affords` assertion
- *   scoped to the US, one `poi-taxonomy` mapping — and it is run BOTH WAYS round the code-point order,
- *   because a refusal that only fires when the new class happens to sort first is not a refusal.
+ *   THE WAVE-1 PLURAL CASE IS HALF COMMITTED NOW. Its concept and its US-scoped assertion are authored in
+ *   the artifact; its `poi-taxonomy` mapping is not, because one activity reaching two MAPPED kinds refuses
+ *   this route at construction and the query surface still carries a single category id. So
+ *   {@linkcode withHeldOutDrugstoreMapping} adds exactly the one held-out record to the committed artifact
+ *   and asserts the refusal that holding it out is what avoids — the collision measured against the real
+ *   records rather than against a clone of them.
+ *
+ *   {@linkcode withAffordingKind} stays for the shapes the committed set cannot express: a class sorting
+ *   AFTER `pharmacy`, because a refusal that only fires when the new class sorts first is not a refusal, and
+ *   a second activity nobody carries yet.
  */
 
 import type { ActivityPhraseEntry, ActivityPhraseLexicon } from "@mailwoman/activity-lexicon"
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
-import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
+import type { CompiledGeographicModel, RelationAssertion } from "@mailwoman/geographic-model"
 import { Modality } from "@mailwoman/geographic-model"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { matchPOISubject } from "@mailwoman/kind-classifier"
@@ -82,13 +87,14 @@ function brand<Branded>(value: string): Branded {
 }
 
 /**
- * The wave-1 set: one more establishment class affording an activity, mapped into `poi-taxonomy` under its own external
- * id, with the assertion's country scope as the caller states it. A `see_a_doctor`-style activity nobody carries yet is
- * cloned from the committed one.
+ * One synthetic establishment class affording an activity, mapped into `poi-taxonomy` under its own external id, with
+ * the assertion's country scope as the caller states it. A `see_a_doctor`-style activity nobody carries yet is cloned
+ * from the committed one.
  *
- * `conceptID` is the parameter that matters for the plural case. The narrowing the route now refuses was decided by
+ * Used only for the shapes the committed records cannot express. The narrowing the route refuses was decided by
  * code-point order over concept ids, so a class sorting BEFORE `pharmacy` and one sorting after are the two sides of
- * the same defect, and the refusal has to hold on both.
+ * the same defect and the refusal has to hold on both — the committed `drugstore` covers the first side, and a
+ * synthetic `retail_pharmacy` is what covers the second.
  */
 function withAffordingKind(conceptID: string, options: { activity?: string; countries?: string[] } = {}) {
 	const activity = options.activity ?? "obtain_medication"
@@ -127,6 +133,38 @@ function withAffordingKind(conceptID: string, options: { activity?: string; coun
 
 		model.concepts = [...model.concepts, cloned]
 	}
+}
+
+/**
+ * The one wave-1 record the artifact deliberately withholds: the `poi-taxonomy` mapping from the committed `drugstore`
+ * concept onto the external id of the same name.
+ *
+ * Adding it is the whole difference between a route that builds and a route that refuses, which is why the test adds
+ * exactly this and nothing else. The concept and its US-scoped assertion are already in the artifact this clones.
+ */
+function withHeldOutDrugstoreMapping(model: CompiledGeographicModel): void {
+	const pharmacyMapping = model.mappings.find((mapping) => String(mapping.concept) === "pharmacy")!
+	const mapping = structuredClone(pharmacyMapping)
+
+	mapping.id = brand("poi-taxonomy-drugstore")
+	mapping.concept = brand("drugstore")
+	mapping.externalID = brand("drugstore")
+
+	model.mappings = [...model.mappings, mapping]
+}
+
+/**
+ * Take the country scope off the committed `drugstore` assertion, so the plural case can be run with the claim scoped
+ * to nowhere in particular as well as to the US.
+ */
+function withoutDrugstoreCountryScope(model: CompiledGeographicModel): void {
+	model.concepts = model.concepts.map((concept) =>
+		String(concept.id) === "drugstore" ? { ...concept, assertions: concept.assertions.map(unscopedAssertion) } : concept
+	)
+}
+
+function unscopedAssertion({ countries: _scoped, ...rest }: RelationAssertion): RelationAssertion {
+	return rest
 }
 
 /**
@@ -351,13 +389,24 @@ describe("the observation", () => {
 })
 
 describe("a plural affordance", () => {
-	// The wave-1 class sorting BEFORE `pharmacy`: the order that made `drugstore` win on `d` preceding `p`, so the class
-	// reaching fewer rows would have beaten the class reaching more, and a `strongly_expected` assertion would have beaten
-	// a `necessary` one.
-	it("refuses at construction when the added class sorts first", async () => {
-		await expect(scratchRoute(withAffordingKind("drugstore", { countries: ["US"] }))).rejects.toThrow(
+	// The committed `drugstore` concept sorts BEFORE `pharmacy`: the order that would make `drugstore` win on `d`
+	// preceding `p`, so the class reaching 6,679 US rows would beat the class reaching 44,945, and a
+	// `strongly_expected` assertion would beat a `necessary` one. The only record standing between the artifact and
+	// that collapse is the mapping this adds.
+	it("refuses at construction the moment the held-out drugstore mapping is added", async () => {
+		await expect(scratchRoute(withHeldOutDrugstoreMapping)).rejects.toThrow(
 			/reaches 2 mapped kinds \(drugstore → drugstore, pharmacy → pharmacy\)/
 		)
+	})
+
+	// The other half of the same statement, and the one that says the hold is doing the work: without the mapping the
+	// committed concept and its assertion are carried, reach nothing, and the route builds.
+	it("builds over the committed artifact, which carries the concept but not the mapping", async () => {
+		const model = await readCommittedModel()
+
+		expect(model.concepts.map((concept) => String(concept.id))).toContain("drugstore")
+		expect(model.mappings.map((mapping) => String(mapping.concept))).not.toContain("drugstore")
+		expect(committedRoute.identity.reachableCategoryIDs).toEqual(["pharmacy"])
 	})
 
 	// The losing order, run because a refusal that only fires when the new class sorts first is not a refusal: it is the
@@ -369,7 +418,7 @@ describe("a plural affordance", () => {
 	})
 
 	it("names the phrase, so the refusal says which record to look at", async () => {
-		await expect(scratchRoute(withAffordingKind("drugstore", { countries: ["US"] }))).rejects.toThrow(
+		await expect(scratchRoute(withHeldOutDrugstoreMapping)).rejects.toThrow(
 			/phrase "prescription" names activity "obtain_medication"/
 		)
 	})
@@ -391,29 +440,44 @@ describe("a plural affordance", () => {
 	})
 
 	// The scope does not rescue it. A set that is singular in France and plural in the US would answer in one country and
-	// collapse in the other, which makes the narrowing a property of the query rather than of the lexicon.
+	// collapse in the other, which makes the narrowing a property of the query rather than of the lexicon. The committed
+	// drugstore assertion IS US-scoped, so the first arm is the real record and the second strips the scope off it.
 	it("refuses over the union, not per country", async () => {
-		await expect(scratchRoute(withAffordingKind("drugstore", { countries: ["US"] }))).rejects.toThrow(
-			/reaches 2 mapped kinds/
-		)
+		await expect(scratchRoute(withHeldOutDrugstoreMapping)).rejects.toThrow(/reaches 2 mapped kinds/)
 
-		await expect(scratchRoute(withAffordingKind("drugstore"))).rejects.toThrow(/reaches 2 mapped kinds/)
+		await expect(
+			scratchRoute((model) => {
+				withHeldOutDrugstoreMapping(model)
+				withoutDrugstoreCountryScope(model)
+			})
+		).rejects.toThrow(/reaches 2 mapped kinds/)
 	})
 })
 
 describe("the assertion's country scope", () => {
 	/**
-	 * One US-scoped class affording the activity, and nothing else — the singular case the plural refusal leaves
-	 * reachable, which is the only shape a country scope can be measured on today.
+	 * The COMMITTED US-scoped assertion, made reachable: its mapping added and the unscoped pharmacy affordance taken
+	 * away, so `drugstore` is the only mapped kind affording the activity and the plural refusal does not stand in front
+	 * of what these tests measure.
+	 *
+	 * Nothing about the scope itself is synthetic here — `countries: ["US"]` is the value the artifact carries, so a
+	 * curator who widened or dropped it would move these tests rather than leave them agreeing with a clone.
 	 */
 	async function usScopedRoute(): Promise<ReturnType<typeof createSemanticObservationRoute>> {
 		return scratchRoute((model, lexicon) => {
-			withAffordingKind("drugstore", { countries: ["US"] })(model)
+			withHeldOutDrugstoreMapping(model)
 			withoutPharmacyAffordance(model)
 
 			lexicon.phrases = [entry({ phrase: "prescription" })]
 		})
 	}
+
+	it("reads the scope off the committed record rather than off a clone of it", async () => {
+		const model = await readCommittedModel()
+		const drugstore = model.concepts.find((concept) => String(concept.id) === "drugstore")
+
+		expect(drugstore?.assertions[0]?.countries).toEqual(["US"])
+	})
 
 	it("answers under a locale whose region the assertion names", async () => {
 		const route = await usScopedRoute()
@@ -471,7 +535,7 @@ describe("the assertion's country scope", () => {
 	// would silence a phrase it does not cover.
 	it("lets a shorter phrase answer where the longer one's assertion is out of scope", async () => {
 		const route = await scratchRoute((model, lexicon) => {
-			withAffordingKind("drugstore", { countries: ["US"] })(model)
+			withHeldOutDrugstoreMapping(model)
 			withAffordingKind("walk_in_clinic", { activity: "see_a_doctor" })(model)
 			withoutPharmacyAffordance(model)
 

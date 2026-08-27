@@ -5,7 +5,8 @@
 vector), #1928 (the semantic-utility probe this record supplies a target for).
 
 **Amendments:** [§4.1 — mapping-breadth wave 1](#41-amendment-1-mapping-breadth-wave-1-2026-08-27)
-(2026-08-27, #1961). **Companion decision:**
+(2026-08-27, #1961; authored 2026-08-27 by #1963 — W1-1 and W1-2 landed, W1-3 held for #1980, see the
+closing note). **Companion decision:**
 [the semantic-route integration decision](./2026-08-27-semantic-route-integration-decision.md)
 (2026-08-27, #1966) — stop condition 2, answered; §6's `@mailwoman/core` exclusion left standing.
 
@@ -387,6 +388,39 @@ and compares the manifest version before freezing any wave-1 provenance: an FR c
 zero reopens the FR exclusion, and a US count that has moved changes what W1-2's target attests. The
 taxonomy read-back in W1-3 and both `curated-overlay.json` quotations **were** verified on HEAD and are
 current at table `0.4.0` / Overture `v1.17.0`.
+
+#### Authored 2026-08-27 (#1963): W1-1 and W1-2 landed, W1-3 waits on #1980
+
+**The census was re-run and every figure above stands.** One `group by category_id, country` pass over the
+shipped `poi.db` — manifest `2026-07-22.0`, `build_sha` `3610771ec`, sealed `2026-08-19` — reproduces §5.3
+cell for cell: `pharmacy` 82,168 (US 44,945 · GB 7,694 · FR 11,984 · CA 9,617 · MX 7,928) and `drugstore`
+7,168 (US 6,679 · GB 117 · **FR 0** · CA 369 · MX 3), over 14,664,001 rows in five countries. **The FR
+exclusion stays closed** — the zero is confirmed twice, by the full group-by scan and by a direct count —
+and **W1-2's US target is unmoved** at 6,679 of 7,168. One correction to how the figure is taken: joining
+`poi.category_id` through `poi_category_codes` silently drops 773,210 rows carrying the sentinel
+`category_id = 0`, so the layer total must be read unjoined; neither pharmacy-adjacent leaf is affected.
+
+**What landed:** W1-1 (the `drugstore` concept) and W1-2 (its US-scoped `strongly_expected` assertion),
+plus the vocabulary correction — `affords` now reads `semantics: "defeasible"`, and the pharmacy
+assertion's provenance note is re-grounded in the concept as this section requires. The compiled model
+moves to `0.2.0`.
+
+**What waits: W1-3, the `poi-taxonomy` mapping.** The interim rule the companion decision record's §8.1
+authorizes — a declared phrase whose activity reaches more than one MAPPED kind refuses at construction —
+merged ahead of this work in PR #1979. With W1-3 authored, `obtain_medication` reaches two mapped kinds,
+all eleven declared phrases refuse, the semantic route becomes unbuildable and the capability #1930
+recorded GO on goes to zero. Since `reachKinds` counts MAPPED kinds, an asserted-but-unmapped `drugstore`
+states the semantics in full while leaving the route intact, which is why the mapping alone is held.
+**#1980 owns the union search that makes it safe to land**, per §8.1's own assignment of that work to the
+runtime and resolver; W1-3 is authored behind it, and this note closes out then. Wave 1 is not widened by
+the deferral — nothing outside the admitted table is authored, and nothing admitted is withdrawn.
+
+**Attested target for the pair:** board row `sem-act-us-03` (`where can i pick up a prescription near
+Coalinga CA`), committed as `improvement_target` against #1980. The board grades outcomes and never
+recall, so the row is the anchor where the two readings coincide: measured through the board's own
+pipeline, `pharmacy near Coalinga CA` resolves the anchor and returns zero rows while `drugstore near
+Coalinga CA` returns two at 0.77 km and 1.71 km. It states no preference between the classes, because at
+that anchor there is only one class to return.
 
 ---
 

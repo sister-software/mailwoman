@@ -17,6 +17,39 @@
 			"status": "active"
 		},
 		{
+			"assertions": [
+				{
+					"countries": ["US"],
+					"id": "drugstore-affords-obtain-medication",
+					"modality": "strongly_expected",
+					"provenance": {
+						"authoredAt": "2026-08-27",
+						"notes": "The committed curator statement `{ \"phrase\": \"drugstore\", \"categoryID\": \"pharmacy\", \"locales\": [\"en-US\"] }` says that in en-US this class names the pharmacy category. `strongly_expected` rather than `necessary`: the statement says a US drugstore characteristically dispenses, and neither a locale-scoped synonym nor a row count is a census of dispensing, so a counter-example qualifies this record rather than falsifying it. Scoped to `US` because that is the only country a committed record scopes the class to — CA (369 rows), GB (117) and MX (3) bound a population and assert nothing about what those premises afford, and FR is a measured zero on the shipped layer, so there would be nothing there for the claim to range over.",
+						"source": "mailwoman-curated",
+						"sourceRecord": "packages/poi-taxonomy/data/curated-overlay.json synonyms[drugstore → pharmacy, locales en-US]",
+						"sourceURL": "https://github.com/sister-software/mailwoman/issues/1963",
+						"sourceVersion": "poi-taxonomy table 0.4.0"
+					},
+					"relation": "affords",
+					"target": "obtain_medication"
+				}
+			],
+			"description": "A retail establishment class whose premises characteristically include a counter that dispenses medication to the public.",
+			"id": "drugstore",
+			"isA": ["establishment"],
+			"kind": "establishment",
+			"label": "drugstore",
+			"provenance": {
+				"authoredAt": "2026-08-27",
+				"notes": "Admitted by the wave-1 amendment against a measured recall gap, re-taken on the shipped layer before this record was frozen: one `group by category_id, country` pass over `poi.db` at manifest 2026-07-22.0 counts 7,168 rows under `retail > drugstore` against 82,168 under `health_and_medical > pharmacy` — 8.0% of the two leaves overall and 12.9% within the US (6,679 of 51,624), all of them out of reach of a `pharmacy` query because the branches are disjoint. A kind of `establishment` directly and not of `healthcare_facility`: the external hierarchy puts it under `retail`, and `healthcare_facility` is premises that exist to provide healthcare, which retail premises with a dispensing counter do not. The `poi-taxonomy` mapping the amendment admits as W1-3 is deliberately NOT authored yet — with it, the one activity would reach two mapped kinds and the query surface carries one category id, so the semantic route refuses at construction. Issue #1980 owns the union search that makes the mapping safe to land.",
+				"source": "mailwoman-curated",
+				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4.1 W1-1",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1963",
+				"sourceVersion": "poi.db layer_manifest 2026-07-22.0"
+			},
+			"status": "active"
+		},
+		{
 			"assertions": [],
 			"description": "A class of premises a person can go to.",
 			"id": "establishment",
@@ -71,7 +104,7 @@
 					"modality": "necessary",
 					"provenance": {
 						"authoredAt": "2026-08-26",
-						"notes": "The proposition the first slice exists to state. `necessary` because dispensing medication to the public is what makes premises a pharmacy rather than a neighbouring retail class, which is the same claim `affords` makes by declaring `hard` semantics — a counter-example falsifies this record instead of qualifying it. No `countries` scope: the country-conditional part of the question is which OTHER establishment classes afford the activity, and the slice authors no second class.",
+						"notes": "The proposition the first slice exists to state. `necessary` because dispensing medication to the public is what makes premises a pharmacy rather than a neighbouring retail class — a counter-example falsifies this record instead of qualifying it. The relation is `defeasible`, which says whether `affords` assertions admit exceptions at all and is what lets a `strongly_expected` record sit beside this one coherently; it does not weaken this claim. No `countries` scope: the country-conditional part of the question is which OTHER establishment classes afford the activity, and each of those carries its own scope.",
 						"source": "mailwoman-curated",
 						"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
 						"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927"
@@ -118,6 +151,10 @@
 			"concept": "activity"
 		},
 		{
+			"ancestors": ["establishment", "place"],
+			"concept": "drugstore"
+		},
+		{
 			"ancestors": ["place"],
 			"concept": "establishment"
 		},
@@ -154,7 +191,7 @@
 			"vocabulary": "poi-taxonomy"
 		}
 	],
-	"modelVersion": "0.1.0",
+	"modelVersion": "0.2.0",
 	"observations": [],
 	"relations": [
 		{
@@ -163,7 +200,7 @@
 			"id": "affords",
 			"label": "affords",
 			"rangeKinds": ["activity"],
-			"semantics": "hard",
+			"semantics": "defeasible",
 			"symmetric": false,
 			"transitive": false
 		}
