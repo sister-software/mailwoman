@@ -59,6 +59,9 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/poi-taxonomy": "packages/poi-taxonomy",
 	// `mailwoman`'s activity-phrase vocabulary — a hard dependency, so the closure guard requires it here.
 	"@mailwoman/activity-lexicon": "packages/activity-lexicon",
+	// The compiled world model `mailwoman/observations` reads — a hard dependency, and one whose version must
+	// track `mailwoman`'s exactly, which is the skew a registry resolution here would hide.
+	"@mailwoman/geographic-model": "packages/geographic-model",
 	"@mailwoman/kind-classifier": "packages/kind-classifier",
 	// @mailwoman/react — bare root import must be node-safe (no CSS/DOM eagerly imported); its deps
 	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is
