@@ -1,21 +1,18 @@
 # @mailwoman/geographic-model
 
-The **world-semantic layer**: stable geographic concepts, the relations between them, mappings from external vocabularies into those concepts, source observations, derived facts, and the provenance of every one of them — authored as records, compiled deterministically into runtime artifacts.
+Authored geographic semantics for the [mailwoman](https://www.npmjs.com/package/mailwoman) geocoder: stable concepts (`pharmacy`, `obtain_medication`), the relations a curator can state between them (`pharmacy affords obtain_medication`), mappings into external vocabularies, source observations, and derived facts — every record carrying provenance, and all of it compiled deterministically into a lookup artifact the runtime reads.
 
-> **Status: one authored proposition.** The record types and their deterministic validator are here (#1925), along with the loader and compiler that turn authored files into a runtime artifact (#1926) and the first authored document — `pharmacy affords obtain_medication` (#1927). Nothing consumes the artifact at runtime: no resolver integration, no ordering change, no POI behavior change. Whether the proposition is worth anything to a user is what #1928's pre-registered probe measures, and #1930 records the decision.
+The design problem it exists to solve: a geocoder benefits from knowing that a pharmacy is a place where you obtain medication, but the moment that knowledge becomes a ranking rule, authored opinion starts overriding what the models learned from data. This package holds the knowledge in a shape that CANNOT become ranking policy — no numeric field exists anywhere in the schema, and the compiled artifact answers lookups, never orderings.
 
-The ownership boundary is fixed by the record at [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](../../docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md) (#1917), under program parent #1916. That document is authoritative for everything below; this README is the package-local summary.
+## Should you install this?
 
-## What this package owns
+Probably not directly — not yet.
 
-- Stable concepts beyond the POI vocabulary, and the identifiers other packages refer to them by.
-- Relation definitions, activities, affordances, and rule modality — the first of which is one proposition: `pharmacy affords obtain_medication`.
-- Mappings from external vocabularies (`@mailwoman/poi-taxonomy` category identifiers, and later others) into world concepts.
-- Source observations, kept separate from derived facts.
-- Derivation provenance on every mapping and every derived fact.
-- Deterministic compilation of the authored records into runtime artifacts, and the validation that refuses a record set which does not compile.
+- If you want a geocoder, install [`mailwoman`](https://www.npmjs.com/package/mailwoman). It consumes this package where its experiments call for it.
+- **Version `0.0.0` on npm is a name reservation**, published to establish the package for npm Trusted Publishing. It carries no compiled output. The first usable release ships with the next coordinated mailwoman release, and the API is unstable until a `1.x`.
+- What you can evaluate today: the schema, the validator, the compiler, and the committed artifact — all shipped as readable TypeScript source and JSON in this repository.
 
-## The schema
+## The shape of the data
 
 One document holds six tables, and all six are required — a hand-authored file writes `"derivedFacts": []` rather than leaving the table out, because an absent table and an empty table are different claims.
 
@@ -33,64 +30,31 @@ Three properties hold by construction:
 - **Authored, observed, and derived are three types, not three uses of one type.** Their identifiers carry separate brands, so one is not assignable where another is expected, and they live in separate tables so a curation decision has to be made deliberately rather than by a record sitting in a convenient place.
 - **A derived fact carries its provenance structurally.** It has no `source` field: its `derivation` plus its `inputs` are the provenance, and every input carries source provenance in turn. A source string can be copied onto a record that did not come from it; an input list either resolves or the document does not validate.
 
-Identifiers are branded through `type-fest`'s `Tagged` and converted explicitly — `toConceptID`, `toRelationID`, `toRuleID`, `toMappingID`, `toObservationID`, `toDerivedFactID` — the same idiom as `toPOICategoryID` in `@mailwoman/poi-taxonomy`. The brands are compile-time only; the strings survive JSON untouched.
+Identifiers are branded through `type-fest`'s `Tagged` and converted explicitly — `toConceptID`, `toRelationID`, `toRuleID`, `toMappingID`, `toObservationID`, `toDerivedFactID`. The brands are compile-time only; the strings survive JSON untouched.
 
 ## The validator
 
 `validateGeographicModelDocument(input)` returns the whole document or every reason it is not one. `parseGeographicModelDocument(input)` is the throwing form, and its `GeographicModelValidationError` states every violation in `error.message` as well as on `error.issues`, so a caller that only prints the message still sees all of them.
 
-It reports **every** violation, each addressed by a JSONPath-style location such as `$.concepts[0].assertions[1].modality`. It never returns a partial document: a validator that quietly drops the records it could not read is a validator whose output is indistinguishable from a world that does not contain them.
+It reports **every** violation, each addressed by a JSONPath-style location such as `$.concepts[0].assertions[1].modality`. It never returns a partial document: a validator that drops the records it could not read, without reporting them, is a validator whose output is indistinguishable from a world that does not contain them.
 
-Two passes, both of which always run. **Shape** covers field presence and types, closed-vocabulary membership, and unknown keys — with a field whose name announces ranking policy (`score`, `boost`, `penalty`, `rankWeight`, `relevanceWeight`, `affinityWeight`, and anything else matching the same fragments) reported under its own code rather than as an anonymous stray field. **Whole-table references** covers duplicate identifiers, `isA` self-reference and cycles, relation and concept resolution, relation domain and range kinds, inverse reciprocity, and derivation inputs.
+Two passes, both of which always run. **Shape** covers field presence and types, closed-vocabulary membership, and unknown keys — with a field whose name announces ranking policy (`score`, `boost`, `penalty`, `rankWeight`, and anything else matching the same fragments) reported under its own code rather than as an anonymous stray field. **Whole-table references** covers duplicate identifiers, `isA` self-reference and cycles, relation and concept resolution, relation domain and range kinds, inverse reciprocity, and derivation inputs.
 
-It is plain deterministic TypeScript with no I/O and no dependencies beyond the two type imports: no reasoner, no query engine, no schema library.
+It is plain deterministic TypeScript with no I/O: no reasoner, no query engine, no schema library.
 
-## The loader
+## The loader, the compiler, and the artifact
 
-`loadGeographicModelDirectory(root)` (the `./load` subpath, the one module here that touches a filesystem) reads every `*.json` file under a directory and merges them into one document.
+`loadGeographicModelDirectory(root)` (the `./load` subpath, the one module here that touches a filesystem) reads every `*.json` file under a directory and merges them into one document. The file layout is authoring convenience and carries no meaning; enumeration order cannot reach the output, and every validation issue names the file it came from.
 
-**The layout is authoring convenience and carries no meaning.** A concept means the same thing whichever file it was written in, and a file may hold any subset of the tables. One file is special: `model.json`, holding the document's `version` — a version assembled from whichever fragment happened to declare one is a version nobody chose.
+`compileGeographicModel(input)` validates by delegation, then compiles. **`isA` alone defines semantic inheritance**: the artifact carries every concept's transitive ancestors and every ancestor's assertions materialized onto descendants as derived facts naming their derivation and inputs. A relation declaring `transitive` or `inverse` is **not** closed over — those fields say what the relation means, and general reasoning is excluded from this package for its lifetime.
 
-Two properties make it safe to build an artifact from:
-
-- **Enumeration order cannot reach the output.** The files are sorted by path before any of them is read, so the merged tables are a function of the file names and their contents, never of `readdir` order. `mergeGeographicModelFiles(files)` states the same property without a filesystem, which is how it is tested: any order in, one document out.
-- **Every issue names the file it came from.** The validator addresses a record by its position in the merged table (`$.concepts[7].kind`) — the one address an author cannot see — so the loader keeps a per-record origin and re-addresses each issue. A duplicate identifier names **both** files, the one that claimed it and the one that claimed it first, because "already used" is unactionable without the other half.
-
-What the loader checks on its own is only what the validator cannot see: whether a file parses, whether it is an object, and whether the keys it uses are tables. Everything else is delegated whole.
-
-## The compiler
-
-`compileGeographicModel(input)` validates by delegation — `parseGeographicModelDocument` decides whether a document is well formed, and throws with every violation before a byte is computed — then compiles it into a `CompiledGeographicModel`. There is no second validator, and no partial artifact: a compile produces the whole thing or produces nothing.
-
-**`isA` alone defines semantic inheritance**, and two derivations follow from it:
-
-| In the artifact      | What it is                                                                                                                                                     |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `inheritanceClosure` | Every concept's transitive `isA` ancestors, deduplicated and ordered. One entry per concept, empty list included — a concept that is a kind of nothing says so |
-| `derivedFacts`       | Every ancestor's assertions materialized onto its descendants as `DerivedFactRecord`s, naming the derivation and every record it read                          |
-
-Materializing the assertions is what makes the artifact answer a question rather than point at one: the closure alone would tell a consumer which concepts to go and read, which is the traversal it was supposed to be spared. A descendant that states the same relation and target itself inherits nothing for that pair — the authored record is the more specific one, which is what `isA` means.
-
-A relation declaring `transitive` or `inverse` is **not** closed over. Those fields say what the relation means; materializing them is a reasoning step no executable need has asked for, and general reasoning is excluded from this package. The day one is needed it arrives as its own named derivation beside this one.
-
-Compilation refuses two things the validator cannot see, both about records the compiler is about to write, and both reported with every offending record named: an inherited assertion whose subject kind the relation does not accept, and two derived facts claiming one identifier.
-
-## The artifact
-
-`serializeCompiledModel(model)` produces the canonical bytes. Two rules define them:
-
-- **Every object's keys are emitted in code-point order**, at every depth. A rule that canonicalizes by itself beats a hand-kept field order, which drifts the first time the schema gains a field.
-- **Every table is ordered by identifier**, under `compareIdentifiers` — code point, never `localeCompare`, whose answer depends on the machine's collation. Arrays inside a record keep the order they were authored in.
-
-Nothing records when compilation ran: `modelVersion` is the authored document's own version, so two builds of one document are byte-identical and a regenerate is a diff only when the records changed. `schemaVersion` is the artifact FORMAT version, and `parseCompiledGeographicModel` refuses an artifact declaring another one rather than reading fields that may have moved.
-
-A committed artifact is these bytes run through `oxfmt`, which inlines short arrays — the same convention `taxonomy.json` follows. So a freshness check compares the **parsed** artifact against a fresh compile, and a byte comparison compares two compiles.
+`serializeCompiledModel(model)` produces canonical bytes: keys in code-point order at every depth, tables ordered by identifier, and nothing recording when compilation ran — two builds of one document are byte-identical, so a regenerate is a diff only when the records changed.
 
 `createGeographicModelIndex(model)` (the `./lookup` subpath) is the read surface: `concept`, `relation`, `ancestorsOf`, `derivedFactsAbout`, `conceptsForExternalID`. Lookups only — no walk, no cursor, no query language, because removing query-time traversal is the reason the artifact exists. Two absences stay distinguishable throughout: a concept the artifact does not carry answers `undefined`, and a concept it carries with nothing derived about it answers an empty list.
 
-## The authored slice
+## What is authored today
 
-One proposition, frozen by §4 of the boundary record and authored under [`data/model/`](./data/model/):
+The first slice, in [`data/model/`](./data/model/):
 
 ```text
 place
@@ -100,23 +64,21 @@ pharmacy               isA healthcare_facility          affords obtain_medicatio
 activity
 obtain_medication      isA activity
 
-affords                establishment → activity, hard, not transitive, not symmetric
+affords                establishment → activity, not transitive, not symmetric
 poi-taxonomy pharmacy  → the pharmacy concept
 ```
 
-Every concept, assertion and mapping carries `provenance` naming the boundary record and #1927 — the two authorities this slice has. `RelationRecord` carries none, because a relation is vocabulary rather than a claim: it says what `affords` means, and stands behind nothing in particular.
-
-Deliberately absent, and each absence is a statement rather than an omission: no source observations, no hand-authored derived facts, no `countries` scope, and no second establishment class. `isA` inheritance materializes nothing here, because the one assertion sits on `pharmacy` and `pharmacy` has no descendants.
-
-[`data/geographic-model.json`](./data/geographic-model.json) is the committed compilation of those records. **Do not hand-edit it** — regenerate:
+[`data/geographic-model.json`](./data/geographic-model.json) is the committed compilation. **Do not hand-edit it** — regenerate:
 
 ```bash
 node packages/geographic-model/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json
 ```
 
-[`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states, where the external category id was read from, and why the freshness check compares parsed values. `test/unit/pharmacy-slice.test.ts` asserts all of it against the committed artifact, and names that command when the artifact goes stale.
+[`data/PROVENANCE.md`](./data/PROVENANCE.md) records what each file states and where the external category id was read from. A reviewed amendment has admitted a first breadth wave (a `drugstore` concept with a US-scoped assertion and its mapping); the records land under the same provenance discipline.
 
-## What this package must never own
+Measured, not promised: with this one proposition injected behind an off-by-default flag, activity-phrased queries against the live geocoder moved from 0 of 4 answered to 3 of 4 (a pharmacy 0.41 km from the Denver anchor), with all 6 control queries unchanged. That measurement — pre-registered before the code existed, frozen by hash, decided against committed thresholds — is why the package continues to grow.
+
+## Design commitments
 
 Each of these is owned elsewhere, and naming the owner is what keeps a second copy from growing here.
 
@@ -125,26 +87,24 @@ Each of these is owned elsewhere, and naming the owner is what keeps a second co
 | Relevance weights, boosts, penalties, any candidate-ordering API — even a type                               | `@mailwoman/resolver` (ordering), `@mailwoman/neural` + `@mailwoman/core/decoder` (the decode objective) |
 | POI categories, their containment hierarchy, the Overture-leaf translation, the query-phrase lexicon, brands | `@mailwoman/poi-taxonomy`                                                                                |
 | Dataset identity and coverage epistemics                                                                     | `@mailwoman/core/layers`                                                                                 |
-| Empirical, spatial activity-affordance statistics                                                            | #1683 — it fits numbers against the identifiers owned here                                               |
+| Empirical, spatial activity-affordance statistics                                                            | Fitted from data elsewhere in the program — against the identifiers owned here                           |
 
-Two rules follow from that table and are enforced rather than assumed:
+Two rules are enforced by tests rather than assumed: `@mailwoman/core` must not depend on this package (core ships the pipeline contract plus ~9 MB of reference data to every consumer, and a world-semantics dependency there is one every drop-in API inherits without asking), and the public surface carries no ranking policy — a binding whose name announces a boost, penalty, weight, rank, score, or ordering fails the suite.
 
-- **`@mailwoman/core` must not depend on `@mailwoman/geographic-model`.** Core ships the pipeline contract and roughly 9 MB of reference data to every consumer, so a world-semantics dependency there is one every drop-in API inherits without asking for it. [`test/unit/boundaries.test.ts`](./test/unit/boundaries.test.ts) reads core's manifest and fails on the day that changes.
-- **The public surface carries no ranking policy.** The same test reads whatever the entry point exports and refuses a binding whose name announces a boost, a penalty, a weight, a rank, a score, or an ordering.
+The operating rule for the whole boundary is one sentence: **knowledge creates observations; it never overrides learned interpretation.** A record here may create a fact, an anomaly, a contradiction, or a coverage-qualified absence. It may not create an imperative.
 
-The operating rule for the whole boundary is one sentence, verbatim from the record: **knowledge creates observations; it never overrides learned interpretation.** A record here may create a fact, an anomaly, a contradiction, or a coverage-qualified absence. It may not create an imperative.
+Architecturally excluded for the life of the package: an OWL/DL reasoner, a SPARQL endpoint, a triplestore, a general-purpose knowledge-graph service, and any query-time traversal of the authoring JSON. Authored records are source material compiled into artifacts — artifacts, not a service.
 
-Architecturally excluded for the life of the program, not merely deferred: an OWL/DL reasoner, a SPARQL endpoint, a triplestore, a general-purpose knowledge-graph service, and any query-time traversal of the authoring JSON. Authored records are source material compiled into artifacts — artifacts, not a service.
+## Where the full design lives
 
-## Release posture
+This README is the package-local summary. The authoritative documents are in the mailwoman repository:
 
-`@mailwoman/geographic-model` is in `.release-it.json`'s workspace list and releases with its siblings. The npm name exists (a token `0.0.0` first publish plus a Trusted Publisher configuration, the `scripts/bless-package.ts` flow — required because npm Trusted Publishing cannot create a package that does not exist yet; `RELEASING.md`'s "Adding a NEW package: it can't be first-published from CI" is the full account). The version reads `0.0.0` until the next coordinated release bumps it — consumers should depend on the first released version, not the token publish, which carries no compiled `out/`.
+- The ownership boundary and the frozen first slice: [`docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md`](https://github.com/sister-software/mailwoman/blob/main/docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md)
+- The program that governs growth, with its decision points: [sister-software/mailwoman#1916](https://github.com/sister-software/mailwoman/issues/1916)
 
 ## Layout
 
-Source lives at the workspace root, as it does in every workspace except `packages/corpus/` and `docs/`. Tests live under `test/unit/` and reach the package through its package name, never a relative path — the contract `scripts/verify-test-contract.ts` enforces.
-
-The manifest's `files` array already declares `data/**/*.json`. Authored records land there, and a glob written now cannot be the one a later publish forgets: `**/*.ts` does not cover JSON, and a data file absent from `files` is a package that installs without the data it exists to carry.
+Source lives at the workspace root. Tests live under `test/unit/` and reach the package through its package name, never a relative path. The manifest's `files` array declares `data/**/*.json` explicitly — `**/*.ts` does not cover JSON, and a data file absent from `files` is a package that installs without the data it exists to carry.
 
 ## License
 
