@@ -773,10 +773,12 @@ thin wiring. `gazetteer build bdc` takes `--state` as a FIPS code, which is the 
 region-scoped build; the EA equivalent takes the product version and an optional administrative area
 for the smoke rung.
 
-**Registration.** A new workspace joins four registers and only the first fails loudly: the root
-`workspaces` array, the `.release-it.json` publish list (or a stated reason for absence), and **both**
-root `tsconfig.json` reference entries. Re-run the release-list arithmetic afterwards — it currently
-reads 59 workspaces, 53 in the list, six absent with a stated reason each.
+**Registration.** A new workspace joins six registers and only the first fails loudly — the root
+`workspaces` array, the `.release-it.json` publish list (or a `SANCTIONED_RELEASE_ABSENCES` entry with
+the reason as data), **both** root `tsconfig.json` reference entries, and the
+`smoke-clean-install.ts` pack set; the full paragraph with the bless-package obligation for a
+brand-new npm name is in the root `AGENTS.md`. Re-run the release-list arithmetic afterwards — it
+currently reads 59 workspaces, 53 in the list, six absent with a stated reason each.
 
 **Acquisition.** The rule binds where the rule actually draws its line: metadata reads and per-feature
 WFS queries are API requests and go through `APIClient`; a 367 MB archive streamed to disk is a file
