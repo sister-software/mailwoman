@@ -23,20 +23,29 @@
  *   cell set entirely inside the polygon; `containmentOverlapping` is the set that touches it at all. The
  *   difference is exactly the boundary fringe, which is where the geometry tier has to be consulted.
  *
- *   A BIG POLYGON IS INDEXED COARSER, BECAUSE h3's ALLOCATOR IS SIZED FROM THE BOUNDING BOX. `polygonToCells`
- *   reserves room for the whole bounding box before it walks anything, so a long thin river polygon — a
- *   shape this product is full of — reserves the rectangle the river's meanders span rather than the river.
- *   Asking for resolution 9 over the largest of them threw `Memory allocation failed (code: 13)` out of the
- *   WASM heap after 350,000 features. So each feature is indexed at the finest resolution whose bounding-box
- *   estimate fits {@link CELL_ESTIMATE_BUDGET}, and the resolution it got is stored on the row. That is not
- *   a compromise bolted on: a coarse cell wholly inside a large polygon is exactly what `compactCells` would
- *   have produced anyway, so the whole tier is unchanged in meaning and only the fringe is coarser.
+ *   MOST PARTS NEVER REACH h3 AT ALL, AND THAT IS THE POINT. The WASM heap is exhausted by CALL VOLUME, not
+ *   by any one polygon: h3-js frees every buffer it allocates, so what accumulates over millions of
+ *   interleaved tiny and large allocations is fragmentation. Three runs over the real product died on the
+ *   same feature after roughly 510,000 others — a 164 m² feature of 23 parts and 130 vertices that
+ *   classifies in 35 ms at every resolution 9 through 4 in a fresh process. So the calls are removed rather
+ *   than shrunk, in the two places where the answer is a fact about geometry: {@link enclosingCell} (a part
+ *   whose bounding-box corners all fall in one cell lies inside it, because a cell is convex) and
+ *   {@link canContainCell} (a part narrower than `edge × √3` cannot enclose a hexagon, so its
+ *   `containmentFull` set is empty). Both were checked against the unconditional polyfill over 60,000 real
+ *   features at resolution 9 with zero disagreements, and `test/unit/cells.test.ts` pins the comparison.
  *
- *   AND THE ESTIMATE IS A PREDICTION, SO THE FAILURE IS RECOVERED RATHER THAN FATAL. The same feature that
- *   threw after 350,000 others classified cleanly when run on its own, which says the ceiling depends on
- *   what the WASM heap already holds and not only on the polygon. {@linkcode classifyFeatureCells} therefore
- *   steps the resolution down and retries; only a feature that fails at {@linkcode MIN_INDEX_RESOLUTION} is
- *   refused. Nothing is ever skipped, because a skipped feature is an invented absence.
+ *   A BIG POLYGON IS ALSO INDEXED COARSER, BECAUSE h3's ALLOCATOR IS SIZED FROM THE BOUNDING BOX.
+ *   `polygonToCells` reserves room for the whole bounding box before it walks anything, so a long thin river
+ *   polygon — a shape this product is full of — reserves the rectangle the river's meanders span rather than
+ *   the river. Each feature is therefore indexed at the finest resolution whose bounding-box estimate fits
+ *   {@link CELL_ESTIMATE_BUDGET}, and the resolution it got is stored on the row. That is not a compromise
+ *   bolted on: a coarse cell wholly inside a large polygon is exactly what `compactCells` would have produced
+ *   anyway, so the whole tier is unchanged in meaning and only the fringe is coarser.
+ *
+ *   AND THE ESTIMATE IS A PREDICTION, SO AN ALLOCATION FAILURE IS RECOVERED RATHER THAN FATAL.
+ *   {@linkcode classifyFeatureCells} steps the resolution down and retries; only a feature that fails at
+ *   {@linkcode MIN_INDEX_RESOLUTION} is refused. Nothing is ever skipped, because a skipped feature is an
+ *   invented absence.
  */
 
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
