@@ -79,6 +79,16 @@ they bind.
    genuine absence. A polygon layer has a cell key; what it has in addition is a second tier, and a
    tier is not an addressing scheme.
 
+**Where a layer also carries a REDUCTION, the key names the reduction rather than the index.** Added
+by `@mailwoman/soil`, which has three cell-facing tables rather than two: the unsimplified rings, a
+`(cell, feature)` containment index above them, and one row per cell reducing that index into the
+summary both its consumers read. The rule above still decides it — the key names what a consumer
+JOINS on — and here that is `soil_capability_cell.h3_cell`: single-resolution, one row per cell, and
+the only one of the three a bulk reader can key against. The containment index is keyed
+`(h3_cell, area_id)` and is mixed-resolution by construction, so it is a tier the layer's own reader
+walks, not an addressing scheme a consumer joins. A layer with no reduction, like the flood zones,
+names its index because that is the only cell-keyed table it has.
+
 Two consequences a consumer must carry, and neither is optional.
 
 **The declared `resolution` is the index's TARGET, and the stored rows carry their own.** The whole

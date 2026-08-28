@@ -211,6 +211,11 @@ byte-identical to one with it, minus the marker.
   per-cell class summary shape and store that, never the grid.
 - **No Cropland Data Layer.** It is CC0 and measured, but it answers a different question — observed cover
   in one season, not capability — its accuracy caveats are unread, and it is a raster ingest into a
-  repository with no raster tooling.
+  repository with no raster tooling. Whoever does build it inherits a meaning-of-zero inversion that
+  arrives pre-built in the source's own encoding: the derived Crop Frequency Layer's value domain runs
+  `"1"` planted once in 18 years through `"18"` planted every year, then **`"255"` planted ZERO times**,
+  while **`"0"` is No Data**. A reader that takes 0 as "never planted" reads _we have no data here_ as
+  _nothing was ever grown here_ — exactly backwards. Nothing in this vocabulary uses a numeric sentinel
+  for either state, and nothing in it should start.
 - **No suitability score.** The layer repeats what an authority states, in the authority's vocabulary, with
   the authority's dates. The projection to a number belongs to the consumer, not to the layer.
