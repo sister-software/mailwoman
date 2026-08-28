@@ -22,12 +22,11 @@
  */
 
 import { execFile } from "node:child_process"
-import { createWriteStream } from "node:fs"
-import { mkdir, rename, rm, stat } from "node:fs/promises"
+import { mkdir, stat } from "node:fs/promises"
 import { join } from "node:path"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
 import { promisify } from "node:util"
+
+import { streamToDisk } from "@mailwoman/core/utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -60,11 +59,6 @@ export interface DownloadGeodatabaseOptions {
 }
 
 /**
- * Bytes between progress reports.
- */
-const PROGRESS_STRIDE_BYTES = 32 * 1024 * 1024
-
-/**
  * Download and unzip the geodatabase for one product vintage, returning the path of the `.gdb` directory.
  *
  * Downloads to a `.part` file and renames only on a clean finish, so an interrupted transfer never presents as a
@@ -85,7 +79,12 @@ export async function downloadFloodGeodatabase(options: DownloadGeodatabaseOptio
 	const archivePath = join(vintageDir, EA_GEODATABASE_RESOURCE)
 
 	if (!(await exists(archivePath))) {
-		await streamToDisk(options, archivePath)
+		await streamToDisk({
+			url: options.url,
+			destination: archivePath,
+			context: "flood download",
+			...(options.onProgress ? { onProgress: options.onProgress } : {}),
+		})
 	} else {
 		options.onProgress?.(`archive for ${options.revisionDate} already downloaded`)
 	}
@@ -99,48 +98,6 @@ export async function downloadFloodGeodatabase(options: DownloadGeodatabaseOptio
 	await execFileAsync("unzip", ["-o", "-q", archivePath, "-d", geodatabasePath])
 
 	return geodatabasePath
-}
-
-/**
- * Stream the archive to `archivePath` through a `.part` file.
- */
-async function streamToDisk(options: DownloadGeodatabaseOptions, archivePath: string): Promise<void> {
-	const partialPath = `${archivePath}.part`
-
-	options.onProgress?.(`downloading ${options.url}`)
-
-	const response = await fetch(options.url)
-
-	if (!response.ok || !response.body) {
-		throw new Error(`flood download: ${options.url} answered HTTP ${response.status}`)
-	}
-
-	let received = 0
-	let reported = 0
-
-	const source = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0])
-
-	source.on("data", (chunk: Buffer) => {
-		received += chunk.byteLength
-
-		if (received - reported >= PROGRESS_STRIDE_BYTES) {
-			reported = received
-
-			options.onProgress?.(`${(received / 1024 / 1024).toFixed(0)} MB`)
-		}
-	})
-
-	try {
-		await pipeline(source, createWriteStream(partialPath))
-	} catch (error) {
-		await rm(partialPath, { force: true })
-
-		throw error
-	}
-
-	await rename(partialPath, archivePath)
-
-	options.onProgress?.(`downloaded ${received.toLocaleString()} bytes`)
 }
 
 async function exists(path: string): Promise<boolean> {

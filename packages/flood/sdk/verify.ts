@@ -36,7 +36,7 @@ import { DatabaseSync } from "node:sqlite"
 
 import {
 	expandH3Cell,
-	pointInEncodedRings,
+	interiorPointOfEncodedRings,
 	pointInPolygonRings,
 	segmentDistanceMetres,
 	type H3CellShort,
@@ -344,7 +344,7 @@ export function sampleAgreementPoints(
 
 			if (!area) continue
 
-			const interior = interiorPointOf(area)
+			const interior = interiorPointOfEncodedRings(area, 7)
 
 			if (!interior) continue
 
@@ -379,40 +379,4 @@ export function sampleAgreementPoints(
 	} finally {
 		database.close()
 	}
-}
-
-/**
- * A point inside one stored polygon.
- *
- * The bbox centre is tried first and is inside for the overwhelming majority of these features; where it is not — a
- * crescent, a ring, a polygon with a hole through its middle — a small deterministic grid over the bbox is scanned. A
- * feature no grid point lands inside is skipped rather than approximated, because a sample point that is not actually
- * inside the polygon turns the agreement check into a check on the sampler.
- */
-function interiorPointOf(area: {
-	min_lat: number
-	min_lon: number
-	max_lat: number
-	max_lon: number
-	rings: Uint8Array
-}): { latitude: number; longitude: number } | undefined {
-	const centreLat = (area.min_lat + area.max_lat) / 2
-	const centreLon = (area.min_lon + area.max_lon) / 2
-
-	if (pointInEncodedRings(area.rings, centreLon, centreLat)) {
-		return { latitude: centreLat, longitude: centreLon }
-	}
-
-	const steps = 7
-
-	for (let row = 1; row < steps; row++) {
-		for (let column = 1; column < steps; column++) {
-			const latitude = area.min_lat + ((area.max_lat - area.min_lat) * row) / steps
-			const longitude = area.min_lon + ((area.max_lon - area.min_lon) * column) / steps
-
-			if (pointInEncodedRings(area.rings, longitude, latitude)) return { latitude, longitude }
-		}
-	}
-
-	return undefined
 }

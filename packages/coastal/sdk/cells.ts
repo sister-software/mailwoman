@@ -25,8 +25,8 @@
  *   probe reads.
  */
 
-import { groupCellsByResolution, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
-import { compactCells, getResolution } from "h3-js"
+import { groupCellsByResolution, type FeatureCells } from "@mailwoman/spatial"
+import { compactCells } from "h3-js"
 
 export {
 	addCoverageCells,
@@ -34,6 +34,9 @@ export {
 	classifyFeatureCells,
 	coverageCellFor,
 	estimateCellCount,
+	// The per-feature row builder is shared for the same reason the classifier is: compaction and the short-cell encoding
+	// are h3 arithmetic rather than anything this product knows, and `@mailwoman/zoning` builds its rows the same way.
+	featureCellRows,
 	MIN_INDEX_RESOLUTION,
 	resolutionForFeature,
 	type FeatureCells,
@@ -207,46 +210,6 @@ export class CoastalCellIndex {
 			pooledPartialShare: touchedTotal ? partialTotal / touchedTotal : 0,
 		}
 	}
-}
-
-/**
- * One feature's cell rows, ready for insertion — the whole set compacted, the partial set left at its own resolution.
- *
- * COMPACTION IS PER FEATURE HERE, AND THAT IS THE DIFFERENCE FROM THE FLOOD BUILD. Flood accumulates per zone CODE
- * across features, so it needs a build-time table to hold every touch until all features have been seen. An erosion
- * cell row names one polygon, so a feature's rows are final the moment it is classified — which keeps the build's
- * memory flat in row count with no temporary table at all. Compacting the fringe would claim it covers ground it does
- * not, so only the whole set is compacted.
- */
-export function featureCellRows(cells: FeatureCells): Array<{
-	h3Cell: number
-	resolution: number
-	containment: "whole" | "partial"
-}> {
-	const rows: Array<{ h3Cell: number; resolution: number; containment: "whole" | "partial" }> = []
-	const wholeShort = new Set<number>()
-
-	for (const group of groupCellsByResolution(cells.whole)) {
-		for (const cell of compactCells(group)) {
-			const resolution = getResolution(cell)
-			const short = shortCellToInt(cell as H3Cell)
-
-			wholeShort.add(short)
-			rows.push({ h3Cell: short, resolution, containment: "whole" })
-		}
-	}
-
-	for (const cell of cells.partial) {
-		const short = shortCellToInt(cell)
-
-		// A cell cannot be both for one polygon; the classifier already subtracts the whole set, and this is belt and
-		// braces against a compaction that produced a parent the partial set also names.
-		if (wholeShort.has(short)) continue
-
-		rows.push({ h3Cell: short, resolution: cells.resolution, containment: "partial" })
-	}
-
-	return rows
 }
 
 /**

@@ -63,6 +63,7 @@ import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
 import type { CoastalErosionRoute } from "./observations/coastal-route.ts"
 import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"
 import type { SoilCapabilityRoute } from "./observations/soil-route.ts"
+import type { ZoningDesignationRoute } from "./observations/zoning-route.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
 import {
 	createResolverBackend,
@@ -408,6 +409,39 @@ export async function loadCoastalErosionRoute(
 }
 
 /**
+ * The zoning route, opened when the sealed Irish Generalised Zoning Types layer is on disk (#1995).
+ *
+ * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the three routes above, and for the same reason: a
+ * boolean would have to construct the reader itself and would put a sealed database open on the default construction
+ * path. No `zoning-ireland.db` in the data root, no route, and the geocode result is byte-identical to a build without
+ * the field.
+ *
+ * THE ARTIFACT IS NAMED FOR ITS JURISDICTION rather than for its subject, and here that matters more than anywhere
+ * else. Zoning is decentralised by construction: 30 Irish local authorities publish 581 distinct zone codes between
+ * them, and a California or a Washington layer would carry its own vocabulary under the same word. A file called
+ * `zoning.db` would invite one jurisdiction's codes to answer for another's.
+ *
+ * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * manifest naming a different product, a coverage row that would license a negative claim — must not take the geocoder
+ * down over an advisory it was never asked for.
+ */
+export async function loadZoningDesignationRoute(
+	options: Pick<GeocodeSessionOptions, "dataRoot">
+): Promise<ZoningDesignationRoute | undefined> {
+	const zoningDBPath = resolvePath(options.dataRoot, "zoning", "zoning-ireland.db")
+
+	if (!existsSync(zoningDBPath)) return undefined
+
+	try {
+		const { createZoningDesignationRoute } = await import("./observations/zoning-route.ts")
+
+		return createZoningDesignationRoute({ databasePath: String(zoningDBPath) })
+	} catch {
+		return undefined
+	}
+}
+
+/**
  * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
  * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
@@ -618,6 +652,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let designationRoute: AuthorityDesignationRoute | undefined
 	let soilRoute: SoilCapabilityRoute | undefined
 	let coastalRoute: CoastalErosionRoute | undefined
+	let zoningRoute: ZoningDesignationRoute | undefined
 
 	const closeQuietly = (handle: { close(): void } | undefined): void => {
 		try {
@@ -637,6 +672,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		closeQuietly(designationRoute)
 		closeQuietly(soilRoute)
 		closeQuietly(coastalRoute)
+		closeQuietly(zoningRoute)
 	}
 
 	// Everything past this point can THROW while the handles above are already open, so it runs behind the
@@ -686,6 +722,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		designationRoute = await loadAuthorityDesignationRoute(options)
 		soilRoute = await loadSoilCapabilityRoute(options)
 		coastalRoute = await loadCoastalErosionRoute(options)
+		zoningRoute = await loadZoningDesignationRoute(options)
 	} catch (error) {
 		close()
 
@@ -856,6 +893,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #1993: present only when the sealed coastal layer is on disk, so a data root without one produces the identical
 			// marker list.
 			...(coastalRoute ? { coastalErosionRoute: coastalRoute } : {}),
+			// #1995: present only when the sealed zoning layer is on disk, so a data root without one produces the identical
+			// marker list.
+			...(zoningRoute ? { zoningDesignationRoute: zoningRoute } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
 			...(trace && options.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 		})

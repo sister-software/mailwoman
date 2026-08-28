@@ -38,7 +38,7 @@ import { execFile, spawn } from "node:child_process"
 import { promisify } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import type { MultiPolygonRings, PolygonRings } from "@mailwoman/spatial"
+import { assertRingsInsideExtent, type MultiPolygonRings, type PolygonRings } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
 import { JSONSpliterator } from "spliterator"
 
@@ -419,7 +419,13 @@ async function* streamLayer(
 
 			const polygons = normalizePolygons(raw.geometry, `${label} feature ${id}`)
 
-			assertInsideExtent(polygons, `${label} feature ${id}`, { minLon, minLat, maxLon, maxLat })
+			assertRingsInsideExtent(
+				polygons,
+				`${label} feature ${id}`,
+				{ minLon, minLat, maxLon, maxLat },
+				BBOX_MARGIN_DEGREES,
+				"coastal ingest"
+			)
 
 			yield { raw, polygons }
 		}
@@ -434,36 +440,6 @@ async function* streamLayer(
 	// A truncated stream reads as a short but well-formed feature list, which is exactly the partial result that must
 	// throw rather than be reported as a smaller coastline.
 	if (exitError) throw exitError
-}
-
-/**
- * Refuse a feature whose reprojected vertices fall outside the authority's own declared extent.
- */
-function assertInsideExtent(
-	polygons: MultiPolygonRings,
-	label: string,
-	extent: { minLon: number; minLat: number; maxLon: number; maxLat: number }
-): void {
-	for (const rings of polygons) {
-		for (const ring of rings) {
-			for (const position of ring) {
-				const lon = position[0]!
-				const lat = position[1]!
-
-				if (
-					lon < extent.minLon - BBOX_MARGIN_DEGREES ||
-					lon > extent.maxLon + BBOX_MARGIN_DEGREES ||
-					lat < extent.minLat - BBOX_MARGIN_DEGREES ||
-					lat > extent.maxLat + BBOX_MARGIN_DEGREES
-				) {
-					throw new Error(
-						`coastal ingest: ${label} has a vertex at ${lon}, ${lat}, outside the declared extent ` +
-							`[${extent.minLon}, ${extent.minLat}, ${extent.maxLon}, ${extent.maxLat}] — the reprojection or the coordinate order is wrong`
-					)
-				}
-			}
-		}
-	}
 }
 
 /**

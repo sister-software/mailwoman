@@ -35,6 +35,7 @@
 		"packages/flood",
 		"packages/soil",
 		"packages/coastal",
+		"packages/zoning",
 		"packages/cartographer",
 		"packages/codex",
 		"packages/corpus",

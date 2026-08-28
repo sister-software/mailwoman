@@ -62,6 +62,7 @@
 import {
 	cellToChildren,
 	cellToParent,
+	compactCells,
 	getHexagonAreaAvg,
 	getHexagonEdgeLengthAvg,
 	getResolution,
@@ -370,6 +371,49 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 	}
 
 	return [...groups.values()]
+}
+
+/**
+ * One classified feature's cell rows, ready for insertion — the whole set compacted, the partial set left at its own
+ * resolution.
+ *
+ * SHARED BY EVERY POLYGON LAYER WHOSE CELL ROW NAMES A POLYGON rather than a class accumulated across features. There
+ * is no product knowledge in it: compaction, the short-cell encoding and the belt-and-braces subtraction below are h3
+ * and blob arithmetic, and a second copy is a second place for the subtraction to stop happening.
+ *
+ * COMPACTION IS PER FEATURE, which is what keeps a build's memory flat in row count with no temporary table: a row that
+ * names one polygon is final the moment that polygon is classified. Only the WHOLE set is compacted — compacting the
+ * fringe would claim it covers ground it does not.
+ */
+export function featureCellRows(cells: FeatureCells): Array<{
+	h3Cell: number
+	resolution: number
+	containment: "whole" | "partial"
+}> {
+	const rows: Array<{ h3Cell: number; resolution: number; containment: "whole" | "partial" }> = []
+	const wholeShort = new Set<number>()
+
+	for (const group of groupCellsByResolution(cells.whole)) {
+		for (const cell of compactCells(group)) {
+			const resolution = getResolution(cell)
+			const short = shortCellToInt(cell as H3Cell)
+
+			wholeShort.add(short)
+			rows.push({ h3Cell: short, resolution, containment: "whole" })
+		}
+	}
+
+	for (const cell of cells.partial) {
+		const short = shortCellToInt(cell)
+
+		// A cell cannot be both for one polygon; the classifier already subtracts the whole set, and this is belt and braces
+		// against a compaction that produced a parent the partial set also names.
+		if (wholeShort.has(short)) continue
+
+		rows.push({ h3Cell: short, resolution: cells.resolution, containment: "partial" })
+	}
+
+	return rows
 }
 
 /**

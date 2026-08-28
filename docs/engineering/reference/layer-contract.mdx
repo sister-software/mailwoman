@@ -133,6 +133,33 @@ Worked example, with the numbers: `packages/flood` — three runs died at one 16
 ~510,000 others, a fourth at another after ~798,000, and every one of those features classifies in
 milliseconds in a fresh process.
 
+### A conversion tool may REWRITE what the source encoded, and the check is the publisher's own total
+
+Measured on `packages/zoning` and binding on every polygon builder whose source encodes anything in
+ring ORIENTATION, because the failure is a property of the conversion tool rather than of that
+product.
+
+**GDAL's GeoJSON writer enforces the RFC 7946 winding unconditionally.** `-lco RFC7946=NO` is not a
+GeoJSONSeq layer-creation option and `--config OGR_ORGANIZE_POLYGONS SKIP` changes nothing, so a
+source that marks holes by winding them counter to their exterior comes out of a reprojection with
+every ring wound as an exterior. Measured on Ireland's largest zoning feature — Meath County
+Council's `RA - Rural Area`, published as 107 single-ring parts, 5 clockwise and 102
+counter-clockwise: through `-f GeoJSONSeq` it arrives as 107 counter-clockwise exteriors totalling
+2,371.9 km² against the publisher's own 2,232.1 km². The same conversion written as `-f CSV -lco
+GEOMETRY=AS_WKT` keeps the source's split intact.
+
+Two requirements follow, and the second is what makes the first checkable.
+
+1. **Choose a transport that preserves what the source encoded**, and say in the ingest which
+   property it is preserving. A reprojection is not a neutral operation on a geometry whose meaning
+   is carried in its winding.
+2. **Compare the built area against the PUBLISHER'S OWN figure, not against the archive's.** Ireland
+   publishes `Shape__Area` on the service and drops it from the bulk export, which is what makes the
+   comparison a second path rather than a file agreeing with itself: read with their holes the rings
+   total 5,444.5 km² and the publisher's column sums to 5,444.5 km²; read without them, 5,666.6 km².
+   The 4.1% is the harmless half — the harmful half is a ray cast answering "inside" for every
+   location the plan carved out.
+
 ### An authority's designation rides the query-intent carrier and names the verdict's own kind
 
 Also settled here, for the same reason: it is a property of the contract rather than of one layer.
@@ -173,9 +200,18 @@ same platform, three months apart, show both directions:
   area, which is the designation a caller actually wants; and the published layers cannot tell those
   apart. So every coverage row carries `basis = source_present`, the layer has no absence reading,
   and the observation stays silent where no polygon contains the point.
+- **`packages/zoning`.** The hardest case of the three, and the one that shows why the rule is about
+  the SOURCE rather than about the subject. A location with no zoning polygon is one of at least four
+  different things — outside any adopted plan area, inside one on land the plan does not zone, in a
+  jurisdiction that has never adopted zoning, or in a jurisdiction whose records nobody has
+  published — and no product distinguishes them. **The source itself proves the asymmetry**: it
+  states `UNZ - Unzoned` as a POSITIVE value on 4 of its 85,330 rows, so where the authority means
+  unzoned it says so on a row and every other absence is a row that is not there. `source_present`
+  again, and the same refusal at both ends.
 
-A builder that had generalized the first rule to the second product would have written "no erosion
-risk" over the whole of England, on a well-formed artifact that passed every structural check.
+A builder that had generalized the first rule to either of the others would have written "no erosion
+risk" over the whole of England, or "no restriction applies" over most of a country's land, on a
+well-formed artifact that passed every structural check.
 
 **So the basis is a checked condition, at both ends, not a convention the builder follows.** A layer
 whose source publishes no footprint refuses to WRITE a coverage row that would support an exclusion,
@@ -351,6 +387,15 @@ Building a new layer? The contract obligations, in order:
   number. It is also where the polygon rule's geometry inverts: its delineations are small against its
   cells, so the containment index answers almost nothing on its own and `compactCells` yields close to
   nothing (measured at resolution 9: 97.6% of cells partial, 369 whole cells compacting to 315).
+- [`@mailwoman/coastal`](../../../packages/coastal/README.md) — the worked SCENARIO-SCOPED example:
+  twelve published layers over the same frontages that must never be pooled, so every stored row and
+  every reading names the one it answered under. It is also where the coverage rule first inverted:
+  the same authority as the flood layer, publishing no coverage statement at all.
+- [`@mailwoman/zoning`](../../../packages/zoning/README.md) — the worked VOCABULARY example: the
+  authority's own code carried verbatim with the publisher's own generic classification beside it,
+  because the mapping is not a function of the pair (52 of 795 (authority, code) pairs take more than
+  one type). It is also where a conversion tool was measured rewriting what the source encoded — this
+  publisher marks holes by ring orientation, and GDAL's GeoJSON writer normalizes it away.
 - [The meaning of zero](./the-meaning-of-zero.mdx) — the general epistemics principle behind the
   coverage rule.
 - [Address-data sources](./address-data-sources.mdx) — the source catalog the shipped layers draw from.

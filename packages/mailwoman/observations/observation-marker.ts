@@ -36,6 +36,7 @@ import type { CoastalErosionObservation, CoastalErosionRoute } from "./coastal-r
 import type { AuthorityDesignationObservation, AuthorityDesignationRoute } from "./flood-route.ts"
 import type { SemanticObservation } from "./semantic-route.ts"
 import type { SoilCapabilityObservation, SoilCapabilityRoute } from "./soil-route.ts"
+import type { ZoningDesignationObservation, ZoningDesignationRoute } from "./zoning-route.ts"
 
 /**
  * `family:rule` for a category chosen from an affordance assertion.
@@ -64,6 +65,11 @@ export const SOIL_CAPABILITY_DESIGNATION_MECHANISM = "layer:soil_capability"
  * `family:rule` for a reading out of the EA coastal-erosion layer — the third rule under the `layer` family.
  */
 export const COASTAL_EROSION_DESIGNATION_MECHANISM = "layer:coastal_erosion"
+
+/**
+ * `family:rule` for a reading out of a planning authority's zoning layer — the fourth rule under the `layer` family.
+ */
+export const ZONING_DESIGNATION_MECHANISM = "layer:zoning"
 
 /**
  * The kinds a POI observation may name. Both route as the POI branch, and the classifier reports whichever one its
@@ -353,6 +359,80 @@ export function coastalErosionMarker(
 }
 
 /**
+ * Turn one zoning reading into a marker on a geocode verdict.
+ *
+ * SAME CODE, SAME FAMILY, DIFFERENT RULE — the fourth under the `layer` family, sharing `authority_designation` with
+ * the flood, soil and coastal markers because all four report what an authority designates at a resolved coordinate.
+ * The rule half names the layer, so a reader meeting several designation markers on one answer can tell which authority
+ * spoke.
+ *
+ * THE AUTHORITY'S OWN CODE IS IN THE SENTENCE, VERBATIM, AND THE GENERIC TYPE RIDES BESIDE IT. That ordering is the
+ * whole vocabulary decision expressed in one string: the publisher's national scheme "complements (rather than
+ * replaces) the existing statutory zoning used for each individual plan", in its own words, and a message that led with
+ * the generic type would report the summary as the designation. The local code is also the half that cannot be
+ * reconstructed — 52 of 795 (authority, local code) pairs take more than one generic type, so the mapping runs one way
+ * only.
+ *
+ * AND THE PLAN IS IN THE SENTENCE TOO. A zone exists inside a named plan with a stated window, and a designation
+ * without one would be a fact about nothing. `currentPlan = 1` means "not superseded" rather than "in force today", so
+ * the window travels on the evidence and the comparison against a date is the reader's.
+ *
+ * The message reports WHAT A PLAN ASSIGNS at a location, never what may be built there. The publisher itself declines
+ * the second statement — its data are "not published here as legal definitions of the current actuality" — and a
+ * wording that blurred them would be this program's invention rather than the authority's.
+ */
+export function zoningDesignationMarkers(
+	route: ZoningDesignationRoute | undefined,
+	latitude: number | null | undefined,
+	longitude: number | null | undefined,
+	verdict: QueryKindResult
+): QueryIntentMarker[] {
+	if (!route) return []
+
+	const decision = route.observe(latitude, longitude)
+
+	return decision.fired ? [zoningDesignationMarker(decision.observation, verdict)] : []
+}
+
+/**
+ * The conversion proper — see {@link zoningDesignationMarkers} for the caller-facing shape.
+ */
+export function zoningDesignationMarker(
+	observation: ZoningDesignationObservation,
+	verdict: QueryKindResult
+): QueryIntentMarker {
+	const first = observation.designations[0]
+
+	const assigned = first
+		? `${first.jurisdiction.name} zones the resolved coordinate ${JSON.stringify(first.localCode)}` +
+			(first.localDescription ? ` (${first.localDescription})` : "") +
+			(first.crosswalk ? `, which it classifies ${first.crosswalk.scheme} ${first.crosswalk.code}` : "") +
+			`, under ${first.plan.name}`
+		: "an adopted plan zones the resolved coordinate"
+
+	return {
+		kind: verdict.kind,
+		code: QueryIntentCode.AuthorityDesignation,
+		mechanism: ZONING_DESIGNATION_MECHANISM,
+		message:
+			`${assigned}. This states what an adopted plan assigns at a location, in the authority's own vocabulary, ` +
+			"not what may be built there — the publisher states its data are not legal definitions and that original data " +
+			"should be sourced directly from the relevant Local Authority.",
+		evidence: {
+			reading: observation.reading,
+			designations: observation.designations,
+			containment: observation.containment,
+			...(observation.coverage ? { coverage: observation.coverage } : {}),
+			indexCellIndex: observation.indexCellIndex,
+			limits: observation.limits,
+			coverageLimit: observation.coverageLimit,
+			layer: observation.layer,
+			coordinate: observation.coordinate,
+		},
+	}
+}
+
+/**
  * The attached spatial layers a caller may hand to a geocode, as one named bundle.
  *
  * ONE TYPE RATHER THAN THREE FIELDS ON THE CONSUMER, because {@link layerDesignationMarkers} already reads all of them
@@ -388,6 +468,15 @@ export interface LayerDesignationRoutes {
 	 * the flood route above. One field across both would put one rule over two opposite meanings of an empty answer.
 	 */
 	coastalErosionRoute?: CoastalErosionRoute
+	/**
+	 * The Irish zoning route (#1995) — a fourth layer, and the first whose observation is a VOCABULARY rather than a code
+	 * from a closed domain. It carries the authority's own zone code verbatim beside the publisher's own generic
+	 * classification, because 52 of 795 (authority, local code) pairs take more than one generic type and the mapping
+	 * therefore runs one way only. Its absence reading is NOTHING, on the same terms as the coastal route above and for a
+	 * harder reason: an absent zoning polygon is one of at least four different things and no product distinguishes
+	 * them.
+	 */
+	zoningDesignationRoute?: ZoningDesignationRoute
 }
 
 /**
@@ -410,5 +499,6 @@ export function layerDesignationMarkers(
 		...authorityDesignationMarkers(routes.authorityDesignationRoute, latitude, longitude, verdict),
 		...soilCapabilityMarkers(routes.soilCapabilityRoute, latitude, longitude, verdict),
 		...coastalErosionMarkers(routes.coastalErosionRoute, latitude, longitude, verdict),
+		...zoningDesignationMarkers(routes.zoningDesignationRoute, latitude, longitude, verdict),
 	]
 }

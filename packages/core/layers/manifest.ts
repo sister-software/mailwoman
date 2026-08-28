@@ -129,6 +129,129 @@ function assertManifestInvariants(manifest: Pick<LayerManifest, "tier" | "freshn
 }
 
 /**
+ * One `layer_coverage` row as a synchronous reader gets it back from `node:sqlite`.
+ */
+export interface CoverageRow {
+	h3_cell: number
+	completeness: number
+	basis: string | null
+	observed_rows: number
+}
+
+/**
+ * A stored coverage row as the parsed {@link CoverageCell}, with the cell's own index and resolution beside it.
+ *
+ * SHARED BY EVERY POLYGON LAYER'S READER, and the reason is the second line of it. A NULL `basis` is an artifact built
+ * before the column existed; it was recording source presence, so that is what it must read back as — never a stronger
+ * basis than the builder actually had. Four readers writing that rule separately is four places for one of them to
+ * write `?? CoverageBasis.Designated` and license an exclusion nobody measured.
+ *
+ * `undefined` in, `undefined` out: a cell with no coverage row is UNKNOWN, never `{completeness: 0}`.
+ */
+export function toCoverageCell(
+	row: CoverageRow | undefined,
+	h3CellIndex: string,
+	resolution: number
+): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
+	if (!row) return undefined
+
+	return {
+		h3Cell: row.h3_cell,
+		h3CellIndex,
+		resolution,
+		completeness: row.completeness,
+		basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
+		observedRows: row.observed_rows,
+	}
+}
+
+/**
+ * One `layer_manifest` row as a synchronous reader gets it back, mapped onto {@link LayerManifest}.
+ *
+ * SHARED BY EVERY LAYER READER. `readLayerManifest` above is the Kysely path; a reader that opens the artifact with
+ * `node:sqlite` for its own synchronous probes reads the same single row and needs the same mapping, and the four that
+ * did it separately differed only in the error prefix.
+ *
+ * @param rows Every row of `layer_manifest` — the count is checked here, because a layer with no identity, or two, must
+ *   fail loudly rather than answer from whichever row came first.
+ * @param context Names the caller in every refusal.
+ * @throws {Error} When the table does not hold exactly one row, when the layer is not `expectedName`, or when the
+ *   manifest's invariants do not hold.
+ */
+export function parseManifestRows(
+	rows: ReadonlyArray<Record<string, string | number | null>>,
+	expectedName: string,
+	context: string
+): LayerManifest {
+	if (rows.length !== 1) {
+		throw new Error(`${context} carries ${rows.length} manifest rows, expected 1`)
+	}
+
+	const row = rows[0]!
+
+	if (String(row.name) !== expectedName) {
+		throw new Error(
+			`${context} is layer ${JSON.stringify(row.name)}, not ${JSON.stringify(expectedName)} — one publisher, one product, one vocabulary per artifact`
+		)
+	}
+
+	const manifest: LayerManifest = {
+		name: String(row.name),
+		version: String(row.version),
+		schemaVersion: Number(row.schema_version),
+		tier: String(row.tier) as LayerTier,
+		license: String(row.license),
+		...(row.attribution === null || row.attribution === undefined ? {} : { attribution: String(row.attribution) }),
+		source: String(row.source),
+		sourceVintage: String(row.source_vintage),
+		buildCmd: String(row.build_cmd),
+		buildSHA: String(row.build_sha),
+		freshnessPolicy: String(row.freshness_policy) as LayerFreshnessPolicy,
+		spineKeys: parseJSONStrict<SpineKeys>(String(row.spine_keys)),
+		createdAt: String(row.created_at),
+	}
+
+	assertManifestInvariants(manifest)
+
+	return manifest
+}
+
+/**
+ * Refuse an artifact whose coverage would license a claim that the thing asked for is NOT there.
+ *
+ * A CONDITION RATHER THAN A CONVENTION, and shared because the rule is the contract's rather than any product's: a
+ * layer whose source publishes no footprint may record presence and nothing else, and the day someone writes a stronger
+ * basis without settling the footprint question the layer must refuse to open rather than answer confidently. Checked
+ * over the DISTINCT bases, so the cost is one query however large the table.
+ *
+ * @param bases Every distinct `basis` in `layer_coverage`, NULL included.
+ * @param reason The layer's own sentence saying why its coverage licenses no negative claim.
+ * @throws {Error} When the table is empty, or when any basis supports an exclusion.
+ */
+export function assertCoverageLicensesNoExclusion(
+	bases: ReadonlyArray<string | null>,
+	context: string,
+	reason: string
+): void {
+	if (!bases.length) {
+		throw new Error(
+			`${context} holds no coverage rows — every location would read as unknown, which is indistinguishable from ground the publisher has not mapped`
+		)
+	}
+
+	for (const value of bases) {
+		const basis = (value as CoverageBasis | null) ?? CoverageBasis.SourcePresent
+
+		if (supportsExclusion({ basis })) {
+			throw new Error(
+				`${context} carries a coverage row on basis ${JSON.stringify(basis)}, which supports an EXCLUSION. ` +
+					`${reason} Until a mapped-footprint source is settled, every row must read ${CoverageBasis.SourcePresent}`
+			)
+		}
+	}
+}
+
+/**
  * Insert the single manifest row. Call exactly once, from the layer's build script.
  */
 export async function writeLayerManifest(db: LayerContractHandle, manifest: LayerManifest): Promise<void> {

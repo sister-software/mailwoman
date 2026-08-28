@@ -265,12 +265,18 @@ export function decodeRings(blob: Uint8Array): DecodedRings {
 const EARTH_RADIUS_M = 6_371_008.8
 
 /**
- * Signed spherical area of one linear ring, in square metres. Counter-clockwise is positive.
+ * Signed spherical area of one linear ring, in square metres. **CLOCKWISE is positive**, counter-clockwise negative.
  *
  * The sign is the whole point: an orientation-respecting sum over a polygon's rings subtracts its holes, while a sum of
  * absolute values adds them. Comparing the two against the source's own area figure is what tells a builder whether it
  * has read the holes at all — the failure mode is silent, because a hole read as an exterior ring produces a perfectly
  * well-formed polygon that simply covers more ground than the authority mapped.
+ *
+ * WHICH WINDING IS POSITIVE IS A CONTRACT, NOT A DETAIL, because a builder whose source encodes hole roles by
+ * ORIENTATION reads roles off this sign. It is the opposite of the standard planar shoelace: this sum runs `(lonᵢ −
+ * lonⱼ)` against the shoelace's `(xⱼ − xᵢ)`, so a ring `@mailwoman/spatial`'s own {@link rectangleRing} builds
+ * counter-clockwise answers NEGATIVE here. `@mailwoman/zoning` is the caller that depends on it, and
+ * `packages/zoning/test/unit/ring-roles.test.ts` pins the sign directly.
  */
 export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number {
 	let total = 0
@@ -316,6 +322,110 @@ export function ringAreaReadings(polygons: MultiPolygonRings): {
 	}
 
 	return { nested, allExterior }
+}
+
+/**
+ * A rectangle in CRS84 degrees.
+ */
+export interface DegreeExtent {
+	minLon: number
+	minLat: number
+	maxLon: number
+	maxLat: number
+}
+
+/**
+ * Refuse a feature whose reprojected vertices fall outside the publisher's own declared extent.
+ *
+ * THE CHECK A PROJECTION CHECK CANNOT MAKE. A swapped coordinate order survives an authority-code comparison — both
+ * axes are still numbers in a plausible range — and a source read in its own metres as if they were degrees produces
+ * perfectly well-formed coordinates in the wrong ocean. Both show up here on the first feature, before a whole layer is
+ * written to the wrong side of the planet.
+ *
+ * SHARED BY EVERY POLYGON INGEST, because it is rectangle arithmetic over the ring types and knows nothing about any
+ * product. `marginDegrees` is the caller's, because a declared extent is itself a rounded published value and how
+ * tightly a source hugs its own is a fact about that source.
+ *
+ * @param context Names the calling ingest in the refusal, so a build log says which layer stopped.
+ * @throws {RangeError} On the first vertex outside the extent.
+ */
+export function assertRingsInsideExtent(
+	polygons: MultiPolygonRings,
+	label: string,
+	extent: DegreeExtent,
+	marginDegrees: number,
+	context = "polygon ingest"
+): void {
+	for (const rings of polygons) {
+		for (const ring of rings) {
+			for (const position of ring) {
+				const lon = position[0]!
+				const lat = position[1]!
+
+				if (
+					lon < extent.minLon - marginDegrees ||
+					lon > extent.maxLon + marginDegrees ||
+					lat < extent.minLat - marginDegrees ||
+					lat > extent.maxLat + marginDegrees
+				) {
+					throw new RangeError(
+						`${context}: ${label} has a vertex at ${lon}, ${lat}, outside the declared extent ` +
+							`[${extent.minLon}, ${extent.minLat}, ${extent.maxLon}, ${extent.maxLat}] — the reprojection or the coordinate order is wrong`
+					)
+				}
+			}
+		}
+	}
+}
+
+/**
+ * One stored polygon's bounding box and geometry, as every polygon layer's truth table stores them.
+ */
+export interface EncodedArea {
+	min_lat: number
+	min_lon: number
+	max_lat: number
+	max_lon: number
+	rings: Uint8Array
+}
+
+/**
+ * A point INSIDE one stored polygon, for a verification sampler.
+ *
+ * The bounding-box centre is tried first; where it is not inside — a crescent, a band hugging a river, a polygon with a
+ * hole through its middle — a small deterministic grid over the box is scanned. A polygon no grid point lands inside is
+ * refused (`undefined`) rather than approximated, because a sample point that is not actually inside the polygon turns
+ * an agreement check into a check on the sampler.
+ *
+ * SHARED BY EVERY POLYGON LAYER'S VERIFY, because it is bounding-box arithmetic over the ring blob and knows nothing
+ * about any product. `gridSteps` is the one thing that differs between them: a layer whose polygons are narrow strips
+ * needs a finer grid than one whose polygons are compact, and the value is part of a layer's sampling receipt — two
+ * runs of the same layer must draw the same points, so it is a caller's choice rather than a shared default nobody
+ * owns.
+ *
+ * @param gridSteps Grid divisions per axis. Only `steps − 1` interior lines are tested, so 7 gives a 6 × 6 grid.
+ */
+export function interiorPointOfEncodedRings(
+	area: EncodedArea,
+	gridSteps = 7
+): { latitude: number; longitude: number } | undefined {
+	const centreLat = (area.min_lat + area.max_lat) / 2
+	const centreLon = (area.min_lon + area.max_lon) / 2
+
+	if (pointInEncodedRings(area.rings, centreLon, centreLat)) {
+		return { latitude: centreLat, longitude: centreLon }
+	}
+
+	for (let row = 1; row < gridSteps; row++) {
+		for (let column = 1; column < gridSteps; column++) {
+			const latitude = area.min_lat + ((area.max_lat - area.min_lat) * row) / gridSteps
+			const longitude = area.min_lon + ((area.max_lon - area.min_lon) * column) / gridSteps
+
+			if (pointInEncodedRings(area.rings, longitude, latitude)) return { latitude, longitude }
+		}
+	}
+
+	return undefined
 }
 
 /**

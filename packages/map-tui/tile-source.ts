@@ -14,6 +14,7 @@
 
 import { type FileHandle, open } from "node:fs/promises"
 
+import { Parser } from "htmlparser2"
 import { PMTiles, type RangeResponse, type Source } from "pmtiles"
 
 import { type DecodedLayer, decodeMVT } from "./mvt.ts"
@@ -57,19 +58,6 @@ class FilePMTilesSource implements Source {
 const TILE_CACHE_LIMIT = 64
 
 /**
- * The named entities attribution strings actually carry — archive metadata is HTML (`<a>&copy; OpenStreetMap</a>`), and
- * a terminal shows entities raw unless they decode here.
- */
-const HTML_ENTITIES: Record<string, string> = {
-	"&amp;": "&",
-	"&copy;": "©",
-	"&gt;": ">",
-	"&lt;": "<",
-	"&quot;": '"',
-	"&#39;": "'",
-}
-
-/**
  * Plain-text attribution out of archive metadata (HTML tags stripped, entities decoded); empty string when absent.
  */
 export function readAttribution(metadata: unknown): string {
@@ -82,10 +70,24 @@ export function readAttribution(metadata: unknown): string {
 		return ""
 	}
 
-	return (metadata as { attribution: string }).attribution
-		.replaceAll(/<[^>]+>/gu, "")
-		.replaceAll(/&[a-z]+;|&#\d+;/gu, (entity) => HTML_ENTITIES[entity] ?? entity)
-		.trim()
+	return htmlText((metadata as { attribution: string }).attribution)
+}
+
+/**
+ * Plain text out of an HTML fragment via `htmlparser2`'s event parser — a hand scan misreads `<` inside attribute
+ * values and unclosed tags, and the parser's own entity decoding covers the full named set a metadata field can carry.
+ * Local rather than `@mailwoman/core`'s `htmlToText`: this package stays standalone by design, and one attribution
+ * string does not price core's shipped data into every consumer.
+ */
+function htmlText(html: string): string {
+	let text = ""
+
+	const parser = new Parser({ ontext: (chunk) => (text += chunk) }, { decodeEntities: true })
+
+	parser.write(html)
+	parser.end()
+
+	return text.replaceAll(/\s+/gu, " ").trim()
 }
 
 /**
