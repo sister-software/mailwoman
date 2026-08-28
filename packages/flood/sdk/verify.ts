@@ -34,11 +34,16 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { expandH3Cell, pointInPolygonRings, type H3CellShort } from "@mailwoman/spatial"
+import {
+	expandH3Cell,
+	pointInEncodedRings,
+	pointInPolygonRings,
+	segmentDistanceMetres,
+	type H3CellShort,
+} from "@mailwoman/spatial"
 import { cellToLatLng } from "h3-js"
 
 import { FloodReadingKind, FloodZoneLookup, type FloodZoneReading } from "../index.ts"
-import { pointInEncodedRings } from "../rings.ts"
 import { EA_FLOOD_LAYER } from "../vocabulary.ts"
 import { EA_SPATIAL_BASE_URL, type EAFloodClient } from "./client.ts"
 
@@ -130,11 +135,6 @@ const PROBE_HALF_WIDTH_DEGREES = 0.0001
  * feature that made this matter is a 20 m sliver.
  */
 const BOUNDARY_TOLERANCE_METRES = 0.5
-
-/**
- * Metres per degree of latitude — the scale the edge distances below are reported in.
- */
-const METRES_PER_DEGREE = 111_320
 
 /**
  * Features per service request. The probe bbox is metres wide, so this is a ceiling rather than a page size.
@@ -291,32 +291,6 @@ async function readServiceZone(
 	}
 
 	return Number.isFinite(nearest) ? { zone, nearestEdgeMetres: nearest } : { zone }
-}
-
-/**
- * Metres from a point to a line segment, with longitude scaled for the latitude so the two axes are comparable.
- *
- * Both corrections matter at this product's scale. Comparing raw degrees treats a degree of longitude as a degree of
- * latitude, which at 54°N overstates east-west distance by 70%; measuring to vertices instead of to the segment
- * overstates the distance to a long edge without bound.
- */
-export function segmentDistanceMetres(
-	lon: number,
-	lat: number,
-	from: readonly number[],
-	to: readonly number[]
-): number {
-	const scale = Math.cos((lat * Math.PI) / 180)
-	const px = (lon - from[0]!) * scale
-	const py = lat - from[1]!
-	const vx = (to[0]! - from[0]!) * scale
-	const vy = to[1]! - from[1]!
-	const lengthSquared = vx * vx + vy * vy
-
-	// A zero-length segment is a repeated vertex; the distance to it is the distance to the point.
-	const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, (px * vx + py * vy) / lengthSquared))
-
-	return Math.hypot(px - t * vx, py - t * vy) * METRES_PER_DEGREE
 }
 
 /**

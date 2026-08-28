@@ -67,7 +67,7 @@ import {
 } from "../vocabulary.ts"
 import type { FloodMapExtent } from "./extent.ts"
 import { ingestFloodChunk, type FloodChunkResult } from "./ingest-chunk.ts"
-import { createGeodatabaseFeatureSource, type FloodFeatureSource } from "./ingest.ts"
+import type { FloodFeatureSource } from "./ingest.ts"
 
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
@@ -707,48 +707,6 @@ function writeVocabularyRows(database: DatabaseSync): void {
 	for (const zone of EA_FLOOD_ZONE_DEFINITIONS) {
 		insert.run(zone.code, zone.label, zone.definition, zone.definitionURL)
 	}
-}
-
-/**
- * The bounding rectangle of one feature's rings — the ray cast's prefilter, precomputed.
- */
-function boundsOf(polygons: ReadonlyArray<ReadonlyArray<ReadonlyArray<readonly number[]>>>): {
-	minLat: number
-	minLon: number
-	maxLat: number
-	maxLon: number
-} {
-	let minLat = Infinity
-	let minLon = Infinity
-	let maxLat = -Infinity
-	let maxLon = -Infinity
-
-	for (const rings of polygons) {
-		for (const ring of rings) {
-			for (const position of ring) {
-				const lon = position[0]!
-				const lat = position[1]!
-
-				if (lon < minLon) {
-					minLon = lon
-				}
-
-				if (lon > maxLon) {
-					maxLon = lon
-				}
-
-				if (lat < minLat) {
-					minLat = lat
-				}
-
-				if (lat > maxLat) {
-					maxLat = lat
-				}
-			}
-		}
-	}
-
-	return { minLat, minLon, maxLat, maxLon }
 }
 
 /**

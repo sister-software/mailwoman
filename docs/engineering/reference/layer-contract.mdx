@@ -295,6 +295,13 @@ Building a new layer? The contract obligations, in order:
   shape, the authority-designation reading, and the traps a polygon layer meets that a point layer
   does not (a centre-containment polyfill that drops small features, an allocator sized from the
   bounding box, a datum grid whose absence shifts the whole layer).
+- [`@mailwoman/soil`](../../../packages/soil/README.md) — the worked TWO-CONSUMER example: one per-cell
+  artifact read both by a result-level observation and by a bulk signal consumer, storing an
+  area-weighted class DISTRIBUTION rather than a winner, with four separate absence shares so
+  "unmapped", "not rated", "the rating does not apply" and "rated unsuitable" never collapse into one
+  number. It is also where the polygon rule's geometry inverts: its delineations are small against its
+  cells, so the containment index answers almost nothing on its own and `compactCells` yields close to
+  nothing (measured at resolution 9: 97.6% of cells partial, 369 whole cells compacting to 315).
 - [The meaning of zero](./the-meaning-of-zero.mdx) — the general epistemics principle behind the
   coverage rule.
 - [Address-data sources](./address-data-sources.mdx) — the source catalog the shipped layers draw from.

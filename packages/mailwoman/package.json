@@ -420,6 +420,7 @@
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/soil": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/variant-aliases": "workspace:*",
 		"chalk": "^6.0.0",

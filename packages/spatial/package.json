@@ -76,6 +76,21 @@
 			"default": "./out/h3/cell.js",
 			"types": "./out/h3/cell.d.ts"
 		},
+		"./h3/polygon-cells": {
+			"node": "./h3/polygon-cells.ts",
+			"default": "./out/h3/polygon-cells.js",
+			"types": "./out/h3/polygon-cells.d.ts"
+		},
+		"./geometries/ring-blob": {
+			"node": "./geometries/ring-blob.ts",
+			"default": "./out/geometries/ring-blob.js",
+			"types": "./out/geometries/ring-blob.d.ts"
+		},
+		"./projection-transform": {
+			"node": "./projection-transform.ts",
+			"default": "./out/projection-transform.js",
+			"types": "./out/projection-transform.d.ts"
+		},
 		"./sdk/well-known-text": {
 			"node": "./sdk/well-known-text.ts",
 			"default": "./out/sdk/well-known-text.js",

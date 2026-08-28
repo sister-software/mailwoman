@@ -63,7 +63,7 @@ export async function measureFloodCellResolutions(
 			index.add(
 				feature.zoneCode,
 				feature.areaID,
-				classifyFeatureCells(feature.polygons, index.resolution, feature.areaID)
+				classifyFeatureCells(feature.polygons, index.resolution, feature.areaID, "flood cells")
 			)
 		}
 

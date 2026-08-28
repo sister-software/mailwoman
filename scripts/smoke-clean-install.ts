@@ -132,6 +132,10 @@ const WORKSPACES: Record<string, string> = {
 	// authority-designation route on the presence of a `flood.db`, and `--help`'s command-module load reaches
 	// `gazetteer build flood`. Unpacked, npm would resolve a name that is not yet published at all.
 	"@mailwoman/flood": "packages/flood",
+	// The soil layer reader is a hard dependency of `mailwoman` for the same reason: `geocode-session` imports the
+	// soil-capability route on the presence of a `soil.db`, and `--help`'s command-module load reaches
+	// `gazetteer build soil`. Unpacked, npm would resolve a name that is not yet published at all.
+	"@mailwoman/soil": "packages/soil",
 }
 
 /**

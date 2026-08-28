@@ -43,11 +43,24 @@ export type {
 
 export { createAuthorityDesignationRoute, DESIGNATION_REFUSALS, describeAuthorityDesignation } from "./flood-route.ts"
 
+export type {
+	SoilCapabilityObservation,
+	SoilCapabilityRoute,
+	SoilCapabilityRouteOptions,
+	SoilDesignationDecision,
+	SoilDesignationRefusal,
+} from "./soil-route.ts"
+
+export { createSoilCapabilityRoute, describeSoilCapability, SOIL_DESIGNATION_REFUSALS } from "./soil-route.ts"
+
 export {
 	absenceObservationMarker,
 	authorityDesignationMarker,
 	authorityDesignationMarkers,
 	FLOOD_ZONE_DESIGNATION_MECHANISM,
+	SOIL_CAPABILITY_DESIGNATION_MECHANISM,
+	soilCapabilityMarker,
+	soilCapabilityMarkers,
 	poiObservationKind,
 	SEMANTIC_ABSENCE_MECHANISM,
 	SEMANTIC_AFFORDS_MECHANISM,
