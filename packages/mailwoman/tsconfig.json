@@ -15,6 +15,7 @@
 		{ "path": "../api" },
 		{ "path": "../api-kit" },
 		{ "path": "../bdc" },
+		{ "path": "../coastal" },
 		{ "path": "../core" },
 		{ "path": "../filer" },
 		{ "path": "../flood" },
@@ -34,6 +35,7 @@
 		{ "path": "../resolver-wof-wasm" },
 		{ "path": "../ban" },
 		{ "path": "../soil" },
+		{ "path": "../zoning" },
 		{ "path": "../spatial" },
 		{ "path": "../osm" },
 		{ "path": "../map-tui" }
