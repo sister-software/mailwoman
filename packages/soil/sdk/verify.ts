@@ -216,7 +216,7 @@ function candidateDelineations(
 	longitude: number
 ): Array<{ mukey: string; rings: Uint8Array }> {
 	const selectCandidates = database.prepare(
-		"SELECT a.mukey AS mukey, a.rings AS rings FROM soil_map_unit_cell c " +
+		"SELECT c.area_id AS area_id, a.mukey AS mukey, a.rings AS rings FROM soil_map_unit_cell c " +
 			"JOIN soil_map_unit_area a ON a.area_id = c.area_id WHERE c.h3_cell = ?"
 	)
 
@@ -227,15 +227,21 @@ function candidateDelineations(
 	for (const resolution of resolutions) {
 		const cell = resolution === indexResolution ? indexCell : (cellToParent(indexCell, resolution) as H3Cell)
 
-		for (const row of selectCandidates.all(shortCellToInt(cell)) as Array<{ mukey: string; rings: Uint8Array }>) {
-			// A delineation reached through two resolutions is one delineation. The key is the ring bytes' length plus the
-			// map unit, which is enough to dedupe within one cell's candidates without carrying the area id through.
-			const key = `${row.mukey}:${row.rings.byteLength}`
+		for (const row of selectCandidates.all(shortCellToInt(cell)) as Array<{
+			area_id: string
+			mukey: string
+			rings: Uint8Array
+		}>) {
+			// DEDUPE ON THE DELINEATION, NEVER ON ITS MAP UNIT. A delineation reached through two resolutions is one
+			// delineation and must be tested once; two DIFFERENT delineations of the same map unit are two shapes covering
+			// different ground and must both be tested. Keying on the map unit drops the second, and it drops it silently —
+			// the point test simply finds nothing and the row reads as a disagreement with the authority. Measured at Iowa
+			// scale: one point in 60, where the artifact's own geometry does contain the point and the index-driven read
+			// could not reach the delineation that holds it.
+			if (seen.has(row.area_id)) continue
 
-			if (seen.has(key)) continue
-
-			seen.add(key)
-			candidates.push(row)
+			seen.add(row.area_id)
+			candidates.push({ mukey: row.mukey, rings: row.rings })
 		}
 	}
 
