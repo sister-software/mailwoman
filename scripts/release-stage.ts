@@ -46,6 +46,9 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 	"packages/soil":
 		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
 		"An unblessed name fails the whole release at this workspace with a bare E404.",
+	"packages/coastal":
+		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
+		"An unblessed name fails the whole release at this workspace with a bare E404.",
 }
 
 /**

@@ -156,6 +156,45 @@ no coverage row, and an advisory there would report a determination nobody made.
 same asymmetry `supportsExclusion` carries: positive evidence needs no coverage row, an absence
 does.
 
+### A coverage basis belongs to its SOURCE, and is never inherited from the previous layer
+
+The rule that fits one authority's product is the wrong rule for the next one, and it fails in the
+direction that produces a confident answer rather than a missing one. Two layers built against the
+same platform, three months apart, show both directions:
+
+- **`packages/flood`.** The Environment Agency states that its Flood Zone mapping "covers all of
+  England", and the Planning Practice Guidance defines Zone 1 as "all land outside Zones 2, 3a and
+  3b". A location inside the footprint with no polygon is therefore a DESIGNATION, carried as a
+  `layer_coverage` row at `basis = designated, completeness = 1.0`, and the reader reports it as
+  `designated_absence`.
+- **`packages/coastal`.** The same authority publishes coastal-erosion zones and **no coverage
+  statement at all**. A location in England with no erosion polygon is either not on the coast — most
+  of the country, about which the product says nothing — or on the coast and outside the mapped risk
+  area, which is the designation a caller actually wants; and the published layers cannot tell those
+  apart. So every coverage row carries `basis = source_present`, the layer has no absence reading,
+  and the observation stays silent where no polygon contains the point.
+
+A builder that had generalized the first rule to the second product would have written "no erosion
+risk" over the whole of England, on a well-formed artifact that passed every structural check.
+
+**So the basis is a checked condition, at both ends, not a convention the builder follows.** A layer
+whose source publishes no footprint refuses to WRITE a coverage row that would support an exclusion,
+and refuses to OPEN an artifact carrying one — `supportsExclusion` is called over the distinct bases
+at construction, and a stronger one throws with the sentence saying why. That is what makes the
+posture auditable: moving the layer to a stronger basis takes a deliberate edit at a guard that
+names the reason, rather than a coverage row nobody notices.
+
+**The footprint question is recorded where a reader will look for it, and it is a SOURCE question.**
+For the coastal layer the state as built is: no mapped-footprint source is settled, so the basis is
+`source_present`, and two candidates are named and unverified — the Environment Agency's Shoreline
+Management Plan Mapping record (NCERM's own lineage says it is derived from the Shoreline Management
+Plans, and every erosion feature carries `smp_no`, `smp_name` and `smp_pu`), and the frontage geometry
+behind `frontageid`, which may not be published at all. What would move the layer from
+`source_present` to `designated` is a published statement of the area the authority MAPPED, plus its
+geometry. Deriving one from the union of the hazard polygons is forbidden for the same reason the
+flood layer forbids it: the union of "at risk" areas is not the mapped area, and the difference is
+the whole content of a negative answer.
+
 ## The manifest — `layer_manifest`
 
 A single-row table holding the layer's identity, provenance, and licensing. The `name` column

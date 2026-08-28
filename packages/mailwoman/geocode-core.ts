@@ -72,10 +72,10 @@ import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hie
 import { shouldDropInferredScope } from "./inferred-scope.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
-// Both route types come from the observations BARREL rather than from their own modules: they are the same kind of
-// thing to this file — an optional, already-open spatial layer — and a third one costs no import here.
-import type { AuthorityDesignationRoute, SoilCapabilityRoute } from "./observations/index.ts"
-import { layerDesignationMarkers } from "./observations/observation-marker.ts"
+// Everything this file takes from the observation surface comes from its BARREL rather than from the individual
+// modules: the three route types are the same kind of thing here — an optional, already-open spatial layer — and the one
+// conversion that reads them takes all three, so a fourth layer costs no import at this call site.
+import { layerDesignationMarkers, type LayerDesignationRoutes } from "./observations/index.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
 import { repairPostcodeContradiction } from "./postcode-repair.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
@@ -309,7 +309,9 @@ export interface GeocodeClassifier {
 	): Promise<AddressTree>
 }
 
-export interface GeocodeDeps {
+// The attached spatial layers ride in as ONE bundle: `layerDesignationMarkers` reads all of them together and this
+// module reads none of them, so a fourth layer is an edit in `observations/observation-marker.ts` and none here.
+export interface GeocodeDeps extends LayerDesignationRoutes {
 	/**
 	 * Poi.db reader for the fork→entity probe (`fork-entity.ts`). Absent = the probe never runs (tolerate-and-degrade,
 	 * like every optional artifact). Both this AND {@link isStreetGeneric} are required for a probe.
@@ -388,28 +390,6 @@ export interface GeocodeDeps {
 	 * consulted AFTER the open result is assembled and its answer is carried beside that result, never merged into it.
 	 */
 	authoritativeProvider?: AuthoritativeProvider
-	/**
-	 * An authority-designation route over a sealed spatial layer (#1989) — the EA's Flood Map for Planning is the first.
-	 * Absent — the default everywhere — leaves the geocode result byte-identical to a run without the field existing: the
-	 * layer is never opened, the coordinate is never re-asked, and no marker appears.
-	 *
-	 * PRESENCE IS THE SWITCH AND WHAT IS PRESENT IS AN OPEN LAYER. A boolean would make this module resolve a data-root
-	 * path and open a sealed database on the default construction path; what arrives here instead is a route the caller
-	 * already built, so this side never learns where the artifact lives. `geocode-session.ts` opens it when the layer
-	 * file is there, the same shape `poiLookup` uses.
-	 *
-	 * The route runs AFTER the open result is assembled, over the coordinate that result reached, and its answer is
-	 * carried as one additive marker. Nothing above the marker assembly reads it.
-	 */
-	authorityDesignationRoute?: AuthorityDesignationRoute
-	/**
-	 * A soil-capability route over a sealed NRCS SSURGO layer (#1991) — a SECOND authority-designation layer under the
-	 * same marker code and `layer` mechanism family, with a rule of its own. Absent by default, and presence of an open
-	 * layer is the switch, exactly as above. A second field rather than a widened first one: the two carry different
-	 * observations — a zone code and a containment path against a class distribution, five shares and two dates — and
-	 * share only the code.
-	 */
-	soilCapabilityRoute?: SoilCapabilityRoute
 	/**
 	 * Country constraint passed to the resolver (e.g. `"US"`).
 	 */

@@ -387,4 +387,36 @@ export function geometryContains(
 	return null
 }
 
+/**
+ * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order and counter-clockwise — the exterior
+ * winding.
+ *
+ * SHARED BECAUSE THE WINDING IS A CONVENTION AND A SECOND COPY IS A SECOND PLACE FOR IT TO DRIFT. Three layer builders
+ * hand-build rectangles for their fixture rungs, and each pairs this with {@link reversedRing} to make a hole. A copy
+ * whose hole is wound the same way as its exterior produces a fixture that passes every structural check and tests
+ * nothing about hole handling — which is the exact failure the area cross-check exists to catch in production data.
+ */
+export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
+	return [
+		[minLon, minLat],
+		[maxLon, minLat],
+		[maxLon, maxLat],
+		[minLon, maxLat],
+		[minLon, minLat],
+	]
+}
+
+/**
+ * The same rectangle wound the other way — a hole, under the GeoJSON convention.
+ */
+export function reversedRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
+	return [
+		[minLon, minLat],
+		[minLon, maxLat],
+		[maxLon, maxLat],
+		[maxLon, minLat],
+		[minLon, minLat],
+	]
+}
+
 //#endregion
