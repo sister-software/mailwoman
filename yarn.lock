@@ -5149,14 +5149,17 @@ __metadata:
     "@storybook/react-vite": "npm:^10.5.5"
     "@types/react": "npm:^19.2.17"
     "@types/react-dom": "npm:^19.2.3"
+    "@types/trusted-types": "npm:^2"
     "@vitejs/plugin-react": "npm:^6.0.5"
     "@vitest/browser-playwright": "npm:4.1.10"
+    dompurify: "npm:^3.3.3"
     maplibre-gl: "npm:^6.5.0"
     playwright: "npm:^1.62.1"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     react-map-gl: "npm:^8.1.2"
     storybook: "npm:^10.5.5"
+    trusted-types: "npm:^2"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.0"
     vitest: "npm:4.1.10"
@@ -9422,7 +9425,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/trusted-types@npm:^2.0.7":
+"@types/trusted-types@npm:^2, @types/trusted-types@npm:^2.0.7":
   version: 2.0.7
   resolution: "@types/trusted-types@npm:2.0.7"
   checksum: 10/8e4202766a65877efcf5d5a41b7dd458480b36195e580a3b1085ad21e948bc417d55d6f8af1fd2a7ad008015d4117d5fdfe432731157da3c68678487174e4ba3
@@ -23855,6 +23858,13 @@ __metadata:
   version: 2.2.0
   resolution: "trough@npm:2.2.0"
   checksum: 10/999c1cb3db6ec63e1663f911146a90125065da37f66ba342b031d53edb22a62f56c1f934bbc61a55b2b29dd74207544cfd78875b414665c1ffadcd9a9a009eeb
+  languageName: node
+  linkType: hard
+
+"trusted-types@npm:^2":
+  version: 2.0.0
+  resolution: "trusted-types@npm:2.0.0"
+  checksum: 10/b980ae6ad15f70e8f4c4b38063c7e8fd284f4189f9abb47a55e0148ba349a1a97c3439cad2e63f3778e40136e9f8e64dcddff010d68a55fdb50278b7e03ae031
   languageName: node
   linkType: hard
 
