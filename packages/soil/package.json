@@ -86,6 +86,11 @@
 			"default": "./out/sdk/build-soil.js",
 			"types": "./out/sdk/build-soil.d.ts"
 		},
+		"./sdk/cell-tiers": {
+			"node": "./sdk/cell-tiers.ts",
+			"default": "./out/sdk/cell-tiers.js",
+			"types": "./out/sdk/cell-tiers.d.ts"
+		},
 		"./sdk/cells": {
 			"node": "./sdk/cells.ts",
 			"default": "./out/sdk/cells.js",

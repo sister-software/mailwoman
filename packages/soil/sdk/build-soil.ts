@@ -49,13 +49,17 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import {
 	expandH3Cell,
-	interiorCoverageCellSet,
+	geometryContains,
+	interiorCoverageCells,
 	shortCellToInt,
 	type GeojsonGeometry,
+	type GeojsonMultiPolygon,
+	type GeojsonPolygon,
+	type GeojsonPosition,
 	type H3Cell,
 	type H3CellShort,
 } from "@mailwoman/spatial"
-import { compactCells, getResolution } from "h3-js"
+import { cellToLatLng, compactCells, getResolution } from "h3-js"
 import { TextSpliterator } from "spliterator"
 
 import {
@@ -73,6 +77,7 @@ import {
 	SSURGO_LICENSE,
 	SSURGO_SOURCE,
 } from "../vocabulary.ts"
+import { reduceCells, resolveCells } from "./cell-tiers.ts"
 import type { SoilChunkResult } from "./ingest-chunk.ts"
 import { ingestSoilChunk } from "./ingest-chunk.ts"
 import type { SoilFeatureSource } from "./ingest.ts"
@@ -713,304 +718,18 @@ async function runChunkProcess(script: string, args: readonly string[]): Promise
 }
 
 /**
- * Resolve the touch table into the stored containment index.
+ * The coverage rows: one per interior cell of the built footprint that soil mapping actually reaches, and none outside.
  *
- * Compaction happens HERE and only on the whole side. It is expected to yield close to nothing on this layer, which is
- * the inversion the survey predicts: compaction needs a uniform interior, and 85.4% of `IA153`'s delineations are
- * smaller than one resolution-9 cell.
- */
-function resolveCells(
-	database: DatabaseSync,
-	indexResolution: number
-): { wholeRows: number; partialRows: number; resolutions: number[] } {
-	database.exec("CREATE INDEX build_cell_touch_area_cell ON build_cell_touch (area_id, resolution, is_full, h3_cell)")
-
-	const groups = database
-		.prepare("SELECT DISTINCT area_id, resolution FROM build_cell_touch WHERE is_full = 1")
-		.all() as Array<{ area_id: string; resolution: number }>
-
-	const insertCell = database.prepare(
-		"INSERT OR REPLACE INTO soil_map_unit_cell (h3_cell, resolution, area_id, containment) VALUES (?, ?, ?, ?)"
-	)
-
-	const resolutions = new Set<number>()
-
-	let wholeRows = 0
-
-	// One group per (delineation, resolution): `compactCells` takes a single resolution, and an adaptively-indexed layer
-	// has several. Pooling them throws; compacting only the target-resolution group would silently drop every coarsened
-	// delineation's interior.
-	database.exec("BEGIN")
-
-	for (const { area_id: areaID, resolution } of groups) {
-		const whole = database
-			.prepare("SELECT DISTINCT h3_cell FROM build_cell_touch WHERE area_id = ? AND resolution = ? AND is_full = 1")
-			.all(areaID, resolution) as Array<{ h3_cell: number }>
-
-		for (const cell of compactCells(whole.map((row) => shortCellToLong(row.h3_cell, resolution)))) {
-			const cellResolution = getResolution(cell)
-
-			resolutions.add(cellResolution)
-			insertCell.run(shortCellToInt(cell as H3Cell), cellResolution, areaID, SoilCellContainment.Whole)
-
-			wholeRows++
-		}
-	}
-
-	database.exec("COMMIT")
-
-	// The partial rows are every touch that is not whole for its own delineation. `INSERT OR REPLACE` above already put
-	// the whole rows in, and the primary key is `(h3_cell, area_id)`, so this insert must skip them explicitly rather
-	// than rely on the key: a partial row replacing a whole one would demote an answered cell to a ray cast.
-	database.exec(
-		"INSERT OR IGNORE INTO soil_map_unit_cell (h3_cell, resolution, area_id, containment) " +
-			"SELECT DISTINCT t.h3_cell, t.resolution, t.area_id, 'partial' FROM build_cell_touch t WHERE t.is_full = 0"
-	)
-
-	const partialRows = (
-		database.prepare("SELECT count(*) AS n FROM soil_map_unit_cell WHERE containment = 'partial'").get() as {
-			n: number
-		}
-	).n
-
-	for (const row of database.prepare("SELECT DISTINCT resolution FROM soil_map_unit_cell").all() as Array<{
-		resolution: number
-	}>) {
-		resolutions.add(row.resolution)
-	}
-
-	resolutions.add(indexResolution)
-
-	return { wholeRows, partialRows, resolutions: [...resolutions].toSorted((left, right) => left - right) }
-}
-
-/**
- * Cells reduced per progress report. The reduction is the slow phase — a lattice of 49 point tests per sampled cell —
- * so it reports often enough that a long run is visibly alive.
- */
-const REDUCE_PROGRESS_STRIDE = 50_000
-
-/**
- * One delineation's geometry, as the reduction reads it.
- */
-interface StoredDelineation {
-	mukey: string
-	min_lat: number
-	min_lon: number
-	max_lat: number
-	max_lon: number
-	rings: Uint8Array
-}
-
-/**
- * How many delineations the reduction keeps in memory at once.
+ * THE INTERIOR TEST RUNS ONCE OVER THE UNION OF EVERY OUTLINE BUILT, NOT PER SURVEY AREA, and the difference is most of
+ * a state. The test is conservative — it keeps only cells lying WHOLLY inside — so applied per area it drops every cell
+ * a county border crosses. Measured on Polk County alone at resolution 6: 20 interior cells against the roughly 42 the
+ * county spans by area, so more than half of it would read `unknown` while sitting inside a survey the build had
+ * ingested. Run over the union, only the OUTER border of the built set is dropped, which is the honest edge: beyond it
+ * lies ground this artifact does not hold.
  *
- * Sized to bound the phase rather than to hold everything: the pilot region's median delineation encodes to roughly 1.4
- * kB, so 200,000 of them is a few hundred megabytes — comfortable, and far below the 2.5 million a whole state holds.
- * Memory stays flat in row count, which is the property the poi build lost when a reader materialized instead of
- * streaming.
- */
-const GEOMETRY_CACHE_ENTRIES = 200_000
-
-/**
- * Reduce the touch table into `soil_capability_cell`.
- *
- * Reads the touch table rather than `soil_map_unit_cell` on purpose: the stored index is compacted on the whole side,
- * so a compacted parent no longer names the cells the reduction has to answer. The touch table is the uncompacted truth
- * about which delineation reaches which cell.
- */
-function reduceCells(
-	database: DatabaseSync,
-	indexResolution: number,
-	onProgress?: (message: string) => void
-): {
-	cells: number
-	sampled: number
-	topClassUnderHalf: number
-	classless: number
-	unsampled: number
-	candidatePairs: number
-} {
-	const profiles = readMapUnitProfiles(database)
-
-	const insert = database.prepare(
-		"INSERT OR REPLACE INTO soil_capability_cell (h3_cell, class_shares, unrated_share, notrateable_share, nodata_share, other_share, mapped_share, top_class, top_class_share, weighting, delineations) " +
-			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-	)
-
-	const selectArea = database.prepare(
-		"SELECT mukey, min_lat, min_lon, max_lat, max_lon, rings FROM soil_map_unit_area WHERE area_id = ?"
-	)
-
-	const rows = database
-		.prepare("SELECT h3_cell, resolution, area_id, is_full FROM build_cell_touch ORDER BY resolution, h3_cell, area_id")
-		.iterate() as Iterable<{ h3_cell: number; resolution: number; area_id: string; is_full: number }>
-
-	let cells = 0
-	let sampled = 0
-	let topClassUnderHalf = 0
-	let classless = 0
-	let unsampled = 0
-	let candidatePairs = 0
-
-	let currentCell: number | undefined
-	let currentResolution = indexResolution
-	let candidates: CellCandidate[] = []
-
-	// A delineation is named by every cell it reaches — 5.35 of them per cell at resolution 9 on the pilot region — so a
-	// naive read fetches each ring blob once per touch. At Iowa's scale that is millions of blob reads of ground already
-	// in memory. The cache is bounded and CLEARED WHOLE when it fills rather than evicted one at a time: h3 cell integers
-	// carry their ancestry in their high bits, so a scan in `h3_cell` order visits neighbours together and a cleared cache
-	// refills with the delineations the next run of cells actually names.
-	const geometry = new Map<string, StoredDelineation>()
-
-	database.exec("BEGIN")
-
-	const flush = (): void => {
-		if (currentCell === undefined || !candidates.length) return
-
-		const cell = expandH3Cell(
-			currentCell.toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort,
-			currentResolution
-		) as H3Cell
-
-		const reducedCell = reduceCell(cell, currentResolution, candidates, profiles, currentCell)
-
-		candidatePairs += candidates.length
-
-		if (reducedCell.row.mapped_share <= 0) {
-			unsampled++
-
-			return
-		}
-
-		cells++
-
-		if (reducedCell.sampled) {
-			sampled++
-		}
-
-		if (reducedCell.topClassUnderHalf) {
-			topClassUnderHalf++
-		}
-
-		if (!reducedCell.row.top_class) {
-			classless++
-		}
-
-		insertRow(insert, reducedCell.row)
-
-		if (cells % REDUCE_PROGRESS_STRIDE === 0) {
-			database.exec("COMMIT")
-			database.exec("BEGIN")
-
-			onProgress?.(`${cells.toLocaleString()} cells reduced`)
-		}
-	}
-
-	for (const row of rows) {
-		if (row.h3_cell !== currentCell || row.resolution !== currentResolution) {
-			flush()
-
-			currentCell = row.h3_cell
-			currentResolution = row.resolution
-			candidates = []
-		}
-
-		let area = geometry.get(row.area_id)
-
-		if (!area) {
-			area = selectArea.get(row.area_id) as StoredDelineation | undefined
-
-			if (!area) {
-				throw new Error(
-					`soil build: the touch table names delineation ${row.area_id}, which soil_map_unit_area does not hold — the ingest and the reduction disagree about what was written`
-				)
-			}
-
-			if (geometry.size >= GEOMETRY_CACHE_ENTRIES) {
-				geometry.clear()
-			}
-
-			geometry.set(row.area_id, area)
-		}
-
-		candidates.push({
-			areaID: row.area_id,
-			mukey: area.mukey,
-			containment: row.is_full ? SoilCellContainment.Whole : SoilCellContainment.Partial,
-			minLat: area.min_lat,
-			minLon: area.min_lon,
-			maxLat: area.max_lat,
-			maxLon: area.max_lon,
-			rings: area.rings,
-		})
-	}
-
-	flush()
-
-	database.exec("COMMIT")
-
-	return { cells, sampled, topClassUnderHalf, classless, unsampled, candidatePairs }
-}
-
-/**
- * Number of hex characters in a stored short cell — 52 bits.
- */
-const SHORT_CELL_HEX_LENGTH = 13
-
-function insertRow(statement: ReturnType<DatabaseSync["prepare"]>, row: SoilCapabilityCellTable): void {
-	statement.run(
-		row.h3_cell,
-		row.class_shares,
-		row.unrated_share,
-		row.notrateable_share,
-		row.nodata_share,
-		row.other_share,
-		row.mapped_share,
-		row.top_class,
-		row.top_class_share,
-		row.weighting,
-		row.delineations
-	)
-}
-
-/**
- * Every map unit's per-unit-area profile, computed once and reused for every cell it reaches.
- */
-function readMapUnitProfiles(database: DatabaseSync): Map<string, MapUnitProfile> {
-	const componentsByMukey = new Map<
-		string,
-		Array<{ comppct_r: number; compkind: string | null; nirrcapcl: string | null }>
-	>()
-
-	for (const row of database
-		.prepare("SELECT mukey, comppct_r, compkind, nirrcapcl FROM soil_component")
-		.all() as Array<{ mukey: string; comppct_r: number; compkind: string | null; nirrcapcl: string | null }>) {
-		const list = componentsByMukey.get(row.mukey)
-
-		if (list) {
-			list.push(row)
-		} else {
-			componentsByMukey.set(row.mukey, [row])
-		}
-	}
-
-	const profiles = new Map<string, MapUnitProfile>()
-
-	for (const row of database.prepare("SELECT mukey, no_mapping FROM soil_map_unit").all() as Array<{
-		mukey: string
-		no_mapping: number
-	}>) {
-		profiles.set(row.mukey, mapUnitProfile(row, componentsByMukey.get(row.mukey) ?? []))
-	}
-
-	return profiles
-}
-
-/**
- * The coverage rows: one per interior cell of a published survey area's outline that soil mapping actually reaches, and
- * none outside.
+ * The conservatism itself stays. A cell wrongly called interior would state that an authority determined a location it
+ * never looked at, and a point in the dropped strip reading `unknown` is the truthful answer for ground the built set
+ * may or may not reach.
  *
  * `observed_rows` counts the delineations reaching the cell, which is what the contract's column means. A cell reached
  * only by `NOTCOM` and access-denied polygons gets NO ROW — the polygon exists, the soil mapping behind it does not,
@@ -1020,50 +739,70 @@ function buildCoverageCells(
 	options: BuildSoilOptions,
 	streamed: StreamResult
 ): { cells: CoverageCell[]; cellsByArea: Map<string, number>; withoutMapping: number } {
+	const footprint: GeojsonGeometry = {
+		type: "MultiPolygon",
+		coordinates: options.areas.flatMap((input) => outlinePolygons(input.outline)),
+	}
+
+	const interior = interiorCoverageCells(footprint, options.coverageResolution)
+
+	if (!interior.length) {
+		throw new Error(
+			`soil build: the ${options.areas.length} built outline(s) yield no interior cell at resolution ${options.coverageResolution} — the artifact would carry no coverage rows and answer "unknown" everywhere while reporting success`
+		)
+	}
+
 	const cells: CoverageCell[] = []
 	const cellsByArea = new Map<string, number>()
-	const seen = new Set<number>()
 
 	let withoutMapping = 0
 
-	for (const area of options.areas) {
-		const interior = interiorCoverageCellSet(area.outline, options.coverageResolution)
+	for (const cell of interior) {
+		const h3Cell = shortCellToInt(cell)
+		const mapped = streamed.mappedByCoverageCell.get(h3Cell) ?? 0
 
-		if (!interior.size) {
-			throw new Error(
-				`soil build: ${area.attributes.areasymbol}'s outline yields no interior cell at resolution ${options.coverageResolution} — the artifact would carry no coverage rows for it and answer "unknown" over a survey area it did build`
-			)
+		if (!mapped) {
+			withoutMapping++
+
+			continue
 		}
 
-		let written = 0
+		cells.push({
+			h3Cell,
+			completeness: 1,
+			basis: CoverageBasis.Designated,
+			observedRows: streamed.observedByCoverageCell.get(h3Cell) ?? 0,
+		})
 
-		for (const h3Cell of interior) {
-			if (seen.has(h3Cell)) continue
+		// Attributed by the cell's CENTRE, so each row is counted for exactly one survey area even where the cell straddles
+		// two. The count is a per-area receipt, not part of the coverage claim — the claim is the row set itself.
+		const [latitude, longitude] = cellToLatLng(cell)
+		const owner = options.areas.find((input) => geometryContains(input.outline, longitude, latitude))
 
-			const mapped = streamed.mappedByCoverageCell.get(h3Cell) ?? 0
+		if (owner) {
+			const symbol = owner.attributes.areasymbol
 
-			if (!mapped) {
-				withoutMapping++
-
-				continue
-			}
-
-			seen.add(h3Cell)
-
-			written++
-
-			cells.push({
-				h3Cell,
-				completeness: 1,
-				basis: CoverageBasis.Designated,
-				observedRows: streamed.observedByCoverageCell.get(h3Cell) ?? 0,
-			})
+			cellsByArea.set(symbol, (cellsByArea.get(symbol) ?? 0) + 1)
 		}
-
-		cellsByArea.set(area.attributes.areasymbol, written)
 	}
 
 	return { cells: cells.toSorted((left, right) => left.h3Cell - right.h3Cell), cellsByArea, withoutMapping }
+}
+
+/**
+ * One outline's polygons, in the `MultiPolygon` coordinate shape, whichever areal type it arrived as.
+ *
+ * @throws {TypeError} When the outline is not areal. A survey area whose footprint cannot be read would silently
+ *   contribute nothing to the union, and the coverage over it would simply be absent.
+ */
+function outlinePolygons(outline: GeojsonGeometry): GeojsonPosition[][][] {
+	if (outline.type === "MultiPolygon") return (outline as GeojsonMultiPolygon).coordinates
+
+	if (outline.type === "Polygon") return [(outline as GeojsonPolygon).coordinates]
+
+	throw new TypeError(
+		`soil build: a survey-area outline is a ${outline.type}, which bounds no area — its coverage would be silently absent rather than refused`
+	)
 }
 
 /**
@@ -1155,16 +894,6 @@ function writeVocabularyRows(database: DatabaseSync, areas: ReadonlyArray<Survey
 	insert.run("share_weighting", SOIL_SHARE_WEIGHTING, SOIL_SHARE_WEIGHTING_DESCRIPTION, WEIGHT_LATTICE_DEPTH)
 
 	database.exec("COMMIT")
-}
-
-/**
- * The full H3 index for a short cell stored at `resolution`.
- *
- * Through `expandH3Cell` rather than a string concatenation, because it VALIDATES: a short cell that does not name a
- * valid cell at the stated resolution throws here instead of reaching `compactCells` as a plausible-looking index.
- */
-function shortCellToLong(shortCell: number, resolution: number): string {
-	return expandH3Cell(shortCell.toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort, resolution)
 }
 
 /**

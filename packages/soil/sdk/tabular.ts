@@ -51,11 +51,11 @@ function readPipeDelimited(path: string): TabularRow[] {
 		columnDelimiter: "|",
 		enableQuoteHandling: true,
 	})) {
-		// The emitter coerces numeric-looking columns, and every key in this export is a STRING contract — `mukey`
-		// `412818` must not become the number 412818, or it stops joining against the shapefile's own `MUKEY`.
-		rows.push(
-			(row as unknown as unknown[]).map((value) => (value === undefined || value === null ? "" : String(value)))
-		)
+		// `String` ON A DECLARED STRING IS NOT REDUNDANT HERE. The emitter's array mode is TYPED `string[]` and coerces
+		// numeric-looking columns at RUNTIME — measured: `mukey` comes back as the number 412818, not `"412818"` — so a row
+		// passed through untouched stops joining against the shapefile's own `MUKEY`. An empty column arrives as `""`
+		// rather than as null, which is why nothing here has to decide what a missing value means.
+		rows.push(row.map((value) => String(value)))
 	}
 
 	return rows

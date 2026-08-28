@@ -61,8 +61,9 @@ try {
 		}),
 		indexResolution: Number(required("index-resolution", values["index-resolution"])),
 		coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
-		// An empty string is an empty set, not "every map unit": a build where nothing lacks soil mapping passes one.
-		noMappingMukeys: new Set((values["no-mapping-mukeys"] ?? "").split(",").filter(Boolean)),
+		// An empty string is an empty set, not "every map unit": a build where nothing lacks soil mapping passes one, and
+		// `"".split(",")` yields one empty element that has to be dropped rather than joined against as a mukey.
+		noMappingMukeys: new Set((values["no-mapping-mukeys"] ?? "").split(",").filter((mukey) => mukey.length > 0)),
 		onProgress: (message) => console.error(`  [chunk] ${message}`),
 	})
 

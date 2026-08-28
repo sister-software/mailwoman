@@ -8,6 +8,7 @@
 
 export * from "./acquire.ts"
 export * from "./build-soil.ts"
+export * from "./cell-tiers.ts"
 export * from "./cells.ts"
 export * from "./client.ts"
 export * from "./download.ts"

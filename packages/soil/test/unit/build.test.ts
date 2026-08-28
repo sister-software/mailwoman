@@ -185,15 +185,33 @@ describe("the invariants that make the shares readable", () => {
 		const database = new DatabaseSync(databasePath, { readOnly: true })
 
 		try {
-			const rows = database.prepare("SELECT * FROM soil_capability_cell").all() as unknown as Array<
-				Parameters<typeof shareTotal>[0]
-			>
+			const rows = database
+				.prepare(
+					"SELECT class_shares, unrated_share, notrateable_share, nodata_share, other_share FROM soil_capability_cell"
+				)
+				.all()
 
 			expect(rows.length).toBeGreaterThan(0)
 
 			for (const row of rows) {
+				// Read column by column rather than cast whole: the five fields the invariant turns on are named here, so a
+				// column that stopped being written fails as a missing name rather than as a share that reads zero.
+				const total = shareTotal({
+					h3_cell: 0,
+					class_shares: String(row.class_shares),
+					unrated_share: Number(row.unrated_share),
+					notrateable_share: Number(row.notrateable_share),
+					nodata_share: Number(row.nodata_share),
+					other_share: Number(row.other_share),
+					mapped_share: 1,
+					top_class: null,
+					top_class_share: null,
+					weighting: "",
+					delineations: 0,
+				})
+
 				// `other_share` is what makes this hold: truncating a long tail is legitimate, doing it silently is not.
-				expect(shareTotal(row)).toBeCloseTo(1, 4)
+				expect(total).toBeCloseTo(1, 4)
 			}
 		} finally {
 			database.close()
