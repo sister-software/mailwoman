@@ -34,7 +34,6 @@
  *   that at 4.1% over a national layer.
  */
 
-import { spawn } from "node:child_process"
 import { rmSync, statSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
@@ -51,9 +50,7 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
-import { TextSpliterator } from "spliterator"
+import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 
 import { createCoastalTables, type CoastalDatabase } from "../schema.ts"
 import {
@@ -607,42 +604,9 @@ async function runBatchedIngest(
 
 /**
  * Run one chunk process and parse its result line.
- *
- * Progress is INHERITED rather than captured, so a long chunk reports as it goes and only the result line has to be
- * parsed. A non-zero exit throws: a chunk that died mid-range has already written part of its rows, and continuing
- * would seal an artifact missing features nobody could name.
  */
 async function runChunk(script: string, args: readonly string[]): Promise<CoastalChunkResult> {
-	const stdout = await new Promise<string>((resolve, reject) => {
-		const child = spawn(process.execPath, [script, ...args], { stdio: ["ignore", "pipe", "inherit"] })
-		const chunks: string[] = []
-
-		child.stdout.setEncoding("utf8")
-
-		child.stdout.on("data", (chunk: string) => {
-			chunks.push(chunk)
-		})
-
-		child.on("error", reject)
-
-		child.on("close", (code) => {
-			if (code === 0) {
-				resolve(chunks.join(""))
-
-				return
-			}
-
-			reject(new Error(`coastal build: chunk process exited ${code}`))
-		})
-	})
-
-	const line = TextSpliterator.from(stdout.trim(), { delimiter: "\n" }).toArray().at(-1)
-
-	if (!line) {
-		throw new Error("coastal build: a chunk printed no result — its rows are in the artifact unaccounted for")
-	}
-
-	return parseJSONStrict<CoastalChunkResult>(line)
+	return runChunkProcess<CoastalChunkResult>({ script, args, context: "coastal build" })
 }
 
 /**

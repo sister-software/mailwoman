@@ -51,17 +51,14 @@
 import { DatabaseSync } from "node:sqlite"
 
 import {
+	assertCoverageLicensesNoExclusion,
 	CoverageBasis,
+	parseManifestRows,
 	toCoverageCell,
 	type CoverageRow,
-	supportsExclusion,
 	type CoverageCell,
-	type LayerFreshnessPolicy,
 	type LayerManifest,
-	type LayerTier,
-	type SpineKeys,
 } from "@mailwoman/core/layers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { recoverShortCellResolution, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 
@@ -536,65 +533,28 @@ function toDesignation(area: AreaRow, containment: CoastalContainmentPath): Coas
  * Read and check the layer's identity.
  */
 function readIdentity(database: DatabaseSync, databasePath: string): CoastalLayerIdentity {
-	const manifestRows = database.prepare("SELECT * FROM layer_manifest").all() as Array<Record<string, string | number>>
+	const manifestRows = database.prepare("SELECT * FROM layer_manifest").all() as Array<
+		Record<string, string | number | null>
+	>
 
-	if (manifestRows.length !== 1) {
-		throw new Error(`coastal reader: ${databasePath} carries ${manifestRows.length} manifest rows, expected 1`)
-	}
-
-	const row = manifestRows[0]!
-	const spineKeys = parseJSONStrict<SpineKeys>(String(row.spine_keys))
-
-	if (String(row.name) !== NCERM_LAYER_NAME) {
-		throw new Error(
-			`coastal reader: ${databasePath} is layer ${JSON.stringify(row.name)}, not ${JSON.stringify(NCERM_LAYER_NAME)} — one authority, one product, one scenario vocabulary per artifact`
-		)
-	}
+	const manifest = parseManifestRows(manifestRows, NCERM_LAYER_NAME, `coastal reader: ${databasePath}`)
+	const spineKeys = manifest.spineKeys
 
 	if (!spineKeys.h3) {
 		throw new Error(`coastal reader: ${databasePath} declares no h3 spine key`)
 	}
 
-	const manifest: LayerManifest = {
-		name: String(row.name),
-		version: String(row.version),
-		schemaVersion: Number(row.schema_version),
-		tier: String(row.tier) as LayerTier,
-		license: String(row.license),
-		...(row.attribution === null ? {} : { attribution: String(row.attribution) }),
-		source: String(row.source),
-		sourceVintage: String(row.source_vintage),
-		buildCmd: String(row.build_cmd),
-		buildSHA: String(row.build_sha),
-		freshnessPolicy: String(row.freshness_policy) as LayerFreshnessPolicy,
-		spineKeys,
-		createdAt: String(row.created_at),
-	}
-
-	const coverageRows = database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{
-		basis: string | null
-	}>
-
-	if (!coverageRows.length) {
-		throw new Error(
-			`coastal reader: ${databasePath} holds no coverage rows — every location would read as unknown, which is indistinguishable from a coast the authority has not mapped`
-		)
-	}
-
 	// THE EXCLUSION CHECK, AND IT IS A CONDITION RATHER THAN A CONVENTION. NCERM publishes no coverage statement, so no
 	// row of this layer may license a claim that a location is NOT at risk. A stronger basis reaching a caller would let
-	// an absent polygon be read as a designation of safety over the whole of inland England. Checked once at open time,
-	// over the distinct bases, so the cost is one query however large the table.
-	for (const coverageRow of coverageRows) {
-		const basis = (coverageRow.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent
-
-		if (supportsExclusion({ basis })) {
-			throw new Error(
-				`coastal reader: ${databasePath} carries a coverage row on basis ${JSON.stringify(basis)}, which supports an EXCLUSION. ` +
-					`${NCERM_COVERAGE_LIMIT} Until a mapped-footprint source is settled, every row must read ${CoverageBasis.SourcePresent}`
-			)
-		}
-	}
+	// an absent polygon be read as a designation of safety over the whole of inland England. The check itself is the
+	// contract's rather than this product's; the SENTENCE saying why is this product's.
+	assertCoverageLicensesNoExclusion(
+		(database.prepare("SELECT DISTINCT basis FROM layer_coverage").all() as Array<{ basis: string | null }>).map(
+			(coverageRow) => coverageRow.basis
+		),
+		`coastal reader: ${databasePath}`,
+		NCERM_COVERAGE_LIMIT
+	)
 
 	const extentRows = database.prepare("SELECT * FROM coastal_mapped_extent ORDER BY extent_id").all() as Array<
 		Record<string, string | number>

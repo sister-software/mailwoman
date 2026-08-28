@@ -71,7 +71,7 @@ import {
 	POLYGON_TO_CELLS_FLAGS,
 } from "h3-js"
 
-import type { MultiPolygonRings } from "../geometries/ring-blob.ts"
+import { ringsBoundingBox, type MultiPolygonRings } from "../geometries/ring-blob.ts"
 import { shortCellToInt, type H3Cell } from "./cell.ts"
 
 /**
@@ -167,50 +167,13 @@ export interface FeatureCells {
 }
 
 /**
- * The bounding box of a feature's rings, in degrees.
- */
-function boundingBox(polygons: MultiPolygonRings): DegreeBox {
-	let minLat = Infinity
-	let minLon = Infinity
-	let maxLat = -Infinity
-	let maxLon = -Infinity
-
-	for (const rings of polygons) {
-		for (const ring of rings) {
-			for (const position of ring) {
-				const lon = position[0]!
-				const lat = position[1]!
-
-				if (lon < minLon) {
-					minLon = lon
-				}
-
-				if (lon > maxLon) {
-					maxLon = lon
-				}
-
-				if (lat < minLat) {
-					minLat = lat
-				}
-
-				if (lat > maxLat) {
-					maxLat = lat
-				}
-			}
-		}
-	}
-
-	return { minLat, minLon, maxLat, maxLon }
-}
-
-/**
  * How many cells at `resolution` the feature's bounding box spans.
  *
  * The same quantity h3 reserves its buffer from, computed here so an oversized polyfill is never issued. Approximate on
  * purpose: it decides which resolution to ask for, not what the answer is.
  */
 export function estimateCellCount(polygons: MultiPolygonRings, resolution: number): number {
-	const box = boundingBox(polygons)
+	const box = ringsBoundingBox(polygons)
 
 	if (!Number.isFinite(box.minLat)) return 0
 
@@ -266,7 +229,7 @@ export function classifyFeatureCells(
 				// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order an ingest emits. Converting
 				// instead would put a transposition between the geometry and the index that nothing downstream could see.
 				const geoJSONRings = rings as number[][][]
-				const box = boundingBox([rings])
+				const box = ringsBoundingBox([rings])
 				const enclosing = enclosingCell(box, resolution)
 
 				// A PART THAT FITS INSIDE ONE CELL IS ANSWERED WITHOUT THE ALLOCATOR, and that is a fact rather than an

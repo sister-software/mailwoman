@@ -30,9 +30,9 @@ import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 
 /**
- * Bytes between progress reports.
+ * Bytes between progress reports, where the caller states no preference.
  */
-const PROGRESS_STRIDE_BYTES = 16 * 1024 * 1024
+const DEFAULT_PROGRESS_STRIDE_BYTES = 16 * 1024 * 1024
 
 export interface StreamToDiskOptions {
 	url: string
@@ -45,6 +45,19 @@ export interface StreamToDiskOptions {
 	 */
 	context: string
 	onProgress?: (message: string) => void
+	/**
+	 * Bytes between progress reports. Scale it to the transfer: the default suits a several-hundred-megabyte archive, and
+	 * leaves a 13 MB one reporting once.
+	 */
+	progressStrideBytes?: number
+	/**
+	 * What this host's non-OK status MEANS, appended to the refusal.
+	 *
+	 * A status code is a poor diagnosis on a host that reuses one. The soil download service answers 400 rather than 404
+	 * for a version date it does not hold, so the bare status sends a reader looking for a malformed request instead of a
+	 * stale catalogue date. Return `undefined` for a status the caller has nothing to add about.
+	 */
+	describeStatus?: (status: number) => string | undefined
 }
 
 /**
@@ -63,8 +76,14 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 	const response = await fetch(options.url, { redirect: "follow" })
 
 	if (!response.ok || !response.body) {
-		throw new Error(`${options.context}: ${options.url} answered HTTP ${response.status}`)
+		const explanation = options.describeStatus?.(response.status)
+
+		throw new Error(
+			`${options.context}: ${options.url} answered HTTP ${response.status}${explanation === undefined ? "" : explanation}`
+		)
 	}
+
+	const strideBytes = options.progressStrideBytes ?? DEFAULT_PROGRESS_STRIDE_BYTES
 
 	let received = 0
 	let reported = 0
@@ -74,7 +93,7 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 	source.on("data", (chunk: Buffer) => {
 		received += chunk.byteLength
 
-		if (received - reported >= PROGRESS_STRIDE_BYTES) {
+		if (received - reported >= strideBytes) {
 			reported = received
 
 			options.onProgress?.(`${(received / 1024 / 1024).toFixed(0)} MB`)

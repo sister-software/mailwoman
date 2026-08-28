@@ -25,10 +25,10 @@
  *   the old one in place.
  */
 
-import { mkdir, stat } from "node:fs/promises"
+import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
 
-import { streamToDisk } from "@mailwoman/core/utils"
+import { pathExists, streamToDisk } from "@mailwoman/core/utils"
 
 /**
  * The file name one vintage's export is kept under.
@@ -59,7 +59,7 @@ export async function downloadZoningExport(options: DownloadZoningExportOptions)
 	const vintageDir = join(options.cacheRoot, options.vintage)
 	const exportPath = join(vintageDir, GZT_EXPORT_FILE)
 
-	if (await exists(exportPath)) {
+	if (await pathExists(exportPath)) {
 		options.onProgress?.(`export for ${options.vintage} already downloaded`)
 
 		return exportPath
@@ -75,11 +75,4 @@ export async function downloadZoningExport(options: DownloadZoningExportOptions)
 	})
 
 	return exportPath
-}
-
-async function exists(path: string): Promise<boolean> {
-	return stat(path).then(
-		() => true,
-		() => false
-	)
 }

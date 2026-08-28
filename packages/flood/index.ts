@@ -41,15 +41,12 @@
 import { DatabaseSync } from "node:sqlite"
 
 import {
+	parseManifestRows,
 	toCoverageCell,
 	type CoverageRow,
 	type CoverageCell,
 	type LayerManifest,
-	type LayerTier,
-	type LayerFreshnessPolicy,
-	type SpineKeys,
 } from "@mailwoman/core/layers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 
@@ -360,39 +357,15 @@ export class FloodZoneLookup {
  * Read and check the layer's identity.
  */
 function readIdentity(database: DatabaseSync, databasePath: string): FloodLayerIdentity {
-	const manifestRows = database.prepare("SELECT * FROM layer_manifest").all() as Array<Record<string, string | number>>
+	const manifestRows = database.prepare("SELECT * FROM layer_manifest").all() as Array<
+		Record<string, string | number | null>
+	>
 
-	if (manifestRows.length !== 1) {
-		throw new Error(`flood reader: ${databasePath} carries ${manifestRows.length} manifest rows, expected 1`)
-	}
-
-	const row = manifestRows[0]!
-	const spineKeys = parseJSONStrict<SpineKeys>(String(row.spine_keys))
-
-	if (String(row.name) !== EA_FLOOD_LAYER_NAME) {
-		throw new Error(
-			`flood reader: ${databasePath} is layer ${JSON.stringify(row.name)}, not ${JSON.stringify(EA_FLOOD_LAYER_NAME)} — one authority, one product, one zone vocabulary per artifact`
-		)
-	}
+	const manifest = parseManifestRows(manifestRows, EA_FLOOD_LAYER_NAME, `flood reader: ${databasePath}`)
+	const spineKeys = manifest.spineKeys
 
 	if (!spineKeys.h3) {
 		throw new Error(`flood reader: ${databasePath} declares no h3 spine key`)
-	}
-
-	const manifest: LayerManifest = {
-		name: String(row.name),
-		version: String(row.version),
-		schemaVersion: Number(row.schema_version),
-		tier: String(row.tier) as LayerTier,
-		license: String(row.license),
-		...(row.attribution === null ? {} : { attribution: String(row.attribution) }),
-		source: String(row.source),
-		sourceVintage: String(row.source_vintage),
-		buildCmd: String(row.build_cmd),
-		buildSHA: String(row.build_sha),
-		freshnessPolicy: String(row.freshness_policy) as LayerFreshnessPolicy,
-		spineKeys,
-		createdAt: String(row.created_at),
 	}
 
 	const extentRows = database.prepare("SELECT * FROM flood_map_extent").all() as Array<Record<string, string | number>>
