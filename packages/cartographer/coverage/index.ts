@@ -18,7 +18,7 @@
  *   demo's LayerToggleControl gives each its own checkbox — pick the reading you want, no extra UI.
  *
  *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/coverage-v5.pmtiles` (same
- *   as `basemap-v4`); the consumer passes its TileJSON URL (`tiles.sister.software/coverage-v5.json`)
+ *   as `basemap-v4`); the consumer passes its TileJSON URL (`tiles.mailwoman.ai/coverage-v5.json`)
  *   to `createCoverageSource`.
  */
 
@@ -55,7 +55,7 @@ export const CoverageLayerID = {
 
 /**
  * Build the coverage source spec from the tile worker's TileJSON endpoint
- * (`https://tiles.sister.software/coverage-v5.json`).
+ * (`https://tiles.mailwoman.ai/coverage-v5.json`).
  */
 export function createCoverageSource(url: string): VectorSourceSpecification {
 	return { type: "vector", url }

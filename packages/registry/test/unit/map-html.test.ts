@@ -36,7 +36,7 @@ describe("toMapHTML", () => {
 		expect(html).toContain('integrity="sha384-')
 		expect(html).not.toMatch(/leaflet/i)
 		// The house Protomaps basemap-v4 vector source (CORS-aware tile-worker), not a raster tile URL.
-		expect(html).toContain("https://tiles.sister.software/basemap-v4.json")
+		expect(html).toContain("https://tiles.mailwoman.ai/basemap-v4.json")
 		// Glyphs + sprite from the CORS-enabled upstream Protomaps assets (house mirror isn't CORS-routed).
 		expect(html).toContain("protomaps.github.io/basemaps-assets/fonts")
 		expect(html).toContain("protomaps.github.io/basemaps-assets/sprites/v4/light")

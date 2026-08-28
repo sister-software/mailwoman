@@ -13,7 +13,7 @@ A demo-map overlay that answers **"where do we need data"** at a glance — cove
 1. **US rooftop fine map** — shades each US area by address-point density (street/block detail). The original overlay; reveals the "looks covered until you zoom in, then the gaps go gray" holes.
 2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, [weighted by importance](./WIKIPEDIA_IMPORTANCE.mdx) (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
 
-- **Live:** `https://tiles.sister.software/coverage-v5.json` (XYZ vector tiles via the tile worker).
+- **Live:** `https://tiles.mailwoman.ai/coverage-v5.json` (XYZ vector tiles via the tile worker).
 - **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · honest fog_. The user picks one.
 - **Coverage today:** US rooftop = 48 states + DC + VI (Overture) + HI (OpenAddresses) + NH (street-level), **AK excluded** (antimeridian). Global postcode coverage = GeoNames `allCountries` postal (121 countries) clearing the holes; civilization backdrop = WOF settlement places weighted by `place_importance`.
 
@@ -26,7 +26,7 @@ It is an **H3 hexbin** tileset. Each cell carries **two baked fog values** in `[
 
 The demo's two fill layers (`coverage-opt-fog`, `coverage-honest-fog`) just point `fill-opacity` at one prop or the other — **no rebake needed to switch readings**. Each H3 resolution is baked in its own non-overlapping zoom band; the finest is baked at a single tile-max zoom and MapLibre **overzooms** above it (hexes are identical geometry at every zoom).
 
-**Serving is XYZ via the tile worker — NOT client-side PMTiles.** The `.pmtiles` archive lives at `nexus-assets/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.sister.software/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — **that was wrong and was removed** (`524f78a8`). Don't bring it back.
+**Serving is XYZ via the tile worker — NOT client-side PMTiles.** The `.pmtiles` archive lives at `nexus-assets/tiles/coverage-v5.pmtiles` and the `tile-worker/` Cloudflare Worker serves it as `tiles.mailwoman.ai/coverage-v5/{z}/{x}/{y}.mvt` (exactly like `basemap-v4`). A previous iteration served the PMTiles directly through the `pmtiles://` protocol — **that was wrong and was removed** (`524f78a8`). Don't bring it back.
 
 The **global holes layer** is decoupled from the US rooftop pipeline (its own DuckDB stage, US-excluded) but rides the SAME `coverage` source-layer + `fog`/`fog_opt` props, so the demo's two fill layers render it with zero wiring changes. It emits res-domain hexes at `[onset…max]` + a res-4 low-zoom rollup; the US tiers are untouched.
 
@@ -77,7 +77,7 @@ RCLONE_S3_PROVIDER=Cloudflare RCLONE_S3_REGION=auto \
 mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.pmtiles --tileset coverage-v5
 ```
 
-**3. Verify:** `curl -s -o /dev/null -w '%{http_code}' https://tiles.sister.software/coverage-v5.json` → `200`.
+**3. Verify:** `curl -s -o /dev/null -w '%{http_code}' https://tiles.mailwoman.ai/coverage-v5.json` → `200`.
 
 **Re-versioning:** the object is at a versioned path (`coverage-v5`). To ship a fresh bake, bump `CoverageTileSetID` in `cartographer/coverage/index.ts` to `coverage-v6`, upload to `tiles/coverage-v6.pmtiles`, and the demo follows automatically. (Versioning avoids R2 cache-staleness; same pattern as `basemap-v4`.)
 

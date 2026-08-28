@@ -78,7 +78,7 @@ const config: Config = {
 			tagName: "link",
 			attributes: {
 				rel: "preconnect",
-				href: "https://tiles.sister.software",
+				href: "https://tiles.mailwoman.ai",
 			},
 		},
 		{

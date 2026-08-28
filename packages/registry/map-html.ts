@@ -9,14 +9,14 @@
  *
  *   It renders on the HOUSE stack: MapLibre GL + a Protomaps basemap (`@protomaps/basemaps` generates
  *   the `layers()` for a named flavor) over the `basemap-v4` vector tiles served from R2 at
- *   `tiles.sister.software` — the same basemap the demo uses. Each entity is a circle sized by
+ *   `tiles.mailwoman.ai` — the same basemap the demo uses. Each entity is a circle sized by
  *   records-merged and colored by cross-dataset-link status (≥2 sources stand out), or
  *   categorically by `bucket` when the reconciliation output carries one. Pure: GeoJSON in, HTML
  *   string out (the Protomaps layer specs are generated at this point and inlined). The generated
  *   page fetches MapLibre, the basemap tiles, and glyphs/sprite over the network when opened (the
  *   house infra).
  *
- *   SERVE IT OVER LOCALHOST, don't open it as a file. The house tile server (`tiles.sister.software`)
+ *   SERVE IT OVER LOCALHOST, don't open it as a file. The house tile server (`tiles.mailwoman.ai`)
  *   CORS-restricts to localhost + the docs domains, so a `file://` page shows the (accurate)
  *   markers on a blank basemap. `npx serve` / `python3 -m http.server` in the output directory is
  *   enough; the page also surfaces a hint banner when it detects it's running from `file://`.
@@ -38,7 +38,7 @@ const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOx
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
 
 /**
- * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.sister.software`, which sends CORS for
+ * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.mailwoman.ai`, which sends CORS for
  * localhost + the docs domains).
  *
  * Glyphs + sprite come from the UPSTREAM Protomaps assets (GitHub Pages, `ACAO: *`), not the house mirror at
@@ -48,7 +48,7 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
  * house mirror once it has a CORS-enabled route.
  */
 const BASEMAP_SOURCE_ID = "basemap-v4"
-const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
+const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
 const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 

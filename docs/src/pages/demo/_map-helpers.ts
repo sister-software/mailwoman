@@ -22,7 +22,7 @@ const CIRCLE_SEGMENTS = 64
 /**
  * Origin of the tile worker serving basemap and overlay tiles. CORS-restricted to localhost and the docs domains.
  */
-export const TILE_WORKER_URL = "https://tiles.sister.software"
+export const TILE_WORKER_URL = "https://tiles.mailwoman.ai"
 /**
  * TileJSON the map reads before requesting basemap tiles.
  */

@@ -13,7 +13,7 @@ MAILWOMAN_DATA_ROOT="${MAILWOMAN_DATA_ROOT:-/tmp/mailwoman-data}" \
 ```
 
 Prefer to try before self-hosting? A hosted trial endpoint runs at
-**https://photon.sister.software** (`/api` + `/reverse`, conservative rate limits).
+**https://photon.mailwoman.ai** (`/api` + `/reverse`, conservative rate limits).
 
 ```bash
 curl "http://localhost:2322/api?q=1600 penn&limit=5&lat=38.9&lon=-77"

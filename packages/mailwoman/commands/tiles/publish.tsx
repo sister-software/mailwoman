@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman tiles publish` — upload a PMTiles archive to the Cloudflare R2 bucket the tile worker
- *   serves from (nexus-assets → https://tiles.sister.software/...). The worker (`tile-worker`)
+ *   serves from (nexus-assets → https://tiles.mailwoman.ai/...). The worker (`tile-worker`)
  *   reads the key `<prefix>/<tileset>.pmtiles` (prefix "tiles" per its wrangler config) and
  *   exposes:
  *
- *   - https://tiles.sister.software/<tileset>.json (TileJSON)
- *   - https://tiles.sister.software/<tileset>/{z}/{x}/{y}.{ext} (vector tiles) So `--tileset coverage`
+ *   - https://tiles.mailwoman.ai/<tileset>.json (TileJSON)
+ *   - https://tiles.mailwoman.ai/<tileset>/{z}/{x}/{y}.{ext} (vector tiles) So `--tileset coverage`
  *       lights up the demo's coverage source with zero further wiring.
  *
  *   Uploads via `rclone` (the RCLONE_S3_* env vars ARE its s3-backend config — source the repo .env
@@ -66,7 +66,7 @@ async function publishTiles(options: Options): Promise<string> {
 
 	const key = `${options.prefix}/${options.tileset}.pmtiles`
 	const sizeMb = statSync(options.file).size / 1024 / 1024
-	const servedAt = `https://tiles.sister.software/${options.tileset}.json`
+	const servedAt = `https://tiles.mailwoman.ai/${options.tileset}.json`
 
 	if (options.dryRun) {
 		return `[dry-run] ${options.file} (${sizeMb.toFixed(1)} MB) → ${options.bucket}/${key}\n[dry-run] would serve at ${servedAt}`

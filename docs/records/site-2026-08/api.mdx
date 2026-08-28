@@ -305,7 +305,7 @@ mailwoman clients generate
 
 ### Python usage
 
-Forward-geocode against the hosted Photon trial endpoint (`https://photon.sister.software`, no local
+Forward-geocode against the hosted Photon trial endpoint (`https://photon.mailwoman.ai`, no local
 server needed):
 
 ```python
@@ -332,7 +332,7 @@ use mailwoman_client::photon::types::PhotonResponse;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = mailwoman_client::photon_hosted(); // https://photon.sister.software
+    let client = mailwoman_client::photon_hosted(); // https://photon.mailwoman.ai
 
     let response = client
         .search(None, None, None, None, Some(3), None, None, Some("berlin"))

@@ -15,7 +15,7 @@
  *   Same idiom as the coverage overlay.
  *
  *   Served as XYZ vector tiles by the tile worker from `nexus-assets/tiles/race-dots-la.pmtiles`; the
- *   consumer passes its TileJSON URL (`tiles.sister.software/race-dots-la.json`) to
+ *   consumer passes its TileJSON URL (`tiles.mailwoman.ai/race-dots-la.json`) to
  *   `createRaceDotsSource`.
  *
  *   The dot is a _representation_, not a record: a random position inside the block, standing in for

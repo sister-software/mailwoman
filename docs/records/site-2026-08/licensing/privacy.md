@@ -32,7 +32,7 @@ deployer's existing legal basis. We never become a processor of it.
 - **The browser demo** downloads model and data artifacts from our content delivery
   infrastructure, then runs locally. Demo queries are processed in your browser and are not
   sent to us.
-- **The public trial endpoint** (photon.sister.software) is provided for evaluation. Like any
+- **The public trial endpoint** (photon.mailwoman.ai) is provided for evaluation. Like any
   web server, it keeps short-lived operational access logs (IP address, request path,
   timestamp) for rate limiting and abuse prevention. These logs are not used for analytics,
   profiling, or any other purpose, are not shared, and are routinely discarded. No accounts

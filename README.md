@@ -127,7 +127,7 @@ contract, from a SQLite file instead of a cluster. A hosted Photon-compatible en
 live for evaluation:
 
 ```bash
-curl "https://photon.sister.software/api?q=berlin&limit=3"   # hosted — nothing to install
+curl "https://photon.mailwoman.ai/api?q=berlin&limit=3"   # hosted — nothing to install
 npx @mailwoman/photon    serve   # Photon-compatible    /api, /reverse
 npx @mailwoman/nominatim serve   # Nominatim-compatible /search, /reverse, /status
 npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand

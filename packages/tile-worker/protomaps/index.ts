@@ -69,7 +69,7 @@ export class CloudflareWorkerPMTiles extends PMTiles {
 		const [header, rawMetadata] = await Promise.all([this.getHeader(), this.getMetadata()])
 
 		const fileExtension = TileTypeFileExtensionMap.get(header.tileType)
-		const url = `https://tiles.sister.software/${tilesetName}/{z}/{x}/{y}.${fileExtension}`
+		const url = `https://tiles.mailwoman.ai/${tilesetName}/{z}/{x}/{y}.${fileExtension}`
 
 		const { vector_layers, name, description, version, attribution } = rawMetadata as TileJSON
 

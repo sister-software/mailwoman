@@ -10,8 +10,8 @@ import { TileSetSourceID } from "../styles/sources.ts"
 
 /**
  * Identifier for the Mailwoman base tileset. Matches the R2 object basename (`nexus-assets/tiles/basemap-v4.pmtiles`) —
- * `tiles.sister.software/basemap-v4.json` returns its tilejson, `tiles.sister.software/basemap-v4/{z}/{x}/{y}.mvt`
- * returns vector tiles.
+ * `tiles.mailwoman.ai/basemap-v4.json` returns its tilejson, `tiles.mailwoman.ai/basemap-v4/{z}/{x}/{y}.mvt` returns
+ * vector tiles.
  */
 export const MailwomanBaseTileSetID = TileSetSourceID("basemap-v4")
 

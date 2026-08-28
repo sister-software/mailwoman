@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Stories for the declarative resolved-place overlays, over the SAME offline stub style as `DemoMap`
- *   (one `background` layer, zero network — never hits `tiles.sister.software`). Each story feeds a fake
+ *   (one `background` layer, zero network — never hits `tiles.mailwoman.ai`). Each story feeds a fake
  *   resolved place through `computeMapPlaceRenderSpec` and drops `<ResolvedPlaceLayers>` into `<DemoMap>`,
  *   covering every branch of the render cascade: bbox circle, crisp polygon, street-radius circle,
  *   anchor-centroid postcode, and the bare point — plus a host `<OverlayLayers>` overlay.
