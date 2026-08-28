@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The account assembly and the shape predicates, driven off hand-built seams so no weights load and no gazetteer
+ *   The account assembly and the shape predicates, driven off hand-built facts so no weights load and no gazetteer
  *   opens. Every case here is a claim about WHAT A PREDICATE MEANS — the point of a v1 classifier is that its
  *   definitions are readable, so the tests are where the definitions are pinned.
  */
@@ -15,10 +15,10 @@ import {
 	assembleAccount,
 	expectationCase,
 	matchShapes,
-	outcomeSeams,
-	parseSeams,
+	collectOutcomeFacts,
+	collectParseFacts,
 	renderAccount,
-	retrievalSeams,
+	collectRetrievalFacts,
 	SHAPE_PREDICATES,
 	type AccountInput,
 	type ExpectationReading,
@@ -115,37 +115,37 @@ const FAILED_EXPECTATION: ExpectationReading = { source: "board_case", met: fals
 
 const ITEM: ResolvedInput = { id: "row-1", input: "Weimar, Thüringen", country: "DE" }
 
-describe("parseSeams — known formats against the parse", () => {
+describe("collectParseFacts — known formats against the parse", () => {
 	it("matches a postcode hit against the postcode component under a different offset frame", () => {
 		// The detector's spans are offsets into the NORMALIZED input, component values are sliced from the RAW one, so
 		// the comparison folds both to characters. "SW1A 1AA" vs "sw1a1aa" is the same assertion.
-		const seams = parseSeams(
+		const facts = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "uk_postcode", confidence: 1, span: { body: "SW1A 1AA" } }] } }),
 			{ postcode: "sw1a1aa" }
 		)
 
-		expect(seams.known_formats[0]!.matched).toBe(true)
-		expect(seams.known_formats[0]!.expects_component).toBe("postcode")
+		expect(facts.known_formats[0]!.matched).toBe(true)
+		expect(facts.known_formats[0]!.expects_component).toBe("postcode")
 	})
 
 	it("reports a hit the parse did not carry as unmatched", () => {
-		const seams = parseSeams(
+		const facts = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "us_zip", confidence: 1, span: { body: "94110" } }] } }),
 			{ locality: "San Francisco" }
 		)
 
-		expect(seams.known_formats[0]!.matched).toBe(false)
+		expect(facts.known_formats[0]!.matched).toBe(false)
 	})
 
 	it("states an absent kind verdict as absent rather than as zero confidence", () => {
-		const seams = parseSeams(traceOf(), {})
+		const facts = collectParseFacts(traceOf(), {})
 
-		expect(seams.kind).toBeNull()
-		expect(seams.kind_absent_reason).toContain("pinned the input register")
+		expect(facts.kind).toBeNull()
+		expect(facts.kind_absent_reason).toContain("pinned the input register")
 	})
 
 	it("keeps an empty decode apart from a zero-confidence one", () => {
-		expect(parseSeams(traceOf(), {}).decode).toEqual({
+		expect(collectParseFacts(traceOf(), {}).decode).toEqual({
 			path: "viterbi",
 			n_tokens: 0,
 			mean_confidence: null,
@@ -154,50 +154,50 @@ describe("parseSeams — known formats against the parse", () => {
 	})
 })
 
-describe("retrievalSeams — ranks and the flip stage", () => {
+describe("collectRetrievalFacts — ranks and the flip stage", () => {
 	it("names the stage at which the pick first reached rank 1", () => {
-		const seams = retrievalSeams([
+		const facts = collectRetrievalFacts([
 			lookup({
 				candidates: [candidate(7, "Weimar", { initial: 4, anchor: 4, importance: 1 })],
 				picked: { id: 7, name: "Weimar", source: "ranked" },
 			}),
 		])
 
-		expect(seams.lookups![0]!.picked_initial_rank).toBe(4)
-		expect(seams.lookups![0]!.flipped_at).toBe("importance")
+		expect(facts.lookups![0]!.picked_initial_rank).toBe(4)
+		expect(facts.lookups![0]!.flipped_at).toBe("importance")
 	})
 
 	it("reports no flip for a pick that was already first", () => {
-		const seams = retrievalSeams([
+		const facts = collectRetrievalFacts([
 			lookup({
 				candidates: [candidate(7, "Weimar", { initial: 1, importance: 1 })],
 				picked: { id: 7, name: "Weimar", source: "ranked" },
 			}),
 		])
 
-		expect(seams.lookups![0]!.flipped_at).toBeNull()
+		expect(facts.lookups![0]!.flipped_at).toBeNull()
 	})
 
 	it("keeps a trace with no resolver records apart from a walk that performed no lookups", () => {
 		// One is a trace that predates the records; the other is the walk stating it had nothing resolvable. Folding
 		// them together would let an old trace read as a retrieval failure.
-		expect(retrievalSeams(undefined).lookups).toBeNull()
-		expect(retrievalSeams([]).lookups).toEqual([])
+		expect(collectRetrievalFacts(undefined).lookups).toBeNull()
+		expect(collectRetrievalFacts([]).lookups).toEqual([])
 	})
 
 	it("collects the gates fired across every lookup, deduplicated", () => {
-		const seams = retrievalSeams([
+		const facts = collectRetrievalFacts([
 			lookup({ gates: ["region_scope_miss"] }),
 			lookup({ tag: "region", gates: ["region_scope_miss", "min_score_reject"] }),
 		])
 
-		expect(seams.gates_fired).toEqual(["region_scope_miss", "min_score_reject"])
+		expect(facts.gates_fired).toEqual(["region_scope_miss", "min_score_reject"])
 	})
 })
 
-describe("outcomeSeams — lineage standing is three-valued", () => {
+describe("collectOutcomeFacts — lineage standing is three-valued", () => {
 	it("counts vouched, contradicted and unverifiable separately", () => {
-		const seams = outcomeSeams({
+		const facts = collectOutcomeFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -209,14 +209,15 @@ describe("outcomeSeams — lineage standing is three-valued", () => {
 			],
 		})
 
-		expect(seams.lineage_vouched).toBe(1)
-		expect(seams.outside_winner_lineage).toEqual([{ tag: "region", name: "Texas", place_id: "wof:2" }])
-		expect(seams.lineage_unverifiable).toBe(1)
+		expect(facts.lineage_vouched).toBe(1)
+		expect(facts.outside_winner_lineage).toEqual([{ tag: "region", name: "Texas", place_id: "wof:2" }])
+		expect(facts.lineage_unverifiable).toBe(1)
 	})
 
 	it("reports an absent coherence report as null, never as a passing check", () => {
 		expect(
-			outcomeSeams({ lat: null, lon: null, resolution_tier: "admin", components: {}, hierarchy: [] }).admin_coherence
+			collectOutcomeFacts({ lat: null, lon: null, resolution_tier: "admin", components: {}, hierarchy: [] })
+				.admin_coherence
 		).toBeNull()
 	})
 })
@@ -225,17 +226,17 @@ describe("matchShapes", () => {
 	const EMPTY = {
 		parse: null,
 		evidence: null,
-		retrieval: retrievalSeams([]),
-		outcome: outcomeSeams({ lat: 1, lon: 2, resolution_tier: "admin", components: {}, hierarchy: [] }),
+		retrieval: collectRetrievalFacts([]),
+		outcome: collectOutcomeFacts({ lat: 1, lon: 2, resolution_tier: "admin", components: {}, hierarchy: [] }),
 	}
 
 	it("flags a high-confidence known format the parse contradicted, and ignores an ambiguous one", () => {
-		const contradicted = parseSeams(
+		const contradicted = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "us_zip", confidence: 1, span: { body: "94110" } }] } }),
 			{}
 		)
 
-		const ambiguous = parseSeams(
+		const ambiguous = collectParseFacts(
 			traceOf({ queryShape: { knownFormats: [{ format: "de_postcode", confidence: 0.6, span: { body: "99423" } }] } }),
 			{}
 		)
@@ -253,13 +254,13 @@ describe("matchShapes", () => {
 	})
 
 	it("calls a lookup empty only when nothing recovered the span", () => {
-		const unresolved = { ...EMPTY, retrieval: retrievalSeams([lookup()]) }
+		const unresolved = { ...EMPTY, retrieval: collectRetrievalFacts([lookup()]) }
 
 		// A format probe answers off an empty candidate table. Reading that as retrieval failure would report a
 		// working fallback as a defect.
 		const fallbackAnswered = {
 			...EMPTY,
-			retrieval: retrievalSeams([
+			retrieval: collectRetrievalFacts([
 				lookup({ candidates: [], picked: { id: 1, name: "Troyes", source: "postcode_format_probe" } }),
 			]),
 		}
@@ -269,7 +270,7 @@ describe("matchShapes", () => {
 	})
 
 	it("does not call a span empty when a later lookup for the same span answered", () => {
-		const retried = retrievalSeams([
+		const retried = collectRetrievalFacts([
 			lookup(),
 			lookup({
 				candidates: [candidate(3, "Weimar", { initial: 1 })],
@@ -281,7 +282,7 @@ describe("matchShapes", () => {
 	})
 
 	it("flags a readmitted pick, and not a scope miss that resolved nothing", () => {
-		const readmitted = retrievalSeams([
+		const readmitted = collectRetrievalFacts([
 			lookup({
 				gates: ["region_scope_miss"],
 				candidates: [candidate(9, "Astoria", { initial: 1 })],
@@ -289,14 +290,14 @@ describe("matchShapes", () => {
 			}),
 		])
 
-		const missedAndAbstained = retrievalSeams([lookup({ gates: ["region_scope_miss"] })])
+		const missedAndAbstained = collectRetrievalFacts([lookup({ gates: ["region_scope_miss"] })])
 
 		expect(matchShapes({ ...EMPTY, retrieval: readmitted })).toContain("scope_miss_readmission")
 		expect(matchShapes({ ...EMPTY, retrieval: missedAndAbstained })).not.toContain("scope_miss_readmission")
 	})
 
 	it("flags a contradicted qualifier and a fragment outside the winner's lineage under one shape", () => {
-		const contradicted = outcomeSeams({
+		const contradicted = collectOutcomeFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -305,7 +306,7 @@ describe("matchShapes", () => {
 			admin_coherence: { region: "contradicted", country: "confirmed" },
 		})
 
-		const chimera = outcomeSeams({
+		const chimera = collectOutcomeFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -318,7 +319,7 @@ describe("matchShapes", () => {
 	})
 
 	it("reads an unverifiable coherence verdict as no finding — absence of evidence is not evidence", () => {
-		const unverifiable = outcomeSeams({
+		const unverifiable = collectOutcomeFacts({
 			lat: 1,
 			lon: 2,
 			resolution_tier: "admin",
@@ -330,18 +331,18 @@ describe("matchShapes", () => {
 		expect(matchShapes({ ...EMPTY, outcome: unverifiable })).toEqual([])
 	})
 
-	it("orders multiple matches by pipeline seam so a row reads as one story", () => {
+	it("orders multiple matches by pipeline execution stage", () => {
 		const shapes = matchShapes({
 			...EMPTY,
 			evidence: evidenceOf({ gazetteer: SILENT_CHANNEL }),
-			retrieval: retrievalSeams([
+			retrieval: collectRetrievalFacts([
 				lookup({
 					gates: ["region_scope_miss"],
 					candidates: [candidate(9, "Astoria", { initial: 3, importance: 1 })],
 					picked: { id: 9, name: "Astoria", source: "ranked" },
 				}),
 			]),
-			outcome: outcomeSeams({
+			outcome: collectOutcomeFacts({
 				lat: 1,
 				lon: 2,
 				resolution_tier: "admin",
@@ -435,7 +436,7 @@ describe("assembleAccount — the terminal states", () => {
 		expect(assembleAccount(ITEM, starved, NO_EXPECTATION).shapes).toEqual(["evidence_starved"])
 	})
 
-	it("flags a coordinate that arrived with no recorded lookup — the retrieval seams are blind, not quiet", () => {
+	it("flags a coordinate when the resolver trace records no lookup", () => {
 		// The resolver trace records the walk's own lookups. A famous name the model tagged `street` is never
 		// queried by the walk (`street` is not in the placetype map) and is answered by the post-walk span-rescore,
 		// which resolves through the backend directly and emits no record. Measured on "Frankfurt": a resolved
