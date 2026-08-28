@@ -18,7 +18,7 @@ import { join } from "node:path"
 
 import { buildFloodDatabase } from "@mailwoman/flood/sdk/build-flood"
 import { realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
-import { verifyFloodDatabase, type ServiceHandle } from "@mailwoman/flood/sdk/verify"
+import { verifyFloodDatabase, type ServiceFeatureReader } from "@mailwoman/flood/sdk/verify"
 import {
 	FIXTURE_ORIGIN,
 	FIXTURE_SIDE,
@@ -31,36 +31,29 @@ import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flo
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * A service that answers every bbox with one polygon carrying `zone`, drawn `offsetDegrees` away from the fixture's own
- * FZ3 square so the nearest-vertex distance is under this test's control.
+ * A service that answers every point with one polygon carrying `zone`, drawn `offsetDegrees` away from the fixture's
+ * own FZ3 square so the nearest-vertex distance is under this test's control. `null` answers with nothing.
  */
-function scriptedService(zone: string | null, offsetDegrees = 0): ServiceHandle {
-	return {
-		fetch: async () => ({
-			data:
-				zone === null
-					? { features: [] }
-					: {
-							features: [
-								{
-									properties: { flood_zone: zone },
-									geometry: {
-										type: "Polygon",
-										coordinates: [
-											rectangleRing(
-												FIXTURE_ORIGIN.lon + offsetDegrees,
-												FIXTURE_ORIGIN.lat + offsetDegrees,
-												FIXTURE_ORIGIN.lon + FIXTURE_SIDE + offsetDegrees,
-												FIXTURE_ORIGIN.lat + FIXTURE_SIDE + offsetDegrees
-											),
-										],
-									},
-								},
+function scriptedService(zone: string | null, offsetDegrees = 0): ServiceFeatureReader {
+	return async () =>
+		zone === null
+			? []
+			: [
+					{
+						properties: { flood_zone: zone },
+						geometry: {
+							type: "Polygon",
+							coordinates: [
+								rectangleRing(
+									FIXTURE_ORIGIN.lon + offsetDegrees,
+									FIXTURE_ORIGIN.lat + offsetDegrees,
+									FIXTURE_ORIGIN.lon + FIXTURE_SIDE + offsetDegrees,
+									FIXTURE_ORIGIN.lat + FIXTURE_SIDE + offsetDegrees
+								),
 							],
 						},
-			// The rest of an axios response is never read by the code under test.
-		}),
-	} as unknown as ServiceHandle
+					},
+				]
 }
 
 /**
@@ -106,7 +99,7 @@ describe("verifyFloodDatabase", () => {
 	it("agrees when both channels assign the same zone", async () => {
 		const result = await verifyFloodDatabase({
 			databasePath,
-			client: scriptedService("FZ3"),
+			readServiceFeatures: scriptedService("FZ3"),
 			points: [INSIDE_FZ3],
 		})
 
@@ -120,7 +113,7 @@ describe("verifyFloodDatabase", () => {
 		// tolerance and the difference cannot be attributed to the two channels rendering the same edge.
 		const result = await verifyFloodDatabase({
 			databasePath,
-			client: scriptedService("FZ2", FIXTURE_SIDE * 4),
+			readServiceFeatures: scriptedService("FZ2", FIXTURE_SIDE * 4),
 			points: [INSIDE_FZ3],
 		})
 
@@ -133,7 +126,7 @@ describe("verifyFloodDatabase", () => {
 	it("carries a service miss as a null verdict rather than as an absent one", async () => {
 		const result = await verifyFloodDatabase({
 			databasePath,
-			client: scriptedService(null),
+			readServiceFeatures: scriptedService(null),
 			points: [INSIDE_FZ3],
 		})
 
@@ -145,7 +138,7 @@ describe("verifyFloodDatabase", () => {
 	it("passes the negative half: every point outside the footprint reads unknown", async () => {
 		const result = await verifyFloodDatabase({
 			databasePath,
-			client: scriptedService(null),
+			readServiceFeatures: scriptedService(null),
 			points: [],
 			outsidePoints: [
 				{
@@ -171,7 +164,7 @@ describe("verifyFloodDatabase", () => {
 		// that only ever asked about places it happened to be silent.
 		const result = await verifyFloodDatabase({
 			databasePath,
-			client: scriptedService(null),
+			readServiceFeatures: scriptedService(null),
 			points: [],
 			outsidePoints: [
 				{ label: "inside the fixture extent", latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 },

@@ -129,15 +129,54 @@ const BOUNDARY_TOLERANCE_DEGREES = 0.00001
 const SERVICE_FEATURE_LIMIT = 200
 
 /**
- * The slice of {@link EAFloodClient} the verification touches — the same reasoning `LayerContractHandle` carries. Naming
- * only the member it calls lets a test drive the comparison against a scripted service without standing up an HTTP
- * client, which is what makes the check's own logic testable rather than only observable on a live run.
+ * One feature as the service publishes it — the only shape the comparison reads.
  */
-export type ServiceHandle = Pick<EAFloodClient, "fetch">
+export interface ServiceFeature {
+	properties?: { flood_zone?: string }
+	geometry?: { type: string; coordinates: unknown }
+}
+
+/**
+ * The ONE call the verification makes against the service: the features it publishes near a point.
+ *
+ * A function rather than the client, and that is what makes the check's own logic testable. The comparison's value is
+ * that it decides which of three outcomes a point gets; expressed against an HTTP client it could only ever be watched
+ * on a live run, and a scripted reader lets those decisions be pinned. {@link createEAServiceReader} builds the real
+ * one.
+ */
+export type ServiceFeatureReader = (latitude: number, longitude: number) => Promise<ServiceFeature[]>
+
+/**
+ * The reader the live check uses: an OGC API Features bbox query against the EA's own service.
+ *
+ * The service answers a BBOX, not a point, so this returns what it published nearby and the containment decision is
+ * made in {@link readServiceZone} against those rings — comparing the artifact's verdict against a bare "the service
+ * returned something here" would pass on any polygon within eleven metres.
+ */
+export function createEAServiceReader(client: Pick<EAFloodClient, "fetch">): ServiceFeatureReader {
+	return async (latitude, longitude) => {
+		const { data } = await client.fetch<{ features?: ServiceFeature[] }>({
+			method: "GET",
+			url: `${EA_SPATIAL_BASE_URL}/ogc/features/v1/collections/${EA_FLOOD_LAYER}/items`,
+			params: {
+				bbox: [
+					longitude - PROBE_HALF_WIDTH_DEGREES,
+					latitude - PROBE_HALF_WIDTH_DEGREES,
+					longitude + PROBE_HALF_WIDTH_DEGREES,
+					latitude + PROBE_HALF_WIDTH_DEGREES,
+				].join(","),
+				limit: SERVICE_FEATURE_LIMIT,
+				f: "application/json",
+			},
+		})
+
+		return data.features ?? []
+	}
+}
 
 export interface VerifyFloodOptions {
 	databasePath: string
-	client: ServiceHandle
+	readServiceFeatures: ServiceFeatureReader
 	/**
 	 * Points to re-ask the service about. A caller samples them from the artifact — see {@link sampleAgreementPoints}.
 	 */
@@ -157,7 +196,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 		for (const point of options.points) {
 			const local = lookup.lookup(point.latitude, point.longitude)
-			const service = await readServiceZone(options.client, point.latitude, point.longitude)
+			const service = await readServiceZone(options.readServiceFeatures, point.latitude, point.longitude)
 
 			const localZone = local.kind === FloodReadingKind.Designated ? (local.zoneCode ?? null) : null
 
@@ -199,41 +238,20 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 }
 
 /**
- * Ask the OGC API Features service what zone its own geometry assigns at a point.
- *
- * The service answers a BBOX, not a point, so the containment decision is made here — against the service's rings, with
- * the same even-odd rule the artifact's reader uses. Comparing the two verdicts is the point; comparing the artifact's
- * verdict against a bare "the service returned something here" would pass on any polygon within eleven metres.
+ * What zone the SERVICE's own geometry assigns at a point, decided here with the same even-odd rule the artifact's
+ * reader uses — so what is compared is a verdict against a verdict.
  */
 async function readServiceZone(
-	client: ServiceHandle,
+	readServiceFeatures: ServiceFeatureReader,
 	latitude: number,
 	longitude: number
 ): Promise<{ zone: string | null; nearestEdgeDegrees?: number }> {
-	const { data } = await client.fetch<{
-		features?: Array<{
-			properties?: { flood_zone?: string }
-			geometry?: { type: string; coordinates: unknown }
-		}>
-	}>({
-		method: "GET",
-		url: `${EA_SPATIAL_BASE_URL}/ogc/features/v1/collections/${EA_FLOOD_LAYER}/items`,
-		params: {
-			bbox: [
-				longitude - PROBE_HALF_WIDTH_DEGREES,
-				latitude - PROBE_HALF_WIDTH_DEGREES,
-				longitude + PROBE_HALF_WIDTH_DEGREES,
-				latitude + PROBE_HALF_WIDTH_DEGREES,
-			].join(","),
-			limit: SERVICE_FEATURE_LIMIT,
-			f: "application/json",
-		},
-	})
+	const features = await readServiceFeatures(latitude, longitude)
 
 	let nearest = Infinity
 	let zone: string | null = null
 
-	for (const feature of data.features ?? []) {
+	for (const feature of features) {
 		const geometry = feature.geometry
 
 		if (!geometry) continue

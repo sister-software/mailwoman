@@ -103,6 +103,43 @@ export interface RealizeExtentOptions {
 }
 
 /**
+ * Pull the outline out of whatever a boundary file actually holds: a bare geometry, a `Feature` wrapping one, or a
+ * `FeatureCollection`.
+ *
+ * A COLLECTION MUST HOLD EXACTLY ONE FEATURE. Every export tool writes a `FeatureCollection`, so refusing the shape
+ * outright would refuse the ordinary case — but taking the first of several would silently choose which country the
+ * coverage claim is about, and the claim is only as good as the outline it was clipped to.
+ *
+ * @throws {TypeError} When the document holds no geometry, or a collection holds anything other than one feature.
+ */
+export function outlineFromGeoJSON(document: unknown, origin: string): GeojsonGeometry {
+	const node = document as {
+		type?: string
+		geometry?: unknown
+		coordinates?: unknown
+		features?: Array<{ geometry?: unknown }>
+	}
+
+	if (node.type === "FeatureCollection") {
+		const features = node.features ?? []
+
+		if (features.length !== 1) {
+			throw new TypeError(
+				`flood extent: ${origin} holds ${features.length} features — a boundary file must name exactly one outline, because taking the first would silently choose which area the coverage claim is about`
+			)
+		}
+
+		return outlineFromGeoJSON(features[0], origin)
+	}
+
+	if (node.geometry) return node.geometry as GeojsonGeometry
+
+	if (node.coordinates) return node as GeojsonGeometry
+
+	throw new TypeError(`flood extent: ${origin} carries no geometry`)
+}
+
+/**
  * Turn an outline plus a coverage statement into a footprint.
  *
  * @throws {Error} When the outline yields no interior cell at `coverageResolution`. That is not an empty country: it

@@ -83,6 +83,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		const {
 			buildFloodDatabase,
 			createEAFloodClient,
+			createEAServiceReader,
 			createGeodatabaseFeatureSource,
 			createONSBoundaryClient,
 			downloadFloodGeodatabase,
@@ -90,6 +91,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 			formatResolutionMeasurementRows,
 			measureFloodCellResolutions,
 			ONS_ENGLAND_PROVENANCE,
+			outlineFromGeoJSON,
 			realizeFloodMapExtent,
 			sampleAgreementPoints,
 			verifyFloodDatabase,
@@ -153,14 +155,9 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		// The outline is a SECOND authority's artifact: the EA says its mapping covers all of England and does not publish
-		// where England is. Which outline was used rides in `flood_map_extent`. A local file may be a bare geometry or a
-		// Feature wrapping one; both are accepted, and anything else fails at the extent's own coordinate walk.
+		// where England is. Which outline was used rides in `flood_map_extent`.
 		const outline = options.boundary
-			? (() => {
-					const parsed = parseJSONStrict<{ geometry?: unknown; type?: string }>(readFileSync(options.boundary!, "utf8"))
-
-					return parsed.geometry ?? parsed
-				})()
+			? outlineFromGeoJSON(parseJSONStrict<unknown>(readFileSync(options.boundary, "utf8")), options.boundary)
 			: (await createONSBoundaryClient().readCountryGeometry(EA_COVERAGE_COUNTRY)).geometry
 
 		const coverageResolution = Number(options.coverageResolution)
@@ -225,7 +222,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 
 			const verified = await verifyFloodDatabase({
 				databasePath: out,
-				client,
+				readServiceFeatures: createEAServiceReader(client),
 				points,
 				onProgress: (message) => console.error(`  [verify] ${message}`),
 			})
