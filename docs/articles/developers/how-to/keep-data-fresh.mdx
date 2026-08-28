@@ -76,7 +76,7 @@ mailwoman data pull candidate --dry-run --force
 
 ```
 ✓ candidate: gazetteer/2026-07-07a/candidate.db: [dry-run] 1652.9 MB
-https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db →
+https://public.mailwoman.ai/mailwoman/gazetteer/2026-07-07a/candidate.db →
 /tmp/mw-fresh-demo/wof/candidate.db
 ```
 
@@ -101,8 +101,8 @@ mailwoman data status candidate --check-remote
 ```
 
 ```
-[DEBUG] (mailwoman data status): HEAD: https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
-[DEBUG] (mailwoman data status): 200 (uncached) HEAD: https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db
+[DEBUG] (mailwoman data status): HEAD: https://public.mailwoman.ai/mailwoman/gazetteer/2026-07-07a/candidate.db
+[DEBUG] (mailwoman data status): 200 (uncached) HEAD: https://public.mailwoman.ai/mailwoman/gazetteer/2026-07-07a/candidate.db
 ✓ candidate: wof/candidate.db: present (1652.9 MB) at /tmp/mw-fresh-demo/wof/candidate.db
 PASS (1/1 checks)
 ```
@@ -222,7 +222,7 @@ data OK
   `address-points` and `interpolation`. `candidate.db`, `poi.db` and the French rooftop register are addressed by
   their dated remote path instead, so refreshing one of those means upgrading `mailwoman` to a release
   that registers a newer path, then pulling again.
-- **`--check-remote` needs network egress to `public.sister.software`.** In an air-gapped deploy the
+- **`--check-remote` needs network egress to `public.mailwoman.ai`.** In an air-gapped deploy the
   offline comparison is what you have, and it still catches truncation.
 
 ## Related

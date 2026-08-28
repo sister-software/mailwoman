@@ -5,7 +5,7 @@
 @author Teffen Ellis, et al.
 
 Publish the public demo assets to the Cloudflare R2 bucket the demo serves from
-(nexus-public → https://public.sister.software/mailwoman/...). This codifies the
+(nexus-public → https://public.mailwoman.ai/mailwoman/...). This codifies the
 hosting migration so a model release isn't a one-off manual rclone.
 
 The demo reads EVERYTHING from R2 at runtime (model, tokenizer, fst, postcode-*.bin,
@@ -162,7 +162,7 @@ def main() -> None:
         print(f"  ✓ {key}  ({ct}, {cc}, {size_mb:.1f} MB)")
 
     print(f"\n{'(dry-run) ' if args.dry_run else ''}{len(files)} objects, {total / 1024 / 1024:.1f} MB → {args.bucket}/{args.prefix}/")
-    print("Served at https://public.sister.software/{}/...".format(args.prefix))
+    print("Served at https://public.mailwoman.ai/{}/...".format(args.prefix))
 
 
 if __name__ == "__main__":

@@ -355,7 +355,7 @@ Read this first — it's the 30-minute version once you know the shape. Three ba
 | ------------- | -------------------------------------- | ------------------------------------------------------------------------------ |
 | **npm**       | `publish.yml` (CI, OIDC)               | library consumers — **fetches the binary from HF**, so HF must be staged FIRST |
 | **HF bucket** | `mailwoman release hf`                 | the npm fetch source + HF-direct `loadFromWeights`                             |
-| **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.sister.software`, NOT HF)                      |
+| **R2/demo**   | `scripts/publish-demo-assets-to-r2.py` | the browser demo (reads `public.mailwoman.ai`, NOT HF)                         |
 
 The end-to-end order that worked: **the promotion eval (revised if needed) → commit card+config to main → HF stage → `publish.yml` (real) → verify npm md5 → R2 demo repoint.** Time-savers and traps, each cost real minutes once:
 
@@ -375,7 +375,7 @@ number namespace but are NOT in lockstep at any given moment. So:
 
 ```bash
 curl -s https://registry.npmjs.org/mailwoman | jq -r '."dist-tags".latest'      # e.g. 4.10.0 (npm code)
-curl -s https://public.sister.software/mailwoman/en-us/releases.json | jq -r .defaultVersion  # e.g. v4.6.0 (demo model)
+curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq -r .defaultVersion  # e.g. v4.6.0 (demo model)
 ```
 
 **The new release must exceed the npm `latest`** (npm refuses to republish an existing version), so the
@@ -409,7 +409,7 @@ forward **unchanged**, and the safest source is the exact bytes the prior versio
 local rebuild that might differ). Enumerate + pull from the prior R2 path, verify sizes:
 
 ```bash
-B=https://public.sister.software/mailwoman/en-us/v<PRIOR>      # e.g. v4.6.0
+B=https://public.mailwoman.ai/mailwoman/en-us/v<PRIOR>      # e.g. v4.6.0
 for f in fst-en-US.bin wof-hot.db wof-polygons.db postcode-us.bin postcode-de.bin postcode-fr.bin; do
   curl -sI "$B/$f" | head -1   # confirm 200 + note Content-Length
 done
@@ -718,7 +718,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
    model, the `fst-en-US.bin` + `wof-hot.db` are unchanged; copy them from the previous version's bucket path.
 
    > **⚠️ The HF `--set-default` alone does NOT flip the live demo** (night-10 discovery, v4.2.0):
-   > `public.sister.software` serves from the **R2** bucket, not HF. The demo leg is a second, mandatory
+   > `public.mailwoman.ai` serves from the **R2** bucket, not HF. The demo leg is a second, mandatory
    > step — stage the same artifact set (plus `postcode-*.bin` + `wof-polygons.db`, copied from the prior
    > version's R2 path when unchanged) into the R2 layout and run:
    >
@@ -727,7 +727,7 @@ fetches at runtime (`docs-build.yml` bundles no binaries). So the whole release 
    > python3 scripts/publish-demo-assets-to-r2.py --src <staged-dir>
    > ```
    >
-   > Verify with `curl -s https://public.sister.software/mailwoman/en-us/releases.json | jq .defaultVersion`
+   > Verify with `curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq .defaultVersion`
    > AND an md5 of the served `model.onnx` against the artifact the promotion eval passed. CI's weight fetch reads HF; the
    > demo reads R2 — a release is done when BOTH backends agree.
 

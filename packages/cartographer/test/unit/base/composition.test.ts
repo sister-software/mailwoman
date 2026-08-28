@@ -162,8 +162,8 @@ test("Composer.toJSON: emits a v8 style with the self-host glyph + sprite endpoi
 	const style = new StyleSpecificationComposer({ sources: {} }).toJSON()
 
 	expect(style.version).toBe(8)
-	expect(style.glyphs).toBe("https://public.sister.software/protomaps/fonts/{fontstack}/{range}.pbf")
-	expect(style.sprite).toBe("https://public.sister.software/protomaps/sprites/v4/light")
+	expect(style.glyphs).toBe("https://public.mailwoman.ai/protomaps/fonts/{fontstack}/{range}.pbf")
+	expect(style.sprite).toBe("https://public.mailwoman.ai/protomaps/sprites/v4/light")
 })
 
 test("Composer.toJSON: carries the composed light, sky, terrain, sources and layers through", () => {

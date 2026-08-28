@@ -42,7 +42,7 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
  * localhost + the docs domains).
  *
  * Glyphs + sprite come from the UPSTREAM Protomaps assets (GitHub Pages, `ACAO: *`), not the house mirror at
- * `public.sister.software` — that bucket sends no CORS headers, so the mirror can't be fetched cross-origin
+ * `public.mailwoman.ai` — that bucket sends no CORS headers, so the mirror can't be fetched cross-origin
  * (`cartographer/base/composition.ts` flags the same: "Currently upstream URLs; we mirror these … but no public route
  * fronts that bucket yet"). The upstream assets target the v4 schema, matching the `basemap-v4` tiles. Swap to the
  * house mirror once it has a CORS-enabled route.

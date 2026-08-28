@@ -320,8 +320,8 @@ describe("defaultGazetteerLexiconURL", () => {
 	test("derives the sibling anchor-lexicon-v1.json beside the model URL", async () => {
 		const { defaultGazetteerLexiconURL } = await import("@mailwoman/neural/web-loader")
 
-		expect(defaultGazetteerLexiconURL("https://public.sister.software/mailwoman/en-us/v4.4.0/model.onnx")).toBe(
-			"https://public.sister.software/mailwoman/en-us/v4.4.0/anchor-lexicon-v1.json"
+		expect(defaultGazetteerLexiconURL("https://public.mailwoman.ai/mailwoman/en-us/v4.4.0/model.onnx")).toBe(
+			"https://public.mailwoman.ai/mailwoman/en-us/v4.4.0/anchor-lexicon-v1.json"
 		)
 
 		// Relative URLs stay relative.
@@ -333,8 +333,8 @@ describe("defaultCountryLexiconURL", () => {
 	test("derives the sibling country-surface-lexicon-v1.json beside the model URL", async () => {
 		const { defaultCountryLexiconURL } = await import("@mailwoman/neural/web-loader")
 
-		expect(defaultCountryLexiconURL("https://public.sister.software/mailwoman/en-us/v6.2.0/model.onnx")).toBe(
-			"https://public.sister.software/mailwoman/en-us/v6.2.0/country-surface-lexicon-v1.json"
+		expect(defaultCountryLexiconURL("https://public.mailwoman.ai/mailwoman/en-us/v6.2.0/model.onnx")).toBe(
+			"https://public.mailwoman.ai/mailwoman/en-us/v6.2.0/country-surface-lexicon-v1.json"
 		)
 
 		expect(defaultCountryLexiconURL("/static/mailwoman/model.onnx")).toBe(

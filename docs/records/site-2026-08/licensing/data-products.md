@@ -96,7 +96,7 @@ as a resolve-before-shipping item on the Lite artifact line.
 :::
 
 **Tier:** shipped. Published to Cloudflare R2 and served from
-`https://public.sister.software/mailwoman/gazetteer/<version>/candidate.db`. The docs demo
+`https://public.mailwoman.ai/mailwoman/gazetteer/<version>/candidate.db`. The docs demo
 byte-range-loads it directly, which is the same artifact you would.
 
 **Version / cadence.** The demo currently serves `2026-07-07a`. The path is dated and immutable, so
@@ -155,7 +155,7 @@ than cell math. Plus an FTS5 name index, a brand table, and 159,702 res-6 covera
 layer manifest, so the obligation travels with the file.
 
 **Tier:** `shipped`, written into the manifest by the builder. Published to R2 at
-`https://public.sister.software/mailwoman/poi/<version>/poi.db`.
+`https://public.mailwoman.ai/mailwoman/poi/<version>/poi.db`.
 
 **Version / cadence.** Currently `2026-07-20a`. `freshness_policy = sealed`, meaning updates are
 full rebuilds rather than in-place refreshes. Rebuild cadence follows Overture's release cadence in
@@ -198,7 +198,7 @@ want credit. `mailwoman situs attribution-manifest` regenerates an `ATTRIBUTION.
 shards on disk, which is the document you hand downstream.
 
 **Tier:** shipped. Hosted byte-range on R2 at
-`https://public.sister.software/mailwoman/street/us/<slug>/situs.db` for 52 slugs — all 50 states
+`https://public.mailwoman.ai/mailwoman/street/us/<slug>/situs.db` for 52 slugs — all 50 states
 plus DC and the US Virgin Islands.
 
 **Version / cadence.** Release `2026-05-20.0`, pinned per artifact family through a `releases.json`
@@ -231,7 +231,7 @@ and the segment geometry as GeoJSON text. Built across all 3,143 counties of the
 **Obligation:** none.
 
 **Tier:** shipped. Hosted at
-`https://public.sister.software/mailwoman/street/us/<slug>/interp.db`.
+`https://public.mailwoman.ai/mailwoman/street/us/<slug>/interp.db`.
 
 **Version / cadence.** Release `TIGER2023`. TIGER publishes annually; the shards are rebuilt when
 we take a new vintage.
@@ -268,7 +268,7 @@ per-row as `source = ban:fr` and recorded in `ban/ATTRIBUTION.json` alongside so
 row count, and md5 at build time.
 
 **Tier:** shipped. Hosted at
-`https://public.sister.software/mailwoman/street/fr/<version>/situs.db`, currently `2026-07-10`
+`https://public.mailwoman.ai/mailwoman/street/fr/<version>/situs.db`, currently `2026-07-10`
 (the quote-fix and arrondissement-fold rebuild).
 
 **Approximate size.** 6.9 GB sealed.

@@ -85,7 +85,7 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 - **Which keys write `nexus-assets`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on nexus-assets** (read _and_ write). `CF_AUTH_TOKEN` is the Cloudflare API token (wrangler).
 - **`wrangler r2 object put` hard-caps at 300 MiB** — useless for these archives. **rclone does multipart with no cap** — that's why `tiles publish` uses rclone, not wrangler.
-- **`nexus-public` ≠ `nexus-assets`.** `nexus-public` (`public.sister.software/mailwoman/`, the `scripts/publish-demo-assets-to-r2.py` target) hosts the demo's model/DBs/data files. The tile worker reads `nexus-assets`. Don't put tiles in `nexus-public`.
+- **`nexus-public` ≠ `nexus-assets`.** `nexus-public` (`public.mailwoman.ai/mailwoman/`, the `scripts/publish-demo-assets-to-r2.py` target) hosts the demo's model/DBs/data files. The tile worker reads `nexus-assets`. Don't put tiles in `nexus-public`.
 
 ## Data state + the HI/NH situation
 

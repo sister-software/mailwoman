@@ -41,7 +41,7 @@ const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
  * The demo's own fetch path (docs/src/contexts/DemoEmbed.tsx) — check what the demo actually reads, not what the
  * publisher believes it wrote.
  */
-const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releases.json"
+const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.json"
 
 /**
  * Zero-dependency path resolution (this file's contract: "no yarn install, just Node built-ins" — the version-parity

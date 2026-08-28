@@ -28,7 +28,7 @@ Don't have a gazetteer yet? The worldwide candidate database is one download (~1
 
 ```bash
 mkdir -p mailwoman-data/wof
-curl -fSL https://public.sister.software/mailwoman/gazetteer/2026-07-07a/candidate.db \
+curl -fSL https://public.mailwoman.ai/mailwoman/gazetteer/2026-07-07a/candidate.db \
   -o mailwoman-data/wof/candidate.db
 ```
 

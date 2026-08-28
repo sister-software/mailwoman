@@ -70,7 +70,7 @@ import type { DataReleaseManifest } from "./data-release.ts"
  * No credentials: this is the read side of the R2 bucket `commands/tiles/publish.tsx`/`commands/gazetteer/publish.tsx`
  * write to.
  */
-export const PUBLIC_BUCKET_BASE_URL = "https://public.sister.software/mailwoman/"
+export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 
 /**
  * One downloadable file within a {@link DataBundle}.

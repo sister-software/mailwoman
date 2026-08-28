@@ -71,7 +71,7 @@ const config: Config = {
 			tagName: "link",
 			attributes: {
 				rel: "preconnect",
-				href: "https://public.sister.software",
+				href: "https://public.mailwoman.ai",
 			},
 		},
 		{

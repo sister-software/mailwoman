@@ -25,13 +25,13 @@ import { describe, expect, test } from "vitest"
 
 describe("pair-index URL construction", () => {
 	test("a versioned base carries the generation segment", () => {
-		expect(pairIndexBaseURL("2026-08-05")).toBe("https://public.sister.software/mailwoman/pair-index/2026-08-05")
+		expect(pairIndexBaseURL("2026-08-05")).toBe("https://public.mailwoman.ai/mailwoman/pair-index/2026-08-05")
 	})
 
 	test("every shipped country gets a binary URL under the base", () => {
 		expect(pairIndexURLs(pairIndexBaseURL("2026-08-05"))).toEqual([
-			"https://public.sister.software/mailwoman/pair-index/2026-08-05/pair-index-gb.bin",
-			"https://public.sister.software/mailwoman/pair-index/2026-08-05/pair-index-nz.bin",
+			"https://public.mailwoman.ai/mailwoman/pair-index/2026-08-05/pair-index-gb.bin",
+			"https://public.mailwoman.ai/mailwoman/pair-index/2026-08-05/pair-index-nz.bin",
 		])
 	})
 
@@ -46,7 +46,7 @@ describe("pair-index URL construction", () => {
 
 describe("the demo loader owns no pair-index URL of its own", () => {
 	// The regression the versioning scheme undoes was a bare base URL string literal in the loader
-	// (`const pairIndexBaseURL = "https://public.sister.software/mailwoman/pair-index"`), which is
+	// (`const pairIndexBaseURL = "https://public.mailwoman.ai/mailwoman/pair-index"`), which is
 	// how the path escaped the versioning discipline the sibling assets follow. Keep the literal in
 	// resources/, where the version constant lives next to it.
 	const source = readFileSync(fileURLToPath(import.meta.resolve("@mailwoman/docs/shared/demo-loader")), "utf8")

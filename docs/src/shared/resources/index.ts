@@ -193,7 +193,7 @@ export interface ResolvedHit {
  * sql.js-httpvfs from here; the rest is one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL
  * swap.
  */
-const ASSET_BASE_URL = "https://public.sister.software/mailwoman/"
+const ASSET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 
 export function assetURL(locale: string, version: string, filename: string): string {
 	return `${ASSET_BASE_URL}${locale}/${version}/${filename}`

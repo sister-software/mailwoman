@@ -121,7 +121,7 @@ on everything already published is irrevocable and the pricing page publishes th
 
 ### 3.3 Mechanics
 
-The publish path today is Cloudflare R2 behind `public.sister.software`, unauthenticated, with a
+The publish path today is Cloudflare R2 behind `public.mailwoman.ai`, unauthenticated, with a
 WAF rule that blocks full-file downloads of byte-ranged `.db` objects so the demo's range
 requests survive without paying for whole-file egress. The channel split rides that same
 infrastructure:

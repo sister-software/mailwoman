@@ -177,8 +177,8 @@ export const DemoPageInner: React.FC<{ debugDefault?: boolean }> = ({ debugDefau
 			    app boots — preconnecting here overlaps DNS+TLS with hydration. The sqljs worker assets are
 			    same-origin and fetched on (or before) first lookup; prefetch warms the HTTP cache at low priority. */}
 			<Head>
-				<link rel="preconnect" href="https://public.sister.software" crossOrigin="anonymous" />
-				<link rel="dns-prefetch" href="https://public.sister.software" />
+				<link rel="preconnect" href="https://public.mailwoman.ai" crossOrigin="anonymous" />
+				<link rel="dns-prefetch" href="https://public.mailwoman.ai" />
 				<link rel="preconnect" href={TILE_WORKER_URL} crossOrigin="anonymous" />
 				<link rel="prefetch" href={`${baseURL}mailwoman/sqljs/index.js`} />
 				<link rel="prefetch" href={`${baseURL}mailwoman/sqljs/sqlite.worker.js`} />

@@ -27,14 +27,14 @@ Four boundaries make that statement literally true rather than roughly true:
   the US Census, Geofabrik, `adresse.data.gouv.fr` and the FCC. These are commands you run
   deliberately, at build time, separate from parsing.
 - **Pulling reference data downloads reference data.** `mailwoman data pull` fetches prebuilt
-  gazetteer, POI and locale bundles from `public.sister.software` — a HEAD request checks the
+  gazetteer, POI and locale bundles from `public.mailwoman.ai` — a HEAD request checks the
   remote size, then a GET streams the file to disk. It runs only when you invoke it, and the exchange
   is shown line by line in
   [Your first ten minutes](../developers/get-started/ten-minute-trial.mdx#5-geocode-it).
 - **The browser runtime downloads its model.** `@mailwoman/neural/web-loader` fetches model and data
   artifacts from a URL your application supplies, once. The query text stays in the page. Our hosted
   [demo](/demo) is a deployment of that runtime, and it serves those artifacts from
-  `public.sister.software` and calls `tiles.sister.software` for coarse map centring — both of which
+  `public.mailwoman.ai` and calls `tiles.sister.software` for coarse map centring — both of which
   are properties of the demo, not of the library you install.
 
 ## How it is licensed
