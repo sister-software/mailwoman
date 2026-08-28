@@ -9,8 +9,8 @@
  *   payload shape, the loop guard, and the output JSON. Codex's hook contract
  *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses:
  *   `Stop` fires when a turn completes, the payload carries `last_assistant_message`, and the
- *   output is `decision: "block"` + `reason` or `hookSpecificOutput.additionalContext` (no
- *   `hookEventName` field in Codex's schema).
+ *   output is `decision: "block"` + `reason` or the non-blocking `systemMessage`. Codex's
+ *   Stop-output schema rejects `hookSpecificOutput` because Stop cannot inject additional context.
  *
  *   Two deliberate differences from the Claude adapter:
  *
@@ -72,7 +72,7 @@ function main(): void {
 		return
 	}
 
-	process.stdout.write(JSON.stringify({ hookSpecificOutput: { additionalContext: verdict.text } }))
+	process.stdout.write(JSON.stringify({ systemMessage: verdict.text }))
 }
 
 try {

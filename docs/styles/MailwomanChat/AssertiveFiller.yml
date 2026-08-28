@@ -10,6 +10,11 @@ level: error
 ignorecase: true
 tokens:
   - undoubtedly
+  - plainly
+  - provably
+  - demonstrably
+  - trivially
+  - outright
   - needless to say
   - it goes without saying
   - of course

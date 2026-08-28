@@ -42,15 +42,33 @@ to work; it is said that the board agrees, according to some observers.
 Undoubtedly, and needless to say, it goes without saying that of course the
 fix lands without a doubt.
 
+Plainly, the patch is provably correct, demonstrably better, trivially safe,
+and outright superior.
+
 The powerful, flexible, intuitive, and elegant design is straightforward.
 
 Notably, the run finished; importantly, it converged; interestingly, twice.
 
+Critically, the retry fired; usefully, the trace recorded it; happily, it passed.
+
+Here's the result, and here’s what changed.
+
+→ The unit test passed.
+
+For completeness, the same result appears below.
+
 The gauntlet earns their keep as the acid test — battle-tested, bulletproof,
 a game-changer, the silver bullet for low-hanging fruit that moves the needle.
 
+The cache is the chokepoint and the assertion is a tripwire. This footgun is
+the remaining gotcha in the storage substrate and retry machinery.
+
 It is worth noting and worth mentioning that you should keep in mind this
 deep dive matters at the end of the day.
+
+It is worth saying and worth calling out that the source field settles it.
+That was the right call and tells the whole postcode-anchor story. The next
+failure has the same story.
 
 Perfect. Got it! Understood, the fix landed. Excellent, all tests pass.
 
@@ -68,6 +86,8 @@ That is tomorrow's work — a good place to pause; we've accomplished a lot,
 so let's pick this up and call it a night, winding down. Pick it up later.
 
 That's corpus authoring, not another config toggle.
+
+The blast-radius reaches every package.
 
 ## Negative assertions — each line below must stay QUIET
 
