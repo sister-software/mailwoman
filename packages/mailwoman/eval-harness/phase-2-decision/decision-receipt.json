@@ -1,7 +1,7 @@
 {
 	"decisionID": "phase-2-decision-1967",
 	"definitionVersion": "1.0.0",
-	"definitionSHA256": "6742d42c1f6545c00e2ac7a80e27cc5c1cc22e4e9040bde9425f1a5f717d0662",
+	"definitionSHA256": "cf7c9ac417bd2b9683b6f4e23a73a8cd655d8ff2c71ad62f6d40fbdb0d18663b",
 	"generatedAt": "2026-08-27T05:16:07.426Z",
 	"gitCommit": "41e308c05",
 	"artifact": {
