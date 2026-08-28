@@ -48,7 +48,6 @@ import {
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import {
-	expandH3Cell,
 	geometryContains,
 	interiorCoverageCells,
 	shortCellToInt,
@@ -56,19 +55,11 @@ import {
 	type GeojsonMultiPolygon,
 	type GeojsonPolygon,
 	type GeojsonPosition,
-	type H3Cell,
-	type H3CellShort,
 } from "@mailwoman/spatial"
-import { cellToLatLng, compactCells, getResolution } from "h3-js"
+import { cellToLatLng } from "h3-js"
 import { TextSpliterator } from "spliterator"
 
-import {
-	createSoilTables,
-	SoilCellContainment,
-	type SoilCapabilityCellTable,
-	type SoilDatabase,
-	type SoilSurveyAreaTable,
-} from "../schema.ts"
+import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "../schema.ts"
 import {
 	SOIL_SHARE_WEIGHTING,
 	SOIL_SHARE_WEIGHTING_DESCRIPTION,
@@ -81,7 +72,7 @@ import { reduceCells, resolveCells } from "./cell-tiers.ts"
 import type { SoilChunkResult } from "./ingest-chunk.ts"
 import { ingestSoilChunk } from "./ingest-chunk.ts"
 import type { SoilFeatureSource } from "./ingest.ts"
-import { mapUnitProfile, reduceCell, WEIGHT_LATTICE_DEPTH, type CellCandidate, type MapUnitProfile } from "./reduce.ts"
+import { WEIGHT_LATTICE_DEPTH } from "./reduce.ts"
 import type { SurveyAreaAttributes } from "./survey-area.ts"
 
 /**
