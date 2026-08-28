@@ -271,8 +271,12 @@ async function readServiceZone(
  * which is the reading this product's Zone-1-as-absence design turns on — and an artifact that answered `unknown`
  * everywhere except inside a polygon would pass a polygon-only sample.
  *
- * The draw is a deterministic stride over `rowid` and over the coverage cells, not a random one, so a re-run compares
- * the same points and a disagreement can be looked at rather than re-rolled.
+ * The draw is a deterministic stride over the primary key and over the coverage cells, not a random one, so a re-run
+ * compares the same points and a disagreement can be looked at rather than re-rolled.
+ *
+ * THE KEYS ARE CHOSEN BEFORE ANY GEOMETRY IS READ. A `WHERE rowid % stride = 0` scan looks like the same thing and is
+ * not: it walks the table itself, which at national scale means reading gigabytes of ring blobs to keep forty of them.
+ * Selecting `area_id` alone is an index-only walk over the primary key, and the rows it names are then fetched by key.
  */
 export function sampleAgreementPoints(
 	databasePath: string,
@@ -284,25 +288,32 @@ export function sampleAgreementPoints(
 
 	try {
 		const points: Array<{ label: string; latitude: number; longitude: number }> = []
-		const areaCount = (database.prepare("SELECT count(*) AS n FROM flood_zone_area").get() as { n: number }).n
-		const stride = Math.max(1, Math.floor(areaCount / Math.max(1, insideCount)))
 
-		const areas = database
-			.prepare(
-				"SELECT area_id, zone_code, min_lat, min_lon, max_lat, max_lon, rings FROM flood_zone_area " +
-					"WHERE rowid % ? = 0 ORDER BY rowid LIMIT ?"
-			)
-			.all(stride, insideCount) as Array<{
-			area_id: string
-			zone_code: string
-			min_lat: number
-			min_lon: number
-			max_lat: number
-			max_lon: number
-			rings: Uint8Array
-		}>
+		const areaIDs = (
+			database.prepare("SELECT area_id FROM flood_zone_area ORDER BY area_id").all() as Array<{ area_id: string }>
+		).map((row) => row.area_id)
 
-		for (const area of areas) {
+		const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, insideCount)))
+
+		const selectArea = database.prepare(
+			"SELECT area_id, zone_code, min_lat, min_lon, max_lat, max_lon, rings FROM flood_zone_area WHERE area_id = ?"
+		)
+
+		for (let index = 0; index < areaIDs.length && points.length < insideCount; index += stride) {
+			const area = selectArea.get(areaIDs[index]!) as
+				| {
+						area_id: string
+						zone_code: string
+						min_lat: number
+						min_lon: number
+						max_lat: number
+						max_lon: number
+						rings: Uint8Array
+				  }
+				| undefined
+
+			if (!area) continue
+
 			const interior = interiorPointOf(area)
 
 			if (!interior) continue
