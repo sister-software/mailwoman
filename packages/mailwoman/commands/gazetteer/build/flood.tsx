@@ -54,6 +54,7 @@ export const spec = {
 		boundary: { type: "string", description: "England outline GeoJSON; fetched from ONS when absent" },
 		offline: { type: "boolean", default: false, description: "Skip every network read; --gdb required" },
 		"source-vintage": { type: "string", description: "Product revision date; read from the catalogue when absent" },
+		"chunk-size": { type: "string", description: "Feature ids per ingest process (default 100000)" },
 		verify: { type: "boolean", default: false, description: "Run the two-path agreement check after building" },
 	},
 } as const satisfies CommandSpec
@@ -68,6 +69,7 @@ interface Options {
 	boundary?: string
 	offline: boolean
 	sourceVintage?: string
+	chunkSize?: string
 	verify: boolean
 }
 
@@ -92,6 +94,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 			measureFloodCellResolutions,
 			ONS_ENGLAND_PROVENANCE,
 			outlineFromGeoJSON,
+			readFloodSourceIdentity,
 			realizeFloodMapExtent,
 			sampleAgreementPoints,
 			verifyFloodDatabase,
@@ -178,14 +181,29 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 			`▸ footprint: ${extent.coverageCells.size.toLocaleString()} coverage cells at res ${coverageResolution}`
 		)
 
+		// The authority's ids run 1..featureCount contiguously, and the batched build walks that range.
+		const identity = await readFloodSourceIdentity({ geodatabasePath })
+
 		const out = options.out ?? String(dataRootPath("flood", "flood.db"))
 		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		const result = await buildFloodDatabase({
-			source: await createGeodatabaseFeatureSource({
-				geodatabasePath,
-				...(options.limit ? { limit: Number(options.limit) } : {}),
-			}),
+			// A `--limit` run is the smoke rung and reads a PREFIX in one process; a full build is BATCHED, one child
+			// process per range of the authority's own feature ids. The reason is reproducibility rather than speed — see
+			// `@mailwoman/flood/sdk/ingest-chunk`.
+			...(options.limit
+				? {
+						source: await createGeodatabaseFeatureSource({ geodatabasePath, limit: Number(options.limit) }),
+					}
+				: {
+						batched: {
+							geodatabasePath,
+							objectIDFrom: 1,
+							objectIDTo: identity.featureCount,
+							declaredFeatureCount: identity.featureCount,
+							...(options.chunkSize ? { chunkSize: Number(options.chunkSize) } : {}),
+						},
+					}),
 			out,
 			sourceVintage,
 			buildCmd: `mailwoman gazetteer build flood --index-resolution ${indexResolution} --coverage-resolution ${coverageResolution}`,

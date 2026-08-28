@@ -49,6 +49,16 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"./scripts/*": {
+			"node": "./scripts/*.ts",
+			"default": "./out/scripts/*.js",
+			"types": "./out/scripts/*.d.ts"
+		},
+		"./sdk/ingest-chunk": {
+			"node": "./sdk/ingest-chunk.ts",
+			"default": "./out/sdk/ingest-chunk.js",
+			"types": "./out/sdk/ingest-chunk.d.ts"
+		},
 		"./schema": {
 			"node": "./schema.ts",
 			"default": "./out/schema.js",

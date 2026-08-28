@@ -35,8 +35,10 @@
  *   every point in it.
  */
 
+import { spawn } from "node:child_process"
 import { rmSync, statSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
+import { fileURLToPath } from "node:url"
 
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
@@ -49,23 +51,23 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
-import { cellToChildren, cellToParent, compactCells, getResolution } from "h3-js"
+import { compactCells, getResolution } from "h3-js"
+import { TextSpliterator } from "spliterator"
 
-import { encodeRings, ringAreaReadings } from "../rings.ts"
 import { createFloodTables, FloodCellContainment, type FloodDatabase } from "../schema.ts"
 import {
 	EA_FLOOD_ATTRIBUTION,
 	EA_FLOOD_DATASET_ID,
 	EA_FLOOD_LAYER_NAME,
 	EA_FLOOD_LICENSE,
-	EA_FLOOD_ZONE_CODES,
 	EA_FLOOD_ZONE_DEFINITIONS,
 } from "../vocabulary.ts"
-import { classifyFeatureCells } from "./cells.ts"
 import type { FloodMapExtent } from "./extent.ts"
-import type { FloodFeatureSource } from "./ingest.ts"
+import { ingestFloodChunk, type FloodChunkResult } from "./ingest-chunk.ts"
+import { createGeodatabaseFeatureSource, type FloodFeatureSource } from "./ingest.ts"
 
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
@@ -74,27 +76,42 @@ import type { FloodFeatureSource } from "./ingest.ts"
 export const FLOOD_SCHEMA_VERSION = 1
 
 /**
- * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob: a larger transaction grows
- * the WAL without improving throughput.
+ * Where a build gets its features, and — for a real one — how it bounds each process's share of them.
  */
-const INSERT_TRANSACTION_ROWS = 5000
+export type BuildFloodInput =
+	| {
+			/**
+			 * A feature source consumed IN THIS PROCESS. Correct for a fixture and for anything small; it is what the batched
+			 * form falls back to per chunk, so the two share one implementation.
+			 */
+			source: FloodFeatureSource
+	  }
+	| {
+			/**
+			 * The published geodatabase, ingested in bounded chunks — one child process per range of the authority's own
+			 * feature ids.
+			 *
+			 * This is the shape a national build takes, and the reason is reproducibility rather than speed: h3's WASM heap
+			 * cannot be reset from JavaScript and does not survive an unbounded number of polyfill calls, so a single-process
+			 * build over 813,627 polygons succeeds or fails on how the allocator happens to fragment. See `ingest-chunk.ts`.
+			 */
+			batched: {
+				geodatabasePath: string
+				layer?: string
+				/**
+				 * Inclusive bounds of the authority's own `OBJECTID` values, and the feature count they should yield.
+				 */
+				objectIDFrom: number
+				objectIDTo: number
+				declaredFeatureCount: number
+				/**
+				 * Feature ids per chunk. See {@link DEFAULT_CHUNK_SIZE}.
+				 */
+				chunkSize?: number
+			}
+	  }
 
-/**
- * The relative gap between the two area readings that fails the build.
- *
- * The comparison is a spherical ring area against GDAL's planar area in the source's own projection, so the two never
- * agree exactly: British National Grid's scale factor runs 0.9996 at its central meridian to about 1.0004 at the edges
- * of its usable zone, contributing roughly a tenth of a percent, and the spherical approximation contributes a similar
- * amount against the ellipsoid. One percent leaves both of those far inside the tolerance while sitting well below the
- * error a hole-blind read produces — the zoning survey measured that at 4.1% over a whole national layer.
- */
-const AREA_TOLERANCE = 0.01
-
-export interface BuildFloodOptions {
-	/**
-	 * Where the features come from — the published geodatabase in a real build, a hand-built list in a fixture.
-	 */
-	source: FloodFeatureSource
+export type BuildFloodOptions = BuildFloodInput & {
 	/**
 	 * Where the sealed artifact lands. The build writes beside it and swaps.
 	 */
@@ -175,15 +192,18 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 		)
 	}
 
-	const { source } = options
+	const declaredFeatureCount =
+		"batched" in options ? options.batched.declaredFeatureCount : options.source.declaredFeatureCount
 
 	options.onProgress?.(
-		`source: ${source.layer} · EPSG:${source.epsg} · ${source.declaredFeatureCount.toLocaleString()} features · ${source.origin}`
+		"batched" in options
+			? `source: ${options.batched.geodatabasePath} · OBJECTID ${options.batched.objectIDFrom}–${options.batched.objectIDTo} · ${declaredFeatureCount.toLocaleString()} features`
+			: `source: ${options.source.layer} · EPSG:${options.source.epsg} · ${declaredFeatureCount.toLocaleString()} features · ${options.source.origin}`
 	)
 
-	if (options.expectedFeatureCount !== undefined && options.expectedFeatureCount !== source.declaredFeatureCount) {
+	if (options.expectedFeatureCount !== undefined && options.expectedFeatureCount !== declaredFeatureCount) {
 		throw new Error(
-			`flood build: the source declares ${source.declaredFeatureCount} features and the live service reports ${options.expectedFeatureCount} — the archive is a different vintage from the one the service is publishing`
+			`flood build: the source declares ${declaredFeatureCount} features and the live service reports ${options.expectedFeatureCount} — the archive is a different vintage from the one the service is publishing`
 		)
 	}
 
@@ -206,7 +226,28 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 		)
 
-		const streamed = await streamFeatures(database, options)
+		// The database handle is CLOSED across the batched ingest: the child processes open the same file, and two writers
+		// on one SQLite file is a problem nobody should have to reason about. Chunks run one at a time, so there is exactly
+		// one writer at every instant.
+		const streamed =
+			"batched" in options
+				? await runBatchedIngest(kdb, database, tmpPath, options)
+				: aggregateChunks([
+						await ingestFloodChunk(database, {
+							source: options.source,
+							indexResolution: options.indexResolution,
+							coverageResolution: options.coverageResolution,
+							...(options.onProgress ? { onProgress: options.onProgress } : {}),
+						}),
+					])
+
+		if (streamed.features !== declaredFeatureCount) {
+			throw new Error(
+				`flood build: streamed ${streamed.features} features, the source declares ${declaredFeatureCount} — a short read builds a smaller England and reports success`
+			)
+		}
+
+		assertAreaAgreement(streamed)
 
 		options.onProgress?.(`${streamed.features.toLocaleString()} features written · resolving cells`)
 
@@ -280,7 +321,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 }
 
 /**
- * What one streaming pass produced.
+ * What the whole ingest produced, however many processes it took.
  */
 interface StreamResult {
 	features: number
@@ -296,132 +337,56 @@ interface StreamResult {
 const M2_PER_KM2 = 1_000_000
 
 /**
- * Features between progress reports.
+ * The relative gap between the two area readings that fails the build.
+ *
+ * The comparison is a spherical ring area against GDAL's planar area in the source's own projection, so the two never
+ * agree exactly: British National Grid's scale factor runs 0.9996 at its central meridian to about 1.0004 at the edges
+ * of its usable zone, contributing roughly a tenth of a percent, and the spherical approximation contributes a similar
+ * amount against the ellipsoid. One percent leaves both far inside the tolerance while sitting well below the error a
+ * hole-blind read produces — the zoning survey measured that at 4.1% over a whole national layer, and this product's
+ * own smoke rung at 17%.
  */
-const PROGRESS_STRIDE = 50_000
+const AREA_TOLERANCE = 0.01
 
 /**
- * Stream every feature into `flood_zone_area` and `build_cell_touch`.
+ * Feature ids per chunk process.
+ *
+ * Sized against the measured ceiling rather than guessed: single-process runs over this product died after roughly
+ * 510,000 and 798,000 features as h3's WASM heap fragmented. 100,000 leaves five times that margin, and the cost of a
+ * smaller number is only one interpreter start per chunk.
  */
-async function streamFeatures(database: DatabaseSync, options: BuildFloodOptions): Promise<StreamResult> {
-	const declaredFeatureCount = options.source.declaredFeatureCount
+export const DEFAULT_CHUNK_SIZE = 100_000
 
-	const insertArea = database.prepare(
-		"INSERT INTO flood_zone_area (area_id, zone_code, zone_subtype, zone_source, origin, panel_id, effective_date, min_lat, min_lon, max_lat, max_lon, rings) " +
-			"VALUES (?, ?, NULL, ?, ?, NULL, NULL, ?, ?, ?, ?, ?)"
-	)
-
-	const insertTouch = database.prepare(
-		"INSERT INTO build_cell_touch (h3_cell, resolution, zone_code, area_id, is_full) VALUES (?, ?, ?, ?, ?)"
-	)
-
+/**
+ * Add up what the chunks reported.
+ */
+function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): StreamResult {
 	const zoneCounts: Record<string, number> = {}
 	const observedByCoverageCell = new Map<number, number>()
 
 	let features = 0
-	let pending = 0
 	let coarsened = 0
 	let sourceArea = 0
 	let nestedArea = 0
 	let allExteriorArea = 0
 
-	database.exec("BEGIN")
+	for (const chunk of chunks) {
+		features += chunk.features
+		coarsened += chunk.coarsened
+		sourceArea += chunk.area.sourceM2
+		nestedArea += chunk.area.nestedM2
+		allExteriorArea += chunk.area.allExteriorM2
 
-	try {
-		for await (const feature of options.source.features()) {
-			if (!EA_FLOOD_ZONE_CODES.has(feature.zoneCode)) {
-				throw new Error(
-					`flood build: feature ${feature.areaID} carries zone code ${JSON.stringify(feature.zoneCode)}, which is not in the authority's declared domain (${[...EA_FLOOD_ZONE_CODES].join(", ")}) — an unknown code is a source-schema change, and coercing it would turn "the source changed" into "there is nothing here"`
-				)
-			}
-
-			const bbox = boundsOf(feature.polygons)
-			const areas = ringAreaReadings(feature.polygons)
-
-			sourceArea += feature.sourceAreaM2
-			nestedArea += areas.nested
-			allExteriorArea += areas.allExterior
-
-			insertArea.run(
-				feature.areaID,
-				feature.zoneCode,
-				feature.zoneSource,
-				feature.origin,
-				bbox.minLat,
-				bbox.minLon,
-				bbox.maxLat,
-				bbox.maxLon,
-				encodeRings(feature.polygons)
-			)
-
-			const classified = classifyFeatureCells(feature.polygons, options.indexResolution, feature.areaID)
-
-			if (classified.resolution !== options.indexResolution) {
-				coarsened++
-			}
-
-			const coverageCells = new Set<number>()
-
-			for (const cell of classified.whole) {
-				insertTouch.run(shortCellToInt(cell), classified.resolution, feature.zoneCode, feature.areaID, 1)
-				addCoverageCells(coverageCells, cell, classified.resolution, options.coverageResolution)
-			}
-
-			for (const cell of classified.partial) {
-				insertTouch.run(shortCellToInt(cell), classified.resolution, feature.zoneCode, feature.areaID, 0)
-				addCoverageCells(coverageCells, cell, classified.resolution, options.coverageResolution)
-			}
-
-			for (const coverageCell of coverageCells) {
-				observedByCoverageCell.set(coverageCell, (observedByCoverageCell.get(coverageCell) ?? 0) + 1)
-			}
-
-			zoneCounts[feature.zoneCode] = (zoneCounts[feature.zoneCode] ?? 0) + 1
-
-			features++
-
-			pending++
-
-			if (pending >= INSERT_TRANSACTION_ROWS) {
-				database.exec("COMMIT")
-				database.exec("BEGIN")
-
-				pending = 0
-			}
-
-			if (features % PROGRESS_STRIDE === 0) {
-				options.onProgress?.(`${features.toLocaleString()} / ${declaredFeatureCount.toLocaleString()} features`)
-			}
+		for (const [zone, count] of Object.entries(chunk.zoneCounts)) {
+			zoneCounts[zone] = (zoneCounts[zone] ?? 0) + count
 		}
 
-		database.exec("COMMIT")
-	} catch (error) {
-		// Best-effort, and it must never replace the real error: the build runs with the journal OFF (nothing here is ever
-		// published without the swap), so SQLite may refuse to unwind. What matters is that the caller sees WHY the ingest
-		// stopped, not that a scratch file was tidied.
-		try {
-			database.exec("ROLLBACK")
-		} catch {
-			// The temp artifact is discarded either way.
+		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region — so the counts ADD rather
+		// than replace. Taking the last chunk's value would report a busy floodplain as holding only its final few
+		// polygons.
+		for (const [cell, count] of chunk.observedByCoverageCell) {
+			observedByCoverageCell.set(cell, (observedByCoverageCell.get(cell) ?? 0) + count)
 		}
-
-		throw error
-	}
-
-	if (features !== declaredFeatureCount) {
-		throw new Error(
-			`flood build: streamed ${features} features, the source declares ${declaredFeatureCount} — a short read builds a smaller England and reports success`
-		)
-	}
-
-	const relativeGap = sourceArea ? Math.abs(nestedArea - sourceArea) / sourceArea : 0
-
-	if (relativeGap > AREA_TOLERANCE) {
-		throw new Error(
-			`flood build: the encoded rings total ${(nestedArea / M2_PER_KM2).toFixed(1)} km² against the source's ${(sourceArea / M2_PER_KM2).toFixed(1)} km² ` +
-				`(${(relativeGap * 100).toFixed(2)}% apart, tolerance ${(AREA_TOLERANCE * 100).toFixed(0)}%). Read without their holes the same rings total ` +
-				`${(allExteriorArea / M2_PER_KM2).toFixed(1)} km², so compare the two: a hole-blind read answers "inside" for every point in a hole`
-		)
 	}
 
 	return {
@@ -433,9 +398,120 @@ async function streamFeatures(database: DatabaseSync, options: BuildFloodOptions
 			sourceKM2: sourceArea / M2_PER_KM2,
 			nestedKM2: nestedArea / M2_PER_KM2,
 			allExteriorKM2: allExteriorArea / M2_PER_KM2,
-			relativeGap,
+			relativeGap: sourceArea ? Math.abs(nestedArea - sourceArea) / sourceArea : 0,
 		},
 	}
+}
+
+/**
+ * Refuse an artifact whose rings do not add up to the area the source itself reports.
+ *
+ * The message carries the hole-blind total beside the nested one, because the gap between them is the diagnosis: a hole
+ * read as an exterior ring answers "inside" for every point in it.
+ */
+function assertAreaAgreement(streamed: StreamResult): void {
+	if (streamed.area.relativeGap <= AREA_TOLERANCE) return
+
+	throw new Error(
+		`flood build: the encoded rings total ${streamed.area.nestedKM2.toFixed(1)} km² against the source's ${streamed.area.sourceKM2.toFixed(1)} km² ` +
+			`(${(streamed.area.relativeGap * 100).toFixed(2)}% apart, tolerance ${(AREA_TOLERANCE * 100).toFixed(0)}%). Read without their holes the same rings total ` +
+			`${streamed.area.allExteriorKM2.toFixed(1)} km², so compare the two: a hole-blind read answers "inside" for every point in a hole`
+	)
+}
+
+/**
+ * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids.
+ *
+ * THE PARENT'S HANDLE IS CLOSED WHILE THEY RUN. Each child opens the same file and appends; chunks run one at a time,
+ * so there is exactly one writer at every instant and no locking to reason about. The parent reopens afterwards to
+ * resolve the cell tiers and seal.
+ *
+ * @throws {Error} When a chunk exits non-zero, or prints no result line — a chunk that died mid-range has written a
+ *   partial set of rows, and continuing would seal an artifact missing features nobody could name.
+ */
+async function runBatchedIngest(
+	kdb: DatabaseClient<FloodDatabase>,
+	database: DatabaseSync,
+	tmpPath: string,
+	options: BuildFloodOptions & { batched: Extract<BuildFloodInput, { batched: unknown }>["batched"] }
+): Promise<StreamResult> {
+	const { batched } = options
+	const chunkSize = batched.chunkSize ?? DEFAULT_CHUNK_SIZE
+	const script = fileURLToPath(import.meta.resolve("@mailwoman/flood/scripts/ingest-chunk"))
+	const chunks: FloodChunkResult[] = []
+
+	// Kysely owns the close, and the child cannot open a file this process is holding open for writing.
+	await kdb.destroy()
+
+	for (let from = batched.objectIDFrom; from <= batched.objectIDTo; from += chunkSize) {
+		const to = Math.min(from + chunkSize - 1, batched.objectIDTo)
+
+		options.onProgress?.(`chunk OBJECTID ${from}–${to}`)
+
+		const stdout = await runChunkProcess(script, [
+			"--database",
+			tmpPath,
+			"--gdb",
+			batched.geodatabasePath,
+			...(batched.layer ? ["--layer", batched.layer] : []),
+			"--object-id-from",
+			String(from),
+			"--object-id-to",
+			String(to),
+			// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower — so
+			// the chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
+			"--declared-feature-count",
+			String(0),
+			"--index-resolution",
+			String(options.indexResolution),
+			"--coverage-resolution",
+			String(options.coverageResolution),
+		])
+
+		const line = TextSpliterator.from(stdout.trim(), { delimiter: "\n" }).toArray().at(-1)
+
+		if (!line) {
+			throw new Error(
+				`flood build: chunk OBJECTID ${from}–${to} printed no result — its rows are in the artifact unaccounted for`
+			)
+		}
+
+		chunks.push(parseJSONStrict<FloodChunkResult>(line))
+	}
+
+	return aggregateChunks(chunks)
+}
+
+/**
+ * Run one chunk process, returning its stdout.
+ *
+ * Progress is INHERITED rather than captured, so a long chunk reports as it goes and only the result line has to be
+ * parsed. A non-zero exit throws: a chunk that died mid-range has already written part of its rows, and continuing
+ * would seal an artifact missing features nobody could name.
+ */
+async function runChunkProcess(script: string, args: readonly string[]): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const child = spawn(process.execPath, [script, ...args], { stdio: ["ignore", "pipe", "inherit"] })
+		const stdout: string[] = []
+
+		child.stdout.setEncoding("utf8")
+
+		child.stdout.on("data", (chunk: string) => {
+			stdout.push(chunk)
+		})
+
+		child.on("error", reject)
+
+		child.on("close", (code) => {
+			if (code === 0) {
+				resolve(stdout.join(""))
+
+				return
+			}
+
+			reject(new Error(`flood build: chunk process exited ${code}`))
+		})
+	})
 }
 
 /**
@@ -523,32 +599,6 @@ function resolveCells(database: DatabaseSync): {
 		partialRows,
 		candidateRows,
 		resolutions: [...resolutions].toSorted((left, right) => left - right),
-	}
-}
-
-/**
- * Record the coverage cells one index cell falls in.
- *
- * A row's coverage cell is `cellToParent` of its finer cell, never a fresh `latLngToCell` at the coarse resolution —
- * every existing reader in this repo derives it that way. An adaptively-coarsened cell can be COARSER than the coverage
- * resolution, in which case it spans several coverage cells and every one of them is recorded: a coarse cell counted
- * against one arbitrary child would leave the others reading as empty.
- */
-function addCoverageCells(into: Set<number>, cell: H3Cell, cellResolution: number, coverageResolution: number): void {
-	if (cellResolution === coverageResolution) {
-		into.add(shortCellToInt(cell))
-
-		return
-	}
-
-	if (cellResolution > coverageResolution) {
-		into.add(shortCellToInt(cellToParent(cell, coverageResolution) as H3Cell))
-
-		return
-	}
-
-	for (const child of cellToChildren(cell, coverageResolution)) {
-		into.add(shortCellToInt(child as H3Cell))
 	}
 }
 

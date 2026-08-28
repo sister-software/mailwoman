@@ -87,6 +87,16 @@ export interface FloodIngestOptions {
 	 * The extent every reprojected vertex must land inside. Defaults to the EA collection's own declaration.
 	 */
 	declaredBBox?: readonly [number, number, number, number]
+	/**
+	 * Read only the authority's feature ids in `[objectIDFrom, objectIDTo]`, inclusive.
+	 *
+	 * This is what makes a bounded build possible: the classification cannot run over the whole file in one process (see
+	 * `ingest-chunk.ts`), so the builder walks ranges of the authority's OWN ids. Ranges rather than an offset because
+	 * `OBJECTID` is the source's stable key — a range names the same features on every run, which an offset into a result
+	 * set does not.
+	 */
+	objectIDFrom?: number
+	objectIDTo?: number
 }
 
 /**
@@ -211,6 +221,24 @@ export function assessDatumTransformation(summary: string): { best?: string; usa
 	return { best, usable: true, reason: "the best operation is available" }
 }
 
+/**
+ * The ingest's `SELECT`, with the id range applied when one is asked for.
+ */
+function floodSelectSQL(layer: string, options: FloodIngestOptions): string {
+	const select = `SELECT OBJECTID AS area_id, origin, flood_zone, flood_source, OGR_GEOM_AREA AS source_area_m2 FROM ${layer}`
+	const bounds: string[] = []
+
+	if (options.objectIDFrom !== undefined) {
+		bounds.push(`OBJECTID >= ${options.objectIDFrom}`)
+	}
+
+	if (options.objectIDTo !== undefined) {
+		bounds.push(`OBJECTID <= ${options.objectIDTo}`)
+	}
+
+	return bounds.length ? `${select} WHERE ${bounds.join(" AND ")}` : select
+}
+
 interface RawFeature {
 	properties: {
 		area_id: number | string
@@ -246,7 +274,7 @@ export async function* readFloodSourceFeatures(options: FloodIngestOptions): Asy
 		`COORDINATE_PRECISION=${COORDINATE_PRECISION}`,
 		...(options.limit === undefined ? [] : ["-limit", String(options.limit)]),
 		"-sql",
-		`SELECT OBJECTID AS area_id, origin, flood_zone, flood_source, OGR_GEOM_AREA AS source_area_m2 FROM ${layer}`,
+		floodSelectSQL(layer, options),
 		options.geodatabasePath,
 	]
 
@@ -371,11 +399,15 @@ export interface FloodFeatureSource {
 /**
  * The published geodatabase as a feature source — identity read up front, features streamed on demand.
  */
-export async function createGeodatabaseFeatureSource(options: FloodIngestOptions): Promise<FloodFeatureSource> {
+export async function createGeodatabaseFeatureSource(
+	options: FloodIngestOptions & { declaredFeatureCount?: number }
+): Promise<FloodFeatureSource> {
 	const identity = await readFloodSourceIdentity(options)
 
 	return {
-		declaredFeatureCount: options.limit ?? identity.featureCount,
+		// A RANGE's own count is supplied by the caller, because `ogrinfo` reports the layer's total and nothing narrower.
+		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
+		declaredFeatureCount: options.declaredFeatureCount ?? options.limit ?? identity.featureCount,
 		layer: identity.layer,
 		epsg: identity.epsg,
 		origin: options.geodatabasePath,

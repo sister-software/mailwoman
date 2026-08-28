@@ -94,6 +94,35 @@ the coverage tier is never compacted. Three resolutions therefore coexist in one
 manifest's index target, the per-row cell resolutions, and the coverage resolution — and each is
 read from where it is stored rather than inferred from another.
 
+### A polygon builder must bound its h3 work, and must refuse an empty answer
+
+Measured on the EA flood layer and binding on every polygon builder that follows, because the failure
+is a property of the tool rather than of that product.
+
+**h3's WASM heap cannot be reset from JavaScript, and it fails by returning nothing.**
+`polygonToCellsExperimental` sizes its output buffer with `_calloc`; a failing `_calloc` returns the
+null pointer, and in WASM address zero is ordinary writable memory — so the call reports success and
+the reader hands back an array of zeros. An exhausted allocator therefore answers "no cells" rather
+than raising. h3-js frees every buffer it allocates, so what accumulates over millions of calls is
+fragmentation, not a leak.
+
+Two consequences, and both are requirements rather than advice.
+
+1. **Refuse a per-PART empty answer.** A part with a non-degenerate bounding box touches at least one
+   cell, so zero is not an answer it can have. Check it per part, not per feature: a per-feature check
+   passes any multi-part feature whose other parts answered, and indexes it short with no error
+   anywhere. That is the silent-absence shape the coverage rule exists to refuse, arriving through the
+   index instead of through the data.
+2. **Bound the classification by construction.** Run it in child processes over ranges of the source's
+   own stable ids, so each gets a heap that starts empty. Reducing the call count — skipping the
+   polyfill where the answer is a fact about geometry — is worth doing for speed, but it is not the
+   correctness mechanism: a build that completes only when fragmentation happens to stay low is not
+   reproducible, and the artifact it produces cannot be re-derived on demand.
+
+Worked example, with the numbers: `packages/flood` — three runs died at one 164 m² feature after
+~510,000 others, a fourth at another after ~798,000, and every one of those features classifies in
+milliseconds in a fresh process.
+
 ### An authority's designation rides the query-intent carrier and names the verdict's own kind
 
 Also settled here, for the same reason: it is a property of the contract rather than of one layer.

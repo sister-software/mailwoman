@@ -111,10 +111,9 @@ date, the licence field and the direct file URL, and the archive is cached per v
   index takes overlapping containment, and a feature that reaches no cell fails the build — a
   dropped feature reads downstream as an absence, which is the one answer this layer must never
   invent.
-- **h3's allocator is sized from the bounding box**, so asking for resolution 9 over a long
-  meandering river polygon threw `Memory allocation failed (code: 13)` out of the WASM heap after
-  350,000 features. Each feature is indexed at the finest resolution whose bounding-box estimate
-  fits the budget, and the resolution it got is stored on the row.
+- **h3's allocator is sized from the bounding box**, so a long meandering river polygon reserves the
+  rectangle its meanders span rather than the river. Each feature is indexed at the finest resolution
+  whose bounding-box estimate fits the budget, and the resolution it got is stored on the row.
 - **`HEAD` returns 405 and `Range` is ignored** on the download host, so a size probe starts a real
   367 MB transfer. Freshness is the catalogue's ISO revision date, never a length probe.
 - **A missing datum grid shifts the whole layer, and nothing says so.** With
@@ -127,6 +126,35 @@ date, the licence field and the direct file URL, and the archive is cached per v
   installed the same check reads **59/59**. `--config PROJ_NETWORK ON` does not reach PROJ through
   GDAL 3.8 and `PROJ_ONLY_BEST=ON` was observed not to refuse, so the build asks `projinfo` what PROJ
   would choose and stops when the answer is a ballpark.
+
+## The h3 heap runs out, and it fails by returning nothing
+
+The finding every polygon builder on this spine inherits, stated with what it cost here.
+
+**The mechanism.** h3's WASM heap cannot be reset from JavaScript, and it does not survive an
+unbounded number of `polygonToCells` calls. h3-js frees every buffer it allocates, so what
+accumulates is fragmentation across millions of interleaved tiny and large allocations. What makes it
+dangerous is HOW it fails: `polygonToCellsExperimental` sizes its output with `_calloc`, a failing
+`_calloc` returns the null pointer, and in WASM address zero is ordinary writable memory — so the
+call reports success and the reader hands back an array of zeros. **An exhausted allocator answers
+"no cells" rather than raising an error.**
+
+**What it cost.** Three single-process runs over this product died at feature 510994 — 164 m², 23
+parts, 130 vertices — after roughly 510,000 others; it classifies in 35 ms at every resolution 9
+through 4 in a fresh process. A fourth died at feature 798284 after 798,000. Both are ordinary
+features. Neither failure is a property of the geometry.
+
+**The invariant, and where it lives.** A part with a non-degenerate bounding box touches at least one
+cell, so zero is not an answer it can have. `classifyFeatureCells` checks that **per part**, not per
+feature: a per-feature check passes any multi-part feature whose other parts answered, and indexes it
+short with no error anywhere — the silent-absence shape this layer exists to refuse.
+
+**The build does not rely on staying under the ceiling.** The classification runs in bounded child
+processes, one per range of the authority's own feature ids (`--chunk-size`, default 100,000 against
+a measured ceiling five times larger), so every chunk gets a heap that starts empty. The
+call-removal shortcuts in `sdk/cells.ts` — a part inside one cell, a part too narrow to contain one —
+make the build faster and are **not** what makes it correct. A build that completed only when
+fragmentation happened to stay low would not be reproducible.
 
 ## Licence
 
