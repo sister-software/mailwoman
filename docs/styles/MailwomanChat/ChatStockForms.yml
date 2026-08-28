@@ -20,9 +20,9 @@ tokens:
   - let me know if
   - happy to help
   - hope (?:this|that) helps
-  - worth noting
-  - worth mentioning
+  - worth (?:noting|mentioning|saying|calling out)
   - keep in mind
   - deep dive
+  - for completeness
   - at the end of the day
   - that(?:'s| is) [^,.\n]{1,40}, not

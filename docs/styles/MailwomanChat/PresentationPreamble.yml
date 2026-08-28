@@ -1,0 +1,12 @@
+## Mailwoman chat style: canned presentation preambles.
+##
+## Vale existence rule (warning). "Here's the result" and "here's what
+## changed" narrate the act of presenting information. Start with the result
+## or change itself. Warning severity preserves conversational uses where the
+## phrase identifies a literal artifact that immediately follows.
+extends: existence
+message: "Cut the presentation preamble '%s' and start with the information it introduces."
+level: warning
+ignorecase: true
+tokens:
+  - "here(?:'|’)s (?:the|what)"

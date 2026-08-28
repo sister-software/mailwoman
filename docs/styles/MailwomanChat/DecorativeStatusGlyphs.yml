@@ -1,0 +1,12 @@
+## Mailwoman chat style: line-leading status ornaments.
+##
+## Vale existence rule. Arrows, proof marks, play buttons, check marks, and
+## traffic lights decorate a status line without naming its state. The output
+## style asks for words and ordinary list syntax, both of which survive plain
+## text rendering and carry the same information without a private legend.
+extends: existence
+message: "Replace the decorative status glyph '%s' with words or ordinary list syntax."
+level: error
+nonword: true
+tokens:
+  - '(?m)^[ \t]*(?:→|∴|▶|✓|✅|❌|🔴|🟢)'

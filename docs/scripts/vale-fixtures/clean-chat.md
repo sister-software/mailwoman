@@ -23,3 +23,15 @@ parent at all.
 Queen Street, Bristol now resolves to Bristol, England, and its ancestry
 chain conforms to the gazetteer record. The three French control rows return
 the same answers as before the change.
+
+The cache serializes writes through one mutex. The assertion fails when the
+fixture omits a parent. The storage layer uses SQLite, and the retry loop makes
+three attempts before it returns the final error.
+
+The source field records Overture, which distinguishes the row from WOF. The
+decision keeps the marker reporting-only because routing would change ranking.
+The postcode index supplies a country candidate when the input contains a full
+UK postcode.
+
+The unit test passed. The trace records that the retry ran once. The following
+JSON object is the emitted artifact:

@@ -25,6 +25,11 @@
 			"default": "./out/hooks/todo-issue-sync.js",
 			"types": "./out/hooks/todo-issue-sync.d.ts"
 		},
+		"./hooks/vale-check-core": {
+			"node": "./hooks/vale-check-core.ts",
+			"default": "./out/hooks/vale-check-core.js",
+			"types": "./out/hooks/vale-check-core.d.ts"
+		},
 		".": {
 			"node": "./index.ts",
 			"default": "./out/index.js",

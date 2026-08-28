@@ -128,7 +128,7 @@ function formatAlerts(alerts: ValeAlert[], opening: string): string {
 	// reply stands, where the per-group lines alone are the useful part.
 	const guidance = hasErrors
 		? [
-				`Replace each flagged phrase with the concrete claim it hides — do not merely delete it. Structure: define project terms at first use; give every count its comparison arm and denominator; state the arithmetic behind derived figures; write addresses in full. A hit inside a verbatim address, place name, or quoted string can stand.`,
+				`Return only replacement text for the flagged sentences. Do not repeat, summarize, reorder, expand, or otherwise restate any unflagged part of the reply. Replace each flagged phrase with the concrete claim it hides — do not merely delete it. Structure: define project terms at first use; give every count its comparison arm and denominator; state the arithmetic behind derived figures; write addresses in full. A hit inside a verbatim address, place name, or quoted string can stand.`,
 			]
 		: []
 
@@ -148,7 +148,7 @@ export function renderVerdict(alerts: ValeAlert[]): ProseVerdict | null {
 			kind: "block",
 			text: formatAlerts(
 				alerts,
-				`Prose check: ${alerts.length} finding${alerts.length === 1 ? "" : "s"} (${errorCount} error). Rewrite the flagged sentences in plain words per the output style, then give the corrected reply.`
+				`Prose check: ${alerts.length} finding${alerts.length === 1 ? "" : "s"} (${errorCount} error). Rewrite only the flagged sentences in plain words per the output style.`
 			),
 		}
 	}

@@ -16,7 +16,9 @@ tokens:
   - '\w+-immune'
   - '\w+-proof'
   - coin-flip
-  - the [\w-]+ story
+  - 'the (?:[\w-]+ ){0,3}story'
+  - same story
+  - tells? the (?:whole )?story
   - acid test
   - battle-tested
   - bulletproof
@@ -24,3 +26,9 @@ tokens:
   - silver bullet
   - low-hanging fruit
   - move(s|d)? the needle
+  - chokepoint
+  - tripwire
+  - footgun
+  - gotcha
+  - substrate
+  - machinery
