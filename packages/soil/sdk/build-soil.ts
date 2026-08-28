@@ -29,7 +29,6 @@
  *   well-formed and simply answers "inside" for ground the authority did not map.
  */
 
-import { spawn } from "node:child_process"
 import { rmSync, statSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
@@ -45,8 +44,7 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import {
 	geometryContains,
 	interiorCoverageCells,
@@ -57,7 +55,6 @@ import {
 	type GeojsonPosition,
 } from "@mailwoman/spatial"
 import { cellToLatLng } from "h3-js"
-import { TextSpliterator } from "spliterator"
 
 import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "../schema.ts"
 import {
@@ -642,70 +639,35 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
 
 			options.onProgress?.(`${area.attributes.areasymbol}: FID ${from}–${to}`)
 
-			const stdout = await runChunkProcess(script, [
-				"--database",
-				tmpPath,
-				"--shapefile",
-				area.shapefilePath,
-				"--area-symbol",
-				area.attributes.areasymbol,
-				"--fid-from",
-				String(from),
-				"--fid-to",
-				String(to),
-				"--index-resolution",
-				String(options.indexResolution),
-				"--coverage-resolution",
-				String(options.coverageResolution),
-				"--no-mapping-mukeys",
-				noMapping.join(","),
-			])
-
-			const line = TextSpliterator.from(stdout.trim(), { delimiter: "\n" }).toArray().at(-1)
-
-			if (!line) {
-				throw new Error(
-					`soil build: chunk ${area.attributes.areasymbol} FID ${from}–${to} printed no result — its rows are in the artifact unaccounted for`
-				)
-			}
-
-			chunks.push(parseJSONStrict<SoilChunkResult>(line))
+			chunks.push(
+				await runChunkProcess<SoilChunkResult>({
+					script,
+					context: "soil build",
+					subject: `chunk ${area.attributes.areasymbol} FID ${from}–${to}`,
+					args: [
+						"--database",
+						tmpPath,
+						"--shapefile",
+						area.shapefilePath,
+						"--area-symbol",
+						area.attributes.areasymbol,
+						"--fid-from",
+						String(from),
+						"--fid-to",
+						String(to),
+						"--index-resolution",
+						String(options.indexResolution),
+						"--coverage-resolution",
+						String(options.coverageResolution),
+						"--no-mapping-mukeys",
+						noMapping.join(","),
+					],
+				})
+			)
 		}
 	}
 
 	return chunks
-}
-
-/**
- * Run one chunk process, returning its stdout.
- *
- * Progress is INHERITED rather than captured, so a long chunk reports as it goes and only the result line has to be
- * parsed. A non-zero exit throws: a chunk that died mid-range has already written part of its rows, and continuing
- * would seal an artifact missing delineations nobody could name.
- */
-async function runChunkProcess(script: string, args: readonly string[]): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const child = spawn(process.execPath, [script, ...args], { stdio: ["ignore", "pipe", "inherit"] })
-		const stdout: string[] = []
-
-		child.stdout.setEncoding("utf8")
-
-		child.stdout.on("data", (chunk: string) => {
-			stdout.push(chunk)
-		})
-
-		child.on("error", reject)
-
-		child.on("close", (code) => {
-			if (code === 0) {
-				resolve(stdout.join(""))
-
-				return
-			}
-
-			reject(new Error(`soil build: chunk process exited ${code}`))
-		})
-	})
 }
 
 /**

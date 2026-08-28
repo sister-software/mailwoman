@@ -4,10 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
+export * from "./chunk-process.ts"
 export * from "./data-root.ts"
+export * from "./geodatabase-archive.ts"
 export * from "./hash.ts"
 export * from "./html-text.ts"
 export * from "./jsonl.ts"
+export * from "./path-exists.ts"
 export * from "./python-json.ts"
 export * from "./python-numeric.ts"
 export * from "./python-random.ts"

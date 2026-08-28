@@ -42,13 +42,12 @@
 import { DatabaseSync } from "node:sqlite"
 
 import {
+	singleManifestRow,
 	toCoverageCell,
+	toLayerManifest,
 	type CoverageRow,
 	type CoverageCell,
-	type LayerFreshnessPolicy,
 	type LayerManifest,
-	type LayerTier,
-	type SpineKeys,
 } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -370,42 +369,27 @@ function readIdentity(
 	definitions: Map<string, string>
 	bounds: Array<{ minLat: number; minLon: number; maxLat: number; maxLon: number }>
 } {
-	const manifestRows = database.prepare("SELECT * FROM layer_manifest").all() as Array<Record<string, string | number>>
+	const manifestRows = database.prepare("SELECT * FROM layer_manifest").all() as Array<
+		Record<string, string | number | null>
+	>
 
-	if (manifestRows.length !== 1) {
-		throw new Error(`soil reader: ${databasePath} carries ${manifestRows.length} manifest rows, expected 1`)
-	}
-
-	const row = manifestRows[0]!
-	const spineKeys = parseJSONStrict<SpineKeys>(String(row.spine_keys))
+	// The name's SUFFIX names the region a build covers, so the reader checks the prefix rather than a whole name — which
+	// is why it asserts its own identity instead of taking `parseManifestRows`: one authority, one product, one rating
+	// vocabulary per artifact, over whichever survey areas were built.
+	const row = singleManifestRow(manifestRows, `soil reader: ${databasePath}`)
 	const name = String(row.name)
 
-	// The name's SUFFIX names the region a build covers, so the reader checks the prefix rather than a whole name: one
-	// authority, one product, one rating vocabulary per artifact, over whichever survey areas were built.
 	if (!name.startsWith(SOIL_LAYER_NAME_PREFIX)) {
 		throw new Error(
 			`soil reader: ${databasePath} is layer ${JSON.stringify(name)}, which is not a ${JSON.stringify(SOIL_LAYER_NAME_PREFIX)} layer — one authority, one product, one rating vocabulary per artifact`
 		)
 	}
 
+	const manifest = toLayerManifest(row)
+	const spineKeys = manifest.spineKeys
+
 	if (!spineKeys.h3) {
 		throw new Error(`soil reader: ${databasePath} declares no h3 spine key`)
-	}
-
-	const manifest: LayerManifest = {
-		name,
-		version: String(row.version),
-		schemaVersion: Number(row.schema_version),
-		tier: String(row.tier) as LayerTier,
-		license: String(row.license),
-		...(row.attribution === null ? {} : { attribution: String(row.attribution) }),
-		source: String(row.source),
-		sourceVintage: String(row.source_vintage),
-		buildCmd: String(row.build_cmd),
-		buildSHA: String(row.build_sha),
-		freshnessPolicy: String(row.freshness_policy) as LayerFreshnessPolicy,
-		spineKeys,
-		createdAt: String(row.created_at),
 	}
 
 	const coverageCount = (database.prepare("SELECT count(*) AS n FROM layer_coverage").get() as { n: number }).n

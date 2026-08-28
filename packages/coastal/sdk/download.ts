@@ -5,30 +5,18 @@
  *
  *   Acquire the published file geodatabase — a 70,296,882-byte archive streamed to disk and unzipped.
  *
- *   THIS IS A FILE TRANSFER, NOT AN API REQUEST, AND IT KEEPS RAW `fetch` ON PURPOSE. The repo's rule sends
- *   HTTP clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class
- *   is for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls.
- *   None of it applies here. Caching a 70 MB body through a JSON-validating disk cache would write a second,
- *   unreadable copy of a file already on disk; there is nothing to pace, because this runs once per product
- *   vintage; and axios buffers any non-stream response type in memory. `packages/osm/sdk/fetch.ts`,
- *   `packages/tiger/sdk/download.ts` and `packages/flood/sdk/download.ts` are the existing transfers that say
- *   the same thing in the same place. The METADATA reads around this one do go through `APIClient` — see
+ *   THE TRANSFER, THE CACHE KEY AND THE EXTRACTION LIVE IN `@mailwoman/core/utils`, because none of them is
+ *   this product's: `downloadZippedGeodatabase` carries why the archive unzips INTO a `.gdb` directory and
+ *   why the cache is keyed on a vintage rather than a length probe, and `streamToDisk` carries why a file
+ *   transfer keeps raw `fetch` instead of going through `APIClient`. What is coastal's, and stays here, is
+ *   the two names below. The METADATA reads around this transfer DO go through `APIClient` — see
  *   `client.ts`.
  *
- *   FRESHNESS IS THE CATALOGUE'S REVISION DATE, NEVER A LENGTH PROBE. The download host answers `HEAD` with
- *   HTTP 405 and ignores `Range`: a `curl -r 0-1023` against this URL returns HTTP 200 with
- *   `size_download=70296882`, the whole file. So "just check the size" starts a real transfer, the cached
- *   archive is keyed on the product's ISO revision date, and a vintage already on disk is never re-fetched.
+ *   THE HOST LEAVES NO CHOICE ABOUT THE CACHE KEY. It answers `HEAD` with HTTP 405 and ignores `Range`: a
+ *   `curl -r 0-1023` against this URL returns HTTP 200 with `size_download=70296882`, the whole file.
  */
 
-import { execFile } from "node:child_process"
-import { mkdir, stat } from "node:fs/promises"
-import { join } from "node:path"
-import { promisify } from "node:util"
-
-import { streamToDisk } from "@mailwoman/core/utils"
-
-const execFileAsync = promisify(execFile)
+import { downloadZippedGeodatabase } from "@mailwoman/core/utils"
 
 /**
  * The resource name the catalogue entry uses for the file geodatabase.
@@ -60,49 +48,15 @@ export interface DownloadGeodatabaseOptions {
 
 /**
  * Download and unzip the geodatabase for one product vintage, returning the path of the `.gdb` directory.
- *
- * Downloads to a `.part` file and renames only on a clean finish, so an interrupted transfer never presents as a
- * complete archive — the same discipline the database build uses, for the same reason.
  */
 export async function downloadCoastalGeodatabase(options: DownloadGeodatabaseOptions): Promise<string> {
-	const vintageDir = join(options.cacheRoot, options.revisionDate)
-	const geodatabasePath = join(vintageDir, NCERM_GEODATABASE_DIRECTORY)
-
-	if (await exists(geodatabasePath)) {
-		options.onProgress?.(`geodatabase for ${options.revisionDate} already unzipped`)
-
-		return geodatabasePath
-	}
-
-	await mkdir(vintageDir, { recursive: true })
-
-	const archivePath = join(vintageDir, NCERM_GEODATABASE_RESOURCE)
-
-	if (await exists(archivePath)) {
-		options.onProgress?.(`archive for ${options.revisionDate} already downloaded`)
-	} else {
-		await streamToDisk({
-			url: options.url,
-			destination: archivePath,
-			context: "coastal download",
-			...(options.onProgress ? { onProgress: options.onProgress } : {}),
-		})
-	}
-
-	options.onProgress?.("unzipping")
-
-	// The archive holds the geodatabase's files at its root rather than inside a `.gdb` directory, so it is unzipped
-	// INTO one. GDAL identifies a file geodatabase by the directory suffix; unzipping in place produces a pile of
-	// `a0000000*.gdbtable` files no driver will open.
-	await mkdir(geodatabasePath, { recursive: true })
-	await execFileAsync("unzip", ["-o", "-q", archivePath, "-d", geodatabasePath])
-
-	return geodatabasePath
-}
-
-async function exists(path: string): Promise<boolean> {
-	return stat(path).then(
-		() => true,
-		() => false
-	)
+	return downloadZippedGeodatabase({
+		url: options.url,
+		revisionDate: options.revisionDate,
+		cacheRoot: options.cacheRoot,
+		resource: NCERM_GEODATABASE_RESOURCE,
+		directory: NCERM_GEODATABASE_DIRECTORY,
+		context: "coastal download",
+		...(options.onProgress ? { onProgress: options.onProgress } : {}),
+	})
 }

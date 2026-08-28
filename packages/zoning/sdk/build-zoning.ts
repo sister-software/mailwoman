@@ -36,7 +36,6 @@
  *   in every chunk that touches them — and merging them in the parent is what keeps the chunk append-only.
  */
 
-import { spawn } from "node:child_process"
 import { rmSync, statSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
@@ -53,9 +52,7 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
-import { TextSpliterator } from "spliterator"
+import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 
 import { createZoningTables, type ZoningDatabase } from "../schema.ts"
 import {
@@ -563,7 +560,7 @@ export function aggregateChunks(chunks: ReadonlyArray<ZoningChunkResult>): Strea
 		}
 
 		for (const [scheme, code, label, rows] of chunk.vocabulary) {
-			const key = `${scheme} ${code}`
+			const key = `${scheme}\u0000${code}`
 			const existing = vocabulary.get(key)
 
 			vocabulary.set(key, existing ? [scheme, code, existing[2], existing[3] + rows] : [scheme, code, label, rows])
@@ -573,7 +570,7 @@ export function aggregateChunks(chunks: ReadonlyArray<ZoningChunkResult>): Strea
 		// like one inside any single chunk: Cork's `Special Policy Area` takes 14 generic types across the county, and a
 		// chunk holding a prefix of its feature ids may well have seen only one of them.
 		for (const [authorityCode, localCode, codes] of chunk.crosswalkPairs) {
-			const key = `${authorityCode} ${localCode}`
+			const key = `${authorityCode}\u0000${localCode}`
 			const existing = crosswalkPairs.get(key)
 
 			pairNames.set(key, [authorityCode, localCode])
@@ -741,36 +738,7 @@ async function runBatchedIngest(
  * would seal an artifact missing features nobody could name.
  */
 async function runChunk(script: string, args: readonly string[]): Promise<ZoningChunkResult> {
-	const stdout = await new Promise<string>((resolve, reject) => {
-		const child = spawn(process.execPath, [script, ...args], { stdio: ["ignore", "pipe", "inherit"] })
-		const parts: string[] = []
-
-		child.stdout.setEncoding("utf8")
-
-		child.stdout.on("data", (chunk: string) => {
-			parts.push(chunk)
-		})
-
-		child.on("error", reject)
-
-		child.on("close", (code) => {
-			if (code === 0) {
-				resolve(parts.join(""))
-
-				return
-			}
-
-			reject(new Error(`zoning build: chunk process exited ${code}`))
-		})
-	})
-
-	const line = TextSpliterator.from(stdout.trim(), { delimiter: "\n" }).toArray().at(-1)
-
-	if (!line) {
-		throw new Error("zoning build: a chunk printed no result — its rows are in the artifact unaccounted for")
-	}
-
-	return parseJSONStrict<ZoningChunkResult>(line)
+	return runChunkProcess<ZoningChunkResult>({ script, args, context: "zoning build" })
 }
 
 /**
@@ -864,7 +832,7 @@ function writeVocabularyRows(
 	>()
 
 	const declare = (scheme: string, code: string, label: string): void => {
-		rows.set(`${scheme} ${code}`, { scheme, code, label, declared: 1, observedRows: 0 })
+		rows.set(`${scheme}\u0000${code}`, { scheme, code, label, declared: 1, observedRows: 0 })
 	}
 
 	for (const term of GZT_DECLARED_CODES) {
@@ -876,7 +844,7 @@ function writeVocabularyRows(
 	}
 
 	for (const [scheme, code, label, observedRows] of observed) {
-		const key = `${scheme} ${code}`
+		const key = `${scheme}\u0000${code}`
 		const existing = rows.get(key)
 
 		if (existing) {

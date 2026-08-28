@@ -166,35 +166,37 @@ export function toCoverageCell(
 }
 
 /**
- * One `layer_manifest` row as a synchronous reader gets it back, mapped onto {@link LayerManifest}.
+ * The single `layer_manifest` row of `rows`, refused if there is not exactly one.
  *
- * SHARED BY EVERY LAYER READER. `readLayerManifest` above is the Kysely path; a reader that opens the artifact with
- * `node:sqlite` for its own synchronous probes reads the same single row and needs the same mapping, and the four that
- * did it separately differed only in the error prefix.
+ * A layer with no identity, or with two, must fail loudly rather than answer from whichever row came first.
  *
- * @param rows Every row of `layer_manifest` — the count is checked here, because a layer with no identity, or two, must
- *   fail loudly rather than answer from whichever row came first.
- * @param context Names the caller in every refusal.
- * @throws {Error} When the table does not hold exactly one row, when the layer is not `expectedName`, or when the
- *   manifest's invariants do not hold.
+ * @param context Names the caller in the refusal.
+ * @throws {Error} When the table does not hold exactly one row.
  */
-export function parseManifestRows(
+export function singleManifestRow(
 	rows: ReadonlyArray<Record<string, string | number | null>>,
-	expectedName: string,
 	context: string
-): LayerManifest {
+): Record<string, string | number | null> {
 	if (rows.length !== 1) {
 		throw new Error(`${context} carries ${rows.length} manifest rows, expected 1`)
 	}
 
-	const row = rows[0]!
+	return rows[0]!
+}
 
-	if (String(row.name) !== expectedName) {
-		throw new Error(
-			`${context} is layer ${JSON.stringify(row.name)}, not ${JSON.stringify(expectedName)} — one publisher, one product, one vocabulary per artifact`
-		)
-	}
-
+/**
+ * One `layer_manifest` row as a synchronous reader gets it back, mapped onto {@link LayerManifest}.
+ *
+ * SHARED BY EVERY LAYER READER, AND SEPARATE FROM THE IDENTITY CHECK ON PURPOSE. `readLayerManifest` above is the
+ * Kysely path; a reader that opens the artifact with `node:sqlite` for its own synchronous probes reads the same single
+ * row and needs the same mapping. What such readers do NOT share is how they recognize their own layer — most match a
+ * fixed name, and a layer whose name carries a build's region suffix matches a prefix instead — so the mapping lives
+ * here and the assertion stays with the caller. {@link parseManifestRows} is the fixed-name case, wired for the callers
+ * that have one.
+ *
+ * @throws {Error} When the manifest's invariants do not hold.
+ */
+export function toLayerManifest(row: Record<string, string | number | null>): LayerManifest {
 	const manifest: LayerManifest = {
 		name: String(row.name),
 		version: String(row.version),
@@ -214,6 +216,30 @@ export function parseManifestRows(
 	assertManifestInvariants(manifest)
 
 	return manifest
+}
+
+/**
+ * The manifest of a layer whose name is FIXED, checked against `expectedName`.
+ *
+ * @param rows Every row of `layer_manifest`.
+ * @param context Names the caller in every refusal.
+ * @throws {Error} When the table does not hold exactly one row, when the layer is not `expectedName`, or when the
+ *   manifest's invariants do not hold.
+ */
+export function parseManifestRows(
+	rows: ReadonlyArray<Record<string, string | number | null>>,
+	expectedName: string,
+	context: string
+): LayerManifest {
+	const row = singleManifestRow(rows, context)
+
+	if (String(row.name) !== expectedName) {
+		throw new Error(
+			`${context} is layer ${JSON.stringify(row.name)}, not ${JSON.stringify(expectedName)} — one publisher, one product, one vocabulary per artifact`
+		)
+	}
+
+	return toLayerManifest(row)
 }
 
 /**

@@ -5,15 +5,11 @@
  *
  *   Acquire one survey area's published archive — 13 to 41 MB streamed to disk and unzipped.
  *
- *   THIS IS A FILE TRANSFER, NOT AN API REQUEST, AND IT KEEPS RAW `fetch` ON PURPOSE. The repo's rule sends
- *   HTTP clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class
- *   is for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls.
- *   None of it applies here. Caching a 25 MB body through a JSON-validating disk cache would write a second,
- *   unreadable copy of a file already on disk; there is nothing to pace, because this runs once per survey
- *   area per product vintage; and axios buffers any non-stream response type in memory.
- *   `packages/osm/sdk/fetch.ts`, `packages/tiger/sdk/download.ts` and `packages/flood/sdk/download.ts` are
- *   the existing transfers that say the same thing in the same place. The METADATA reads around this one do
- *   go through `APIClient` — see `client.ts`.
+ *   THE TRANSFER ITSELF LIVES IN `@mailwoman/core/utils`, and `streamToDisk` carries why a file transfer of
+ *   this size keeps raw `fetch` instead of going through `APIClient`, plus the `.part`-rename rule. What is
+ *   soil's, and stays here, is the URL shape, the cache key, and the two facts below that the shared
+ *   transfer is told rather than assumes: the progress stride and what a 400 means. The METADATA reads
+ *   around this one do go through `APIClient` — see `client.ts`.
  *
  *   FRESHNESS IS `sacatalog.saverest`, NEVER A LENGTH PROBE, AND THE HOST LEAVES NO CHOICE. It answers `HEAD`
  *   with HTTP 405 (`allow: GET`) and IGNORES `Range`: a request with `Range: bytes=0-0` returned HTTP 200 and
@@ -35,12 +31,11 @@
  */
 
 import { execFile } from "node:child_process"
-import { createWriteStream } from "node:fs"
-import { mkdir, rename, rm, stat } from "node:fs/promises"
+import { mkdir } from "node:fs/promises"
 import { join } from "node:path"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
 import { promisify } from "node:util"
+
+import { pathExists, streamToDisk } from "@mailwoman/core/utils"
 
 const execFileAsync = promisify(execFile)
 
@@ -75,7 +70,8 @@ export interface DownloadSurveyAreaOptions {
 }
 
 /**
- * Bytes between progress reports.
+ * Bytes between progress reports. Smaller than the shared default because these archives are 13–41 MB, and the default
+ * stride would leave the smallest of them reporting once.
  */
 const PROGRESS_STRIDE_BYTES = 8 * 1024 * 1024
 
@@ -117,13 +113,26 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 	const root = join(vintageDirectory, options.areaSymbol)
 	const archivePath = join(vintageDirectory, `wss_SSA_${options.areaSymbol}.zip`)
 
-	if (!(await exists(root))) {
+	if (!(await pathExists(root))) {
 		await mkdir(vintageDirectory, { recursive: true })
 
-		if (await exists(archivePath)) {
+		if (await pathExists(archivePath)) {
 			options.onProgress?.(`${options.areaSymbol}: archive for ${options.versionDate} already downloaded`)
 		} else {
-			await streamToDisk(options, archivePath)
+			await streamToDisk({
+				url: surveyAreaArchiveURL(options.areaSymbol, options.versionDate),
+				destination: archivePath,
+				context: "soil download",
+				progressStrideBytes: PROGRESS_STRIDE_BYTES,
+				describeStatus: (status) =>
+					status === UNKNOWN_VERSION_STATUS
+						? " — this host answers 400 rather than 404 for a version date it does not hold, so check the date against sacatalog.saverest"
+						: undefined,
+				// Every progress line names the area, because a full acquisition interleaves hundreds of them.
+				...(options.onProgress
+					? { onProgress: (message: string) => options.onProgress?.(`${options.areaSymbol}: ${message}`) }
+					: {}),
+			})
 		}
 
 		// The archive holds its files under an `<AREASYMBOL>/` root already, so it unzips into the vintage directory
@@ -137,7 +146,7 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 	const tabularDirectory = join(root, "tabular")
 
 	for (const directory of [spatialDirectory, tabularDirectory]) {
-		if (!(await exists(directory))) {
+		if (!(await pathExists(directory))) {
 			throw new Error(
 				`soil download: ${options.areaSymbol} extracted without a ${directory} directory — every survey area publishes both spatial/ and tabular/, so this archive is not the product`
 			)
@@ -152,60 +161,4 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 		tabularDirectory,
 		archivePath,
 	}
-}
-
-/**
- * Stream the archive to `archivePath` through a `.part` file.
- */
-async function streamToDisk(options: DownloadSurveyAreaOptions, archivePath: string): Promise<void> {
-	const url = surveyAreaArchiveURL(options.areaSymbol, options.versionDate)
-	const partialPath = `${archivePath}.part`
-
-	options.onProgress?.(`${options.areaSymbol}: downloading ${url}`)
-
-	const response = await fetch(url)
-
-	if (!response.ok || !response.body) {
-		throw new Error(
-			`soil download: ${url} answered HTTP ${response.status}${
-				response.status === UNKNOWN_VERSION_STATUS
-					? " — this host answers 400 rather than 404 for a version date it does not hold, so check the date against sacatalog.saverest"
-					: ""
-			}`
-		)
-	}
-
-	let received = 0
-	let reported = 0
-
-	const source = Readable.fromWeb(response.body as Parameters<typeof Readable.fromWeb>[0])
-
-	source.on("data", (chunk: Buffer) => {
-		received += chunk.byteLength
-
-		if (received - reported >= PROGRESS_STRIDE_BYTES) {
-			reported = received
-
-			options.onProgress?.(`${options.areaSymbol}: ${(received / 1024 / 1024).toFixed(0)} MB`)
-		}
-	})
-
-	try {
-		await pipeline(source, createWriteStream(partialPath))
-	} catch (error) {
-		await rm(partialPath, { force: true })
-
-		throw error
-	}
-
-	await rename(partialPath, archivePath)
-
-	options.onProgress?.(`${options.areaSymbol}: downloaded ${received.toLocaleString()} bytes`)
-}
-
-async function exists(path: string): Promise<boolean> {
-	return stat(path).then(
-		() => true,
-		() => false
-	)
 }

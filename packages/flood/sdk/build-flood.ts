@@ -35,7 +35,6 @@
  *   every point in it.
  */
 
-import { spawn } from "node:child_process"
 import { rmSync, statSync } from "node:fs"
 import { DatabaseSync } from "node:sqlite"
 import { fileURLToPath } from "node:url"
@@ -51,11 +50,9 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
 import { compactCells, getResolution } from "h3-js"
-import { TextSpliterator } from "spliterator"
 
 import { createFloodTables, FloodCellContainment, type FloodDatabase } from "../schema.ts"
 import {
@@ -479,70 +476,35 @@ async function runBatchedIngest(
 
 		options.onProgress?.(`chunk OBJECTID ${from}–${to}`)
 
-		const stdout = await runChunkProcess(script, [
-			"--database",
-			tmpPath,
-			"--gdb",
-			batched.geodatabasePath,
-			...(batched.layer ? ["--layer", batched.layer] : []),
-			"--object-id-from",
-			String(from),
-			"--object-id-to",
-			String(to),
-			// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower — so
-			// the chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
-			"--declared-feature-count",
-			String(0),
-			"--index-resolution",
-			String(options.indexResolution),
-			"--coverage-resolution",
-			String(options.coverageResolution),
-		])
-
-		const line = TextSpliterator.from(stdout.trim(), { delimiter: "\n" }).toArray().at(-1)
-
-		if (!line) {
-			throw new Error(
-				`flood build: chunk OBJECTID ${from}–${to} printed no result — its rows are in the artifact unaccounted for`
-			)
-		}
-
-		chunks.push(parseJSONStrict<FloodChunkResult>(line))
+		chunks.push(
+			await runChunkProcess<FloodChunkResult>({
+				script,
+				context: "flood build",
+				subject: `chunk OBJECTID ${from}–${to}`,
+				args: [
+					"--database",
+					tmpPath,
+					"--gdb",
+					batched.geodatabasePath,
+					...(batched.layer ? ["--layer", batched.layer] : []),
+					"--object-id-from",
+					String(from),
+					"--object-id-to",
+					String(to),
+					// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower —
+					// so the chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
+					"--declared-feature-count",
+					String(0),
+					"--index-resolution",
+					String(options.indexResolution),
+					"--coverage-resolution",
+					String(options.coverageResolution),
+				],
+			})
+		)
 	}
 
 	return aggregateChunks(chunks)
-}
-
-/**
- * Run one chunk process, returning its stdout.
- *
- * Progress is INHERITED rather than captured, so a long chunk reports as it goes and only the result line has to be
- * parsed. A non-zero exit throws: a chunk that died mid-range has already written part of its rows, and continuing
- * would seal an artifact missing features nobody could name.
- */
-async function runChunkProcess(script: string, args: readonly string[]): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const child = spawn(process.execPath, [script, ...args], { stdio: ["ignore", "pipe", "inherit"] })
-		const stdout: string[] = []
-
-		child.stdout.setEncoding("utf8")
-
-		child.stdout.on("data", (chunk: string) => {
-			stdout.push(chunk)
-		})
-
-		child.on("error", reject)
-
-		child.on("close", (code) => {
-			if (code === 0) {
-				resolve(stdout.join(""))
-
-				return
-			}
-
-			reject(new Error(`flood build: chunk process exited ${code}`))
-		})
-	})
 }
 
 /**
