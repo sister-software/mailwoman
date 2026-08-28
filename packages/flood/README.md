@@ -206,9 +206,15 @@ short with no error anywhere — the silent-absence shape this layer exists to r
 **The build does not rely on staying under the ceiling.** The classification runs in bounded child
 processes, one per range of the authority's own feature ids (`--chunk-size`, default 100,000 against
 a measured ceiling five times larger), so every chunk gets a heap that starts empty. The
-call-removal shortcuts in `sdk/cells.ts` — a part inside one cell, a part too narrow to contain one —
-make the build faster and are **not** what makes it correct. A build that completed only when
-fragmentation happened to stay low would not be reproducible.
+call-removal shortcuts — a part inside one cell, a part too narrow to contain one — make the build
+faster and are **not** what makes it correct. A build that completed only when fragmentation happened
+to stay low would not be reproducible.
+
+**Both live in `@mailwoman/spatial`, not here.** `classifyFeatureCells`, the zero-cell guard and the
+ring blob under it are properties of h3-js and of byte layout rather than of this product, and
+`@mailwoman/soil` needs them unchanged — so they moved, and `sdk/cells.ts` and `rings.ts` re-export
+them. What stays in this package is what is zone-shaped: `FloodCellIndex` accumulates per zone code,
+because the question asked of this layer is about the ZONE.
 
 ## Licence
 
