@@ -35,13 +35,17 @@ failure and defended-area residual risk.
 Read over the whole published file (813,627 features, 329,940,166 vertices), because the two design
 decisions below rest on it rather than on an impression of what a flood polygon looks like:
 
-| bounding-box side | features | share |
-| ----------------- | -------: | ----: |
-| ≤ 11 m            |  315,826 | 38.8% |
-| ≤ 111 m           |  163,988 | 20.2% |
-| ≤ 1.1 km          |  214,856 | 26.4% |
-| ≤ 11 km           |  118,855 | 14.6% |
-| ≤ 111 km          |      102 | 0.01% |
+| longer bounding-box side | features |  share |
+| ------------------------ | -------: | -----: |
+| ≤ 0.0001° (~11 m)        |  315,826 | 38.82% |
+| ≤ 0.001° (~111 m)        |  163,988 | 20.16% |
+| ≤ 0.01° (~1.1 km)        |  214,856 | 26.41% |
+| ≤ 0.1° (~11 km)          |  118,855 | 14.61% |
+| ≤ 1° (~111 km)           |      102 |  0.01% |
+
+The metre figures are the LATITUDE reading of each degree bound; at 53°N a degree of longitude is
+about six tenths of that, so a feature in the first row is under 11 m north-south and under 7 m
+east-west.
 
 The largest single feature spans 0.604° (~67 km) and covers 494.7 km²; the widest carries 640,493
 vertices. So the product is overwhelmingly tiny slivers with a long tail of river-network polygons,
