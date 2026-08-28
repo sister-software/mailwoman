@@ -82,8 +82,9 @@ The build refuses to run without it and says so, because the failure is otherwis
 the trap list below.
 
 ```bash
-# Measure the partial share at the candidate resolutions and stop.
-mailwoman gazetteer build flood --measure-resolutions 7,8,9
+# Measure the partial share at the candidate resolutions and stop. Single-process, so pair it with
+# --limit on anything large — see the note below.
+mailwoman gazetteer build flood --measure-resolutions 7,8,9 --limit 200000
 
 # The smoke rung: a real artifact over a real prefix of the source.
 mailwoman gazetteer build flood --limit 20000 --out /tmp/flood-smoke.db
@@ -95,6 +96,14 @@ mailwoman gazetteer build flood --verify
 The build acquires the geodatabase itself: the catalogue entry supplies the product's ISO revision
 date, the licence field and the direct file URL, and the archive is cached per vintage. Pass
 `--gdb` to point at an already-unzipped `.gdb`, and `--offline` to skip every network read.
+
+**`--measure-resolutions` is single-process, and a build is the authoritative instrument.** The
+measurement compares candidate resolutions in one pass, which means one h3 heap for all of them — and
+that heap does not survive the whole file at the finer candidates (see the section below). It
+completed at resolution 7 over all 813,627 features and did not at 8 or 9. Use it with `--limit` to
+compare candidates on a prefix, and take the number that describes a shipped artifact from the
+BUILD's own receipt: `resolveCells` reports exactly the same whole / partial / candidate-pair counts,
+and the build is bounded by construction.
 
 ## Traps this package exists to have already hit
 
