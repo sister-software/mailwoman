@@ -140,6 +140,8 @@ const config: Config = {
 		mermaid: true,
 	},
 
+	clientModules: ["./src/client/trust-policies.ts"],
+
 	presets: [
 		[
 			"classic",
