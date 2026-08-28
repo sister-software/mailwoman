@@ -208,6 +208,62 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 	}
 
 	const tmpPath = `${options.out}.tmp-${process.pid}`
+
+	// THE INGEST AND THE RESOLVE PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path, which does not need
+	// them separated. The batched path DOES: its children open the same file, so the parent's handle has to be closed
+	// across them, and a single shared handle silently becomes a closed one by the time the cell tiers are resolved. Doing
+	// it one way in both paths is what puts the fixture suites on the same sequence a national build takes.
+	let streamed: StreamResult
+
+	{
+		const database = new DatabaseSync(tmpPath)
+		const kdb = new DatabaseClient<FloodDatabase>({ database })
+
+		try {
+			database.exec("PRAGMA journal_mode = OFF")
+			database.exec("PRAGMA synchronous = OFF")
+
+			await createFloodTables(kdb)
+			await createLayerManifestTable(kdb)
+			await createLayerCoverageTable(kdb)
+
+			// The touch table exists only for this build and is dropped before the artifact is sealed. No primary key while
+			// loading: the resolution queries below read it through indexes created once the load is done, and a clustered
+			// key would sort every insert against an ingest order nothing controls.
+			database.exec(
+				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
+			)
+
+			if (!("batched" in options)) {
+				streamed = aggregateChunks([
+					await ingestFloodChunk(database, {
+						source: options.source,
+						indexResolution: options.indexResolution,
+						coverageResolution: options.coverageResolution,
+						...(options.onProgress ? { onProgress: options.onProgress } : {}),
+					}),
+				])
+			}
+		} catch (error) {
+			await kdb.destroy().catch(() => undefined)
+			rmSync(tmpPath, { force: true })
+
+			throw error
+		}
+
+		await kdb.destroy()
+	}
+
+	if ("batched" in options) {
+		try {
+			streamed = await runBatchedIngest(tmpPath, options)
+		} catch (error) {
+			rmSync(tmpPath, { force: true })
+
+			throw error
+		}
+	}
+
 	const database = new DatabaseSync(tmpPath)
 	const kdb = new DatabaseClient<FloodDatabase>({ database })
 
@@ -215,41 +271,17 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 		database.exec("PRAGMA journal_mode = OFF")
 		database.exec("PRAGMA synchronous = OFF")
 
-		await createFloodTables(kdb)
-		await createLayerManifestTable(kdb)
-		await createLayerCoverageTable(kdb)
-
-		// The touch table exists only for this build and is dropped before the artifact is sealed. No primary key while
-		// loading: the resolution queries below read it through indexes created once the load is done, and a clustered
-		// key would sort every insert against an ingest order nothing controls.
-		database.exec(
-			"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
-		)
-
-		// The database handle is CLOSED across the batched ingest: the child processes open the same file, and two writers
-		// on one SQLite file is a problem nobody should have to reason about. Chunks run one at a time, so there is exactly
-		// one writer at every instant.
-		const streamed =
-			"batched" in options
-				? await runBatchedIngest(kdb, database, tmpPath, options)
-				: aggregateChunks([
-						await ingestFloodChunk(database, {
-							source: options.source,
-							indexResolution: options.indexResolution,
-							coverageResolution: options.coverageResolution,
-							...(options.onProgress ? { onProgress: options.onProgress } : {}),
-						}),
-					])
-
-		if (streamed.features !== declaredFeatureCount) {
+		if (streamed!.features !== declaredFeatureCount) {
 			throw new Error(
-				`flood build: streamed ${streamed.features} features, the source declares ${declaredFeatureCount} — a short read builds a smaller England and reports success`
+				`flood build: streamed ${streamed!.features} features, the source declares ${declaredFeatureCount} — a short read builds a smaller England and reports success`
 			)
 		}
 
-		assertAreaAgreement(streamed)
+		const ingested = streamed!
 
-		options.onProgress?.(`${streamed.features.toLocaleString()} features written · resolving cells`)
+		assertAreaAgreement(ingested)
+
+		options.onProgress?.(`${ingested.features.toLocaleString()} features written · resolving cells`)
 
 		const cells = resolveCells(database)
 
@@ -257,7 +289,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			`${cells.wholeRows.toLocaleString()} whole (compacted) · ${cells.partialRows.toLocaleString()} partial · ${cells.candidateRows.toLocaleString()} candidate pairs`
 		)
 
-		const coverage = buildCoverageCells(options.extent, streamed.observedByCoverageCell)
+		const coverage = buildCoverageCells(options.extent, ingested.observedByCoverageCell)
 
 		await writeLayerCoverage(kdb, coverage)
 
@@ -294,19 +326,19 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 
 		return {
 			out: options.out,
-			features: streamed.features,
-			zoneCounts: streamed.zoneCounts,
+			features: ingested.features,
+			zoneCounts: ingested.zoneCounts,
 			indexResolution: options.indexResolution,
 			coverageResolution: options.coverageResolution,
 			wholeCellRows: cells.wholeRows,
 			partialCellRows: cells.partialRows,
 			candidateRows: cells.candidateRows,
 			storedPartialShare: totalCellRows ? cells.partialRows / totalCellRows : 0,
-			coarsenedFeatures: streamed.coarsened,
+			coarsenedFeatures: ingested.coarsened,
 			storedResolutions: cells.resolutions,
 			coverageCells: coverage.length,
 			coverageCellsWithRows: coverage.filter((cell) => cell.observedRows > 0).length,
-			area: streamed.area,
+			area: ingested.area,
 			sizeBytes: sizeOf(options.out),
 		}
 	} catch (error) {
@@ -359,8 +391,12 @@ export const DEFAULT_CHUNK_SIZE = 100_000
 
 /**
  * Add up what the chunks reported.
+ *
+ * Exported for its own test: the coverage-cell arithmetic is the one part of the batched path that a fixture build
+ * cannot reach, and getting it wrong produces a well-formed artifact that under-reports how many polygons a cell
+ * holds.
  */
-function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): StreamResult {
+export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): StreamResult {
 	const zoneCounts: Record<string, number> = {}
 	const observedByCoverageCell = new Map<number, number>()
 
@@ -422,16 +458,14 @@ function assertAreaAgreement(streamed: StreamResult): void {
 /**
  * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids.
  *
- * THE PARENT'S HANDLE IS CLOSED WHILE THEY RUN. Each child opens the same file and appends; chunks run one at a time,
- * so there is exactly one writer at every instant and no locking to reason about. The parent reopens afterwards to
- * resolve the cell tiers and seal.
+ * THE PARENT HOLDS NO HANDLE WHILE THEY RUN — its caller closed one before this and opens another after. Each child
+ * opens the same file and appends; chunks run one at a time, so there is exactly one writer at every instant and no
+ * locking to reason about.
  *
  * @throws {Error} When a chunk exits non-zero, or prints no result line — a chunk that died mid-range has written a
  *   partial set of rows, and continuing would seal an artifact missing features nobody could name.
  */
 async function runBatchedIngest(
-	kdb: DatabaseClient<FloodDatabase>,
-	database: DatabaseSync,
 	tmpPath: string,
 	options: BuildFloodOptions & { batched: Extract<BuildFloodInput, { batched: unknown }>["batched"] }
 ): Promise<StreamResult> {
@@ -439,9 +473,6 @@ async function runBatchedIngest(
 	const chunkSize = batched.chunkSize ?? DEFAULT_CHUNK_SIZE
 	const script = fileURLToPath(import.meta.resolve("@mailwoman/flood/scripts/ingest-chunk"))
 	const chunks: FloodChunkResult[] = []
-
-	// Kysely owns the close, and the child cannot open a file this process is holding open for writing.
-	await kdb.destroy()
 
 	for (let from = batched.objectIDFrom; from <= batched.objectIDTo; from += chunkSize) {
 		const to = Math.min(from + chunkSize - 1, batched.objectIDTo)
