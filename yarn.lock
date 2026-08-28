@@ -5231,6 +5231,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/soil@workspace:*, @mailwoman/soil@workspace:packages/soil":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/soil@workspace:packages/soil"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    h3-js: "npm:^4.5.0"
+    kysely: "npm:^0.29.4"
+    spliterator: "npm:^6.2.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/spatial@workspace:*, @mailwoman/spatial@workspace:packages/spatial":
   version: 0.0.0-use.local
   resolution: "@mailwoman/spatial@workspace:packages/spatial"
@@ -17020,6 +17032,7 @@ __metadata:
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/soil": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"

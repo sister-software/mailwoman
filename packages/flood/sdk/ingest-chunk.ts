@@ -22,13 +22,11 @@
 
 import type { DatabaseSync } from "node:sqlite"
 
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { cellToChildren, cellToParent } from "h3-js"
+import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox, shortCellToInt } from "@mailwoman/spatial"
 
-import { encodeRings, ringAreaReadings } from "../rings.ts"
 import { EA_FLOOD_ZONE_CODES } from "../vocabulary.ts"
 import { classifyFeatureCells } from "./cells.ts"
-import type { FloodFeatureSource, MultiPolygonRings } from "./ingest.ts"
+import type { FloodFeatureSource } from "./ingest.ts"
 
 /**
  * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob: a larger transaction grows
@@ -70,77 +68,6 @@ export interface IngestFloodChunkOptions {
 }
 
 /**
- * Record the coverage cells one index cell falls in.
- *
- * A row's coverage cell is `cellToParent` of its finer cell, never a fresh `latLngToCell` at the coarse resolution —
- * every existing reader in this repo derives it that way, and the two agree for a point but not for a cell. An
- * adaptively-coarsened cell can be COARSER than the coverage resolution, in which case it spans several coverage cells
- * and every one of them is recorded: a coarse cell counted against one arbitrary child would leave the others reading
- * as empty.
- */
-export function addCoverageCells(
-	into: Set<number>,
-	cell: H3Cell,
-	cellResolution: number,
-	coverageResolution: number
-): void {
-	if (cellResolution === coverageResolution) {
-		into.add(shortCellToInt(cell))
-
-		return
-	}
-
-	if (cellResolution > coverageResolution) {
-		into.add(shortCellToInt(cellToParent(cell, coverageResolution) as H3Cell))
-
-		return
-	}
-
-	for (const child of cellToChildren(cell, coverageResolution)) {
-		into.add(shortCellToInt(child as H3Cell))
-	}
-}
-
-/**
- * The bounding rectangle of one feature's rings — the ray cast's prefilter, precomputed.
- */
-export function boundsOf(polygons: MultiPolygonRings): {
-	minLat: number
-	minLon: number
-	maxLat: number
-	maxLon: number
-} {
-	let minLat = Infinity
-	let minLon = Infinity
-	let maxLat = -Infinity
-	let maxLon = -Infinity
-
-	for (const rings of polygons) {
-		for (const ring of rings) {
-			for (const position of ring) {
-				const lon = position[0]!
-				const lat = position[1]!
-
-				if (lon < minLon) {
-					minLon = lon
-				}
-				if (lon > maxLon) {
-					maxLon = lon
-				}
-				if (lat < minLat) {
-					minLat = lat
-				}
-				if (lat > maxLat) {
-					maxLat = lat
-				}
-			}
-		}
-	}
-
-	return { minLat, minLon, maxLat, maxLon }
-}
-
-/**
  * Stream one chunk of the source into `database`.
  *
  * @throws {Error} On a zone code outside the authority's declared domain, or on a feature the classifier refuses.
@@ -178,7 +105,7 @@ export async function ingestFloodChunk(
 				)
 			}
 
-			const bbox = boundsOf(feature.polygons)
+			const bbox = ringsBoundingBox(feature.polygons)
 			const areas = ringAreaReadings(feature.polygons)
 
 			sourceArea += feature.sourceAreaM2
@@ -197,7 +124,7 @@ export async function ingestFloodChunk(
 				encodeRings(feature.polygons)
 			)
 
-			const classified = classifyFeatureCells(feature.polygons, options.indexResolution, feature.areaID)
+			const classified = classifyFeatureCells(feature.polygons, options.indexResolution, feature.areaID, "flood cells")
 
 			if (classified.resolution !== options.indexResolution) {
 				coarsened++

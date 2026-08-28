@@ -31,21 +31,20 @@ import { execFile, spawn } from "node:child_process"
 import { promisify } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { JSONSpliterator, TextSpliterator } from "spliterator"
+import type { MultiPolygonRings, PolygonRings } from "@mailwoman/spatial"
+import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
+import { JSONSpliterator } from "spliterator"
 
 import { EA_DECLARED_BBOX, EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "../vocabulary.ts"
 
 const execFileAsync = promisify(execFile)
 
 /**
- * One polygon's rings: `[exterior, ...holes]`, each ring a list of `[lon, lat]` positions.
+ * The ring types, and the PROJ guard, both re-exported from `@mailwoman/spatial`: neither is flood-specific, and a
+ * second copy of the `projinfo` parse would be a second place for the ballpark check to stop refusing.
  */
-export type PolygonRings = ReadonlyArray<ReadonlyArray<readonly number[]>>
-
-/**
- * A feature's polygons — `MultiPolygon` coordinates, with a bare `Polygon` lifted into the same shape.
- */
-export type MultiPolygonRings = ReadonlyArray<PolygonRings>
+export { assessDatumTransformation, type DatumTransformationVerdict } from "@mailwoman/spatial/projection-transform"
+export type { MultiPolygonRings, PolygonRings } from "@mailwoman/spatial"
 
 /**
  * One source feature, reprojected to WGS84.
@@ -163,62 +162,9 @@ export async function readFloodSourceIdentity(
 		throw new TypeError(`flood ingest: ${layer} reports no feature count`)
 	}
 
-	await assertDatumTransformationAvailable(code)
+	await assertDatumTransformation(code, { context: "flood ingest", areaOfUse: "United Kingdom" })
 
 	return { epsg: code, featureCount: described.featureCount, layer }
-}
-
-/**
- * PROJ falls back to a BALLPARK datum shift when the accurate grid is not on disk, and it does so SILENTLY.
- *
- * Measured on this product: with the OSGB36→WGS84 grid missing, ogr2ogr placed the first feature's first vertex at
- * `1.698151293, 52.648130027`; with `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` present it placed it at `1.698174628,
- * 52.648157259` — 3.4 m apart. Both look like perfectly ordinary WGS84 coordinates, both pass a bounding-box check, and
- * the whole layer is offset. It surfaced as eight disagreements out of 59 against the authority's own OGC service,
- * every one a point that fell into a NEIGHBOURING sliver: at this product's scale a 3 m shift changes the answer,
- * because 38.8% of its polygons are under 11 m across.
- *
- * `--config PROJ_NETWORK ON` does not reach PROJ through GDAL 3.8, and `PROJ_ONLY_BEST=ON` was observed not to refuse,
- * so neither is a usable guard. What is usable is asking PROJ what it would do: `projinfo` names the best candidate
- * operation and says when a grid is missing.
- *
- * @throws {Error} When the best available transformation is a ballpark one, or is missing a grid.
- */
-export async function assertDatumTransformationAvailable(sourceEPSG: number): Promise<void> {
-	const { stdout } = await execFileAsync("projinfo", ["-s", `EPSG:${sourceEPSG}`, "-t", "EPSG:4326", "--summary"])
-	const verdict = assessDatumTransformation(stdout)
-
-	if (verdict.usable) return
-
-	throw new Error(
-		`flood ingest: the best EPSG:${sourceEPSG} → EPSG:4326 transformation is unusable — ${verdict.reason} ` +
-			`(${verdict.best ?? "projinfo named no candidate"}). PROJ falls back to a ballpark datum shift, which is metres ` +
-			'wrong and looks exactly like a correct answer. Install the grid with `projsync --area-of-use "United Kingdom"` ' +
-			"and re-run."
-	)
-}
-
-/**
- * Read `projinfo --summary` output: which operation PROJ would choose, and whether it can actually run.
- *
- * Split from the spawn so the parse is testable against captured output. The two states this distinguishes were both
- * observed on the same machine — the same command printed `at least one grid missing` before the grid was installed and
- * did not after — and they are the difference between a metre-accurate layer and a 3 m-offset one.
- */
-export function assessDatumTransformation(summary: string): { best?: string; usable: boolean; reason: string } {
-	// The first line naming a candidate operation is the one PROJ will choose. Everything before it is a header, and the
-	// `Note:` line about `--spatial-test` is not a candidate.
-	const best = TextSpliterator.from(summary, { delimiter: "\n" })
-		.map((line) => line.trim())
-		.find((line) => line.includes(", ") && !line.startsWith("Note:") && !line.startsWith("Candidate operations"))
-
-	if (!best) return { usable: false, reason: "projinfo named no candidate operation" }
-
-	if (best.includes("grid missing")) return { best, usable: false, reason: "its grid is not installed" }
-
-	if (best.toLowerCase().includes("ballpark")) return { best, usable: false, reason: "it is a ballpark offset" }
-
-	return { best, usable: true, reason: "the best operation is available" }
 }
 
 /**

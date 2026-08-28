@@ -34,6 +34,7 @@ import { type QueryIntentMarker, QueryIntentCode, type QueryKind, type QueryKind
 import type { AbsenceObservation } from "./absence-route.ts"
 import type { AuthorityDesignationObservation, AuthorityDesignationRoute } from "./flood-route.ts"
 import type { SemanticObservation } from "./semantic-route.ts"
+import type { SoilCapabilityObservation, SoilCapabilityRoute } from "./soil-route.ts"
 
 /**
  * `family:rule` for a category chosen from an affordance assertion.
@@ -52,6 +53,11 @@ export const SEMANTIC_ABSENCE_MECHANISM = "semantic:absence"
  * answer can tell which authority spoke. A later overlay writes its own rule under the same `layer` family.
  */
 export const FLOOD_ZONE_DESIGNATION_MECHANISM = "layer:flood_zone"
+
+/**
+ * `family:rule` for a reading out of the NRCS SSURGO soil-capability layer — the second rule under the `layer` family.
+ */
+export const SOIL_CAPABILITY_DESIGNATION_MECHANISM = "layer:soil_capability"
 
 /**
  * The kinds a POI observation may name. Both route as the POI branch, and the classifier reports whichever one its
@@ -207,4 +213,88 @@ export function authorityDesignationMarker(
 			coordinate: observation.coordinate,
 		},
 	}
+}
+
+/**
+ * Turn one soil-capability reading into a marker on a geocode verdict.
+ *
+ * SAME CODE, SAME FAMILY, DIFFERENT RULE. It shares `authority_designation` and the `layer` mechanism family with the
+ * flood marker, because both report what an authority designates at a resolved coordinate; the rule half names the
+ * layer, so a reader meeting two designation markers on one answer can tell which authority spoke.
+ *
+ * THE CLASS NEVER TRAVELS WITHOUT THE SHARE IT RESTS ON. NRCS's own map-unit aggregation ships its dominant-condition
+ * class beside the share that class covers, with an observed minimum of 2%, and this marker reproduces that pairing at
+ * cell grain. A message carrying "class 2" alone would manufacture certainty from a plurality.
+ *
+ * The message reports WHAT THE SURVEY ASSIGNS TO THE MAP UNIT covering the location, never whether the land can be
+ * farmed. The authority itself declines the second statement — its data are "intended for planning purposes only" — and
+ * a wording that blurred them would be this program's invention rather than the authority's.
+ */
+export function soilCapabilityMarkers(
+	route: SoilCapabilityRoute | undefined,
+	latitude: number | null | undefined,
+	longitude: number | null | undefined,
+	verdict: QueryKindResult
+): QueryIntentMarker[] {
+	if (!route) return []
+
+	const decision = route.observe(latitude, longitude)
+
+	return decision.fired ? [soilCapabilityMarker(decision.observation, verdict)] : []
+}
+
+/**
+ * The conversion proper — see {@link soilCapabilityMarkers} for the caller-facing shape.
+ */
+export function soilCapabilityMarker(
+	observation: SoilCapabilityObservation,
+	verdict: QueryKindResult
+): QueryIntentMarker {
+	const assigned = observation.topClass
+		? `assigns land capability class ${observation.topClass} over ${((observation.topClassShare ?? 0) * 100).toFixed(1)}% of the cell`
+		: "mapped this ground and rated no capability class here"
+
+	return {
+		kind: verdict.kind,
+		code: QueryIntentCode.AuthorityDesignation,
+		mechanism: SOIL_CAPABILITY_DESIGNATION_MECHANISM,
+		message:
+			`The USDA NRCS soil survey (${observation.layer.sourceVintage}) ${assigned} at the resolved coordinate. ` +
+			`This states what the survey assigns to the map unit covering a location, not whether the land can be farmed.`,
+		evidence: {
+			reading: observation.reading,
+			...(observation.topClass ? { topClass: observation.topClass } : {}),
+			...(observation.topClassShare === undefined ? {} : { topClassShare: observation.topClassShare }),
+			...(observation.topClassDefinition ? { topClassDefinition: observation.topClassDefinition } : {}),
+			distribution: observation.distribution,
+			...(observation.surveyArea ? { surveyArea: observation.surveyArea } : {}),
+			...(observation.coverage ? { coverage: observation.coverage } : {}),
+			indexCellIndex: observation.indexCellIndex,
+			limits: observation.limits,
+			layer: observation.layer,
+			coordinate: observation.coordinate,
+		},
+	}
+}
+
+/**
+ * Every attached layer's designation for one resolved coordinate, in one call.
+ *
+ * A LIST RATHER THAN A CALL PER LAYER, so a third layer is one edit HERE and none at the call site. Each route is
+ * independently optional and each contributes zero markers when absent, which is what makes an unconfigured session
+ * produce the identical marker list — the property the byte-stability tests pin.
+ *
+ * Order is fixed by the array below rather than by which route happened to be constructed first, so two sessions
+ * holding the same layers produce markers in the same order.
+ */
+export function layerDesignationMarkers(
+	routes: { authorityDesignationRoute?: AuthorityDesignationRoute; soilCapabilityRoute?: SoilCapabilityRoute },
+	latitude: number | null | undefined,
+	longitude: number | null | undefined,
+	verdict: QueryKindResult
+): QueryIntentMarker[] {
+	return [
+		...authorityDesignationMarkers(routes.authorityDesignationRoute, latitude, longitude, verdict),
+		...soilCapabilityMarkers(routes.soilCapabilityRoute, latitude, longitude, verdict),
+	]
 }

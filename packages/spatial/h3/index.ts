@@ -11,6 +11,7 @@ import { type H3Cell, type H3CellShort, expandH3Cell } from "./cell.ts"
 
 export * from "./cell.ts"
 export * from "./interior-cells.ts"
+export * from "./polygon-cells.ts"
 
 /**
  * Given a short cell address and the resolution it was captured at, return the centre of that cell.

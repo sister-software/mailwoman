@@ -1,0 +1,161 @@
+{
+	"name": "@mailwoman/soil",
+	"version": "9.2.0",
+	"description": "USDA NRCS SSURGO soil capability — acquisition, build, and the soil.db layer reader",
+	"keywords": [
+		"farmland",
+		"geospatial",
+		"h3",
+		"land-capability",
+		"nrcs",
+		"soil",
+		"ssurgo"
+	],
+	"homepage": "https://github.com/sister-software/mailwoman",
+	"bugs": {
+		"url": "https://github.com/sister-software/mailwoman/issues"
+	},
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/soil"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"README.md",
+		"*.ts",
+		"*.tsx",
+		"**/*.ts",
+		"**/*.tsx",
+		"!*.test.ts",
+		"!*.test.tsx",
+		"!**/*.test.ts",
+		"!**/*.test.tsx",
+		"!test/**"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./scripts/*": {
+			"node": "./scripts/*.ts",
+			"default": "./out/scripts/*.js",
+			"types": "./out/scripts/*.d.ts"
+		},
+		"./schema": {
+			"node": "./schema.ts",
+			"default": "./out/schema.js",
+			"types": "./out/schema.d.ts"
+		},
+		"./vocabulary": {
+			"node": "./vocabulary.ts",
+			"default": "./out/vocabulary.js",
+			"types": "./out/vocabulary.d.ts"
+		},
+		"./test-kit": {
+			"node": "./test-kit.ts",
+			"default": "./out/test-kit.js",
+			"types": "./out/test-kit.d.ts"
+		},
+		"./sdk": {
+			"node": "./sdk/index.ts",
+			"default": "./out/sdk/index.js",
+			"types": "./out/sdk/index.d.ts"
+		},
+		"./sdk/acquire": {
+			"node": "./sdk/acquire.ts",
+			"default": "./out/sdk/acquire.js",
+			"types": "./out/sdk/acquire.d.ts"
+		},
+		"./sdk/build-soil": {
+			"node": "./sdk/build-soil.ts",
+			"default": "./out/sdk/build-soil.js",
+			"types": "./out/sdk/build-soil.d.ts"
+		},
+		"./sdk/cell-tiers": {
+			"node": "./sdk/cell-tiers.ts",
+			"default": "./out/sdk/cell-tiers.js",
+			"types": "./out/sdk/cell-tiers.d.ts"
+		},
+		"./sdk/cells": {
+			"node": "./sdk/cells.ts",
+			"default": "./out/sdk/cells.js",
+			"types": "./out/sdk/cells.d.ts"
+		},
+		"./sdk/client": {
+			"node": "./sdk/client.ts",
+			"default": "./out/sdk/client.js",
+			"types": "./out/sdk/client.d.ts"
+		},
+		"./sdk/download": {
+			"node": "./sdk/download.ts",
+			"default": "./out/sdk/download.js",
+			"types": "./out/sdk/download.d.ts"
+		},
+		"./sdk/ingest": {
+			"node": "./sdk/ingest.ts",
+			"default": "./out/sdk/ingest.js",
+			"types": "./out/sdk/ingest.d.ts"
+		},
+		"./sdk/ingest-chunk": {
+			"node": "./sdk/ingest-chunk.ts",
+			"default": "./out/sdk/ingest-chunk.js",
+			"types": "./out/sdk/ingest-chunk.d.ts"
+		},
+		"./sdk/measure-resolutions": {
+			"node": "./sdk/measure-resolutions.ts",
+			"default": "./out/sdk/measure-resolutions.js",
+			"types": "./out/sdk/measure-resolutions.d.ts"
+		},
+		"./sdk/reduce": {
+			"node": "./sdk/reduce.ts",
+			"default": "./out/sdk/reduce.js",
+			"types": "./out/sdk/reduce.d.ts"
+		},
+		"./sdk/survey-area": {
+			"node": "./sdk/survey-area.ts",
+			"default": "./out/sdk/survey-area.js",
+			"types": "./out/sdk/survey-area.d.ts"
+		},
+		"./sdk/tabular": {
+			"node": "./sdk/tabular.ts",
+			"default": "./out/sdk/tabular.js",
+			"types": "./out/sdk/tabular.d.ts"
+		},
+		"./sdk/verify": {
+			"node": "./sdk/verify.ts",
+			"default": "./out/sdk/verify.js",
+			"types": "./out/sdk/verify.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@mailwoman/core": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
+		"h3-js": "^4.5.0",
+		"kysely": "^0.29.4",
+		"spliterator": "^6.2.0"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

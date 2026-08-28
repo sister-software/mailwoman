@@ -748,6 +748,7 @@ jobs:
               - 'packages/bdc/**'
               - 'packages/filer/**'
               - 'packages/flood/**'
+              - 'packages/soil/**'
               # --- Smoke script + packaging pipeline ---
               - 'scripts/smoke-clean-install.ts'
               - 'scripts/pack-workspace.ts'

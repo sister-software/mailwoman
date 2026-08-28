@@ -33,6 +33,7 @@
 		"packages/ban",
 		"packages/bdc",
 		"packages/flood",
+		"packages/soil",
 		"packages/cartographer",
 		"packages/codex",
 		"packages/corpus",

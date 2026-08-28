@@ -33,6 +33,7 @@
 		{ "path": "../resolver-wof-sqlite" },
 		{ "path": "../resolver-wof-wasm" },
 		{ "path": "../ban" },
+		{ "path": "../soil" },
 		{ "path": "../spatial" },
 		{ "path": "../osm" },
 		{ "path": "../map-tui" }

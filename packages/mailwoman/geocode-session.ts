@@ -61,6 +61,7 @@ import {
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
 import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"
+import type { SoilCapabilityRoute } from "./observations/soil-route.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
 import {
 	createResolverBackend,
@@ -346,6 +347,33 @@ export async function loadAuthorityDesignationRoute(
 }
 
 /**
+ * The soil-capability route, opened when the sealed SSURGO layer is on disk (#1991).
+ *
+ * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the flood route above, and for the same reason: a
+ * boolean would have to construct the reader itself and would put a sealed database open on the default construction
+ * path. No `soil.db` in the data root, no route, and the geocode result is byte-identical to a build without the
+ * field.
+ *
+ * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * manifest naming a different product — must not take the geocoder down over an advisory it was never asked for.
+ */
+export async function loadSoilCapabilityRoute(
+	options: Pick<GeocodeSessionOptions, "dataRoot">
+): Promise<SoilCapabilityRoute | undefined> {
+	const soilDBPath = resolvePath(options.dataRoot, "soil", "soil.db")
+
+	if (!existsSync(soilDBPath)) return undefined
+
+	try {
+		const { createSoilCapabilityRoute } = await import("./observations/soil-route.ts")
+
+		return createSoilCapabilityRoute({ databasePath: String(soilDBPath) })
+	} catch {
+		return undefined
+	}
+}
+
+/**
  * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
  * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
@@ -554,6 +582,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	let poiHandle: { close(): void } | undefined
 	let designationRoute: AuthorityDesignationRoute | undefined
+	let soilRoute: SoilCapabilityRoute | undefined
 
 	const closeQuietly = (handle: { close(): void } | undefined): void => {
 		try {
@@ -571,6 +600,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		closeQuietly(lookup)
 		closeQuietly(poiHandle)
 		closeQuietly(designationRoute)
+		closeQuietly(soilRoute)
 	}
 
 	// Everything past this point can THROW while the handles above are already open, so it runs behind the
@@ -618,6 +648,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		forkEntityDeps = probe.deps
 		poiHandle = probe.handle
 		designationRoute = await loadAuthorityDesignationRoute(options)
+		soilRoute = await loadSoilCapabilityRoute(options)
 	} catch (error) {
 		close()
 
@@ -782,6 +813,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #1989: present only when the sealed flood layer is on disk, so a data root without one produces the identical
 			// marker list.
 			...(designationRoute ? { authorityDesignationRoute: designationRoute } : {}),
+			// #1991: present only when the sealed soil layer is on disk, so a data root without one produces the identical
+			// marker list.
+			...(soilRoute ? { soilCapabilityRoute: soilRoute } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
 			...(trace && options.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 		})

@@ -72,8 +72,10 @@ import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hie
 import { shouldDropInferredScope } from "./inferred-scope.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
-import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"
-import { authorityDesignationMarkers } from "./observations/observation-marker.ts"
+// Both route types come from the observations BARREL rather than from their own modules: they are the same kind of
+// thing to this file — an optional, already-open spatial layer — and a third one costs no import here.
+import type { AuthorityDesignationRoute, SoilCapabilityRoute } from "./observations/index.ts"
+import { layerDesignationMarkers } from "./observations/observation-marker.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
 import { repairPostcodeContradiction } from "./postcode-repair.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
@@ -400,6 +402,14 @@ export interface GeocodeDeps {
 	 * carried as one additive marker. Nothing above the marker assembly reads it.
 	 */
 	authorityDesignationRoute?: AuthorityDesignationRoute
+	/**
+	 * A soil-capability route over a sealed NRCS SSURGO layer (#1991) — a SECOND authority-designation layer under the
+	 * same marker code and `layer` mechanism family, with a rule of its own. Absent by default, and presence of an open
+	 * layer is the switch, exactly as above. A second field rather than a widened first one: the two carry different
+	 * observations — a zone code and a containment path against a class distribution, five shares and two dates — and
+	 * share only the code.
+	 */
+	soilCapabilityRoute?: SoilCapabilityRoute
 	/**
 	 * Country constraint passed to the resolver (e.g. `"US"`).
 	 */
@@ -1456,12 +1466,10 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// opt-in venue tier, extracted as one unit — see applyEntityTiers.
 	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
 
-	// #1989: an authority's own designation for the coordinate this answer reached, read from a sealed layer and
-	// recorded beside the answer. It reads a finished result and returns a record — no candidate, no ordering, no
-	// abstain — so an unconfigured session produces the identical marker list.
-	markers.push(...authorityDesignationMarkers(deps.authorityDesignationRoute, result.lat, result.lon, verdict))
-
-	result.intent_markers = markers
+	// #1989 / #1991: what each ATTACHED spatial layer designates for the coordinate this answer reached, recorded beside
+	// it. Every route reads a finished result and returns a record — no candidate, no ordering, no abstain — and each
+	// contributes nothing when absent, so an unconfigured session produces the identical marker list.
+	result.intent_markers = [...markers, ...layerDesignationMarkers(deps, result.lat, result.lon, verdict)]
 
 	// #1901: the authoritative consult runs LAST, over the finished result's evidence, and attaches its answer
 	// beside it. Nothing above this line reads the block, so an unconfigured session skips it byte-identically.
