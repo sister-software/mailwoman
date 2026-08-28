@@ -263,18 +263,32 @@ export function classifyFeatureCells(
 					continue
 				}
 
-				for (const cell of polygonToCellsExperimental(
+				const overlapping = polygonToCellsExperimental(
 					geoJSONRings,
 					resolution,
 					POLYGON_TO_CELLS_FLAGS.containmentOverlapping,
 					true
-				)) {
+				)
+
+				// AN EMPTY ANSWER FOR A REAL PART IS AN ALLOCATOR FAILURE WEARING A RESULT'S CLOTHES, and it has to be caught
+				// HERE rather than after the whole feature. h3-js sizes its output buffer with `_calloc`, and a `_calloc`
+				// that fails returns the null pointer — which in WASM is ordinary writable memory, so the call reports
+				// success and the reader hands back an array of zeros, i.e. nothing. Every part with a non-degenerate
+				// bounding box touches at least one cell, so zero is impossible as an answer. Checking per FEATURE instead
+				// would pass any multi-part feature whose other parts happened to answer, and silently index it short.
+				if (!overlapping.length) {
+					throw new Error(
+						`flood cells: part of feature ${areaID} spanning ${box.minLat},${box.minLon} to ${box.maxLat},${box.maxLon} returned no cell at resolution ${resolution} — a part always touches at least one, so this is an allocator failure reported as an answer`
+					)
+				}
+
+				for (const cell of overlapping) {
 					touched.add(cell)
 				}
 
-				// Likewise: a part narrower than a cell's minimum width cannot contain one, so its `full` set is empty and
-				// asking for it is pure cost. Erring towards asking is safe — a missed whole cell becomes a partial one and
-				// the ray cast still answers correctly — so the comparison is the permissive one.
+				// A part narrower than a cell's minimum width cannot contain one, so its `full` set is empty and asking for it
+				// is pure cost. Erring towards asking is safe — a missed whole cell becomes a partial one and the ray cast
+				// still answers correctly — so the comparison is the permissive one.
 				if (!canContainCell(box, resolution)) continue
 
 				for (const cell of polygonToCellsExperimental(
