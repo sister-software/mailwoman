@@ -22,14 +22,27 @@
  *   is how a rendering difference gets reported as a conversion defect.
  *
  *   THE ARTIFACT'S OWN ANSWER IS THE CELL SUMMARY, AND THE POINT'S MAP UNIT IS UNDER IT. So the comparison
- *   reads `soil_map_unit_area` directly — the truth table — rather than the reduction: the reduction is a
- *   per-cell distribution and has no single map unit to compare. That makes this a check on the CONVERSION,
- *   which is what it is for; the reduction is checked by the fixtures and by the share-sum invariant.
+ *   reaches the GEOMETRY — the truth table — rather than the reduction: the reduction is a per-cell
+ *   distribution and has no single map unit to compare. That makes this a check on the CONVERSION, which is
+ *   what it is for; the reduction is checked by the fixtures and by the share-sum invariant.
+ *
+ *   IT REACHES IT THROUGH THE CELL INDEX, NOT THROUGH A BOUNDING-BOX SCAN. A `WHERE min_lat <= ? AND …` over
+ *   the geometry table reads like a prefilter and is a full table scan: none of those columns is indexed and
+ *   every row carries a ring blob, so at the pilot's 2.7 million delineations it reads gigabytes per point.
+ *   Naming the point's cell is a primary-key range scan over a `WITHOUT ROWID` table, which is the whole
+ *   reason the index exists.
  */
 
 import { DatabaseSync } from "node:sqlite"
 
-import { decodeRings, pointInEncodedRings, segmentDistanceMetres } from "@mailwoman/spatial"
+import {
+	decodeRings,
+	pointInEncodedRings,
+	segmentDistanceMetres,
+	shortCellToInt,
+	type H3Cell,
+} from "@mailwoman/spatial"
+import { cellToParent, latLngToCell } from "h3-js"
 
 import { SoilCapabilityLookup, SoilReadingKind } from "../index.ts"
 import type { SoilDataAccessClient } from "./client.ts"
@@ -131,11 +144,21 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 	const database = new DatabaseSync(options.databasePath, { readOnly: true })
 	const lookup = new SoilCapabilityLookup({ databasePath: options.databasePath })
 
+	// Read once: the stored index is mixed-resolution because the whole tier is compacted, and a probe that assumed one
+	// resolution would read every row at the others as an absence.
+	const resolutions = (
+		database.prepare("SELECT DISTINCT resolution FROM soil_map_unit_cell ORDER BY resolution").all() as Array<{
+			resolution: number
+		}>
+	).map((row) => row.resolution)
+
+	const { indexResolution } = lookup.identity
+
 	try {
 		const agreement: SoilAgreementRow[] = []
 
 		for (const point of options.points) {
-			const local = localDelineationAt(database, point.latitude, point.longitude)
+			const local = localDelineationAt(database, resolutions, indexResolution, point.latitude, point.longitude)
 			const serviceMukey = (await options.client.mukeyAtPoint(point.latitude, point.longitude)) ?? null
 
 			const nearEdge = local.nearestEdgeMetres !== undefined && local.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
@@ -174,23 +197,66 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 }
 
 /**
+ * The candidate delineations reaching a point, found THROUGH THE CELL INDEX rather than by scanning the geometry table.
+ *
+ * A bounding-box `WHERE` over `soil_map_unit_area` reads as a prefilter and is a FULL TABLE SCAN: none of those columns
+ * is indexed, the rows carry the ring blobs, and at the pilot's scale that is 2.7 million rows and several gigabytes
+ * read per point. The cell index exists to make exactly this question cheap — `soil_map_unit_cell` is `WITHOUT ROWID`
+ * keyed `(h3_cell, area_id)`, so naming the point's cell is a primary-key range scan.
+ *
+ * EVERY STORED RESOLUTION IS PROBED, not just the index one. The whole tier is compacted parent-ward, so a delineation
+ * that fills a run of cells is stored at a coarser resolution and a probe at the index resolution alone would read it
+ * as an absence — the same ancestor walk the reader does, and the same false negative it avoids.
+ */
+function candidateDelineations(
+	database: DatabaseSync,
+	resolutions: readonly number[],
+	indexResolution: number,
+	latitude: number,
+	longitude: number
+): Array<{ mukey: string; rings: Uint8Array }> {
+	const selectCandidates = database.prepare(
+		"SELECT a.mukey AS mukey, a.rings AS rings FROM soil_map_unit_cell c " +
+			"JOIN soil_map_unit_area a ON a.area_id = c.area_id WHERE c.h3_cell = ?"
+	)
+
+	const indexCell = latLngToCell(latitude, longitude, indexResolution) as H3Cell
+	const seen = new Set<string>()
+	const candidates: Array<{ mukey: string; rings: Uint8Array }> = []
+
+	for (const resolution of resolutions) {
+		const cell = resolution === indexResolution ? indexCell : (cellToParent(indexCell, resolution) as H3Cell)
+
+		for (const row of selectCandidates.all(shortCellToInt(cell)) as Array<{ mukey: string; rings: Uint8Array }>) {
+			// A delineation reached through two resolutions is one delineation. The key is the ring bytes' length plus the
+			// map unit, which is enough to dedupe within one cell's candidates without carrying the area id through.
+			const key = `${row.mukey}:${row.rings.byteLength}`
+
+			if (seen.has(key)) continue
+
+			seen.add(key)
+			candidates.push(row)
+		}
+	}
+
+	return candidates
+}
+
+/**
  * Which map unit the ARTIFACT's own geometry puts at a point, and how far the point is from that delineation's nearest
  * edge.
  *
- * The bounding box is the prefilter; the ray cast decides. The edge distance is measured against the matched
- * delineation, or — where none matched — against every delineation whose box contains the point, so a near-miss is
- * still reported with a distance rather than with nothing.
+ * The cell index narrows; the ray cast decides. The edge distance is measured against every candidate, so a near-miss
+ * is reported with a distance rather than with nothing.
  */
 function localDelineationAt(
 	database: DatabaseSync,
+	resolutions: readonly number[],
+	indexResolution: number,
 	latitude: number,
 	longitude: number
 ): { mukey: string | null; nearestEdgeMetres?: number } {
-	const candidates = database
-		.prepare(
-			"SELECT mukey, rings FROM soil_map_unit_area WHERE min_lat <= ? AND max_lat >= ? AND min_lon <= ? AND max_lon >= ?"
-		)
-		.all(latitude, latitude, longitude, longitude) as Array<{ mukey: string; rings: Uint8Array }>
+	const candidates = candidateDelineations(database, resolutions, indexResolution, latitude, longitude)
 
 	let mukey: string | null = null
 	let nearest = Infinity
@@ -247,9 +313,9 @@ function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number
  * The draw is a deterministic stride over the primary key, not a random one, so a re-run compares the same points and a
  * disagreement can be looked at rather than re-rolled.
  *
- * THE KEYS ARE CHOSEN BEFORE ANY GEOMETRY IS READ. A `WHERE rowid % stride = 0` scan looks like the same thing and is
- * not: it walks the table itself, which means reading every ring blob to keep a few dozen. Selecting `area_id` alone is
- * an index-only walk over the primary key, and the rows it names are then fetched by key.
+ * ONE ROW IS READ PER SAMPLE POINT AND NO MORE. A `WHERE rowid % stride = 0` scan looks like the same thing and is not:
+ * it walks the table itself, which means reading every ring blob to keep a few dozen. `ORDER BY area_id LIMIT 1 OFFSET
+ * n` walks the primary-key index to the offset and fetches exactly the row it lands on.
  */
 export function sampleAgreementPoints(
 	databasePath: string,
@@ -259,20 +325,20 @@ export function sampleAgreementPoints(
 	const database = new DatabaseSync(databasePath, { readOnly: true })
 
 	try {
-		const areaIDs = (
-			database.prepare("SELECT area_id FROM soil_map_unit_area ORDER BY area_id").all() as Array<{ area_id: string }>
-		).map((row) => row.area_id)
+		const total = (database.prepare("SELECT count(*) AS n FROM soil_map_unit_area").get() as { n: number }).n
+		const stride = Math.max(1, Math.floor(total / Math.max(1, count)))
 
-		const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, count)))
-
-		const selectArea = database.prepare(
-			"SELECT area_id, mukey, min_lat, min_lon, max_lat, max_lon, rings FROM soil_map_unit_area WHERE area_id = ?"
+		// One OFFSET probe per sample point rather than one materialized key list. The list looks cheap because it reads
+		// only the primary key, and at the pilot's 2.7 million delineations it is still 2.7 million strings held to keep
+		// sixty of them.
+		const selectByOffset = database.prepare(
+			"SELECT area_id, mukey, min_lat, min_lon, max_lat, max_lon, rings FROM soil_map_unit_area ORDER BY area_id LIMIT 1 OFFSET ?"
 		)
 
 		const points: Array<{ label: string; latitude: number; longitude: number }> = []
 
-		for (let index = 0; index < areaIDs.length && points.length < count; index += stride) {
-			const area = selectArea.get(areaIDs[index]!) as
+		for (let index = 0; index < total && points.length < count; index += stride) {
+			const area = selectByOffset.get(index) as
 				| {
 						area_id: string
 						mukey: string

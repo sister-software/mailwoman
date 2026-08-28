@@ -60,6 +60,7 @@ export const spec = {
 		"measure-resolutions": { type: "string", description: "Measure the partial share at these resolutions and stop" },
 		"chunk-size": { type: "string", description: "Delineation ids per ingest process (default 100000)" },
 		verify: { type: "boolean", default: false, description: "Run the Soil Data Access agreement check after building" },
+		"verify-only": { type: "boolean", default: false, description: "Check an already-sealed --out and build nothing" },
 		"verify-points": { type: "string", description: "How many points to re-ask the service about (default 60)" },
 	},
 } as const satisfies CommandSpec
@@ -73,7 +74,52 @@ interface Options {
 	measureResolutions?: string
 	chunkSize?: string
 	verify: boolean
+	verifyOnly: boolean
 	verifyPoints?: string
+}
+
+/**
+ * Both halves of the check, as the summary lines they produce.
+ *
+ * A function rather than an inline block because two modes reach it: the tail of a build, and `--verify-only` against
+ * an artifact some earlier run sealed.
+ */
+async function runVerification(
+	databasePath: string,
+	client: Parameters<typeof import("@mailwoman/soil/sdk").verifySoilDatabase>[0]["client"],
+	count?: number
+): Promise<string[]> {
+	const { sampleAgreementPoints, verifySoilDatabase } = await import("@mailwoman/soil/sdk")
+
+	const points = sampleAgreementPoints(databasePath, count === undefined ? {} : { count })
+
+	const verified = await verifySoilDatabase({
+		databasePath,
+		client,
+		points,
+		onProgress: (message) => console.error(`  [verify] ${message}`),
+	})
+
+	// A disagreement count is not actionable on its own — the rows are. Printed to stderr with the progress stream,
+	// because the first thing anyone does with a non-zero count is ask which points.
+	for (const row of verified.agreement.filter((entry) => entry.outcome === "disagree")) {
+		console.error(
+			`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.localMukey ?? "no map unit"}, ` +
+				`service ${row.serviceMukey ?? "no map unit"}, ${row.nearestEdgeMetres?.toFixed(3) ?? "?"} m to the nearest edge`
+		)
+	}
+
+	return [
+		`verify: ${verified.agreed}/${verified.agreement.length} agree with Soil Data Access · ` +
+			`${verified.boundaryTolerance} within boundary tolerance · ${verified.disagreed} disagree`,
+		`verify (outside the built survey areas): ${verified.outsidePassed}/${verified.outside.length} read unknown` +
+			(verified.outside.some((row) => !row.passed)
+				? `, ${verified.outside
+						.filter((row) => !row.passed)
+						.map((row) => row.label)
+						.join(", ")} did not`
+				: ""),
+	]
 }
 
 const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
@@ -89,8 +135,6 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 			createSoilDataAccessClient,
 			formatSoilResolutionRows,
 			measureSoilCellResolutions,
-			sampleAgreementPoints,
-			verifySoilDatabase,
 		} = await import("@mailwoman/soil/sdk")
 
 		const { SOIL_PILOT_REGION, soilLayerName, SSURGO_ATTRIBUTION, SSURGO_LICENSE } =
@@ -105,6 +149,17 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		const prefix = options.area ?? options.region ?? SOIL_PILOT_REGION.toUpperCase()
 		const region = options.area ? options.area.toLowerCase() : prefix.toLowerCase()
 		const client = createSoilDataAccessClient()
+
+		// `--verify-only` CHECKS AN ARTIFACT THAT ALREADY EXISTS and acquires nothing. A full-region build takes hours and
+		// seals its artifact before the check runs, so a check that could only run as the build's last step would cost a
+		// rebuild every time the check itself was worth re-running.
+		if (options.verifyOnly) {
+			return runVerification(
+				options.out ?? String(dataRootPath("soil", "soil.db")),
+				client,
+				options.verifyPoints ? Number(options.verifyPoints) : undefined
+			)
+		}
 
 		const acquired = await acquireRegion({
 			client,
@@ -185,34 +240,8 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 
 		if (options.verify) {
-			const points = sampleAgreementPoints(out, options.verifyPoints ? { count: Number(options.verifyPoints) } : {})
-
-			const verified = await verifySoilDatabase({
-				databasePath: out,
-				client,
-				points,
-				onProgress: (message) => console.error(`  [verify] ${message}`),
-			})
-
-			// A disagreement count is not actionable on its own — the rows are. Printed to stderr with the progress stream,
-			// because the first thing anyone does with a non-zero count is ask which points.
-			for (const row of verified.agreement.filter((entry) => entry.outcome === "disagree")) {
-				console.error(
-					`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.localMukey ?? "no map unit"}, ` +
-						`service ${row.serviceMukey ?? "no map unit"}, ${row.nearestEdgeMetres?.toFixed(3) ?? "?"} m to the nearest edge`
-				)
-			}
-
 			lines.push(
-				`verify: ${verified.agreed}/${verified.agreement.length} agree with Soil Data Access · ` +
-					`${verified.boundaryTolerance} within boundary tolerance · ${verified.disagreed} disagree`,
-				`verify (outside the built survey areas): ${verified.outsidePassed}/${verified.outside.length} read unknown` +
-					(verified.outside.some((row) => !row.passed)
-						? `, ${verified.outside
-								.filter((row) => !row.passed)
-								.map((row) => row.label)
-								.join(", ")} did not`
-						: "")
+				...(await runVerification(out, client, options.verifyPoints ? Number(options.verifyPoints) : undefined))
 			)
 		}
 

@@ -237,8 +237,8 @@ export interface BuildSoilResult {
  * Build the layer.
  *
  * @throws {Error} On a delineation the classifier refuses, a streamed count that disagrees with the shapefile's own
- *   declaration, an area total that disagrees with the authority's published acreage, or a survey area whose outline
- *   yields no interior coverage cell.
+ *   declaration, an area total that disagrees with the authority's published acreage, or a set of outlines that yields
+ *   no interior coverage cell at all.
  */
 export async function buildSoilDatabase(options: BuildSoilOptions): Promise<BuildSoilResult> {
 	if (options.coverageResolution >= options.indexResolution) {
