@@ -105,10 +105,10 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"h3-js": "^4.5.0",
-		"spliterator": "^6.2.0"
+		"spliterator": "^6.3.0"
 	},
 	"devDependencies": {
-		"@types/node": ">=26.1.2",
+		"@types/node": ">=26.3.0",
 		"playwright": "^1.62.1"
 	}
 }

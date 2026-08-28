@@ -41,7 +41,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@hono/zod-openapi": "^1.5.1",
+		"@hono/zod-openapi": "^1.6.1",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
@@ -51,7 +51,7 @@
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
-		"hono": "^4.13.0",
+		"hono": "^4.13.4",
 		"mailwoman": "workspace:*",
 		"zod": "^4.4.3"
 	}

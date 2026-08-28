@@ -131,8 +131,8 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"h3-js": "^4.5.0",
-		"kysely": "^0.29.4",
-		"spliterator": "^6.2.0"
+		"kysely": "^0.29.5",
+		"spliterator": "^6.3.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"
