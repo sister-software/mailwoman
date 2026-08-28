@@ -249,7 +249,7 @@ describe("buildTruthFamilyGroups — the held-out ground truth", () => {
 		const southgateFirst = labelFor("Southgate Capital Partners LLC", "Northbridge Holdings LLC")
 
 		// The FULL joined label, not a substring: the id set is what gets published, and `toContain(":northbridge")`
-		// would pass just as happily on a label that had lost the other parent.
+		// would pass just as on a label that had lost the other parent.
 		const expected = "holding_company_name:northbridge holdings + holding_company_name:southgate capital partners"
 
 		// Equal to each other AND equal to the full expected set — the label is a property of the registrant, not of

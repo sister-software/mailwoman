@@ -56,11 +56,10 @@ import type { PostcodePlacement } from "../shard-recipes/scaffold.ts"
 export interface PostcodeTriple {
 	postcode: string
 	/**
-	 * The segment BEFORE the locality, when the source has one. Load-bearing rather than decorative: a shard whose every
-	 * row begins with the locality teaches that the first named segment IS the locality, and that flips the model's
-	 * default. Measured on the v4.8.0 candidate, which had no such segment — `Ye Three Lords, 27 Minories, London EC3N
-	 * 1DE` came back `locality: "Ye Three Lords"` with the venue and the street both gone, and 11 of its 25 regressions
-	 * were venue-led rows across seven countries.
+	 * The segment before the locality, when the source has one. A shard whose every row begins with the locality teaches
+	 * that the first named segment IS the locality, and that flips the model's default. Measured on the v4.8.0 candidate,
+	 * which had no such segment — `Ye Three Lords, 27 Minories, London EC3N 1DE` came back `locality: "Ye Three Lords"`
+	 * with the venue and the street both gone, and 11 of its 25 regressions were venue-led rows across seven countries.
 	 */
 	dependentLocality?: string
 	locality: string

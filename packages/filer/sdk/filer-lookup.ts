@@ -83,7 +83,7 @@
  *   and `as_of` instead of `source`/`source_vintage` — its provenance is "this reader's own
  *   computation", not a row in `filer.db`, and that must stay legible at the call site.
  *
- *   **`families` is a separate rollup from `cluster` (§7-3b gate 1, load-bearing).** `cluster` answers
+ *   **`families` is a separate rollup from `cluster` (§7-3b gate 1, required).** `cluster` answers
  *   "which OTHER identifiers denote this SAME filer" (entity resolution); `families` answers "which
  *   corporate family (holding/management tree) does this filer belong to" — spec §4.1 keeps these two
  *   rollups apart on purpose, because folding them together is exactly the error that makes a broadband
@@ -177,7 +177,7 @@ export interface FilerLookupInferredLink {
 /**
  * One corporate-family membership the queried node carries, `asOf` the query's date — reported on
  * {@link FilerLookupResult.families}, a field STRUCTURALLY DISTINCT from {@link FilerLookupResult.cluster} (§7-3b gate
- * 1, load-bearing). `relationship` is one of {@link FilerRelationship} (`holding_company`, `management_company`,
+ * 1, required). `relationship` is one of {@link FilerRelationship} (`holding_company`, `management_company`,
  * `parent_company`, `subsidiary` — never `same_entity`, which is reserved for entity-cluster edges and never written to
  * `filer_family`). Deliberately carries NO `members` field and NO `cluster_id`-shaped key — see the module docstring's
  * "families is a separate rollup" section for why that shape difference is the whole point: a family membership must
@@ -228,16 +228,15 @@ export interface FilerLookupResult {
 	cluster: FilerLookupCluster | null
 	inferred_links: FilerLookupInferredLink[]
 	/**
-	 * Every corporate-family membership the queried node carries, `asOf` the query's date (§7-3b gate 1, load-bearing) —
-	 * read EXCLUSIVELY from `filer_family`, a query that never shares a code path with `cluster` above. A family
-	 * membership can never appear here as a `cluster` entry, and a `cluster` member can never appear here unless
-	 * `filer_family` independently asserts it — the two rollups are answers to different questions (same filer under
-	 * another identifier, vs. same corporate family as a DIFFERENT filer) and this field's shape
-	 * ({@link FilerLookupFamily}: `family_id`/`relationship`) is structurally incompatible with
-	 * {@link FilerLookupCluster} (`cluster_id`/`members`) on purpose. Empty array, never `null`, when the node carries no
-	 * family membership as of this date — `cluster`'s `null` means "no cluster has ever been computed for this node";
-	 * there is no analogous "never computed" state for `families`, since every `filer_family` row is a direct fact, not a
-	 * derived snapshot.
+	 * Every corporate-family membership the queried node carries, `asOf` the query's date (§7-3b gate 1, required) — read
+	 * EXCLUSIVELY from `filer_family`, a query that never shares a code path with `cluster` above. A family membership
+	 * can never appear here as a `cluster` entry, and a `cluster` member can never appear here unless `filer_family`
+	 * independently asserts it — the two rollups are answers to different questions (same filer under another identifier,
+	 * vs. same corporate family as a DIFFERENT filer) and this field's shape ({@link FilerLookupFamily}:
+	 * `family_id`/`relationship`) is structurally incompatible with {@link FilerLookupCluster} (`cluster_id`/`members`)
+	 * on purpose. Empty array, never `null`, when the node carries no family membership as of this date — `cluster`'s
+	 * `null` means "no cluster has ever been computed for this node"; there is no analogous "never computed" state for
+	 * `families`, since every `filer_family` row is a direct fact, not a derived snapshot.
 	 *
 	 * **One entry per DISTINCT `(family_id, relationship, assertion, match_score)`, not one per `filer_family` row.** A
 	 * single membership can be asserted by several rows — two sources reporting it, or two raw spellings that
@@ -335,10 +334,10 @@ export function pickPrimaryFRN(candidates: readonly FRNFilingRecord[]): FRN {
  *
  * Applies the SAME full half-open predicate as every other temporal read in this module — `valid_from <= asOf AND
  * (valid_to IS NULL OR asOf < valid_to)` (see the module docstring; `schema.ts`'s `FilerEdgeTable.valid_to` documents
- * why the convention is half-open, not a stylistic choice). BOTH halves are load-bearing. With only `valid_from <=
- * asOf`, a CLOSED 499 edge (superseded by a later one, `valid_to` set to that later edge's `valid_from`) still wins the
- * "most recent" comparison over an in-force earlier edge, so the primary-FRN pick rests on an assertion this SAME
- * reader simultaneously reports as no longer in force via `identifiers`/`inferred_links`'s temporal scoping — a direct
+ * why the convention is half-open, not a stylistic choice). BOTH halves are required. With only `valid_from <= asOf`, a
+ * CLOSED 499 edge (superseded by a later one, `valid_to` set to that later edge's `valid_from`) still wins the "most
+ * recent" comparison over an in-force earlier edge, so the primary-FRN pick rests on an assertion this SAME reader
+ * simultaneously reports as no longer in force via `identifiers`/`inferred_links`'s temporal scoping — a direct
  * self-contradiction.
  *
  * A `frn` with no in-force filing `asOf` the given date contributes no candidate at all (not an error — see
@@ -520,8 +519,8 @@ export async function readFamilyMembers(
  * reviewer reproduced the consequence: rewrite one persisted `family_id` to what a canonicalizer one designation-token
  * older would have minted (node, edge and membership all intact) and every `display_names` on both surfaces silently
  * empties — no error, no warning, the name simply gone. `filer_family.naming_node_id` carries that fact from BUILD time
- * instead, which is also the plainly correct shape under this project's binding rule (provenance on every edge): a
- * membership row must not record the fact without recording what produced it.
+ * instead, which is also the correct shape under this project's binding rule (provenance on every edge): a membership
+ * row must not record the fact without recording what produced it.
  *
  * **`assertion: "authoritative"` is required — EXCEPT for EDGAR's own source.** The general rule is binding: a
  * `display_names` entry is presented as a DOCUMENTED name this family's members actually reported, so an edge inferred
@@ -852,7 +851,7 @@ export async function filerLookup(
 		source: edge.source,
 	}))
 
-	// Gate 1 (3b, load-bearing): `families` is read from `filer_family` ONLY — an entirely separate query from
+	// Gate 1 (3b, required): `families` is read from `filer_family` ONLY — an entirely separate query from
 	// `cluster`'s filer_cluster/filer_edge path above and from `inferred_links`'s filer_edge path just above this. No
 	// function in this reader touches both a cluster source and a family source, so a family membership can never be
 	// returned as a cluster member, and vice versa. Same half-open asOf predicate as everywhere else in this module.

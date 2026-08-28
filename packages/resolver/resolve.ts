@@ -1381,7 +1381,7 @@ class WOFResolver implements Resolver {
 
 		// Admin-containment partition (#1717 stage 2): the LAST soft re-rank, after the anchor/fame keys
 		// above, because the qualifier is the address's OWN text — evidence, which outranks a prior. The
-		// backend already put contained rows first; this second partition is load-bearing, not belt-and-
+		// backend already put contained rows first; this second partition is required, not belt-and-
 		// braces: `rankByImportance` just re-ordered the exact tier by fame, and Richmond, Virginia
 		// outscores Richmond, North Yorkshire on importance — without this the lever loses exactly where
 		// fame disagrees with the qualifier (the shared-function partition, tier-safe + stable, so it can

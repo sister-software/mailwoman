@@ -22,7 +22,7 @@ So we built a synthetic training shard that puts the gold boundary on exactly th
 
 We don't ship on the macro. We ship on a battery of per-locale floors ("don't regress US locality below 72.9," that sort of thing), graded against the _assembled_ output: the actual parse a user would get, not the per-token score the trainer optimizes.
 
-One floor came back red. **US locality: 66.2, floor 72.9.** The retrain that aced the boundaries had dropped six and a half points on locality, on real held-out US addresses, while the aggregate went _up_. The gains were concentrated where we'd added training data; the loss was spread across everything else, and the average happily averaged it away.
+One floor came back red. **US locality: 66.2, floor 72.9.** The retrain that aced the boundaries had dropped six and a half points on locality, on real held-out US addresses, while the aggregate went _up_. The gains were concentrated where we'd added training data; the loss was spread across everything else, and the average averaged it away.
 
 This is the trap we've been burned by before, and it has a name on this project: **grade the assembled coordinate, never the label-F1.** We wrote it on the wall. We still almost walked past it.
 

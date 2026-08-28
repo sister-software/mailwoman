@@ -5,7 +5,7 @@
  *
  *   Tests for the `no-fragment` shard (Track B — the NO house-number-licence lever).
  *
- *   Two invariants, both load-bearing (the fr-fragment lesson, transplanted):
+ *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
  *   1. THE SPLIT with a DIACRITIC surface. The board keeps diacritics; a diacritic-stripping norm
  *      would leak `Tømmerlien` silently. Pinned in both directions.

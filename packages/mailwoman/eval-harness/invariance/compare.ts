@@ -7,7 +7,7 @@
  *   decoded component maps (order-insensitive: a plain key→value record has no order) and classifies the
  *   pair INVARIANT / DEGRADED / LOST.
  *
- *   `house_number` / `street` / `postcode` are treated as CRITICAL: they're the load-bearing tags a
+ *   `house_number` / `street` / `postcode` are treated as CRITICAL: they're the required tags a
  *   downstream geocoder needs to resolve a rooftop (the same three the #251/#1101 DIR-test failures broke
  *   on). A value change on a critical tag that's present in the original — including one token bleeding
  *   from a neighboring tag, e.g. a stripped comma pulling a directional suffix into the locality — is LOST

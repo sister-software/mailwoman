@@ -239,7 +239,7 @@ Two constraints ride on that:
 
 Components are not coordinates. The [demo](/demo) resolves them by range-loading a 1.65 GB gazetteer
 over HTTP: `sql.js-httpvfs` fetches only the SQLite pages a lookup touches, which the gazetteer's own
-build notes put at about a dozen range requests per session. That machinery is docs-site code rather
+build notes put at about a dozen range requests per session. That implementation is docs-site code rather
 than a published package, and two things stand between it and your page.
 
 The worker is one. `sql.js-httpvfs` runs SQLite in a `Worker`, and a `Worker` cannot be constructed

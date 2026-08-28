@@ -1,7 +1,7 @@
 # Modal retrain launch — runbook
 
 Notes for whoever (agent or human) launches a training run on Modal. Read this before touching
-`train_remote.py` or kicking a retrain. The flow has several non-obvious failure points; each gotcha
+`train_remote.py` or kicking a retrain. The flow has several non-obvious failure points; each failure mode
 below has cost a run or hours.
 
 ## The flow, in one line
@@ -57,7 +57,7 @@ mailwoman-training models/tokenizer`). Re-using the base run's tokenizer keeps i
 ## Stale `__pycache__`
 
 A container-side write of new `.py` over old leaves stale `.pyc` that imports instead (the night-3 pyc
-gotcha). Every `sync_*` clears `…/mailwoman_train/__pycache__` before `vol.commit()`.
+failure mode). Every `sync_*` clears `…/mailwoman_train/__pycache__` before `vol.commit()`.
 
 ## Recovering
 

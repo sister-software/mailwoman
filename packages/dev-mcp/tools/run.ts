@@ -5,7 +5,7 @@
  *
  *   The `mwdev_run` tool definition — the description an agent reads, the input schema, and the handler wiring.
  *   The measurement itself lives in the package root; this file is the CONTRACT, and the description is the
- *   load-bearing half of it.
+ *   required half of it.
  */
 
 import { haversineKm } from "@mailwoman/spatial"

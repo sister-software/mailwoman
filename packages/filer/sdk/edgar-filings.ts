@@ -14,7 +14,7 @@
  *      {@linkcode fetchTenKFilings} reads it and keeps only `form === "10-K"` rows (10-K/A amendments are
  *      deliberately excluded — a distinct filing this task doesn't need, not an oversight).
  *
- *   **Name→CIK matching is NOT name-only, and this is the load-bearing rule in this file (3a's
+ *   **Name→CIK matching is NOT name-only, and this is the required rule in this file (3a's
  *   false-identity-link lesson, carried forward).** `cluster-filers.ts` carries the worked example:
  *   "American Broadband LLC" and "American Broadband, Inc." — two DIFFERENT companies — canonicalize to the
  *   exact same string once legal designations are stripped, and a matcher that silently picks "the best

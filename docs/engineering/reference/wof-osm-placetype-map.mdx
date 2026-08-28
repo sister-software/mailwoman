@@ -47,7 +47,7 @@ sub-venue parsing lives in OSM's _indoor_ scheme, not its _place_ scheme.
 | `continent`     | `place=continent`                                                                                             | firm                       |
 | `country`       | `boundary=administrative` + `admin_level=2`; also `place=country`                                             | firm                       |
 | `county`        | `boundary=administrative`, typically `admin_level=6`                                                          | moderate                   |
-| `custom`        | none — WOF's escape hatch for non-standard geometries                                                         | n/a                        |
+| `custom`        | none — WOF's override for non-standard geometries                                                             | n/a                        |
 | `dependency`    | `boundary=administrative` with ISO3166 tags; genuinely messy in OSM                                           | weak                       |
 | `disputed`      | `disputed=yes` / `boundary=disputed`                                                                          | moderate                   |
 | `empire`        | **none** — historical polities live in OpenHistoricalMap, not OSM                                             | firm (absent)              |

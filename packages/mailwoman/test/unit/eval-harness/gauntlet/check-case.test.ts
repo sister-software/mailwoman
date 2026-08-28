@@ -7,7 +7,7 @@
  *   2026-08-06 none of it was reachable without the ~9 GB shard set — which is how two stored expectation
  *   columns (`expect_place_id`, `expect_place_name`) went the corpus's whole life unread (#1507).
  *
- *   The load-bearing case is `grades place identity off the RESOLVED place, not the echoed query span`: it
+ *   The required case is `grades place identity off the RESOLVED place, not the echoed query span`: it
  *   pins the exact confusion that would make this whole gate decorative.
  */
 
@@ -147,7 +147,7 @@ describe("the place-identity gate (#1507)", () => {
 	it("grades place identity off the RESOLVED place, not the echoed query span", () => {
 		// The Gaborone class, verbatim: the parse is perfect and `locality` echoes it, while the resolver
 		// returned an Austrian hamlet. `expect_components.locality` is green on this result; only the place
-		// gate can see the failure — which is what makes reading `hierarchy[0].name` load-bearing.
+		// gate can see the failure — which is what makes reading `hierarchy[0].name` required.
 		const c = storedCase({
 			expect_components: JSON.stringify({ locality: "Gaborone" }),
 			expect_place_name: "Gaborone",

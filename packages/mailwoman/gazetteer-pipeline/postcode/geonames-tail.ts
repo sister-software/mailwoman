@@ -17,7 +17,7 @@
  *   gated on per-country row-count parity with the frozen artifact — GB 1,839,678 · PL 20,299 ·
  *   SE 18,870 · NO 5,132 · FI 3,576 · SK 3,480 · CZ 2,694 · DK 1,159 · SI 556 · HR 309.
  *
- *   Country ORDER is load-bearing for id reproducibility, not for correctness: `ingestGeonamesPostal`
+ *   Country ORDER is required for id reproducibility, not for correctness: `ingestGeonamesPostal`
  *   allocates ids from one counter at {@link GEONAMES_POSTAL_ID_BASE}, so
  *   {@link DEFAULT_GEONAMES_TAIL_COUNTRIES} is written in the frozen artifact's own ingest order
  *   (recovered from its per-country id ranges) and reproduces its ids exactly. File-level md5 identity

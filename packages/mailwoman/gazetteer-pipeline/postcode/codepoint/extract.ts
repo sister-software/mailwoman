@@ -146,11 +146,11 @@ export interface ExtractCodePointResult {
 	/**
 	 * `Doc/licence.txt` verbatim, so the shard's provenance quotes OS's own words rather than ours.
 	 *
-	 * Decoded as **Latin-1**, and that is load-bearing rather than fussy. The archive declares no encoding, and the
-	 * file's only non-ASCII byte is `0xA9` — Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns
-	 * every copyright symbol into U+FFFD, so the first build baked `Contains Ordnance Survey data � Crown copyright` into
-	 * the shard's `meta`. Mojibake in a decorative string is cosmetic; mojibake in the attribution text a redistributor
-	 * is legally required to carry is not.
+	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's
+	 * only non-ASCII byte is `0xA9` — Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every
+	 * copyright symbol into U+FFFD, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the
+	 * shard's `meta`. Mojibake in a decorative string is cosmetic; mojibake in the attribution text a redistributor is
+	 * legally required to carry is not.
 	 */
 	licenseText: string
 	totalBytes: number

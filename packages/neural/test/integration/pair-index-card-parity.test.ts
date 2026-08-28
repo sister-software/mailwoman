@@ -102,7 +102,7 @@ describe("pair-index ↔ model-card parity", () => {
 
 			const facts = readPairIndexFacts(binPath)
 
-			// Pair count is the load-bearing one: it is what changed, unnoticed, across three increments.
+			// Pair count is the required one: it is what changed, unnoticed, across three increments.
 			expect(block!.pairs, `${pkg}: card pairs != artifact pairs — rebuild the artifact or update the card`).toBe(
 				facts.pairs
 			)

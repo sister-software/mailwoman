@@ -7,7 +7,7 @@
  *   through, the phrase → record index built over the surfaces accumulated so far, and the operator
  *   that decides whether a feature's name contains a known designator.
  *
- *   The two matching rules here are script-conditional, and both narrowings are load-bearing — see
+ *   The two matching rules here are script-conditional, and both narrowings are required — see
  *   {@link NON_SPACING_SCRIPT} and {@link nameContainsSurfaces}.
  */
 

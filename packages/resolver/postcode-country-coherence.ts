@@ -197,7 +197,7 @@ export interface PostcodeCountryScopeOpts {
 }
 
 /**
- * A usable coordinate — the gazetteer stores an unlocated row as 0,0, which haversine would happily measure against.
+ * A usable coordinate — the gazetteer stores an unlocated row as 0,0, which haversine would measure against.
  */
 function hasCoord(p: ResolvedPlace): boolean {
 	return p.lat !== 0 || p.lon !== 0
@@ -214,7 +214,7 @@ const MAX_LOCALITY_VALUES = 3
  * case-insensitively deduplicated. Two passes so a real locality always beats a dependent one regardless of tree
  * order.
  *
- * Document order is load-bearing, not cosmetic. The original stack-pop traversal visited the LAST node first, so on `92
+ * Document order is required, not cosmetic. The original stack-pop traversal visited the LAST node first, so on `92
  * Laurell Road, Gander, NL A1V 0A9` — where the model tags both `Gander` and the province abbreviation `NL` as
  * localities — the pass keyed its whole country verdict on "NL", whose only exact locality-band bearer is an alias of
  * Nal, Afghanistan, and the walk resolved a Newfoundland street 10,000 km away. The FIRST-written locality is the one

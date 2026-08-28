@@ -143,7 +143,7 @@ for await (const row of CSVSpliterator.fromAsync(path, { mode: "object" })) {
 > replaces all of that.~~ **Superseded during execution:** `enableQuoteHandling` is broken for
 > embedded delimiters (see the resolved/new-issue note under Pattern B). Both trainers kept
 > their manual quote/pending logic; only the line-reading layer moved to `TextSpliterator`,
-> with a `\r` strip (the CMS hospital CSV is CRLF — load-bearing, see Execution notes).
+> with a `\r` strip (the CMS hospital CSV is CRLF — required, see Execution notes).
 
 ### Pattern C: Pipe/Custom delimiter (`for await (const line …)` + `line.split("|")` or `"\t"`)
 

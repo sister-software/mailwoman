@@ -110,7 +110,7 @@ export function decodeAsJSON(
 		out.unknown = unknownSpans(tree)
 	}
 
-	// Always emitted when asked, `[]` included — the same reasoning as `unknown` above, and load-bearing here: a caller
+	// Always emitted when asked, `[]` included — the same reasoning as `unknown` above, and required here: a caller
 	// that has to presence-check cannot tell "nothing was dropped" from "this build does not report drops".
 	if (opts.includeDropped) {
 		out.dropped = dropped

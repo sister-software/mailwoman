@@ -8,7 +8,7 @@
  *   supplies only the ONE docs-specific concern: the live poi.db search, which needs the site's staged
  *   sql.js-httpvfs assets and the byte-ranged published layer. It's injected as a `runLiveSearch`
  *   function that dynamically imports `@mailwoman/docs/shared/poi-httpvfs` on first use, so the httpvfs/worker
- *   machinery never enters the package's browser graph and the intent-only common case pays nothing.
+ *   implementation never enters the package's browser graph and the intent-only common case pays nothing.
  *
  *   The injected probe is CATEGORY-ONLY, and `brandLiveSearch` is left off (default), so a chain-brand
  *   query ("chevron near Houston") shows its intent + Wikidata QID chip but no live block. A brand-wide

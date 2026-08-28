@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Google Geocoding API client, built on {@linkcode APIClient}. Ported from
  *   `isp-nexus/universe/mailwoman/sdk/google/GoogleGeocoder.ts`, with the plumbing rewritten onto this
- *   repo's own machinery and three defects from the original fixed rather than carried.
+ *   repo's own implementation and three defects from the original fixed rather than carried.
  *
  *   **THE `@googlemaps/google-maps-services-js` DEPENDENCY IS DROPPED.** The original constructed the
  *   library's `Client` around this client's Axios instance (`axiosInstance: this.axios as any // Fixes
@@ -101,7 +101,7 @@ const MS_PER_MINUTE = 60_000
  *
  * Not permanent, either. `sec-client.ts` earns a century-long TTL because a filed SEC document is immutable by law;
  * nothing here is. Thirty days bounds how long a re-authored case can disagree with a fresh geocode without anyone
- * noticing, and deleting the cache directory is always the escape hatch.
+ * noticing, and deleting the cache directory is always the override.
  */
 const DEFAULT_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000
 

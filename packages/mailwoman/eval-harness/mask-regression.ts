@@ -24,7 +24,7 @@
  *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
  *   Hook it into the release path (`mailwoman eval gate` / the publish flow), NOT into Test CI.
  *
- *   Mechanics: reuses the `capability-manifest.ts` scoring machinery verbatim — `createScorer` (so
+ *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim — `createScorer` (so
  *   the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
  *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't

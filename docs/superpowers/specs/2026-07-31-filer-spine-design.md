@@ -11,7 +11,7 @@ US telecom identity is deliberately fragmented across a dozen public registries 
 cleanly. A single operating company can appear as: an FRN in CORES, a 499 Filer ID with a separately
 named holding company, a SPIN at USAC, a six-digit provider ID in BDC, an OCN in NECA/LERG, an ASN
 at ARIN, a CIK at the SEC, a state CPCN per state, and a dozen DBAs in marketing. Nothing publishes
-the crosswalk. The opacity is load-bearing for the incumbents: a census block showing "five
+the crosswalk. The opacity is required for the incumbents: a census block showing "five
 providers" may be two corporate families, and the map calls that competition.
 
 Mailwoman is unusually well placed to fix this because the hard part is **record linkage over messy
@@ -103,7 +103,7 @@ edge: { from, to, assertion: "authoritative" | "inferred", source, source_vintag
   contact, with FRN/SPIN/ASN as `exactDiscriminator`s when present and name/address as scored
   comparators. This is the existing Fellegi-Sunter path, not a new subsystem.
 
-**Edges are time-scoped — this is load-bearing, not bookkeeping.** Ownership changes faster than
+**Edges are time-scoped — this is required, not bookkeeping.** Ownership changes faster than
 filing vintages update (worked example: a filer acquired ~7 months before the BDC vintage under
 inspection still files under its pre-acquisition identity — see
 `2026-07-31-evidence-axes-beyond-filings.md` §2.1). Every family rollup query therefore takes a date,

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared machinery for the decoder-side regex repair passes (`postcode-repair.ts`,
+ *   Shared implementation for the decoder-side regex repair passes (`postcode-repair.ts`,
  *   `unit-repair.ts`).
  *
  *   Both passes have the same skeleton: run a priority-ordered list of shape regexes over the raw

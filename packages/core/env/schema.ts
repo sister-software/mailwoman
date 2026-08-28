@@ -126,7 +126,7 @@ export const PublicEnvSchema = z.object({
 	 */
 	MAILWOMAN_WOF_GLOBAL_DB: z.string().optional(),
 	/**
-	 * Deployed demo URL for the docs e2e suite (skips the local build+serve machinery).
+	 * Deployed demo URL for the docs e2e suite (skips the local build+serve implementation).
 	 */
 	MAILWOMAN_DEMO_URL: z.string().optional(),
 	/**

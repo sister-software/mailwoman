@@ -703,7 +703,7 @@ function renderWhySection(withheld: LinkageEvalRun): string {
 function renderWhatWouldMoveItSection(): string {
 	return (
 		"It is tempting to call the withheld number a floor that any better evidence would lift. That is not what this " +
-		"code does, and an earlier version of this page said it anyway. Two probes settle it.\n\n" +
+		"code does, and an earlier version of this page said it anyway. Two probes establish the behavior.\n\n" +
 		"**Populating the address and contact columns changes nothing.** Fill `hqAddress`, " +
 		"`customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family " +
 		"in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those " +
@@ -777,7 +777,7 @@ function renderLinkageEvalReport(input: RenderLinkageEvalReportInput): string {
 			"been observed reporting DIFFERENT parents, which would mean the fold is joining companies that ought to stay " +
 			"apart. That failure is not silent here. Folding two registrants that belong to different families puts a " +
 			"truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below " +
-			"1.000, and the test asserting a perfect control fails. The rule is load-bearing and wired to a tripwire.",
+			"1.000, and the test asserting a perfect control fails. The rule is required and wired to a regression check.",
 		"",
 		"## Corpus",
 		"",

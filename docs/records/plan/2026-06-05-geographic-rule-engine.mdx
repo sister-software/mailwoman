@@ -16,7 +16,7 @@ That distinction is the foundation of everything below. (A) lives in the resolve
 
 ## The thesis
 
-The machinery after the parse is not one monolithic resolver, and it is not a Matryoshka of nested resolver _objects_ either (orthogonal concerns — grid morphology vs postal schema vs alias lists — don't fit a single inheritance tree, and adding a city shouldn't mean a code deploy). It's a flat **Geographic Rule Engine**:
+The implementation after the parse is not one monolithic resolver, and it is not a Matryoshka of nested resolver _objects_ either (orthogonal concerns — grid morphology vs postal schema vs alias lists — don't fit a single inheritance tree, and adding a city shouldn't mean a code deploy). It's a flat **Geographic Rule Engine**:
 
 > A `convention` table keyed by Who's-On-First polygon id, deep-merged up the ancestor chain (Sapporo's row inherits Hokkaidō's inherits Japan's), that dispatches a short ordered sequence of named **strategy functions**. The data carries the routing and parameters; the strategies are a small registry of code primitives. "Plug in and out as needed" means a row in a table plus a pick from existing primitives — new code only for a novel spatial system.
 
@@ -29,7 +29,7 @@ This also retires an older open question. Direction D imagined a coarse-placer t
 
 ## The one foundational decision
 
-The seductive idea is to throw out the semantic tags and have the parser emit positional levels (`L0…Ln`) that the convention names per locale. It's elegant and would serve every future country. It is also the highest-regret move on the board: it detonates four working locales, forces a from-scratch retrain plus a resolver-contract rewrite, with NL's 94.9% to re-earn from zero — and it breaks on partial queries, where the level _index_ of a bare "Berlin" is undefined until you've already resolved the country. We are **not** doing that, and Phase 3 below exists only to record the tripwire that would ever reopen it.
+The seductive idea is to throw out the semantic tags and have the parser emit positional levels (`L0…Ln`) that the convention names per locale. It's elegant and would serve every future country. It is also the highest-regret move on the board: it detonates four working locales, forces a from-scratch retrain plus a resolver-contract rewrite, with NL's 94.9% to re-earn from zero — and it breaks on partial queries, where the level _index_ of a bare "Berlin" is undefined until you've already resolved the country. We are **not** doing that, and Phase 3 below exists only to record the regression check that would ever reopen it.
 
 The additive cut that buys ~80% of the value with zero regression risk: keep every existing semantic tag, and add exactly one new multi-valued tag — **`locator[]`** — for sub-locality spatial units that aren't a Western street + number (chōme/banchi/gō, grid coordinates, block numbers). Street-based countries never emit it; block-based countries never emit `street`; the convention maps `locator[]` per locale. DE/FR/GB/NL never reference it, so they cannot regress.
 
@@ -69,4 +69,4 @@ Seed strategy registry: `postcode_area_resolution`, `block_area_lookup`, `inters
 - **Phase 1 promotion:** a locale ships when postcode-route PIP-containment clears ~85% on a real OA sample, with no regression to DE/FR/GB/NL (the existing coordinate-first numbers are byte-stable).
 - **Phase 2 gate:** the `locator[]` fine-tune promotes only on per-locale-F1 + resolver utility, and never if it drops an existing locale >2pp. Default to not promoting; live on Phase 1's coarse win.
 - **The `locator[]` shape, the first-ship scope, and the convention-asset format are open forks** to settle at Phase 1 kickoff (plain ordered slot vs typed; JP-only branch vs general refactor; WOF-id-keyed read-only sqlite asset like `postcode-locality-intl.db`).
-- **Phase 3 tripwire (the only thing that reopens `L0…Ln`):** the additive `locator[]` scheme fails to express a newly-onboarded system _as data_ and forces per-country parser-output post-processing in ≥2 locales.
+- **Phase 3 regression check (the only thing that reopens `L0…Ln`):** the additive `locator[]` scheme fails to express a newly-onboarded system _as data_ and forces per-country parser-output post-processing in ≥2 locales.

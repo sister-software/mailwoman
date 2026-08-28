@@ -7,7 +7,7 @@
  *   `mailwoman/eval-harness/fr-parse-recall.ts` and the promotion gate calls it IN-PROCESS.
  *
  *   It USED to live at `scripts/diagnostic/fr-parse-recall.ts`, which was the wrong drawer for it:
- *   `scripts/diagnostic/` is `.gitignore`d wholesale, so a gate-load-bearing leg was surviving only
+ *   `scripts/diagnostic/` is `.gitignore`d wholesale, so a gate-required leg was surviving only
  *   because someone had force-added it to the index. This shim therefore sits in `scripts/eval/` —
  *   the referenced-probe drawer — so `node scripts/eval/fr-parse-recall.ts` keeps working, and the
  *   old diagnostic path is gone.

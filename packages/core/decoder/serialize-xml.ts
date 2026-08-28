@@ -24,7 +24,7 @@
  *       without the vendor prefix have a direct attribute to read.
  *   - Root `<address>` carries `raw` — the full input string for round-trip.
  *
- *   ⚠ DOM gotcha: `element.textContent` on a mixed-content node returns the concatenation of all
+ *   ⚠ DOM failure mode: `element.textContent` on a mixed-content node returns the concatenation of all
  *   descendant text (parent value + children values). Use `Array.from(el.childNodes).filter(n =>
  *   n.nodeType === 3).map(n => n.nodeValue).join('').trim()` or XPath `text()` to get just the
  *   parent's own value. Documented in the package README.

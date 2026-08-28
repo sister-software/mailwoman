@@ -93,7 +93,7 @@ pulled from WOF. It is an acquisition gap, not a modelling error, and it closes 
 ### What shipped, and what is still unverified
 
 A **seat preference** now breaks the tie: on an exact `neg_rank` tie, a `locality` carrying a _real_
-population outranks other placetypes. Both gates are load-bearing and were measured, not reasoned:
+population outranks other placetypes. Both gates are required and were measured, not reasoned:
 
 - A plain "finer placetype wins" moved the top slot on **11,377** keys, of which only **722** were the
   seat/district duplicate. The rest were contests between distinct places — 2,885 `locality → neighbourhood`
@@ -207,7 +207,7 @@ Three reasons worth stating, because they generalise:
 1. **The fan-out is invisible per query.** Nothing asks how many keys one place has, so 19 rows for `to`
    looks like a busy key rather than a data problem.
 2. **The bad rows are shaped exactly like the good ones.** Both are alt-names in a named language with
-   `privateuse=preferred`. Toledo proves the mechanism is load-bearing — abbreviation aliases are how
+   `privateuse=preferred`. Toledo proves the mechanism is required — abbreviation aliases are how
    `TO` → Toledo works — so `is_primary=0` cannot simply be dropped.
 3. **It is not the stopword problem**, which is what I expected going in. That belongs to the FTS route
    (976 hits). The candidate route returns 19, and its bad rows arrive through legitimate-looking alias

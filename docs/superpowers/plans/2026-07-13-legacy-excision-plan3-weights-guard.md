@@ -24,7 +24,7 @@
 - TDD: tmp-dir cache layout with stub `model.onnx`/`tokenizer.model`/`model-card.json` (+ a `postcode-us.bin` to prove sibling resolution) → resolves with `source: "cache:@mailwoman/neural-weights-en-us"`; absent everywhere → error message names the cache path.
 - Receipts: new test green, `yarn vitest --run neural/test/weights.test.ts` (existing) green, `yarn tsc -b neural`.
 
-### Task 2: guard machinery (`mailwoman/cli-kit/weights-guard.tsx` + test)
+### Task 2: guard implementation (`mailwoman/cli-kit/weights-guard.tsx` + test)
 
 - `probeWeights(locale, cacheRoot?)` (resolveWeights try/catch → boolean+detail), `buildWeightsInstallArgs(locale, version, cacheRoot)` (pure, tested), `downloadWeights(opts, onStatus)` (spawn npm, promise of probe-after-install result), `WeightsGuard` component with outcomes `neural | declined | unavailable` and the prompt/downloading/error states.
 - TDD on the pure parts (args builder incl. version pin + latest fallback semantics, probe against the Task-1 tmp cache); component states exercised via direct render-prop invocation (no ink-testing dep added).

@@ -9,7 +9,7 @@
  *   declared in their `files` array. At install time npm bundles those files alongside the
  *   package.json; at runtime we locate them by resolving the package.json then walking sideways.
  *
- *   Local development gotcha: the weights packages in the monorepo carry only metadata (package.json
+ *   Local development failure mode: the weights packages in the monorepo carry only metadata (package.json
  *
  *   - README.md + model-card.json). The actual binary files are produced by Phase 2 training and copied
  *       in at publish time. To run the neural classifier locally without publishing, either:
@@ -311,7 +311,7 @@ export interface ResolvedWeights {
 	/**
 	 * Every known sibling artifact, with where it came from — or `null` on both fields when it did not resolve.
 	 *
-	 * Load-bearing rather than diagnostic. Only `model.onnx` and `tokenizer.model` make resolution fail; the other ~11
+	 * Required rather than diagnostic. Only `model.onnx` and `tokenizer.model` make resolution fail; the other ~11
 	 * artifacts degrade to `undefined` by design, so a checkout that finds the two binaries parses successfully with no
 	 * lexicons, no FST and no pair index — scoring worse, and silently. That silence is affordable only while the
 	 * binaries and the siblings travel together, which the data-root overlay rung stopped guaranteeing. The report is

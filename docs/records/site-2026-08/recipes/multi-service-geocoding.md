@@ -75,7 +75,7 @@ Run the residual sequentially, or at whatever rate your plan allows. This is the
 
 ## Cache what you buy
 
-A paid answer you fetch twice is a bug. Key a cache on the input address (run it through `@mailwoman/normalize` first, so trivial variants collapse to one entry) and check it before escalating. One caveat worth reading the fine print for: storage terms differ. OpenCage lets you store results indefinitely and says so plainly; some providers require you to treat results as ephemeral and re-query instead. The cascade compounds with friendly storage terms — a small residual, bought once, stays bought.
+A paid answer you fetch twice is a bug. Key a cache on the input address (run it through `@mailwoman/normalize` first, so trivial variants collapse to one entry) and check it before escalating. One caveat worth reading the fine print for: storage terms differ. OpenCage lets you store results indefinitely and states; some providers require you to treat results as ephemeral and re-query instead. The cascade compounds with friendly storage terms — a small residual, bought once, stays bought.
 
 ## What "free" actually costs
 

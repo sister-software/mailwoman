@@ -5,7 +5,7 @@
  * @file Tests for {@linkcode parseExhibit21}/{@linkcode fetchExhibit21} (§7-3b decision 6, gate 3).
  *
  *   Gate 3 first (TDD order): the mangled fixture's zero-subsidiaries/non-zero-unparseable/no-throw
- *   contract is the load-bearing test in this file. The other three fixtures (clean table, nested list,
+ *   contract is the required test in this file. The other three fixtures (clean table, nested list,
  *   plain text) each pin a correct extraction for their own shape.
  *
  *   Six document shapes are known to tempt an extractor into emitting a subsidiary name that appears
@@ -296,10 +296,10 @@ describe("fetchExhibit21", () => {
 })
 
 /**
- * The load-bearing invariant this fabrication-audit fix is held to (module docstring): a name is only emitted if it
- * appears in the input as a contiguous string. `normalizedDocument` reproduces the SAME normalization every parse
- * strategy applies before comparing/emitting text — strip tags, decode entities, collapse whitespace — so "appears in
- * the input" is checked on the same basis the parser itself reasons on, not against the raw (still-tagged) source.
+ * The required invariant this fabrication-audit fix is held to (module docstring): a name is only emitted if it appears
+ * in the input as a contiguous string. `normalizedDocument` reproduces the SAME normalization every parse strategy
+ * applies before comparing/emitting text — strip tags, decode entities, collapse whitespace — so "appears in the input"
+ * is checked on the same basis the parser itself reasons on, not against the raw (still-tagged) source.
  */
 function normalizedDocument(html: string): string {
 	return normalizeWhitespace(decodeEntities(stripTags(html)))
@@ -307,8 +307,8 @@ function normalizedDocument(html: string): string {
 
 /**
  * Every case the fabrication audit found (C1-C4, I1, I2), preserved here so the substring-invariant test below runs
- * across them alongside the four fixture files — this is what makes the invariant test "load-bearing": mutating any ONE
- * of the tightenings above regresses at least one of these back to a name that fails the check.
+ * across them alongside the four fixture files — this is what makes the invariant test "required": mutating any ONE of
+ * the tightenings above regresses at least one of these back to a name that fails the check.
  */
 const FABRICATION_AUDIT_CASES: Record<string, string> = {
 	"C1a unclosed <td>": "<table><tr><td>Acme Fiber LLC<td>Delaware</td></tr></table>",

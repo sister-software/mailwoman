@@ -208,7 +208,7 @@ function fold(value: string): string {
 
 /**
  * Does a live neighbour cover this place? Exact name first, then containment in either direction — see
- * {@link CoverageVerdict} for why containment is the load-bearing half.
+ * {@link CoverageVerdict} for why containment is the required half.
  */
 function judgeCoverage(
 	dead: { key: string; words: Set<string>; lat: number; lon: number; placetype: string },

@@ -6,7 +6,7 @@
  *   @file Build the sub-venue designator lexicon (#35) — the vocabulary a corpus shard and, eventually,
  *   the span proposer read to recognize `Terminal 5`, `North Terminal`, `Concourse B`, `ターミナル1` as
  *   venue-INTERIOR structure. This is the assembly: the record schema lives in `sub-venue/table.ts`, the
- *   per-stage machinery in its siblings, and the curation decisions in `sub-venue-promotions.ts`.
+ *   implementation in its siblings, and the curation decisions in `sub-venue-promotions.ts`.
  *
  *   Reads the fetch outputs (`mailwoman corpus fetch wikidata-subvenue`, a JSONL of
  *   `@mailwoman/osm/sdk`'s `SubVenueSourceRow`s per region, and the Overture slice of `poi.db` via
@@ -20,7 +20,7 @@
  *
  *   ── Where the stages live ────────────────────────────────────────────────────────────────────────
  *   Each stage carries the measurements that shaped it; the order they run in is
- *   {@link buildSubVenueLexicon}'s own docstring, and it is load-bearing.
+ *   {@link buildSubVenueLexicon}'s own docstring, and it is required.
  *
  *   - `sub-venue/table.ts` — the emitted record schema plus the shipped seed vocabulary.
  *   - `sub-venue/surfaces.ts` — phrase normalization, the phrase → record index, and the name-match
@@ -158,7 +158,7 @@ export interface BuildSubVenueLexiconInput {
 /**
  * Build the lexicon table. PURE and deterministic — same inputs, byte-identical output.
  *
- * Order of operations is load-bearing in three places:
+ * Order of operations is required in three places:
  *
  * 1. Seed surfaces are inserted before anything else, so `terminal` indexes to the `terminal` designator rather than to
  *    whichever Wikidata alias sorts first.

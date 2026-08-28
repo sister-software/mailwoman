@@ -9,7 +9,7 @@ the low-level rule-classifier packages directly.
 ## 1. `@mailwoman/classifiers` is removed
 
 The rule-classifier workspace (the `*Classifier` families, `adapter`, the composite scheme
-machinery) is gone from the monorepo and deprecated on npm.
+implementation) is gone from the monorepo and deprecated on npm.
 
 - **If you parse addresses:** use `mailwoman` (CLI) or `createRuntimePipeline` (library). This is
   the supported path and is unchanged.
@@ -26,7 +26,7 @@ machinery) is gone from the monorepo and deprecated on npm.
 
 ## 2. `@mailwoman/core` no longer exports `./solver` or `./classification`
 
-The v0 constraint solver (`@mailwoman/core/solver`) and the rule-classification machinery
+The v0 constraint solver (`@mailwoman/core/solver`) and the rule-classification implementation
 (`@mailwoman/core/classification` — `BaseClassifier`, `CompositeClassifier`, `PhraseClassifier`,
 `SectionClassifier`, `WordClassifier`, `scheme`) are deleted. They had no consumer outside the
 removed rules parser.

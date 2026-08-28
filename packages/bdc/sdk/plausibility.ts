@@ -24,7 +24,7 @@
  *   - **Physical evidence's search center**: independent of the above — `claim.point` (or the geocoded
  *     `claim.address`) directly, whenever available. A GEOID-ONLY claim (no point, no address) has NO
  *     coordinate to search from: bdc.db stores no public geoid→centroid resolver (deriving one would
- *     need the same Fabric-adjacent block-centroid machinery the vertical explicitly keeps out of reach
+ *     need the same Fabric-adjacent block-centroid implementation the vertical explicitly keeps out of reach
  *     — §2.2's boundary), so physical evidence is skipped entirely for that shape of claim. This is a
  *     genuine, documented capability gap, not a missing-layer abstain: `coverage_confidence` still
  *     degrades honestly (see below), but no `PlausibilityEvidence` abstain variant fits "no coordinate

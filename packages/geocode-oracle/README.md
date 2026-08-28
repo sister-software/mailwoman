@@ -65,5 +65,5 @@ built, which also means rotating the key does not orphan the cache.
 ## Lineage
 
 Ported from the operator's isp-nexus project (`universe/mailwoman/sdk/google/`, `.../sdk/census/`). The
-domain logic was salvaged; the plumbing was rewritten onto this repo's own machinery. Each module's
+domain logic was salvaged; the plumbing was rewritten onto this repo's own implementation. Each module's
 header names what was kept, what was dropped, and why — including the defects found in the originals.

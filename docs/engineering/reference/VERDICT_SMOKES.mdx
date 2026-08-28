@@ -90,7 +90,7 @@ A smoke is **only** answering "would this recipe survive sustained peak LR for t
 
 Three v0.4.0 diagnostic tools that should run against every v0.5.0 smoke / full-run pair. Each is in the tree as of 2026-05-23.
 
-- **`corpus-audit`** ([`corpus/scripts/audit.ts`](https://github.com/sister-software/mailwoman/blob/main/corpus/scripts/audit.ts)) — per-source parquet-file-count × source-weight diagnostic. Run before training to verify the sampled mix matches intent. Catches the v0.3.0 "NAD = 35% effective sample" class of footgun before it costs a training cycle.
+- **`corpus-audit`** ([`corpus/scripts/audit.ts`](https://github.com/sister-software/mailwoman/blob/main/corpus/scripts/audit.ts)) — per-source parquet-file-count × source-weight diagnostic. Run before training to verify the sampled mix matches intent. Catches the v0.3.0 "NAD = 35% effective sample" class of misuse hazard before it costs a training cycle.
 
   ```bash
   npx tsx corpus/scripts/audit.ts /data/corpus/versioned/<rev>/corpus-<rev> \

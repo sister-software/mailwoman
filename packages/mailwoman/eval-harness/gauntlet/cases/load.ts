@@ -16,7 +16,7 @@
  *   chronological array order; the ablation board id hashes a SORTED fingerprint (`ablation.ts`), and the
  *   regression runner grades per row.
  *
- *   What the prose migration cost, stated plainly: JSONL carries no comments, so the 16 batch headers and 18
+ *   What the prose migration cost, stated directly: JSONL carries no comments, so the 16 batch headers and 18
  *   per-case margin notes that lived between the array literals moved VERBATIM to `batch-notes.md`, keyed by
  *   the `source` value their rows carry. They are not lost, but they are no longer adjacent to their rows.
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.

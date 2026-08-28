@@ -83,7 +83,7 @@ env:
 concurrency:
   group: test-${{ github.workflow }}-${{ github.ref }}
   # Cancel superseded runs on PRs AND pushes to main: only the latest head's `test` check is
-  # load-bearing (the ruleset + release auto-merge match on the branch HEAD sha), so an older
+  # required (the ruleset + release auto-merge match on the branch HEAD sha), so an older
   # in-flight run is pure fleet burn — each leg occupies one of the 4 lab runner slots, and a
   # stale push's 4 legs queue AHEAD of the current push's. workflow_dispatch is EXEMPT: that's
   # publish.yml mode=prepare dispatching against the release branch — cancelling it when a
@@ -150,7 +150,7 @@ jobs:
             exit 0
           fi
 
-          # The `.runners | type == "array"` test is load-bearing, not defensive noise. Every API
+          # The `.runners | type == "array"` test is required, not defensive noise. Every API
           # failure — bad credentials, 403, 404 — returns a JSON OBJECT with a `message` and no
           # `runners` key, so a tolerant expression like `.runners // []` counts it as ZERO ONLINE
           # RUNNERS and reports the fleet down. A count of zero cannot tell "nothing is online" from
@@ -686,7 +686,7 @@ jobs:
   # NOT PORTABLE — job-skipped when the fleet is down, for the same reason as unit-slow but a
   # sharper one: smoke packs the weights workspaces, `copy-weights.ts` materializes them from the
   # data root, and `yarn pack` quietly packs whatever subset of the `files` globs exists. Without
-  # the host it would pack payload-free tarballs and install them happily — the exact failure that
+  # the host it would pack payload-free tarballs and install them — the exact failure that
   # published neural-weights-en-in@8.6.0 empty.
   smoke:
     needs: data-fleet
@@ -863,7 +863,7 @@ jobs:
       # A `skipped` leg normally means something went wrong upstream, so it stays fatal — EXCEPT when
       # the data fleet is down, where unit-slow and smoke skip by design because the host they need
       # is gone. That exemption is the price of being able to merge at all with the fleet off, and it
-      # is narrow: failure and cancellation are still fatal, and the run says plainly what it did not
+      # is narrow: failure and cancellation are still fatal, and the run says what it did not
       # cover.
       - name: Fail if any leg failed
         # `lexicon-full` is EXCLUDED from the skipped-is-fatal check on purpose: skipping it is its

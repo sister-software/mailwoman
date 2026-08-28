@@ -73,7 +73,7 @@ scheme list; anything off-template falls through); flat BIO fails on clean input
 
 **The proposal:** score whole _segmentations_ — a semi-Markov CRF over spans, with a **segment-level**
 transition grammar. Same idea as scheme matching, except the scores are learned and the hypothesis
-space is every segmentation rather than a hand-written list. And critically: **k-best output**, because
+space is every segmentation rather than a hand-written list. And : **k-best output**, because
 the useful artifact is a ranked list of readings, not one answer.
 
 Worth noting for anyone who's been here before: this project abandoned a **token-level** CRF at v0.5.0

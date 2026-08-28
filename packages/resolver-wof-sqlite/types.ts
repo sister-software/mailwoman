@@ -126,8 +126,8 @@ export interface PlaceCandidate {
 	 * Admin-containment stamp (#1717 stage 2) — TRI-STATE, mirroring `ResolvedPlace.containedByQualifier` in
 	 * `@mailwoman/core`: `true` = the ancestors sidecar vouches this candidate sits under the query's
 	 * {@link FindPlaceQuery.regionQualifier}; `false` = evaluated and not vouched for; absent = never evaluated (no
-	 * qualifier on the query, or an artifact without the sidecar). Absence is load-bearing — the resolver walk reads it
-	 * as `unavailable`, never as "not contained".
+	 * qualifier on the query, or an artifact without the sidecar). Absence is required — the resolver walk reads it as
+	 * `unavailable`, never as "not contained".
 	 */
 	containedByQualifier?: boolean
 	/**

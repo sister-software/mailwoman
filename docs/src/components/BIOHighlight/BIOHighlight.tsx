@@ -139,7 +139,7 @@ function assignBIOLabels(
  * - I-X labels in blue (inside an address component)
  * - O labels in gray (outside any component)
  *
- * Returns null when no node carries offsets — the SpanHighlight can still tell the story.
+ * Returns null when no node carries offsets — the SpanHighlight can still show the result.
  */
 export const BIOHighlight: React.FC<BIOHighlightProps> = ({ input, nodes }) => {
 	if (!input) return null

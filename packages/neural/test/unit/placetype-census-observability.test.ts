@@ -206,7 +206,7 @@ describe("census observability — what lands on the trace", () => {
 // output is unchanged, but only a full decode proves nothing downstream (the transition conversion,
 // the repair passes, the tree build) reads the census. Gated on the dev weights being linked —
 // `link-dev-weights.ts` puts both the model and `pair-index-us.bin` in place, and the pair index is
-// load-bearing here: without it the prior never runs and there is no parent candidate to probe
+// required here: without it the prior never runs and there is no parent candidate to probe
 // alongside. The census artifact is BUILT into a temp dir rather than resolved from the data root,
 // which is read-only on the lab host; a fixture census is enough to prove the wiring.
 // Resolved rather than probed in the workspace: the binaries are not in git, so where they live is the

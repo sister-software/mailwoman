@@ -68,7 +68,7 @@ that's a standing obligation.
 4. **v3101-cache ≠ shipped v385.** Several early boards ran on the candidate cache (bare-street
    0.777 vs 0.605 shipped). Every ship/no-ship claim was re-verified on shipped bytes (live CLI +
    gauntlet), and the default-on battery was run v385-only from the start. Board percentages from a
-   candidate cache are candidate numbers — the §0.4 discipline is load-bearing.
+   candidate cache are candidate numbers — the §0.4 discipline is required.
 5. **Pre-registration pays for itself twice.** Every sweep cell, bar, and fallback route was written
    before measuring — so when fork A failed, when W1 first failed, and when the default-on battery
    failed one bar, the next action was already decided (pivot / iterate / opt-in-fallback). The one

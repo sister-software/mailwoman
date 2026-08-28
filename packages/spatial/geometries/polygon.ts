@@ -324,11 +324,10 @@ export type GeojsonPosition = [number, number, ...number[]]
 /**
  * A GeoJSON `Polygon` as a RING LIST — `[outerRing, hole1, hole2, …]`.
  *
- * This coexists with {@linkcode PolygonLiteral} on purpose, and the difference is load-bearing. `PolygonLiteral`
- * defaults to {@linkcode SolidPolygonPath}, a one-element tuple that cannot express a hole; a real administrative
- * boundary routinely has them (a country with a lake, a locality with an enclave). Use this type for geometry read off
- * a gazetteer, and `PolygonLiteral` where the solid/nested distinction is one you are asserting rather than
- * discovering.
+ * This coexists with {@linkcode PolygonLiteral} on purpose, and the difference is required. `PolygonLiteral` defaults to
+ * {@linkcode SolidPolygonPath}, a one-element tuple that cannot express a hole; a real administrative boundary routinely
+ * has them (a country with a lake, a locality with an enclave). Use this type for geometry read off a gazetteer, and
+ * `PolygonLiteral` where the solid/nested distinction is one you are asserting rather than discovering.
  */
 export interface GeojsonPolygon {
 	type: "Polygon"

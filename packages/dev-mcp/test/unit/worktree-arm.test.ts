@@ -6,7 +6,7 @@
  *   The worktree arm's CONTRACT, exercised against a throwaway git repo rather than this one.
  *
  *   Deliberately not a geocode: building an engine costs minutes and needs the data root, so a test that ran one
- *   would be a slow integration test wearing a unit test's clothes. What is asserted here is the machinery that
+ *   would be a slow integration test wearing a unit test's clothes. What is asserted here is the implementation that
  *   was actually hard — that a ref arm runs the REF's source and a `WORKTREE` arm runs the UNCOMMITTED one,
  *   that a dirty tree says so in the commit it reports, and that neither leaves litter behind.
  */

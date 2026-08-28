@@ -473,7 +473,7 @@ def _cross_pollution(
     labels: torch.Tensor,
     row_locale_ids: torch.Tensor | None,
 ) -> dict[str, float]:
-    """The Saint-Albans collapse tripwire: rate at which gold city/region-START tokens
+    """The Saint-Albans collapse regression check: rate at which gold city/region-START tokens
     (``B-locality`` / ``B-region``) are predicted as a POSTCODE label (``B-`` / ``I-postcode``).
 
     Overall, plus per-locale when ``row_locale_ids`` (one id per sequence) is supplied. The
@@ -516,7 +516,7 @@ def _eval_val(
     max_rows: int | None,
 ) -> dict[str, float]:
     """Streaming val-set eval. Returns mean val loss + token-level macro F1 + (PR3) the
-    cross-pollution tripwire and the aux locale-head accuracy when self-conditioning is on."""
+    cross-pollution regression check and the aux locale-head accuracy when self-conditioning is on."""
     model.eval()
     loss_total = 0.0
     seen_batches = 0
@@ -554,7 +554,7 @@ def _eval_val(
     metrics = _token_f1(preds, labels, num_labels=len(label_set.bio_labels), bio_labels=label_set.bio_labels)
     metrics["val_loss"] = loss_total / seen_batches
     metrics["val_rows"] = rows_seen
-    # PR3 tripwire + aux-head accuracy.
+    # PR3 regression check + aux-head accuracy.
     row_locale = torch.cat(all_locale_ids, dim=0) if all_locale_ids else None
     metrics.update(_cross_pollution(preds, labels, row_locale))
     if all_locale_preds and row_locale is not None:
@@ -1011,7 +1011,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                         f"  val_rows={val.get('val_rows', 0)}"
                         f"\n         {tag_summary}"
                     )
-                    # PR3 tripwire: city/region-start → postcode rate (gate < 1% per locale), plus
+                    # PR3 regression check: city/region-start → postcode rate (gate < 1% per locale), plus
                     # the aux locale-head accuracy. Only prints when self-conditioning is active.
                     if "cross_pollution" in val:
                         xpoll = "  ".join(
@@ -1060,7 +1060,7 @@ def train(cfg: Config, *, resume_from: str | Path | None = None) -> None:
                             eval_metrics[f"f1.{tag}"] = float(val.get(f"f1_tag.{tag}", 0.0))
                             tags_with_support += 1
                     eval_metrics["val_tags_with_support"] = tags_with_support
-                    # PR3: stream the cross-pollution tripwire (overall + per-locale) and the aux
+                    # PR3: stream the cross-pollution regression check (overall + per-locale) and the aux
                     # locale-head accuracy to the dashboard, so the 20k gate is watchable live.
                     for k, v in val.items():
                         if k.startswith("cross_pollution") or k == "locale_acc":

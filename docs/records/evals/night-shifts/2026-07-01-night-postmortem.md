@@ -184,7 +184,7 @@ Wrote three OpenCage-style developer recipes in house voice, each verified again
 README-fiction trap): **privacy/coordinate-rounding** (`toGeohash` + decimal rounding, with the
 "coarsening is not anonymity" caveat), **batch geocoding** (`POST /api/batch`, input-order results, per-row
 error isolation, the cap + concurrency knobs), **display-on-a-map** (`resolveEntities → toGeoJSON →
-toMapHTML`, the localhost-CORS `file://` gotcha). `docusaurus build` green. The **multi-service/cost-first**
+toMapHTML`, the localhost-CORS `file://` failure mode). `docusaurus build` green. The **multi-service/cost-first**
 recipe was left for the operator's voice pass (competitive positioning, gracious-not-vengeful).
 
 ## Lever B — #379 deps (PR #855): the "high CVE" framing was stale
@@ -201,7 +201,7 @@ resolution + `test_shard_paths.py` (deliverable 2), the quantize value_info/opse
 deliverable I closed is **#4 — a toolchain pin-consistency verifier** (`verify_toolchain.py`): asserts the
 export/quant pins agree across pyproject ↔ the Modal image ↔ the export opset (the exact drift that broke
 mobile-Safari int8 in 2026-06-09), wired into `lint:python` + a 3-test pytest. Deliverables 3 (curriculum
-stamping) + 5 (snapshot publishing) stay open — both touch the train loop / release machinery.
+stamping) + 5 (snapshot publishing) stay open — both touch the train loop / release implementation.
 
 ## Lever H — #378 WASM cold-path SLO (committed artifact)
 

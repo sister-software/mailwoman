@@ -272,7 +272,7 @@ M5V 3L9 abstention the landing record recorded is the CA row here, and it is a s
 CA postcode rows while the candidate table carries 843,739. JP and NZ are unreachable on both — a codex slice with no
 postcode data behind it.
 
-Two consequences worth stating plainly:
+Two consequences must be explicit:
 
 - Default-on changes nothing outside those countries. Everywhere else the pass finds no candidate country and abstains,
   at the cost of the lookups it already spends.

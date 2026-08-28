@@ -18,7 +18,7 @@
  *      thoroughfare vocabulary). The fork population's street-flavored surfaces (`Savile Row`,
  *      `Kärntner Straße`, `Gran Vía`) belong to the street tier, and poi.db holds exactly one poi
  *      NAMED `savile row` — without this gate the famous street would resolve to a shop
- *      (`gb-fork-entity-savile-row-guard` is the live tripwire).
+ *      (`gb-fork-entity-savile-row-guard` is the live regression check).
  *   3. **Exactly one entity worldwide bears the name** (name-key EXACT equality, duplicate rows of
  *      the same physical venue collapsed by proximity). Zero is a miss; two is an ambiguity the
  *      query gave no anchor to break — both abstain. The uniqueness bar is what lets an anchorless

@@ -53,7 +53,7 @@ type WorkerMessage = ReadyMessage | ResultMessage
 
 export interface WorkerHostOptions {
 	/**
-	 * Absolute path to the worker entry module. A parameter rather than a constant so the crash/restart machinery is
+	 * Absolute path to the worker entry module. A parameter rather than a constant so the crash/restart implementation is
 	 * testable against a stub child that can be told to hang, crash, or answer garbage.
 	 */
 	workerPath: string

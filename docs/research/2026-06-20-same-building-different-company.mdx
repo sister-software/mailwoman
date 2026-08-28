@@ -18,7 +18,7 @@ The first tool is a string matcher. Splink, Zingg, dedupe, the fuzzy-match block
 
 That doesn't make strings useless. Names are some of the best evidence you have, and in a minute I'm going to argue you should lean on them hard. The catch is narrower: a string only knows how a record is spelled, never where it sits, so it can't be the thing you _block_ on. Hold that thought.
 
-The second tool is a join key. Placekey, SmartyKey, our own `@mailwoman/address-id`: they normalize the address, geocode it, and hand you back a deterministic identifier. Records that mint the same key are at the same place. This is better than string matching, because it keys on _where_ instead of on _spelling_. Placekey will happily tell you those two records are the same building.
+The second tool is a join key. Placekey, SmartyKey, our own `@mailwoman/address-id`: they normalize the address, geocode it, and hand you back a deterministic identifier. Records that mint the same key are at the same place. This is better than string matching, because it keys on _where_ instead of on _spelling_. Placekey will tell you those two records are the same building.
 
 And then it stops. Because same building is the easy eighty percent.
 
@@ -26,7 +26,7 @@ And then it stops. Because same building is the easy eighty percent.
 
 Here's the part the key vendors are quiet about. At `1504 Taub Loop` in Houston, four separate provider registrations resolve to the same rooftop, and all four are Baylor College of Medicine, one organization filed four ways. A deterministic key buckets them together, correctly. Good. But one address over, a single medical-office building holds a dozen distinct practices: different owners, different specialties, different everything except the street number. The key buckets _them_ together too. Now it's wrong, and it can't tell you which case you're in, because a hexagon doesn't have an opinion.
 
-Placekey's own FAQ says it plainly: it "operates as a universal join key rather than a matching service… it doesn't perform record linkage itself." Read that as the spec, because it is one. A key is where the problem starts. Same building is where the interesting question begins: same building, different company name on the door, are these one entity or two?
+Placekey's own FAQ states: it "operates as a universal join key rather than a matching service… it doesn't perform record linkage itself." Read that as the spec, because it is one. A key is where the problem starts. Same building is where the interesting question begins: same building, different company name on the door, are these one entity or two?
 
 That question needs a probability, not a bucket.
 

@@ -218,7 +218,7 @@ Carried from the repo's own documents, restated because every phase can violate 
 4. **The recipe is reviewed like code.** Coverage lists stay in `defaults.ts` with the prose that earned
    them; a bare string in JSON loses the six lines of measurement behind `IN`.
 5. **Measure the claim.** Every number in this document came from a command. Where a phase rests on a claim
-   about data or scale, it spends the one command that settles it.
+   about data or scale, it spends the one command that determines the result.
 
 ## Open, and honestly open
 

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Reverse geocoding (#484): `(lat, lon)` → the containing admin hierarchy. Assembly over existing
- *   machinery, per the 2026-06-11 scoping notes:
+ *   implementation, per the 2026-06-11 scoping notes:
  *
  *   1. **Candidate fetch** — the admin DB's `place_bbox` R*Tree (built by `fts.ts`) for places whose
  *        bbox contains the point, smallest-area-first (so the FIRST polygon confirmation is the

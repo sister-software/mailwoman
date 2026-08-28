@@ -13,7 +13,7 @@ A short article on one DeepSeek API quirk that has burned every mailwoman thread
 
 ## The trap
 
-DeepSeek's chat-completions API takes a `max_tokens` parameter. The natural reading is "stop after this many output tokens." The actual semantic is "stop after this many **reasoning + output** tokens." With `reasoning_effort=low`, the model's internal reasoning happily consumes 75% of the budget before any output is emitted.
+DeepSeek's chat-completions API takes a `max_tokens` parameter. The natural reading is "stop after this many output tokens." The actual semantic is "stop after this many **reasoning + output** tokens." With `reasoning_effort=low`, the model's internal reasoning consumes 75% of the budget before any output is emitted.
 
 Thread B2's first run was configured with `max_tokens=20000` and `reasoning_effort=low`. The model's reasoning ate ~15K tokens per response, leaving ~5K for output. Most transliteration responses needed more than 5K (multi-script transliteration of an address row plus its annotation is large). Every truncated response was returned with `finish_reason=length` and a partial body.
 

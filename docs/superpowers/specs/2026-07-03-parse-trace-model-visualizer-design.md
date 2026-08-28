@@ -150,7 +150,7 @@ Each increment is independently shippable; 2 and 3 are parallel once 1 lands.
 
 ## Testing
 
-- **Parity (the load-bearing test):** for a corpus of addresses, `traceParse(text).tokens` must
+- **Parity (the required test):** for a corpus of addresses, `traceParse(text).tokens` must
   deep-equal `parse(text)`'s tokens under identical opts — proves the no-fork invariant.
 - **Byte-stability:** existing `parse`/`parseWithLogits` suites unchanged and green.
 - **Schema snapshot:** one serialized trace committed as a fixture; drift fails the test and

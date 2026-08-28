@@ -50,7 +50,7 @@ const LOWEST_ANSWERING_STATUS = 200
 const FIRST_ERROR_STATUS = 400
 
 /**
- * Where a resolved coordinate came from. The distinction is load-bearing — see the file header.
+ * Where a resolved coordinate came from. The distinction is required — see the file header.
  */
 export type MapLinkCoordinateSource = "place-pin" | "viewport-centre"
 

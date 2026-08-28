@@ -9,7 +9,7 @@
  *   call it directly. Loads ONLY the committed JSONL — no model, no gazetteer, no warm engine —
  *   measured at ~2 s on the 651-row corpus.
  *
- *   The committed constants stay a deliberate review tripwire: check mode compares MEASURED against
+ *   The committed constants stay a deliberate review regression check: check mode compares MEASURED against
  *   COMMITTED, never deriving both sides from the live corpus, and update mode rewrites only the
  *   three constant lines so the pin test's dated history comments survive byte-identically.
  */

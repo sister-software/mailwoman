@@ -117,7 +117,7 @@ Piran Heights, Upton, Bude, EX23 0LY
   OFF  street=Simons Orchard
 ```
 
-**The Fisher artifact settles it directly.** The diagonal empirical Fisher over the final 2,000 steps is
+**The Fisher artifact determines the result directly.** The diagonal empirical Fisher over the final 2,000 steps is
 per-parameter squared-gradient mass, so `anchor_projection.weight` column _j_ answers "did LOCALE_ORDER
 slot _j_ take gradient". The within-run control is exact: the widened lookup covers DE/FR/US/GB/NL/ES/IT,
 so CA (slot 3) and JP (slot 5) could not have taken any.

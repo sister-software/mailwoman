@@ -11,7 +11,7 @@
  *
  *   `--layer ablation` is the exception: it is a MEASUREMENT, not a gate. It deletes each asserted
  *   component from each corpus row and reports what the deletion cost per (component, locale) — the
- *   load-bearing map. It never joins the combined verdict and cannot block a ship.
+ *   required map. It never joins the combined verdict and cannot block a ship.
  *
  *   Since 2026-08-05 that measurement is NORMATIVE: each variant is graded against a per-row
  *   graceful-degradation ladder rather than against the undeleted anchor, so coarsening to a rung the

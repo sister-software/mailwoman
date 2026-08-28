@@ -235,7 +235,7 @@ describe("filingLandscape — Gate 2: meaning-of-zero", () => {
 	})
 })
 
-describe("filingLandscape — Gate 2 (extended): coverage-check is load-bearing, not a rows-shortcut proxy", () => {
+describe("filingLandscape — Gate 2 (extended): coverage-check is required, not a rows-shortcut proxy", () => {
 	// Gate 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
 	// the "no candidate cell" shortcut alone, and the coverage-check branch can be deleted outright without turning
 	// it red. These two tests target that branch directly: (a) a geoid WITH rows whose coverage row is deliberately

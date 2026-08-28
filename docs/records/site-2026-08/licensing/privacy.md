@@ -10,7 +10,7 @@ hide_footer: true
 Last updated: 2026-07-11. Contact for anything on this page: teffen@sister.software.
 
 Mailwoman's privacy story is architectural rather than procedural: the software is designed so
-that personal data never reaches us in the first place. This page states that plainly, covers
+that personal data never reaches us in the first place. This page states that directly, covers
 the few surfaces we do operate, and lists the legal frameworks the design addresses.
 
 ## The software collects nothing

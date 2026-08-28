@@ -31,7 +31,7 @@ import type { MapProps, MapRef, ViewStateChangeEvent } from "react-map-gl/maplib
 export type DemoMapStyle = NonNullable<MapProps["mapStyle"]>
 
 /**
- * Escape hatch for the `<Map>` props `<DemoMap>` does not surface explicitly (e.g. `minZoom`, `attributionControl`,
+ * Override for the `<Map>` props `<DemoMap>` does not surface explicitly (e.g. `minZoom`, `attributionControl`,
  * `maplibreLogo`). The controlled fields DemoMap owns are omitted so they can't be set twice.
  */
 export type DemoMapExtraProps = Partial<

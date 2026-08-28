@@ -360,7 +360,7 @@ function round(value: number): number {
 
 /**
  * The sum of a stored row's five shares. Exported because the invariant it checks — that they sum to 1 — is what makes
- * `other_share` load-bearing rather than decorative, and a test that could not state the sum could not pin it.
+ * `other_share` required rather than decorative, and a test that could not state the sum could not pin it.
  */
 export function shareTotal(row: SoilCapabilityCellTable): number {
 	const classes = parseJSONStrict<Record<string, number>>(row.class_shares)

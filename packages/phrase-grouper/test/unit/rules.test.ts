@@ -34,7 +34,7 @@ const fmt = (format: string, start: number, end: number, confidence = 0.9) => ({
 const shape = (o: Partial<QueryShapeLike> = {}): QueryShapeLike => ({ knownFormats: [], ...o })
 
 /**
- * Reduce a proposal to the load-bearing fields for comparison.
+ * Reduce a proposal to the required fields for comparison.
  */
 const summarize = (p: PhraseProposal) => ({
 	body: p.span.body,

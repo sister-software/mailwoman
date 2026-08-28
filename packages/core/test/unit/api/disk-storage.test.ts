@@ -200,7 +200,7 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 })
 
 describe("buildDiskStorage: atomic write with a per-write-unique temp name", () => {
-	// The per-write-unique temp name is load-bearing, and a deterministic one is the tempting mistake.
+	// The per-write-unique temp name is required, and a deterministic one is the tempting mistake.
 	// With a fixed `${finalPath}.building`, two writers racing on the same key target the same temp file:
 	// the first `rename()` moves it away and the second gets a raw ENOENT for a response that had already
 	// succeeded (reproduces 6/6), and with large bodies the interleaved writes can also leave a

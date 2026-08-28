@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the placetype specificity scale. The load-bearing case is the one that created the file: a
+ *   Tests for the placetype specificity scale. The required case is the one that created the file: a
  *   `neighbourhood` must NOT count as covering a `locality`, because reading a surviving child as covering its own
  *   dead parent is what #1746 was.
  */

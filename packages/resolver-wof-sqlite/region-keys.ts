@@ -120,14 +120,14 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
 /**
  * The PROBE-side expansion for a region qualifier — {@link regionKeys} plus the county-PREFIXED variant of every key.
  *
- * The verdict machinery intersects two {@link regionKeys} SETS, so `Co. Donegal` meets stored `County Donegal` at the
- * shared stripped key `donegal`. A table probe is one-sided: it matches the STORED fold verbatim, and WOF stores Irish
- * counties under `county donegal` with no bare `donegal` key (measured on the shipped candidate.db — the qualifier
- * probe missed every Irish county until this variant landed). Adding `county <key>` restores the two-sidedness for the
- * one stored-form family with an evidenced case; the union is monotone (a wider qualifier set can only find more
- * BEARERS, each of which must still genuinely contain a candidate before anything moves). The suffix sibling (`<key>
- * province`) is deliberately absent — no stored-form case has been evidenced, and a lever without a board does not get
- * built.
+ * The verdict implementation intersects two {@link regionKeys} SETS, so `Co. Donegal` meets stored `County Donegal` at
+ * the shared stripped key `donegal`. A table probe is one-sided: it matches the STORED fold verbatim, and WOF stores
+ * Irish counties under `county donegal` with no bare `donegal` key (measured on the shipped candidate.db — the
+ * qualifier probe missed every Irish county until this variant landed). Adding `county <key>` restores the
+ * two-sidedness for the one stored-form family with an evidenced case; the union is monotone (a wider qualifier set can
+ * only find more BEARERS, each of which must still genuinely contain a candidate before anything moves). The suffix
+ * sibling (`<key> province`) is deliberately absent — no stored-form case has been evidenced, and a lever without a
+ * board does not get built.
  */
 export function regionQualifierProbeKeys(value: string, countryAlpha2?: string): Set<string> {
 	const keys = regionKeys(value, countryAlpha2)

@@ -48,7 +48,7 @@ version works where the string-first v0 imploded.
     the schema types in a shared base (a separate refactor).
 
 - **`@mailwoman/record`** (#600) — the canonicalize layer. Plain TypeScript interfaces
-  only (operator decision: **no Nexus/TypeORM/JSON-schema machinery**; use Kysely if a DB
+  only (operator decision: **no Nexus/TypeORM/JSON-schema implementation**; use Kysely if a DB
   is ever needed).
   - `address.ts`: `PostalAddress` (components + canonicalKey + optional `AddressGeocode`
     - formatted), `AddressGeocode` (mirrors mailwoman `GeocodeResult`: `ResolutionTier` +

@@ -18,7 +18,7 @@
  *   `(from_node_id, to_node_id, source, valid_from)`), and `filer_family` (PK `(node_id, family_id,
  *   naming_node_id, source, valid_from)` — the edge key's four columns plus `naming_node_id`, so two raw
  *   spellings that canonicalize to one `family_id` stay two rows instead of colliding; see
- *   `createFilerFamilyTable`'s PK docstring in `schema.ts` for why that placement is load-bearing) already
+ *   `createFilerFamilyTable`'s PK docstring in `schema.ts` for why that placement is required) already
  *   carry the uniqueness constraint a staging table would otherwise exist to provide — so all three are
  *   written directly via raw prepared `INSERT OR IGNORE` against the PRODUCTION table. The composite PK, not
  *   a separate staging pass, is the dedup mechanism, and the family-membership writes reuse it rather than
@@ -68,7 +68,7 @@
  *     is a free-text human label (`"2026-Q2"`) that is not guaranteed ISO-sortable, and `valid_from`
  *     participates in every downstream `asOf` predicate as a plain string comparison.
  *
- *   The direction convention (documented, not semantically load-bearing — `filer_edge` asserts symmetric
+ *   The direction convention (documented, not semantically required — `filer_edge` asserts symmetric
  *   sameness, and the `to_node_id` index makes either traversal direction cheap): FRN is `from` for
  *   499-derived edges (it is the identifier hub — spec §3), `bdcProviderID` is `from` for provider-list
  *   edges (the row's own natural anchor).

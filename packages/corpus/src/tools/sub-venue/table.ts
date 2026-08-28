@@ -53,10 +53,10 @@ export interface SubVenueDesignator {
 	/**
 	 * Whether this designator may be preceded by a {@link SubVenueModifier} — the `North Terminal` shape.
 	 *
-	 * A SUBSET, and the exclusions are load-bearing: `gate` and `building` form ordinary STREET names in exactly this
-	 * shape ("East Gate" is a real GB street, "Building Society Place" is a real street), so admitting them turns a
-	 * correct street parse into a sub-venue one. Setting this true means claiming no street is named `<modifier> <id>`.
-	 * Check before you do.
+	 * A SUBSET, and the exclusions are required: `gate` and `building` form ordinary STREET names in exactly this shape
+	 * ("East Gate" is a real GB street, "Building Society Place" is a real street), so admitting them turns a correct
+	 * street parse into a sub-venue one. Setting this true means claiming no street is named `<modifier> <id>`. Check
+	 * before you do.
 	 */
 	modifierEligible: boolean
 	/**
@@ -191,7 +191,7 @@ export interface SubVenueLexiconTable {
 	identifierShapes: IdentifierShape[]
 	/**
 	 * Every curation decision taken against this table, promotion AND rejection, each with the census that backs it. A
-	 * rejection is as load-bearing as a promotion: it is what stops the next reader re-proposing `hall` for en-GB.
+	 * rejection is as required as a promotion: it is what stops the next reader re-proposing `hall` for en-GB.
 	 */
 	promotions: SubVenuePromotion[]
 }

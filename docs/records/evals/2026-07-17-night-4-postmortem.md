@@ -135,7 +135,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
   (50 'honest'→calibrated etc., 25 mdx files) that now CONFLICTS with current main (docs diverged
   since it was cut); stash@{1} = 'WIP on fix/965-gate-hard-country'. Neither is tonight's work; I
   left both intact (did not drop). stash@{0} needs manual reconciliation or a drop — operator's call.
-- GOTCHA: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
+- failure mode: `export_onnx --step` needs the ZERO-PADDED checkpoint name (`002000`, not `2000`) — the
   saver zero-pads. First grade run FileNotFounded on step-2000; fixed to 002000.
 - TIMEKEEPING CORRECTION (self-caught TWICE: at the 05:03 checkpoint, and again at 05:48 when four
   fresh entries carried local+2h stamps): all stamps above are now receipt-anchored to commit/PR
@@ -161,7 +161,7 @@ Paris` (identical terminal token + membership; emission-gap distributions overla
 
 ## What could've gone better
 
-- **The `export_onnx --step` zero-pad gotcha cost a grade round-trip** (FileNotFound on `step-2000`
+- **The `export_onnx --step` zero-pad failure mode cost a grade round-trip** (FileNotFound on `step-2000`
   vs the saved `step-002000`). A tiny cost, but the export helper should accept either form — a
   one-line `str(int(step)).zfill(6)` would remove the trap. Logged for the operator.
 - **Timekeeping drifted twice** (local+2h stamps labeled UTC) before I wrote the lab-clock memory

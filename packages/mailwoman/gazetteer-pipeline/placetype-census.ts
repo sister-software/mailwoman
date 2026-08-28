@@ -130,7 +130,7 @@ export const PLACETYPE_PROJECTION: Readonly<Record<string, ComponentTag | null>>
 	marinearea: null,
 	planet: null,
 	empire: null,
-	// `custom` is WOF's escape hatch for a locally-defined placetype. It names no fixed feature class, so no projection
+	// `custom` is WOF's override for a locally-defined placetype. It names no fixed feature class, so no projection
 	// can be right for it — deliberately uncounted rather than guessed at.
 	custom: null,
 	// Multi-span and record placetypes: in the vocabulary, structurally unprojectable onto ONE tag. An intersection is

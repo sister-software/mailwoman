@@ -189,7 +189,7 @@ Ireland at a different scale.
 
 So "is WOF granular enough?" has no country-independent answer, and neither does "should we prefer
 Overture?" The scorecard carrying both columns per country is therefore not redundancy — it is the
-only defensible shape. This is what makes the ABSENT/MISTYPED name match load-bearing rather than a
+only defensible shape. This is what makes the ABSENT/MISTYPED name match required rather than a
 refinement.
 
 #### And node counts do not survive conversion to pairs
@@ -215,7 +215,7 @@ Overture's 992 macrohoods carry `parent_division_id`.
 
 **Conversion ranges from 15% to 99%.** Ranking gazetteer work by node count is therefore not a
 shortcut with acceptable error — it is wrong by up to 6×, and wrong in a way that inverts the
-ordering. The pair-yield column is load-bearing, not a refinement, and the scorecard must never
+ordering. The pair-yield column is required, not a refinement, and the scorecard must never
 present a node count as an opportunity estimate.
 
 #### The headline the probe was looking for

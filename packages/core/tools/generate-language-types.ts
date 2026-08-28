@@ -67,7 +67,7 @@ export async function generateLanguageTypes(
 
 	report?.(`Reading ${dataSourcePath}`)
 
-	// Quote handling is on and load-bearing: six labels wrap an embedded comma
+	// Quote handling is on and required: six labels wrap an embedded comma
 	// (`gre,el,"Greek, Modern (1453-)"`), and the spliterator leaves quoting off by default.
 	// `header` defaults true, which is what skips the `alpha3-b,alpha2,English` line.
 	for await (const columns of CSVSpliterator.fromAsync(dataSourcePath, { enableQuoteHandling: true })) {

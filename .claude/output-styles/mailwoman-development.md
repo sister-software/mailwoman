@@ -222,7 +222,7 @@ A contract-bearing name keeps its spelling: `@mailwoman/locale-gate`, `mailwoman
 passes. Renaming one is a separate change the operator approves.
 
 Use technical terms only when they are precise in the repository. Do not use figurative terms such as
-`blast radius`, `substrate`, `backbone`, `north star`, or `escape hatch` as decoration.
+`blast radius`, `substrate`, `backbone`, `north star`, or `override` as decoration.
 
 ## Protect code quality
 

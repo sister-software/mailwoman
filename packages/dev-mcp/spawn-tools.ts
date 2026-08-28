@@ -223,7 +223,7 @@ export function buildSpawnTools(registry: EngineRegistry, jobs: JobRegistry): De
 		{
 			name: "mwdev_cli",
 			description:
-				"Run a READ-ONLY mailwoman CLI command and return its output. An escape hatch, not the main road: every " +
+				"Run a READ-ONLY mailwoman CLI command and return its output. An override, not the main road: every " +
 				"call pays the full ~1.4s cold start that the warm tools exist to avoid.",
 			inputSchema: z.object({
 				args: z.array(z.string()).describe('Argument vector, e.g. ["geocode", "350 5th Ave", "--json"]. No shell.'),

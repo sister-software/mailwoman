@@ -33,7 +33,7 @@ const env = process.env
 const CI = !!env.CI
 
 /**
- * When set, run against a deployed URL and skip the local build+serve machinery.
+ * When set, run against a deployed URL and skip the local build+serve implementation.
  */
 const remoteURL = env.MAILWOMAN_DEMO_URL
 const LOCAL_PORT = 7770

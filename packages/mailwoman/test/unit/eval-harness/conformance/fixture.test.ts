@@ -6,7 +6,7 @@
  *   The conformance-law fixture contract's refusals. Every case here is a row that must NOT load, because
  *   the alternative to a refusal is a row that grades under a default nobody wrote and reports as authored.
  *
- *   The load-bearing pair is `rejects a fixture with no comparator` and `rejects an unknown comparator`:
+ *   The required pair is `rejects a fixture with no comparator` and `rejects an unknown comparator`:
  *   between them they are the whole reason the comparator set is closed, and both messages must carry the
  *   fixture's own id — a refusal that does not name the row sends the reader to a file with no line to open.
  */

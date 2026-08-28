@@ -6,7 +6,7 @@
  *   The hard-slice board's FRAGMENT-REGISTER rows — inputs whose difficulty is their SHAPE.
  *
  *   Split out of `build-hard-slice-board.run.ts` because the two halves change for different reasons and
- *   at different rates: the builder is machinery (read a WOF point, walk two FST binaries, emit JSONL),
+ *   at different rates: the builder is implementation (read a WOF point, walk two FST binaries, emit JSONL),
  *   while this file is the editorial content — which inputs pin which discrimination case, and why. A row
  *   here carries NO coordinates and NO bias numbers on purpose; those are measured at build time from
  *   primary data, so the only thing a curator can get wrong is the CHOICE, which is the thing worth

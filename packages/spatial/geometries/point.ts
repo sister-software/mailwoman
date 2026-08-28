@@ -149,7 +149,7 @@ export class GeoPoint implements PointLiteral {
 	/**
 	 * Assigns the pair as GeoJSON [longitude, latitude(, altitude)] — the axis order is the contract, never inferred from
 	 * the magnitudes — and REJECTS a coordinate that is not on the globe. See {@link GeoPoint.from} for why both halves of
-	 * that sentence are load-bearing.
+	 * that sentence are required.
 	 *
 	 * @throws {RangeError} When longitude is outside [-180, 180] or latitude is outside [-90, 90].
 	 */

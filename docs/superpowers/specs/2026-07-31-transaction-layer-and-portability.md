@@ -62,7 +62,7 @@ Honest ranking of second verticals by data quality, not by market attractiveness
 - **Water** — weak. EPA SDWIS covers systems and violations, but ownership is mostly municipal and
   poorly structured. Skip.
 
-The abstraction, stated plainly: **mailwoman is a geocoded entity-resolution substrate for
+The abstraction, stated directly: **mailwoman is a geocoded entity-resolution substrate for
 regulated-monopoly public record.** The address parser is the joining primitive because these
 datasets key on addresses and coordinates and nothing joins cleanly without one. That framing
 explains why the geocoder is the foundation rather than the product — and it is a framing, not a

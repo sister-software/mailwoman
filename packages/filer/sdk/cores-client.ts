@@ -277,9 +277,9 @@ function cellText(rawHTML: string): string {
  * or when its `FRN:` row disagrees with the FRN that was requested. Both are ordinary: CORES serves a search form for
  * an unknown FRN, and an abstention here is a fact the caller counts, not an error it handles.
  *
- * **The FRN cross-check is the load-bearing part.** Without it a page served for the wrong entity — a redirect, a
- * cached response for a different query, a truncated document — would be attributed to the FRN that was asked for,
- * which is a false identity link written silently. The page states its own FRN; requiring the two to agree is free.
+ * **The FRN cross-check is the required part.** Without it a page served for the wrong entity — a redirect, a cached
+ * response for a different query, a truncated document — would be attributed to the FRN that was asked for, which is a
+ * false identity link written silently. The page states its own FRN; requiring the two to agree is free.
  */
 export function parseCORESRegistration(frn: FRN, html: string): CORESRegistration | null {
 	const fields: Partial<Record<keyof CORESRegistration, string>> = {}

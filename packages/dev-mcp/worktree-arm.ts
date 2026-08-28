@@ -272,7 +272,7 @@ export async function runWorktreeArm(args: {
 	} finally {
 		if (parent) {
 			// `git worktree remove` refuses on a dirty checkout, and this one always is — the runner script and the
-			// node_modules farm are both untracked. `--force` is the normal path here, not an escape hatch.
+			// node_modules farm are both untracked. `--force` is the normal path here, not an override.
 			try {
 				execFileSync("git", ["worktree", "remove", "--force", worktree], { cwd: repoRoot, stdio: "pipe" })
 			} catch {

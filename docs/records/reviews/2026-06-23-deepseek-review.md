@@ -165,7 +165,7 @@ The issues that are ALREADY SHIPPED but still open (a recurring pattern in this 
 
 ### 1. The blog post is draft:true but publication-ready
 
-`docs/research/2026-06-23-we-graded-ourselves-against-the-incumbents.mdx` is marked `draft: true`. It is a polished, honest narrative — the centroid-vs-rooftop trade is stated plainly, the AU drag is quantified, the two-fix story is clear. The draft flag should be removed and the post published. The trade-show differentiator (calibrated confidence, browser deployment, no Elasticsearch) is the story this post tells best, and it's the one the project should be telling right now.
+`docs/research/2026-06-23-we-graded-ourselves-against-the-incumbents.mdx` is marked `draft: true`. It is a polished, honest narrative — the centroid-vs-rooftop trade is stated directly, the AU drag is quantified, the two-fix story is clear. The draft flag should be removed and the post published. The trade-show differentiator (calibrated confidence, browser deployment, no Elasticsearch) is the story this post tells best, and it's the one the project should be telling right now.
 
 ### 2. The competitive benchmark's `--messy` flag is implemented but the run wasn't done
 
@@ -210,7 +210,7 @@ Mailwoman is now competitive with (and on Europe, ahead of) the incumbents on th
 
 - The eval discipline: benchmark → classify → drill-down → fix. No hunch-driven work.
 - The resolver lever contract: default-off, byte-stable, tested, measured before promotion.
-- The honesty about limitations: centroid-vs-rooftop, AU drag, @1km gap — all stated plainly.
+- The honesty about limitations: centroid-vs-rooftop, AU drag, @1km gap — all stated directly.
 - The blog voice: technical, self-critical, doesn't flatter.
 
 ### What needs attention

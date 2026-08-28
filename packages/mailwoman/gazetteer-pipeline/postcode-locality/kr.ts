@@ -188,7 +188,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	// GeoNames postal KR: group by postcode (first row wins; multi-row postcodes cluster tightly).
 	const postal = new Map<string, [string, string, number, number]>()
 
-	// Streamed — `args.geonames` is a caller-supplied national dump. `header: false` is load-bearing:
+	// Streamed — `args.geonames` is a caller-supplied national dump. `header: false` is required:
 	// the GeoNames postal dump is headerless, so row 1 would be read as column names.
 	for await (const f of TSVSpliterator.fromAsync(args.geonames, { header: false })) {
 		if (f.length > 10 && f[1]) {

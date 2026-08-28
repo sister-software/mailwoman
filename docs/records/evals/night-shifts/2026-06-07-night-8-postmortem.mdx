@@ -46,7 +46,7 @@ not just unit-tested — the gated re-measure happened this shift:
 - **#390** `--anchor-rerank` flag on `oa-resolver-eval` (#369 S8): measured the re-ranker via real
   `resolveTree` + PIP — it HURTS (uniform posterior), so it stays gated on a sharp posterior.
 - **#391** per-locale calibration tables (#368): NL ECE 0.047→0.010, DE 0.089→0.041 vs the global table.
-- **#392** calibration drift guard (#368): CI tripwire on ECE regression >0.02.
+- **#392** calibration drift guard (#368): CI regression check on ECE regression >0.02.
 - **#393** ship calibration tables in `@mailwoman/neural-weights-en-us` (#368 L1): global + per-locale JSON
   in the package `files` array + model-card `calibration` block (held-out ECE raw 0.0673 → cal 0.0035).
 - **#394** "three retrains and a phantom" blog (#327): the public German metric-artifact writeup.
@@ -55,7 +55,7 @@ not just unit-tested — the gated re-measure happened this shift:
 - **#396** opt-in `cityStateFallback` resolver recovery (#387): the Berlin city-state half — synthesizes the
   dropped locality from the region's centroid-coincident same-name descendant. Default-off, 25/25 tests.
 - **#398** `--city-state-fallback` flag on `oa-resolver-eval` (#387): the measurement handle for the above.
-- **#399** per-locale F1 floor gate (#375 S48): non-blocking CI tripwire, self-tested.
+- **#399** per-locale F1 floor gate (#375 S48): non-blocking CI regression check, self-tested.
 - **#400** split-conformal coordinate intervals + eval report (#374): FR 90%@5.5km / NL @4.6km / DE @14.7km,
   realized coverage validated; the DE 34.8% abstention independently re-surfaces #387.
 - Issues filed: #368–#379 (12 backlog), #386 (Saxony), #387 (Berlin city-state), **#397** (the en-us symlink

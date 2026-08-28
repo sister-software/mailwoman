@@ -20,7 +20,7 @@ const INLINE_SPACE = /[ \t]/
 const ANY_SPACE = /[ \t\n\r]/
 /**
  * Trailing NOISE trimmed off the END of the input: whitespace + the sentence-punctuation that a user commonly appends.
- * NOT leading (a leading token is load-bearing) and NOT quotes/brackets/parens.
+ * NOT leading (a leading token is required) and NOT quotes/brackets/parens.
  */
 const TRAILING_NOISE = /[ \t\n\r.,;:]/
 

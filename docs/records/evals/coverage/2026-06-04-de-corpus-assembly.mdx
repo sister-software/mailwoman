@@ -15,11 +15,11 @@ The German rows are real OpenAddresses Berlin + Saxony tuples (~1.2M unique, cac
 
 ## Why this is the right data for the pilot, not a repeat of v0.8.0
 
-The v0.8.0 German order-shard failed — German street/house-number F1 jumped (+22/+16pp), but locality and postcode F1 _collapsed_ (−37/−58pp) via end-of-string span fragmentation, and US/FR slipped past the 1pp tripwire. That collapse is exactly the failure self-conditioning is designed to prevent: a model that has resolved "this is a German address" globally, before per-token labels, shouldn't bleed a city's lead token into the postcode span. So this corpus + the PR3 architecture is the test of that hypothesis, and the `cross_pollution` tripwire (now with the 4K German val shard for support) is the live readout of whether it holds.
+The v0.8.0 German order-shard failed — German street/house-number F1 jumped (+22/+16pp), but locality and postcode F1 _collapsed_ (−37/−58pp) via end-of-string span fragmentation, and US/FR slipped past the 1pp regression check. That collapse is exactly the failure self-conditioning is designed to prevent: a model that has resolved "this is a German address" globally, before per-token labels, shouldn't bleed a city's lead token into the postcode span. So this corpus + the PR3 architecture is the test of that hypothesis, and the `cross_pollution` regression check (now with the 4K German val shard for support) is the live readout of whether it holds.
 
 ## The mix knob
 
-In `v0.9.0-pilot-selfcond.yaml`, `synth-german` is weighted 6.0 of a ~34 source-weight total — German at ~18% of the mix. Enough for a from-scratch model to learn it, inside the synthesis-as-supplement guideline. It is **the key tunable**: raise it if DE locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp tripwire.
+In `v0.9.0-pilot-selfcond.yaml`, `synth-german` is weighted 6.0 of a ~34 source-weight total — German at ~18% of the mix. Enough for a from-scratch model to learn it, inside the synthesis-as-supplement guideline. It is **the key tunable**: raise it if DE locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp regression check.
 
 ## Reproduce + deploy
 
@@ -37,4 +37,4 @@ modal volume put mailwoman-training <NEW>/val/part-german-val.parquet     corpus
 modal volume put mailwoman-training <NEW>/MANIFEST.json                    corpus/versioned/v0.4.1-de/corpus-v0.4.1-de/MANIFEST.json
 ```
 
-After the upload, Pilot A is a one-command launch (`modal run -d scripts/modal/train_remote.py --config v0.9.0-pilot-selfcond.yaml --resume none --trackio`), against a tripwire already wired to report at 20k whether self-conditioning earns the full run.
+After the upload, Pilot A is a one-command launch (`modal run -d scripts/modal/train_remote.py --config v0.9.0-pilot-selfcond.yaml --resume none --trackio`), against a regression check already wired to report at 20k whether self-conditioning earns the full run.

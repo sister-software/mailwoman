@@ -19,7 +19,7 @@ Canada and Mexico went in clean. Mexico is the real win: the model's grasp of Me
 
 ## The guard that said no
 
-Every model change runs a gate before it's allowed anywhere near production. Most of it is the obvious stuff — did the new thing work — but the load-bearing half is the opposite question: did anything I wasn't looking at get worse. We hold a frozen set of graded addresses and we demand that no category of them regress by more than two points. It's a boring gate. It is also the entire reason we can move fast without shipping quiet damage.
+Every model change runs a gate before it's allowed anywhere near production. Most of it is the obvious stuff — did the new thing work — but the required half is the opposite question: did anything I wasn't looking at get worse. We hold a frozen set of graded addresses and we demand that no category of them regress by more than two points. It's a boring gate. It is also the entire reason we can move fast without shipping quiet damage.
 
 Brazil built clean. Brazil trained clean. And then the gate came back with one red line. Country recall — the model's ability to pull the country out of an address that names one — had dropped more than five points. Everything else held: cities, streets, postcodes, house numbers, all flat. Just country, and just enough to fail.
 
@@ -29,7 +29,7 @@ The tell was in the comparison. The run with only Canada and Mexico had nicked c
 
 So I went and looked at the addresses themselves — not the model, the training rows. And there it was, sitting in plain sight, obvious the way these things always are once you stop assuming: not one of the 666,000 new Canadian, Mexican, and Brazilian rows contained a country.
 
-They're not wrong to. An Overture address is `street, city, postcode` — the country is implied by the file it came from, the way a letter mailed within a country doesn't write the country on the envelope. Every row is honest. But a model doesn't learn from any single row; it learns from the pile. And the pile I'd just handed it was two-thirds of a million addresses, every one of them fluently, consistently silent about which country it was in. Train on that, weighted as heavily as I'd weighted it, and the lesson the model extracts is not "here are three new countries." The lesson is: _addresses don't say their country._ So when the graded set hands it `1600 Pennsylvania Ave NW, Washington, DC, USA` — an address that plainly does — the model has been gently taught to look past the `USA` and drop it on the floor.
+They're not wrong to. An Overture address is `street, city, postcode` — the country is implied by the file it came from, the way a letter mailed within a country doesn't write the country on the envelope. Every row is honest. But a model doesn't learn from any single row; it learns from the pile. And the pile I'd just handed it was two-thirds of a million addresses, every one of them fluently, consistently silent about which country it was in. Train on that, weighted as heavily as I'd weighted it, and the lesson the model extracts is not "here are three new countries." The lesson is: _addresses don't say their country._ So when the graded set hands it `1600 Pennsylvania Ave NW, Washington, DC, USA` — an address that does — the model has been gently taught to look past the `USA` and drop it on the floor.
 
 I'd checked that the new rows carried the tags I wanted: street, city, postcode, all present, all correct. I never checked the tag that wasn't there. The absence was the payload.
 

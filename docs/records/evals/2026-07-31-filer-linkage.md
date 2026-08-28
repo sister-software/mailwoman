@@ -25,7 +25,7 @@ Membership rows that exist only because two filers named the same MANAGEMENT com
 
 The unit scored is the registrant, not the FRN. One operator can hold several FRN registrations — the corpus has one that holds two, joined by a shared provider id — and a parent disclosed on one registration is a fact about the company, not about that registration. Scoring FRNs individually would have let the truth partition put a single legal entity in two different families at once.
 
-Treating a shared provider id as proof of one registrant is a modelling choice, not a law: real provider-list rows sharing a provider id have been observed reporting DIFFERENT parents, which would mean the fold is joining companies that ought to stay apart. That failure is not silent here. Folding two registrants that belong to different families puts a truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below 1.000, and the test asserting a perfect control fails. The rule is load-bearing and wired to a tripwire.
+Treating a shared provider id as proof of one registrant is a modelling choice, not a law: real provider-list rows sharing a provider id have been observed reporting DIFFERENT parents, which would mean the fold is joining companies that ought to stay apart. That failure is not silent here. Folding two registrants that belong to different families puts a truth-negative pair inside one truth group, the control run cannot recover it, control recall drops below 1.000, and the test asserting a perfect control fails. The rule is required and wired to a regression check.
 
 ## Corpus
 
@@ -131,7 +131,7 @@ Nothing else in the build produces an ownership fact. Two mechanisms account for
 
 ## What would move this number
 
-It is tempting to call the withheld number a floor that any better evidence would lift. That is not what this code does, and an earlier version of this page said it anyway. Two probes settle it.
+It is tempting to call the withheld number a floor that any better evidence would lift. That is not what this code does, and an earlier version of this page said it anyway. Two probes establish the behavior.
 
 **Populating the address and contact columns changes nothing.** Fill `hqAddress`, `customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those columns are stored as attributes and nothing on the family path — or on the entity-resolution path, which reads only legal names and identifier codes — ever looks at them. That is a property of the pipeline, not a gap in the corpus.
 

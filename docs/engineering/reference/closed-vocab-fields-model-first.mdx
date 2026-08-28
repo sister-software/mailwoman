@@ -73,7 +73,7 @@ The deterministic _override_ appears in none of them.
 ## Architecture: a soft gazetteer anchor
 
 For `country`, the matcher produces per-token features fed into the transformer's token
-representation (same machinery as the postcode anchor), and the model decides every tag:
+representation (same implementation as the postcode anchor), and the model decides every tag:
 
 - **Binary gazetteer-match flag** — "this token/sequence is a known country surface form."
   Its main job is **long-tail recall**: with ~250 countries at realistic prevalence, a

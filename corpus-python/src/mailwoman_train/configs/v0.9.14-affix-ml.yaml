@@ -23,7 +23,7 @@
 #   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl.
 #   - NO-REGRESSION (within ~1pp, fp32): US house_number / postcode / locality / region; DE native-order
 #     locality (de-order-eval.ts). The balance rows ADD FR/DE order signal — DE should hold or improve.
-#   DECISION: FR postcode recovered + affix retained + no tripwire → PROMOTE candidate (v4.2.0) and the
+#   DECISION: FR postcode recovered + affix retained + no regression check → PROMOTE candidate (v4.2.0) and the
 #     affix lever is BANKED for consolidation. If affix slips below v0.9.8: too much balance crowded the
 #     US dose — raise synth-affix to 2.5 or lower --multilocale-count and rerun. If FR still dilutes:
 #     raise --multilocale-count (more FR balance).

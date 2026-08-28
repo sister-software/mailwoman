@@ -42,7 +42,7 @@ Four confirmed sites, in descending order of how much they cost.
 
 ### 1. The postcode-anchor channel — the bit exists and nothing reads it
 
-`neural/postcode-anchor.ts` documents it plainly:
+`neural/postcode-anchor.ts` documents it:
 
 ```ts
 /** `1 - normalizedEntropy(posterior)` when the postcode exists; `0` when it is in no gazetteer. */
@@ -126,4 +126,4 @@ Every instance costs a wrong verdict or a dead lever, and none of them announce 
 rerank was VOID because a resolver reading `0.000` street evidence looked exactly like a resolver with
 no street evidence to give — the instrument was dark, the number was well-formed, and the report read
 as a finding. That is the whole failure mode: **a magnitude carrying its own absence is a lie the type
-system will happily typecheck.**
+system will typecheck.**

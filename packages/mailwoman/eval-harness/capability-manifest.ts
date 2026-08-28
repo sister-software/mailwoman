@@ -20,7 +20,7 @@
  *   - `pocket`: anchor ON, gazetteer OFF (the lighter on-device feed; not yet a serving target).
  *
  *   For each tier × locale × {mask-off, mask-on} we run the model and compute UNFOLDED exact-match
- *   per-tag F1 (same machinery as `score-affix.ts` — split `street_prefix`/`street`/`street_suffix`
+ *   per-tag F1 (same implementation as `score-affix.ts` — split `street_prefix`/`street`/`street_suffix`
  *   so the affix capability is measurable, which the folded `per-locale-f1.ts` cannot see). The
  *   classifier is built via the canonical `createScorer` so the channel feed matches the ship
  *   config (the #566/#685 trap), with `overrides.conventions` toggling mask off/on and

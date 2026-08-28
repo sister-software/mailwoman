@@ -142,7 +142,7 @@ writeFileSync(
  *   \`mailwoman.baseWeights\`, so it symlinks nothing and its only job is building the index that makes
  *   \`resolveWeights({locale: "${slug}"})\` surface \`pairIndexPath\` in local dev.
  *
- *   TODO(${slug}): say what makes this locale's index load-bearing, and what it is INERT without. If
+ *   TODO(${slug}): say what makes this locale's index required, and what it is INERT without. If
  *   the locale writes its postcode BEFORE the locality, it needs entries in
  *   \`SEGMENT_PARENT_POSTCODE_SHAPES\` and \`LEADING_POSTCODE_COUNTRIES\`
  *   (\`neural/placetype-pair-prior.ts\`) or the artifact changes nothing; if it writes the postcode

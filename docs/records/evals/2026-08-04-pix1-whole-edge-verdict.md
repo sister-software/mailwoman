@@ -167,7 +167,7 @@ wanted. Fixed by recording the stripped range as `CandidateWindow.keyPieceIndice
 parent bias over it; the child write still spans the whole segment, unchanged. Two unit tests pin
 both the FR leading-postcode and GB trailing-postcode shapes.
 
-Worth stating plainly: the general B-2 board, the broad B-3 board and the preregistered B-1
+must be explicit: the general B-2 board, the broad B-3 board and the preregistered B-1
 population would all have passed this defect. The FR leg caught it.
 
 ## Reproduce

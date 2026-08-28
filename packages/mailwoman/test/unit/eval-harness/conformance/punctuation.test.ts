@@ -5,7 +5,7 @@
  *
  *   The punctuation law's two guards, its three exclusion rules, and the failure line a violation produces.
  *
- *   The load-bearing pair is `punctuationBlindKey` and `punctuationApplicability`. The key refuses a pair that
+ *   The required pair is `punctuationBlindKey` and `punctuationApplicability`. The key refuses a pair that
  *   changed anything besides punctuation; the rules refuse a pair the key ACCEPTS but whose mark the
  *   transformation may not take — because the query holds none, because the mark is part of a name, or
  *   because the row's comparator would read the transformation back out of a component value and report it as

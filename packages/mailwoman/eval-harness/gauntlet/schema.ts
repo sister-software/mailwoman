@@ -10,7 +10,7 @@
  *   the held-out fresh-draw runner (`holdout.ts`) and the metamorphic invariants (`metamorphic.ts`), which
  *   need no stored expected values and so can't be over-fit.
  *
- *   The `source` + `address_kind` columns are load-bearing: coverage is tracked BY KIND (po-box nonprofits,
+ *   The `source` + `address_kind` columns are required: coverage is tracked BY KIND (po-box nonprofits,
  *   suite-heavy clinics, rural-route facilities, bare intl streets…), so "we tested 10k addresses" can never
  *   hide "…all suburban-US residential." That is CheckList's capability matrix applied to addresses.
  */
@@ -160,8 +160,8 @@ export interface GauntletMetaTable {
 	 */
 	corpus_hash: string
 	/**
-	 * How many rows were written. Redundant with the hash for detection, load-bearing for the DIAGNOSIS: "0 cases" reads
-	 * as an empty loader, "306 vs 192" as a corpus that moved under the artifact.
+	 * How many rows were written. Redundant with the hash for detection, required for the DIAGNOSIS: "0 cases" reads as
+	 * an empty loader, "306 vs 192" as a corpus that moved under the artifact.
 	 */
 	case_count: number
 	/**

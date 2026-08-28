@@ -199,7 +199,7 @@ export async function jsonlToParquet(
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 		const instance = await DuckDBInstance.create()
 		const db = await instance.connect()
-		// Row order is load-bearing: the overlay-manifest assembler records first/last source_id from
+		// Row order is required: the overlay-manifest assembler records first/last source_id from
 		// shard order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 		await db.run("SET preserve_insertion_order=true")
 

@@ -85,7 +85,7 @@ technology reporting as a mismatch.
 
 **Salvage:** `isp-nexus/universe/sync/experiments/pluck-att.ts` + `fcc/labels/` already implement this
 shape against AT&T (scrape → LLM extraction → Zod `BroadbandLabelSchema`). The salvage survey filed it
-under C5 pricing; it is equally an availability-corroboration source. Same machinery, second use.
+under C5 pricing; it is equally an availability-corroboration source. Same implementation, second use.
 
 **Constraints to respect:** these are third-party sites, so per-provider ToS and robots directives
 govern, request volume must stay modest and identified, and results are cached with a timestamp

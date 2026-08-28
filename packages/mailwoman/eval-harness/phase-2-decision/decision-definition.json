@@ -601,12 +601,12 @@
 	],
 	"defaultChangeBarNote": "The integration record's §5 bar for a DEFAULT change, recorded with what each row reads today. It is never an input to the decision: `decidePhase2` reports the unmet row numbers in its reasons and computes nothing from them. It is here because PROCEED-AS-AUTHORIZED is a claim about a specific authorization — the opt-in surface — and a reader must be able to see the separate default bar unmet rather than infer it from the absence of a claim. Rows 5 and 7 having no committed instrument is the record's own finding, and its §5 says the bar deliberately contains no prevalence number: that absence is not a check that can be waived, it is the reason the default posture is what it is.",
 	"decisionRule": [
-		"Checked in this order, and the order is load-bearing.",
+		"Checked in this order, and the order is required.",
 		"1. Control misses. More than `controlRegressionTolerance` control checks missing their bar records STOP-REDESIGN under every other reading. A capability bought by moving something that already worked is not a result this program can act on.",
 		"2. Lanes reporting. Fewer than `requiredMeasurableLanes` lanes producing checks records STOP-REDESIGN. An instrument that could not run leaves a lane unreported, and an unreported lane is not a passing one.",
 		"3. PROCEED-AS-AUTHORIZED — at least `minimumResolutionChecks` resolution-tier checks AND at least `minimumEvidenceChecks` evidence-tier checks hold. Authorizes the opt-in surface named in `authorizedOutcome` and nothing beyond it.",
 		"4. EVIDENCE-ONLY — the evidence bar holds and the resolution bar does not. This is #1966 §7's outcome: the observation surface without the recognition change.",
-		"5. STOP-REDESIGN — the evidence bar does not hold. Per §7 that ends the opt-in surface too, not merely a default change; the route reverts to experiment machinery behind a frozen pre-registration, and the compiled artifact with its conformance instruments is retained as the durable product of the phase.",
+		"5. STOP-REDESIGN — the evidence bar does not hold. Per §7 that ends the opt-in surface too, not merely a default change; the route reverts to experiment implementation behind a frozen pre-registration, and the compiled artifact with its conformance instruments is retained as the durable product of the phase.",
 		"A blocked lane changes no arithmetic. It sets `coverage: partial` and is named in the reasons on every run, so no decision this ruler produces can be read as covering the whole phase.",
 		"Artifact pin deviations change no arithmetic either. They set `comparability: deviated` and are named: a decision measured on other artifacts is still a decision, about those artifacts."
 	],

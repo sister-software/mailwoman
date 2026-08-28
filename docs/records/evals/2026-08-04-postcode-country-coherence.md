@@ -82,7 +82,7 @@ and the four-way `75001` collision the diagnosis predicted is present verbatim:
 | DE      | 48.843796, 9.367177   | 421285019                   |
 | PL      | 54.1903, 16.1879      | 8000048250 (+ a second row) |
 
-**The postal shards are NOT attached everywhere, and the difference is load-bearing** — see §4 and §5.
+**The postal shards are NOT attached everywhere, and the difference is required** — see §4 and §5.
 
 ## 3. The Rivoli case, end to end
 
@@ -245,7 +245,7 @@ question. What remains open is narrower:
 1. **The gauntlet has not seen this.** `mailwoman eval gauntlet` carries no resolver-lever pin, so the
    D-rule's standard gate has no leg for it. §6 is an oa-resolver measurement, which is the right
    instrument for a resolver lever but is not the gate the release process runs.
-2. **`exactMatch` is load-bearing and backend-dependent.** P04 shows the FTS backend and the candidate
+2. **`exactMatch` is required and backend-dependent.** P04 shows the FTS backend and the candidate
    backend disagree about what an exact match is (`Munchen` → `München` is exact on one, not the
    other). Every §6 number is candidate-backend. A default-on mechanism whose firing rate depends on
    which gazetteer is attached needs that difference measured on the FTS path too, or the diacritic

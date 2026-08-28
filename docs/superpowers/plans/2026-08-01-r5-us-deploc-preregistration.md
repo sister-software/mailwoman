@@ -131,7 +131,7 @@ into three classes that want three different mechanisms — the useful generaliz
 build the index and the tag emits. Everything R2–R5 did lives here.
 
 **Class 2 — open-class venue names (`venue` → `venue`).** NOT artifact-gated, and the measurement
-says so plainly: of the 40 probe-set-2 improvement targets carrying an expected venue string, only
+states: of the 40 probe-set-2 improvement targets carrying an expected venue string, only
 **8 (20%) exist in poi.db at all** — and most of those 8 are wrong-country homonyms ("East West"
 [US] for a London row, "Ginza" [FR] for a Dhaka row), so true coverage rounds to near zero. The
 residual is "A Bar with Shapes for a Name", "Art4Space", "B.indulged", "Paws 4 A Rest", "Tricky's @

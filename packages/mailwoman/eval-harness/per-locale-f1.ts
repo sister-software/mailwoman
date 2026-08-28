@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-locale held-out F1 TRIPWIRE.
+ *   Per-locale held-out F1 regression check.
  *
  *   The golden v0.1.2 dev set is already split by country (`dev/us.jsonl`, `dev/fr.jsonl`,
  *   `dev/adversarial.jsonl`). This script loads the neural classifier ONCE and scores each country
@@ -15,7 +15,7 @@
  *   first measure whether US and FR already diverge on the SAME model. Equal per-locale F1 ⇒ no
  *   current interference ⇒ conditioning is premature. A gap ⇒ interference is real and conditioning
  *   earns its keep. Run again after adding any new locale: if an existing locale's F1 drops, that's
- *   the interference tripwire firing.
+ *   the interference regression check firing.
  *
  *   Scoring mirrors `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the
  *   Stage-3 street parts (`street_prefix`/`street`/`street_suffix` → `street`,
@@ -412,7 +412,7 @@ export async function perLocaleF1(
 
 		neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: args.weightsCache })
 	} else if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
-		// FOOTGUN GUARD: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
+		// misuse check: if ANY custom-model flag is set, ALL THREE are required. Previously a missing
 		// --tokenizer silently fell back to the DEFAULT shipped weights, so --model was ignored and two
 		// different checkpoints scored byte-identical. Refuse to guess; fail loud.
 		if (!args.modelPath || !args.tokenizerPath || !args.modelCardPath) {
@@ -545,7 +545,7 @@ export async function perLocaleF1(
 	const macroF1s = localeReports.map((r) => r.macroF1)
 	const spread = macroF1s.length > 1 ? Math.max(...macroF1s) - Math.min(...macroF1s) : 0
 
-	report("# Per-locale F1 tripwire\n")
+	report("# Per-locale F1 regression check\n")
 	report("| Locale | n | Macro-F1 | Micro-F1 | Exact-match |")
 	report("|---|--:|--:|--:|--:|")
 

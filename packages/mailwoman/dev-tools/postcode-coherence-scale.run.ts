@@ -12,7 +12,7 @@
  *   firing rate of a mechanism proposed for default-on. Hence a probe you can point at either backend, running the same
  *   protocol, so the two tables are comparable line for line.
  *
- *   Three legs per panel, and the regime split is the load-bearing part:
+ *   Three legs per panel, and the regime split is the required part:
  *
  *   - `domestic`  — the panel's own country as `defaultCountry`. Any override is a border crossing, i.e. a FALSE
  *       POSITIVE, because the address really is in the panel's country.

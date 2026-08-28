@@ -9,7 +9,7 @@
  *   This dumps the parse alone (classifier-only pipeline, no resolver, exactly the gauntlet's parse half).
  *
  *   Registers are the invariance suite's own transforms, so a row can be read across the register axis the
- *   #690 case-normalization work made load-bearing: `asis` / `lower` / `upper` / `comma-drop`.
+ *   #690 case-normalization work made required: `asis` / `lower` / `upper` / `comma-drop`.
  *
  *   Usage:
  *     node packages/mailwoman/dev-tools/diff-territory-spans.run.ts --rows <file.txt> --cache-root <dir> --label cand-on

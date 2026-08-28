@@ -164,7 +164,7 @@ export interface ResolvedPlace {
 	 */
 	resolutionQuality?: "fallback"
 	/**
-	 * The admin-containment verdict for this candidate (#1717 stage 2) — TRI-STATE, and the absence is load-bearing
+	 * The admin-containment verdict for this candidate (#1717 stage 2) — TRI-STATE, and the absence is required
 	 * (meaning-of-zero): `true` = the backend's ancestors sidecar vouches that this candidate sits UNDER the query's
 	 * parsed region qualifier; `false` = the backend evaluated containment and could not vouch for it; `undefined` = the
 	 * question was never asked — the lever is off, the query carried no qualifier, or the backend/artifact cannot answer

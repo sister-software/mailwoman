@@ -23,9 +23,9 @@ import type { AddressKind, CaseStatus, ResolutionTier } from "../schema.ts"
 /**
  * One row of the curated regression corpus, as committed under `cases/<cc>/*.jsonl`.
  *
- * The field ORDER here is load-bearing twice over: {@linkcode SEED_CASE_KEY_ORDER} mirrors it (so every emitted JSONL
- * row keys identically and a diff shows content changes, never a re-shuffle), and the migration that produced the
- * corpus keyed its rows by it.
+ * The field ORDER here is required twice over: {@linkcode SEED_CASE_KEY_ORDER} mirrors it (so every emitted JSONL row
+ * keys identically and a diff shows content changes, never a re-shuffle), and the migration that produced the corpus
+ * keyed its rows by it.
  */
 export interface SeedCase {
 	id: string

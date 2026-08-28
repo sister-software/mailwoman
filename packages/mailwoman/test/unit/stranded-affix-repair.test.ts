@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the stranded-affix repair. The load-bearing cases are the REFUSALS: this pass rewrites a place name, so
+ *   Tests for the stranded-affix repair. The required cases are the REFUSALS: this pass rewrites a place name, so
  *   the interesting question is never "does it join `Brixton` to `Hill`" but "what does it leave alone".
  */
 

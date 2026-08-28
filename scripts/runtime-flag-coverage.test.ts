@@ -16,7 +16,7 @@
  *   - `arbitrate` did not exist in any source file. It gated a union with the LEGACY RULE PARSER, deleted
  *       in v7.0.0, so it had gated nothing for two majors. Removal.
  *   - `jointReconcile` is live in `runtime-pipeline.ts` and reaches ~1,850 lines of well-tested reconcile
- *       machinery. The MECHANISM has a 648-line kryptonite suite; the FLAG that reaches it has nothing.
+ *       implementation. The MECHANISM has a 648-line kryptonite suite; the FLAG that reaches it has nothing.
  *       Missing testing — of the switch, not the switched.
  *
  *   MATCHING IS DELIBERATELY LOOSE. A flag name appearing anywhere in a test file counts, including in

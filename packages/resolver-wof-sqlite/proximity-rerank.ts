@@ -13,7 +13,7 @@
  *   enough — the two copies agreed on every literal and still diverged on which field the population term reads and on
  *   whether the combined value is written back, which is the half that actually decides the answer.
  *
- *   Two properties are load-bearing and easy to lose when transcribing:
+ *   Two properties are required and easy to lose when transcribing:
  *
  *   1. The population base is `prominence ?? score`, NOT `score`. `prominence` carries the bounded cross-country
  *      primary preference, so reading raw score lets a coincidental foreign alias ride population back over a primary

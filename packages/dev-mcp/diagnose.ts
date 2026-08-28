@@ -281,7 +281,7 @@ export interface RetrievalSeams {
 	 * `null` when the trace carries no resolver records at all (a trace predating them). An EMPTY array is the walk
 	 * stating it performed no lookups — a different claim, and one the shapes must not read as retrieval failure.
 	 *
-	 * COVERAGE BOUND, and it is load-bearing for every retrieval shape below: the trace records the WALK's own
+	 * COVERAGE BOUND, and it is required for every retrieval shape below: the trace records the WALK's own
 	 * `#lookupAndPick` and nothing else. The resolver's post-walk recovery passes — span-rescore (a famous name the model
 	 * tagged `street`, which the walk never queries because `street` is not in the placetype map) and the
 	 * postcode-compound recovery — query the backend directly and emit no record. So a row can carry a resolved

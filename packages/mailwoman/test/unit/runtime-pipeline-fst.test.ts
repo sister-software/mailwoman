@@ -85,7 +85,7 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual({ biasScale: 0, dependentLocalityPenalty: 0 })
 	})
 
-	it("fst: false suppresses the auto-load (byte-stable escape hatch)", async () => {
+	it("fst: false suppresses the auto-load (byte-stable override)", async () => {
 		const dir = mkdtempSync(join(tmpdir(), "mw-fst-optout-"))
 		const { classifier, calls } = fakeClassifier(writeTinyFST(dir))
 		const pipeline = createRuntimePipeline({ classifier, fst: false })

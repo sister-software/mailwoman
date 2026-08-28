@@ -29,7 +29,7 @@
 
 ## Acceptance gates (§7-3a, pre-registered — Task 7 discharges them)
 
-1. **Provenance completeness (load-bearing).** No edge can exist without `source`, `source_vintage`, `assertion`, and `valid_from`. Enforce structurally: the fields are non-optional on the insert type, pinned with `satisfies Record<keyof FilerEdgeInsert, true>`, and a runtime test asserts a partial edge is rejected.
+1. **Provenance completeness (required).** No edge can exist without `source`, `source_vintage`, `assertion`, and `valid_from`. Enforce structurally: the fields are non-optional on the insert type, pinned with `satisfies Record<keyof FilerEdgeInsert, true>`, and a runtime test asserts a partial edge is rejected.
 2. **Authoritative/inferred never conflated.** Clustering over authoritative edges only; a test builds a fixture where an inferred edge _would_ merge two authoritative components and asserts it does not, and that the API surfaces the distinction.
 3. **Cardinality fidelity.** A fixture `provider_id` carrying two FRNs round-trips both edges through `filer.db`; the test also asserts the documented primary-FRN rule picks the later-filed one.
 4. **Temporal scoping.** Every edge carries `valid_from`; a rollup query with an `asOf` before an edge's `valid_from` excludes it; the result states the `asOf` used.

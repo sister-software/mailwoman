@@ -47,7 +47,7 @@ Three findings worth naming:
    `Rue du 11-Novembre-1918`. If any surface were going to drag a street reading toward locality, it
    is these.
 3. **Bare house numbers match places.** `12` → localadmin 0.065, `2` → 0.148. The gazetteer will
-   happily bias a house number toward an admin tag.
+   bias a house number toward an admin tag.
 
 Only 3 surfaces were inert at importance 0 (`avenue`, `budapest`, `paix`) — so the
 [meaning-of-zero](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/registry-backed-structured-prediction.mdx) inertia is **not** what

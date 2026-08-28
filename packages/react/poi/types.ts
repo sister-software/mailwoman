@@ -5,7 +5,7 @@
  *
  *   Types for the POI explorer. The intent path (classification → subject → OverpassQL) is fully
  *   self-contained over the pure `@mailwoman/*` packages; the live poi.db path is expressed only as an
- *   INJECTED async function ({@link POILiveSearch}) so the httpvfs/worker machinery stays out of this
+ *   INJECTED async function ({@link POILiveSearch}) so the httpvfs/worker implementation stays out of this
  *   package's browser graph (it lives in the docs site, which knows where the layer is served).
  */
 

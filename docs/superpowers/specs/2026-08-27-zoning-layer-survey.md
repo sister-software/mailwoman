@@ -20,7 +20,7 @@ shape the erosion survey established:
   their data may be copied** — measured at **85.0 % of 2,000 enumerated public zoning services carrying
   an empty licence field** (§2.6), with the false-negative direction tested.
 
-The consuming machinery already exists, so nothing below proposes new architecture. The layer contract
+The consuming implementation already exists, so nothing below proposes new architecture. The layer contract
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
 [`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx); the
 exclusion-grade coverage pilot
@@ -365,7 +365,7 @@ there says why it will not match the zoning.
 grants zoning to "the governing body of a **municipality**". Ch. 231, titled _County Zoning Authority_,
 has one definitional section conferring no power, and **every operative subchapter is geographically
 restricted** — Padre Island, Amistad, military zones, named lakes, the El Paso Mission Trail, Hood County.
-Harris County's own Fair Housing plan states it plainly: "**In the State of Texas counties are not granted
+Harris County's own Fair Housing plan states: "**In the State of Texas counties are not granted
 zoning powers** and have limited power to guide development and as a result, private deed restrictions and
 covenants usually govern land use and development." Gillespie County confirms the pattern independently:
 its adopted subdivision regulations extract to 311,117 characters with **zero occurrences of "zoning"**.
@@ -742,7 +742,7 @@ binding text or the specification:
 
 **The part of a plan that carries the actual building restrictions is admitted to be unharmonised.**
 `SupplementaryRegulationValue` has extensibility `any` against `HILUCSValue`'s `none`, and the
-specification says so plainly: "**Further work is though needed for achieving a European harmonisation on
+specification states: "**Further work is though needed for achieving a European harmonisation on
 that matter**."
 
 **Four escape hatches bound the whole obligation**, all verbatim from the specification: "INSPIRE does not

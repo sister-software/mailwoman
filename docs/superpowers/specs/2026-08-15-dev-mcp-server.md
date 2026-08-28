@@ -86,7 +86,7 @@ run, which is the same thing as changing which panel it picks.
 
 ## 2. What already exists, and what this must not duplicate
 
-Grounding, so the spec proposes machinery rather than re-describing it.
+Grounding, so the spec proposes implementation rather than re-describing it.
 
 ### 2.1 `@mailwoman/mcp` — the shipped, public MCP server
 
@@ -255,7 +255,7 @@ interface EngineKey {
 Hash it; that string is the engine id, and it appears in the provenance block of every result the
 engine produces.
 
-**Construction-time versus per-call is the load-bearing split**, and the harness already draws it. In
+**Construction-time versus per-call is the required split**, and the harness already draws it. In
 `buildGauntletDeps`, the model, the overlays and the resolver backend are construction-time; the
 per-call options are `GauntletGeocodeOpts` — `defaultCountry`, `caseCountry`, `fuzzyCountryScope`
 (`harness.ts:110-127`) — and the lever pins are spread into each `geocodeAddress` call
@@ -593,7 +593,7 @@ Passthrough to `node packages/mailwoman/out/cli.js`, with three guards:
    through this tool.
 
 This tool exists because the CLI's surface is larger than the daemon's and will stay that way. It is a
-deliberate escape hatch, not the main road — every call pays the full cold start measured in §1.2, and
+deliberate override, not the main road — every call pays the full cold start measured in §1.2, and
 the result says so.
 
 ### 4.11 `mwdev_job`

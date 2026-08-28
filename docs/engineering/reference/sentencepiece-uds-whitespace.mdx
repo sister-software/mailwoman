@@ -1,6 +1,6 @@
 ---
 title: SentencePiece UDS literals with ASCII space silently fail to match
-topic: gotcha
+topic: failure mode
 project: mailwoman
 tags: [tokenizer]
 written_at: 2026-05-23T18:09:47Z
@@ -21,4 +21,4 @@ Why it bites: there's no error log. SP silently treats the UDS as never-matching
 
 ## See also
 
-- [Tokenizer A0 — baseline](./tokenizer-a0-baseline.mdx) — the tokenizer retrain that hit this gotcha
+- [Tokenizer A0 — baseline](./tokenizer-a0-baseline.mdx) — the tokenizer retrain that hit this failure mode

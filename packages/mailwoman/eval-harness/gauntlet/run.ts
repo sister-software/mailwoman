@@ -14,7 +14,7 @@
  *   Promote gate (a candidate):    mailwoman eval gauntlet --candidate ./out/v195/model.onnx [--source us]
  *   One layer only:                mailwoman eval gauntlet --layer regression|metamorphic|holdout …
  *   A RESOLVER lever, both ways:   mailwoman eval gauntlet [--postcode-country-coherence]
- *   The load-bearing MAP:          mailwoman eval gauntlet --layer ablation [--components postcode,street]
+ *   The required MAP:          mailwoman eval gauntlet --layer ablation [--components postcode,street]
  *
  *   That last one is not a gate. `ablation` (2026-08-05) deletes each asserted component from each corpus row and
  *   measures what the deletion costs, per (component, locale) — the operator's "where does the pipeline falter when a
@@ -47,8 +47,8 @@ import { type GauntletLayerOptions, runRegressionLayer } from "./regression.ts"
 /**
  * The Gauntlet layers. The first three are GATES and make up the combined verdict; `ablation` is a MEASUREMENT layer —
  * reachable only via `--layer ablation`, deliberately absent from the combined gate below, and incapable of blocking a
- * ship. It produces the load-bearing map (what deleting each component costs, per locale), which is a question about
- * the corpus and the resolver rather than a pass/fail about a candidate.
+ * ship. It produces the required map (what deleting each component costs, per locale), which is a question about the
+ * corpus and the resolver rather than a pass/fail about a candidate.
  */
 export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation"
 

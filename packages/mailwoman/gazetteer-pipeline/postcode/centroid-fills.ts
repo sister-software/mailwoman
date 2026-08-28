@@ -126,7 +126,7 @@ async function readGeonamesPostal(
 	if (!existsSync(source)) return acc
 
 	// Streamed: `source` is a per-country dump of ~1 MB OR the 140 MB combined file, and only the caller
-	// knows which. `header: false` is load-bearing — the spliterator consumes row 1 as a header even in
+	// knows which. `header: false` is required — the spliterator consumes row 1 as a header even in
 	// array mode, and GeoNames postal is headerless, so the first postcode would vanish without it.
 	//
 	// Columns: country, postcode, place, admin1..3 (name + code pairs), latitude, longitude, accuracy.

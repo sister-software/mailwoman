@@ -30,7 +30,7 @@ describe("isOwnNameVariant — the measured census contests", () => {
 	})
 
 	it("refuses the coincidental-collision class the penalty exists for", () => {
-		// Changchun's Turkish exonym "Çançun" folds to `cancun` — the load-bearing negative: the query
+		// Changchun's Turkish exonym "Çançun" folds to `cancun` — the required negative: the query
 		// means Cancún, Mexico, and the penalty must keep protecting it.
 		expect(isOwnNameVariant("чанчунь", "cancun")).toBe(false)
 		// Augsburg's Latin name `augusta` is a different name, not an orthography of "Augsburg".

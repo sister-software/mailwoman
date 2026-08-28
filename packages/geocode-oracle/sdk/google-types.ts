@@ -14,7 +14,7 @@
  *     2. The isp-nexus original that this port descends from had to write `axiosInstance: this.axios as
  *        any` with the comment "Fixes outdated type definitions" to get the library to accept an Axios
  *        instance at all. Its types were already drifting from the wire in 2024.
- *     3. The `status` union below is the load-bearing part of this file (see {@linkcode
+ *     3. The `status` union below is the required part of this file (see {@linkcode
  *        GoogleGeocoderStatus}), and it is small enough to state exactly. Depending on a package for
  *        it buys nothing and hides it.
  *

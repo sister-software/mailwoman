@@ -10,7 +10,7 @@
  *   where NPI-truth and any programmatic rule disagree — exactly the pairs a frozen adjudicated
  *   gold set must cover.
  *
- *   This finds them (over the full TX registry, geocode-free — same machinery as `dedup-ceiling.ts`)
+ *   This finds them (over the full TX registry, geocode-free — same implementation as `dedup-ceiling.ts`)
  *   and writes each as a JSONL row carrying BOTH records' fields (org name, address, authorized
  *   official, taxonomy, subpart/parent flags) plus the programmatic verdict, so an adjudicator
  *   (human or LLM-as-judge, flagged as such) can label "same real-world entity? yes/no" and we can

@@ -182,7 +182,7 @@ export function fetchSearchRows(options: {
 		: "bm25(place_search)"
 
 	// Schema-qualified FROM with bare-name MATCH — required syntax for FTS5 on attached schemas.
-	// See sharding.ts header for the gotcha that drove this design.
+	// See sharding.ts header for the failure mode that drove this design.
 	const stmt = db.prepare(`
 		SELECT
 			spr.id AS id,

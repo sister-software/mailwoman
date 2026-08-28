@@ -59,7 +59,7 @@ export function scratch(prefix: string, tuples: object[], surfaces: string[]): {
 
 /**
  * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved surfaces. The seed is
- * per-recipe and load-bearing — these suites assert on generated distributions.
+ * per-recipe and required — these suites assert on generated distributions.
  */
 export function shardRunner<TStats>(prefix: string, recipe: ShardRecipe<TStats>, seed: number) {
 	return async function run(

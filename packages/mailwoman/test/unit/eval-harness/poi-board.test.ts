@@ -297,7 +297,7 @@ describe("the committed poi-board fixture set", () => {
 	// number (#1960) and that is the one that must not move without an argument: 51 counted rows. The committed total
 	// and the tracked count move whenever a failure class is committed to the surface every candidate is graded on,
 	// which is what the tracked convention is for. A row added or a status flipped without this test moving is a floor
-	// denominator changing in silence — so the counted assertion is the load-bearing one, and the other two say which
+	// denominator changing in silence — so the counted assertion is the required one, and the other two say which
 	// kind of change happened.
 	it("carries 56 cases — 51 counted toward the floors, plus 5 tracked", () => {
 		expect(fixtures).toHaveLength(56)

@@ -20,7 +20,7 @@ zero-out, independent per-channel draws) with **three-law lexicon selectivity**:
 
 Verdict grid (v3.18, all pre-registered bars passed): locality marginal within −0.020 everywhere;
 homonym +0.055 as-typed / **+0.292 lowercase-heal**; user-register net +0.020. The lowercase
-doctrine (operator-ratified) is load-bearing: evidence value peaks in the register users type.
+doctrine (operator-ratified) is required: evidence value peaks in the register users type.
 
 ## Phases
 

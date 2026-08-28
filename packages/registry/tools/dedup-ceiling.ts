@@ -40,7 +40,7 @@ import { addressFrequencyKey, streamRows } from "#index"
 import { norm } from "./shared.ts"
 
 /**
- * Similarity at or above which a pair is a near-miss worth inspecting rather than plainly unrelated.
+ * Similarity at or above which a pair is a near-miss worth inspecting rather than unrelated.
  */
 const WEAK_SIMILARITY_MIN = 0.3
 

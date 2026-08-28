@@ -8,7 +8,7 @@
  *   Spec §6.1 gives `ArmSpec` four members and all four are built: a mailwoman configuration, an external endpoint, a
  *   metered reference geocoder, and a stored past run.
  *
- *   Every kind gets its own schema branch, and that is the load-bearing detail in this file. A bare {@link EngineConfig}
+ *   Every kind gets its own schema branch, and that is the required detail in this file. A bare {@link EngineConfig}
  *   stays legal as shorthand so the older two-mailwoman-arms call keeps working, and a zod object STRIPS unknown keys —
  *   so without an explicit branch, `{kind:"oracle", provider:"google"}` parses cleanly as an empty mailwoman config and
  *   silently runs the production default against itself. The caller would get a comparison, a verdict, and no

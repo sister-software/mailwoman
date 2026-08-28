@@ -69,9 +69,9 @@ A1 retrain is a single re-invocation of the A0 harness against `corpus-v0.4.0` �
 
 Three things:
 
-1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalisation step (see [`SP UDS whitespace gotcha`](./sentencepiece-uds-whitespace.mdx) — or, if you are reading on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer_train.py`), the model card writer, the byte-fallback eval — every piece worked. A1 has zero new code to write.
+1. **The harness is validated.** A0 trained end-to-end on real data. Reservoir sampling, the user-defined-symbols normalisation step (see [`SP UDS whitespace failure mode`](./sentencepiece-uds-whitespace.mdx) — or, if you are reading on the published docs site, the version in the mailwoman repo at `corpus-python/src/mailwoman_train/tokenizer_train.py`), the model card writer, the byte-fallback eval — every piece worked. A1 has zero new code to write.
 2. **The eval fixture is validated.** 43 hand-curated multi-script lines is small but the per-script breakdown is informative enough to tell us _where_ a retrain helped vs hurt. Future tokenizer iterations will use the same fixture and the same harness, so A0 / A1 / A2 numbers will be directly comparable.
-3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS — US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalisation does not silently disable the UDS (the [SP UDS whitespace gotcha](./sentencepiece-uds-whitespace.mdx)). That substitution has held across every A-series harness run.
+3. **The user-defined-symbols list is validated.** A0 has 2,110 UDS — US state codes, country abbreviations, postcode literal patterns (`5-digit ZIP`, `5-4 ZIP+4`, UK alphanumeric blocks, JP `100-0005`). The A0 harness substitutes ASCII space → U+2581 internally so SP's normalisation does not silently disable the UDS (the [SP UDS whitespace failure mode](./sentencepiece-uds-whitespace.mdx)). That substitution has held across every A-series harness run.
 
 ## Model card schema
 

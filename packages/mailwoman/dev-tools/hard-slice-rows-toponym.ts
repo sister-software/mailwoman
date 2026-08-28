@@ -7,8 +7,8 @@
  *
  *   The four classes here are the ways one surface can mean several places, ordered by what decides:
  *
- *   - `homonym_confound` — a trailing region settles it (#267/#833/#905).
- *   - `bare_namesake` — nothing settles it but ranking; the answer has to be dominant enough to pin.
+ *   - `homonym_confound` — a trailing region determines the result (#267/#833/#905).
+ *   - `bare_namesake` — nothing determines the result but ranking; the answer has to be dominant enough to pin.
  *   - `wiki_pop_conflict` — population and encyclopedic importance pick DIFFERENT bearers, so the row is
  *       the disagreement itself. Saint-Denis is the canonical member.
  *   - `street_head_control` — the surface is a toponym in street-head position and must NOT be pulled to

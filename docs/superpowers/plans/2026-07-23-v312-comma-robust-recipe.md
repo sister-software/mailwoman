@@ -1,6 +1,6 @@
 # v3.12 — comma-robust dep-loc recipe (pre-registered proposal, OPERATOR-GATED)
 
-**Date:** 2026-07-23 · **Status:** proposal, NOT launched · **Context:** the v3.11.x lineage is closed for shipping (stop rule executed): no checkpoint passes the gauntlet metamorphic layer; the terminal break — comma-free US address → total resolution loss — is byte-stable under damped consolidation (8k ≡ 10k), i.e. a learned behavior, not churn. Five-whys record: the dep-loc shards are ~100% comma-structured; commas were promoted toward load-bearing boundary evidence; comma-free robustness paid the bill.
+**Date:** 2026-07-23 · **Status:** proposal, NOT launched · **Context:** the v3.11.x lineage is closed for shipping (stop rule executed): no checkpoint passes the gauntlet metamorphic layer; the terminal break — comma-free US address → total resolution loss — is byte-stable under damped consolidation (8k ≡ 10k), i.e. a learned behavior, not churn. Five-whys record: the dep-loc shards are ~100% comma-structured; commas were promoted toward required boundary evidence; comma-free robustness paid the bill.
 
 ## Step 0 — the why-3 verification (BEFORE any recipe is written; ~1 hour, zero GPU)
 

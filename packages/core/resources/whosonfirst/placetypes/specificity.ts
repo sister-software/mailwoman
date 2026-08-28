@@ -94,10 +94,10 @@ export function isAtLeastAsSpecific(
  * Is `candidate` STRICTLY finer than `reference` — a child rung, not the same one?
  *
  * The distinction from {@link isAtLeastAsSpecific} is the whole bug it was written for. "Does this live row cover that
- * dead one" wants the EQUAL case to count as covering: a live `locality` plainly covers a dead `locality` of the same
- * name. Asking `isAtLeastAsSpecific(live, dead)` and negating it answers "is the live row strictly coarser", which
- * quietly drops the equal case — measured on the real artifact, that turned 973 blocked rows into 18 and would have
- * resurrected 955 places that are already alive.
+ * dead one" wants the EQUAL case to count as covering: a live `locality` covers a dead `locality` of the same name.
+ * Asking `isAtLeastAsSpecific(live, dead)` and negating it answers "is the live row strictly coarser", which quietly
+ * drops the equal case — measured on the real artifact, that turned 973 blocked rows into 18 and would have resurrected
+ * 955 places that are already alive.
  *
  * `undefined` when either placetype is unranked; a caller gating on this should treat that as "not strictly finer".
  */

@@ -47,7 +47,7 @@ describe("release.config.json under the prepare bump", () => {
 		const root = parseJSONStrict<{ version: string }>(readFileSync(rootManifestPath, "utf8"))
 
 		// The v9.2.0 incident: the root moved and this file did not. The prepare bump now writes both,
-		// and its pre-write sync check refuses drift — this assertion is the standing tripwire.
+		// and its pre-write sync check refuses drift — this assertion is the standing regression check.
 		expect(currentVersion).toBe(root.version)
 	})
 })

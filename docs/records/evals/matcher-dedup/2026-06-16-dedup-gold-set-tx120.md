@@ -2,7 +2,7 @@
 
 _Gold-set P3. The dual-level benchmark and the ceiling both suggested the dedup over-merge might be
 NPI **over-segmentation** (one org / many NPIs) rather than model error. This adjudicates the hard
-slice and settles it._
+slice and determines the result._
 
 ## Method
 
