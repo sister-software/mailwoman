@@ -345,6 +345,11 @@ export class SoilCapabilityLookup {
 	 * A rectangle rather than the outline, and that is honest about what it is: the answer names WHICH published survey
 	 * the reading came from, and two neighbouring counties' rectangles overlap at their corners. The reading itself does
 	 * not depend on it — the cell row is the answer — so a corner ambiguity costs a label rather than a determination.
+	 *
+	 * A LINEAR SCAN, WHICH THE PILOT'S 99 SURVEY AREAS MAKE FREE AND A NATIONAL BUILD WOULD NOT. It returns on the first
+	 * containing rectangle, so the pilot costs a few dozen comparisons per geocode. At the 3,380 survey areas the country
+	 * holds this wants a bounding-box index; it is left as a scan because a structure sized for a set this build does not
+	 * hold would be untested at the size it was built for.
 	 */
 	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {
 		for (const [index, bounds] of this.#bounds.entries()) {
