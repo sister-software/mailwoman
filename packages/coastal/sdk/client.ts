@@ -116,6 +116,16 @@ export interface CoastalCatalogueRecord {
 const BBOX_ORDINATES = 4
 
 /**
+ * The marker the published record puts before each copy of its attribution statement.
+ */
+const ATTRIBUTION_MARKER = "Attribution statement:"
+
+/**
+ * A four-digit year, anywhere in a statement. Bounded and anchored to word boundaries, so it is linear on any input.
+ */
+const YEAR_PATTERN = /\b\d{4}\b/u
+
+/**
  * The attribution statement carrying a year, taken from a block of text that may hold the statement more than once.
  *
  * THE FIRST COPY IS THE WRONG ONE, MEASURED. The 2024 record's abstract ends "…© Environment Agency copyright and/or
@@ -124,24 +134,46 @@ const BBOX_ORDINATES = 4
  * match would ship an attribution naming no year, which is a licence condition stated incorrectly rather than a
  * cosmetic slip.
  *
+ * INDEX SCANS RATHER THAN A REGEX, AND THAT IS A CORRECTNESS CHOICE RATHER THAN A SPEED ONE. The obvious form —
+ * `/Attribution statement:\s*([^<]*?)(?=Attribution statement:|<|$)/g` — backtracks polynomially, because the `\s*` and
+ * the lazy run overlap on whitespace and the lookahead's `$` alternative makes every position a candidate end. The
+ * input here is a 27,643-byte document that arrived over the network, so "a pathological one cannot happen" is not a
+ * claim this reader gets to make. Two `indexOf` calls per copy answer the same question in one pass.
+ *
+ * EACH COPY ENDS AT THE NEXT MARKER OR THE NEXT TAG, whichever comes first. The statement sits inside a
+ * `gco:CharacterString`, so a scan that ran to the end of the document would return several kilobytes of XML that
+ * happens to contain a year.
+ *
  * @throws {Error} When no copy carries a four-digit year. A statement without one is not this product's attribution,
  *   and guessing which copy was meant is exactly the choice that produced the malformed pair.
  */
 export function parseAttributionStatement(text: string): string {
 	const statements: string[] = []
 
-	// BOUNDED AT A TAG AS WELL AS AT THE NEXT COPY, because the text this runs over is the ISO record itself rather than a
-	// bare abstract. The statement sits inside a `gco:CharacterString`, so an unbounded lazy capture would run from the
-	// last copy to the end of the document and return several kilobytes of XML that happens to contain a year.
-	for (const match of text.matchAll(/Attribution statement:\s*(?<statement>[^<]*?)(?=Attribution statement:|<|$)/gu)) {
-		const statement = match.groups?.statement?.trim()
+	let cursor = 0
+
+	for (;;) {
+		const marker = text.indexOf(ATTRIBUTION_MARKER, cursor)
+
+		if (marker === -1) break
+
+		const from = marker + ATTRIBUTION_MARKER.length
+		const nextMarker = text.indexOf(ATTRIBUTION_MARKER, from)
+		const nextTag = text.indexOf("<", from)
+
+		// `Math.min` over the two ends, with an absent end reading as the end of the string rather than as `-1` — which
+		// would sort BELOW every real index and truncate every statement to nothing.
+		const end = Math.min(nextMarker === -1 ? text.length : nextMarker, nextTag === -1 ? text.length : nextTag)
+		const statement = text.slice(from, end).trim()
 
 		if (statement) {
 			statements.push(statement)
 		}
+
+		cursor = from
 	}
 
-	const dated = statements.filter((statement) => /\b\d{4}\b/u.test(statement))
+	const dated = statements.filter((statement) => YEAR_PATTERN.test(statement))
 
 	if (!dated.length) {
 		throw new Error(

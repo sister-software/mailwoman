@@ -16,6 +16,11 @@ import { NCERM_ATTRIBUTION, NCERM_SERVICE_SLUG } from "@mailwoman/coastal/vocabu
 import { describe, expect, it } from "vitest"
 
 /**
+ * The marker the published record puts before each copy of its attribution statement.
+ */
+const ATTRIBUTION_MARKER = "Attribution statement:"
+
+/**
  * The tail of the published abstract, verbatim — doubled, with the first copy carrying no year and the whole thing
  * ending in a trailing space.
  */
@@ -42,6 +47,28 @@ describe("parseAttributionStatement", () => {
 
 	it("trims the trailing space the structured field ships", () => {
 		expect(parseAttributionStatement(PUBLISHED_ABSTRACT_TAIL).endsWith(" ")).toBe(false)
+	})
+
+	it("stays linear on a pathological input, because the record arrives over the network", () => {
+		// The regex this parse replaced backtracked polynomially: its `\s*` and its lazy run overlapped on whitespace, and
+		// its lookahead's `$` alternative made every position a candidate end. A long whitespace run after the marker is
+		// exactly the shape that triggers it. Two `indexOf` calls per copy answer the same question in one pass, and a
+		// ceiling far above any real parse time is what turns "it is linear" into something a test can fail on.
+		const pathological = `${ATTRIBUTION_MARKER}${" ".repeat(200_000)}`
+
+		const started = performance.now()
+
+		expect(() => parseAttributionStatement(pathological)).toThrow(/carries a year/u)
+
+		expect(performance.now() - started).toBeLessThan(1000)
+	})
+
+	it("reads every copy when several are separated by tags", () => {
+		const record =
+			`<a>${ATTRIBUTION_MARKER} © Somebody 1999.</a>` + `<b>${ATTRIBUTION_MARKER} © Somebody Else 2025.</b>`
+
+		// The LAST dated copy wins, which is what makes the published record's yearless first copy unreachable.
+		expect(parseAttributionStatement(record)).toBe("© Somebody Else 2025.")
 	})
 
 	it("stops at the closing tag when it is handed the ISO record rather than a bare abstract", () => {
