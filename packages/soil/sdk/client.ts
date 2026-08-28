@@ -104,13 +104,51 @@ export class SoilDataAccessError extends Error {
 export function readServiceException(body: string): string | undefined {
 	if (!body.includes("ServiceExceptionReport")) return undefined
 
-	// The tag name must END here — `<ServiceException(\s…)?>` and not `<ServiceException[^>]*>`, because the latter also
-	// matches the enclosing `<ServiceExceptionReport xmlns="…">` and then captures the whole report body as the message.
-	const matched = /<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/u.exec(body)
-
 	// A report whose exception element cannot be read is still a report, and reporting it as a successful empty answer
 	// is the failure this whole function exists to prevent.
-	return decodeXMLEntities((matched?.[1] ?? "the report carried no readable ServiceException element").trim())
+	return decodeXMLEntities((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
+}
+
+/**
+ * The opening tag, without its terminator — the prefix `<ServiceExceptionReport …>` unhelpfully shares.
+ */
+const EXCEPTION_OPEN = "<ServiceException"
+
+/**
+ * The inner text of the first real `<ServiceException>` element.
+ *
+ * INDEX SCANS RATHER THAN A REGEX. The obvious form — `/<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/`
+ * — backtracks polynomially on a body whose opening tag has no closing partner, and this body is whatever a network
+ * service returned. Two more things it has to get right, both of which cost nothing here: the tag name must END at the
+ * match, because `<ServiceExceptionReport xmlns="…">` shares the prefix and taking it captures the entire report as the
+ * message; and an unclosed element reads as unreadable rather than as empty.
+ */
+function exceptionText(body: string): string | undefined {
+	let cursor = 0
+
+	for (;;) {
+		const start = body.indexOf(EXCEPTION_OPEN, cursor)
+
+		if (start === -1) return undefined
+
+		const after = start + EXCEPTION_OPEN.length
+
+		cursor = after
+
+		// `>` closes a bare tag; whitespace introduces attributes. Anything else continues the tag NAME, which means this
+		// is `ServiceExceptionReport` or a sibling and not the element being read.
+		if (!/^[\s>]/u.test(body.slice(after, after + 1))) continue
+
+		const contentStart = body.indexOf(">", after)
+
+		if (contentStart === -1) return undefined
+
+		const end = body.indexOf("</ServiceException>", contentStart)
+
+		if (end === -1) return undefined
+
+		return body.slice(contentStart + 1, end)
+	}
 }
 
 /**

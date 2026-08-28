@@ -48,6 +48,25 @@ describe("readServiceException", () => {
 	it("returns nothing for a real answer, so the JSON path is untouched", () => {
 		expect(readServiceException('{"Table":[["IA153"]]}')).toBeUndefined()
 	})
+
+	it("answers in linear time on a report whose exception element is never closed", () => {
+		// The shape a lazy `[\\s\\S]*?` scan backtracks polynomially over: an opening tag with no closing partner, in a
+		// body a network service produced. It must return the "could not read" reading rather than spend the document.
+		const unclosed = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc"><ServiceException>${"x".repeat(200_000)}`
+		const started = performance.now()
+
+		expect(readServiceException(unclosed)).toMatch(/no readable ServiceException/u)
+		expect(performance.now() - started).toBeLessThan(1000)
+	})
+
+	it("never mistakes the enclosing report element for the exception it wraps", () => {
+		// `<ServiceExceptionReport …>` shares the whole prefix. Matching it captures the entire report body as the message.
+		const nested = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc">
+<ServiceException>Invalid query - access denied.</ServiceException>
+</ServiceExceptionReport>`
+
+		expect(readServiceException(nested)).toBe("Invalid query - access denied.")
+	})
 })
 
 /**
@@ -90,6 +109,17 @@ describe("readFGDCMetadata", () => {
 		expect(() => readFGDCMetadata(FGDC.replace(/<pubdate>.*?<\/pubdate>/u, ""), "IA153")).toThrow(
 			/no publication date/u
 		)
+	})
+
+	it("reads an unclosed element as unreadable, in one pass rather than by scanning for it", () => {
+		// What a truncated archive produces, and what a lazy-quantifier reader backtracks polynomially over. Every element
+		// after the cut is unreadable, so the licence assertion — the FIRST thing read — is what refuses, and the refusal
+		// doubles as the timing check.
+		const truncated = `${FGDC.slice(0, FGDC.indexOf("<pubdate>") + "<pubdate>".length)}${"9".repeat(200_000)}`
+		const started = performance.now()
+
+		expect(() => readFGDCMetadata(truncated, "IA153")).toThrow(/public information/u)
+		expect(performance.now() - started).toBeLessThan(1000)
 	})
 })
 

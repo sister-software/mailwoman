@@ -350,8 +350,7 @@ export function readFGDCMetadata(xml: string, areaSymbol: string): FGDCMetadata 
 function readSourceCitations(xml: string): Array<{ date: string; title: string; scale: number | null }> {
 	const citations: Array<{ date: string; title: string; scale: number | null }> = []
 
-	for (const block of xml.matchAll(/<srcinfo>([\s\S]*?)<\/srcinfo>/gu)) {
-		const body = block[1]!
+	for (const body of elementBlocks(xml, "srcinfo")) {
 		// `caldate` for a single date, `begdate` for a range. A range's END is when the source stopped being collected;
 		// its BEGINNING is when the ground was first looked at, which is the fact this layer is carrying.
 		const date = elementText(body, "caldate") ?? elementText(body, "begdate")
@@ -371,12 +370,52 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 }
 
 /**
- * The text of the first `<name>` element, with entities decoded and whitespace left alone.
+ * The text of the first `<name>` element, whitespace left alone.
+ *
+ * INDEX SCANS RATHER THAN A REGEX, AND THAT IS A CORRECTNESS CHOICE RATHER THAN A SPEED ONE. The obvious form — ``new
+ * RegExp(`<${name}>([\\s\\S]*?)</${name}>`)`` — backtracks polynomially on a document whose opening tag has no closing
+ * partner: the lazy run re-scans to the end from every candidate start. The input here is a 43,251-character document
+ * that arrived over the network inside a downloaded archive, so "a malformed one cannot happen" is not a claim this
+ * reader gets to make. Two `indexOf` calls answer the same question in one pass.
  */
 function elementText(xml: string, name: string): string | undefined {
-	const matched = new RegExp(`<${name}>([\\s\\S]*?)</${name}>`, "u").exec(xml)
+	const open = `<${name}>`
+	const start = xml.indexOf(open)
 
-	return matched?.[1]
+	if (start === -1) return undefined
+
+	const from = start + open.length
+	const end = xml.indexOf(`</${name}>`, from)
+
+	// An element with no closing tag is unreadable, not empty — the same answer an absent element gets, because both
+	// mean the value could not be read rather than that it is blank.
+	return end === -1 ? undefined : xml.slice(from, end)
+}
+
+/**
+ * Every `<name>` element's inner text, in document order. The repeating counterpart of {@link elementText}, and linear
+ * for the same reason.
+ */
+function elementBlocks(xml: string, name: string): string[] {
+	const open = `<${name}>`
+	const close = `</${name}>`
+	const blocks: string[] = []
+
+	let cursor = 0
+
+	for (;;) {
+		const start = xml.indexOf(open, cursor)
+
+		if (start === -1) return blocks
+
+		const from = start + open.length
+		const end = xml.indexOf(close, from)
+
+		if (end === -1) return blocks
+
+		blocks.push(xml.slice(from, end))
+		cursor = end + close.length
+	}
 }
 
 /**
