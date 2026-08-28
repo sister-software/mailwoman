@@ -15,7 +15,8 @@
  *   plain text would test nothing.
  */
 
-import { assertAttributionUnchanged, stripMarkup } from "@mailwoman/zoning/sdk/client"
+import { htmlToText } from "@mailwoman/core/utils"
+import { assertAttributionUnchanged } from "@mailwoman/zoning/sdk/client"
 import { GZT_ATTRIBUTION, GZT_DECLARED_CODE_SET, GZT_DECLARED_CODES, GZT_LICENSE } from "@mailwoman/zoning/vocabulary"
 import { describe, expect, it } from "vitest"
 
@@ -33,23 +34,23 @@ const PUBLISHED_LICENSE_TAIL =
  */
 const PUBLISHED_ACCESS_INFORMATION = "Department of Housing, Local Government, and Heritage"
 
-describe("stripMarkup", () => {
+describe("htmlToText over the published license field", () => {
 	it("returns the publisher's own words with the markup gone", () => {
-		expect(stripMarkup(PUBLISHED_LICENSE_TAIL)).toContain("Tailte Éireann. All rights reserved.")
-		expect(stripMarkup(PUBLISHED_LICENSE_TAIL)).not.toContain("<")
-		expect(stripMarkup(PUBLISHED_LICENSE_TAIL)).not.toContain("style=")
+		expect(htmlToText(PUBLISHED_LICENSE_TAIL)).toContain("Tailte Éireann. All rights reserved.")
+		expect(htmlToText(PUBLISHED_LICENSE_TAIL)).not.toContain("<")
+		expect(htmlToText(PUBLISHED_LICENSE_TAIL)).not.toContain("style=")
 	})
 
 	it("collapses the whitespace the field's paragraph markup leaves behind", () => {
-		expect(stripMarkup("<p>a</p>\n\n<p>  b  </p>")).toBe("a b")
+		expect(htmlToText("<p>a</p>\n\n<p>  b  </p>")).toBe("a b")
 	})
 
 	it("decodes the entities the field ships", () => {
-		expect(stripMarkup("<p>a&nbsp;&amp;&nbsp;b</p>")).toBe("a & b")
+		expect(htmlToText("<p>a&nbsp;&amp;&nbsp;b</p>")).toBe("a & b")
 	})
 
 	it("leaves plain text alone", () => {
-		expect(stripMarkup("Generalised Zoning Types")).toBe("Generalised Zoning Types")
+		expect(htmlToText("Generalised Zoning Types")).toBe("Generalised Zoning Types")
 	})
 })
 
@@ -58,7 +59,7 @@ describe("assertAttributionUnchanged", () => {
 		expect(() =>
 			assertAttributionUnchanged({
 				accessInformation: PUBLISHED_ACCESS_INFORMATION,
-				licenseInfo: stripMarkup(PUBLISHED_LICENSE_TAIL),
+				licenseInfo: htmlToText(PUBLISHED_LICENSE_TAIL),
 			})
 		).not.toThrow()
 	})
@@ -67,7 +68,7 @@ describe("assertAttributionUnchanged", () => {
 		expect(() =>
 			assertAttributionUnchanged({
 				accessInformation: "Department of Housing and Local Government",
-				licenseInfo: stripMarkup(PUBLISHED_LICENSE_TAIL),
+				licenseInfo: htmlToText(PUBLISHED_LICENSE_TAIL),
 			})
 		).toThrow(/a change in it is a change in the terms/u)
 	})
@@ -83,7 +84,7 @@ describe("assertAttributionUnchanged", () => {
 
 	it("refuses an empty credit line rather than reading it as unchanged", () => {
 		expect(() =>
-			assertAttributionUnchanged({ accessInformation: "", licenseInfo: stripMarkup(PUBLISHED_LICENSE_TAIL) })
+			assertAttributionUnchanged({ accessInformation: "", licenseInfo: htmlToText(PUBLISHED_LICENSE_TAIL) })
 		).toThrow(/a change in it is a change in the terms/u)
 	})
 })

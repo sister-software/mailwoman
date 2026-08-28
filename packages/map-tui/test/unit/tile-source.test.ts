@@ -112,8 +112,11 @@ describe("readAttribution", () => {
 		).toBe("© OpenStreetMap")
 	})
 
-	it("keeps an unknown entity raw rather than guessing", () => {
-		expect(readAttribution({ attribution: "&copy; Foo &odot; Bar" })).toBe("© Foo &odot; Bar")
+	it("decodes the full named-entity set, HTML5 legacy rules included", () => {
+		expect(readAttribution({ attribution: "&copy; Foo &odot; Bar" })).toBe("© Foo ⊙ Bar")
+		// The HTML5 legacy set decodes WITHOUT a semicolon, so a prefix-matching token is not "unknown":
+		expect(readAttribution({ attribution: "&notarealentity;" })).toBe("¬arealentity;")
+		expect(readAttribution({ attribution: "&zzznotanentity; stays raw" })).toBe("&zzznotanentity; stays raw")
 	})
 
 	it("reads absent or malformed metadata as empty", () => {

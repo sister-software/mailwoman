@@ -34,7 +34,7 @@
 
 import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { htmlToText, dataRootPath } from "@mailwoman/core/utils"
 
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "../vocabulary.ts"
 
@@ -103,48 +103,6 @@ export interface ZoningItemRecord {
 }
 
 /**
- * A tag-stripped, whitespace-collapsed reading of one HTML metadata field.
- *
- * The Department's `licenseInfo` and `description` are HTML fragments carrying inline styles, so a comparison against a
- * plain-text constant has to strip them. Bounded character scans rather than a regex: the input arrived over the
- * network, and the obvious `/<[^>]*>/g` form is fine but the entity pass beside it is not worth two passes.
- */
-export function stripMarkup(html: string): string {
-	let text = ""
-	let depth = 0
-
-	for (const character of html) {
-		if (character === "<") {
-			depth++
-
-			continue
-		}
-
-		if (character === ">") {
-			if (depth > 0) {
-				depth--
-			}
-
-			continue
-		}
-
-		if (!depth) {
-			text += character
-		}
-	}
-
-	return text
-		.replaceAll("&nbsp;", " ")
-		.replaceAll("&amp;", "&")
-		.replaceAll("&quot;", '"')
-		.replaceAll("&#39;", "'")
-		.replaceAll("&lt;", "<")
-		.replaceAll("&gt;", ">")
-		.replaceAll(/\s+/gu, " ")
-		.trim()
-}
-
-/**
  * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`.
  */
 const BBOX_ORDINATES = 4
@@ -201,7 +159,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 			title: data.title ?? "",
 			modifiedDate: new Date(data.modified).toISOString().slice(0, 10),
 			accessInformation: data.accessInformation ?? "",
-			licenseInfo: stripMarkup(data.licenseInfo ?? ""),
+			licenseInfo: htmlToText(data.licenseInfo ?? ""),
 			declaredBBox: bbox,
 		}
 	}

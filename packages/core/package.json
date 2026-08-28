@@ -504,6 +504,7 @@
 		"d3-scale-chromatic": "^3.1.0",
 		"env-paths": "^2.2.1",
 		"fast-glob": "^3.3.3",
+		"htmlparser2": "^10",
 		"http-status-codes": "^2.3.0",
 		"kysely": "^0.29.4",
 		"path-ts": "^2.1.0",
