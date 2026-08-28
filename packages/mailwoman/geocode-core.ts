@@ -72,6 +72,8 @@ import { assembleHierarchy, type HierarchyEntry, lineageAnchorNode } from "./hie
 import { shouldDropInferredScope } from "./inferred-scope.ts"
 import { thingQueryRefusalMarkers } from "./intent-refusal.ts"
 import { interpCalibrationForRegion, type InterpCalibrationTable } from "./interp-calibration.ts"
+import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"
+import { authorityDesignationMarkers } from "./observations/observation-marker.ts"
 import { applyPlusCodeOverride } from "./plus-code-override.ts"
 import { repairPostcodeContradiction } from "./postcode-repair.ts"
 import { declaredAmbiguityMarker } from "./query-intent.ts"
@@ -384,6 +386,20 @@ export interface GeocodeDeps {
 	 * consulted AFTER the open result is assembled and its answer is carried beside that result, never merged into it.
 	 */
 	authoritativeProvider?: AuthoritativeProvider
+	/**
+	 * An authority-designation route over a sealed spatial layer (#1989) — the EA's Flood Map for Planning is the first.
+	 * Absent — the default everywhere — leaves the geocode result byte-identical to a run without the field existing: the
+	 * layer is never opened, the coordinate is never re-asked, and no marker appears.
+	 *
+	 * PRESENCE IS THE SWITCH AND WHAT IS PRESENT IS AN OPEN LAYER. A boolean would make this module resolve a data-root
+	 * path and open a sealed database on the default construction path; what arrives here instead is a route the caller
+	 * already built, so this side never learns where the artifact lives. `geocode-session.ts` opens it when the layer
+	 * file is there, the same shape `poiLookup` uses.
+	 *
+	 * The route runs AFTER the open result is assembled, over the coordinate that result reached, and its answer is
+	 * carried as one additive marker. Nothing above the marker assembly reads it.
+	 */
+	authorityDesignationRoute?: AuthorityDesignationRoute
 	/**
 	 * Country constraint passed to the resolver (e.g. `"US"`).
 	 */
@@ -1439,6 +1455,11 @@ async function geocodeAddressOnce(input: string, deps: GeocodeDeps): Promise<Geo
 	// Entity answers (fork-entity.ts owns both probes and their gates): the declared-fork rescue and the
 	// opt-in venue tier, extracted as one unit — see applyEntityTiers.
 	applyEntityTiers(result, markers, parseInput, resolved.roots, deps)
+
+	// #1989: an authority's own designation for the coordinate this answer reached, read from a sealed layer and
+	// recorded beside the answer. It reads a finished result and returns a record — no candidate, no ordering, no
+	// abstain — so an unconfigured session produces the identical marker list.
+	markers.push(...authorityDesignationMarkers(deps.authorityDesignationRoute, result.lat, result.lon, verdict))
 
 	result.intent_markers = markers
 

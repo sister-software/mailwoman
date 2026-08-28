@@ -17,6 +17,7 @@
 		{ "path": "../bdc" },
 		{ "path": "../core" },
 		{ "path": "../filer" },
+		{ "path": "../flood" },
 		{ "path": "../geographic-model" },
 		{ "path": "../resolver" },
 		{ "path": "../corpus" },

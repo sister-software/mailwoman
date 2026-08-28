@@ -404,6 +404,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
 		"@mailwoman/filer": "workspace:*",
+		"@mailwoman/flood": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
 		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",

@@ -128,6 +128,10 @@ const WORKSPACES: Record<string, string> = {
 	// flagged both missing on the first PR after their merge (pre-existing gap, not that PR's).
 	"@mailwoman/bdc": "packages/bdc",
 	"@mailwoman/filer": "packages/filer",
+	// The flood layer reader is a hard dependency of `mailwoman`: `geocode-session` imports the
+	// authority-designation route on the presence of a `flood.db`, and `--help`'s command-module load reaches
+	// `gazetteer build flood`. Unpacked, npm would resolve a name that is not yet published at all.
+	"@mailwoman/flood": "packages/flood",
 }
 
 /**

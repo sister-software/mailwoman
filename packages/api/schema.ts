@@ -192,6 +192,7 @@ const QueryIntentMarkerSchema = z
 			"focus_point_required",
 			"poi_category",
 			"coverage_qualified_absence",
+			"authority_designation",
 		]),
 		mechanism: z.string(),
 		message: z.string(),

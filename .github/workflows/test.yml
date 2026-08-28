@@ -747,6 +747,7 @@ jobs:
               - 'packages/mcp/**'
               - 'packages/bdc/**'
               - 'packages/filer/**'
+              - 'packages/flood/**'
               # --- Smoke script + packaging pipeline ---
               - 'scripts/smoke-clean-install.ts'
               - 'scripts/pack-workspace.ts'

@@ -3,13 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman/observations` — the opt-in observation surface: two routes that state on whose authority an
- *   answer was reached, and the one carrier that takes what they record to a caller.
+ *   `mailwoman/observations` — the opt-in observation surface: three routes that state on whose authority
+ *   an answer was reached, and the one carrier that takes what they record to a caller.
  *
  *   NOTHING HERE IS ON BY DEFAULT, and presence is the switch. A caller constructs a route and hands it in;
- *   `createRuntimePipeline` with no `poiSemanticLookup` is the pipeline that shipped, and the absence route
- *   reads a finished answer without being wired into a pipeline at all. There is no boolean, because a
- *   boolean would make the pipeline construct the artifact reader itself and put world semantics on the
+ *   `createRuntimePipeline` with no `poiSemanticLookup` is the pipeline that shipped, the absence route
+ *   reads a finished answer without being wired into a pipeline at all, and the authority-designation route
+ *   reads a finished COORDINATE the same way. There is no boolean, because a boolean would make the caller
+ *   construct the artifact reader itself and put world semantics — or a sealed spatial layer — on the
  *   default construction path.
  *
  *   ROLLBACK IS REMOVING THE ARGUMENT at the one call site. A consumer who never passed a route is
@@ -32,8 +33,21 @@ export {
 	recoverCoverageResolution,
 } from "./absence-route.ts"
 
+export type {
+	AuthorityDesignationObservation,
+	AuthorityDesignationRoute,
+	AuthorityDesignationRouteOptions,
+	DesignationDecision,
+	DesignationRefusal,
+} from "./flood-route.ts"
+
+export { createAuthorityDesignationRoute, DESIGNATION_REFUSALS, describeAuthorityDesignation } from "./flood-route.ts"
+
 export {
 	absenceObservationMarker,
+	authorityDesignationMarker,
+	authorityDesignationMarkers,
+	FLOOD_ZONE_DESIGNATION_MECHANISM,
 	poiObservationKind,
 	SEMANTIC_ABSENCE_MECHANISM,
 	SEMANTIC_AFFORDS_MECHANISM,
