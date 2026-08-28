@@ -59,13 +59,17 @@ export interface AgreementRow {
 	service: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Degrees from the point to the nearest vertex of any polygon the service returned nearby.
+	 * Metres from the point to the nearest EDGE of any polygon the service returned nearby.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what separates a real conversion defect
-	 * from the two channels rendering the same edge differently — and a receipt that omits it forces a re-run.
-	 * `undefined` means the service returned no polygon at all near the point.
+	 * To the edge, not to the nearest vertex: a polygon's edges are long compared to this product's slivers, so a point
+	 * can sit a centimetre from an edge and metres from every vertex of it. Measuring vertices makes the boundary
+	 * tolerance far stricter than it reads, which is how a rendering difference gets reported as a conversion defect.
+	 *
+	 * Carried on every row rather than only the tolerated ones, because it is what separates a real defect from the two
+	 * channels rendering the same edge differently — and a receipt that omits it forces a re-run. `undefined` means the
+	 * service returned no polygon at all near the point.
 	 */
-	nearestEdgeDegrees?: number
+	nearestEdgeMetres?: number
 }
 
 /**
@@ -118,10 +122,19 @@ const PROBE_HALF_WIDTH_DEGREES = 0.0001
 
 /**
  * How close to a service-polygon edge a disagreement is attributed to the channels' differing coordinate precision
- * rather than to the conversion. The service publishes six decimals — about 10 cm — so a metre is an order of magnitude
- * of headroom over the rendering difference and still far below any real polygon.
+ * rather than to the conversion.
+ *
+ * The service publishes six decimals — about 11 cm of latitude, 7 cm of longitude at this latitude — while the
+ * geodatabase publishes nine, so two renderings of the SAME edge can sit up to roughly 16 cm apart and a point between
+ * them lands on opposite sides. Half a metre is threefold headroom over that and still far below any real polygon: the
+ * feature that made this matter is a 20 m sliver.
  */
-const BOUNDARY_TOLERANCE_DEGREES = 0.00001
+const BOUNDARY_TOLERANCE_METRES = 0.5
+
+/**
+ * Metres per degree of latitude — the scale the edge distances below are reported in.
+ */
+const METRES_PER_DEGREE = 111_320
 
 /**
  * Features per service request. The probe bbox is metres wide, so this is a ceiling rather than a page size.
@@ -200,8 +213,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 			const localZone = local.kind === FloodReadingKind.Designated ? (local.zoneCode ?? null) : null
 
-			const nearEdge =
-				service.nearestEdgeDegrees !== undefined && service.nearestEdgeDegrees <= BOUNDARY_TOLERANCE_DEGREES
+			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
 			// The distance rides on EVERY row, not only the tolerated ones: it is the first thing anyone wants when a
 			// disagreement appears, and carrying it only where it was already acted on means re-running the check to see it.
@@ -210,7 +222,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 				local,
 				service: service.zone,
 				outcome: localZone === service.zone ? "agree" : nearEdge ? "boundary_tolerance" : "disagree",
-				...(service.nearestEdgeDegrees === undefined ? {} : { nearestEdgeDegrees: service.nearestEdgeDegrees }),
+				...(service.nearestEdgeMetres === undefined ? {} : { nearestEdgeMetres: service.nearestEdgeMetres }),
 			})
 
 			options.onProgress?.(`${agreement.length}/${options.points.length} points compared`)
@@ -245,7 +257,7 @@ async function readServiceZone(
 	readServiceFeatures: ServiceFeatureReader,
 	latitude: number,
 	longitude: number
-): Promise<{ zone: string | null; nearestEdgeDegrees?: number }> {
+): Promise<{ zone: string | null; nearestEdgeMetres?: number }> {
 	const features = await readServiceFeatures(latitude, longitude)
 
 	let nearest = Infinity
@@ -263,8 +275,8 @@ async function readServiceZone(
 
 		for (const rings of polygons) {
 			for (const ring of rings) {
-				for (const position of ring) {
-					const distance = Math.hypot(position[0]! - longitude, position[1]! - latitude)
+				for (let i = 1; i < ring.length; i++) {
+					const distance = segmentDistanceMetres(longitude, latitude, ring[i - 1]!, ring[i]!)
 
 					if (distance < nearest) {
 						nearest = distance
@@ -278,7 +290,33 @@ async function readServiceZone(
 		}
 	}
 
-	return Number.isFinite(nearest) ? { zone, nearestEdgeDegrees: nearest } : { zone }
+	return Number.isFinite(nearest) ? { zone, nearestEdgeMetres: nearest } : { zone }
+}
+
+/**
+ * Metres from a point to a line segment, with longitude scaled for the latitude so the two axes are comparable.
+ *
+ * Both corrections matter at this product's scale. Comparing raw degrees treats a degree of longitude as a degree of
+ * latitude, which at 54°N overstates east-west distance by 70%; measuring to vertices instead of to the segment
+ * overstates the distance to a long edge without bound.
+ */
+export function segmentDistanceMetres(
+	lon: number,
+	lat: number,
+	from: readonly number[],
+	to: readonly number[]
+): number {
+	const scale = Math.cos((lat * Math.PI) / 180)
+	const px = (lon - from[0]!) * scale
+	const py = lat - from[1]!
+	const vx = (to[0]! - from[0]!) * scale
+	const vy = to[1]! - from[1]!
+	const lengthSquared = vx * vx + vy * vy
+
+	// A zero-length segment is a repeated vertex; the distance to it is the distance to the point.
+	const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, (px * vx + py * vy) / lengthSquared))
+
+	return Math.hypot(px - t * vx, py - t * vy) * METRES_PER_DEGREE
 }
 
 /**

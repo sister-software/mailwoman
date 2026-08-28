@@ -136,6 +136,51 @@ and the build is bounded by construction.
   GDAL 3.8 and `PROJ_ONLY_BEST=ON` was observed not to refuse, so the build asks `projinfo` what PROJ
   would choose and stops when the answer is a ballpark.
 
+## The index resolution, and what the measurement actually decided
+
+Three full builds over all 813,627 polygons. Every column is from the build's own receipt.
+
+| res | whole cells (compacted) | partial cells | partial share | candidate `(cell, area)` pairs | candidates per ray cast | sealed artifact |
+| --: | ----------------------: | ------------: | ------------: | -----------------------------: | ----------------------: | --------------: |
+|   7 |                      75 |        50,187 |         99.8% |                        986,219 |                    19.7 |   (measurement) |
+|   8 |                   1,207 |       205,049 |         99.4% |                      1,310,706 |                     6.4 | 5,776,105,472 B |
+|   9 |                  18,037 |       766,114 |         97.7% |                      2,330,261 |                     3.0 | 5,814,308,864 B |
+
+**Resolution 9, and the number that decided it is not the one the survey expected.**
+
+The `partial` share barely moves — 99.8% to 99.4% to 97.7% across three resolutions. That is not a
+property of the index; it is the polygon size distribution showing through. 38.8% of this product's
+features are under 11 m across, so they are `partial` at every resolution a national layer could
+use, and no resolution choice can change that. **Choosing on the `partial` share would have been
+choosing on a constant.**
+
+What does move is the size of the candidate list a `partial` cell hands to the ray cast: 19.7
+polygons at resolution 7, 6.4 at 8, 3.0 at 9. That is the runtime cost the two-tier design exists to
+bound, and it improves by 6.5× from 7 to 9.
+
+The price is 38 MB — resolution 9's artifact is **0.66% larger** than resolution 8's, because the
+index tier is small against 5.5 GB of geometry either way. Six times the ray-cast work saved for
+two-thirds of one percent of the artifact is not a close call.
+
+Resolution 7 is excluded outright: 75 whole cells over the whole of England means the index
+summarizes essentially nothing.
+
+## What the full build produces
+
+- **813,627 polygons** — 540,282 `FZ2`, 273,345 `FZ3`, matching the source's own distribution exactly.
+- **18,037 whole cells** after compaction, at resolutions 6/7/8/9; **766,114 partial**; 2,330,261
+  candidate pairs. No feature needed coarsening.
+- **3,464 coverage cells** at resolution 6, all `designated` at completeness 1.0.
+- **17,766.2 km²** of mapped flood zone against the source's own 17,830.1 km² — 0.359% apart. Read
+  without their holes the same rings total 19,399.1 km², so a hole-blind reader would have claimed
+  **9.2% more ground than the authority mapped**.
+- **5,814,308,864 bytes** sealed at 0444.
+
+Verification against the authority's own OGC API Features service, on 58 sampled points: **57 agree,
+1 within boundary tolerance, 0 disagree**. The tolerated point sits **9 mm** from the service's own
+edge, where a six-decimal rendering and a nine-decimal one fall on opposite sides. The negative half:
+**8/8 points outside England read `unknown`**, none read a zone.
+
 ## The h3 heap runs out, and it fails by returning nothing
 
 The finding every polygon builder on this spine inherits, stated with what it cost here.

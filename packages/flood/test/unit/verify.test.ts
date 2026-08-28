@@ -120,7 +120,7 @@ describe("verifyFloodDatabase", () => {
 		expect(result.disagreed).toBe(1)
 		expect(result.boundaryTolerance).toBe(0)
 		// The distance rides on the row even though it was not acted on — it is what triage starts from.
-		expect(result.agreement[0]!.nearestEdgeDegrees).toBeGreaterThan(0)
+		expect(result.agreement[0]!.nearestEdgeMetres).toBeGreaterThan(0)
 	})
 
 	it("carries a service miss as a null verdict rather than as an absent one", async () => {
@@ -131,7 +131,7 @@ describe("verifyFloodDatabase", () => {
 		})
 
 		expect(result.agreement[0]!.service).toBeNull()
-		expect(result.agreement[0]!.nearestEdgeDegrees).toBeUndefined()
+		expect(result.agreement[0]!.nearestEdgeMetres).toBeUndefined()
 		expect(result.disagreed).toBe(1)
 	})
 
