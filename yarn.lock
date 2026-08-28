@@ -4587,6 +4587,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/coastal@workspace:*, @mailwoman/coastal@workspace:packages/coastal":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/coastal@workspace:packages/coastal"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    h3-js: "npm:^4.5.0"
+    kysely: "npm:^0.29.4"
+    spliterator: "npm:^6.2.0"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/codex@workspace:*, @mailwoman/codex@workspace:packages/codex":
   version: 0.0.0-use.local
   resolution: "@mailwoman/codex@workspace:packages/codex"
@@ -17010,6 +17022,7 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/bdc": "workspace:*"
+    "@mailwoman/coastal": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"

@@ -32,6 +32,7 @@
 import { type QueryIntentMarker, QueryIntentCode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
 
 import type { AbsenceObservation } from "./absence-route.ts"
+import type { CoastalErosionObservation, CoastalErosionRoute } from "./coastal-route.ts"
 import type { AuthorityDesignationObservation, AuthorityDesignationRoute } from "./flood-route.ts"
 import type { SemanticObservation } from "./semantic-route.ts"
 import type { SoilCapabilityObservation, SoilCapabilityRoute } from "./soil-route.ts"
@@ -58,6 +59,11 @@ export const FLOOD_ZONE_DESIGNATION_MECHANISM = "layer:flood_zone"
  * `family:rule` for a reading out of the NRCS SSURGO soil-capability layer — the second rule under the `layer` family.
  */
 export const SOIL_CAPABILITY_DESIGNATION_MECHANISM = "layer:soil_capability"
+
+/**
+ * `family:rule` for a reading out of the EA coastal-erosion layer — the third rule under the `layer` family.
+ */
+export const COASTAL_EROSION_DESIGNATION_MECHANISM = "layer:coastal_erosion"
 
 /**
  * The kinds a POI observation may name. Both route as the POI branch, and the classifier reports whichever one its
@@ -278,6 +284,113 @@ export function soilCapabilityMarker(
 }
 
 /**
+ * Turn one coastal-erosion reading into a marker on a geocode verdict.
+ *
+ * SAME CODE, SAME FAMILY, DIFFERENT RULE — the third under the `layer` family, sharing `authority_designation` with the
+ * flood and soil markers because all three report what an authority designates at a resolved coordinate. The rule half
+ * names the layer, so a reader meeting several designation markers on one answer can tell which authority spoke.
+ *
+ * THE SCENARIO TRAVELS IN THE MESSAGE, NOT ONLY IN THE EVIDENCE. NCERM publishes twelve erosion-zone layers and they
+ * answer twelve different questions; a message reading "at erosion risk" without naming which one would let a 2105
+ * projection under a 95th-percentile sea-level-rise allowance be read as a present-day designation. So the scenario key
+ * and its plain-language label are in the sentence itself.
+ *
+ * AND THE MESSAGE CARRIES THE COVERAGE LIMIT, because this layer's silence is not a reassurance. The Environment Agency
+ * publishes no coverage statement for NCERM, so an absent designation says nothing — and the marker only ever fires on
+ * a PRESENT one, which is why the limit rides on the evidence rather than being implied by the marker's absence.
+ *
+ * The message reports WHAT THE AUTHORITY'S MAPPING ASSIGNS at a location, never whether a property will erode. The
+ * authority itself declines the second statement — its data "cannot provide details for individual properties" — and a
+ * wording that blurred them would be this program's invention rather than the authority's.
+ */
+export function coastalErosionMarkers(
+	route: CoastalErosionRoute | undefined,
+	latitude: number | null | undefined,
+	longitude: number | null | undefined,
+	verdict: QueryKindResult
+): QueryIntentMarker[] {
+	if (!route) return []
+
+	const decision = route.observe(latitude, longitude)
+
+	return decision.fired ? [coastalErosionMarker(decision.observation, verdict)] : []
+}
+
+/**
+ * The conversion proper — see {@link coastalErosionMarkers} for the caller-facing shape.
+ */
+export function coastalErosionMarker(
+	observation: CoastalErosionObservation,
+	verdict: QueryKindResult
+): QueryIntentMarker {
+	const first = observation.designations[0]
+
+	const assigned = first
+		? `places the resolved coordinate inside a coastal-erosion zone at ${first.distanceM} m of cumulative erosion`
+		: "places the resolved coordinate inside a coastal-erosion zone"
+
+	return {
+		kind: verdict.kind,
+		code: QueryIntentCode.AuthorityDesignation,
+		mechanism: COASTAL_EROSION_DESIGNATION_MECHANISM,
+		message:
+			`The Environment Agency's coastal erosion mapping (${observation.layer.sourceVintage}) ${assigned}, under scenario ` +
+			`${observation.scenario.key} — ${observation.scenario.label}. This states what the authority's map assigns at a ` +
+			"location under one named scenario, not whether a property will erode.",
+		evidence: {
+			reading: observation.reading,
+			scenario: observation.scenario,
+			designations: observation.designations,
+			containment: observation.containment,
+			...(observation.coverage ? { coverage: observation.coverage } : {}),
+			indexCellIndex: observation.indexCellIndex,
+			limits: observation.limits,
+			coverageLimit: observation.coverageLimit,
+			layer: observation.layer,
+			coordinate: observation.coordinate,
+		},
+	}
+}
+
+/**
+ * The attached spatial layers a caller may hand to a geocode, as one named bundle.
+ *
+ * ONE TYPE RATHER THAN THREE FIELDS ON THE CONSUMER, because {@link layerDesignationMarkers} already reads all of them
+ * together and the consumer reads none of them. `GeocodeDeps` extends this, so a fourth layer is one edit HERE — the
+ * route type, its field, its docstring and its entry in the marker list — and none at the call site.
+ *
+ * EVERY FIELD IS OPTIONAL AND PRESENCE IS THE SWITCH. A boolean would make the consumer resolve a data-root path and
+ * open a sealed database on the default construction path; what arrives here instead is a route the caller already
+ * built, so the consumer never learns where the artifact lives. Absent — the default everywhere — leaves the geocode
+ * result byte-identical to a run without the field existing: the layer is never opened, the coordinate is never
+ * re-asked, and no marker appears.
+ *
+ * EVERY ROUTE RUNS AFTER THE OPEN RESULT IS ASSEMBLED, over the coordinate that result reached, and its answer is
+ * carried as one additive marker. Nothing above the marker assembly reads any of them.
+ */
+export interface LayerDesignationRoutes {
+	/**
+	 * The EA Flood Map for Planning route (#1989) — the first of these, and the one whose absence reading is a
+	 * DESIGNATION: inside England a location with no flood polygon is Flood Zone 1 by the Planning Practice Guidance's
+	 * own definition.
+	 */
+	authorityDesignationRoute?: AuthorityDesignationRoute
+	/**
+	 * The NRCS SSURGO soil-capability route (#1991) — a second layer under the same marker code and `layer` mechanism
+	 * family, with a rule of its own. A separate field rather than a widened first one: the two carry different
+	 * observations — a zone code and a containment path against a class distribution, five shares and two dates — and
+	 * share only the code.
+	 */
+	soilCapabilityRoute?: SoilCapabilityRoute
+	/**
+	 * The EA coastal-erosion route (#1993) — a third layer, and the one whose absence reading is NOTHING. NCERM publishes
+	 * no coverage statement, so this route fires on a designation and stays silent otherwise, which is the opposite of
+	 * the flood route above. One field across both would put one rule over two opposite meanings of an empty answer.
+	 */
+	coastalErosionRoute?: CoastalErosionRoute
+}
+
+/**
  * Every attached layer's designation for one resolved coordinate, in one call.
  *
  * A LIST RATHER THAN A CALL PER LAYER, so a third layer is one edit HERE and none at the call site. Each route is
@@ -288,7 +401,7 @@ export function soilCapabilityMarker(
  * holding the same layers produce markers in the same order.
  */
 export function layerDesignationMarkers(
-	routes: { authorityDesignationRoute?: AuthorityDesignationRoute; soilCapabilityRoute?: SoilCapabilityRoute },
+	routes: LayerDesignationRoutes,
 	latitude: number | null | undefined,
 	longitude: number | null | undefined,
 	verdict: QueryKindResult
@@ -296,5 +409,6 @@ export function layerDesignationMarkers(
 	return [
 		...authorityDesignationMarkers(routes.authorityDesignationRoute, latitude, longitude, verdict),
 		...soilCapabilityMarkers(routes.soilCapabilityRoute, latitude, longitude, verdict),
+		...coastalErosionMarkers(routes.coastalErosionRoute, latitude, longitude, verdict),
 	]
 }

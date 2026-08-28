@@ -60,6 +60,7 @@ import {
 	type StateShards,
 } from "./geocode-core.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
+import type { CoastalErosionRoute } from "./observations/coastal-route.ts"
 import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"
 import type { SoilCapabilityRoute } from "./observations/soil-route.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
@@ -374,6 +375,39 @@ export async function loadSoilCapabilityRoute(
 }
 
 /**
+ * The coastal-erosion route, opened when the sealed EA NCERM layer is on disk (#1993).
+ *
+ * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the two routes above, and for the same reason: a
+ * boolean would have to construct the reader itself and would put a sealed database open on the default construction
+ * path. No `coastal-england.db` in the data root, no route, and the geocode result is byte-identical to a build without
+ * the field.
+ *
+ * THE ARTIFACT IS NAMED FOR ITS EXTENT rather than for its subject, because the surveyed alternatives are not
+ * interchangeable with it: Wales publishes NCERM on the previous generation's vocabulary, Scotland's Dynamic Coast
+ * carries a property-level prohibition of its own, and Northern Ireland publishes 122 line segments carrying one
+ * attribute. A file called `coastal.db` would invite one of them to overwrite the other.
+ *
+ * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * manifest naming a different product, a coverage row that would license a negative claim — must not take the geocoder
+ * down over an advisory it was never asked for.
+ */
+export async function loadCoastalErosionRoute(
+	options: Pick<GeocodeSessionOptions, "dataRoot">
+): Promise<CoastalErosionRoute | undefined> {
+	const coastalDBPath = resolvePath(options.dataRoot, "coastal", "coastal-england.db")
+
+	if (!existsSync(coastalDBPath)) return undefined
+
+	try {
+		const { createCoastalErosionRoute } = await import("./observations/coastal-route.ts")
+
+		return createCoastalErosionRoute({ databasePath: String(coastalDBPath) })
+	} catch {
+		return undefined
+	}
+}
+
+/**
  * The fork→entity probe's two signals — both or neither (an ungated probe is the Savile Row hijack; fork-entity.ts gate
  * 2). Tolerate-and-degrade: no poi.db in the data root, no probe.
  */
@@ -583,6 +617,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	let poiHandle: { close(): void } | undefined
 	let designationRoute: AuthorityDesignationRoute | undefined
 	let soilRoute: SoilCapabilityRoute | undefined
+	let coastalRoute: CoastalErosionRoute | undefined
 
 	const closeQuietly = (handle: { close(): void } | undefined): void => {
 		try {
@@ -601,6 +636,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		closeQuietly(poiHandle)
 		closeQuietly(designationRoute)
 		closeQuietly(soilRoute)
+		closeQuietly(coastalRoute)
 	}
 
 	// Everything past this point can THROW while the handles above are already open, so it runs behind the
@@ -649,6 +685,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		poiHandle = probe.handle
 		designationRoute = await loadAuthorityDesignationRoute(options)
 		soilRoute = await loadSoilCapabilityRoute(options)
+		coastalRoute = await loadCoastalErosionRoute(options)
 	} catch (error) {
 		close()
 
@@ -816,6 +853,9 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			// #1991: present only when the sealed soil layer is on disk, so a data root without one produces the identical
 			// marker list.
 			...(soilRoute ? { soilCapabilityRoute: soilRoute } : {}),
+			// #1993: present only when the sealed coastal layer is on disk, so a data root without one produces the identical
+			// marker list.
+			...(coastalRoute ? { coastalErosionRoute: coastalRoute } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
 			...(trace && options.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 		})

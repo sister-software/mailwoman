@@ -19,9 +19,18 @@
  *   against — so a fixture stays a fixture and still lives in the coordinate space the product occupies.
  */
 
+// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than this
+// product's geometry, and a second copy of it is a second place for a hole to stop being one.
+import { rectangleRing, reversedRing as holeRing } from "@mailwoman/spatial"
+
 import { ringAreaReadings } from "./rings.ts"
 import type { FloodFeatureSource, FloodSourceFeature, MultiPolygonRings } from "./sdk/ingest.ts"
 import { EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "./vocabulary.ts"
+
+/**
+ * Re-exported so a fixture in another workspace builds its rings the same way this one does.
+ */
+export { rectangleRing, reversedRing as holeRing } from "@mailwoman/spatial"
 
 /**
  * South-west corner of the fixture world, in the North Sea east of Great Yarmouth.
@@ -33,32 +42,6 @@ export const FIXTURE_ORIGIN = { lon: 1.9, lat: 52.6 } as const
  * has a real interior AND a real fringe.
  */
 export const FIXTURE_SIDE = 0.01
-
-/**
- * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order.
- */
-export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
-	return [
-		[minLon, minLat],
-		[maxLon, minLat],
-		[maxLon, maxLat],
-		[minLon, maxLat],
-		[minLon, minLat],
-	]
-}
-
-/**
- * The same rectangle wound the other way — a hole, under the GeoJSON convention the source honours.
- */
-export function holeRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
-	return [
-		[minLon, minLat],
-		[minLon, maxLat],
-		[maxLon, maxLat],
-		[maxLon, minLat],
-		[minLon, minLat],
-	]
-}
 
 /**
  * One fixture feature, with its area computed from its own rings so the build's area cross-check has something true to

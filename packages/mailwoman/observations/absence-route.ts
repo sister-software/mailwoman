@@ -77,7 +77,7 @@ import type {
 	SourceProvenance,
 } from "@mailwoman/geographic-model"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
-import { expandH3Cell, H3_MAX_RESOLUTION, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
+import { recoverShortCellResolution, type H3Cell } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 
 import { resolvePOISearchCenter } from "../poi-executor.ts"
@@ -349,51 +349,13 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
  * — a mixed-resolution coverage table has no single resolution to probe at, and picking one would silently answer
  * "unsurveyed" for every cell at the other.
  *
+ * THE IMPLEMENTATION LIVES IN `@mailwoman/spatial` because a second layer reader needed it and the two failure modes it
+ * refuses are silent in a copy. This name and its message prefix are kept so callers and their receipts read the same.
+ *
  * @throws {Error} When the table is empty, when a cell expands at no resolution, or when the cells disagree.
  */
 export function recoverCoverageResolution(cells: readonly number[]): number {
-	if (!cells.length) {
-		throw new Error("absence route: the coverage layer holds no cells — there is no resolution to recover")
-	}
-
-	let recovered: number | undefined
-
-	for (const cell of cells) {
-		const short = BigInt(cell).toString(16).padStart(13, "0") as H3CellShort
-		const valid: number[] = []
-
-		for (let resolution = 0; resolution <= H3_MAX_RESOLUTION; resolution++) {
-			try {
-				expandH3Cell(short, resolution)
-				valid.push(resolution)
-			} catch {
-				// A resolution the short cell does not expand at. Every cell expands at exactly one, so this is the
-				// ordinary case for fifteen of the sixteen probes.
-			}
-		}
-
-		if (valid.length !== 1) {
-			throw new Error(
-				`absence route: coverage cell ${cell} expands at ${valid.length} resolutions (${valid.join(", ") || "none"}) — it is not a short H3 cell this layer can be probed by`
-			)
-		}
-
-		const resolution = valid[0]!
-
-		if (recovered === undefined) {
-			recovered = resolution
-
-			continue
-		}
-
-		if (recovered !== resolution) {
-			throw new Error(
-				`absence route: the coverage table mixes resolutions (${recovered} and ${resolution}) — a single-resolution probe would read every cell at the other resolution as unsurveyed`
-			)
-		}
-	}
-
-	return recovered!
+	return recoverShortCellResolution(cells, "absence route")
 }
 
 /**

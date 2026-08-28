@@ -18,9 +18,18 @@
  *   behaviour rather than hoping a county contains one.
  */
 
+// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than this
+// product's geometry, and a second copy of it is a second place for a hole to stop being one.
+import { rectangleRing } from "@mailwoman/spatial"
+
 import type { SoilComponentTable, SoilMapUnitTable } from "./schema.ts"
 import type { SoilDelineation, SoilFeatureSource } from "./sdk/ingest.ts"
 import type { SurveyAreaAttributes } from "./sdk/survey-area.ts"
+
+/**
+ * Re-exported so a fixture in another workspace builds its rings the same way this one does.
+ */
+export { rectangleRing, reversedRing as holeRing } from "@mailwoman/spatial"
 
 /**
  * Where the fixture geometry sits — central Iowa, so the cells it produces are the ones a real build would use.
@@ -32,26 +41,6 @@ export const FIXTURE_ORIGIN = { lat: 41.6, lon: -93.6 }
  * square has both an interior and a fringe.
  */
 export const FIXTURE_SIDE = 0.015
-
-/**
- * A closed counter-clockwise rectangle in `[lon, lat]` order.
- */
-export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
-	return [
-		[minLon, minLat],
-		[maxLon, minLat],
-		[maxLon, maxLat],
-		[minLon, maxLat],
-		[minLon, minLat],
-	]
-}
-
-/**
- * The same rectangle wound the other way — a hole.
- */
-export function holeRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
-	return rectangleRing(minLon, minLat, maxLon, maxLat).toReversed()
-}
 
 /**
  * The fixture map units. Each one exists to exercise exactly one reading.
