@@ -49,6 +49,13 @@ import {
 	type CoastalLayerIdentity,
 } from "@mailwoman/coastal"
 
+import {
+	observationCoverageRecord,
+	observationLayerRecord,
+	type ObservationCoverageRecord,
+	type ObservationLayerRecord,
+} from "./layer-record.ts"
+
 /**
  * One coastal-erosion designation, recorded beside an answer.
  *
@@ -75,14 +82,7 @@ export interface CoastalErosionObservation {
 	/**
 	 * The coverage side of the claim. Its basis is `source_present`, which supports presence and nothing else.
 	 */
-	coverage?: {
-		h3Cell: number
-		h3CellIndex: string
-		resolution: number
-		basis: string
-		completeness: number
-		observedRows: number
-	}
+	coverage?: ObservationCoverageRecord
 	/**
 	 * The index cell probed.
 	 */
@@ -95,18 +95,7 @@ export interface CoastalErosionObservation {
 	 * Why this layer's coverage licenses no claim that a location is NOT at risk.
 	 */
 	coverageLimit: string
-	layer: {
-		name: string
-		version: string
-		tier: string
-		license: string
-		attribution?: string
-		source: string
-		sourceVintage: string
-		buildCmd: string
-		buildSHA: string
-		createdAt: string
-	}
+	layer: ObservationLayerRecord
 	databasePath: string
 	coordinate: { latitude: number; longitude: number }
 }
@@ -227,33 +216,11 @@ function decide(
 			},
 			designations: reading.designations,
 			containment: reading.containment,
-			...(reading.coverage
-				? {
-						coverage: {
-							h3Cell: reading.coverage.h3Cell,
-							h3CellIndex: reading.coverage.h3CellIndex,
-							resolution: reading.coverage.resolution,
-							basis: String(reading.coverage.basis),
-							completeness: reading.coverage.completeness,
-							observedRows: reading.coverage.observedRows,
-						},
-					}
-				: {}),
+			...observationCoverageRecord(reading.coverage),
 			indexCellIndex: reading.indexCellIndex,
 			limits: reading.limits,
 			coverageLimit: reading.coverageLimit,
-			layer: {
-				name: manifest.name,
-				version: manifest.version,
-				tier: manifest.tier,
-				license: manifest.license,
-				...(manifest.attribution ? { attribution: manifest.attribution } : {}),
-				source: manifest.source,
-				sourceVintage: manifest.sourceVintage,
-				buildCmd: manifest.buildCmd,
-				buildSHA: manifest.buildSHA,
-				createdAt: manifest.createdAt,
-			},
+			layer: observationLayerRecord(manifest),
 			databasePath,
 			coordinate: { latitude, longitude },
 		},

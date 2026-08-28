@@ -5361,6 +5361,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/zoning@workspace:*, @mailwoman/zoning@workspace:packages/zoning":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/zoning@workspace:packages/zoning"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    h3-js: "npm:^4.5.0"
+    kysely: "npm:^0.29.4"
+    spliterator: "npm:^6.2.0"
+  languageName: unknown
+  linkType: soft
+
 "@mapbox/jsonlint-lines-primitives@npm:^2.0.3":
   version: 2.0.3
   resolution: "@mapbox/jsonlint-lines-primitives@npm:2.0.3"
@@ -17049,6 +17061,7 @@ __metadata:
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"
+    "@mailwoman/zoning": "workspace:*"
     "@types/yauzl-promise": "npm:^4.0.1"
     chalk: "npm:^6.0.0"
     change-case: "npm:^5.4.4"

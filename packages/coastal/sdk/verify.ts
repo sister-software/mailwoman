@@ -32,7 +32,7 @@
 
 import { DatabaseSync } from "node:sqlite"
 
-import { pointInEncodedRings, pointInPolygonRings, segmentDistanceMetres } from "@mailwoman/spatial"
+import { interiorPointOfEncodedRings, pointInPolygonRings, segmentDistanceMetres } from "@mailwoman/spatial"
 
 import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "../index.ts"
 import { NCERM_SCENARIOS_BY_KEY } from "../vocabulary.ts"
@@ -358,7 +358,7 @@ export function sampleAgreementPoints(
 
 			if (!area) continue
 
-			const interior = interiorPointOf(area)
+			const interior = interiorPointOfEncodedRings(area, 17)
 
 			if (!interior) continue
 
@@ -373,40 +373,4 @@ export function sampleAgreementPoints(
 	} finally {
 		database.close()
 	}
-}
-
-/**
- * A point inside one stored polygon.
- *
- * The bbox centre is tried first; where it is not inside — a crescent, a narrow band hugging a bay — a small
- * deterministic grid over the bbox is scanned. A feature no grid point lands inside is skipped rather than
- * approximated, because a sample point that is not actually inside the polygon turns the agreement check into a check
- * on the sampler. NCERM's zones are narrow strips, so the grid is the common path here rather than the exception.
- */
-function interiorPointOf(area: {
-	min_lat: number
-	min_lon: number
-	max_lat: number
-	max_lon: number
-	rings: Uint8Array
-}): { latitude: number; longitude: number } | undefined {
-	const centreLat = (area.min_lat + area.max_lat) / 2
-	const centreLon = (area.min_lon + area.max_lon) / 2
-
-	if (pointInEncodedRings(area.rings, centreLon, centreLat)) {
-		return { latitude: centreLat, longitude: centreLon }
-	}
-
-	const steps = 17
-
-	for (let row = 1; row < steps; row++) {
-		for (let column = 1; column < steps; column++) {
-			const latitude = area.min_lat + ((area.max_lat - area.min_lat) * row) / steps
-			const longitude = area.min_lon + ((area.max_lon - area.min_lon) * column) / steps
-
-			if (pointInEncodedRings(area.rings, longitude, latitude)) return { latitude, longitude }
-		}
-	}
-
-	return undefined
 }

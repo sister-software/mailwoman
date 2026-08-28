@@ -32,7 +32,7 @@ import { basename, join } from "node:path"
 import { promisify } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import type { MultiPolygonRings, PolygonRings } from "@mailwoman/spatial"
+import { assertRingsInsideExtent, type MultiPolygonRings, type PolygonRings } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable } from "@mailwoman/spatial/projection-transform"
 import { JSONSpliterator } from "spliterator"
 
@@ -312,26 +312,7 @@ function toDelineation(
 
 	const polygons = normalizePolygons(geometry, String(properties.fid))
 
-	for (const rings of polygons) {
-		for (const ring of rings) {
-			for (const position of ring) {
-				const lon = position[0]!
-				const lat = position[1]!
-
-				if (
-					lon < extent.minLon - BBOX_MARGIN_DEGREES ||
-					lon > extent.maxLon + BBOX_MARGIN_DEGREES ||
-					lat < extent.minLat - BBOX_MARGIN_DEGREES ||
-					lat > extent.maxLat + BBOX_MARGIN_DEGREES
-				) {
-					throw new Error(
-						`soil ingest: delineation ${properties.fid} has a vertex at ${lon}, ${lat}, outside the declared extent ` +
-							`[${extent.minLon}, ${extent.minLat}, ${extent.maxLon}, ${extent.maxLat}] — the reprojection or the coordinate order is wrong`
-					)
-				}
-			}
-		}
-	}
+	assertRingsInsideExtent(polygons, `delineation ${properties.fid}`, extent, BBOX_MARGIN_DEGREES, "soil ingest")
 
 	return {
 		areaID: `${properties.areasymbol}:${properties.fid}`,

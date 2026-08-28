@@ -142,6 +142,11 @@ const WORKSPACES: Record<string, string> = {
 	// `gazetteer build coastal` imports the SDK inside its task rather than at module scope, so only `geocode-session`'s
 	// dynamic route load reaches the package, and only where a `coastal-england.db` is on disk.
 	"@mailwoman/coastal": "packages/coastal",
+	// The zoning layer reader is a declared dependency of `mailwoman` on the same terms as soil and coastal above: npm
+	// resolves it at INSTALL time whether or not any code path reaches it, and unpacked that is a name which is not yet
+	// published at all. `gazetteer build zoning` imports the SDK inside its task rather than at module scope, so only
+	// `geocode-session`'s dynamic route load reaches the package, and only where a `zoning-ireland.db` is on disk.
+	"@mailwoman/zoning": "packages/zoning",
 }
 
 /**

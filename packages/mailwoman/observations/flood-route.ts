@@ -42,6 +42,13 @@ import {
 	type FloodZoneReading,
 } from "@mailwoman/flood"
 
+import {
+	observationCoverageRecord,
+	observationLayerRecord,
+	type ObservationCoverageRecord,
+	type ObservationLayerRecord,
+} from "./layer-record.ts"
+
 /**
  * One authority designation, recorded beside an answer.
  *
@@ -72,14 +79,7 @@ export interface AuthorityDesignationObservation {
 	/**
 	 * The coverage side of the claim, present whenever the location falls inside the authority's footprint.
 	 */
-	coverage?: {
-		h3Cell: number
-		h3CellIndex: string
-		resolution: number
-		basis: string
-		completeness: number
-		observedRows: number
-	}
+	coverage?: ObservationCoverageRecord
 	/**
 	 * The index cell probed.
 	 */
@@ -92,18 +92,7 @@ export interface AuthorityDesignationObservation {
 	 * What the product excludes, in the authority's own words.
 	 */
 	limits: ReadonlyArray<string>
-	layer: {
-		name: string
-		version: string
-		tier: string
-		license: string
-		attribution?: string
-		source: string
-		sourceVintage: string
-		buildCmd: string
-		buildSHA: string
-		createdAt: string
-	}
+	layer: ObservationLayerRecord
 	databasePath: string
 	coordinate: { latitude: number; longitude: number }
 }
@@ -202,18 +191,7 @@ function decide(
 			...(reading.definition ? { definition: reading.definition } : {}),
 			...(reading.areaID ? { areaID: reading.areaID } : {}),
 			containment: reading.containment,
-			...(reading.coverage
-				? {
-						coverage: {
-							h3Cell: reading.coverage.h3Cell,
-							h3CellIndex: reading.coverage.h3CellIndex,
-							resolution: reading.coverage.resolution,
-							basis: String(reading.coverage.basis),
-							completeness: reading.coverage.completeness,
-							observedRows: reading.coverage.observedRows,
-						},
-					}
-				: {}),
+			...observationCoverageRecord(reading.coverage),
 			indexCellIndex: reading.indexCellIndex,
 			extent: {
 				authority: extent.authority,
@@ -221,18 +199,7 @@ function decide(
 				statementURL: extent.statementURL,
 			},
 			limits: reading.limits,
-			layer: {
-				name: manifest.name,
-				version: manifest.version,
-				tier: manifest.tier,
-				license: manifest.license,
-				...(manifest.attribution ? { attribution: manifest.attribution } : {}),
-				source: manifest.source,
-				sourceVintage: manifest.sourceVintage,
-				buildCmd: manifest.buildCmd,
-				buildSHA: manifest.buildSHA,
-				createdAt: manifest.createdAt,
-			},
+			layer: observationLayerRecord(manifest),
 			databasePath,
 			coordinate: { latitude, longitude },
 		},

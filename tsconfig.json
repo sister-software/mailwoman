@@ -29,6 +29,7 @@
 		{ "path": "./packages/flood" },
 		{ "path": "./packages/soil" },
 		{ "path": "./packages/coastal" },
+		{ "path": "./packages/zoning" },
 		{ "path": "./packages/cartographer" },
 		{ "path": "./packages/codex" },
 		{ "path": "./packages/corpus" },
@@ -117,6 +118,7 @@
 		{ "path": "./packages/spatial/tsconfig.test.json" },
 		{ "path": "./packages/timezone-lookup/tsconfig.test.json" },
 		{ "path": "./packages/un-locode-lookup/tsconfig.test.json" },
-		{ "path": "./packages/variant-aliases/tsconfig.test.json" }
+		{ "path": "./packages/variant-aliases/tsconfig.test.json" },
+		{ "path": "./packages/zoning/tsconfig.test.json" }
 	]
 }

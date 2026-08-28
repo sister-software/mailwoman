@@ -749,6 +749,8 @@ jobs:
               - 'packages/filer/**'
               - 'packages/flood/**'
               - 'packages/soil/**'
+              - 'packages/coastal/**'
+              - 'packages/zoning/**'
               # --- Smoke script + packaging pipeline ---
               - 'scripts/smoke-clean-install.ts'
               - 'scripts/pack-workspace.ts'

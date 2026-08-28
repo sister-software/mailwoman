@@ -41,7 +41,8 @@
 import { DatabaseSync } from "node:sqlite"
 
 import {
-	CoverageBasis,
+	toCoverageCell,
+	type CoverageRow,
 	type CoverageCell,
 	type LayerManifest,
 	type LayerTier,
@@ -283,22 +284,13 @@ export class FloodZoneLookup {
 	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
 		const coverageCell = cellToParent(indexCell, this.identity.coverageResolution) as H3Cell
 
-		const row = this.#selectCoverage.get(shortCellToInt(coverageCell)) as
-			| { h3_cell: number; completeness: number; basis: string | null; observed_rows: number }
-			| undefined
-
-		if (!row) return undefined
-
-		return {
-			h3Cell: row.h3_cell,
-			h3CellIndex: coverageCell,
-			resolution: this.identity.coverageResolution,
-			completeness: row.completeness,
-			// A NULL column is an artifact built before `basis` existed. It was recording source presence, so that is what
-			// it reads back as — never a stronger basis than the builder actually had.
-			basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
-			observedRows: row.observed_rows,
-		}
+		// The NULL-basis rule lives in the shared mapping: a NULL column is an artifact built before `basis` existed, and
+		// it was recording source presence — never a stronger basis than the builder actually had.
+		return toCoverageCell(
+			this.#selectCoverage.get(shortCellToInt(coverageCell)) as CoverageRow | undefined,
+			coverageCell,
+			this.identity.coverageResolution
+		)
 	}
 
 	/**

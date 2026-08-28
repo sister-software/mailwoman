@@ -31,7 +31,7 @@ import { execFile, spawn } from "node:child_process"
 import { promisify } from "node:util"
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import type { MultiPolygonRings, PolygonRings } from "@mailwoman/spatial"
+import { assertRingsInsideExtent, type MultiPolygonRings, type PolygonRings } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
 import { JSONSpliterator } from "spliterator"
 
@@ -288,26 +288,7 @@ function toSourceFeature(
 
 	const polygons = normalizePolygons(geometry, String(properties.area_id))
 
-	for (const rings of polygons) {
-		for (const ring of rings) {
-			for (const position of ring) {
-				const lon = position[0]!
-				const lat = position[1]!
-
-				if (
-					lon < extent.minLon - BBOX_MARGIN_DEGREES ||
-					lon > extent.maxLon + BBOX_MARGIN_DEGREES ||
-					lat < extent.minLat - BBOX_MARGIN_DEGREES ||
-					lat > extent.maxLat + BBOX_MARGIN_DEGREES
-				) {
-					throw new Error(
-						`flood ingest: feature ${properties.area_id} has a vertex at ${lon}, ${lat}, outside the declared extent ` +
-							`[${extent.minLon}, ${extent.minLat}, ${extent.maxLon}, ${extent.maxLat}] — the reprojection or the coordinate order is wrong`
-					)
-				}
-			}
-		}
-	}
+	assertRingsInsideExtent(polygons, `feature ${properties.area_id}`, extent, BBOX_MARGIN_DEGREES, "flood ingest")
 
 	return {
 		areaID: String(properties.area_id),

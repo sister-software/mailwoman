@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman/observations` — the opt-in observation surface: four routes that state on whose authority
+ *   `mailwoman/observations` — the opt-in observation surface: five routes that state on whose authority
  *   an answer was reached, and the one carrier that takes what they record to a caller.
  *
  *   NOTHING HERE IS ON BY DEFAULT, and presence is the switch. A caller constructs a route and hands it in;
@@ -63,6 +63,16 @@ export type {
 
 export { createSoilCapabilityRoute, describeSoilCapability, SOIL_DESIGNATION_REFUSALS } from "./soil-route.ts"
 
+export type {
+	ZoningDecision,
+	ZoningDesignationObservation,
+	ZoningDesignationRoute,
+	ZoningDesignationRouteOptions,
+	ZoningRefusal,
+} from "./zoning-route.ts"
+
+export { createZoningDesignationRoute, describeZoningDesignation, ZONING_REFUSALS } from "./zoning-route.ts"
+
 export {
 	absenceObservationMarker,
 	authorityDesignationMarker,
@@ -79,6 +89,9 @@ export {
 	SEMANTIC_ABSENCE_MECHANISM,
 	SEMANTIC_AFFORDS_MECHANISM,
 	semanticObservationMarkers,
+	ZONING_DESIGNATION_MECHANISM,
+	zoningDesignationMarker,
+	zoningDesignationMarkers,
 } from "./observation-marker.ts"
 
 export type { LayerDesignationRoutes } from "./observation-marker.ts"
