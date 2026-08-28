@@ -264,7 +264,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// pushed every GB parse along an untrained input direction. Measured: exact postcode 294/318 with the
 	// binary present vs 318/318 with it absent, on the gb-golden board across three registers.
 	//
-	// So this assertion is a TRIPWIRE, not a description: the failure it exists to catch is someone
+	// So this assertion is a regression check, not a description: the failure it exists to catch is someone
 	// re-adding postcode-gb.bin — to `files`, to release.config.json's postcodeDBByCountry, to the
 	// publish workflow's fetch list, or by hand into the package dir — WITHOUT the retrain that feeds
 	// slot 4. That change produces no error and no warning on its own; it just quietly makes GB worse.
@@ -298,7 +298,7 @@ describe("resolveWeights — package auto-resolve", () => {
 		LINK_SCRIPT_TIMEOUT_MS
 	)
 
-	// The packaging half of the same tripwire. The assertion above reads the RESOLVER's answer, which is
+	// The packaging half of the same regression check. The assertion above reads the RESOLVER's answer, which is
 	// derived from the package DIRECTORY; this one reads the package MANIFEST. They can disagree — a
 	// tarball ships what `files` names, a dev worktree resolves what is on disk — and each failure mode
 	// has its own repair, so neither assertion substitutes for the other.
@@ -331,7 +331,7 @@ describe("resolveWeights — package auto-resolve", () => {
 	// postcode-nz.bin (no WOF NZ postcode shard exists — the overlay's model-card `no_postcode_bin`
 	// follow-up), so `anchorLookupPath` must come back undefined while `pair-index-nz.bin` and the
 	// overlay-local model-card still resolve from the package dir. Wiring-only, one test — the
-	// prior/country-gate behavior itself is generic machinery already covered by the en-gb prior
+	// prior/country-gate behavior itself is generic implementation already covered by the en-gb prior
 	// block below and the mispackaging gate at the bottom of this file.
 	test.skipIf(!haveModel || !haveCLI || !haveNZSource)(
 		"en-nz resolves model/tokenizer from the en-us base + pair-index-nz.bin locally, with NO anchor lookup (no NZ postcode shard), and parses",

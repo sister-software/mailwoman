@@ -5,7 +5,7 @@
  *
  *   Tests for the fork-preference resolver.
  *
- *   Two legs are load-bearing. A CLEAN fork must resolve UPSTREAM — after the 2026-08-20 sweep forked 474 repos,
+ *   Two legs are required. A CLEAN fork must resolve UPSTREAM — after the 2026-08-20 sweep forked 474 repos,
  *   existence stopped meaning "we corrected this", and a fork does not track its parent, so preferring a clean one
  *   reads a stale snapshot for no benefit. And a FAILED probe must pull upstream while SAYING the lookup failed,
  *   because "no fork" and "could not look" license different conclusions.

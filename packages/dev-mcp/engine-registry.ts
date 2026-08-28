@@ -159,8 +159,8 @@ export function effectiveKeyFor(declared: string): string {
  *
  * Structurally the same type, field for field. It exists because TypeScript withholds an implicit index signature from
  * an INTERFACE — declaration merging could add a member later — so an interface value is not assignable to
- * `Record<string, unknown>` however plainly it is one. The mapping is checked property by property and keeps each
- * field's own type, which a cast through `unknown` would discard.
+ * `Record<string, unknown>` however it is one. The mapping is checked property by property and keeps each field's own
+ * type, which a cast through `unknown` would discard.
  */
 export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
 
@@ -282,9 +282,9 @@ export class EngineRegistry {
 		this.#repoRoot = repoRoot
 		this.#maxResident = maxResident
 		// Captured once, at construction, because this is the tree the PROCESS imported — not the tree any
-		// individual engine was built from. Those differ after a reload, and the difference is load-bearing: a
+		// individual engine was built from. Those differ after a reload, and the difference is required: a
 		// registry with no resident engine has nothing stale to compare against, so without this the first call
-		// after a reload builds happily and stamps the NEW fingerprint onto answers produced by the OLD modules.
+		// after a reload builds and stamps the NEW fingerprint onto answers produced by the OLD modules.
 		this.#bootFingerprint = computeTreeFingerprint(repoRoot)
 	}
 

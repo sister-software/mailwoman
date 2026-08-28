@@ -58,7 +58,7 @@ interface PlaceRow {
 /**
  * Walk parent chain up to 6 levels, over a place table already resident in memory.
  *
- * `resolve` is the escape hatch for a parent outside the preloaded set (a chain that leaves the country); it is a point
+ * `resolve` is the override for a parent outside the preloaded set (a chain that leaves the country); it is a point
  * query, so keeping the common case out of it is the whole point.
  */
 function chainOf(

@@ -174,7 +174,7 @@ export function enumerateFlips(
  *
  * Two directions, never one: a row running under the base weights flips TO its country's overlay, and a row already
  * running under its country's overlay flips BACK to the base. The second direction is what prices the overlay — "the
- * overlay is load-bearing here" is a claim only its removal can support.
+ * overlay is required here" is a claim only its removal can support.
  */
 function localeCounterfactual(current: string, country: string | undefined): CounterfactualFlip | { why: string } {
 	if (!country) {

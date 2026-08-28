@@ -122,7 +122,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 /**
  * Run git and return its stdout with only the TRAILING newline removed.
  *
- * Leading whitespace is load-bearing for `--porcelain`, whose first two columns are the index and worktree status: an
+ * Leading whitespace is required for `--porcelain`, whose first two columns are the index and worktree status: an
  * unstaged modification is `" M path"`, and a full trim eats column one of the FIRST line only — after which a
  * fixed-width `slice(3)` takes the first character of the path with it. Callers that want a bare token trim their own
  * result.

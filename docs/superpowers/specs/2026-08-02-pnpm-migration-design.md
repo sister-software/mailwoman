@@ -140,7 +140,7 @@ specified against whichever layout this migration lands, and is not built until 
 - `yarn verify-tarball` equivalent and `smoke-clean-install.ts` pass against pnpm-packed tarballs for
   every workspace they currently cover.
 - `pnpm install --frozen-lockfile` → `compile` → `ci:test:fast` → `ci:test:slow` all green, with no
-  `public-hoist-pattern` escape hatch in place for `vitest` (i.e. the three packages are declared,
+  `public-hoist-pattern` override in place for `vitest` (i.e. the three packages are declared,
   not hoisted around).
 - All 5 workflows green.
 - A dry-run release completes end to end.

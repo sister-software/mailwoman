@@ -90,7 +90,7 @@ describe("collapseWhitespace", () => {
 	})
 
 	it("does NOT trim leading punctuation or internal / quote / bracket punctuation", () => {
-		expect(collapseWhitespace(".net cafe").text).toBe(".net cafe") // leading dot is load-bearing
+		expect(collapseWhitespace(".net cafe").text).toBe(".net cafe") // leading dot is required
 		expect(collapseWhitespace('"350 5th"').text).toBe('"350 5th"') // trailing quote is not noise
 		expect(collapseWhitespace("Apt (rear)").text).toBe("Apt (rear)") // trailing bracket preserved
 	})

@@ -183,7 +183,7 @@ test("surfacesFromWikidata maps QIDs to designators and drops untagged and unkno
 })
 
 test("surfacesFromWikidata: nothing it produces is curated", () => {
-	// The load-bearing invariant. A Wikidata class label is a CONCEPT NAME, not an addressed
+	// The required invariant. A Wikidata class label is a CONCEPT NAME, not an addressed
 	// designator (`puerta de embarque` vs `Puerta`), so promotion is a human act.
 	expect(surfacesFromWikidata(wikidataFixture).every((s) => !s.curated)).toBe(true)
 })
@@ -579,7 +579,7 @@ test("buildSubVenueLexicon: every surface points at a record that exists", () =>
 })
 
 test("buildSubVenueLexicon: a harvest can only match a phrase an EARLIER stage introduced", () => {
-	// Order is load-bearing and easy to break: head nouns are derived after Wikidata and before the
+	// Order is required and easy to break: head nouns are derived after Wikidata and before the
 	// harvests, because `ターミナル` has to be a surface before a Japanese extract can be searched for
 	// it. Reordering silently empties the Japanese harvest.
 	const table = buildSubVenueLexicon({

@@ -144,7 +144,7 @@
  *
  *   **Anchored mode (v1.1)** — the comma-free complement to segment mode, reached by the `"auto"` chain
  *   exactly where segment mode is structurally inert. The delta vs window mode is candidate SELECTION
- *   only (the probing/dual-key/bias machinery is shared verbatim): instead of probing every window
+ *   only (the probing/dual-key/bias implementation is shared verbatim): instead of probing every window
  *   against every other window anywhere in the string (the any-to-any geometry behind window mode's
  *   79% venue-confound FP at δ=10 — see the brainstorm doc's FP anatomy), candidates are pinned to the
  *   register-style GB suffix geometry: the PARENT (post-town position) is a 1..{@link WINDOW_MAX_WORDS}-word
@@ -158,7 +158,7 @@
  *   before the shorter one — a partial-child probe ("cadbury" under "north cadbury") can never fire.
  *   The FIRST hit biases the CHILD span only (the parent keeps the model's own — typically strong
  *   `locality` — read, matching how the other modes only ever bias the X role) and probing stops. "Typically" is
- *   load-bearing and was never checked — see "Whole-edge parent bias" below for the case where it does not hold and the
+ *   required and was never checked — see "Whole-edge parent bias" below for the case where it does not hold and the
  *   opt-in that closes it.
  *   Marker suppression applies to the child exactly as window mode applies it. A venue-embedded
  *   confound at the string start ("Queens Park Cafe …") is rejected by construction — its text is

@@ -423,7 +423,7 @@ def _raw_row_stream(
         order = [s for s in shard_paths if s.exists()]
         rng.shuffle(order)
         for s in order:
-            # Keep the --golden footgun guard the bucketing path used to provide: a label-less
+            # Keep the --golden misuse check the bucketing path used to provide: a label-less
             # golden shard (source=None) scoring as val would produce garbage metrics silently.
             if _shard_first_source(s) is None:
                 raise ValueError(
@@ -461,7 +461,7 @@ def _raw_row_stream(
             "\n  ".join(f"{p}: {reason}" for p, reason in skipped_shards[:10]),
         )
 
-    # FOOTGUN GUARD: a shard with a None `source` (e.g. a --golden eval shard wrongly used as a train/
+    # misuse check: a shard with a None `source` (e.g. a --golden eval shard wrongly used as a train/
     # val shard — golden rows carry no source field) used to crash here with a cryptic
     # "'<' not supported between NoneType and str" from sorted(). Fail loud with the real cause instead.
     if any(src is None for src in by_source):

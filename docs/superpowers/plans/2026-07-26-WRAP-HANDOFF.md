@@ -39,7 +39,7 @@ accurate against main + the ledger). The full dated record is `.superpowers/sdd/
 
 ## Working discipline (still non-negotiable — every one earned with a receipt)
 
-1. **Verify before verdict.** A report (even this one) is not truth for a load-bearing number — re-run
+1. **Verify before verdict.** A report (even this one) is not truth for a required number — re-run
    it on the live CLI (`node mailwoman/out/cli.js parse --neural "<input>"`) before acting.
 2. **Measure in the SHIPPED configuration.** v3101-cache ≠ shipped v385 (bare-street 0.777 vs 0.605).
    Board percentages from a candidate cache are candidate numbers. Pin to production defaults; when an

@@ -236,8 +236,8 @@ function isStreetSuffix(token: string): boolean {
 /**
  * Romance/Latin street-TYPE words that LEAD the street ("Via Trento", "Calle Mayor", "Corso Italia"). English puts the
  * type last (a suffix — see STREET_SUFFIXES); Romance languages put it first. Without this, a leading "Via"/"Calle" is
- * capitalized first-segment text the locality rule happily proposes, and on OOD intl input the model can't type it
- * either — so the grouper-audit promotes it to a spurious `locality`, burying the real city (#425 re-gate).
+ * capitalized first-segment text the locality rule proposes, and on OOD intl input the model can't type it either — so
+ * the grouper-audit promotes it to a spurious `locality`, burying the real city (#425 re-gate).
  *
  * Street-TYPES only — deliberately NOT the ambiguous area/development words ("Polígono", "Urbanización", "Lugar",
  * "Partida", "Borgo") that legitimately serve AS localities. This stays a bounded linguistic category; per-locale

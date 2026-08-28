@@ -12,7 +12,7 @@
  *   Matching is an IDENTITY test with three conjuncts: same country, within
  *   {@link CAPITAL_MATCH_RADIUS_KM} of the reference point, and the candidate's own folded name a
  *   member of the reference entry's folded name set (name + romanization + the source's alternate
- *   names, so exonym rows — "Vienna" for Wien — still match). All three are load-bearing. The
+ *   names, so exonym rows — "Vienna" for Wien — still match). All three are required. The
  *   iteration-1 board run matched on country + coordinate alone, and the 25 km radius promoted
  *   capital-ADJACENT namesakes instead of capitals: North Salt Lake beside the Utah seat, a Gujarat
  *   Indiranagar beside Gandhinagar, Via delle Parti beside Perugia. The name set is what makes the

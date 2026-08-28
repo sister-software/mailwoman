@@ -30,7 +30,7 @@
  *   - Cross-language variant forms are NOT bridged: `Thüringen` folds to `thuringen`, the stored
  *     exonym `Thuringia` to `thuringia`, so a variant-form match the gazetteer could vouch for
  *     still reads `contradicted`. Bridging it needs a candidate.db alias probe, which would pull
- *     the SQLite lookup machinery into this pure module — deliberately skipped.
+ *     the SQLite lookup implementation into this pure module — deliberately skipped.
  *   - The only normalizers consulted beyond the fold are the codex tables, because they are pure
  *     and already in-house: {@link matchCountry} (surface form / alpha-2 / alpha-3 → country) and
  *     {@link matchSubdivision} (US state + CA province code ↔ name). So `IL` confirms against

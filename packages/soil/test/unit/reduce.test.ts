@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The reduction's arithmetic: what the four absence shares mean, why class 8 is not one of them, and the
- *   invariant that makes `other_share` load-bearing rather than decorative.
+ *   invariant that makes `other_share` required rather than decorative.
  */
 
 import type { SoilCapabilityCellTable } from "@mailwoman/soil/schema"

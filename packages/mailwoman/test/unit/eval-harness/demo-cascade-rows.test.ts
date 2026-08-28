@@ -7,7 +7,7 @@
  *   split out of the runner "so the schema contract is unit-testable without loading the model / the
  *   hot DB" — and then no test was ever written, which is part of why nobody noticed when the
  *   2026-07-10 probe triage deleted the module out from under its importer and left the gate leg
- *   unloadable. A test that imports it is the cheapest possible tripwire for that class of mistake:
+ *   unloadable. A test that imports it is the cheapest possible regression check for that class of mistake:
  *   delete the file again and CI goes red immediately, instead of four weeks later when someone
  *   stages a `wof-hot.db`.
  *

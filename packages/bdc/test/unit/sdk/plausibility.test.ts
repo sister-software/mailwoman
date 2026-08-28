@@ -824,7 +824,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
  * fuller proof by comment, rather than re-deriving the whole scenario.
  */
 describe("§7-2b gates", () => {
-	describe("Gate 1 — positive-evidence-only invariant (load-bearing)", () => {
+	describe("Gate 1 — positive-evidence-only invariant (required)", () => {
 		it("well-covered area, no filing, no nearby plant -> zero evidence entries, and confidence that reflects the REAL coverage (never insufficient_survey_data)", async () => {
 			const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
 			const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([]) // no plant anywhere

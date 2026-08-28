@@ -140,8 +140,8 @@ export interface CapturePair {
 /**
  * One-to-one greedy assignment over the accepted pairs, best first (highest similarity, then closest).
  *
- * One-to-one is load-bearing, not tidiness: `m` is a count of AGREEMENTS between two inventories, so letting one row of
- * the first inventory answer for three rows of the second counts one agreement three times, deflates `N̂`, and inflates
+ * One-to-one is required, not tidiness: `m` is a count of AGREEMENTS between two inventories, so letting one row of the
+ * first inventory answer for three rows of the second counts one agreement three times, deflates `N̂`, and inflates
  * completeness — again in the direction that turns a gap into negative evidence.
  *
  * The candidate scan is quadratic in the two inputs. That is deliberate at pilot scale (a few thousand rows a side, a

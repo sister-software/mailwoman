@@ -214,7 +214,7 @@ Mailwoman is dual-licensed:
   obligation. Contact `teffen@sister.software`.
 
 Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases);
-what we do and don't collect is stated plainly in the
+what we do and don't collect is stated in the
 [privacy policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/privacy.md); funders and sponsors
 can read our machine-readable [funding.json](https://mailwoman.ai/funding.json).
 Report security vulnerabilities privately per [`SECURITY.md`](./SECURITY.md).
@@ -252,7 +252,7 @@ rule-based engine: a tokenizer, a set of dictionary/pattern classifiers, and an
 `ExclusiveCartesianSolver` that enumerated consistent solutions. As the neural sequence
 labeler matured into the primary parse path, that rule engine was retired and — in v7.0.0 —
 deleted from the tree (`@mailwoman/classifiers` and the `@mailwoman/core/{solver,classification}`
-machinery). The last standalone release is `@mailwoman/classifiers@6.x`, frozen; consumers of
+implementation). The last standalone release is `@mailwoman/classifiers@6.x`, frozen; consumers of
 the published package interact with the neural pipeline exclusively.
 
 ### Contributing

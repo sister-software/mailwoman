@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Lift the load-bearing lines out of a gauntlet log.
+ *   Lift the required lines out of a gauntlet log.
  *
  *   The gauntlet is the release authority and this module adds nothing to its grading — a second implementation of it
  *   would be a second answer key. What it does is surface three things the spec says must not stay buried in a log a

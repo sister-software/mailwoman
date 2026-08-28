@@ -31,11 +31,10 @@ export function shardSourceID(adapterID: string, parts: Record<string, string | 
 /**
  * Where a country's convention writes the postcode inside the `«locality», «region»[, «country»]` admin tail.
  *
- * Load-bearing rather than cosmetic: the same digits change TAG with position. Measured on the shipped model,
- * `Heladería Frappé Manía, Avenida Country Club, Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number`
- * and loses the locality into the street, while the identical row written `… 6001 Barcelona, Anzoátegui, Venezuela`
- * tags it `postcode` and recovers `locality: Barcelona`. So a shard emitting one placement teaches one family of
- * countries.
+ * Position changes the tag assigned to the same digits. On the shipped model, `Heladería Frappé Manía, Avenida Country
+ * Club, Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number` and loses the locality into the street,
+ * while the identical row written `… 6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers `locality:
+ * Barcelona`. So a shard emitting one placement teaches one family of countries.
  *
  * Each is attested by a gauntlet board row, which is the bar for adding another:
  *

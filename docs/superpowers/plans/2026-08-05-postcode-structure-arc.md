@@ -122,7 +122,7 @@ false negative.
   `findPostcodeCountryScope` — and only for the COUNTRY decision.
 - **Direction 2 reverse (the postcode confirms an ambiguous name) exists once**, as the #741
   short-circuit, and only for US postal cities via a side-index table.
-- **Direction 3 (partial codes encode ancestry) is not implemented anywhere.** The strip machinery
+- **Direction 3 (partial codes encode ancestry) is not implemented anywhere.** The strip implementation
   DELETES the postcode from the pair key; nothing reads a prefix as a prior. The codex prefix tables
   are consumed by exactly one corpus recipe and nothing at runtime.
 

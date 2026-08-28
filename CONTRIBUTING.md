@@ -151,7 +151,7 @@ changing anything structural. The short version:
 A vitest config in `packages/core/` and `packages/neural/` aliases sibling `@mailwoman/*` imports
 to source, so `yarn test` runs without a precompile step.
 
-**One gotcha worth knowing:** when a test file imports `@mailwoman/core` _both_
+**One failure mode worth knowing:** when a test file imports `@mailwoman/core` _both_
 bare and via a subpath, Vite can leave the bare re-exports unbound and a base
 class evaluates as `undefined`. The fix is a side-effect `import "@mailwoman/core"`
 at the top of the test file. `AGENTS.md` documents this under the bare/subpath
@@ -181,7 +181,7 @@ node packages/mailwoman/out/cli.js --help
 ## Where to read next
 
 - [`AGENTS.md`](./AGENTS.md) — architecture, workspace conventions, the release
-  pipeline, and the load-bearing gotchas.
+  pipeline, and the required gotchas.
 - [`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx)
   — the model-work runbook: which evals a change must pass, how to add a training-data subset.
 - [`docs/records/site-2026-08/concepts/what-mailwoman-is.mdx`](./docs/records/site-2026-08/concepts/what-mailwoman-is.mdx)

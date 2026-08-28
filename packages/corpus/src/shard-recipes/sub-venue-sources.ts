@@ -274,8 +274,8 @@ const USABLE_IDENTIFIER_SHAPES: ReadonlySet<string> = new Set([
  * One atom of a sign identifier: a short number (`5`, `205`), a single letter (`B`), a letter-then-number (`A12`,
  * `B05`), or a number-then-letter (`2F`, `4S`).
  *
- * The **single** leading letter is the load-bearing part, and it is what the third smoke found. A letter-digit ref with
- * a MULTI-letter prefix is not an identifier read off a sign, it is a network code: the lexicon's own examples of that
+ * The **single** leading letter is the required part, and it is what the third smoke found. A letter-digit ref with a
+ * MULTI-letter prefix is not an identifier read off a sign, it is a network code: the lexicon's own examples of that
  * shape are `BS04`, `BS07`, `PWP2`, `WSW3687`, `RQ8` — campus and platform codes — and the GB extract offers `Arundel
  * Gate AG1` … `AG124`, fourteen bus stops on a Sheffield STREET called Arundel Gate whose stop codes begin with its
  * initials. Admitting two-letter prefixes put all fourteen in the attested pool as `unit`.

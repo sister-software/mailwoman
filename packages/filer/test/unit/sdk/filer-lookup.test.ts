@@ -152,7 +152,7 @@ function minimalForm499Row(overrides: Partial<Form499Row> = {}): Form499Row {
 }
 
 describe("§7-3a gates", () => {
-	describe("1. Provenance completeness (load-bearing)", () => {
+	describe("1. Provenance completeness (required)", () => {
 		/**
 		 * STRUCTURAL half of the gate (the established idiom — see `bdc/sdk/plausibility.test.ts`): an exhaustive
 		 * `satisfies Record<keyof FilerEdgeInsert, true>` pin over `filer_edge`'s insert shape. `FilerEdgeTable` carries no
@@ -160,8 +160,8 @@ describe("§7-3a gates", () => {
 		 * requires every field on insert — this pin's job is making sure that guarantee can't silently erode: a field ADDED
 		 * to `FilerEdgeTable` that this literal doesn't also list fails `satisfies` (excess-property / missing-property
 		 * checking on an object literal assigned via `satisfies`), forcing a reviewer to touch this file and consciously
-		 * answer "is the new field also load-bearing provenance?" Only `tsc` (`yarn typecheck:tests`) checks the
-		 * `satisfies` clause itself — `yarn vitest run` alone (esbuild, types stripped) only runs the `it()` below.
+		 * answer "is the new field also required provenance?" Only `tsc` (`yarn typecheck:tests`) checks the `satisfies`
+		 * clause itself — `yarn vitest run` alone (esbuild, types stripped) only runs the `it()` below.
 		 */
 		type FilerEdgeInsert = Insertable<FilerEdgeTable>
 
@@ -178,7 +178,7 @@ describe("§7-3a gates", () => {
 			evidence: true,
 		} satisfies Record<keyof FilerEdgeInsert, true>
 
-		it("the structural pin enumerates every FilerEdgeTable field, including all four load-bearing ones", () => {
+		it("the structural pin enumerates every FilerEdgeTable field, including all four required ones", () => {
 			expect(Object.keys(FILER_EDGE_INSERT_FIELDS)).toHaveLength(10)
 
 			expect(FILER_EDGE_INSERT_FIELDS).toMatchObject({
@@ -247,7 +247,7 @@ describe("§7-3a gates", () => {
 			)
 		})
 
-		it("SQLite's NOT NULL alone does NOT reject an empty-string valid_from — this is why the builder-level guards below are load-bearing", async () => {
+		it("SQLite's NOT NULL alone does NOT reject an empty-string valid_from — this is why the builder-level guards below are required", async () => {
 			using db = openMemory()
 			await createAllTables(db)
 
@@ -984,7 +984,7 @@ describe("§7-3a gates", () => {
  * for the gates verbatim; both extend to EDGAR-sourced families, covered by the second describe block below.
  */
 describe("§7-3b gates", () => {
-	describe("1. Family and entity cluster are never conflated (load-bearing)", () => {
+	describe("1. Family and entity cluster are never conflated (required)", () => {
 		/**
 		 * STRUCTURAL half: {@link FilerLookupCluster} (`cluster_id`/`members`) and {@link FilerLookupFamily}
 		 * (`family_id`/`relationship`) are shapes with NO field in common — assigning one to a variable typed as the other
@@ -1521,7 +1521,7 @@ describe("§7-3b gates", () => {
 		 * `Generated<>`-wrapped columns (`schema.ts`), so `Insertable<FilerFamilyTable>` already requires every field on
 		 * insert — this pin's job is making sure that guarantee can't silently erode: a field ADDED to `FilerFamilyTable`
 		 * that this literal doesn't also list fails `satisfies`, forcing a reviewer to consciously answer "is the new field
-		 * also load-bearing provenance?" Only `tsc` (`yarn typecheck:tests`) checks this.
+		 * also required provenance?" Only `tsc` (`yarn typecheck:tests`) checks this.
 		 */
 		type FilerFamilyInsert = Insertable<FilerFamilyTable>
 
@@ -2025,7 +2025,7 @@ describe("pickPrimaryFRN", () => {
 		expect(pickPrimaryFRN([...candidates].toReversed())).toBe(FRN_LATE)
 	})
 
-	it("keeps the first candidate on an exact filedAt tie (deterministic, not itself semantically load-bearing)", () => {
+	it("keeps the first candidate on an exact filedAt tie (deterministic, not itself semantically required)", () => {
 		const candidates: FRNFilingRecord[] = [
 			{ frn: FRN_EARLY, filedAt: "2026-01-15" },
 			{ frn: FRN_LATE, filedAt: "2026-01-15" },

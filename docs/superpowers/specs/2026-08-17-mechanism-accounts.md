@@ -1,4 +1,4 @@
-# Mechanism accounts — diagnosis machinery for mailwoman
+# Mechanism accounts — diagnosis implementation for mailwoman
 
 **Date:** 2026-08-17 · **Status:** design of record; first slices landed (see §8) · **Epic:** #1716
 **Origin:** the 2026-08-16 design conversation, the #1711 investigation that motivated it, and two
@@ -8,8 +8,8 @@ claim-tagged research reports (`docs/records/research/2026-08-16-*.md`).
 
 Debugging this system today rests on whoever is reasoning about it in the moment. The operator named
 the cost precisely: every context reset means re-learning how addresses behave through a small
-porthole, and the assistant's in-context reasoning is a load-bearing part of how the product
-improves — which is exactly what nobody wants load-bearing.
+porthole, and the assistant's in-context reasoning is a required part of how the product
+improves — which is exactly what nobody wants required.
 
 The instrument driving that dependence is the aggregate. Distance-from-truth is a projection that
 destroys diagnostic information: the #1711 city-only stratum reported `89.1% vs 96.9%, p = 0.084` —

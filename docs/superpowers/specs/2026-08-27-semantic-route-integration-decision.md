@@ -165,7 +165,7 @@ The evidence for the requirement is §1.1, which is committed data and independe
 capability is absent, the absence is structural, and the natural repair is refused at the type
 level. The evidence for the requirement's **size** is §1.3, which is nothing.
 
-That asymmetry decides the posture, and it is worth stating plainly because it is the whole argument
+That asymmetry decides the posture, and it is worth stating because it is the whole argument
 of this record. A capability nobody can reach is a defensible thing to ship for the callers who ask
 for it. Changing what every caller gets is a different claim, and it needs the denominator that does
 not exist. So the requirement is admitted **at opt-in strength**: enough to make the route a
@@ -253,7 +253,7 @@ publishes `@mailwoman/geographic-model` at the shared version. Because the works
 both and the dependency is coherent by construction. Nothing here needs a hand-publish, and nothing
 here permits one.
 
-The dynamic import may stay or go once the edge is real. It is no longer load-bearing for
+The dynamic import may stay or go once the edge is real. It is no longer required for
 publishability; keeping it only keeps the artifact reader off the load path for callers who never
 build a route, which is a small and separate benefit.
 
@@ -294,7 +294,7 @@ the option is the switch, absence is the pipeline that shipped, and the type sta
 
 **A future default change must ADD the suppression before it flips.** `createRuntimePipeline`
 already has the house pattern for this, twice: `fst?: … | false` and `streetMorphology?: … | false`,
-each documented as the byte-stable escape hatch for a mechanism that became default-on. Any change
+each documented as the byte-stable override for a mechanism that became default-on. Any change
 that makes the route auto-construct must widen `poiSemanticLookup` to `… | false` in the same
 commit, with a test that sets it `false` and asserts byte-stability against the pre-change
 composition. Rollback that arrives after the change is not rollback (§6).
@@ -399,7 +399,7 @@ place to ride — which is why §8.3 lists it as a prerequisite rather than a fa
 
 **A stop-strength outcome** — controls regressing, or the false-claim census turning up
 unadjudicable claims — ends the opt-in surface too, not merely the default change. The route then
-reverts to what it is today: experiment machinery behind a frozen pre-registration, with the
+reverts to what it is today: experiment implementation behind a frozen pre-registration, with the
 compiled artifact and its conformance instruments retained as the durable product of the phase.
 
 ---

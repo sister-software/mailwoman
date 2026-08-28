@@ -26,7 +26,7 @@ import sys
 import tomllib
 from pathlib import Path
 
-# The export/quant deps whose version is load-bearing for the shipped ONNX graph. datasets/tqdm/
+# The export/quant deps whose version is required for the shipped ONNX graph. datasets/tqdm/
 # trackio are loose by design (they don't touch the graph), so they are NOT guarded here.
 INVARIANT_DEPS = ("torch", "transformers", "onnx", "onnxruntime")
 MAX_OPSET = 17

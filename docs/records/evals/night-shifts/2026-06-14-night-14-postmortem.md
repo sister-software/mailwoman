@@ -66,7 +66,7 @@ All six merged to `main`:
   (fast to fetch/build), so full ≈ top-N in cost but complete in coverage.
 - **Observability before RemoteResolver**, against the issue's stated order. Rationale: the issue says
   "measure SLOs first" (needs the latency instrument) and `/health` is high-value/low-risk, whereas
-  RemoteResolver is multi-instance machinery we don't need single-process.
+  RemoteResolver is multi-instance implementation we don't need single-process.
 - **interp calibration as a CLI-default constant (1.70), opt-in at the resolver.** Keeps the resolver
   calibration-agnostic + byte-stable; the caller owns the factor.
 

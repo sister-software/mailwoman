@@ -291,9 +291,9 @@ function containsTokens(haystack: string[], needle: string[]): boolean {
 /**
  * Classify one colliding venue name against the probe string it collided with.
  *
- * The rule is stated in the module header and implemented here in the same order: an explicit query marker settles it;
- * otherwise a name that IS the probe adds nothing and is query-shaped, on whichever of the two remaining tells applies;
- * otherwise the name carries something the probe does not, and is an ordinary name.
+ * The rule is stated in the module header and implemented here in the same order: an explicit query marker determines
+ * the result; otherwise a name that IS the probe adds nothing and is query-shaped, on whichever of the two remaining
+ * tells applies; otherwise the name carries something the probe does not, and is an ordinary name.
  */
 export function classifyVenueName(name: string, probe: string): VenueNameVerdict {
 	const normalized = normalizeActivityPhrase(name)

@@ -5,7 +5,7 @@ data we could carry, what each one's own words permit and forbid, what a layer b
 be allowed to claim, and which single source and region the first build should take. The builder is a
 follow-up issue, outlined in §7 and not filed here.
 
-The consuming machinery already exists, so nothing below proposes new architecture. The layer
+The consuming implementation already exists, so nothing below proposes new architecture. The layer
 contract (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
 [`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx);
 `packages/bdc` is the worked federal-provider shape; the exclusion-grade coverage pilot
@@ -414,7 +414,7 @@ pharmacy class in the #1964 pilot; a class boundary is not incompleteness, and e
 fractional completeness would invent a measurement nobody took.
 
 That reasoning only holds if the layer cannot be read as covering a class it does not hold, and the
-contract has already met this problem. `absence-route.ts` records it plainly — a coverage table
+contract has already met this problem. `absence-route.ts` records it — a coverage table
 carries a completeness per cell and no class, so a completeness measured over pharmacies would license
 a claim about cafés if nothing stopped it — and solves it by reading the held class out of the artifact
 and refusing unless the answered class is exactly it. The flood layer inherits the same rule: one
@@ -617,7 +617,7 @@ bounded because the index has reduced the candidate set to what one cell touches
 `pointInPolygonRings` and `bboxAround` in `@mailwoman/spatial` are the primitives; nothing new is
 needed.
 
-The interior/boundary distinction is not new machinery either — `coverage-region.ts` already separates
+The interior/boundary distinction is not new implementation either — `coverage-region.ts` already separates
 a polyfilled cell set from the cells lying wholly inside an outline, and measured 371 polyfilled
 against 290 interior on Île-de-France.
 
@@ -633,7 +633,7 @@ The contract requires every domain row to be addressable by at least one spine k
 not: it spans many cells. `SpineKeys` has already grown once for precisely this reason — the situs
 shards carry no cell, no WOF id and no address-id, so `street` was added rather than naming a column
 that does not exist. A cell-indexed geometry layer is the same kind of event, and this record does not
-settle it.
+establishes the result.
 
 The two candidate answers for the builder: declare `h3` naming `flood_zone_cell.h3_cell`, which is
 true (the layer _is_ addressable by cell) but points a consumer at the index rather than at the domain

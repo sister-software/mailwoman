@@ -9,7 +9,7 @@
  *   at a sealed `poi.db` layer (`mailwoman gazetteer build poi`). `--overpass` additionally renders
  *   the OverpassQL export block (`@mailwoman/poi-overpass`) — export-only, mailwoman never queries
  *   Overpass itself. A non-POI query (kind classifier never emits `poi_query`, or the intent stage
- *   fell through) reports that plainly and exits 0 — this command is a debug probe, not a strict
+ *   fell through) reports that and exits 0 — this command is a debug probe, not a strict
  *   POI-only parser.
  *
  *   Exit-code contract:

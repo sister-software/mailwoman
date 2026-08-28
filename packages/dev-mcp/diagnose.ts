@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Mechanism accounts (#1722) — per row, what the pipeline DID, assembled from the seams it already exposes.
+ *   Mechanism accounts (#1722) — per row, what the pipeline DID, assembled from the facts it already exposes.
  *
  *   Two commitments from the epic bind every line here.
  *
@@ -11,11 +11,11 @@
  *      here is cached. Every account is recomputed from the current system on every call, so an explanation is free to
  *      dissolve the moment the system stops working that way. (The anti-Pelias rule: no mechanistic belief accumulates
  *      that a truer understanding of addresses could break against.)
- *   2. **Failure shapes are MECHANISM-STATES, never address shapes.** Every predicate below reads pipeline seams —
+ *   2. **Failure shapes are MECHANISM-STATES, never address shapes.** Every predicate below reads pipeline facts —
  *      channels, gates, ranks, lineage — and none reads what KIND of address the row is. A shape makes a claim about
  *      what the system did on this input; it cannot fossilize a wrong belief about how addresses work.
  *
- *   Classification is v1: transparent seam-fact predicate matching, with NO calibration. Every result says so in its
+ *   Classification is v1: transparent predicates over recorded pipeline facts, with NO calibration. Every result says so in its
  *   own `calibration` field. A row that matches no shape and still fails its expectation is reported `unclassified`
  *   rather than squeezed into the nearest match, because a label applied to it now is the thing a calibrated v2 would
  *   have to un-learn.
@@ -42,7 +42,7 @@
  *     four could carry calibration; the last three cannot, and splitting them into train/calibration halves makes it
  *     worse.
  *   - **These shapes are MULTI-LABEL and Mondrian partitions.** `by_shape` counts overlap by construction and the
- *     result says never to sum them, so "the class" a row calibrates under has to be defined first — earliest seam,
+ *     result says never to sum them, so "the class" a row calibrates under has to be defined first — earliest pipeline stage,
  *     full label set, or something else — and that choice is a modelling decision, not a detail.
  *
  *   Exchangeability is the third question and the least comfortable one: calibration rows drawn from the tracked board
@@ -100,11 +100,11 @@ const SHAPE_ID_CAP = 20
 export const COUNTERFACTUAL_FULL_RUN_MAX_ROWS = 20
 
 /**
- * The v1 shape vocabulary, in PIPELINE-SEAM ORDER — parse, evidence, retrieval, ranking, outcome.
+ * The v1 shape vocabulary, in PIPELINE EXECUTION ORDER — parse, evidence, retrieval, ranking, outcome.
  *
- * A row can match several, and the order is what makes a multi-match readable: the earliest seam comes first, so
- * `[retrieval_empty, wrong_instance_detected]` reads as one story rather than two verdicts. The two terminal states are
- * mutually exclusive with everything, including each other.
+ * A row can match several, and the order is what makes a multi-match readable: the earliest pipeline stage comes first,
+ * so `[retrieval_empty, wrong_instance_detected]` reads as one story rather than two verdicts. The two terminal states
+ * are mutually exclusive with everything, including each other.
  */
 export const DIAGNOSE_SHAPES = [
 	"parse_shape_contradiction",
@@ -210,7 +210,7 @@ export interface AccountInput {
 		| undefined
 }
 
-//#region Seams
+//#region Facts
 
 /**
  * The decode's own confidence, over the tokens the tree was built from.
@@ -237,10 +237,10 @@ interface KnownFormatReading {
 	matched: boolean
 }
 
-export interface ParseSeams {
+export interface ParseFacts {
 	kind: { verdict: string; confidence: number } | null
 	/**
-	 * Why {@link ParseSeams.kind} is null, when it is. The classifier is skipped when a caller pinned the register, which
+	 * Why {@link ParseFacts.kind} is null, when it is. The classifier is skipped when a caller pinned the register, which
 	 * is a fact about the call — not a zero-confidence verdict.
 	 */
 	kind_absent_reason?: string
@@ -256,7 +256,7 @@ export interface ParseSeams {
  * One backend lookup, reduced to the facts a shape reads. The candidate table itself is deliberately NOT carried —
  * `mwdev_trace` renders it, and an account that dumped it would be a trace with extra steps.
  */
-interface LookupSeam {
+interface LookupFact {
 	tag: string
 	value: string
 	placetype: string
@@ -276,23 +276,23 @@ interface LookupSeam {
 	flipped_at: string | null
 }
 
-export interface RetrievalSeams {
+export interface RetrievalFacts {
 	/**
 	 * `null` when the trace carries no resolver records at all (a trace predating them). An EMPTY array is the walk
 	 * stating it performed no lookups — a different claim, and one the shapes must not read as retrieval failure.
 	 *
-	 * COVERAGE BOUND, and it is load-bearing for every retrieval shape below: the trace records the WALK's own
+	 * COVERAGE BOUND, and it is required for every retrieval shape below: the trace records the WALK's own
 	 * `#lookupAndPick` and nothing else. The resolver's post-walk recovery passes — span-rescore (a famous name the model
 	 * tagged `street`, which the walk never queries because `street` is not in the placetype map) and the
 	 * postcode-compound recovery — query the backend directly and emit no record. So a row can carry a resolved
 	 * coordinate beside an EMPTY lookup list; {@link RowAccount.resolved_without_recorded_lookup} states exactly that
 	 * case rather than leaving the reader to read the empty list as "no retrieval happened".
 	 */
-	lookups: LookupSeam[] | null
+	lookups: LookupFact[] | null
 	gates_fired: string[]
 }
 
-export interface OutcomeSeams {
+export interface OutcomeFacts {
 	tier: string
 	abstained: boolean
 	/**
@@ -326,14 +326,14 @@ export interface RowAccount {
 	 * `null` when the run carried no parse trace — the bundle could not produce one. Distinct from a parse whose every
 	 * channel is absent.
 	 */
-	parse: ParseSeams | null
+	parse: ParseFacts | null
 	evidence: EvidenceCensus | null
-	retrieval: RetrievalSeams
-	outcome: OutcomeSeams
+	retrieval: RetrievalFacts
+	outcome: OutcomeFacts
 	expectation: ExpectationReading
 	/**
-	 * A coordinate arrived and the resolver trace recorded NO lookup — the account's retrieval seams are blind for this
-	 * row. See {@link RetrievalSeams.lookups} for which passes are outside the trace's coverage. Reported so the empty
+	 * A coordinate arrived and the resolver trace recorded NO lookup — the account's retrieval facts are blind for this
+	 * row. See {@link RetrievalFacts.lookups} for which passes are outside the trace's coverage. Reported so the empty
 	 * lookup list is not read as "retrieval had nothing to do": the retrieval shapes cannot fire here, and their silence
 	 * is a coverage bound rather than a finding.
 	 */
@@ -370,10 +370,10 @@ function foldForSpanMatch(value: string): string {
 	return value.toLowerCase().replaceAll(/[^\da-z]/g, "")
 }
 
-export function parseSeams(
+export function collectParseFacts(
 	trace: NonNullable<AccountInput["trace"]>,
 	components: Record<string, string | undefined>
-): ParseSeams {
+): ParseFacts {
 	const priors = priorSignals(trace.parse)
 
 	const knownFormats = trace.queryShape.knownFormats.map((hit): KnownFormatReading => {
@@ -408,10 +408,10 @@ export function parseSeams(
 	}
 }
 
-export function retrievalSeams(records: ReadonlyArray<ResolveNodeTrace> | undefined): RetrievalSeams {
+export function collectRetrievalFacts(records: ReadonlyArray<ResolveNodeTrace> | undefined): RetrievalFacts {
 	if (!records) return { lookups: null, gates_fired: [] }
 
-	const lookups = records.map((record): LookupSeam => {
+	const lookups = records.map((record): LookupFact => {
 		const picked = record.picked
 		const pickedRow = picked ? record.candidates.find((candidate) => candidate.id === picked.id) : undefined
 		// The rank vector's key order IS the resolver's stage execution order — the recorder writes one entry per stage
@@ -452,8 +452,8 @@ export function retrievalSeams(records: ReadonlyArray<ResolveNodeTrace> | undefi
 	return { lookups, gates_fired: [...gates] }
 }
 
-export function outcomeSeams(result: AccountInput["result"]): OutcomeSeams {
-	const outside: OutcomeSeams["outside_winner_lineage"] = []
+export function collectOutcomeFacts(result: AccountInput["result"]): OutcomeFacts {
+	const outside: OutcomeFacts["outside_winner_lineage"] = []
 	let vouched = 0
 	let unverifiable = 0
 
@@ -487,24 +487,24 @@ export function outcomeSeams(result: AccountInput["result"]): OutcomeSeams {
  * The terminal states are NOT decided here: `clean` vs `unclassified` needs the row's expectation, and keeping that out
  * of this function is what stops an expectation from ever influencing a MECHANISM claim (commitment 1).
  */
-export function matchShapes(seams: {
-	parse: ParseSeams | null
+export function matchShapes(facts: {
+	parse: ParseFacts | null
 	evidence: EvidenceCensus | null
-	retrieval: RetrievalSeams
-	outcome: OutcomeSeams
+	retrieval: RetrievalFacts
+	outcome: OutcomeFacts
 }): DiagnoseShape[] {
 	const shapes: DiagnoseShape[] = []
-	const lookups = seams.retrieval.lookups ?? []
+	const lookups = facts.retrieval.lookups ?? []
 
 	if (
-		seams.parse?.known_formats.some(
+		facts.parse?.known_formats.some(
 			(hit) => hit.confidence >= KNOWN_FORMAT_CONFIDENCE_FLOOR && hit.expects_component !== null && !hit.matched
 		)
 	) {
 		shapes.push("parse_shape_contradiction")
 	}
 
-	if (seams.evidence?.silent) {
+	if (facts.evidence?.silent) {
 		shapes.push("evidence_starved")
 	}
 
@@ -535,10 +535,10 @@ export function matchShapes(seams: {
 	}
 
 	const contradicted =
-		seams.outcome.admin_coherence?.region === "contradicted" ||
-		seams.outcome.admin_coherence?.country === "contradicted"
+		facts.outcome.admin_coherence?.region === "contradicted" ||
+		facts.outcome.admin_coherence?.country === "contradicted"
 
-	if (contradicted || seams.outcome.outside_winner_lineage.length) {
+	if (contradicted || facts.outcome.outside_winner_lineage.length) {
 		shapes.push("wrong_instance_detected")
 	}
 
@@ -652,7 +652,7 @@ export function renderAccount(account: Omit<RowAccount, "rendered">): string {
 	}
 
 	if (account.resolved_without_recorded_lookup) {
-		parts.push("resolved with NO recorded lookup (retrieval seams blind here)")
+		parts.push("resolved with NO recorded lookup (the resolver trace does not cover this result)")
 	}
 
 	const empty = (account.retrieval.lookups ?? []).filter((lookup) => lookup.n_candidates === 0 && !lookup.picked)
@@ -800,7 +800,7 @@ function misTaggedInVocabulary(
 }
 
 /**
- * Assemble one row's account: the seams, the shapes they match, and the terminal state.
+ * Assemble one row's account: the facts, the shapes they match, and the terminal state.
  */
 export function assembleAccount(
 	item: ResolvedInput,
@@ -808,10 +808,10 @@ export function assembleAccount(
 	expectation: ExpectationReading
 ): Omit<RowAccount, "rendered"> {
 	const trace = run.trace
-	const parse = trace ? parseSeams(trace, run.result.components) : null
+	const parse = trace ? collectParseFacts(trace, run.result.components) : null
 	const evidence = trace ? evidenceCensus(trace.parse) : null
-	const retrieval = retrievalSeams(trace?.resolver)
-	const outcome = outcomeSeams(run.result)
+	const retrieval = collectRetrievalFacts(trace?.resolver)
+	const outcome = collectOutcomeFacts(run.result)
 	const shapes = matchShapes({ parse, evidence, retrieval, outcome })
 
 	if (!shapes.length) {
@@ -837,7 +837,7 @@ export function assembleAccount(
 			? {}
 			: {
 					trace_absent_reason:
-						"No trace was recorded for this run, so the parse, evidence and retrieval seams are ABSENT — not " +
+						"No trace was recorded for this run, so the parse, evidence and retrieval facts are ABSENT — not " +
 						"silent. Either the session refused to trace, or the loaded bundle's classifier cannot produce one.",
 				}),
 	}
@@ -937,9 +937,9 @@ export async function runDiagnose(registry: EngineRegistry, args: Record<string,
 	return {
 		provenance: provenanceFor(engine, set),
 		input_set: inputSetProvenance(set),
-		calibration: "none — v1 seam-fact matching",
+		calibration: "none — v1 fact set-fact matching",
 		calibration_note:
-			"Shapes here are PREDICATE MATCHES over pipeline seams, carrying no coverage guarantee: there is no confidence, " +
+			"Shapes here are PREDICATE MATCHES over pipeline facts, carrying no coverage guarantee: there is no confidence, " +
 			"no abstention band and no guarantee attached to any of them. Each shape's predicate travels beside its " +
 			"count so the claim is checkable by reading it.",
 		summary: [

@@ -222,8 +222,8 @@ const AuthoritativeMatchSchema = z.object({
  * (`GeocodeOutcome = Record<string, unknown>`, `api/engine.ts`) — nothing here validates a real response, so a
  * schema/engine mismatch can never reject or mutate a result at runtime. Deliberately carries NO import from
  * `mailwoman` (the engine-agnosticism boundary — `mailwoman` is the one workspace allowed to depend on
- * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time tripwire that
- * catches this shape drifting from the real `GeocodeResult` interface.
+ * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time regression check
+ * that catches this shape drifting from the real `GeocodeResult` interface.
  */
 export const GeocodeOutcomeLikeSchema = z.object({
 	input: z.string(),
@@ -329,8 +329,8 @@ export type GeocodeOutcomeLike = z.infer<typeof GeocodeOutcomeLikeSchema>
  * (`GeocodeOutcome = Record<string, unknown>`, `api/engine.ts`) — nothing here validates a real response, so a
  * schema/engine mismatch can never reject or mutate a result at runtime. Deliberately carries NO import from
  * `mailwoman` (the engine-agnosticism boundary — `mailwoman` is the one workspace allowed to depend on
- * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time tripwire that
- * catches this shape drifting from the real `GeocodeResult` interface.
+ * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time regression check
+ * that catches this shape drifting from the real `GeocodeResult` interface.
  */
 export const GeocodeOutcomeSchema = GeocodeOutcomeLikeSchema.loose().openapi("GeocodeOutcome")
 

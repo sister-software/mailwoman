@@ -9,7 +9,7 @@
  *   — rather than a different name that merely shares the folded key?
  *
  *   The comparator is `levenshteinSimilarity`, NOT Jaro-Winkler: JW's common-prefix bonus scores
- *   the load-bearing NEGATIVE case (`chanchun` vs `cancun`, 0.925) above real positives
+ *   the required NEGATIVE case (`chanchun` vs `cancun`, 0.925) above real positives
  *   (`saint george s` vs `st georges` expanded, 0.914), so no JW threshold separates them.
  *   Measured on the #1882 census contests, edit similarity separates every case with margin:
  *

@@ -1,5 +1,5 @@
 /**
- * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The load-bearing checks: (1) every slice
+ * Tests for the anchor-absorption counter-augmentation (#220/#723 Probe A1). The required checks: (1) every slice
  * aligns cleanly (no quarantine) so the shard is trainable, and (2) the LEADING 5-digit gets the CONTEXT-correct label
  * — house_number when a trailing postcode is present (CASE-H), postcode when not (CASE-P). That contrast is exactly
  * what the model must learn instead of flipping the default (the Probe A0 erosion this shard fixes).

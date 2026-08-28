@@ -12,7 +12,7 @@
 # not the recipe — the same A/B discipline as the v0.8.x MLM arms.
 #
 # STOP AT 20k (the early gate). Pre-registered, from the design doc:
-#   - cross_pollution < 1% per locale (the live tripwire — watch it on the dashboard)
+#   - cross_pollution < 1% per locale (the live regression check — watch it on the dashboard)
 #   - DE locality F1 >= 70% and rising
 #   - US/FR within ~1pp of v0.7.2 (no-regression on the incumbents)
 #   - locale_acc climbing (the aux head is actually learning "which country")
@@ -65,10 +65,10 @@ data:
     synth-intersection: 0.2
     # German at ~18% of the mix (6.0 of a ~34 total) — enough for a from-scratch model to learn it,
     # while staying within the synthesis-as-supplement guideline. THE key tunable: raise it if DE
-    # locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp tripwire.
+    # locality F1 lags the 70% gate, lower it if US/FR slip past the 1pp regression check.
     synth-german: 6.0
   train_rows_per_epoch: 1000000
-  val_rows: 4096 # the per-locale cross_pollution tripwire now has DE val support (the 4K German val shard)
+  val_rows: 4096 # the per-locale cross_pollution regression check now has DE val support (the 4K German val shard)
   coarse_filter: true
   augment_directional_prob: 0.3
   augment_region_prob: 0.3

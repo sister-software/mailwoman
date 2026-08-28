@@ -13,7 +13,7 @@
  *   authoritative SAME-ENTITY edge is never in doubt, so ANY finite `threshold` unions it. The resulting
  *   connected components are written to `filer_cluster` with `assertion: "authoritative"`.
  *
- *   **The `relationship` filter is load-bearing, not incidental.** `assertion` grades
+ *   **The `relationship` filter is required, not incidental.** `assertion` grades
  *   evidence strength (authoritative vs. inferred); `relationship` grades WHAT the edge means
  *   (`same_entity` vs. `holding_company` vs. `management_company` — `schema.ts`'s {@link
  *   FilerRelationship}) — the two columns are orthogonal by design, and entity clustering
@@ -82,7 +82,7 @@
  *   normalized HQ address, a contact phone/email) — that data doesn't exist reliably in this crosswalk
  *   until CORES and EDGAR land in Phase 3b, so it's explicitly deferred there, not attempted here.
  *
- *   **Decision 5 / gate 2, BINDING and load-bearing:** an inferred link must NEVER alter an
+ *   **Decision 5 / gate 2, BINDING and required:** an inferred link must NEVER alter an
  *   authoritative cluster assignment. This is not a runtime check on the inferred pass's output — it
  *   is a structural property of where each pass writes: (a) only ever touches `filer_cluster` rows
  *   `WHERE assertion = 'authoritative'`; (b) only ever touches rows `WHERE assertion = 'inferred'`

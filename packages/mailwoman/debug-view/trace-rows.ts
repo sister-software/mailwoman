@@ -68,9 +68,9 @@ const LOCALE_HEAD_ENTRIES = 3
  * The addressing system whose conventions applied, the register the parse ran in, the operator's locale, and the
  * known-format spans Stage 2 detected.
  *
- * `systemSource` is load-bearing and rides in parentheses: `auto` means the locale head chose the system, `pinned`
- * means the bundle or the caller did, and `off` means conventions never ran — three different reasons for the same
- * `us`, and the trace is the only place that distinction survives.
+ * `systemSource` is required and rides in parentheses: `auto` means the locale head chose the system, `pinned` means
+ * the bundle or the caller did, and `off` means conventions never ran — three different reasons for the same `us`, and
+ * the trace is the only place that distinction survives.
  */
 export function systemRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT

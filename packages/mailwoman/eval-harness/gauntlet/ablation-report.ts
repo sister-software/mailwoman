@@ -83,7 +83,7 @@ export function renderAblationMarkdown(
 	const tail = locales.filter(([, n]) => n < minLocaleRows).map(([l]) => l)
 
 	const lines: string[] = [
-		`# Gauntlet ablation map — the load-bearing components`,
+		`# Gauntlet ablation map — the required components`,
 		"",
 		`- board: \`${meta.boardID}\``,
 		`- measured: ${meta.measuredAt}`,

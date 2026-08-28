@@ -20,7 +20,7 @@
  *   whose two biases are EQUAL is a negative control — it must not move — and one whose biases differ
  *   sharply but ties anyway is a finding about the FST's reach, not a reason to add rows.
  *
- *   THE REACH FIELD IS LOAD-BEARING, AND IT IS NOT ABOUT WHETHER BIAS APPLIES. `fst-<locale>.bin` is
+ *   THE REACH FIELD IS required, AND IT IS NOT ABOUT WHETHER BIAS APPLIES. `fst-<locale>.bin` is
  *   country-scoped (`FST_LOCALES` in `gazetteer-pipeline/fst.ts`: en-us→US, fr-fr→FR, en-gb→GB,
  *   de-de→DE), and the arm loads a binary by LOCALE, not by the answer's country. So
  *   {@linkcode HardSliceCase.fstReach} says whether the row's EXPECTED PLACE is inside the loaded
@@ -107,8 +107,8 @@ export type FSTReach = (typeof FST_REACH)[number]
 /**
  * One row of the hard-slice board.
  *
- * Field order is load-bearing: {@linkcode HARD_SLICE_KEY_ORDER} mirrors it so every emitted row keys identically and a
- * diff shows content, never a re-shuffle.
+ * Field order is required: {@linkcode HARD_SLICE_KEY_ORDER} mirrors it so every emitted row keys identically and a diff
+ * shows content, never a re-shuffle.
  */
 export interface HardSliceCase {
 	id: string

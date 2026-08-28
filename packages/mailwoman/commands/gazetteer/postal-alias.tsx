@@ -15,7 +15,7 @@
  *   says Clarkstown".
  *
  *   SIBLING table by design (`postal_city_alias`, its own sqlite) — never mixed into the PIP-derived
- *   `postcode_locality` rows: one table = one provenance class (feedback-no-load-bearing-trivia). A
+ *   `postcode_locality` rows: one table = one provenance class (feedback-no-irrelevant-trivia). A
  *   count floor drops typo noise; everything kept is observed-in-the-wild N times, with N
  *   recorded.
  *

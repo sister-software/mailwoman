@@ -77,7 +77,7 @@ export interface FragmentBoardOutcome {
 const fold = (value: string): string => value.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 /**
- * Wilson score interval — the reason this board exists. The normal approximation collapses at the extremes (it happily
+ * Wilson score interval — the reason this board exists. The normal approximation collapses at the extremes (it *
  * reports a negative lower bound on 0/400, and a zero-width interval on 400/400); Wilson stays inside [0,1] and stays
  * sane on the small, skewed cells that fragment classes actually produce.
  */

@@ -44,7 +44,7 @@ export const Form499CessationReason = {
 	/**
 	 * `This company still exists, however it is no longer providing telecommunications services.` The entity survives;
 	 * only the telecom operation ended. Distinct from {@linkcode Form499CessationReason.OutOfBusiness} and the difference
-	 * is load-bearing — one of these companies can still be somebody's parent.
+	 * is required — one of these companies can still be somebody's parent.
 	 */
 	ExitedTelecom: "exited-telecom",
 	/**

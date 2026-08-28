@@ -14,8 +14,7 @@ Three findings need action, and one of them is not a garbage-input problem at al
 The stack is well-behaved on the input classes you would expect to break it. Empty
 strings, whitespace, punctuation runs, emoji, ZWJ sequences, box drawing, unpaired surrogates,
 embedded NUL, BOM, zalgo, RTL overrides, CJK and Devanagari all pass through without a throw and
-mostly without emitting anything. That is a real clean bill of health and it is stated plainly
-below rather than buried.
+mostly without emitting anything. That is a real clean bill of health and it is stated below rather than buried.
 
 What breaks is length. Two independent quadratics live in the preprocessing stages, and a
 sequence-length cap in the ONNX runner desynchronises two arrays that the decoder then indexes in
@@ -339,7 +338,7 @@ ships it.
 
 ## What held up
 
-Stated plainly, because these are real results and not padding. Across all four paths, none of the
+stated directly, because these are real results and not padding. Across all four paths, none of the
 following threw, hung, or emitted anything:
 
 - **Degenerate input is clean.** Empty string, single/multiple spaces, tab, newline, CRLF, only

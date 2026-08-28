@@ -8,7 +8,7 @@
  *
  *   WHY A FOURTH PRE-REGISTRATION AND NOT A FOURTH COPY. #1928's ruler decides one lane against one frozen
  *   baseline; #1965's asserts one asymmetry. Phase 2 spans four lanes whose combined effect neither covers,
- *   so this file registers the LANES and the checks that read them, and takes the freeze machinery from
+ *   so this file registers the LANES and the checks that read them, and takes the implementation from
  *   {@linkcode canonicalJSON} rather than re-typing it. Two encoders hashing the same content drift at the
  *   first key ordering either one changes.
  *
@@ -886,7 +886,7 @@ export interface Phase2Verdict {
 /**
  * Map measured checks onto exactly one decision, against the frozen thresholds.
  *
- * ORDER IS LOAD-BEARING, and it is #1928's order. A control miss is checked FIRST and stops under both decisions: a
+ * ORDER IS required, and it is #1928's order. A control miss is checked FIRST and stops under both decisions: a
  * capability bought by moving something that already worked is not a result to act on. PROCEED-AS-AUTHORIZED is checked
  * before EVIDENCE-ONLY, and requires BOTH tiers — the surface the integration record authorizes serves a category
  * together with the authority that chose it, so the evidence half is a component of proceeding rather than an

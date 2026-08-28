@@ -63,7 +63,7 @@ availability. FL and MA are not postal deserts.
 `type` discriminator — so position is the only thing distinguishing the levels. `[1]` is the state.
 `[2]` is the **administrative municipality** (census place / town), which the top NY values give
 away: Hempstead, Brookhaven, Islip, Oyster Bay, Greece, Colonie. Nobody addresses mail to "Greece,
-NY". Joining the two fields where both are present settles it:
+NY". Joining the two fields where both are present determines the result:
 
 | `address_levels[2]` | `postal_city` |      n |
 | ------------------- | ------------- | -----: |

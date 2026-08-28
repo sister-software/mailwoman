@@ -69,7 +69,7 @@ node target    -> neural/onnx-runner.ts
 and `loadFromWeights` runs with the `webpackIgnore` dance deleted, using a plain static
 self-referencing import.
 
-**The load-bearing detail: export conditions do not apply to relative imports.** `./onnx-runner.ts`
+**The required detail: export conditions do not apply to relative imports.** `./onnx-runner.ts`
 bypasses `exports` entirely. Every runtime-split import inside the package has to become a
 self-reference — `@mailwoman/neural/onnx-runner` — which Node and webpack both resolve, and which
 this repo does nowhere today.

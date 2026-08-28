@@ -67,7 +67,7 @@ The shard puts the gold boundary on diverse realizations of these shapes. The lo
 base-derived (the #511 contradiction is resolved, not deferred), so the shard is retrain-ready. The
 retrain's success criterion (the `v1.6.0-boundary-stress` recipe gate): move these four numbers up
 (street_suffix 41.7 → ≥55, comma-less street 47 → ≥65, fr-prefix 55 → ≥70, hn-after 51.3 → ≥65) without
-regressing the clean canonical per-locale F1 (the US/FR/DE tripwire) and the affix floors — one variable,
+regressing the clean canonical per-locale F1 (the US/FR/DE regression check) and the affix floors — one variable,
 gated, per `CONTRIBUTING_MODEL_WORK`.
 
 _Source: `scripts/eval/boundary-stress-baseline.ts` over `corpus/src/synthesize-boundary-stress.ts`._

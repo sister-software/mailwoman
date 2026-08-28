@@ -8,7 +8,7 @@ with the gotchas already paid for, not a from-scratch spike._
 ## What you actually want
 
 The demo's heavy assets — `model.onnx`, `tokenizer.model`, `wof-hot.db`, `fst-en-US.bin` (~60 MB cold) — are
-HTTP-cache-only today. The header comment in `src/pages/demo/index.tsx` says it plainly: _"After first load the
+HTTP-cache-only today. The header comment in `src/pages/demo/index.tsx` states: _"After first load the
 browser caches everything."_ That's fragile. There's no offline story, no version awareness, and the HTTP
 cache can be evicted under pressure with no say from us. You want a service worker that **precaches the bundle,
 keyed by the selected model version, and evicts the old version's blobs when you switch.**

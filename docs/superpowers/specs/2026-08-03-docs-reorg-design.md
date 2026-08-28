@@ -15,7 +15,7 @@ The docs serve three audiences — developers, the managers who pay, and investo
 3. **Lab notebook: keep only the best, rewritten for clarity.** Curated benchmark/eval material returns as fresh evidence pages. Raw dated records leave the published site (git history and unpublished repo directories keep them).
 4. **Old links break.** No redirect infrastructure. The front page and search carry readers to the new material.
 5. **Docs and CLI land together.** Where a documented path needs a missing or broken command (data download, planet build, drop-in serve), building or fixing the command is in scope. Every tutorial is executed end-to-end before it ships.
-6. **Site shape: Ory-style top level.** Flat top nav of company-story doors; the four-part manual (Diátaxis) lives inside the Developers door. The existing DocsSubHeader section-switcher machinery provides per-door sub-navigation — no mega menu.
+6. **Site shape: Ory-style top level.** Flat top nav of company-story doors; the four-part manual (Diátaxis) lives inside the Developers door. The existing DocsSubHeader section-switcher implementation provides per-door sub-navigation — no mega menu.
 7. **Label notes:** the manager door was renamed away from "Why Mailwoman" (stutter next to the logo). The investor/trust door avoids the word "Company" (there is no company yet) — working label **About**; play with the word during drafting.
 
 ## Target structure

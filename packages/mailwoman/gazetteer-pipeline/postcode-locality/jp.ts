@@ -117,7 +117,7 @@ async function loadGeonamesPoints(path: string): Promise<Map<string, [number, nu
 	const out = new Map<string, [number, number]>()
 
 	// Streamed — `path` is a caller-supplied national dump (JP's is 12 MB). `header: false` is
-	// load-bearing: the GeoNames postal dump is headerless, so row 1 would be read as column names.
+	// required: the GeoNames postal dump is headerless, so row 1 would be read as column names.
 	for await (const f of TSVSpliterator.fromAsync(path, { header: false })) {
 		if (f.length > 10 && f[1]) {
 			const lat = pyFloat(f[9])

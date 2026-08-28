@@ -158,7 +158,7 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	// NZ dependent_locality (en-nz pair-prior arc) — Plimmerton is a suburb (dependent_locality) of Porirua. Postcode
 	// DELIBERATELY OMITTED: a trailing "Porirua 5026" puts the postcode in the parent's comma-field, so segment mode
 	// folds "porirua 5026" and misses the index's bare "porirua" key (the shipped GB artifact misses the same way) —
-	// tracked as #1308. The `country: "nz"` pin is load-bearing here: locale-gate can't structurally detect NZ (4-digit
+	// tracked as #1308. The `country: "nz"` pin is required here: locale-gate can't structurally detect NZ (4-digit
 	// postcode isn't a distinctive format), so ONLY the preset pin selects the nz index — free-typed NZ stays unfired.
 	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]

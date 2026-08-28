@@ -242,7 +242,7 @@ export function lookupCandidate(
 		let found = probe(exactKey)
 
 		// The runtime's own extra keys, IN ITS ORDER. The whitespace fold comes first because `findPlace`
-		// applies it at the top, before the cascade — and the order is load-bearing, not cosmetic: measured
+		// applies it at the top, before the cascade — and the order is required, not cosmetic: measured
 		// against the shipped candidate.db, "1012 LG" strips to `1012` and resolves the NL PC6 unit to the
 		// 4-digit stem in NL *and* DK, while its own row sits under `1012lg`. Strip-first coarsens a hit it
 		// should never have reached.

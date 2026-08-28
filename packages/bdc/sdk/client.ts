@@ -289,7 +289,7 @@ type UncachedBDCRequestConfig = BDCRequestConfig & {
 /**
  * Build the absolute request URL for `path`, with `params` as its query string.
  *
- * `path` is APPENDED to {@linkcode BDC_API_BASE_URL}, never RESOLVED against it. That distinction is load-bearing: `new
+ * `path` is APPENDED to {@linkcode BDC_API_BASE_URL}, never RESOLVED against it. That distinction is required: `new
  * URL("https://elsewhere.example/x", BDC_API_BASE_URL)` would resolve to `elsewhere.example` and carry the credential
  * header pair there, while string concatenation can only ever produce a path under the BDC origin.
  */
@@ -574,7 +574,7 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		// Declaring the budget states the intent in the option whose name matches the published limit. If
 		// `requestsPerMinute` is ever corrected in `core/api` to mean what it says, this client already
 		// declares the right budget and the interval becomes a redundant second ceiling rather than the
-		// load-bearing one.
+		// required one.
 		requestsPerMinute,
 		minRequestIntervalMs: Math.ceil(MS_PER_MINUTE / requestsPerMinute),
 		retry: {

@@ -207,7 +207,7 @@ by it.
 | Learned decoding (`@mailwoman/neural`, `@mailwoman/core/decoder`) | Interpretation of observations; the decode objective                                                                                                                                                                                                                     | Authored imperatives that bypass interpretation                                                                      |
 | #1683                                                             | Empirical, spatial activity-affordance statistics fitted from data                                                                                                                                                                                                       | The stable activity/affordance identifiers themselves — those come from the geographic model                         |
 
-Two dependency rules follow, and both are load-bearing:
+Two dependency rules follow, and both are required:
 
 - **`@mailwoman/core` must not depend on `@mailwoman/geographic-model`** without a later integration
   decision that demonstrates the direction is necessary. Core ships the pipeline contract and ~9 MB of
@@ -572,7 +572,7 @@ relation type, no country scope and no per-assertion provenance.
   provenance.
 - Missing data becomes negative evidence only through exclusion-grade coverage supplied by
   `@mailwoman/core/layers`.
-- Law tests extend the existing gauntlet, board, trace, and dev-MCP machinery. No parallel test
+- Law tests extend the existing gauntlet, board, trace, and dev-MCP implementation. No parallel test
   universe.
 - No second POI taxonomy, no second `layer_manifest`/`layer_coverage`, no second POI intent pipeline,
   and no second affordance vocabulary independent of #1683.

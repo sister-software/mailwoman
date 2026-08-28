@@ -11,7 +11,7 @@
  *   default). Which repositories to sync is decided in `sync-plan.ts` before any network work, so a mistake is a
  *   message rather than a directory full of clones.
  *
- *   The progress display reports REPOSITORIES, and the per-repository `▸` lines are the load-bearing part: a first
+ *   The progress display reports REPOSITORIES, and the per-repository `▸` lines are the required part: a first
  *   clone of a large country runs for minutes, and a counter that moves only on completion is indistinguishable from a
  *   hang while it does. Those lines go to stderr, so they survive the non-interactive Ink render that writes one frame
  *   at unmount.

@@ -11,7 +11,7 @@
  *   The gap this closes: `yarn pack` treats every `files` entry as a glob, and a glob matching
  *   nothing contributes nothing, SILENTLY. A workspace whose derived binaries were never built
  *   therefore packs to a tarball of metadata describing artifacts that are not in it, and npm
- *   accepts that happily. Published versions are immutable, so between packing and publishing is
+ *   accepts it. Published versions are immutable, so between packing and publishing is
  *   the only place the mistake is still recoverable.
  *
  *   A literal (non-glob) `files` entry is the author stating a file exists. Treat its absence as a

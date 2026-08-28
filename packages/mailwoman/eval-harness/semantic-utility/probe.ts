@@ -597,7 +597,7 @@ export interface ProbeVerdict {
 /**
  * Map measured counts onto exactly one decision, against the frozen thresholds and the frozen baseline.
  *
- * Order is load-bearing. A control regression is checked FIRST and stops under both decisions: a target delta bought by
+ * Order is required. A control regression is checked FIRST and stops under both decisions: a target delta bought by
  * breaking the venue-noun form of the same query is not a result the program can act on. GO is checked before
  * DIAGNOSTIC-ONLY because a row that passes the comparator necessarily reached the POI branch, so the diagnostic
  * condition holds whenever the primary one does.

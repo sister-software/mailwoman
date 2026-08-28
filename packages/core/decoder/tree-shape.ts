@@ -12,7 +12,7 @@
  *   - {@link loneValueBearingNode} — the tree has EXACTLY one value-bearing node. The street-miss
  *     fallback and the resolver's bare-country race bind the tag at the call site.
  *
- *   The distinction is load-bearing: a two-segment parse can satisfy the first and never the second,
+ *   The distinction is required: a two-segment parse can satisfy the first and never the second,
  *   and both behaviors are pinned by their consumers' boards.
  */
 

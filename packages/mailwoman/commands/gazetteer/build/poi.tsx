@@ -116,7 +116,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` seam.
 			const rows: POISourceRow[] = []
 
-			// DYNAMIC import, load-bearing: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off
+			// DYNAMIC import, required: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off
 			// pending — see osm/README.md), and this dependency belongs only on the selected build path,
 			// so a top-level import breaks the whole published CLI on a clean install — the smoke
 			// test's clean-install leg is what catches it. The osm source branch is build-local by

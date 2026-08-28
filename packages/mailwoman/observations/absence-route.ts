@@ -15,7 +15,7 @@
  *   is byte-identical to the pipeline that runs with this module unloaded, which is what makes the
  *   inertness receipt a statement about construction rather than about a measurement.
  *
- *   BOTH HALVES OF THE CONJUNCTION ARE LOAD-BEARING, and each has its own refusal. The artifact half
+ *   BOTH HALVES OF THE CONJUNCTION ARE required, and each has its own refusal. The artifact half
  *   answers "what does this category afford, and on whose authority" — a category no concept both affords
  *   with and maps to is not a category this route can say anything about. The coverage half answers "may a
  *   miss here be read as absence" — {@linkcode supportsExclusion} over the cell's own basis, never over

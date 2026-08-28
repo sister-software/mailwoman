@@ -370,7 +370,7 @@ test("POST /v1/format: round-trips components into a formatted string + a non-em
 
 	expect(res.status).toBe(200)
 	const body = (await res.json()) as { formatted: string; canonicalKey: string }
-	// The formatter template owns the exact rendering — only pin the load-bearing substring.
+	// The formatter template owns the exact rendering — only pin the required substring.
 	expect(body.formatted).toContain("1600")
 	expect(body.canonicalKey.length).toBeGreaterThan(0)
 })

@@ -38,7 +38,7 @@ const FULL_FST_MATCH_SCALE = 1
 const SPACE_SENTINEL = "▁"
 
 /**
- * A SentencePiece byte-fallback piece (`<0xHH>`) — the vocab's escape hatch for a character with no direct token (curly
+ * A SentencePiece byte-fallback piece (`<0xHH>`) — the vocab's override for a character with no direct token (curly
  * quotes “”‘’, guillemets «», braces {} all hit this even on an otherwise-Latin-script vocab; see `tokenizer.ts`'s doc
  * comment). The placeholder TEXT itself ("<0x7B>") contains hex digits and letters that `/[\p{L}\p{N}]/u` would misread
  * as real alnum content — without this guard, a byte-fallback piece's placeholder text leaks into `fstToken` as garbage
@@ -476,7 +476,7 @@ export function buildFSTEmissionPriors(
  *      this is an ordinary continuation — appended onto it. If a word is PENDING (`current` is `null` — because the last
  *      piece was case 2's bare `▁`, or a run of case-3-punctuation with nothing to attach to, or this is the very first
  *      piece), this piece is the actual start of the pending word: nothing else marks the boundary, so it opens `current`
- *      fresh here instead of being dropped. **Opening on a non-`▁` piece is load-bearing, not a nicety**: restrict
+ *      fresh here instead of being dropped. **Opening on a non-`▁` piece is required, not a nicety**: restrict
  *      word-opening to `▁`-prefixed pieces (or `i === 0`) and a pending word whose first piece happens to lack its own `▁`
  *      vanishes silently — that is the exact shape a SentencePiece vocab produces for a short/common word never learned as
  *      a merged `"▁word"` token (`"on"`, `"upon"`, `"super"`, bare `"IL"` after a lone `"▁"` before it — all observed on

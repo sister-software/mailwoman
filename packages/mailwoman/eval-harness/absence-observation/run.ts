@@ -162,9 +162,9 @@ function readArtifactIdentity(
 /**
  * Run the probe.
  *
- * The POI database the executor queries DEFAULTS to the coverage layer itself, and that default is load-bearing: an
- * absence qualified by one layer's coverage while the answer came out of a different layer is a claim about two
- * artifacts that were never compared. Pass `db` explicitly only to measure that mismatch on purpose.
+ * The POI database the executor queries DEFAULTS to the coverage layer itself, and that default is required: an absence
+ * qualified by one layer's coverage while the answer came out of a different layer is a claim about two artifacts that
+ * were never compared. Pass `db` explicitly only to measure that mismatch on purpose.
  */
 export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = {}): Promise<AbsenceProbeReceipt> {
 	const definition = loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)

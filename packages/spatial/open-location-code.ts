@@ -106,7 +106,7 @@ export function decodePlusCode(code: string): DecodedPlusCode | null {
 }
 
 /**
- * Encode the pair digits of a coordinate to `length` digits (length ≤ 10, even) — the prefix machinery
+ * Encode the pair digits of a coordinate to `length` digits (length ≤ 10, even) — the prefix implementation
  * {@link recoverNearestPlusCode} needs; not a general encoder.
  */
 function encodePairDigits(lat: number, lon: number, length: number): string {

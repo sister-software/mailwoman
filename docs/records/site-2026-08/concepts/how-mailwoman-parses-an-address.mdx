@@ -33,7 +33,7 @@ mailwoman parse "2119 SE Belmont St Apt 3, Portland, OR 97214"
 
 ## Parsing as labeling
 
-A rule parser asks "which of my patterns does this string match?" Mailwoman asks a smaller question, many times: "which component does this piece of the string belong to?" Every character span in the input gets a label — `house_number`, `street`, `locality`, `postcode` — or no label at all. The parse above is eight labeled spans. Assigning a label to every position in a sequence is what the NLP literature calls sequence labeling, the same task family as named-entity recognition. That's the entire framing; everything below is the machinery that makes the labels come out right.
+A rule parser asks "which of my patterns does this string match?" Mailwoman asks a smaller question, many times: "which component does this piece of the string belong to?" Every character span in the input gets a label — `house_number`, `street`, `locality`, `postcode` — or no label at all. The parse above is eight labeled spans. Assigning a label to every position in a sequence is what the NLP literature calls sequence labeling, the same task family as named-entity recognition. That's the entire framing; everything below is the implementation that makes the labels come out right.
 
 ## The string becomes pieces
 
@@ -95,7 +95,7 @@ Valid labels become spans, and spans become a tree. Each component attaches to t
 </address>
 ```
 
-This tree is the handoff. The resolver walks it top-down and decorates nodes with coordinates and attribution, scoping each child's lookup to its resolved parent — a `Springfield` under a resolved `Illinois` searches Illinois, not Massachusetts. [Resolution is its own subject](./how-mailwoman-resolves-a-place.mdx) with its own machinery; the parse ends here.
+This tree is the handoff. The resolver walks it top-down and decorates nodes with coordinates and attribution, scoping each child's lookup to its resolved parent — a `Springfield` under a resolved `Illinois` searches Illinois, not Massachusetts. [Resolution is its own subject](./how-mailwoman-resolves-a-place.mdx) with its own implementation; the parse ends here.
 
 ## What one model covers, and how it fails
 

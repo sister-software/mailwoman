@@ -33,7 +33,7 @@ export const REFERENTIAL_LOG2_SCALE = 14
 /**
  * The population at which {@link referentialFromPopulation} saturates at exactly 1.0: `(2^14 − 1) · 1000` = 16,383,000.
  *
- * Load-bearing, not trivia. Above this the score CLAMPS, so two megacities that population would order (Tokyo ~37 M vs
+ * Required, not trivia. Above this the score CLAMPS, so two megacities that population would order (Tokyo ~37 M vs
  * Delhi ~33 M) tie at 1.0. Any ranking keyed on referential alone must break that tie on raw population to stay
  * ordering-identical to the population-first path — which is exactly what {@link compareReferential} does, and why it
  * exists rather than a bare subtraction at each call site.

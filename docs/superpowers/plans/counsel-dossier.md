@@ -117,12 +117,12 @@ on the free channel) and marks every point where an instrument would be needed.
 3. **L3 — can we condition a compiled artifact whose inputs are public domain?** The working
    assumption is that the attribution condition rides the download agreement, not a copyright
    claim over facts; EU database-compilation right vs US contract likely differ. **This is the
-   load-bearing question for the whole Lite line.**
+   required question for the whole Lite line.**
 4. **L4 — the WOF license, and it is fact-finding first.** The repo contradicts itself: the
    licensing pages say CC0, `resolver-wof-sqlite/README.md` and the HF dataset card say CC-BY 4.0,
    `THIRD_PARTY_NOTICES.md` says "several sources with their own licenses." If CC-BY, the
    gazetteer carries a standing attribution obligation in **both** channels. The upstream's own
-   license page may settle it without a lawyer.
+   license page may answer the question without a lawyer.
 5. **L5 — Eurostat GISCO NUTS terms** (the EuroGeographics component). The repo records an
    attribution string and no license identifier at all, so whether a built `nuts.db` may be
    redistributed is unknown. Fact-finding first.

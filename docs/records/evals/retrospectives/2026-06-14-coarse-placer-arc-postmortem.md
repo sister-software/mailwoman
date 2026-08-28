@@ -29,7 +29,7 @@ the default-on flip were authorized, not self-granted._
 
 - **M1 — soft prior wiring (#606, spec #605).** The placer becomes an opt-in `placeCountry` pipeline stage
   that turns a confident in-map country guess into an `anchorPosterior` fed to the resolver's existing #369
-  re-rank — it _boosts_ the right-country candidate, never filters. Reuses the postcode-anchor machinery
+  re-rank — it _boosts_ the right-country candidate, never filters. Reuses the postcode-anchor implementation
   whole; defers to a postcode posterior; no-op on abstain/OTHER; byte-stable when the stage is absent. Wired
   into `core/pipeline`, `geocode-core`, and a `geocode --place-country` CLI flag. **Promotion gate (the
   assembled pipeline, not the component): in-map right-country 64.7 → 85.3 %, 7 wins, 0 regressions.**

@@ -396,7 +396,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 * Is `sprID` contained by ANY of the qualifier's rows? Interval first — {@link intervalContains}, O(1), reflexive —
 	 * then the closure rows where intervals abstain: the interval forest encodes only the CANONICAL parent per place, so
 	 * a `false` there means "not contained along the canonical hierarchy", and the chain probe (one clustered read of
-	 * ≤{@link MAX_ANCESTOR_DEPTH} rows) is the complete record that settles it.
+	 * ≤{@link MAX_ANCESTOR_DEPTH} rows) is the complete record that determines the result.
 	 */
 	#containedByQualifier(sprID: number, qualifierIDs: ReadonlySet<number>, qualifierLabels: IntervalLabel[]): boolean {
 		if (qualifierIDs.has(sprID)) return true

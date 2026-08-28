@@ -44,7 +44,7 @@ libpostal is not a geocoder, and its own README is direct about it:
 > — [libpostal README](https://github.com/openvenues/libpostal), read 2026-08-04
 
 Its non-goals name "geocoding addresses to a lat/lon (that requires a database/search index)", and it
-states plainly that "libpostal is not itself a full geocoder". It exposes two functions:
+states that "libpostal is not itself a full geocoder". It exposes two functions:
 `parse_address`, which labels an address into components with a conditional random field, and
 `expand_address`, which normalizes a messy address into standardized forms for indexing. The README
 gives the default model as about 1.8 GB, with an alternative Senzing model at about 2.2 GB.

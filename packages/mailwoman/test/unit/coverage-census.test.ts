@@ -50,7 +50,7 @@ describe("normalizeArrowListColumn", () => {
 describe("readAdmittedCountries", () => {
 	it("keeps a bare NO as the string it is", () => {
 		// YAML 1.1 resolves bare `NO` to boolean false. A YAML parser here would report Norway as un-admitted while the
-		// config plainly lists it — reproducing, inside the tool meant to SURFACE that bug, the bug itself.
+		// config lists it — reproducing, inside the tool meant to SURFACE that bug, the bug itself.
 		const path = join(root, "norway.yaml")
 
 		writeFileSync(

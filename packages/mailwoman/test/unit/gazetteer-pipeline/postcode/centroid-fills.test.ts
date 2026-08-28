@@ -139,7 +139,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 
 	shard.close()
 
-	// An EMPTY per-country directory — the shape on disk that made this branch load-bearing.
+	// An EMPTY per-country directory — the shape on disk that made this branch required.
 	const geonamesDir = join(dir, "geonames-postal")
 
 	mkdirSync(geonamesDir, { recursive: true })

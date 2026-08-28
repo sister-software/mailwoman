@@ -112,7 +112,7 @@ function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEn
 /**
  * The per-locale abbreviation table (short↔long), exposed so consumers can reuse the SAME data instead of duplicating
  * it. The metamorphic gauntlet inverts this table to generate expanded→abbreviated perturbations (`Avenue`→`Ave`); the
- * "no load-bearing trivia" rule means that data lives in exactly one place — here.
+ * "no required trivia" rule means that data lives in exactly one place — here.
  */
 export function abbreviationDictionary(locale?: string): ReadonlyArray<AbbreviationEntry> {
 	return getDictionary(locale)

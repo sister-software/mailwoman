@@ -38,7 +38,7 @@
  *   those runs — detected through {@link "@mailwoman/codex"}'s own postcode shapes, never a local pattern —
  *   and a query whose ONLY run is structural reports {@linkcode WHITESPACE_APPLICABILITY_RULES}'s
  *   `structural-identifier-space` rather than the identity reading, because "this query has no spacing" and
- *   "this query's spacing is load-bearing" are different absences.
+ *   "this query's spacing is required" are different absences.
  *
  *   THE VARIANT IS DERIVED, NEVER AUTHORED. Every committed row's `variant` is exactly the named
  *   transformation applied to its `base`, and {@linkcode auditWhitespaceSuite} re-derives it. A hand-typed
@@ -251,8 +251,8 @@ export interface WhitespaceApplicability {
  * May `transformation` be stated as a whitespace law over `text`?
  *
  * Reads the TEXT and nothing else. Unlike case folding, no locale can make a space mean a different space: what makes a
- * space load-bearing here is the identifier it sits inside, which the text carries with it whatever country the row
- * routes through.
+ * space required here is the identifier it sits inside, which the text carries with it whatever country the row routes
+ * through.
  */
 export function whitespaceApplicability(
 	text: string,
@@ -323,8 +323,8 @@ export const WHITESPACE_SUITE_PATH = ((): string => {
  * {@linkcode whitespaceApplicability} is deliberately NOT re-checked here, and the case-folding audit's parallel check
  * is not an oversight in this one. A pair classifies only when its transformation MOVED something, which is the whole
  * of what applicability asks of a whitespace transformation, so an inapplicable row cannot reach this function — it
- * fails classification first, naming the transformation set. The rules are load-bearing one layer out, where the
- * suite's COMPLETENESS test reads them: an arm absent from a committed row must name the rule that refuses it.
+ * fails classification first, naming the transformation set. The rules are required one layer out, where the suite's
+ * COMPLETENESS test reads them: an arm absent from a committed row must name the rule that refuses it.
  */
 export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	const problems: string[] = []

@@ -123,7 +123,7 @@ modal volume put mailwoman-training \
   corpus-python/src/mailwoman_train/configs/v0_6_2-crf-fp32-diagnostic.yaml \
   corpus-python/src/mailwoman_train/configs/v0_6_2-crf-fp32-diagnostic.yaml --force
 
-# Clear pyc cache (Modal's documented gotcha — labels.py / model.py changes need this):
+# Clear pyc cache (Modal's documented failure mode — labels.py / model.py changes need this):
 modal volume rm mailwoman-training corpus-python/src/mailwoman_train/__pycache__ -r
 
 # Launch the experiment (~30 min on A100):

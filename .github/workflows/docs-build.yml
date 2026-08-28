@@ -17,7 +17,7 @@ on:
   # The demo BUNDLES these workspaces (neural-web pulls in the resolver), so a change to the
   # resolver must rebuild + redeploy the demo — otherwise a merged resolver fix sits on main while
   # the live demo serves the old bundle (which is exactly how the "New York → West New York" fix
-  # almost shipped invisibly). workflow_dispatch is the manual escape hatch when a dependency
+  # almost shipped invisibly). workflow_dispatch is the manual override when a dependency
   # outside these paths changes.
   #
   # The pull_request trigger deliberately carries NO `paths:` filter, so the `build` job runs and

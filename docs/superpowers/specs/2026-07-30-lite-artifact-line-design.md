@@ -73,7 +73,7 @@ published anywhere customer-facing:
   is biannual. An artifact cannot be fresher than its source. The subscriber commitment is
   therefore "we publish within one week of a source release we ingest," not "a new artifact
   every Monday." Per-artifact source cadence belongs in the catalog page, one column, verified.
-- **The cadence claim is currently unbacked by machinery.** Today the gazetteer is rebuilt when
+- **The cadence claim is currently unbacked by implementation.** Today the gazetteer is rebuilt when
   the operator rebuilds it (`RELEASING.md`: "Rebuilt periodically as WOF upstream changes"), and
   the HF dataset card has not been touched since 2026-05-28. A published weekly commitment
   without a scheduled build is a promise we would immediately break. §7 makes the scheduled
@@ -175,7 +175,7 @@ waives this one, because this one is genuinely ours to waive.
 > compilation right in the EU vs. contract in the US — likely a different answer per
 > jurisdiction). The working assumption is that the condition rides the **download agreement**,
 > not a claim of copyright over the facts. That assumption is exactly what needs checking, and
-> it is the load-bearing one for the entire Lite line.
+> it is the required one for the entire Lite line.
 
 > **PENDING COUNSEL — L4.** The exact WOF license, because the repo contradicts itself. The
 > licensing pages say **CC0**; `resolver-wof-sqlite/README.md` and the Hugging Face dataset card
@@ -183,7 +183,7 @@ waives this one, because this one is genuinely ours to waive.
 > licenses. If WOF is CC-BY, the gazetteer carries a standing attribution obligation in _both_
 > channels and the data-provenance table is wrong. Resolve this before publishing an attribution
 > policy that depends on it. (This is a fact-finding task first and a counsel task second — the
-> upstream's own license page may settle it without a lawyer.)
+> the upstream license page may answer the question without a lawyer.)
 
 ## 5. What is gateable, and what is not
 

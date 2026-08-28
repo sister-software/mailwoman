@@ -5,7 +5,7 @@
  *
  *   The case-folding law's two guards, and the failure line a violation produces.
  *
- *   The load-bearing pair is `caseFoldKey` and `caseApplicability`, and the reason both exist is here in
+ *   The required pair is `caseFoldKey` and `caseApplicability`, and the reason both exist is here in
  *   executable form: the key refuses a pair that changed anything besides case, and the applicability rules
  *   refuse a pair the key ACCEPTS but whose locale casts case differently. `İstanbul` clears the first and
  *   fails the second, which is the whole argument for having two.

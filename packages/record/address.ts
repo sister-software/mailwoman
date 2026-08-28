@@ -7,7 +7,7 @@
  *   the organization and contact records build on.
  *
  *   It is plain data: parser components + the formatter's match key + an optional resolved geocode,
- *   composed into one object. No ORM, no decorators, no schema-generation machinery — if we need a
+ *   composed into one object. No ORM, no decorators, no schema-generation implementation — if we need a
  *   database we reach for Kysely at the call site, not a model layer here.
  *
  *   The geocode fields mirror mailwoman's `GeocodeResult` (tier + calibrated uncertainty + hierarchy)

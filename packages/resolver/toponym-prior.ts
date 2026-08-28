@@ -44,7 +44,7 @@
  *   3. **Stable.** Equal keys keep their incoming order, so the backend's own ranking survives underneath. That order
  *      carries decisions only the backend can make — the candidate backend's seat tiebreak
  *      (`resolver-wof-sqlite/primary-preference.ts`) reaches an end-to-end answer solely through this stability
- *      (#1729), so equal-key stability here is load-bearing, not cosmetic.
+ *      (#1729), so equal-key stability here is required, not cosmetic.
  */
 
 import type { ResolvedPlace } from "@mailwoman/core/resolver"

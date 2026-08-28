@@ -10,7 +10,7 @@
  *   and webpack refuses to resolve `node:fs/promises` for the web target. Import this through its own
  *   `@mailwoman/core/api/disk-storage` subpath.
  *
- *   Two rules here are load-bearing, both carried over from the bespoke cache this replaces
+ *   Two rules here are required, both carried over from the bespoke cache this replaces
  *   (`98c4dda1:filer/sdk/sec-client.ts`), both learned the hard way:
  *
  *     1. VALIDATE BEFORE WRITING. A response that can't be read back — an unparseable body, a
@@ -84,7 +84,7 @@ function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
  * Create an on-disk {@linkcode AxiosStorage}, keyed by the SHA-256 of the interceptor's cache key (which already folds
  * in method, URL, params and body), so a filename is always a fixed-length, filesystem-safe hex digest.
  *
- * An in-process overlay Map sits in front of the files, and it is load-bearing for two reasons:
+ * An in-process overlay Map sits in front of the files, and it is required for two reasons:
  *
  * 1. `loading` markers live there INSTEAD of on disk. That keeps the interceptor's stampede guard working (a concurrent
  *    second request for the same key sees `loading` and waits on the first) without a file write per request, and

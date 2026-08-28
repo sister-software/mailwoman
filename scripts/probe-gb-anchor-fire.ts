@@ -25,7 +25,7 @@ import { readFileSync } from "node:fs"
 import { parseArgs } from "node:util"
 
 // `@mailwoman/neural` exports neither `./postcode-repair` nor `./case-normalize` as a subpath, and both
-// are load-bearing here: `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode
+// are required here: `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode
 // reads, and `normalizeInputCase` is what the text has been through by the time the anchor sees it
 // (#690, default-ON in `parse`). Re-implementing either is the one thing that must not drift, so this
 // repo-local diagnostic imports the modules directly.

@@ -222,8 +222,8 @@ export interface FoldOptions {
 	 */
 	alternateDir?: string
 	/**
-	 * #1514 escape hatch: proceed even when `adminIn` already carries alias rows for countries this run does NOT list.
-	 * The fold owns its whole id range and rewrites it wholesale, so those countries are DROPPED. Only pass this when
+	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does NOT list. The
+	 * fold owns its whole id range and rewrites it wholesale, so those countries are DROPPED. Only pass this when
 	 * shrinking the fold is the point.
 	 */
 	allowCoverageLoss?: boolean

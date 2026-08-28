@@ -330,7 +330,7 @@ describe("applyDistrictAsLocalityOverride (--district-as-locality tri-state)", (
 		expect(part.districtAsLocality).toBeUndefined()
 	})
 
-	it("false forces districtAsLocality off, overriding a part pinned true (GB/NZ debugging escape hatch)", () => {
+	it("false forces districtAsLocality off, overriding a part pinned true (GB/NZ debugging override)", () => {
 		const part: LocalePart = { path: "/x.csv", districtAsLocality: true }
 
 		expect(applyDistrictAsLocalityOverride(part, false)).toEqual({ path: "/x.csv", districtAsLocality: false })

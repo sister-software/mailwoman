@@ -69,7 +69,7 @@ mailwoman coverage build --states all --exclude-states AK \
 
 ```bash
 set -a; . ./.env; set +a
-# nexus-assets is written by the *_PUBLIC_* R2 keys (see gotcha below):
+# nexus-assets is written by the *_PUBLIC_* R2 keys (see failure mode below):
 RCLONE_S3_ACCESS_KEY_ID="$RCLONE_S3_PUBLIC_ACCESS_KEY_ID" \
 RCLONE_S3_SECRET_ACCESS_KEY="$RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY" \
 RCLONE_S3_ENDPOINT="$RCLONE_S3_PUBLIC_ENDPOINT" \

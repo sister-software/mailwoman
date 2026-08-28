@@ -221,10 +221,10 @@ export interface LoadFromURLsOptions {
 /**
  * Fetch + decode the postcode anchor binaries TOLERANTLY, then merge the ones that loaded.
  *
- * Each `postcode-<cc>.bin` is OPTIONAL: the postcode anchor is a soft ranking channel, not a load-bearing model input,
- * so a single missing/404 binary must NEVER reject the whole classifier load. This is the fix for the 2026-07 demo
- * outage — `postcode-de.bin` went 404 on prod R2 for every shipped version while postcode-us/fr stayed 200, and the old
- * throwing `Promise.all(urls.map(fetchBytes))` rejected on that one 404. That rejection propagated up through
+ * Each `postcode-<cc>.bin` is OPTIONAL: the postcode anchor is a soft ranking channel, not a required model input, so a
+ * single missing/404 binary must NEVER reject the whole classifier load. This is the fix for the 2026-07 demo outage —
+ * `postcode-de.bin` went 404 on prod R2 for every shipped version while postcode-us/fr stayed 200, and the old throwing
+ * `Promise.all(urls.map(fetchBytes))` rejected on that one 404. That rejection propagated up through
  * `loadNeuralClassifierFromURLs` → `runtime.ready` never fired → the demo input stayed permanently disabled even though
  * the model, tokenizer, and the other two postcode binaries were all fine.
  *
@@ -312,7 +312,7 @@ export function resolvePairGateCountry(country: string | undefined): string {
  * Fetch + construct the PIX1 placetype-pair indexes TOLERANTLY (the {@link loadPostcodeAnchorLookup} contract): each
  * `pair-index-<cc>.bin` is OPTIONAL, so a 404/network failure/corrupt binary (bad magic, truncated header) is skipped
  * with a loud `console.warn` naming the URL — never a rejection that blocks the classifier load. Older HF release
- * versions ship no pair indexes at all, and the prior is a soft decode channel, not a load-bearing model input.
+ * versions ship no pair indexes at all, and the prior is a soft decode channel, not a required model input.
  *
  * **Phase 2 (#1278): NO load-time country gate.** Every successfully-fetched index is constructed into a live
  * {@link PairIndexResolver} and retained, tagged by its header country. The per-parse selection

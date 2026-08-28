@@ -5,7 +5,7 @@
  *
  *   The whitespace law's two guards, and the failure line a violation produces.
  *
- *   The load-bearing pair is `whitespaceBlindKey` and `whitespaceApplicability`, and the reason both exist is
+ *   The required pair is `whitespaceBlindKey` and `whitespaceApplicability`, and the reason both exist is
  *   here in executable form: the key refuses a pair that changed anything besides whitespace, and the
  *   applicability rules refuse a pair the key ACCEPTS but whose spacing the transformation could never have
  *   moved. A space swapped for a newline clears the first and is refused by neither — it is refused because
@@ -182,7 +182,7 @@ describe("whitespaceApplicability", () => {
 		}
 	)
 
-	it("separates a query with no spacing from one whose spacing is load-bearing", () => {
+	it("separates a query with no spacing from one whose spacing is required", () => {
 		expect(whitespaceApplicability(PL_SINGLE_TOKEN, "repeated").rule).toBe("identity-transformation")
 		expect(whitespaceApplicability(GB_BARE_POSTCODE, "repeated").rule).toBe("structural-identifier-space")
 	})

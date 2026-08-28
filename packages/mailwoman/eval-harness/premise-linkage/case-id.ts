@@ -46,7 +46,7 @@ export function assertUsableSalt(salt: string): void {
 /**
  * The published identifier for one input under one run's salt.
  *
- * The NUL separator is load-bearing: without it `salt + input` lets a different (salt, input) split produce the same
+ * The NUL separator is required: without it `salt + input` lets a different (salt, input) split produce the same
  * digest, so two runs whose salts happen to be prefixes of one another would share identifiers.
  */
 export function caseIDFor(input: string, salt: string): string {

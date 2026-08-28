@@ -8,7 +8,7 @@
  *   NO SECOND HARNESS. A fixture is graded by running the SAME pipeline the Gauntlet runs, through an
  *   observer the caller supplies — `gauntletObserver` wraps `buildGauntletDeps`'s own `geocode` and projects
  *   it with `toGauntletResult`, the projection the board's grader and the warm-engine tools already share. A
- *   law suite is therefore a Gauntlet layer's worth of machinery plus a fixture file, not a parallel runner
+ *   law suite is therefore a Gauntlet layer's worth of implementation plus a fixture file, not a parallel runner
  *   with its own model loading, its own weights ladder and its own idea of what a result is.
  *
  *   BOTH SIDES ARE OBSERVED, EVERY TIME. Nothing here caches by query, because a fixture whose base and

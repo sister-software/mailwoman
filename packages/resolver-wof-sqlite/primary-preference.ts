@@ -134,9 +134,9 @@ export type RankedRow<R> = R & {
  * the fame prior overrides by design; a probe with NO placetype filter (the browser cascade's last resort, the dev
  * lookup tools) presents the full tie and this term is all that breaks it.
  *
- * BOTH GATES ARE LOAD-BEARING, and a plain "finer placetype wins" measured wrong before this shape was settled: it
- * moved the top slot on 11,377 keys in `candidate.db`, of which only 722 were the seat/district duplicate. The rest
- * were contests between genuinely distinct places that merely tie — 2,885 `locality → neighbourhood` (a bare city name
+ * BOTH GATES ARE required, and a plain "finer placetype wins" measured wrong before this shape was settled: it moved
+ * the top slot on 11,377 keys in `candidate.db`, of which only 722 were the seat/district duplicate. The rest were
+ * contests between genuinely distinct places that merely tie — 2,885 `locality → neighbourhood` (a bare city name
  * losing to a same-named hood), 2,973 `region → county`, 2,662 `postalcode → locality` — and 7,179 of the 11,377 sat at
  * population 0, where a tie means NO EVIDENCE rather than equal evidence. Requiring a real population keeps the term
  * off every no-evidence tie; promoting the populated-place tier specifically, rather than whatever is finer, keeps it

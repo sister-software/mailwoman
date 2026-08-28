@@ -38,7 +38,7 @@ toMapHTML(fc, { title: "Funded sites", flavor: "dark", colorBy: "sources" })
 
 The flavors are the Protomaps stock set — `light` (the default, data reads cleanly over it), `dark`, `white`, `grayscale`, `black`.
 
-## The one gotcha: tiles need an origin
+## The one failure mode: tiles need an origin
 
 The basemap tiles come from R2, and they're CORS-restricted to `localhost` and the docs domains. Open `map.html` straight off your disk as a `file://` page and your data points render perfectly while the basemap underneath them stays blank — the tile fetches get refused. The page notices it's running from `file://` and shows a banner saying so, so you're not left guessing.
 

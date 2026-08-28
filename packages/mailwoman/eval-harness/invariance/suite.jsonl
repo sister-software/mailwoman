@@ -36,7 +36,7 @@
 // ignored), the abbreviation-swap Saint-prefix guard was rewritten (no longer index-0-only), and the
 // whitespace-jitter applicability guard was tightened to match its mutation. Re-running the full suite
 // against this SAME v385 weights produced the IDENTICAL 101/7/13 profile (121 pairs, 0 skipped) — a
-// byte-identical transcript to the pre-fix-wave run. Say that plainly: this fixture just doesn't happen to
+// byte-identical transcript to the pre-fix-wave run. state that: this fixture just doesn't happen to
 // exercise the exact shapes the definition changes target (no row here has a critical tag hallucinated
 // from nothing, and the tightened Saint-prefix guard doesn't change any of THIS suite's own abbreviation-
 // swap outcomes — gb-banbury and gb-stockton-saint-prefix still resolve the same way). The definitions are

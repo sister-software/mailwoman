@@ -103,7 +103,7 @@ export function mintForm499NodeID(form499ID: string, rowIndex: number): string {
  * (`valid_from <= asOf`) then treats that edge as valid SINCE FOREVER, exactly the dishonesty decision 7 exists to
  * prevent. Guarded here — in the builder, not in `form499.ts`'s parser — for the same reason
  * {@linkcode mintForm499NodeID} guards `form499ID` here rather than upstream: this file already owns the "which fields
- * are load-bearing for THIS artifact's identity/provenance" discipline, and `form499.ts` is deliberately a raw,
+ * are required for THIS artifact's identity/provenance" discipline, and `form499.ts` is deliberately a raw,
  * non-validating passthrough for every field it doesn't itself need to type (see its own docstring).
  */
 export function assertLastFiledAt(lastFiledAt: string, form499ID: string, rowIndex: number): string {

@@ -24,7 +24,7 @@
  *   THE CONTROLS SPLIT THE CONJUNCTION. `outside_coverage` rows put the same query and the same empty
  *   answer outside the surveyed cell set, which is the whole contract: the `[]` there is silence.
  *   `wrong_class` puts a DIFFERENT category at the exact cell a target fires on, so the artifact half of
- *   the conjunction is shown to be load-bearing at a cell where the coverage half holds. `cell_populated`
+ *   the conjunction is shown to be required at a cell where the coverage half holds. `cell_populated`
  *   rows sit inside exclusion-grade coverage on cells the layer holds rows in. A control set that could
  *   only fail one way is not a control set.
  */

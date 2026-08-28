@@ -105,7 +105,7 @@ export interface SubVenueTagRule {
 /**
  * The tag rules, ordered — the FIRST rule a feature satisfies wins.
  *
- * Order is load-bearing in exactly one place: a station platform commonly carries BOTH `public_transport=platform` and
+ * Order is required in exactly one place: a station platform commonly carries BOTH `public_transport=platform` and
  * `railway=platform`, and an aerodrome terminal building sometimes carries both `aeroway=terminal` and
  * `building=terminal`. In every such case the colliding rules share a `designatorID`, so the first-wins resolution is
  * harmless — it picks the same answer either way. There is no pair of rules with DIFFERENT designators that a single

@@ -11,7 +11,7 @@ activity-affordance vector wants a per-cell signal that can sit beside light, dw
 density. Acquiring the same national datasets twice, with two aggregation choices that can never be
 reconciled cell for cell, is the outcome §4 exists to prevent.
 
-The consuming machinery already exists, so nothing below proposes new architecture. The layer contract
+The consuming implementation already exists, so nothing below proposes new architecture. The layer contract
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
 [`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx);
 `packages/bdc` is the worked federal-provider shape; the exclusion-grade coverage pilot
@@ -136,7 +136,7 @@ acknowledgement request and a liability clause that contemplates redistribution,
 `shipped` layer needs. The acknowledgement string the layer must carry is the agency name as the
 metadata gives it: **U.S. Department of Agriculture, Natural Resources Conservation Service.**
 
-**The caveats in the same paragraph are load-bearing and §3 spends them.** Two sentences constrain what
+**The caveats in the same paragraph are required and §3 spends them.** Two sentences constrain what
 any consumer may do with a point:
 
 > "Photographic or digital enlargement of these maps to scales greater than at which they were
@@ -452,7 +452,7 @@ What CLMS actually holds: CORINE Land Cover in **five editions only — 1990, 20
 (CLC2024 is "scheduled for publication in Q3 2026", the current quarter, and is not in the catalogue),
 44 level-3 classes, **25 ha minimum mapping unit** and 100 m minimum width, 5 ha for change layers,
 EPSG:3035, thematic accuracy "≥ 85%". The arable family is **2.1 Arable land** — 211 Non-irrigated
-arable land, 212 Permanently irrigated land, 213 Rice fields — and CLMS states plainly that "Crop types
+arable land, 212 Permanently irrigated land, 213 Rice fields — and CLMS states that "Crop types
 (e.g. wheat, corn...) are not distinguished in CORINE Land Cover." CLC+ Backbone is a 10 m raster with
 **11 classes**, of which only "Periodically herbaceous" is arable-adjacent, and it **complements rather
 than replaces** CLC — verbatim, "It is designed to complement the well-known CORINE Land Cover time
@@ -815,7 +815,7 @@ the share of the map unit that class actually covers.** Measured over all 339,19
 with an observed **minimum of 2 %**. The authority ships its own aggregation with the confidence that
 aggregation rests on. The layer reproduces that pattern at cell grain rather than inventing one.
 
-**The information this choice discards, stated plainly.** Three losses, and naming them is the point of
+**Information discarded by this choice.** Three losses, and naming them is the point of
 the paragraph:
 
 1. **Sub-cell spatial arrangement is gone.** After aggregation the layer knows that 40 % of a cell is

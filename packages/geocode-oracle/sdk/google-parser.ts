@@ -57,7 +57,7 @@ interface ComponentRule {
 
 /**
  * The component-type → `ComponentTag` table, IN PRIORITY ORDER. Two independent first-writer-wins rules apply as it is
- * walked, and both are load-bearing:
+ * walked, and both are required:
  *
  * 1. **A tag is written once.** A later rule for an already-filled tag is skipped.
  * 2. **A component is consumed once.** A component that already claimed a tag cannot claim a second one.
@@ -197,9 +197,9 @@ export function buildGoogleComponents(result: GoogleGeocodeResult): ComponentDic
  *
  * Three of the four are unambiguous. `GEOMETRIC_CENTER` is not: Google documents it as the centre of "a polyline (for
  * example, a street) or polygon (region)", which spans both the `street` and `admin` tiers depending on which shape it
- * was. The result's own `types` settle it when they name a `route`; otherwise this reports `admin`, which UNDER-claims.
- * That direction is deliberate — an oracle that over-claims precision is worse than one that under-claims, because a
- * case author pinning `expectTier` from it would encode a tolerance the parser can never earn.
+ * was. A `route` value in the result's own `types` identifies a street; otherwise this reports `admin`, which
+ * UNDER-claims. That direction is deliberate — an oracle that over-claims precision is worse than one that
+ * under-claims, because a case author pinning `expectTier` from it would encode a tolerance the parser can never earn.
  *
  * A missing `location_type` returns `null` rather than a guess. Read `raw.geometry` when it does.
  */

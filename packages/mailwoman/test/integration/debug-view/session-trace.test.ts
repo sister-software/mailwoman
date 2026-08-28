@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `trace: true` session, against the real classifier: what it records, and — the load-bearing half — that
+ *   The `trace: true` session, against the real classifier: what it records, and — the required half — that
  *   recording it changes no answer. The debug view is an INSPECTION surface; the moment its extra decode could move a
  *   coordinate, every reading taken through it would be about a different pipeline than the one that ships.
  *

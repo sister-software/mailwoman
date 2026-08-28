@@ -14,7 +14,7 @@
  *   "the source changed" into "there is none of it", at exactly the measurement boundary where that lie
  *   costs the most.
  *
- *   QUOTE HANDLING IS NOT OPTIONAL HERE, AND THE MEASUREMENT SETTLES IT. `sacatlog.txt` holds 594 newline
+ *   QUOTE HANDLING IS NOT OPTIONAL HERE, AND THE MEASUREMENT determines the result. `sacatlog.txt` holds 594 newline
  *   bytes and exactly ONE record: its `fgdcmetadata` column carries a 43,251-character XML document with
  *   embedded newlines. `mstabcol.txt` — the column dictionary itself — holds 913 newlines and 865 records.
  *   A line-splitting reader gets 594 malformed rows from a one-row file, every one of them well-formed

@@ -7,7 +7,7 @@
  *
  *   The CLI's bin entry. It runs the process-wide preamble before selecting and importing one command.
  *
- *   The split is load-bearing. ESM evaluates every static import before a module's own body runs, so a preamble
+ *   The split is required. ESM evaluates every static import before a module's own body runs, so a preamble
  *   written in a statically imported command graph would execute after that graph had already initialized. Only
  *   `node:module` is imported statically here; command code arrives through dynamic imports after this body.
  *
@@ -51,7 +51,7 @@ const { values, positionals } = parseArgs({
 	allowPositionals: true,
 })
 
-// A ROOT version request, which is why the positional count is load-bearing: `--version` reached from anywhere in the
+// A ROOT version request, which is why the positional count is required: `--version` reached from anywhere in the
 // vector would make the launcher answer `mw geocode --version` itself, swallowing a flag that belongs to the command.
 const rootVersionRequest = values.version === true && !positionals.length
 

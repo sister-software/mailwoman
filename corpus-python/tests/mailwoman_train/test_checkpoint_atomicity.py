@@ -4,7 +4,7 @@
 sequentially, and ``find_latest_checkpoint`` picks the highest ``step-*`` name with no
 completeness check. An interruption mid-save (the exact crash-and-resume loop the docstring
 promises to survive) therefore leaves a partial directory that the next ``--resume auto``
-happily loads.
+loads.
 
 Contract pinned here (the repair): a checkpoint directory named ``step-*`` is either
 COMPLETE or ABSENT. Writes go to a temp name the ``step-*`` glob cannot see, then rename

@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-12
 **Status:** Approved sections (operator, 2026-07-12); spec pending operator review
-**Excises:** the Mailwoman v1 rules-based parser — `@mailwoman/classifiers`, `core/solver`, `core/solvers`, the `core/parser` machinery, the `core/classification` classifier machinery — and every runtime path into it.
+**Excises:** the Mailwoman v1 rules-based parser — `@mailwoman/classifiers`, `core/solver`, `core/solvers`, the `core/parser` implementation, the `core/classification` classifier implementation — and every runtime path into it.
 **Consult record:** 3-round DeepSeek pro session (2026-07-12); structural adds folded in §Evidence capture, §Projection layer, §Order; rejections recorded in §Consult notes.
 
 ## Problem
@@ -74,7 +74,7 @@ The degraded path is the current-gen preprocessing stack, **not** a retained rul
 
 ## Contract rehoming (before deletion)
 
-1. `Classification.ts` string-set → `core/types/` (it's a taxonomy the mapper and formatter consume; the classifier machinery around it dies).
+1. `Classification.ts` string-set → `core/types/` (it's a taxonomy the mapper and formatter consume; the classifier implementation around it dies).
 2. Break `tokenization/context.ts → core/solver` edge. Keep `Span`, `normalizer`, `split` (current-gen consumers: neural, phrase-grouper, decoder, policy). Delete `context`, `Graph`, `permutate` with the solver.
 3. `core/parser/proposal-pipeline.ts` (generic `ProposalClassifier` orchestrator, rule-or-neural) moves out of `core/parser/` before the directory dies.
 
@@ -95,13 +95,13 @@ Every converted fixture carries provenance: `v1-parity:<country>: "<address>" ma
 | `classifiers/` workspace (2.8k LOC + 29 test files)                                         | npm package deprecated, not unpublished                           |
 | `core/solvers/`, `core/solver/`                                                             | after the tokenization edge is broken                             |
 | `core/parser/AddressParser.ts`, `solution-to-proposals.ts`                                  | `proposal-pipeline.ts` rehomed first                              |
-| `core/classification/` machinery (Base/Word/Phrase/Section/Composite, scheme)               | `Classification.ts` rehomed first                                 |
+| `core/classification/` implementation (Base/Word/Phrase/Section/Composite, scheme)          | `Classification.ts` rehomed first                                 |
 | arbitration bridge: `arbitrate` flag, `ruleProposer`, `applyRuleArbitration`, policy routes | research-only, default-OFF, killed by #685                        |
 | eval-harness v0 legs (`harness-v0-neural` rules leg, `per-type-report`, resolver-eval legs) | v0-vs-neural history lives in the dated eval reports              |
 | test-kit `createAddressParser` + the 27 `mailwoman/test/` parity files                      | after conversion                                                  |
 | umbrella `export * from "@mailwoman/classifiers"` + `utils/parser.ts`                       | breaking API removal → migration guide                            |
 | `mailwoman debug`, `parse`, no-weights rules fallback                                       | fallback replaced by the weights guard                            |
-| `prepareLocaleIndex()` + libpostal loader machinery in `core/resources`                     | loses all callers with the classifiers; the `.txt` **data** stays |
+| `prepareLocaleIndex()` + libpostal loader implementation in `core/resources`                | loses all callers with the classifiers; the `.txt` **data** stays |
 
 Stays, explicitly: `core/data/libpostal/` + `core/data/internal/` dictionaries (corpus + FST builders read them raw), `whosonfirst/` + `chromium-i18n/` data, `Span`/`normalizer`/`split`, `types/mapping.ts`, `normalize/`, `codex/`, THIRD_PARTY_NOTICES entries for retained data (verify coverage).
 

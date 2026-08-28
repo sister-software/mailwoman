@@ -133,7 +133,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 		const out = options.out ?? dataRootPath("poi", `poi-coverage-${options.category}-${slugify(region)}.db`)
 		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
-		// DYNAMIC import, load-bearing: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off pending —
+		// DYNAMIC import, required: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off pending —
 		// see osm/README.md), so a top-level import breaks the published CLI on a clean install. Same
 		// reasoning as the `--source osm` branch of `gazetteer build poi`.
 		const { extractOSMBoundary, extractOSMPOIs, tagRuleFromOSMTag } = await import("@mailwoman/osm/sdk")

@@ -105,7 +105,7 @@ no counterpart in this family.
   `macrocounty`, `county`, `localadmin`, `locality`, `borough`, `neighbourhood`, `postalcode`,
   `ocean`, `marinearea`, `empire` — each with abbreviation, WOF id, and source variants [S].
   Populated by the `wof-admin-lookup` point-in-polygon service during import [S]. Autocomplete is ES
-  analyzer machinery over these fields; admin boosting is query-time scoring over the materialized
+  analyzer implementation over these fields; admin boosting is query-time scoring over the materialized
   names [M].
 
 ### Photon (Komoot)
@@ -371,7 +371,7 @@ predecessor stand in_" is not.
   over the same normalized token streams — the `ReverseStringFilter` trick at word granularity [S],
   which for multi-token names is equivalent to a suffix-trie restricted to token boundaries. Build
   it with the existing fst-builder by feeding reversed token sequences; `walk(["york"])` on it
-  enumerates predecessors ("new", "west", …) with the same BFS machinery.
+  enumerates predecessors ("new", "west", …) with the same BFS implementation.
 - If "enter at any token" is wanted (not just last-token-known), the named upgrade is the **factor
   automaton of the name set** (Mohri et al.) [S] — the ASR-biasing lineage the FST curation header
   already cites; but note AnalyzingInfixSuggester [S] as the precedent that an inverted index on
@@ -400,7 +400,7 @@ predecessor stand in_" is not.
 - **The DAG caveat decides the fallback.** WOF places can carry multiple hierarchies [M] and
   Overture keeps `hierarchies` plural [S]. A single interval pair encodes one tree. Policy:
   intervals over the _primary_ hierarchy (what the chain already commits to); if cross-hierarchy
-  reachability ever becomes load-bearing (disputed territories), GRAIL's multiple randomized
+  reachability ever becomes required (disputed territories), GRAIL's multiple randomized
   interval labels [S] is the named, linear-size upgrade — do not invent one.
 - Nominatim's `place_addressline` [S] is the argument _against_ a closure table for us: it is the
   biggest table in their schema for a capability the chain+interval combination gives in 40 bytes

@@ -5,7 +5,7 @@
  *
  *   Smoke tests for the invariance mini-suite RUNNER — weightless. `runInvarianceSuite` takes an
  *   injectable `ParseFn`, so these tests exercise the fixture-loading + comparison + summary + exit-code
- *   machinery with a FAKE parser instead of a real model (weight-dependent tests don't run in CI, #582).
+ *   implementation with a FAKE parser instead of a real model (weight-dependent tests don't run in CI, #582).
  */
 
 import {

@@ -11,7 +11,7 @@
  *   {@linkcode BOARD_ID}; the commit that deleted the array kept the pins and dropped the array leg, so the
  *   content claim outlives the source it was checked against. The deep-equal is in the history, not in prose.
  *
- *   The board id is the load-bearing one. `ablationBoardID` fingerprints a SORTED `id`+`input` list, so it is
+ *   The board id is the required one. `ablationBoardID` fingerprints a SORTED `id`+`input` list, so it is
  *   content-addressed and NOT order-addressed: reorganizing 192 rows into 29 files is invisible to it, and
  *   every ablation artifact measured before the migration stays comparable to every one measured after.
  *   `gauntlet-regression@192:d753b86005a7` is the same string on both sides. The id is NOT versioned by this
@@ -89,7 +89,7 @@ const CORPUS_SIZE = 651
  *
  * Moved 2026-08-11 (seventh) — → this — by the 2-row `fork_entity` board (the declared_fork → entity-probe wire's
  * freeze): the COMER primary (poi.db holds the worldwide-unique entity 6 m from truth; the fork abstains with no
- * consumer) and the Savile Row hijack tripwire, pinned to the true London street with its three wrong behaviors
+ * consumer) and the Savile Row hijack regression check, pinned to the true London street with its three wrong behaviors
  * receipted (the qualifier-strip Rhu scrape among them). 530 → 532, so the board id moves too.
  *
  * Moved 2026-08-11 (eighth) — → this — by the fork→entity WIRE landing: the COMER row flips improvement_target → pass
@@ -102,8 +102,9 @@ const CORPUS_SIZE = 651
  * Moved 2026-08-12 (second) — → this — by the street-miss FALLBACK landing: both bare-capital rows flip
  * improvement_target → pass with measured receipts. Row count and every `id`+`input` untouched, so the board id stays.
  *
- * Moved 2026-08-12 (third) — → this — by the #1626 strip guard landing: the Savile Row tripwire's note re-ledgers its
- * residual (strip scrape closed; the fuzzy-tier namesake remains, #1614's territory). Note-only; the board id stays.
+ * Moved 2026-08-12 (third) — → this — by the #1626 strip guard landing: the Savile Row regression check's note
+ * re-ledgers its residual (strip scrape closed; the fuzzy-tier namesake remains, #1614's territory). Note-only; the
+ * board id stays.
  *
  * Moved 2026-08-12 (seventh) — → this — by the ANTI-ROT PROMOTION SWEEP: 218 improvement_target rows whose now-PASSES
  * flags were byte-identical across three same-corpus production boards (the sweep baseline, the register-scope-tags
@@ -124,8 +125,9 @@ const CORPUS_SIZE = 651
  * `situs_wrong_village` board (#1631 Teichstraße, the wrong-village rooftop match panel-v2 surfaced): the aucklnad
  * measure-misalignment witness flips improvement_target → pass with its measured receipt (Auckland NZ, word-level 0.975
  * vs auckley 0.868), the board-flagged newly-passing `gb-street-name-savile-row` promotes to pass, and the Savile Row
- * tripwire's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while opening #1632
- * for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves too.
+ * regression check's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while
+ * opening #1632 for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves
+ * too.
  *
  * Moved again by the bare-street-name retry guard: `us-street-name-ocean-parkway-south` and
  * `fr-street-name-rue-du-faubourg-saint-honore` flip improvement_target → pass once a parse that read its whole input

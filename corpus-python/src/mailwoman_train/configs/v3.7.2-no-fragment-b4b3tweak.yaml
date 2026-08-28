@@ -15,7 +15,7 @@
 # CONFOUND, stated: the 6x-all boost triples the shard volume (11,609 -> 33,203 rows) at the same weight
 # 12.0, so this changes signal volume AND composition. The FR guard is the detector — if FR re-drifts like
 # knob 1, the volume over-diluted and the weight needs dropping; if FR holds, volume was fine. Reading FR
-# is therefore load-bearing this run, not just do-no-harm.
+# is therefore required this run, not just do-no-harm.
 #
 # THE MEASURED PROBLEM (board 3, n=400/class, 95% Wilson, SHIPPED v310, zero Norwegian rows pre-#1145):
 #     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- TARGET (no postcode competing)

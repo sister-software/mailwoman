@@ -93,7 +93,7 @@ import { resolveWOFHotDB } from "./wof-hot-db.ts"
  * Render captured sink lines the way a child process's stdout arrived: one trailing newline per `report()` call. Every
  * `.md` the gate writes goes through this, so the artifacts match the pre-migration bytes.
  *
- * This is the whole migration's load-bearing assumption in one line. `console.log(x)` writes `x` then a newline, and zx
+ * This is the whole migration's required assumption in one line. `console.log(x)` writes `x` then a newline, and zx
  * handed the concatenation of those writes back as `.stdout`; a sink that records one entry per `console.log` call
  * therefore reproduces the same bytes — INCLUDING a multi-line argument (one call, embedded newlines, one trailing
  * newline) and a bare `console.log()` (the empty string, one newline). Exported for `promotion-gate-sinks.test.ts`.

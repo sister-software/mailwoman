@@ -127,7 +127,7 @@ export const ResourceErrorKind = {
 export type ResourceErrorKind = (typeof ResourceErrorKind)[keyof typeof ResourceErrorKind]
 
 /**
- * The `source` component every URN in this module carries — the machinery that produced the failure.
+ * The `source` component every URN in this module carries — the implementation that produced the failure.
  */
 const RESOURCE_ERROR_SOURCE = "axios"
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gauntlet ABLATION layer — the load-bearing map. For every corpus row that ASSERTS a component, delete
+ *   Gauntlet ABLATION layer — the required map. For every corpus row that ASSERTS a component, delete
  *   that component from the input and re-run the full pipeline: the displacement from the row's own
  *   undeleted anchor says what the component was worth. Aggregated per (component, locale) it answers the
  *   operator's question directly — "where does the pipeline falter when a part of the address is missing?"

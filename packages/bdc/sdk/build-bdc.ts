@@ -138,8 +138,8 @@ export interface BuildBDCOptions {
 	 * Resolve a 15-char census block GEOID to its centroid. Injected so tests supply a small fixture `Map` lookup instead
 	 * of touching a real TIGER database; the real (CLI-wired) implementation is
 	 * {@linkcode createTIGERBlockCentroidLookup}, which reads `tabblock20.GEOID` (uppercase — `TIGERBlockTable`) block
-	 * geometry. Returning `undefined` for an unknown geoid is load-bearing: the materialize pass counts it in
-	 * `unknownGeoids` and skips the row — it must NEVER guess a cell.
+	 * geometry. Returning `undefined` for an unknown geoid is required: the materialize pass counts it in `unknownGeoids`
+	 * and skips the row — it must NEVER guess a cell.
 	 */
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
@@ -257,7 +257,7 @@ interface BDCStageRow {
  *
  * `csvPath` is optional and used ONLY to name the offending file in a thrown error (the direct-buffer unit tests call
  * this without one; {@linkcode readAvailabilityRowsFromCSVPaths} always supplies it). The `Number.isSafeInteger` guard
- * below is load-bearing, not defensive dressing: `bdc_stage.provider_id` is `INTEGER NOT NULL`, and a bare
+ * below is required, not defensive dressing: `bdc_stage.provider_id` is `INTEGER NOT NULL`, and a bare
  * `Number.parseInt` on a non-numeric field (a malformed/re-headered/truncated CSV) silently produces `NaN`. `NaN` binds
  * to that NOT NULL column as SQLite `NULL`, `INSERT OR IGNORE` then drops the row without a constraint error, and every
  * dropped row gets counted as `deduped` — the ENTIRE file's rows vanish silently, misreported as ordinary dedup. A

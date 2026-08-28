@@ -67,7 +67,7 @@ voice pass), **#918** (#473: TW postcode table + JP Overture gold — agent).
    is the discovery.** `postcodeConsistency` is inert (ctrl≡pcc byte-identical); **postcode-shard
    COVERAGE alone collapses the tail: FI namesake 300→1 (unresolved 13→0), CZ 131→4 (12→2), ni
    PASS everywhere** — a resolvable postcode feeds the existing coordinate-first candidate
-   injection; the binding machinery existed all along. Format normalization is load-bearing
+   injection; the binding implementation existed all along. Format normalization is required
    (spaced GeoNames CZ codes made things WORSE, +13, before strip-whitespace at build).
    **Extension (same night): all eight tail locales measured** — SK −98%, DK −77%, SI −71%,
    HR −52%, NO −47%, PL null. Three production-spec findings: (1) crude postcode centroids tax

@@ -10,7 +10,7 @@
  *   ## Why a separate builder rather than a source mode on `geonames-tail.ts`
  *
  *   Folding this in was considered and rejected on the code, not on taste. `geonames-tail.ts` is a
- *   REPRODUCER: its docstring pins it to a frozen 946 MB artifact, its country order is load-bearing
+ *   REPRODUCER: its docstring pins it to a frozen 946 MB artifact, its country order is required
  *   because `ingestGeonamesPostal` allocates ids from one counter so a rebuild stays id-comparable,
  *   and it is gated on per-country row-count parity against that artifact. Code-Point Open shares none
  *   of its inputs — different coordinate system (OSGB36 eastings/northings, not degrees), different row

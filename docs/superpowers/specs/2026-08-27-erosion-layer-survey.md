@@ -7,7 +7,7 @@ outcome, and this record delivers a split verdict: **one viable coastal pilot, a
 that no surveyed source supports a soil-erosion layer.** Both are completions, and the second is not a
 consolation — it is the answer to the question the issue asked first.
 
-The consuming machinery already exists, so nothing below proposes new architecture. The layer contract
+The consuming implementation already exists, so nothing below proposes new architecture. The layer contract
 (`layer_manifest` / `layer_coverage` on the H3 spine) is specified in
 [`../../engineering/reference/layer-contract.mdx`](../../engineering/reference/layer-contract.mdx); the
 exclusion-grade coverage pilot
@@ -73,7 +73,7 @@ geometry and no consumer question:
   than observed.
 
 A layer that pooled them would be this record's invention. Every section below states which subject it
-is about, and §3.2's table keeps them apart. The two verdicts differ, so the split is load-bearing.
+is about, and §3.2's table keeps them apart. The two verdicts differ, so the split is required.
 
 ### 2.2 United States, soil — USDA National Resources Inventory
 
@@ -891,7 +891,7 @@ The inherited size contract settles two shapes: the **polygon rule** (#1989) and
 | **EUROSION, EMODnet field data, NI appraisal**      | polylines              | **the linear rule, below**                         |
 
 **The linear rule.** A source whose geometry is a line or a set of points along one is neither an area
-nor a grid, and the polygon rule's machinery does not apply to it:
+nor a grid, and the polygon rule's implementation does not apply to it:
 
 - **The authority's polylines or transect points are the truth table**, stored unsimplified with a
   precomputed bounding box, exactly as the polygon rule stores rings.
@@ -1061,7 +1061,7 @@ Five reasons, in the order they bind.
    attribution string, `<Fees>NONE</Fees>` on both services, no registration and no key. Compare
    Copernicus (401 anonymous by regulation), ESDAC (redistribution forbidden outright), NOAA (a
    disclaimer, not a grant) and the two EU shoreline products (contradictory licences).
-4. **It reuses the flood layer's machinery.** Same platform, same `HEAD` 405 and ignored `Range`, same
+4. **It reuses the flood layer's implementation.** Same platform, same `HEAD` 405 and ignored `Range`, same
    CSW metadata route, same ISO field names, same England extent, same OGL attribution shape. The second
    Environment Agency layer costs a fraction of the first.
 5. **It puts the meaning-of-zero rule under a NEW kind of pressure, which is the point.** The flood layer

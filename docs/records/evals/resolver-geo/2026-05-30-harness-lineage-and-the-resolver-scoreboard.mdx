@@ -119,7 +119,7 @@ with `project-neural-vs-v0-capability-map`.
 Continue-train from the v0.7.2 checkpoint with **interleaved comma-free renders**
 (`house street locality region` with the delimiter dropped), roughly 15% of
 batches, low LR, capped steps, early-stop on the harness, with a held-out
-comma'd-only forgetting tripwire. Hypothesis: the model leans on a comma cue that
+comma'd-only forgetting regression check. Hypothesis: the model leans on a comma cue that
 real inputs drop (`339 Bedford Ave Brooklyn`); teaching delimiter-invariance
 should move locality-missing and street-absorbs-locality together. Pre-registered
 revert: if post-train harness is below 22% **and** resolver Acc@1 does not improve

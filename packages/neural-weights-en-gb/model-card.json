@@ -56,7 +56,7 @@
 		"$comment": "Copy of the base card's requires block — same trained ship-config, same fail-closed contract via createScorer. Keep in lockstep with neural-weights-en-us/model-card.json on every base ship, EXCEPT conventions.mode, which is deliberately locale-pinned (see conventions.$comment), and anchor, which now carries a deliberate GB deviation (see anchor.$comment).",
 		"anchor": {
 			"required": true,
-			"$comment": "9.0.0 (ROAD_TO_V9 A4): the anchor channel is BACK ON for GB — v4.2.0 trained slot 4 (Fisher 11.28% of anchor-projection mass; gb-golden 318/318 with the channel fed vs the #1467-era 294/318 with it fed-but-untrained). span_mode 'shaped' is load-bearing: postcode-gb.bin's 1,746,976 unit keys are space-stripped upper and unreachable by the alnum-run scan. The 2026-08-05 anchor-OFF mitigation record stays in gb_artifacts for history.",
+			"$comment": "9.0.0 (ROAD_TO_V9 A4): the anchor channel is BACK ON for GB — v4.2.0 trained slot 4 (Fisher 11.28% of anchor-projection mass; gb-golden 318/318 with the channel fed vs the #1467-era 294/318 with it fed-but-untrained). span_mode 'shaped' is required: postcode-gb.bin's 1,746,976 unit keys are space-stripped upper and unreachable by the alnum-run scan. The 2026-08-05 anchor-OFF mitigation record stays in gb_artifacts for history.",
 			"span_mode": "shaped"
 		},
 		"gazetteer": {

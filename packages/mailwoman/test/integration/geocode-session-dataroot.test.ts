@@ -12,7 +12,7 @@
  *
  *   The discriminating shape: a bogus data root WITH a real candidate.db passes the gazetteer check (which is
  *   deliberately resolved first), so the session's next stop is weights — which must now fail against the bogus root.
- *   Before the fix this test's expectation fails: weights resolve happily from the env root and the session comes up.
+ *   Before the fix this test's expectation fails: weights resolve from the env root and the session comes up.
  */
 
 import { existsSync, mkdtempSync, rmSync } from "node:fs"

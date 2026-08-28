@@ -13,7 +13,7 @@
  *   code path is the ancestrie-backed one. If a deliberate behavior change ever lands in ancestrie's
  *   `autocomplete`, this suite fails and the change must be RE-RATIFIED by updating the frozen copy
  *   in the same commit, which is what makes drift between the two homes visible (the #861 rule: the
- *   function is shared; this is the tripwire proving it stays shared).
+ *   function is shared; this is the regression check proving it stays shared).
  *
  *   Two legs:
  *

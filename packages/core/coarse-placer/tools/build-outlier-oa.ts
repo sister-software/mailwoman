@@ -127,7 +127,7 @@ function assemble(r: Record<string, unknown>): string | null {
 	if (!street && !locality) return null
 
 	// nothing distinctive
-	// Drop raw-coord-only / PO-box-ish noise (DeepSeek gotcha): need a real street or locality token.
+	// Drop raw-coord-only / PO-box-ish noise (DeepSeek failure mode): need a real street or locality token.
 	if (!street && !/[a-z]/i.test(locality)) return null
 	const head = [num, street].filter(nonEmpty).join(" ")
 	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)

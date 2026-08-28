@@ -125,7 +125,7 @@ component.
 motivated by "10 Boulevard Saint-Germain Paris": the graph holds `Saint-Germain` _and_
 `Saint` + `Germain`, and solvers (`ExclusiveCartesianSolver` + penalty/filter passes) pick
 whichever composition yields a valid solution. The same split function covers `/`, which is
-what gives Pelias a shot at slash forms — but note plainly: we found no test or issue
+what gives Pelias a shot at slash forms — but note: we found no test or issue
 demonstrating it resolves the Australian `1/123` unit/house convention specifically.
 
 **pelias/api sanitizers.** Read from

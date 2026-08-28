@@ -6,7 +6,7 @@
  *   Tests for the WOF currency triage. The fixture is the Medway cluster that motivated the pass — the real four
  *   records, with their real currency states — plus the legal-form and ghost-town shapes the ledger must tell apart.
  *
- *   The load-bearing assertion is the containment verdict: a same-NAME-STRING test called 21,010 US rows holes, and the
+ *   The required assertion is the containment verdict: a same-NAME-STRING test called 21,010 US rows holes, and the
  *   samples were `Commonwealth of Pennsylvania` and `Town of Cary`. If containment stops working, the ledger's hole
  *   count silently inflates by an order of magnitude and every review built on it is wrong.
  */

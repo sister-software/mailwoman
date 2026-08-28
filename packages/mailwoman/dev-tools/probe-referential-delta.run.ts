@@ -24,7 +24,7 @@
  *
  *   1. **Gazetteer census** — every place at or above saturation, and every NAME-COLLIDING pair where
  *      both bearers clear it. The second number is the population of cases where the tiebreak is
- *      load-bearing; if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
+ *      required; if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
  *   2. **Live query replay** — every board query plus the namesake families, run through the real
  *      `findPlace`, with the returned candidate list re-sorted under BOTH the pre-split key and
  *      `compareReferential`. Any row whose id sequence differs is a real resolver delta and is printed.
@@ -63,7 +63,7 @@ if (!existsSync(adminPath)) {
 		REFERENTIAL_SATURATION_POPULATION
 	)!.c
 
-	// The configuration where the tiebreak is load-bearing: two CURRENT places sharing a name, both
+	// The configuration where the tiebreak is required: two CURRENT places sharing a name, both
 	// clamped to referential 1.0. Anything less than this cannot produce a differing order.
 	// Same one-row guarantee: the GROUP BY is inside the subquery, the outer count(*) has none.
 	const collidingPairs = getRow<{ c: number }>(

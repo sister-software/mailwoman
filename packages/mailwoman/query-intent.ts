@@ -30,7 +30,7 @@
  *   silent-drift generator). The module imports nothing but `@mailwoman/spatial`, so the cost is a
  *   type-strip, not a dependency.
  *
- *   ## The collapse is load-bearing
+ *   ## The collapse is required
  *
  *   WOF stores a big city twice — Paris the `locality` and Paris the `localadmin`, same population —
  *   so a RAW top-2 margin reads 0.01 for Paris and 0.00 for Washington. Uncollapsed, every major city

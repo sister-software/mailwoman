@@ -10,7 +10,7 @@
  *   street_norm. The bare-vs-anchored match-rate delta IS the gap, and isolates whether the model only
  *   learned FR structure in the postcode-anchored context.
  *
- *   GATE-LOAD-BEARING (#949). This is a promotion-gate battery leg — the `fr.bare_street_intact`
+ *   GATE-required (#949). This is a promotion-gate battery leg — the `fr.bare_street_intact`
  *   floor — not a one-off probe, which is why it lives here and not in `scripts/diagnostic/`. It sat
  *   in that drawer until the de-shell migration; the drawer is `.gitignore`d wholesale
  *   (`scripts/diagnostic/`), so the file survived only because it had been force-added to the index,

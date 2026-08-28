@@ -56,7 +56,7 @@ All of it ships as a single self-contained `postcode-locality-intl.db` — DE/ES
 
 ## What it doesn't do yet
 
-The limits are real and worth naming plainly. GB resolves out of the box, but WOF's GB locality coverage is only ~66% — a third of UK unit postcodes fall outside any WOF locality polygon and get no coordinate candidate; closing that needs a finer or non-WOF British source. ES and IT are in the gazetteer but WOF is orphan-heavy there (29% / 42% postcode coverage), so they're data-limited until a richer source lands. And there's a few-point city-state residual in Berlin / Paris / London where a postcode centroid lands in an unnamed Ortsteil — cosmetic, on the table for a later tune. None of these are architectural; they're all the upstream gazetteer running out of data, which is exactly where you'd want the remaining work to live.
+The limits are real and must be explicit. GB resolves out of the box, but WOF's GB locality coverage is only ~66% — a third of UK unit postcodes fall outside any WOF locality polygon and get no coordinate candidate; closing that needs a finer or non-WOF British source. ES and IT are in the gazetteer but WOF is orphan-heavy there (29% / 42% postcode coverage), so they're data-limited until a richer source lands. And there's a few-point city-state residual in Berlin / Paris / London where a postcode centroid lands in an unnamed Ortsteil — cosmetic, on the table for a later tune. None of these are architectural; they're all the upstream gazetteer running out of data, which is exactly where you'd want the remaining work to live.
 
 ## Where this leaves the parser
 

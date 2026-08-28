@@ -11,7 +11,7 @@
  *   (FI 300/1k … PL 75/1k offender rows), and the controlled experiment showed postcode-shard
  *   coverage alone collapses it (FI 300→1, CZ 131→4): a resolvable postcode node feeds the
  *   resolver's coordinate-first sibling-postcode candidate injection, which binds the locality
- *   pick to its postcode neighborhood. The machinery already ships; it was coverage-starved.
+ *   pick to its postcode neighborhood. The implementation already ships; it was coverage-starved.
  *
  *   Two hard-won laws from the experiment are enforced HERE, in code, not in a runbook:
  *
@@ -173,7 +173,7 @@ export async function ingestGeonamesPostal(
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
 		// Streamed: a national dump is a caller-supplied size — GB's is 177 MB, and only the caller
-		// knows which country is next. `header: false` is load-bearing; the GeoNames postal dump is
+		// knows which country is next. `header: false` is required; the GeoNames postal dump is
 		// headerless, so row 1 would be consumed as column names and its postcode lost.
 		for await (const cols of TSVSpliterator.fromAsync(file, { header: false })) {
 			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue
