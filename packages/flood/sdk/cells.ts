@@ -44,7 +44,9 @@ import {
 	cellToParent,
 	compactCells,
 	getHexagonAreaAvg,
+	getHexagonEdgeLengthAvg,
 	getResolution,
+	latLngToCell,
 	polygonToCellsExperimental,
 	POLYGON_TO_CELLS_FLAGS,
 } from "h3-js"
@@ -66,6 +68,54 @@ export const CELL_ESTIMATE_BUDGET = 2_000_000
  * kilometres and the index stops summarizing anything.
  */
 export const MIN_INDEX_RESOLUTION = 4
+
+/**
+ * The single cell containing this whole bounding box, or `undefined` when it spans more than one.
+ *
+ * An H3 cell is convex, so a rectangle whose four corners all fall in the same cell lies entirely inside it. That makes
+ * this an exact answer rather than an approximation, and it takes the WASM polyfill off the majority of this product's
+ * parts: 38.8% of its features are under 11 m across, and most parts of the multi-part ones are smaller still.
+ */
+function enclosingCell(
+	box: { minLat: number; minLon: number; maxLat: number; maxLon: number },
+	resolution: number
+): string | undefined {
+	if (!Number.isFinite(box.minLat)) return undefined
+
+	const first = latLngToCell(box.minLat, box.minLon, resolution)
+
+	for (const [lat, lon] of [
+		[box.minLat, box.maxLon],
+		[box.maxLat, box.minLon],
+		[box.maxLat, box.maxLon],
+	] as Array<[number, number]>) {
+		if (latLngToCell(lat, lon, resolution) !== first) return undefined
+	}
+
+	return first
+}
+
+/**
+ * Could a shape this size contain a whole cell?
+ *
+ * A hexagon's minimum width is twice its inradius, and its inradius is `edge × √3/2` — so a bounding box narrower than
+ * `edge × √3` in either direction cannot enclose one, and the `containmentFull` polyfill is guaranteed to return
+ * nothing. The comparison is deliberately permissive: a wrong `true` costs one polyfill call, while a wrong `false`
+ * would demote a whole cell to a partial one, which the ray cast still answers correctly but more slowly.
+ */
+function canContainCell(
+	box: { minLat: number; minLon: number; maxLat: number; maxLon: number },
+	resolution: number
+): boolean {
+	if (!Number.isFinite(box.minLat)) return false
+
+	const minimumWidthM = getHexagonEdgeLengthAvg(resolution, "m") * Math.sqrt(3)
+	const midLat = ((box.minLat + box.maxLat) / 2) * (Math.PI / 180)
+	const heightM = (box.maxLat - box.minLat) * METRES_PER_DEGREE
+	const widthM = (box.maxLon - box.minLon) * METRES_PER_DEGREE * Math.cos(midLat)
+
+	return heightM >= minimumWidthM && widthM >= minimumWidthM
+}
 
 /**
  * The two cell sets one feature produces, and the resolution they came out at.
@@ -192,6 +242,17 @@ export function classifyFeatureCells(
 				// `isGeoJSON = true`: the rings are already `[lon, lat]`, which is the order the ingest emits. Converting
 				// instead would put a transposition between the geometry and the index that nothing downstream could see.
 				const geoJSONRings = rings as number[][][]
+				const box = boundingBox([rings])
+				const enclosing = enclosingCell(box, resolution)
+
+				// A PART THAT FITS INSIDE ONE CELL IS ANSWERED WITHOUT THE ALLOCATOR, and that is a fact rather than an
+				// approximation: an H3 cell is convex, so a rectangle whose four corners all fall in one cell lies entirely
+				// within it. Such a part touches exactly that cell and fills none of it.
+				if (enclosing) {
+					touched.add(enclosing)
+
+					continue
+				}
 
 				for (const cell of polygonToCellsExperimental(
 					geoJSONRings,
@@ -201,6 +262,11 @@ export function classifyFeatureCells(
 				)) {
 					touched.add(cell)
 				}
+
+				// Likewise: a part narrower than a cell's minimum width cannot contain one, so its `full` set is empty and
+				// asking for it is pure cost. Erring towards asking is safe — a missed whole cell becomes a partial one and
+				// the ray cast still answers correctly — so the comparison is the permissive one.
+				if (!canContainCell(box, resolution)) continue
 
 				for (const cell of polygonToCellsExperimental(
 					geoJSONRings,

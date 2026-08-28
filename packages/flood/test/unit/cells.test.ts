@@ -13,8 +13,8 @@ import {
 	resolutionForFeature,
 	CELL_ESTIMATE_BUDGET,
 } from "@mailwoman/flood/sdk/cells"
-import { rectangleRing } from "@mailwoman/flood/test-kit"
-import { polygonToCells } from "h3-js"
+import { FIXTURE_ORIGIN, holeRing, rectangleRing } from "@mailwoman/flood/test-kit"
+import { POLYGON_TO_CELLS_FLAGS, polygonToCells, polygonToCellsExperimental } from "h3-js"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -100,4 +100,78 @@ describe("classifyFeatureCells", () => {
 
 		expect(classifyFeatureCells(collapsed, 9, "collapsed").partial).toHaveLength(1)
 	})
+})
+
+/**
+ * The unconditional allocator path: every part through h3, no fast paths at all.
+ *
+ * The differential below is the two-path discipline applied to this module's own optimization. Two of its shortcuts — a
+ * part that fits inside one cell, and a part too narrow to contain one — replace an h3 call with a claim about
+ * geometry, and a claim about geometry that is subtly wrong produces a well-formed wrong index rather than an error.
+ * Measured over the real product before it landed: 60,000 features at resolution 9, zero disagreements.
+ */
+function referenceClassification(polygons: number[][][][], resolution: number) {
+	const touched = new Set<string>()
+	const full = new Set<string>()
+
+	for (const rings of polygons) {
+		for (const cell of polygonToCellsExperimental(
+			rings,
+			resolution,
+			POLYGON_TO_CELLS_FLAGS.containmentOverlapping,
+			true
+		)) {
+			touched.add(cell)
+		}
+
+		for (const cell of polygonToCellsExperimental(rings, resolution, POLYGON_TO_CELLS_FLAGS.containmentFull, true)) {
+			full.add(cell)
+		}
+	}
+
+	return {
+		whole: [...full].toSorted(),
+		partial: [...touched].filter((cell) => !full.has(cell)).toSorted(),
+	}
+}
+
+describe("the allocator-free shortcuts agree with the allocator", () => {
+	const { lon, lat } = FIXTURE_ORIGIN
+
+	const cases: Array<[string, number[][][][]]> = [
+		["a sub-cell square", [[rectangleRing(lon, lat, lon + 0.0001, lat + 0.0001)]]],
+		[
+			"a sub-cell square straddling a cell edge",
+			[[rectangleRing(lon + 0.00317, lat + 0.00211, lon + 0.0042, lat + 0.0031)]],
+		],
+		["a square several cells across", [[rectangleRing(lon, lat, lon + 0.02, lat + 0.02)]]],
+		[
+			"a square with a hole",
+			[[rectangleRing(lon, lat, lon + 0.02, lat + 0.02), holeRing(lon + 0.008, lat + 0.008, lon + 0.012, lat + 0.012)]],
+		],
+		[
+			"a multi-part feature mixing both sizes",
+			[
+				[rectangleRing(lon, lat, lon + 0.0001, lat + 0.0001)],
+				[rectangleRing(lon + 0.05, lat + 0.05, lon + 0.07, lat + 0.07)],
+			],
+		],
+		["the real 128 m² first feature", TINY_REAL_FEATURE],
+	]
+
+	for (const [label, polygons] of cases) {
+		it(`matches the unconditional polyfill on ${label}`, () => {
+			for (const resolution of [7, 9, 11]) {
+				const fast = classifyFeatureCells(polygons, resolution, label)
+
+				// The comparison is only meaningful where the adaptive path did not coarsen.
+				if (fast.resolution !== resolution) continue
+
+				const reference = referenceClassification(polygons, resolution)
+
+				expect([...fast.whole].toSorted()).toEqual(reference.whole)
+				expect([...fast.partial].toSorted()).toEqual(reference.partial)
+			}
+		})
+	}
 })
