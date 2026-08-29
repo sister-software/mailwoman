@@ -22,7 +22,9 @@
 
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox, shortCellToInt } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { FloodDatabase } from "../schema.ts"
 import { EA_FLOOD_ZONE_CODES } from "../vocabulary.ts"
 import { classifyFeatureCells } from "./cells.ts"
 import type { FloodFeatureSource } from "./ingest.ts"
@@ -72,7 +74,7 @@ export interface IngestFloodChunkOptions {
  * @throws {Error} On a zone code outside the authority's declared domain, or on a feature the classifier refuses.
  */
 export async function ingestFloodChunk(
-	database: DatabaseSync,
+	database: DatabaseClient<FloodDatabase>,
 	options: IngestFloodChunkOptions
 ): Promise<FloodChunkResult> {
 	const insertArea = database.prepare(

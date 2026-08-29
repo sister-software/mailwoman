@@ -11,10 +11,12 @@
  *   whole phase exists to fix.
  */
 
+import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	buildCommandGaps,
 	FOREIGN_ROOTS,
@@ -48,7 +50,7 @@ function dataRoot(): string {
 function manifested(path: string, name: string, buildCmd: string): void {
 	mkdirSync(join(path, ".."), { recursive: true })
 
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<LayerContractDatabase>(path)
 
 	db.exec(`CREATE TABLE layer_manifest (
 		name TEXT PRIMARY KEY, version TEXT NOT NULL, schema_version INTEGER NOT NULL, tier TEXT NOT NULL,
@@ -60,17 +62,17 @@ function manifested(path: string, name: string, buildCmd: string): void {
 		"INSERT INTO layer_manifest VALUES (?, '1.0', 1, 'shipped', 'ODbL', 'x', 'src', '2026-01-01', ?, 'abc', 'sealed', '{}', '2026-01-01T00:00:00Z')"
 	).run(name, buildCmd)
 
-	db.close()
+	db.destroy()
 }
 
 /**
  * A built database with no manifest — the ordinary state of most of the data root.
  */
 function bare(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<LayerContractDatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
-	db.close()
+	db.destroy()
 }
 
 describe("takeInventory — the four states stay distinct", () => {

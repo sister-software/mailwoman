@@ -18,6 +18,7 @@
  *   share an edge, because the per-area version passes every other test in this package.
  */
 
+import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
@@ -33,6 +34,7 @@ import {
 	fixtureSource,
 	rectangleRing,
 } from "@mailwoman/soil/test-kit"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, it } from "vitest"
 
 const { lat, lon } = FIXTURE_ORIGIN
@@ -130,12 +132,12 @@ async function build(areas: SurveyAreaInput[]): Promise<string> {
 }
 
 function coverageCellCount(databasePath: string): number {
-	const database = new DatabaseSync(databasePath, { readOnly: true })
+	const database = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 	try {
 		return (database.prepare("SELECT count(*) AS n FROM layer_coverage").get() as { n: number }).n
 	} finally {
-		database.close()
+		database.destroy()
 	}
 }
 

@@ -16,6 +16,7 @@ import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { SoilCapabilityLookup, SoilReadingKind } from "@mailwoman/soil"
+import type { SoilDatabase } from "@mailwoman/soil/schema"
 import { buildSoilDatabase, type BuildSoilResult } from "@mailwoman/soil/sdk/build-soil"
 import { shareTotal } from "@mailwoman/soil/sdk/reduce"
 import {
@@ -27,6 +28,7 @@ import {
 	fixtureSource,
 } from "@mailwoman/soil/test-kit"
 import { decodeRings } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 9
@@ -181,7 +183,7 @@ describe("what each reading says", () => {
 
 describe("the invariants that make the shares readable", () => {
 	it("sums every stored row's five shares to one", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const rows = database
@@ -213,12 +215,12 @@ describe("the invariants that make the shares readable", () => {
 				expect(total).toBeCloseTo(1, 4)
 			}
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("writes a coverage row only where mapped soil reaches, at designated and completeness 1", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const rows = database.prepare("SELECT basis, completeness, observed_rows FROM layer_coverage").all() as Array<{
@@ -235,12 +237,12 @@ describe("the invariants that make the shares readable", () => {
 				expect(row.observed_rows).toBeGreaterThan(0)
 			}
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("stores the rings unsimplified, so the covered-area weights can be re-derived", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const row = database.prepare("SELECT rings FROM soil_map_unit_area WHERE area_id = ?").get("XX001:0") as {
@@ -253,21 +255,21 @@ describe("the invariants that make the shares readable", () => {
 
 			expect(polygons[0]![0]!).toHaveLength(10)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("seals the artifact read-only", () => {
 		expect(result.sizeBytes).toBeGreaterThan(0)
 
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
 		try {
 			expect((database.prepare("SELECT count(*) AS n FROM soil_vocabulary").get() as { n: number }).n).toBeGreaterThan(
 				0
 			)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 })

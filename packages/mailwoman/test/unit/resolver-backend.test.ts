@@ -6,6 +6,7 @@
 
 import { defaultMailwomanPaths } from "@mailwoman/core/env"
 import { join, resolve } from "@mailwoman/platform/path"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import type { CapitalTable } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import {
 	conventionCandidateDBPath,
@@ -103,15 +104,15 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 
 	// An artifact carrying the table: the CR capital only.
 	const artifactPath = join(dir, "candidate.db")
-	const artifact = new DatabaseSync(artifactPath)
+	const artifact = new DatabaseClient<CandidateDatabase>(artifactPath)
 
-	await createCapitalTable(new DatabaseClient<{ capital: CapitalTable }>(artifact))
+	await createCapitalTable<CandidateDatabase>(artifact)
 
 	artifact
 		.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
 		.run("CR", 9.9333, -84.0833, "national", JSON.stringify(["san jose"]))
 
-	artifact.close()
+	artifact.destroy()
 
 	// A repo-style file carrying a DIFFERENT entry (GD), so which source served is observable.
 	const repoPath = join(dir, "capitals-v1.json")
@@ -133,7 +134,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	// An artifact WITHOUT the table falls through to the repo file.
 	const barePath = join(dir, "bare.db")
 
-	new DatabaseSync(barePath).close()
+	new DatabaseClient<CandidateDatabase>(barePath).destroy()
 	const fromRepo = loadCapitalIndex({ candidateDB: barePath, path: repoPath })
 
 	expect(fromRepo!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)

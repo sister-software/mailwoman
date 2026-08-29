@@ -52,6 +52,7 @@
 		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"hono": "^4.13.0",
 		"mailwoman": "workspace:*",
 		"zod": "^4.4.3"

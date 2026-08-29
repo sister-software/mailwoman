@@ -10,6 +10,8 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { CountryGranularity, RungMeasurement } from "mailwoman/gazetteer-pipeline/granularity"
 import {
 	DEFAULT_COVERAGE_FLOOR,
@@ -60,7 +62,7 @@ describe("SUB_LOCALITY_RUNGS", () => {
  */
 function ladderFixtureDB(): string {
 	const path = `/tmp/granularity-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, is_current INTEGER, is_deprecated INTEGER)`
@@ -97,7 +99,7 @@ function ladderFixtureDB(): string {
 		db.prepare(`INSERT INTO ancestors VALUES (?, ?)`).run(id, ancestorID)
 	}
 
-	db.close()
+	db.destroy()
 
 	return path
 }

@@ -60,6 +60,11 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./sdk/schema": {
+			"node": "./sdk/schema.ts",
+			"default": "./out/sdk/schema.js",
+			"types": "./out/sdk/schema.d.ts"
 		}
 	},
 	"publishConfig": {

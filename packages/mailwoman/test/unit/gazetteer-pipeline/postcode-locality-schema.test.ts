@@ -13,7 +13,6 @@
  */
 
 import { allRows } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	createPostcodeLocalityIndex,
@@ -37,18 +36,17 @@ interface TableInfoRow {
 /**
  * A fresh in-memory shard with both tables and the index.
  */
-async function buildShard(ifNotExists: boolean): Promise<DatabaseSync> {
-	const database = new DatabaseSync(":memory:")
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(database)
+async function buildShard(ifNotExists: boolean): Promise<DatabaseClient<PostcodeLocalityDatabase>> {
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(":memory:")
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists })
 	await createPostcodeLocalityIndex(kdb, { ifNotExists })
 	await createPostcodeLocalityMetaTable(kdb, { ifNotExists })
 
-	return database
+	return kdb
 }
 
-function tableInfo(db: DatabaseSync, table: string): TableInfoRow[] {
+function tableInfo(db: DatabaseClient<PostcodeLocalityDatabase>, table: string): TableInfoRow[] {
 	return allRows<TableInfoRow>(db.prepare(`PRAGMA table_info(${table})`))
 }
 
@@ -74,7 +72,7 @@ describe("createPostcodeLocalityTable", () => {
 			{ cid: 6, name: "is_containing", type: "INTEGER", notnull: 1 },
 		])
 
-		db.close()
+		db.destroy()
 	})
 
 	it("declares the meta key/value shape with `key` as the primary key", async () => {
@@ -85,12 +83,11 @@ describe("createPostcodeLocalityTable", () => {
 			{ name: "value", type: "TEXT", pk: 0 },
 		])
 
-		db.close()
+		db.destroy()
 	})
 
 	it("is re-runnable under `ifNotExists` — the accumulative build fills one shard country by country", async () => {
-		const database = new DatabaseSync(":memory:")
-		const kdb = new DatabaseClient<PostcodeLocalityDatabase>(database)
+		const kdb = new DatabaseClient<PostcodeLocalityDatabase>(":memory:")
 
 		await createPostcodeLocalityTable(kdb, { ifNotExists: true })
 		await createPostcodeLocalityIndex(kdb, { ifNotExists: true })
@@ -103,7 +100,7 @@ describe("createPostcodeLocalityTable", () => {
 		// Without the flag the same statement is an error — that is what makes a rebuild build a rebuild.
 		await expect(createPostcodeLocalityTable(kdb, { ifNotExists: false })).rejects.toThrow(/already exists/)
 
-		database.close()
+		kdb.destroy()
 	})
 })
 
@@ -125,7 +122,7 @@ describe("createPostcodeLocalityIndex", () => {
 			[1, "country"],
 		])
 
-		db.close()
+		db.destroy()
 	})
 })
 
@@ -142,7 +139,7 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 		expect(named![1]!.split(",").map((c) => c.trim())).toEqual(declared)
 		expect(named![2]!.split(",").map((c) => c.trim())).toEqual(declared.map(() => "?"))
 
-		db.close()
+		db.destroy()
 	})
 
 	it("lands each positional value in its own column", async () => {
@@ -162,7 +159,7 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 			is_containing: 1,
 		})
 
-		db.close()
+		db.destroy()
 	})
 
 	it("accepts a null alias list", async () => {
@@ -175,6 +172,6 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 			distance_km: 1.5,
 		})
 
-		db.close()
+		db.destroy()
 	})
 })

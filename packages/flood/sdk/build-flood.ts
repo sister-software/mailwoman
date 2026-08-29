@@ -213,12 +213,11 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 	let streamed: StreamResult
 
 	{
-		const database = new DatabaseSync(tmpPath)
-		const kdb = new DatabaseClient<FloodDatabase>(database)
+		const kdb = new DatabaseClient<FloodDatabase>(tmpPath)
 
 		try {
-			database.exec("PRAGMA journal_mode = OFF")
-			database.exec("PRAGMA synchronous = OFF")
+			kdb.exec("PRAGMA journal_mode = OFF")
+			kdb.exec("PRAGMA synchronous = OFF")
 
 			await createFloodTables(kdb)
 			await createLayerManifestTable(kdb)
@@ -227,13 +226,13 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			// The touch table exists only for this build and is dropped before the artifact is sealed. No primary key while
 			// loading: the resolution queries below read it through indexes created once the load is done, and a clustered
 			// key would sort every insert against an ingest order nothing controls.
-			database.exec(
+			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
 
 			if (!("batched" in options)) {
 				streamed = aggregateChunks([
-					await ingestFloodChunk(database, {
+					await ingestFloodChunk(kdb, {
 						source: options.source,
 						indexResolution: options.indexResolution,
 						coverageResolution: options.coverageResolution,
@@ -261,12 +260,11 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 		}
 	}
 
-	const database = new DatabaseSync(tmpPath)
-	const kdb = new DatabaseClient<FloodDatabase>(database)
+	const kdb = new DatabaseClient<FloodDatabase>(tmpPath)
 
 	try {
-		database.exec("PRAGMA journal_mode = OFF")
-		database.exec("PRAGMA synchronous = OFF")
+		kdb.exec("PRAGMA journal_mode = OFF")
+		kdb.exec("PRAGMA synchronous = OFF")
 
 		if (streamed!.features !== declaredFeatureCount) {
 			throw new Error(
@@ -280,7 +278,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 
 		options.onProgress?.(`${ingested.features.toLocaleString()} features written · resolving cells`)
 
-		const cells = resolveCells(database)
+		const cells = resolveCells(kdb)
 
 		options.onProgress?.(
 			`${cells.wholeRows.toLocaleString()} whole (compacted) · ${cells.partialRows.toLocaleString()} partial · ${cells.candidateRows.toLocaleString()} candidate pairs`
@@ -290,8 +288,8 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 
 		await writeLayerCoverage(kdb, coverage)
 
-		writeExtentRow(database, options, coverage.length)
-		writeVocabularyRows(database)
+		writeExtentRow(kdb, options, coverage.length)
+		writeVocabularyRows(kdb)
 
 		await writeLayerManifest(kdb, {
 			name: EA_FLOOD_LAYER_NAME,
@@ -311,8 +309,8 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			createdAt: options.createdAt,
 		})
 
-		database.exec("DROP TABLE build_cell_touch")
-		database.exec("VACUUM")
+		kdb.exec("DROP TABLE build_cell_touch")
+		kdb.exec("VACUUM")
 
 		await kdb.destroy()
 
@@ -514,7 +512,7 @@ async function runBatchedIngest(
  * coarse cells while the fringe stays fine — hierarchy-respecting run-length encoding. A partial cell's parent is not
  * partial in any useful sense, so compacting the fringe would claim it covers ground it does not.
  */
-function resolveCells(database: DatabaseSync): {
+function resolveCells(database: DatabaseClient<FloodDatabase>): {
 	wholeRows: number
 	partialRows: number
 	candidateRows: number
@@ -630,7 +628,11 @@ function buildCoverageCells(extent: FloodMapExtent, observed: Map<number, number
 /**
  * Insert the single footprint row.
  */
-function writeExtentRow(database: DatabaseSync, options: BuildFloodOptions, coverageCells: number): void {
+function writeExtentRow(
+	database: DatabaseClient<FloodDatabase>,
+	options: BuildFloodOptions,
+	coverageCells: number
+): void {
 	const { extent } = options
 
 	database
@@ -661,7 +663,7 @@ function writeExtentRow(database: DatabaseSync, options: BuildFloodOptions, cove
 /**
  * Insert the authority's declared zone domain.
  */
-function writeVocabularyRows(database: DatabaseSync): void {
+function writeVocabularyRows(database: DatabaseClient<FloodDatabase>): void {
 	const insert = database.prepare(
 		"INSERT INTO flood_zone_vocabulary (zone_code, label, definition, definition_url) VALUES (?, ?, ?, ?)"
 	)

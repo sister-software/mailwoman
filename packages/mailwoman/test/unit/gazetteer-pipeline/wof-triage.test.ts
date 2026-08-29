@@ -15,6 +15,8 @@ import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CoverageVerdict, CurrencyClass, triageWOFCurrency } from "mailwoman/gazetteer-pipeline/wof-triage"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -32,7 +34,7 @@ afterEach(async () => {
  * A minimal admin gazetteer in the shape the triage reads.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -75,7 +77,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (10, 208453);
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 /**

@@ -11,8 +11,10 @@
 
 import { readFileSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { MultiPolygonCoords } from "./index.ts"
+import type { TimezoneDatabase } from "./schema.ts"
 
 interface TimezoneFeature {
 	properties: { tzid: string }
@@ -25,7 +27,7 @@ interface TimezoneFeature {
 export function buildTimezoneDB(geojsonPath: string, dbPath: string): { features: number } {
 	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/timezone-lookup` does not depend on @mailwoman/core.
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: TimezoneFeature[] }
-	const db = new DatabaseSync(dbPath)
+	const db = new DatabaseClient<TimezoneDatabase>(dbPath)
 	db.exec("DROP TABLE IF EXISTS timezone_polygons")
 
 	db.exec(
@@ -79,7 +81,7 @@ export function buildTimezoneDB(geojsonPath: string, dbPath: string): { features
 
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_tz_bbox ON timezone_polygons (minLat, maxLat, minLon, maxLon)")
-	db.close()
+	db.destroy()
 
 	return { features: data.features.length }
 }

@@ -10,6 +10,8 @@ import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { loadDefaultReverseGeocoder } from "mailwoman/default-reverse-geocoder"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "mailwoman/poi-intent"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
@@ -356,7 +358,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	it("routes an exact poi.db name hit and rejects a longer token-overlap control", async () => {
 		const directory = await mkdtemp(join(tmpdir(), "mailwoman-poi-name-"))
 		const databasePath = join(directory, "poi.db")
-		const db = new DatabaseSync(databasePath)
+		const db = new DatabaseClient<POIDatabase>(databasePath)
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")
 
 		try {
@@ -403,7 +405,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 			db.prepare("INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)").run("東京タワー", tokyoNameKey, 0)
 
-			db.close()
+			db.destroy()
 
 			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: { poiDatabasePath: databasePath } })
 			const result = await pipeline("Statue of Liberty", { locale: "en-US" })
@@ -431,7 +433,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 			expect(overlap.path).not.toBe("poi")
 		} finally {
 			try {
-				db.close()
+				db.destroy()
 			} catch {
 				// Already closed after fixture setup.
 			}

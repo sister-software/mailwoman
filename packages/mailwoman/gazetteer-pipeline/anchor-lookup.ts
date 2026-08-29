@@ -63,6 +63,8 @@
 import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
 import { closeSync, openSync, readFileSync, writeSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"
 
 /**
@@ -99,7 +101,7 @@ function placed(lat: number, lon: number): boolean {
  */
 function loadIntl(country: string): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	const con = new DatabaseSync(dataRootPath("wof", "postalcode-intl.db"))
+	const con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-intl.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND country=?")
@@ -115,7 +117,7 @@ function loadIntl(country: string): Map<string, Centroid> {
 		}
 	}
 
-	con.close()
+	con.destroy()
 
 	return out
 }
@@ -126,7 +128,7 @@ function loadIntl(country: string): Map<string, Centroid> {
  */
 function loadUs(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	const con = new DatabaseSync(dataRootPath("wof", "postalcode-us.db"))
+	const con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-us.db"))
 	const hasSources = con.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='centroid_source'").get()
 	const srcJoin = hasSources ? "LEFT JOIN centroid_source cs ON cs.id=spr.id" : ""
 	const srcCol = hasSources ? "cs.source" : "NULL"
@@ -148,7 +150,7 @@ function loadUs(): Map<string, Centroid> {
 		}
 	}
 
-	con.close()
+	con.destroy()
 
 	return out
 }
@@ -196,7 +198,7 @@ const NL_SOURCE = "cbs-pc6"
  */
 function loadGBCodePoint(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	const con = new DatabaseSync(dataRootPath("wof", "postalcode-gb-codepoint.db"))
+	const con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-gb-codepoint.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
@@ -212,7 +214,7 @@ function loadGBCodePoint(): Map<string, Centroid> {
 		out.set(pc, [lat, lon, placed(lat, lon) ? GB_SOURCE : null])
 	}
 
-	con.close()
+	con.destroy()
 
 	return out
 }
@@ -262,7 +264,7 @@ function addGBOutwardKeys(units: Map<string, Centroid>): number {
  */
 function loadNLPC6(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	const con = new DatabaseSync(dataRootPath("wof", "postalcode-nl-pc6.db"))
+	const con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-nl-pc6.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
@@ -278,7 +280,7 @@ function loadNLPC6(): Map<string, Centroid> {
 		out.set(pc, [lat, lon, placed(lat, lon) ? NL_SOURCE : null])
 	}
 
-	con.close()
+	con.destroy()
 
 	return out
 }

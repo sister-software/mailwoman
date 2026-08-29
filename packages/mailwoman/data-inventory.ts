@@ -23,10 +23,12 @@
  *   visible instead of leaving it as a filesystem detail.
  */
 
+import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { type Dirent, existsSync, lstatSync, readdirSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
 import { basename, join, relative } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Whether an artifact can say how it was made.
@@ -125,10 +127,10 @@ export interface InventoryReport {
  * one read-write would fail on exactly the artifacts it most needs to describe.
  */
 export function probeManifest(path: string): { manifest?: LayerManifest; error?: string } {
-	let db: DatabaseSync | undefined
+	let db: DatabaseClient<LayerContractDatabase> | undefined
 
 	try {
-		db = new DatabaseSync(path, { readOnly: true })
+		db = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
 
 		const present = db
 			.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'layer_manifest' LIMIT 1")
@@ -142,7 +144,7 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
 	} catch (error) {
 		return { error: (error as Error).message }
 	} finally {
-		db?.close()
+		db?.destroy()
 	}
 }
 

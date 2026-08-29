@@ -35,7 +35,9 @@
 import { existsSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"
 
 /**
@@ -317,7 +319,7 @@ async function loadAttestors(
  */
 export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResult> {
 	const progress = opts.onProgress ?? (() => {})
-	const db = new DatabaseSync(opts.adminDB, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(opts.adminDB, { readOnly: true })
 
 	try {
 		const placetypes = TRIAGE_PLACETYPES.map((pt) => `'${pt}'`).join(", ")
@@ -461,6 +463,6 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 
 		return { rows, summary }
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }

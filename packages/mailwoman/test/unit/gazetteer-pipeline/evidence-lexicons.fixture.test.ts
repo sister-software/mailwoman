@@ -34,6 +34,8 @@ import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { BuiltLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
 import { buildLocalitySurfaceLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -45,7 +47,7 @@ let scratch: string
  * (aliases), `place_population` (the law-2/3 importance input), and `ancestors` (the v4 parent-prominence proxy).
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	// Throwaway fixture, so durability is worthless and expensive. `db.exec` runs each statement in
 	// its own autocommit transaction, and the ~50 INSERTs below were paying an fsync apiece —
@@ -134,7 +136,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO names VALUES (13, 'Roazhon');
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 beforeEach(async () => {

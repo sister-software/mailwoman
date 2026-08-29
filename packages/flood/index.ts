@@ -47,9 +47,11 @@ import {
 } from "@mailwoman/core/layers"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
 import { pointInEncodedRings } from "./rings.ts"
+import type { FloodDatabase } from "./schema.ts"
 import { FloodCellContainment } from "./schema.ts"
 import { EA_FLOOD_LAYER_NAME, EA_PRODUCT_LIMITS, FLOOD_ZONE_1, type FloodZoneDefinition } from "./vocabulary.ts"
 
@@ -185,22 +187,22 @@ export interface FloodZoneLookupOptions {
 export class FloodZoneLookup {
 	readonly identity: FloodLayerIdentity
 
-	readonly #database: DatabaseSync
-	readonly #selectCell: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectCandidates: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectAreaBounds: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectAreaRings: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectCoverage: ReturnType<DatabaseSync["prepare"]>
+	readonly #database: DatabaseClient<FloodDatabase>
+	readonly #selectCell: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectCandidates: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectAreaBounds: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectAreaRings: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectCoverage: ReturnType<DatabaseClient["prepare"]>
 	readonly #definitions: Map<string, FloodZoneDefinition>
 
 	constructor(options: FloodZoneLookupOptions) {
-		this.#database = new DatabaseSync(options.databasePath, { readOnly: true })
+		this.#database = new DatabaseClient<FloodDatabase>(options.databasePath, { readOnly: true })
 
 		try {
 			this.identity = readIdentity(this.#database, options.databasePath)
 			this.#definitions = readDefinitions(this.#database)
 		} catch (error) {
-			this.#database.close()
+			this.#database.destroy()
 
 			throw error
 		}
@@ -271,7 +273,7 @@ export class FloodZoneLookup {
 	}
 
 	public close(): void {
-		this.#database.close()
+		this.#database.destroy()
 	}
 
 	/**
@@ -355,7 +357,7 @@ export class FloodZoneLookup {
 /**
  * Read and check the layer's identity.
  */
-function readIdentity(database: DatabaseSync, databasePath: string): FloodLayerIdentity {
+function readIdentity(database: DatabaseClient<FloodDatabase>, databasePath: string): FloodLayerIdentity {
 	const manifestRows = database.prepare("SELECT * FROM layer_manifest").all() as Array<
 		Record<string, string | number | null>
 	>
@@ -438,7 +440,7 @@ function readIdentity(database: DatabaseSync, databasePath: string): FloodLayerI
 /**
  * The authority's zone definitions, keyed by code.
  */
-function readDefinitions(database: DatabaseSync): Map<string, FloodZoneDefinition> {
+function readDefinitions(database: DatabaseClient<FloodDatabase>): Map<string, FloodZoneDefinition> {
 	const rows = database.prepare("SELECT * FROM flood_zone_vocabulary").all() as Array<{
 		zone_code: string
 		label: string

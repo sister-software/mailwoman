@@ -14,6 +14,8 @@ import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { Resolved } from "./tree-hits.ts"
 
@@ -131,7 +133,7 @@ export function buildLocalityMatcher(adminShardPath: string): LocalityMatcher {
 	// wrong-place misses: different WOF ids carry disjoint name sets, so Saint Albans never
 	// matches St. Johnsbury. The admin db (shard 0) is opened read-only; `names` is indexed on
 	// id, and lookups are cached + only fire on a near-miss, so the cost is negligible.
-	const adminDB = new DatabaseSync(adminShardPath, { readOnly: true })
+	const adminDB = new DatabaseClient<WOFDatabase>(adminShardPath, { readOnly: true })
 	const namesStmt = adminDB.prepare("SELECT name FROM names WHERE id = ?")
 	const altCache = new Map<number, Set<string>>()
 

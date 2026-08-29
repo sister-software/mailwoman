@@ -36,9 +36,11 @@
 
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { interiorPointOfEncodedRings, pointInEncodedRings, segmentDistanceMetres } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { ZoningLookup, ZoningReadingKind, type ZoningReading } from "../index.ts"
 import { encodeRings, resolveRingRoles, type MultiPolygonRings, type PolygonRings } from "../rings.ts"
+import type { ZoningDatabase } from "../schema.ts"
 import type { GZTClient } from "./client.ts"
 
 /**
@@ -320,7 +322,7 @@ export function sampleAgreementPoints(
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number; localCode: string }> {
 	const count = options.count ?? 48
-	const database = new DatabaseSync(databasePath, { readOnly: true })
+	const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 	try {
 		const points: Array<{ label: string; latitude: number; longitude: number; localCode: string }> = []
@@ -371,6 +373,6 @@ export function sampleAgreementPoints(
 
 		return points
 	} finally {
-		database.close()
+		database.destroy()
 	}
 }

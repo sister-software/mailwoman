@@ -14,15 +14,17 @@ import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
 import { WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm/lookup"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 let scratch: string
 let slimBytes: Uint8Array
 
 function buildFixtureWOF(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -110,7 +112,7 @@ function buildFixtureWOF(path: string): void {
 		INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000);
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 beforeAll(async () => {

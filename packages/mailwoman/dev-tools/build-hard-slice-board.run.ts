@@ -29,6 +29,8 @@ import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { JSONSpliterator } from "spliterator"
 
 import {
@@ -48,7 +50,7 @@ const WOF_DB = String(dataRootPath("wof", "fst-staging-2026-08-05", "admin-globa
 const POP_FST_DIR = String(dataRootPath("wof", "fst-per-locale"))
 const IMP_FST_DIR = String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix"))
 
-const db = new DatabaseSync(WOF_DB, { readOnly: true })
+const db = new DatabaseClient<WOFDatabase>(WOF_DB, { readOnly: true })
 const pointStmt = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")
 
 interface Point {
@@ -207,6 +209,6 @@ console.error(`wrote ${sorted.length} rows → ${OUT}`)
 console.error(`  fstReach in=${inReach} out=${sorted.length - inReach}`)
 console.error(`  rows whose probe surface has a DIFFERENT bias between arms: ${moved}`)
 
-db.close()
+db.destroy()
 
 //#endregion

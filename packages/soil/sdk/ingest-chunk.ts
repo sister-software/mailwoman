@@ -22,7 +22,9 @@
 
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox, shortCellToInt } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { SoilDatabase } from "../schema.ts"
 import { classifyDelineationCells } from "./cells.ts"
 import type { SoilFeatureSource } from "./ingest.ts"
 
@@ -84,7 +86,7 @@ export interface IngestSoilChunkOptions {
  * @throws {Error} On a delineation the classifier refuses — which includes the allocator's silent zero-cell answer.
  */
 export async function ingestSoilChunk(
-	database: DatabaseSync,
+	database: DatabaseClient<SoilDatabase>,
 	options: IngestSoilChunkOptions
 ): Promise<SoilChunkResult> {
 	const insertArea = database.prepare(

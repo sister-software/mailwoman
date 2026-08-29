@@ -4663,7 +4663,9 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
     "@mailwoman/platform": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
+    "@mailwoman/tiger": "workspace:*"
     "@types/node": "npm:>=26.1.2"
     adm-zip: "npm:^0.6.0"
     fast-glob: "npm:^3.3.3"
@@ -5145,6 +5147,7 @@ __metadata:
     "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     hono: "npm:^4.13.0"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
@@ -5278,6 +5281,7 @@ __metadata:
     "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@sqlite.org/sqlite-wasm": "npm:^3.53.0-build1"
   languageName: unknown
   linkType: soft

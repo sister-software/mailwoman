@@ -306,12 +306,11 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 	let streamed: StreamResult
 
 	{
-		const database = new DatabaseSync(tmpPath)
-		const kdb = new DatabaseClient<ZoningDatabase>(database)
+		const kdb = new DatabaseClient<ZoningDatabase>(tmpPath)
 
 		try {
-			database.exec("PRAGMA journal_mode = OFF")
-			database.exec("PRAGMA synchronous = OFF")
+			kdb.exec("PRAGMA journal_mode = OFF")
+			kdb.exec("PRAGMA synchronous = OFF")
 
 			await createZoningTables(kdb)
 			await createLayerManifestTable(kdb)
@@ -319,7 +318,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 
 			if (!("batched" in options)) {
 				streamed = aggregateChunks([
-					await ingestZoningChunk(database, {
+					await ingestZoningChunk(kdb, {
 						source: options.source,
 						indexResolution: options.indexResolution,
 						coverageResolution: options.coverageResolution,
@@ -347,12 +346,11 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 		}
 	}
 
-	const database = new DatabaseSync(tmpPath)
-	const kdb = new DatabaseClient<ZoningDatabase>(database)
+	const kdb = new DatabaseClient<ZoningDatabase>(tmpPath)
 
 	try {
-		database.exec("PRAGMA journal_mode = OFF")
-		database.exec("PRAGMA synchronous = OFF")
+		kdb.exec("PRAGMA journal_mode = OFF")
+		kdb.exec("PRAGMA synchronous = OFF")
 
 		const ingested = streamed!
 
@@ -381,10 +379,10 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 				`(${ingested.rings.exteriors.toLocaleString()} exterior, ${ingested.rings.holes.toLocaleString()} hole)`
 		)
 
-		writeJurisdictionRows(database, ingested.jurisdictions)
-		writePlanRows(database, ingested.plans)
+		writeJurisdictionRows(kdb, ingested.jurisdictions)
+		writePlanRows(kdb, ingested.plans)
 
-		const vocabulary = writeVocabularyRows(database, ingested.vocabulary)
+		const vocabulary = writeVocabularyRows(kdb, ingested.vocabulary)
 
 		const coverage = buildCoverageCells(ingested.observedByCoverageCell)
 
@@ -411,7 +409,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 		})
 
 		const storedResolutions = (
-			database.prepare("SELECT DISTINCT resolution FROM zoning_cell ORDER BY resolution").all() as Array<{
+			kdb.prepare("SELECT DISTINCT resolution FROM zoning_cell ORDER BY resolution").all() as Array<{
 				resolution: number
 			}>
 		).map((row) => row.resolution)
@@ -421,7 +419,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 		// handful of rows, and the geometry table is probed by `area_id`, its own key. An index over a `WITHOUT ROWID` table
 		// carries the primary key in every entry, so it would roughly double the cell tier to serve a scan that is already
 		// short.
-		database.exec("VACUUM")
+		kdb.exec("VACUUM")
 
 		await kdb.destroy()
 
@@ -781,7 +779,10 @@ export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void 
 /**
  * Insert the authorities.
  */
-function writeJurisdictionRows(database: DatabaseSync, jurisdictions: ReadonlyArray<[string, string]>): void {
+function writeJurisdictionRows(
+	database: DatabaseClient<ZoningDatabase>,
+	jurisdictions: ReadonlyArray<[string, string]>
+): void {
 	const insert = database.prepare(
 		"INSERT INTO zoning_jurisdiction (jurisdiction_id, name, source_code, country) VALUES (?, ?, ?, ?)"
 	)
@@ -797,7 +798,7 @@ function writeJurisdictionRows(database: DatabaseSync, jurisdictions: ReadonlyAr
 /**
  * Insert the plans.
  */
-function writePlanRows(database: DatabaseSync, plans: ZoningChunkResult["plans"]): void {
+function writePlanRows(database: DatabaseClient<ZoningDatabase>, plans: ZoningChunkResult["plans"]): void {
 	const insert = database.prepare(
 		"INSERT INTO zoning_plan (plan_id, jurisdiction_id, plan_name, plan_level, valid_from, valid_to, current_plan) " +
 			"VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -818,7 +819,7 @@ function writePlanRows(database: DatabaseSync, plans: ZoningChunkResult["plans"]
  * change indistinguishable from the publisher's own vocabulary.
  */
 function writeVocabularyRows(
-	database: DatabaseSync,
+	database: DatabaseClient<ZoningDatabase>,
 	observed: ReadonlyArray<ObservedTerm>
 ): BuildZoningResult["vocabulary"] {
 	const insert = database.prepare(

@@ -58,6 +58,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/p
 import { dirname, join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
 
 import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "./fst.ts"
@@ -376,7 +378,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 	const countryCounts = computeSurfaceCountryCounts(dbPath)
 	const personNames = loadPersonNameSurfaces()
 
-	const db = new DatabaseSync(dbPath, { open: true })
+	const db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
 	const importanceByID = new Map<number, number>()
 	const popStmt = db.prepare("SELECT id, population FROM place_population")
 
@@ -484,7 +486,7 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		add(row.name, row.id)
 	}
 
-	db.close()
+	db.destroy()
 
 	// Laws 2 + 3, applied post-scan (a surface's floor input is its MAX importance across carriers;
 	// own vs parent tracked separately so law 3 can refuse parent-laundered person-names).

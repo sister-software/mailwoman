@@ -389,22 +389,21 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 	const edgarSource: AsyncIterable<EdgarSubsidiaryRow> | Iterable<EdgarSubsidiaryRow> = options.edgarRows ?? []
 
-	const db = new DatabaseSync(buildingPath)
+	const kdb = new DatabaseClient<FilerDatabase>(buildingPath)
 	// Build-tuning pragmas — identical to build-bdc.ts's discipline.
-	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<FilerDatabase>(db)
+	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
 	progress("creating manifest/node/edge/attribute/cluster/family/attribute-stage tables")
 	await createFilerBuildTables(kdb)
 
-	const insNode = db.prepare(
+	const insNode = kdb.prepare(
 		`INSERT OR IGNORE INTO filer_node (node_id, identifier_type, identifier_value) VALUES (?, ?, ?)`
 	)
 
 	// relationship: FRN<->form499ID and bdcProviderID<->FRN assert identity (SameEntity); the
 	// holding-/management-company edges below assert HoldingCompany/ManagementCompany — see the module docstring's
 	// "relationship is fully typed" section.
-	const insEdge = db.prepare(
+	const insEdge = kdb.prepare(
 		`INSERT OR IGNORE INTO filer_edge (
 			from_node_id, to_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score, evidence
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -415,13 +414,13 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	// uniqueness a staging table would otherwise exist to give. naming_node_id belongs in that key —
 	// see createFilerFamilyTable's docstring for why leaving it out would make THIS statement's OR IGNORE drop a
 	// second, differently-spelled report of the same family.
-	const insFamily = db.prepare(
+	const insFamily = kdb.prepare(
 		`INSERT OR IGNORE INTO filer_family (
 			node_id, family_id, naming_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	)
 
-	const insAttrStage = db.prepare(
+	const insAttrStage = kdb.prepare(
 		`INSERT OR IGNORE INTO filer_attribute_stage (node_id, key, value, source, source_vintage) VALUES (?, ?, ?, ?, ?)`
 	)
 
@@ -432,8 +431,8 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		batch++
 
 		if (batch >= STAGE_BATCH_SIZE) {
-			db.exec("COMMIT")
-			db.exec("BEGIN")
+			kdb.exec("COMMIT")
+			kdb.exec("BEGIN")
 			batch = 0
 		}
 	}
@@ -445,7 +444,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	}
 
 	progress("staging nodes/edges/attributes — raw prepared INSERT OR IGNORE")
-	db.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	// EDGAR corroboration input — keyed by FRN, keeping the LATEST lastFiledAt's legal name per FRN, the
 	// same "latest wins" convention cluster-filers.ts's readLatestLegalNames uses for the identical reason (a
@@ -604,9 +603,9 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		commitBatch()
 	}
 
-	db.exec("COMMIT")
+	kdb.exec("COMMIT")
 
-	const stagedCountRow = db.prepare("SELECT COUNT(*) AS staged_count FROM filer_attribute_stage").get() as {
+	const stagedCountRow = kdb.prepare("SELECT COUNT(*) AS staged_count FROM filer_attribute_stage").get() as {
 		staged_count: number
 	}
 
@@ -614,7 +613,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 	progress("materializing filer_attribute from the staged, deduped facts")
 
-	db.exec(
+	kdb.exec(
 		`INSERT INTO filer_attribute (node_id, key, value, source, source_vintage)
 		 SELECT node_id, key, value, source, source_vintage FROM filer_attribute_stage`
 	)
@@ -663,10 +662,10 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 		})
 		.execute()
 
-	const nodeCount = (db.prepare("SELECT COUNT(*) AS c FROM filer_node").get() as { c: number }).c
-	const edgeCount = (db.prepare("SELECT COUNT(*) AS c FROM filer_edge").get() as { c: number }).c
-	const attributeCount = (db.prepare("SELECT COUNT(*) AS c FROM filer_attribute").get() as { c: number }).c
-	const familyCount = (db.prepare("SELECT COUNT(*) AS c FROM filer_family").get() as { c: number }).c
+	const nodeCount = (kdb.prepare("SELECT COUNT(*) AS c FROM filer_node").get() as { c: number }).c
+	const edgeCount = (kdb.prepare("SELECT COUNT(*) AS c FROM filer_edge").get() as { c: number }).c
+	const attributeCount = (kdb.prepare("SELECT COUNT(*) AS c FROM filer_attribute").get() as { c: number }).c
+	const familyCount = (kdb.prepare("SELECT COUNT(*) AS c FROM filer_family").get() as { c: number }).c
 
 	progress(
 		`materialized ${nodeCount.toLocaleString()} node(s), ${edgeCount.toLocaleString()} edge(s), ` +
@@ -675,12 +674,12 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	)
 
 	progress("finalize: ANALYZE + VACUUM")
-	db.exec("ANALYZE")
+	kdb.exec("ANALYZE")
 	// page_size MUST be set right before VACUUM — node:sqlite initializes the file at the 4096 default on
 	// `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size (matches
 	// build-bdc.ts's same discipline).
-	db.exec("PRAGMA page_size=8192")
-	db.exec("VACUUM")
+	kdb.exec("PRAGMA page_size=8192")
+	kdb.exec("VACUUM")
 	await kdb.destroy()
 
 	progress("seal")

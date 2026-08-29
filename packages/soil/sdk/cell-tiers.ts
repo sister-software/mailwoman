@@ -18,9 +18,10 @@
 
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { compactCells, getResolution } from "h3-js"
 
-import { SoilCellContainment, type SoilCapabilityCellTable } from "../schema.ts"
+import { SoilCellContainment, type SoilCapabilityCellTable, type SoilDatabase } from "../schema.ts"
 import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } from "./reduce.ts"
 
 /**
@@ -31,7 +32,7 @@ import { mapUnitProfile, reduceCell, type CellCandidate, type MapUnitProfile } f
  * smaller than one resolution-9 cell.
  */
 export function resolveCells(
-	database: DatabaseSync,
+	database: DatabaseClient<SoilDatabase>,
 	indexResolution: number
 ): { wholeRows: number; partialRows: number; resolutions: number[] } {
 	database.exec("CREATE INDEX build_cell_touch_area_cell ON build_cell_touch (area_id, resolution, is_full, h3_cell)")
@@ -131,7 +132,7 @@ const GEOMETRY_CACHE_ENTRIES = 200_000
  * about which delineation reaches which cell.
  */
 export function reduceCells(
-	database: DatabaseSync,
+	database: DatabaseClient<SoilDatabase>,
 	indexResolution: number,
 	onProgress?: (message: string) => void
 ): {
@@ -270,7 +271,7 @@ export function reduceCells(
  */
 const SHORT_CELL_HEX_LENGTH = 13
 
-function insertRow(statement: ReturnType<DatabaseSync["prepare"]>, row: SoilCapabilityCellTable): void {
+function insertRow(statement: ReturnType<DatabaseClient["prepare"]>, row: SoilCapabilityCellTable): void {
 	statement.run(
 		row.h3_cell,
 		row.class_shares,
@@ -289,7 +290,7 @@ function insertRow(statement: ReturnType<DatabaseSync["prepare"]>, row: SoilCapa
 /**
  * Every map unit's per-unit-area profile, computed once and reused for every cell it reaches.
  */
-function readMapUnitProfiles(database: DatabaseSync): Map<string, MapUnitProfile> {
+function readMapUnitProfiles(database: DatabaseClient<SoilDatabase>): Map<string, MapUnitProfile> {
 	const componentsByMukey = new Map<
 		string,
 		Array<{ comppct_r: number; compkind: string | null; nirrcapcl: string | null }>

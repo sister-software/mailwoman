@@ -14,6 +14,8 @@ import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ancestorIdentity, candidateLayerManifest } from "mailwoman/gazetteer-pipeline/candidate-manifest"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -37,11 +39,11 @@ function scratch(): string {
  * An admin database with a manifest naming `name@version`.
  */
 function manifested(path: string, name: string, version: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec("CREATE TABLE layer_manifest (name TEXT PRIMARY KEY, version TEXT NOT NULL)")
 	db.prepare("INSERT INTO layer_manifest VALUES (?, ?)").run(name, version)
-	db.close()
+	db.destroy()
 }
 
 const BASE = {
@@ -64,10 +66,10 @@ describe("ancestorIdentity — the four states", () => {
 	it("says the ancestor PREDATES the contract, which is the live state today", () => {
 		// Every admin build before phase 3 has no manifest. This is measured, not hypothetical.
 		const root = scratch()
-		const db = new DatabaseSync(join(root, "admin.db"))
+		const db = new DatabaseClient<WOFDatabase>(join(root, "admin.db"))
 
 		db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY)")
-		db.close()
+		db.destroy()
 
 		expect(ancestorIdentity(join(root, "admin.db"))).toContain("predates the layer contract")
 	})

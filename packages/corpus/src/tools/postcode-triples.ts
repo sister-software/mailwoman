@@ -45,6 +45,8 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"
 
 import type { PostcodePlacement } from "../shard-recipes/scaffold.ts"
@@ -186,7 +188,7 @@ export function readTriplesFromParentJoin(
 
 	if (!existsSync(postcodeDB) || !existsSync(adminDB)) return []
 
-	const db = new DatabaseSync(adminDB, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
 
 	try {
 		db.exec(`ATTACH DATABASE '${postcodeDB.replaceAll("'", "''")}' AS pc`)
@@ -227,7 +229,7 @@ export function readTriplesFromParentJoin(
 
 		return out
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }
 
@@ -254,7 +256,7 @@ export function createKnownLocalityGate(country: string, adminDB?: string): (nam
 
 	if (!existsSync(path)) return () => true
 
-	const db = new DatabaseSync(path, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(path, { readOnly: true })
 
 	try {
 		const names = new Set<string>()
@@ -273,7 +275,7 @@ export function createKnownLocalityGate(country: string, adminDB?: string): (nam
 
 		return (name: string) => names.has(name.toLowerCase())
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }
 

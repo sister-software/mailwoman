@@ -30,6 +30,8 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { LocaleBaseTuple } from "#synthesizers/german"
 import {
@@ -676,7 +678,7 @@ const POI_CONFOUND_CATEGORIES: readonly string[] = [
  * fr-FR and nothing else, and a zero here is evidence of absence in four countries rather than in the world.
  */
 export function readPOIPools(dbPath: string, country: string, query: PoolQuery): NamePools {
-	const db = new DatabaseSync(dbPath, { readOnly: true })
+	const db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
 	try {
 		const codes = db.prepare("select id, category from poi_category_codes").all() as Array<{
@@ -732,7 +734,7 @@ export function readPOIPools(dbPath: string, country: string, query: PoolQuery):
 			unpromotedShapes: [],
 		}
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }
 

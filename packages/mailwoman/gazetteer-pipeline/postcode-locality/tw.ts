@@ -308,7 +308,7 @@ interface AdminPlace {
  * The database handle is closed before returning — everything downstream reads these indexes, not SQL.
  */
 function loadAdminIndexes(args: { adminDB: string }) {
-	const admin = new DatabaseSync(args.adminDB)
+	const admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
 	const ph = PLACETYPES.map(() => "?").join(",")
 	const places = new Map<number, AdminPlace>()
 
@@ -400,7 +400,7 @@ function loadAdminIndexes(args: { adminDB: string }) {
 		}
 	}
 
-	admin.close()
+	admin.destroy()
 
 	// Proximity grid (0.5° cells, same shape as the JP/KR builders) — used by both the polygon
 	// candidate scan (bbox-scoped) and the no-polygon fallback.
@@ -468,8 +468,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 
 	const buildPath = `${args.output}.building`
 	rmSync(buildPath, { force: true })
-	const db = new DatabaseSync(buildPath)
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(db)
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(buildPath)
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
 
@@ -615,14 +614,14 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		}
 	}
 
-	const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
-	db.exec("BEGIN")
+	const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
+	kdb.exec("BEGIN")
 
 	for (const r of rows) {
 		insert.run(...r)
 	}
 
-	db.exec("COMMIT")
+	kdb.exec("COMMIT")
 
 	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
 
@@ -657,18 +656,18 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 		["built_at", isoSeconds()],
 	]
 
-	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+	const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
 		insMeta.run(k, v)
 	}
 
-	db.exec("PRAGMA journal_mode=DELETE")
-	db.exec("ANALYZE")
-	assertDatabaseIntegrity(db, buildPath)
+	kdb.exec("PRAGMA journal_mode=DELETE")
+	kdb.exec("ANALYZE")
+	assertDatabaseIntegrity(kdb, buildPath)
 
-	db.exec("VACUUM")
-	db.close()
+	kdb.exec("VACUUM")
+	kdb.destroy()
 	// Build-then-move: the destination only ever sees a fully-built, integrity-checked artifact.
 	renameSync(buildPath, args.output)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.

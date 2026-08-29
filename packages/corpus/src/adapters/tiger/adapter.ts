@@ -36,6 +36,8 @@
 
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 
 import { lookupFipsState } from "#codex/us-fips-state"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -179,7 +181,7 @@ export function createTigerAdapter(): CorpusAdapter {
 				throw new Error(`tiger adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
+			const db = new DatabaseClient<TIGERDatabase>(opts.inputPath, { readOnly: true })
 			let emitted = 0
 
 			try {
@@ -240,7 +242,7 @@ export function createTigerAdapter(): CorpusAdapter {
 					}
 				}
 			} finally {
-				db.close()
+				db.destroy()
 			}
 		},
 	}

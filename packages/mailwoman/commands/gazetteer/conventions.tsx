@@ -124,15 +124,14 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 		if (!Array.isArray(rows)) throw new CommandError(`${src} must be a JSON array of authored conventions`)
 		validate(rows, KNOWN)
 
-		const db = new DatabaseSync(output)
-		// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `db` handle.
-		const kdb = new DatabaseClient<ConventionDatabase>(db)
+		const kdb = new DatabaseClient<ConventionDatabase>(output)
+		// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `kdb` handle.
 		await kdb.schema.dropTable("address_convention").ifExists().execute()
 		await kdb.schema.dropTable("meta").ifExists().execute()
 
 		await createAddressConventionTable(kdb)
 
-		const ins = db.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
+		const ins = kdb.prepare("INSERT INTO address_convention (wof_id, convention, source) VALUES (?, ?, ?)")
 
 		for (const r of rows) {
 			ins.run(r.wof_id, JSON.stringify(r.convention), r.source)
@@ -151,16 +150,16 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 			strategies_known: [...KNOWN].join(","),
 		}
 
-		const insMeta = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
+		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
 
 		for (const [k, v] of Object.entries(meta)) {
 			insMeta.run(k, v)
 		}
 
-		db.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
-		db.exec("ANALYZE")
-		assertDatabaseIntegrity(db, output)
-		db.exec("VACUUM")
+		kdb.exec("PRAGMA journal_mode = DELETE") // no -wal/-shm sidecar; the .db is self-contained
+		kdb.exec("ANALYZE")
+		assertDatabaseIntegrity(kdb, output)
+		kdb.exec("VACUUM")
 		await kdb.destroy() // closes the underlying `db` handle
 
 		const summary = [`conventions: ${output}`, `${rows.length} convention(s) compiled, integrity=ok`]

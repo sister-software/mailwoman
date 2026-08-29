@@ -157,7 +157,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	const points = await loadGeonamesPoints(args.geonames)
 
-	const admin = new DatabaseSync(args.adminDB)
+	const admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
 	const ph = PLACETYPES.map(() => "?").join(",")
 
 	const places = admin
@@ -167,7 +167,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		)
 		.all(args.country, ...PLACETYPES) as Array<{ id: number; name: string; latitude: number; longitude: number }>
 
-	admin.close()
+	admin.destroy()
 
 	const grid = new Map<string, Array<{ pid: number; nm: string; la: number; lo: number }>>()
 
@@ -205,8 +205,8 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		return out
 	}
 
-	const db = new DatabaseSync(args.output)
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(db)
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(args.output)
+
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
@@ -239,14 +239,14 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		}
 	}
 
-	const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
-	db.exec("BEGIN")
+	const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
+	kdb.exec("BEGIN")
 
 	for (const r of rows) {
 		insert.run(...r)
 	}
 
-	db.exec("COMMIT")
+	kdb.exec("COMMIT")
 
 	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
 
@@ -266,18 +266,18 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		["built_at", isoSeconds()],
 	]
 
-	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+	const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
 		insMeta.run(k, v)
 	}
 
-	db.exec("PRAGMA journal_mode=DELETE")
-	db.exec("ANALYZE")
-	assertDatabaseIntegrity(db, args.output)
+	kdb.exec("PRAGMA journal_mode=DELETE")
+	kdb.exec("ANALYZE")
+	assertDatabaseIntegrity(kdb, args.output)
 
-	db.exec("VACUUM")
-	db.close()
+	kdb.exec("VACUUM")
+	kdb.destroy()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
 

@@ -258,12 +258,11 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 	// them separated. The batched path DOES: its children open the same file, so the parent's handle has to be closed
 	// across them, and a single shared handle silently becomes a closed one by the time the cell tiers are resolved.
 	{
-		const database = new DatabaseSync(tmpPath)
-		const kdb = new DatabaseClient<SoilDatabase>(database)
+		const kdb = new DatabaseClient<SoilDatabase>(tmpPath)
 
 		try {
-			database.exec("PRAGMA journal_mode = OFF")
-			database.exec("PRAGMA synchronous = OFF")
+			kdb.exec("PRAGMA journal_mode = OFF")
+			kdb.exec("PRAGMA synchronous = OFF")
 
 			await createSoilTables(kdb)
 			await createLayerManifestTable(kdb)
@@ -272,14 +271,14 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			// The touch table exists only for this build and is dropped before the artifact is sealed. No primary key while
 			// loading: the resolution queries below read it through indexes created once the load is done, and a clustered
 			// key would sort every insert against an ingest order nothing controls.
-			database.exec(
+			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
 
-			writeAttributes(database, options.areas)
+			writeAttributes(kdb, options.areas)
 
 			if (options.inProcess) {
-				streamed = aggregateChunks(await ingestInProcess(database, options))
+				streamed = aggregateChunks(await ingestInProcess(kdb, options))
 			}
 		} catch (error) {
 			await kdb.destroy().catch(() => undefined)
@@ -301,12 +300,11 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 		}
 	}
 
-	const database = new DatabaseSync(tmpPath)
-	const kdb = new DatabaseClient<SoilDatabase>(database)
+	const kdb = new DatabaseClient<SoilDatabase>(tmpPath)
 
 	try {
-		database.exec("PRAGMA journal_mode = OFF")
-		database.exec("PRAGMA synchronous = OFF")
+		kdb.exec("PRAGMA journal_mode = OFF")
+		kdb.exec("PRAGMA synchronous = OFF")
 
 		const ingested = streamed!
 
@@ -315,20 +313,20 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 
 		options.onProgress?.(`${ingested.delineations.toLocaleString()} delineations written · resolving cells`)
 
-		const cells = resolveCells(database, options.indexResolution)
+		const cells = resolveCells(kdb, options.indexResolution)
 
 		options.onProgress?.(
 			`${cells.wholeRows.toLocaleString()} whole (compacted) · ${cells.partialRows.toLocaleString()} partial · reducing`
 		)
 
-		const reduced = reduceCells(database, options.indexResolution, options.onProgress)
+		const reduced = reduceCells(kdb, options.indexResolution, options.onProgress)
 
 		const coverage = buildCoverageCells(options, ingested)
 
 		await writeLayerCoverage(kdb, coverage.cells)
 
-		writeSurveyAreaRows(database, options, coverage.cellsByArea)
-		writeVocabularyRows(database, options.areas)
+		writeSurveyAreaRows(kdb, options, coverage.cellsByArea)
+		writeVocabularyRows(kdb, options.areas)
 
 		await writeLayerManifest(kdb, {
 			name: soilLayerName(options.region),
@@ -352,8 +350,8 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			createdAt: options.createdAt,
 		})
 
-		database.exec("DROP TABLE build_cell_touch")
-		database.exec("VACUUM")
+		kdb.exec("DROP TABLE build_cell_touch")
+		kdb.exec("VACUUM")
 
 		await kdb.destroy()
 
@@ -515,7 +513,7 @@ function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: St
  * and because a delineation whose map unit is missing must fail while the artifact is still empty rather than after
  * millions of geometry rows are written.
  */
-function writeAttributes(database: DatabaseSync, areas: ReadonlyArray<SurveyAreaInput>): void {
+function writeAttributes(database: DatabaseClient<SoilDatabase>, areas: ReadonlyArray<SurveyAreaInput>): void {
 	const insertMapUnit = database.prepare(
 		"INSERT OR REPLACE INTO soil_map_unit (mukey, areasymbol, musym, muname, mukind, mustatus, farmlndcl, farmland_scope, niccdcd, niccdcdpct, no_mapping) " +
 			"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
@@ -584,7 +582,10 @@ function noMappingMukeys(areas: ReadonlyArray<SurveyAreaInput>): Set<string> {
 /**
  * The in-process ingest — one chunk per survey area, all in this interpreter. Fixtures only.
  */
-async function ingestInProcess(database: DatabaseSync, options: BuildSoilOptions): Promise<SoilChunkResult[]> {
+async function ingestInProcess(
+	database: DatabaseClient<SoilDatabase>,
+	options: BuildSoilOptions
+): Promise<SoilChunkResult[]> {
 	const noMapping = noMappingMukeys(options.areas)
 	const chunks: SoilChunkResult[] = []
 
@@ -762,7 +763,7 @@ function outlinePolygons(outline: GeojsonGeometry): GeojsonPosition[][][] {
  * Insert one row per survey area.
  */
 function writeSurveyAreaRows(
-	database: DatabaseSync,
+	database: DatabaseClient<SoilDatabase>,
 	options: BuildSoilOptions,
 	cellsByArea: ReadonlyMap<string, number>
 ): void {
@@ -831,7 +832,7 @@ function writeSurveyAreaRows(
  * The weighting rides in the vocabulary table as well as on every row: the row-level copy is what a consumer reads, and
  * this one carries the sentence that says what it MEANS, which no column can.
  */
-function writeVocabularyRows(database: DatabaseSync, areas: ReadonlyArray<SurveyAreaInput>): void {
+function writeVocabularyRows(database: DatabaseClient<SoilDatabase>, areas: ReadonlyArray<SurveyAreaInput>): void {
 	const insert = database.prepare(
 		"INSERT OR REPLACE INTO soil_vocabulary (domain, code, definition, sequence) VALUES (?, ?, ?, ?)"
 	)

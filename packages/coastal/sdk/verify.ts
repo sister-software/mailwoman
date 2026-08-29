@@ -32,8 +32,10 @@
 
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { interiorPointOfEncodedRings, pointInPolygonRings, segmentDistanceMetres } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "../index.ts"
+import type { CoastalDatabase } from "../schema.ts"
 import { NCERM_SCENARIOS_BY_KEY } from "../vocabulary.ts"
 import { EA_NCERM_SPATIAL_BASE_URL, type EANCERMClient } from "./client.ts"
 
@@ -325,7 +327,7 @@ export function sampleAgreementPoints(
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> {
 	const count = options.count ?? 48
-	const database = new DatabaseSync(databasePath, { readOnly: true })
+	const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
 	try {
 		const points: Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> = []
@@ -370,6 +372,6 @@ export function sampleAgreementPoints(
 
 		return points
 	} finally {
-		database.close()
+		database.destroy()
 	}
 }

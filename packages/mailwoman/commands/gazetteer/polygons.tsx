@@ -212,7 +212,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 		const tol = options.tol
 
 		const srcPath = points || admin
-		const src = new DatabaseSync(srcPath, { readOnly: true })
+		const src = new DatabaseClient<PolygonDatabase>(srcPath, { readOnly: true })
 
 		const where = countries
 			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
@@ -223,7 +223,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
-		src.close()
+		src.destroy()
 
 		// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
 		// readonly artifact — never write the live path in case the build dies halfway). The
@@ -236,18 +236,17 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		const dbOut = new DatabaseSync(tmpOut)
-		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
-		const kdb = new DatabaseClient<PolygonDatabase>(dbOut)
+		const kdb = new DatabaseClient<PolygonDatabase>(tmpOut)
+		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `kdb` handle.
 
 		await createPolygonsTable(kdb)
 
-		const insert = dbOut.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
+		const insert = kdb.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
 
 		let done = 0
 		let missing = 0
 		let dropped = 0
-		dbOut.exec("BEGIN")
+		kdb.exec("BEGIN")
 
 		for (const r of rows) {
 			const path = geojsonPath(repos, r.country, r.id)
@@ -281,10 +280,10 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		dbOut.exec("COMMIT")
-		dbOut.exec("VACUUM")
+		kdb.exec("COMMIT")
+		kdb.exec("VACUUM")
 
-		const bytes = dbOut.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
+		const bytes = kdb.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
 			n: number
 			b: number | null
 		}

@@ -36,6 +36,8 @@ import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -319,7 +321,7 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 const surfaceCountryCountsMemo = new Map<string, Map<string, number>>()
 
 function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
-	const db = new DatabaseSync(dbPath, { open: true })
+	const db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
 	const placetypes = ["country", "region", "county", "locality", "localadmin", "borough", "neighbourhood"]
 	const ph = placetypes.map(() => "?").join(",")
 	// Memory shape matters: the names table runs to millions of rows (GeoNames alias folds included)
@@ -367,7 +369,7 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 		paint(row.name, row.country)
 	}
 
-	db.close()
+	db.destroy()
 
 	const counts = new Map<string, number>()
 

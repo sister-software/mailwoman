@@ -102,20 +102,20 @@ const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 
 		console.error(`▸ writing ${rows.length.toLocaleString()} rows → ${out}`)
 
-		const db = new DatabaseSync(out)
-		db.exec("PRAGMA journal_mode = WAL;")
+		const kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
+		kdb.exec("PRAGMA journal_mode = WAL;")
 		// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests
 		// use, so this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw
 		// parquet reader; the hot INSERT below stays on the raw `db` handle.
 		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal-city-alias-schema")
-		const kdb = new DatabaseClient<PostalCityAliasDatabase>(db)
+
 		await createPostalCityAliasTable(kdb)
 
-		const insert = db.prepare(
+		const insert = kdb.prepare(
 			"INSERT INTO postal_city_alias (postcode, postal_city, geo_locality, n, divergent, source, release) VALUES (?, ?, ?, ?, ?, ?, ?)"
 		)
 
-		db.exec("BEGIN")
+		kdb.exec("BEGIN")
 		let divergent = 0
 
 		for (const r of rows) {
@@ -133,9 +133,9 @@ const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 		}
 
-		db.exec("COMMIT")
+		kdb.exec("COMMIT")
 		// Indexes were created by createPostalCityAliasTable above; just checkpoint + compact.
-		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 		await kdb.destroy()
 
 		return [

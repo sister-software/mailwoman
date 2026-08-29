@@ -16,7 +16,9 @@
 
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { SoilDatabase } from "../schema.ts"
 import { ingestSoilChunk } from "../sdk/ingest-chunk.ts"
 import { createShapefileFeatureSource } from "../sdk/ingest.ts"
 
@@ -39,7 +41,7 @@ function required(name: string, value: string | undefined): string {
 	return value
 }
 
-const database = new DatabaseSync(required("database", values.database))
+const database = new DatabaseClient<SoilDatabase>(required("database", values.database))
 
 try {
 	database.exec("PRAGMA journal_mode = OFF")
@@ -69,5 +71,5 @@ try {
 
 	console.log(JSON.stringify(result))
 } finally {
-	database.close()
+	database.destroy()
 }

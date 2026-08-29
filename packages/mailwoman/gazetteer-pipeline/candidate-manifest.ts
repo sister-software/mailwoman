@@ -22,9 +22,11 @@
  */
 
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
+import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * The ancestor's identity as this manifest records it.
@@ -35,10 +37,10 @@ import { DatabaseSync } from "@mailwoman/platform/sqlite"
 export function ancestorIdentity(adminDBPath: string): string {
 	if (!existsSync(adminDBPath)) return "unknown (admin gazetteer not found)"
 
-	let db: DatabaseSync | undefined
+	let db: DatabaseClient<LayerContractDatabase> | undefined
 
 	try {
-		db = new DatabaseSync(adminDBPath, { readOnly: true })
+		db = new DatabaseClient<LayerContractDatabase>(adminDBPath, { readOnly: true })
 
 		const present = db
 			.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'layer_manifest' LIMIT 1")
@@ -54,7 +56,7 @@ export function ancestorIdentity(adminDBPath: string): string {
 	} catch (error) {
 		return `unknown (${(error as Error).message})`
 	} finally {
-		db?.close()
+		db?.destroy()
 	}
 }
 

@@ -16,6 +16,8 @@
 import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PostcodeLocalityDatabase } from "mailwoman/gazetteer-pipeline/postcode-locality/schema"
 
 /**
  * The per-country artifacts, probed in caller-country order with `intl` as the shared fallback.
@@ -25,7 +27,7 @@ const POSTCODE_LOCALITY_SUFFIXES = ["fr", "de", "jp", "intl"] as const
 export type LocalityPostcodeLookup = (wofID: number, countryCode: string | null) => string | undefined
 
 export function createLocalityPostcodeLookup(): LocalityPostcodeLookup {
-	const statements = new Map<string, ReturnType<DatabaseSync["prepare"]>>()
+	const statements = new Map<string, ReturnType<DatabaseClient["prepare"]>>()
 
 	for (const suffix of POSTCODE_LOCALITY_SUFFIXES) {
 		const path = String(dataRootPath("wof", `postcode-locality-${suffix}.db`))
@@ -33,7 +35,7 @@ export function createLocalityPostcodeLookup(): LocalityPostcodeLookup {
 		if (!existsSync(path)) continue
 
 		try {
-			const db = new DatabaseSync(path, { readOnly: true })
+			const db = new DatabaseClient<PostcodeLocalityDatabase>(path, { readOnly: true })
 
 			// No `is_containing` filter: villages routinely carry 0 (the builder's containment test is
 			// distance-classified, and a village near its postcode centroid still has exactly one code).

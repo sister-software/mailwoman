@@ -15,6 +15,8 @@
 
 import { allRows } from "@mailwoman/core/utils"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -88,10 +90,10 @@ const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) =
 		const dbPath = options.db ?? dataRootPath("wof", "admin-global-priority.db").toString()
 		const country = options.country
 
-		let db: DatabaseSync
+		let db: DatabaseClient<WOFDatabase>
 
 		try {
-			db = new DatabaseSync(dbPath, { readOnly: true })
+			db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 		} catch (error) {
 			throw new CommandError(`Cannot open WOF DB ${dbPath}: ${(error as Error).message}`)
 		}
@@ -126,7 +128,7 @@ const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) =
 			...params
 		)
 
-		db.close()
+		db.destroy()
 
 		const byParent = new Map<string, Array<{ placetype: string; n: number }>>()
 
