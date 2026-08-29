@@ -41,6 +41,9 @@ const repoRoot = repoRootPath()
  * source-coherent (new-vs-new).
  */
 const WORKSPACES: Record<string, string> = {
+	// Runtime capability boundary shared by the publish graph. Pack it first so every consumer resolves
+	// the source-coherent tarball instead of a stale (or not-yet-published) registry version.
+	"@mailwoman/platform": "packages/platform",
 	"@mailwoman/core": "packages/core",
 	"@mailwoman/spatial": "packages/spatial",
 	"@mailwoman/resolver": "packages/resolver",
@@ -167,12 +170,14 @@ const IMPORT_CHECK = [
 ]
 
 /**
- * Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep guard the
- * closure phase can't provide. ONLY add a package whose runtime deps are all third-party (or also packed by this
- * script), else its `@mailwoman/*` dep resolves from the registry and skews the test. `@mailwoman/core` qualifies: zero
- * `@mailwoman/*` runtime deps.
+ * Leaves whose tarball must import without the umbrella (no unrelated hoisting) — the undeclared-dep guard the closure
+ * phase can't provide. Each entry names the first-party tarballs that form the leaf's declared runtime closure, keeping
+ * the check source-coherent without making unrelated packages available.
  */
-const STANDALONE_LEAVES = ["@mailwoman/core"]
+const STANDALONE_LEAVES: Record<string, string[]> = {
+	// Core otherwise qualifies as a dependency-clean leaf; platform is its sole first-party runtime dependency.
+	"@mailwoman/core": ["@mailwoman/platform"],
+}
 
 /**
  * The tools `@mailwoman/mcp` registers (`mcp/tools.ts` + the bdc/filer additions, 2026-07-31). The bin-exec leg asserts
@@ -446,13 +451,11 @@ try {
 	// Standalone-leaf guard (#core-zx, 2026-07-18). The phase above installs the WHOLE `mailwoman`
 	// closure into ONE project, so a hoisted-but-undeclared dep is always present in node_modules — it
 	// cannot catch a leaf package whose OWN manifest is missing a runtime dep. Install each
-	// dependency-clean leaf ALONE (only its tarball; npm pulls that package's declared deps from the
-	// registry) and import it. `@mailwoman/core` has no `@mailwoman/*` runtime deps, so it installs
-	// standalone; an undeclared import (the v7.0.0 `zx` bug, which the closure phase hid because
-	// `mailwoman` declares `zx`) crashes here and nowhere else. Add a leaf only if its runtime deps are
-	// all third-party or also listed here — otherwise its `@mailwoman/*` dep 404s / pulls a stale
-	// registry version (the source-skew this file's header warns about).
-	for (const leaf of STANDALONE_LEAVES) {
+	// dependency-clean leaf with only its declared first-party closure and import it. An undeclared import
+	// (the v7.0.0 `zx` bug, which the closure phase hid because `mailwoman` declares `zx`) crashes here and
+	// nowhere else. Keep each entry's first-party closure complete so npm never pulls a stale registry
+	// version (the source-skew this file's header warns about).
+	for (const [leaf, firstPartyDependencies] of Object.entries(STANDALONE_LEAVES)) {
 		const leafDir = WORKSPACES[leaf]!
 
 		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
@@ -467,7 +470,13 @@ try {
 					name: `mw-solo-${leafDir}`,
 					private: true,
 					type: "module",
-					dependencies: { [leaf]: `file:${join(tarDir, `${leafDir}.tgz`)}` },
+					dependencies: Object.fromEntries(
+						[leaf, ...firstPartyDependencies].map((name) => {
+							const workspaceDir = WORKSPACES[name]!
+
+							return [name, `file:${join(tarDir, `${workspaceDir}.tgz`)}`]
+						})
+					),
 				},
 				null,
 				2

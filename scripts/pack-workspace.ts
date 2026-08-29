@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The ONE way to produce a consumer-grade tarball from a workspace: inject the derived
- *   `publishConfig.exports` (strip `node → .ts` — Node refuses type-stripping under
- *   node_modules, so that condition must never reach a consumer), `yarn pack`, restore the
+ *   `publishConfig.exports` (rewrite `node → .ts` to emitted JavaScript — Node refuses
+ *   type-stripping under node_modules, so a source target must never reach a consumer), `yarn pack`, restore the
  *   manifest. Used by BOTH the release path (`publish-workspace.ts`) and the CI smoke test
  *   (`smoke-clean-install.ts`) — the smoke previously packed raw and shipped dev maps, which
  *   let the v7.2.0 ship-break class through untested.

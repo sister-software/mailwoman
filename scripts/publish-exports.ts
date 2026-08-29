@@ -20,9 +20,10 @@ export function isTypeScriptSource(path: string): boolean {
  * Rewrite the packed manifest's `exports` for consumers, in place inside the tarball.
  *
  * The dev map's `node` conditions point at `.ts` source (the repo runs source directly under node); published packages
- * ship only `out/`. This drops every `node` condition whose target is TypeScript source, reorders each entry
+ * ship only `out/`. This rewrites those conditions to their emitted JavaScript counterparts, reorders each entry
  * `types`-first, strips any legacy `publishConfig.exports`, then HARD-FAILS unless every remaining non-pattern target
- * exists inside the tarball and nothing resolves to `.ts`/`.tsx`. Exported for tests.
+ * exists inside the tarball and nothing resolves to `.ts`/`.tsx`. Keeping the `node` condition is significant for
+ * packages such as `@mailwoman/platform`, whose default is an explicit unsupported-runtime stub.
  */
 export function transformExportsForPublish(exports: unknown): unknown {
 	if (typeof exports !== "object" || exports === null) return exports
@@ -39,7 +40,7 @@ export function transformExportsForPublish(exports: unknown): unknown {
 		const conditions = value as Record<string, unknown>
 		const rewritten: Record<string, unknown> = {}
 
-		// types first (npm requires it precede default to take effect), then the rest minus node→.ts.
+		// Types first (npm requires it precede default to take effect), then consumer-safe runtime targets.
 		if (typeof conditions["types"] === "string") {
 			rewritten["types"] = conditions["types"]
 		}
@@ -47,8 +48,10 @@ export function transformExportsForPublish(exports: unknown): unknown {
 		for (const [condition, target] of Object.entries(conditions)) {
 			if (condition === "types") continue
 
-			if (condition === "node" && typeof target === "string" && isTypeScriptSource(target)) continue
-			rewritten[condition] = target
+			rewritten[condition] =
+				condition === "node" && typeof target === "string" && isTypeScriptSource(target)
+					? `./out/${target.replace(/^\.\//, "").replace(/\.tsx?$/, ".js")}`
+					: target
 		}
 
 		out[subpath] = rewritten
@@ -62,7 +65,7 @@ export function transformExportsForPublish(exports: unknown): unknown {
  *
  * These use the same development shape as exports: `node` points at source TypeScript so Node's native type stripping
  * can run the checkout directly, while `default` points at emitted JavaScript. A package installed under `node_modules`
- * cannot type-strip that source, so the packed map must drop every `node → .ts` condition.
+ * cannot type-strip that source, so the packed map rewrites every `node → .ts` condition to emitted JavaScript.
  */
 export function transformImportsForPublish(imports: unknown): unknown {
 	if (typeof imports !== "object" || imports === null) return imports

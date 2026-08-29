@@ -24,12 +24,22 @@ const DEV_MAP = {
 }
 
 describe("transformExportsForPublish", () => {
-	it("drops node→.ts conditions and reorders types first", () => {
+	it("rewrites node→.ts conditions to emitted JavaScript and reorders types first", () => {
 		const result = transformExportsForPublish(DEV_MAP) as Record<string, unknown>
 
-		expect(result["."]).toEqual({ types: "./out/index.d.ts", default: "./out/index.js" })
+		expect(result["."]).toEqual({
+			types: "./out/index.d.ts",
+			node: "./out/index.js",
+			default: "./out/index.js",
+		})
+
 		expect(Object.keys(result["."] as object)[0]).toBe("types")
-		expect(result["./table"]).toEqual({ types: "./out/table.d.ts", default: "./out/table.js" })
+
+		expect(result["./table"]).toEqual({
+			types: "./out/table.d.ts",
+			node: "./out/table.js",
+			default: "./out/table.js",
+		})
 	})
 
 	it("passes through string subpaths and patterns untouched", () => {
@@ -45,6 +55,22 @@ describe("transformExportsForPublish", () => {
 		}) as Record<string, Record<string, string>>
 
 		expect(result["."]).toEqual({ node: "./out/node.js", default: "./out/index.js" })
+	})
+
+	it("preserves a platform-specific Node implementation distinct from the default", () => {
+		const result = transformExportsForPublish({
+			"./util": {
+				node: "./node/util.ts",
+				default: "./out/unsupported/util.js",
+				types: "./out/unsupported/util.d.ts",
+			},
+		}) as Record<string, Record<string, string>>
+
+		expect(result["./util"]).toEqual({
+			types: "./out/unsupported/util.d.ts",
+			node: "./out/node/util.js",
+			default: "./out/unsupported/util.js",
+		})
 	})
 
 	it("returns non-object exports unchanged", () => {
@@ -80,7 +106,7 @@ describe("transformImportsForPublish", () => {
 				"#data": "./data/table.json",
 			})
 		).toEqual({
-			"#runner": { default: "./out/src/runner.js" },
+			"#runner": { node: "./out/src/runner.js", default: "./out/src/runner.js" },
 			"#data": "./data/table.json",
 		})
 	})
