@@ -130,8 +130,19 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 		this.#database.function(name, optionsOrFn, fn!)
 	}
 
+	/**
+	 * End the connection at scope exit, synchronously.
+	 *
+	 * `destroy()` is Kysely's teardown and returns a promise, which `Symbol.dispose` cannot await — calling it here would
+	 * return with the file still open, and the next thing to touch that path (a `sealDatabase`, a reader expecting a
+	 * finalized statement) would see a connection that should have been gone. `node:sqlite`'s `close()` is synchronous,
+	 * so `using` closes the file before the scope ends.
+	 *
+	 * Kysely's own driver state is not unwound here. It holds this one connection and nothing else, and a query issued
+	 * afterwards fails on the closed handle rather than on a pool that thinks it is alive.
+	 */
 	[Symbol.dispose](): void {
-		this.destroy()
+		this.#database.close()
 	}
 }
 

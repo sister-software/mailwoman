@@ -128,27 +128,19 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 
 	describe("Node lookup (resolver-wof-sqlite) — parity on the same DB", () => {
 		test('"Brooklyn" locality query → the borough (placetype expansion + alias-bag exact tier)', async () => {
-			const lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
+			using lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
 
-			try {
-				const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
-				expect(matches[0]).toMatchObject({ id: BROOKLYN_BOROUGH, name: "Brooklyn", placetype: "borough" })
-				expect(matches[0]?.exactMatch).toBe(true)
-			} finally {
-				lookup.close()
-			}
+			const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: BROOKLYN_BOROUGH, name: "Brooklyn", placetype: "borough" })
+			expect(matches[0]?.exactMatch).toBe(true)
 		})
 
 		test('"New York City" → the New York locality via the alias bag (no names table on the slim DB)', async () => {
-			const lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
+			using lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
 
-			try {
-				const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
-				expect(matches[0]).toMatchObject({ id: NEW_YORK_LOCALITY, name: "New York" })
-				expect(matches[0]?.exactMatch).toBe(true)
-			} finally {
-				lookup.close()
-			}
+			const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: NEW_YORK_LOCALITY, name: "New York" })
+			expect(matches[0]?.exactMatch).toBe(true)
 		})
 	})
 })

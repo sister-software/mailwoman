@@ -79,30 +79,28 @@ describe("SqliteConventionSource", () => {
 
 describe("convention-asset auto-detect → dispatch", () => {
 	it("with no address_convention rows for the country, the coord-first path still recovers the town", async () => {
-		const lookup = new WOFSQLitePlaceLookup({ database: buildDB(), buildFTS: true })
+		using lookup = new WOFSQLitePlaceLookup({ database: buildDB(), buildFTS: true })
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
-		lookup.close()
 	})
 
 	it("an attached convention asset that drops postcode_area_resolution reroutes dispatch", async () => {
 		// The convention asset lives in the same (main) schema; the lookup auto-detects address_convention
 		// and queries it by the DE country WOF id (90). Dropping postcode_area_resolution means the typo
 		// no longer recovers Plauen — proof the asset drives findPlace with no opts.conventions injection.
-		const lookup = new WOFSQLitePlaceLookup({
+		using lookup = new WOFSQLitePlaceLookup({
 			database: buildDB([{ wof_id: 90, convention: { candidateStrategies: ["fallback_fuzzy_name_match"] } }]),
 			buildFTS: true,
 		})
 
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).not.toBe("Plauen")
-		lookup.close()
 	})
 
 	it("warns loudly (once) on a convention that names an unknown strategy, then continues", async () => {
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 
-		const lookup = new WOFSQLitePlaceLookup({
+		using lookup = new WOFSQLitePlaceLookup({
 			database: buildDB([
 				{ wof_id: 90, convention: { candidateStrategies: ["does_not_exist", "fallback_fuzzy_name_match"] } },
 			]),
@@ -115,6 +113,5 @@ describe("convention-asset auto-detect → dispatch", () => {
 		expect(warn).toHaveBeenCalledTimes(1) // once per name, not once per query
 		expect(warn.mock.calls[0]![0]).toContain("does_not_exist")
 		warn.mockRestore()
-		lookup.close()
 	})
 })

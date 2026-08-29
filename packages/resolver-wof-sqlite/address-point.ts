@@ -42,9 +42,9 @@ type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "relea
  */
 const SELECT_COLS = "lat, lon, source, release, locality_norm, postcode"
 
-export class AddressPointSqliteLookup<
-	DB extends AddressPointDatabase = AddressPointDatabase,
-> implements AddressPointLookup {
+export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressPointDatabase>
+	implements AddressPointLookup, Disposable
+{
 	readonly #db: DatabaseClient<DB>
 	readonly #locale: StreetLocale
 	readonly #byPostcode: PreparedGet<[postcode: string, street: StreetKey, number: string], AddressPointRow> | undefined
@@ -214,6 +214,10 @@ export class AddressPointSqliteLookup<
 	}
 
 	close(): void {
-		this.#db.destroy()
+		this.#db[Symbol.dispose]()
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }

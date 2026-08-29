@@ -55,7 +55,7 @@ console.log(`### 1. Live gazetteer census (\`${adminPath}\`)\n`)
 if (!existsSync(adminPath)) {
 	console.log(`- admin DB absent — census skipped\n`)
 } else {
-	const db = new DatabaseClient<WOFDatabase>(adminPath, { open: true })
+	using db = new DatabaseClient<WOFDatabase>(adminPath, { open: true })
 
 	// `!` because the OUTER count(*) carries no GROUP BY, so SQLite always returns exactly one row.
 	const saturated = getRow<{ c: number }>(
@@ -94,8 +94,6 @@ if (!existsSync(adminPath)) {
 	}
 
 	console.log("")
-
-	await db.destroy()
 }
 
 //#endregion
@@ -122,7 +120,7 @@ if (!wofPaths.length) {
 	console.log(`- no WOF shards found — replay skipped\n`)
 } else {
 	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
+	using lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
 	const board = await loadHardSliceBoard(values.board)
 
 	// Board inputs AND their probe surfaces: the input is what a user types, the surface is the token
@@ -163,8 +161,6 @@ if (!wofPaths.length) {
 	console.log(`- queries compared (≥2 candidates): **${compared}** of ${queries.length}`)
 	console.log(`- candidates at or above saturation across all result sets: **${saturatedCandidates}**`)
 	console.log(`- result sets whose ORDER differs pre-split vs post-split: **${differing}**\n`)
-
-	lookup.close()
 }
 
 //#endregion

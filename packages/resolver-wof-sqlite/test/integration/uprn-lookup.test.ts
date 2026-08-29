@@ -146,25 +146,21 @@ describe("nearestUPRN", () => {
 
 describe("layer contract", () => {
 	it("round-trips the manifest, spine declaration included", async () => {
-		const kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+		using kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest.name).toBe("os-open-uprn-fixture")
 		expect(manifest.tier).toBe(LayerTier.BuildLocal)
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
-
-		await kdb.destroy()
 	})
 
 	it("keeps unsurveyed cells UNKNOWN — the meaning-of-zero rule", async () => {
-		const kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+		using kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 		const surveyed = await readLayerCoverage(kdb, 1)
 
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
 		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
-
-		await kdb.destroy()
 	})
 })

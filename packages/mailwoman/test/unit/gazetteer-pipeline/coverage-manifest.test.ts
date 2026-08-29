@@ -46,7 +46,7 @@ afterEach(async () => {
  * A minimal admin WOF with the tables `buildCandidateTable` reads (mirrors `build-candidate.test.ts`).
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -62,8 +62,6 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO spr VALUES (200, 'Chicago', 'locality', 'US', 41.88, -87.63, 41.6, -87.9, 42.0, -87.5, -1, 0);
 		INSERT INTO place_population VALUES (200, 2700000);
 	`)
-
-	db.destroy()
 }
 
 /**
@@ -111,93 +109,73 @@ describe("emit → read round-trip through a real candidate build", () => {
 		const candidateDB = await buildFixtureCandidate()
 		await emitCoverageManifest({ dbPath: candidateDB })
 
-		const db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
 
-		try {
-			const manifest = readGazetteerCoverageManifest(db)
+		const manifest = readGazetteerCoverageManifest(db)
 
-			expect(manifest).toBeDefined()
-			expect([...manifest!.hardCountrySafelist].toSorted()).toEqual([...HARD_PLACE_COUNTRY_SAFELIST].toSorted())
+		expect(manifest).toBeDefined()
+		expect([...manifest!.hardCountrySafelist].toSorted()).toEqual([...HARD_PLACE_COUNTRY_SAFELIST].toSorted())
 
-			// Provenance survives: the GB row carries its panel size + receipt.
-			const gb = manifest!.countryCoverage.get("GB")
-			expect(gb?.hardFilterSafe).toBe(true)
-			expect(gb?.hardResolveRate).toBeCloseTo(0.977, 3)
-			expect(gb?.sampleSize).toBe(300)
-			expect(gb?.source).toContain("#928")
+		// Provenance survives: the GB row carries its panel size + receipt.
+		const gb = manifest!.countryCoverage.get("GB")
+		expect(gb?.hardFilterSafe).toBe(true)
+		expect(gb?.hardResolveRate).toBeCloseTo(0.977, 3)
+		expect(gb?.sampleSize).toBe(300)
+		expect(gb?.source).toContain("#928")
 
-			// AU recorded a verdict without a single-rate number — nullable columns round-trip as absent.
-			const au = manifest!.countryCoverage.get("AU")
-			expect(au?.hardFilterSafe).toBe(true)
-			expect(au?.hardResolveRate).toBeUndefined()
+		// AU recorded a verdict without a single-rate number — nullable columns round-trip as absent.
+		const au = manifest!.countryCoverage.get("AU")
+		expect(au?.hardFilterSafe).toBe(true)
+		expect(au?.hardResolveRate).toBeUndefined()
 
-			// Bboxes round-trip against the constant.
-			expect(manifest!.countryBBoxes.size).toBe(Object.keys(COUNTRY_BBOX).length)
-			const us = manifest!.countryBBoxes.get("US")
-			expect([us?.latMin, us?.latMax, us?.lonMin, us?.lonMax]).toEqual([...COUNTRY_BBOX["US"]!])
-		} finally {
-			await db.destroy()
-		}
+		// Bboxes round-trip against the constant.
+		expect(manifest!.countryBBoxes.size).toBe(Object.keys(COUNTRY_BBOX).length)
+		const us = manifest!.countryBBoxes.get("US")
+		expect([us?.latMin, us?.latMax, us?.lonMin, us?.lonMax]).toEqual([...COUNTRY_BBOX["US"]!])
 	})
 
 	test("meaning-of-zero: measured-and-failed (FI) is present; never-measured (NZ) is absent", async () => {
 		const candidateDB = await buildFixtureCandidate()
 		await emitCoverageManifest({ dbPath: candidateDB })
 
-		const db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
 
-		try {
-			const manifest = readGazetteerCoverageManifest(db)!
+		const manifest = readGazetteerCoverageManifest(db)!
 
-			// FI: MEASURED and failed the gate — a first-class negative result, off the safelist.
-			const fi = manifest.countryCoverage.get("FI")
-			expect(fi).toBeDefined()
-			expect(fi?.hardFilterSafe).toBe(false)
-			expect(fi?.hardResolveRate).toBeCloseTo(0.695, 3)
-			expect(manifest.hardCountrySafelist.has("FI")).toBe(false)
+		// FI: MEASURED and failed the gate — a first-class negative result, off the safelist.
+		const fi = manifest.countryCoverage.get("FI")
+		expect(fi).toBeDefined()
+		expect(fi?.hardFilterSafe).toBe(false)
+		expect(fi?.hardResolveRate).toBeCloseTo(0.695, 3)
+		expect(manifest.hardCountrySafelist.has("FI")).toBe(false)
 
-			// NZ: never measured — ABSENT, not "failed". The two states must be distinguishable.
-			expect(manifest.countryCoverage.has("NZ")).toBe(false)
-			expect(manifest.countryCoverage.has("FI")).not.toBe(manifest.countryCoverage.has("NZ"))
-		} finally {
-			await db.destroy()
-		}
+		// NZ: never measured — ABSENT, not "failed". The two states must be distinguishable.
+		expect(manifest.countryCoverage.has("NZ")).toBe(false)
+		expect(manifest.countryCoverage.has("FI")).not.toBe(manifest.countryCoverage.has("NZ"))
 	})
 
 	test("WOFCandidateTableLookup exposes artifactCoverage after emission", async () => {
 		const candidateDB = await buildFixtureCandidate()
 		await emitCoverageManifest({ dbPath: candidateDB })
 
-		const lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
+		using lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
 
-		try {
-			expect(lookup.artifactCoverage).toBeDefined()
+		expect(lookup.artifactCoverage).toBeDefined()
 
-			expect([...lookup.artifactCoverage!.hardCountrySafelist].toSorted()).toEqual(
-				[...HARD_PLACE_COUNTRY_SAFELIST].toSorted()
-			)
-		} finally {
-			lookup.close()
-		}
+		expect([...lookup.artifactCoverage!.hardCountrySafelist].toSorted()).toEqual(
+			[...HARD_PLACE_COUNTRY_SAFELIST].toSorted()
+		)
 	})
 
 	test("a legacy candidate DB (no manifest tables) reads undefined — the constant-fallback signal", async () => {
 		const candidateDB = await buildFixtureCandidate()
 
-		const db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
 
-		try {
-			expect(readGazetteerCoverageManifest(db)).toBeUndefined()
-		} finally {
-			await db.destroy()
-		}
+		expect(readGazetteerCoverageManifest(db)).toBeUndefined()
 
-		const lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
+		using lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })
 
-		try {
-			expect(lookup.artifactCoverage).toBeUndefined()
-		} finally {
-			lookup.close()
-		}
+		expect(lookup.artifactCoverage).toBeUndefined()
 	})
 })

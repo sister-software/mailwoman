@@ -123,19 +123,15 @@ describe("findPlace — population boost", () => {
 	})
 
 	test("the population boost can be tuned to 0 — falls back to BM25-only ordering", async () => {
-		const dbg = new WOFSQLitePlaceLookup({ database: buildFixtureDB(), buildFTS: true }, { populationBoost: 0 })
+		using dbg = new WOFSQLitePlaceLookup({ database: buildFixtureDB(), buildFTS: true }, { populationBoost: 0 })
 
-		try {
-			const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
-			const springfields = candidates.filter((c) => c.name === "Springfield")
-			expect(springfields).toHaveLength(4)
-			// With boost=0, the four Springfields tie on BM25 + everything else. Ordering is
-			// implementation-defined but ALL should have identical scores.
-			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
-			expect(scores.size).toBe(1)
-		} finally {
-			dbg.close()
-		}
+		const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
+		const springfields = candidates.filter((c) => c.name === "Springfield")
+		expect(springfields).toHaveLength(4)
+		// With boost=0, the four Springfields tie on BM25 + everything else. Ordering is
+		// implementation-defined but ALL should have identical scores.
+		const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
+		expect(scores.size).toBe(1)
 	})
 
 	test("population boost caps at populationBoost magnitude (Tokyo doesn't exceed it)", async () => {
@@ -154,23 +150,19 @@ describe("findPlace — population boost", () => {
 		const db = buildFixtureDB()
 		buildPlaceSearchFTS(db)
 		db.exec(`DROP TABLE place_population`)
-		const fallback = new WOFSQLitePlaceLookup({ database: db })
+		using fallback = new WOFSQLitePlaceLookup({ database: db })
 
-		try {
-			const candidates = await fallback.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
-			// All 4 Springfields returned, none with `population` field (the aux table was dropped).
-			const springfields = candidates.filter((c) => c.name === "Springfield")
-			expect(springfields).toHaveLength(4)
+		const candidates = await fallback.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
+		// All 4 Springfields returned, none with `population` field (the aux table was dropped).
+		const springfields = candidates.filter((c) => c.name === "Springfield")
+		expect(springfields).toHaveLength(4)
 
-			for (const c of springfields) {
-				expect(c.population).toBeUndefined()
-			}
-
-			// Their scores should all be equal (no population boost differentiation).
-			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
-			expect(scores.size).toBe(1)
-		} finally {
-			fallback.close()
+		for (const c of springfields) {
+			expect(c.population).toBeUndefined()
 		}
+
+		// Their scores should all be equal (no population boost differentiation).
+		const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
+		expect(scores.size).toBe(1)
 	})
 })

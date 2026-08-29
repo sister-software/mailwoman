@@ -35,20 +35,21 @@ function stubWorker(innerDB: DatabaseClient<AddressPointDatabase>) {
 	}
 }
 
-const openDatabases: DatabaseClient<AddressPointDatabase>[] = []
+/**
+ * Every connection these fixtures open, ended together at the end of the file.
+ */
+const openDatabases = new DisposableStack()
 
 function db(setup: (d: DatabaseClient<AddressPointDatabase>) => void): DatabaseClient<AddressPointDatabase> {
 	const d = new DatabaseClient<AddressPointDatabase>(":memory:")
 	setup(d)
-	openDatabases.push(d)
+	openDatabases.use(d)
 
 	return d
 }
 
 afterEach(() => {
-	while (openDatabases.length) {
-		openDatabases.pop()!.destroy()
-	}
+	openDatabases.dispose()
 })
 
 function situsDB(): DatabaseClient<AddressPointDatabase> {

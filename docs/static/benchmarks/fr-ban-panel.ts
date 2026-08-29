@@ -204,74 +204,67 @@ function reorderedForm(row: PanelRow): string {
 //#region Resample
 
 async function resample(): Promise<void> {
-	const db = new DatabaseClient<AddressPointDatabase>(banPath, { readOnly: true })
+	using db = new DatabaseClient<AddressPointDatabase>(banPath, { readOnly: true })
 
-	try {
-		const { m: maxRowid } = db.prepare("SELECT max(rowid) m FROM address_point").get() as { m: number }
+	const { m: maxRowid } = db.prepare("SELECT max(rowid) m FROM address_point").get() as { m: number }
 
-		const release = (db.prepare("SELECT release FROM address_point LIMIT 1").get() as { release: string | null })
-			.release
+	const release = (db.prepare("SELECT release FROM address_point LIMIT 1").get() as { release: string | null }).release
 
-		const rowStatement = db.prepare(
-			"SELECT number, street_raw, postcode, locality_norm, lat, lon FROM address_point WHERE rowid = ?"
-		)
+	const rowStatement = db.prepare(
+		"SELECT number, street_raw, postcode, locality_norm, lat, lon FROM address_point WHERE rowid = ?"
+	)
 
-		const centroidStatement = db.prepare(
-			`SELECT lat, lon FROM address_point WHERE postcode = ? LIMIT ${CENTROID_SAMPLE}`
-		)
+	const centroidStatement = db.prepare(`SELECT lat, lon FROM address_point WHERE postcode = ? LIMIT ${CENTROID_SAMPLE}`)
 
-		const random = mulberry32(SEED)
-		const seenPostcode = new Set()
-		const rows = []
+	const random = mulberry32(SEED)
+	const seenPostcode = new Set()
+	const rows = []
 
-		for (let draw = 0; draw < DRAW_SIZE && rows.length < PANEL_SIZE; draw++) {
-			const rowid = 1 + Math.floor(random() * maxRowid)
-			const hit = rowStatement.get(rowid)
+	for (let draw = 0; draw < DRAW_SIZE && rows.length < PANEL_SIZE; draw++) {
+		const rowid = 1 + Math.floor(random() * maxRowid)
+		const hit = rowStatement.get(rowid)
 
-			// A drawn rowid can miss (a vacuumed gap) or land on a row with no postcode or commune to
-			// render. Both are skipped rather than retried, so the draw stays a pure function of the seed.
-			if (!hit?.postcode || !hit.locality_norm || !hit.street_raw || !hit.number) continue
+		// A drawn rowid can miss (a vacuumed gap) or land on a row with no postcode or commune to
+		// render. Both are skipped rather than retried, so the draw stays a pure function of the seed.
+		if (!hit?.postcode || !hit.locality_norm || !hit.street_raw || !hit.number) continue
 
-			if (seenPostcode.has(hit.postcode)) continue
+		if (seenPostcode.has(hit.postcode)) continue
 
-			seenPostcode.add(hit.postcode)
+		seenPostcode.add(hit.postcode)
 
-			const points = centroidStatement.all(hit.postcode) as Array<{ lat: number; lon: number }>
+		const points = centroidStatement.all(hit.postcode) as Array<{ lat: number; lon: number }>
 
-			const centroid = {
-				lat: points.reduce((sum, p) => sum + p.lat, 0) / points.length,
-				lon: points.reduce((sum, p) => sum + p.lon, 0) / points.length,
-				n: points.length,
-			}
-
-			rows.push({
-				number: hit.number,
-				street: hit.street_raw,
-				postcode: hit.postcode,
-				locality: hit.locality_norm,
-				lat: hit.lat,
-				lon: hit.lon,
-				postcodeCentroid: centroid,
-			})
+		const centroid = {
+			lat: points.reduce((sum, p) => sum + p.lat, 0) / points.length,
+			lon: points.reduce((sum, p) => sum + p.lon, 0) / points.length,
+			n: points.length,
 		}
 
-		const panel = {
-			source: "Base Adresse Nationale (BAN), via `mailwoman data pull fr`",
-			license: "Licence Ouverte / Open Licence — https://adresse.data.gouv.fr/",
-			release,
-			seed: SEED,
-			drawSize: DRAW_SIZE,
-			centroidSampleCap: CENTROID_SAMPLE,
-			note: "One row per postcode. Coordinates are BAN's own; they are the grading target.",
-			rows,
-		}
-
-		writeFileSync(flags.sample, `${JSON.stringify(panel, null, "\t")}\n`)
-
-		console.error(`fr-ban-panel: wrote ${rows.length} rows to ${flags.sample} (BAN release ${release}).`)
-	} finally {
-		await db.destroy()
+		rows.push({
+			number: hit.number,
+			street: hit.street_raw,
+			postcode: hit.postcode,
+			locality: hit.locality_norm,
+			lat: hit.lat,
+			lon: hit.lon,
+			postcodeCentroid: centroid,
+		})
 	}
+
+	const panel = {
+		source: "Base Adresse Nationale (BAN), via `mailwoman data pull fr`",
+		license: "Licence Ouverte / Open Licence — https://adresse.data.gouv.fr/",
+		release,
+		seed: SEED,
+		drawSize: DRAW_SIZE,
+		centroidSampleCap: CENTROID_SAMPLE,
+		note: "One row per postcode. Coordinates are BAN's own; they are the grading target.",
+		rows,
+	}
+
+	writeFileSync(flags.sample, `${JSON.stringify(panel, null, "\t")}\n`)
+
+	console.error(`fr-ban-panel: wrote ${rows.length} rows to ${flags.sample} (BAN release ${release}).`)
 }
 
 //#endregion
@@ -349,7 +342,7 @@ async function run() {
 	const rows = flags.limit ? panel.rows.slice(0, Number(flags.limit)) : panel.rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
-	const lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
+	using lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 	const resolver = createWOFResolver(lookup)
 	const banShards = new BANShardProvider(DATA_ROOT)
 
@@ -357,66 +350,62 @@ async function run() {
 	const results: Record<string, { summary: ReturnType<typeof summarize>; records: GradedRecord[] }> = {}
 	const startedAt = Date.now()
 
-	try {
-		for (const [arm, render] of Object.entries(arms)) {
-			const records = []
+	for (const [arm, render] of Object.entries(arms)) {
+		const records = []
 
-			for (const row of rows) {
-				const input = render(row)
-				let result
+		for (const row of rows) {
+			const input = render(row)
+			let result
 
-				try {
-					result = await geocodeAddress(input, {
-						classifier,
-						resolver,
-						nationalShards: banShards.for,
-						// Pinned: this panel is a French dataset run through a French pipeline, so it measures
-						// resolution INSIDE France and makes no claim about country disambiguation.
-						defaultCountry: "FR",
-					})
-				} catch (error) {
-					records.push({
-						input,
-						error: error instanceof Error ? error.message : String(error),
-						km: null,
-						tier: null,
-						routed: false,
-					})
-
-					continue
-				}
-
-				// Capture the coordinates, not the object: narrowing `result` does not narrow `result.lat`.
-				const answer =
-					typeof result.lat === "number" && typeof result.lon === "number" ? { lat: result.lat, lon: result.lon } : null
-
-				const km = answer ? haversineKm(answer.lat, answer.lon, row.lat, row.lon) : null
-
-				const routed =
-					answer !== null &&
-					haversineKm(answer.lat, answer.lon, row.postcodeCentroid.lat, row.postcodeCentroid.lon) <= ROUTING_KM
-
+			try {
+				result = await geocodeAddress(input, {
+					classifier,
+					resolver,
+					nationalShards: banShards.for,
+					// Pinned: this panel is a French dataset run through a French pipeline, so it measures
+					// resolution INSIDE France and makes no claim about country disambiguation.
+					defaultCountry: "FR",
+				})
+			} catch (error) {
 				records.push({
 					input,
-					expected: { lat: row.lat, lon: row.lon, postcode: row.postcode, locality: row.locality },
-					got: { lat: result.lat, lon: result.lon },
-					parsed: {
-						house_number: result.house_number,
-						street: result.street,
-						postcode: result.postcode,
-						locality: result.locality,
-					},
-					countryCode: result.countryCode,
-					tier: result.resolution_tier,
-					km: km === null ? null : Number(km.toFixed(4)),
-					routed,
+					error: error instanceof Error ? error.message : String(error),
+					km: null,
+					tier: null,
+					routed: false,
 				})
+
+				continue
 			}
 
-			results[arm] = { summary: summarize(records), records }
+			// Capture the coordinates, not the object: narrowing `result` does not narrow `result.lat`.
+			const answer =
+				typeof result.lat === "number" && typeof result.lon === "number" ? { lat: result.lat, lon: result.lon } : null
+
+			const km = answer ? haversineKm(answer.lat, answer.lon, row.lat, row.lon) : null
+
+			const routed =
+				answer !== null &&
+				haversineKm(answer.lat, answer.lon, row.postcodeCentroid.lat, row.postcodeCentroid.lon) <= ROUTING_KM
+
+			records.push({
+				input,
+				expected: { lat: row.lat, lon: row.lon, postcode: row.postcode, locality: row.locality },
+				got: { lat: result.lat, lon: result.lon },
+				parsed: {
+					house_number: result.house_number,
+					street: result.street,
+					postcode: result.postcode,
+					locality: result.locality,
+				},
+				countryCode: result.countryCode,
+				tier: result.resolution_tier,
+				km: km === null ? null : Number(km.toFixed(4)),
+				routed,
+			})
 		}
-	} finally {
-		lookup.close()
+
+		results[arm] = { summary: summarize(records), records }
 	}
 
 	const report = {

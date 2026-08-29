@@ -59,13 +59,16 @@ function fixtureDB(): DatabaseClient<NUTSDatabase> {
 }
 
 test("NUTSLookup.find: deepest containing region → nested codes", () => {
-	const lookup = new NUTSLookup({ database: fixtureDB() })
+	using db = fixtureDB()
+	using lookup = new NUTSLookup({ database: db })
 	expect(lookup.find(5, 5)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
 test("makeNUTSAnnotator: fills nuts inside, abstains outside", () => {
-	const annotate = makeNUTSAnnotator(new NUTSLookup({ database: fixtureDB() }))
+	using db = fixtureDB()
+	using lookup = new NUTSLookup({ database: db })
+	const annotate = makeNUTSAnnotator(lookup)
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ nuts: { level1: "XX3", level2: "XX30", level3: "XX300" } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

@@ -58,13 +58,16 @@ function fixtureDB(): DatabaseClient<TimezoneDatabase> {
 }
 
 test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", () => {
-	const lookup = new TimezoneLookup({ database: fixtureDB() })
+	using db = fixtureDB()
+	using lookup = new TimezoneLookup({ database: db })
 	expect(lookup.find(5, 5)).toBe("Test/Zone")
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
 test("makeTimezoneAnnotator: fills AnnotationSet.timezone", () => {
-	const annotate = makeTimezoneAnnotator(new TimezoneLookup({ database: fixtureDB() }))
+	using db = fixtureDB()
+	using lookup = new TimezoneLookup({ database: db })
+	const annotate = makeTimezoneAnnotator(lookup)
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone" } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

@@ -170,7 +170,11 @@ export class StreetInterpolator<
 	DB extends StreetSegmentDatabase = StreetSegmentDatabase,
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
-	readonly #ownsDB: boolean
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	readonly #byPostcode:
 		| PreparedAll<[postcode: string, street: RouteKey, minNumber: number, maxNumber: number], SegmentRow>
 		| undefined
@@ -180,10 +184,8 @@ export class StreetInterpolator<
 	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB> }) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.dbPath) {
-			this.#db = new DatabaseClient<DB>(opts.dbPath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<DB>(opts.dbPath, { readOnly: true }))
 		} else {
 			throw new Error("StreetInterpolator: one of dbPath or database is required")
 		}
@@ -326,8 +328,6 @@ export class StreetInterpolator<
 	}
 
 	close(): void {
-		if (this.#ownsDB) {
-			this.#db.destroy()
-		}
+		this.#resources.dispose()
 	}
 }

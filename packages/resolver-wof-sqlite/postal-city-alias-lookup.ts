@@ -56,15 +56,17 @@ export interface PostalCityAlias {
  */
 export class WOFPostalCityAliasLookup implements Disposable {
 	#db: DatabaseClient<PostalCityAliasDatabase>
-	#ownsDB: boolean
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 
 	constructor(opts: WOFPostalCityAliasLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.databasePath) {
-			this.#db = new DatabaseClient<PostalCityAliasDatabase>(opts.databasePath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<PostalCityAliasDatabase>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("WOFPostalCityAliasLookup needs `databasePath` or `database`")
 		}
@@ -90,9 +92,7 @@ export class WOFPostalCityAliasLookup implements Disposable {
 	}
 
 	close(): void {
-		if (this.#ownsDB) {
-			this.#db.destroy()
-		}
+		this.#resources.dispose()
 	}
 
 	[Symbol.dispose](): void {

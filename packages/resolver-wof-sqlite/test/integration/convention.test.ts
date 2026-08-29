@@ -116,18 +116,17 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {
-		const lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
+		using lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 		// "Plaun" won't FTS-match; postcode_area_resolution injects Plauen from the postcode.
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
-		lookup.close()
 	})
 
 	it("an injected country convention that drops postcode_area_resolution reroutes dispatch", async () => {
 		// Key the convention by the DE country WOF id (90). Removing postcode_area_resolution from the
 		// strategy list means the typo no longer recovers Plauen — proof the merged convention controls
 		// findPlace dispatch through the live country → WOF-id → convention path.
-		const lookup = new WOFSQLitePlaceLookup({
+		using lookup = new WOFSQLitePlaceLookup({
 			database: db,
 			buildFTS: true,
 			conventions: { 90: { candidateStrategies: ["fallback_fuzzy_name_match"] } },
@@ -135,6 +134,5 @@ describe("convention engine — live dispatch", () => {
 
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).not.toBe("Plauen")
-		lookup.close()
 	})
 })

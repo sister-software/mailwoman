@@ -158,7 +158,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(lookup.coordinateOf(906_700_601_612)).toEqual({ latitude: 55.8823426, longitude: -4.2786558 })
 		expect(lookup.nearestUPRN(51.4526, -2.602, 100)?.uprn).toBe(1)
 
-		const kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
+		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -177,8 +177,6 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
 		expect(surveyed?.completeness).toBe(1)
 		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
-
-		await kdb.destroy()
 	})
 
 	it("fails loudly on header drift", async () => {

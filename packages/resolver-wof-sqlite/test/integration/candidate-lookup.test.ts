@@ -36,7 +36,7 @@ let candidatePath: string
  * Minimal admin WOF (the tables `buildCandidateTable` reads) with a population homonym + alias + qualifier case.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -198,15 +198,13 @@ function buildFixtureAdmin(path: string): void {
 		);
 		INSERT INTO names VALUES (990, 'TD', 'region', 'ES', 'abbr', '', 0, 0);
 	`)
-
-	db.destroy()
 }
 
 /**
  * A postcode shard: one real-coord ZIP + one placeholder 0,0 (dropped at build, the White House 20500 case).
  */
 function buildFixturePostcodes(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -220,8 +218,6 @@ function buildFixturePostcodes(path: string): void {
 		-- The B2-2 containment anchor: the Sansome cluster's postcode.
 		INSERT INTO spr VALUES (94101, '94101', 'postalcode', 'US', 37.75, -122.42, 37.74, -122.43, 37.76, -122.41, -1, 0);
 	`)
-
-	db.destroy()
 }
 
 beforeEach(async () => {
@@ -240,115 +236,89 @@ afterEach(async () => {
 
 describe("WOFCandidateTableLookup", () => {
 	test("ranks homonyms population-first + country-agnostic (Moscow → RU, not Idaho)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
-			expect(hits).toHaveLength(2)
-			// The 10.4M-pop Russian city outranks the 26k-pop Idaho town — no country filter needed.
-			expect(hits[0]!.country).toBe("RU")
-			expect(hits[0]!.lat).toBeCloseTo(55.75, 2)
-			expect(hits[1]!.country).toBe("US")
-			// score = -neg_rank → the higher-population hit ranks at least as high.
-			expect(hits[0]!.score).toBeGreaterThanOrEqual(hits[1]!.score)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+		expect(hits).toHaveLength(2)
+		// The 10.4M-pop Russian city outranks the 26k-pop Idaho town — no country filter needed.
+		expect(hits[0]!.country).toBe("RU")
+		expect(hits[0]!.lat).toBeCloseTo(55.75, 2)
+		expect(hits[1]!.country).toBe("US")
+		// score = -neg_rank → the higher-population hit ranks at least as high.
+		expect(hits[0]!.score).toBeGreaterThanOrEqual(hits[1]!.score)
 	})
 
 	test("proximity bias (#938) re-ranks the exact tier by nearness without a hard filter", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// No bias: population wins — Moscow, RU (10.4M) over Moscow, ID (26k).
-			const plain = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
-			expect(plain[0]!.country).toBe("RU")
+		const plain = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+		expect(plain[0]!.country).toBe("RU")
 
-			// A view over Idaho flips it to Moscow, ID — the in-view namesake wins the tie.
-			const idahoView = await lk.findPlace({
-				text: "Moscow",
-				placetype: "locality",
-				limit: 5,
-				bias: [{ lat: 46.73, lon: -117, weight: 1 }],
-			})
+		// A view over Idaho flips it to Moscow, ID — the in-view namesake wins the tie.
+		const idahoView = await lk.findPlace({
+			text: "Moscow",
+			placetype: "locality",
+			limit: 5,
+			bias: [{ lat: 46.73, lon: -117, weight: 1 }],
+		})
 
-			expect(idahoView[0]!.country).toBe("US")
-			expect(idahoView[0]!.lat).toBeCloseTo(46.73, 1)
+		expect(idahoView[0]!.country).toBe("US")
+		expect(idahoView[0]!.lat).toBeCloseTo(46.73, 1)
 
-			// A DISTANT view must NOT flip a far-more-populous city: a Chicago-area view (near neither
-			// Moscow) leaves population-first order intact — the sharp decay keeps out-of-view namesakes out.
-			const chicagoView = await lk.findPlace({
-				text: "Moscow",
-				placetype: "locality",
-				limit: 5,
-				bias: [{ lat: 41.88, lon: -87.63, weight: 1 }],
-			})
+		// A DISTANT view must NOT flip a far-more-populous city: a Chicago-area view (near neither
+		// Moscow) leaves population-first order intact — the sharp decay keeps out-of-view namesakes out.
+		const chicagoView = await lk.findPlace({
+			text: "Moscow",
+			placetype: "locality",
+			limit: 5,
+			bias: [{ lat: 41.88, lon: -87.63, weight: 1 }],
+		})
 
-			expect(chicagoView[0]!.country).toBe("RU")
-		} finally {
-			lk.close()
-		}
+		expect(chicagoView[0]!.country).toBe("RU")
 	})
 
 	test("country filter narrows to the requested country", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", country: "US" })
-			expect(hits).toHaveLength(1)
-			expect(hits[0]!.country).toBe("US")
-			expect(hits[0]!.lat).toBeCloseTo(46.73, 2)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", country: "US" })
+		expect(hits).toHaveLength(1)
+		expect(hits[0]!.country).toBe("US")
+		expect(hits[0]!.lat).toBeCloseTo(46.73, 2)
 	})
 
 	test("an unknown country (not in the table) returns no candidates", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			expect(await lk.findPlace({ text: "Moscow", placetype: "locality", country: "ZZ" })).toHaveLength(0)
-		} finally {
-			lk.close()
-		}
+		expect(await lk.findPlace({ text: "Moscow", placetype: "locality", country: "ZZ" })).toHaveLength(0)
 	})
 
 	test("resolves an alias row to the primary place", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const [hit] = await lk.findPlace({ text: "Moskva", placetype: "locality" })
-			expect(hit?.name).toBe("Moscow")
-			expect(hit?.country).toBe("RU")
-			expect(hit?.exactMatch).toBe(true) // every candidate row IS an exact normalized-name/alias match
-		} finally {
-			lk.close()
-		}
+		const [hit] = await lk.findPlace({ text: "Moskva", placetype: "locality" })
+		expect(hit?.name).toBe("Moscow")
+		expect(hit?.country).toBe("RU")
+		expect(hit?.exactMatch).toBe(true)
 	})
 
 	test("excludeNameRoles refuses the abbreviation alias while the role-NULL alias tier stays open (#1730)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// Without the exclusion the abbreviation alias answers — today's bare-race hazard.
-			const [open] = await lk.findPlace({ text: "TD", placetype: "region" })
-			expect(open?.name).toBe("Toledano")
+		const [open] = await lk.findPlace({ text: "TD", placetype: "region" })
+		expect(open?.name).toBe("Toledano")
 
-			// With it, the abbr-stamped row is refused…
-			const refused = await lk.findPlace({ text: "TD", placetype: "region", excludeNameRoles: ["abbr", "gloss"] })
-			expect(refused).toHaveLength(0)
+		// With it, the abbr-stamped row is refused…
+		const refused = await lk.findPlace({ text: "TD", placetype: "region", excludeNameRoles: ["abbr", "gloss"] })
+		expect(refused).toHaveLength(0)
 
-			// …while a role-NULL exonym alias still answers under the same exclusion (the 格鲁吉亚 contract).
-			const [exonym] = await lk.findPlace({
-				text: "Moskva",
-				placetype: "locality",
-				excludeNameRoles: ["abbr", "gloss"],
-			})
+		// …while a role-NULL exonym alias still answers under the same exclusion (the 格鲁吉亚 contract).
+		const [exonym] = await lk.findPlace({
+			text: "Moskva",
+			placetype: "locality",
+			excludeNameRoles: ["abbr", "gloss"],
+		})
 
-			expect(exonym?.name).toBe("Moscow")
-		} finally {
-			lk.close()
-		}
+		expect(exonym?.name).toBe("Moscow")
 	})
 
 	test("excludeNameRoles degrades to a no-op on an artifact without the role column", async () => {
@@ -373,255 +343,169 @@ describe("WOFCandidateTableLookup", () => {
 
 		await legacy.destroy()
 
-		const lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
+		using lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
 
-		try {
-			const [hit] = await lk.findPlace({ text: "TD", placetype: "region", excludeNameRoles: ["abbr", "gloss"] })
-			expect(hit?.name).toBe("Toledano")
-		} finally {
-			lk.close()
-		}
+		const [hit] = await lk.findPlace({ text: "TD", placetype: "region", excludeNameRoles: ["abbr", "gloss"] })
+		expect(hit?.name).toBe("Toledano")
 	})
 
 	test("returns the denormalized PlaceCandidate shape (exactMatch + bbox + coords)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const [chi] = await lk.findPlace({ text: "Chicago", placetype: "locality" })
-			expect(chi).toMatchObject({ name: "Chicago", placetype: "locality", country: "US", exactMatch: true })
-			expect(chi!.lat).toBeCloseTo(41.88, 2)
-			expect(chi!.bbox?.minLat).toBeCloseTo(41.6, 2)
-			expect(chi!.bbox?.maxLon).toBeCloseTo(-87.5, 2)
-		} finally {
-			lk.close()
-		}
+		const [chi] = await lk.findPlace({ text: "Chicago", placetype: "locality" })
+		expect(chi).toMatchObject({ name: "Chicago", placetype: "locality", country: "US", exactMatch: true })
+		expect(chi!.lat).toBeCloseTo(41.88, 2)
+		expect(chi!.bbox?.minLat).toBeCloseTo(41.6, 2)
+		expect(chi!.bbox?.maxLon).toBeCloseTo(-87.5, 2)
 	})
 
 	test("bbox filter keeps only candidates whose centroid falls inside (the region-disambiguation path)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// A box over European Russia — contains RU Moscow's centroid, not the Idaho one.
-			const hits = await lk.findPlace({
-				text: "Moscow",
-				placetype: "locality",
-				bbox: { minLat: 50, maxLat: 60, minLon: 30, maxLon: 45 },
-			})
+		const hits = await lk.findPlace({
+			text: "Moscow",
+			placetype: "locality",
+			bbox: { minLat: 50, maxLat: 60, minLon: 30, maxLon: 45 },
+		})
 
-			expect(hits).toHaveLength(1)
-			expect(hits[0]!.country).toBe("RU")
-		} finally {
-			lk.close()
-		}
+		expect(hits).toHaveLength(1)
+		expect(hits[0]!.country).toBe("RU")
 	})
 
 	test("qualifier-strip fallback resolves 'Lenk im Simmental' → 'Lenk'", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const [hit] = await lk.findPlace({ text: "Lenk im Simmental", placetype: "locality" })
-			expect(hit?.name).toBe("Lenk")
-			expect(hit?.country).toBe("CH")
-		} finally {
-			lk.close()
-		}
+		const [hit] = await lk.findPlace({ text: "Lenk im Simmental", placetype: "locality" })
+		expect(hit?.name).toBe("Lenk")
+		expect(hit?.country).toBe("CH")
 	})
 
 	test("folds postcodes in; resolves a real ZIP, drops the placeholder 0,0 row", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const [zip] = await lk.findPlace({ text: "60601", placetype: "postalcode" })
-			expect(zip?.placetype).toBe("postalcode")
-			expect(zip?.lat).toBeCloseTo(41.885, 3)
-			// 20500's 0,0 placeholder was filtered at build time.
-			expect(await lk.findPlace({ text: "20500", placetype: "postalcode" })).toHaveLength(0)
-		} finally {
-			lk.close()
-		}
+		const [zip] = await lk.findPlace({ text: "60601", placetype: "postalcode" })
+		expect(zip?.placetype).toBe("postalcode")
+		expect(zip?.lat).toBeCloseTo(41.885, 3)
+		// 20500's 0,0 placeholder was filtered at build time.
+		expect(await lk.findPlace({ text: "20500", placetype: "postalcode" })).toHaveLength(0)
 	})
 
 	test("a placetype that doesn't match the row's type yields nothing (Moscow is not a postalcode)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			expect(await lk.findPlace({ text: "Moscow", placetype: "postalcode" })).toHaveLength(0)
-		} finally {
-			lk.close()
-		}
+		expect(await lk.findPlace({ text: "Moscow", placetype: "postalcode" })).toHaveLength(0)
 	})
 
 	test("an unknown name + an empty query return no candidates", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			expect(await lk.findPlace({ text: "Nowhereville" })).toHaveLength(0)
-			expect(await lk.findPlace({ text: "   " })).toHaveLength(0)
-		} finally {
-			lk.close()
-		}
+		expect(await lk.findPlace({ text: "Nowhereville" })).toHaveLength(0)
+		expect(await lk.findPlace({ text: "   " })).toHaveLength(0)
 	})
 
 	test("FTS5-trigram fuzzy fallback recovers a misspelled locality on an exact miss", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// "Chicgo"/"Moscw" aren't a name_key — the exact + strip probes miss, so the trigram fallback
-			// recovers the right place by name similarity, still country/placetype-filtered and ranked like
-			// the admin backend. (The fixture's buildCandidateTable now materializes the candidate_fts index.)
-			expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
-			expect((await lk.findPlace({ text: "Moscw", placetype: "locality", country: "RU" }))[0]?.name).toBe("Moscow")
-			// Garbage stays a miss — the trigram-Jaccard threshold filters noise (no false fuzzy hit).
-			expect(await lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).toHaveLength(0)
-		} finally {
-			lk.close()
-		}
+		expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
+		expect((await lk.findPlace({ text: "Moscw", placetype: "locality", country: "RU" }))[0]?.name).toBe("Moscow")
+		// Garbage stays a miss — the trigram-Jaccard threshold filters noise (no false fuzzy hit).
+		expect(await lk.findPlace({ text: "Zzzqqx", placetype: "locality", country: "US" })).toHaveLength(0)
 	})
 
 	test("a typo-corrected row is NOT an exact match (#17)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// `exactMatch` is a MATCH-QUALITY claim, and the trigram tier's whole job is to answer a query
-			// that matched nothing. Stamping its rows exact made this backend disagree with the FTS one
-			// (where the flag is a real tier discriminator) and, worse, fed a lie to every consumer that
-			// filters on it. Span-rescore is the one that got hurt: it enumerates raw spans LONGEST-first
-			// and takes the first exact hit, so a 2-token span that only fuzzy-matches out-claimed the
-			// 1-token span that matched exactly — measured 2026-08-10, `geocode 'Weimar Thüringen'` came
-			// back as Thüringenhausen (population 105) instead of Weimar (65,228), 47.7 km off.
-			const exact = await lk.findPlace({ text: "Chicago", placetype: "locality", country: "US" })
-			expect(exact[0]?.name).toBe("Chicago")
-			expect(exact[0]?.exactMatch).toBe(true)
+		const exact = await lk.findPlace({ text: "Chicago", placetype: "locality", country: "US" })
+		expect(exact[0]?.name).toBe("Chicago")
+		expect(exact[0]?.exactMatch).toBe(true)
 
-			const fuzzy = await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" })
-			// Recall is untouched — the typo still resolves, it just stops claiming to be exact.
-			expect(fuzzy[0]?.name).toBe("Chicago")
-			expect(fuzzy[0]?.exactMatch).toBe(false)
-		} finally {
-			lk.close()
-		}
+		const fuzzy = await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" })
+		// Recall is untouched — the typo still resolves, it just stops claiming to be exact.
+		expect(fuzzy[0]?.name).toBe("Chicago")
+		expect(fuzzy[0]?.exactMatch).toBe(false)
 	})
 
 	test("the qualifier-strip fallback KEEPS its exact claim — it is a name-key normalization, not a guess", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// "Lenk im Simmental" → "Lenk" strips a qualifier the gazetteer's canonical name omits. That is
-			// the same place under a longer label, not a misspelling, so it stays in the exact tier.
-			const stripped = await lk.findPlace({ text: "Lenk im Simmental", placetype: "locality", country: "CH" })
-			expect(stripped[0]?.name).toBe("Lenk")
-			expect(stripped[0]?.exactMatch).toBe(true)
-		} finally {
-			lk.close()
-		}
+		const stripped = await lk.findPlace({ text: "Lenk im Simmental", placetype: "locality", country: "CH" })
+		expect(stripped[0]?.name).toBe("Lenk")
+		expect(stripped[0]?.exactMatch).toBe(true)
 	})
 
 	test("the fuzzy fallback NEVER fires for postcodes — an unknown code abstains, it does not become a different code", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// "B0601" shares the trigrams {060, 601} with the fixture's real 60601 — exactly the shape
-			// that let Northern Ireland's BT3 9QQ trigram-match Sheffield's S3 9QQ after the Code-Point
-			// swap (2026-08-05). A "corrected" postcode is a DIFFERENT postcode; the only right answer
-			// for an unknown one is no answer.
-			expect(await lk.findPlace({ text: "B0601", placetype: "postalcode" })).toHaveLength(0)
-			// The same input WITHOUT the postcode placetype may fuzz (it is a name then) — the guard is
-			// placetype-scoped, not a global fuzzy kill.
-			expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
-		} finally {
-			lk.close()
-		}
+		expect(await lk.findPlace({ text: "B0601", placetype: "postalcode" })).toHaveLength(0)
+		// The same input WITHOUT the postcode placetype may fuzz (it is a name then) — the guard is
+		// placetype-scoped, not a global fuzzy kill.
+		expect((await lk.findPlace({ text: "Chicgo", placetype: "locality", country: "US" }))[0]?.name).toBe("Chicago")
 	})
 
 	test("parentID scopes the probe to the in-region place (Springfield → IL under Illinois, not the larger MO)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// Baseline: no parentID → population-first picks the larger Springfield, MO (169k > 114k).
-			const bare = await lk.findPlace({ text: "Springfield", placetype: "locality", country: "US", limit: 5 })
-			expect(bare.map((c) => c.id)).toContain(310)
-			expect(bare.map((c) => c.id)).toContain(311)
-			expect(bare[0]!.id).toBe(311) // MO first, by population
-			expect(bare[0]!.lat).toBeCloseTo(37.19, 2)
+		const bare = await lk.findPlace({ text: "Springfield", placetype: "locality", country: "US", limit: 5 })
+		expect(bare.map((c) => c.id)).toContain(310)
+		expect(bare.map((c) => c.id)).toContain(311)
+		expect(bare[0]!.id).toBe(311) // MO first, by population
+		expect(bare[0]!.lat).toBeCloseTo(37.19, 2)
 
-			// With parentID = Illinois (400), region_id scoping returns ONLY Springfield, IL (310) —
-			// the population-first MO pick is dropped because it isn't in the parent region.
-			const scoped = await lk.findPlace({
-				text: "Springfield",
-				placetype: "locality",
-				country: "US",
-				parentID: 400,
-				limit: 5,
-			})
+		// With parentID = Illinois (400), region_id scoping returns ONLY Springfield, IL (310) —
+		// the population-first MO pick is dropped because it isn't in the parent region.
+		const scoped = await lk.findPlace({
+			text: "Springfield",
+			placetype: "locality",
+			country: "US",
+			parentID: 400,
+			limit: 5,
+		})
 
-			expect(scoped).toHaveLength(1)
-			expect(scoped[0]!.id).toBe(310)
-			expect(scoped[0]!.lat).toBeCloseTo(39.78, 2)
-		} finally {
-			lk.close()
-		}
+		expect(scoped).toHaveLength(1)
+		expect(scoped[0]!.id).toBe(310)
+		expect(scoped[0]!.lat).toBeCloseTo(39.78, 2)
 	})
 
 	test("parentID falls back to the unscoped probe when the region has no in-region match", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// parentID = 999 is a region NO Springfield sits under → the region-scoped cascade returns
-			// nothing, so the reader retries unscoped and resolves exactly as the bare query does today
-			// (population-first Springfield, MO). Fallback is recall-safe: a wrong/absent parent never
-			// drops a place that a plain lookup would have found.
-			const scoped = await lk.findPlace({
-				text: "Springfield",
-				placetype: "locality",
-				country: "US",
-				parentID: 999,
-				limit: 5,
-			})
+		const scoped = await lk.findPlace({
+			text: "Springfield",
+			placetype: "locality",
+			country: "US",
+			parentID: 999,
+			limit: 5,
+		})
 
-			expect(scoped.length).toBeGreaterThan(0)
-			expect(scoped[0]!.id).toBe(311) // unscoped population-first — same as the no-parentID baseline
-			expect(scoped[0]!.lat).toBeCloseTo(37.19, 2)
-		} finally {
-			lk.close()
-		}
+		expect(scoped.length).toBeGreaterThan(0)
+		expect(scoped[0]!.id).toBe(311) // unscoped population-first — same as the no-parentID baseline
+		expect(scoped[0]!.lat).toBeCloseTo(37.19, 2)
 	})
 
 	test("bounded primary preference: a same-key foreign primary beats a more-populous colliding alias (Cancún/Changchun)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// "Zedton" MX (0.89 M primary) vs the exonym alias of "Farland" CN (4.19 M, 0.67 log10 more populous).
-			// Population-first alone would pick the foreign alias; the bounded preference keeps the primary.
-			const hits = await lk.findPlace({ text: "Zedton", placetype: "locality", limit: 5 })
-			expect(hits[0]!.name).toBe("Zedton")
-			expect(hits[0]!.country).toBe("MX")
-			expect(hits[0]!.exactMatch).toBe(true)
-			// The colliding foreign alias is demoted OUT of the exact tier (so a country posterior can't cross back).
-			const alias = hits.find((h) => h.country === "CN")
-			expect(alias).toBeDefined()
-			expect(alias!.exactMatch).toBe(false)
-			// `score` stays the RAW population rank (for the walk's minWinningScore gate); `prominence` carries the
-			// penalty, so the primary's prominence now exceeds the more-populous alias's.
-			expect(hits[0]!.score).toBeLessThan(alias!.score)
-			expect(hits[0]!.prominence!).toBeGreaterThan(alias!.prominence!)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Zedton", placetype: "locality", limit: 5 })
+		expect(hits[0]!.name).toBe("Zedton")
+		expect(hits[0]!.country).toBe("MX")
+		expect(hits[0]!.exactMatch).toBe(true)
+		// The colliding foreign alias is demoted OUT of the exact tier (so a country posterior can't cross back).
+		const alias = hits.find((h) => h.country === "CN")
+		expect(alias).toBeDefined()
+		expect(alias!.exactMatch).toBe(false)
+		// `score` stays the RAW population rank (for the walk's minWinningScore gate); `prominence` carries the
+		// penalty, so the primary's prominence now exceeds the more-populous alias's.
+		expect(hits[0]!.score).toBeLessThan(alias!.score)
+		expect(hits[0]!.prominence!).toBeGreaterThan(alias!.prominence!)
 	})
 
 	test("bounded primary preference: a dominant alt-name still wins over an obscure same-key foreign primary (LA/Los Angeles)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// "Wyeburg" GH (98 k primary) vs the alias of "Wyemetro" US (3.8 M, 1.6 log10 more populous — over the
-			// 1.0 margin). The dominant alias must still win AND stay in the exact tier (recall of real alt-names).
-			const hits = await lk.findPlace({ text: "Wyeburg", placetype: "locality", limit: 5 })
-			expect(hits[0]!.name).toBe("Wyemetro")
-			expect(hits[0]!.country).toBe("US")
-			expect(hits[0]!.exactMatch).toBe(true)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Wyeburg", placetype: "locality", limit: 5 })
+		expect(hits[0]!.name).toBe("Wyemetro")
+		expect(hits[0]!.country).toBe("US")
+		expect(hits[0]!.exactMatch).toBe(true)
 	})
 })
 
@@ -916,137 +800,107 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 
 		await db.destroy()
 
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const off = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
-			const on = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
+		const off = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
+		const on = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
 
-			// Byte-identical: the exact probe answers the single geographic locality; the re-rank rung
-			// sits strictly beneath it and never sees the three-row candidate set.
-			expect(on).toEqual(off)
-			expect(on).toHaveLength(1)
-			expect(on[0]!.id).toBe(SANSOME_SMALL)
-		} finally {
-			lk.close()
-		}
+		// Byte-identical: the exact probe answers the single geographic locality; the re-rank rung
+		// sits strictly beneath it and never sees the three-row candidate set.
+		expect(on).toEqual(off)
+		expect(on).toHaveLength(1)
+		expect(on[0]!.id).toBe(SANSOME_SMALL)
 	})
 
 	test("B2-2: in-gate rows sort by distance first, the out-gate tail keeps its population order", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
+		const hits = await lk.findPlace(sansomeQuery({ postcode: "94101", postcodeContainmentCoherence: true }))
 
-			expect(hits.map((c) => c.id)).toEqual([SANSOME_SMALL, SANSOME_BIG, SANSOME_MID])
-			// The winner is the locality CONTAINING the postcode — within the bar's ≤5 km of its centroid.
-			expect(haversineKm(ANCHOR.lat, ANCHOR.lon, hits[0]!.lat, hits[0]!.lon)).toBeLessThanOrEqual(5)
-			// The out-gate tail (big before mid) is the ORIGINAL population-first order, untouched.
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((c) => c.id)).toEqual([SANSOME_SMALL, SANSOME_BIG, SANSOME_MID])
+		// The winner is the locality CONTAINING the postcode — within the bar's ≤5 km of its centroid.
+		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, hits[0]!.lat, hits[0]!.lon)).toBeLessThanOrEqual(5)
 	})
 
 	test("B2-2: the postcode-removed arm is unchanged — and the gap the bar claims is real", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// No postcode → the rung cannot fire → population-first.
-			const bare = await lk.findPlace(sansomeQuery())
-			expect(bare.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
+		const bare = await lk.findPlace(sansomeQuery())
+		expect(bare.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
-			// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the gate).
-			const flagless = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
-			expect(flagless.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
+		// A postcode WITHOUT the flag is byte-identical to no postcode (the flag is the gate).
+		const flagless = await lk.findPlace(sansomeQuery({ postcode: "94101" }))
+		expect(flagless.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 
-			// The population-first winner is ~550 km from the postcode — removing the postcode moves the
-			// answer far outside the gate, so the mechanism is doing what the bar claims it does.
-			expect(haversineKm(ANCHOR.lat, ANCHOR.lon, bare[0]!.lat, bare[0]!.lon)).toBeGreaterThan(25)
-		} finally {
-			lk.close()
-		}
+		// The population-first winner is ~550 km from the postcode — removing the postcode moves the
+		// answer far outside the gate, so the mechanism is doing what the bar claims it does.
+		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, bare[0]!.lat, bare[0]!.lon)).toBeGreaterThan(25)
 	})
 
 	test("B2-2: an anchor miss abstains — a postcode the table doesn't carry leaves the order untouched", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace(sansomeQuery({ postcode: "99999", postcodeContainmentCoherence: true }))
-			expect(hits.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace(sansomeQuery({ postcode: "99999", postcodeContainmentCoherence: true }))
+		expect(hits.map((c) => c.id)).toEqual([SANSOME_BIG, SANSOME_MID, SANSOME_SMALL])
 	})
 
 	test("B2-2: a single-row candidate set is a no-op — the rung only fires when there is a tie to break", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const [hit] = await lk.findPlace({
-				text: "Chicago",
-				placetype: "locality",
-				postcode: "94101",
-				postcodeContainmentCoherence: true,
-			})
+		const [hit] = await lk.findPlace({
+			text: "Chicago",
+			placetype: "locality",
+			postcode: "94101",
+			postcodeContainmentCoherence: true,
+		})
 
-			expect(hit?.id).toBe(200)
-			expect(hit?.name).toBe("Chicago")
-		} finally {
-			lk.close()
-		}
+		expect(hit?.id).toBe(200)
+		expect(hit?.name).toBe("Chicago")
 	})
 
 	test("B2-2 resolver-level: postcode present → the ≤5 km locality; postcode removed → population-first far away", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const resolver = createWOFResolver(lk)
 
-		try {
-			const withPC = await resolver.resolveTree(
-				tree(node({ tag: "locality", value: "Sansome" }), node({ tag: "postcode", value: "94101" })),
-				{ postcodeContainmentCoherence: true }
-			)
+		const withPC = await resolver.resolveTree(
+			tree(node({ tag: "locality", value: "Sansome" }), node({ tag: "postcode", value: "94101" })),
+			{ postcodeContainmentCoherence: true }
+		)
 
-			const sansPostcode = await resolver.resolveTree(tree(node({ tag: "locality", value: "Sansome" })), {})
+		const sansPostcode = await resolver.resolveTree(tree(node({ tag: "locality", value: "Sansome" })), {})
 
-			const near = tagged(withPC.roots, "locality")[0]!
-			const far = tagged(sansPostcode.roots, "locality")[0]!
+		const near = tagged(withPC.roots, "locality")[0]!
+		const far = tagged(sansPostcode.roots, "locality")[0]!
 
-			expect(near.placeID).toBe("wof:722")
-			expect(far.placeID).toBe("wof:720")
-			expect(haversineKm(ANCHOR.lat, ANCHOR.lon, near.lat!, near.lon!)).toBeLessThanOrEqual(5)
-			expect(haversineKm(ANCHOR.lat, ANCHOR.lon, far.lat!, far.lon!)).toBeGreaterThan(25)
-		} finally {
-			lk.close()
-		}
+		expect(near.placeID).toBe("wof:722")
+		expect(far.placeID).toBe("wof:720")
+		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, near.lat!, near.lon!)).toBeLessThanOrEqual(5)
+		expect(haversineKm(ANCHOR.lat, ANCHOR.lon, far.lat!, far.lon!)).toBeGreaterThan(25)
 	})
 
 	test("B2-3: the double-repair arms agree — postcodeConsistency ON vs OFF pick the same locality", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
 		const resolver = createWOFResolver(lk)
 
-		try {
-			const mkTree = () => tree(node({ tag: "locality", value: "Sansome" }), node({ tag: "postcode", value: "94101" }))
+		const mkTree = () => tree(node({ tag: "locality", value: "Sansome" }), node({ tag: "postcode", value: "94101" }))
 
-			const withConsistency = await resolver.resolveTree(mkTree(), { postcodeContainmentCoherence: true })
+		const withConsistency = await resolver.resolveTree(mkTree(), { postcodeContainmentCoherence: true })
 
-			const withoutConsistency = await resolver.resolveTree(mkTree(), {
-				postcodeContainmentCoherence: true,
-				postcodeConsistency: false,
-			})
+		const withoutConsistency = await resolver.resolveTree(mkTree(), {
+			postcodeContainmentCoherence: true,
+			postcodeConsistency: false,
+		})
 
-			const a = tagged(withConsistency.roots, "locality")[0]!
-			const b = tagged(withoutConsistency.roots, "locality")[0]!
+		const a = tagged(withConsistency.roots, "locality")[0]!
+		const b = tagged(withoutConsistency.roots, "locality")[0]!
 
-			// The containment rung picks small; the consistency pass (default-ON) is already satisfied and
-			// must NOT re-pick with a different tie-break — both arms land on the same locality.
-			expect(a.placeID).toBe("wof:722")
-			expect(b.placeID).toBe(a.placeID)
-			expect(a.lat).toBeCloseTo(37.76, 2)
-		} finally {
-			lk.close()
-		}
+		// The containment rung picks small; the consistency pass (default-ON) is already satisfied and
+		// must NOT re-pick with a different tie-break — both arms land on the same locality.
+		expect(a.placeID).toBe("wof:722")
+		expect(b.placeID).toBe(a.placeID)
+		expect(a.lat).toBeCloseTo(37.76, 2)
 	})
 })
 
@@ -1068,7 +922,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 	 * Lenk deliberately is not. Ids are unrelated to the admin fixture's, as they are in production.
 	 */
 	function buildFixtureImportance(path: string): void {
-		const db = new DatabaseClient<WOFDatabase>(path)
+		using db = new DatabaseClient<WOFDatabase>(path)
 
 		db.exec(`
 			CREATE TABLE spr (
@@ -1085,8 +939,6 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 			INSERT INTO place_importance VALUES (7000000000301, 0.5465);
 			INSERT INTO place_importance VALUES (7000000000200, 0.8125);
 		`)
-
-		db.destroy()
 	}
 
 	beforeEach(async () => {
@@ -1099,60 +951,42 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 	})
 
 	test("surfaces a measured score as `importance`", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
+		using lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
-			expect(hits).toHaveLength(2)
-			expect(hits[0]!.country).toBe("RU")
-			expect(hits[0]!.importance).toBeCloseTo(0.953, 4)
-			expect(hits[1]!.importance).toBeCloseTo(0.5465, 4)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+		expect(hits).toHaveLength(2)
+		expect(hits[0]!.country).toBe("RU")
+		expect(hits[0]!.importance).toBeCloseTo(0.953, 4)
+		expect(hits[1]!.importance).toBeCloseTo(0.5465, 4)
 	})
 
 	test("an ALIAS row carries the place's score (the Москва → 'moscow' path)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
+		using lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
 
-		try {
-			// "Moskva" is an alt-name of the same RU place; the row is denormalized onto that place, so it
-			// must report the place's fame, not nothing.
-			const hits = await lk.findPlace({ text: "Moskva", placetype: "locality", limit: 5 })
-			expect(hits).toHaveLength(1)
-			expect(hits[0]!.country).toBe("RU")
-			expect(hits[0]!.importance).toBeCloseTo(0.953, 4)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Moskva", placetype: "locality", limit: 5 })
+		expect(hits).toHaveLength(1)
+		expect(hits[0]!.country).toBe("RU")
+		expect(hits[0]!.importance).toBeCloseTo(0.953, 4)
 	})
 
 	test("an unmeasured place omits the field entirely — absent, not zero", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
+		using lk = new WOFCandidateTableLookup({ databasePath: scoredPath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Lenk", placetype: "locality", limit: 5 })
-			expect(hits).toHaveLength(1)
-			// `undefined`, and the KEY must not be present at all — `rankByImportance` reads a 0 as a
-			// measurement and would let a scored hamlet leapfrog an unscored metropolis.
-			expect(hits[0]!.importance).toBeUndefined()
-			expect("importance" in hits[0]!).toBe(false)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Lenk", placetype: "locality", limit: 5 })
+		expect(hits).toHaveLength(1)
+		// `undefined`, and the KEY must not be present at all — `rankByImportance` reads a 0 as a
+		// measurement and would let a scored hamlet leapfrog an unscored metropolis.
+		expect(hits[0]!.importance).toBeUndefined()
+		expect("importance" in hits[0]!).toBe(false)
 	})
 
 	test("an artifact built WITHOUT a score source reports no fame anywhere", async () => {
 		// `candidatePath` is the shared fixture, built with no `importance` option.
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
-			expect(hits).toHaveLength(2)
-			expect(hits.every((h) => h.importance === undefined)).toBe(true)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+		expect(hits).toHaveLength(2)
+		expect(hits.every((h) => h.importance === undefined)).toBe(true)
 	})
 
 	test("an artifact PREDATING the column still resolves — the probe is existence-gated", async () => {
@@ -1164,16 +998,12 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 		rw.exec("ALTER TABLE candidate DROP COLUMN importance")
 		await rw.destroy()
 
-		const lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
+		using lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
-			expect(hits).toHaveLength(2)
-			expect(hits[0]!.country).toBe("RU")
-			expect(hits.every((h) => h.importance === undefined)).toBe(true)
-		} finally {
-			lk.close()
-		}
+		const hits = await lk.findPlace({ text: "Moscow", placetype: "locality", limit: 5 })
+		expect(hits).toHaveLength(2)
+		expect(hits[0]!.country).toBe("RU")
+		expect(hits.every((h) => h.importance === undefined)).toBe(true)
 	})
 })
 
@@ -1245,41 +1075,33 @@ describe("seat preference through findPlace — where the term can and cannot re
 	// term decides, and the Of-shape pair the filter partitions before any ranking runs.
 
 	test("a locality/localadmin duplicate enters ONE locality probe and the seat wins it", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Seatley", placetype: "locality", limit: 5 })
+		const hits = await lk.findPlace({ text: "Seatley", placetype: "locality", limit: 5 })
 
-			// localadmin is a locality-group peer (PLACETYPE_FILTER_GROUPS), so BOTH rows are in the set…
-			expect(hits.map((h) => h.placetype).toSorted()).toEqual(["localadmin", "locality"])
-			// …and the seat tiebreak orders the town over its district even though the district is
-			// fetched first (its region id sorts lower in the clustered key). This ordering is the
-			// term's ONLY corridor to an end-to-end answer — the resolver's downstream sorts are
-			// stable on equal keys (toponym-prior.ts house rule 3) — so it is the mechanism's reach,
-			// not a cosmetic preference.
-			expect(hits[0]!.placetype).toBe("locality")
-			expect(hits[0]!.id).toBe(810)
-		} finally {
-			lk.close()
-		}
+		// localadmin is a locality-group peer (PLACETYPE_FILTER_GROUPS), so BOTH rows are in the set…
+		expect(hits.map((h) => h.placetype).toSorted()).toEqual(["localadmin", "locality"])
+		// …and the seat tiebreak orders the town over its district even though the district is
+		// fetched first (its region id sorts lower in the clustered key). This ordering is the
+		// term's ONLY corridor to an end-to-end answer — the resolver's downstream sorts are
+		// stable on equal keys (toponym-prior.ts house rule 3) — so it is the mechanism's reach,
+		// not a cosmetic preference.
+		expect(hits[0]!.placetype).toBe("locality")
+		expect(hits[0]!.id).toBe(810)
 	})
 
 	test("a locality/county duplicate is PARTITIONED before ranking — the locality probe fetches one row", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Ofton", placetype: "locality", limit: 5 })
+		const hits = await lk.findPlace({ text: "Ofton", placetype: "locality", limit: 5 })
 
-			// County is not a locality-group peer: the Of-shape seat/district pair never co-occurs in
-			// a walk probe, so the seat term cannot decide it end-to-end — the placetype filter
-			// selects the seat by construction, and only an UNFILTERED probe (the browser cascade's
-			// last resort, the dev lookup tools) ever presents this tie to the ranker.
-			expect(hits).toHaveLength(1)
-			expect(hits[0]!.id).toBe(820)
-			expect(hits[0]!.placetype).toBe("locality")
-		} finally {
-			lk.close()
-		}
+		// County is not a locality-group peer: the Of-shape seat/district pair never co-occurs in
+		// a walk probe, so the seat term cannot decide it end-to-end — the placetype filter
+		// selects the seat by construction, and only an UNFILTERED probe (the browser cascade's
+		// last resort, the dev lookup tools) ever presents this tie to the ranker.
+		expect(hits).toHaveLength(1)
+		expect(hits[0]!.id).toBe(820)
+		expect(hits[0]!.placetype).toBe("locality")
 	})
 })
 
@@ -1292,182 +1114,136 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 	// fixtures pin INJECTION, not just ordering.
 
 	test("#1731: a contained NEIGHBOURHOOD is injected past the locality filter group", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({
-				text: "Astorington",
-				placetype: "locality",
-				regionQualifier: "Yorkia",
-				limit: 5,
-			})
+		const hits = await lk.findPlace({
+			text: "Astorington",
+			placetype: "locality",
+			regionQualifier: "Yorkia",
+			limit: 5,
+		})
 
-			// The locality-group pool holds only the wrong-instance locality (972, under no qualifier
-			// ancestry); the TRUE instance is a neighbourhood the filter group cannot reach. The
-			// dependent-band injection admits it on containment proof and the shared partition puts it
-			// first. Without the band, this query answers 972 — the Astoria chimera's first half.
-			expect(hits[0]!.id).toBe(971)
-			expect(hits[0]!.placetype).toBe("neighbourhood")
-			expect(hits[0]!.containedByQualifier).toBe(true)
-			expect(hits.map((h) => h.id)).toContain(972)
-		} finally {
-			lk.close()
-		}
+		// The locality-group pool holds only the wrong-instance locality (972, under no qualifier
+		// ancestry); the TRUE instance is a neighbourhood the filter group cannot reach. The
+		// dependent-band injection admits it on containment proof and the shared partition puts it
+		// first. Without the band, this query answers 972 — the Astoria chimera's first half.
+		expect(hits[0]!.id).toBe(971)
+		expect(hits[0]!.placetype).toBe("neighbourhood")
+		expect(hits[0]!.containedByQualifier).toBe(true)
+		expect(hits.map((h) => h.id)).toContain(972)
 	})
 
 	test("REORDERS the worldwide set: the contained namesake beats the more-populous one", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
+		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
 
-			expect(hits.map((h) => h.id)).toEqual([901, 902])
-			expect(hits[0]!.country).toBe("DE")
-			expect(hits[0]!.containedByQualifier).toBe(true)
-			expect(hits[1]!.containedByQualifier).toBe(false)
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((h) => h.id)).toEqual([901, 902])
+		expect(hits[0]!.country).toBe("DE")
+		expect(hits[0]!.containedByQualifier).toBe(true)
+		expect(hits[1]!.containedByQualifier).toBe(false)
 	})
 
 	test("INJECTS past a country scope: the contained instance the hard filter hid re-enters the list", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// Without the qualifier, the US scope makes the DE row unreachable at any rank.
-			const scoped = await lk.findPlace({ text: "Marwei", placetype: "locality", country: "US", limit: 5 })
+		const scoped = await lk.findPlace({ text: "Marwei", placetype: "locality", country: "US", limit: 5 })
 
-			expect(scoped.map((h) => h.id)).toEqual([902])
+		expect(scoped.map((h) => h.id)).toEqual([902])
 
-			// With it, the sidecar-vouched instance is ADDED and ranked first — the scoped row survives
-			// as the runner-up (additive, never a filter).
-			const hits = await lk.findPlace({
-				text: "Marwei",
-				placetype: "locality",
-				country: "US",
-				regionQualifier: "Thuria",
-				limit: 5,
-			})
+		// With it, the sidecar-vouched instance is ADDED and ranked first — the scoped row survives
+		// as the runner-up (additive, never a filter).
+		const hits = await lk.findPlace({
+			text: "Marwei",
+			placetype: "locality",
+			country: "US",
+			regionQualifier: "Thuria",
+			limit: 5,
+		})
 
-			expect(hits.map((h) => h.id)).toEqual([901, 902])
-			expect(hits[0]!.country).toBe("DE")
-			expect(hits[0]!.exactMatch).toBe(true)
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((h) => h.id)).toEqual([901, 902])
+		expect(hits[0]!.country).toBe("DE")
+		expect(hits[0]!.exactMatch).toBe(true)
 	})
 
 	test("bridges a variant-form qualifier through the artifact's own alias keys", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// 'Thueria' is an alias key of the Thuria region row — the Thüringen→Thuringia class the
-			// fold-equality verdicts (their stated v1 bound) cannot bridge; the qualifier probe can.
-			const hits = await lk.findPlace({
-				text: "Marwei",
-				placetype: "locality",
-				country: "US",
-				regionQualifier: "Thueria",
-				limit: 5,
-			})
+		const hits = await lk.findPlace({
+			text: "Marwei",
+			placetype: "locality",
+			country: "US",
+			regionQualifier: "Thueria",
+			limit: 5,
+		})
 
-			expect(hits[0]!.id).toBe(901)
-		} finally {
-			lk.close()
-		}
+		expect(hits[0]!.id).toBe(901)
 	})
 
 	test("falls through to the CLOSURE rows where the interval forest cannot see the qualifier (DAG)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// Deggton DE's canonical parent is the ancestry-less county, so its interval label sits in a
-			// different tree than Thuria's — the interval verdict is 'not contained along the canonical
-			// hierarchy', and only the closure chain knows better.
-			const hits = await lk.findPlace({ text: "Deggton", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
+		const hits = await lk.findPlace({ text: "Deggton", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
 
-			expect(hits.map((h) => h.id)).toEqual([905, 907])
-			expect(hits[0]!.country).toBe("DE")
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((h) => h.id)).toEqual([905, 907])
+		expect(hits[0]!.country).toBe("DE")
 	})
 
 	test("meets a 'County X' stored form addressed as 'Co. X' — the probe-side prefix variant", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// The stored fold is 'county dundo' with no bare 'dundo' key; the qualifier's own strip goes
-			// the OTHER way ('Co. Dundo' → 'dundo'), so a one-sided probe would miss what the verdicts'
-			// two-sided set intersection meets — the exact reason `regionQualifierProbeKeys` exists.
-			const hits = await lk.findPlace({
-				text: "Kennytown",
-				placetype: "locality",
-				regionQualifier: "Co. Dundo",
-				limit: 5,
-			})
+		const hits = await lk.findPlace({
+			text: "Kennytown",
+			placetype: "locality",
+			regionQualifier: "Co. Dundo",
+			limit: 5,
+		})
 
-			expect(hits.map((h) => h.id)).toEqual([961, 962])
-			expect(hits[0]!.country).toBe("IE")
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((h) => h.id)).toEqual([961, 962])
+		expect(hits[0]!.country).toBe("IE")
 	})
 
 	test("answers a COUNTRY name in the region slot — the parse-mislabel class ('Moscow, Russia')", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({
-				text: "Mosgrad",
-				placetype: "locality",
-				country: "US",
-				regionQualifier: "Ruslandia",
-				limit: 5,
-			})
+		const hits = await lk.findPlace({
+			text: "Mosgrad",
+			placetype: "locality",
+			country: "US",
+			regionQualifier: "Ruslandia",
+			limit: 5,
+		})
 
-			expect(hits.map((h) => h.id)).toEqual([951, 952])
-			expect(hits[0]!.country).toBe("RU")
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((h) => h.id)).toEqual([951, 952])
+		expect(hits[0]!.country).toBe("RU")
 	})
 
 	test("SOFT, never a filter: a qualifier that matches nothing changes nothing (and says it was asked)", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const plain = await lk.findPlace({ text: "Marwei", placetype: "locality", limit: 5 })
+		const plain = await lk.findPlace({ text: "Marwei", placetype: "locality", limit: 5 })
 
-			const hits = await lk.findPlace({
-				text: "Marwei",
-				placetype: "locality",
-				regionQualifier: "Nowhereshire",
-				limit: 5,
-			})
+		const hits = await lk.findPlace({
+			text: "Marwei",
+			placetype: "locality",
+			regionQualifier: "Nowhereshire",
+			limit: 5,
+		})
 
-			expect(hits.map((h) => h.id)).toEqual(plain.map((h) => h.id))
-			// Evaluated, not silently skipped: the stamps are present and false, so the walk's verdict
-			// reads no_contained_candidate rather than unavailable.
-			expect(hits.every((h) => h.containedByQualifier === false)).toBe(true)
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((h) => h.id)).toEqual(plain.map((h) => h.id))
+		// Evaluated, not silently skipped: the stamps are present and false, so the walk's verdict
+		// reads no_contained_candidate rather than unavailable.
+		expect(hits.every((h) => h.containedByQualifier === false)).toBe(true)
 	})
 
 	test("an uncontained qualifier (wrong region) leaves the population order untouched", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			// 'Texia' contains the US namesake, which already leads on population — stamped, unmoved.
-			const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Texia", limit: 5 })
+		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Texia", limit: 5 })
 
-			expect(hits.map((h) => h.id)).toEqual([902, 901])
-			expect(hits[0]!.containedByQualifier).toBe(true)
-			expect(hits[1]!.containedByQualifier).toBe(false)
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((h) => h.id)).toEqual([902, 901])
+		expect(hits[0]!.containedByQualifier).toBe(true)
+		expect(hits[1]!.containedByQualifier).toBe(false)
 	})
 
 	test("CAPABILITY-GATED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
@@ -1479,30 +1255,22 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 		rw.exec("DROP TABLE candidate_ancestor; DROP TABLE candidate_interval;")
 		await rw.destroy()
 
-		const lk = new WOFCandidateTableLookup({ databasePath: preSidecarPath })
+		using lk = new WOFCandidateTableLookup({ databasePath: preSidecarPath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
+		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", regionQualifier: "Thuria", limit: 5 })
 
-			// Population-first, unmoved — and NO stamp, so the walk reports the lever `unavailable`
-			// rather than reading the absence as "not contained" (meaning-of-zero).
-			expect(hits.map((h) => h.id)).toEqual([902, 901])
-			expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)
-		} finally {
-			lk.close()
-		}
+		// Population-first, unmoved — and NO stamp, so the walk reports the lever `unavailable`
+		// rather than reading the absence as "not contained" (meaning-of-zero).
+		expect(hits.map((h) => h.id)).toEqual([902, 901])
+		expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)
 	})
 
 	test("no qualifier on the query → no stamps, byte-identical to the incumbent path", async () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", limit: 5 })
+		const hits = await lk.findPlace({ text: "Marwei", placetype: "locality", limit: 5 })
 
-			expect(hits.map((h) => h.id)).toEqual([902, 901])
-			expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)
-		} finally {
-			lk.close()
-		}
+		expect(hits.map((h) => h.id)).toEqual([902, 901])
+		expect(hits.every((h) => !("containedByQualifier" in h))).toBe(true)
 	})
 })

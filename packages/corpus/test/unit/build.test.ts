@@ -86,10 +86,9 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(trainShard).toBeDefined()
 		expect(trainShard.format).toBe("parquet")
 		expect(trainShard.path).toMatch(/\.parquet$/)
-		const reader = await ParquetReader.openFile<ParquetRow>(trainShard.path)
+		await using reader = await ParquetReader.openFile<ParquetRow>(trainShard.path)
 		const cursor = reader.getCursor()
 		const firstRow = (await cursor.next()) as ParquetRow | null
-		await reader.close()
 		expect(firstRow).not.toBeNull()
 		expect(firstRow!.corpus_version).toBe("0.1.0")
 		expect(firstRow!.tokens).toHaveLength(firstRow!.labels.length)

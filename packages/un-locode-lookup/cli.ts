@@ -54,10 +54,8 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 
-	const lookup = new UnLocodeLookup({ databasePath: values.db })
+	using lookup = new UnLocodeLookup({ databasePath: values.db })
 	const code = byName ? lookup.byName(values.country!, values.name!) : lookup.nearest(lat, lon)
 
 	console.log(JSON.stringify({ unLocode: code }))
-
-	lookup.close()
 }

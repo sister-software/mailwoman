@@ -155,9 +155,13 @@ function ftsTrigramQuery(s: string): string {
  * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WOFSQLitePlaceLookup} in `createWOFResolver(backend)`
  * — same `findPlace` contract, population-first ranking.
  */
-export class WOFCandidateTableLookup implements PlaceLookup {
+export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 	#db: DatabaseClient<CandidateDatabase>
-	#ownsDB: boolean
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	readonly #countryToID = new Map<string, number>()
 	readonly #idToCountry = new Map<number, string>()
 	readonly #placetypeToID = new Map<string, number>()
@@ -239,10 +243,8 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.databasePath) {
-			this.#db = new DatabaseClient<CandidateDatabase>(opts.databasePath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<CandidateDatabase>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("WOFCandidateTableLookup needs `databasePath` or `database`")
 		}
@@ -968,8 +970,10 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDB) {
-			this.#db.destroy()
-		}
+		this.#resources.dispose()
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }

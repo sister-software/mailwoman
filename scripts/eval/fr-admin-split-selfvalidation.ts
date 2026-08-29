@@ -162,7 +162,7 @@ await db.destroy()
 
 // --- resolver (production path) ------------------------------------------------------------------
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-const backend = new WOFSQLitePlaceLookup({ databasePath: DB })
+using backend = new WOFSQLitePlaceLookup({ databasePath: DB })
 const resolver = createWOFResolver(backend)
 const resolveOpts = { defaultCountry: "FR" }
 

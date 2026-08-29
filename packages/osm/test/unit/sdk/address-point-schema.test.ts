@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest"
 
 describe("OSM address-point layer schema", () => {
 	it("adds an indexed H3 spine and honest empty coverage to the shared rooftop table", async () => {
-		const db = new DatabaseClient<OSMAddressPointDatabase>(":memory:")
+		using db = new DatabaseClient<OSMAddressPointDatabase>(":memory:")
 
 		await createOSMAddressPointTables(db)
 
@@ -67,8 +67,6 @@ describe("OSM address-point layer schema", () => {
 		expect(columns.find((column) => column.name === "h3_cell")?.notnull).toBe(1)
 		const indexes = db.prepare("PRAGMA index_list(address_point)").all() as Array<{ name: string }>
 		expect(indexes.some((index) => index.name === "idx_ap_h3")).toBe(true)
-
-		await db.destroy()
 	})
 
 	it("remains readable through the unchanged shared address-point lookup", async () => {
@@ -101,15 +99,13 @@ describe("OSM address-point layer schema", () => {
 
 			await db.destroy()
 
-			const lookup = new AddressPointSqliteLookup(path, { streetLocale: "fr" })
+			using lookup = new AddressPointSqliteLookup(path, { streetLocale: "fr" })
 
 			expect(lookup.find({ street, number: "2", postcode: "75001" })).toMatchObject({
 				lat: 48.8566,
 				lon: 2.3522,
 				source: "openstreetmap:fr",
 			})
-
-			lookup.close()
 		} finally {
 			rmSync(dir, { recursive: true, force: true })
 		}

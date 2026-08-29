@@ -71,17 +71,19 @@ export class AddressPointInterpolator<
 	DB extends AddressPointDatabase = AddressPointDatabase,
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
-	readonly #ownsDB: boolean
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	readonly #fallback: StreetInterpolator | undefined
 	readonly #byPostcode: PreparedAll<[postcode: string, street: RouteKey, number: number], PointRow> | undefined
 
 	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB>; fallback?: StreetInterpolator }) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.dbPath) {
-			this.#db = new DatabaseClient<DB>(opts.dbPath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<DB>(opts.dbPath, { readOnly: true }))
 		} else {
 			throw new Error("AddressPointInterpolator: one of dbPath or database is required")
 		}
@@ -130,9 +132,7 @@ export class AddressPointInterpolator<
 	}
 
 	close(): void {
-		if (this.#ownsDB) {
-			this.#db.destroy()
-		}
+		this.#resources.dispose()
 	}
 }
 

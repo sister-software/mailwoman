@@ -142,7 +142,7 @@ function cellFor(latitude: number, longitude: number): number {
  * `buildPOIDatabase`, see this file's header docstring for why.
  */
 async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promise<void> {
-	const kdb = new DatabaseClient<POIDatabase>(path)
+	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` (unused here) — the category-codes dictionary
@@ -184,8 +184,6 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 	// Index-after-load, matching the builder's own discipline (poi-schema.ts / poi-lookup.test.ts).
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
-
-	await kdb.destroy()
 }
 
 /**

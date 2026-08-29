@@ -176,8 +176,10 @@ const IMPORT_CHECK = [
  * the check source-coherent without making unrelated packages available.
  */
 const STANDALONE_LEAVES: Record<string, string[]> = {
-	// Core otherwise qualifies as a dependency-clean leaf; platform is its sole first-party runtime dependency.
-	"@mailwoman/core": ["@mailwoman/platform"],
+	// Core otherwise qualifies as a dependency-clean leaf. Its first-party runtime dependencies are supplied as local
+	// tarballs rather than resolved from npm: `@mailwoman/sqlite` is a NEW name with no publish yet, so a registry
+	// install answers E404 and the probe reports a packaging failure that is really an unblessed name.
+	"@mailwoman/core": ["@mailwoman/platform", "@mailwoman/sqlite"],
 }
 
 /**

@@ -247,32 +247,26 @@ describe("findPlace — backwards compat", () => {
 			INSERT INTO place_search (wof_id, name, alt_names) SELECT id, name, '' FROM spr;
 		`)
 
-		const oldLookup = new WOFSQLitePlaceLookup({ database: db })
+		using oldLookup = new WOFSQLitePlaceLookup({ database: db })
 
-		try {
-			// bbox option should be silently ignored — without the R*Tree we can't filter at SQL level,
-			// and dropping the option to ensure no-crash is the chosen contract (documented in types.ts).
-			const all = await oldLookup.findPlace({
-				text: "Paris",
-				placetype: "locality",
-				bbox: { minLat: -10, maxLat: -9, minLon: -10, maxLon: -9 },
-			})
+		const all = await oldLookup.findPlace({
+			text: "Paris",
+			placetype: "locality",
+			bbox: { minLat: -10, maxLat: -9, minLon: -10, maxLon: -9 },
+		})
 
-			// Without the bbox filter (silently dropped) all Parises are returned.
-			expect(all).toHaveLength(2)
+		// Without the bbox filter (silently dropped) all Parises are returned.
+		expect(all).toHaveLength(2)
 
-			// `near` without `maxDistanceKm` is purely a boost — works without the R*Tree because the
-			// haversine math runs on each row's centroid columns.
-			const near = await oldLookup.findPlace({
-				text: "Paris",
-				placetype: "locality",
-				near: { lat: 48.85, lon: 2.34 },
-			})
+		// `near` without `maxDistanceKm` is purely a boost — works without the R*Tree because the
+		// haversine math runs on each row's centroid columns.
+		const near = await oldLookup.findPlace({
+			text: "Paris",
+			placetype: "locality",
+			near: { lat: 48.85, lon: 2.34 },
+		})
 
-			expect(near[0]?.country).toBe("FR")
-			expect(near[0]?.distanceKm).toBeCloseTo(0, 0)
-		} finally {
-			oldLookup.close()
-		}
+		expect(near[0]?.country).toBe("FR")
+		expect(near[0]?.distanceKm).toBeCloseTo(0, 0)
 	})
 })

@@ -140,7 +140,11 @@ const CF_MISMATCH_KM = 50
 
 export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	readonly #db: DatabaseClient<WOFDatabase>
-	readonly #ownsDB: boolean
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	readonly #weights: RankingWeights
 	/**
 	 * Cached at construction so we don't `sqlite_master` query on every findPlace call. Bbox + near- with-radius queries
@@ -215,7 +219,6 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 			this.#shards = [{ path: ":memory:", schemaName: "main", placetypes: [] }]
 		} else {
 			const shards = resolveShards(opts.databasePath!)
@@ -226,8 +229,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			// ONLY when that build was explicitly requested. Every read query (FTS5 MATCH, the aux-table
 			// SELECTs, ATTACH, and the `busy_timeout` PRAGMA) works read-only. See the docker read-only
 			// mount limitation (#1213).
-			this.#db = new DatabaseClient<WOFDatabase>(shards[0]!.path, { readOnly: !opts.buildFTS })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<WOFDatabase>(shards[0]!.path, { readOnly: !opts.buildFTS }))
 
 			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
 			// interpolate directly (SQLite ATTACH doesn't accept parameters for the schema name).
@@ -836,13 +838,9 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	}
 
 	close(): void {
-		// Destroying the Kysely instance closes the underlying connection IF we own it. If the caller
-		// passed in a pre-opened DatabaseSync (test fixture), respect their ownership.
-		void this.#db.destroy()
-
-		if (this.#ownsDB) {
-			this.#db.destroy()
-		}
+		// Only when we opened it. A caller who passed a pre-opened client keeps using it after this returns — the FTS
+		// build this lookup performed lives on their connection, and closing it would take that with us.
+		this.#resources.dispose()
 	}
 
 	[Symbol.dispose](): void {

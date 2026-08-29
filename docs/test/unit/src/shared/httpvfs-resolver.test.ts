@@ -34,7 +34,10 @@ function stubWorker(db: DatabaseClient<CandidateDatabase>) {
 	}
 }
 
-const openDatabases: DatabaseClient<CandidateDatabase>[] = []
+/**
+ * Every connection these fixtures open, ended together at the end of the file.
+ */
+const openDatabases = new DisposableStack()
 
 function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 	const d = new DatabaseClient<CandidateDatabase>(":memory:")
@@ -65,15 +68,13 @@ function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 		`)
 	}
 
-	openDatabases.push(d)
+	openDatabases.use(d)
 
 	return d
 }
 
 afterEach(() => {
-	while (openDatabases.length) {
-		openDatabases.pop()!.destroy()
-	}
+	openDatabases.dispose()
 })
 
 describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => {

@@ -35,20 +35,24 @@ function fixtureDB(): DatabaseClient<UNLocodeDatabase> {
 }
 
 test("UnLocodeLookup.byName: country + folded name → code", () => {
-	const lookup = new UnLocodeLookup({ database: fixtureDB() })
+	using db = fixtureDB()
+	using lookup = new UnLocodeLookup({ database: db })
 	expect(lookup.byName("NL", "Rotterdam")).toBe("NL RTM")
 	expect(lookup.byName("us", "new york")).toBe("US NYC")
 	expect(lookup.byName("NL", "Nowhere")).toBeNull()
 })
 
 test("UnLocodeLookup.nearest: closest coordinate within range", () => {
-	const lookup = new UnLocodeLookup({ database: fixtureDB() })
+	using db = fixtureDB()
+	using lookup = new UnLocodeLookup({ database: db })
 	expect(lookup.nearest(40.71, -74.01)).toBe("US NYC")
 	expect(lookup.nearest(0, 0, 25)).toBeNull()
 })
 
 test("makeUnLocodeAnnotator: byName when available, else nearest", () => {
-	const annotate = makeUnLocodeAnnotator(new UnLocodeLookup({ database: fixtureDB() }))
+	using db = fixtureDB()
+	using lookup = new UnLocodeLookup({ database: db })
+	const annotate = makeUnLocodeAnnotator(lookup)
 
 	expect(annotate({ lat: 40.71, lon: -74.01, countryCode: "US", placeName: "New York" })).toEqual({
 		unLocode: "US NYC",

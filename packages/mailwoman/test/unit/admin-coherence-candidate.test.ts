@@ -36,7 +36,7 @@ const WEIMAR_US = 202
  * country, so a bare population-first "Weimar" answers Texas.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -69,8 +69,6 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (${WEIMAR_US}, ${USA}, 'country');
 		INSERT INTO ancestors VALUES (${TEXAS}, ${USA}, 'country');
 	`)
-
-	db.destroy()
 }
 
 let scratch: string

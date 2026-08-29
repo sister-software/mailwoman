@@ -51,7 +51,7 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
  * Read every row from a `.parquet` file in on-disk order.
  */
 async function readParquet(path: string): Promise<ParquetRow[]> {
-	const reader = await ParquetReader.openFile<ParquetRow>(path)
+	await using reader = await ParquetReader.openFile<ParquetRow>(path)
 	const cursor = reader.getCursor()
 	const out: ParquetRow[] = []
 	let row: ParquetRow | null
@@ -60,8 +60,6 @@ async function readParquet(path: string): Promise<ParquetRow[]> {
 	while ((row = (await cursor.next()) as ParquetRow | null)) {
 		out.push(row)
 	}
-
-	await reader.close()
 
 	return out
 }

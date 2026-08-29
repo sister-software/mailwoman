@@ -139,13 +139,15 @@ type POIRow = Pick<
 >
 
 /**
- * Node reader over `poi.db`. `implements Disposable` so callers can `using lookup = new POILookup(...)` (or call
- * `[Symbol.dispose]()` explicitly), the same precedent as {@link WOFCandidateTableLookup} /
- * {@link WOFSQLitePlaceLookup}.
+ * Node reader over `poi.db`.
  */
 export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposable {
 	#db: DatabaseClient<DB>
-	#ownsDB: boolean
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	readonly #categoryToID = new Map<string, number>()
 	readonly #idToCategory = new Map<number, string>()
 
@@ -165,10 +167,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	constructor(opts: POILookupOpts<DB>) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.databasePath) {
-			this.#db = new DatabaseClient<DB>(opts.databasePath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<DB>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("POILookup needs `databasePath` or `database`")
 		}
@@ -352,9 +352,7 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 	}
 
 	close(): void {
-		if (this.#ownsDB) {
-			this.#db.destroy()
-		}
+		this.#resources.dispose()
 	}
 
 	[Symbol.dispose](): void {

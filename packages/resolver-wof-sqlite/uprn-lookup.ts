@@ -97,7 +97,11 @@ interface UPRNRow {
  */
 export class UPRNLookup implements Disposable {
 	#db: DatabaseClient<UPRNDatabase>
-	#ownsDB: boolean
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 
 	/**
 	 * `uprn` → its point (rowid-alias PK hit).
@@ -107,10 +111,8 @@ export class UPRNLookup implements Disposable {
 	constructor(opts: UPRNLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.databasePath) {
-			this.#db = new DatabaseClient<UPRNDatabase>(opts.databasePath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<UPRNDatabase>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("UPRNLookup needs `databasePath` or `database`")
 		}
@@ -199,9 +201,7 @@ export class UPRNLookup implements Disposable {
 	}
 
 	close(): void {
-		if (this.#ownsDB) {
-			this.#db.destroy()
-		}
+		this.#resources.dispose()
 	}
 
 	[Symbol.dispose](): void {

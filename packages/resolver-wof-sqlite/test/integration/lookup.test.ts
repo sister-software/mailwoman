@@ -477,10 +477,9 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 	})
 
 	test("errors loudly when FTS table is missing and buildFTS is false", () => {
-		const db = new DatabaseClient<WOFDatabase>(":memory:")
+		using db = new DatabaseClient<WOFDatabase>(":memory:")
 		db.exec(`CREATE TABLE places (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT);`)
 		expect(() => new WOFSQLitePlaceLookup({ database: db, buildFTS: false })).toThrow(/place_search/)
-		db.destroy()
 	})
 
 	test("SMOKE: a sealed 0444 on-disk shard opens and still answers FTS queries end-to-end", async () => {

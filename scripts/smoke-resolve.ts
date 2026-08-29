@@ -11,7 +11,7 @@ import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
 const { positionals } = parseArgs({ allowPositionals: true })
 const DB = positionals[0] ?? String(dataRootPath("wof", "admin-global-priority.db"))
-const lookup = new WOFSQLitePlaceLookup({ databasePath: DB })
+using lookup = new WOFSQLitePlaceLookup({ databasePath: DB })
 
 console.log("=== plain: 'New York' (locality) ===")
 console.log(

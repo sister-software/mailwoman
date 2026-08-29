@@ -22,7 +22,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 let scratch: string
 
 function buildAdminShard(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -39,11 +39,10 @@ function buildAdminShard(path: string): void {
 	`)
 
 	buildPlaceSearchFTS(db)
-	db.destroy()
 }
 
 function buildPostcodeShard(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -60,7 +59,6 @@ function buildPostcodeShard(path: string): void {
 	`)
 
 	buildPlaceSearchFTS(db)
-	db.destroy()
 }
 
 beforeEach(async () => {
@@ -75,15 +73,11 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 	test("opens a single shard via string path (backwards compatible)", async () => {
 		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
 		buildAdminShard(adminPath)
-		const lookup = new WOFSQLitePlaceLookup({ databasePath: adminPath })
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: adminPath })
 
-		try {
-			const r = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
-			expect(r.length).toBeGreaterThan(0)
-			expect(r[0]?.name).toBe("Springfield")
-		} finally {
-			lookup.close()
-		}
+		const r = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
+		expect(r.length).toBeGreaterThan(0)
+		expect(r[0]?.name).toBe("Springfield")
 	})
 
 	test("opens admin + postcode shards via array, auto-routes by placetype", async () => {
@@ -92,23 +86,18 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
-		try {
-			// Locality query → admin shard
-			const localities = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
-			expect(localities).toHaveLength(1)
-			expect(localities[0]?.placetype).toBe("locality")
-			expect(localities[0]?.id).toBe(101)
+		const localities = await lookup.findPlace({ text: "Springfield", placetype: "locality" })
+		expect(localities).toHaveLength(1)
+		expect(localities[0]?.placetype).toBe("locality")
+		expect(localities[0]?.id).toBe(101)
 
-			// Postcode query → postalcode shard
-			const postcodes = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
-			expect(postcodes).toHaveLength(1)
-			expect(postcodes[0]?.placetype).toBe("postalcode")
-			expect(postcodes[0]?.id).toBe(201)
-		} finally {
-			lookup.close()
-		}
+		// Postcode query → postalcode shard
+		const postcodes = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
+		expect(postcodes).toHaveLength(1)
+		expect(postcodes[0]?.placetype).toBe("postalcode")
+		expect(postcodes[0]?.id).toBe(201)
 	})
 
 	test("ShardConfig.schemaName override + explicit placetypes hint", async () => {
@@ -117,19 +106,13 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(oddlyNamed)
 
-		const lookup = new WOFSQLitePlaceLookup({
+		using lookup = new WOFSQLitePlaceLookup({
 			databasePath: [adminPath, { path: oddlyNamed, schemaName: "pc", placetypes: ["postalcode"] }],
 		})
 
-		try {
-			// Even though the filename derives `wherever_they_put_postcodes`, the override gave it
-			// a `pc` schema name with explicit `postalcode` routing.
-			const postcodes = await lookup.findPlace({ text: "90210", placetype: "postalcode" })
-			expect(postcodes).toHaveLength(1)
-			expect(postcodes[0]?.name).toBe("90210")
-		} finally {
-			lookup.close()
-		}
+		const postcodes = await lookup.findPlace({ text: "90210", placetype: "postalcode" })
+		expect(postcodes).toHaveLength(1)
+		expect(postcodes[0]?.name).toBe("90210")
 	})
 
 	test("postcode bbox + proximity work via R*Tree on the attached shard", async () => {
@@ -138,23 +121,17 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
-		try {
-			// "62701" near Illinois coords with a 10km hard filter — only 62701 and 62702 in fixture
-			// are near these coords, but the FTS phrase exact-match on "62701" picks just one.
-			const r = await lookup.findPlace({
-				text: "62701",
-				placetype: "postalcode",
-				near: { lat: 39.8, lon: -89.65, maxDistanceKm: 10 },
-			})
+		const r = await lookup.findPlace({
+			text: "62701",
+			placetype: "postalcode",
+			near: { lat: 39.8, lon: -89.65, maxDistanceKm: 10 },
+		})
 
-			expect(r.length).toBeGreaterThan(0)
-			expect(r[0]?.distanceKm).toBeDefined()
-			expect(r[0]?.distanceKm).toBeLessThan(5)
-		} finally {
-			lookup.close()
-		}
+		expect(r.length).toBeGreaterThan(0)
+		expect(r[0]?.distanceKm).toBeDefined()
+		expect(r[0]?.distanceKm).toBeLessThan(5)
 	})
 
 	test("query without placetype routes to main (admin) regardless of shards", async () => {
@@ -163,16 +140,11 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		buildPostcodeShard(pcPath)
 
-		const lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
-		try {
-			// No placetype → main only. "62701" won't match (it's in postcode shard); Springfield will.
-			const r = await lookup.findPlace({ text: "Springfield" })
-			expect(r).toHaveLength(1)
-			expect(r[0]?.placetype).toBe("locality")
-		} finally {
-			lookup.close()
-		}
+		const r = await lookup.findPlace({ text: "Springfield" })
+		expect(r).toHaveLength(1)
+		expect(r[0]?.placetype).toBe("locality")
 	})
 
 	test("placetype with no matching shard falls back to main", async () => {
@@ -180,13 +152,9 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 		buildAdminShard(adminPath)
 		// Only admin shard — no postcode shard. A postalcode query falls back to main, returns
 		// nothing because admin has no postalcodes.
-		const lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath] })
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath] })
 
-		try {
-			const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
-			expect(r).toEqual([])
-		} finally {
-			lookup.close()
-		}
+		const r = await lookup.findPlace({ text: "62701", placetype: "postalcode" })
+		expect(r).toEqual([])
 	})
 })

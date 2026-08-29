@@ -210,23 +210,19 @@ export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [string, number, number
  */
 export async function verifyReversePanel(adminDBPath: string): Promise<VerifyResult> {
 	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
-	const rg = new WOFReverseGeocoder({ adminDBPath })
+	using rg = new WOFReverseGeocoder({ adminDBPath })
 	const checks: VerifyCheckResult[] = []
 
-	try {
-		for (const [label, lat, lon, expected] of REVERSE_PANEL_CASES) {
-			const r = await rg.reverseGeocode(lat, lon)
-			const deepest = r.hierarchy[0]
-			const got = (r.hierarchy.find((h) => h.placetype === "country")?.country ?? deepest?.country ?? "").toUpperCase()
+	for (const [label, lat, lon, expected] of REVERSE_PANEL_CASES) {
+		const r = await rg.reverseGeocode(lat, lon)
+		const deepest = r.hierarchy[0]
+		const got = (r.hierarchy.find((h) => h.placetype === "country")?.country ?? deepest?.country ?? "").toUpperCase()
 
-			checks.push({
-				check: `reverse:${label}`,
-				ok: got === expected,
-				detail: `${deepest?.name ?? "(empty)"} → ${got || "(none)"} (want ${expected})`,
-			})
-		}
-	} finally {
-		rg.close()
+		checks.push({
+			check: `reverse:${label}`,
+			ok: got === expected,
+			detail: `${deepest?.name ?? "(empty)"} → ${got || "(none)"} (want ${expected})`,
+		})
 	}
 
 	return { ok: checks.every((c) => c.ok), checks }

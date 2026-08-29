@@ -73,7 +73,7 @@ const backend: ResolverBackend =
 const rows = new Map<string, number>()
 
 if (backendName === "candidate") {
-	const db = new DatabaseClient<CandidateDatabase>(candidatePath, { readOnly: true })
+	using db = new DatabaseClient<CandidateDatabase>(candidatePath, { readOnly: true })
 
 	for (const r of db
 		.prepare(
@@ -87,11 +87,9 @@ if (backendName === "candidate") {
 		.all() as { country: string; n: number }[]) {
 		rows.set((r.country ?? "").toUpperCase(), r.n)
 	}
-
-	await db.destroy()
 } else {
 	for (const path of wofShardPaths().filter(existsSync)) {
-		const db = new DatabaseClient<CandidateDatabase>(path, { readOnly: true })
+		using db = new DatabaseClient<CandidateDatabase>(path, { readOnly: true })
 
 		for (const r of db
 			.prepare("SELECT country, COUNT(*) AS n FROM spr WHERE placetype = 'postalcode' GROUP BY country")
@@ -99,8 +97,6 @@ if (backendName === "candidate") {
 			const c = (r.country ?? "").toUpperCase()
 			rows.set(c, (rows.get(c) ?? 0) + r.n)
 		}
-
-		await db.destroy()
 	}
 }
 

@@ -32,7 +32,7 @@ let dir: string
  * A main shard complete enough to construct against.
  */
 const writeMain = (path: string): void => {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -44,21 +44,17 @@ const writeMain = (path: string): void => {
 		CREATE VIRTUAL TABLE place_search USING fts5(wof_id UNINDEXED, name, alt_names);
 		CREATE TABLE names (id INTEGER, name TEXT, lang TEXT);
 	`)
-
-	db.destroy()
 }
 
 /**
  * A shard that CLAIMS to be a place shard — it carries `spr` — and cannot serve one.
  */
 const writeSprOnly = (path: string): void => {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, latitude REAL, longitude REAL)`
 	)
-
-	db.destroy()
 }
 
 /**
@@ -72,13 +68,11 @@ const writeEmpty = (path: string): void => {
  * A relation-table shard, which never claims to be a place shard and is part of the documented default set.
  */
 const writeRelationOnly = (path: string): void => {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
 		`CREATE TABLE postcode_locality (postcode TEXT, locality_id INTEGER, is_containing INTEGER, distance_km REAL)`
 	)
-
-	db.destroy()
 }
 
 beforeAll(() => {

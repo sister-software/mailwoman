@@ -54,7 +54,7 @@ export interface SQLiteStreetNameLookupOpts {
  * A {@link StreetLocalityEvidence} backed by a street-name SQLite index. Positive evidence only: any doubt (missing
  * table, read miss) returns `false`, so the rerank fails open to the model's ranking.
  */
-export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
+export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposable {
 	readonly countries: ReadonlySet<string>
 	readonly #db: DatabaseClient<WOFDatabase>
 	readonly #byName: ReturnType<DatabaseClient["prepare"]> | undefined
@@ -109,6 +109,10 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 	 * Close the underlying handle.
 	 */
 	close(): void {
-		this.#db.destroy()
+		this.#db[Symbol.dispose]()
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }

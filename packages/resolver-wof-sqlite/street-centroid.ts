@@ -131,6 +131,6 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	}
 
 	close(): void {
-		this.#db.destroy()
+		this.#db[Symbol.dispose]()
 	}
 }

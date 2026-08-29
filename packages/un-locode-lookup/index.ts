@@ -43,14 +43,21 @@ export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } |
 /**
  * A UN/LOCODE lookup over a built `node:sqlite` table.
  */
-export class UnLocodeLookup {
+export class UnLocodeLookup implements Disposable {
 	#db: DatabaseClient<UNLocodeDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	#byName: ReturnType<DatabaseClient["prepare"]>
 	#byBox: ReturnType<DatabaseClient["prepare"]>
 
 	constructor(opts: { databasePath: string } | { database: DatabaseClient<UNLocodeDatabase> }) {
 		this.#db =
-			"database" in opts ? opts.database : new DatabaseClient<UNLocodeDatabase>(opts.databasePath, { readOnly: true })
+			"database" in opts
+				? opts.database
+				: this.#resources.use(new DatabaseClient<UNLocodeDatabase>(opts.databasePath, { readOnly: true }))
 
 		this.#byName = this.#db.prepare(
 			"SELECT country, location FROM un_locode WHERE country = ? AND nameNorm = ? LIMIT 1"
@@ -100,7 +107,11 @@ export class UnLocodeLookup {
 	}
 
 	close(): void {
-		this.#db.destroy()
+		this.#resources.dispose()
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }
 

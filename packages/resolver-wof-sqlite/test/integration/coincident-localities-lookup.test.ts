@@ -93,15 +93,14 @@ describe("WOFSQLitePlaceLookup.coincidentLocalitiesFor", () => {
 	})
 
 	test("returns [] gracefully when the relation table is absent", () => {
-		const bare = new DatabaseClient<WOFDatabase>(":memory:")
+		using bare = new DatabaseClient<WOFDatabase>(":memory:")
 
 		bare.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
 			latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL,
 			max_longitude REAL, is_current INTEGER, is_deprecated INTEGER, parent_id INTEGER);
 			CREATE TABLE names (rowid INTEGER PRIMARY KEY AUTOINCREMENT, id INTEGER, language TEXT, name TEXT);`)
 
-		const bareLookup = new WOFSQLitePlaceLookup({ database: bare, buildFTS: true })
+		using bareLookup = new WOFSQLitePlaceLookup({ database: bare, buildFTS: true })
 		expect(bareLookup.coincidentLocalitiesFor(910)).toHaveLength(0)
-		bare.destroy()
 	})
 })

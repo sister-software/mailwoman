@@ -37,18 +37,19 @@ import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-sche
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, it } from "vitest"
 
-const openHandles: Array<Pick<DatabaseClient, "destroy">> = []
+/**
+ * Every connection these fixtures open, ended together at the end of the file.
+ */
+const openHandles = new DisposableStack()
 
 afterAll(() => {
-	for (const db of openHandles) {
-		db.destroy()
-	}
+	openHandles.dispose()
 })
 
 function memoryDatabase<DB>(): DatabaseClient<DB> {
 	const db = new DatabaseClient<DB>(":memory:")
 
-	openHandles.push(db)
+	openHandles.use(db)
 
 	return db
 }
