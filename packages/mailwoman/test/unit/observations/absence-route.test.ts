@@ -100,7 +100,7 @@ async function scratchLayer(options: ScratchLayerOptions = {}): Promise<string> 
 
 	const database = new DatabaseSync(path)
 
-	using db = new DatabaseClient<POIDatabase>({ database })
+	using db = new DatabaseClient<POIDatabase>(database)
 
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)

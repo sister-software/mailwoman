@@ -515,7 +515,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	const db = new DatabaseSync(opts.out)
 	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA), matching build-candidate.ts's discipline.
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<POIDatabase>({ database: db })
+	const kdb = new DatabaseClient<POIDatabase>(db)
 
 	progress("stage", "creating staging + dictionary tables")
 	await createPOIStagingTables(kdb)

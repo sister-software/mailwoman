@@ -394,7 +394,7 @@ export async function createAbsenceObservationRoute(
 	}
 
 	const database = new DatabaseSync(options.coverageDatabasePath, { readOnly: true })
-	const db = new DatabaseClient<POIDatabase>({ database })
+	const db = new DatabaseClient<POIDatabase>(database)
 
 	try {
 		const coverageLayer = await readLayerManifest(db)

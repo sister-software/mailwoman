@@ -125,7 +125,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const db = new DatabaseSync(output)
 		// DDL via the Kysely schema-builder; the row INSERTs below stay on the raw `db` handle.
-		const kdb = new DatabaseClient<ConventionDatabase>({ database: db })
+		const kdb = new DatabaseClient<ConventionDatabase>(db)
 		await kdb.schema.dropTable("address_convention").ifExists().execute()
 		await kdb.schema.dropTable("meta").ifExists().execute()
 

@@ -87,7 +87,7 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	const kdb = new DatabaseClient<GauntletDatabase>({ database: raw })
+	const kdb = new DatabaseClient<GauntletDatabase>(raw)
 	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A gate
 	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)

@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 
 async function openWithTable(): Promise<DatabaseSync> {
 	const db = new DatabaseSync(":memory:")
-	const kdb = new DatabaseClient<{ capital: CapitalTable }>({ database: db })
+	const kdb = new DatabaseClient<{ capital: CapitalTable }>(db)
 
 	await createCapitalTable(kdb)
 

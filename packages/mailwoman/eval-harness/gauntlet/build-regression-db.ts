@@ -56,7 +56,7 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 	}
 
 	const db = new DatabaseSync(tmp)
-	const kdb = new DatabaseClient<GauntletDatabase>({ database: db })
+	const kdb = new DatabaseClient<GauntletDatabase>(db)
 	await createGauntletTable(kdb)
 	await createGauntletMetaTable(kdb)
 

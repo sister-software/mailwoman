@@ -306,7 +306,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 
 	{
 		const database = new DatabaseSync(tmpPath)
-		const kdb = new DatabaseClient<ZoningDatabase>({ database })
+		const kdb = new DatabaseClient<ZoningDatabase>(database)
 
 		try {
 			database.exec("PRAGMA journal_mode = OFF")
@@ -347,7 +347,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 	}
 
 	const database = new DatabaseSync(tmpPath)
-	const kdb = new DatabaseClient<ZoningDatabase>({ database })
+	const kdb = new DatabaseClient<ZoningDatabase>(database)
 
 	try {
 		database.exec("PRAGMA journal_mode = OFF")

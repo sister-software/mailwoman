@@ -210,7 +210,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA). The code dictionaries + the transient
 	// staging table come from the SHARED schema DDL, so they can't drift from {@link CandidateDatabase}.
 	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<CandidateDatabase>({ database: out })
+	const kdb = new DatabaseClient<CandidateDatabase>(out)
 	await createCandidateStagingTables(kdb)
 
 	// --- compact code maps (country/placetype → small int, shrinks the clustered key). The ids are

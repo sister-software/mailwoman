@@ -72,7 +72,7 @@ export class WOFPostalCityAliasLookup {
 		}
 
 		// `#kdb` wraps `#db` for the typed query; close() owns the raw handle directly (sync).
-		this.#kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: this.#db })
+		this.#kdb = new DatabaseClient<PostalCityAliasDatabase>(this.#db)
 	}
 
 	/**

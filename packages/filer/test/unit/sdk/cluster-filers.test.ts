@@ -42,11 +42,10 @@ import {
 	CLUSTER_FILERS_SOURCE,
 	hasSharedIdentifier,
 } from "@mailwoman/filer/sdk/cluster-filers"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(":memory:") })
+	return new DatabaseClient<FilerDatabase>(":memory:")
 }
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {

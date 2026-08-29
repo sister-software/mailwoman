@@ -105,7 +105,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	const artifactPath = join(dir, "candidate.db")
 	const artifact = new DatabaseSync(artifactPath)
 
-	await createCapitalTable(new DatabaseClient<{ capital: CapitalTable }>({ database: artifact }))
+	await createCapitalTable(new DatabaseClient<{ capital: CapitalTable }>(artifact))
 
 	artifact
 		.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")

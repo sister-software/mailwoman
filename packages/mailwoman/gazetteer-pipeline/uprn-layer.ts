@@ -644,7 +644,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		PRAGMA cache_size = -400000;
 	`)
 
-	const kdb = new DatabaseClient<UPRNDatabase>({ database: db })
+	const kdb = new DatabaseClient<UPRNDatabase>(db)
 
 	await createUPRNTable(kdb)
 	await createUPRNMetaTable(kdb)

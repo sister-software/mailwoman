@@ -2,12 +2,12 @@ import type * as Native from "node:child_process"
 
 import { createNotImplementedFunction } from "../internal.ts"
 
-export const ChildProcess = createNotImplementedFunction("node:child_process") as unknown as typeof Native.ChildProcess
+export const ChildProcess = createNotImplementedFunction<typeof Native.ChildProcess>("node:child_process")
 
 export type ChildProcess = Native.ChildProcess
-export const execFile = createNotImplementedFunction("node:child_process") as unknown as typeof Native.execFile
-export const execFileSync = createNotImplementedFunction("node:child_process") as unknown as typeof Native.execFileSync
-export const execSync = createNotImplementedFunction("node:child_process") as unknown as typeof Native.execSync
-export const fork = createNotImplementedFunction("node:child_process") as unknown as typeof Native.fork
-export const spawn = createNotImplementedFunction("node:child_process") as unknown as typeof Native.spawn
-export const spawnSync = createNotImplementedFunction("node:child_process") as unknown as typeof Native.spawnSync
+export const execFile = createNotImplementedFunction<typeof Native.execFile>("node:child_process")
+export const execFileSync = createNotImplementedFunction<typeof Native.execFileSync>("node:child_process")
+export const execSync = createNotImplementedFunction<typeof Native.execSync>("node:child_process")
+export const fork = createNotImplementedFunction<typeof Native.fork>("node:child_process")
+export const spawn = createNotImplementedFunction<typeof Native.spawn>("node:child_process")
+export const spawnSync = createNotImplementedFunction<typeof Native.spawnSync>("node:child_process")

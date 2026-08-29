@@ -392,7 +392,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	const db = new DatabaseSync(buildingPath)
 	// Build-tuning pragmas — identical to build-bdc.ts's discipline.
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<FilerDatabase>({ database: db })
+	const kdb = new DatabaseClient<FilerDatabase>(db)
 
 	progress("creating manifest/node/edge/attribute/cluster/family/attribute-stage tables")
 	await createFilerBuildTables(kdb)

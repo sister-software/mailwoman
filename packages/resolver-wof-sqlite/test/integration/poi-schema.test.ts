@@ -21,7 +21,7 @@ import { describe, expect, it } from "vitest"
 function openMemory(): { raw: DatabaseSync; kdb: DatabaseClient<POIDatabase> } {
 	const raw = new DatabaseSync(":memory:")
 
-	return { raw, kdb: new DatabaseClient<POIDatabase>({ database: raw }) }
+	return { raw, kdb: new DatabaseClient<POIDatabase>(raw) }
 }
 
 describe("poi schema", () => {

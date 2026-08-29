@@ -469,7 +469,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	const buildPath = `${args.output}.building`
 	rmSync(buildPath, { force: true })
 	const db = new DatabaseSync(buildPath)
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(db)
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
 

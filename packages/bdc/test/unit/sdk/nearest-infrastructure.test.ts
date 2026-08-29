@@ -144,7 +144,7 @@ function cellFor(latitude: number, longitude: number): number {
  */
 async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promise<void> {
 	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	const kdb = new DatabaseClient<POIDatabase>(raw)
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` (unused here) — the category-codes dictionary
@@ -195,7 +195,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
  * against whatever database the caller passes, independent of poi.db's own coverage.
  */
 async function openEmptyContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+	const kdb = new DatabaseClient<LayerContractDatabase>(":memory:")
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)

@@ -55,11 +55,10 @@ import {
 } from "@mailwoman/filer/schema"
 import { mintFamilyID } from "@mailwoman/filer/sdk/family-id"
 import { familyRollup } from "@mailwoman/filer/sdk/family-rollup"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(":memory:") })
+	return new DatabaseClient<FilerDatabase>(":memory:")
 }
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {

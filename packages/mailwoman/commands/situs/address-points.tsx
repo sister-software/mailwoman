@@ -168,7 +168,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		// from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
 		// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
 		db.exec("PRAGMA journal_mode = WAL;")
-		const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+		const kdb = new DatabaseClient<AddressPointDatabase>(db)
 		await createAddressPointTable(kdb)
 
 		const insert = db.prepare(

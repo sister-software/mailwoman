@@ -15,7 +15,6 @@ import { statSync } from "@mailwoman/platform/fs"
 import { mkdtemp, writeFile } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import { UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -159,9 +158,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(lookup.coordinateOf(906_700_601_612)).toEqual({ latitude: 55.8823426, longitude: -4.2786558 })
 		expect(lookup.nearestUPRN(51.4526, -2.602, 100)?.uprn).toBe(1)
 
-		const kdb = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(out, { readOnly: true }),
-		})
+		const kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 

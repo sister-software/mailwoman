@@ -607,7 +607,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	const db = new DatabaseSync(buildingPath)
 	// Build-tuning pragmas — identical to build-poi.ts's discipline.
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<BDCDatabase>({ database: db })
+	const kdb = new DatabaseClient<BDCDatabase>(db)
 
 	// Assigned at the end of the try — the tallies live inside its scope; the seal + swap do not.
 	let result: BuildBDCResult

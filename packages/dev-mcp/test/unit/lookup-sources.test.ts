@@ -101,7 +101,7 @@ const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name
 
 async function candidateFixture(): Promise<DatabaseSync> {
 	const db = memoryDatabase()
-	const kdb = new DatabaseClient<CandidateDatabase>({ database: db })
+	const kdb = new DatabaseClient<CandidateDatabase>(db)
 
 	await kdb.schema
 		.createTable("country_codes")
@@ -309,7 +309,7 @@ describe("lookupWOF", () => {
 
 async function poiFixture(): Promise<DatabaseSync> {
 	const db = memoryDatabase()
-	const kdb = new DatabaseClient<POIDatabase>({ database: db })
+	const kdb = new DatabaseClient<POIDatabase>(db)
 
 	await kdb.schema
 		.createTable("poi_category_codes")

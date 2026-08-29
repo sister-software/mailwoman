@@ -64,7 +64,7 @@ export interface ShardMetaDatabase {
  * column added to one is a compile error against the other.
  */
 export async function createShardMetaTable(db: DatabaseSync): Promise<void> {
-	const kdb = new DatabaseClient<ShardMetaDatabase>({ database: db })
+	const kdb = new DatabaseClient<ShardMetaDatabase>(db)
 
 	await kdb.schema
 		.createTable("meta")

@@ -139,7 +139,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const db = new DatabaseSync(dbPath, { open: true })
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
-		const kdb = new DatabaseClient<PlaceImportanceDatabase>({ database: db })
+		const kdb = new DatabaseClient<PlaceImportanceDatabase>(db)
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")

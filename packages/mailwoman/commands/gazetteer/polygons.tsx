@@ -237,7 +237,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const dbOut = new DatabaseSync(tmpOut)
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
-		const kdb = new DatabaseClient<PolygonDatabase>({ database: dbOut })
+		const kdb = new DatabaseClient<PolygonDatabase>(dbOut)
 
 		await createPolygonsTable(kdb)
 

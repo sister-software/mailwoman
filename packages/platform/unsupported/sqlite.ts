@@ -2,13 +2,22 @@ import type * as Native from "node:sqlite"
 
 import { createNotImplementedFunction } from "../internal.ts"
 
-export const DatabaseSync = createNotImplementedFunction("node:sqlite") as unknown as typeof Native.DatabaseSync
+/**
+ * The unsupported-runtime twin of the Node handle. See `../node/sqlite.ts` for what `DB` does.
+ */
+export type DatabaseSync<DB = unknown> = Native.DatabaseSync & {
+	readonly __mailwomanDatabaseSchema?: DB
+}
 
-export type DatabaseSync = Native.DatabaseSync
+interface DatabaseSyncConstructor {
+	new <DB = unknown>(location: string | URL, options?: Native.DatabaseSyncOptions): DatabaseSync<DB>
+}
+
+export const DatabaseSync = createNotImplementedFunction<DatabaseSyncConstructor>("node:sqlite")
 
 export type DatabaseSyncOptions = Native.DatabaseSyncOptions
 
 export type SQLInputValue = Native.SQLInputValue
-export const StatementSync = createNotImplementedFunction("node:sqlite") as unknown as typeof Native.StatementSync
+export const StatementSync = createNotImplementedFunction<typeof Native.StatementSync>("node:sqlite")
 
 export type StatementSync = Native.StatementSync

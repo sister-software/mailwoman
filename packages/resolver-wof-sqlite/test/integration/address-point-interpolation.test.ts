@@ -29,7 +29,7 @@ async function seedPoints(db: DatabaseSync, points: SeedPoint[]): Promise<void> 
 	// Shared table builder (the same `scripts/build-address-point-shard.ts` uses) so this fixture can't
 	// drift from the production shape. `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle
 	// (closed in afterAll), so we don't destroy `kdb`.
-	const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+	const kdb = new DatabaseClient<AddressPointDatabase>(db)
 	await createAddressPointTable(kdb)
 
 	const ins = db.prepare(

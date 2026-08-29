@@ -42,7 +42,7 @@ interface Seed {
 async function seedShard(rows: Seed[]): Promise<string> {
 	const path = join(mkdtempSync(join(tmpdir(), "sc-test-")), "street-centroids.db")
 	const db = new DatabaseSync(path)
-	const kdb = new DatabaseClient<StreetCentroidDatabase>({ database: db })
+	const kdb = new DatabaseClient<StreetCentroidDatabase>(db)
 	await createStreetCentroidTable(kdb)
 
 	const ins = db.prepare(

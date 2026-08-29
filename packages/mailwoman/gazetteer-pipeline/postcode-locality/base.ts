@@ -155,7 +155,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 			.join(", ") +
 		"}"
 
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(db)
 
 	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
 
@@ -302,7 +302,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	// Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality shard
 	// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
 	// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: out })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(out)
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists: true })
 

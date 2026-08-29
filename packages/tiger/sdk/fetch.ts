@@ -217,7 +217,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 	const db = new DatabaseSync(outPath)
 	db.exec(TIGER_PRAGMAS)
-	const kdb = new DatabaseClient<TIGERDatabase>({ database: db })
+	const kdb = new DatabaseClient<TIGERDatabase>(db)
 	await initializeTIGERSchema(kdb)
 
 	/**

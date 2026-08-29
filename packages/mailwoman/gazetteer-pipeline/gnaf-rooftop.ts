@@ -188,7 +188,7 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 	const db = new DatabaseSync(tmp)
 
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<OSMAddressPointDatabase>({ database: db })
+	const kdb = new DatabaseClient<OSMAddressPointDatabase>(db)
 
 	await createOSMAddressPointTables(kdb)
 

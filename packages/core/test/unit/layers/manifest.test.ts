@@ -21,7 +21,6 @@ import {
 	createLayerManifestTable,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers/schema"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
@@ -42,7 +41,7 @@ const MANIFEST: LayerManifest = {
 }
 
 async function openContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const db = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+	const db = new DatabaseClient<LayerContractDatabase>(":memory:")
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)
 

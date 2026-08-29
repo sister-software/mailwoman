@@ -17,8 +17,20 @@ function byteTransform(stream: CompressionStream | DecompressionStream): {
 	readable: ReadableStream<Uint8Array>
 	writable: WritableStream<Uint8Array>
 } {
-	// Node's Web Stream declarations type the writable side as the wider `BufferSource`; a Uint8Array is always one.
-	return stream as unknown as { readable: ReadableStream<Uint8Array>; writable: WritableStream<Uint8Array> }
+	// `pipeThrough` rejects the native transform: its readable side is `NonSharedUint8Array` and its writable side is
+	// `BufferSource`, neither of which matches `ReadableStream<Uint8Array>`. Wrapping the writer bridges both.
+	// Keep the `new Uint8Array(chunk)` copy — `Uint8Array<ArrayBufferLike>` may sit on a SharedArrayBuffer, which
+	// `BufferSource` excludes. The copy produces a non-shared buffer.
+	const writer = stream.writable.getWriter()
+
+	return {
+		readable: stream.readable,
+		writable: new WritableStream<Uint8Array>({
+			abort: (reason) => writer.abort(reason),
+			close: () => writer.close(),
+			write: (chunk) => writer.write(new Uint8Array(chunk)),
+		}),
+	}
 }
 
 async function collect(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {

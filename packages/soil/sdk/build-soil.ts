@@ -258,7 +258,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 	// across them, and a single shared handle silently becomes a closed one by the time the cell tiers are resolved.
 	{
 		const database = new DatabaseSync(tmpPath)
-		const kdb = new DatabaseClient<SoilDatabase>({ database })
+		const kdb = new DatabaseClient<SoilDatabase>(database)
 
 		try {
 			database.exec("PRAGMA journal_mode = OFF")
@@ -301,7 +301,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 	}
 
 	const database = new DatabaseSync(tmpPath)
-	const kdb = new DatabaseClient<SoilDatabase>({ database })
+	const kdb = new DatabaseClient<SoilDatabase>(database)
 
 	try {
 		database.exec("PRAGMA journal_mode = OFF")

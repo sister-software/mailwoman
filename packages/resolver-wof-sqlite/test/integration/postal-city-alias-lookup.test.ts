@@ -31,7 +31,7 @@ async function buildAliasDB(): Promise<DatabaseSync> {
 	const db = new DatabaseSync(":memory:")
 	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.close()/aliasDB.close()),
 	// so we don't destroy `kdb`.
-	const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
+	const kdb = new DatabaseClient<PostalCityAliasDatabase>(db)
 	await createPostalCityAliasTable(kdb)
 
 	const ins = db.prepare(

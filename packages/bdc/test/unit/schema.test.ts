@@ -14,16 +14,11 @@ import {
 } from "@mailwoman/bdc/schema"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createLayerCoverageTable, createLayerManifestTable, LayerTier } from "@mailwoman/core/layers"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { describe, expect, it } from "vitest"
-
-function openMemory(): DatabaseClient<BDCDatabase> {
-	return new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(":memory:") })
-}
 
 describe("bdc schema", () => {
 	it("co-resides with the layer contract, accepts a typed availability row, and reads it back", async () => {
-		using db = openMemory()
+		using db = new DatabaseClient<BDCDatabase>(":memory:")
 		// `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes
 		// `Kysely<DB>` INVARIANT in `DB` (see build-bdc.ts's `asContractDB` for the full rationale) —
 		// narrow the handle back down for these two shared layer-contract calls.

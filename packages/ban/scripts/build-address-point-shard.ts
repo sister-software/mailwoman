@@ -138,7 +138,7 @@ async function main(): Promise<void> {
 
 	const out = new DatabaseSync(tmp)
 	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<AddressPointDatabase>({ database: out })
+	const kdb = new DatabaseClient<AddressPointDatabase>(out)
 	await createAddressPointTable(kdb)
 
 	const insert = out.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)

@@ -28,7 +28,7 @@ beforeAll(async () => {
 	const dir = mkdtempSync(join(tmpdir(), "ap-lookup-"))
 	const path = join(dir, "fixture.db")
 	const db = new DatabaseSync(path)
-	const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+	const kdb = new DatabaseClient<AddressPointDatabase>(db)
 
 	await createAddressPointTable(kdb)
 

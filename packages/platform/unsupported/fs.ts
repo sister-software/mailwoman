@@ -2,44 +2,44 @@ import type * as Native from "node:fs"
 
 import { createNotImplementedFunction } from "../internal.ts"
 
-export const Dirent = createNotImplementedFunction("node:fs") as unknown as typeof Native.Dirent
+export const Dirent = createNotImplementedFunction<typeof Native.Dirent>("node:fs")
 
 export type Dirent = Native.Dirent
 
 export type PathLike = Native.PathLike
-export const Stats = createNotImplementedFunction("node:fs") as unknown as typeof Native.Stats
+export const Stats = createNotImplementedFunction<typeof Native.Stats>("node:fs")
 
 export type Stats = Native.Stats
-export const WriteStream = createNotImplementedFunction("node:fs") as unknown as typeof Native.WriteStream
+export const WriteStream = createNotImplementedFunction<typeof Native.WriteStream>("node:fs")
 
 export type WriteStream = Native.WriteStream
-export const accessSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.accessSync
-export const appendFileSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.appendFileSync
-export const chmodSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.chmodSync
-export const closeSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.closeSync
-export const constants = createNotImplementedFunction("node:fs") as unknown as typeof Native.constants
-export const copyFileSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.copyFileSync
-export const cpSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.cpSync
-export const createReadStream = createNotImplementedFunction("node:fs") as unknown as typeof Native.createReadStream
-export const createWriteStream = createNotImplementedFunction("node:fs") as unknown as typeof Native.createWriteStream
-export const existsSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.existsSync
-export const globSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.globSync
-export const lstatSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.lstatSync
-export const mkdirSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.mkdirSync
-export const mkdtempSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.mkdtempSync
-export const openSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.openSync
-export const promises = createNotImplementedFunction("node:fs") as unknown as typeof Native.promises
-export const readFileSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.readFileSync
-export const readSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.readSync
-export const readdirSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.readdirSync
-export const readlinkSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.readlinkSync
-export const realpathSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.realpathSync
-export const renameSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.renameSync
-export const rmSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.rmSync
-export const rmdirSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.rmdirSync
-export const statSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.statSync
-export const symlinkSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.symlinkSync
-export const unlinkSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.unlinkSync
-export const utimesSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.utimesSync
-export const writeFileSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.writeFileSync
-export const writeSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.writeSync
+export const accessSync = createNotImplementedFunction<typeof Native.accessSync>("node:fs")
+export const appendFileSync = createNotImplementedFunction<typeof Native.appendFileSync>("node:fs")
+export const chmodSync = createNotImplementedFunction<typeof Native.chmodSync>("node:fs")
+export const closeSync = createNotImplementedFunction<typeof Native.closeSync>("node:fs")
+export const constants = createNotImplementedFunction<typeof Native.constants>("node:fs")
+export const copyFileSync = createNotImplementedFunction<typeof Native.copyFileSync>("node:fs")
+export const cpSync = createNotImplementedFunction<typeof Native.cpSync>("node:fs")
+export const createReadStream = createNotImplementedFunction<typeof Native.createReadStream>("node:fs")
+export const createWriteStream = createNotImplementedFunction<typeof Native.createWriteStream>("node:fs")
+export const existsSync = createNotImplementedFunction<typeof Native.existsSync>("node:fs")
+export const globSync = createNotImplementedFunction<typeof Native.globSync>("node:fs")
+export const lstatSync = createNotImplementedFunction<typeof Native.lstatSync>("node:fs")
+export const mkdirSync = createNotImplementedFunction<typeof Native.mkdirSync>("node:fs")
+export const mkdtempSync = createNotImplementedFunction<typeof Native.mkdtempSync>("node:fs")
+export const openSync = createNotImplementedFunction<typeof Native.openSync>("node:fs")
+export const promises = createNotImplementedFunction<typeof Native.promises>("node:fs")
+export const readFileSync = createNotImplementedFunction<typeof Native.readFileSync>("node:fs")
+export const readSync = createNotImplementedFunction<typeof Native.readSync>("node:fs")
+export const readdirSync = createNotImplementedFunction<typeof Native.readdirSync>("node:fs")
+export const readlinkSync = createNotImplementedFunction<typeof Native.readlinkSync>("node:fs")
+export const realpathSync = createNotImplementedFunction<typeof Native.realpathSync>("node:fs")
+export const renameSync = createNotImplementedFunction<typeof Native.renameSync>("node:fs")
+export const rmSync = createNotImplementedFunction<typeof Native.rmSync>("node:fs")
+export const rmdirSync = createNotImplementedFunction<typeof Native.rmdirSync>("node:fs")
+export const statSync = createNotImplementedFunction<typeof Native.statSync>("node:fs")
+export const symlinkSync = createNotImplementedFunction<typeof Native.symlinkSync>("node:fs")
+export const unlinkSync = createNotImplementedFunction<typeof Native.unlinkSync>("node:fs")
+export const utimesSync = createNotImplementedFunction<typeof Native.utimesSync>("node:fs")
+export const writeFileSync = createNotImplementedFunction<typeof Native.writeFileSync>("node:fs")
+export const writeSync = createNotImplementedFunction<typeof Native.writeSync>("node:fs")

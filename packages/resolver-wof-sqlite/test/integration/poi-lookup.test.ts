@@ -174,7 +174,7 @@ const ALL_ROWS = [
 
 async function buildFixture(path: string): Promise<void> {
 	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	const kdb = new DatabaseClient<POIDatabase>(raw)
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` — unused here, but the category-codes dictionary

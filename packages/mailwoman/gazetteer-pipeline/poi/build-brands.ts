@@ -97,7 +97,7 @@ export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
  */
 export async function readSourceLayer(dbPath: string): Promise<POIBrandSourceLayer> {
 	const raw = new DatabaseSync(dbPath, { readOnly: true })
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: raw })
+	const kdb = new DatabaseClient<LayerContractDatabase>(raw)
 
 	try {
 		const manifest = await readLayerManifest(kdb)

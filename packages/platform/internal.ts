@@ -10,7 +10,7 @@ export function createNotImplementedError(packageName: string): NotImplementedEr
 /**
  * Creates a lazily-throwing stand-in for an unsupported platform export.
  */
-export function createNotImplementedFunction(packageName: string): (...args: never[]) => never {
+export function createNotImplementedFunction<T = (...args: never[]) => never>(packageName: string): T {
 	const unavailable = (): never => {
 		throw createNotImplementedError(packageName)
 	}
@@ -19,5 +19,5 @@ export function createNotImplementedFunction(packageName: string): (...args: nev
 		apply: unavailable,
 		construct: unavailable,
 		get: unavailable,
-	})
+	}) as T
 }

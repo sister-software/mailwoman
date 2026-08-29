@@ -139,7 +139,7 @@ async function buildBDCFixture(): Promise<{ scratch: string; db: DatabaseClient<
 		blockCentroids,
 	})
 
-	return { scratch, db: new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) }) }
+	return { scratch, db: new DatabaseClient<BDCDatabase>(out, { readOnly: true }) }
 }
 
 interface POIFixtureRow {
@@ -169,7 +169,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ 
 	const path = join(scratch, "poi.db")
 
 	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	const kdb = new DatabaseClient<POIDatabase>(raw)
 
 	await createPOITable(kdb)
 	await createPOIStagingTables(kdb)
@@ -217,7 +217,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ 
  * happy-path tests. `resolutionOverride` lets the mismatch test set something else.
  */
 async function openPOIContractDB(resolutionOverride = 9): Promise<DatabaseClient<LayerContractDatabase>> {
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+	const kdb = new DatabaseClient<LayerContractDatabase>(":memory:")
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
@@ -490,7 +490,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 			blockCentroids,
 		})
 
-		const db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+		const db = new DatabaseClient<BDCDatabase>(out, { readOnly: true })
 
 		cleanups.push(async () => {
 			db[Symbol.dispose]()

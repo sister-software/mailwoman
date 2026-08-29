@@ -213,7 +213,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 
 	{
 		const database = new DatabaseSync(tmpPath)
-		const kdb = new DatabaseClient<FloodDatabase>({ database })
+		const kdb = new DatabaseClient<FloodDatabase>(database)
 
 		try {
 			database.exec("PRAGMA journal_mode = OFF")
@@ -261,7 +261,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 	}
 
 	const database = new DatabaseSync(tmpPath)
-	const kdb = new DatabaseClient<FloodDatabase>({ database })
+	const kdb = new DatabaseClient<FloodDatabase>(database)
 
 	try {
 		database.exec("PRAGMA journal_mode = OFF")

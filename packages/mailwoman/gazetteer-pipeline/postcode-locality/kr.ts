@@ -204,7 +204,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	}
 
 	const db = new DatabaseSync(args.output)
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(db)
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists: false })

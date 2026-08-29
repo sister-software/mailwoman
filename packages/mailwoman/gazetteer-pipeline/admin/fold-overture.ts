@@ -165,7 +165,7 @@ export function prepareInserts(db: DatabaseSync): {
 } {
 	// Wraps the caller's handle for statement compilation only — the same one-connection idiom
 	// `createUnifiedSchema` uses for its DDL. The caller owns `db`'s lifecycle, so this is not destroyed.
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>(db)
 
 	return {
 		spr: db.prepare(compileInsert(kdb, "spr", SPR_COLUMNS, true)),

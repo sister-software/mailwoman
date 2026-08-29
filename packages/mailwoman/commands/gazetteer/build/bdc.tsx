@@ -32,7 +32,6 @@ import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/core/kys
 import type { FilerDatabase } from "@mailwoman/filer"
 import { execFileSync } from "@mailwoman/platform/child_process"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -167,7 +166,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		if (filerDBPath) {
 			console.error(`▸ provider list: ${options.providerListPath} (filer.db: ${filerDBPath})`)
 
-			filerDB = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(filerDBPath, { readOnly: true }) })
+			filerDB = new DatabaseClient<FilerDatabase>(filerDBPath, { readOnly: true })
 		}
 
 		try {

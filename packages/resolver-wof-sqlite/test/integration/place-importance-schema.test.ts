@@ -170,7 +170,7 @@ describe("loadImportanceSplit", () => {
 	it("reads the split columns verbatim when they exist", async () => {
 		const db = new DatabaseSync(":memory:")
 		seedPopulation(db, [[1, 96_128]])
-		const kdb = new DatabaseClient<PlaceImportanceDatabase>({ database: db })
+		const kdb = new DatabaseClient<PlaceImportanceDatabase>(db)
 		await createPlaceImportanceTable(kdb)
 
 		db.prepare("INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)").run(

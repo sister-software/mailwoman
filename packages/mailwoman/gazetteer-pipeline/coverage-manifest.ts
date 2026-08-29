@@ -160,7 +160,7 @@ export async function emitCoverageManifest(opts: EmitCoverageManifestOptions): P
 	const { writeGazetteerCoverageManifest } = await import("@mailwoman/resolver-wof-sqlite")
 
 	const db = new DatabaseSync(opts.dbPath)
-	const kdb = new DatabaseClient<GazetteerCoverageDatabase>({ database: db })
+	const kdb = new DatabaseClient<GazetteerCoverageDatabase>(db)
 
 	try {
 		await writeGazetteerCoverageManifest(kdb, {

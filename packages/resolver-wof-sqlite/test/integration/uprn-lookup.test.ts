@@ -54,7 +54,7 @@ beforeAll(async () => {
 	databasePath = join(dir, "uprn.db")
 
 	const db = new DatabaseSync(databasePath)
-	const kdb = new DatabaseClient<UPRNDatabase>({ database: db })
+	const kdb = new DatabaseClient<UPRNDatabase>(db)
 	const contract = kdb
 
 	await createUPRNTable(kdb)
@@ -148,9 +148,7 @@ describe("nearestUPRN", () => {
 
 describe("layer contract", () => {
 	it("round-trips the manifest, spine declaration included", async () => {
-		const kdb = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(databasePath, { readOnly: true }),
-		})
+		const kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -162,9 +160,7 @@ describe("layer contract", () => {
 	})
 
 	it("keeps unsurveyed cells UNKNOWN — the meaning-of-zero rule", async () => {
-		const kdb = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(databasePath, { readOnly: true }),
-		})
+		const kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 		const surveyed = await readLayerCoverage(kdb, 1)
 

@@ -106,7 +106,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// DDL via the Kysely schema-builder (the house idiom); the hot INSERT loop below stays on the
 		// raw `node:sqlite` handle for speed. `kdb` wraps `db` — the two share the one connection.
-		const kdb = new DatabaseClient<PostalCityCandidateDatabase>({ database: db })
+		const kdb = new DatabaseClient<PostalCityCandidateDatabase>(db)
 		await kdb.schema.dropTable(POSTAL_CITY_CANDIDATE_TABLE).ifExists().execute()
 		await createPostalCityCandidateTable(kdb)
 

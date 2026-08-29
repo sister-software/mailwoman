@@ -18,7 +18,7 @@ export interface SqliteDialectConfig {
 	 *
 	 * https://nodejs.org/api/sqlite.html#class-databasesync
 	 */
-	database: InstanceType<typeof DatabaseSync> | (() => Promise<InstanceType<typeof DatabaseSync>>)
+	database: DatabaseSync | (() => Promise<DatabaseSync>)
 
 	/**
 	 * Called once when the first query is executed.

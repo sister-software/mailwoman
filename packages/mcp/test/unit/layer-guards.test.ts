@@ -63,7 +63,7 @@ async function poiFixtureFile(name: string): Promise<string> {
 	scratch = await mkdtemp(join(tmpdir(), "mcp-layer-guards-"))
 	const path = join(scratch, name)
 	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	const kdb = new DatabaseClient<POIDatabase>(raw)
 
 	await createPOITable(kdb)
 	// Also creates `poi_category_codes`, per `poi-schema.ts`'s naming.

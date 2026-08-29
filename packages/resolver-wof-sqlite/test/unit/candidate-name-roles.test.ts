@@ -68,7 +68,7 @@ interface NameSpec {
 async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
 	const src = new DatabaseSync(":memory:")
 	const out = new DatabaseSync(":memory:")
-	const kdb = new DatabaseClient<CandidateDatabase>({ database: out })
+	const kdb = new DatabaseClient<CandidateDatabase>(out)
 
 	await createCandidateStagingTables(kdb)
 

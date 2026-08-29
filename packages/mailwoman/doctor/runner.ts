@@ -155,7 +155,7 @@ function defaultConventionCandidatePath(dataRoot: string): string | undefined {
  */
 async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
 	const raw = new DatabaseSync(path, { readOnly: true })
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: raw })
+	const kdb = new DatabaseClient<LayerContractDatabase>(raw)
 
 	try {
 		const manifest = await readLayerManifest(kdb)

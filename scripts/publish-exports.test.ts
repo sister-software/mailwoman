@@ -6,7 +6,12 @@
 
 import { describe, expect, it } from "vitest"
 
-import { collectExportTargets, transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
+import {
+	assertNoSourceTargets,
+	collectExportTargets,
+	transformExportsForPublish,
+	transformImportsForPublish,
+} from "./publish-exports.ts"
 
 const DEV_MAP = {
 	"./package.json": "./package.json",
@@ -73,9 +78,47 @@ describe("transformExportsForPublish", () => {
 		})
 	})
 
+	it("rewrites every source-targeting condition, not only node", () => {
+		// @mailwoman/platform's shape: the Node target and the unsupported-runtime target are different FILES, and both
+		// are source in the dev map. Rewriting only `node` shipped browser and worker bundlers a raw `.ts`.
+		const result = transformExportsForPublish({
+			"./fs": {
+				node: "./node/fs.ts",
+				worker: "./unsupported/fs.ts",
+				browser: "./unsupported/fs.ts",
+				default: "./out/unsupported/fs.js",
+				types: "./out/unsupported/fs.d.ts",
+			},
+		}) as Record<string, Record<string, string>>
+
+		expect(result["./fs"]).toEqual({
+			types: "./out/unsupported/fs.d.ts",
+			node: "./out/node/fs.js",
+			worker: "./out/unsupported/fs.js",
+			browser: "./out/unsupported/fs.js",
+			default: "./out/unsupported/fs.js",
+		})
+	})
+
 	it("returns non-object exports unchanged", () => {
 		expect(transformExportsForPublish("./out/index.js")).toBe("./out/index.js")
 		expect(transformExportsForPublish(undefined)).toBeUndefined()
+	})
+})
+
+describe("assertNoSourceTargets", () => {
+	it("accepts a transformed map", () => {
+		expect(() => assertNoSourceTargets("pkg", transformExportsForPublish(DEV_MAP))).not.toThrow()
+	})
+
+	it("names the workspace and the leaked target", () => {
+		expect(() =>
+			assertNoSourceTargets("packages/platform exports", { "./fs": { browser: "./unsupported/fs.ts" } })
+		).toThrow(/packages\/platform exports.*\.\/unsupported\/fs\.ts/s)
+	})
+
+	it("accepts a declaration file, which is a legitimate publish target", () => {
+		expect(() => assertNoSourceTargets("pkg", { ".": { types: "./out/index.d.ts" } })).not.toThrow()
 	})
 })
 
@@ -89,9 +132,10 @@ describe("collectExportTargets", () => {
 		expect(targets.some((t) => t.includes("*"))).toBe(false)
 	})
 
-	it("would expose a source leak for the guard to reject", () => {
-		// The v7.2.0 failure shape: a dev map shipped verbatim. The transform repairs the node
-		// condition, so a .ts leak can only survive via a non-node condition — the guard's job.
+	it("exposes a source leak for assertNoSourceTargets to reject", () => {
+		// The v7.2.0 failure shape: a dev map shipped verbatim. The transform repairs every condition whose target is
+		// source, so a leak can only reach here through a shape it does not walk — a pattern target, or a nested
+		// condition it did not visit. Collecting it is what lets the refusal see it.
 		const leaked = collectExportTargets({ ".": { default: "./index.ts" } })
 		expect(leaked).toContain("./index.ts")
 	})

@@ -58,7 +58,7 @@ function buildFixtureAdmin(path: string): void {
  */
 async function attachPostalCityIndex(path: string): Promise<void> {
 	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<PostalCityCandidateDatabase>({ database: raw })
+	const kdb = new DatabaseClient<PostalCityCandidateDatabase>(raw)
 	await createPostalCityCandidateTable(kdb)
 
 	await kdb

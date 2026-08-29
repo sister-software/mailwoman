@@ -25,7 +25,7 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 
 	// `kdb` wraps `db` for the DDL (the house idiom); the caller owns `db`'s lifecycle, so we don't
 	// destroy it here. The bulk INSERTs (populateAncestors + build-unified-wof) stay on the raw handle.
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>(db)
 
 	await kdb.schema
 		.createTable("spr")
@@ -151,7 +151,7 @@ export function populateAncestors(db: DatabaseSync): number {
 }
 
 export async function createUnifiedIndexes(db: DatabaseSync): Promise<void> {
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>(db)
 	await kdb.schema.createIndex("spr_by_placetype").ifNotExists().on("spr").column("placetype").execute()
 	await kdb.schema.createIndex("spr_by_country").ifNotExists().on("spr").column("country").execute()
 	await kdb.schema.createIndex("spr_by_parent").ifNotExists().on("spr").column("parent_id").execute()

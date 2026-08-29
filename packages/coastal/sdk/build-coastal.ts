@@ -239,7 +239,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 
 	{
 		const database = new DatabaseSync(tmpPath)
-		const kdb = new DatabaseClient<CoastalDatabase>({ database })
+		const kdb = new DatabaseClient<CoastalDatabase>(database)
 
 		try {
 			database.exec("PRAGMA journal_mode = OFF")
@@ -280,7 +280,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 	}
 
 	const database = new DatabaseSync(tmpPath)
-	const kdb = new DatabaseClient<CoastalDatabase>({ database })
+	const kdb = new DatabaseClient<CoastalDatabase>(database)
 
 	try {
 		database.exec("PRAGMA journal_mode = OFF")

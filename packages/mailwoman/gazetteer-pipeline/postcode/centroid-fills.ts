@@ -243,7 +243,7 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string, combinedPath:
 	// The GeoNames UPDATE matches on (country, name); the build only indexes placetype/country/parent,
 	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows). `kdb`
 	// wraps `db` for the DDL; the caller owns `db`'s lifecycle, so we don't destroy it here.
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>(db)
 	await kdb.schema.createIndex("spr_by_country_name").ifNotExists().on("spr").columns(["country", "name"]).execute()
 
 	const countries = (
@@ -385,11 +385,7 @@ export async function fillPostcodeCentroids(
 
 		phase("name-geonames", "delivery-city names")
 
-		geonamesNames = await geonamesNameFill(
-			new DatabaseClient<WOFDatabase>({ database: db }),
-			opts.geonamesDir,
-			combinedPath
-		)
+		geonamesNames = await geonamesNameFill(new DatabaseClient<WOFDatabase>(db), opts.geonamesDir, combinedPath)
 	}
 
 	if (opts.adminPath && existsSync(opts.adminPath)) {

@@ -52,7 +52,7 @@ export interface ReferenceInventory {
 export async function readReferenceInventory(query: ReferenceInventoryQuery): Promise<ReferenceInventory> {
 	const database = new DatabaseSync(query.databasePath, { readOnly: true })
 
-	using db = new DatabaseClient<POIDatabase>({ database })
+	using db = new DatabaseClient<POIDatabase>(database)
 
 	const code = await db
 		.selectFrom("poi_category_codes")

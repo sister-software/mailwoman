@@ -140,7 +140,7 @@ export async function backfillAncestorsFromHierarchy(
 	opts: { maxID?: number } = {}
 ): Promise<AncestryBackfillResult> {
 	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+	const kdb = new DatabaseClient<WOFDatabase>(db)
 
 	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring. The
 	// earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children that

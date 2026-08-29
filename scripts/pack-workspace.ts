@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   The ONE way to produce a consumer-grade tarball from a workspace: inject the derived
- *   `publishConfig.exports` (rewrite `node → .ts` to emitted JavaScript — Node refuses
- *   type-stripping under node_modules, so a source target must never reach a consumer), `yarn pack`, restore the
- *   manifest. Used by BOTH the release path (`publish-workspace.ts`) and the CI smoke test
+ *   `publishConfig.exports` (rewrite every `.ts` target to emitted JavaScript — Node refuses
+ *   type-stripping under node_modules, so a source target must never reach a consumer), refuse the pack outright if
+ *   one survives, `yarn pack`, restore the manifest. Used by BOTH the release path (`publish-workspace.ts`) and the CI smoke test
  *   (`smoke-clean-install.ts`) — the smoke previously packed raw and shipped dev maps, which
  *   let the v7.2.0 ship-break class through untested.
  */
@@ -16,7 +16,7 @@ import { spawnSync } from "@mailwoman/platform/child_process"
 import { copyFileSync, lstatSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname, resolve } from "@mailwoman/platform/path"
 
-import { transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
+import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
 
 /**
  * Replace any symlinked `files` entries with real copies of their targets. `yarn pack` stores symlinks AS symlinks in
@@ -63,10 +63,16 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 		}>(originalManifest)
 
 		if (manifest.exports || manifest.imports) {
+			const exports = manifest.exports ? transformExportsForPublish(manifest.exports) : undefined
+			const imports = manifest.imports ? transformImportsForPublish(manifest.imports) : undefined
+
+			assertNoSourceTargets(`${workspaceDir} exports`, exports)
+			assertNoSourceTargets(`${workspaceDir} imports`, imports)
+
 			manifest.publishConfig = {
 				...manifest.publishConfig,
-				...(manifest.exports ? { exports: transformExportsForPublish(manifest.exports) } : {}),
-				...(manifest.imports ? { imports: transformImportsForPublish(manifest.imports) } : {}),
+				...(exports ? { exports } : {}),
+				...(imports ? { imports } : {}),
 			}
 
 			writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")

@@ -2,11 +2,9 @@ import type * as Native from "node:module"
 
 import { createNotImplementedFunction } from "../internal.ts"
 
-export const createRequire = createNotImplementedFunction("node:module") as unknown as typeof Native.createRequire
+export const createRequire = createNotImplementedFunction<typeof Native.createRequire>("node:module")
 
-export const enableCompileCache = createNotImplementedFunction(
-	"node:module"
-) as unknown as typeof Native.enableCompileCache
+export const enableCompileCache = createNotImplementedFunction<typeof Native.enableCompileCache>("node:module")
 
-export const findPackageJSON = createNotImplementedFunction("node:module") as unknown as typeof Native.findPackageJSON
-export const registerHooks = createNotImplementedFunction("node:module") as unknown as typeof Native.registerHooks
+export const findPackageJSON = createNotImplementedFunction<typeof Native.findPackageJSON>("node:module")
+export const registerHooks = createNotImplementedFunction<typeof Native.registerHooks>("node:module")

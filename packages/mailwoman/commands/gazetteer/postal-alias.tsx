@@ -108,7 +108,7 @@ const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 		// use, so this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw
 		// parquet reader; the hot INSERT below stays on the raw `db` handle.
 		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal-city-alias-schema")
-		const kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: db })
+		const kdb = new DatabaseClient<PostalCityAliasDatabase>(db)
 		await createPostalCityAliasTable(kdb)
 
 		const insert = db.prepare(

@@ -56,7 +56,6 @@ import { chmodSync, existsSync } from "@mailwoman/platform/fs"
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
@@ -179,7 +178,7 @@ afterAll(async () => {
 })
 
 function openFixture(): DatabaseClient<BDCDatabase> {
-	return new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+	return new DatabaseClient<BDCDatabase>(out, { readOnly: true })
 }
 
 describe("filingLandscape — Gate 1: contract conformance", () => {
@@ -263,7 +262,7 @@ describe("filingLandscape — Gate 2 (extended): coverage-check is required, not
 
 		chmodSync(corruptOut, 0o644)
 
-		using writable = new DatabaseClient<BDCDatabase>({ database: openBuiltDatabase(corruptOut, { write: true }) })
+		using writable = new DatabaseClient<BDCDatabase>(openBuiltDatabase(corruptOut, { write: true }))
 
 		const sfRow = await writable
 			.selectFrom("bdc_availability")
@@ -426,7 +425,7 @@ describe("filingLandscape — Gate 4: vintage-or-throw", () => {
 		chmodSync(corruptOut, 0o644)
 		expect(existsSync(corruptOut)).toBe(true)
 
-		using writable = new DatabaseClient<BDCDatabase>({ database: openBuiltDatabase(corruptOut, { write: true }) })
+		using writable = new DatabaseClient<BDCDatabase>(openBuiltDatabase(corruptOut, { write: true }))
 		await writable.deleteFrom("layer_manifest").execute()
 
 		await expect(filingLandscape(writable, { geoids: [GEOID_SF] })).rejects.toThrow(/manifest/)
@@ -487,7 +486,7 @@ describe("speed bucket boundaries", () => {
 		})
 
 		it("groups the 7 boundary speeds into exactly the 4 buckets the JS mirror predicts", async () => {
-			using db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(boundaryOut, { readOnly: true }) })
+			using db = new DatabaseClient<BDCDatabase>(boundaryOut, { readOnly: true })
 
 			const result = await filingLandscape(db, { geoids: BOUNDARY_SPEEDS.map(boundaryGeoid) })
 

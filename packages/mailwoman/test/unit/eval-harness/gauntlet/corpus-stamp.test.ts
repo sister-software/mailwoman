@@ -59,7 +59,7 @@ function scratchDB(): string {
 }
 
 function open(path: string): DatabaseClient<GauntletDatabase> {
-	const kdb = new DatabaseClient<GauntletDatabase>({ database: new DatabaseSync(path, { readOnly: true }) })
+	const kdb = new DatabaseClient<GauntletDatabase>(path, { readOnly: true })
 
 	opened.push(kdb)
 
@@ -116,7 +116,7 @@ describe("the build stamp", () => {
 	it("REFUSES a DB that predates the stamp entirely", async () => {
 		const output = scratchDB()
 		const raw = new DatabaseSync(output)
-		const writer = new DatabaseClient<GauntletDatabase>({ database: raw })
+		const writer = new DatabaseClient<GauntletDatabase>(raw)
 
 		// A pre-2026-08-06 artifact: cases, no meta table.
 		await createGauntletTable(writer)

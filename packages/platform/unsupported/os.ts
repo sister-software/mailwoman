@@ -2,14 +2,12 @@ import type * as Native from "node:os"
 
 import { createNotImplementedFunction } from "../internal.ts"
 
-export const arch = createNotImplementedFunction("node:os") as unknown as typeof Native.arch
+export const arch = createNotImplementedFunction<typeof Native.arch>("node:os")
 
-export const availableParallelism = createNotImplementedFunction(
-	"node:os"
-) as unknown as typeof Native.availableParallelism
+export const availableParallelism = createNotImplementedFunction<typeof Native.availableParallelism>("node:os")
 
-export const cpus = createNotImplementedFunction("node:os") as unknown as typeof Native.cpus
-export const homedir = createNotImplementedFunction("node:os") as unknown as typeof Native.homedir
-export const platform = createNotImplementedFunction("node:os") as unknown as typeof Native.platform
-export const tmpdir = createNotImplementedFunction("node:os") as unknown as typeof Native.tmpdir
-export const totalmem = createNotImplementedFunction("node:os") as unknown as typeof Native.totalmem
+export const cpus = createNotImplementedFunction<typeof Native.cpus>("node:os")
+export const homedir = createNotImplementedFunction<typeof Native.homedir>("node:os")
+export const platform = createNotImplementedFunction<typeof Native.platform>("node:os")
+export const tmpdir = createNotImplementedFunction<typeof Native.tmpdir>("node:os")
+export const totalmem = createNotImplementedFunction<typeof Native.totalmem>("node:os")

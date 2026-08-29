@@ -128,7 +128,7 @@ async function main(): Promise<void> {
 
 	const out = new DatabaseSync(tmp)
 	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<OSMAddressPointDatabase>({ database: out })
+	const kdb = new DatabaseClient<OSMAddressPointDatabase>(out)
 	await createOSMAddressPointTables(kdb)
 
 	const insert = out.prepare(

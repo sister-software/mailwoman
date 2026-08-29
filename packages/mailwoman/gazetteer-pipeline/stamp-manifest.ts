@@ -37,7 +37,7 @@ import { DatabaseSync } from "@mailwoman/platform/sqlite"
  */
 export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
 	const db = new DatabaseSync(path)
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: db })
+	const kdb = new DatabaseClient<LayerContractDatabase>(db)
 
 	try {
 		await createLayerManifestTable(kdb)

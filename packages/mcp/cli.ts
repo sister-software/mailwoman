@@ -54,7 +54,6 @@ import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/l
 import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
@@ -261,9 +260,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async layerManifest(databasePath) {
-		using db = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(databasePath, { readOnly: true }),
-		})
+		using db = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 		const manifest = await readLayerManifest(db)
 
@@ -285,7 +282,7 @@ const deps: MCPToolDeps = {
 		// never the raw `node:sqlite` "unable to open database file" message.
 		assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
 
-		using db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(q.databasePath, { readOnly: true }) })
+		using db = new DatabaseClient<BDCDatabase>(q.databasePath, { readOnly: true })
 
 		return filingLandscape(db, { geoids: q.geoids, h3Cells: q.h3Cells })
 	},

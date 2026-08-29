@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest"
 describe("OSM address-point layer schema", () => {
 	it("adds an indexed H3 spine and honest empty coverage to the shared rooftop table", async () => {
 		const raw = new DatabaseSync(":memory:")
-		const db = new DatabaseClient<OSMAddressPointDatabase>({ database: raw })
+		const db = new DatabaseClient<OSMAddressPointDatabase>(raw)
 
 		await createOSMAddressPointTables(db)
 
@@ -79,7 +79,7 @@ describe("OSM address-point layer schema", () => {
 
 		try {
 			const raw = new DatabaseSync(path)
-			const db = new DatabaseClient<OSMAddressPointDatabase>({ database: raw })
+			const db = new DatabaseClient<OSMAddressPointDatabase>(raw)
 			await createOSMAddressPointTables(db)
 			const street = "Rue de Rivoli"
 			const streetNorm = normalizeStreetForKeyLocale(street, "fr")

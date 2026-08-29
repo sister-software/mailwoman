@@ -123,7 +123,7 @@ describe("buildPOIDatabase", () => {
 		// `kdb`'s dispose closes the underlying connection — don't ALSO `using` `raw`, or both dispose
 		// paths race to close() the same DatabaseSync and one throws "database is not open".
 		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(raw)
 
 		// --- dictionary round-trip: insert-on-first-sight, 0 reserved for uncategorized ---
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
@@ -314,7 +314,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		expect(result.coverageCells).toBe(coverageCellsOverride.length)
 
 		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(raw)
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -363,7 +363,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		expect(result.coverageCells).toBe(1)
 
 		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(raw)
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 
 		expect(coverageRows).toHaveLength(1)
@@ -444,7 +444,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		expect(result.coverageCells).toBe(1)
 
 		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(raw)
 		const contractDB = kdb
 
 		const builderWrittenCoverage = await readLayerCoverage(contractDB, overrideCell.h3Cell)

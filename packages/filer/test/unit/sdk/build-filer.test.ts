@@ -26,7 +26,6 @@ import { existsSync } from "@mailwoman/platform/fs"
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { describe, expect, it } from "vitest"
 
 const FRN_ACME = toFRN("0001753557")!
@@ -112,7 +111,7 @@ async function teardownScratch(): Promise<void> {
 }
 
 function openFilerDB(path: string): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(path, { readOnly: true }) })
+	return new DatabaseClient<FilerDatabase>(path, { readOnly: true })
 }
 
 describe("buildFilerDatabase", () => {

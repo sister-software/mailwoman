@@ -94,7 +94,7 @@ let databasePath: string
 
 async function buildFixture(path: string): Promise<void> {
 	const raw = new DatabaseSync(path)
-	using kdb = new DatabaseClient<FixtureDatabase>({ database: raw })
+	using kdb = new DatabaseClient<FixtureDatabase>(raw)
 
 	await kdb.schema
 		.createTable("poi_category_codes")

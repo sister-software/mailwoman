@@ -215,7 +215,7 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 		db.exec("PRAGMA journal_mode = WAL;")
 		// DDL via the SHARED street-segment-schema builder (the table the reader + tests use) so this
 		// producer can't drift. DuckDB below is the raw spatial reader; the hot INSERT stays on `db`.
-		const kdb = new DatabaseClient<StreetSegmentDatabase>({ database: db })
+		const kdb = new DatabaseClient<StreetSegmentDatabase>(db)
 		await createStreetSegmentTable(kdb)
 		// #374 doctrine: the conformal radius multiplier is a property of the calibration set, so it ships IN
 		// the artifact — bake the state's factor (or the conservative default for unmeasured states) into the

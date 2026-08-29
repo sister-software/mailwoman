@@ -17,7 +17,6 @@ import {
 	writeLayerCoverage,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { type GeojsonGeometry, type GeojsonPosition, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToBoundary, latLngToCell } from "h3-js"
 import { describe, expect, it } from "vitest"
@@ -134,7 +133,7 @@ describe("buildExclusionCoverage", () => {
 
 describe("the layer contract's read of these cells", () => {
 	async function openCoverageDB() {
-		const db = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+		const db = new DatabaseClient<LayerContractDatabase>(":memory:")
 		await createLayerCoverageTable(db)
 
 		return db

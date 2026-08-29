@@ -284,7 +284,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		seed(calibDB, [MAIN_EVEN])
 		// The SAME producer the shard builder runs (`writeInterpCalibration`), so the fixture can't
 		// drift from the production shape.
-		const kdb = new DatabaseClient<StreetSegmentDatabase>({ database: calibDB })
+		const kdb = new DatabaseClient<StreetSegmentDatabase>(calibDB)
 		await writeInterpCalibration(kdb, { radius_multiplier: 1.7, method: "split-conformal:2026-06-14", region: "TX" })
 		const calibrated = new StreetInterpolator({ database: calibDB })
 
