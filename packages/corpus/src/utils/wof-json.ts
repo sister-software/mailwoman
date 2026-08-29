@@ -29,9 +29,8 @@
  *   silently emitted zero rows from the real corpus.
  */
 
-import { readFile } from "node:fs/promises"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import FastGlob from "fast-glob"
 
 /**

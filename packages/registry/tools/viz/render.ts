@@ -17,8 +17,8 @@
  *   pays for it.
  */
 
-import { resolve } from "node:path"
-import { pathToFileURL } from "node:url"
+import { resolve } from "@mailwoman/platform/path"
+import { pathToFileURL } from "@mailwoman/platform/url"
 
 /**
  * Options for {@linkcode renderPlotlyHTMLToPNG}.

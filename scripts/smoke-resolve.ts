@@ -1,3 +1,4 @@
+import { dataRootPath } from "@mailwoman/core/utils"
 /**
  * Smoke test: confirm WOFSQLitePlaceLookup works against our CUSTOM unified DB (admin-global-priority.db) now that
  * ancestors + FTS are built. Tests plain text lookup AND ancestors-based parent-constraint scoping (the Springfield
@@ -5,9 +6,7 @@
  *
  * Run: node scripts/smoke-resolve.ts
  */
-import { parseArgs } from "node:util"
-
-import { dataRootPath } from "@mailwoman/core/utils"
+import { parseArgs } from "@mailwoman/platform/util"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
 const { positionals } = parseArgs({ allowPositionals: true })

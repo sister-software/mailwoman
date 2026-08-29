@@ -29,8 +29,7 @@
  *   Tested by the sibling `zcta-centroids.test.ts`.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { TSVSpliterator } from "spliterator"
 
 /**

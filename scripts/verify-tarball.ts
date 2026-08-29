@@ -27,9 +27,8 @@
  *        the v7.2.0 ship-break: exports pointing at files the `files` globs excluded.
  */
 
-import { spawnSync } from "node:child_process"
-
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
+import { spawnSync } from "@mailwoman/platform/child_process"
 import { TextSpliterator } from "spliterator"
 
 import { collectExportTargets } from "./publish-exports.ts"

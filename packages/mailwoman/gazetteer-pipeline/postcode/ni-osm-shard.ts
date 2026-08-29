@@ -42,12 +42,11 @@
  *   is `codepoint-shard.ts` with an Overpass-JSON reader in place of a CSV one.
  */
 
-import { existsSync, unlinkSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, sealDatabase } from "@mailwoman/core/utils"
+import { existsSync, unlinkSync } from "@mailwoman/platform/fs"
+import { readFile } from "@mailwoman/platform/fs/promises"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { join } from "path-ts"
 
 import { buildFTS } from "../fts.ts"

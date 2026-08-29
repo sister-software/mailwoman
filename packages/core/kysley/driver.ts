@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { DatabaseSync, StatementSync } from "node:sqlite"
-
+import type { DatabaseSync, StatementSync } from "@mailwoman/platform/sqlite"
 import {
 	CompiledQuery,
 	createQueryId,

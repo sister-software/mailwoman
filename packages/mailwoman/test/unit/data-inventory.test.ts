@@ -11,11 +11,10 @@
  *   whole phase exists to fix.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	buildCommandGaps,
 	FOREIGN_ROOTS,

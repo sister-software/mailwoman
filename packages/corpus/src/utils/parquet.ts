@@ -37,10 +37,9 @@
  *   close — cheap relative to writing it).
  */
 
-import { mkdir, stat, writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import { sha256File } from "@mailwoman/core/utils"
+import { mkdir, stat, writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 
 import { ParquetWriter, type ParquetSchemaDefinition } from "#parquet-wrapper"
 import type { LabeledRow } from "#types"

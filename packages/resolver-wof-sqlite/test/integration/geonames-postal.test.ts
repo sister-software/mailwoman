@@ -9,11 +9,10 @@
  *   the p50-tax law).
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	GEONAMES_POSTAL_ID_BASE,
 	ingestGeonamesPostal,

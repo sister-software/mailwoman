@@ -6,11 +6,10 @@
  *   scorer, the lever progression, the adjudication packet, and the report renderer.
  */
 
-import { mkdtempSync, readFileSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { jaccard, type TermFrequencyTable } from "@mailwoman/match"
+import { mkdtempSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import type { ResolvedEntity, SourceRecord } from "@mailwoman/registry/types"
 import { describe, expect, it } from "vitest"
 

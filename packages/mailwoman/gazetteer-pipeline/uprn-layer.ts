@@ -47,13 +47,6 @@
  *   not in any OS OpenData product.
  */
 
-import { createWriteStream, existsSync, unlinkSync } from "node:fs"
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
@@ -66,6 +59,12 @@ import {
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { createWriteStream, existsSync, unlinkSync } from "@mailwoman/platform/fs"
+import { mkdir, readdir, readFile, stat, writeFile } from "@mailwoman/platform/fs/promises"
+import { dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import {
 	LATITUDE_MAX,

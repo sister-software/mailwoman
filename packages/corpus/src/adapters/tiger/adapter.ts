@@ -34,9 +34,8 @@
  *   needed — every row in TIGER is the same license.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { lookupFipsState } from "#codex/us-fips-state"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"

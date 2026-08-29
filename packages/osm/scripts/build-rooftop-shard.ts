@@ -21,14 +21,13 @@
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
-import { existsSync, mkdirSync, rmSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"

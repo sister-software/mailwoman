@@ -8,12 +8,11 @@
  *   where a source carries one verbatim, is never second-guessed).
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mkdtempSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address-point"
 import {
 	ADDRESS_POINT_COLUMNS,

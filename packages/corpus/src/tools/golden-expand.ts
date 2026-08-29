@@ -46,14 +46,13 @@
  *   - Does not retry hallucinated candidates. Cost of wasted tokens is trivial (~$0.0006/each).
  */
 
-import { mkdir } from "node:fs/promises"
-import { dirname } from "node:path"
-
 import { ParquetReader } from "@dsnp/parquetjs"
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { dirname } from "@mailwoman/platform/path"
 import { createNewlineWriter } from "spliterator"
 
 // ── Types ─────────────────────────────────────────────────────────────────

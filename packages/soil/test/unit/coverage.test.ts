@@ -18,11 +18,10 @@
  *   share an edge, because the per-area version passes every other test in this package.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { SoilCapabilityLookup, SoilReadingKind } from "@mailwoman/soil"
 import { buildSoilDatabase, type SurveyAreaInput } from "@mailwoman/soil/sdk/build-soil"
 import type { SoilDelineation } from "@mailwoman/soil/sdk/ingest"

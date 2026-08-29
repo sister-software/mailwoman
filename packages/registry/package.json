@@ -101,6 +101,7 @@
 		"@mailwoman/address-id": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",

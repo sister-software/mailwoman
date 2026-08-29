@@ -13,8 +13,7 @@
  *   generalises to any other national open register (the coverage story, one country at a time).
  */
 
-import { existsSync } from "node:fs"
-
+import { existsSync } from "@mailwoman/platform/fs"
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { join } from "path-ts"
 

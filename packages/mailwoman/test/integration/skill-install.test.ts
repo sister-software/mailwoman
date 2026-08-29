@@ -11,12 +11,11 @@
  *   the task review caught: `cpSync` alone never deletes).
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { workspacePath } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
 import { afterEach, describe, expect, test, vi } from "vitest"
 

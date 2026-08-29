@@ -16,13 +16,12 @@
  *   https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/
  */
 
-import { mkdir } from "node:fs/promises"
-import { dirname, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { dirname, join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { TextSpliterator } from "spliterator"
 
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.ts"

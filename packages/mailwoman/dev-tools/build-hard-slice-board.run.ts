@@ -22,12 +22,11 @@
  *   Run: node packages/mailwoman/dev-tools/build-hard-slice-board.run.ts [--out <path>]
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { dataRootPath, getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { JSONSpliterator } from "spliterator"

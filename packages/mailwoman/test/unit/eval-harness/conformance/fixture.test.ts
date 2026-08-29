@@ -11,11 +11,10 @@
  *   fixture's own id — a refusal that does not name the row sends the reader to a file with no line to open.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { repoRootPath } from "@mailwoman/core/utils"
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	CONFORMANCE_RELATIONS,
 	type ConformanceFixture,

@@ -20,13 +20,12 @@
  *   CSV exists and sha matches MANIFEST, skips download.
  */
 
-import { spawn, spawnSync } from "node:child_process"
-import { existsSync, mkdirSync, statSync } from "node:fs"
-import { unlink } from "node:fs/promises"
-import { join } from "node:path"
-
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
+import { spawn, spawnSync } from "@mailwoman/platform/child_process"
+import { existsSync, mkdirSync, statSync } from "@mailwoman/platform/fs"
+import { unlink } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"

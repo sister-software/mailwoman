@@ -24,8 +24,7 @@
  *   Usage: mailwoman dev generate language-types
  */
 
-import * as fs from "node:fs/promises"
-
+import * as fs from "@mailwoman/platform/fs/promises"
 import { pascalCase } from "change-case"
 import { CSVSpliterator } from "spliterator"
 

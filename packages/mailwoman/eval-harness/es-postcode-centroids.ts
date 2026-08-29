@@ -17,9 +17,8 @@
  *   Run: mailwoman eval es-postcode-centroids [--parquet <path>] [--out <db>] [--country ES]
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Options for {@linkcode buildESPostcodeCentroids}.

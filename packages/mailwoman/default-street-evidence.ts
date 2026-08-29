@@ -28,7 +28,7 @@ export function loadDefaultStreetEvidence(): Promise<StreetLocalityEvidence | nu
 	if (!cached) {
 		cached = (async (): Promise<StreetLocalityEvidence | null> => {
 			try {
-				const { existsSync } = await import("node:fs")
+				const { existsSync } = await import("@mailwoman/platform/fs")
 				const { dataRootPath } = await import("@mailwoman/core/utils")
 				const dbPath = dataRootPath("ban", "street-centroids-fr.db")
 

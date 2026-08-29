@@ -32,13 +32,12 @@
  *   which is what they had before Wikipedia importance existed.
  */
 
-import { createReadStream, existsSync, mkdirSync, writeFileSync } from "node:fs"
-import { get as httpsGet } from "node:https"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { createGunzip } from "node:zlib"
-
 import { allRows, cacheRootPath, getRow } from "@mailwoman/core/utils"
+import { createReadStream, existsSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { get as httpsGet } from "@mailwoman/platform/https"
+import { dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { createGunzip } from "@mailwoman/platform/zlib"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
 

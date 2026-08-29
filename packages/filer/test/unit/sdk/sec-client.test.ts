@@ -19,16 +19,15 @@
  *   reason to breach that.
  */
 
-import { mkdtempSync, readdirSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
 import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/core/api/test-transport"
 // `ResourceError` is used both as a VALUE (`toBeInstanceOf`) and as a TYPE (`as ResourceErrorShape`). The value arrives
 // via the post-reset dynamic import below; a `const` carries no type side, so the type position needs its own static
 // import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
+import { mkdtempSync, readdirSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // NOTE: `./sec-client.ts` is imported DYNAMICALLY below, after `vi.resetModules()` — see the

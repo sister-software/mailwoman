@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { existsSync } from "node:fs"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveInputSet } from "@mailwoman/dev-mcp/input-sets"
+import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, it } from "vitest"
 
 /**

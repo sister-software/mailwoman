@@ -17,11 +17,10 @@
  *   bonus the fused street path survives (the measured emission-only miss). One assertion, both wires.
  */
 
-import { readFileSync } from "node:fs"
-
 import { workspacePath } from "@mailwoman/core/utils"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import { serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))

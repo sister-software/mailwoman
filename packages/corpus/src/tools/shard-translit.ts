@@ -28,12 +28,11 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { mkdir, stat } from "node:fs/promises"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { mkdir, stat } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"

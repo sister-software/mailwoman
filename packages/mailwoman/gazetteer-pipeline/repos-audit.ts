@@ -28,9 +28,9 @@
  *   the two as one number would either overstate the risk or hide it.
  */
 
-import { execFileSync } from "node:child_process"
-import { type Dirent, existsSync, readdirSync, realpathSync, statSync } from "node:fs"
-import { join } from "node:path"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { type Dirent, existsSync, readdirSync, realpathSync, statSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 /**
  * Where a clone sits relative to the repos root.

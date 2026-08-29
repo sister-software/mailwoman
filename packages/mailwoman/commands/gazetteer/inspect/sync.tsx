@@ -142,8 +142,8 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
 			const { resolveWOFRepoOrigin, UPSTREAM_ORG } = await import("#gazetteer/wof-repo-origin")
-			const { execFile } = await import("node:child_process")
-			const { promisify } = await import("node:util")
+			const { execFile } = await import("@mailwoman/platform/child_process")
+			const { promisify } = await import("@mailwoman/platform/util")
 
 			const run = promisify(execFile)
 

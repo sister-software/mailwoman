@@ -1,3 +1,4 @@
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -14,9 +15,7 @@
  *
  *   The 37013 antioch→nashville edge is a real top row of the built `postal-city-alias-us.db`.
  */
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { WOFPostalCityAliasLookup } from "@mailwoman/resolver-wof-sqlite/postal-city-alias-lookup"
 import {

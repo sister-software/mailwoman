@@ -27,9 +27,9 @@
  *   steps run later, consuming the JSONL shards this writes.
  */
 
-import { createWriteStream, type WriteStream } from "node:fs"
-import { mkdir, writeFile } from "node:fs/promises"
-import { dirname, join } from "node:path"
+import { createWriteStream, type WriteStream } from "@mailwoman/platform/fs"
+import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { dirname, join } from "@mailwoman/platform/path"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"

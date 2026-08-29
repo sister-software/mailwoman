@@ -14,7 +14,7 @@
  *   The `--` separates flags from coordinates so negative longitudes parse as positionals.
  */
 
-import { parseArgs } from "node:util"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { buildTimezoneDB } from "./build.ts"
 import { offsetSecForTimezone, TimezoneLookup } from "./index.ts"

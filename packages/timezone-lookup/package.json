@@ -43,6 +43,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/annotations": "workspace:*"
+		"@mailwoman/annotations": "workspace:*",
+		"@mailwoman/platform": "workspace:*"
 	}
 }

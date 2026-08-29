@@ -33,8 +33,7 @@
  *   Standalone like the segment tier — core wiring rides the Phase 2 ordered `spatialTiers` list.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 

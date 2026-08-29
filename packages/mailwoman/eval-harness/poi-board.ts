@@ -51,11 +51,10 @@
  *   so the interval/distance math is tested against synthetic outcomes.
  */
 
-import { existsSync } from "node:fs"
-
 import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { existsSync } from "@mailwoman/platform/fs"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"

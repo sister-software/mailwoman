@@ -253,7 +253,7 @@ async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefine
 	if (!dbPath) return undefined
 
 	try {
-		const { existsSync } = await import("node:fs")
+		const { existsSync } = await import("@mailwoman/platform/fs")
 
 		if (!existsSync(dbPath)) return undefined
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")

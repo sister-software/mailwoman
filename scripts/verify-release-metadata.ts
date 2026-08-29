@@ -54,13 +54,12 @@
  *   as a step after the HF preflight and before release-it publishes.
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { parseArgs as parseNodeArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
+import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 
 /**

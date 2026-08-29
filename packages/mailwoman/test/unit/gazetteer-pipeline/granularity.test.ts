@@ -8,9 +8,8 @@
  *   are asserted on data small enough to read.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { ComponentTag } from "@mailwoman/core/types"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { CountryGranularity, RungMeasurement } from "mailwoman/gazetteer-pipeline/granularity"
 import {
 	DEFAULT_COVERAGE_FLOOR,

@@ -22,13 +22,12 @@
  *   naming all the paths it tried.
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { homedir } from "node:os"
-import { basename, dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { homedir } from "@mailwoman/platform/os"
+import { basename, dirname, resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { AnchorSpanMode } from "./anchor-inference.ts"
 import { PlacetypeCensusResolver } from "./placetype-census.ts"

@@ -14,9 +14,8 @@
  *   reaches `man mailwoman`.
  */
 
-import { readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, it } from "vitest"
 
 import { MAN_PAGE_PATH, renderManPage } from "./generate-man.ts"

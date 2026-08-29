@@ -74,14 +74,13 @@
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
  */
 
-import { existsSync } from "node:fs"
-
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { normalize } from "@mailwoman/normalize"
+import { existsSync } from "@mailwoman/platform/fs"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"

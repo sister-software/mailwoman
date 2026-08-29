@@ -11,8 +11,7 @@
  *   still loses to Paris' own name, and pre-#940 gazetteers (no `official` column) fail soft.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { RankingWeights } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, describe, expect, test } from "vitest"

@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { freezeAdmin } from "mailwoman/gazetteer-pipeline/admin/freeze"
 import { expect, test } from "vitest"

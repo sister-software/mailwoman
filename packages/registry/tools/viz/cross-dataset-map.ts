@@ -7,10 +7,9 @@
  *   `crossAgencyOnly` removes links whose sources belong to one agency.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
 import { type MapFeatureData, toMapHTML } from "#index"

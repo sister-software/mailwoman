@@ -27,11 +27,10 @@
  *   a bounded chunk name the same features every time.
  */
 
-import { execFile, spawn } from "node:child_process"
-import { basename, join } from "node:path"
-import { promisify } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { execFile, spawn } from "@mailwoman/platform/child_process"
+import { basename, join } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 import { assertRingsInsideExtent, type MultiPolygonRings, type PolygonRings } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable } from "@mailwoman/spatial/projection-transform"
 import { JSONSpliterator } from "spliterator"

@@ -28,13 +28,12 @@
 
 // oxlint-disable max-depth -- the streaming source-format state machine is intentionally kept in one pass
 
-import { createReadStream, globSync, mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-import { parseArgs } from "node:util"
-
 import { titlecaseIfUpper } from "@mailwoman/core"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { pyFloat, pyJSONDumps, SeededRandom } from "@mailwoman/core/utils"
+import { createReadStream, globSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 
 //#region CSV source

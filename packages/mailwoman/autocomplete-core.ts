@@ -6,11 +6,10 @@
  * Framework-free FST autocomplete shared by CLI and library-facing adapters.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Resolve the FST artifact from an explicit flag, environment, or the application data directory.

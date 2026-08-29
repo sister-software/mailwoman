@@ -58,11 +58,10 @@
  *   is a property of the invocation, not of a feature. Rows carry `country: ""` and the caller stamps it.
  */
 
-import { spawn } from "node:child_process"
-import { once } from "node:events"
-import { createWriteStream } from "node:fs"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawn } from "@mailwoman/platform/child_process"
+import { once } from "@mailwoman/platform/events"
+import { createWriteStream } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 import { representativePoint } from "./representative-point.ts"

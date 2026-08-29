@@ -13,10 +13,9 @@
  *   can't be found is a FAIL, never a skip).
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 /**

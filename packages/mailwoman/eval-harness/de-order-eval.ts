@@ -28,10 +28,9 @@
  *   --out /tmp/v092-eval
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 import { oaResolverEval } from "./oa-resolver-eval.ts"

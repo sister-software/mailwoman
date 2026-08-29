@@ -19,6 +19,7 @@
 	},
 	"include": [],
 	"references": [
+		{ "path": "./packages/platform" },
 		{ "path": "./packages/core" },
 		{ "path": "./packages/resolver" },
 		{ "path": "./packages/spatial" },
@@ -119,6 +120,7 @@
 		{ "path": "./packages/timezone-lookup/tsconfig.test.json" },
 		{ "path": "./packages/un-locode-lookup/tsconfig.test.json" },
 		{ "path": "./packages/variant-aliases/tsconfig.test.json" },
-		{ "path": "./packages/zoning/tsconfig.test.json" }
+		{ "path": "./packages/zoning/tsconfig.test.json" },
+		{ "path": "./packages/platform/tsconfig.test.json" }
 	]
 }

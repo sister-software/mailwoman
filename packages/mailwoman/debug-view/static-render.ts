@@ -15,8 +15,7 @@
  *   that is the one sanctioned adjustment (see the Task 11 brief).
  */
 
-import { EventEmitter } from "node:events"
-
+import { EventEmitter } from "@mailwoman/platform/events"
 import { render } from "ink"
 import type React from "react"
 

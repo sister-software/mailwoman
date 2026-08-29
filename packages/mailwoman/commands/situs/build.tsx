@@ -33,12 +33,11 @@
  *   regardless.
  */
 
-import { spawn } from "node:child_process"
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
-import * as os from "node:os"
-import * as path from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { spawn } from "@mailwoman/platform/child_process"
+import { existsSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as os from "@mailwoman/platform/os"
+import * as path from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

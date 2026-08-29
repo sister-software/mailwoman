@@ -75,8 +75,8 @@ interface Options {
 
 const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { execFileSync } = await import("node:child_process")
-		const { readFileSync } = await import("node:fs")
+		const { execFileSync } = await import("@mailwoman/platform/child_process")
+		const { readFileSync } = await import("@mailwoman/platform/fs")
 
 		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")

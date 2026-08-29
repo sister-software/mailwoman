@@ -6,9 +6,8 @@
  *   formatted for human review.
  */
 
-import { writeFileSync } from "node:fs"
-
 import { isPresent } from "@mailwoman/core/objects"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import type { ResolvedEntity, SourceRecord } from "#index"
 

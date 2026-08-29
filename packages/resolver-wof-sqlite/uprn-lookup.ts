@@ -25,8 +25,7 @@
  *   `@mailwoman/spatial`'s `shortCellToInt` via `uprnFullCell` — never reimplemented here.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { gridDisk } from "h3-js"
 

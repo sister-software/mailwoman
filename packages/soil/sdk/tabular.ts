@@ -26,9 +26,8 @@
  *   classifications, the six component kinds. The layer stores them and validates against them.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { CSVSpliterator } from "spliterator"
 
 /**

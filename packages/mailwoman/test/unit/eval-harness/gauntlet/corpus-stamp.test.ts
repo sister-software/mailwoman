@@ -11,12 +11,11 @@
  *   nothing in the pipeline could tell them apart.
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildRegressionDB } from "mailwoman/eval-harness/gauntlet/build-regression-db"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { assertCorpusStampFresh, readCorpusStamp } from "mailwoman/eval-harness/gauntlet/corpus-stamp"

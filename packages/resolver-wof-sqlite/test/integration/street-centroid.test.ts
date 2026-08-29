@@ -10,12 +10,11 @@
  *   extent-derived uncertainty, and the exact-match miss.
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mkdtempSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite/street-centroid"
 import {
 	type StreetCentroidDatabase,

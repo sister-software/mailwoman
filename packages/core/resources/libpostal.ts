@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readdir } from "node:fs/promises"
-import { availableParallelism } from "node:os"
-
+import { readdir } from "@mailwoman/platform/fs/promises"
+import { availableParallelism } from "@mailwoman/platform/os"
 import type { PathBuilder } from "path-ts"
 import pluralize from "pluralize"
 import { AsyncSequence, TextSpliterator } from "spliterator"

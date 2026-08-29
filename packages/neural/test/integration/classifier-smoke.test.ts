@@ -13,13 +13,12 @@
  *   - Model.onnx is read from $MAILWOMAN_TEST_ONNX_MODEL or the default path below
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")

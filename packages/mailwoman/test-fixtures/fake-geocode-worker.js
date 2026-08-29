@@ -8,7 +8,7 @@
  * and the mapped-address column count.
  */
 
-import { workerData } from "node:worker_threads"
+import { workerData } from "@mailwoman/platform/worker_threads"
 
 const { mapping, geocode } = workerData.userData
 

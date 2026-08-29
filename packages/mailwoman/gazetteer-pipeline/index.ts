@@ -17,7 +17,9 @@
  *   passed in.
  */
 
-import { execFileSync } from "node:child_process"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath, repoRootPathBuilder, sealDatabase } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
 import {
 	chmodSync,
 	copyFileSync,
@@ -28,12 +30,9 @@ import {
 	rmSync,
 	symlinkSync,
 	writeFileSync,
-} from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath, repoRootPathBuilder, sealDatabase } from "@mailwoman/core/utils"
+} from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault

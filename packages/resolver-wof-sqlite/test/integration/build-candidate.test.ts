@@ -18,11 +18,10 @@
  *        delivery-city aliases (#1495).
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	buildCandidateTable,
 	type PlaceAttrs,
@@ -753,7 +752,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		const geonamesDir = join(scratch, "geonames")
 
 		buildFixtureCurrency(input)
-		const { mkdir, writeFile } = await import("node:fs/promises")
+		const { mkdir, writeFile } = await import("@mailwoman/platform/fs/promises")
 
 		await mkdir(geonamesDir, { recursive: true })
 

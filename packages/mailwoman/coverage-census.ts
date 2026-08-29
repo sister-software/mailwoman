@@ -30,12 +30,11 @@
  *   rather than silently served as current.
  */
 
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * How well a country can be geocoded, in the three tiers the resolution ladder actually has.

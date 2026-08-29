@@ -4,16 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
-// Lightweight integration smoke against the actual corpus on this host. Skipped when the data
-// isn't present (CI / fresh clones); only the file-format-parsing tests run unconditionally.
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 // Re-export the internals for testing. The script's CLI entry is gated on
 // `runIfScript(import.meta, …)`, so importing the module is side-effect-free.
 import { audit } from "@mailwoman/corpus/tools/audit"
+// Lightweight integration smoke against the actual corpus on this host. Skipped when the data
+// isn't present (CI / fresh clones); only the file-format-parsing tests run unconditionally.
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const CORPUS_PATH = dataRootPath("corpus", "versioned", "v0.3.0", "corpus-v0.3.0")

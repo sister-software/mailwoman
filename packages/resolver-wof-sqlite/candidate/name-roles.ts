@@ -5,9 +5,8 @@
  * @file Pass 3c of the candidate build — the `name_role` detectors and the cuts they are judged by.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { normalizeLocalityForKey } from "../street-normalize.ts"
 import { isOwnNameVariant } from "./own-name.ts"

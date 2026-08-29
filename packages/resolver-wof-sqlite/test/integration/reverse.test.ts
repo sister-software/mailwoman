@@ -16,9 +16,8 @@
  *       `/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db` (staged by build-demo-assets).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { $public } from "@mailwoman/core/env"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/reverse"
 import { geometryContains, pointInPolygonRings, pointInRing, type GeojsonPosition } from "@mailwoman/spatial"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"

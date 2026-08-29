@@ -33,7 +33,7 @@
  *   the legacy `role:` requirement (see `isDelegatedWorkstream`).
  */
 
-import { parseArgs } from "node:util"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import sidebars from "../sidebars.ts"
 import { validatePage } from "./docs-frontmatter-contract.ts"

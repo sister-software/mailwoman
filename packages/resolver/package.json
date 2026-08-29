@@ -111,6 +111,7 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/spatial": "workspace:*"
 	}
 }

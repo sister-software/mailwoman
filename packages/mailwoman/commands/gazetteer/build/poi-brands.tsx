@@ -14,8 +14,7 @@
  *   `oxfmt` on the output here so the emitted file is commit-ready without a manual format pass.
  */
 
-import { execFileSync } from "node:child_process"
-
+import { execFileSync } from "@mailwoman/platform/child_process"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

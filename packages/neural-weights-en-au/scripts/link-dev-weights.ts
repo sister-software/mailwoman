@@ -30,10 +30,9 @@
  *   checked-in repo files symlinked in place; there's nothing to go stale.
  */
 
-import { existsSync, mkdirSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { dataRootPath, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import { linkForce, removeIfPresent } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**

@@ -20,14 +20,13 @@
  *   Run: node scripts/eval/fr-parse-recall.ts
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { allRows, dataRootPath, mailwomanDataRoot, workspacePath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { TextSpliterator } from "spliterator"
 

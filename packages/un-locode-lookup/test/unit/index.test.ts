@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { foldName, makeUnLocodeAnnotator, parseUnLocodeCoords, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
 import { expect, test } from "vitest"
 

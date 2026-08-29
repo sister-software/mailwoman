@@ -20,7 +20,7 @@
  *   measured answer, and whether a measured answer exists is the whole question `/status` is asked.
  */
 
-import { existsSync } from "node:fs"
+import { existsSync } from "@mailwoman/platform/fs"
 
 import { probeManifest } from "./data-inventory.ts"
 

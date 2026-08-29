@@ -27,8 +27,7 @@
  *   matter; it is not needed to test whether a warm engine changes which panel gets measured.
  */
 
-import { createHash } from "node:crypto"
-
+import { createHash } from "@mailwoman/platform/crypto"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession, type GeocodeSession, type GeocodeSessionOptions } from "mailwoman/geocode-session"
 

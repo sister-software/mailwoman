@@ -38,11 +38,10 @@
  *   loudly instead of silently drifting.
  */
 
-import { createRequire } from "node:module"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { createRequire } from "@mailwoman/platform/module"
+import { dirname, join, resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { $ } from "zx"
 
 /**

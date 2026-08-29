@@ -41,7 +41,7 @@ const FilerEdgarIngest: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerEdgarIngest } = await import("@mailwoman/filer/tools")
 
-		const { readFileSync } = await import("node:fs")
+		const { readFileSync } = await import("@mailwoman/platform/fs")
 
 		// oxlint-disable mailwoman/prefer-spliterator -- command input is materialized for the batch lookup below
 		const names = readFileSync(options.names, "utf8")

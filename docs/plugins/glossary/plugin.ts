@@ -24,9 +24,8 @@
  *     still produced a backlink would advertise a tooltip the page does not render.
  */
 
-import path from "node:path"
-
 import type { LoadContext, Plugin } from "@docusaurus/types"
+import path from "@mailwoman/platform/path"
 import type {
 	GlossaryData,
 	GlossaryPluginOptions as BaseGlossaryPluginOptions,
@@ -202,7 +201,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 
 			glossary = content as GlossaryData
 
-			const { readFile } = await import("node:fs/promises")
+			const { readFile } = await import("@mailwoman/platform/fs/promises")
 			const registry = parseYAML(await readFile(tagsPath, "utf8")) as Record<string, TagRegistryEntry>
 			const registered = new Set(Object.keys(registry))
 
@@ -262,7 +261,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 				.flatMap((version) => version.docs)
 				.filter((doc) => !doc.draft && !doc.unlisted)
 
-			const { readFile } = await import("node:fs/promises")
+			const { readFile } = await import("@mailwoman/platform/fs/promises")
 			const backlinks: GlossaryBacklinks = {}
 			const terms = (glossary.terms ?? []) as TaggedGlossaryTerm[]
 

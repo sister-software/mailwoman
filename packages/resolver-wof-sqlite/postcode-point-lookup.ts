@@ -19,7 +19,7 @@
  *   countries to build its country posterior, so it queries each shard directly.
  */
 
-import { DatabaseSync } from "node:sqlite"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * A gazetteer hit. `lat`/`lon` of 0 means the postcode is known but has no centroid (no admin parent).

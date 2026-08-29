@@ -38,10 +38,9 @@
  *   British bus stops.
  */
 
-import { readFileSync, statSync, writeFileSync } from "node:fs"
-import { basename, join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, join } from "@mailwoman/platform/path"
 
 import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "./sub-venue-promotions.ts"
 import { extractAttestedPhrases, readSubVenueJSONL, type SubVenueHarvestRow } from "./sub-venue/harvest.ts"

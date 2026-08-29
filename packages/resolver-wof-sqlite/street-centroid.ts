@@ -19,8 +19,7 @@
  *   exact-after-normalization only (no fuzzy street matching in this tier).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/resolver"
 
 import { hasTable, prepareGet, type PreparedGet } from "./sqlite-utils.ts"

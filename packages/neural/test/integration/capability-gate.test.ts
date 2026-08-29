@@ -20,12 +20,11 @@
  *   weights.test.ts) so stripped-down CI still passes.
  */
 
-import { existsSync } from "node:fs"
-
 import { ADDRESS_SYSTEM_CONVENTIONS, type AddressSystemConventions } from "@mailwoman/codex"
 import { $public } from "@mailwoman/core/env"
 import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
+import { existsSync } from "@mailwoman/platform/fs"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const MODEL =

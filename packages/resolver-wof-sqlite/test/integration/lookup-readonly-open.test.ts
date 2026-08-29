@@ -14,17 +14,16 @@
  *   invariant.)
  */
 
-import { chmodSync, mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { chmodSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // Record every DatabaseSync construction (path + the readOnly option) while delegating to the real implementation.
 const spy = vi.hoisted(() => ({ opens: [] as Array<{ path: string; readOnly: boolean | undefined }> }))
 
-vi.mock("node:sqlite", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("node:sqlite")>()
+vi.mock("@mailwoman/platform/sqlite", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@mailwoman/platform/sqlite")>()
 
 	class RecordingDatabaseSync extends actual.DatabaseSync {
 		constructor(path: string, options?: { readOnly?: boolean }) {
@@ -54,7 +53,7 @@ afterAll(() => vi.resetModules())
 
 // Dynamic imports AFTER the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
-const { DatabaseSync } = await import("node:sqlite")
+const { DatabaseSync } = await import("@mailwoman/platform/sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**

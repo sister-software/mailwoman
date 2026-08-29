@@ -8,9 +8,8 @@
  *   IATA, Coordinates, Remarks). One row per assigned location; coordinates parsed where present.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { readFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { CSVSpliterator } from "spliterator"
 
 import { foldName, parseUnLocodeCoords } from "./index.ts"

@@ -15,13 +15,12 @@
  *        never-measured (absent).
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor } from "@mailwoman/core/pipeline"
 import { hardCountrySafelistFromCoverage } from "@mailwoman/core/resolver"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { COUNTRY_BBOX } from "@mailwoman/resolver"
 import { readGazetteerCoverageManifest, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"

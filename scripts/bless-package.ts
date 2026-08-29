@@ -22,13 +22,12 @@
  *   is on file, releases run from CI over OIDC with no second factor at all.
  */
 
-import { existsSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-import path from "node:path"
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { readFile } from "@mailwoman/platform/fs/promises"
+import path from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"

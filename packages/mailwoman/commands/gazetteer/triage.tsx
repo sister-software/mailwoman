@@ -14,9 +14,8 @@
  *   which no build step asks today.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

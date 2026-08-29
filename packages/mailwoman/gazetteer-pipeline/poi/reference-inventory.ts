@@ -13,9 +13,8 @@
  *   read some other class's rows under this class's name, which no downstream check could catch.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 
 import type { BBox } from "./build-poi.ts"

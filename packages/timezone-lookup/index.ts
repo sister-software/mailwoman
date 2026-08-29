@@ -9,9 +9,8 @@
  *   database dependency. Build the DB with `mailwoman-timezone build` (see `./build.ts`).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.

@@ -47,13 +47,12 @@
  *   DO NOT change the resolver or parser — this script only READS stamped metadata.
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, median, tempRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"

@@ -4,10 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import {
 	extractDeclaredSymbols,
 	findDeclarations,
@@ -17,6 +13,9 @@ import {
 	selectReportable,
 	type DeclarationSite,
 } from "@mailwoman/dev-mcp/symbol-index"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**

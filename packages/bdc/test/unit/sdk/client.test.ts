@@ -21,11 +21,6 @@
  *   reason to breach that.
  */
 
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { crc32 } from "node:zlib"
-
 import type { BDCFile, RawBDCFile } from "@mailwoman/bdc/sdk/common"
 import type { FCCAsOfDateEntry } from "@mailwoman/bdc/sdk/filing-dates"
 import { createFakeClock, maxCountInSlidingWindow, VirtualClock } from "@mailwoman/core/api/test-clocks"
@@ -34,6 +29,10 @@ import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/
 // arrives via the post-reset dynamic import below; a `const` carries no type side, so the type position
 // needs its own static import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { crc32 } from "@mailwoman/platform/zlib"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` (`@mailwoman/core/env`) is a LIVE getter over `{ ...dotEnv, ...process.env }` — `dotEnv` is

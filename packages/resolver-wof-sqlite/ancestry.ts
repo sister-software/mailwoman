@@ -15,7 +15,7 @@
  *   geocoding always does).
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { allRows } from "./sqlite-utils.ts"
 

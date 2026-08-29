@@ -33,8 +33,7 @@
  *   reason the index exists.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	decodeRings,
 	interiorPointOfEncodedRings,

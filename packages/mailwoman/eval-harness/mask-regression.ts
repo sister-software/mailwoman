@@ -45,12 +45,11 @@
  *   `<out-dir>/mask-regression.md`.
  */
 
-import { existsSync, writeFileSync } from "node:fs"
-
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
+import { existsSync, writeFileSync } from "@mailwoman/platform/fs"
 
 import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "./per-tag-f1.ts"
 

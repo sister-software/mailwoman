@@ -10,8 +10,7 @@
  *       no-GeoNames → placeholder; no-overwrite: ZCTA-already-filled row stays ZCTA, not geonames.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	fillGeonamesPlaceholders,
 	fillPlaceholderCentroids,

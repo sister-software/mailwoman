@@ -11,10 +11,6 @@
  *   which streams real multi-GB OA/PPD CSVs) so the byte-identical-when-unset invariant is provable without I/O.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import {
 	applyCountryAppend,
@@ -26,6 +22,9 @@ import {
 	resolveLocaleParts,
 } from "@mailwoman/corpus/shard-recipes/locale"
 import { makeMulberry32 } from "@mailwoman/corpus/shard-recipes/scaffold"
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { SynthesizedLocaleRow } from "#synthesizers/german"

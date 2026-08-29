@@ -9,12 +9,11 @@
  *   picks up a directory the loader excludes. None of them throws; each returns a confident number.
  */
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	buildCorpusCensus,
 	normalizeArrowListColumn,

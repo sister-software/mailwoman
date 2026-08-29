@@ -51,11 +51,6 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts [--countries us,fr] [--db <path>] [--out <dir>] [--skip-source-md5]`
  */
 
-import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs"
-import { basename, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
 import { allRows, dataRootPath, md5File } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
@@ -65,6 +60,10 @@ import {
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
 } from "@mailwoman/neural/pair-index-resolver"
+import { existsSync, mkdirSync, renameSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 
 /**
  * The (locality, region) edge spec per country — ComponentTag space on the artifact side, WOF placetype space on the

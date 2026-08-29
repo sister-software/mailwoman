@@ -10,12 +10,11 @@
  *   artifact carrying source md5s.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
 import { buildPostcodeGeonamesTail } from "mailwoman/gazetteer-pipeline/postcode/geonames-tail"
 import { afterAll, beforeAll, expect, test } from "vitest"

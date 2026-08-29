@@ -20,9 +20,8 @@
  *   the driver happened to emit first — indistinguishable downstream from the region the caller meant.
  */
 
-import { spawn } from "node:child_process"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawn } from "@mailwoman/platform/child_process"
 import type { GeojsonGeometry } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 

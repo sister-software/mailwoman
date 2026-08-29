@@ -12,10 +12,9 @@
  *   fixtures below reproduce that shape at a size a test can hold.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { readDeclaredDomains, readTable, readTabularDictionary, saverestToISODate } from "@mailwoman/soil/sdk/tabular"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

@@ -9,14 +9,13 @@
  *   thing — a comparison that must NOT produce a verdict, for two different reasons.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { runCompare } from "@mailwoman/dev-mcp/compare"
 import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "@mailwoman/dev-mcp/oracle-arm"
 import { listRuns } from "@mailwoman/dev-mcp/run-store"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 const RUN_STORE = mkdtempSync(join(tmpdir(), "mwdev-arms-runs-"))

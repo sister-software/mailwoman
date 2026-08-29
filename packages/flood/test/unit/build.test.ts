@@ -11,10 +11,6 @@
  *   a layer that could not tell them apart would report every unmapped location as low-hazard.
  */
 
-import { mkdtempSync, rmSync, statSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { FloodContainmentPath, FloodReadingKind, FloodZoneLookup } from "@mailwoman/flood"
 import { buildFloodDatabase, type BuildFloodResult } from "@mailwoman/flood/sdk/build-flood"
 import { realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
@@ -28,6 +24,9 @@ import {
 	FIXTURE_SIDE,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL, EA_FLOOD_LAYER_NAME } from "@mailwoman/flood/vocabulary"
+import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

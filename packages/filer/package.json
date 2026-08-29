@@ -181,6 +181,7 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"kysely": "^0.29.4",

@@ -15,10 +15,9 @@
  *   reconciled — and reading the declaration to decide what to change is how #1015 happened.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { getRow } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { AdminSource } from "./country-sources.ts"
 

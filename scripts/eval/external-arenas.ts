@@ -9,9 +9,8 @@
  *   owns every printed line. Do not add logic here.
  */
 
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { externalArenas } from "mailwoman/eval-harness/external-arenas"
 
 async function main(): Promise<void> {

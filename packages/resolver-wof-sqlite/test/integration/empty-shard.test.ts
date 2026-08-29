@@ -8,11 +8,10 @@
  *   no-op MISS, not throw `no such table` at construction and take down a whole state's geocode.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address-point"
 import { AddressPointInterpolator } from "@mailwoman/resolver-wof-sqlite/address-point-interpolation"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"

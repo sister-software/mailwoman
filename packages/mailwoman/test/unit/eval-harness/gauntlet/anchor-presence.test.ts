@@ -15,11 +15,10 @@
  *   neural-weights-* dirs without deleting an artifact out from under every other test in the run.
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { assertDeclaredAnchorBins } from "mailwoman/eval-harness/gauntlet/harness"
 import { describe, expect, it } from "vitest"
 

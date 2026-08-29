@@ -14,12 +14,11 @@
  *   a recipe; the recipe is `../defaults.ts`).
  */
 
-import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { md5File, repoRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { dataRootPath } from "../../resolver-backend.ts"
 import {

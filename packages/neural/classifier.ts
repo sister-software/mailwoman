@@ -223,7 +223,7 @@ export class NeuralAddressClassifier {
 		] = await Promise.all([
 			import(/* webpackIgnore: true */ "@mailwoman/core/env"),
 			import(/* webpackIgnore: true */ "./weights.ts"),
-			import(/* webpackIgnore: true */ "node:fs"),
+			import(/* webpackIgnore: true */ "@mailwoman/platform/fs"),
 		])
 
 		/* oxlint-enable typescript/no-restricted-imports */

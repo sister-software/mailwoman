@@ -15,10 +15,9 @@
  *   Run: mailwoman eval gauntlet-build fdic-holdout
  */
 
-import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { createWriteStream, existsSync, renameSync, rmSync } from "@mailwoman/platform/fs"
 
 /**
  * Southern edge of the US including Puerto Rico and Hawaii.

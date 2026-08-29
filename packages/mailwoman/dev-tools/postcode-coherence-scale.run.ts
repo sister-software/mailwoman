@@ -39,12 +39,11 @@
  *   about — every FP is printed with its pair, so a finding is never a bare count.
  */
 
-import { existsSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { wofShardPaths } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { JSONSpliterator } from "spliterator"

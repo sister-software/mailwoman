@@ -12,9 +12,8 @@
  *   $MAILWOMAN_DATA_ROOT/coarse-placer/model]`
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
 import { dataRootPath, repoRootPath } from "#utils"

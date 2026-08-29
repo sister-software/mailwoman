@@ -19,8 +19,7 @@
  *   dilute its FTS doc score (the real-world trigger). This isolates the TIERING logic.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { RankingWeights } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, describe, expect, test } from "vitest"

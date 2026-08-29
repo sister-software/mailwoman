@@ -8,10 +8,9 @@
  * candidate
  */
 
-import { parseArgs } from "node:util"
-
 import { type ComponentTag, decodeAsTuples } from "@mailwoman/core"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { createRuntimePipeline } from "#index"
 

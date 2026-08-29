@@ -13,9 +13,8 @@
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { allRows } from "@mailwoman/core/utils"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

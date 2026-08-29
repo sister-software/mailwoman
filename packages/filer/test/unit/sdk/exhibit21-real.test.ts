@@ -23,11 +23,10 @@
  *   every one of which the hand-written suite was happy with. Do not regenerate it from parser output.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { decodeEntities, normalizeWhitespace, parseExhibit21, stripTags } from "@mailwoman/filer/sdk/exhibit21"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 interface ExpectedSubsidiary {

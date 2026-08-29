@@ -9,10 +9,9 @@
  *   Run from the repo root: `node packages/mailwoman/dev-tools/us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
  */
 
-import { parseArgs } from "node:util"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { CLIUsageError } from "#cli-kit"

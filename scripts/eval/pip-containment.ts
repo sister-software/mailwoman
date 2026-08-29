@@ -19,13 +19,12 @@
  *   NAME] [--json OUT]
  */
 
-import { globSync, readFileSync, writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, pyFixed } from "@mailwoman/core/utils"
+import { globSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 
 /**
  * Artifact examples collected before the list is truncated.

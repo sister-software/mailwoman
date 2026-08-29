@@ -7,10 +7,9 @@
  * each case's country. This wrapper makes that routing and its artifact provenance inspectable before a board run.
  */
 
-import { realpathSync } from "node:fs"
-import { relative, resolve, sep } from "node:path"
-
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
+import { realpathSync } from "@mailwoman/platform/fs"
+import { relative, resolve, sep } from "@mailwoman/platform/path"
 import {
 	buildGauntletDeps,
 	runOne,

@@ -170,6 +170,13 @@ export default {
 				],
 			},
 		},
+		{
+			files: ["packages/platform/**/*.ts"],
+			rules: {
+				"sister-software/require-constant-doc": "off",
+				"typescript/no-restricted-imports": "off",
+			},
+		},
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),
@@ -178,6 +185,18 @@ export default {
 		"mailwoman/no-database-handle-cast": "error",
 		"mailwoman/require-database-schema-argument": "error",
 		"mailwoman/require-disable-reason": "error",
+		"typescript/no-restricted-imports": [
+			"error",
+			{
+				patterns: [
+					{
+						group: [NODE_BUILTIN_PATTERN],
+						message:
+							"Node builtins are isolated behind @mailwoman/platform. Import the matching platform subpath instead.",
+					},
+				],
+			},
+		],
 		// `split("\n")`/`split("\t")` materializes every segment into one array before the first is
 		// read — the whole-buffer parse spliterator exists to avoid. Bounded-input sites keep split
 		// behind a scoped disable saying why their bound is durable.

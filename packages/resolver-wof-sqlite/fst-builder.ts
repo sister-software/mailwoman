@@ -11,7 +11,7 @@
  *   PlaceEntry at terminals → return FSTMatcher.
  */
 
-import { DatabaseSync } from "node:sqlite"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { readWOFSourceIdentity } from "./fst-freshness.ts"
 import type { FSTNode } from "./fst-matcher.ts"

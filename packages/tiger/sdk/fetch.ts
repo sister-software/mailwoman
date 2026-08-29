@@ -24,16 +24,15 @@
  *   inserts. Re-running a state replaces its rows.
  */
 
-import { spawn } from "node:child_process"
-import { mkdir } from "node:fs/promises"
-import { dirname, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { spawn } from "@mailwoman/platform/child_process"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { dirname, join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { TextSpliterator } from "spliterator"
 
 import { downloadIfNeeded } from "./download.ts"

@@ -28,10 +28,9 @@
  *   [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import {
 	addressFrequencyKey,

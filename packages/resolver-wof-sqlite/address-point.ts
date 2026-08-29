@@ -15,8 +15,7 @@
  *   scopes missed). Multiple hits return the first by rowid — unit siblings share the building coord.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/resolver"
 
 import type { AddressPointTable } from "./address-point-schema.ts"

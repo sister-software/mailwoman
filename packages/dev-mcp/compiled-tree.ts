@@ -16,8 +16,8 @@
  *   for the same reason. The failure mode is silence, so the answer is a refusal rather than a warning.
  */
 
-import { readdirSync, statSync } from "node:fs"
-import { basename, join, relative, sep } from "node:path"
+import { readdirSync, statSync } from "@mailwoman/platform/fs"
+import { basename, join, relative, sep } from "@mailwoman/platform/path"
 
 import { FINGERPRINTED_WORKSPACES } from "./tree-fingerprint.ts"
 

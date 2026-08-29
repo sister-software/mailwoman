@@ -27,9 +27,8 @@
  *   [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import {
 	addressFrequencyKey,
@@ -301,8 +300,8 @@ export async function crossSourceThresholdSweep(
 	const candidateArms: ArmMetrics[] = []
 
 	if (CANDIDATE) {
-		const { pathToFileURL } = await import("node:url")
-		const { resolve: resolvePath } = await import("node:path")
+		const { pathToFileURL } = await import("@mailwoman/platform/url")
+		const { resolve: resolvePath } = await import("@mailwoman/platform/path")
 
 		const mod = (await import(pathToFileURL(resolvePath(CANDIDATE)).href)) as {
 			CROSS_SOURCE_GBT_MODEL?: typeof DEDUP_GBT_MODEL

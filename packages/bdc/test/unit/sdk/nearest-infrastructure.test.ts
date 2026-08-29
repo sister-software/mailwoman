@@ -32,11 +32,6 @@
  *   {@link nearestInfrastructure} itself uses, cross-checked against a direct `readLayerCoverage` call).
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { res9ShortCellToRes6Parent } from "@mailwoman/bdc/sdk/filing-landscape"
 import {
 	nearestInfrastructure,
@@ -52,6 +47,10 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { POI_H3_RESOLUTION, POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,

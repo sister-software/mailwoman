@@ -28,9 +28,8 @@
  *       stale-format file.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import type {
 	AutocompleteOpts,
 	AutocompleteResult,

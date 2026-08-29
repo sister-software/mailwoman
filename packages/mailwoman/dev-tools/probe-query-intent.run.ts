@@ -89,7 +89,7 @@
  *   pass.
  */
 
-import { parseArgs } from "node:util"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { buildGauntletDeps } from "../eval-harness/gauntlet/harness.ts"
 

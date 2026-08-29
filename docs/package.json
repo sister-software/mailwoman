@@ -80,6 +80,7 @@
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/react": "workspace:^",
 		"@mailwoman/resolver": "workspace:*",

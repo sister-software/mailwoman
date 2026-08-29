@@ -13,9 +13,8 @@
  *   accuracy falling). Validate accuracy on the points that DO have `addr:street` (ground truth) first.
  */
 
-import { spawn } from "node:child_process"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawn } from "@mailwoman/platform/child_process"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 

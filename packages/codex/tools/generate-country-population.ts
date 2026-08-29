@@ -20,10 +20,9 @@
  *   Usage: mailwoman dev generate country-population
  */
 
-import { writeFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
 

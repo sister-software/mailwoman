@@ -17,10 +17,9 @@
  *   Usage: `node scripts/merge-admin.ts <pr-number> [--method merge|squash|rebase]`
  */
 
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { $ } from "zx"
 
 /**

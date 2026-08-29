@@ -34,8 +34,7 @@
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { interiorPointOfEncodedRings, pointInEncodedRings, segmentDistanceMetres } from "@mailwoman/spatial"
 
 import { ZoningLookup, ZoningReadingKind, type ZoningReading } from "../index.ts"

@@ -25,9 +25,8 @@
  *      explicitly rather than left inside the general "only in incumbent" bucket.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { percentile } from "@mailwoman/core/utils"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**

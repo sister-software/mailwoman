@@ -34,9 +34,8 @@
  *   re-stamp accordingly.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { splitStreetLine } from "#adapters/utils"
 import { lookupStateAbbreviation } from "#codex/us-fips-state"

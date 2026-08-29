@@ -32,12 +32,11 @@
  *   Usage: node packages/mailwoman/dev-tools/score-anchor-v2-boards.run.ts --board gb --locale en-gb --cache-root <dir>
  */
 
-import { createHash } from "node:crypto"
-import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createHash } from "@mailwoman/platform/crypto"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"

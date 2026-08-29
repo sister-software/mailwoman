@@ -49,15 +49,14 @@
  *   ```
  */
 
-import { createReadStream, existsSync, readFileSync, realpathSync, statSync } from "node:fs"
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
-import { createRequire } from "node:module"
-import { arch, cpus, platform, totalmem } from "node:os"
-import { basename, dirname, extname, normalize, resolve as resolveFilePath, sep } from "node:path"
-import { gzipSync } from "node:zlib"
-
 import { dataRootPath, median, percentile, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
+import { createReadStream, existsSync, readFileSync, realpathSync, statSync } from "@mailwoman/platform/fs"
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
+import { createRequire } from "@mailwoman/platform/module"
+import { arch, cpus, platform, totalmem } from "@mailwoman/platform/os"
+import { basename, dirname, extname, normalize, resolve as resolveFilePath, sep } from "@mailwoman/platform/path"
+import { gzipSync } from "@mailwoman/platform/zlib"
 import { build } from "esbuild"
 import { type Browser, chromium } from "playwright"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
@@ -706,7 +705,7 @@ async function bundleBrowserEntry(resolveDir: string): Promise<Buffer> {
 		write: false,
 		logLevel: "silent",
 		// Both are dynamic imports behind a node-environment guard; the browser never evaluates them.
-		external: ["node:fs/promises", "node:module"],
+		external: ["@mailwoman/platform/fs/promises", "@mailwoman/platform/module"],
 	})
 
 	const output = result.outputFiles[0]

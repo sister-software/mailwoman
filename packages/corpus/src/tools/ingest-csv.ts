@@ -25,10 +25,9 @@
  *   CREATE TABLE, but don't import
  */
 
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
-import { basename, dirname, extname, join } from "node:path"
-import type { SQLInputValue } from "node:sqlite"
-
+import { existsSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, dirname, extname, join } from "@mailwoman/platform/path"
+import type { SQLInputValue } from "@mailwoman/platform/sqlite"
 import { TextSpliterator } from "spliterator"
 
 //#region Core: quote-aware CSV field splitting
@@ -252,7 +251,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	}
 
 	// --- Create database + import ---
-	const { DatabaseSync } = await import("node:sqlite")
+	const { DatabaseSync } = await import("@mailwoman/platform/sqlite")
 	mkdirSync(dirname(opts.outputPath), { recursive: true })
 
 	const db = new DatabaseSync(opts.outputPath)
@@ -361,7 +360,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	db.close()
 
 	// Write MANIFEST
-	const stat = await (await import("node:fs/promises")).stat(opts.outputPath)
+	const stat = await (await import("@mailwoman/platform/fs/promises")).stat(opts.outputPath)
 
 	const manifest = {
 		ingested_at: new Date().toISOString(),

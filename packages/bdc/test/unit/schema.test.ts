@@ -4,8 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	BDC_COVERAGE_H3_RESOLUTION,
 	BDC_H3_RESOLUTION,
@@ -16,6 +14,7 @@ import {
 } from "@mailwoman/bdc/schema"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createLayerCoverageTable, createLayerManifestTable, LayerTier } from "@mailwoman/core/layers"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<BDCDatabase> {

@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "node:sqlite"
-
+import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "@mailwoman/platform/sqlite"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {

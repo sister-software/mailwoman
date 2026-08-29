@@ -22,16 +22,15 @@
  *   covered below.
  */
 
-import { execFile } from "node:child_process"
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { promisify } from "node:util"
-
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)

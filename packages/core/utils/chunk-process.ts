@@ -22,8 +22,7 @@
  *   failure. The same applies to a chunk that exits cleanly having printed nothing.
  */
 
-import { spawn } from "node:child_process"
-
+import { spawn } from "@mailwoman/platform/child_process"
 import { TextSpliterator } from "spliterator"
 
 import { parseJSONStrict } from "../objects.ts"

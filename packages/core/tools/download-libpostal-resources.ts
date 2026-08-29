@@ -24,9 +24,9 @@
  *   - `--force` — delete an existing `./dictionaries` directory instead of erroring out
  */
 
-import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 
 import { isDirectory } from "#fs"
 import { CommandError } from "#scripting/command"

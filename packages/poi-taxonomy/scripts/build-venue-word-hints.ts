@@ -36,13 +36,12 @@
  *   md5 is recorded in the output's provenance block, and `data/PROVENANCE.md` carries the rest.
  */
 
-import { createHash } from "node:crypto"
-import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { createHash } from "@mailwoman/platform/crypto"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import type { VenueWordHint, VenueWordHintTable } from "../venue-word-hints.ts"
 

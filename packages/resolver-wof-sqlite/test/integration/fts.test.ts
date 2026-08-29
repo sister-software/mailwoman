@@ -7,8 +7,7 @@
  *   `mailwoman gazetteer build fts` CLI.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	ALIAS_SEPARATOR,
 	aliasBagExactMatch,

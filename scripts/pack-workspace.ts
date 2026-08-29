@@ -11,11 +11,10 @@
  *   let the v7.2.0 ship-break class through untested.
  */
 
-import { spawnSync } from "node:child_process"
-import { copyFileSync, lstatSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { copyFileSync, lstatSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, resolve } from "@mailwoman/platform/path"
 
 import { transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
 

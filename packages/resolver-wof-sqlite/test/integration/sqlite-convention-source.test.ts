@@ -9,8 +9,7 @@
  *   dispatch — the same reroute the in-memory `opts.conventions` path gives, but through the
  *   asset.
  */
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { SqliteConventionSource } from "@mailwoman/resolver-wof-sqlite/sqlite-convention-source"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"

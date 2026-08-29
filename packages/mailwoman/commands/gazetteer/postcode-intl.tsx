@@ -37,9 +37,8 @@
  *   verbatim.
  */
 
-import { copyFileSync, existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { copyFileSync, existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 

@@ -12,7 +12,7 @@
  * job (./cli.ts), which keeps every rejection path testable without a subprocess.
  */
 
-import { parseArgs } from "node:util"
+import { parseArgs } from "@mailwoman/platform/util"
 
 /**
  * Center longitude when `--lon` is omitted — the world view mapscii opens on.

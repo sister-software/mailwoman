@@ -13,9 +13,8 @@
  *   Run: `mailwoman placer eval latin-offmap --model <dir> [--abstain 0.5]`
  */
 
-import { readFileSync } from "node:fs"
-import * as path from "node:path"
-
+import { readFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
 import { parseJSONStrict } from "#objects"

@@ -182,12 +182,11 @@
  *   `build/edgar-rows.ts` (one Exhibit 21 disclosure's two edges).
  */
 
-import { existsSync, mkdirSync, renameSync, rmSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { sealDatabase } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, renameSync, rmSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import {
 	createFilerAttributeNodeIndex,

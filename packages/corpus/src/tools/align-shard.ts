@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import { createWriteStream } from "node:fs"
-
+import { createWriteStream } from "@mailwoman/platform/fs"
 import { JSONSpliterator } from "spliterator"
 
 /**

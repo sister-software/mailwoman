@@ -16,11 +16,10 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { mkdir } from "node:fs/promises"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"

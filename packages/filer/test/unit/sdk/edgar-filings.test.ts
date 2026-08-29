@@ -13,9 +13,6 @@
  *   this manifest, a real-EDGAR quirk this suite counts rather than papers over).
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import {
 	accessionArchiveURL,
 	fetchCompanyTickers,
@@ -34,6 +31,8 @@ import {
 	type SECGetClient,
 } from "@mailwoman/filer/sdk/edgar-filings"
 import type { SECDocumentClient } from "@mailwoman/filer/sdk/exhibit21"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 describe("isCIK / toCIK", () => {

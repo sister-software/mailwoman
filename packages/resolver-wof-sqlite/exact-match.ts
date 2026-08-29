@@ -7,7 +7,7 @@
  *   candidate holds the query text as its own name, an alias, or an official name.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { aliasBagExactMatch } from "./fts.ts"
 

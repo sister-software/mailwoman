@@ -1,5 +1,5 @@
-import { existsSync, type PathLike, readFileSync } from "node:fs"
-import { parseEnv } from "node:util"
+import { existsSync, type PathLike, readFileSync } from "@mailwoman/platform/fs"
+import { parseEnv } from "@mailwoman/platform/util"
 
 /**
  * Parse a `.env` file into a record. Returns `{}` when the file is absent (a `.env` is optional — the real environment

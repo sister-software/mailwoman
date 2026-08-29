@@ -18,9 +18,8 @@
  *   trees must keep running; so it warns, names the rebuild command, and gets out of the way.
  */
 
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { Text } from "ink"
 
 import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

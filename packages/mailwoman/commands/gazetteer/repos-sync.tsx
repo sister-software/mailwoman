@@ -19,9 +19,8 @@
  *   six months behind produces a plausible artifact and no complaint.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -64,10 +63,10 @@ const ACTION_MARK: Record<string, string> = {
 
 const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { execFile } = await import("node:child_process")
-		const { promisify } = await import("node:util")
-		const { existsSync } = await import("node:fs")
-		const { join } = await import("node:path")
+		const { execFile } = await import("@mailwoman/platform/child_process")
+		const { promisify } = await import("@mailwoman/platform/util")
+		const { existsSync } = await import("@mailwoman/platform/fs")
+		const { join } = await import("@mailwoman/platform/path")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { auditReposRoot } = await import("../../gazetteer-pipeline/repos-audit.ts")
 		const { planReposSync, SyncAction, syncSentence } = await import("../../gazetteer-pipeline/repos-sync.ts")

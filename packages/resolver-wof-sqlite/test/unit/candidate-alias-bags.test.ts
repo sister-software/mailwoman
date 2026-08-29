@@ -12,8 +12,7 @@
  *   asserted here directly rather than through a whole build.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { describe, expect, test } from "vitest"

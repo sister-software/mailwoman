@@ -9,9 +9,6 @@
  *   directly, and the fetch tests pass a one-method stub satisfying {@link CORESDocumentClient}.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import {
 	coresDetailURL,
 	fetchCORESRegistration,
@@ -20,6 +17,8 @@ import {
 	type CORESDocumentClient,
 } from "@mailwoman/filer/sdk/cores-client"
 import { toFRN, type FRN } from "@mailwoman/filer/sdk/frn"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 function fixture(name: string): string {

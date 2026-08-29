@@ -28,13 +28,12 @@
  *   why it is seeded at 130 k rather than something merely above 10 k.
  */
 
-import { readFileSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { BuiltLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
 import { buildLocalitySurfaceLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"

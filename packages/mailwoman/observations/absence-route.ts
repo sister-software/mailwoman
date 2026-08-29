@@ -57,8 +57,6 @@
  *   so a caller who never builds a route never loads it.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
@@ -76,6 +74,7 @@ import type {
 	RelationAssertion,
 	SourceProvenance,
 } from "@mailwoman/geographic-model"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { recoverShortCellResolution, type H3Cell } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"

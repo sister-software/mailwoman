@@ -23,14 +23,13 @@
  *   manifest returns `undefined` and every consumer falls back to the code constants byte-identically.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import {
 	hardCountrySafelistFromCoverage,
 	type CountryBBoxFact,
 	type CountryCoverageFact,
 	type GazetteerArtifactCoverage,
 } from "@mailwoman/core/resolver"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { sql, type Kysely } from "kysely"
 
 import { allRows, hasTable } from "./sqlite-utils.ts"

@@ -8,9 +8,8 @@
  *   region, with its level and bounding box for the lookup's prefilter.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { readFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { GeoFeature, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 
 import type { MultiPolygonCoords } from "./index.ts"

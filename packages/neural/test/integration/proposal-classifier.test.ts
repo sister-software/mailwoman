@@ -10,8 +10,6 @@
  *   weights when `MAILWOMAN_TEST_ONNX_MODEL` (or the default host path) is present.
  */
 
-import { existsSync } from "node:fs"
-
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
@@ -21,6 +19,7 @@ import {
 	createNeuralProposalClassifier,
 	type NeuralProposalClassifierConfig,
 } from "@mailwoman/neural/proposal-classifier"
+import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 /**

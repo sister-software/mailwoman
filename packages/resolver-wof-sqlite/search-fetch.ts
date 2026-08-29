@@ -12,8 +12,7 @@
  *   whole corpus, so an exact haversine over the survivors is cheap.
  */
 
-import type { DatabaseSync, SQLInputValue } from "node:sqlite"
-
+import type { DatabaseSync, SQLInputValue } from "@mailwoman/platform/sqlite"
 import { bboxAround } from "@mailwoman/spatial"
 
 import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "./fts.ts"

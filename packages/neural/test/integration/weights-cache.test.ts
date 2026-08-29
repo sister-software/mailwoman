@@ -12,10 +12,9 @@
  *   falls through to the cache on every host, lab or CI.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "#weights"

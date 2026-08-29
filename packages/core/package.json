@@ -495,6 +495,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/platform": "workspace:*",
 		"adm-zip": "^0.6.0",
 		"async-init": "^1.0.0",
 		"axios": "^1.19.0",

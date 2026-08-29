@@ -29,12 +29,11 @@
  *   substring first, so the AST cost is paid on ~30 files, not ~2,700.
  */
 
-import { execFile } from "node:child_process"
-import { access, readFile } from "node:fs/promises"
-import { join, relative } from "node:path"
-import { promisify } from "node:util"
-
 import { repoRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { access, readFile } from "@mailwoman/platform/fs/promises"
+import { join, relative } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 

@@ -36,13 +36,12 @@
  *   monorepo version-synced in git while npm doesn't see a weights tick.
  */
 
-import { spawnSync } from "node:child_process"
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
-
 import { $private, $public } from "@mailwoman/core/env"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join, resolve } from "@mailwoman/platform/path"
 
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "./pack-workspace.ts"
 import { verifyTarball } from "./verify-tarball.ts"

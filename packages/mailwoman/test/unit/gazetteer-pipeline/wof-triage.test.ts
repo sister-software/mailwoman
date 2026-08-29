@@ -11,11 +11,10 @@
  *   count silently inflates by an order of magnitude and every review built on it is wrong.
  */
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { CoverageVerdict, CurrencyClass, triageWOFCurrency } from "mailwoman/gazetteer-pipeline/wof-triage"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 

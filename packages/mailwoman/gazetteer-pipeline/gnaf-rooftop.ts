@@ -29,10 +29,6 @@
  *   0-geocode failure).
  */
 
-import { existsSync, readdirSync, rmSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
@@ -43,6 +39,9 @@ import {
 	OSM_ADDRESS_POINT_COLUMNS,
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk"
+import { existsSync, readdirSync, rmSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import {
 	canonicalizeRouteKey,

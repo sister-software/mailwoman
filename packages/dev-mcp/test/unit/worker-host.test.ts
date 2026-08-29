@@ -9,11 +9,10 @@
  *   with no signal to refresh.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { WorkerHost } from "@mailwoman/dev-mcp/worker-host"
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 const STUB_DIR = mkdtempSync(join(tmpdir(), "mwdev-stub-worker-"))
@@ -25,7 +24,7 @@ const TOOLS_PATH = join(STUB_DIR, "tools.json")
  */
 writeFileSync(
 	STUB_PATH,
-	`import { readFileSync } from "node:fs"
+	`const { readFileSync } = process.getBuiltinModule("node:fs")
 const tools = JSON.parse(readFileSync(process.argv[2], "utf8"))
 process.on("message", (message) => {
 	if (message.type === "handshake") {

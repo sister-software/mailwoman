@@ -55,9 +55,6 @@
  *   --out-json /tmp/per-locale-f1.json
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, resolve } from "node:path"
-
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
@@ -70,6 +67,8 @@ import {
 } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, resolve } from "@mailwoman/platform/path"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 

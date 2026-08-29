@@ -18,9 +18,8 @@
  *   which builds a STANDALONE shard — the admin gazetteer never wanted postcode rows folded into it.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 export interface FoldGeonamesOptions {
 	/**

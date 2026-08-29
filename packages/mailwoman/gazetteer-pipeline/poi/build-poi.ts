@@ -33,10 +33,6 @@
  *   `<out>.building` instruction, per the brief's own "follow the anchor, record the deviation" rule.
  */
 
-import { existsSync, mkdirSync, rmSync } from "node:fs"
-import { dirname, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
@@ -47,6 +43,9 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { dirname, join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,

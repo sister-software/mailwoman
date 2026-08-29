@@ -9,7 +9,7 @@
  *   MUST run AFTER `enrichAdmin` — `place_search` concatenates the `names` rows, abbreviations included.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 export interface BuildFTSOptions {
 	/**

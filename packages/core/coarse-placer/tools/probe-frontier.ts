@@ -19,8 +19,7 @@
  *   Run: `mailwoman placer probe-frontier [--model <dir>] [--n 2000] [--out <md>]`
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 

@@ -2,12 +2,11 @@
  * Report-only C6 census over the committed Gauntlet corpus. This command is not a release gate.
  */
 
-import { writeFile } from "node:fs/promises"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
+import { writeFile } from "@mailwoman/platform/fs/promises"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"

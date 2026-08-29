@@ -22,13 +22,12 @@
  *   Run from the repo root: `node packages/mailwoman/dev-tools/postcode-coherence-coverage.run.ts <fts|candidate>`
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 

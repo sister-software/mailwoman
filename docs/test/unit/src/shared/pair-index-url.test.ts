@@ -17,10 +17,9 @@
  *   strict e2e run against production.
  */
 
-import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { PAIR_INDEX_VERSION, pairIndexBaseURL, pairIndexURLs } from "@mailwoman/docs/shared/resources"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, test } from "vitest"
 
 describe("pair-index URL construction", () => {

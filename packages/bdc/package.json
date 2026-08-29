@@ -129,6 +129,7 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/filer": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"h3-js": "^4.5.0",

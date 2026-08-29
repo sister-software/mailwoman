@@ -31,8 +31,8 @@
  *   malformed input and throws (decision 8), not silently coerced to `null`.
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
+import { createReadStream } from "@mailwoman/platform/fs"
+import { createInterface } from "@mailwoman/platform/readline"
 
 import { toFRN, type FRN } from "./frn.ts"
 

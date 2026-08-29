@@ -24,9 +24,8 @@
  *   Read-only against the admin DB: no network, no model, no writes.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { ComponentTag } from "@mailwoman/core/types"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { OVERTURE_ID_BASE } from "./admin/fold-overture.ts"
 import { DEFAULT_COVERAGE_FLOOR } from "./defaults.ts"

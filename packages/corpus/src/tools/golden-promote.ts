@@ -31,10 +31,9 @@
  *   ```
  */
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { sha256File } from "@mailwoman/core/utils"
+import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
 // ── Types ──────────────────────────────────────────────────────────────────

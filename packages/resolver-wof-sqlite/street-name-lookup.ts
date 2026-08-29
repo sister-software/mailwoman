@@ -19,8 +19,7 @@
  *   the production rebuild is a tracked BAN-sdk follow-up.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { foldStreetSurface, type StreetEvidenceScope, type StreetLocalityEvidence } from "@mailwoman/resolver"
 
 function hasTable(db: DatabaseSync, table: string): boolean {

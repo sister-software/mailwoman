@@ -21,8 +21,7 @@
  *   unresolved control row, a missing database. A recorded STOP-REDESIGN is a result, not a failure.
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeFileSync } from "@mailwoman/platform/fs"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

@@ -30,11 +30,10 @@
  *   License: stamped `"Public Domain"` per 17 U.S.C. § 105 (US federal works).
  */
 
-import { readdir } from "node:fs/promises"
-import { join } from "node:path"
-
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
+import { readdir } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"

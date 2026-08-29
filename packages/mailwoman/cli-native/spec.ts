@@ -7,9 +7,8 @@
  * Parsing never imports the help renderer; `@isaacs/cliui` is reached only from {@link renderCommandHelp}.
  */
 
-import { parseArgs } from "node:util"
-
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { parseArgs } from "@mailwoman/platform/util"
 
 type OptionValue = boolean | number | string | boolean[] | number[] | string[]
 

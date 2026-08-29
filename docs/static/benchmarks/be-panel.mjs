@@ -52,15 +52,14 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
 // <DATA_ROOT>/wof/candidate.db. No other artifact is needed — that is the point of the panel.
 
-import { readFileSync, realpathSync, writeFileSync } from "node:fs"
-import { createRequire } from "node:module"
-import { basename, dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { readFileSync, realpathSync, writeFileSync } from "@mailwoman/platform/fs"
+import { createRequire } from "@mailwoman/platform/module"
+import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"

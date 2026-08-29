@@ -17,11 +17,6 @@
  *   two contradictory numbers under one name.
  */
 
-import { mkdtempSync, rmSync, statSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { CoastalContainmentPath, CoastalErosionLookup, CoastalReadingKind } from "@mailwoman/coastal"
 import {
 	assertNoNegativeClaim,
@@ -41,6 +36,10 @@ import {
 } from "@mailwoman/coastal/test-kit"
 import { NCERM_LAYER_NAME } from "@mailwoman/coastal/vocabulary"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/core/layers"
+import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 10

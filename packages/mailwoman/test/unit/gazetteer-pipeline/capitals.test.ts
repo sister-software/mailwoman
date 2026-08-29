@@ -7,11 +7,10 @@
  *   export squatting on `<CC>.txt` from reading as "scanned, no capital".
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { buildCapitalsReference, type CapitalsReference, parseCapitalRows } from "mailwoman/gazetteer-pipeline/capitals"
 import { describe, expect, it } from "vitest"
 

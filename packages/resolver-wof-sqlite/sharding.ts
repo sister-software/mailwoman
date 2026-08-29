@@ -23,7 +23,7 @@
  *   scope.
  */
 
-import { basename } from "node:path"
+import { basename } from "@mailwoman/platform/path"
 
 /**
  * Derive a SQL-safe schema name from a WOF distribution filename. Used by `ATTACH DATABASE … AS <name>` so each shard

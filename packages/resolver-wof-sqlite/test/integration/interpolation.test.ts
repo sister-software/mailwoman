@@ -9,9 +9,8 @@
  *   no-match fall-through.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
 import {
 	type StreetSegmentDatabase,

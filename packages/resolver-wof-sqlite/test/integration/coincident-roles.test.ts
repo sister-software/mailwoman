@@ -8,8 +8,7 @@
  *   too-far (excluded) cases, then asserts the derived relation + the in-memory loader.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	buildCoincidentRoles,
 	coincidentRolesExists,

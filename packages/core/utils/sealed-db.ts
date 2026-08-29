@@ -15,9 +15,9 @@
  *   built-artifact lifecycle, and because a rule the project states in prose and implements more than
  *   once in code should be a function.
  */
-import { chmodSync, existsSync, renameSync, rmSync, statSync, unlinkSync } from "node:fs"
-import { basename } from "node:path"
-import type { DatabaseSync } from "node:sqlite"
+import { chmodSync, existsSync, renameSync, rmSync, statSync, unlinkSync } from "@mailwoman/platform/fs"
+import { basename } from "@mailwoman/platform/path"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * `node:sqlite` via {@link process.getBuiltinModule} — invisible to bundlers. A static import here would ride the
@@ -25,7 +25,7 @@ import type { DatabaseSync } from "node:sqlite"
  * imports) can't resolve `node:sqlite` (CI: "Cannot find module 'sqlite'"). The builtin accessor keeps the functions
  * synchronous with zero resolve surface.
  */
-function sqlite(): typeof import("node:sqlite") {
+function sqlite(): typeof import("@mailwoman/platform/sqlite") {
 	return process.getBuiltinModule("node:sqlite")
 }
 

@@ -11,8 +11,7 @@
  *   unambiguous city over the postcode's fine-grained Ortsteil, and the path is inert without a
  *   postcode.
  */
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 

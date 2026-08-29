@@ -11,12 +11,11 @@
  *   read-only from the moment it exists.
  */
 
-import { existsSync, readFileSync, unlinkSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { sealDatabase } from "@mailwoman/core/utils"
+import { existsSync, readFileSync, unlinkSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { dataRootPath } from "../../resolver-backend.ts"
 import { ingestWOF } from "../admin/ingest-wof.ts"

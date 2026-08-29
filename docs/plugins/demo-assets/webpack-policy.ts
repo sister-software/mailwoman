@@ -5,9 +5,8 @@
  * @file Browser/SSR bundle policy for the docs demo.
  */
 
-import { createHash } from "node:crypto"
-import { resolve } from "node:path"
-
+import { createHash } from "@mailwoman/platform/crypto"
+import { resolve } from "@mailwoman/platform/path"
 import type { Configuration } from "webpack"
 import webpack from "webpack"
 

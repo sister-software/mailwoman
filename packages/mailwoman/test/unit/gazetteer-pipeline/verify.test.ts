@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { enrichAdmin } from "mailwoman/gazetteer-pipeline/admin/enrich"
 import { buildFTS } from "mailwoman/gazetteer-pipeline/fts"
 import { REVERSE_PANEL_CASES, type VerifyBaseline, verifyAdmin } from "mailwoman/gazetteer-pipeline/verify"

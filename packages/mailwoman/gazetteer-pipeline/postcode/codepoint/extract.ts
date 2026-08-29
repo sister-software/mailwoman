@@ -33,10 +33,9 @@
  *   `grep` the same bytes the builder saw.
  */
 
-import { createWriteStream } from "node:fs"
-import { mkdir, readFile } from "node:fs/promises"
-import { pipeline } from "node:stream/promises"
-
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { mkdir, readFile } from "@mailwoman/platform/fs/promises"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 import { join } from "path-ts"
 import { open as openZip } from "yauzl-promise"
 

@@ -25,10 +25,9 @@
  *   `arbitrate` shape — not to grade the quality of the coverage it finds.
  */
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
-import { join } from "node:path"
-
 import { repoRootPath } from "@mailwoman/core/utils"
+import { existsSync, readdirSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const REGISTER = String(repoRootPath("docs", "engineering", "reference", "runtime-flags.mdx"))

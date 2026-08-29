@@ -17,9 +17,8 @@
  *   tall as the viewport emits `\x1b[3J`, which wipes the scrollback.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 

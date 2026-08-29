@@ -29,10 +29,9 @@
  *   question a violation raises, and it is answered without loading a model.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { normalize } from "@mailwoman/normalize"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
 	auditCanonicalFormSuite,

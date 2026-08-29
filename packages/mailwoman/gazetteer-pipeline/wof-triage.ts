@@ -32,10 +32,9 @@
  *   never `unattested`.
  */
 
-import { existsSync } from "node:fs"
-import { resolve } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { existsSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
 

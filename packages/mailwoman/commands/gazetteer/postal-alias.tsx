@@ -25,10 +25,9 @@
  *   build.
  */
 
-import { mkdirSync, rmSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 

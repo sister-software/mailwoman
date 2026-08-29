@@ -78,6 +78,9 @@
 	"publishConfig": {
 		"access": "public"
 	},
+	"dependencies": {
+		"@mailwoman/platform": "workspace:*"
+	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*"
 	}

@@ -9,12 +9,11 @@
  *   class), and declared files never materialized (the `@mailwoman/neural-weights-en-au` class). Each is pinned here.
  */
 
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 import { $ } from "zx"
@@ -24,10 +23,10 @@ import { checkReleaseListIdentity, SANCTIONED_RELEASE_ABSENCES } from "./release
 import { literalFilesEntries, verifyTarball } from "./verify-tarball.ts"
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 53 published, every absence sanctioned by name", () => {
+	it("holds on the current tree: 54 published, every absence sanctioned by name", () => {
 		const identity = checkReleaseListIdentity(String(repoRootPath()))
 
-		expect(identity.publishCount).toBe(53)
+		expect(identity.publishCount).toBe(54)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])

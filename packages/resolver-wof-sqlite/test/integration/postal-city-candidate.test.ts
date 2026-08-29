@@ -1,3 +1,4 @@
+import { DatabaseClient } from "@mailwoman/core/kysley/client"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -10,12 +11,10 @@
  *   geographic locality; a bare query (no postcode), a postcode miss, a non-locality request, and a
  *   candidate.db WITHOUT the side-index are all untouched (byte-stable).
  */
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
 import {

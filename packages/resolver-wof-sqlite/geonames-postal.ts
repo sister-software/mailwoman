@@ -34,9 +34,8 @@
  *   the model card like the existing GeoNames alias fold.
  */
 
-import { existsSync } from "node:fs"
-import type { DatabaseSync } from "node:sqlite"
-
+import { existsSync } from "@mailwoman/platform/fs"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 

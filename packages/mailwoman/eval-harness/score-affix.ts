@@ -16,14 +16,13 @@
  *   `scripts/eval/score-affix.ts` is the thin CLI that keeps standalone invocation working.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { JSONSpliterator } from "spliterator"
 
 /**

@@ -14,9 +14,8 @@
  *   keeps the coordinate radius from promoting a capital's same-name neighbours (`capitals.ts`).
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { Kysely } from "kysely"
 
 import type { CapitalPoint } from "./capitals.ts"

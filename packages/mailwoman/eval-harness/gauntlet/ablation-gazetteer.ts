@@ -22,10 +22,9 @@
  *   a read-only artifact, called once per rung and once per component per variant.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync, type StatementSync } from "node:sqlite"
-
 import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync, type StatementSync } from "@mailwoman/platform/sqlite"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { haversineKm } from "@mailwoman/spatial"
 

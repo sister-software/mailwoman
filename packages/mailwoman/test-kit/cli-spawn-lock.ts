@@ -17,9 +17,9 @@
  *   in a `finally` — a leaked test lock turns one failure into a whole-suite timeout.
  */
 
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 
 const LOCK_DIR = join(tmpdir(), "mailwoman-cli-spawn.lock")
 const PID_FILE = join(LOCK_DIR, "pid")

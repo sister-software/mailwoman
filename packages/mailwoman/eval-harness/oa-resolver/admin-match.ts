@@ -10,11 +10,10 @@
  *   place — never launder a wrong one.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { lookupGermanState } from "@mailwoman/codex/de"
 import { lookupFrenchRegion } from "@mailwoman/codex/fr"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import type { Resolved } from "./tree-hits.ts"
 

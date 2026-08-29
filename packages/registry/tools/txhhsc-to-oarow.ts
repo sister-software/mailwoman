@@ -14,9 +14,8 @@
  *   Run: `mailwoman registry convert tx-hhsc [--src <tsv>] [--out /tmp/txhhsc-oarow.jsonl]`
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { TSVSpliterator } from "spliterator"
 
 /**

@@ -15,12 +15,11 @@
  *   - Postcode rows resolve, and placeholder 0,0-coord rows were dropped at build.
  */
 
-import { copyFile, mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { copyFile, mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { rankByPrimaryPreference, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"

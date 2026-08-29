@@ -27,10 +27,9 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
-import { mkdirSync, rmSync } from "node:fs"
-import { basename, dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { basename, dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
 

@@ -4,15 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import {
 	createGeonamesPostalAdapter,
 	GEONAMES_POSTAL_ADAPTER_ID,
 	GEONAMES_POSTAL_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/geonames-postal/adapter"
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "#types"

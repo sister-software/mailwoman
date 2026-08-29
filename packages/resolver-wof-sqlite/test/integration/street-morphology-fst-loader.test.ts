@@ -13,11 +13,10 @@
  *     (warning, never a throw)
  */
 
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { deserializeFSTWeb } from "@mailwoman/resolver-wof-sqlite/fst-deserialize-web"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { PlaceEntry } from "@mailwoman/resolver-wof-sqlite/fst-types"

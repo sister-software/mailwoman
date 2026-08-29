@@ -22,7 +22,7 @@
  *   survives the relay; a refusal only helps if the agent stays inside the tool.
  */
 
-import { execFileSync } from "node:child_process"
+import { execFileSync } from "@mailwoman/platform/child_process"
 
 import { effectiveKeyFor } from "./engine-registry.ts"
 

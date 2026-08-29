@@ -20,8 +20,7 @@
  *   constraint the higher-population namesake wins, which is exactly why region resolution has to
  *   work.
  */
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 

@@ -28,13 +28,12 @@
  *     node ban/out/scripts/build-address-point-shard.js --depts 48,2A,05 --out /tmp/ban-sample.db
  */
 
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,

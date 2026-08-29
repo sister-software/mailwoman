@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	createPOISearchFTS,
 	createPOIStagingTables,

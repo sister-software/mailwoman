@@ -17,9 +17,8 @@
  *   measurements, and the ECE alone cannot tell them apart.
  */
 
-import { existsSync } from "node:fs"
-
 import type { DecoderToken } from "@mailwoman/core/decoder"
+import { existsSync } from "@mailwoman/platform/fs"
 import { componentMatches } from "mailwoman/eval-harness/gauntlet/check-case"
 import { JSONSpliterator } from "spliterator"
 

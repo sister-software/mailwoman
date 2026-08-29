@@ -27,8 +27,7 @@
  *   this is where it would show.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { referentialFromPopulation } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { afterEach, describe, expect, it } from "vitest"

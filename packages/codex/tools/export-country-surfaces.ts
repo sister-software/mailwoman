@@ -12,8 +12,8 @@
  *   Regenerate: `node codex/tools/export-country-surfaces.ts` (writes the corpus-python data file).
  */
 
-import { writeFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
 

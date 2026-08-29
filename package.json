@@ -15,6 +15,7 @@
 		"url": "https://github.com/sister-software/mailwoman.git"
 	},
 	"workspaces": [
+		"packages/platform",
 		"packages/mailwoman",
 		"packages/annotations",
 		"packages/api-kit",
@@ -124,6 +125,7 @@
 	},
 	"devDependencies": {
 		"@duckdb/node-api": "^1.5.3-r.3",
+		"@mailwoman/platform": "workspace:*",
 		"@release-it-plugins/workspaces": "^6.0.0",
 		"@sister.software/oxfmt-config": "^13.0.0",
 		"@sister.software/oxlint-config": "^13.0.0",

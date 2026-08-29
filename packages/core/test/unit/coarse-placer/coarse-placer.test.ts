@@ -9,10 +9,6 @@
  *   identical confidence. Also covers `featurize` determinism and `dequantizeInt8Weights`.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import {
 	CoarsePlacer,
 	dequantizeInt8Weights,
@@ -20,6 +16,9 @@ import {
 	featurize,
 	inMapPosterior,
 } from "@mailwoman/core/coarse-placer"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, test } from "vitest"
 
 const tmpRoot = mkdtempSync(join(tmpdir(), "coarse-placer-test-"))

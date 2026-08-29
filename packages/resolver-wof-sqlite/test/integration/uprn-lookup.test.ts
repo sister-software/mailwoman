@@ -8,11 +8,6 @@
  *   never disagree on which cell a coordinate keys to.
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
@@ -26,6 +21,10 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { mkdtempSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { UPRN_MAX_NEAREST_RADIUS_M, UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import {
 	createUPRNIndexes,

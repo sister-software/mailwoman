@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { makeNUTSAnnotator, nutsFromID, NUTSLookup, pointInMultiPolygon } from "@mailwoman/nuts-lookup"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { expect, test } from "vitest"
 
 test("nutsFromID: derives nested levels by prefix", () => {

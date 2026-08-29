@@ -10,9 +10,8 @@
  *   candidate.db WITHOUT the side-index (today's production demo), are byte-stable.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { WOFCandidateTableLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { afterEach, describe, expect, test } from "vitest"
 
 /**
@@ -112,7 +111,7 @@ describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", 
 	// loaded, the capitalized global never existed, and the demo street tier silently fell back to
 	// the admin cascade for three days. These pins make the next sweep fail loudly instead.
 	test("the library actually exports `createDbWorker` (lowercase b)", async () => {
-		const { createRequire } = await import("node:module")
+		const { createRequire } = await import("@mailwoman/platform/module")
 		const require = createRequire(import.meta.url)
 		const umd = require("sql.js-httpvfs/dist/index.js") as Record<string, unknown>
 
@@ -120,7 +119,7 @@ describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", 
 	})
 
 	test("the loader references the library's own casing and never the house-cased variant", async () => {
-		const { readFileSync } = await import("node:fs")
+		const { readFileSync } = await import("@mailwoman/platform/fs")
 		const source = readFileSync(new URL("../../../../src/shared/httpvfs-resolver.ts", import.meta.url), "utf8")
 
 		expect(source).toContain("createDbWorker")

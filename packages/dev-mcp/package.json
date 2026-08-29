@@ -277,6 +277,7 @@
 		"@mailwoman/geocode-oracle": "workspace:*",
 		"@mailwoman/libpostal": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.30.0",

@@ -21,11 +21,10 @@
  *   like provenance and carry none.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { getRow } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * The ancestor's identity as this manifest records it.

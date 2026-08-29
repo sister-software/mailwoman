@@ -8,8 +8,7 @@
  *   the relation with `spr` and returns the dual-role completion candidates the resolver consumes.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"

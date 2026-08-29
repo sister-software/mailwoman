@@ -23,13 +23,12 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import { existsSync, mkdirSync, statSync } from "node:fs"
-import { rm } from "node:fs/promises"
-import { basename, join } from "node:path"
-
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, statSync } from "@mailwoman/platform/fs"
+import { rm } from "@mailwoman/platform/fs/promises"
+import { basename, join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"

@@ -18,11 +18,10 @@
  *        somewhere else.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "@mailwoman/resolver-wof-sqlite/candidate-importance"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 

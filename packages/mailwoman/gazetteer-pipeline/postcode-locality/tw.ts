@@ -50,12 +50,11 @@
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-tw.db
  */
 
-import { readFileSync, renameSync, rmSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/core/utils"
+import { readFileSync, renameSync, rmSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 

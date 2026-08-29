@@ -25,8 +25,8 @@
  *   - `--concurrency <n>` — parallel per-country fetches; default `8`
  */
 
-import { mkdir, writeFile } from "node:fs/promises"
-import { join } from "node:path"
+import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 
 import { corePackagePath } from "#utils"
 

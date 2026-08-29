@@ -8,8 +8,7 @@
  *   are asserted on data small enough to read.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	PLACETYPE_PROJECTION,
 	WOF_PLACETYPES,

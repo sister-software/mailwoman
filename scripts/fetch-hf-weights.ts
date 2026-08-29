@@ -22,15 +22,14 @@
  *   the browser demo loads. Nothing here writes to Hugging Face, npm, git, or R2.
  */
 
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { APIClient } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { md5Hex, repoRootPath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 

@@ -28,10 +28,9 @@
  *   overwritten, and the file is sealed read-only afterwards.
  */
 
-import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
-
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode-prefix-index"
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

@@ -4,11 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { iterateJSONL, writeJSONL } from "@mailwoman/core/utils/jsonl"
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 describe("jsonl", () => {

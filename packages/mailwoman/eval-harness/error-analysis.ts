@@ -30,13 +30,12 @@
  *   <spm> --model-card <json>
  */
 
-import { resolve } from "node:path"
-
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { resolve } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
 interface GoldenEntry {

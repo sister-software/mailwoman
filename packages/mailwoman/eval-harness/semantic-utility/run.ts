@@ -24,12 +24,11 @@
  *   behind it, so the receipt states on whose authority each answered row's category was chosen.
  */
 
-import { readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { JSONSpliterator } from "spliterator"
 
 import { type LayerManifest, probeManifest } from "../../data-inventory.ts"

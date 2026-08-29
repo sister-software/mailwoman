@@ -20,9 +20,8 @@
  *   {@link cleanLieuDit} (`.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
  */
 
-import { createReadStream } from "node:fs"
-import { createGunzip } from "node:zlib"
-
+import { createReadStream } from "@mailwoman/platform/fs"
+import { createGunzip } from "@mailwoman/platform/zlib"
 import { CSVSpliterator } from "spliterator"
 
 /**

@@ -16,12 +16,11 @@
  *   passes every test written against the other.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	buildPostcodeNIOSM,
 	NI_LIVE_POSTCODES,

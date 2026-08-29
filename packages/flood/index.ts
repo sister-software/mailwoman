@@ -38,8 +38,6 @@
  *   that created these tables IS Kysely — see `schema.ts`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	parseManifestRows,
 	toCoverageCell,
@@ -47,6 +45,7 @@ import {
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 

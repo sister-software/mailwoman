@@ -41,8 +41,7 @@
  *   (`resolver/toponym-prior.ts`) leaves an unmeasured candidate exactly where population put it.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { normalizeLocalityForKey } from "./street-normalize.ts"

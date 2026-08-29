@@ -9,11 +9,10 @@
  *   satisfying {@link SECIngestClient}.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { toCIK, type CompanyTickerEntry } from "@mailwoman/filer/sdk/edgar-filings"
 import { collectEdgarSubsidiaryRows, EdgarSkipReason, type SECIngestClient } from "@mailwoman/filer/sdk/edgar-ingest"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const CABLE_ONE = toCIK("0001632127")!

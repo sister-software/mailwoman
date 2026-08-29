@@ -32,11 +32,10 @@
  *   consumer reads them at open instead of trusting a runbook.
  */
 
-import { existsSync, statSync, unlinkSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath, md5File, sealDatabase } from "@mailwoman/core/utils"
+import { existsSync, statSync, unlinkSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { join } from "path-ts"
 
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"

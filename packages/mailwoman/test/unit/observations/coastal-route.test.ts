@@ -19,10 +19,6 @@
  *   publishes no such definition, so silence here is a named refusal rather than an advisory.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { buildCoastalDatabase } from "@mailwoman/coastal/sdk/build-coastal"
 import {
 	fixtureFeatures,
@@ -33,6 +29,9 @@ import {
 } from "@mailwoman/coastal/test-kit"
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { QueryKind } from "@mailwoman/core/pipeline"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import type { Resolver } from "@mailwoman/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode-core"
 import { createCoastalErosionRoute, describeCoastalErosion } from "mailwoman/observations"

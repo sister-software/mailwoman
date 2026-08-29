@@ -12,10 +12,6 @@
  *   and it refuses differently for a wrong-shaped root than for a correctly-shaped one that is under-staged.
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import {
 	assertWeightsCacheStaged,
 	EFFECTIVE_KEY_FOR,
@@ -27,6 +23,9 @@ import {
 import { ENGINE_CONFIG_SCHEMA } from "@mailwoman/dev-mcp/tool-kit"
 import { computeTreeFingerprint } from "@mailwoman/dev-mcp/tree-fingerprint"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 /**

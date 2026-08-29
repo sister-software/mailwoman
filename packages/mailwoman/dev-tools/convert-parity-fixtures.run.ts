@@ -12,10 +12,9 @@
  *   Run from the repo root: `node packages/mailwoman/dev-tools/convert-parity-fixtures.run.ts`
  */
 
-import { mkdirSync } from "node:fs"
-
 import type { Classification } from "@mailwoman/core"
 import { legacyClassificationToComponentTag } from "@mailwoman/core/types"
+import { mkdirSync } from "@mailwoman/platform/fs"
 import { dirname } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 

@@ -8,11 +8,10 @@
  *   contract (hyphen/apostrophe), positive-evidence fallback, and graceful degrade on a tableless db.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import { SQLiteStreetNameLookup } from "@mailwoman/resolver-wof-sqlite/street-name-lookup"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"

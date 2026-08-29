@@ -11,12 +11,11 @@
  *   indistinguishable from a measured answer, and whether a measured answer exists is the question.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { ManifestState, readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
 import { afterEach, describe, expect, it } from "vitest"

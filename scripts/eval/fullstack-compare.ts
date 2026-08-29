@@ -22,11 +22,10 @@
  *   Optional: --geocode-earth-key <key> also queries api.geocode.earth (real Pelias) per case.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { parseArgs as parseNodeArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 
 interface Args {
 	harnessPath: string

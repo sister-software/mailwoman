@@ -38,13 +38,12 @@
  *     CycloneDX:  cyclonedx-cli validate --input-file docs/static/sbom/mailwoman-<version>.cdx.json
  */
 
-import { execFileSync } from "node:child_process"
-import { mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { dirname, join, resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { dirname, join, resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const repoRoot = resolve(import.meta.dirname, "..")
 

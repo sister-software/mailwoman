@@ -6,11 +6,10 @@
  *   Download and manifest utilities for `mailwoman corpus fetch <source>`.
  */
 
-import { existsSync } from "node:fs"
-import { readFile, writeFile } from "node:fs/promises"
-import { setTimeout as sleep } from "node:timers/promises"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { existsSync } from "@mailwoman/platform/fs"
+import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
+import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
 
 /**
  * Rate limited — retryable, the server is asking us to back off.

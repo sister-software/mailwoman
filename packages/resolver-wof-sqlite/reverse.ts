@@ -28,9 +28,8 @@
  *   says so per result rather than pretending.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 
 import { ancestorLineage, placetypeDepth } from "./ancestry.ts"

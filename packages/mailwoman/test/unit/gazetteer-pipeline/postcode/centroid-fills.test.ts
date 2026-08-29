@@ -3,11 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { fillPostcodeCentroids } from "mailwoman/gazetteer-pipeline/postcode/centroid-fills"
 import { expect, test } from "vitest"

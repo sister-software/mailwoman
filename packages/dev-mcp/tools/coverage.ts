@@ -7,9 +7,8 @@
  *   The census itself lives in `../coverage-census.ts`; this file is the CONTRACT.
  */
 
-import { existsSync, readdirSync, statSync } from "node:fs"
-
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { existsSync, readdirSync, statSync } from "@mailwoman/platform/fs"
 import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage-census"
 import { z } from "zod"
 

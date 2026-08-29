@@ -22,10 +22,9 @@
  *   columns rather than rejected, so filtering them is the reader's job and this reader was not doing it.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { PLACETYPE_PROJECTION } from "./placetype-census.ts"
 

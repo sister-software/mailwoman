@@ -9,11 +9,10 @@
  *   between the primaries pass and the alias pass.
  */
 
-import { existsSync } from "node:fs"
-import { resolve } from "node:path"
-import type { DatabaseSync } from "node:sqlite"
-
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
+import { existsSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
 

@@ -28,10 +28,6 @@
  *   [--falsehoods data/eval/falsehoods] # extra JSONL row files to include
  */
 
-import { readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, join } from "node:path"
-import { parseArgs as parseNodeArgs } from "node:util"
-
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
@@ -45,6 +41,9 @@ import {
 } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { readdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, join } from "@mailwoman/platform/path"
+import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
 import { createRuntimePipeline } from "mailwoman"

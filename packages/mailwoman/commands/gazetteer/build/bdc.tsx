@@ -28,12 +28,11 @@
  *   list to resolve FRNs FOR.
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/core/kysley/client"
 import type { FilerDatabase } from "@mailwoman/filer"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

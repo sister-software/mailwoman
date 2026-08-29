@@ -15,9 +15,8 @@
  *   swallowed.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "./convention.ts"
 

@@ -35,13 +35,12 @@
  *   `--country` runs (a temp-build would wipe prior countries' rows).
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { assertDatabaseIntegrity, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 
 import {

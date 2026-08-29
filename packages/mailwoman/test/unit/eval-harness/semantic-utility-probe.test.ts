@@ -10,12 +10,11 @@
  *   loader against temporary copies of the committed files, so every threshold is exercised without a run.
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { POIIntent, POIResult } from "@mailwoman/core/pipeline"
+import { mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardOutcome } from "mailwoman/eval-harness/poi-board"
 import {
 	auditProbeDefinition,

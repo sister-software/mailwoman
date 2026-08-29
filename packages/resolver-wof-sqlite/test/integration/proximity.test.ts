@@ -7,8 +7,7 @@
  *   fixture-DB pattern. Real-WOF coverage lives in `integration.test.ts`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { bboxAround, haversineKm } from "@mailwoman/spatial"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"

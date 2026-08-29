@@ -32,8 +32,7 @@
  *   `assessDatumTransformation` in `ingest.ts` for the guard that now refuses the build instead.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	expandH3Cell,
 	interiorPointOfEncodedRings,

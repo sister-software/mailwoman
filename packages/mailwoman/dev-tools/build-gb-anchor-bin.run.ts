@@ -35,13 +35,12 @@
  *   Usage: node packages/mailwoman/dev-tools/build-gb-anchor-bin.run.ts --out <dir>
  */
 
-import { writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 
 /**
  * A GB unit postcode in the space-stripped key form the train painter writes. Verbatim from

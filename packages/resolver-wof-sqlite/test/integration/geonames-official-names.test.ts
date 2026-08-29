@@ -10,11 +10,10 @@
  *   file the fold is byte-identical to the pre-#936 untagged behavior.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
 import { afterAll, beforeAll, expect, test } from "vitest"
 

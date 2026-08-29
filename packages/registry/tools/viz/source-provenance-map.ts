@@ -7,11 +7,10 @@
  *   The output requires an HTTP origin because the tile server does not serve `file:` origins.
  */
 
-import { writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
 import { type MapFeatureData, toMapHTML } from "#index"

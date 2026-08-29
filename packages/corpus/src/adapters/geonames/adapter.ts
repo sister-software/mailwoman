@@ -28,9 +28,8 @@
  *   License: stamped `"CC-BY-4.0"` per row (GeoNames' terms); provenance is the `geonames-<id>` key.
  */
 
-import { existsSync } from "node:fs"
-
 import { reconcileComponents } from "@mailwoman/formatter"
+import { existsSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 

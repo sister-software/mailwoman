@@ -11,10 +11,9 @@
  *   the geocoder-demo spec.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { resolveStreet } from "@mailwoman/docs/shared/demo-helpers"
 import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/docs/shared/httpvfs-street"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { afterEach, describe, expect, test } from "vitest"
 
 /**

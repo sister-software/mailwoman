@@ -16,9 +16,9 @@
  *   2500]`
  */
 
-import { appendFileSync } from "node:fs"
-import * as path from "node:path"
-import { DatabaseSync } from "node:sqlite"
+import { appendFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { dataRootPath, repoRootPath } from "#utils"
 

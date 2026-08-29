@@ -9,9 +9,8 @@
  *   its parents. An `@mailwoman/annotations` `Annotator`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AnnotationSet, Annotator, NUTS } from "@mailwoman/annotations"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.

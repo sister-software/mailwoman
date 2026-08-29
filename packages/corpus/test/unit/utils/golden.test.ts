@@ -4,10 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	parseGoldenLine,
@@ -15,6 +11,9 @@ import {
 	validateGoldenDir,
 	validateGoldenFile,
 } from "@mailwoman/corpus/utils/golden"
+import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const goldenDir = repoRootPath("data", "eval", "golden", "v0.1.0")

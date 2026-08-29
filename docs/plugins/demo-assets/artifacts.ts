@@ -33,13 +33,12 @@
  *   Only a docs BUILD can verify a change to that, never a unit test.
  */
 
-import { spawnSync } from "node:child_process"
-import { copyFileSync, existsSync, lstatSync, readFileSync, readlinkSync, statSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-
 import { $public } from "@mailwoman/core/env"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { copyFileSync, existsSync, lstatSync, readFileSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
+import { dirname, resolve } from "@mailwoman/platform/path"
 
 import type { ReleaseInfo } from "#shared/demo-helpers"
 
@@ -257,7 +256,7 @@ export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?
 	const script = `
 		import { buildFSTFromWOF } from '@mailwoman/resolver-wof-sqlite/fst-builder'
 		import { serializeFST } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
-		import { writeFileSync } from 'node:fs'
+		import { writeFileSync } from '@mailwoman/platform/fs'
 		const { matcher, provenance } = buildFSTFromWOF({
 			dbPath: ${JSON.stringify(wofDB)},
 			countries: ${countries},

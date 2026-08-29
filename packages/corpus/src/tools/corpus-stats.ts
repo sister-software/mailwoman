@@ -36,8 +36,8 @@
  *   --output /tmp/corpus-stats-local.json
  */
 
-import { readdirSync, statSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
+import { readdirSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 import { ParquetReader } from "../parquet-wrapper/index.ts"
 

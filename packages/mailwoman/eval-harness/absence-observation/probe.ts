@@ -29,11 +29,10 @@
  *   only fail one way is not a control set.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { ABSENCE_REFUSALS } from "../../observations/index.ts"
 // The canonical-JSON encoder is IMPORTED rather than re-typed: two freeze records hashing the same content

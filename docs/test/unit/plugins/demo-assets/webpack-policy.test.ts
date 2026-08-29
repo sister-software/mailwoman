@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { resolve } from "node:path"
-
 import { configureDemoWebpack } from "@mailwoman/docs/plugins/demo-assets/webpack-policy"
 import { buildWorkspaceAliases } from "@mailwoman/docs/plugins/demo-assets/workspace-aliases"
+import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, test } from "vitest"
 
 const docsDir = resolve(import.meta.dirname, "../../../..")

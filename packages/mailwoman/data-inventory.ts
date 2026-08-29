@@ -23,11 +23,10 @@
  *   visible instead of leaving it as a filesystem detail.
  */
 
-import { type Dirent, existsSync, lstatSync, readdirSync, readlinkSync, statSync } from "node:fs"
-import { basename, join, relative } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { getRow } from "@mailwoman/core/utils"
+import { type Dirent, existsSync, lstatSync, readdirSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
+import { basename, join, relative } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Whether an artifact can say how it was made.

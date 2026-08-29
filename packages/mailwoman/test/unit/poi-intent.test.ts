@@ -4,13 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { loadDefaultReverseGeocoder } from "mailwoman/default-reverse-geocoder"
 import { createPOIIntentStage, createPOINameLookup, poiTaxonomyLookup } from "mailwoman/poi-intent"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"

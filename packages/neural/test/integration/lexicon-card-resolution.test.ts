@@ -17,11 +17,10 @@
  *   sibling-resolution code this file is about.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { LexiconVersionMismatchError, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 let cacheRoot: string

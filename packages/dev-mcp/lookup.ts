@@ -20,11 +20,10 @@
  *   re-derives what a consumer reads: the FST collapse is `collapseFSTBias`, the decoder's own function.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalize } from "@mailwoman/normalize"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Sources a lookup can address. Each answers a different "does it know this?" and they are not interchangeable — a

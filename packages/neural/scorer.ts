@@ -21,11 +21,10 @@
  *   browser bundle.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 
 import {
 	parseAnchorLookup,

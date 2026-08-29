@@ -10,9 +10,8 @@
  *   its cap, route-key folding, and the no-bracket fall-through to the TIGER segment fallback.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { AddressPointInterpolator } from "@mailwoman/resolver-wof-sqlite/address-point-interpolation"
 import { type AddressPointDatabase, createAddressPointTable } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"

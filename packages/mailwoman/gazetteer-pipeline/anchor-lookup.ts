@@ -60,10 +60,9 @@
  *   also `$MAILWOMAN_DATA_ROOT` overridable.
  */
 
-import { closeSync, openSync, readFileSync, writeSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
+import { closeSync, openSync, readFileSync, writeSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { TSVSpliterator } from "spliterator"
 
 /**

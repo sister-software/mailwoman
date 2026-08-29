@@ -17,12 +17,11 @@
  *   `runIfScript` writes its environment banner there first.
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import { releaseWorkspaces } from "./release-stage.ts"
 

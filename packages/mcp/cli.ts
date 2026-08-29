@@ -48,15 +48,14 @@
  *   ```
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { createRuntimePipeline, type PipelineResult } from "mailwoman"

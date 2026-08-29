@@ -21,10 +21,10 @@
  *   an extraction. What stays with each caller is where the URL came from and what the two names are.
  */
 
-import { execFile } from "node:child_process"
-import { mkdir } from "node:fs/promises"
-import { join } from "node:path"
-import { promisify } from "node:util"
+import { execFile } from "@mailwoman/platform/child_process"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 
 import { pathExists } from "./path-exists.ts"
 import { streamToDisk } from "./stream-to-disk.ts"

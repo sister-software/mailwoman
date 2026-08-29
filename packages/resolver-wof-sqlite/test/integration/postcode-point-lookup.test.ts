@@ -8,11 +8,10 @@
  *   the `is_current` filter, coordinate-less membership, and the cross-shard union.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite/postcode-point-lookup"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

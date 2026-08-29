@@ -11,8 +11,7 @@
  *   which is how an eval row scored a miss against two backends that had both answered correctly.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { assignSyntheticIDs, OVERTURE_ID_BASE, prepareInserts } from "mailwoman/gazetteer-pipeline/admin/fold-overture"
 import { describe, expect, test } from "vitest"

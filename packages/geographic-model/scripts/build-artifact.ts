@@ -22,8 +22,8 @@
  *   dependency graph.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import { type CompiledGeographicModel, parseCompiledGeographicModel, serializeCompiledModel } from "../artifact.ts"
 import { compileGeographicModel } from "../compile.ts"

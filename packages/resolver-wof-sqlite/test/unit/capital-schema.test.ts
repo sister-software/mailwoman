@@ -7,9 +7,8 @@
  *   rather than crashing a session open.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { type CapitalTable, createCapitalTable, readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import { describe, expect, it } from "vitest"
 

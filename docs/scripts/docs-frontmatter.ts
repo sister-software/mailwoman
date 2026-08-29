@@ -14,9 +14,9 @@
  *   …) without pulling a YAML dependency into what must stay a no-install fast path in CI.
  */
 
-import { readdir, readFile } from "node:fs/promises"
-import path from "node:path"
-import { fileURLToPath } from "node:url"
+import { readdir, readFile } from "@mailwoman/platform/fs/promises"
+import path from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 

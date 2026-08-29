@@ -19,11 +19,10 @@
  * ```
  */
 
-import { readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 const MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")

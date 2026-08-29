@@ -23,11 +23,10 @@
  *   # then push the overlay to R2 + sync + `modal run -d ... --config <recipe>.yaml --resume none`.
  */
 
-import { readFileSync, statSync, writeFileSync } from "node:fs"
-import { basename, dirname, join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
+import { readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, dirname, join } from "@mailwoman/platform/path"
 
 interface ShardDescriptor {
 	split: string

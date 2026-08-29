@@ -5,7 +5,7 @@
  * @file Pass 4 of the candidate build — fold a postcode or locality shard into the staging table.
  */
 
-import { DatabaseSync } from "node:sqlite"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { normalizeLocalityForKey } from "../street-normalize.ts"
 import type { PlaceAttrs, StageRow } from "./place-attrs.ts"

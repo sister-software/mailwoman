@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { join } from "node:path"
-
+import { join } from "@mailwoman/platform/path"
 import { resolveWOFHotDB } from "mailwoman/eval-harness/wof-hot-db"
 import { afterEach, describe, expect, it, vi } from "vitest"
 

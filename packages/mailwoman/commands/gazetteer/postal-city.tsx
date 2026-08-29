@@ -20,9 +20,8 @@
  *   streams to stderr; the final summary is on stdout.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { allRows } from "@mailwoman/core/utils"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 

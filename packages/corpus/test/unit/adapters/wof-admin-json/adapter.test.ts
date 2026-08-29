@@ -4,9 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { rm } from "node:fs/promises"
-import { join } from "node:path"
-
 import { workspacePath } from "@mailwoman/core/utils"
 import {
 	WOF_ADMIN_ADAPTER_ID,
@@ -14,6 +11,8 @@ import {
 	nameSlotsFor,
 	variantsFor,
 } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
+import { rm } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

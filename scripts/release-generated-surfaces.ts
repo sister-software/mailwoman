@@ -17,11 +17,10 @@
  *   same tree is a no-op by construction (the generators are deterministic over the compiled CLI).
  */
 
-import { existsSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
 
 /**

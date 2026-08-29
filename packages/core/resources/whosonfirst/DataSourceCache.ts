@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdirSync } from "node:fs"
-
+import { mkdirSync } from "@mailwoman/platform/fs"
 import { dirname } from "path-ts"
 
 import type { Alpha3bLanguageCode } from "#resources/languages"

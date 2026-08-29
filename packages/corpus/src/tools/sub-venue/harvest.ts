@@ -31,9 +31,8 @@
  *   needs, since a `hall` seen on a platform is a confound and a `hall` seen on a terminal is evidence.
  */
 
-import { readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 import { nameContainsSurfaces, type SurfaceIndex } from "./surfaces.ts"

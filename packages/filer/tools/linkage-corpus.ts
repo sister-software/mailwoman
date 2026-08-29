@@ -11,7 +11,7 @@
  *   Nothing here imports `linkage-eval.ts`, so the dependency between the two stays one-directional.
  */
 
-import { createHash } from "node:crypto"
+import { createHash } from "@mailwoman/platform/crypto"
 
 import { FilerIdentifierType } from "../schema.ts"
 import { mintFamilyID } from "../sdk/family-id.ts"

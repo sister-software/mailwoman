@@ -25,7 +25,7 @@ import { SqliteDriver } from "./driver.ts"
  * The constructor takes an instance of {@link SqliteDialectConfig}.
  *
  * ```ts
- * import { DatabaseSync } from "node:sqlite"
+ * import { DatabaseSync } from "@mailwoman/platform/sqlite"
  *
  * new SqliteDialect({
  * 	database: new DatabaseSync("db.sqlite"),
@@ -35,7 +35,7 @@ import { SqliteDriver } from "./driver.ts"
  * If you want the pool to only be created once it's first used, `database` can be a function:
  *
  * ```ts
- * import { DatabaseSync } from "node:sqlite"
+ * import { DatabaseSync } from "@mailwoman/platform/sqlite"
  *
  * new SqliteDialect({
  * 	database: async () => new DatabaseSync("db.sqlite"),

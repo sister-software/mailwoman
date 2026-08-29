@@ -26,11 +26,10 @@
  *   excluded by (street, locality, postcode) so the training shard never overlaps the benchmark.
  */
 
-import { createWriteStream } from "node:fs"
-import { readdir } from "node:fs/promises"
-import { join } from "node:path"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { readdir } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { PSVSpliterator, TextSpliterator } from "spliterator"
 
 export interface GNAFAssembleOptions {

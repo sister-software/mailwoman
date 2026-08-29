@@ -13,9 +13,8 @@
  *   does not speak. Both stamp non-primary rows only.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	CANDIDATE_COLUMNS,
 	type CandidateDatabase,

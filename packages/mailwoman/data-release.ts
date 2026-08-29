@@ -15,9 +15,8 @@
  *   Example `releases.json`: { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "path-ts"
 
 /**

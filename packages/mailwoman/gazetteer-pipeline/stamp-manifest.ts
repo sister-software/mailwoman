@@ -16,9 +16,6 @@
  *   loudly, which is the correct half. What it would cost is the build, at its very end.
  */
 
-import { execFileSync } from "node:child_process"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createLayerManifestTable,
@@ -26,6 +23,8 @@ import {
 	type LayerManifest,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Open `path`, write `manifest`, and close.

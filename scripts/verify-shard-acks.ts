@@ -51,10 +51,9 @@
  *   scripts/verify-shard-acks.ts --manifest /tmp/MANIFEST.json
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs as parseNodeArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 
 interface ShardEntry {
 	path: string

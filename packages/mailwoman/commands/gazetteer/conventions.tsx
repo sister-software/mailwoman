@@ -22,9 +22,8 @@
  *   final summary lands on stdout.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { readFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.

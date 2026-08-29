@@ -23,8 +23,7 @@
  *   the result the asymmetry claim is graded on.
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeFileSync } from "@mailwoman/platform/fs"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

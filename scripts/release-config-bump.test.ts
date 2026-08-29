@@ -9,11 +9,10 @@
  *   wholesale (measured: the single-line `locales` array expands to eleven lines).
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 import { bumpReleaseConfigVersion } from "./release-config-version.ts"

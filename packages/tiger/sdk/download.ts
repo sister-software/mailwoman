@@ -14,12 +14,11 @@
  *   never holds it: a web stream piped to a write stream.
  */
 
-import { createWriteStream, existsSync } from "node:fs"
-import { rename } from "node:fs/promises"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
-
 import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
+import { createWriteStream, existsSync } from "@mailwoman/platform/fs"
+import { rename } from "@mailwoman/platform/fs/promises"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 
 /**
  * Download `url` to `dest` unless a VALID copy is already there. Returns `true` when the cache was reused, `false` when

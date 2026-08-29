@@ -25,8 +25,8 @@
  *   state: it is the operator-intent signal.
  */
 
-import { type ChildProcess, fork } from "node:child_process"
-import { once } from "node:events"
+import { type ChildProcess, fork } from "@mailwoman/platform/child_process"
+import { once } from "@mailwoman/platform/events"
 
 export interface WorkerToolMeta {
 	name: string

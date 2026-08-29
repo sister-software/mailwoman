@@ -8,8 +8,7 @@
  *   `wof:population` into it at ingest) — then verifies the ranking boost behaves as documented.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"

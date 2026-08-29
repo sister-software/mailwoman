@@ -24,11 +24,10 @@
  *   about (`dependent_locality`) is exactly the one the rule keeps.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * The complete Who's on First placetype vocabulary (35 as of 2026-08-02). {@link PLACETYPE_PROJECTION} must carry a key

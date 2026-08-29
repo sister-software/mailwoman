@@ -8,11 +8,10 @@
  *   a row per query saying "no", which is the shape a genuine absence has.
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-
 import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import { runLookup } from "@mailwoman/dev-mcp/lookup-tool"
+import { mkdtempSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
 import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 

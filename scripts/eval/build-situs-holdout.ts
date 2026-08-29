@@ -12,9 +12,9 @@
  *   Usage: node scripts/eval/build-situs-holdout.ts --shard <situs.db> --region <ABBR> [--n 2500]
  *   [--out /tmp/<region>-situs-holdout.jsonl]
  */
-import { writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const { values: a } = parseArgs({
 	options: {

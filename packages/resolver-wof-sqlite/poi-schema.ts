@@ -12,9 +12,8 @@
  *   manifest (tier `shipped`, spine `h3` res 9) and per-res-6-cell coverage.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { sql, type Kysely } from "kysely"
 
 import type { NameKey } from "./street-normalize.ts"

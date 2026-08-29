@@ -39,14 +39,13 @@
  *   ---------------------------------------------------------------------------
  */
 
-import { spawnSync } from "node:child_process"
-import { createHash } from "node:crypto"
-import { existsSync, readFileSync, statSync, writeFileSync, mkdirSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { createHash } from "@mailwoman/platform/crypto"
+import { existsSync, readFileSync, statSync, writeFileSync, mkdirSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
 	pairIndexStaleReason,

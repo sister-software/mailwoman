@@ -9,9 +9,8 @@
  *   list. An `@mailwoman/annotations` `Annotator`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 /**

@@ -9,12 +9,11 @@
  *   pragmas + `createUnifiedSchema`); this function only enumerates + ingests.
  */
 
-import { readFile } from "node:fs/promises"
-import type { DatabaseSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whosonfirst"
+import { readFile } from "@mailwoman/platform/fs/promises"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import FastGlob from "fast-glob"
 import { parallelMap } from "spliterator"
 

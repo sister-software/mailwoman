@@ -10,10 +10,6 @@
  *   present ONLY in `matchedAddress`, and the address range on `fromAddress`/`toAddress`.
  */
 
-import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { isTransientResourceError } from "@mailwoman/core/api"
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
@@ -26,6 +22,9 @@ import {
 	parseCensusAddressMatch,
 } from "@mailwoman/geocode-oracle/sdk/census-parser"
 import type { CensusAddressComponents, CensusAddressMatch } from "@mailwoman/geocode-oracle/sdk/census-types"
+import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 function addressComponents(overrides: Partial<CensusAddressComponents> = {}): CensusAddressComponents {

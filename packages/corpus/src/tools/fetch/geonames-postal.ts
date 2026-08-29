@@ -48,10 +48,9 @@
  *   Invoke via `mailwoman corpus fetch geonames-postal --countries pt,au,nz`.
  */
 
-import { mkdirSync } from "node:fs"
-import { join } from "node:path"
-
 import { sha256File } from "@mailwoman/core/utils"
+import { mkdirSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, HTTPStatusError, writeManifest } from "./download.ts"

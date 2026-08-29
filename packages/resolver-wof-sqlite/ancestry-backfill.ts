@@ -45,11 +45,10 @@
  *   nothing.
  */
 
-import { readdirSync } from "node:fs"
-import type { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import { readdirSync } from "@mailwoman/platform/fs"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { join } from "path-ts"
 
 import type { WOFDatabase } from "./schema.ts"

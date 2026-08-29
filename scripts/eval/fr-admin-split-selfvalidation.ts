@@ -29,12 +29,11 @@
  *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
 import { allRows, dataRootPath, percentile } from "@mailwoman/core/utils"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import type { ClassificationRecord } from "mailwoman"
@@ -304,7 +303,7 @@ const out = [
 const outPath = values["out"] || ""
 
 if (outPath) {
-	const { writeFileSync } = await import("node:fs")
+	const { writeFileSync } = await import("@mailwoman/platform/fs")
 	writeFileSync(outPath, out)
 
 	console.error(`[fr-split] wrote ${outPath}`)

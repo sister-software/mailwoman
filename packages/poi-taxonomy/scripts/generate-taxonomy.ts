@@ -45,13 +45,12 @@
  *   (asserted by `lookup.test.ts`).
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "../types.ts"
 

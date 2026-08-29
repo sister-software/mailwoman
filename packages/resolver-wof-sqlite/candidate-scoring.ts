@@ -7,8 +7,7 @@
  *   ordered — the weighted-sum score and the exact-match tiering that ranks over it.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { exactMatchIDs, officialNameIDs } from "./exact-match.ts"

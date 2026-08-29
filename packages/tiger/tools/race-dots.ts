@@ -21,11 +21,10 @@
  *   Run: `mailwoman tiger race-dots --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson`
  */
 
-import { createWriteStream } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Attempts to place a dot inside its polygon by rejection sampling before giving up on it.

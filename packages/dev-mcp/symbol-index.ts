@@ -6,7 +6,7 @@
  *   Does this symbol already have a home in the monorepo?
  */
 
-import { execFileSync } from "node:child_process"
+import { execFileSync } from "@mailwoman/platform/child_process"
 
 /**
  * Both patterns anchor to column zero: indentation means a nested scope, and a symbol nobody outside the enclosing

@@ -9,8 +9,6 @@
  *   name (the FTS index cannot show one, so a second route has to).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { openSealedArtifact, type LookupRow } from "@mailwoman/dev-mcp/lookup"
 import {
@@ -21,6 +19,7 @@ import {
 	lookupPostcodeAnchor,
 	lookupWOF,
 } from "@mailwoman/dev-mcp/lookup-sources"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	createCandidateTable,
 	type CandidateDatabase,

@@ -10,11 +10,10 @@
  *   reproduces all four.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildPostcodePrefixIndex } from "mailwoman/gazetteer-pipeline/postcode-prefix"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

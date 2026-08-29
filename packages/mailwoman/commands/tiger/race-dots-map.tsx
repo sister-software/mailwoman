@@ -82,7 +82,7 @@ const TIGERRaceDotsMap: ParsedCommandComponent<Options> = ({ options }) => {
 		)
 
 		if (options.serve) {
-			const { dirname } = await import("node:path")
+			const { dirname } = await import("@mailwoman/platform/path")
 			const dir = dirname(result.outPath)
 			await tools.serveWithRangeSupport({ dir, port: options.port }, report)
 			setServing({ dir, port: options.port })

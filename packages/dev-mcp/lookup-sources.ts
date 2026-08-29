@@ -24,11 +24,10 @@
  *   instead of being the silent cause of a wrong "absent".
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { candidateSystemsForPostcode, us } from "@mailwoman/codex"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { AnchorSpanMode } from "@mailwoman/neural/anchor-inference"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts-query"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 

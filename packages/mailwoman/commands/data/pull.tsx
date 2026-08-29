@@ -35,14 +35,13 @@
  *   fix path is the candidate backend, so the env line has to be impossible to miss.
  */
 
-import { createWriteStream, existsSync, mkdirSync, rmSync } from "node:fs"
-import { basename, dirname } from "node:path"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
-
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { mailwomanDataRoot, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { createWriteStream, existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { basename, dirname } from "@mailwoman/platform/path"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 

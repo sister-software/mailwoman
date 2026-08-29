@@ -35,10 +35,6 @@
  *   every point in it.
  */
 
-import { rmSync, statSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
@@ -51,6 +47,9 @@ import {
 	type CoverageCell,
 } from "@mailwoman/core/layers"
 import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { rmSync, statSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
 import { compactCells, getResolution } from "h3-js"
 

@@ -1,8 +1,3 @@
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
 import {
@@ -12,6 +7,10 @@ import {
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk/address-point-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/osm/sdk/street-locale"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { describe, expect, it } from "vitest"

@@ -1,11 +1,10 @@
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { runCompare } from "@mailwoman/dev-mcp/compare"
 import type { EngineConfig, EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import type { ResolvedInput } from "@mailwoman/dev-mcp/input-sets"
 import type { RoutedMailwomanArm } from "@mailwoman/dev-mcp/routed-mailwoman-arm"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 const RUN_STORE = mkdtempSync(join(tmpdir(), "mwdev-routed-compare-"))

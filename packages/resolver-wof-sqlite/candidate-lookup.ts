@@ -23,9 +23,8 @@
  *   `bbox` field on {@link FindPlaceQuery}).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	expandPlacetypeFilter,
 	partitionByContainment,

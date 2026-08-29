@@ -14,7 +14,7 @@
  *   report to stdout by design).
  */
 
-import { spawn, type ChildProcess } from "node:child_process"
+import { spawn, type ChildProcess } from "@mailwoman/platform/child_process"
 
 export type JobState = "running" | "succeeded" | "failed" | "cancelled"
 

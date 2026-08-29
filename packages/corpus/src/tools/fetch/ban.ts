@@ -18,14 +18,13 @@
  *   Python.
  */
 
-import { existsSync, mkdirSync, statSync } from "node:fs"
-import { readFile, unlink, writeFile } from "node:fs/promises"
-import { join } from "node:path"
-import { setTimeout as sleep } from "node:timers/promises"
-import { gunzipSync } from "node:zlib"
-
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, statSync } from "@mailwoman/platform/fs"
+import { readFile, unlink, writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
+import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
+import { gunzipSync } from "@mailwoman/platform/zlib"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, loadManifestEntries, writeManifest } from "./download.ts"

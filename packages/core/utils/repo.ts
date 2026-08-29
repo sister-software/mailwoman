@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { basename, dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
+import { basename, dirname, resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { createPathBuilderResolver, createPathResolver, type Join, type PathBuilder } from "path-ts"
 
 /**

@@ -43,18 +43,17 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
 // <DATA_ROOT>/wof/candidate.db and the BAN shard from <DATA_ROOT>/ban/address-points-fr.db.
 
-import { readFileSync, realpathSync, writeFileSync } from "node:fs"
-import { createRequire } from "node:module"
-import { basename, dirname, join, resolve } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
-
 import { BANShardProvider } from "@mailwoman/ban/sdk"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { median, mulberry32, percentile } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { readFileSync, realpathSync, writeFileSync } from "@mailwoman/platform/fs"
+import { createRequire } from "@mailwoman/platform/module"
+import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { fileURLToPath } from "@mailwoman/platform/url"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"

@@ -28,11 +28,6 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-verify.ts [--countries us,fr] [--db <path>] [--dir <dir>]`
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
 import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
@@ -42,6 +37,10 @@ import {
 	PairIndexResolver,
 	peekPairIndexHeader,
 } from "@mailwoman/neural/pair-index-resolver"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).

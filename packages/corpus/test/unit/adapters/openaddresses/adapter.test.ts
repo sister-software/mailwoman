@@ -4,15 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { rm, writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import { workspacePath } from "@mailwoman/core/utils"
 import {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,
 	createOpenaddressesAdapter,
 } from "@mailwoman/corpus/adapters/openaddresses/adapter"
+import { rm, writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

@@ -15,12 +15,11 @@
  *   Run: mailwoman eval gauntlet-build regression-db
  */
 
-import { existsSync, mkdirSync, rmSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "./cases/load.ts"
 import { assertCorpusIsNonEmpty, writeCorpusStamp } from "./corpus-stamp.ts"

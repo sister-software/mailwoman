@@ -4,8 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createFilerAttributeTable,
@@ -24,6 +22,7 @@ import {
 	type FilerEdgeTable,
 	type FilerFamilyTable,
 } from "@mailwoman/filer/schema"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {

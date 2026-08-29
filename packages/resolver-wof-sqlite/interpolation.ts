@@ -26,9 +26,8 @@
  *   `AddressPointLookup.find()` to keep that wiring mechanical.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { InterpolationLookup } from "@mailwoman/resolver"
 import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
 

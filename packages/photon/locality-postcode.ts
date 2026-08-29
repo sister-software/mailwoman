@@ -13,10 +13,9 @@
  *   everywhere and the consumer simply doesn't decorate.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * The per-country artifacts, probed in caller-country order with `intl` as the shared fallback.

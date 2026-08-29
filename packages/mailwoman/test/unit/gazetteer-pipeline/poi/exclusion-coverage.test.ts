@@ -8,8 +8,6 @@
  *   pipeline's default path comes back answering false.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
@@ -19,6 +17,7 @@ import {
 	writeLayerCoverage,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { type GeojsonGeometry, type GeojsonPosition, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToBoundary, latLngToCell } from "h3-js"
 import { describe, expect, it } from "vitest"

@@ -8,12 +8,11 @@
  *   `scripts/build-unified-wof.ts` (#1015/#1021) into the pipeline module.
  */
 
-import type { DatabaseSync, StatementSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { simpleSHA3 } from "@mailwoman/core/crypto"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import type { DatabaseSync, StatementSync } from "@mailwoman/platform/sqlite"
 // Type-only, so it is erased at build and adds no runtime edge to what is an optional peer here (the
 // caller reaches the package through a lazy `await import`).
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"

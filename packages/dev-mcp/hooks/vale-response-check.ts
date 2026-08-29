@@ -20,9 +20,8 @@
  *   Register it in `.claude/settings.json` under `hooks.Stop`.
  */
 
-import { readFileSync } from "node:fs"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 import { lintReply, renderVerdict } from "./vale-check-core.ts"

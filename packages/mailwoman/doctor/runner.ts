@@ -13,16 +13,15 @@
  *   geocode` uses, and the POI path from `gazetteer build poi`'s own default.
  */
 
-import { accessSync, constants, existsSync, readFileSync, statSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-
 import { $public, defaultMailwomanPaths } from "@mailwoman/core/env"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
+import { accessSync, constants, existsSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { resolvePath } from "path-ts"
 
 import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFShardPaths } from "../resolver-backend.ts"

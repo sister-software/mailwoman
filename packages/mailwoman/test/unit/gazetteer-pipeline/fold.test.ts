@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { accessSync, constants, mkdirSync, mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { sealDatabase } from "@mailwoman/core/utils"
+import { accessSync, constants, mkdirSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { foldGeonamesIntoAdmin } from "mailwoman/gazetteer-pipeline"
 import { afterAll, beforeAll, expect, test } from "vitest"

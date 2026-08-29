@@ -39,11 +39,10 @@
  *   `candidate-ancestors-schema.ts` owns the encoding decision and the DAG/absence semantics.
  */
 
-import { existsSync, rmSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { existsSync, rmSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { createCandidateFTS } from "./candidate-fts.ts"
 import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "./candidate-importance.ts"

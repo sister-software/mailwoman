@@ -23,10 +23,9 @@
  *   the live demo drives through its httpvfs lookup — same SQL + ranking as the WASM lookup).
  */
 
-import { readFile } from "node:fs/promises"
-
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder/types"
 import { $public } from "@mailwoman/core/env"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"

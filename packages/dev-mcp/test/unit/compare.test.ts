@@ -10,15 +10,14 @@
  *   checked by hand against the two answers the stubs give.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import type { ExternalArm } from "@mailwoman/dev-mcp/arms"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
 import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import { ExternalGeocoderClient } from "@mailwoman/dev-mcp/external-arm"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**

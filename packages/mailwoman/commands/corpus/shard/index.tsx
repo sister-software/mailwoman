@@ -11,9 +11,8 @@
  *   corpus/src/shard-recipes.
  */
 
-import { createWriteStream } from "node:fs"
-
 import type { ShardRecipeOpts } from "@mailwoman/corpus"
+import { createWriteStream } from "@mailwoman/platform/fs"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

@@ -16,15 +16,14 @@
  *   server spends its resident memory, and it spends it on sessions.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { basename } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
 import { readRequiredChannels, resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { basename } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { resolveCandidateDBPath, resolveWOFShardPaths } from "mailwoman/resolver-backend"

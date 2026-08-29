@@ -25,7 +25,7 @@
  *   fallback only needs to recover the name_key, then re-probes the B-tree for its rows).
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Name of the FTS5 trigram virtual table this module owns. The reader gates its fuzzy fallback on it.

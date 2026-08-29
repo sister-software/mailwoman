@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { execFileSync } from "node:child_process"
-import { fileURLToPath } from "node:url"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, it } from "vitest"
 
 const HOOK = fileURLToPath(import.meta.resolve("../../hooks/symbol-precheck.ts"))

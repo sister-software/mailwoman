@@ -19,10 +19,9 @@
  *   `labels` key. Existence and completeness are different questions.
  */
 
-import { existsSync } from "node:fs"
-
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 /**

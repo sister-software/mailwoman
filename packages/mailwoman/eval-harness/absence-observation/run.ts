@@ -24,12 +24,11 @@
  *   read it says so in place rather than omitting the field.
  */
 
-import { readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { readFileSync } from "@mailwoman/platform/fs"
 
 import { type LayerManifest, probeManifest } from "../../data-inventory.ts"
 import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"

@@ -78,8 +78,8 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 
 	const state = useCommandTask(async () => {
 		const { $ } = await import("zx")
-		const { existsSync, readdirSync } = await import("node:fs")
-		const { join } = await import("node:path")
+		const { existsSync, readdirSync } = await import("@mailwoman/platform/fs")
+		const { join } = await import("@mailwoman/platform/path")
 
 		const corpusRoot = options.corpusDir ?? String(dataRootPath("corpus", "versioned"))
 

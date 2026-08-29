@@ -12,12 +12,11 @@
  *   exercised without a run.
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
+import { mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	ABSENCE_PROBE_FREEZE_PATH,
 	type AbsenceProbeFreezeRecord,

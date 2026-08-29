@@ -22,13 +22,12 @@
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
 
-import { existsSync, readdirSync } from "node:fs"
-import { readdir } from "node:fs/promises"
-import { basename, join } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
+import { existsSync, readdirSync } from "@mailwoman/platform/fs"
+import { readdir } from "@mailwoman/platform/fs/promises"
+import { basename, join } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { TextSpliterator } from "spliterator"
 
 import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "./seed-case.ts"

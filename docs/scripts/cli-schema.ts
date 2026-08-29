@@ -2,9 +2,9 @@
  * Read compiled command modules and assemble their native command specifications.
  */
 
-import { readdir, stat } from "node:fs/promises"
-import { join } from "node:path"
-import { pathToFileURL } from "node:url"
+import { readdir, stat } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
+import { pathToFileURL } from "@mailwoman/platform/url"
 
 export interface OptionSpec {
 	type: "boolean" | "string" | "number"

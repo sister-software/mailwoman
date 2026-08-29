@@ -11,12 +11,11 @@
  *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid gate battery.
  */
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { listGateSpecs, resolveGateSpecPath, runPromotionGate } from "mailwoman/eval-harness/promotion-gate"
 import { describe, expect, it } from "vitest"
 

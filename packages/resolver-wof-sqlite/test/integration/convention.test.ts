@@ -12,8 +12,7 @@
  *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
  *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
  */
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	type Convention,
 	mergeConventions,

@@ -34,8 +34,8 @@
  *   design, not by oversight.
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
+import { createReadStream } from "@mailwoman/platform/fs"
+import { createInterface } from "@mailwoman/platform/readline"
 
 import type { Form499Lifecycle } from "./form499-notes.ts"
 import { toFRN, type FRN } from "./frn.ts"

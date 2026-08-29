@@ -9,14 +9,13 @@
  *   determinism under a fixed seed, and the `--country-fraction` append.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { gzipSync } from "node:zlib"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { frLieuditRecipe } from "@mailwoman/corpus/shard-recipes/fr-lieudit"
 import type { ShardRecipeOpts } from "@mailwoman/corpus/shard-recipes/scaffold"
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { gzipSync } from "@mailwoman/platform/zlib"
 import { afterEach, describe, expect, it } from "vitest"
 
 import type { ShardRow } from "#test-kit/shard-recipe"

@@ -14,9 +14,8 @@
  *   Gauntlet harness, so this leg runs wherever the repo does.
  */
 
-import { readdirSync } from "node:fs"
-import { basename } from "node:path"
-
+import { readdirSync } from "@mailwoman/platform/fs"
+import { basename } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
 	CONFORMANCE_SUITE_DIR,

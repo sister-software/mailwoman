@@ -14,11 +14,10 @@
  *   silent gate drift the eval discipline exists to catch.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join, resolve } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { join, resolve } from "@mailwoman/platform/path"
 
 /**
  * One floor and what the run read against it.

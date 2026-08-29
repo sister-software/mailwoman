@@ -34,13 +34,12 @@
  *   block is the year of OUR publication, which is why it is a function and not a string constant.
  */
 
-import { createWriteStream } from "node:fs"
-import { mkdir, writeFile } from "node:fs/promises"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
-
 import { APIClient } from "@mailwoman/core/api"
 import { md5File } from "@mailwoman/core/utils"
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 import { join } from "path-ts"
 
 /**

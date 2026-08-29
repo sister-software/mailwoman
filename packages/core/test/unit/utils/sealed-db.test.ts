@@ -1,13 +1,3 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- */
-import { existsSync, mkdtempSync, statSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { dirname, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	isSealed,
 	openBuiltDatabase,
@@ -15,6 +5,15 @@ import {
 	sealDatabase,
 	swapDatabaseIntoPlace,
 } from "@mailwoman/core/utils/sealed-db"
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+import { existsSync, mkdtempSync, statSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { dirname, join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { describe, expect, it } from "vitest"
 
 function makeDB(): string {

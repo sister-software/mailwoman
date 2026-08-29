@@ -16,12 +16,11 @@
  *      MUST run after them — and both MUST precede the FTS build (`place_search` concatenates `names`).
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import type { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { corePackagePath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 export interface EnrichAdminOptions {
 	/**

@@ -22,10 +22,9 @@
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
 
-import { rmSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { rmSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { CSVSpliterator } from "spliterator"
 
 /**

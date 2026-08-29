@@ -1,3 +1,5 @@
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -15,11 +17,8 @@
  *   This asserts EVERY workspace in the `.release-it.json` publish set carries the canonical
  *   `repository` block, so a drift fails at PR/CI time instead of mid-release.
  */
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const repoRoot = repoRootPath()

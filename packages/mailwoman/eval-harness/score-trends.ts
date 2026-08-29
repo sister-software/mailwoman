@@ -17,10 +17,9 @@
  *   diff noise across a table spanning every release.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { pyRound, repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Tags in report order. Anything the ledger carries that is absent here still appears, sorted, after the listed ones —

@@ -13,10 +13,9 @@
  *   variants.
  */
 
-import { parseArgs } from "node:util"
-
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { expandAbbreviations, normalize } from "@mailwoman/normalize"
+import { parseArgs } from "@mailwoman/platform/util"
 import { corsBannerLine, loadClassifierOrExit, parseOpenAPIFlags, runDropInCLI } from "mailwoman/cli-kit/dropin"
 
 import { createLibpostalApp, LIBPOSTAL_DOC_INFO, type LibpostalEngine, treeToParseMatches } from "./index.ts"

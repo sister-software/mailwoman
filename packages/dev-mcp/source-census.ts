@@ -25,11 +25,10 @@
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
-import { existsSync, readdirSync, statSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { existsSync, readdirSync, statSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * What a shard can be joined THROUGH, which decides what a corpus builder can extract from it.

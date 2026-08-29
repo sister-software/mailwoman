@@ -15,10 +15,9 @@
  *   Plain-node tool-script (no env banner, no zx). Run: node scripts/verify-export-quant-versions.ts
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync, readFileSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 
 const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
 const TRAIN_REMOTE = "corpus-python/modal/train_remote.py"

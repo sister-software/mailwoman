@@ -31,11 +31,10 @@
  *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
-import { createReadStream, existsSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
+import { createReadStream, existsSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

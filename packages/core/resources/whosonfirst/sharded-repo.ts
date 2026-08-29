@@ -11,8 +11,7 @@
  *   parsed record has.
  */
 
-import { existsSync, readFileSync, statSync } from "node:fs"
-
+import { existsSync, readFileSync, statSync } from "@mailwoman/platform/fs"
 import { resolvePath } from "path-ts"
 
 import { tryParsingJSON } from "#objects"

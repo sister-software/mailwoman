@@ -11,9 +11,8 @@
  *   artifact afterwards.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { assertDatabaseIntegrity } from "@mailwoman/core/utils"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { OVERTURE_ID_BASE } from "./fold-overture.ts"
 

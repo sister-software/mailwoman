@@ -29,10 +29,17 @@
  *   and continue.
  */
 
-import { createHash } from "node:crypto"
-import { closeSync, existsSync, openSync, readFileSync, readSync, statSync, writeFileSync } from "node:fs"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { createHash } from "@mailwoman/platform/crypto"
+import {
+	closeSync,
+	existsSync,
+	openSync,
+	readFileSync,
+	readSync,
+	statSync,
+	writeFileSync,
+} from "@mailwoman/platform/fs"
 
 import { FST_FORMAT_VERSION } from "./fst-serialize.ts"
 import type { FSTProvenance } from "./fst-types.ts"

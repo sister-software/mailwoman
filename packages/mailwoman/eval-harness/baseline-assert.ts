@@ -48,10 +48,9 @@
  *   a deviation quiet. That's the silent-gate-drift failure wearing a different hat.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 /**
  * A registered baseline row, as stored in `baselines.json`.

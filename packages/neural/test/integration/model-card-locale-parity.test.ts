@@ -15,10 +15,9 @@
  *   the shared subset and drop the `cp` in publish.yml.
  */
 
-import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, test } from "vitest"
 
 /**

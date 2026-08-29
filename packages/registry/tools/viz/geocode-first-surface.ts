@@ -7,9 +7,8 @@
  *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained HTML.
  */
 
-import { writeFileSync } from "node:fs"
-
 import { tempRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Options for {@linkcode geocodeFirstSurface}.

@@ -11,8 +11,7 @@
  *   deleted an entry would take the reason with it, and the resulting diff would look clean.
  */
 
-import { readFileSync } from "node:fs"
-
+import { readFileSync } from "@mailwoman/platform/fs"
 import { addCountry, removeCountry } from "mailwoman/gazetteer-pipeline/recipe-edit"
 import { describe, expect, it } from "vitest"
 

@@ -8,10 +8,9 @@
  *   handles). Uses a fake lookup factory + on-disk touch files — no WOF / weights needed.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { readReleaseManifest, resolveShardPath } from "mailwoman/data-release"
 import { ShardProvider } from "mailwoman/geocode-core"
 import { afterAll, describe, expect, test } from "vitest"

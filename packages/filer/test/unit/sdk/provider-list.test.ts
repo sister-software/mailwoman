@@ -8,9 +8,8 @@
  *   sharing a `provider_id` into one, no matter how tempting a `Map` keyed by `provider_id` looks.
  */
 
-import { join } from "node:path"
-
 import { parseProviderList, type ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const FIXTURES_DIR = join(import.meta.dirname, "../../../test-fixtures")

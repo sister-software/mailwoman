@@ -25,12 +25,11 @@
  *       smoke output, not predicted; the docstrings name the strings that produced them.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { LocaleBaseTuple } from "#synthesizers/german"
 import {

@@ -19,8 +19,7 @@
  *   the RECORDING itself is the operator's.
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeFileSync } from "@mailwoman/platform/fs"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

@@ -17,11 +17,10 @@
  * instead is what makes it fast and what makes it wrong — see `CensusPOIReader`.
  */
 
-import { writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 
 import {

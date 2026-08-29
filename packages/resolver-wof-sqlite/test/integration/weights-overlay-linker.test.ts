@@ -8,11 +8,10 @@
  *   or malformed one recomputes and rewrites, and the rewrite self-heals the cache.
  */
 
-import { mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { md5File } from "@mailwoman/core/utils"
+import { mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { md5FileWithSidecar } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 import { afterEach, describe, expect, it } from "vitest"
 

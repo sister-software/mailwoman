@@ -4494,6 +4494,8 @@ __metadata:
 "@mailwoman/activity-lexicon@workspace:*, @mailwoman/activity-lexicon@workspace:packages/activity-lexicon":
   version: 0.0.0-use.local
   resolution: "@mailwoman/activity-lexicon@workspace:packages/activity-lexicon"
+  dependencies:
+    "@mailwoman/platform": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -4527,6 +4529,7 @@ __metadata:
   dependencies:
     "@hono/node-server": "npm:^2.0.12"
     "@hono/zod-openapi": "npm:^1.5.1"
+    "@mailwoman/platform": "workspace:*"
     hono: "npm:^4.13.0"
     zod: "npm:^4.4.3"
   languageName: unknown
@@ -4550,6 +4553,7 @@ __metadata:
   resolution: "@mailwoman/ban@workspace:packages/ban"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     path-ts: "npm:^2.1.0"
@@ -4563,6 +4567,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/filer": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     h3-js: "npm:^4.5.0"
@@ -4592,6 +4597,7 @@ __metadata:
   resolution: "@mailwoman/coastal@workspace:packages/coastal"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
@@ -4605,6 +4611,7 @@ __metadata:
   dependencies:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
@@ -4615,6 +4622,7 @@ __metadata:
   dependencies:
     "@duckdb/node-api": "npm:1.5.3-r.3"
     "@mailwoman/codex": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@types/d3-color": "npm:^3.1.3"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
@@ -4651,6 +4659,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@types/node": "npm:>=26.1.2"
     adm-zip: "npm:^0.6.0"
     fast-glob: "npm:^3.3.3"
@@ -4671,6 +4680,7 @@ __metadata:
     "@mailwoman/geocode-oracle": "workspace:*"
     "@mailwoman/libpostal": "workspace:*"
     "@mailwoman/neural": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
@@ -4702,6 +4712,7 @@ __metadata:
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/react": "workspace:^"
     "@mailwoman/resolver": "workspace:*"
@@ -4766,6 +4777,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/match": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/record": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     kysely: "npm:^0.29.4"
@@ -4781,6 +4793,7 @@ __metadata:
   resolution: "@mailwoman/flood@workspace:packages/flood"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
@@ -4807,6 +4820,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/record": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
@@ -4819,6 +4833,7 @@ __metadata:
   resolution: "@mailwoman/geographic-model@workspace:packages/geographic-model"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     type-fest: "npm:^5.8.0"
   languageName: unknown
@@ -4843,6 +4858,7 @@ __metadata:
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     hono: "npm:^4.13.0"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
@@ -4863,6 +4879,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/map-tui@workspace:packages/map-tui"
   dependencies:
+    "@mailwoman/platform": "workspace:*"
     "@mapbox/vector-tile": "npm:^2.0.3"
     "@sister.software/asciify": "npm:^4.1.0"
     htmlparser2: "npm:^10"
@@ -4892,6 +4909,7 @@ __metadata:
     "@mailwoman/filer": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
@@ -4921,6 +4939,7 @@ __metadata:
   resolution: "@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4940,6 +4959,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4950,6 +4970,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4969,6 +4990,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4978,6 +5000,7 @@ __metadata:
   resolution: "@mailwoman/neural-weights-en-us@workspace:packages/neural-weights-en-us"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4997,6 +5020,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -5017,6 +5041,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/locale-gate": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/sentencepiece-wasm": "workspace:*"
     esbuild: "npm:0.28.1"
@@ -5047,6 +5072,7 @@ __metadata:
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/nuts-lookup": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
@@ -5072,6 +5098,7 @@ __metadata:
   resolution: "@mailwoman/nuts-lookup@workspace:packages/nuts-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
   bin:
     nuts-lookup: ./out/cli.js
@@ -5083,6 +5110,7 @@ __metadata:
   resolution: "@mailwoman/osm@workspace:packages/osm"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     h3-js: "npm:^4.5.0"
@@ -5104,6 +5132,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     hono: "npm:^4.13.0"
@@ -5124,11 +5153,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/platform@workspace:*, @mailwoman/platform@workspace:packages/platform":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/platform@workspace:packages/platform"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/poi-taxonomy@workspace:*, @mailwoman/poi-taxonomy@workspace:packages/poi-taxonomy":
   version: 0.0.0-use.local
   resolution: "@mailwoman/poi-taxonomy@workspace:packages/poi-taxonomy"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -5192,6 +5228,7 @@ __metadata:
     "@mailwoman/address-id": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/match": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/record": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@protomaps/basemaps": "npm:^5.7.2"
@@ -5210,6 +5247,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/match": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     h3-js: "npm:^4.5.0"
@@ -5226,6 +5264,7 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@sqlite.org/sqlite-wasm": "npm:^3.53.0-build1"
@@ -5238,6 +5277,7 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -5245,6 +5285,8 @@ __metadata:
 "@mailwoman/sentencepiece-wasm@workspace:*, @mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm"
+  dependencies:
+    "@mailwoman/platform": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -5253,6 +5295,7 @@ __metadata:
   resolution: "@mailwoman/soil@workspace:packages/soil"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
@@ -5267,6 +5310,7 @@ __metadata:
     "@googlemaps/google-maps-services-js": "npm:^3.4.2"
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@types/google.maps": "npm:^3.65.3"
     geo-coordinates-parser: "npm:^1.7.4"
     h3-js: "npm:^4.5.0"
@@ -5285,6 +5329,7 @@ __metadata:
   resolution: "@mailwoman/tiger@workspace:packages/tiger"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@protomaps/basemaps": "npm:^5.7.2"
     "@turf/boolean-contains": "npm:^7.3.5"
@@ -5311,6 +5356,7 @@ __metadata:
   resolution: "@mailwoman/timezone-lookup@workspace:packages/timezone-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
   bin:
     timezone-lookup: ./out/cli.js
   languageName: unknown
@@ -5321,6 +5367,7 @@ __metadata:
   resolution: "@mailwoman/un-locode-lookup@workspace:packages/un-locode-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     spliterator: "npm:^6.2.0"
   bin:
@@ -5333,6 +5380,7 @@ __metadata:
   resolution: "@mailwoman/universe@workspace:."
   dependencies:
     "@duckdb/node-api": "npm:^1.5.3-r.3"
+    "@mailwoman/platform": "workspace:*"
     "@release-it-plugins/workspaces": "npm:^6.0.0"
     "@sister.software/oxfmt-config": "npm:^13.0.0"
     "@sister.software/oxlint-config": "npm:^13.0.0"
@@ -5363,6 +5411,8 @@ __metadata:
 "@mailwoman/variant-aliases@workspace:*, @mailwoman/variant-aliases@workspace:packages/variant-aliases":
   version: 0.0.0-use.local
   resolution: "@mailwoman/variant-aliases@workspace:packages/variant-aliases"
+  dependencies:
+    "@mailwoman/platform": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -5371,6 +5421,7 @@ __metadata:
   resolution: "@mailwoman/zoning@workspace:packages/zoning"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
@@ -17075,6 +17126,7 @@ __metadata:
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/osm": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"

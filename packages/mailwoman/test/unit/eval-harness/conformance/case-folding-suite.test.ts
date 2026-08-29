@@ -16,9 +16,8 @@
  *   stated over a row the pipeline already fails says nothing about casing.
  */
 
-import { existsSync } from "node:fs"
-import { join } from "node:path"
-
+import { existsSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import {
 	auditCaseFoldingSuite,
 	CASE_FOLDING_LAW,

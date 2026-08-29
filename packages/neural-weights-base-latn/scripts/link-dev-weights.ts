@@ -1,14 +1,13 @@
 #!/usr/bin/env node
+import { $public } from "@mailwoman/core/env"
+import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 /**
  * Link dev artifacts into the base-latn workspace (FST-distribution arc precedent — same pattern as the locale weights
  * packages, but ships only the shared model + tokenizer + calibration + lexicons; locale-specific data stays in each
  * overlay).
  */
-import { existsSync, mkdirSync } from "node:fs"
-import { resolve } from "node:path"
-
-import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**

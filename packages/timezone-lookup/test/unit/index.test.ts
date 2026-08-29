@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	makeTimezoneAnnotator,
 	offsetSecForTimezone,

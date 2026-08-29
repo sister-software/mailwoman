@@ -78,12 +78,11 @@
  *   point of preferring a rule that needs no exception list.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { GB_BORDER_STRADDLING_AREAS, countryOfPostcodeArea, type UkCountryCode } from "@mailwoman/codex/gb"
 import { isZipCode } from "@mailwoman/codex/us"
 import { percentile } from "@mailwoman/core/utils"
 import type { PostcodePrefixAncestor, PostcodePrefixNode } from "@mailwoman/neural/postcode-prefix-index"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { AdminLocator } from "./admin-locator.ts"

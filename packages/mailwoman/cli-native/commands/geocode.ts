@@ -374,7 +374,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 		throw new CLIUsageError("--stdin emits one record per line; use --json or --jsonld, not --text.")
 	}
 
-	const { createInterface } = await import("node:readline")
+	const { createInterface } = await import("@mailwoman/platform/readline")
 	const session = await openSession(options)
 	let index = 0
 

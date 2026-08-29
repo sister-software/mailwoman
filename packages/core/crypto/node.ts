@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { createHash } from "node:crypto"
+import { createHash } from "@mailwoman/platform/crypto"
 
 import { isPresent } from "../objects.ts"
 

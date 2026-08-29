@@ -40,10 +40,9 @@
  *   two-path check rather than the archive agreeing with itself. See `sdk/client.ts`.
  */
 
-import { execFile, spawn } from "node:child_process"
-import { promisify } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { execFile, spawn } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { assertRingsInsideExtent } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/sdk/well-known-text"

@@ -37,12 +37,6 @@
  *     agreement test; the "100-1000" bucket is otherwise never exercised by the gates.
  */
 
-import { chmodSync, existsSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { BDC_H3_RESOLUTION, type BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase } from "@mailwoman/bdc/sdk/build-bdc"
 import {
@@ -58,6 +52,11 @@ import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { openBuiltDatabase } from "@mailwoman/core/utils"
+import { chmodSync, existsSync } from "@mailwoman/platform/fs"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"

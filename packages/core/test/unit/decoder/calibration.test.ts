@@ -4,13 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readFileSync } from "node:fs"
-
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import { createCalibrator, type CalibrationTable } from "@mailwoman/core/decoder/calibration"
 import type { AddressNode, DecoderToken } from "@mailwoman/core/decoder/types"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { BIOLabel } from "@mailwoman/core/types/component"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 import { repoRootPath } from "#utils"

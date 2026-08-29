@@ -1,3 +1,5 @@
+import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -21,13 +23,10 @@
  *
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
-import { execFileSync, spawn } from "node:child_process"
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
-
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { execFileSync, spawn } from "@mailwoman/platform/child_process"
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join, resolve } from "@mailwoman/platform/path"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
 

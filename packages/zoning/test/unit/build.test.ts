@@ -22,12 +22,11 @@
  *      tier, which the builder refuses to raise while the licence is unresolved.
  */
 
-import { mkdtempSync, rmSync, statSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { CoverageBasis, LayerTier, supportsExclusion } from "@mailwoman/core/layers"
+import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { ZoningContainmentPath, ZoningLookup, ZoningReadingKind } from "@mailwoman/zoning"
 import {
 	assertCrosswalkIsNotATable,

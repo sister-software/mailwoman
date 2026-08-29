@@ -36,12 +36,11 @@
  *   ```
  */
 
-import { existsSync, mkdirSync, statSync } from "node:fs"
-import { writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { sha256File } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, statSync } from "@mailwoman/platform/fs"
+import { writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"

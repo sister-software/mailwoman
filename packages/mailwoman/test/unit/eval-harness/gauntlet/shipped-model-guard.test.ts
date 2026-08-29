@@ -22,9 +22,8 @@
  *   quietly stopped happening.
  */
 
-import { readFileSync } from "node:fs"
-
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, it } from "vitest"
 
 const HARNESS = String(repoRootPath("packages", "mailwoman", "eval-harness", "gauntlet", "harness.ts"))

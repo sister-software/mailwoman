@@ -44,11 +44,10 @@
  *   not build-time savings.
  */
 
-import { spawnSync } from "node:child_process"
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
 	pairIndexStaleReason,

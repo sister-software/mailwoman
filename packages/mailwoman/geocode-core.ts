@@ -22,8 +22,6 @@
  *   how.
  */
 
-import { existsSync } from "node:fs"
-
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core"
@@ -46,6 +44,7 @@ import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwom
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
+import { existsSync } from "@mailwoman/platform/fs"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import {
 	adminLadderForNodes,

@@ -4,8 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	COVERAGE_INSERT_BATCH,
@@ -23,6 +21,7 @@ import {
 	createLayerManifestTable,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers/schema"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 

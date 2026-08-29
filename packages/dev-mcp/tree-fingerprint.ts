@@ -16,10 +16,10 @@
  *   imports, plus `HEAD` and the dirty set, and a change makes the engine UNREACHABLE rather than wrong.
  */
 
-import { execFileSync } from "node:child_process"
-import { createHash } from "node:crypto"
-import { readdirSync, statSync } from "node:fs"
-import { join } from "node:path"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { createHash } from "@mailwoman/platform/crypto"
+import { readdirSync, statSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 /**
  * Workspaces whose source an engine's module graph reaches. Editing anything here can change a parse or a resolve, so

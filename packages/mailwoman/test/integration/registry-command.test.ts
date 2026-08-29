@@ -8,10 +8,9 @@
  *   resolution — the one bit of command-specific logic that doesn't touch the heavy runtime.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { DEFAULT_MAPPING, loadMapping, loadSources } from "mailwoman/commands/registry/run"
 import { afterAll, describe, expect, test } from "vitest"
 

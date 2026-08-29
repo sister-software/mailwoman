@@ -68,14 +68,13 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-import { basename, dirname, join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { readFile } from "@mailwoman/platform/fs/promises"
+import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { deOrderEval } from "./de-order-eval.ts"
 import { demoCascadeSmoke } from "./demo-cascade-smoke.ts"

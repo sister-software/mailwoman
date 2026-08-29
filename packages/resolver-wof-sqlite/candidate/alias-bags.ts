@@ -5,7 +5,7 @@
  * @file Pass 2 of the candidate build — explode `place_search.alt_names` into distinct alias rows.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { ALIAS_SEPARATOR } from "../fts.ts"
 import { normalizeLocalityForKey } from "../street-normalize.ts"

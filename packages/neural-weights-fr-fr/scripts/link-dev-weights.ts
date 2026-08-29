@@ -28,11 +28,10 @@
  *       this caused.
  */
 
-import { spawnSync } from "node:child_process"
-import { existsSync, mkdirSync, statSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { existsSync, mkdirSync, statSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
 	pairIndexStaleReason,

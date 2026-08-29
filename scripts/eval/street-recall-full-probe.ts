@@ -20,9 +20,8 @@
  *   --model-card neural-weights-en-us/model-card.json --n 2660
  */
 
-import { parseArgs } from "node:util"
-
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 const { values: args } = parseArgs({

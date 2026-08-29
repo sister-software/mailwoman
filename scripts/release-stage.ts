@@ -18,10 +18,9 @@
  *   sibling version exactly as the publish path does.
  */
 
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "node:fs"
-import { join, resolve } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "@mailwoman/platform/fs"
+import { join, resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"

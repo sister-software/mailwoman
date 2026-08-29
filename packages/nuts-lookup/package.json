@@ -44,6 +44,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/annotations": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/spatial": "workspace:*"
 	}
 }

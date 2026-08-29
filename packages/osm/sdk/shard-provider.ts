@@ -12,8 +12,7 @@
  *   distribution boundary and the lawyer sign-off gate before shipping any of them.
  */
 
-import { existsSync } from "node:fs"
-
+import { existsSync } from "@mailwoman/platform/fs"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { join } from "path-ts"
 

@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import * as fs from "node:fs/promises"
-
+import * as fs from "@mailwoman/platform/fs/promises"
 import FastGlob from "fast-glob"
 import type { PathBuilder } from "path-ts"
 import { parallelMap } from "spliterator"

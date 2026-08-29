@@ -14,10 +14,9 @@
  *   Usage: mailwoman dev generate country-reference
  */
 
-import { writeFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
 

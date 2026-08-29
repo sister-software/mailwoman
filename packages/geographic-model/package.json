@@ -81,6 +81,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"type-fest": "^5.8.0"
 	},

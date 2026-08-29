@@ -49,8 +49,6 @@
  *   `schema.ts`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	assertCoverageLicensesNoExclusion,
 	CoverageBasis,
@@ -60,6 +58,7 @@ import {
 	type CoverageRow,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { recoverShortCellResolution, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 

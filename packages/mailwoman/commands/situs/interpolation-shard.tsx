@@ -24,12 +24,11 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
-import { globSync, mkdirSync, rmSync } from "node:fs"
-import { basename, dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath, repoRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { globSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { basename, dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { Box, Text } from "ink"
 

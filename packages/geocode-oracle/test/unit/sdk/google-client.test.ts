@@ -15,13 +15,12 @@
  *   the API key, which must not reach a log, a cache key or a filename.
  */
 
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // `$private` is a LIVE getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the repo's

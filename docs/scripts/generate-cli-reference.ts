@@ -29,9 +29,9 @@
  *   Table cells are padded the way `oxfmt` pads them, so the emitted file is already formatted.
  */
 
-import { readFile, writeFile } from "node:fs/promises"
-import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
+import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
+import { dirname, join } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"
 

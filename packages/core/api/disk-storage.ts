@@ -23,10 +23,9 @@
  *        bytes interleaved into a corrupt-but-parseable entry.
  */
 
-import { randomUUID } from "node:crypto"
-import { mkdir, readFile, rename, rm, unlink, writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
+import { randomUUID } from "@mailwoman/platform/crypto"
+import { mkdir, readFile, rename, rm, unlink, writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
 
 import { ConsoleLogger, type IRuntimeLogger } from "../logging/index.ts"

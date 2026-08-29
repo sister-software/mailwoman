@@ -21,12 +21,11 @@
  *   [--anchor-lookup $MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json]
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.

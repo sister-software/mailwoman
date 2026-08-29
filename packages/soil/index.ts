@@ -39,8 +39,6 @@
  *   shape. The DDL that created these tables IS Kysely — see `schema.ts`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	singleManifestRow,
 	toCoverageCell,
@@ -50,6 +48,7 @@ import {
 	type LayerManifest,
 } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 

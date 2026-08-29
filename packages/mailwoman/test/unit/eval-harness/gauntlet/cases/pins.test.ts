@@ -7,10 +7,9 @@
  *   and a reshaped test file refuses instead of being partially rewritten.
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import {
 	checkBoardPins,
 	PIN_TEST_PATH,

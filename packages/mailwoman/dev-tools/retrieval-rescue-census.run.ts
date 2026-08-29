@@ -6,10 +6,9 @@
  * classified against the row's coordinate truth by `retrieval-rescue-census.ts`.
  */
 
-import { writeFile } from "node:fs/promises"
-import { parseArgs } from "node:util"
-
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { writeFile } from "@mailwoman/platform/fs/promises"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
 import { buildGauntletDeps } from "../eval-harness/gauntlet/harness.ts"

@@ -19,12 +19,6 @@
  *   apart?), not clustering internals, which `cluster-filers.test.ts` already gates.
  */
 
-import { chmodSync, existsSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createFilerAttributeTable,
@@ -57,6 +51,11 @@ import {
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
+import { chmodSync, existsSync } from "@mailwoman/platform/fs"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { Insertable } from "kysely"
 import { describe, expect, it } from "vitest"
 

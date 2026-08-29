@@ -19,7 +19,7 @@
  *   land in the right country — border towns are the hard class by construction.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { DEFAULT_VERIFY_BASELINE } from "./verify-baseline.ts"
 

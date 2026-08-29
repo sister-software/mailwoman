@@ -31,9 +31,8 @@
  *   should read it; new code reads the split columns.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { Kysely } from "kysely"
 
 import { allRows } from "./sqlite-utils.ts"

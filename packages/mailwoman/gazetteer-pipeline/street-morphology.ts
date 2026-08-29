@@ -27,10 +27,9 @@
  *   in-place), then seal read-only.
  */
 
-import { chmodSync, mkdirSync, renameSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
+import { chmodSync, mkdirSync, renameSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, resolve } from "@mailwoman/platform/path"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
 import { STREET_MORPHOLOGY_ARTIFACT_FILENAME } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"

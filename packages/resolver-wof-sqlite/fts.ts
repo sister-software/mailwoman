@@ -14,7 +14,7 @@
  *   bag.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 /**
  * Name of the FTS5 virtual table this module owns. Centralized so `WOFSQLitePlaceLookup` and the CLI can't drift apart.

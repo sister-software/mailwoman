@@ -151,8 +151,8 @@ export class CoarsePlacer {
 	 * doesn't pull them in.
 	 */
 	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
-		const { readFile } = await import("node:fs/promises")
-		const { join } = await import("node:path")
+		const { readFile } = await import("@mailwoman/platform/fs/promises")
+		const { join } = await import("@mailwoman/platform/path")
 		const meta = parseJSONStrict<CoarsePlacerMeta>(await readFile(join(dir, "meta.json"), "utf8"))
 		const buf = await readFile(join(dir, "weights.bin"))
 		// Copy out of the (possibly pooled, possibly mis-aligned) Buffer into a fresh ArrayBuffer so the

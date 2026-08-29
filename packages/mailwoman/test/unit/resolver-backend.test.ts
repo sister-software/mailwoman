@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { join, resolve } from "node:path"
-
 import { defaultMailwomanPaths } from "@mailwoman/core/env"
+import { join, resolve } from "@mailwoman/platform/path"
 import type { CapitalTable } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import {
 	conventionCandidateDBPath,
@@ -93,9 +92,9 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 })
 
 test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {
-	const { mkdtempSync, writeFileSync } = await import("node:fs")
-	const { tmpdir } = await import("node:os")
-	const { DatabaseSync } = await import("node:sqlite")
+	const { mkdtempSync, writeFileSync } = await import("@mailwoman/platform/fs")
+	const { tmpdir } = await import("@mailwoman/platform/os")
+	const { DatabaseSync } = await import("@mailwoman/platform/sqlite")
 	const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
 	const { createCapitalTable } = await import("@mailwoman/resolver-wof-sqlite/capital-schema")
 	const { loadCapitalIndex } = await import("mailwoman/resolver-backend")

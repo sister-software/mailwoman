@@ -34,11 +34,10 @@
  *   50]
  */
 
-import { readdirSync } from "node:fs"
-import { join } from "node:path"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { readdirSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 /**
  * A column-projected base/shard row: parallel token + label lists plus the row's country.

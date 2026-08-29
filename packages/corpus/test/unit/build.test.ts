@@ -13,16 +13,15 @@
  *   fixture shape.
  */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/utils"
 import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
 import { buildCorpus, type BuildStage } from "@mailwoman/corpus/build"
 import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"
 import type { ParquetRow } from "@mailwoman/corpus/utils/parquet"
+import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 

@@ -36,11 +36,10 @@
  *   behavior.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { assertDatabaseIntegrity, pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator, TextSpliterator } from "spliterator"
 

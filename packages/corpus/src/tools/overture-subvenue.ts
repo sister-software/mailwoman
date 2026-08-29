@@ -38,9 +38,8 @@
  *   function and the source-neutral {@link SubVenueHarvestRow} name.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import type { SubVenueHarvestRow } from "./sub-venue-lexicon.ts"
 

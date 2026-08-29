@@ -16,8 +16,8 @@
  *   Run: `mailwoman placer quantize [--in <fp32 dir>] [--out <int8 dir>]`
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
+import { mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
 
 import { parseJSONStrict } from "#objects"
 import { dataRootPath } from "#utils"

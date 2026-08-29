@@ -50,11 +50,6 @@
  *      the house rule exists for.
  */
 
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "node:fs"
-import { open } from "node:fs/promises"
-import { basename, dirname, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
@@ -73,6 +68,10 @@ import type { FilerDatabase } from "@mailwoman/filer"
 //. Only the TYPES are imported here; `import type` is fully erased, so
 // this line has zero runtime cost for every `@mailwoman/bdc` consumer that never populates providers.
 import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
+import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "@mailwoman/platform/fs"
+import { open } from "@mailwoman/platform/fs/promises"
+import { basename, dirname, join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"

@@ -25,15 +25,14 @@
  *     node ban/out/scripts/build-street-centroid-shard.js --country fr --out /tmp/sc-fr.db
  */
 
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import { foldStreetSurface } from "@mailwoman/resolver"
 import {
 	createStreetCentroidIndexes,

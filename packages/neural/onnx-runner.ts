@@ -13,8 +13,7 @@
  *   cheap and synchronous.
  */
 
-import { promises as fs } from "node:fs"
-
+import { promises as fs } from "@mailwoman/platform/fs"
 import ort from "onnxruntime-node"
 
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"

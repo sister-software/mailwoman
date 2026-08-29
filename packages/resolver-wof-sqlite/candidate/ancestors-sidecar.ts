@@ -5,9 +5,8 @@
  * @file Pass 3b of the candidate build — the containment sidecar (closure rows + interval labels).
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import type { DatabaseClient } from "@mailwoman/core/kysley/client"
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { placetypeDepth } from "../ancestry.ts"
 import {

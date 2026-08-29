@@ -1,6 +1,3 @@
-import { existsSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -21,6 +18,8 @@ import { parseArgs } from "node:util"
  */
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"

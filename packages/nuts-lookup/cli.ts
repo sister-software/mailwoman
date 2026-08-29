@@ -14,7 +14,7 @@
  *   The `--` separates flags from coordinates so negative coordinates parse as positionals.
  */
 
-import { parseArgs } from "node:util"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { buildNUTSDB } from "./build.ts"
 import { NUTSLookup } from "./index.ts"

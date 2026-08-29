@@ -15,11 +15,10 @@
  *   is the answer, and a rung that shipped without it would trade a loud failure for a quiet one.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { resolveWeights, WeightsOrigin } from "@mailwoman/neural/weights"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, describe, expect, it } from "vitest"
 
 const roots: string[] = []

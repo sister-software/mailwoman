@@ -21,9 +21,8 @@
  *   `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 
 import type { FSTMatcher } from "./fst-matcher.ts"
 import { deserializeFST, readFSTProvenance } from "./fst-serialize.ts"

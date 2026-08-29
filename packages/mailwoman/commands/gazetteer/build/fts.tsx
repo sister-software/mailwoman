@@ -9,9 +9,8 @@
  *   `mailwoman-wof-build-fts` bin.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { Text } from "ink"
 
 import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

@@ -50,14 +50,13 @@
  *   promote, never in git).
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { wordNorm } from "@mailwoman/codex"
 import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@mailwoman/codex/de"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { dataRootPath, repoRootPathBuilder, resourceDictionaryPath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { TextSpliterator } from "spliterator"
 

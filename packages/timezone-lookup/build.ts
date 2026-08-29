@@ -9,8 +9,8 @@
  *   prefilter), and the geometry normalized to MultiPolygon coordinates as JSON.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import type { MultiPolygonCoords } from "./index.ts"
 

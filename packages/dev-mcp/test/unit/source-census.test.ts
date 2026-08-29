@@ -10,12 +10,11 @@
  *   never an exception that takes the whole census down with it.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { censusArtifact, gazetteerArtifacts } from "@mailwoman/dev-mcp/source-census"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let root: string

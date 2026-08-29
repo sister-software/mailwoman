@@ -15,9 +15,8 @@
  *      broken prior. The bare-locality rows must exist and must carry no street-side label.
  */
 
-import { writeFileSync } from "node:fs"
-
 import { frFragmentRecipe, frTitleCase } from "@mailwoman/corpus/shard-recipes/fr-fragment"
+import { writeFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, it } from "vitest"
 
 import { scratch, shardRunner, type ShardRow } from "#test-kit/shard-recipe"

@@ -19,12 +19,11 @@
  *   asymmetry by stating `UNZ - Unzoned` as a POSITIVE value where it means it.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { QueryKind } from "@mailwoman/core/pipeline"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import type { Resolver } from "@mailwoman/resolver"
 import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
 import { fixtureFeatures, fixtureSource, FIXTURE_ORIGIN, FIXTURE_PLANS, FIXTURE_SIDE } from "@mailwoman/zoning/test-kit"

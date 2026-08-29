@@ -15,10 +15,9 @@
  *   Run: mailwoman eval gauntlet --layer regression [--candidate <candidate.onnx>]
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import { checkCase } from "./check-case.ts"
 import { assertCorpusStampFresh } from "./corpus-stamp.ts"

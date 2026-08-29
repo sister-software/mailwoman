@@ -27,10 +27,9 @@
  *   country that was simply never measured (absent row).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resolver"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 // resolver-wof-sqlite is an optional peer of mailwoman (the geocode.tsx convention) — runtime
 // imports are DYNAMIC inside the functions; type-only imports are erased and safe at module level.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite"

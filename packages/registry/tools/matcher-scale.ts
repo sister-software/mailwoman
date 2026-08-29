@@ -16,9 +16,8 @@
  *   [--em] [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { makeLcg } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import { resolveEntities, type SourceRecord } from "#index"
 

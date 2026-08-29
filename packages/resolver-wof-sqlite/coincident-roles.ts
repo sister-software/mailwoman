@@ -38,8 +38,7 @@
  *   be wired as a post-step of the main `scripts/build-unified-wof.ts`.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
+import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 

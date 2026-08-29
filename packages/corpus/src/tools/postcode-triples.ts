@@ -41,11 +41,10 @@
  *   recipe's header for the measurement.
  */
 
-import { existsSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { TSVSpliterator } from "spliterator"
 
 import type { PostcodePlacement } from "../shard-recipes/scaffold.ts"

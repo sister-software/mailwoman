@@ -15,8 +15,8 @@
  *   parse the last stdout line without a framing convention.
  */
 
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { ingestFloodChunk } from "../sdk/ingest-chunk.ts"
 import { createGeodatabaseFeatureSource } from "../sdk/ingest.ts"

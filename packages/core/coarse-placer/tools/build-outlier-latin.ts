@@ -23,8 +23,8 @@
  *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]`
  */
 
-import { appendFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
+import { appendFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
 
 import { dataRootPath, repoRootPath } from "#utils"
 

@@ -10,9 +10,6 @@
  *   successor, a filer whose USF flag is `No`, and a 53-jurisdiction national one.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import {
 	assertWorkbookHeader,
@@ -21,6 +18,8 @@ import {
 	readOperatingStates,
 	toISOFilingDate,
 } from "@mailwoman/filer/sdk/form499-workbook"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const WORKBOOK_PATH = join(import.meta.dirname, "../../../test-fixtures/form499/filer-db-sample.xlsx")

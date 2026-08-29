@@ -47,12 +47,11 @@
  *   self-contained.
  */
 
-import { createWriteStream, existsSync, readFileSync, type WriteStream } from "node:fs"
-import { mkdir, writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { createWriteStream, existsSync, readFileSync, type WriteStream } from "@mailwoman/platform/fs"
+import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "#adapters/utils"

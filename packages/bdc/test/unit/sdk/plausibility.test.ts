@@ -21,11 +21,6 @@
  *   every fixture below, so a single set of derived cells serves both the bdc.db and poi fixtures.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase } from "@mailwoman/bdc/sdk/build-bdc"
 import { res9ShortCellToRes6Parent } from "@mailwoman/bdc/sdk/filing-landscape"
@@ -50,6 +45,10 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,

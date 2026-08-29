@@ -6,9 +6,8 @@
  *   Small shared helpers for the SQLite-backed lookups.
  */
 
-import type { DatabaseSync, SQLInputValue } from "node:sqlite"
-
 import { allRows, getRow } from "@mailwoman/core/utils"
+import type { DatabaseSync, SQLInputValue } from "@mailwoman/platform/sqlite"
 
 // The row-shape assertion itself lives in `core` so the readers that cannot depend on this package reach the same
 // seam; re-exported here because this module is where this package's readers already look for it.

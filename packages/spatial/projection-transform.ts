@@ -28,8 +28,8 @@
  *   installed, and they are the difference between a metre-accurate layer and a 3 m-offset one.
  */
 
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 
 const execFileAsync = promisify(execFile)
 

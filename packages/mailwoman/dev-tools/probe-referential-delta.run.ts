@@ -32,12 +32,11 @@
  *   Usage: node packages/mailwoman/dev-tools/probe-referential-delta.run.ts [--board <path>]
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { parseArgs } from "@mailwoman/platform/util"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
 
 import { loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"

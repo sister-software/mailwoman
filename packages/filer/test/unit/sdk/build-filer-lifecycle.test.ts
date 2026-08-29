@@ -9,16 +9,15 @@
  *   below pins that a TSV-shaped row still produces byte-identical output.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { FilerIdentifierType, FilerRelationship } from "@mailwoman/filer/schema"
 import { buildFilerDatabase } from "@mailwoman/filer/sdk/build-filer"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { parseForm499Notes } from "@mailwoman/filer/sdk/form499-notes"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 let scratch: string

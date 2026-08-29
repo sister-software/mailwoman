@@ -4,11 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/synth-po-box/adapter"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 function writeFixture(rows: Array<Record<string, unknown>>): string {

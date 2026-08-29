@@ -24,10 +24,10 @@
  *   on, and what to do with the bytes afterwards.
  */
 
-import { createWriteStream } from "node:fs"
-import { rename, rm } from "node:fs/promises"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { rename, rm } from "@mailwoman/platform/fs/promises"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 
 /**
  * Bytes between progress reports, where the caller states no preference.

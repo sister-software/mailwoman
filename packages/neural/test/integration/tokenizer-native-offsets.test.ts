@@ -23,10 +23,9 @@
  *      byte-identical across all 1,066).
  */
 
-import { existsSync } from "node:fs"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 // The dev tokenizer, same source link-dev-weights pins (v0.9.0-multisplice) — resolved via the

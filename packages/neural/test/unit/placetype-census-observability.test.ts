@@ -19,10 +19,6 @@
  *   two artifacts (`foldVersion`) is part of what's under test.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import type { ComponentTag } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
@@ -36,6 +32,9 @@ import {
 } from "@mailwoman/neural/placetype-census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "@mailwoman/neural/placetype-pair-prior"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, test } from "vitest"
 
 const LABELS = STAGE2_BIO_LABELS

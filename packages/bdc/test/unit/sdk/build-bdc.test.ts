@@ -14,12 +14,6 @@
  *   `(geoid, provider_id, technology_code, location_id)`.
  */
 
-import { existsSync, statSync } from "node:fs"
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase, geometryCentroid, peekProviderID, type BuildBDCResult } from "@mailwoman/bdc/sdk/build-bdc"
 import type { ProviderID } from "@mailwoman/bdc/sdk/common"
@@ -41,6 +35,11 @@ import {
 	type FilerDatabase,
 } from "@mailwoman/filer"
 import { toFRN, type ProviderListRow } from "@mailwoman/filer/sdk"
+import { existsSync, statSync } from "@mailwoman/platform/fs"
+import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const GEOID_SF = "060750001001001"

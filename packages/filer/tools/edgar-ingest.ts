@@ -9,7 +9,7 @@
  *   module.
  */
 
-import { readFileSync } from "node:fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 
 import { parseCIKLookupData, type CompanyTickerEntry } from "../sdk/edgar-filings.ts"
 import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "../sdk/edgar-ingest.ts"
@@ -77,8 +77,8 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 			: undefined,
 	})
 
-	const { writeFileSync, mkdirSync } = await import("node:fs")
-	const { join } = await import("node:path")
+	const { writeFileSync, mkdirSync } = await import("@mailwoman/platform/fs")
+	const { join } = await import("@mailwoman/platform/path")
 
 	mkdirSync(options.outDir, { recursive: true })
 

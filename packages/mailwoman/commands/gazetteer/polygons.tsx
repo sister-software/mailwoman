@@ -27,11 +27,10 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
-import { existsSync, readFileSync, rmSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { allRows, dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { existsSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"

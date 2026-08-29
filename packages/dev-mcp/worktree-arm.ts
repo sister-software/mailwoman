@@ -33,12 +33,19 @@
  *   for the same reason, since "source that can change a geocode" is the one question both are asking.
  */
 
-import { execFileSync } from "node:child_process"
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import {
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync,
+} from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 
 import { FINGERPRINTED_WORKSPACES } from "./tree-fingerprint.ts"
 

@@ -29,10 +29,9 @@
  *   from MLIT/JapanPost).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { isPresent } from "@mailwoman/core/objects"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 

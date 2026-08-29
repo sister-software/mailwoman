@@ -15,7 +15,7 @@
  *   the neural runtime and the resolver behind it. The register itself needs neither.
  */
 
-import { dirname } from "node:path"
+import { dirname } from "@mailwoman/platform/path"
 
 import {
 	auditCaseFoldingSuite,

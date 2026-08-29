@@ -16,10 +16,9 @@
  *   streams to stderr; the summary lands on stdout.
  */
 
-import { readdirSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { readdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

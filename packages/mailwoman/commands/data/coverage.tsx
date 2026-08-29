@@ -55,7 +55,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { censusCoverage } = await import("../../coverage-census.ts")
 		const { dataRootPath, repoRootPath } = await import("@mailwoman/core/utils")
-		const { existsSync, readdirSync, statSync } = await import("node:fs")
+		const { existsSync, readdirSync, statSync } = await import("@mailwoman/platform/fs")
 
 		const repoRoot = String(repoRootPath())
 		const configDir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`

@@ -20,11 +20,10 @@
  *   [--data-root <dir>] [--out-md docs/articles/evals/resolver-geo/<date>-...md]`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import { streamRows } from "#index"
 

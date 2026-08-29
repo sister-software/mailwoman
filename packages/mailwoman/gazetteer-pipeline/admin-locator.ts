@@ -14,9 +14,8 @@
  *   sub-second pass rather than an overnight one.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { pointInMultiPolygon, pointInPolygon } from "@mailwoman/spatial"
 
 type Ring = Array<[number, number]>

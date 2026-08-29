@@ -12,12 +12,11 @@
  *   weights are absent + emits a tree from that).
  */
 
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)

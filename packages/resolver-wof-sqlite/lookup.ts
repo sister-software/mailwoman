@@ -10,9 +10,8 @@
  *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
  */
 
-import { DatabaseSync, type SQLInputValue } from "node:sqlite"
-
 import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
+import { DatabaseSync, type SQLInputValue } from "@mailwoman/platform/sqlite"
 import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { Kysely } from "kysely"
