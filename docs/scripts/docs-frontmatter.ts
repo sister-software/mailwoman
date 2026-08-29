@@ -15,7 +15,7 @@
  */
 
 import { readdir, readFile } from "@mailwoman/platform/fs/promises"
-import path from "@mailwoman/platform/path"
+import * as path from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))

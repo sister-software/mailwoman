@@ -25,7 +25,7 @@
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
-import path from "@mailwoman/platform/path"
+import * as path from "@mailwoman/platform/path"
 import type {
 	GlossaryData,
 	GlossaryPluginOptions as BaseGlossaryPluginOptions,

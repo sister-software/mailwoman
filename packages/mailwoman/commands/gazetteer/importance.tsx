@@ -32,14 +32,15 @@
  *   which is what they had before Wikipedia importance existed.
  */
 
-import { allRows, cacheRootPath, getRow } from "@mailwoman/core/utils"
-import { createReadStream, existsSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { allRows, cacheRootPath, getRow, pathExists } from "@mailwoman/core/utils"
+import { gunzipChunks } from "@mailwoman/platform/compression"
+import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
 import { get as httpsGet } from "@mailwoman/platform/https"
 import { dirname } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
-import { createGunzip } from "@mailwoman/platform/zlib"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
+import { createReadStream } from "spliterator/node/fs"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -59,6 +60,11 @@ const HTTP_FOUND = 302
  * Columns a Wikidata concordance row needs before it carries a usable mapping.
  */
 const MIN_WIKIDATA_COLUMNS = 5
+
+/**
+ * Chunk size used while streaming the compressed Wikimedia importance table.
+ */
+const IMPORTANCE_READ_HIGH_WATER_MARK = 64 * 1024
 
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"
 
@@ -91,8 +97,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 						res2.on("data", (chunk) => chunks.push(chunk))
 
 						res2.on("end", () => {
-							writeFileSync(dest, Buffer.concat(chunks))
-							resolve()
+							void writeFile(dest, Buffer.concat(chunks)).then(() => resolve(), reject)
 						})
 
 						res2.on("error", reject)
@@ -106,8 +111,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 			res.on("data", (chunk) => chunks.push(chunk))
 
 			res.on("end", () => {
-				writeFileSync(dest, Buffer.concat(chunks))
-				resolve()
+				void writeFile(dest, Buffer.concat(chunks)).then(() => resolve(), reject)
 			})
 
 			res.on("error", reject)
@@ -131,7 +135,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		const tsvPath = options.tsv
 		const t0 = performance.now()
 
-		if (!existsSync(dbPath)) throw new CommandError(`Database not found: ${dbPath}`)
+		if (!(await pathExists(dbPath))) throw new CommandError(`Database not found: ${dbPath}`)
 
 		const db = new DatabaseSync(dbPath, { open: true })
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
@@ -203,12 +207,12 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		if (!gzPath) {
 			gzPath = cacheRootPath("wikimedia-importance.csv.gz")
 
-			if (existsSync(gzPath)) {
+			if (await pathExists(gzPath)) {
 				console.error(`  Using cached TSV: ${gzPath}`)
 			} else {
 				console.error(`  Downloading ${IMPORTANCE_URL}...`)
 
-				mkdirSync(dirname(gzPath), { recursive: true })
+				await mkdir(dirname(gzPath), { recursive: true })
 
 				await downloadToFile(IMPORTANCE_URL, gzPath)
 
@@ -222,11 +226,10 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		const importanceMap = new Map<string, number>()
 		let totalRows = 0
 
-		const gunzip = createGunzip()
-		const fileStream = createReadStream(gzPath)
+		const fileChunks = await createReadStream(gzPath, IMPORTANCE_READ_HIGH_WATER_MARK)
 
 		// crlf: the wikidata id is the last column — a CRLF source would leave a stray \r on it.
-		for await (const line of TextSpliterator.fromAsync(fileStream.pipe(gunzip), { crlf: true })) {
+		for await (const line of TextSpliterator.fromAsync(gunzipChunks(fileChunks), { crlf: true })) {
 			totalRows++
 
 			if (totalRows === 1 && line.startsWith("language")) continue

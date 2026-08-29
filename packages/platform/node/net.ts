@@ -1,1 +1,1 @@
-export * from "node:net"
+export type { AddressInfo } from "node:net"

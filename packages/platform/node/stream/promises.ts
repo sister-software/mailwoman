@@ -1,1 +1,1 @@
-export * from "node:stream/promises"
+export { pipeline } from "node:stream/promises"

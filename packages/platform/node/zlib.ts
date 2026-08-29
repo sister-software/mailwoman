@@ -1,1 +1,1 @@
-export * from "node:zlib"
+export { crc32, gzipSync } from "node:zlib"

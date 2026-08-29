@@ -21,5 +21,6 @@ describe("platform capability boundaries", () => {
 
 		expect(unsupportedExistsSync).toBeTypeOf("function")
 		expect(() => unsupportedExistsSync()).toThrow(NotImplementedError)
+		expect(() => Reflect.get(unsupportedExistsSync, "anything")).toThrow(NotImplementedError)
 	})
 })

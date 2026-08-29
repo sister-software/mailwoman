@@ -1,1 +1,1 @@
-export * from "node:crypto"
+export { Hash, createHash, randomBytes, randomUUID } from "node:crypto"

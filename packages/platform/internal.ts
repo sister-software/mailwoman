@@ -11,7 +11,13 @@ export function createNotImplementedError(packageName: string): NotImplementedEr
  * Creates a lazily-throwing stand-in for an unsupported platform export.
  */
 export function createNotImplementedFunction(packageName: string): (...args: never[]) => never {
-	return () => {
+	const unavailable = (): never => {
 		throw createNotImplementedError(packageName)
 	}
+
+	return new Proxy(unavailable, {
+		apply: unavailable,
+		construct: unavailable,
+		get: unavailable,
+	})
 }

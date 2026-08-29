@@ -4,9 +4,15 @@ import { createNotImplementedFunction } from "../internal.ts"
 
 export const Dirent = createNotImplementedFunction("node:fs") as unknown as typeof Native.Dirent
 
+export type Dirent = Native.Dirent
+
 export type PathLike = Native.PathLike
 export const Stats = createNotImplementedFunction("node:fs") as unknown as typeof Native.Stats
+
+export type Stats = Native.Stats
 export const WriteStream = createNotImplementedFunction("node:fs") as unknown as typeof Native.WriteStream
+
+export type WriteStream = Native.WriteStream
 export const accessSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.accessSync
 export const appendFileSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.appendFileSync
 export const chmodSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.chmodSync
@@ -37,6 +43,3 @@ export const unlinkSync = createNotImplementedFunction("node:fs") as unknown as 
 export const utimesSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.utimesSync
 export const writeFileSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.writeFileSync
 export const writeSync = createNotImplementedFunction("node:fs") as unknown as typeof Native.writeSync
-
-const unsupportedDefault = createNotImplementedFunction("node:fs") as unknown as typeof Native
-export default unsupportedDefault

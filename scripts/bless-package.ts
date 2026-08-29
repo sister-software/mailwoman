@@ -26,7 +26,7 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
-import path from "@mailwoman/platform/path"
+import * as path from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { $, type ProcessPromise } from "zx"
 

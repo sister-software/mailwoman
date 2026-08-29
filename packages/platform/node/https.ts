@@ -1,1 +1,1 @@
-export * from "node:https"
+export { get } from "node:https"

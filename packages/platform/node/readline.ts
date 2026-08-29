@@ -1,1 +1,1 @@
-export * from "node:readline"
+export { createInterface } from "node:readline"

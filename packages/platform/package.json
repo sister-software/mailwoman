@@ -30,6 +30,13 @@
 			"default": "./out/internal.js",
 			"types": "./out/internal.d.ts"
 		},
+		"./compression": {
+			"node": "./compression.ts",
+			"worker": "./compression.ts",
+			"browser": "./compression.ts",
+			"default": "./out/compression.js",
+			"types": "./out/compression.d.ts"
+		},
 		"./child_process": {
 			"node": "./node/child_process.ts",
 			"worker": "./unsupported/child_process.ts",
