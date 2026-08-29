@@ -61,7 +61,6 @@ import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { createWriteStream, existsSync, unlinkSync } from "@mailwoman/platform/fs"
 import { mkdir, readdir, readFile, stat, writeFile } from "@mailwoman/platform/fs/promises"
 import { dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
@@ -674,7 +673,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 			if (header !== OPEN_UPRN_HEADER) {
 				kdb.exec("ROLLBACK")
-				kdb.destroy()
+				await kdb.destroy()
 				throw new Error(
 					`buildUPRNLayer: header drift — expected ${JSON.stringify(OPEN_UPRN_HEADER)}, found ${JSON.stringify(header)}`
 				)

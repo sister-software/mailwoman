@@ -5,7 +5,6 @@
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
 import { writeFile } from "@mailwoman/platform/fs/promises"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"

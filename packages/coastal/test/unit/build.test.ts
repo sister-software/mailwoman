@@ -40,7 +40,6 @@ import { CoverageBasis, supportsExclusion } from "@mailwoman/core/layers"
 import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -352,7 +351,7 @@ describe("the declared domains", () => {
 
 			expect(row.defence_type).toBe("Sheet piles")
 		} finally {
-			database.destroy()
+			await database.destroy()
 		}
 	})
 
@@ -387,7 +386,7 @@ describe("the declared domains", () => {
 			expect(row.mt_policy).toBe(" ")
 			expect(row.published_year).toBe(0)
 		} finally {
-			database.destroy()
+			await database.destroy()
 		}
 	})
 })

@@ -432,7 +432,7 @@ export async function createAbsenceObservationRoute(
 			close: () => db.destroy(),
 		}
 	} catch (error) {
-		db.destroy()
+		await db.destroy()
 
 		throw error
 	}

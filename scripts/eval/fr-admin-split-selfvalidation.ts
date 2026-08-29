@@ -32,10 +32,11 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
 import { allRows, dataRootPath, percentile } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { ClassificationRecord } from "mailwoman"
 import { v0RecordToTree } from "mailwoman/eval-harness/v0-tree-adapter"
 
@@ -124,7 +125,7 @@ const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")
 const N = Number(values["n"] || "200")
 
 // --- sample FR communes (collision + unique strata) ----------------------------------------------
-const db = new DatabaseSync(DB, { readOnly: true })
+const db = new DatabaseClient<WOFDatabase>(DB, { readOnly: true })
 
 interface Commune {
 	id: number
@@ -157,7 +158,7 @@ const rows = allRows<Commune>(
 const shuffled = [...rows].toSorted((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
 const collision = shuffled.filter((r) => r.collisionCount > 1).slice(0, N)
 const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
-db.close()
+await db.destroy()
 
 // --- resolver (production path) ------------------------------------------------------------------
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")

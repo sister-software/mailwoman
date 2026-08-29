@@ -13,13 +13,14 @@
 
 import { resolveStreet } from "@mailwoman/docs/shared/demo-helpers"
 import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/docs/shared/httpvfs-street"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, test } from "vitest"
 
 /**
  * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
  */
-function stubWorker(innerDB: DatabaseSync) {
+function stubWorker(innerDB: DatabaseClient<AddressPointDatabase>) {
 	return {
 		db: {
 			async exec(sql: string) {
@@ -34,10 +35,10 @@ function stubWorker(innerDB: DatabaseSync) {
 	}
 }
 
-const openDatabases: DatabaseSync[] = []
+const openDatabases: DatabaseClient<AddressPointDatabase>[] = []
 
-function db(setup: (d: DatabaseSync) => void): DatabaseSync {
-	const d = new DatabaseSync(":memory:")
+function db(setup: (d: DatabaseClient<AddressPointDatabase>) => void): DatabaseClient<AddressPointDatabase> {
+	const d = new DatabaseClient<AddressPointDatabase>(":memory:")
 	setup(d)
 	openDatabases.push(d)
 
@@ -46,11 +47,11 @@ function db(setup: (d: DatabaseSync) => void): DatabaseSync {
 
 afterEach(() => {
 	while (openDatabases.length) {
-		openDatabases.pop()!.close()
+		openDatabases.pop()!.destroy()
 	}
 })
 
-function situsDB(): DatabaseSync {
+function situsDB(): DatabaseClient<AddressPointDatabase> {
 	return db((d) => {
 		d.exec(
 			"CREATE TABLE address_point(street_norm TEXT, street_key TEXT, number TEXT, unit TEXT, postcode TEXT, locality_norm TEXT, street_raw TEXT, lat REAL, lon REAL, source TEXT, release TEXT)"
@@ -63,7 +64,7 @@ function situsDB(): DatabaseSync {
 	})
 }
 
-function interpDB(): DatabaseSync {
+function interpDB(): DatabaseClient<AddressPointDatabase> {
 	return db((d) => {
 		d.exec(
 			"CREATE TABLE street_segment(street_norm TEXT, from_hn INTEGER, to_hn INTEGER, min_hn INTEGER, max_hn INTEGER, parity TEXT, postcode TEXT, geometry TEXT, source TEXT, release TEXT)"

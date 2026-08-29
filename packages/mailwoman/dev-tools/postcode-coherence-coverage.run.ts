@@ -26,10 +26,11 @@ import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { conventionCandidateDBPath } from "../resolver-backend.ts"
 
@@ -72,7 +73,7 @@ const backend: ResolverBackend =
 const rows = new Map<string, number>()
 
 if (backendName === "candidate") {
-	const db = new DatabaseSync(candidatePath, { readOnly: true })
+	const db = new DatabaseClient<CandidateDatabase>(candidatePath, { readOnly: true })
 
 	for (const r of db
 		.prepare(
@@ -87,10 +88,10 @@ if (backendName === "candidate") {
 		rows.set((r.country ?? "").toUpperCase(), r.n)
 	}
 
-	db.close()
+	await db.destroy()
 } else {
 	for (const path of wofShardPaths().filter(existsSync)) {
-		const db = new DatabaseSync(path, { readOnly: true })
+		const db = new DatabaseClient<CandidateDatabase>(path, { readOnly: true })
 
 		for (const r of db
 			.prepare("SELECT country, COUNT(*) AS n FROM spr WHERE placetype = 'postalcode' GROUP BY country")
@@ -99,7 +100,7 @@ if (backendName === "candidate") {
 			rows.set(c, (rows.get(c) ?? 0) + r.n)
 		}
 
-		db.close()
+		await db.destroy()
 	}
 }
 

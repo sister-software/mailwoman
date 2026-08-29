@@ -14,7 +14,6 @@
 import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CoverageVerdict, CurrencyClass, triageWOFCurrency } from "mailwoman/gazetteer-pipeline/wof-triage"

@@ -103,7 +103,9 @@
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/record": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"h3-js": "^4.5.0",
 		"spliterator": "^6.2.0"

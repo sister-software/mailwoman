@@ -25,7 +25,6 @@
 import { dataRootPath, getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -209,6 +208,6 @@ console.error(`wrote ${sorted.length} rows → ${OUT}`)
 console.error(`  fstReach in=${inReach} out=${sorted.length - inReach}`)
 console.error(`  rows whose probe surface has a DIFFERENT bias between arms: ${moved}`)
 
-db.destroy()
+await db.destroy()
 
 //#endregion

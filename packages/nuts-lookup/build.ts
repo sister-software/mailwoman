@@ -9,7 +9,6 @@
  */
 
 import { readFileSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { GeoFeature, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

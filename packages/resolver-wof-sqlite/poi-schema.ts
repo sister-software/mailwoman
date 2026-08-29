@@ -13,7 +13,7 @@
  */
 
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql, type Kysely } from "kysely"
 
 import type { NameKey } from "./street-normalize.ts"
@@ -191,7 +191,7 @@ export const POI_FTS_TABLE = "poi_search"
 /**
  * FTS5 stays raw SQL by project rule (Kysely can't express virtual tables). Content-keyed by name_key.
  */
-export function createPOISearchFTS(db: DatabaseSync): void {
+export function createPOISearchFTS<DB>(db: DatabaseClient<DB>): void {
 	db.exec(
 		`CREATE VIRTUAL TABLE ${POI_FTS_TABLE} USING fts5(name, name_key UNINDEXED, h3_cell UNINDEXED, tokenize = 'unicode61')`
 	)

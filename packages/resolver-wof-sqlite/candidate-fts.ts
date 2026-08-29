@@ -25,7 +25,9 @@
  *   fallback only needs to recover the name_key, then re-probes the B-tree for its rows).
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { CandidateDatabase } from "./candidate-schema.ts"
 
 /**
  * Name of the FTS5 trigram virtual table this module owns. The reader gates its fuzzy fallback on it.
@@ -36,7 +38,7 @@ export const CANDIDATE_FTS_TABLE = "candidate_fts"
  * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table. Call after the candidate
  * B-tree is populated (build pipeline) or against an existing candidate DB (migration).
  */
-export function createCandidateFTS(db: DatabaseSync): void {
+export function createCandidateFTS<DB>(db: DatabaseClient<DB>): void {
 	db.exec(`DROP TABLE IF EXISTS ${CANDIDATE_FTS_TABLE}`)
 	db.exec(`CREATE VIRTUAL TABLE ${CANDIDATE_FTS_TABLE} USING fts5(name_key, tokenize='trigram')`)
 

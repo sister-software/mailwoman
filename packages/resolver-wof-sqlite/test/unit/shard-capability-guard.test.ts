@@ -21,8 +21,9 @@
 import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let dir: string
@@ -31,7 +32,7 @@ let dir: string
  * A main shard complete enough to construct against.
  */
 const writeMain = (path: string): void => {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -44,40 +45,40 @@ const writeMain = (path: string): void => {
 		CREATE TABLE names (id INTEGER, name TEXT, lang TEXT);
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 /**
  * A shard that CLAIMS to be a place shard — it carries `spr` — and cannot serve one.
  */
 const writeSprOnly = (path: string): void => {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, latitude REAL, longitude REAL)`
 	)
 
-	db.close()
+	db.destroy()
 }
 
 /**
  * A shard with NOTHING in it, under a name that routes. A truncated or zero-byte file reads exactly like this.
  */
 const writeEmpty = (path: string): void => {
-	new DatabaseSync(path).close()
+	new DatabaseClient<WOFDatabase>(path).destroy()
 }
 
 /**
  * A relation-table shard, which never claims to be a place shard and is part of the documented default set.
  */
 const writeRelationOnly = (path: string): void => {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
 		`CREATE TABLE postcode_locality (postcode TEXT, locality_id INTEGER, is_containing INTEGER, distance_km REAL)`
 	)
 
-	db.close()
+	db.destroy()
 }
 
 beforeAll(() => {

@@ -30,7 +30,7 @@
 import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resolver"
 // resolver-wof-sqlite is an optional peer of mailwoman (the geocode.tsx convention) — runtime
 // imports are DYNAMIC inside the functions; type-only imports are erased and safe at module level.
-import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite"
+import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite/coverage-manifest-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**

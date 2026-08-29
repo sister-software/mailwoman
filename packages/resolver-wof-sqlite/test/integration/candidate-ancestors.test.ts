@@ -25,7 +25,6 @@
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import {
 	CANDIDATE_ANCESTOR_TABLE,
@@ -34,7 +33,9 @@ import {
 	type IntervalLabel,
 } from "@mailwoman/resolver-wof-sqlite/candidate-ancestors-schema"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { allRows, getRow } from "#sqlite-utils"
@@ -56,7 +57,7 @@ const AMBIVILLE = 300
  * row, and an edge to a place with no current spr row.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -116,7 +117,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (${WEIMAR_DE}, 999, 'region');
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 let scratch: string
@@ -134,13 +135,13 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-function intervalOf(db: DatabaseSync, id: number): IntervalLabel | undefined {
+function intervalOf(db: DatabaseClient<WOFDatabase>, id: number): IntervalLabel | undefined {
 	return getRow<IntervalLabel>(db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`), id)
 }
 
 describe("the candidate ancestors sidecar", () => {
 	test("closure rows round-trip denormalized, nearest-first, under the shared fold", () => {
-		const db = new DatabaseSync(candidatePath, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
 		try {
 			const rows = allRows<{
@@ -168,7 +169,7 @@ describe("the candidate ancestors sidecar", () => {
 			expect(rows[1]!.parent_name).toBe("Thüringen")
 			expect(rows[1]!.parent_name_key).toBe(normalizeLocalityForKey("Thüringen"))
 		} finally {
-			db.close()
+			db.destroy()
 		}
 	})
 
@@ -198,7 +199,7 @@ describe("the candidate ancestors sidecar", () => {
 	})
 
 	test("interval containment truth table: ancestor, descendant, sibling, self, disjoint", () => {
-		const db = new DatabaseSync(candidatePath, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
 		try {
 			const germany = intervalOf(db, GERMANY)!
@@ -232,12 +233,12 @@ describe("the candidate ancestors sidecar", () => {
 
 			expect(descendants.map((d) => d.spr_id)).toEqual([WEIMAR_DE, ERFURT, WEIMARER_LAND])
 		} finally {
-			db.close()
+			db.destroy()
 		}
 	})
 
 	test("every candidate under one name_key enumerates WITH its chain from the one artifact (#1722)", () => {
-		const db = new DatabaseSync(candidatePath, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
 		try {
 			const rows = allRows<{
@@ -267,12 +268,12 @@ describe("the candidate ancestors sidecar", () => {
 			expect(regionKeyOf(WEIMAR_DE)).toBe(normalizeLocalityForKey("Thüringen"))
 			expect(regionKeyOf(WEIMAR_US)).toBe(normalizeLocalityForKey("Texas"))
 		} finally {
-			db.close()
+			db.destroy()
 		}
 	})
 
 	test("a multi-parent place keeps EVERY parent in the closure rows; the interval forest commits to one", () => {
-		const db = new DatabaseSync(candidatePath, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
 		try {
 			const parents = allRows<{ parent_spr_id: number }>(
@@ -303,16 +304,16 @@ describe("the candidate ancestors sidecar", () => {
 
 			expect(n).toBe(1)
 		} finally {
-			db.close()
+			db.destroy()
 		}
 	})
 
 	test("an artifact without the sidecar reports the capability ABSENT — never [] dressed as an answer", () => {
 		// The tests may patch the built (unsealed) fixture directly — the same shape as an older
 		// candidate.db that predates the sidecar.
-		const db = new DatabaseSync(candidatePath)
+		const db = new DatabaseClient<WOFDatabase>(candidatePath)
 		db.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
-		db.close()
+		db.destroy()
 
 		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
@@ -326,7 +327,7 @@ describe("the candidate ancestors sidecar", () => {
 	test("a canonical-parent cycle degrades to unlabeled places — closure rows kept, no hang, no labels", async () => {
 		const input = join(scratch, "cycle-admin.db")
 		const output = join(scratch, "cycle-candidate.db")
-		const db = new DatabaseSync(input)
+		const db = new DatabaseClient<WOFDatabase>(input)
 
 		// Two localities each naming the other as an ancestor (corrupt source ancestry), beside one
 		// healthy chain that must still label.
@@ -352,7 +353,7 @@ describe("the candidate ancestors sidecar", () => {
 			INSERT INTO ancestors VALUES (10, 11, 'region');
 		`)
 
-		db.close()
+		await db.destroy()
 
 		const result = await buildCandidateTable({ input, output })
 
@@ -361,14 +362,14 @@ describe("the candidate ancestors sidecar", () => {
 		expect(result.ancestorPlaces).toBe(3)
 		expect(result.intervalPlaces).toBe(2)
 
-		const built = new DatabaseSync(output, { readOnly: true })
+		const built = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			expect(intervalOf(built, 1)).toBeUndefined()
 			expect(intervalOf(built, 2)).toBeUndefined()
 			expect(intervalContains(intervalOf(built, 11)!, intervalOf(built, 10)!)).toBe(true)
 		} finally {
-			built.close()
+			await built.destroy()
 		}
 	})
 })

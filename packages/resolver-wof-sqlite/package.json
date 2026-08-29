@@ -338,6 +338,11 @@
 			"node": "./schema.ts",
 			"default": "./out/schema.js",
 			"types": "./out/schema.d.ts"
+		},
+		"./coverage-manifest-schema": {
+			"node": "./coverage-manifest-schema.ts",
+			"default": "./out/coverage-manifest-schema.js",
+			"types": "./out/coverage-manifest-schema.d.ts"
 		}
 	},
 	"publishConfig": {

@@ -20,7 +20,8 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	buildPostcodeNIOSM,
 	NI_LIVE_POSTCODES,
@@ -116,7 +117,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	// ignores the permission and would pass a W_OK probe on a sealed file).
 	expect(statSync(out).mode & 0o222).toBe(0)
 
-	const db = new DatabaseSync(out, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
 	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
@@ -189,7 +190,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const drops = parseJSONStrict<{ malformedValues: Record<string, number> }>(meta.get("quality_drops")!)
 	expect(drops.malformedValues).toEqual({ "BT36 4RU,": 1 })
 
-	db.close()
+	await db.destroy()
 })
 
 test("buildPostcodeNIOSM: a response modified since acquisition is refused, not built from", async () => {

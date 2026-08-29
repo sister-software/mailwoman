@@ -46,11 +46,13 @@ import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { existsSync, unlinkSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
 import { buildFTS } from "../fts.ts"
+import type { ShardMetaDatabase } from "./geonames-tail.ts"
 import { createShardMetaTable } from "./geonames-tail.ts"
 import {
 	acquireNIPostcodes,
@@ -261,7 +263,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseSync(ingestPath)
+	const db = new DatabaseClient<WOFDatabase>(ingestPath)
 
 	db.exec(`
 		PRAGMA page_size = 8192;
@@ -354,7 +356,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	}
 
 	db.prepare("VACUUM INTO ?").run(out)
-	db.close()
+	await db.destroy()
 
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
 		if (existsSync(stale)) {
@@ -363,9 +365,9 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	}
 
 	phase("fts")
-	const outDB = new DatabaseSync(out)
+	const outDB = new DatabaseClient<WOFDatabase>(out)
 	const fts = await buildFTS(outDB, { onProgress: phase })
-	outDB.close()
+	await outDB.destroy()
 
 	phase("seal")
 	sealDatabase(out)
@@ -467,7 +469,10 @@ interface ShardMetaInput {
 /**
  * Bake the provenance record into the staging DB (pre-VACUUM, pre-seal — a shipped DB is never patched).
  */
-async function writeShardMeta(db: DatabaseSync, input: ShardMetaInput): Promise<void> {
+async function writeShardMeta<DB extends ShardMetaDatabase>(
+	db: DatabaseClient<DB>,
+	input: ShardMetaInput
+): Promise<void> {
 	await createShardMetaTable(db)
 
 	const pct = ((input.inserted / NI_LIVE_POSTCODES) * 100).toFixed(1)

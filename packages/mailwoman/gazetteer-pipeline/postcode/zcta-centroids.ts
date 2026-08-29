@@ -29,7 +29,8 @@
  *   Tested by the sibling `zcta-centroids.test.ts`.
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"
 
 /**
@@ -82,7 +83,7 @@ export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
  * stay placeholder (and get no provenance row). Idempotent. Returns the number of rows filled.
  */
 export function fillPlaceholderCentroids(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	zcta: ReadonlyMap<string, ZCTACentroid>,
 	source: string = ZCTA_SOURCE
 ): number {
@@ -172,7 +173,7 @@ export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> 
  * GeoNames is CC-BY 4.0: any DB that ships rows with source `geonames-us` must attribute "GeoNames (CC-BY 4.0)".
  */
 export function fillGeonamesPlaceholders(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	geonames: ReadonlyMap<string, ZCTACentroid>,
 	source: string = GEONAMES_US_SOURCE
 ): number {

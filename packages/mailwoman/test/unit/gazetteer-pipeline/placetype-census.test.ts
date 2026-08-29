@@ -8,7 +8,6 @@
  *   are asserted on data small enough to read.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {

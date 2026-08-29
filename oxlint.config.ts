@@ -177,6 +177,13 @@ export default {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
+		{
+			// `@mailwoman/sqlite` is where a connection comes into being, so it is the one place that names the builtin.
+			files: ["packages/sqlite/**/*.ts"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),
@@ -193,6 +200,16 @@ export default {
 						group: [NODE_BUILTIN_PATTERN],
 						message:
 							"Node builtins are isolated behind @mailwoman/platform. Import the matching platform subpath instead.",
+					},
+					{
+						group: ["@mailwoman/platform/sqlite"],
+						message:
+							"A caller says WHICH FILE and WHICH SCHEMA; opening the connection is the library's job. Use " +
+							"`new DatabaseClient<Schema>(path)` (@mailwoman/sqlite/client), or `openBuiltClient` " +
+							"(@mailwoman/sqlite/sealed) for a sealed artifact. Handing construction to callers is what let one " +
+							"database be described by two schemas with nothing making them agree, and split ownership so the " +
+							"first `destroy()` closed the connection under the other holder. `exec`, `prepare` and `function` " +
+							"reach the same connection for the statements Kysely does not model.",
 					},
 				],
 			},

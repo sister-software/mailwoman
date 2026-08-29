@@ -38,7 +38,6 @@
 
 import { pyFloat, pyRound } from "@mailwoman/core/utils"
 import { readFileSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -167,7 +166,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		)
 		.all(args.country, ...PLACETYPES) as Array<{ id: number; name: string; latitude: number; longitude: number }>
 
-	admin.destroy()
+	await admin.destroy()
 
 	const grid = new Map<string, Array<{ pid: number; nm: string; la: number; lo: number }>>()
 
@@ -277,7 +276,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 	assertDatabaseIntegrity(kdb, args.output)
 
 	kdb.exec("VACUUM")
-	kdb.destroy()
+	await kdb.destroy()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
 

@@ -24,7 +24,8 @@
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createHash } from "@mailwoman/platform/crypto"
 import { readFileSync, rmSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
 /**
@@ -83,7 +84,7 @@ export async function buildCZDistrictsShard(
 	}
 
 	rmSync(tmpPath, { force: true })
-	const db = new DatabaseSync(tmpPath)
+	const db = new DatabaseClient<WOFDatabase>(tmpPath)
 	db.exec("PRAGMA journal_mode = OFF")
 	db.exec("PRAGMA synchronous = OFF")
 	await createUnifiedSchema(db)
@@ -118,7 +119,7 @@ export async function buildCZDistrictsShard(
 	await createUnifiedIndexes(db)
 	buildPlaceSearchFTS(db, { drop: true })
 	db.exec("ANALYZE")
-	db.close()
+	await db.destroy()
 
 	swapDatabaseIntoPlace(tmpPath, outPath)
 	sealDatabase(outPath)

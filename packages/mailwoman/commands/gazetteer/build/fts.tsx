@@ -10,7 +10,8 @@
  */
 
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Text } from "ink"
 
 import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -50,7 +51,7 @@ const GazetteerBuildFTS: ParsedCommandComponent<Options> = ({ options, args }) =
 					continue
 				}
 
-				const db = new DatabaseSync(path)
+				const db = new DatabaseClient<WOFDatabase>(path)
 
 				try {
 					const result = buildPlaceSearchFTS(db, {
@@ -66,7 +67,7 @@ const GazetteerBuildFTS: ParsedCommandComponent<Options> = ({ options, args }) =
 				} catch (error) {
 					checks.push({ ok: false, check: path, detail: error instanceof Error ? error.message : String(error) })
 				} finally {
-					db.close()
+					await db.destroy()
 				}
 			}
 

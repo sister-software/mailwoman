@@ -35,7 +35,6 @@
  */
 
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 
@@ -242,7 +241,7 @@ export function createTigerAdapter(): CorpusAdapter {
 					}
 				}
 			} finally {
-				db.destroy()
+				await db.destroy()
 			}
 		},
 	}

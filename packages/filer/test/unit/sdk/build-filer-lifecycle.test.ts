@@ -17,7 +17,6 @@ import { toFRN } from "@mailwoman/filer/sdk/frn"
 import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -85,7 +84,7 @@ async function build(rows: Form499Row[]) {
 		value: string
 	}>
 
-	db.destroy()
+	await db.destroy()
 
 	return { result, edges, attributes }
 }

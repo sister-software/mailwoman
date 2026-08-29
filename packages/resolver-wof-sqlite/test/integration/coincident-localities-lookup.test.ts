@@ -8,16 +8,17 @@
  *   the relation with `spr` and returns the dual-role completion candidates the resolver consumes.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildCoincidentRoles } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let db: DatabaseSync
+let db: DatabaseClient<WOFDatabase>
 let lookup: WOFSQLitePlaceLookup
 
 beforeEach(() => {
-	db = new DatabaseSync(":memory:")
+	db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -55,7 +56,7 @@ beforeEach(() => {
 	lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 })
 
-afterEach(() => db.close())
+afterEach(() => db.destroy())
 
 describe("WOFSQLitePlaceLookup.coincidentLocalitiesFor", () => {
 	test("returns the dual-role locality joined with spr", () => {
@@ -92,7 +93,7 @@ describe("WOFSQLitePlaceLookup.coincidentLocalitiesFor", () => {
 	})
 
 	test("returns [] gracefully when the relation table is absent", () => {
-		const bare = new DatabaseSync(":memory:")
+		const bare = new DatabaseClient<WOFDatabase>(":memory:")
 
 		bare.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
 			latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL,
@@ -101,6 +102,6 @@ describe("WOFSQLitePlaceLookup.coincidentLocalitiesFor", () => {
 
 		const bareLookup = new WOFSQLitePlaceLookup({ database: bare, buildFTS: true })
 		expect(bareLookup.coincidentLocalitiesFor(910)).toHaveLength(0)
-		bare.close()
+		bare.destroy()
 	})
 })

@@ -19,7 +19,7 @@
  *   browser tier and the docs bundler (see `sealed-db.ts` for the value-side counterpart).
  */
 
-import type { SQLInputValue, StatementSync } from "@mailwoman/platform/sqlite"
+import type { SQLInputValue, StatementSync } from "@mailwoman/sqlite/client"
 
 /**
  * Execute a prepared statement whose selected columns are described by `Row`.

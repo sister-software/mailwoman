@@ -47,7 +47,6 @@ import {
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -168,12 +167,11 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ 
 	const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-poi-"))
 	const path = join(scratch, "poi.db")
 
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>(raw)
+	const kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	await createPOIStagingTables(kdb)
-	createPOISearchFTS(raw)
+	createPOISearchFTS(kdb)
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {
 		await kdb.insertInto("poi_category_codes").values({ id, category }).execute()

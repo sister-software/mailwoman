@@ -17,6 +17,8 @@
 import { chmodSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // Record every DatabaseSync construction (path + the readOnly option) while delegating to the real implementation.
@@ -53,6 +55,7 @@ afterAll(() => vi.resetModules())
 
 // Dynamic imports AFTER the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
+// oxlint-disable-next-line no-restricted-imports -- this probe RECORDS the construction, so it must name the builtin
 const { DatabaseSync } = await import("@mailwoman/platform/sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
@@ -60,7 +63,7 @@ const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lo
  * Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable.
  */
 function seedFixture(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -78,7 +81,7 @@ function seedFixture(path: string): void {
 	).run(101_715_829, 85_688_489, "Paris", "locality", "US", 33.66, -95.55)
 
 	db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`).run(101_715_829, "und", "Paris")
-	db.close()
+	db.destroy()
 }
 
 /**

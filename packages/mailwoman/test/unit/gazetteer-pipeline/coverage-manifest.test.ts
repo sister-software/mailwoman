@@ -20,10 +20,11 @@ import { hardCountrySafelistFromCoverage } from "@mailwoman/core/resolver"
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { COUNTRY_BBOX } from "@mailwoman/resolver"
 import { readGazetteerCoverageManifest, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	emitCoverageManifest,
 	MEASURED_COUNTRY_BBOXES,
@@ -45,7 +46,7 @@ afterEach(async () => {
  * A minimal admin WOF with the tables `buildCandidateTable` reads (mirrors `build-candidate.test.ts`).
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -62,7 +63,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (200, 2700000);
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 /**
@@ -110,7 +111,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 		const candidateDB = await buildFixtureCandidate()
 		await emitCoverageManifest({ dbPath: candidateDB })
 
-		const db = new DatabaseSync(candidateDB, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
 
 		try {
 			const manifest = readGazetteerCoverageManifest(db)
@@ -135,7 +136,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 			const us = manifest!.countryBBoxes.get("US")
 			expect([us?.latMin, us?.latMax, us?.lonMin, us?.lonMax]).toEqual([...COUNTRY_BBOX["US"]!])
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -143,7 +144,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 		const candidateDB = await buildFixtureCandidate()
 		await emitCoverageManifest({ dbPath: candidateDB })
 
-		const db = new DatabaseSync(candidateDB, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
 
 		try {
 			const manifest = readGazetteerCoverageManifest(db)!
@@ -159,7 +160,7 @@ describe("emit → read round-trip through a real candidate build", () => {
 			expect(manifest.countryCoverage.has("NZ")).toBe(false)
 			expect(manifest.countryCoverage.has("FI")).not.toBe(manifest.countryCoverage.has("NZ"))
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -183,12 +184,12 @@ describe("emit → read round-trip through a real candidate build", () => {
 	test("a legacy candidate DB (no manifest tables) reads undefined — the constant-fallback signal", async () => {
 		const candidateDB = await buildFixtureCandidate()
 
-		const db = new DatabaseSync(candidateDB, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(candidateDB, { readOnly: true })
 
 		try {
 			expect(readGazetteerCoverageManifest(db)).toBeUndefined()
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 
 		const lookup = new WOFCandidateTableLookup({ databasePath: candidateDB })

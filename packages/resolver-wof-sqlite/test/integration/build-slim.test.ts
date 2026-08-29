@@ -16,7 +16,6 @@
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -116,7 +115,7 @@ describe("buildSlimWOFDatabase", () => {
 			expect(names).not.toContain("Paris")
 			expect(names).not.toContain("Old Town")
 		} finally {
-			slim.destroy()
+			await slim.destroy()
 		}
 	})
 
@@ -157,7 +156,7 @@ describe("buildSlimWOFDatabase", () => {
 			const geojsonExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'geojson'`).get()
 			expect(geojsonExists).toBeUndefined()
 		} finally {
-			slim.destroy()
+			await slim.destroy()
 		}
 	})
 
@@ -178,7 +177,7 @@ describe("buildSlimWOFDatabase", () => {
 			expect(rows[0]?.id).toBe(100) // US country, biggest population
 			expect(rows[0]?.population).toBe(331_000_000)
 		} finally {
-			slim.destroy()
+			await slim.destroy()
 		}
 	})
 
@@ -224,7 +223,7 @@ describe("buildSlimWOFDatabase", () => {
 
 			expect(hit?.wof_id).toBe(200)
 		} finally {
-			slim.destroy()
+			await slim.destroy()
 		}
 	})
 
@@ -253,7 +252,7 @@ describe("buildSlimWOFDatabase", () => {
 
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000)`)
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 202, 'capital-seat', 'region', 6.0, 8000)`)
-		s.destroy()
+		await s.destroy()
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 }) // keeps Springfield, drops Mascoutah
 
@@ -264,7 +263,7 @@ describe("buildSlimWOFDatabase", () => {
 			// Only the surviving pair — Mascoutah's row is dropped because 202 was trimmed from spr.
 			expect(rows).toEqual([{ admin_id: 101, locality_id: 201 }])
 		} finally {
-			slim.destroy()
+			await slim.destroy()
 		}
 	})
 
@@ -275,7 +274,7 @@ describe("buildSlimWOFDatabase", () => {
 		const s = new DatabaseClient<WOFDatabase>(source)
 		s.exec(`INSERT INTO names (id, language, name) VALUES (101, 'abbr', 'IL')`) // Illinois (region) — survives
 		s.exec(`INSERT INTO names (id, language, name) VALUES (202, 'abbr', 'MZ')`) // Mascoutah (locality) — trimmed
-		s.destroy()
+		await s.destroy()
 
 		// top-2 keeps Springfield, drops Mascoutah; dropNames removes the source names table afterward.
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
@@ -289,7 +288,7 @@ describe("buildSlimWOFDatabase", () => {
 			expect(rows).toEqual([{ id: 101, abbr: "IL" }])
 			expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()
 		} finally {
-			slim.destroy()
+			await slim.destroy()
 		}
 	})
 })

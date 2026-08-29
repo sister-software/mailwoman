@@ -8,7 +8,6 @@ import { workspacePath } from "@mailwoman/core/utils"
 import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "@mailwoman/corpus/adapters/tiger/adapter"
 import { readFile, rm } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 import { beforeEach, describe, expect, it } from "vitest"
@@ -29,7 +28,7 @@ async function buildFixtureDB(): Promise<string> {
 	const path = join(scratch.path, "tiger-fixture.db")
 	const db = new DatabaseClient<TIGERDatabase>(path)
 	db.exec(sql)
-	db.destroy()
+	await db.destroy()
 
 	return path
 }
@@ -139,7 +138,7 @@ describe("tiger adapter against fixture.sql", () => {
 			INSERT INTO tiger_streets VALUES ('110099999', 'Border Rd', '10001', '10002', '36');
 		`)
 
-		db.destroy()
+		await db.destroy()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),
@@ -170,7 +169,7 @@ describe("tiger adapter against fixture.sql", () => {
 			INSERT INTO tiger_streets VALUES ('110099998', 'Unnamed Rd', NULL, NULL, '41');
 		`)
 
-		db.destroy()
+		await db.destroy()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),
@@ -197,7 +196,7 @@ describe("tiger adapter against fixture.sql", () => {
 			INSERT INTO tiger_places  VALUES ('9999000', 'Phantomville', '99', '25');
 		`)
 
-		db.destroy()
+		await db.destroy()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),

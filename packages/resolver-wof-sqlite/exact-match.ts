@@ -7,7 +7,7 @@
  *   candidate holds the query text as its own name, an alias, or an official name.
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { aliasBagExactMatch } from "./fts.ts"
 
@@ -18,7 +18,12 @@ import { aliasBagExactMatch } from "./fts.ts"
  * column is the same alias set joined on the boundary-preserving `ALIAS_SEPARATOR` (#523), so `aliasBagExactMatch`
  * recovers the exact alias tier ("New York City" → New York) that the dropped `names` table used to provide.
  */
-export function exactMatchIDs(db: DatabaseSync, schemaName: string, ids: number[], text: string): Set<number> {
+export function exactMatchIDs<DB>(
+	db: DatabaseClient<DB>,
+	schemaName: string,
+	ids: number[],
+	text: string
+): Set<number> {
 	const out = new Set<number>()
 	const trimmed = text.trim()
 
@@ -79,7 +84,12 @@ export function exactMatchIDs(db: DatabaseSync, schemaName: string, ids: number[
  * agree on what "equals the query" means. Fails soft on gazetteers built before #940 (no `official` column) — the
  * sub-tier then behaves exactly as if `officialNameExact` were off.
  */
-export function officialNameIDs(db: DatabaseSync, schemaName: string, ids: number[], text: string): Set<number> {
+export function officialNameIDs<DB>(
+	db: DatabaseClient<DB>,
+	schemaName: string,
+	ids: number[],
+	text: string
+): Set<number> {
 	const out = new Set<number>()
 	const trimmed = text.trim()
 

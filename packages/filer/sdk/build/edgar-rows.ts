@@ -15,8 +15,8 @@
  *   than picking, and why the corroboration must also land in `filer_family`.
  */
 
-import type { StatementSync } from "@mailwoman/platform/sqlite"
 import { canonicalizeOrganizationName } from "@mailwoman/record"
+import type { StatementSync } from "@mailwoman/sqlite/client"
 
 import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "../../schema.ts"
 import { assertISODate } from "../guards.ts"

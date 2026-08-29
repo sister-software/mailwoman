@@ -13,7 +13,6 @@
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
 import {
@@ -29,7 +28,7 @@ let scratch: string
 let candidatePath: string
 
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<PostalCityCandidateDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -50,15 +49,15 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (2, 117000);
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 /**
  * Attach the #741 side-index with one edge: the postal city "Antioch" at 37013 → Nashville (id 1).
  */
 async function attachPostalCityIndex(path: string): Promise<void> {
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<PostalCityCandidateDatabase>(raw)
+	const kdb = new DatabaseClient<PostalCityCandidateDatabase>(path)
+
 	await createPostalCityCandidateTable(kdb)
 
 	await kdb

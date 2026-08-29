@@ -184,7 +184,6 @@
 
 import { existsSync, mkdirSync, renameSync, rmSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 

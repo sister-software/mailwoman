@@ -35,9 +35,10 @@
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
 
@@ -54,7 +55,7 @@ console.log(`### 1. Live gazetteer census (\`${adminPath}\`)\n`)
 if (!existsSync(adminPath)) {
 	console.log(`- admin DB absent — census skipped\n`)
 } else {
-	const db = new DatabaseSync(adminPath, { open: true })
+	const db = new DatabaseClient<WOFDatabase>(adminPath, { open: true })
 
 	// `!` because the OUTER count(*) carries no GROUP BY, so SQLite always returns exactly one row.
 	const saturated = getRow<{ c: number }>(
@@ -94,7 +95,7 @@ if (!existsSync(adminPath)) {
 
 	console.log("")
 
-	db.close()
+	await db.destroy()
 }
 
 //#endregion

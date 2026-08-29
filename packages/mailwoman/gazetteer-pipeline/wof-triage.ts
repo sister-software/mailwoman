@@ -34,7 +34,6 @@
 
 import { existsSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -463,6 +462,6 @@ export async function triageWOFCurrency(opts: TriageOptions): Promise<TriageResu
 
 		return { rows, summary }
 	} finally {
-		db.destroy()
+		await db.destroy()
 	}
 }

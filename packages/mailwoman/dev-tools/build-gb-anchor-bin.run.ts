@@ -39,7 +39,6 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
 import { writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -71,7 +70,7 @@ const rows = con
 	.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
 	.all() as Array<{ name: string; latitude: number; longitude: number }>
 
-con.destroy()
+await con.destroy()
 
 const entries: PostcodeBinaryEntry[] = []
 const outward = new Map<string, { lat: number; lon: number; n: number }>()

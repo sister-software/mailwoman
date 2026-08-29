@@ -39,7 +39,6 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { pyRound } from "@mailwoman/core/utils"
 import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -187,7 +186,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 	assertDatabaseIntegrity(db, output)
 
 	db.exec("VACUUM")
-	db.destroy()
+	await db.destroy()
 
 	// Python prints the dict repr (insertion order rows→containing, single quotes).
 	const summaryRepr =
@@ -293,7 +292,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE country=? AND placetype='postalcode' AND is_current!=0")
 		.all(country!) as Array<{ name: string; latitude: number | null; longitude: number | null }>
 
-	con.destroy()
+	await con.destroy()
 
 	console.log(`  ${postcodes.length} ${country} postcode centroids`)
 
@@ -388,7 +387,7 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		`  wrote ${rows} rows (${nContained}/${postcodes.length} postcodes have a containing locality) → ${output}`
 	)
 
-	db.destroy()
+	await db.destroy()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(output)
 }

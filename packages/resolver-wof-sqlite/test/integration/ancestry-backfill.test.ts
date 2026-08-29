@@ -7,11 +7,12 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	backfillAncestorsFromHierarchy,
 	discoverAdminDataRoots,
 } from "@mailwoman/resolver-wof-sqlite/ancestry-backfill"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: string
@@ -48,7 +49,7 @@ test("discoverAdminDataRoots: missing root yields empty list, never throws", () 
 })
 
 test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-self places, idempotent", async () => {
-	const db = new DatabaseSync(":memory:")
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
@@ -94,11 +95,11 @@ test("backfillAncestorsFromHierarchy: inserts wof:hierarchy ancestors for only-s
 	expect(again.rowsAdded).toBe(0)
 	expect(again.placesFixed).toBe(0)
 
-	db.close()
+	await db.destroy()
 })
 
 test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its parent's dead end (#1445)", async () => {
-	const db = new DatabaseSync(":memory:")
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
@@ -175,11 +176,11 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	const again = await backfillAncestorsFromHierarchy(db, [dataRoot])
 	expect(again.rowsAdded).toBe(0)
 
-	db.close()
+	await db.destroy()
 })
 
 test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bound-variable cap", async () => {
-	const db = new DatabaseSync(":memory:")
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 	// Production always carries ancestors_by_id (unified-schema.ts) and the freeze runs its index phase
@@ -208,11 +209,11 @@ test("backfillAncestorsFromHierarchy: survives more candidates than SQLite's bou
 	expect(result.rowsAdded).toBe(0)
 	expect(result.noGeojson).toBe(33_000)
 
-	db.close()
+	await db.destroy()
 })
 
 test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stops short alone", async () => {
-	const db = new DatabaseSync(":memory:")
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, placetype TEXT)")
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
@@ -231,5 +232,5 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	expect(result.rowsAdded).toBe(0)
 	expect(result.noGeojson).toBe(0)
 
-	db.close()
+	await db.destroy()
 })

@@ -28,7 +28,7 @@ import type { BDCDatabase, PlausibilityDeps } from "@mailwoman/bdc"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import type { FilerDatabase } from "@mailwoman/filer"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
@@ -55,11 +55,11 @@ export async function openPlausibilityPOIDeps(databasePath: string | undefined):
 	if (!databasePath || !existsSync(databasePath)) return undefined
 
 	const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi-lookup")
-	const database = new DatabaseSync(databasePath, { readOnly: true })
+	const database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })
 
 	return {
 		lookup: new POILookup({ database }),
-		contractDB: new DatabaseClient<LayerContractDatabase>(database),
+		contractDB: database,
 	}
 }
 

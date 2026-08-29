@@ -51,12 +51,13 @@ import { resolveWeights } from "@mailwoman/neural/weights"
 import { readFileSync, realpathSync, writeFileSync } from "@mailwoman/platform/fs"
 import { createRequire } from "@mailwoman/platform/module"
 import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { geocodeAddress } from "mailwoman/geocode-core"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
@@ -68,10 +69,14 @@ const HERE = dirname(fileURLToPath(import.meta.url))
  */
 const LOCALE = "fr-FR"
 
-/** The committed draw seed. Changing it changes the panel, so it is a constant and not a flag. */
+/**
+ * The committed draw seed. Changing it changes the panel, so it is a constant and not a flag.
+ */
 const SEED = 20_260_804
 
-/** Rows in the panel. */
+/**
+ * Rows in the panel.
+ */
 const PANEL_SIZE = 100
 
 /**
@@ -80,7 +85,9 @@ const PANEL_SIZE = 100
  */
 const DRAW_SIZE = 1200
 
-/** Rows averaged to place a postcode's centroid. Capped so a dense postcode does not dominate the run. */
+/**
+ * Rows averaged to place a postcode's centroid. Capped so a dense postcode does not dominate the run.
+ */
 const CENTROID_SAMPLE = 2000
 
 /**
@@ -116,10 +123,53 @@ if (!dataRoot) {
 
 	// oxlint-disable-next-line sister-software/no-process-globals -- shipped doc asset
 	process.exit(1)
+
+	// `process.exit` is typed `never`, but only when the checker can see this branch ends. Throwing states it.
+	throw new Error("unreachable")
 }
 
-const banPath = join(dataRoot, "ban", "address-points-fr.db")
-const candidatePath = join(dataRoot, "wof", "candidate.db")
+/**
+ * The checked data root. Module-level narrowing does not reach into a function body, so the guard's result is bound
+ * once here rather than re-asserted at every use.
+ */
+const DATA_ROOT: string = dataRoot
+
+const banPath = join(DATA_ROOT, "ban", "address-points-fr.db")
+const candidatePath = join(DATA_ROOT, "wof", "candidate.db")
+
+/**
+ * The committed sample file: the draw's provenance plus the rows it produced.
+ */
+interface PanelFile {
+	source: string
+	generated: string
+	seed: number
+	release: string | null
+	rows: PanelRow[]
+}
+
+/**
+ * A panel row as the committed sample file carries it.
+ */
+interface PanelRow {
+	number: string
+	street: string
+	postcode: string
+	locality: string
+	lat: number
+	lon: number
+	postcodeCentroid: { lat: number; lon: number; n: number }
+}
+
+/**
+ * One graded answer. `km` is null when the pipeline returned no coordinate, which is a different reading from a
+ * coordinate that landed far away — {@link summarize} keeps the two apart.
+ */
+interface GradedRecord {
+	km: number | null
+	tier?: string | null
+	routed?: boolean
+}
 
 //#region Address rendering
 
@@ -128,17 +178,24 @@ const candidatePath = join(dataRoot, "wof", "candidate.db")
  * `orleans` renders as `Orleans` and never as `Orléans`. That loss is real and the published page carries it as a
  * caveat: every panel row asks the pipeline for an unaccented commune.
  */
-function titleCase(norm) {
-	return norm.replaceAll(/(^|[\s'’-])(\p{L})/gu, (_, lead, letter) => lead + letter.toUpperCase())
+function titleCase(norm: string): string {
+	return norm.replaceAll(
+		/(^|[\s'’-])(\p{L})/gu,
+		(_: string, lead: string, letter: string) => lead + letter.toUpperCase()
+	)
 }
 
-/** The canonical French order: house number, street, postcode, commune. */
-function cleanForm(row) {
+/**
+ * The canonical French order: house number, street, postcode, commune.
+ */
+function cleanForm(row: PanelRow): string {
 	return `${row.number} ${row.street}, ${row.postcode} ${titleCase(row.locality)}`
 }
 
-/** The robustness arm: the same tokens with the postcode and commune moved to the front. */
-function reorderedForm(row) {
+/**
+ * The robustness arm: the same tokens with the postcode and commune moved to the front.
+ */
+function reorderedForm(row: PanelRow): string {
 	return `${row.postcode} ${titleCase(row.locality)}, ${row.number} ${row.street}`
 }
 
@@ -146,12 +203,14 @@ function reorderedForm(row) {
 
 //#region Resample
 
-function resample() {
-	const db = new DatabaseSync(banPath, { readOnly: true })
+async function resample(): Promise<void> {
+	const db = new DatabaseClient<AddressPointDatabase>(banPath, { readOnly: true })
 
 	try {
-		const { m: maxRowid } = db.prepare("SELECT max(rowid) m FROM address_point").get()
-		const release = db.prepare("SELECT release FROM address_point LIMIT 1").get().release
+		const { m: maxRowid } = db.prepare("SELECT max(rowid) m FROM address_point").get() as { m: number }
+
+		const release = (db.prepare("SELECT release FROM address_point LIMIT 1").get() as { release: string | null })
+			.release
 
 		const rowStatement = db.prepare(
 			"SELECT number, street_raw, postcode, locality_norm, lat, lon FROM address_point WHERE rowid = ?"
@@ -177,7 +236,7 @@ function resample() {
 
 			seenPostcode.add(hit.postcode)
 
-			const points = centroidStatement.all(hit.postcode)
+			const points = centroidStatement.all(hit.postcode) as Array<{ lat: number; lon: number }>
 
 			const centroid = {
 				lat: points.reduce((sum, p) => sum + p.lat, 0) / points.length,
@@ -211,7 +270,7 @@ function resample() {
 
 		console.error(`fr-ban-panel: wrote ${rows.length} rows to ${flags.sample} (BAN release ${release}).`)
 	} finally {
-		db.close()
+		await db.destroy()
 	}
 }
 
@@ -233,10 +292,15 @@ function resample() {
 function versionStamp() {
 	const require = createRequire(import.meta.url)
 	const resolved = resolveWeights({ locale: LOCALE })
-	const card = parseJSONStrict(readFileSync(resolved.modelCardPath, "utf8"))
+
+	// `resolveWeights` answers `undefined` when the bundle ships no card. The stamp is the point of this function, so a
+	// missing card is a failure to report rather than a field to omit.
+	if (!resolved.modelCardPath) throw new Error("fr-ban-panel: the resolved weights bundle carries no model card.")
+
+	const card = parseJSONStrict<{ name: string; version: string }>(readFileSync(resolved.modelCardPath, "utf8"))
 
 	return {
-		mailwoman: require("mailwoman/package.json").version,
+		mailwoman: (require("mailwoman/package.json") as { version: string }).version,
 		model: basename(realpathSync(resolved.modelPath)),
 		modelCard: `${card.name}@${card.version}`,
 		gazetteer: basename(realpathSync(candidatePath)),
@@ -248,14 +312,14 @@ function versionStamp() {
 
 //#region Grading
 
-function summarize(records) {
-	const distances = records.filter((r) => r.km !== null).map((r) => r.km)
-	const within = (km) => records.filter((r) => r.km !== null && r.km <= km).length
+function summarize(records: GradedRecord[]) {
+	const distances = records.flatMap((r) => (r.km === null ? [] : [r.km]))
+	const within = (km: number): number => records.filter((r) => r.km !== null && r.km <= km).length
 	// Bucketed on the tier that ANSWERED, which is `none` for a row that returned no coordinate:
 	// `resolution_tier` reports where the cascade ended, not whether it produced anything, so it still
 	// reads "admin" on a row that answered nothing. Every row on this panel resolved, so the two
 	// bucketings agree here — the guard is in place so they cannot silently disagree on a future run.
-	const tiers = {}
+	const tiers: Record<string, number> = {}
 
 	for (const record of records) {
 		const bucket = record.km === null ? "none" : (record.tier ?? "none")
@@ -271,8 +335,8 @@ function summarize(records) {
 		within25km: within(25),
 		exactRow: records.filter((r) => r.km !== null && r.km <= EXACT_ROW_KM).length,
 		routedToPostcodeArea: records.filter((r) => r.routed).length,
-		medianKm: distances.length ? Number(median(distances).toFixed(4)) : null,
-		p90Km: distances.length ? Number(percentile(distances, 90).toFixed(4)) : null,
+		medianKm: distances.length ? Number((median(distances) ?? 0).toFixed(4)) : null,
+		p90Km: distances.length ? Number((percentile(distances, 90) ?? 0).toFixed(4)) : null,
 		maxKm: distances.length ? Number(Math.max(...distances).toFixed(4)) : null,
 		tiers,
 	}
@@ -281,16 +345,16 @@ function summarize(records) {
 //#endregion
 
 async function run() {
-	const panel = parseJSONStrict(readFileSync(flags.sample, "utf8"))
+	const panel = parseJSONStrict<PanelFile>(readFileSync(flags.sample, "utf8"))
 	const rows = flags.limit ? panel.rows.slice(0, Number(flags.limit)) : panel.rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
 	const lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 	const resolver = createWOFResolver(lookup)
-	const banShards = new BANShardProvider(dataRoot)
+	const banShards = new BANShardProvider(DATA_ROOT)
 
-	const arms = { clean: cleanForm, reordered: reorderedForm }
-	const results = {}
+	const arms: Record<string, (row: PanelRow) => string> = { clean: cleanForm, reordered: reorderedForm }
+	const results: Record<string, { summary: ReturnType<typeof summarize>; records: GradedRecord[] }> = {}
 	const startedAt = Date.now()
 
 	try {
@@ -322,12 +386,15 @@ async function run() {
 					continue
 				}
 
-				const hasCoordinate = typeof result.lat === "number" && typeof result.lon === "number"
-				const km = hasCoordinate ? haversineKm(result.lat, result.lon, row.lat, row.lon) : null
+				// Capture the coordinates, not the object: narrowing `result` does not narrow `result.lat`.
+				const answer =
+					typeof result.lat === "number" && typeof result.lon === "number" ? { lat: result.lat, lon: result.lon } : null
+
+				const km = answer ? haversineKm(answer.lat, answer.lon, row.lat, row.lon) : null
 
 				const routed =
-					hasCoordinate &&
-					haversineKm(result.lat, result.lon, row.postcodeCentroid.lat, row.postcodeCentroid.lon) <= ROUTING_KM
+					answer !== null &&
+					haversineKm(answer.lat, answer.lon, row.postcodeCentroid.lat, row.postcodeCentroid.lon) <= ROUTING_KM
 
 				records.push({
 					input,
@@ -389,8 +456,4 @@ async function run() {
 	console.log(`wrote ${resolve(flags.out)}`)
 }
 
-if (flags.resample) {
-	resample()
-} else {
-	await run()
-}
+await (flags.resample ? resample() : run())

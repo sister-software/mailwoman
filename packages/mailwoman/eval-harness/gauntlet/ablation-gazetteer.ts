@@ -24,9 +24,11 @@
 
 import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync, type StatementSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { StatementSync } from "@mailwoman/sqlite/client"
 
 import {
 	type AblationGazetteerProbe,
@@ -129,8 +131,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 */
 	readonly unavailableReason: string | null
 
-	#ancestry: DatabaseSync | null = null
-	#candidates: DatabaseSync | null = null
+	#ancestry: DatabaseClient<WOFDatabase> | null = null
+	#candidates: DatabaseClient<WOFDatabase> | null = null
 	#placeStatement: StatementSync | null = null
 	#lineageStatement: StatementSync | null = null
 	#namedStatement: StatementSync | null = null
@@ -174,8 +176,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 			return
 		}
 
-		this.#ancestry = new DatabaseSync(ancestryPath, { readOnly: true })
-		this.#candidates = new DatabaseSync(candidatePath, { readOnly: true })
+		this.#ancestry = new DatabaseClient<WOFDatabase>(ancestryPath, { readOnly: true })
+		this.#candidates = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
 		this.#placeStatement = this.#ancestry.prepare(
 			`SELECT id, name, placetype, country, latitude, longitude,
@@ -342,8 +344,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	}
 
 	close(): void {
-		this.#ancestry?.close()
-		this.#candidates?.close()
+		this.#ancestry?.destroy()
+		this.#candidates?.destroy()
 		this.#ancestry = null
 		this.#candidates = null
 	}

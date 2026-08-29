@@ -11,9 +11,10 @@
 import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { foldStreetSurface } from "@mailwoman/resolver"
+import type { StreetCentroidDatabase } from "@mailwoman/resolver-wof-sqlite/street-centroid-schema"
 import { SQLiteStreetNameLookup } from "@mailwoman/resolver-wof-sqlite/street-name-lookup"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 let dir: string
@@ -23,7 +24,7 @@ let emptyPath: string
 beforeAll(() => {
 	dir = mkdtempSync(join(tmpdir(), "mw-street-name-"))
 	dbPath = join(dir, "street-centroids-fr.db")
-	const seed = new DatabaseSync(dbPath)
+	const seed = new DatabaseClient<StreetCentroidDatabase>(dbPath)
 
 	// The real shard shape: the geocoding `street_norm` PLUS the #727 phase-4c `name_key` (contract fold). The reader must
 	// prefer `name_key`; each row carries a DELIBERATELY WRONG street_norm, so a passing lookup proves it read name_key.
@@ -46,12 +47,12 @@ beforeAll(() => {
 		ins.run("ZZ-wrong-street-norm", pc, foldStreetSurface(loc), foldStreetSurface(raw))
 	}
 
-	seed.close()
+	seed.destroy()
 
 	emptyPath = join(dir, "empty.db")
-	const empty = new DatabaseSync(emptyPath)
+	const empty = new DatabaseClient<StreetCentroidDatabase>(emptyPath)
 	empty.exec("CREATE TABLE unrelated (x)")
-	empty.close()
+	empty.destroy()
 })
 
 afterAll(() => rmSync(dir, { recursive: true, force: true }))
@@ -105,14 +106,14 @@ describe("SQLiteStreetNameLookup", () => {
 
 	test("legacy shard (no name_key column) falls back to street_norm", () => {
 		const legacyPath = join(dir, "legacy.db")
-		const legacy = new DatabaseSync(legacyPath)
+		const legacy = new DatabaseClient<StreetCentroidDatabase>(legacyPath)
 		legacy.exec("CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL)")
 
 		legacy
 			.prepare("INSERT INTO street_centroid (street_norm, postcode, locality_base) VALUES (?, ?, ?)")
 			.run(foldStreetSurface("Rue Corsier"), "75001", foldStreetSurface("Paris"))
 
-		legacy.close()
+		legacy.destroy()
 		const lk = new SQLiteStreetNameLookup(legacyPath)
 		expect(lk.hasStreetName("Rue Corsier")).toBe(true)
 		expect(lk.hasStreetName("Rue Nonexistent")).toBe(false)

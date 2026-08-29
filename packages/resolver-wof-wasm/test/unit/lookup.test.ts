@@ -12,7 +12,6 @@
 import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"

@@ -13,8 +13,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ingestWOF } from "mailwoman/gazetteer-pipeline/admin/ingest-wof"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -64,7 +65,7 @@ afterAll(() => {
 
 describe("ingestWOF centroids (#1726)", () => {
 	it("stores the label centroid when present, the math centroid otherwise, and never a mix", async () => {
-		const db = new DatabaseSync(":memory:")
+		const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 		await createUnifiedSchema(db)
 		await ingestWOF(db, { dataDir: ROOT })
@@ -81,7 +82,7 @@ describe("ingestWOF centroids (#1726)", () => {
 			{ id: 3, latitude: 30, longitude: 40 },
 		])
 
-		db.close()
+		await db.destroy()
 	})
 })
 
@@ -105,7 +106,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 			})
 		)
 
-		const db = new DatabaseSync(":memory:")
+		const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 		await createUnifiedSchema(db)
 
@@ -123,12 +124,12 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 		expect(row).toEqual({ latitude: 38.904831, longitude: -77.016216 })
 		expect(result.labelPointOverrides).toBe(1)
 
-		db.close()
+		await db.destroy()
 		rmSync(root, { recursive: true, force: true })
 	})
 
 	it("without a lookup the label preference is unchanged and the override count is a measured zero", async () => {
-		const db = new DatabaseSync(":memory:")
+		const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 		await createUnifiedSchema(db)
 
@@ -136,7 +137,7 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 
 		expect(result.labelPointOverrides).toBe(0)
 
-		db.close()
+		await db.destroy()
 	})
 })
 
@@ -162,7 +163,7 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 			})
 		)
 
-		const db = new DatabaseSync(":memory:")
+		const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 		await createUnifiedSchema(db)
 
@@ -179,7 +180,7 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 		expect(row).toEqual({ latitude: 31.030974, longitude: -98.326329 })
 		expect(result.labelPointOverrides).toBe(0)
 
-		db.close()
+		await db.destroy()
 		rmSync(root, { recursive: true, force: true })
 	})
 })

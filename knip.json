@@ -52,7 +52,7 @@
 				"plugins/**/*.ts",
 				"scripts/**/*.{ts,mts}",
 				"src/**/*.{js,ts,tsx}",
-				"static/**/*.{js,mjs}"
+				"static/**/*.{js,mjs,ts}"
 			]
 		}
 	}

@@ -144,7 +144,7 @@ export async function* readZipEntry(
 			try {
 				yield* contents
 			} finally {
-				contents.destroy()
+				await contents.destroy()
 			}
 
 			return

@@ -13,7 +13,9 @@
 import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildPostcodePrefixIndex } from "mailwoman/gazetteer-pipeline/postcode-prefix"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -52,7 +54,7 @@ beforeAll(() => {
 	const adminPath = join(dir, "admin.db")
 	const polygonPath = join(dir, "polygons.db")
 
-	const source = new DatabaseSync(sourcePath)
+	const source = new DatabaseClient<WOFDatabase>(sourcePath)
 
 	// Deliberately NO `meta` table — the real shard has none, and the coordinate-tier rule must not read a declaration
 	// out of its absence.
@@ -81,9 +83,9 @@ beforeAll(() => {
 			(11, 'Lea County-Zip Franklin Memorial Airport', 'postalcode', 1.0, 0.5);
 	`)
 
-	source.close()
+	source.destroy()
 
-	const admin = new DatabaseSync(adminPath)
+	const admin = new DatabaseClient<WOFDatabase>(adminPath)
 
 	admin.exec(`
 		CREATE TABLE spr (
@@ -96,9 +98,9 @@ beforeAll(() => {
 			(${BETA_ID}, 'Beta', 'region', 'US', 1);
 	`)
 
-	admin.close()
+	admin.destroy()
 
-	const polygons = new DatabaseSync(polygonPath)
+	const polygons = new DatabaseClient<PolygonDatabase>(polygonPath)
 
 	polygons.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT)`)
 
@@ -106,7 +108,7 @@ beforeAll(() => {
 
 	insert.run(ALPHA_ID, square(0))
 	insert.run(BETA_ID, square(2))
-	polygons.close()
+	polygons.destroy()
 
 	built = buildPostcodePrefixIndex({ sourcePath, adminPath, polygonPath, country: "us", level: "3" })
 })

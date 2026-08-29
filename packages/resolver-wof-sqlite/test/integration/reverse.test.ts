@@ -17,9 +17,10 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/reverse"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { geometryContains, pointInPolygonRings, pointInRing, type GeojsonPosition } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 const square = (minX: number, minY: number, maxX: number, maxY: number): GeojsonPosition[] => [
@@ -70,8 +71,8 @@ describe("point-in-polygon primitives", () => {
  * bbox-false-positive case) ⊃ localadmin town (4, point geometry, centroid near the query point) ⊃ locality village (5,
  * point geometry, degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
  */
-function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
-	const admin = new DatabaseSync(":memory:")
+function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: DatabaseClient<WOFDatabase> } {
+	const admin = new DatabaseClient<WOFDatabase>(":memory:")
 
 	admin.exec(`
 		CREATE TABLE spr (
@@ -109,7 +110,7 @@ function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
 		INSERT INTO place_bbox VALUES (6, 43.85, 44.25, -72.45, -71.85);
 	`)
 
-	const polygons = new DatabaseSync(":memory:")
+	const polygons = new DatabaseClient<WOFDatabase>(":memory:")
 	polygons.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL);`)
 	const insert = polygons.prepare(`INSERT INTO polygons (id, geom) VALUES (?, ?)`)
 	// Region polygon: the whole fixture area.

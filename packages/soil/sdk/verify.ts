@@ -33,7 +33,6 @@
  *   reason the index exists.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	decodeRings,
 	interiorPointOfEncodedRings,
@@ -194,7 +193,7 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 		}
 	} finally {
 		lookup.close()
-		database.destroy()
+		await database.destroy()
 	}
 }
 

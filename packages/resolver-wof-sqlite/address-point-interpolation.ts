@@ -33,10 +33,11 @@
  *   Standalone like the segment tier — core wiring rides the Phase 2 ordered `spatialTiers` list.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { InterpolationLookup } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { AddressPointDatabase } from "./address-point-schema.ts"
 import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "./interpolation.ts"
 import { hasTable, prepareAll, type PreparedAll } from "./sqlite-utils.ts"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "./street-normalize.ts"
@@ -66,18 +67,20 @@ interface NumberAnchor {
 	release: string
 }
 
-export class AddressPointInterpolator implements InterpolationLookup {
-	readonly #db: DatabaseSync
+export class AddressPointInterpolator<
+	DB extends AddressPointDatabase = AddressPointDatabase,
+> implements InterpolationLookup {
+	readonly #db: DatabaseClient<DB>
 	readonly #ownsDB: boolean
 	readonly #fallback: StreetInterpolator | undefined
 	readonly #byPostcode: PreparedAll<[postcode: string, street: RouteKey, number: number], PointRow> | undefined
 
-	constructor(opts: { dbPath?: string; database?: DatabaseSync; fallback?: StreetInterpolator }) {
+	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB>; fallback?: StreetInterpolator }) {
 		if (opts.database) {
 			this.#db = opts.database
 			this.#ownsDB = false
 		} else if (opts.dbPath) {
-			this.#db = new DatabaseSync(opts.dbPath, { readOnly: true })
+			this.#db = new DatabaseClient<DB>(opts.dbPath, { readOnly: true })
 			this.#ownsDB = true
 		} else {
 			throw new Error("AddressPointInterpolator: one of dbPath or database is required")
@@ -128,7 +131,7 @@ export class AddressPointInterpolator implements InterpolationLookup {
 
 	close(): void {
 		if (this.#ownsDB) {
-			this.#db.close()
+			this.#db.destroy()
 		}
 	}
 }

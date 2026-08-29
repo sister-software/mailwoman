@@ -20,7 +20,6 @@ import {
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	createPOISearchFTS,
 	createPOIStagingTables,
@@ -48,7 +47,7 @@ async function emptySqliteFile(name: string): Promise<string> {
 	scratch = await mkdtemp(join(tmpdir(), "mcp-layer-guards-"))
 	const path = join(scratch, name)
 
-	new DatabaseSync(path).close()
+	new DatabaseClient<POIDatabase>(path).destroy()
 
 	return path
 }
@@ -62,13 +61,12 @@ async function emptySqliteFile(name: string): Promise<string> {
 async function poiFixtureFile(name: string): Promise<string> {
 	scratch = await mkdtemp(join(tmpdir(), "mcp-layer-guards-"))
 	const path = join(scratch, name)
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>(raw)
+	const kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// Also creates `poi_category_codes`, per `poi-schema.ts`'s naming.
 	await createPOIStagingTables(kdb)
-	createPOISearchFTS(raw)
+	createPOISearchFTS(kdb)
 
 	await kdb.destroy()
 

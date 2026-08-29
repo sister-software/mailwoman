@@ -56,6 +56,11 @@
 			"node": "./sealed-db.ts",
 			"default": "./out/sealed-db.js",
 			"types": "./out/sealed-db.d.ts"
+		},
+		"./database-schema": {
+			"node": "./database-schema.ts",
+			"default": "./out/database-schema.js",
+			"types": "./out/database-schema.d.ts"
 		}
 	},
 	"publishConfig": {

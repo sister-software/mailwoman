@@ -26,7 +26,6 @@
  */
 
 import { percentile } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

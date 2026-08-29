@@ -16,8 +16,9 @@
 import { dataRootPath } from "@mailwoman/core/utils"
 import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFCandidateTableLookup as NodeCandidateLookup } from "@mailwoman/resolver-wof-sqlite"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 
 const CANDIDATE_DB = dataRootPath("wof", "candidate.db")
@@ -27,7 +28,7 @@ const present = existsSync(CANDIDATE_DB)
  * The minimal httpvfs worker handle over node:sqlite (async exec, sql.js result shape) — the same stub
  * `httpvfs-resolver.test.ts` uses, pointed at the real artifact.
  */
-function stubWorker(db: DatabaseSync) {
+function stubWorker(db: DatabaseClient<CandidateDatabase>) {
 	return {
 		db: {
 			async exec(sql: string) {
@@ -62,12 +63,12 @@ const PANEL = [
 ] as const
 
 describe.skipIf(!present)("Node↔browser candidate parity over the real artifact", () => {
-	const raw = present ? new DatabaseSync(CANDIDATE_DB, { readOnly: true }) : undefined
+	const raw = present ? new DatabaseClient<CandidateDatabase>(CANDIDATE_DB, { readOnly: true }) : undefined
 	const node = present ? new NodeCandidateLookup({ databasePath: CANDIDATE_DB }) : undefined
 	const browser = raw ? new BrowserCandidateLookup(stubWorker(raw) as never) : undefined
 
 	afterAll(() => {
-		raw?.close()
+		raw?.destroy()
 		node?.close?.()
 	})
 

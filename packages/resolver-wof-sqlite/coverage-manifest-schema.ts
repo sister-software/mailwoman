@@ -29,7 +29,7 @@ import {
 	type CountryCoverageFact,
 	type GazetteerArtifactCoverage,
 } from "@mailwoman/core/resolver"
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql, type Kysely } from "kysely"
 
 import { allRows, hasTable } from "./sqlite-utils.ts"
@@ -184,7 +184,7 @@ export async function writeGazetteerCoverageManifest(
  * purpose: this runs inside {@link WOFCandidateTableLookup}'s synchronous constructor (the sync-reader carve-out in
  * `AGENTS.md`), and the tables are a few dozen rows read once per open.
  */
-export function readGazetteerCoverageManifest(db: DatabaseSync): GazetteerArtifactCoverage | undefined {
+export function readGazetteerCoverageManifest<DB>(db: DatabaseClient<DB>): GazetteerArtifactCoverage | undefined {
 	const hasCoverage = hasTable(db, COUNTRY_COVERAGE_TABLE)
 	const hasBBox = hasTable(db, COUNTRY_BBOX_TABLE)
 

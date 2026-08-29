@@ -40,7 +40,7 @@ const dependencies = {
 			prepare: () => ({
 				all: (key: unknown) => (HOLDINGS[String(key)] ?? []).map((placetype) => ({ placetype })),
 			}),
-			close: () => {},
+			destroy: () => {},
 		},
 	}),
 }

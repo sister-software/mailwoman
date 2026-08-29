@@ -59,9 +59,16 @@ interface ConstraintMiss {
 	had_candidates: boolean
 }
 
+/**
+ * What the census reader needs of a connection it is handed: one prepared read, and a way to end it.
+ *
+ * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is injectable — the tests supply a fake
+ * that answers fixed rows without opening a file. `destroy` rather than `close` is what a `DatabaseClient` offers, so
+ * the real opener satisfies this without an adapter.
+ */
 interface CensusDatabase {
 	prepare(sql: string): { all(nameKey: string): Array<Record<string, unknown>> }
-	close(): void
+	destroy(): void | Promise<void>
 }
 
 type OpenCensusArtifact = (path: string | undefined) => { db: CensusDatabase } | { unavailable: string }
@@ -234,7 +241,7 @@ export async function runConstraintCensus(
 			}
 		}
 	} finally {
-		db.close()
+		await db.destroy()
 	}
 
 	const reachability = misses.filter((m) => m.elsewhere.length)

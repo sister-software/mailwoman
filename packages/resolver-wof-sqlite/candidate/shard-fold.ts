@@ -5,8 +5,10 @@
  * @file Pass 4 of the candidate build — fold a postcode or locality shard into the staging table.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { CandidateDatabase } from "../candidate-schema.ts"
+import type { WOFDatabase } from "../schema.ts"
 import { normalizeLocalityForKey } from "../street-normalize.ts"
 import type { PlaceAttrs, StageRow } from "./place-attrs.ts"
 
@@ -21,7 +23,7 @@ export function foldShard(ctx: {
 	/**
 	 * The staging connection. The shard itself is opened read-only here and closed before returning.
 	 */
-	out: DatabaseSync
+	out: DatabaseClient<CandidateDatabase>
 	shardPath: string
 	shardPlacetype: "postalcode" | "locality"
 	ccID: (code: string | null) => number
@@ -33,7 +35,7 @@ export function foldShard(ctx: {
 
 	progress(shardPlacetype === "postalcode" ? "postcodes" : "localities", `reading ${shardPath}`)
 
-	const pc = new DatabaseSync(shardPath, { readOnly: true })
+	const pc = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 	const pcPtid = ptID(shardPlacetype)
 	// Per-shard, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
 	// below has nothing to join against unless this primary loop records what it staged.
@@ -131,7 +133,7 @@ export function foldShard(ctx: {
 		progress("postcode-aliases", `${shardPath} has no \`names\` table — no delivery-city aliases to fold`)
 	}
 
-	pc.close()
+	pc.destroy()
 
 	return { primaries, aliases }
 }

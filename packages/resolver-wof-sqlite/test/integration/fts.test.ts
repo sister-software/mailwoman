@@ -7,7 +7,6 @@
  *   `mailwoman gazetteer build fts` CLI.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	ALIAS_SEPARATOR,
 	aliasBagExactMatch,
@@ -15,10 +14,12 @@ import {
 	PLACE_SEARCH_TABLE,
 	placeSearchFTSExists,
 } from "@mailwoman/resolver-wof-sqlite/fts"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
-function buildBaseSchema(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildBaseSchema(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	// Mirror the real WOF SQLite schema subset that fts.ts queries. Includes the bbox columns
 	// (min_latitude/max_latitude/min_longitude/max_longitude) the R*Tree builder reads.
@@ -66,7 +67,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(result.durationMs).toBeGreaterThanOrEqual(0)
 		expect(placeSearchFTSExists(db)).toBe(true)
 
-		db.close()
+		db.destroy()
 	})
 
 	test("is a no-op when the table already exists and drop is false", () => {
@@ -77,7 +78,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(result.created).toBe(false)
 		expect(result.indexedRows).toBe(3)
 
-		db.close()
+		db.destroy()
 	})
 
 	test("rebuilds when drop is true", () => {
@@ -95,7 +96,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(result.created).toBe(true)
 		expect(result.indexedRows).toBe(4)
 
-		db.close()
+		db.destroy()
 	})
 
 	test("concatenates alt_names from the names table into the FTS document", () => {
@@ -111,7 +112,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(row.alt_names).toContain("パリ")
 		expect(row.alt_names).toContain("París")
 
-		db.close()
+		db.destroy()
 	})
 
 	test("joins aliases with the boundary-preserving ALIAS_SEPARATOR token (#523)", () => {
@@ -126,7 +127,7 @@ describe("buildPlaceSearchFTS", () => {
 		// the trailing format marker that distinguishes new bags from legacy single-alias ones.
 		expect(row.alt_names).toBe(`パリ ${ALIAS_SEPARATOR} París ${ALIAS_SEPARATOR}`)
 
-		db.close()
+		db.destroy()
 	})
 
 	test("a phrase query cannot match ACROSS two aliases' concatenation boundary (#523)", () => {
@@ -155,7 +156,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(match('"york"')).toEqual([5]) // each alias is still individually matchable
 		expect(match('"new city"')).toEqual([5])
 
-		db.close()
+		db.destroy()
 	})
 
 	test("strips an embedded U+E000 from source names so a poisoned row can't forge an alias boundary (#523)", () => {
@@ -177,7 +178,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(aliasBagExactMatch(row.alt_names, "evil", false)).toBe(false) // fragment ≠ exact
 		expect(aliasBagExactMatch(row.alt_names, "evil name", false)).toBe(true) // the whole alias is
 
-		db.close()
+		db.destroy()
 	})
 
 	test("MATCH query works against the built index", () => {
@@ -198,7 +199,7 @@ describe("buildPlaceSearchFTS", () => {
 		expect(altRows).toHaveLength(1)
 		expect(altRows[0]?.wof_id).toBe(1)
 
-		db.close()
+		db.destroy()
 	})
 
 	test("invokes onProgress for each phase on a fresh build", () => {
@@ -206,7 +207,7 @@ describe("buildPlaceSearchFTS", () => {
 		const phases: string[] = []
 		buildPlaceSearchFTS(db, { onProgress: (phase) => phases.push(phase) })
 		expect(phases).toEqual(["checking", "creating", "populating", "creating-bbox", "populating-bbox", "done"])
-		db.close()
+		db.destroy()
 	})
 
 	test("invokes onProgress with the dropping phase when --drop is used (twice — once per index)", () => {
@@ -226,7 +227,7 @@ describe("buildPlaceSearchFTS", () => {
 			"done",
 		])
 
-		db.close()
+		db.destroy()
 	})
 
 	test("onProgress receives a detail string for the done phase", () => {
@@ -243,7 +244,7 @@ describe("buildPlaceSearchFTS", () => {
 
 		expect(doneDetail).toMatch(/3 FTS rows/)
 		expect(doneDetail).toMatch(/3 bbox rows/)
-		db.close()
+		db.destroy()
 	})
 
 	test("populates the R*Tree bbox table from spr.min_*/max_* columns", () => {
@@ -256,7 +257,7 @@ describe("buildPlaceSearchFTS", () => {
 			.all(48.85, 48.85, 2.34, 2.34) as { id: number }[]
 
 		expect(hits.map((h) => h.id)).toContain(1)
-		db.close()
+		db.destroy()
 	})
 
 	test("indexes places with is_current = 1 (legacy Mapzen-era) as well as is_current = -1 (modern); see #91", () => {
@@ -291,7 +292,7 @@ describe("buildPlaceSearchFTS", () => {
 		}[]
 
 		expect(bboxHit.map((h) => h.id)).toContain(1000)
-		db.close()
+		db.destroy()
 	})
 
 	test("excludes is_current = 0 places (no-longer-current); see #91", () => {
@@ -315,7 +316,7 @@ describe("buildPlaceSearchFTS", () => {
 			| undefined
 
 		expect(hit).toBeUndefined()
-		db.close()
+		db.destroy()
 	})
 })
 
@@ -352,13 +353,13 @@ describe("placeSearchFTSExists", () => {
 	test("returns false when the table is absent", () => {
 		const db = buildBaseSchema()
 		expect(placeSearchFTSExists(db)).toBe(false)
-		db.close()
+		db.destroy()
 	})
 
 	test("returns true once the table is built", () => {
 		const db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 		expect(placeSearchFTSExists(db)).toBe(true)
-		db.close()
+		db.destroy()
 	})
 })

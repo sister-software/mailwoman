@@ -11,13 +11,14 @@
  */
 
 import { WOFCandidateTableLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, test } from "vitest"
 
 /**
  * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
  */
-function stubWorker(db: DatabaseSync) {
+function stubWorker(db: DatabaseClient<CandidateDatabase>) {
 	return {
 		db: {
 			async exec(sql: string) {
@@ -33,10 +34,10 @@ function stubWorker(db: DatabaseSync) {
 	}
 }
 
-const openDatabases: DatabaseSync[] = []
+const openDatabases: DatabaseClient<CandidateDatabase>[] = []
 
-function makeDB(withSideIndex: boolean): DatabaseSync {
-	const d = new DatabaseSync(":memory:")
+function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
+	const d = new DatabaseClient<CandidateDatabase>(":memory:")
 
 	d.exec(`
 		CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT);
@@ -71,7 +72,7 @@ function makeDB(withSideIndex: boolean): DatabaseSync {
 
 afterEach(() => {
 	while (openDatabases.length) {
-		openDatabases.pop()!.close()
+		openDatabases.pop()!.destroy()
 	}
 })
 

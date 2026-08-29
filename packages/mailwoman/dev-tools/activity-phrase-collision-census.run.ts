@@ -19,9 +19,10 @@
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { writeFileSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import {
 	type CensusVenue,
@@ -33,7 +34,7 @@ import { createPOINameLookup } from "../poi-intent.ts"
 const { values } = parseArgs({ options: { db: { type: "string" }, out: { type: "string" } } })
 
 const databasePath = values.db ?? String(dataRootPath("poi", "poi.db"))
-const database = new DatabaseSync(databasePath, { readOnly: true })
+const database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })
 const lookup = new POILookup({ database })
 const shippedRung = createPOINameLookup(lookup)
 
@@ -73,5 +74,5 @@ try {
 	}
 } finally {
 	lookup[Symbol.dispose]()
-	database.close()
+	await database.destroy()
 }

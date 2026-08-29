@@ -134,3 +134,9 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 		this.destroy()
 	}
 }
+
+/**
+ * The `node:sqlite` types a caller needs when it holds a statement or binds a value. Re-exported so nothing has to
+ * reach past this package for them.
+ */
+export type { DatabaseSyncOptions, SQLInputValue, SQLOutputValue, StatementSync } from "@mailwoman/platform/sqlite"

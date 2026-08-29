@@ -41,7 +41,6 @@ import {
 } from "@mailwoman/core/layers"
 import { runChunkProcess } from "@mailwoman/core/utils"
 import { rmSync, statSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import {
 	geometryContains,

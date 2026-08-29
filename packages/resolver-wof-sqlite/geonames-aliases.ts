@@ -26,11 +26,12 @@
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { existsSync } from "@mailwoman/platform/fs"
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { GEONAMES_POSTAL_ID_BASE } from "./geonames-postal.ts"
+import type { WOFDatabase } from "./schema.ts"
 
 /**
  * Synthetic id base for GeoNames-sourced rows (#743/#193) — above Overture's 8e12 so the three sources (WOF real ids,
@@ -65,7 +66,7 @@ const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as c
  * 9.5e12, NL-PC6 @ 9.6e12, Code-Point @ 9.7e12, NI @ 9.8e12 — and a purge that ran past {@link GEONAMES_POSTAL_ID_BASE}
  * would delete them.
  */
-export function purgeGeonamesAliasRange(db: DatabaseSync): Record<string, number> {
+export function purgeGeonamesAliasRange<DB>(db: DatabaseClient<DB>): Record<string, number> {
 	const removed: Record<string, number> = {}
 
 	for (const table of FOLD_OWNED_TABLES) {
@@ -189,7 +190,7 @@ async function parseAlternateNamesV2(
  * the candidate build's alias pass.
  */
 export async function ingestGeonamesAliases(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	countries: string[],
 	geonamesDir: string,
 	onProgress?: (event: GeonamesIngestProgress) => void,

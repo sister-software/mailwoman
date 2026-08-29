@@ -38,10 +38,11 @@
  *   be wired as a post-step of the main `scripts/build-unified-wof.ts`.
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { WOFDatabase } from "./schema.ts"
 import { allRows } from "./sqlite-utils.ts"
 
 /**
@@ -104,7 +105,7 @@ interface CandidateRow {
 	pop: number
 }
 
-function tableExists(db: DatabaseSync, name: string): boolean {
+function tableExists<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?").get(name)
 }
 
@@ -113,7 +114,7 @@ function tableExists(db: DatabaseSync, name: string): boolean {
  * touches `spr`/`names`/`ancestors`. Idempotent.
  */
 export function buildCoincidentRoles(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	opts: BuildCoincidentRolesOpts = {}
 ): BuildCoincidentRolesResult {
 	const start = Date.now()
@@ -214,7 +215,7 @@ export function buildCoincidentRoles(
 /**
  * True iff the relation table exists. Used by the resolver to decide whether completion can run.
  */
-export function coincidentRolesExists(db: DatabaseSync): boolean {
+export function coincidentRolesExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, COINCIDENT_ROLES_TABLE)
 }
 
@@ -223,7 +224,7 @@ export function coincidentRolesExists(db: DatabaseSync): boolean {
  * MULTIPLE same-name descendants; the consumer disambiguates (min distance → population → abstain). Returns an empty
  * map when the table is absent.
  */
-export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRole[]> {
+export function loadCoincidentRoles<DB>(db: DatabaseClient<DB>): Map<number, CoincidentRole[]> {
 	const map = new Map<number, CoincidentRole[]>()
 
 	if (!coincidentRolesExists(db)) return map
@@ -268,7 +269,7 @@ export function loadCoincidentRoles(db: DatabaseSync): Map<number, CoincidentRol
  * {@link loadCoincidentRoles}, carrying the canonical name and coordinates each coincident locality resolves to.
  * Returns an empty map when the relation table is absent.
  */
-export function loadCoincidentLocalities(db: DatabaseSync): Map<number, CoincidentLocality[]> {
+export function loadCoincidentLocalities<DB>(db: DatabaseClient<DB>): Map<number, CoincidentLocality[]> {
 	const map = new Map<number, CoincidentLocality[]>()
 
 	if (coincidentRolesExists(db)) {

@@ -12,8 +12,8 @@
  *   whole corpus, so an exact haversine over the survivors is cheap.
  */
 
-import type { DatabaseSync, SQLInputValue } from "@mailwoman/platform/sqlite"
 import { bboxAround } from "@mailwoman/spatial"
+import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 
 import { PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE } from "./fts.ts"
 import type { RankingWeights } from "./ranking-weights.ts"
@@ -70,8 +70,8 @@ export interface RawSearchRow {
  * short queries), plus the population-ordered companion fetch that keeps the prominent holders of a name pool-complete.
  * `schemaName` is the routed shard's bare schema name — validated at construction, so it is interpolated directly.
  */
-export function fetchSearchRows(options: {
-	db: DatabaseSync
+export function fetchSearchRows<DB>(options: {
+	db: DatabaseClient<DB>
 	schemaName: string
 	query: FindPlaceQuery
 	placetypes: WOFPlacetype[] | null

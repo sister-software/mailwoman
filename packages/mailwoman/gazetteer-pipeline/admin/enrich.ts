@@ -20,7 +20,8 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { corePackagePath } from "@mailwoman/core/utils"
 import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 export interface EnrichAdminOptions {
 	/**
@@ -38,7 +39,7 @@ export interface EnrichAdminResult {
 /**
  * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent.
  */
-export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): EnrichAdminResult {
+export function enrichAdmin<DB>(db: DatabaseClient<DB>, opts: EnrichAdminOptions = {}): EnrichAdminResult {
 	const specsDir = opts.specsDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
 
 	db.exec("DELETE FROM names WHERE language = 'abbr'")

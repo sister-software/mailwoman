@@ -19,7 +19,8 @@
  *   land in the right country — border towns are the hard class by construction.
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { DEFAULT_VERIFY_BASELINE } from "./verify-baseline.ts"
 
@@ -58,7 +59,7 @@ const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
 /**
  * Run the structural checks against an (open) admin DB. Pure SQL — no network, no model.
  */
-export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyResult {
+export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline): VerifyResult {
 	const checks: VerifyCheckResult[] = []
 
 	const tableExists = (name: string): boolean =>
@@ -235,7 +236,7 @@ export async function verifyReversePanel(adminDBPath: string): Promise<VerifyRes
  * Generate a baseline from an existing DB — the DELIBERATE-update path (review the diff of `verify-baseline.ts` like
  * code). Requires `country` for every country that has one; adds `region` where regions exist.
  */
-export function generateBaseline(db: DatabaseSync): VerifyBaseline {
+export function generateBaseline<DB>(db: DatabaseClient<DB>): VerifyBaseline {
 	const requiredNodes: Record<string, Array<"country" | "region">> = {}
 
 	for (const r of db

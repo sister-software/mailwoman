@@ -39,7 +39,6 @@
  */
 
 import { pyFloat, pyRound } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -156,7 +155,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		}
 	}
 
-	admin.destroy()
+	await admin.destroy()
 
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first. Korean place names repeat heavily across the country
@@ -303,7 +302,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	assertDatabaseIntegrity(kdb, args.output)
 
 	kdb.exec("VACUUM")
-	kdb.destroy()
+	await kdb.destroy()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
 

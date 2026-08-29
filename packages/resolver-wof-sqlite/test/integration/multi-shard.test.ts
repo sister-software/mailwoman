@@ -13,15 +13,16 @@
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: string
 
 function buildAdminShard(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -38,11 +39,11 @@ function buildAdminShard(path: string): void {
 	`)
 
 	buildPlaceSearchFTS(db)
-	db.close()
+	db.destroy()
 }
 
 function buildPostcodeShard(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -59,7 +60,7 @@ function buildPostcodeShard(path: string): void {
 	`)
 
 	buildPlaceSearchFTS(db)
-	db.close()
+	db.destroy()
 }
 
 beforeEach(async () => {

@@ -1,9 +1,10 @@
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { enrichAdmin } from "mailwoman/gazetteer-pipeline/admin/enrich"
 import { buildFTS } from "mailwoman/gazetteer-pipeline/fts"
 import { REVERSE_PANEL_CASES, type VerifyBaseline, verifyAdmin } from "mailwoman/gazetteer-pipeline/verify"
@@ -15,9 +16,9 @@ const TINY_BASELINE: VerifyBaseline = {
 	minCountries: 1,
 }
 
-async function fixtureDB(): Promise<DatabaseSync> {
+async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const db = new DatabaseSync(":memory:")
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 	await createUnifiedSchema(db)
 
 	// Non-zero coords + real extents — the place_bbox R*Tree insert skips all-zero placeholder rows.
@@ -50,7 +51,7 @@ test("verifyAdmin passes a complete fixture", async () => {
 	])
 
 	expect(r.ok).toBe(true)
-	db.close()
+	await db.destroy()
 })
 
 test("verifyAdmin fails node-census when a required country node is missing (#1026)", async () => {
@@ -61,7 +62,7 @@ test("verifyAdmin fails node-census when a required country node is missing (#10
 	const census = r.checks.find((c) => c.check === "node-census")!
 	expect(census.ok).toBe(false)
 	expect(census.detail).toContain("TL/country")
-	db.close()
+	await db.destroy()
 })
 
 test("verifyAdmin fails place-abbr when the join table is missing (the #1015 missed-step class)", async () => {
@@ -70,7 +71,7 @@ test("verifyAdmin fails place-abbr when the join table is missing (the #1015 mis
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)
 	expect(r.checks.find((c) => c.check === "place-abbr")!.ok).toBe(false)
-	db.close()
+	await db.destroy()
 })
 
 test("the reverse panel covers the #1015 failure cases", () => {

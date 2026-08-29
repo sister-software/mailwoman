@@ -13,7 +13,6 @@
 import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ancestorIdentity, candidateLayerManifest } from "mailwoman/gazetteer-pipeline/candidate-manifest"

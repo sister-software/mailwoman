@@ -18,34 +18,35 @@ import {
 	lookupPostcodeAnchor,
 	lookupWOF,
 } from "@mailwoman/dev-mcp/lookup-sources"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	createCandidateTable,
 	type CandidateDatabase,
 	type CandidateTable,
 } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
+import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import {
 	createPOINameKeyIndex,
 	createPOISearchFTS,
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, it } from "vitest"
 
-const openHandles: DatabaseSync[] = []
+const openHandles: Array<Pick<DatabaseClient, "destroy">> = []
 
 afterAll(() => {
 	for (const db of openHandles) {
-		db.close()
+		db.destroy()
 	}
 })
 
-function memoryDatabase(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function memoryDatabase<DB>(): DatabaseClient<DB> {
+	const db = new DatabaseClient<DB>(":memory:")
 
 	openHandles.push(db)
 
@@ -99,9 +100,9 @@ const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name
 	},
 ]
 
-async function candidateFixture(): Promise<DatabaseSync> {
-	const db = memoryDatabase()
-	const kdb = new DatabaseClient<CandidateDatabase>(db)
+async function candidateFixture(): Promise<DatabaseClient<CandidateDatabase>> {
+	const db = memoryDatabase<CandidateDatabase>()
+	const kdb = db
 
 	await kdb.schema
 		.createTable("country_codes")
@@ -246,8 +247,8 @@ describe("lookupCandidate", () => {
  * Rows measured against the shipped `admin-global-priority.db`: one live place, and the GB name whose thirteen records
  * are every one deprecated.
  */
-async function wofFixture(): Promise<DatabaseSync> {
-	const db = memoryDatabase()
+async function wofFixture(): Promise<DatabaseClient<WOFDatabase>> {
+	const db = memoryDatabase<WOFDatabase>()
 
 	await createUnifiedSchema(db)
 
@@ -299,7 +300,7 @@ describe("lookupWOF", () => {
 	})
 
 	it("names a shard it could not query instead of counting it as a miss", async () => {
-		const broken = memoryDatabase()
+		const broken = memoryDatabase<POIDatabase>()
 		const [row] = lookupWOF([{ name: "broken.db", db: broken }], ["Vaduz"])
 
 		expect(row!.note).toContain("probe(s) failed")
@@ -307,9 +308,9 @@ describe("lookupWOF", () => {
 	})
 })
 
-async function poiFixture(): Promise<DatabaseSync> {
-	const db = memoryDatabase()
-	const kdb = new DatabaseClient<POIDatabase>(db)
+async function poiFixture(): Promise<DatabaseClient<POIDatabase>> {
+	const db = memoryDatabase<POIDatabase>()
+	const kdb = db
 
 	await kdb.schema
 		.createTable("poi_category_codes")
@@ -468,7 +469,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 
 	it("joins importance_split by spr_id when an importance DB is given, and reports a missing row as null", async () => {
 		const db = await candidateFixture()
-		const importance = new DatabaseSync(":memory:")
+		const importance = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 
 		importance.exec(
 			"CREATE TABLE place_importance (id INTEGER PRIMARY KEY, referential REAL NOT NULL, encyclopedic REAL, importance REAL NOT NULL)"
@@ -500,7 +501,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 
 		expect(bareEntries.every((entry) => !("importance_split" in entry))).toBe(true)
 
-		importance.close()
+		await importance.destroy()
 	})
 
 	it("diffs two artifacts' returned rows: presence both ways plus moved ranking fields", async () => {

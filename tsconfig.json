@@ -115,6 +115,8 @@
 		{ "path": "./packages/resolver-wof-sqlite/tsconfig.test.json" },
 		{ "path": "./packages/resolver-wof-wasm/tsconfig.test.json" },
 		{ "path": "./packages/resolver/tsconfig.test.json" },
+		{ "path": "./docs" },
+		{ "path": "./scripts" },
 		{ "path": "./scripts/tsconfig.test.json" },
 		{ "path": "./packages/soil/tsconfig.test.json" },
 		{ "path": "./packages/spatial/tsconfig.test.json" },

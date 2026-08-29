@@ -9,7 +9,6 @@
  *   no-match fall-through.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
 import {
 	type StreetSegmentDatabase,
@@ -28,7 +27,7 @@ interface SeedSegment {
 	geometry: [number, number][]
 }
 
-function seed(db: DatabaseSync, segments: SeedSegment[]): void {
+function seed(db: DatabaseClient<StreetSegmentDatabase>, segments: SeedSegment[]): void {
 	db.exec(`
 		CREATE TABLE street_segment (
 			street_norm  TEXT NOT NULL,
@@ -86,11 +85,11 @@ const MAIN_EVEN: SeedSegment = {
 
 const MAIN_ODD: SeedSegment = { ...MAIN_EVEN, side: "L", from_hn: 101, to_hn: 199, parity: "odd" }
 
-let db: DatabaseSync
+let db: DatabaseClient<StreetSegmentDatabase>
 let interpolator: StreetInterpolator
 
 beforeAll(() => {
-	db = new DatabaseSync(":memory:")
+	db = new DatabaseClient<StreetSegmentDatabase>(":memory:")
 
 	seed(db, [
 		MAIN_EVEN,
@@ -177,7 +176,7 @@ beforeAll(() => {
 
 afterAll(() => {
 	interpolator.close()
-	db.close()
+	db.destroy()
 })
 
 describe("StreetInterpolator", () => {
@@ -280,13 +279,13 @@ describe("StreetInterpolator", () => {
 // time. A shard predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
 	it("reads the shard's baked multiplier at open time", async () => {
-		const calibDB = new DatabaseSync(":memory:")
-		seed(calibDB, [MAIN_EVEN])
+		const kdb = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+		seed(kdb, [MAIN_EVEN])
 		// The SAME producer the shard builder runs (`writeInterpCalibration`), so the fixture can't
 		// drift from the production shape.
-		const kdb = new DatabaseClient<StreetSegmentDatabase>(calibDB)
+
 		await writeInterpCalibration(kdb, { radius_multiplier: 1.7, method: "split-conformal:2026-06-14", region: "TX" })
-		const calibrated = new StreetInterpolator({ database: calibDB })
+		const calibrated = new StreetInterpolator({ database: kdb })
 
 		expect(calibrated.radiusCalibration).toBe(1.7)
 		// find() itself never applies the multiplier — the raw radius stays the honest half-segment
@@ -296,7 +295,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		expect(hit!.uncertaintyM).toBeGreaterThan(40)
 		expect(hit!.uncertaintyM).toBeLessThan(70)
 		calibrated.close()
-		calibDB.close()
+		await kdb.destroy()
 	})
 
 	it("reports undefined for a shard predating the metadata table", () => {
@@ -305,7 +304,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 	})
 
 	it("reports undefined for an empty or invalid calibration table", () => {
-		const emptyDB = new DatabaseSync(":memory:")
+		const emptyDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
 		seed(emptyDB, [MAIN_EVEN])
 
 		emptyDB.exec(
@@ -315,7 +314,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		const emptyCalib = new StreetInterpolator({ database: emptyDB })
 		expect(emptyCalib.radiusCalibration).toBeUndefined()
 		emptyCalib.close()
-		emptyDB.close()
+		emptyDB.destroy()
 	})
 })
 
@@ -341,11 +340,11 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 	})
 
 	describe("near tie-break geometry", () => {
-		let nearDB: DatabaseSync
+		let nearDB: DatabaseClient<StreetSegmentDatabase>
 		let nearInterp: StreetInterpolator
 
 		beforeAll(() => {
-			nearDB = new DatabaseSync(":memory:")
+			nearDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
 
 			seed(nearDB, [
 				// Same street, same parity, two ZIPs ~20 km apart along the meridian.
@@ -418,7 +417,7 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 
 		afterAll(() => {
 			nearInterp.close()
-			nearDB.close()
+			nearDB.destroy()
 		})
 
 		it("breaks a multi-ZIP tie by dominant proximity to `near`", () => {

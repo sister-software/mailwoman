@@ -14,7 +14,9 @@
  *   bag.
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { WOFDatabase } from "./schema.ts"
 
 /**
  * Name of the FTS5 virtual table this module owns. Centralized so `WOFSQLitePlaceLookup` and the CLI can't drift apart.
@@ -189,7 +191,10 @@ export interface BuildPlaceSearchFTSOpts {
  * Returns a `BuildPlaceSearchFTSResult` summary. Idempotent when `drop: false` — re-running against an already-indexed
  * DB skips whichever indexes already exist.
  */
-export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSOpts = {}): BuildPlaceSearchFTSResult {
+export function buildPlaceSearchFTS<DB>(
+	db: DatabaseClient<DB>,
+	opts: BuildPlaceSearchFTSOpts = {}
+): BuildPlaceSearchFTSResult {
 	const start = Date.now()
 	const onProgress = opts.onProgress ?? (() => {})
 
@@ -329,25 +334,25 @@ export function buildPlaceSearchFTS(db: DatabaseSync, opts: BuildPlaceSearchFTSO
  * Returns true iff the `place_search` table exists in the connected DB. Used by `WOFSQLitePlaceLookup` for its "FTS
  * missing — pass buildFTS:true or run the CLI" guard.
  */
-export function placeSearchFTSExists(db: DatabaseSync): boolean {
+export function placeSearchFTSExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, PLACE_SEARCH_TABLE)
 }
 
 /**
  * Returns true iff the `place_bbox` R*Tree table exists. Used for opt-in proximity lookup checks.
  */
-export function placeBboxExists(db: DatabaseSync): boolean {
+export function placeBboxExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, PLACE_BBOX_TABLE)
 }
 
 /**
  * Returns true iff the `place_population` table exists. Used for opt-in population-ranking checks.
  */
-export function placePopulationExists(db: DatabaseSync): boolean {
+export function placePopulationExists<DB>(db: DatabaseClient<DB>): boolean {
 	return tableExists(db, PLACE_POPULATION_TABLE)
 }
 
-function tableExists(db: DatabaseSync, name: string): boolean {
+function tableExists<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	const row = db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?`).get(name) as
 		| { name: string }
 		| undefined

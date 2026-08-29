@@ -28,7 +28,6 @@ import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { globSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { basename, dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
@@ -212,11 +211,11 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 			rmSync(tmpOut + sfx, { force: true })
 		}
 
-		const db = new DatabaseSync(tmpOut)
-		db.exec("PRAGMA journal_mode = WAL;")
+		const kdb = new DatabaseClient<StreetSegmentDatabase>(tmpOut)
+		kdb.exec("PRAGMA journal_mode = WAL;")
 		// DDL via the SHARED street-segment-schema builder (the table the reader + tests use) so this
 		// producer can't drift. DuckDB below is the raw spatial reader; the hot INSERT stays on `db`.
-		const kdb = new DatabaseClient<StreetSegmentDatabase>(db)
+
 		await createStreetSegmentTable(kdb)
 		// #374 doctrine: the conformal radius multiplier is a property of the calibration set, so it ships IN
 		// the artifact — bake the state's factor (or the conservative default for unmeasured states) into the
@@ -232,7 +231,7 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 
 		await writeInterpCalibration(kdb, calibration)
 
-		const insert = db.prepare(
+		const insert = kdb.prepare(
 			`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
 					 VALUES (${STREET_SEGMENT_COLUMNS.map(() => "?").join(", ")})`
 		)
@@ -245,7 +244,7 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 		let skippedNonNumeric = 0
 		const parityCounts = { odd: 0, even: 0, mixed: 0 }
 
-		db.exec("BEGIN")
+		kdb.exec("BEGIN")
 
 		for (const shp of shapefiles) {
 			const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
@@ -315,11 +314,11 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 			console.error(`  ${countyFips}: done (${sides} sides so far)`)
 		}
 
-		db.exec("COMMIT")
+		kdb.exec("COMMIT")
 		await createStreetSegmentIndexes(kdb)
-		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 
-		const stats = db
+		const stats = kdb
 			.prepare(
 				"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment"
 			)

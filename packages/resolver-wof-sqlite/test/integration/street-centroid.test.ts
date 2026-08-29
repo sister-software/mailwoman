@@ -66,7 +66,7 @@ async function seedShard(rows: Seed[]): Promise<string> {
 		)
 	}
 
-	kdb.destroy()
+	await kdb.destroy()
 
 	return path
 }

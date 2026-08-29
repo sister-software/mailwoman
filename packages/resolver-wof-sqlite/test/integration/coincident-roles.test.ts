@@ -8,13 +8,14 @@
  *   too-far (excluded) cases, then asserts the derived relation + the in-memory loader.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	buildCoincidentRoles,
 	coincidentRolesExists,
 	loadCoincidentRoles,
 	type CoincidentRole,
 } from "@mailwoman/resolver-wof-sqlite/coincident-roles"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixtureRow {
@@ -111,10 +112,10 @@ const ANCESTRY: Array<[number, number]> = [
 	[62, 60],
 ]
 
-let db: DatabaseSync
+let db: DatabaseClient<WOFDatabase>
 
 beforeEach(() => {
-	db = new DatabaseSync(":memory:")
+	db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -150,7 +151,7 @@ beforeEach(() => {
 	}
 })
 
-afterEach(() => db.close())
+afterEach(() => db.destroy())
 
 function rolesFor(adminID: number): CoincidentRole[] {
 	return loadCoincidentRoles(db).get(adminID) ?? []
@@ -201,9 +202,9 @@ describe("buildCoincidentRoles", () => {
 	})
 
 	test("loadCoincidentRoles returns an empty map when the table is absent", () => {
-		const fresh = new DatabaseSync(":memory:")
+		const fresh = new DatabaseClient<WOFDatabase>(":memory:")
 		expect(loadCoincidentRoles(fresh).size).toBe(0)
 		expect(coincidentRolesExists(fresh)).toBe(false)
-		fresh.close()
+		fresh.destroy()
 	})
 })

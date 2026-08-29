@@ -15,7 +15,6 @@
  *   the last stdout line without a framing convention.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -69,5 +68,5 @@ try {
 
 	console.log(JSON.stringify(result))
 } finally {
-	database.destroy()
+	await database.destroy()
 }

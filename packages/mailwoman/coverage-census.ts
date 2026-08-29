@@ -34,7 +34,8 @@ import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * How well a country can be geocoded, in the three tiers the resolution ladder actually has.
@@ -375,7 +376,7 @@ export function readGazetteerCoverage(dbPath: string): Map<string, number> {
 
 	if (!existsSync(dbPath)) return out
 
-	const db = new DatabaseSync(dbPath, { readOnly: true })
+	const db = new DatabaseClient<CandidateDatabase>(dbPath, { readOnly: true })
 
 	try {
 		const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as Array<{ name: string }>
@@ -395,7 +396,7 @@ export function readGazetteerCoverage(dbPath: string): Map<string, number> {
 	} catch {
 		// An unreadable gazetteer is a missing column, not a failed report.
 	} finally {
-		db.close()
+		db.destroy()
 	}
 
 	return out

@@ -15,8 +15,9 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { pointInMultiPolygon, pointInPolygon } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 type Ring = Array<[number, number]>
 
@@ -78,8 +79,8 @@ export class AdminLocator {
 	readonly withoutGeometry: number
 
 	constructor(options: AdminLocatorOptions) {
-		const admin = new DatabaseSync(options.adminPath, { readOnly: true })
-		const polys = new DatabaseSync(options.polygonPath, { readOnly: true })
+		const admin = new DatabaseClient<WOFDatabase>(options.adminPath, { readOnly: true })
+		const polys = new DatabaseClient<WOFDatabase>(options.polygonPath, { readOnly: true })
 
 		try {
 			const geomStmt = polys.prepare(`select geom from polygons where id = ?`)
@@ -153,8 +154,8 @@ export class AdminLocator {
 			this.located = located
 			this.withoutGeometry = missing
 		} finally {
-			polys.close()
-			admin.close()
+			polys.destroy()
+			admin.destroy()
 		}
 	}
 

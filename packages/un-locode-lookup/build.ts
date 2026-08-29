@@ -9,7 +9,6 @@
  */
 
 import { readFileSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CSVSpliterator } from "spliterator"
 

@@ -9,7 +9,7 @@
  *   abstention is why `valid_to` is sometimes left open on a filer known to have ceased.
  */
 
-import type { StatementSync } from "@mailwoman/platform/sqlite"
+import type { StatementSync } from "@mailwoman/sqlite/client"
 
 import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "../../schema.ts"
 import type { Form499Lifecycle } from "../form499-notes.ts"

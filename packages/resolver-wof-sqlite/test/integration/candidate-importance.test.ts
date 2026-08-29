@@ -21,8 +21,9 @@
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "@mailwoman/resolver-wof-sqlite/candidate-importance"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: string
@@ -34,7 +35,7 @@ let sourcePath: string
  * Ids here are deliberately NOTHING like the ids a candidate build would carry — the join must not depend on them.
  */
 function buildFixtureSource(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -75,7 +76,7 @@ function buildFixtureSource(path: string): void {
 		INSERT INTO place_importance VALUES (9000000000009, 0.4000);
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 beforeEach(async () => {

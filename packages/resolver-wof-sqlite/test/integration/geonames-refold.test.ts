@@ -27,8 +27,9 @@
 import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { GEONAMES_ID_BASE, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 type Row = Record<string, string | number | null>
@@ -49,8 +50,8 @@ function row(over: Record<number, string>): string {
 	return f.join("\t")
 }
 
-function freshDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function freshDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -119,7 +120,7 @@ test("a re-fold with a different country list leaves no name bound to another co
 
 	expect(disagreeing.n).toBe(0)
 
-	db.close()
+	await db.destroy()
 })
 
 test("a re-fold rewrites the range wholesale — no row survives from the previous run", async () => {
@@ -143,7 +144,7 @@ test("a re-fold rewrites the range wholesale — no row survives from the previo
 
 	expect(sprRows.n).toBe(2) // Wien + Aichegg, and nothing else
 
-	db.close()
+	await db.destroy()
 })
 
 test("a stale population cannot outlive the place it belonged to", async () => {
@@ -167,7 +168,7 @@ test("a stale population cannot outlive the place it belonged to", async () => {
 
 	expect(pop).toBeUndefined()
 
-	db.close()
+	await db.destroy()
 })
 
 test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
@@ -181,7 +182,7 @@ test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
 
 	expect(second.n).toBe(first.n)
 
-	db.close()
+	await db.destroy()
 })
 
 test("every folded locality gets its self-ancestor row, admin fold or not", async () => {
@@ -207,7 +208,7 @@ test("every folded locality gets its self-ancestor row, admin fold or not", asyn
 	expect(selves.n).toBe(localities.n)
 	expect(localities.n).toBe(3)
 
-	db.close()
+	await db.destroy()
 })
 
 test("the purge stops at the GeoNames-POSTAL namespace above it", async () => {
@@ -225,5 +226,5 @@ test("the purge stops at the GeoNames-POSTAL namespace above it", async () => {
 
 	expect(postal.n).toBe(1)
 
-	db.close()
+	await db.destroy()
 })

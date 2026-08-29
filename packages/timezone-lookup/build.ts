@@ -10,7 +10,6 @@
  */
 
 import { readFileSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { MultiPolygonCoords } from "./index.ts"

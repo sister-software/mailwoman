@@ -1,3 +1,6 @@
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { SqliteConventionSource } from "@mailwoman/resolver-wof-sqlite/sqlite-convention-source"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -9,17 +12,15 @@
  *   dispatch — the same reroute the in-memory `opts.conventions` path gives, but through the
  *   asset.
  */
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
-import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
-import { SqliteConventionSource } from "@mailwoman/resolver-wof-sqlite/sqlite-convention-source"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 /**
  * A minimal WOF fixture (DE country #90 + Plauen) WITH an attached `address_convention` table in the same schema, so
  * the lookup auto-detects it.
  */
-function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -50,14 +51,14 @@ function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []
 }
 
 describe("SqliteConventionSource", () => {
-	let db: DatabaseSync
+	let db: DatabaseClient<WOFDatabase>
 
 	beforeEach(() => {
 		db = buildDB([{ wof_id: 90, convention: { scoringWeights: { pc: 0.9 } } }])
 	})
 
 	afterEach(() => {
-		db.close()
+		db.destroy()
 	})
 
 	it("reads + parses a convention by WOF id, and returns undefined for a miss", () => {

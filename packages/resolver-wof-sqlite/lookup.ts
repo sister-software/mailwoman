@@ -10,9 +10,10 @@
  *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
  */
 
-import { DatabaseSync, type SQLInputValue } from "@mailwoman/platform/sqlite"
 import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import type { SQLInputValue } from "@mailwoman/sqlite/client"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { SqliteDialect } from "@mailwoman/sqlite/dialect"
 import { Kysely } from "kysely"
 
@@ -72,10 +73,10 @@ export interface WOFSQLitePlaceLookupOpts {
 	 */
 	databasePath?: string | ReadonlyArray<string | ShardConfig>
 	/**
-	 * Pre-opened DatabaseSync — primarily for tests against an inline fixture DB. Mutually exclusive with `databasePath`.
+	 * Pre-opened connection — primarily for tests against an inline fixture DB. Mutually exclusive with `databasePath`.
 	 * Multi-shard requires `databasePath` (so the lookup owns the ATTACH).
 	 */
-	database?: DatabaseSync
+	database?: DatabaseClient<WOFDatabase>
 	/**
 	 * If true, build the FTS5 `place_search` virtual table on construction if it doesn't already exist. The upstream WOF
 	 * distribution does NOT ship FTS5, so callers either set this once on first open or pre-build it via the
@@ -138,9 +139,8 @@ const CF_PC_DECAY_KM = 8
 const CF_MISMATCH_KM = 50
 
 export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
-	readonly #db: DatabaseSync
+	readonly #db: DatabaseClient<WOFDatabase>
 	readonly #ownsDB: boolean
-	readonly #kysely: Kysely<WOFDatabase>
 	readonly #weights: RankingWeights
 	/**
 	 * Cached at construction so we don't `sqlite_master` query on every findPlace call. Bbox + near- with-radius queries
@@ -226,7 +226,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			// ONLY when that build was explicitly requested. Every read query (FTS5 MATCH, the aux-table
 			// SELECTs, ATTACH, and the `busy_timeout` PRAGMA) works read-only. See the docker read-only
 			// mount limitation (#1213).
-			this.#db = new DatabaseSync(shards[0]!.path, { readOnly: !opts.buildFTS })
+			this.#db = new DatabaseClient<WOFDatabase>(shards[0]!.path, { readOnly: !opts.buildFTS })
 			this.#ownsDB = true
 
 			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
@@ -244,10 +244,6 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		} else {
 			this.#assertFTSExists()
 		}
-
-		this.#kysely = new Kysely<WOFDatabase>({
-			dialect: new SqliteDialect({ database: this.#db }),
-		})
 
 		this.#weights = { ...DEFAULT_WEIGHTS, ...weights }
 
@@ -842,10 +838,10 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	close(): void {
 		// Destroying the Kysely instance closes the underlying connection IF we own it. If the caller
 		// passed in a pre-opened DatabaseSync (test fixture), respect their ownership.
-		void this.#kysely.destroy()
+		void this.#db.destroy()
 
 		if (this.#ownsDB) {
-			this.#db.close()
+			this.#db.destroy()
 		}
 	}
 

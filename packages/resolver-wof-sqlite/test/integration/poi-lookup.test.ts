@@ -16,7 +16,6 @@
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { POI_H3_RESOLUTION, POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -173,14 +172,13 @@ const ALL_ROWS = [
 ]
 
 async function buildFixture(path: string): Promise<void> {
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>(raw)
+	const kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` — unused here, but the category-codes dictionary
 	// lives alongside it and there's no standalone builder for just that table.
 	await createPOIStagingTables(kdb)
-	createPOISearchFTS(raw)
+	createPOISearchFTS(kdb)
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {
 		await kdb.insertInto("poi_category_codes").values({ id, category }).execute()
@@ -212,7 +210,7 @@ async function buildFixture(path: string): Promise<void> {
 			})
 			.execute()
 
-		raw.prepare(`INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)`).run(row.name, nameKey, h3Cell)
+		kdb.prepare(`INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)`).run(row.name, nameKey, h3Cell)
 	}
 
 	// Index-after-load: builders create the name_key + brand_wikidata indexes AFTER the bulk materialize.
@@ -441,18 +439,18 @@ describe("POILookup", () => {
 	})
 
 	test("the name_key index exists (FTS-hydration path, not a full table scan)", () => {
-		const raw = new DatabaseSync(dbPath, { readOnly: true })
+		const raw = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
 		try {
 			const found = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?").get("poi_name_key")
 			expect(found).toBeDefined()
 		} finally {
-			raw.close()
+			raw.destroy()
 		}
 	})
 
 	test("the brand_wikidata partial index exists (brand-wide fetch, not a full table scan)", () => {
-		const raw = new DatabaseSync(dbPath, { readOnly: true })
+		const raw = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
 		try {
 			const found = raw
@@ -464,7 +462,7 @@ describe("POILookup", () => {
 			expect(found!.sql.toLowerCase()).toContain("where")
 			expect(found!.sql.toLowerCase()).toContain("brand_wikidata")
 		} finally {
-			raw.close()
+			raw.destroy()
 		}
 	})
 

@@ -14,7 +14,6 @@
 import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { SoilCapabilityLookup, SoilReadingKind } from "@mailwoman/soil"
 import type { SoilDatabase } from "@mailwoman/soil/schema"
 import { buildSoilDatabase, type BuildSoilResult } from "@mailwoman/soil/sdk/build-soil"

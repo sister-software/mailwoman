@@ -11,9 +11,10 @@
 import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
 import { describe, expect, it } from "vitest"
 
@@ -23,7 +24,7 @@ import { describe, expect, it } from "vitest"
  */
 function writeTinyFST(dir: string): string {
 	const dbPath = join(dir, "tiny-wof.db")
-	const db = new DatabaseSync(dbPath)
+	const db = new DatabaseClient<WOFDatabase>(dbPath)
 
 	try {
 		db.exec(
@@ -40,7 +41,7 @@ function writeTinyFST(dir: string): string {
 		db.prepare("INSERT INTO names (id, name, language) VALUES (1, 'testville', 'eng')").run()
 		db.prepare("INSERT INTO place_importance (id, importance) VALUES (1, 0.5)").run()
 	} finally {
-		db.close()
+		db.destroy()
 	}
 
 	const { matcher, provenance } = buildFSTFromWOF({ dbPath, countries: ["US"], languages: ["*"] })

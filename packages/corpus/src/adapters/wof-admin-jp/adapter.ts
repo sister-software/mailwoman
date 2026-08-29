@@ -31,7 +31,6 @@
 
 import { isPresent } from "@mailwoman/core/objects"
 import { allRows, getRow } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -205,7 +204,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 					emitted++
 				}
 			} finally {
-				db.destroy()
+				await db.destroy()
 			}
 		},
 	}

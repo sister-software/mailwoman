@@ -18,7 +18,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Options for {@linkcode buildESPostcodeCentroids}.
@@ -114,7 +115,7 @@ GROUP BY b.pc
 
 	// Emit the spr table the WOFPostcodeLookup query consumes:
 	//   SELECT country, latitude, longitude FROM spr WHERE name=? AND placetype='postalcode' AND is_current!=0
-	const out = new DatabaseSync(OUT_DB)
+	const out = new DatabaseClient<WOFDatabase>(OUT_DB)
 	// Throwaway build artifact — no durability needed; OFF journal + a single transaction around the
 	// inserts makes large locales (CA = 843k rows) finish in seconds instead of one implicit
 	// transaction (with its own journal write) per row, which is slow enough to be killed by a timeout.
@@ -149,7 +150,7 @@ CREATE TABLE spr (
 
 	out.exec("COMMIT")
 	out.exec(`CREATE INDEX spr_by_name ON spr(name); CREATE INDEX spr_by_country ON spr(country);`)
-	out.close()
+	await out.destroy()
 
 	console.error(`wrote ${rows.length} rows → ${OUT_DB}`)
 }

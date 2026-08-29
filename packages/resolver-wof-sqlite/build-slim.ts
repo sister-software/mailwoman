@@ -38,13 +38,14 @@
 import { copyFileSync, existsSync, mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { SqliteDialect } from "@mailwoman/sqlite/dialect"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { Kysely, sql } from "kysely"
+import { sql } from "kysely"
+import type { Kysely } from "kysely"
 
 import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.ts"
-import type { NamesTable, SprTable } from "./schema.ts"
+import type { NamesTable, SprTable, WOFDatabase } from "./schema.ts"
 
 export interface BuildSlimOptions {
 	/**
@@ -168,11 +169,11 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	// (raw sqlite_master read — Kysely doesn't model that) so the output mirrors source column
 	// ordering / types. `CREATE TABLE AS SELECT` flattens types to dynamic, which would break
 	// callers that rely on column-affinity behavior.
-	const out = new DatabaseSync(opts.output)
+	const out = new DatabaseClient<BuildSchema>(opts.output)
 	let result: BuildSlimResult
 
 	try {
-		const firstSource = new DatabaseSync(inputs[0]!, { readOnly: true })
+		const firstSource = new DatabaseClient<WOFDatabase>(inputs[0]!, { readOnly: true })
 
 		try {
 			progress("schema", "copying spr / names / place_population schemas from first input")
@@ -199,14 +200,12 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			// index on names.id helps the per-id INSERT SELECT later.
 			out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
 		} finally {
-			firstSource.close()
+			await firstSource.destroy()
 		}
-
-		const kysely = new Kysely<BuildSchema>({ dialect: new SqliteDialect({ database: out }) })
 
 		// Pull rows from each input.
 		for (const inputPath of inputs) {
-			await copyFromSource(out, kysely, inputPath, countries, topLocalities, progress)
+			await copyFromSource(out, out, inputPath, countries, topLocalities, progress)
 		}
 
 		// Build the resolver virtual tables on the trimmed row set. Both place_search (FTS5) and
@@ -267,7 +266,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			rowCounts,
 		}
 	} finally {
-		out.close()
+		await out.destroy()
 	}
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
@@ -277,7 +276,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 }
 
 async function copyFromSource(
-	out: DatabaseSync,
+	out: DatabaseClient<BuildSchema>,
 	kysely: Kysely<BuildSchema>,
 	inputPath: string,
 	countries: string[],
@@ -415,7 +414,7 @@ async function copyFromSource(
 	}
 }
 
-function countRows(db: DatabaseSync, table: string): number {
+function countRows(db: DatabaseClient<BuildSchema>, table: string): number {
 	const row = db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n?: number } | undefined
 
 	return Number(row?.n ?? 0)

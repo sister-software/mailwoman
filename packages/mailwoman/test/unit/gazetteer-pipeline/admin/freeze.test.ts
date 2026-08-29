@@ -1,15 +1,16 @@
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { freezeAdmin } from "mailwoman/gazetteer-pipeline/admin/freeze"
 import { expect, test } from "vitest"
 
 test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and passes integrity", async () => {
-	const db = new DatabaseSync(":memory:")
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 	await createUnifiedSchema(db)
 
 	const ins = db.prepare(
@@ -32,5 +33,5 @@ test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and p
 		db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'ancestors_by_id'").get()
 	).toBeTruthy()
 
-	db.close()
+	await db.destroy()
 })

@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync, type DatabaseSyncOptions, type SQLInputValue } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { DatabaseSyncOptions, SQLInputValue } from "@mailwoman/sqlite/client"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
@@ -98,8 +99,26 @@ function placetypeRecordFromRow(row: Record<string, SQLInputValue>): PlacetypeRe
 /**
  * A data source for WhosOnFirst placetype records.
  */
+/**
+ * The one table {@link PlacetypeDataSource} creates and reads. Declared here beside the DDL that builds it, so a column
+ * added to one is a compile error against the other.
+ */
+export interface PlacetypeRecordDatabase {
+	records: {
+		id: number
+		src: string
+		name: string
+		preferred: string | null
+		variant: string | null
+		colloquial: string | null
+		abbr: string | null
+		short: string | null
+		parent_id: number | null
+	}
+}
+
 export class PlacetypeDataSource implements Disposable {
-	#db: DatabaseSync
+	#db: DatabaseClient<PlacetypeRecordDatabase>
 
 	public static createPath<P extends WhosOnFirstPlacetype, L extends Alpha3bLanguageCode | Alpha2LanguageCode>({
 		placetype,
@@ -150,8 +169,8 @@ export class PlacetypeDataSource implements Disposable {
 
 	constructor(databasePath: PathBuilderLike, dbOptions?: DatabaseSyncOptions) {
 		this.#db = dbOptions
-			? new DatabaseSync(databasePath.toString(), dbOptions)
-			: new DatabaseSync(databasePath.toString())
+			? new DatabaseClient<PlacetypeRecordDatabase>(databasePath.toString(), dbOptions)
+			: new DatabaseClient<PlacetypeRecordDatabase>(databasePath.toString())
 
 		// node:sqlite has no .pragma() helper; pragmas are executed as plain SQL.
 		this.#db.exec("PRAGMA busy_timeout = 10000")
@@ -163,7 +182,7 @@ export class PlacetypeDataSource implements Disposable {
 	}
 
 	public [Symbol.dispose]() {
-		this.#db.close()
+		this.#db.destroy()
 	}
 
 	/**

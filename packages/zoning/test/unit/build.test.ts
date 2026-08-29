@@ -26,7 +26,6 @@ import { CoverageBasis, LayerTier, supportsExclusion } from "@mailwoman/core/lay
 import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ZoningContainmentPath, ZoningLookup, ZoningReadingKind } from "@mailwoman/zoning"
 import type { ZoningDatabase } from "@mailwoman/zoning/schema"

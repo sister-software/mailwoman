@@ -29,7 +29,6 @@ import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/l
 import { allRows, dataRootPath, workspacePath } from "@mailwoman/core/utils"
 import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

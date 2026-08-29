@@ -28,7 +28,6 @@
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { readFileSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

@@ -41,9 +41,10 @@
  *   (`resolver/toponym-prior.ts`) leaves an unmeasured candidate exactly where population put it.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { CandidateDatabase } from "./candidate-schema.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 /**
@@ -181,7 +182,7 @@ export class ImportanceIndex {
  * 25 s.
  */
 export function loadImportanceIndex(databasePath: string): ImportanceIndex {
-	const db = new DatabaseSync(databasePath, { readOnly: true })
+	const db = new DatabaseClient<CandidateDatabase>(databasePath, { readOnly: true })
 
 	try {
 		const groups = new Map<string, ScoredPlace[]>()
@@ -222,6 +223,6 @@ export function loadImportanceIndex(databasePath: string): ImportanceIndex {
 
 		return new ImportanceIndex(groups, { places, keys: groups.size, unkeyable })
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }

@@ -25,7 +25,6 @@ import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**

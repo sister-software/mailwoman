@@ -7,9 +7,10 @@
  *   fixture-DB pattern. Real-WOF coverage lives in `integration.test.ts`.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { bboxAround, haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixturePlace {
@@ -65,8 +66,8 @@ const FIXTURE: FixturePlace[] = [
 	},
 ]
 
-function buildFixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildFixtureDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (

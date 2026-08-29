@@ -34,7 +34,7 @@
 
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { existsSync, statSync, unlinkSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { ShardMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
@@ -48,10 +48,8 @@ export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"
  * `meta` is the artifact's own provenance record — a key/value table read at open, so the licence obligation and the
  * source fingerprints travel WITH the database instead of in a document that can drift from it.
  */
-export interface ShardMetaTable {
-	key: string
-	value: string | null
-}
+
+export type { ShardMetaTable } from "@mailwoman/resolver-wof-sqlite/schema"
 
 /**
  * Kysely read/write contract for the shard's provenance table.
@@ -64,8 +62,8 @@ export interface ShardMetaDatabase {
  * Create the provenance `meta` table. Co-located with {@link ShardMetaDatabase} per the schema-module convention: a
  * column added to one is a compile error against the other.
  */
-export async function createShardMetaTable(db: DatabaseSync): Promise<void> {
-	const kdb = new DatabaseClient<ShardMetaDatabase>(db)
+export async function createShardMetaTable<DB extends ShardMetaDatabase>(db: DatabaseClient<DB>): Promise<void> {
+	const kdb = db
 
 	await kdb.schema
 		.createTable("meta")
@@ -172,7 +170,7 @@ export async function buildPostcodeGeonamesTail(
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseSync(ingestPath)
+	const db = new DatabaseClient<WOFDatabase>(ingestPath)
 
 	db.exec(`
 		PRAGMA page_size = 8192;
@@ -216,7 +214,7 @@ export async function buildPostcodeGeonamesTail(
 	}
 
 	db.prepare("VACUUM INTO ?").run(out)
-	db.close()
+	await db.destroy()
 
 	for (const sidecar of [ingestPath, ingestPath + "-wal", ingestPath + "-shm"]) {
 		if (existsSync(sidecar)) {
@@ -225,9 +223,9 @@ export async function buildPostcodeGeonamesTail(
 	}
 
 	phase("fts")
-	const outDB = new DatabaseSync(out)
+	const outDB = new DatabaseClient<ShardMetaDatabase>(out)
 	const fts = await buildFTS(outDB, { onProgress: phase })
-	outDB.close()
+	await outDB.destroy()
 
 	phase("seal")
 	sealDatabase(out)
@@ -320,7 +318,10 @@ interface ShardMetaInput {
  * Bake the provenance record into the staging DB (pre-VACUUM, pre-seal — a shipped DB is never patched). `sources` is
  * stored as JSON so the per-file md5s stay machine-readable.
  */
-async function writeShardMeta(db: DatabaseSync, input: ShardMetaInput): Promise<void> {
+async function writeShardMeta<DB extends ShardMetaDatabase>(
+	db: DatabaseClient<DB>,
+	input: ShardMetaInput
+): Promise<void> {
 	await createShardMetaTable(db)
 
 	const rows: Array<[string, string]> = [

@@ -24,7 +24,6 @@ import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot, repoRootPathBuilder, wofShardPaths } from "@mailwoman/core/utils"
 import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -33,6 +32,8 @@ import type {
 } from "@mailwoman/resolver-wof-sqlite"
 import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
 /**
@@ -212,7 +213,7 @@ export function loadCapitalIndex(opts: {
 	missing?: "throw" | "degrade"
 }): CapitalIndex | undefined {
 	if (opts.candidateDB && existsSync(opts.candidateDB)) {
-		const db = new DatabaseSync(opts.candidateDB, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(opts.candidateDB, { readOnly: true })
 
 		try {
 			const points = readCapitalPoints(db)
@@ -225,7 +226,7 @@ export function loadCapitalIndex(opts: {
 				return new CapitalIndex(points)
 			}
 		} finally {
-			db.close()
+			db.destroy()
 		}
 	}
 

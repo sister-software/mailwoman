@@ -29,7 +29,6 @@
 
 import { mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { basename, dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
 
@@ -164,15 +163,15 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
 			: ""
 
-		const db = new DatabaseSync(tmpOut)
+		const kdb = new DatabaseClient<AddressPointDatabase>(tmpOut)
 		// DDL + column order come from the SHARED schema (address-point-schema) so the writer can't drift
 		// from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
 		// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
-		db.exec("PRAGMA journal_mode = WAL;")
-		const kdb = new DatabaseClient<AddressPointDatabase>(db)
+		kdb.exec("PRAGMA journal_mode = WAL;")
+
 		await createAddressPointTable(kdb)
 
-		const insert = db.prepare(
+		const insert = kdb.prepare(
 			`INSERT INTO address_point (${ADDRESS_POINT_COLUMNS.join(", ")})
 					 VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 		)
@@ -219,7 +218,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		const stream = await duck.stream(streamSQL)
 		// A streamed DataChunk carries no column names of its own, so pull them off the result once.
 		const colNames = stream.columnNames()
-		db.exec("BEGIN")
+		kdb.exec("BEGIN")
 
 		for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
 			const rows = chunk.getRowObjects(colNames) as Record<string, unknown>[]
@@ -257,14 +256,14 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		db.exec("COMMIT")
+		kdb.exec("COMMIT")
 
 		console.error(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`)
 
 		await createAddressPointIndexes(kdb)
-		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 
-		const stats = db
+		const stats = kdb
 			.prepare(
 				"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point"
 			)

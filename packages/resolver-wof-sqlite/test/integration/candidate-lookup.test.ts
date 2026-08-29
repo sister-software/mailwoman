@@ -19,13 +19,14 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { copyFile, mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { rankByPrimaryPreference, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
 import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { FindPlaceQuery } from "@mailwoman/resolver-wof-sqlite/types"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: string
@@ -35,7 +36,7 @@ let candidatePath: string
  * Minimal admin WOF (the tables `buildCandidateTable` reads) with a population homonym + alias + qualifier case.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -198,14 +199,14 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO names VALUES (990, 'TD', 'region', 'ES', 'abbr', '', 0, 0);
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 /**
  * A postcode shard: one real-coord ZIP + one placeholder 0,0 (dropped at build, the White House 20500 case).
  */
 function buildFixturePostcodes(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -220,7 +221,7 @@ function buildFixturePostcodes(path: string): void {
 		INSERT INTO spr VALUES (94101, '94101', 'postalcode', 'US', 37.75, -122.42, 37.74, -122.43, 37.76, -122.41, -1, 0);
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 beforeEach(async () => {
@@ -353,7 +354,7 @@ describe("WOFCandidateTableLookup", () => {
 	test("excludeNameRoles degrades to a no-op on an artifact without the role column", async () => {
 		// A pre-#1730 candidate DB: same columns MINUS name_role. The option must be ignored, never error.
 		const legacyPath = join(scratch, "legacy-candidate.db")
-		const legacy = new DatabaseSync(legacyPath)
+		const legacy = new DatabaseClient<WOFDatabase>(legacyPath)
 
 		legacy.exec(`
 			CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT UNIQUE);
@@ -370,7 +371,7 @@ describe("WOFCandidateTableLookup", () => {
 			INSERT INTO candidate VALUES ('td', 0, 0, 0, -5.0, 970, 'Toledano', 39.8, -4.0, 39.0, -5.0, 40.5, -3.0, 700000, 0, NULL);
 		`)
 
-		legacy.close()
+		await legacy.destroy()
 
 		const lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
 
@@ -898,7 +899,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 	test("B2-1: the #741 postal-city short-circuit is untouched — an exact (name, postcode) hit wins with the flag on or off", async () => {
 		// Patch the built candidate DB with the #741 side-index carrying the exact hit; the lookup
 		// existence-gates its probe on the table, so this is the real fast-path configuration.
-		const db = new DatabaseSync(candidatePath)
+		const db = new DatabaseClient<WOFDatabase>(candidatePath)
 
 		db.exec(
 			"CREATE TABLE postal_city_candidate (name_key TEXT, postcode TEXT, spr_id INTEGER, name TEXT, latitude REAL, longitude REAL)"
@@ -913,7 +914,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 			-122.44
 		)
 
-		db.close()
+		await db.destroy()
 
 		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
@@ -1067,7 +1068,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 	 * Lenk deliberately is not. Ids are unrelated to the admin fixture's, as they are in production.
 	 */
 	function buildFixtureImportance(path: string): void {
-		const db = new DatabaseSync(path)
+		const db = new DatabaseClient<WOFDatabase>(path)
 
 		db.exec(`
 			CREATE TABLE spr (
@@ -1085,7 +1086,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 			INSERT INTO place_importance VALUES (7000000000200, 0.8125);
 		`)
 
-		db.close()
+		db.destroy()
 	}
 
 	beforeEach(async () => {
@@ -1159,9 +1160,9 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 		// an old DDL that could drift from what the old builder actually emitted.
 		const legacyPath = join(scratch, "candidate-legacy.db")
 		await copyFile(scoredPath, legacyPath)
-		const rw = new DatabaseSync(legacyPath)
+		const rw = new DatabaseClient<WOFDatabase>(legacyPath)
 		rw.exec("ALTER TABLE candidate DROP COLUMN importance")
-		rw.close()
+		await rw.destroy()
 
 		const lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
 
@@ -1474,9 +1475,9 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 		// vintage discipline as the pre-#28 importance-column test above.
 		const preSidecarPath = join(scratch, "candidate-pre-sidecar.db")
 		await copyFile(candidatePath, preSidecarPath)
-		const rw = new DatabaseSync(preSidecarPath)
+		const rw = new DatabaseClient<WOFDatabase>(preSidecarPath)
 		rw.exec("DROP TABLE candidate_ancestor; DROP TABLE candidate_interval;")
-		rw.close()
+		await rw.destroy()
 
 		const lk = new WOFCandidateTableLookup({ databasePath: preSidecarPath })
 

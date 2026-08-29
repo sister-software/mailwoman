@@ -15,7 +15,6 @@
 
 import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PostcodeLocalityDatabase } from "mailwoman/gazetteer-pipeline/postcode-locality/schema"
 

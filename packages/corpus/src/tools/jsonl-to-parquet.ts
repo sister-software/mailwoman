@@ -214,7 +214,7 @@ export async function jsonlToParquet(
 
 		return { read: rows, written, outPath: options.output }
 	} finally {
-		stage.destroy()
+		await stage.destroy()
 		await unlink(stagePath).catch(() => {})
 	}
 }

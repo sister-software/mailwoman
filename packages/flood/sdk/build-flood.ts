@@ -47,7 +47,6 @@ import {
 } from "@mailwoman/core/layers"
 import { runChunkProcess } from "@mailwoman/core/utils"
 import { rmSync, statSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

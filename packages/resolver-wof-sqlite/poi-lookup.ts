@@ -25,11 +25,11 @@
  *   it).
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk, latLngToCell } from "h3-js"
 
-import type { POICategoryCodeTable, POITable } from "./poi-schema.ts"
+import type { POICategoryCodeTable, POIDatabase, POITable } from "./poi-schema.ts"
 import { allRows } from "./sqlite-utils.ts"
 
 /**
@@ -111,7 +111,7 @@ export interface POISearchHit {
 	distanceM?: number
 }
 
-export interface POILookupOpts {
+export interface POILookupOpts<DB extends POIDatabase = POIDatabase> {
 	/**
 	 * Path to a `poi.db` built by the (future) POI builder. Opened read-only.
 	 */
@@ -119,7 +119,7 @@ export interface POILookupOpts {
 	/**
 	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
 	 */
-	database?: DatabaseSync
+	database?: DatabaseClient<DB>
 }
 
 /**
@@ -143,8 +143,8 @@ type POIRow = Pick<
  * `[Symbol.dispose]()` explicitly), the same precedent as {@link WOFCandidateTableLookup} /
  * {@link WOFSQLitePlaceLookup}.
  */
-export class POILookup implements Disposable {
-	#db: DatabaseSync
+export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposable {
+	#db: DatabaseClient<DB>
 	#ownsDB: boolean
 	readonly #categoryToID = new Map<string, number>()
 	readonly #idToCategory = new Map<number, string>()
@@ -152,22 +152,22 @@ export class POILookup implements Disposable {
 	/**
 	 * `(h3_cell, category_id)` → the cell's category-clustered range, most-confident-first.
 	 */
-	readonly #categoryCellProbe: ReturnType<DatabaseSync["prepare"]>
+	readonly #categoryCellProbe: ReturnType<DatabaseClient["prepare"]>
 	/**
 	 * `brand_wikidata` → ALL of a brand's rows globally (partial-index range-scan); distance-sorted in JS, not SQL.
 	 */
-	readonly #brandProbe: ReturnType<DatabaseSync["prepare"]>
+	readonly #brandProbe: ReturnType<DatabaseClient["prepare"]>
 	/**
 	 * FTS5 `MATCH` over `poi_search`, returning candidate `name_key`s to hydrate.
 	 */
-	readonly #nameFTSProbe: ReturnType<DatabaseSync["prepare"]>
+	readonly #nameFTSProbe: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: POILookupOpts) {
+	constructor(opts: POILookupOpts<DB>) {
 		if (opts.database) {
 			this.#db = opts.database
 			this.#ownsDB = false
 		} else if (opts.databasePath) {
-			this.#db = new DatabaseSync(opts.databasePath, { readOnly: true })
+			this.#db = new DatabaseClient<DB>(opts.databasePath, { readOnly: true })
 			this.#ownsDB = true
 		} else {
 			throw new Error("POILookup needs `databasePath` or `database`")
@@ -353,7 +353,7 @@ export class POILookup implements Disposable {
 
 	close(): void {
 		if (this.#ownsDB) {
-			this.#db.close()
+			this.#db.destroy()
 		}
 	}
 

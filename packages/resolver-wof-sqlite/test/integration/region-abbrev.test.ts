@@ -1,3 +1,5 @@
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -20,15 +22,14 @@
  *   constraint the higher-population namesake wins, which is exactly why region resolution has to
  *   work.
  */
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
-import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 // US regions, their USPS abbreviations (what add-region-abbrevs writes into `names`), and two
 // same-named towns ("Sheldon") — the Vermont one small, the Iowa one larger — plus the ancestry
 // the wof:hierarchy backfill restores so the region constraint can reach the descendant town.
-function buildDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,

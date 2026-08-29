@@ -16,10 +16,11 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { adminCoherenceField, type AdminCoherenceSourceNode } from "mailwoman/admin-coherence"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
@@ -35,7 +36,7 @@ const WEIMAR_US = 202
  * country, so a bare population-first "Weimar" answers Texas.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -69,7 +70,7 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (${TEXAS}, ${USA}, 'country');
 	`)
 
-	db.close()
+	db.destroy()
 }
 
 let scratch: string

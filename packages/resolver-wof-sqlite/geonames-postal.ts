@@ -35,9 +35,11 @@
  */
 
 import { existsSync } from "@mailwoman/platform/fs"
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
+
+import type { WOFDatabase } from "./schema.ts"
 
 /**
  * Column count of a GeoNames postal-code TSV row. Short rows are truncated or blank and are skipped. See the
@@ -137,7 +139,7 @@ export interface GeonamesPostalIngestResult {
  * freeze phase).
  */
 export async function ingestGeonamesPostal(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	countries: readonly string[],
 	postalDir: string
 ): Promise<GeonamesPostalIngestResult> {

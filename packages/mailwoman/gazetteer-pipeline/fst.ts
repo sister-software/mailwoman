@@ -31,7 +31,6 @@
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"

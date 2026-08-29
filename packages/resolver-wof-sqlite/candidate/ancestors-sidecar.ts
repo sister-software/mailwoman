@@ -5,7 +5,6 @@
  * @file Pass 3b of the candidate build — the containment sidecar (closure rows + interval labels).
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { placetypeDepth } from "../ancestry.ts"
@@ -18,6 +17,7 @@ import {
 	MAX_ANCESTOR_DEPTH,
 } from "../candidate-ancestors-schema.ts"
 import type { CandidateDatabase } from "../candidate-schema.ts"
+import type { WOFDatabase } from "../schema.ts"
 import type { PlaceAttrs } from "./place-attrs.ts"
 
 /**
@@ -31,9 +31,8 @@ import type { PlaceAttrs } from "./place-attrs.ts"
  * no name to denormalize; it is dropped and counted rather than stored blind.
  */
 export async function buildAncestorsSidecar(ctx: {
-	src: DatabaseSync
-	out: DatabaseSync
-	kdb: DatabaseClient<CandidateDatabase>
+	src: DatabaseClient<WOFDatabase>
+	out: DatabaseClient<CandidateDatabase>
 	attrs: Map<number, PlaceAttrs>
 	ptID: (pt: string | null) => number
 	progress: (phase: string, message: string) => void
@@ -41,8 +40,8 @@ export async function buildAncestorsSidecar(ctx: {
 	const { src, out, attrs, ptID, progress } = ctx
 
 	progress("ancestors", "building containment sidecar (closure rows + interval labels)")
-	await createCandidateAncestorTable(ctx.kdb)
-	await createCandidateIntervalTable(ctx.kdb)
+	await createCandidateAncestorTable(ctx.out)
+	await createCandidateIntervalTable(ctx.out)
 
 	const insAncestor = out.prepare(
 		`INSERT INTO ${CANDIDATE_ANCESTOR_TABLE} VALUES (${CANDIDATE_ANCESTOR_COLUMNS.map(() => "?").join(", ")})`

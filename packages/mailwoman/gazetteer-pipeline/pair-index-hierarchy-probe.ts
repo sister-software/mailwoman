@@ -62,7 +62,6 @@ import {
 } from "@mailwoman/neural/pair-index-resolver"
 import { existsSync, mkdirSync, renameSync, writeFileSync } from "@mailwoman/platform/fs"
 import { basename, join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -331,7 +330,7 @@ async function main(): Promise<void> {
 		}
 	}
 
-	db.destroy()
+	await db.destroy()
 }
 
 await runIfScript(import.meta, main)

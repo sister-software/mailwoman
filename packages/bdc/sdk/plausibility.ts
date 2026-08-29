@@ -258,7 +258,7 @@ export interface GeocodeLike {
  */
 export interface PlausibilityPOIDeps {
 	lookup: POILookup
-	contractDB: DatabaseClient<LayerContractDatabase>
+	contractDB: LayerContractHandle & Pick<DatabaseClient, "destroy">
 }
 
 export interface PlausibilityDeps {
@@ -368,7 +368,7 @@ function combineCoverage(
  */
 async function assertLayerSpineResolution(
 	layer: "bdc" | "poi",
-	contractDB: LayerContractHandle,
+	contractDB: LayerContractHandle & Pick<DatabaseClient, "destroy">,
 	expectedResolution: number
 ): Promise<void> {
 	const manifest = await readLayerManifest(contractDB)

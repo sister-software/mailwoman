@@ -13,8 +13,9 @@
 import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 type Row = Record<string, string | number | null>
@@ -49,8 +50,8 @@ function altRow(gid: string, lang: string, name: string, flags: Partial<Record<4
 	return f.join("\t")
 }
 
-function freshDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function freshDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -128,7 +129,7 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	expect(byName("Santa Isabel")).toEqual({ language: "sv", privateuse: "", official: 0 })
 	// The primary-name mirror row stays untagged — spr.name already IS the name-exact tier.
 	expect(byName("Turku")).toEqual({ language: "", privateuse: "", official: 0 })
-	db.close()
+	await db.destroy()
 })
 
 test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", async () => {
@@ -146,5 +147,5 @@ test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", 
 		expect(r.official).toBe(0)
 	}
 
-	db.close()
+	await db.destroy()
 })

@@ -95,7 +95,6 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {
 	const { mkdtempSync, writeFileSync } = await import("@mailwoman/platform/fs")
 	const { tmpdir } = await import("@mailwoman/platform/os")
-	const { DatabaseSync } = await import("@mailwoman/platform/sqlite")
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	const { createCapitalTable } = await import("@mailwoman/resolver-wof-sqlite/capital-schema")
 	const { loadCapitalIndex } = await import("mailwoman/resolver-backend")
@@ -112,7 +111,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 		.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
 		.run("CR", 9.9333, -84.0833, "national", JSON.stringify(["san jose"]))
 
-	artifact.destroy()
+	await artifact.destroy()
 
 	// A repo-style file carrying a DIFFERENT entry (GD), so which source served is observable.
 	const repoPath = join(dir, "capitals-v1.json")

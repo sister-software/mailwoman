@@ -19,16 +19,18 @@
  *   the production rebuild is a tracked BAN-sdk follow-up.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { foldStreetSurface, type StreetEvidenceScope, type StreetLocalityEvidence } from "@mailwoman/resolver"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-function hasTable(db: DatabaseSync, table: string): boolean {
+import type { WOFDatabase } from "./schema.ts"
+
+function hasTable(db: DatabaseClient<WOFDatabase>, table: string): boolean {
 	const row = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1").get(table)
 
 	return row !== undefined
 }
 
-function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
+function hasColumn(db: DatabaseClient<WOFDatabase>, table: string, column: string): boolean {
 	// `table` is a caller-controlled identifier (default `street_centroid`), not user input — safe to interpolate.
 	for (const row of db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>) {
 		if (row.name === column) return true
@@ -54,14 +56,14 @@ export interface SQLiteStreetNameLookupOpts {
  */
 export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 	readonly countries: ReadonlySet<string>
-	readonly #db: DatabaseSync
-	readonly #byName: ReturnType<DatabaseSync["prepare"]> | undefined
-	readonly #byNameLocality: ReturnType<DatabaseSync["prepare"]> | undefined
-	readonly #byNamePostcode: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #db: DatabaseClient<WOFDatabase>
+	readonly #byName: ReturnType<DatabaseClient["prepare"]> | undefined
+	readonly #byNameLocality: ReturnType<DatabaseClient["prepare"]> | undefined
+	readonly #byNamePostcode: ReturnType<DatabaseClient["prepare"]> | undefined
 
 	constructor(dbPath: string, opts: SQLiteStreetNameLookupOpts = {}) {
 		this.countries = new Set([...(opts.countries ?? ["FR"])].map((c) => c.toUpperCase()))
-		this.#db = new DatabaseSync(dbPath, { readOnly: true })
+		this.#db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 		const table = opts.table ?? "street_centroid"
 
 		// Degrade gracefully on an empty/tableless shard — a no-op miss, never a crash (#568 discipline).
@@ -107,6 +109,6 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence {
 	 * Close the underlying handle.
 	 */
 	close(): void {
-		this.#db.close()
+		this.#db.destroy()
 	}
 }

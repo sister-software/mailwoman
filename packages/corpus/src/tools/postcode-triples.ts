@@ -44,7 +44,6 @@
 import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"

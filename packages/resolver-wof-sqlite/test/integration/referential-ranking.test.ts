@@ -27,9 +27,10 @@
  *   this is where it would show.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { referentialFromPopulation } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, it } from "vitest"
 
 interface FixturePlace {
@@ -87,8 +88,8 @@ const SAINT_DENIS: FixturePlace[] = [
 function buildFixtureDB(
 	places: readonly FixturePlace[],
 	{ withEncyclopedic }: { withEncyclopedic: boolean }
-): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (

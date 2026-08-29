@@ -72,7 +72,7 @@ describe("createPostcodeLocalityTable", () => {
 			{ cid: 6, name: "is_containing", type: "INTEGER", notnull: 1 },
 		])
 
-		db.destroy()
+		await db.destroy()
 	})
 
 	it("declares the meta key/value shape with `key` as the primary key", async () => {
@@ -83,7 +83,7 @@ describe("createPostcodeLocalityTable", () => {
 			{ name: "value", type: "TEXT", pk: 0 },
 		])
 
-		db.destroy()
+		await db.destroy()
 	})
 
 	it("is re-runnable under `ifNotExists` — the accumulative build fills one shard country by country", async () => {
@@ -100,7 +100,7 @@ describe("createPostcodeLocalityTable", () => {
 		// Without the flag the same statement is an error — that is what makes a rebuild build a rebuild.
 		await expect(createPostcodeLocalityTable(kdb, { ifNotExists: false })).rejects.toThrow(/already exists/)
 
-		kdb.destroy()
+		await kdb.destroy()
 	})
 })
 
@@ -122,7 +122,7 @@ describe("createPostcodeLocalityIndex", () => {
 			[1, "country"],
 		])
 
-		db.destroy()
+		await db.destroy()
 	})
 })
 
@@ -139,7 +139,7 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 		expect(named![1]!.split(",").map((c) => c.trim())).toEqual(declared)
 		expect(named![2]!.split(",").map((c) => c.trim())).toEqual(declared.map(() => "?"))
 
-		db.destroy()
+		await db.destroy()
 	})
 
 	it("lands each positional value in its own column", async () => {
@@ -159,7 +159,7 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 			is_containing: 1,
 		})
 
-		db.destroy()
+		await db.destroy()
 	})
 
 	it("accepts a null alias list", async () => {
@@ -172,6 +172,6 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 			distance_km: 1.5,
 		})
 
-		db.destroy()
+		await db.destroy()
 	})
 })

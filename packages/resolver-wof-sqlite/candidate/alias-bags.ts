@@ -5,9 +5,11 @@
  * @file Pass 2 of the candidate build — explode `place_search.alt_names` into distinct alias rows.
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { CandidateDatabase } from "../candidate-schema.ts"
 import { ALIAS_SEPARATOR } from "../fts.ts"
+import type { WOFDatabase } from "../schema.ts"
 import { normalizeLocalityForKey } from "../street-normalize.ts"
 import type { PlaceAttrs, StageRow } from "./place-attrs.ts"
 
@@ -16,8 +18,8 @@ import type { PlaceAttrs, StageRow } from "./place-attrs.ts"
  * each place's distinct staged keys (primary included) — the gloss detector's key-count signal (#1730).
  */
 export function explodeAliasBags(
-	src: DatabaseSync,
-	out: DatabaseSync,
+	src: DatabaseClient<WOFDatabase>,
+	out: DatabaseClient<CandidateDatabase>,
 	attrs: Map<number, PlaceAttrs>,
 	stageRow: StageRow
 ): { nAlias: number; keyCounts: Map<number, number> } {

@@ -14,7 +14,6 @@
  */
 
 import { allRows } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
@@ -128,7 +127,7 @@ const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) =
 			...params
 		)
 
-		db.destroy()
+		await db.destroy()
 
 		const byParent = new Map<string, Array<{ placetype: string; n: number }>>()
 

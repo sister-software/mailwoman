@@ -27,7 +27,6 @@
 
 import { mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 

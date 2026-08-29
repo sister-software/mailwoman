@@ -30,7 +30,6 @@
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { existsSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
@@ -223,7 +222,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
-		src.destroy()
+		await src.destroy()
 
 		// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
 		// readonly artifact — never write the live path in case the build dies halfway). The

@@ -38,7 +38,6 @@
  */
 
 import { copyFileSync, existsSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 
@@ -263,7 +262,7 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	}
 
 	kdb.exec("COMMIT")
-	kdb.destroy()
+	await kdb.destroy()
 
 	return rows
 }
@@ -363,8 +362,8 @@ async function foldIntoCandidate(
 	out.exec("COMMIT")
 	// Re-cluster the WITHOUT ROWID B-tree contiguously after the mid-tree inserts.
 	out.exec("VACUUM")
-	shard.destroy()
-	out.destroy()
+	await shard.destroy()
+	await out.destroy()
 
 	return n
 }

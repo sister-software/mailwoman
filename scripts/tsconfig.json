@@ -1,21 +1,23 @@
 {
-	// Leaf type-check project for the toolshed. Not part of the build graph
-	// (composite:false, noEmit) — invoked explicitly via `tsc -p scripts/tsconfig.json`
-	// (and in CI) so `scripts/` stops being the one untyped corner where rot
-	// accumulates. Scoped to .ts/.tsx (the repo bans .mjs — zero remain as of 2026-07-07).
+	// The toolshed's project, IN `tsc -b`'s graph so `yarn compile` covers it. `composite` requires declaration output,
+	// and `emitDeclarationOnly` is how that is satisfied without emitting JavaScript: `scripts/` is run from source under
+	// node's type stripping, so the `.d.ts` files are build state, not shipped artifacts.
+	//
+	// It was outside the graph before, reachable only through `yarn typecheck:scripts`, which is how a type error here
+	// could survive every `yarn compile`. Scoped to .ts/.tsx (the repo bans .mjs).
 	"extends": "@sister.software/tsconfig/node",
 	"compilerOptions": {
-		"noEmit": true,
+		"composite": true,
 		"erasableSyntaxOnly": true,
-		"emitDeclarationOnly": false,
-		"declaration": false,
-		"declarationMap": false,
+		"emitDeclarationOnly": true,
+		"declaration": true,
+		"declarationMap": true,
 		"sourceMap": false,
-		"composite": false,
-		"incremental": false,
+		"incremental": true,
 		"checkJs": false,
 		"allowJs": false,
-		"rootDir": ".."
+		"rootDir": ".",
+		"outDir": "./out"
 	},
 	"include": ["./**/*.ts", "./**/*.tsx"],
 	// `diagnostic/` and `scratchpad/` are the throwaway namespaces (.gitignore'd);
@@ -29,6 +31,8 @@
 		"./**/node_modules/**",
 		"./diagnostic/**",
 		"./scratchpad/**",
-		"./eval/demo-cascade-smoke.ts"
+		"./eval/demo-cascade-smoke.ts",
+		"./**/*.test.ts",
+		"./**/*.test.tsx"
 	]
 }

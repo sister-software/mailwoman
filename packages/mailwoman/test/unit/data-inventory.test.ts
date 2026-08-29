@@ -15,7 +15,6 @@ import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	buildCommandGaps,

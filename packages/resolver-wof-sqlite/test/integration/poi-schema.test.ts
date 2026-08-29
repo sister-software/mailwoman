@@ -5,7 +5,6 @@
  */
 
 import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	createPOISearchFTS,
 	createPOIStagingTables,
@@ -18,10 +17,10 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
-function openMemory(): { raw: DatabaseSync; kdb: DatabaseClient<POIDatabase> } {
-	const raw = new DatabaseSync(":memory:")
+function openMemory(): { raw: DatabaseClient<POIDatabase>; kdb: DatabaseClient<POIDatabase> } {
+	const raw = new DatabaseClient<POIDatabase>(":memory:")
 
-	return { raw, kdb: new DatabaseClient<POIDatabase>(raw) }
+	return { raw, kdb: raw }
 }
 
 describe("poi schema", () => {

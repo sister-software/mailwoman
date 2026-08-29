@@ -24,7 +24,6 @@
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { createWriteStream } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { TIGERDatabase } from "../sdk/schema.ts"
@@ -162,7 +161,7 @@ export async function raceDots(
 		)
 		.all() as Array<{ geometry: string } & Record<(typeof CATEGORIES)[number], number>>
 
-	db.destroy()
+	await db.destroy()
 
 	const out = createWriteStream(OUT)
 	const totals = new Map<string, number>()

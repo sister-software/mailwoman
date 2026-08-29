@@ -37,7 +37,6 @@
 import { allRows } from "@mailwoman/core/utils"
 import { existsSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
@@ -138,7 +137,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 				country
 			)
 
-			conn.destroy()
+			await conn.destroy()
 
 			const { entries, skipped, outwardKeys } = buildPostcodeBinaryEntries(country, rows, {
 				gbGranularity: granularity,

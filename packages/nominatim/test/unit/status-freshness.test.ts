@@ -16,10 +16,17 @@ import { createNominatimApp, type NominatimStatus, nominatimStatus } from "@mail
 import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
 import { afterEach, expect, test } from "vitest"
+
+/**
+ * The one-column table this fixture writes, so the freshness probe reads a file with a declared schema.
+ */
+interface FreshnessFixtureDatabase {
+	rows: { id: number }
+}
 
 const roots: string[] = []
 
@@ -63,10 +70,10 @@ async function stamped(path: string, createdAt: string): Promise<string> {
  * A built database with no manifest — every gazetteer built before the layer contract.
  */
 function bare(path: string): string {
-	const db = new DatabaseSync(path)
+	const db = new DatabaseClient<FreshnessFixtureDatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
-	db.close()
+	db.destroy()
 
 	return path
 }

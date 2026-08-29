@@ -21,7 +21,6 @@
  */
 
 import { allRows } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 
@@ -78,7 +77,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		pcl.destroy()
+		await pcl.destroy()
 
 		// spr_id → {name, lat, lon} from the candidate table's own rows (the coord bridge).
 		console.error(`▸ loading candidate coordinates from ${candidateDB}`)
@@ -102,7 +101,7 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 			alias.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
 		)
 
-		alias.destroy()
+		await alias.destroy()
 
 		// DDL via the Kysely schema-builder (the house idiom); the hot INSERT loop below stays on the
 		// raw `node:sqlite` handle for speed. `db` wraps `db` — the two share the one connection.

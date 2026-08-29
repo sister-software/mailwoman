@@ -19,7 +19,8 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/utils"
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 export interface FoldGeonamesOptions {
 	/**
@@ -49,7 +50,10 @@ export interface FoldGeonamesResult {
 /**
  * Fold GeoNames aliases into an open unified staging DB.
  */
-export async function foldGeonames(db: DatabaseSync, opts: FoldGeonamesOptions): Promise<FoldGeonamesResult> {
+export async function foldGeonames(
+	db: DatabaseClient<WOFDatabase>,
+	opts: FoldGeonamesOptions
+): Promise<FoldGeonamesResult> {
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — lazy import (the gazetteer-pipeline convention).
 	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames-aliases")
 	const geonamesDir = opts.geonamesDir ?? String(dataRootPath("geonames"))

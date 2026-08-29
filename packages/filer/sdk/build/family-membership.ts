@@ -9,7 +9,7 @@
  *   therefore two writes of ONE fact, and every caller emitting the first must emit the second.
  */
 
-import type { StatementSync } from "@mailwoman/platform/sqlite"
+import type { StatementSync } from "@mailwoman/sqlite/client"
 
 import { mintFamilyID } from "../family-id.ts"
 

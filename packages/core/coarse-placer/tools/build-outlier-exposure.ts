@@ -18,7 +18,6 @@
 
 import { appendFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { dataRootPath, repoRootPath } from "#utils"
@@ -192,7 +191,7 @@ export async function buildOutlierExposure(
 		report?.(`  ${lang}: ${kept}`)
 	}
 
-	db.destroy()
+	await db.destroy()
 
 	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as OTHER.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))

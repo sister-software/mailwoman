@@ -25,7 +25,6 @@
  *   and no locking to reason about.
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 

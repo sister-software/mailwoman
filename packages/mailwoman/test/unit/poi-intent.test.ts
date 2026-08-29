@@ -9,7 +9,6 @@ import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { loadDefaultReverseGeocoder } from "mailwoman/default-reverse-geocoder"
@@ -405,7 +404,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 
 			db.prepare("INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)").run("東京タワー", tokyoNameKey, 0)
 
-			db.destroy()
+			await db.destroy()
 
 			const pipeline = createRuntimePipeline({ ...HERMETIC, poiQueryKind: { poiDatabasePath: databasePath } })
 			const result = await pipeline("Statue of Liberty", { locale: "en-US" })
@@ -433,7 +432,7 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 			expect(overlap.path).not.toBe("poi")
 		} finally {
 			try {
-				db.destroy()
+				await db.destroy()
 			} catch {
 				// Already closed after fixture setup.
 			}

@@ -1,3 +1,12 @@
+import {
+	type Convention,
+	mergeConventions,
+	resolveConvention,
+	SeedConventionSource,
+	WORLD_DEFAULT,
+} from "@mailwoman/resolver-wof-sqlite/convention"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -12,15 +21,7 @@
  *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
  *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
  */
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
-import {
-	type Convention,
-	mergeConventions,
-	resolveConvention,
-	SeedConventionSource,
-	WORLD_DEFAULT,
-} from "@mailwoman/resolver-wof-sqlite/convention"
-import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 describe("convention engine — merge + resolve", () => {
@@ -77,8 +78,8 @@ describe("convention engine — merge + resolve", () => {
 
 // --- Live dispatch: an injected convention reroutes findPlace -------------------------------------
 
-function buildDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -104,7 +105,7 @@ function buildDB(): DatabaseSync {
 }
 
 describe("convention engine — live dispatch", () => {
-	let db: DatabaseSync
+	let db: DatabaseClient<WOFDatabase>
 
 	beforeEach(() => {
 		db = buildDB()

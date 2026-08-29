@@ -23,7 +23,7 @@
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalize } from "@mailwoman/normalize"
 import { existsSync, readFileSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Sources a lookup can address. Each answers a different "does it know this?" and they are not interchangeable — a
@@ -215,13 +215,13 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
  * is never modified after creation, so a read-write open would fail on a correctly-sealed artifact and succeed — with a
  * journal file beside it — on one that was not.
  */
-export function openSealedArtifact(path: string | undefined): { db: DatabaseSync } | { unavailable: string } {
+export function openSealedArtifact<DB>(path: string | undefined): { db: DatabaseClient<DB> } | { unavailable: string } {
 	if (!path) return { unavailable: "No artifact path was resolved for this source." }
 
 	if (!existsSync(path)) return { unavailable: `Artifact not found at ${path}.` }
 
 	try {
-		return { db: new DatabaseSync(path, { readOnly: true }) }
+		return { db: new DatabaseClient<DB>(path, { readOnly: true }) }
 	} catch (error) {
 		return { unavailable: `Artifact at ${path} could not be opened read-only: ${(error as Error).message}` }
 	}

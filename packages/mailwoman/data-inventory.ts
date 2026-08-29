@@ -27,7 +27,6 @@ import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { type Dirent, existsSync, lstatSync, readdirSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
 import { basename, join, relative } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**

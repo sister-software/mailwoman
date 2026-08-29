@@ -8,9 +8,10 @@
  *   `wof:population` into it at ingest) — then verifies the ranking boost behaves as documented.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixturePlace {
@@ -33,8 +34,8 @@ const FIXTURE: FixturePlace[] = [
 	{ id: 1100, name: "Tokyo", country: "JP", lat: 35.68, lon: 139.69, population: 13_500_000 },
 ]
 
-function buildFixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildFixtureDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -94,7 +95,7 @@ describe("buildPlaceSearchFTS — done-phase summary", () => {
 
 		expect(doneDetail).toMatch(/FTS rows/)
 		expect(doneDetail).toMatch(/bbox rows/)
-		db.close()
+		db.destroy()
 	})
 })
 

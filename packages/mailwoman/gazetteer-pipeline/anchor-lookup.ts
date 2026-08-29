@@ -62,7 +62,6 @@
 
 import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
 import { closeSync, openSync, readFileSync, writeSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"

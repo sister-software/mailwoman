@@ -48,7 +48,6 @@ import {
 	type LayerManifest,
 } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"

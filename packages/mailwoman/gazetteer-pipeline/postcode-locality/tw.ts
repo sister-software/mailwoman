@@ -52,7 +52,6 @@
 
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { readFileSync, renameSync, rmSync } from "@mailwoman/platform/fs"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -667,7 +666,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	assertDatabaseIntegrity(kdb, buildPath)
 
 	kdb.exec("VACUUM")
-	kdb.destroy()
+	await kdb.destroy()
 	// Build-then-move: the destination only ever sees a fully-built, integrity-checked artifact.
 	renameSync(buildPath, args.output)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
