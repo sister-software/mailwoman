@@ -37,11 +37,12 @@
 
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/utils"
-import { mailwomanDataRoot, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { mailwomanDataRoot, md5File } from "@mailwoman/core/utils"
 import { createWriteStream, existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { basename, dirname } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 

@@ -13,7 +13,6 @@
  *   does not speak. Both stamp non-primary rows only.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	CANDIDATE_COLUMNS,
@@ -21,6 +20,7 @@ import {
 	createCandidateStagingTables,
 } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
 import { GLOSS_EXCLUDED_PLACETYPES, stampNameRoles } from "#candidate/name-roles"

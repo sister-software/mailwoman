@@ -37,7 +37,6 @@ import { gunzipChunks } from "@mailwoman/platform/compression"
 import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
 import { get as httpsGet } from "@mailwoman/platform/https"
 import { dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
 import { createReadStream } from "spliterator/node/fs"
@@ -121,7 +120,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 
 const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
 		const { blendImportance, createPlaceImportanceTable, referentialFromPopulation } =
 			await import("@mailwoman/resolver-wof-sqlite/place-importance-schema")
@@ -137,9 +136,9 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 		if (!(await pathExists(dbPath))) throw new CommandError(`Database not found: ${dbPath}`)
 
-		const db = new DatabaseSync(dbPath, { open: true })
+		const kdb = new DatabaseClient<PlaceImportanceDatabase>(dbPath, { open: true })
+
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
-		const kdb = new DatabaseClient<PlaceImportanceDatabase>(db)
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")
@@ -152,7 +151,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			// `is_current = 1` — a deprecated place is not in any consumer's read path, and leaving it
 			// in would let a dead row win a fan-out group. DISTINCT because `concordances` carries
 			// duplicate (id, other_id) rows (Q18125 appears twice for the same place).
-			const stmt = db.prepare(
+			const stmt = kdb.prepare(
 				`SELECT DISTINCT c.other_id AS other_id, s.id AS id, s.placetype AS placetype,
 				        s.latitude AS lat, s.longitude AS lon, COALESCE(p.population, 0) AS population
 				 FROM concordances c
@@ -294,7 +293,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			const popRows = allRows<{
 				id: number
 				population: number
-			}>(db.prepare("SELECT id, population FROM place_population"))
+			}>(kdb.prepare("SELECT id, population FROM place_population"))
 
 			for (const row of popRows) {
 				const score = referentialFromPopulation(row.population)
@@ -307,7 +306,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			console.error("  No place_population table — every referential score will be 0")
 		}
 
-		const insertStmt = db.prepare(
+		const insertStmt = kdb.prepare(
 			"INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)"
 		)
 
@@ -318,7 +317,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		// that we measured no salience rather than that we measured nothing.
 		const allIDs = new Set<number>([...wofReferential.keys(), ...wofEncyclopedic.keys()])
 
-		db.exec("BEGIN TRANSACTION")
+		kdb.exec("BEGIN TRANSACTION")
 
 		for (const wofID of allIDs) {
 			const referential = wofReferential.get(wofID) ?? 0
@@ -334,12 +333,12 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			insertStmt.run(wofID, referential, encyclopedic ?? null, blendImportance(referential, encyclopedic))
 		}
 
-		db.exec("COMMIT")
+		kdb.exec("COMMIT")
 
 		// The total is READ BACK, never derived by adding the two counters. The counters describe what
 		// this run tried to do; the table is what it did, and when those disagreed nobody noticed
 		// because the derived number looked plausible. `SELECT count(*)` cannot drift.
-		const total = getRow<{ c: number }>(db.prepare("SELECT count(*) AS c FROM place_importance"))!.c
+		const total = getRow<{ c: number }>(kdb.prepare("SELECT count(*) AS c FROM place_importance"))!.c
 
 		await kdb.destroy() // closes the underlying `db` handle
 

@@ -11,7 +11,6 @@
  *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.
  */
 
-import type { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { FilerEdgeAssertion, FilerRelationship, type FilerDatabase } from "@mailwoman/filer/schema"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import {
@@ -35,6 +34,7 @@ import {
 } from "@mailwoman/filer/tools/linkage-eval"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 const FRN_CASCADE_1 = toFRN("9100000001")!

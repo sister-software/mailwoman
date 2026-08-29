@@ -15,9 +15,8 @@
  *   Run: mailwoman eval gauntlet --layer regression [--candidate <candidate.onnx>]
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { checkCase } from "./check-case.ts"
 import { assertCorpusStampFresh } from "./corpus-stamp.ts"
@@ -86,8 +85,7 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
  * Run the curated regression layer. Returns `pass` (every `status=pass` case still passes).
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
-	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	const kdb = new DatabaseClient<GauntletDatabase>(raw)
+	const kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A gate
 	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)

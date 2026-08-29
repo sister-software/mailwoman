@@ -10,10 +10,10 @@
  *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
  */
 
-import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 import { DatabaseSync, type SQLInputValue } from "@mailwoman/platform/sqlite"
 import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import { SqliteDialect } from "@mailwoman/sqlite/dialect"
 import { Kysely } from "kysely"
 
 import { ancestorLineage } from "./ancestry.ts"

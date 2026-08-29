@@ -12,8 +12,8 @@ import {
 	createBDCProviderTable,
 	type BDCDatabase,
 } from "@mailwoman/bdc/schema"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createLayerCoverageTable, createLayerManifestTable, LayerTier } from "@mailwoman/core/layers"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 describe("bdc schema", () => {

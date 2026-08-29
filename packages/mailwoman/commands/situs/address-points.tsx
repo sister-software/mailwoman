@@ -66,8 +66,9 @@ interface Options {
 
 const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
-		const { dataRootPath, swapDatabaseIntoPlace } = await import("@mailwoman/core/utils")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { swapDatabaseIntoPlace } = await import("@mailwoman/sqlite/sealed-db")
 
 		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
 		const OA_MODE = Boolean(options.oaCSV)

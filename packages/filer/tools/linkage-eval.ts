@@ -8,11 +8,11 @@
  * measurement contract, truth unit, and leakage controls.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { chmodSync } from "@mailwoman/platform/fs"
 import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { FilerIdentifierType, FilerRelationship, type FilerDatabase } from "../schema.ts"
 import { buildFilerDatabase } from "../sdk/build-filer.ts"

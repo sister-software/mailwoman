@@ -27,12 +27,11 @@
  *   country that was simply never measured (absent row).
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import type { CountryBBoxFact, CountryCoverageFact } from "@mailwoman/core/resolver"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 // resolver-wof-sqlite is an optional peer of mailwoman (the geocode.tsx convention) — runtime
 // imports are DYNAMIC inside the functions; type-only imports are erased and safe at module level.
 import type { GazetteerCoverageDatabase } from "@mailwoman/resolver-wof-sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Shared source string for the #743 promote measurements.
@@ -159,8 +158,7 @@ export interface EmitCoverageManifestOptions {
 export async function emitCoverageManifest(opts: EmitCoverageManifestOptions): Promise<void> {
 	const { writeGazetteerCoverageManifest } = await import("@mailwoman/resolver-wof-sqlite")
 
-	const db = new DatabaseSync(opts.dbPath)
-	const kdb = new DatabaseClient<GazetteerCoverageDatabase>(db)
+	const kdb = new DatabaseClient<GazetteerCoverageDatabase>(opts.dbPath)
 
 	try {
 		await writeGazetteerCoverageManifest(kdb, {

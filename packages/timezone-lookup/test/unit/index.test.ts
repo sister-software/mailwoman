@@ -4,13 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	makeTimezoneAnnotator,
 	offsetSecForTimezone,
 	pointInMultiPolygon,
 	TimezoneLookup,
 } from "@mailwoman/timezone-lookup"
+import type { TimezoneDatabase } from "@mailwoman/timezone-lookup/schema"
 import { expect, test } from "vitest"
 
 const SQUARE: number[][][][] = [
@@ -40,8 +41,8 @@ test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
 })
 
-function fixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function fixtureDB(): DatabaseClient<TimezoneDatabase> {
+	const db = new DatabaseClient<TimezoneDatabase>(":memory:")
 	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
 
 	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run(

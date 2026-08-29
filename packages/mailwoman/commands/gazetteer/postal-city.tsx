@@ -48,7 +48,7 @@ interface Options {
 
 const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const candidateDB = options.candidateDB

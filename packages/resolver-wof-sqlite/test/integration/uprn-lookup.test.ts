@@ -8,7 +8,6 @@
  *   never disagree on which cell a coordinate keys to.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -24,7 +23,6 @@ import {
 import { mkdtempSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { UPRN_MAX_NEAREST_RADIUS_M, UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import {
 	createUPRNIndexes,
@@ -33,6 +31,7 @@ import {
 	type UPRNDatabase,
 } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { beforeAll, describe, expect, it } from "vitest"
 
 /**
@@ -53,15 +52,14 @@ beforeAll(async () => {
 
 	databasePath = join(dir, "uprn.db")
 
-	const db = new DatabaseSync(databasePath)
-	const kdb = new DatabaseClient<UPRNDatabase>(db)
+	const kdb = new DatabaseClient<UPRNDatabase>(databasePath)
 	const contract = kdb
 
 	await createUPRNTable(kdb)
 	await createLayerManifestTable(contract)
 	await createLayerCoverageTable(contract)
 
-	const insert = db.prepare("INSERT INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
+	const insert = kdb.prepare("INSERT INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 
 	for (const point of FIXTURE_POINTS) {
 		insert.run(point.uprn, point.lat, point.lon, uprnH3Cell(point.lat, point.lon))

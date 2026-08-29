@@ -25,11 +25,11 @@
  */
 
 import type { BDCDatabase, PlausibilityDeps } from "@mailwoman/bdc"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import type { FilerDatabase } from "@mailwoman/filer"
 import { existsSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Open a bdc.db, or return `undefined` when `databasePath` is unset or the file is missing — NEVER a raw sqlite throw.

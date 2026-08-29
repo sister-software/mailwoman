@@ -50,7 +50,6 @@
  *      the house rule exists for.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -61,7 +60,6 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { openBuiltDatabase, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { FilerDatabase } from "@mailwoman/filer"
 // `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
 // inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
@@ -73,6 +71,9 @@ import { open } from "@mailwoman/platform/fs/promises"
 import { basename, dirname, join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { openBuiltClient } from "@mailwoman/sqlite/sealed"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
 
@@ -440,7 +441,7 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 export function createTIGERBlockCentroidLookup(
 	tigerDBPath: string
 ): (geoid: string) => { lat: number; lon: number } | undefined {
-	const db = openBuiltDatabase(tigerDBPath)
+	const db = openBuiltClient(tigerDBPath)
 	const stmt = db.prepare("SELECT geometry FROM tabblock20 WHERE GEOID = ?")
 
 	return (geoid: string) => {

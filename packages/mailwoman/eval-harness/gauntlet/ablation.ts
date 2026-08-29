@@ -57,13 +57,13 @@
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, percentile, sha256Hex } from "@mailwoman/core/utils"
 import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import {
 	ABLATION_ABSENT,

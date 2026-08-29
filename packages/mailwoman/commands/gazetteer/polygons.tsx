@@ -28,10 +28,11 @@
  */
 
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { allRows, dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { existsSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
+import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
@@ -182,7 +183,7 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 
 const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
 		const { isPresent, tryParsingJSON } = await import("@mailwoman/core/objects")
 

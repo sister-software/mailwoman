@@ -124,7 +124,7 @@ export function tsOutPathBuilder<S extends string[]>(
 	return repoRootPathBuilder(OutDirectoryName, ...pathSegments) as any
 }
 
-export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "internal" | "whosonfirst"
+export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "internal"
 
 /**
  * Path builder relative to a address resource dictionary directory.

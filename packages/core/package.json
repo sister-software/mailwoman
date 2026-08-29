@@ -260,21 +260,6 @@
 			"default": "./out/resolver/index.js",
 			"types": "./out/resolver/index.d.ts"
 		},
-		"./kysley/client": {
-			"node": "./kysley/client.ts",
-			"default": "./out/kysley/client.js",
-			"types": "./out/kysley/client.d.ts"
-		},
-		"./kysley/dialect": {
-			"node": "./kysley/dialect.ts",
-			"default": "./out/kysley/dialect.js",
-			"types": "./out/kysley/dialect.d.ts"
-		},
-		"./kysley/dialect-config": {
-			"node": "./kysley/dialect-config.ts",
-			"default": "./out/kysley/dialect-config.js",
-			"types": "./out/kysley/dialect-config.d.ts"
-		},
 		"./errors": {
 			"node": "./errors/index.ts",
 			"default": "./out/errors/index.js",
@@ -480,11 +465,6 @@
 			"default": "./out/utils/jsonl.js",
 			"types": "./out/utils/jsonl.d.ts"
 		},
-		"./utils/sealed-db": {
-			"node": "./utils/sealed-db.ts",
-			"default": "./out/utils/sealed-db.js",
-			"types": "./out/utils/sealed-db.d.ts"
-		},
 		"./utils/stats": {
 			"node": "./utils/stats.ts",
 			"default": "./out/utils/stats.js",
@@ -496,6 +476,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/platform": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"adm-zip": "^0.6.0",
 		"async-init": "^1.0.0",
 		"axios": "^1.19.0",
@@ -510,7 +491,6 @@
 		"kysely": "^0.29.4",
 		"path-ts": "^2.1.0",
 		"pino": "^10.3.1",
-		"pluralize": "^8.0.0",
 		"regenerate": "^1.4.2",
 		"spliterator": "^6.2.0",
 		"type-fest": "^5.8.0",

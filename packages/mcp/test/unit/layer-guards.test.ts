@@ -10,7 +10,6 @@
  *   path set but the file missing, path set and the file present.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	assertBDCDatabaseExists,
 	assertFilerDatabaseExists,
@@ -28,6 +27,7 @@ import {
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, it } from "vitest"
 
 let scratch: string | undefined

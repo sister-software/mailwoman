@@ -29,7 +29,6 @@
  *   well-formed and simply answers "inside" for ground the authority did not map.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -40,7 +39,7 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { runChunkProcess } from "@mailwoman/core/utils"
 import { rmSync, statSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -53,6 +52,8 @@ import {
 	type GeojsonPolygon,
 	type GeojsonPosition,
 } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToLatLng } from "h3-js"
 
 import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "../schema.ts"

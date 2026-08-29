@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, supportsExclusion, writeLayerCoverage } from "@mailwoman/core/layers/manifest"
 import {
 	CoverageBasis,
@@ -13,6 +12,7 @@ import {
 	LayerTier,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 

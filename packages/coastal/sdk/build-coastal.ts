@@ -34,7 +34,6 @@
  *   that at 4.1% over a national layer.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -46,10 +45,12 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { runChunkProcess } from "@mailwoman/core/utils"
 import { rmSync, statSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
 import { createCoastalTables, type CoastalDatabase } from "../schema.ts"
 import {

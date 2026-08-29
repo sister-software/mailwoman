@@ -25,13 +25,13 @@
  *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { allRows, dataRootPath, workspacePath } from "@mailwoman/core/utils"
 import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "./defaults.ts"
 

@@ -36,11 +36,12 @@
  *   behavior.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { assertDatabaseIntegrity, pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { pyFloat, pyRound } from "@mailwoman/core/utils"
 import { readFileSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { TSVSpliterator, TextSpliterator } from "spliterator"
 
 import {

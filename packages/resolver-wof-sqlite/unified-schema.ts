@@ -12,8 +12,8 @@
  *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { WOFDatabase } from "./schema.ts"
 

@@ -5,7 +5,8 @@
  */
 
 import { makeNUTSAnnotator, nutsFromID, NUTSLookup, pointInMultiPolygon } from "@mailwoman/nuts-lookup"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { NUTSDatabase } from "@mailwoman/nuts-lookup/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { expect, test } from "vitest"
 
 test("nutsFromID: derives nested levels by prefix", () => {
@@ -31,8 +32,8 @@ test("pointInMultiPolygon: inside vs outside", () => {
 	expect(pointInMultiPolygon(20, 20, square)).toBe(false)
 })
 
-function fixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function fixtureDB(): DatabaseClient<NUTSDatabase> {
+	const db = new DatabaseClient<NUTSDatabase>(":memory:")
 
 	db.exec(
 		"CREATE TABLE nuts_regions (nutsID TEXT, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)"

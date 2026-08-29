@@ -72,6 +72,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@turf/boolean-contains": "^7.3.5",
 		"kysely": "^0.29.4",
 		"spliterator": "^6.2.0",

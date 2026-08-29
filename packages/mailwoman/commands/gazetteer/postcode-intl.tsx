@@ -208,7 +208,7 @@ const SPR_COLUMNS = [
 ] as const
 
 async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normalizeKey: NormalizeKey): Promise<number> {
-	const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
 	if (existsSync(outPath)) {
 		console.error(`out exists, overwriting: ${outPath}`)

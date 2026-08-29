@@ -15,11 +15,11 @@
  *   Run: mailwoman eval gauntlet-build regression-db
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
 import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "./cases/load.ts"
 import { assertCorpusIsNonEmpty, writeCorpusStamp } from "./corpus-stamp.ts"
@@ -55,12 +55,11 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 		rmSync(tmp)
 	}
 
-	const db = new DatabaseSync(tmp)
-	const kdb = new DatabaseClient<GauntletDatabase>(db)
+	const kdb = new DatabaseClient<GauntletDatabase>(tmp)
 	await createGauntletTable(kdb)
 	await createGauntletMetaTable(kdb)
 
-	const insert = db.prepare(`INSERT INTO gauntlet_case VALUES (${GAUNTLET_CASE_COLUMNS.map(() => "?").join(", ")})`)
+	const insert = kdb.prepare(`INSERT INTO gauntlet_case VALUES (${GAUNTLET_CASE_COLUMNS.map(() => "?").join(", ")})`)
 
 	for (const c of cases) {
 		// Positional, in GAUNTLET_CASE_COLUMNS order.

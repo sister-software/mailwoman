@@ -22,7 +22,6 @@
  *   never alter an authoritative cluster assignment.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -42,6 +41,7 @@ import {
 	CLUSTER_FILERS_SOURCE,
 	hasSharedIdentifier,
 } from "@mailwoman/filer/sdk/cluster-filers"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {

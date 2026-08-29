@@ -16,8 +16,8 @@
  *   uses), keeping one normalizer in one place.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.ts"
 

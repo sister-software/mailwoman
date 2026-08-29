@@ -49,14 +49,14 @@ import {
 	speedBucketForDownloadSpeed,
 } from "@mailwoman/bdc/sdk/filing-landscape"
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import { openBuiltDatabase } from "@mailwoman/core/utils"
 import { chmodSync, existsSync } from "@mailwoman/platform/fs"
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -262,7 +262,7 @@ describe("filingLandscape — Gate 2 (extended): coverage-check is required, not
 
 		chmodSync(corruptOut, 0o644)
 
-		using writable = new DatabaseClient<BDCDatabase>(openBuiltDatabase(corruptOut, { write: true }))
+		using writable = openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 
 		const sfRow = await writable
 			.selectFrom("bdc_availability")
@@ -421,11 +421,11 @@ describe("filingLandscape — Gate 4: vintage-or-throw", () => {
 		})
 
 		// `buildBDCDatabase` seals (chmod 0444). Unseal so the manifest row can be deleted, per
-		// `openBuiltDatabase`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
+		// `openBuiltClient`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
 		chmodSync(corruptOut, 0o644)
 		expect(existsSync(corruptOut)).toBe(true)
 
-		using writable = new DatabaseClient<BDCDatabase>(openBuiltDatabase(corruptOut, { write: true }))
+		using writable = openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 		await writable.deleteFrom("layer_manifest").execute()
 
 		await expect(filingLandscape(writable, { geoids: [GEOID_SF] })).rejects.toThrow(/manifest/)

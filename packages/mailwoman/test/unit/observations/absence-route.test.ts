@@ -18,7 +18,6 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -33,9 +32,9 @@ import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
 import { mkdtempSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 import {
 	auditAbsenceProbeDefinition,
@@ -98,9 +97,7 @@ async function scratchLayer(options: ScratchLayerOptions = {}): Promise<string> 
 
 	built.push(path)
 
-	const database = new DatabaseSync(path)
-
-	using db = new DatabaseClient<POIDatabase>(database)
+	using db = new DatabaseClient<POIDatabase>(path)
 
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)

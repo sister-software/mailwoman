@@ -8,6 +8,7 @@
 	},
 	"exclude": ["./out/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../sqlite" },
 		// ---
 		{ "path": "../core" },
 		{ "path": "../resolver-wof-sqlite" }

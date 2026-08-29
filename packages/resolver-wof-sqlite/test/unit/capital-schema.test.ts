@@ -7,9 +7,9 @@
  *   rather than crashing a session open.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { type CapitalTable, createCapitalTable, readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 async function openWithTable(): Promise<DatabaseSync> {

@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -22,6 +21,7 @@ import {
 	type FilerEdgeTable,
 	type FilerFamilyTable,
 } from "@mailwoman/filer/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {

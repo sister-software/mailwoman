@@ -56,7 +56,7 @@
  *   way it reaches `filerLookup`'s `cluster`/`inferred_links` split. See {@link FamilyRollupMember}.
  */
 
-import type { DatabaseClient } from "@mailwoman/core/kysley/client"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { readFilerManifest, type FilerDatabase } from "../schema.ts"
 import { assertFamilySchemaVersion, readFamilyDisplayNames, readFamilyMembers, todayISODate } from "./filer-lookup.ts"

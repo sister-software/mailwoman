@@ -9,7 +9,6 @@
  *   filesystem — matches `build-bdc.test.ts`'s injected-row convention.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import {
 	FilerEdgeAssertion,
@@ -26,6 +25,7 @@ import { existsSync } from "@mailwoman/platform/fs"
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 const FRN_ACME = toFRN("0001753557")!

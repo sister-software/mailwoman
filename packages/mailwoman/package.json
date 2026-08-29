@@ -424,6 +424,7 @@
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/soil": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/variant-aliases": "workspace:*",
 		"@mailwoman/zoning": "workspace:*",
 		"chalk": "^6.0.0",

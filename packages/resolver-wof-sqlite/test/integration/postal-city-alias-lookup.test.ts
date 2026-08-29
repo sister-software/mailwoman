@@ -1,4 +1,3 @@
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -22,6 +21,7 @@ import {
 	createPostalCityAliasTable,
 	type PostalCityAliasDatabase,
 } from "@mailwoman/resolver-wof-sqlite/postal-city-alias-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 /**

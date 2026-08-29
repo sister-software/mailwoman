@@ -33,9 +33,9 @@
  *   block excluded from `surveyed_block_count` never contributes to `filings` either.
  */
 
-import type { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent } from "h3-js"
 import { sql } from "kysely"
 

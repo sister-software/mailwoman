@@ -10,17 +10,16 @@
  *   extent-derived uncertainty, and the exact-match miss.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mkdtempSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite/street-centroid"
 import {
 	type StreetCentroidDatabase,
 	createStreetCentroidTable,
 } from "@mailwoman/resolver-wof-sqlite/street-centroid-schema"
 import { normalizeLocalityForKey, stripArrondissement } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 interface Seed {
@@ -41,11 +40,10 @@ interface Seed {
  */
 async function seedShard(rows: Seed[]): Promise<string> {
 	const path = join(mkdtempSync(join(tmpdir(), "sc-test-")), "street-centroids.db")
-	const db = new DatabaseSync(path)
-	const kdb = new DatabaseClient<StreetCentroidDatabase>(db)
+	const kdb = new DatabaseClient<StreetCentroidDatabase>(path)
 	await createStreetCentroidTable(kdb)
 
-	const ins = db.prepare(
+	const ins = kdb.prepare(
 		`INSERT INTO street_centroid
 		 (street_norm, postcode, locality_base, lat, lon, min_lat, max_lat, min_lon, max_lon, point_count, street_raw, source, release, name_key)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ban:fr', '2026-05-18', ?)`
@@ -68,7 +66,7 @@ async function seedShard(rows: Seed[]): Promise<string> {
 		)
 	}
 
-	db.close()
+	kdb.destroy()
 
 	return path
 }

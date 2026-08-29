@@ -25,11 +25,12 @@
  */
 
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
-import { dataRootPath, repoRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { globSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { basename, dirname } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
+import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -150,7 +151,7 @@ function parityOf(from: number, to: number): "odd" | "even" | "mixed" {
 
 const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
 		const { INTERP_RADIUS_CALIBRATION } = await import("../../interp-calibration.ts")
 

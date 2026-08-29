@@ -12,10 +12,10 @@
  */
 
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { sealDatabase } from "@mailwoman/core/utils"
 import { existsSync, readFileSync, unlinkSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
 import { dataRootPath } from "../../resolver-backend.ts"
 import { ingestWOF } from "../admin/ingest-wof.ts"

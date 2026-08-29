@@ -1,0 +1,71 @@
+{
+	"name": "@mailwoman/sqlite",
+	"version": "9.2.0",
+	"description": "The one way a Mailwoman SQLite connection is opened: a typed Kysely client over node:sqlite, plus the sealed-artifact lifecycle.",
+	"keywords": [
+		"kysely",
+		"sqlite"
+	],
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/sqlite"
+	},
+	"files": [
+		"out/",
+		"*.ts",
+		"!*.test.ts",
+		"!test/**"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./client": {
+			"node": "./client.ts",
+			"default": "./out/client.js",
+			"types": "./out/client.d.ts"
+		},
+		"./dialect": {
+			"node": "./dialect.ts",
+			"default": "./out/dialect.js",
+			"types": "./out/dialect.d.ts"
+		},
+		"./dialect-config": {
+			"node": "./dialect-config.ts",
+			"default": "./out/dialect-config.js",
+			"types": "./out/dialect-config.d.ts"
+		},
+		"./sealed": {
+			"node": "./sealed.ts",
+			"default": "./out/sealed.js",
+			"types": "./out/sealed.d.ts"
+		},
+		"./sealed-db": {
+			"node": "./sealed-db.ts",
+			"default": "./out/sealed-db.js",
+			"types": "./out/sealed-db.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/platform": "workspace:*",
+		"kysely": "^0.29.4"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

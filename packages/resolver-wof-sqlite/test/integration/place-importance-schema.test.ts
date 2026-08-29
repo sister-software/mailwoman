@@ -8,7 +8,6 @@
  *   reconstruction the read-only 2026-08-05 staging database needs.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
 	compareReferential,
@@ -20,6 +19,7 @@ import {
 	referentialFromPopulation,
 	splitLegacyImportance,
 } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 describe("referentialFromPopulation", () => {

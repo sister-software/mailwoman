@@ -37,7 +37,6 @@ import {
 	nearestInfrastructure,
 	NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS,
 } from "@mailwoman/bdc/sdk/nearest-infrastructure"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -62,6 +61,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

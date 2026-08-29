@@ -9,13 +9,13 @@
  *   no-match fall-through.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
 import {
 	type StreetSegmentDatabase,
 	writeInterpCalibration,
 } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 interface SeedSegment {

@@ -12,9 +12,9 @@
  *   under test.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { allRows } from "@mailwoman/core/utils"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	createPostcodeLocalityIndex,
 	createPostcodeLocalityMetaTable,

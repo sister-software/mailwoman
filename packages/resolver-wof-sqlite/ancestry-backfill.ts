@@ -45,10 +45,10 @@
  *   nothing.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { readdirSync } from "@mailwoman/platform/fs"
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 
 import type { WOFDatabase } from "./schema.ts"

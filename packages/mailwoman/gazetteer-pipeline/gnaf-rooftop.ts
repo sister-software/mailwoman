@@ -29,9 +29,8 @@
  *   0-geocode failure).
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
-import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	createOSMAddressPointIndexes,
 	createOSMAddressPointTables,
@@ -41,7 +40,6 @@ import {
 } from "@mailwoman/osm/sdk"
 import { existsSync, readdirSync, rmSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import {
 	canonicalizeRouteKey,
@@ -49,6 +47,8 @@ import {
 	normalizeStreetForKeyLocale,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { latLngToCell } from "h3-js"
 import { TextSpliterator } from "spliterator"
 
@@ -185,14 +185,16 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 		rmSync(tmp)
 	}
 
-	const db = new DatabaseSync(tmp)
+	const kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)
 
-	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<OSMAddressPointDatabase>(db)
+	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
 	await createOSMAddressPointTables(kdb)
 
-	const insert = db.prepare(`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
+	const insert = kdb.prepare(
+		`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
+	)
+
 	const counts: GNAFRooftopResult = { out, written: 0, retired: 0, alias: 0, noNumber: 0, noGeocode: 0, noStreet: 0 }
 	const BATCH = 50_000
 
@@ -223,7 +225,7 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 
 		let read: ((line: string) => Record<string, string>) | null = null
 
-		db.exec("BEGIN")
+		kdb.exec("BEGIN")
 
 		for await (const line of TextSpliterator.fromAsync(p("ADDRESS_DETAIL"))) {
 			if (!line) continue
@@ -314,8 +316,8 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 			counts.written++
 
 			if (counts.written % BATCH === 0) {
-				db.exec("COMMIT")
-				db.exec("BEGIN")
+				kdb.exec("COMMIT")
+				kdb.exec("BEGIN")
 
 				if (counts.written % 1_000_000 === 0) {
 					log(`[gnaf]   ${counts.written.toLocaleString()} written…`)
@@ -323,7 +325,7 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 			}
 		}
 
-		db.exec("COMMIT")
+		kdb.exec("COMMIT")
 	}
 
 	log(`[gnaf] indexing…`)
@@ -347,7 +349,7 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 		createdAt: options.createdAt,
 	})
 
-	db.exec("ANALYZE")
+	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
 	swapDatabaseIntoPlace(tmp, out)

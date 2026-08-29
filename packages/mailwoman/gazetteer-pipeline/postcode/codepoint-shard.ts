@@ -41,10 +41,11 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync, unlinkSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
 import { buildFTS } from "../fts.ts"

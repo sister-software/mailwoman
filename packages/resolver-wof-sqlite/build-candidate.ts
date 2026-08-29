@@ -40,9 +40,9 @@
  */
 
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { existsSync, rmSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { createCandidateFTS } from "./candidate-fts.ts"
 import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "./candidate-importance.ts"

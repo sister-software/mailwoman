@@ -9,7 +9,6 @@
  *   artifact back through the production reader.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { CoverageBasis, readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { statSync } from "@mailwoman/platform/fs"
 import { mkdtemp, writeFile } from "@mailwoman/platform/fs/promises"
@@ -18,6 +17,7 @@ import { join } from "@mailwoman/platform/path"
 import { UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import { UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent } from "h3-js"
 import {
 	buildUPRNLayer,

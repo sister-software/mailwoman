@@ -13,9 +13,8 @@
  *   read some other class's rows under this class's name, which no downstream check could catch.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { BBox } from "./build-poi.ts"
 
@@ -50,9 +49,7 @@ export interface ReferenceInventory {
  * Every row of `category` inside `bbox`. Throws when the artifact holds no such category.
  */
 export async function readReferenceInventory(query: ReferenceInventoryQuery): Promise<ReferenceInventory> {
-	const database = new DatabaseSync(query.databasePath, { readOnly: true })
-
-	using db = new DatabaseClient<POIDatabase>(database)
+	using db = new DatabaseClient<POIDatabase>(query.databasePath, { readOnly: true })
 
 	const code = await db
 		.selectFrom("poi_category_codes")

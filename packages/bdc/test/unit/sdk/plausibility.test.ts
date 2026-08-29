@@ -37,7 +37,6 @@ import {
 	type PlausibilityEvidence,
 } from "@mailwoman/bdc/sdk/plausibility"
 import { BroadbandTechnologyCode } from "@mailwoman/bdc/sdk/technologies"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -60,6 +59,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "h3-js"
 import { afterEach, describe, expect, it } from "vitest"
 

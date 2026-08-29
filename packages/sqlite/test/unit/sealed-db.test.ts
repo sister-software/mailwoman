@@ -1,10 +1,3 @@
-import {
-	isSealed,
-	openBuiltDatabase,
-	SealedArtifactError,
-	sealDatabase,
-	swapDatabaseIntoPlace,
-} from "@mailwoman/core/utils/sealed-db"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -14,6 +7,8 @@ import { existsSync, mkdtempSync, statSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { dirname, join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { openBuiltClient } from "@mailwoman/sqlite/sealed"
+import { isSealed, SealedArtifactError, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { describe, expect, it } from "vitest"
 
 function makeDB(): string {
@@ -47,29 +42,27 @@ describe("sealDatabase", () => {
 	})
 })
 
-describe("openBuiltDatabase", () => {
+describe("openBuiltClient", () => {
 	it("opens a sealed artifact read-only by default", () => {
 		const path = makeDB()
 		sealDatabase(path)
-		const db = openBuiltDatabase(path)
+		using db = openBuiltClient(path)
 		expect((db.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("x")
-		db.close()
 	})
 
 	it("throws SealedArtifactError (naming the rebuild command) on a write open of a sealed artifact", () => {
 		const path = makeDB()
 		sealDatabase(path)
-		expect(() => openBuiltDatabase(path, { write: true })).toThrow(SealedArtifactError)
-		expect(() => openBuiltDatabase(path, { write: true })).toThrow(/sealed read-only artifact/)
-		expect(() => openBuiltDatabase(path, { write: true })).toThrow(/gazetteer build/)
+		expect(() => openBuiltClient(path, { write: true })).toThrow(SealedArtifactError)
+		expect(() => openBuiltClient(path, { write: true })).toThrow(/sealed read-only artifact/)
+		expect(() => openBuiltClient(path, { write: true })).toThrow(/gazetteer build/)
 	})
 
 	it("allows a write open of an UNsealed database (builder staging)", () => {
 		const path = makeDB()
-		const db = openBuiltDatabase(path, { write: true })
+		using db = openBuiltClient(path, { write: true })
 
 		expect(() => db.exec("INSERT INTO t (v) VALUES ('y')")).not.toThrow()
-		db.close()
 	})
 })
 

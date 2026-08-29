@@ -35,7 +35,6 @@
  *   every point in it.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -46,11 +45,13 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { runChunkProcess } from "@mailwoman/core/utils"
 import { rmSync, statSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { compactCells, getResolution } from "h3-js"
 
 import { createFloodTables, FloodCellContainment, type FloodDatabase } from "../schema.ts"

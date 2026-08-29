@@ -47,7 +47,6 @@
  *   not in any OS OpenData product.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -58,7 +57,7 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { createWriteStream, existsSync, unlinkSync } from "@mailwoman/platform/fs"
 import { mkdir, readdir, readFile, stat, writeFile } from "@mailwoman/platform/fs/promises"
 import { dirname } from "@mailwoman/platform/path"
@@ -74,6 +73,8 @@ import {
 	shortCellToInt,
 	type H3Cell,
 } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent } from "h3-js"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"

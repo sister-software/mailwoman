@@ -4,8 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { foldName, makeUnLocodeAnnotator, parseUnLocodeCoords, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
+import type { UNLocodeDatabase } from "@mailwoman/un-locode-lookup/schema"
 import { expect, test } from "vitest"
 
 test("foldName: strips diacritics, lowercases, collapses whitespace", () => {
@@ -23,8 +24,8 @@ test("parseUnLocodeCoords: DDMM hemisphere → decimal degrees", () => {
 	expect(parseUnLocodeCoords("nonsense")).toBeNull()
 })
 
-function fixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function fixtureDB(): DatabaseClient<UNLocodeDatabase> {
+	const db = new DatabaseClient<UNLocodeDatabase>(":memory:")
 	db.exec("CREATE TABLE un_locode (country TEXT, location TEXT, name TEXT, nameNorm TEXT, lat REAL, lon REAL)")
 	const ins = db.prepare("INSERT INTO un_locode VALUES (?,?,?,?,?,?)")
 	ins.run("NL", "RTM", "Rotterdam", "rotterdam", 51.92, 4.48)

@@ -108,9 +108,10 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 
 const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
-		const { assertDatabaseIntegrity, dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { assertDatabaseIntegrity } = await import("@mailwoman/sqlite/sealed-db")
 
 		const { BUILTIN_STRATEGY_NAMES } = await import("@mailwoman/resolver-wof-sqlite")
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)

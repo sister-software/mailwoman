@@ -35,12 +35,12 @@
  *   as a custom postcode DB, isn't built yet).
  */
 
-import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
-import { sealDatabase } from "@mailwoman/core/utils"
 import { copyFileSync, existsSync, mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { SqliteDialect } from "@mailwoman/sqlite/dialect"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { Kysely, sql } from "kysely"
 
 import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "./fts.ts"

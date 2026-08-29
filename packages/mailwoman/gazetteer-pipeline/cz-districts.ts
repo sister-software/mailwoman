@@ -21,10 +21,11 @@
  *   Run: mailwoman gazetteer build cz-districts [--source <CZ.txt>] [--out <localities-cz-districts.db>]
  */
 
-import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { createHash } from "@mailwoman/platform/crypto"
 import { readFileSync, rmSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
 /**
  * Synthetic id base — distinct from the GeoNames postal range (9500000000000), the NL PC6 range (9600000000000), and

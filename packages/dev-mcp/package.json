@@ -280,6 +280,7 @@
 		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.30.0",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.1.0",

@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	COVERAGE_INSERT_BATCH,
 	readLayerCoverage,
@@ -21,6 +20,7 @@ import {
 	createLayerManifestTable,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 

@@ -1,4 +1,3 @@
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -23,6 +22,7 @@ import {
 	type PostalCityCandidateDatabase,
 } from "@mailwoman/resolver-wof-sqlite/postal-city-candidate-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: string

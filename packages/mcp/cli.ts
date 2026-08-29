@@ -49,7 +49,6 @@
  */
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -57,6 +56,7 @@ import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline, type PipelineResult } from "mailwoman"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { emitOverpassQL } from "mailwoman/poi-overpass"

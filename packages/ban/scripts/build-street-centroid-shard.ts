@@ -25,15 +25,14 @@
  *     node ban/out/scripts/build-street-centroid-shard.js --country fr --out /tmp/sc-fr.db
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { parseArgs } from "@mailwoman/platform/util"
 import { foldStreetSurface } from "@mailwoman/resolver"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import {
 	createStreetCentroidIndexes,
 	createStreetCentroidTable,
@@ -41,6 +40,8 @@ import {
 	type StreetCentroidDatabase,
 } from "@mailwoman/resolver-wof-sqlite/street-centroid-schema"
 import { type NameKey, stripArrondissement } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
 import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.ts"
 import { streetLocaleForBANCountry } from "../sdk/street-locale.ts"
@@ -102,7 +103,7 @@ async function main(): Promise<void> {
 	}
 
 	// The SEALED input — READ-ONLY, immutable; register the base-commune folder as a scalar SQL function.
-	const src = new DatabaseSync(args.source, { readOnly: true })
+	using src = new DatabaseClient<AddressPointDatabase>(args.source, { readOnly: true })
 
 	// SQLite hands a scalar function its argument as `unknown`, which erases the key brand. The value is
 	// `address_point.locality_norm`, which the shared schema declares a `NameKey` (the builder wrote it through
@@ -112,14 +113,12 @@ async function main(): Promise<void> {
 		typeof loc === "string" && loc ? stripArrondissement(loc as NameKey) : ""
 	)
 
-	const out = new DatabaseSync(tmp)
-
-	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-1000000;")
-	const kdb = new DatabaseClient<StreetCentroidDatabase>(out)
+	const kdb = new DatabaseClient<StreetCentroidDatabase>(tmp)
+	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-1000000;")
 
 	await createStreetCentroidTable(kdb)
 
-	const insert = out.prepare(
+	const insert = kdb.prepare(
 		`INSERT INTO street_centroid VALUES (${STREET_CENTROID_COLUMNS.map(() => "?").join(", ")})`
 	)
 
@@ -143,7 +142,7 @@ async function main(): Promise<void> {
 
 	console.error(`[ban] deriving ${args.country} street-centroid tier from ${args.source}`)
 
-	out.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for (const row of agg.iterate() as Iterable<{
 		street_norm: string
@@ -181,8 +180,8 @@ async function main(): Promise<void> {
 		written++
 
 		if (written % BATCH === 0) {
-			out.exec("COMMIT")
-			out.exec("BEGIN")
+			kdb.exec("COMMIT")
+			kdb.exec("BEGIN")
 
 			if (written % 500_000 === 0) {
 				console.error(`[ban]   ${written.toLocaleString()} streets…`)
@@ -190,13 +189,12 @@ async function main(): Promise<void> {
 		}
 	}
 
-	out.exec("COMMIT")
-	src.close()
+	kdb.exec("COMMIT")
 
 	console.error(`[ban] indexing…`)
 
 	await createStreetCentroidIndexes(kdb)
-	out.exec("ANALYZE")
+	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
 	swapDatabaseIntoPlace(tmp, args.output)

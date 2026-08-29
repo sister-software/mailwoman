@@ -46,6 +46,7 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/platform": "packages/platform",
 	"@mailwoman/core": "packages/core",
 	"@mailwoman/spatial": "packages/spatial",
+	"@mailwoman/sqlite": "packages/sqlite",
 	"@mailwoman/resolver": "packages/resolver",
 	// mailwoman's peerDependency (optional) — packed too so `mailwoman`'s gazetteer-pipeline poi builder
 	// (a static `resolver-wof-sqlite/poi-lookup` import, reached eagerly via `--help`'s command-module

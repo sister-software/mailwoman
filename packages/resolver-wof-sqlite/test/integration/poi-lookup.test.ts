@@ -13,7 +13,6 @@
  *   reader's.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
@@ -29,6 +28,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 

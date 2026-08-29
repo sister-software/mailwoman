@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   The sealed-artifact invariant: every SQLite DB a build produces is a READ-ONLY asset. `sealDatabase`
- *   is the last step of every builder — checkpoint, freeze the journal, chmod 0444. `openBuiltDatabase`
- *   is how anything opens a data artifact; a write-mode open of a sealed file throws a NAMED error
- *   pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
+ *   is the last step of every builder — checkpoint, freeze the journal, chmod 0444. `openBuiltClient`
+ *   (`@mailwoman/sqlite/sealed`) is how anything opens a data artifact; a write-mode open of a sealed
+ *   file throws a NAMED error pointing at the rebuild command instead of a cryptic SQLITE_READONLY. Unsealing is deliberate and
  *   manual (`chmod u+w`), never programmatic — rebuild, don't mutate.
  *
  *   `swapDatabaseIntoPlace` is the other half of that invariant — the atomic publish step AGENTS.md
@@ -18,6 +18,12 @@
 import { chmodSync, existsSync, renameSync, rmSync, statSync, unlinkSync } from "@mailwoman/platform/fs"
 import { basename } from "@mailwoman/platform/path"
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+
+/**
+ * The one capability {@link assertDatabaseIntegrity} needs. Narrowing to it rather than naming a handle type lets a
+ * `DatabaseClient` satisfy the parameter with no import and no cast.
+ */
+type IntegrityProbe = Pick<DatabaseSync, "prepare">
 
 /**
  * `node:sqlite` via {@link process.getBuiltinModule} — invisible to bundlers. A static import here would ride the
@@ -94,7 +100,7 @@ export function sealDatabase(path: string): void {
  *
  * @throws When the database reports anything other than `ok`, naming the artifact and what SQLite said.
  */
-export function assertDatabaseIntegrity(db: DatabaseSync, artifact: string): void {
+export function assertDatabaseIntegrity(db: IntegrityProbe, artifact: string): void {
 	const row = db.prepare("PRAGMA integrity_check").get() as { integrity_check: string } | undefined
 	const verdict = row?.integrity_check
 
@@ -104,17 +110,17 @@ export function assertDatabaseIntegrity(db: DatabaseSync, artifact: string): voi
 }
 
 /**
- * Open a data artifact. Read-only by default. `write: true` is for builders working on UNsealed staging — against a
- * sealed artifact it throws {@link SealedArtifactError}.
+ * Refuse a write-mode open of a sealed artifact, naming the rebuild command instead of letting SQLite answer
+ * `SQLITE_READONLY`.
+ *
+ * The open itself lives in `@mailwoman/sqlite/sealed` — `openBuiltClient`, which every caller uses. This half stays
+ * here because it is a filesystem predicate, and because this module reaches `node:sqlite` through
+ * {@link process.getBuiltinModule} to keep the `@mailwoman/core/utils` barrel free of it.
+ *
+ * @throws {SealedArtifactError} When `path` is sealed.
  */
-export function openBuiltDatabase(path: string, opts: { write?: boolean } = {}): DatabaseSync {
-	if (opts.write) {
-		if (isSealed(path)) throw new SealedArtifactError(path)
-
-		return new (sqlite().DatabaseSync)(path)
-	}
-
-	return new (sqlite().DatabaseSync)(path, { readOnly: true })
+export function assertUnsealedForWrite(path: string): void {
+	if (isSealed(path)) throw new SealedArtifactError(path)
 }
 
 /**

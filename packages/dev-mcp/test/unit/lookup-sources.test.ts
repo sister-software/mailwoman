@@ -9,7 +9,6 @@
  *   name (the FTS index cannot show one, so a second route has to).
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { openSealedArtifact, type LookupRow } from "@mailwoman/dev-mcp/lookup"
 import {
 	diffCandidateRows,
@@ -34,6 +33,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, it } from "vitest"
 
 const openHandles: DatabaseSync[] = []

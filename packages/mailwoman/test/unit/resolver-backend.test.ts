@@ -95,7 +95,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	const { mkdtempSync, writeFileSync } = await import("@mailwoman/platform/fs")
 	const { tmpdir } = await import("@mailwoman/platform/os")
 	const { DatabaseSync } = await import("@mailwoman/platform/sqlite")
-	const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	const { createCapitalTable } = await import("@mailwoman/resolver-wof-sqlite/capital-schema")
 	const { loadCapitalIndex } = await import("mailwoman/resolver-backend")
 

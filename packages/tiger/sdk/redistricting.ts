@@ -17,11 +17,10 @@
  */
 
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { mkdir } from "@mailwoman/platform/fs/promises"
 import { dirname, join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
 
 import { AdminLevel1CodeToAbbreviation, StateName, type AdminLevel1Code } from "../state.ts"
@@ -166,9 +165,8 @@ export async function* fetchRedistricting(
 	const total = logToGeoid.size
 	yield { phase: "header", blocks: total }
 
-	const db = new DatabaseSync(outPath)
-	db.exec(TIGER_PRAGMAS)
-	const kdb = new DatabaseClient<TIGERDatabase>(db)
+	const kdb = new DatabaseClient<TIGERDatabase>(outPath)
+	kdb.exec(TIGER_PRAGMAS)
 	await initializeTIGERSchema(kdb)
 
 	try {
@@ -219,7 +217,7 @@ export async function* fetchRedistricting(
 		await flush()
 
 		yield { phase: "load", inserted, total }
-		db.exec("PRAGMA wal_checkpoint(TRUNCATE);")
+		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE);")
 
 		return { outPath, table: "pl_block", inserted }
 	} finally {

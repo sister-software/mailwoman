@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import {
@@ -15,6 +14,7 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 

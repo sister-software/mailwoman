@@ -10,8 +10,10 @@
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { UNLocodeDatabase } from "./schema.ts"
 
 /**
  * Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace.
@@ -42,12 +44,13 @@ export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } |
  * A UN/LOCODE lookup over a built `node:sqlite` table.
  */
 export class UnLocodeLookup {
-	#db: DatabaseSync
-	#byName: ReturnType<DatabaseSync["prepare"]>
-	#byBox: ReturnType<DatabaseSync["prepare"]>
+	#db: DatabaseClient<UNLocodeDatabase>
+	#byName: ReturnType<DatabaseClient["prepare"]>
+	#byBox: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
-		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+	constructor(opts: { databasePath: string } | { database: DatabaseClient<UNLocodeDatabase> }) {
+		this.#db =
+			"database" in opts ? opts.database : new DatabaseClient<UNLocodeDatabase>(opts.databasePath, { readOnly: true })
 
 		this.#byName = this.#db.prepare(
 			"SELECT country, location FROM un_locode WHERE country = ? AND nameNorm = ? LIMIT 1"
@@ -97,7 +100,7 @@ export class UnLocodeLookup {
 	}
 
 	close(): void {
-		this.#db.close()
+		this.#db.destroy()
 	}
 }
 

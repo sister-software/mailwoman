@@ -15,10 +15,11 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { md5File, repoRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { md5File, repoRootPath } from "@mailwoman/core/utils"
 import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
 import { dataRootPath } from "../../resolver-backend.ts"
 import {

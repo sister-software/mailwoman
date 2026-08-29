@@ -20,12 +20,12 @@
  *      (city-states like Berlin). Every coordinate still comes from our own admin DB.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 

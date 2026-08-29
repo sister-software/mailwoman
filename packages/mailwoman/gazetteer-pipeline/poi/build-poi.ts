@@ -33,7 +33,6 @@
  *   `<out>.building` instruction, per the brief's own "follow the anchor, record the deviation" rule.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -42,7 +41,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
 import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
@@ -59,6 +58,8 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
 
 import { DEFAULT_RELEASE } from "./defaults.ts"

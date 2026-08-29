@@ -18,7 +18,7 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath, repoRootPathBuilder, sealDatabase } from "@mailwoman/core/utils"
+import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
 import {
 	chmodSync,
@@ -40,6 +40,7 @@ import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { resolvePath } from "path-ts"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"

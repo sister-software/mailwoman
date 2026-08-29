@@ -10,7 +10,9 @@
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { TimezoneDatabase } from "./schema.ts"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
@@ -86,11 +88,12 @@ export function offsetSecForTimezone(tzid: string, date: Date = new Date()): num
  * A timezone lookup over a built `node:sqlite` polygon DB.
  */
 export class TimezoneLookup {
-	#db: DatabaseSync
-	#stmt: ReturnType<DatabaseSync["prepare"]>
+	#db: DatabaseClient<TimezoneDatabase>
+	#stmt: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
-		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+	constructor(opts: { databasePath: string } | { database: DatabaseClient<TimezoneDatabase> }) {
+		this.#db =
+			"database" in opts ? opts.database : new DatabaseClient<TimezoneDatabase>(opts.databasePath, { readOnly: true })
 
 		// Candidate features whose bbox contains the point; PIP picks the exact one.
 		this.#stmt = this.#db.prepare(
@@ -114,7 +117,7 @@ export class TimezoneLookup {
 	}
 
 	close(): void {
-		this.#db.close()
+		this.#db.destroy()
 	}
 }
 

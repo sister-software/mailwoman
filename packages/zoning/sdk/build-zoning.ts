@@ -36,7 +36,6 @@
  *   in every chunk that touches them — and merging them in the parent is what keeps the chunk append-only.
  */
 
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -48,10 +47,12 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { runChunkProcess } from "@mailwoman/core/utils"
 import { rmSync, statSync } from "@mailwoman/platform/fs"
 import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { fileURLToPath } from "@mailwoman/platform/url"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
 import { createZoningTables, type ZoningDatabase } from "../schema.ts"
 import {
