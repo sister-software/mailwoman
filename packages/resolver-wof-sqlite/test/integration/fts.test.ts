@@ -58,7 +58,7 @@ function buildBaseSchema(): DatabaseClient<WOFDatabase> {
 
 describe("buildPlaceSearchFTS", () => {
 	test("builds the place_search virtual table from a fresh DB", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		expect(placeSearchFTSExists(db)).toBe(false)
 
 		const result = buildPlaceSearchFTS(db)
@@ -66,23 +66,19 @@ describe("buildPlaceSearchFTS", () => {
 		expect(result.indexedRows).toBe(3)
 		expect(result.durationMs).toBeGreaterThanOrEqual(0)
 		expect(placeSearchFTSExists(db)).toBe(true)
-
-		db.destroy()
 	})
 
 	test("is a no-op when the table already exists and drop is false", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
 		const result = buildPlaceSearchFTS(db)
 		expect(result.created).toBe(false)
 		expect(result.indexedRows).toBe(3)
-
-		db.destroy()
 	})
 
 	test("rebuilds when drop is true", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
 		// Add a new place but don't reindex yet — count should still be the original 3.
@@ -95,12 +91,10 @@ describe("buildPlaceSearchFTS", () => {
 		const result = buildPlaceSearchFTS(db, { drop: true })
 		expect(result.created).toBe(true)
 		expect(result.indexedRows).toBe(4)
-
-		db.destroy()
 	})
 
 	test("concatenates alt_names from the names table into the FTS document", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
 		const row = db.prepare(`SELECT name, alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 1`).get() as {
@@ -111,12 +105,10 @@ describe("buildPlaceSearchFTS", () => {
 		expect(row.name).toBe("Paris")
 		expect(row.alt_names).toContain("パリ")
 		expect(row.alt_names).toContain("París")
-
-		db.destroy()
 	})
 
 	test("joins aliases with the boundary-preserving ALIAS_SEPARATOR token (#523)", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
 		const row = db.prepare(`SELECT alt_names FROM ${PLACE_SEARCH_TABLE} WHERE wof_id = 1`).get() as {
@@ -126,12 +118,10 @@ describe("buildPlaceSearchFTS", () => {
 		// One boundary between the two aliases (space-padded so each alias tokenizes normally) plus
 		// the trailing format marker that distinguishes new bags from legacy single-alias ones.
 		expect(row.alt_names).toBe(`パリ ${ALIAS_SEPARATOR} París ${ALIAS_SEPARATOR}`)
-
-		db.destroy()
 	})
 
 	test("a phrase query cannot match ACROSS two aliases' concatenation boundary (#523)", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 
 		// Two aliases whose concatenation forms a third phrase: the bag "York <sep> New City" must
 		// not phrase-match "york new". Without the separator token, FTS5 assigns the aliases' tokens
@@ -155,12 +145,10 @@ describe("buildPlaceSearchFTS", () => {
 		expect(match('"york new"')).toEqual([]) // the false cross-boundary phrase
 		expect(match('"york"')).toEqual([5]) // each alias is still individually matchable
 		expect(match('"new city"')).toEqual([5])
-
-		db.destroy()
 	})
 
 	test("strips an embedded U+E000 from source names so a poisoned row can't forge an alias boundary (#523)", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 
 		db.exec(`
 			INSERT INTO spr VALUES (6, NULL, 'Honest Place', 'locality', 'US', 41.0, -81.0, 40.9, 41.1, -81.1, -80.9, -1, 0);
@@ -176,13 +164,11 @@ describe("buildPlaceSearchFTS", () => {
 		// Flattened to a space — ONE alias (plus the trailing format marker), no forged boundary.
 		expect(row.alt_names).toBe(`Evil Name ${ALIAS_SEPARATOR}`)
 		expect(aliasBagExactMatch(row.alt_names, "evil", false)).toBe(false) // fragment ≠ exact
-		expect(aliasBagExactMatch(row.alt_names, "evil name", false)).toBe(true) // the whole alias is
-
-		db.destroy()
+		expect(aliasBagExactMatch(row.alt_names, "evil name", false)).toBe(true)
 	})
 
 	test("MATCH query works against the built index", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
 		const rows = db
@@ -198,20 +184,17 @@ describe("buildPlaceSearchFTS", () => {
 
 		expect(altRows).toHaveLength(1)
 		expect(altRows[0]?.wof_id).toBe(1)
-
-		db.destroy()
 	})
 
 	test("invokes onProgress for each phase on a fresh build", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		const phases: string[] = []
 		buildPlaceSearchFTS(db, { onProgress: (phase) => phases.push(phase) })
 		expect(phases).toEqual(["checking", "creating", "populating", "creating-bbox", "populating-bbox", "done"])
-		db.destroy()
 	})
 
 	test("invokes onProgress with the dropping phase when --drop is used (twice — once per index)", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 		const phases: string[] = []
 		buildPlaceSearchFTS(db, { drop: true, onProgress: (phase) => phases.push(phase) })
@@ -226,12 +209,10 @@ describe("buildPlaceSearchFTS", () => {
 			"populating-bbox",
 			"done",
 		])
-
-		db.destroy()
 	})
 
 	test("onProgress receives a detail string for the done phase", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		let doneDetail: string | undefined
 
 		buildPlaceSearchFTS(db, {
@@ -244,11 +225,10 @@ describe("buildPlaceSearchFTS", () => {
 
 		expect(doneDetail).toMatch(/3 FTS rows/)
 		expect(doneDetail).toMatch(/3 bbox rows/)
-		db.destroy()
 	})
 
 	test("populates the R*Tree bbox table from spr.min_*/max_* columns", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 
 		// Paris (id 1) bbox should be present and queryable.
@@ -257,11 +237,10 @@ describe("buildPlaceSearchFTS", () => {
 			.all(48.85, 48.85, 2.34, 2.34) as { id: number }[]
 
 		expect(hits.map((h) => h.id)).toContain(1)
-		db.destroy()
 	})
 
 	test("indexes places with is_current = 1 (legacy Mapzen-era) as well as is_current = -1 (modern); see #91", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 
 		// Add one place tagged with the legacy convention (`is_current = 1`). WOF mixes both
 		// conventions; ~42% of admin-US rows carry `1` rather than `-1`. The filter must accept
@@ -292,11 +271,10 @@ describe("buildPlaceSearchFTS", () => {
 		}[]
 
 		expect(bboxHit.map((h) => h.id)).toContain(1000)
-		db.destroy()
 	})
 
 	test("excludes is_current = 0 places (no-longer-current); see #91", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 
 		db.exec(`
 			INSERT INTO spr VALUES (
@@ -316,7 +294,6 @@ describe("buildPlaceSearchFTS", () => {
 			| undefined
 
 		expect(hit).toBeUndefined()
-		db.destroy()
 	})
 })
 
@@ -351,15 +328,13 @@ describe("aliasBagExactMatch", () => {
 
 describe("placeSearchFTSExists", () => {
 	test("returns false when the table is absent", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		expect(placeSearchFTSExists(db)).toBe(false)
-		db.destroy()
 	})
 
 	test("returns true once the table is built", () => {
-		const db = buildBaseSchema()
+		using db = buildBaseSchema()
 		buildPlaceSearchFTS(db)
 		expect(placeSearchFTSExists(db)).toBe(true)
-		db.destroy()
 	})
 })

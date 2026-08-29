@@ -768,7 +768,7 @@ interface ShardCacheEntry extends StateShards {
  * `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic switchover
  * when a new version is published. Call {@link close} when done to release every cached handle.
  */
-export class ShardProvider {
+export class ShardProvider implements Disposable {
 	readonly #factory: ShardLookupFactory
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, ShardCacheEntry>()
@@ -857,6 +857,10 @@ export class ShardProvider {
 
 		this.#cache.clear()
 		this.#retired = []
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }
 

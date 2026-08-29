@@ -310,7 +310,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	copyFileSync(opts.adminIn, opts.adminOut)
 	chmodSync(opts.adminOut, 0o644)
 
-	const db = new DatabaseClient<WOFDatabase>(opts.adminOut)
+	await using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
 
 	// #1026 + #1514: the purge clears the A-class country/region nodes and the locality ancestry too, so a fold that
 	// does not pass adminForCountries un-parents the 95 zero-coverage locales' localities. Default it to the same
@@ -326,7 +326,6 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })
 	db.exec("ANALYZE")
-	await db.destroy()
 
 	return { ingested, placeSearchRows: res.indexedRows, bboxRows: res.bboxIndexedRows, refoldedCountries }
 }

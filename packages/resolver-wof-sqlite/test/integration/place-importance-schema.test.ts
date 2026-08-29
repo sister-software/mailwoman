@@ -167,7 +167,7 @@ function seedPopulation(db: DatabaseClient<PlaceImportanceDatabase>, rows: Reado
 
 describe("loadImportanceSplit", () => {
 	it("reads the split columns verbatim when they exist", async () => {
-		const kdb = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		await using kdb = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 		seedPopulation(kdb, [[1, 96_128]])
 
 		await createPlaceImportanceTable(kdb)
@@ -187,12 +187,10 @@ describe("loadImportanceSplit", () => {
 		expect(split.encyclopedic.get(1)).toBe(0.1173)
 		// NULL encyclopedic is ABSENT, not 0.
 		expect(split.encyclopedic.has(2)).toBe(false)
-
-		await kdb.destroy()
 	})
 
 	it("reconstructs the split from a legacy conflated table", () => {
-		const db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 
 		seedPopulation(db, [
 			[1, 418],
@@ -216,12 +214,10 @@ describe("loadImportanceSplit", () => {
 		expect(split.encyclopedic.has(3)).toBe(false)
 		expect(split.referential.get(1)).toBe(referentialFromPopulation(418))
 		expect(split.referential.get(2)).toBe(referentialFromPopulation(96_128))
-
-		db.destroy()
 	})
 
 	it("falls back to population alone when there is no importance table", () => {
-		const db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 		seedPopulation(db, [[1, 96_128]])
 
 		const split = loadImportanceSplit(db)
@@ -229,19 +225,15 @@ describe("loadImportanceSplit", () => {
 		expect(split.source).toBe(IMPORTANCE_SPLIT_SOURCES.populationOnly)
 		expect(split.referential.get(1)).toBe(referentialFromPopulation(96_128))
 		expect(split.encyclopedic.size).toBe(0)
-
-		db.destroy()
 	})
 
 	it("reports `none` rather than a table of zeros when the database carries no salience at all", () => {
-		const db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 
 		const split = loadImportanceSplit(db)
 
 		expect(split.source).toBe(IMPORTANCE_SPLIT_SOURCES.none)
 		expect(split.referential.size).toBe(0)
-
-		db.destroy()
 	})
 })
 

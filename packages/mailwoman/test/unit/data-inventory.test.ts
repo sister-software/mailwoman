@@ -49,7 +49,7 @@ function dataRoot(): string {
 function manifested(path: string, name: string, buildCmd: string): void {
 	mkdirSync(join(path, ".."), { recursive: true })
 
-	const db = new DatabaseClient<LayerContractDatabase>(path)
+	using db = new DatabaseClient<LayerContractDatabase>(path)
 
 	db.exec(`CREATE TABLE layer_manifest (
 		name TEXT PRIMARY KEY, version TEXT NOT NULL, schema_version INTEGER NOT NULL, tier TEXT NOT NULL,
@@ -60,18 +60,15 @@ function manifested(path: string, name: string, buildCmd: string): void {
 	db.prepare(
 		"INSERT INTO layer_manifest VALUES (?, '1.0', 1, 'shipped', 'ODbL', 'x', 'src', '2026-01-01', ?, 'abc', 'sealed', '{}', '2026-01-01T00:00:00Z')"
 	).run(name, buildCmd)
-
-	db.destroy()
 }
 
 /**
  * A built database with no manifest — the ordinary state of most of the data root.
  */
 function bare(path: string): void {
-	const db = new DatabaseClient<LayerContractDatabase>(path)
+	using db = new DatabaseClient<LayerContractDatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
-	db.destroy()
 }
 
 describe("takeInventory — the four states stay distinct", () => {

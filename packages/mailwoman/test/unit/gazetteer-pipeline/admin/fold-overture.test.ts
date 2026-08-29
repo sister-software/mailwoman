@@ -100,7 +100,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 	}
 
 	test("every prepared insert accepts a row", async () => {
-		const db = await openUnified()
+		await using db = await openUnified()
 		const { spr, names, population, concordances } = prepareInserts(db)
 		const id = OVERTURE_ID_BASE + 1
 
@@ -124,13 +124,11 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 		expect(db.prepare("SELECT other_id FROM concordances WHERE id = ? AND other_source = 'wd:id'").get(id)).toEqual({
 			other_id: "Q140147",
 		})
-
-		await db.destroy()
 	})
 
 	test("spr uses OR REPLACE so a re-ingest updates the row rather than throwing on its primary key", async () => {
 		// Content-derived ids make a re-ingest recompute the SAME id, so this is the path a second run takes.
-		const db = await openUnified()
+		await using db = await openUnified()
 		const { spr } = prepareInserts(db)
 		const id = OVERTURE_ID_BASE + 2
 
@@ -139,7 +137,5 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 		expect(db.prepare("SELECT COUNT(*) AS n FROM spr WHERE id = ?").get(id)).toEqual({ n: 1 })
 		expect(db.prepare("SELECT name FROM spr WHERE id = ?").get(id)).toEqual({ name: "After" })
-
-		await db.destroy()
 	})
 })

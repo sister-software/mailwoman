@@ -62,7 +62,7 @@ interface Staged {
  */
 function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number, PlaceAttrs>) {
 	const src = new DatabaseClient<WOFDatabase>(":memory:")
-	const out = new DatabaseClient<CandidateDatabase>(":memory:")
+	using out = new DatabaseClient<CandidateDatabase>(":memory:")
 
 	src.exec("CREATE TABLE place_search (wof_id INTEGER PRIMARY KEY, alt_names TEXT)")
 
@@ -79,7 +79,6 @@ function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number,
 	})
 
 	src.destroy()
-	out.destroy()
 
 	return { ...result, staged }
 }

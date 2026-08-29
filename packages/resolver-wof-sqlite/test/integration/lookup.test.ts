@@ -451,7 +451,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	})
 
 	test("Disposable: Symbol.dispose closes the lookup", async () => {
-		const db = buildFixtureDB()
+		await using db = buildFixtureDB()
 
 		{
 			using disposable = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
@@ -462,7 +462,6 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 		// don't own it.
 		const after = db.prepare(`SELECT COUNT(*) AS n FROM spr`).get() as { n: number }
 		expect(after.n).toBe(FIXTURE.length)
-		await db.destroy()
 	})
 })
 
@@ -493,10 +492,9 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 
 		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped shard.
 		{
-			const disk = buildFixtureDB(dbPath)
+			await using disk = buildFixtureDB(dbPath)
 			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })
-			builder.close() // #ownsDB is false for a passed-in handle, so `disk` stays open; FTS is now persisted.
-			await disk.destroy()
+			builder.close()
 		}
 		chmodSync(dbPath, 0o444)
 

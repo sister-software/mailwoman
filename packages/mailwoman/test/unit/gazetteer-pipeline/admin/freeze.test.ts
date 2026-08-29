@@ -10,7 +10,7 @@ import { freezeAdmin } from "mailwoman/gazetteer-pipeline/admin/freeze"
 import { expect, test } from "vitest"
 
 test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and passes integrity", async () => {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	await using db = new DatabaseClient<WOFDatabase>(":memory:")
 	await createUnifiedSchema(db)
 
 	const ins = db.prepare(
@@ -32,6 +32,4 @@ test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and p
 	expect(
 		db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'ancestors_by_id'").get()
 	).toBeTruthy()
-
-	await db.destroy()
 })

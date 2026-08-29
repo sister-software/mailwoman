@@ -38,7 +38,7 @@ async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 }
 
 test("verifyAdmin passes a complete fixture", async () => {
-	const db = await fixtureDB()
+	await using db = await fixtureDB()
 	const r = verifyAdmin(db, TINY_BASELINE)
 
 	expect(r.checks.map((c) => `${c.check}:${c.ok}`)).toEqual([
@@ -51,27 +51,24 @@ test("verifyAdmin passes a complete fixture", async () => {
 	])
 
 	expect(r.ok).toBe(true)
-	await db.destroy()
 })
 
 test("verifyAdmin fails node-census when a required country node is missing (#1026)", async () => {
-	const db = await fixtureDB()
+	await using db = await fixtureDB()
 	db.exec("DELETE FROM spr WHERE id = 1") // drop Testland's country node
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)
 	const census = r.checks.find((c) => c.check === "node-census")!
 	expect(census.ok).toBe(false)
 	expect(census.detail).toContain("TL/country")
-	await db.destroy()
 })
 
 test("verifyAdmin fails place-abbr when the join table is missing (the #1015 missed-step class)", async () => {
-	const db = await fixtureDB()
+	await using db = await fixtureDB()
 	db.exec("DROP TABLE place_abbr")
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)
 	expect(r.checks.find((c) => c.check === "place-abbr")!.ok).toBe(false)
-	await db.destroy()
 })
 
 test("the reverse panel covers the #1015 failure cases", () => {

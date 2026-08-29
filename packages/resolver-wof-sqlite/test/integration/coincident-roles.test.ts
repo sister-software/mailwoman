@@ -202,9 +202,8 @@ describe("buildCoincidentRoles", () => {
 	})
 
 	test("loadCoincidentRoles returns an empty map when the table is absent", () => {
-		const fresh = new DatabaseClient<WOFDatabase>(":memory:")
+		using fresh = new DatabaseClient<WOFDatabase>(":memory:")
 		expect(loadCoincidentRoles(fresh).size).toBe(0)
 		expect(coincidentRolesExists(fresh)).toBe(false)
-		fresh.destroy()
 	})
 })

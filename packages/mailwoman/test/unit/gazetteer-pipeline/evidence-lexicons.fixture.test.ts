@@ -46,7 +46,7 @@ let scratch: string
  * (aliases), `place_population` (the law-2/3 importance input), and `ancestors` (the v4 parent-prominence proxy).
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	// Throwaway fixture, so durability is worthless and expensive. `db.exec` runs each statement in
 	// its own autocommit transaction, and the ~50 INSERTs below were paying an fsync apiece —
@@ -134,8 +134,6 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO names VALUES (46, 'Washington');
 		INSERT INTO names VALUES (13, 'Roazhon');
 	`)
-
-	db.destroy()
 }
 
 beforeEach(async () => {

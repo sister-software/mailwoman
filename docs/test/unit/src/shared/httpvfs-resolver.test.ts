@@ -13,7 +13,7 @@
 import { WOFCandidateTableLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { afterEach, describe, expect, test } from "vitest"
+import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 /**
  * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
@@ -35,9 +35,14 @@ function stubWorker(db: DatabaseClient<CandidateDatabase>) {
 }
 
 /**
- * Every connection these fixtures open, ended together at the end of the file.
+ * Every connection this test's fixtures open. A DisposableStack disposes once and stays disposed, so each test gets a
+ * fresh one rather than reusing the emptied stack.
  */
-const openDatabases = new DisposableStack()
+let openDatabases = new DisposableStack()
+
+beforeEach(() => {
+	openDatabases = new DisposableStack()
+})
 
 function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 	const d = new DatabaseClient<CandidateDatabase>(":memory:")

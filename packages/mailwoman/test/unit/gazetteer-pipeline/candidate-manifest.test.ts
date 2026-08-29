@@ -38,11 +38,10 @@ function scratch(): string {
  * An admin database with a manifest naming `name@version`.
  */
 function manifested(path: string, name: string, version: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec("CREATE TABLE layer_manifest (name TEXT PRIMARY KEY, version TEXT NOT NULL)")
 	db.prepare("INSERT INTO layer_manifest VALUES (?, ?)").run(name, version)
-	db.destroy()
 }
 
 const BASE = {

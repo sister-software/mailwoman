@@ -61,7 +61,7 @@ describe("SUB_LOCALITY_RUNGS", () => {
  */
 function ladderFixtureDB(): string {
 	const path = `/tmp/granularity-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, is_current INTEGER, is_deprecated INTEGER)`
@@ -97,8 +97,6 @@ function ladderFixtureDB(): string {
 	for (const [id, ancestorID] of links) {
 		db.prepare(`INSERT INTO ancestors VALUES (?, ?)`).run(id, ancestorID)
 	}
-
-	db.destroy()
 
 	return path
 }

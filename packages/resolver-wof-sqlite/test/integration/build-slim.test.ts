@@ -24,7 +24,7 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 let scratch: string
 
 function buildFixtureWOF(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -72,8 +72,6 @@ function buildFixtureWOF(path: string): void {
 		INSERT INTO place_population VALUES (202, 8000);
 		INSERT INTO place_population VALUES (400, 2100000);
 	`)
-
-	db.destroy()
 }
 
 beforeEach(async () => {

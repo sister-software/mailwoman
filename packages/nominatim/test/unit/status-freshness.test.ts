@@ -70,10 +70,9 @@ async function stamped(path: string, createdAt: string): Promise<string> {
  * A built database with no manifest — every gazetteer built before the layer contract.
  */
 function bare(path: string): string {
-	const db = new DatabaseClient<FreshnessFixtureDatabase>(path)
+	using db = new DatabaseClient<FreshnessFixtureDatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
-	db.destroy()
 
 	return path
 }

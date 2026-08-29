@@ -65,7 +65,7 @@ afterAll(() => {
 
 describe("ingestWOF centroids (#1726)", () => {
 	it("stores the label centroid when present, the math centroid otherwise, and never a mix", async () => {
-		const db = new DatabaseClient<WOFDatabase>(":memory:")
+		await using db = new DatabaseClient<WOFDatabase>(":memory:")
 
 		await createUnifiedSchema(db)
 		await ingestWOF(db, { dataDir: ROOT })
@@ -81,8 +81,6 @@ describe("ingestWOF centroids (#1726)", () => {
 			{ id: 2, latitude: 10.5, longitude: 20.25 },
 			{ id: 3, latitude: 30, longitude: 40 },
 		])
-
-		await db.destroy()
 	})
 })
 
@@ -129,15 +127,13 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 	})
 
 	it("without a lookup the label preference is unchanged and the override count is a measured zero", async () => {
-		const db = new DatabaseClient<WOFDatabase>(":memory:")
+		await using db = new DatabaseClient<WOFDatabase>(":memory:")
 
 		await createUnifiedSchema(db)
 
 		const result = await ingestWOF(db, { dataDir: ROOT })
 
 		expect(result.labelPointOverrides).toBe(0)
-
-		await db.destroy()
 	})
 })
 

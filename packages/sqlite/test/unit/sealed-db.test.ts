@@ -14,11 +14,10 @@ import { describe, expect, it } from "vitest"
 function makeDB(): string {
 	const dir = mkdtempSync(join(tmpdir(), "sealed-db-"))
 	const path = join(dir, "artifact.db")
-	const db = new DatabaseSync(path)
+	using db = new DatabaseSync(path)
 	db.exec("PRAGMA journal_mode = WAL")
 	db.exec("CREATE TABLE t (id INTEGER PRIMARY KEY, v TEXT)")
 	db.exec("INSERT INTO t (v) VALUES ('x')")
-	db.close()
 
 	return path
 }
@@ -29,9 +28,8 @@ describe("sealDatabase", () => {
 		sealDatabase(path)
 		expect(statSync(path).mode & 0o777).toBe(0o444)
 		expect(isSealed(path)).toBe(true)
-		const db = new DatabaseSync(path, { readOnly: true })
+		using db = new DatabaseSync(path, { readOnly: true })
 		expect((db.prepare("PRAGMA journal_mode").get() as { journal_mode: string }).journal_mode).toBe("delete")
-		db.close()
 	})
 
 	it("is idempotent — sealing a sealed artifact leaves it sealed", () => {
@@ -92,8 +90,7 @@ describe("swapDatabaseIntoPlace", () => {
 		expect(() => swapDatabaseIntoPlace(missingTmp, final)).toThrow(/ENOENT/)
 
 		expect(existsSync(final)).toBe(true)
-		const restored = new DatabaseSync(final, { readOnly: true })
+		using restored = new DatabaseSync(final, { readOnly: true })
 		expect((restored.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("x")
-		restored.close()
 	})
 })

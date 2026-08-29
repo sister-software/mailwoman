@@ -149,7 +149,7 @@ describe("AddressPointInterpolator", () => {
 	})
 
 	it("falls through to the TIGER segment fallback when bracketing cannot answer", () => {
-		const segDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+		using segDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
 
 		segDB.exec(`
 			CREATE TABLE street_segment (
@@ -196,6 +196,5 @@ describe("AddressPointInterpolator", () => {
 
 		ladder.close()
 		tiger.close()
-		segDB.destroy()
 	})
 })

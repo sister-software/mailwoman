@@ -24,7 +24,7 @@ let root: string
  * A shard with `spr` and the ancestry tables — the shape a corpus builder can extract triples from.
  */
 function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, country TEXT);
@@ -39,23 +39,19 @@ function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): voi
 			db.prepare("INSERT INTO spr (id, parent_id, name, country) VALUES (?, ?, ?, ?)").run(id++, 42, `p${i}`, country)
 		}
 	}
-
-	db.destroy()
 }
 
 /**
  * `spr` only, and every `parent_id` is the -1 sentinel — countable, not joinable, not walkable.
  */
 function writeCountOnly(path: string, country: string, n: number): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, country TEXT)")
 
 	for (let i = 0; i < n; i++) {
 		db.prepare("INSERT INTO spr (id, parent_id, name, country) VALUES (?, -1, ?, ?)").run(i + 1, `p${i}`, country)
 	}
-
-	db.destroy()
 }
 
 beforeAll(() => {

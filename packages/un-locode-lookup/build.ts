@@ -36,7 +36,7 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 		enableQuoteHandling: true,
 	}) as Iterable<CSVRow>
 
-	const db = new DatabaseClient<UNLocodeDatabase>(dbPath)
+	using db = new DatabaseClient<UNLocodeDatabase>(dbPath)
 	db.exec("DROP TABLE IF EXISTS un_locode")
 
 	db.exec(
@@ -66,7 +66,6 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_locode_name ON un_locode (country, nameNorm)")
 	db.exec("CREATE INDEX idx_locode_bbox ON un_locode (lat, lon)")
-	db.destroy()
 
 	return { rows, withCoords }
 }

@@ -23,7 +23,7 @@ let scratch: string
 let slimBytes: Uint8Array
 
 function buildFixtureWOF(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -110,8 +110,6 @@ function buildFixtureWOF(path: string): void {
 			PRIMARY KEY (admin_id, locality_id));
 		INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000);
 	`)
-
-	db.destroy()
 }
 
 beforeAll(async () => {

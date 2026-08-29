@@ -121,7 +121,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 })
 
 test("default (no includeAdmin) stays localities-only with no admin rows — byte-stable", async () => {
-	const db2 = new DatabaseClient<WOFDatabase>(":memory:")
+	await using db2 = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db2.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
@@ -146,7 +146,6 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM ancestors WHERE id = ancestor_id").get() as Row).n).toBe(1)
 	expect((db2.prepare("SELECT parent_id FROM spr WHERE placetype='locality'").get() as Row).parent_id).toBe(-1)
-	await db2.destroy()
 })
 
 test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)", async () => {

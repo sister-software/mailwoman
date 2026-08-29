@@ -26,9 +26,8 @@ let dbPath: string
 async function buildFixtureDB(): Promise<string> {
 	const sql = await readFile(fixtureSQLPath, "utf8")
 	const path = join(scratch.path, "tiger-fixture.db")
-	const db = new DatabaseClient<TIGERDatabase>(path)
+	await using db = new DatabaseClient<TIGERDatabase>(path)
 	db.exec(sql)
-	await db.destroy()
 
 	return path
 }

@@ -61,14 +61,12 @@ async function emptySqliteFile(name: string): Promise<string> {
 async function poiFixtureFile(name: string): Promise<string> {
 	scratch = await mkdtemp(join(tmpdir(), "mcp-layer-guards-"))
 	const path = join(scratch, name)
-	const kdb = new DatabaseClient<POIDatabase>(path)
+	await using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// Also creates `poi_category_codes`, per `poi-schema.ts`'s naming.
 	await createPOIStagingTables(kdb)
 	createPOISearchFTS(kdb)
-
-	await kdb.destroy()
 
 	return path
 }
@@ -84,11 +82,9 @@ describe("openBDCDatabaseIfPresent", () => {
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("bdc.db")
-		const db = openBDCDatabaseIfPresent(path)
+		await using db = openBDCDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
-
-		await db?.destroy()
 	})
 })
 
@@ -138,11 +134,9 @@ describe("openFilerDatabaseIfPresent", () => {
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("filer.db")
-		const db = openFilerDatabaseIfPresent(path)
+		await using db = openFilerDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
-
-		await db?.destroy()
 	})
 })
 

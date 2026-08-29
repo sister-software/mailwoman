@@ -66,10 +66,9 @@ async function stamped(path: string, name: string, createdAt: string): Promise<s
  * A built database with no manifest — the state of every artifact built before the layer contract.
  */
 function bare(path: string): string {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
-	db.destroy()
 
 	return path
 }

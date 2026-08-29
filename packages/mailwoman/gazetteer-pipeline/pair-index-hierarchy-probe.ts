@@ -193,7 +193,7 @@ async function main(): Promise<void> {
 	mkdirSync(outDir, { recursive: true })
 
 	// READ-ONLY on the admin DB — this module must never write to it.
-	const db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
+	await using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 
 	const sourceMD5 = values["skip-source-md5"] ? "(skipped)" : await md5File(dbPath)
 
@@ -329,8 +329,6 @@ async function main(): Promise<void> {
 			)
 		}
 	}
-
-	await db.destroy()
 }
 
 await runIfScript(import.meta, main)

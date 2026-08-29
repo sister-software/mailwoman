@@ -117,7 +117,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	// ignores the permission and would pass a W_OK probe on a sealed file).
 	expect(statSync(out).mode & 0o222).toBe(0)
 
-	const db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
+	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
 	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
@@ -189,8 +189,6 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 
 	const drops = parseJSONStrict<{ malformedValues: Record<string, number> }>(meta.get("quality_drops")!)
 	expect(drops.malformedValues).toEqual({ "BT36 4RU,": 1 })
-
-	await db.destroy()
 })
 
 test("buildPostcodeNIOSM: a response modified since acquisition is refused, not built from", async () => {

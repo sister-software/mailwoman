@@ -22,7 +22,7 @@ async function openWithTable(): Promise<DatabaseClient<CandidateDatabase>> {
 
 describe("capital table round-trip", () => {
 	it("returns what the builder wrote, keys parsed", async () => {
-		const db = await openWithTable()
+		await using db = await openWithTable()
 
 		db.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)").run(
 			"CR",
@@ -35,19 +35,16 @@ describe("capital table round-trip", () => {
 		expect(readCapitalPoints(db)).toEqual([
 			{ country: "CR", latitude: 9.9333, longitude: -84.0833, level: "national", k: ["san jose", "chepe"] },
 		])
-
-		await db.destroy()
 	})
 
 	it("answers NULL — not an empty list — on an artifact that predates the table", () => {
-		const db = new DatabaseClient<CandidateDatabase>(":memory:")
+		using db = new DatabaseClient<CandidateDatabase>(":memory:")
 
 		expect(readCapitalPoints(db)).toBeNull()
-		db.destroy()
 	})
 
 	it("skips a row with an unknown level or unparseable keys instead of crashing the session open", async () => {
-		const db = await openWithTable()
+		await using db = await openWithTable()
 		const insert = db.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
 
 		insert.run("XX", 0, 0, "county-seat", JSON.stringify(["x"]))
@@ -58,6 +55,5 @@ describe("capital table round-trip", () => {
 
 		expect(points).toHaveLength(1)
 		expect(points![0]!.country).toBe("GD")
-		await db.destroy()
 	})
 })

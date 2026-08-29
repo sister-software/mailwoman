@@ -26,7 +26,7 @@ interface TimezoneFeature {
 export function buildTimezoneDB(geojsonPath: string, dbPath: string): { features: number } {
 	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/timezone-lookup` does not depend on @mailwoman/core.
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: TimezoneFeature[] }
-	const db = new DatabaseClient<TimezoneDatabase>(dbPath)
+	using db = new DatabaseClient<TimezoneDatabase>(dbPath)
 	db.exec("DROP TABLE IF EXISTS timezone_polygons")
 
 	db.exec(
@@ -80,7 +80,6 @@ export function buildTimezoneDB(geojsonPath: string, dbPath: string): { features
 
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_tz_bbox ON timezone_polygons (minLat, maxLat, minLon, maxLon)")
-	db.destroy()
 
 	return { features: data.features.length }
 }

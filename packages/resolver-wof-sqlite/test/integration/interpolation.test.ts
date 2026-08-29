@@ -279,7 +279,7 @@ describe("StreetInterpolator", () => {
 // time. A shard predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
 	it("reads the shard's baked multiplier at open time", async () => {
-		const kdb = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+		await using kdb = new DatabaseClient<StreetSegmentDatabase>(":memory:")
 		seed(kdb, [MAIN_EVEN])
 		// The SAME producer the shard builder runs (`writeInterpCalibration`), so the fixture can't
 		// drift from the production shape.
@@ -295,7 +295,6 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		expect(hit!.uncertaintyM).toBeGreaterThan(40)
 		expect(hit!.uncertaintyM).toBeLessThan(70)
 		calibrated.close()
-		await kdb.destroy()
 	})
 
 	it("reports undefined for a shard predating the metadata table", () => {
@@ -304,7 +303,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 	})
 
 	it("reports undefined for an empty or invalid calibration table", () => {
-		const emptyDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+		using emptyDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
 		seed(emptyDB, [MAIN_EVEN])
 
 		emptyDB.exec(
@@ -314,7 +313,6 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		const emptyCalib = new StreetInterpolator({ database: emptyDB })
 		expect(emptyCalib.radiusCalibration).toBeUndefined()
 		emptyCalib.close()
-		emptyDB.destroy()
 	})
 })
 

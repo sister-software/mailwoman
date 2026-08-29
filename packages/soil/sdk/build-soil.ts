@@ -257,7 +257,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 	// them separated. The batched path DOES: its children open the same file, so the parent's handle has to be closed
 	// across them, and a single shared handle silently becomes a closed one by the time the cell tiers are resolved.
 	{
-		const kdb = new DatabaseClient<SoilDatabase>(tmpPath)
+		await using kdb = new DatabaseClient<SoilDatabase>(tmpPath)
 
 		try {
 			kdb.exec("PRAGMA journal_mode = OFF")
@@ -285,8 +285,6 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 
 			throw error
 		}
-
-		await kdb.destroy()
 	}
 
 	if (!options.inProcess) {

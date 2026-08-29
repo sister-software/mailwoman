@@ -183,7 +183,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			if (!existsSync(dbPath)) return false
 
 			try {
-				const db = new DatabaseClient<AddressPointDatabase>(dbPath, { readOnly: true })
+				using db = new DatabaseClient<AddressPointDatabase>(dbPath, { readOnly: true })
 				const n = (db.prepare("SELECT count(*) AS n FROM address_point").get() as { n: number }).n
 
 				const idx = (
@@ -191,8 +191,6 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 						.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='index' AND name='idx_ap_streetkey'")
 						.get() as { n: number }
 				).n
-
-				db.destroy()
 
 				return n > 0 && idx > 0
 			} catch {

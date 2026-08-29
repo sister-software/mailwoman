@@ -20,7 +20,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
  * Create a minimal postcode shard with the columns the lookup reads.
  */
 function seedShard(path: string, rows: Array<[number, string, string, string, number, number, number]>): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, latitude REAL, longitude REAL, is_current INTEGER)`
@@ -33,8 +33,6 @@ function seedShard(path: string, rows: Array<[number, string, string, string, nu
 	for (const r of rows) {
 		ins.run(...r)
 	}
-
-	db.destroy()
 }
 
 let dir: string

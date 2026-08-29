@@ -75,7 +75,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	// root ignores the permission and would pass a W_OK probe on a sealed file).
 	expect(statSync(out).mode & 0o222).toBe(0)
 
-	const db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
+	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
 	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
 	const names = db.prepare("SELECT name FROM spr WHERE country='CZ' ORDER BY name").all() as Array<{ name: string }>
@@ -120,8 +120,6 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(meta.get("license")).toContain("CC-BY 4.0")
 	expect(meta.get("license_gb")).toContain("Open Government Licence v3")
 	expect(parseJSONStrict<unknown[]>(meta.get("source_files")!)).toHaveLength(2)
-
-	await db.destroy()
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten, in its ingest order", () => {

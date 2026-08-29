@@ -40,7 +40,7 @@ interface Seed {
  */
 async function seedShard(rows: Seed[]): Promise<string> {
 	const path = join(mkdtempSync(join(tmpdir(), "sc-test-")), "street-centroids.db")
-	const kdb = new DatabaseClient<StreetCentroidDatabase>(path)
+	await using kdb = new DatabaseClient<StreetCentroidDatabase>(path)
 	await createStreetCentroidTable(kdb)
 
 	const ins = kdb.prepare(
@@ -65,8 +65,6 @@ async function seedShard(rows: Seed[]): Promise<string> {
 			r.street_norm // name_key — the geocoding lookup doesn't probe it; any non-null fixture value serves
 		)
 	}
-
-	await kdb.destroy()
 
 	return path
 }

@@ -35,7 +35,7 @@ export function foldShard(ctx: {
 
 	progress(shardPlacetype === "postalcode" ? "postcodes" : "localities", `reading ${shardPath}`)
 
-	const pc = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
+	using pc = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 	const pcPtid = ptID(shardPlacetype)
 	// Per-shard, not the admin `attrs` map: pass 1 only ever sees the admin DB, so the alias pass
 	// below has nothing to join against unless this primary loop records what it staged.
@@ -132,8 +132,6 @@ export function foldShard(ctx: {
 		// "0 aliases" from a table that was never read.
 		progress("postcode-aliases", `${shardPath} has no \`names\` table — no delivery-city aliases to fold`)
 	}
-
-	pc.destroy()
 
 	return { primaries, aliases }
 }

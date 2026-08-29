@@ -189,7 +189,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 	const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-poi-"))
 	const path = join(scratch, "poi.db")
 
-	const kdb = new DatabaseClient<POIDatabase>(path)
+	await using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	await createPOIStagingTables(kdb)
@@ -225,7 +225,6 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
-	await kdb.destroy()
 
 	return {
 		path,

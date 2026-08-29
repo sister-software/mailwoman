@@ -206,7 +206,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	}
 
 	const src = new DatabaseClient<WOFDatabase>(opts.input, { readOnly: true })
-	const kdb = new DatabaseClient<CandidateDatabase>(opts.output)
+	await using kdb = new DatabaseClient<CandidateDatabase>(opts.output)
 	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA). The code dictionaries + the transient
 	// staging table come from the SHARED schema DDL, so they can't drift from {@link CandidateDatabase}.
 	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
@@ -591,7 +591,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		.executeTakeFirstOrThrow()
 
 	await src.destroy()
-	await kdb.destroy()
 
 	// closes the underlying `out` connection
 	return {

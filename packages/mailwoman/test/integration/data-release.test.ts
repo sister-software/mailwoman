@@ -145,10 +145,9 @@ describe("ShardProvider atomic switchover", () => {
 		const apDir = dirEnsure(join(root, "address-points"))
 		writeFileSync(join(apDir, "address-points-us-tx-v1.db"), "")
 		writeFileSync(join(root, "releases.json"), JSON.stringify({ "address-points": "v1" }))
-		const provider = new ShardProvider(factory, root)
+		using provider = new ShardProvider(factory, root)
 		const first = provider.for("tx").addressPoints
 		provider.reload()
-		expect(provider.for("tx").addressPoints).toBe(first) // same instance — not reopened
-		provider.close()
+		expect(provider.for("tx").addressPoints).toBe(first)
 	})
 })

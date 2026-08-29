@@ -31,9 +31,8 @@ let dbPath: string
 async function buildFixtureDB(): Promise<string> {
 	const sql = await readFile(fixtureSQLPath, "utf8")
 	const path = join(scratch.path, "fcc-bdc-fixture.db")
-	const db = new DatabaseClient<BDCDatabase>(path)
+	await using db = new DatabaseClient<BDCDatabase>(path)
 	db.exec(sql)
-	await db.destroy()
 
 	return path
 }

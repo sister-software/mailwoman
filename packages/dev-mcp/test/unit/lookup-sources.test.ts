@@ -470,7 +470,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 
 	it("joins importance_split by spr_id when an importance DB is given, and reports a missing row as null", async () => {
 		const db = await candidateFixture()
-		const importance = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		await using importance = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 
 		importance.exec(
 			"CREATE TABLE place_importance (id INTEGER PRIMARY KEY, referential REAL NOT NULL, encyclopedic REAL, importance REAL NOT NULL)"
@@ -501,8 +501,6 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 		const bareEntries = (bare!.entries ?? []) as Array<{ importance_split?: unknown }>
 
 		expect(bareEntries.every((entry) => !("importance_split" in entry))).toBe(true)
-
-		await importance.destroy()
 	})
 
 	it("diffs two artifacts' returned rows: presence both ways plus moved ranking fields", async () => {

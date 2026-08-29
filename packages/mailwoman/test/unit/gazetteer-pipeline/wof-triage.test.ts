@@ -33,7 +33,7 @@ afterEach(async () => {
  * A minimal admin gazetteer in the shape the triage reads.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -75,8 +75,6 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO place_population VALUES (2, 62982);
 		INSERT INTO place_population VALUES (10, 208453);
 	`)
-
-	db.destroy()
 }
 
 /**

@@ -41,7 +41,7 @@ let scratch: string
  * A minimal admin WOF with the tables `buildCandidateTable` reads.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -86,8 +86,6 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (201, 101, 'region');
 		INSERT INTO ancestors VALUES (202, 101, 'region');
 	`)
-
-	db.destroy()
 }
 
 /**
@@ -98,7 +96,7 @@ function buildFixtureAdmin(path: string): void {
  * @param withNames Build the shard WITHOUT a `names` table, to cover the tolerate-and-say-so path.
  */
 function buildFixturePostcodes(path: string, withNames = true): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -132,8 +130,6 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 			INSERT INTO names VALUES (20500, 'The White House', 'postalcode', 'US', '', '', 0, 0);
 		`)
 	}
-
-	db.destroy()
 }
 
 interface CandRow {
@@ -471,7 +467,7 @@ describe("buildCandidateTable", () => {
 		 * Saint-Étienne are scored; Springfield deliberately is NOT (the unmeasured case).
 		 */
 		function buildFixtureImportance(path: string): void {
-			const db = new DatabaseClient<WOFDatabase>(path)
+			using db = new DatabaseClient<WOFDatabase>(path)
 
 			db.exec(`
 				CREATE TABLE spr (
@@ -493,8 +489,6 @@ describe("buildCandidateTable", () => {
 				INSERT INTO place_importance VALUES (7000000000201, 0.6126);
 				INSERT INTO place_importance VALUES (7000000060601, 0.1000);
 			`)
-
-			db.destroy()
 		}
 
 		function importanceOf(db: DatabaseClient<WOFDatabase>, key: string): Array<number | null> {
@@ -691,7 +685,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	 * unattested blob, a near-live block, an under-floor hamlet, and a superseded record the pass must never judge.
 	 */
 	function buildFixtureCurrency(path: string): void {
-		const db = new DatabaseClient<WOFDatabase>(path)
+		using db = new DatabaseClient<WOFDatabase>(path)
 
 		db.exec(`
 			CREATE TABLE spr (
@@ -724,8 +718,6 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 
 			INSERT INTO place_population VALUES (301, 318);
 		`)
-
-		db.destroy()
 	}
 
 	/**
@@ -798,7 +790,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	})
 
 	test("keeps the gates: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
-		const db = await buildWithBackfill(true)
+		await using db = await buildWithBackfill(true)
 
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
 			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
@@ -807,15 +799,12 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 			// stage nothing at all.
 			expect(rows.map((r) => r.spr_id)).toEqual(key === "nearlive" ? [304] : [])
 		}
-
-		await db.destroy()
 	})
 
 	test("without the option the pass never runs and every hole stays dead", async () => {
-		const db = await buildWithBackfill(false)
+		await using db = await buildWithBackfill(false)
 		const { n } = db.prepare(`SELECT COUNT(*) AS n FROM candidate WHERE spr_id = 300`).get() as { n: number }
 
 		expect(n).toBe(0)
-		await db.destroy()
 	})
 })

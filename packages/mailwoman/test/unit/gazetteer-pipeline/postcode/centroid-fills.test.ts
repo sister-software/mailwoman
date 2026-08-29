@@ -40,7 +40,7 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 
 	await admin.destroy()
 
-	const db = new DatabaseClient<WOFDatabase>(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(shardPath)
 	const r = await fillPostcodeCentroids(db, { adminPath })
 	expect(r.placedBefore).toBe(1)
 	expect(r.placedAfter).toBe(2)
@@ -59,7 +59,6 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 	}
 
 	expect(untouched).toEqual({ latitude: 5.5, longitude: 6.5 })
-	await db.destroy()
 })
 
 test("GeoNames postal names each postcode's delivery city, including territories filed under their own ISO code", async () => {
@@ -95,7 +94,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 		].join("\n")
 	)
 
-	const db = new DatabaseClient<WOFDatabase>(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(shardPath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir })
 
@@ -118,8 +117,6 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	const pr = db.prepare("SELECT latitude FROM spr WHERE id = 3").get() as { latitude: number }
 
 	expect(pr.latitude).toBeCloseTo(18.1801, 3)
-
-	await db.destroy()
 })
 
 test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
@@ -153,7 +150,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 		)
 	)
 
-	const db = new DatabaseClient<WOFDatabase>(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(shardPath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir, geonamesCombined })
 
@@ -167,6 +164,4 @@ test("falls back to the combined dump for a country the per-country directory ha
 	const placed = db.prepare("SELECT latitude FROM spr WHERE id = 1").get() as { latitude: number }
 
 	expect(placed.latitude).toBeCloseTo(40.694, 3)
-
-	await db.destroy()
 })

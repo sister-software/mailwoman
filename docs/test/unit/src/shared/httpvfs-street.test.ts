@@ -15,7 +15,7 @@ import { resolveStreet } from "@mailwoman/docs/shared/demo-helpers"
 import { HTTPVFSAddressPointLookup, HTTPVFSInterpolator } from "@mailwoman/docs/shared/httpvfs-street"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { afterEach, describe, expect, test } from "vitest"
+import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 /**
  * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
@@ -36,9 +36,14 @@ function stubWorker(innerDB: DatabaseClient<AddressPointDatabase>) {
 }
 
 /**
- * Every connection these fixtures open, ended together at the end of the file.
+ * Every connection this test's fixtures open. A DisposableStack disposes once and stays disposed, so each test gets a
+ * fresh one rather than reusing the emptied stack.
  */
-const openDatabases = new DisposableStack()
+let openDatabases = new DisposableStack()
+
+beforeEach(() => {
+	openDatabases = new DisposableStack()
+})
 
 function db(setup: (d: DatabaseClient<AddressPointDatabase>) => void): DatabaseClient<AddressPointDatabase> {
 	const d = new DatabaseClient<AddressPointDatabase>(":memory:")

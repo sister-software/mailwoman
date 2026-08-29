@@ -212,7 +212,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 	let streamed: StreamResult
 
 	{
-		const kdb = new DatabaseClient<FloodDatabase>(tmpPath)
+		await using kdb = new DatabaseClient<FloodDatabase>(tmpPath)
 
 		try {
 			kdb.exec("PRAGMA journal_mode = OFF")
@@ -245,8 +245,6 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 
 			throw error
 		}
-
-		await kdb.destroy()
 	}
 
 	if ("batched" in options) {

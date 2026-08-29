@@ -305,7 +305,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 	let streamed: StreamResult
 
 	{
-		const kdb = new DatabaseClient<ZoningDatabase>(tmpPath)
+		await using kdb = new DatabaseClient<ZoningDatabase>(tmpPath)
 
 		try {
 			kdb.exec("PRAGMA journal_mode = OFF")
@@ -331,8 +331,6 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 
 			throw error
 		}
-
-		await kdb.destroy()
 	}
 
 	if ("batched" in options) {

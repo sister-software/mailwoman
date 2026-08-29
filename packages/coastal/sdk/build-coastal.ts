@@ -238,7 +238,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 	let streamed: StreamResult
 
 	{
-		const kdb = new DatabaseClient<CoastalDatabase>(tmpPath)
+		await using kdb = new DatabaseClient<CoastalDatabase>(tmpPath)
 
 		try {
 			kdb.exec("PRAGMA journal_mode = OFF")
@@ -264,8 +264,6 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 
 			throw error
 		}
-
-		await kdb.destroy()
 	}
 
 	if ("batched" in options) {

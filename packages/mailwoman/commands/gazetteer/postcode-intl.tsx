@@ -213,7 +213,7 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
 
-	const kdb = new DatabaseClient<WOFDatabase>(outPath)
+	await using kdb = new DatabaseClient<WOFDatabase>(outPath)
 	// Regenerated artifact — drop any prior table so a re-run with a different country set fully
 	// replaces it (and synthetic ids restart cleanly without colliding with stale rows).
 	await kdb.schema.dropTable("spr").ifExists().execute()
@@ -262,7 +262,6 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 	}
 
 	kdb.exec("COMMIT")
-	await kdb.destroy()
 
 	return rows
 }
@@ -281,7 +280,7 @@ async function foldIntoCandidate(
 	copyFileSync(srcPath, dstPath)
 
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-	const out = new DatabaseClient<WOFDatabase>(dstPath)
+	await using out = new DatabaseClient<WOFDatabase>(dstPath)
 	const shard = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 
 	const ptRow = out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'").get() as
@@ -363,7 +362,6 @@ async function foldIntoCandidate(
 	// Re-cluster the WITHOUT ROWID B-tree contiguously after the mid-tree inserts.
 	out.exec("VACUUM")
 	await shard.destroy()
-	await out.destroy()
 
 	return n
 }

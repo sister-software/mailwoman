@@ -101,7 +101,7 @@ const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 
 		console.error(`▸ writing ${rows.length.toLocaleString()} rows → ${out}`)
 
-		const kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
+		await using kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
 		kdb.exec("PRAGMA journal_mode = WAL;")
 		// DDL via the SHARED createPostalCityAliasTable builder — the exact table the reader + tests
 		// use, so this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw
@@ -135,7 +135,6 @@ const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 		kdb.exec("COMMIT")
 		// Indexes were created by createPostalCityAliasTable above; just checkpoint + compact.
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
-		await kdb.destroy()
 
 		return [
 			`postal-city alias: ${out}`,

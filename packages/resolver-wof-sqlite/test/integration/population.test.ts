@@ -82,7 +82,7 @@ afterEach(() => {
 
 describe("buildPlaceSearchFTS — done-phase summary", () => {
 	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
-		const db = buildFixtureDB()
+		using db = buildFixtureDB()
 		let doneDetail: string | undefined
 
 		buildPlaceSearchFTS(db, {
@@ -95,7 +95,6 @@ describe("buildPlaceSearchFTS — done-phase summary", () => {
 
 		expect(doneDetail).toMatch(/FTS rows/)
 		expect(doneDetail).toMatch(/bbox rows/)
-		db.destroy()
 	})
 })
 

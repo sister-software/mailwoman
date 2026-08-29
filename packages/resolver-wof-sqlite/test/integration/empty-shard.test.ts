@@ -27,9 +27,8 @@ function tablelessDBFile(): string {
 	const dir = mkdtempSync(join(tmpdir(), "mw-empty-shard-"))
 	dirs.push(dir)
 	const path = join(dir, "empty.db")
-	const seed = new DatabaseClient<AddressPointDatabase>(path)
-	seed.exec("CREATE TABLE unrelated (x)") // a valid db file, but no address_point / street_segment table
-	seed.destroy()
+	using seed = new DatabaseClient<AddressPointDatabase>(path)
+	seed.exec("CREATE TABLE unrelated (x)")
 
 	return path
 }

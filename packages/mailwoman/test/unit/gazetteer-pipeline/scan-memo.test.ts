@@ -26,7 +26,7 @@ let scratch: string
  * The columns {@link computeSurfaceCountryCounts} reads: `spr` primaries plus the `names` alias table.
  */
 function buildFixture(path: string, extraName?: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -42,8 +42,6 @@ function buildFixture(path: string, extraName?: string): void {
 	if (extraName) {
 		db.prepare("INSERT INTO names VALUES (?, ?)").run(3, extraName)
 	}
-
-	db.destroy()
 }
 
 beforeEach(async () => {

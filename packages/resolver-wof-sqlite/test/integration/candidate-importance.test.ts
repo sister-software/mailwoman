@@ -35,7 +35,7 @@ let sourcePath: string
  * Ids here are deliberately NOTHING like the ids a candidate build would carry — the join must not depend on them.
  */
 function buildFixtureSource(path: string): void {
-	const db = new DatabaseClient<WOFDatabase>(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -75,8 +75,6 @@ function buildFixtureSource(path: string): void {
 		INSERT INTO place_importance VALUES (9000000000008, 0.4000);
 		INSERT INTO place_importance VALUES (9000000000009, 0.4000);
 	`)
-
-	db.destroy()
 }
 
 beforeEach(async () => {
