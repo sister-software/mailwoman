@@ -19,10 +19,9 @@
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 

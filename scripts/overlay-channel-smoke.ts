@@ -22,8 +22,6 @@
  *   Usage: node scripts/overlay-channel-smoke.ts --locale en-gb [--cache-root <dir>]
  */
 
-import { parseArgs } from "node:util"
-
 import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "@mailwoman/neural"
 // `@mailwoman/neural` exports no `./case-normalize` subpath, and what the anchor channel sees is the
 // CASE-NORMALIZED text (#690/#829, default-ON in `parse`) — re-implementing that here is the one thing
@@ -32,6 +30,7 @@ import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "@ma
 import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
 import { buildSoftFeatures } from "@mailwoman/neural/soft-features"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const { values } = parseArgs({
 	options: {

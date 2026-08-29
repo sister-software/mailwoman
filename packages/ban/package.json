@@ -78,8 +78,10 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"path-ts": "^2.1.0",
 		"spliterator": "^6.2.0"
 	},

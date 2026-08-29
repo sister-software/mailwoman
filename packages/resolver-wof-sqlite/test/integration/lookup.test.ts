@@ -12,12 +12,12 @@
  *   fetch).
  */
 
-import { chmodSync, mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { chmodSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixturePlace {
@@ -219,8 +219,8 @@ const FIXTURE: FixturePlace[] = [
 	},
 ]
 
-function buildFixtureDB(path = ":memory:"): DatabaseSync {
-	const db = new DatabaseSync(path)
+function buildFixtureDB(path = ":memory:"): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	// Schema mirrors the real WOF SQLite distribution at data.geocode.earth (subset of columns we
 	// actually read; full schema is documented in `schema.ts`). WOF lifecycle: both `is_current = -1`
@@ -424,7 +424,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 			expect(candidates[0]?.exactMatch).toBe(true)
 		} finally {
 			lookup2.close()
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -446,12 +446,12 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 			expect(alias[0]).toMatchObject({ id: 999_000_001, exactMatch: true })
 		} finally {
 			lookup2.close()
-			db.close()
+			await db.destroy()
 		}
 	})
 
 	test("Disposable: Symbol.dispose closes the lookup", async () => {
-		const db = buildFixtureDB()
+		await using db = buildFixtureDB()
 
 		{
 			using disposable = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
@@ -462,7 +462,6 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 		// don't own it.
 		const after = db.prepare(`SELECT COUNT(*) AS n FROM spr`).get() as { n: number }
 		expect(after.n).toBe(FIXTURE.length)
-		db.close()
 	})
 })
 
@@ -471,15 +470,15 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		expect(() => new WOFSQLitePlaceLookup({})).toThrow(/one of/)
 
 		expect(
-			() => new WOFSQLitePlaceLookup({ database: new DatabaseSync(":memory:"), databasePath: "/tmp/x.db" })
+			() =>
+				new WOFSQLitePlaceLookup({ database: new DatabaseClient<WOFDatabase>(":memory:"), databasePath: "/tmp/x.db" })
 		).toThrow(/not both/)
 	})
 
 	test("errors loudly when FTS table is missing and buildFTS is false", () => {
-		const db = new DatabaseSync(":memory:")
+		using db = new DatabaseClient<WOFDatabase>(":memory:")
 		db.exec(`CREATE TABLE places (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT);`)
 		expect(() => new WOFSQLitePlaceLookup({ database: db, buildFTS: false })).toThrow(/place_search/)
-		db.close()
 	})
 
 	test("SMOKE: a sealed 0444 on-disk shard opens and still answers FTS queries end-to-end", async () => {
@@ -493,17 +492,16 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 
 		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped shard.
 		{
-			const disk = buildFixtureDB(dbPath)
+			await using disk = buildFixtureDB(dbPath)
 			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })
-			builder.close() // #ownsDB is false for a passed-in handle, so `disk` stays open; FTS is now persisted.
-			disk.close()
+			builder.close()
 		}
 		chmodSync(dbPath, 0o444)
 
 		let ro: WOFSQLitePlaceLookup | undefined
 
 		try {
-			// The real code path: databasePath → `new DatabaseSync(path, { readOnly: !opts.buildFTS })`.
+			// The real code path: databasePath → `new DatabaseClient<WOFDatabase>(path, { readOnly: !opts.buildFTS })`.
 			// With buildFTS omitted this opens the 0444 file read-only; a write-mode open would throw here.
 			ro = new WOFSQLitePlaceLookup({ databasePath: dbPath })
 			const candidates = await ro.findPlace({ text: "Paris", country: "US" })

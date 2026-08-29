@@ -4,9 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	COVERAGE_INSERT_BATCH,
 	readLayerCoverage,
@@ -23,6 +20,7 @@ import {
 	createLayerManifestTable,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
@@ -43,7 +41,7 @@ const MANIFEST: LayerManifest = {
 }
 
 async function openContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const db = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+	const db = new DatabaseClient<LayerContractDatabase>(":memory:")
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)
 

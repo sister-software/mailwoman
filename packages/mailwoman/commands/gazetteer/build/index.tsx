@@ -10,8 +10,7 @@
  *   Both artifacts land at STAGING/dated paths; swapping/promoting stays deliberate (RELEASING.md).
  */
 
-import { join } from "node:path"
-
+import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

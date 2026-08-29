@@ -12,12 +12,11 @@
  *   that refuses before it opens a file.
  */
 
-import { mkdtemp, readFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { AuthoritativeResponseStatus, type AuthoritativeQuery } from "@mailwoman/core/resolver"
+import { mkdtemp, readFile } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	syntheticFixtureAdapter,
 	syntheticFixtureDeps,

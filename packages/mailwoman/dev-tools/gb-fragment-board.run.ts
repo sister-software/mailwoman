@@ -28,12 +28,11 @@
  *   Usage: node packages/mailwoman/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
  */
 
-import { createHash } from "node:crypto"
-import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createHash } from "@mailwoman/platform/crypto"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { deriveGeocodeRegister } from "#geocode-core"

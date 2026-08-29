@@ -36,9 +36,8 @@
  *   `eval-harness/baseline-assert.ts`'s `resolveBaselineFilePath` uses for its sibling JSON asset.
  */
 
-import { cpSync, existsSync, rmSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
+import { cpSync, existsSync, rmSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 

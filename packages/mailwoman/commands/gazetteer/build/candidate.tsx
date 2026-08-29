@@ -9,8 +9,7 @@
  *   streams to stderr; the final summary is on stdout. See RELEASING.md Step 5.
  */
 
-import { join } from "node:path"
-
+import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

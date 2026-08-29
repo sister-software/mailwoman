@@ -10,9 +10,8 @@
  *   stricter reading of the argument vector gets wrong while still looking correct for `mw --version`.
  */
 
-import { execFileSync } from "node:child_process"
-import { fileURLToPath } from "node:url"
-
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, it } from "vitest"
 
 const CLI = fileURLToPath(import.meta.resolve("../../cli.ts"))

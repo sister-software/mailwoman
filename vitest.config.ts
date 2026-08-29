@@ -14,10 +14,9 @@
 
 /// <reference types="vitest/config" />
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
+import { readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import type { Alias } from "vite"
 import { defineConfig } from "vite"
 

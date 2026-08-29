@@ -18,10 +18,9 @@
  *   sibling version exactly as the publish path does.
  */
 
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "node:fs"
-import { join, resolve } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "@mailwoman/platform/fs"
+import { join, resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -47,6 +46,9 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
 		"An unblessed name fails the whole release at this workspace with a bare E404.",
 	"packages/coastal":
+		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
+		"An unblessed name fails the whole release at this workspace with a bare E404.",
+	"packages/sqlite":
 		"new npm name — awaiting the bless-package first publish, for the same reason as @mailwoman/flood above. " +
 		"An unblessed name fails the whole release at this workspace with a bare E404.",
 	"packages/zoning":

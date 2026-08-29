@@ -4,11 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { execSync } from "node:child_process"
-import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, relative, resolve } from "node:path"
-
 import { repoRootPath } from "@mailwoman/core/utils"
+import { execSync } from "@mailwoman/platform/child_process"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, relative, resolve } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 const repoRoot = repoRootPath()

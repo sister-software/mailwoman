@@ -5,8 +5,7 @@
  * @file Shared exact-match per-tag scoring for weight-dependent evaluation gates.
  */
 
-import { existsSync } from "node:fs"
-
+import { existsSync } from "@mailwoman/platform/fs"
 import { JSONSpliterator } from "spliterator"
 
 export interface PerTagEvalRow {

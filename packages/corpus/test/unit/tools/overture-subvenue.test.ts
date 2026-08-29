@@ -14,17 +14,15 @@
  *   3.9 GB database no CI runner has.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	OVERTURE_SUBVENUE_CATEGORIES,
 	readOvertureLayerVintage,
 	readOvertureSubVenues,
 } from "@mailwoman/corpus/tools/overture-subvenue"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
@@ -94,8 +92,7 @@ let scratch: string
 let databasePath: string
 
 async function buildFixture(path: string): Promise<void> {
-	const raw = new DatabaseSync(path)
-	using kdb = new DatabaseClient<FixtureDatabase>({ database: raw })
+	using kdb = new DatabaseClient<FixtureDatabase>(path)
 
 	await kdb.schema
 		.createTable("poi_category_codes")

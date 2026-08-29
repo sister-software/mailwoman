@@ -9,9 +9,10 @@
  *   its parents. An `@mailwoman/annotations` `Annotator`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AnnotationSet, Annotator, NUTS } from "@mailwoman/annotations"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { NUTSDatabase } from "./schema.ts"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
@@ -99,12 +100,20 @@ export function nutsFromID(id: string): NUTS {
 /**
  * A NUTS lookup over a built `node:sqlite` polygon table.
  */
-export class NUTSLookup {
-	#db: DatabaseSync
-	#byLevelBox: ReturnType<DatabaseSync["prepare"]>
+export class NUTSLookup implements Disposable {
+	#db: DatabaseClient<NUTSDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
+	#byLevelBox: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
-		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+	constructor(opts: { databasePath: string } | { database: DatabaseClient<NUTSDatabase> }) {
+		this.#db =
+			"database" in opts
+				? opts.database
+				: this.#resources.use(new DatabaseClient<NUTSDatabase>(opts.databasePath, { readOnly: true }))
 
 		this.#byLevelBox = this.#db.prepare(
 			// The explicit alias pins the JS key: for a bare column ref, sqlite3_column_name returns the
@@ -132,7 +141,11 @@ export class NUTSLookup {
 	}
 
 	close(): void {
-		this.#db.close()
+		this.#resources.dispose()
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }
 

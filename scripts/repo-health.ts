@@ -9,14 +9,13 @@
  * failure disappear.
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync } from "node:fs"
-import { readFile, writeFile } from "node:fs/promises"
-import { relative, resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { existsSync } from "@mailwoman/platform/fs"
+import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
+import { relative, resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import ts from "typescript"
 
 interface DebtCounters {

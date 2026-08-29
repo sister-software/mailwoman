@@ -25,12 +25,11 @@
  *   country, so DE/FR emit streams are unchanged for a given seed.
  */
 
-import { createReadStream } from "node:fs"
-
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { createReadStream } from "@mailwoman/platform/fs"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"

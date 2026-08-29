@@ -30,13 +30,12 @@
  *   /tmp/part-po-box.parquet
  */
 
-import { randomUUID } from "node:crypto"
-import { createWriteStream } from "node:fs"
-import { unlink } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { randomUUID } from "@mailwoman/platform/crypto"
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { unlink } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 const REQUIRED_COLUMNS = [
@@ -215,7 +214,7 @@ export async function jsonlToParquet(
 
 		return { read: rows, written, outPath: options.output }
 	} finally {
-		stage.destroy()
+		await stage.destroy()
 		await unlink(stagePath).catch(() => {})
 	}
 }

@@ -23,9 +23,8 @@
  *   middle of someone else's build.
  */
 
-import { existsSync, lstatSync, readlinkSync, statSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { existsSync, lstatSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
 
 interface ArtifactState {
 	name: string
@@ -108,7 +107,7 @@ export interface ProvenanceOptions {
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
 	const { dataRootPath, mailwomanDataRoot, repoRootPath } = await import("@mailwoman/core/utils")
-	const { readFileSync } = await import("node:fs")
+	const { readFileSync } = await import("@mailwoman/platform/fs")
 
 	const dataRoot = String(mailwomanDataRoot())
 

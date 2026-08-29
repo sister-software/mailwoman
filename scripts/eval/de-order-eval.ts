@@ -9,9 +9,8 @@
  *   every printed line. Do not add logic here.
  */
 
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { deOrderEval } from "mailwoman/eval-harness/de-order-eval"
 
 async function main(): Promise<void> {

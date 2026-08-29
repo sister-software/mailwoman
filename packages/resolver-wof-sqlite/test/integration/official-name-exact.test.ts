@@ -11,10 +11,10 @@
  *   still loses to Paris' own name, and pre-#940 gazetteers (no `official` column) fail soft.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { RankingWeights } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, test } from "vitest"
 
 interface SeedPlace {
@@ -35,8 +35,8 @@ interface SeedPlace {
 /**
  * Same production shape as the exact-match-tiering fixture, plus the #940 `official` column.
  */
-function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (

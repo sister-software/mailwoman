@@ -9,13 +9,6 @@
  *   filesystem — matches `build-bdc.test.ts`'s injected-row convention.
  */
 
-import { existsSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import {
 	FilerEdgeAssertion,
@@ -28,6 +21,11 @@ import { buildFilerDatabase, type BuildFilerResult, type EdgarSubsidiaryRow } fr
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
+import { existsSync } from "@mailwoman/platform/fs"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 const FRN_ACME = toFRN("0001753557")!
@@ -113,7 +111,7 @@ async function teardownScratch(): Promise<void> {
 }
 
 function openFilerDB(path: string): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(path, { readOnly: true }) })
+	return new DatabaseClient<FilerDatabase>(path, { readOnly: true })
 }
 
 describe("buildFilerDatabase", () => {

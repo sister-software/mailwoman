@@ -29,9 +29,8 @@
  *   [--data-root <dir>] [--out-md <md>] [--out-geojson <geojson>]`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import {
 	ingestRows,

@@ -9,9 +9,10 @@
  *   database dependency. Build the DB with `mailwoman-timezone build` (see `./build.ts`).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { TimezoneDatabase } from "./schema.ts"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
@@ -86,12 +87,20 @@ export function offsetSecForTimezone(tzid: string, date: Date = new Date()): num
 /**
  * A timezone lookup over a built `node:sqlite` polygon DB.
  */
-export class TimezoneLookup {
-	#db: DatabaseSync
-	#stmt: ReturnType<DatabaseSync["prepare"]>
+export class TimezoneLookup implements Disposable {
+	#db: DatabaseClient<TimezoneDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
+	#stmt: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
-		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+	constructor(opts: { databasePath: string } | { database: DatabaseClient<TimezoneDatabase> }) {
+		this.#db =
+			"database" in opts
+				? opts.database
+				: this.#resources.use(new DatabaseClient<TimezoneDatabase>(opts.databasePath, { readOnly: true }))
 
 		// Candidate features whose bbox contains the point; PIP picks the exact one.
 		this.#stmt = this.#db.prepare(
@@ -115,7 +124,11 @@ export class TimezoneLookup {
 	}
 
 	close(): void {
-		this.#db.close()
+		this.#resources.dispose()
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }
 

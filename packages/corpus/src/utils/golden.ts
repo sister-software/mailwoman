@@ -19,10 +19,9 @@
  *   creep in over time as new entries land.
  */
 
-import { readdir } from "node:fs/promises"
-
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 import { reconcileComponents } from "@mailwoman/formatter"
+import { readdir } from "@mailwoman/platform/fs/promises"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 

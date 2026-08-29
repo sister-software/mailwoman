@@ -78,6 +78,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/platform": "workspace:*",
 		"@mapbox/vector-tile": "^2.0.3",
 		"@sister.software/asciify": "^4.1.0",
 		"htmlparser2": "^10",

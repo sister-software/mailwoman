@@ -16,9 +16,8 @@
  *   1, which is what `--floor` promised. Do not add logic here.
  */
 
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { frParseRecall } from "mailwoman/eval-harness/fr-parse-recall"
 
 async function main(): Promise<void> {

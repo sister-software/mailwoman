@@ -8,12 +8,12 @@
  *   region, with its level and bounding box for the lookup's prefilter.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { readFileSync } from "@mailwoman/platform/fs"
 import type { GeoFeature, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { MultiPolygonCoords } from "./index.ts"
+import type { NUTSDatabase } from "./schema.ts"
 
 interface NUTSProperties {
 	NUTS_ID: string
@@ -28,7 +28,7 @@ export type NUTSFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, NUTSP
 export function buildNUTSDB(geojsonPath: string, dbPath: string): { regions: number } {
 	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/nuts-lookup` does not depend on @mailwoman/core.
 	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NUTSFeature[] }
-	const db = new DatabaseSync(dbPath)
+	using db = new DatabaseClient<NUTSDatabase>(dbPath)
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
 
 	// `nutsId` is a string contract with every shipped nuts.db — the acronym-casing convention applies
@@ -92,7 +92,6 @@ export function buildNUTSDB(geojsonPath: string, dbPath: string): { regions: num
 
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_nuts_level_bbox ON nuts_regions (level, minLat, maxLat, minLon, maxLon)")
-	db.close()
 
 	return { regions: data.features.length }
 }

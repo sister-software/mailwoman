@@ -8,12 +8,12 @@
  *   `parentID` scoping and adminCoherence reach the gap countries ("Tbilisi, GE" can resolve).
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 /**
@@ -22,7 +22,7 @@ import { afterAll, beforeAll, expect, test } from "vitest"
 type Row = Record<string, string | number | null>
 
 let dir: string
-let db: DatabaseSync
+let db: DatabaseClient<WOFDatabase>
 
 // One GeoNames row: 19 tab-separated columns (id, name, ascii, alt, lat, lon, fclass, fcode, country, cc2,
 // admin1, admin2, admin3, admin4, pop, elev, dem, tz, mod).
@@ -61,7 +61,7 @@ beforeAll(async () => {
 
 	writeFileSync(join(dir, "GE.txt"), lines)
 
-	db = new DatabaseSync(":memory:")
+	db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -80,7 +80,7 @@ beforeAll(async () => {
 })
 
 afterAll(() => {
-	db.close()
+	db.destroy()
 	rmSync(dir, { recursive: true, force: true })
 })
 
@@ -121,7 +121,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 })
 
 test("default (no includeAdmin) stays localities-only with no admin rows — byte-stable", async () => {
-	const db2 = new DatabaseSync(":memory:")
+	await using db2 = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db2.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
@@ -146,7 +146,6 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM ancestors WHERE id = ancestor_id").get() as Row).n).toBe(1)
 	expect((db2.prepare("SELECT parent_id FROM spr WHERE placetype='locality'").get() as Row).parent_id).toBe(-1)
-	db2.close()
 })
 
 test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)", async () => {
@@ -170,7 +169,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 		].join("\n")
 	)
 
-	const hk = new DatabaseSync(":memory:")
+	const hk = new DatabaseClient<WOFDatabase>(":memory:")
 
 	hk.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
@@ -189,6 +188,6 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 		"Hong Kong"
 	)
 
-	hk.close()
+	await hk.destroy()
 	rmSync(d, { recursive: true, force: true })
 })

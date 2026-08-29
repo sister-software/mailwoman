@@ -20,11 +20,10 @@
  *   [--out-jsonl <path>]`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import { addressFrequencyKey, streamRows } from "#index"
 

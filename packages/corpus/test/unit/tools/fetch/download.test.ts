@@ -4,12 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readFileSync, mkdtempSync } from "node:fs"
-import { createServer, type Server } from "node:http"
-import type { AddressInfo } from "node:net"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import {
 	downloadToFile,
 	isTransientStatus,
@@ -17,6 +11,11 @@ import {
 	readManifest,
 	writeManifest,
 } from "@mailwoman/corpus/tools/fetch/download"
+import { readFileSync, mkdtempSync } from "@mailwoman/platform/fs"
+import { createServer, type Server } from "@mailwoman/platform/http"
+import type { AddressInfo } from "@mailwoman/platform/net"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let server: Server

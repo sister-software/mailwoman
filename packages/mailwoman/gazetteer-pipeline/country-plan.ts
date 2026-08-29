@@ -15,10 +15,10 @@
  *   reconciled — and reading the declaration to decide what to change is how #1015 happened.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { getRow } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { AdminSource } from "./country-sources.ts"
 
@@ -46,7 +46,7 @@ export interface SourceCensus {
  * evidence — which is also how the #1015 recipe had to be reconstructed after the manifest lagged.
  */
 export function censusForCountry(adminDBPath: string, country: string): SourceCensus {
-	const db = new DatabaseSync(adminDBPath, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
 	try {
 		const row = getRow<{ wof: number | null; overture: number | null; geonames: number | null }>(
@@ -71,7 +71,7 @@ export function censusForCountry(adminDBPath: string, country: string): SourceCe
 			geonames: Number(row?.geonames ?? 0),
 		}
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }
 

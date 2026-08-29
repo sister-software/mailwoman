@@ -12,23 +12,20 @@
  *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { WOFDatabase } from "./schema.ts"
 
-export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
+export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Promise<void> {
 	// PRAGMAs stay raw — not Kysely-modelled, and these tune the bulk build.
 	db.exec("PRAGMA journal_mode = WAL")
 	db.exec("PRAGMA busy_timeout = 10000")
 	db.exec("PRAGMA synchronous = OFF")
 
-	// `kdb` wraps `db` for the DDL (the house idiom); the caller owns `db`'s lifecycle, so we don't
+	// `db` wraps `db` for the DDL (the house idiom); the caller owns `db`'s lifecycle, so we don't
 	// destroy it here. The bulk INSERTs (populateAncestors + build-unified-wof) stay on the raw handle.
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
 
-	await kdb.schema
+	await db.schema
 		.createTable("spr")
 		.ifNotExists()
 		.addColumn("id", "integer", (c) => c.primaryKey())
@@ -56,7 +53,7 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 	// x_variant rows tagged with an official language ("MSP", "Frisco") stay 0. Primary-name mirror
 	// rows stay 0 too: the name-exact tier already consults spr.name; `official` only marks the
 	// ALIASES eligible to join it. Both are ingest-time facts, never computed at query time.
-	await kdb.schema
+	await db.schema
 		.createTable("names")
 		.ifNotExists()
 		.addColumn("id", "integer", (c) => c.notNull())
@@ -69,7 +66,7 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
 		.execute()
 
-	await kdb.schema
+	await db.schema
 		.createTable("concordances")
 		.ifNotExists()
 		.addColumn("id", "integer", (c) => c.notNull())
@@ -78,7 +75,7 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
 		.execute()
 
-	await kdb.schema
+	await db.schema
 		.createTable("place_population")
 		.ifNotExists()
 		.addColumn("id", "integer", (c) => c.primaryKey())
@@ -90,7 +87,7 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
 	// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`. The off-the-shelf WOF dumps
 	// ship this table; our build derives it from the parent_id chain (see populateAncestors) since
 	// we don't capture `wof:hierarchy`.
-	await kdb.schema
+	await db.schema
 		.createTable("ancestors")
 		.ifNotExists()
 		.addColumn("id", "integer", (c) => c.notNull())
@@ -107,7 +104,7 @@ export async function createUnifiedSchema(db: DatabaseSync): Promise<void> {
  * Sentinel/negative parent_ids and cycles terminate the walk. ~4 rows/place average; a transaction keeps the ~5M
  * inserts fast.
  */
-export function populateAncestors(db: DatabaseSync): number {
+export function populateAncestors<DB>(db: DatabaseClient<DB>): number {
 	db.exec("DELETE FROM ancestors")
 
 	const rows = db.prepare("SELECT id, parent_id, placetype FROM spr").all() as Array<{
@@ -151,22 +148,21 @@ export function populateAncestors(db: DatabaseSync): number {
 	return count
 }
 
-export async function createUnifiedIndexes(db: DatabaseSync): Promise<void> {
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
-	await kdb.schema.createIndex("spr_by_placetype").ifNotExists().on("spr").column("placetype").execute()
-	await kdb.schema.createIndex("spr_by_country").ifNotExists().on("spr").column("country").execute()
-	await kdb.schema.createIndex("spr_by_parent").ifNotExists().on("spr").column("parent_id").execute()
-	await kdb.schema.createIndex("names_by_id").ifNotExists().on("names").column("id").execute()
-	await kdb.schema.createIndex("names_by_name").ifNotExists().on("names").column("name").execute()
+export async function createUnifiedIndexes(db: DatabaseClient<WOFDatabase>): Promise<void> {
+	await db.schema.createIndex("spr_by_placetype").ifNotExists().on("spr").column("placetype").execute()
+	await db.schema.createIndex("spr_by_country").ifNotExists().on("spr").column("country").execute()
+	await db.schema.createIndex("spr_by_parent").ifNotExists().on("spr").column("parent_id").execute()
+	await db.schema.createIndex("names_by_id").ifNotExists().on("names").column("id").execute()
+	await db.schema.createIndex("names_by_name").ifNotExists().on("names").column("name").execute()
 
-	await kdb.schema
+	await db.schema
 		.createIndex("concordances_by_id")
 		.ifNotExists()
 		.on("concordances")
 		.columns(["id", "lastmodified"])
 		.execute()
 
-	await kdb.schema
+	await db.schema
 		.createIndex("concordances_by_other_id")
 		.ifNotExists()
 		.on("concordances")
@@ -175,6 +171,6 @@ export async function createUnifiedIndexes(db: DatabaseSync): Promise<void> {
 
 	// ancestor_id is the hot column (parent-constraint queries `WHERE ancestor_id = ?`); id supports
 	// the reverse lookup.
-	await kdb.schema.createIndex("ancestors_by_ancestor").ifNotExists().on("ancestors").column("ancestor_id").execute()
-	await kdb.schema.createIndex("ancestors_by_id").ifNotExists().on("ancestors").column("id").execute()
+	await db.schema.createIndex("ancestors_by_ancestor").ifNotExists().on("ancestors").column("ancestor_id").execute()
+	await db.schema.createIndex("ancestors_by_id").ifNotExists().on("ancestors").column("id").execute()
 }

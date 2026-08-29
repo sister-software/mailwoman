@@ -22,10 +22,9 @@
  *   Everything here is pure (no I/O); side-effecting code goes in `./runner.ts`.
  */
 
-import { createHash, type Hash } from "node:crypto"
-
 import type { ComponentTag } from "@mailwoman/core/types"
 import { sha256Hex } from "@mailwoman/core/utils"
+import { createHash, type Hash } from "@mailwoman/platform/crypto"
 
 import type { CanonicalRow, CorpusAdapter } from "#types"
 

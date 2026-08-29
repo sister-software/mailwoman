@@ -38,13 +38,12 @@
  *   omit it for a dry run that only prints the block.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 
 import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "./per-tag-f1.ts"
 

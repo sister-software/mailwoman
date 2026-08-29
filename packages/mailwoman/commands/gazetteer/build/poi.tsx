@@ -21,8 +21,7 @@
  *   below is UNTOUCHED and stays byte-identical when `--source` is omitted.
  */
 
-import { execFileSync } from "node:child_process"
-
+import { execFileSync } from "@mailwoman/platform/child_process"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

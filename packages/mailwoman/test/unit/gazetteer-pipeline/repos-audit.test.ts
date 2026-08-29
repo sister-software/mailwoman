@@ -12,12 +12,11 @@
  *   and `verifyAdmin` cannot catch the second, since it tests floors.
  */
 
-import { execFileSync } from "node:child_process"
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	auditReposRoot,
 	CloneLayout,

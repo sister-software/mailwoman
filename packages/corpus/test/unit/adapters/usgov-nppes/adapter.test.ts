@@ -4,15 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import {
 	createUsgovNPPESAdapter,
 	USGOV_NPPES_ADAPTER_ID,
 	USGOV_NPPES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/usgov-nppes/adapter"
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { InMemoryAdapterRegistry } from "#adapters/utils"

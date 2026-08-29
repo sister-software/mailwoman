@@ -17,9 +17,8 @@
  *   the strata, the provenance block. A number that differs between the paths differs because the measurement does.
  */
 
-import { randomUUID } from "node:crypto"
-
 import { formatPercent } from "@mailwoman/core/utils"
+import { randomUUID } from "@mailwoman/platform/crypto"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"

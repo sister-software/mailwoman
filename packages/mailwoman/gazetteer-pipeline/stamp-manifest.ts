@@ -12,20 +12,18 @@
  *
  *   THE ORDERING IS THE WHOLE CONTRACT. This must run BEFORE `sealDatabase`, because a sealed artifact is
  *   `0444` and a manifest written afterwards needs the database reopened read-write — the one thing
- *   `openBuiltDatabase` exists to refuse. Calling it after the seal does not fail quietly; it fails
+ *   `openBuiltClient` exists to refuse. Calling it after the seal does not fail quietly; it fails
  *   loudly, which is the correct half. What it would cost is the build, at its very end.
  */
 
-import { execFileSync } from "node:child_process"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createLayerManifestTable,
 	type LayerContractDatabase,
 	type LayerManifest,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Open `path`, write `manifest`, and close.
@@ -37,8 +35,7 @@ import {
  * @throws When the database is already sealed, which is the ordering mistake this function exists to make loud.
  */
 export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
-	const db = new DatabaseSync(path)
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: db })
+	const kdb = new DatabaseClient<LayerContractDatabase>(path)
 
 	try {
 		await createLayerManifestTable(kdb)

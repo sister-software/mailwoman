@@ -46,15 +46,15 @@
  *   - Does not retry hallucinated candidates. Cost of wasted tokens is trivial (~$0.0006/each).
  */
 
-import { mkdir } from "node:fs/promises"
-import { dirname } from "node:path"
-
-import { ParquetReader } from "@dsnp/parquetjs"
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { dirname } from "@mailwoman/platform/path"
 import { createNewlineWriter } from "spliterator"
+
+import { ParquetReader } from "../parquet-wrapper/index.ts"
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -213,7 +213,7 @@ async function loadSeeds(
 	let skippedThinComponents = 0
 
 	for (const path of paths) {
-		const reader = await ParquetReader.openFile(path)
+		await using reader = await ParquetReader.openFile(path)
 		const cursor = reader.getCursor()
 
 		while (true) {
@@ -253,8 +253,6 @@ async function loadSeeds(
 				bucket.push(seed)
 			}
 		}
-
-		await reader.close()
 	}
 
 	report?.(

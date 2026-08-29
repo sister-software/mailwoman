@@ -33,10 +33,10 @@
  *   plans and about 880 vocabulary rows cross a process boundary for nothing.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { ZoningDatabase } from "../schema.ts"
 import { GZT_CROSSWALK_SCHEME, GZT_PROVENANCE_GRADE, GZT_ROLLUP_SCHEME, localSchemeFor } from "../vocabulary.ts"
 import { classifyFeatureCells, featureCellRows } from "./cells.ts"
 import type { ZoningFeatureSource, ZoningSourceFeature } from "./ingest.ts"
@@ -135,7 +135,7 @@ export interface IngestZoningChunkOptions {
  * @throws {Error} On a feature the classifier or the ring-role resolver refuses.
  */
 export async function ingestZoningChunk(
-	database: DatabaseSync,
+	database: DatabaseClient<ZoningDatabase>,
 	options: IngestZoningChunkOptions
 ): Promise<ZoningChunkResult> {
 	const insertArea = database.prepare(

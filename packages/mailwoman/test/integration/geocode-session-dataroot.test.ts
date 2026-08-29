@@ -15,11 +15,10 @@
  *   Before the fix this test's expectation fails: weights resolve from the env root and the session comes up.
  */
 
-import { existsSync, mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
+import { existsSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession } from "mailwoman/geocode-session"
 import { afterAll, describe, expect, it } from "vitest"

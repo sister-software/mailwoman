@@ -16,11 +16,11 @@
  *       `/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db` (staged by build-demo-assets).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { $public } from "@mailwoman/core/env"
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite/reverse"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { geometryContains, pointInPolygonRings, pointInRing, type GeojsonPosition } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 const square = (minX: number, minY: number, maxX: number, maxY: number): GeojsonPosition[] => [
@@ -71,8 +71,8 @@ describe("point-in-polygon primitives", () => {
  * bbox-false-positive case) ⊃ localadmin town (4, point geometry, centroid near the query point) ⊃ locality village (5,
  * point geometry, degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
  */
-function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
-	const admin = new DatabaseSync(":memory:")
+function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: DatabaseClient<WOFDatabase> } {
+	const admin = new DatabaseClient<WOFDatabase>(":memory:")
 
 	admin.exec(`
 		CREATE TABLE spr (
@@ -110,7 +110,7 @@ function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
 		INSERT INTO place_bbox VALUES (6, 43.85, 44.25, -72.45, -71.85);
 	`)
 
-	const polygons = new DatabaseSync(":memory:")
+	const polygons = new DatabaseClient<WOFDatabase>(":memory:")
 	polygons.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL);`)
 	const insert = polygons.prepare(`INSERT INTO polygons (id, geom) VALUES (?, ?)`)
 	// Region polygon: the whole fixture area.
@@ -126,7 +126,7 @@ function buildFixture(): { admin: DatabaseSync; polygons: DatabaseSync } {
 describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 	test("PIP confirms the deepest polygon, then descends to the nearest point-geometry child", async () => {
 		const { admin, polygons } = buildFixture()
-		const rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
+		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		const result = await rg.reverseGeocode(44, -72)
 
 		// Deepest = the locality village (descent: county A → town → village), approximate.
@@ -144,55 +144,49 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 		expect(result.hierarchy.some((p) => p.id === 6)).toBe(false)
 		// The approximate winner carries its centroid distance.
 		expect(result.hierarchy[0]?.distanceKm).toBeGreaterThan(0)
-		rg.close()
 	})
 
 	test("polygon containment is reported when the deepest place IS polygon-confirmed", async () => {
 		const { admin, polygons } = buildFixture()
-		const rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
+		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		// Restrict to the polygon-bearing tiers — the deepest is then county A, PIP-confirmed.
 		const result = await rg.reverseGeocode(44, -72, { placetypes: ["country", "region", "county"] })
 		expect(result.containment).toBe("polygon")
 		expect(result.hierarchy[0]).toMatchObject({ id: 3, placetype: "county" })
-		rg.close()
 	})
 
 	test("no polygon DB → centroid-only mode, every result approximate", async () => {
 		const { admin } = buildFixture()
-		const rg = new WOFReverseGeocoder({ adminDatabase: admin })
+		using rg = new WOFReverseGeocoder({ adminDatabase: admin })
 		const result = await rg.reverseGeocode(44, -72)
 		expect(result.containment).toBe("approximate")
 		// Bbox false positives can't be vetoed without polygons; the smallest containing bbox
 		// (a county) still anchors the walk and the descent still reaches the village.
 		expect(result.hierarchy[0]?.name).toBe("Middlewich Village")
-		rg.close()
 	})
 
 	test("a point outside every bbox returns an empty hierarchy", async () => {
 		const { admin, polygons } = buildFixture()
-		const rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
+		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		const result = await rg.reverseGeocode(-44, 72)
 		expect(result.hierarchy).toEqual([])
 		expect(result.containment).toBe("approximate")
-		rg.close()
 	})
 
 	test("approximate steps respect maxApproximateKm", async () => {
 		const { admin, polygons } = buildFixture()
-		const rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
+		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		// Tiny cap: the town centroid (~2 km away) is out of reach → walk stops at county A.
 		const result = await rg.reverseGeocode(44, -72, { maxApproximateKm: 0.5 })
 		expect(result.hierarchy[0]).toMatchObject({ id: 3, placetype: "county" })
 		expect(result.containment).toBe("polygon")
-		rg.close()
 	})
 
 	test("rejects out-of-range coordinates", async () => {
 		const { admin } = buildFixture()
-		const rg = new WOFReverseGeocoder({ adminDatabase: admin })
+		using rg = new WOFReverseGeocoder({ adminDatabase: admin })
 		await expect(rg.reverseGeocode(91, 0)).rejects.toThrow(RangeError)
 		await expect(rg.reverseGeocode(0, 181)).rejects.toThrow(RangeError)
-		rg.close()
 	})
 })
 

@@ -13,12 +13,11 @@
  *   the bin points at; the suite skips when the tree has not been built.
  */
 
-import { execFile } from "node:child_process"
-import { existsSync } from "node:fs"
-import { promisify } from "node:util"
-
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { existsSync } from "@mailwoman/platform/fs"
+import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
@@ -43,7 +42,7 @@ const COUNTING_HOOK =
 	"data:text/javascript," +
 	encodeURIComponent(
 		[
-			'import { registerHooks } from "node:module"',
+			'const { registerHooks } = process.getBuiltinModule("node:module")',
 			"let loaded = 0",
 			"registerHooks({",
 			"	load(url, context, nextLoad) {",

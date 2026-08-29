@@ -16,10 +16,9 @@
  *   against the `us` bundle's 103 files).
  */
 
-import { existsSync, statSync } from "node:fs"
-
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { existsSync, statSync } from "@mailwoman/platform/fs"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 

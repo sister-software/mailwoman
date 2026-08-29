@@ -13,11 +13,10 @@
  *   specs. Skipped automatically in remote-smoke mode (`MAILWOMAN_DEMO_URL` set).
  */
 
-import { execFile } from "node:child_process"
-import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
-import { promisify } from "node:util"
-
+import { execFile } from "@mailwoman/platform/child_process"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join, resolve } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 import { expect, test } from "@playwright/test"
 import { TextSpliterator } from "spliterator"
 

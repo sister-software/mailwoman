@@ -48,9 +48,6 @@
  *   which both this and the demo take it from — and which fixed the order both copies had wrong.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runPipeline } from "@mailwoman/core/pipeline"
@@ -59,6 +56,8 @@ import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver 
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"

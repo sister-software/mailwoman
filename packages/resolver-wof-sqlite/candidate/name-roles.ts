@@ -5,10 +5,11 @@
  * @file Pass 3c of the candidate build — the `name_role` detectors and the cuts they are judged by.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { CandidateDatabase } from "../candidate-schema.ts"
+import type { WOFDatabase } from "../schema.ts"
 import { normalizeLocalityForKey } from "../street-normalize.ts"
 import { isOwnNameVariant } from "./own-name.ts"
 import type { PlaceAttrs } from "./place-attrs.ts"
@@ -55,8 +56,8 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
  * any role.
  */
 export function stampNameRoles(ctx: {
-	src: DatabaseSync
-	out: DatabaseSync
+	src: DatabaseClient<WOFDatabase>
+	out: DatabaseClient<CandidateDatabase>
 	attrs: Map<number, PlaceAttrs>
 	keyCounts: Map<number, number>
 	glossThreshold: number

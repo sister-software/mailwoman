@@ -23,7 +23,7 @@
  *       That is precisely the stale-tree shape: the loader resolved no `.jsonl` at all.
  */
 
-import type { DatabaseClient } from "@mailwoman/core/kysley/client"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 
 import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "./cases/load.ts"

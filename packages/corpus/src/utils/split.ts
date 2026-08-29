@@ -24,13 +24,12 @@
  *   (under `corpus/splits/<version>/`) so reruns are reproducible bit-for-bit.
  */
 
-import { spawn } from "node:child_process"
-import { createHash } from "node:crypto"
-import { createWriteStream } from "node:fs"
-import { mkdir, unlink, writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { spawn } from "@mailwoman/platform/child_process"
+import { createHash } from "@mailwoman/platform/crypto"
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { mkdir, unlink, writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"

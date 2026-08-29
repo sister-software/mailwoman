@@ -16,12 +16,11 @@
  *   <postal-cases.jsonl>
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { pyFixed } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })

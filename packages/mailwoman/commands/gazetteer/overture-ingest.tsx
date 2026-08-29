@@ -28,9 +28,8 @@
  *   `scripts/ingest-overture-addresses.ts` behavior verbatim.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

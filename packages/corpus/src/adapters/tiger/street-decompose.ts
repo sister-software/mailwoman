@@ -16,9 +16,8 @@
  *   suffix: "Blvd" }
  */
 
-import { readFileSync } from "node:fs"
-
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 function loadDictionary(filename: string): Set<string> {

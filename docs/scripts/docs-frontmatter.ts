@@ -14,9 +14,13 @@
  *   …) without pulling a YAML dependency into what must stay a no-install fast path in CI.
  */
 
+// Node builtins on purpose. `check-docs-structure.ts` reaches this file, and the Docs workflow runs it before
+// `yarn install`. Same reason the frontmatter parser above stays hand-rolled: nothing here may need an install.
+/* oxlint-disable typescript/no-restricted-imports -- runs before `yarn install`; see above */
 import { readdir, readFile } from "node:fs/promises"
-import path from "node:path"
+import * as path from "node:path"
 import { fileURLToPath } from "node:url"
+/* oxlint-enable typescript/no-restricted-imports */
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url))
 

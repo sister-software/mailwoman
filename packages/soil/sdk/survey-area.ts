@@ -28,10 +28,9 @@
  *   repeated across SSURGO, which is why asserting it is cheap and why a change in it is loud.
  */
 
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import type { GeojsonGeometry } from "@mailwoman/spatial"
 
 import type { SoilComponentTable, SoilMapUnitTable } from "../schema.ts"

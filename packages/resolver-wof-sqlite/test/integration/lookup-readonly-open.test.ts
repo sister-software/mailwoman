@@ -14,17 +14,18 @@
  *   invariant.)
  */
 
-import { chmodSync, mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { chmodSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 // Record every DatabaseSync construction (path + the readOnly option) while delegating to the real implementation.
 const spy = vi.hoisted(() => ({ opens: [] as Array<{ path: string; readOnly: boolean | undefined }> }))
 
-vi.mock("node:sqlite", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("node:sqlite")>()
+vi.mock("@mailwoman/platform/sqlite", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@mailwoman/platform/sqlite")>()
 
 	class RecordingDatabaseSync extends actual.DatabaseSync {
 		constructor(path: string, options?: { readOnly?: boolean }) {
@@ -54,14 +55,15 @@ afterAll(() => vi.resetModules())
 
 // Dynamic imports AFTER the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
-const { DatabaseSync } = await import("node:sqlite")
+// oxlint-disable-next-line no-restricted-imports -- this probe RECORDS the construction, so it must name the builtin
+const { DatabaseSync } = await import("@mailwoman/platform/sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**
  * Seed a minimal on-disk WOF fixture (schema + one place), WITHOUT the FTS index. Writable.
  */
 function seedFixture(path: string): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -79,7 +81,6 @@ function seedFixture(path: string): void {
 	).run(101_715_829, 85_688_489, "Paris", "locality", "US", 33.66, -95.55)
 
 	db.prepare(`INSERT INTO names (id, language, name) VALUES (?, ?, ?)`).run(101_715_829, "und", "Paris")
-	db.close()
 }
 
 /**
@@ -116,13 +117,9 @@ describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 
 	test("buildFTS: true opens the main shard READ-WRITE (the FTS5 index build must write)", () => {
 		spy.opens.length = 0
-		const lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true })
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true })
 
-		try {
-			expect(readOnlyForOpenOf(dbPath)).toBe(false)
-		} finally {
-			lookup.close()
-		}
+		expect(readOnlyForOpenOf(dbPath)).toBe(false)
 	})
 
 	test("buildFTS omitted opens the main shard READ-ONLY, even against a sealed 0444 file, and still queries", async () => {
@@ -131,18 +128,12 @@ describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 		chmodSync(dbPath, 0o444)
 
 		spy.opens.length = 0
-		const lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath })
+		using lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath })
 
-		try {
-			// The distinguishing signal: the construction chose readOnly:true (a write-mode open would fail on a
-			// genuine `:ro` mount even though SQLite downgrades it on an owned 0444 file).
-			expect(readOnlyForOpenOf(dbPath)).toBe(true)
+		expect(readOnlyForOpenOf(dbPath)).toBe(true)
 
-			const candidates = await lookup.findPlace({ text: "Paris", country: "US" })
-			expect(candidates.length).toBeGreaterThan(0)
-			expect(candidates[0]).toMatchObject({ name: "Paris", country: "US", placetype: "locality" })
-		} finally {
-			lookup.close()
-		}
+		const candidates = await lookup.findPlace({ text: "Paris", country: "US" })
+		expect(candidates.length).toBeGreaterThan(0)
+		expect(candidates[0]).toMatchObject({ name: "Paris", country: "US", placetype: "locality" })
 	})
 })

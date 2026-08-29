@@ -7,24 +7,22 @@
  *   rather than crashing a session open.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { type CapitalTable, createCapitalTable, readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
-async function openWithTable(): Promise<DatabaseSync> {
-	const db = new DatabaseSync(":memory:")
-	const kdb = new DatabaseClient<{ capital: CapitalTable }>({ database: db })
+async function openWithTable(): Promise<DatabaseClient<CandidateDatabase>> {
+	const kdb = new DatabaseClient<CandidateDatabase>(":memory:")
 
-	await createCapitalTable(kdb)
+	await createCapitalTable<CandidateDatabase>(kdb)
 
-	return db
+	return kdb
 }
 
 describe("capital table round-trip", () => {
 	it("returns what the builder wrote, keys parsed", async () => {
-		const db = await openWithTable()
+		await using db = await openWithTable()
 
 		db.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)").run(
 			"CR",
@@ -37,19 +35,16 @@ describe("capital table round-trip", () => {
 		expect(readCapitalPoints(db)).toEqual([
 			{ country: "CR", latitude: 9.9333, longitude: -84.0833, level: "national", k: ["san jose", "chepe"] },
 		])
-
-		db.close()
 	})
 
 	it("answers NULL — not an empty list — on an artifact that predates the table", () => {
-		const db = new DatabaseSync(":memory:")
+		using db = new DatabaseClient<CandidateDatabase>(":memory:")
 
 		expect(readCapitalPoints(db)).toBeNull()
-		db.close()
 	})
 
 	it("skips a row with an unknown level or unparseable keys instead of crashing the session open", async () => {
-		const db = await openWithTable()
+		await using db = await openWithTable()
 		const insert = db.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
 
 		insert.run("XX", 0, 0, "county-seat", JSON.stringify(["x"]))
@@ -60,6 +55,5 @@ describe("capital table round-trip", () => {
 
 		expect(points).toHaveLength(1)
 		expect(points![0]!.country).toBe("GD")
-		db.close()
 	})
 })

@@ -14,17 +14,10 @@
  *   `(geoid, provider_id, technology_code, location_id)`.
  */
 
-import { existsSync, statSync } from "node:fs"
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase, geometryCentroid, peekProviderID, type BuildBDCResult } from "@mailwoman/bdc/sdk/build-bdc"
 import type { ProviderID } from "@mailwoman/bdc/sdk/common"
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import {
@@ -41,6 +34,11 @@ import {
 	type FilerDatabase,
 } from "@mailwoman/filer"
 import { toFRN, type ProviderListRow } from "@mailwoman/filer/sdk"
+import { existsSync, statSync } from "@mailwoman/platform/fs"
+import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const GEOID_SF = "060750001001001"
@@ -163,7 +161,7 @@ describe("buildBDCDatabase", () => {
 		expect(result.providers).toBe(2)
 		expect(result.coverageCells).toBe(3)
 
-		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+		using kdb = new DatabaseClient<BDCDatabase>(out, { readOnly: true })
 
 		const badRow = await kdb
 			.selectFrom("bdc_availability")
@@ -175,7 +173,7 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("(d) leaves location_id NULL by default", async () => {
-		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+		using kdb = new DatabaseClient<BDCDatabase>(out, { readOnly: true })
 
 		const row = await kdb
 			.selectFrom("bdc_availability")
@@ -200,7 +198,7 @@ describe("buildBDCDatabase", () => {
 			blockCentroids,
 		})
 
-		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(includeOut, { readOnly: true }) })
+		using kdb = new DatabaseClient<BDCDatabase>(includeOut, { readOnly: true })
 
 		const row = await kdb
 			.selectFrom("bdc_availability")
@@ -212,7 +210,7 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("(e) writes a manifest whose sourceVintage equals asOfDate", async () => {
-		using kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
 		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest).toMatchObject({
@@ -232,7 +230,7 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("coverage rows carry completeness 1 and a positive observed_rows total", async () => {
-		using kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 
 		expect(coverageRows).toHaveLength(result.coverageCells)
@@ -246,7 +244,7 @@ describe("buildBDCDatabase", () => {
 	it("(f) leaves bdc_provider empty and providersPopulated at 0 when `providers` is omitted (3a decision 6)", async () => {
 		expect(result.providersPopulated).toBe(0)
 
-		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+		using kdb = new DatabaseClient<BDCDatabase>(out, { readOnly: true })
 		const providerRows = await kdb.selectFrom("bdc_provider").selectAll().execute()
 
 		expect(providerRows).toHaveLength(0)
@@ -311,7 +309,7 @@ describe("buildBDCDatabase", () => {
 		expect(second.rows).toBe(3)
 		expect(existsSync(`${out}.prev`)).toBe(false)
 
-		using kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
 		const manifest = await readLayerManifest(kdb)
 		expect(manifest.sourceVintage).toBe("2026-07-01")
 	})
@@ -356,7 +354,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 		expect(result.deduped).toBe(0)
 		expect(result.coverageCells).toBe(1)
 
-		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(collapsedOut, { readOnly: true }) })
+		using kdb = new DatabaseClient<BDCDatabase>(collapsedOut, { readOnly: true })
 
 		const rows = await kdb.selectFrom("bdc_availability").selectAll().where("geoid", "=", GEOID_SF).execute()
 		expect(rows).toHaveLength(1)
@@ -383,7 +381,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 		expect(result.deduped).toBe(0)
 		expect(result.coverageCells).toBe(1)
 
-		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(perBSLOut, { readOnly: true }) })
+		using kdb = new DatabaseClient<BDCDatabase>(perBSLOut, { readOnly: true })
 
 		const rows = await kdb.selectFrom("bdc_availability").selectAll().where("geoid", "=", GEOID_SF).execute()
 		expect(rows).toHaveLength(3)
@@ -401,7 +399,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	const FRN_SOLO = toFRN("0003333333")!
 
 	function openFilerMemory(): DatabaseClient<FilerDatabase> {
-		return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(":memory:") })
+		return new DatabaseClient<FilerDatabase>(":memory:")
 	}
 
 	/**
@@ -578,7 +576,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 
 		expect(result.providersPopulated).toBe(3)
 
-		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(providerOut, { readOnly: true }) })
+		using kdb = new DatabaseClient<BDCDatabase>(providerOut, { readOnly: true })
 
 		const multiFRNProvider = await kdb
 			.selectFrom("bdc_provider")
@@ -693,7 +691,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 
 		expect(result.providersPopulated).toBe(1)
 
-		using kdb = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(providerOut, { readOnly: true }) })
+		using kdb = new DatabaseClient<BDCDatabase>(providerOut, { readOnly: true })
 
 		const provider = await kdb
 			.selectFrom("bdc_provider")

@@ -20,7 +20,7 @@
  * that reason.
  */
 
-import { createRequire } from "node:module"
+import { createRequire } from "@mailwoman/platform/module"
 
 import { MapBrowser } from "./browser.ts"
 import { type CLIArgs, CLIArgsError, HELP_TEXT, parseCLIArgs } from "./cli-args.ts"

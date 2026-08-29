@@ -11,12 +11,10 @@
  *   nothing in the pipeline could tell them apart.
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildRegressionDB } from "mailwoman/eval-harness/gauntlet/build-regression-db"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { assertCorpusStampFresh, readCorpusStamp } from "mailwoman/eval-harness/gauntlet/corpus-stamp"
@@ -60,7 +58,7 @@ function scratchDB(): string {
 }
 
 function open(path: string): DatabaseClient<GauntletDatabase> {
-	const kdb = new DatabaseClient<GauntletDatabase>({ database: new DatabaseSync(path, { readOnly: true }) })
+	const kdb = new DatabaseClient<GauntletDatabase>(path, { readOnly: true })
 
 	opened.push(kdb)
 
@@ -116,8 +114,7 @@ describe("the build stamp", () => {
 
 	it("REFUSES a DB that predates the stamp entirely", async () => {
 		const output = scratchDB()
-		const raw = new DatabaseSync(output)
-		const writer = new DatabaseClient<GauntletDatabase>({ database: raw })
+		const writer = new DatabaseClient<GauntletDatabase>(output)
 
 		// A pre-2026-08-06 artifact: cases, no meta table.
 		await createGauntletTable(writer)

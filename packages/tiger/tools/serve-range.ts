@@ -11,11 +11,10 @@
  *   Internal helper module — no standalone command.
  */
 
-import { createReadStream, statSync, type Stats } from "node:fs"
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
-import { extname, join, normalize } from "node:path"
-
 import { mailwomanTempRoot } from "@mailwoman/core/utils"
+import { createReadStream, statSync, type Stats } from "@mailwoman/platform/fs"
+import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
+import { extname, join, normalize } from "@mailwoman/platform/path"
 
 /**
  * Options for {@linkcode serveWithRangeSupport}.

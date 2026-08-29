@@ -33,12 +33,12 @@
  *   regardless.
  */
 
-import { spawn } from "node:child_process"
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
-import * as os from "node:os"
-import * as path from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { spawn } from "@mailwoman/platform/child_process"
+import { existsSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as os from "@mailwoman/platform/os"
+import * as path from "@mailwoman/platform/path"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -183,7 +183,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			if (!existsSync(dbPath)) return false
 
 			try {
-				const db = new DatabaseSync(dbPath, { readOnly: true })
+				using db = new DatabaseClient<AddressPointDatabase>(dbPath, { readOnly: true })
 				const n = (db.prepare("SELECT count(*) AS n FROM address_point").get() as { n: number }).n
 
 				const idx = (
@@ -191,8 +191,6 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 						.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='index' AND name='idx_ap_streetkey'")
 						.get() as { n: number }
 				).n
-
-				db.close()
 
 				return n > 0 && idx > 0
 			} catch {

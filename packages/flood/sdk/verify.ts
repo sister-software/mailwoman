@@ -32,8 +32,6 @@
  *   `assessDatumTransformation` in `ingest.ts` for the guard that now refuses the build instead.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	expandH3Cell,
 	interiorPointOfEncodedRings,
@@ -41,9 +39,11 @@ import {
 	segmentDistanceMetres,
 	type H3CellShort,
 } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng } from "h3-js"
 
 import { FloodReadingKind, FloodZoneLookup, type FloodZoneReading } from "../index.ts"
+import type { FloodDatabase } from "../schema.ts"
 import { EA_FLOOD_LAYER } from "../vocabulary.ts"
 import { EA_SPATIAL_BASE_URL, type EAFloodClient } from "./client.ts"
 
@@ -314,7 +314,7 @@ export function sampleAgreementPoints(
 ): Array<{ label: string; latitude: number; longitude: number }> {
 	const insideCount = options.insideCount ?? 40
 	const absenceCount = options.absenceCount ?? 20
-	const database = new DatabaseSync(databasePath, { readOnly: true })
+	const database = new DatabaseClient<FloodDatabase>(databasePath, { readOnly: true })
 
 	try {
 		const points: Array<{ label: string; latitude: number; longitude: number }> = []
@@ -377,6 +377,6 @@ export function sampleAgreementPoints(
 
 		return points
 	} finally {
-		database.close()
+		database.destroy()
 	}
 }

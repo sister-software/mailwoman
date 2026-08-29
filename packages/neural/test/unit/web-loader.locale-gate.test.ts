@@ -18,12 +18,11 @@
  *      byte-stable `undefined` on no match.
  */
 
-import { readdirSync, readFileSync } from "node:fs"
-import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "@mailwoman/neural/web-loader"
+import { readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { dirname, join } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { TextSpliterator } from "spliterator"
 import { describe, expect, test } from "vitest"
 

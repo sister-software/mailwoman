@@ -18,9 +18,9 @@
  *   trees must keep running; so it warns, names the rebuild command, and gets out of the way.
  */
 
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Text } from "ink"
 
 import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -53,9 +53,9 @@ const GazetteerVerify: ParsedCommandComponent<Options> = ({ options }) => {
 
 			console.error(`Verifying ${dbPath}...`)
 
-			const db = new DatabaseSync(dbPath, { readOnly: true })
+			const db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 			const structural = verifyAdmin(db, loadDefaultBaseline())
-			db.close()
+			await db.destroy()
 			const checks = [...structural.checks]
 			let ok = structural.ok
 

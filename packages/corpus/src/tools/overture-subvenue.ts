@@ -38,9 +38,7 @@
  *   function and the source-neutral {@link SubVenueHarvestRow} name.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { SubVenueHarvestRow } from "./sub-venue-lexicon.ts"
 
@@ -114,9 +112,7 @@ interface POIReadDatabase {
  * layer-contract.mdx` — so there is no version of poi.db where this is absent.
  */
 export async function readOvertureLayerVintage(databasePath: string): Promise<string> {
-	using kdb = new DatabaseClient<POIReadDatabase>({
-		database: new DatabaseSync(databasePath, { readOnly: true }),
-	})
+	using kdb = new DatabaseClient<POIReadDatabase>(databasePath, { readOnly: true })
 
 	const row = await kdb
 		.selectFrom("layer_manifest")
@@ -171,9 +167,7 @@ export interface OvertureSubVenueRow extends SubVenueHarvestRow {
 export async function readOvertureSubVenues(options: ReadOvertureSubVenuesOptions): Promise<OvertureSubVenueRow[]> {
 	const categories = options.categories ?? OVERTURE_SUBVENUE_CATEGORIES
 
-	using kdb = new DatabaseClient<POIReadDatabase>({
-		database: new DatabaseSync(options.databasePath, { readOnly: true }),
-	})
+	using kdb = new DatabaseClient<POIReadDatabase>(options.databasePath, { readOnly: true })
 
 	const codes = await kdb
 		.selectFrom("poi_category_codes")

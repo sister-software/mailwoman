@@ -8,14 +8,13 @@
  *   writing, and write atomically under a per-write-unique temp name.
  */
 
-import { chmodSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { APIClient } from "@mailwoman/core/api/APIClient"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { isTransientResourceError } from "@mailwoman/core/api/responses"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { chmodSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import type { CachedStorageValue, NotEmptyStorageValue } from "axios-cache-interceptor"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 

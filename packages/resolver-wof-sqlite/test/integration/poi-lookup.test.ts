@@ -13,12 +13,9 @@
  *   reader's.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { POI_H3_RESOLUTION, POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -30,6 +27,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
@@ -174,14 +172,13 @@ const ALL_ROWS = [
 ]
 
 async function buildFixture(path: string): Promise<void> {
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` — unused here, but the category-codes dictionary
 	// lives alongside it and there's no standalone builder for just that table.
 	await createPOIStagingTables(kdb)
-	createPOISearchFTS(raw)
+	createPOISearchFTS(kdb)
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {
 		await kdb.insertInto("poi_category_codes").values({ id, category }).execute()
@@ -213,14 +210,12 @@ async function buildFixture(path: string): Promise<void> {
 			})
 			.execute()
 
-		raw.prepare(`INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)`).run(row.name, nameKey, h3Cell)
+		kdb.prepare(`INSERT INTO poi_search (name, name_key, h3_cell) VALUES (?, ?, ?)`).run(row.name, nameKey, h3Cell)
 	}
 
 	// Index-after-load: builders create the name_key + brand_wikidata indexes AFTER the bulk materialize.
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
-
-	await kdb.destroy()
 }
 
 let scratch: string
@@ -238,235 +233,158 @@ afterEach(async () => {
 
 describe("POILookup", () => {
 	test("category search returns cafes nearest-first with distanceM ascending", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			const hits = lk.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 10 })
-			expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta", "Cafe Gamma"])
-			expect(hits[0]!.distanceM).toBeLessThan(hits[1]!.distanceM!)
-			expect(hits[1]!.distanceM).toBeLessThan(hits[2]!.distanceM!)
-			// gers_id round-trips: Cafe Alpha was seeded with one, the others with null.
-			expect(hits[0]!.gersID).toBe(CAFE_ALPHA.gersID)
-			expect(hits[1]!.gersID).toBeNull()
+		const hits = lk.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 10 })
+		expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta", "Cafe Gamma"])
+		expect(hits[0]!.distanceM).toBeLessThan(hits[1]!.distanceM!)
+		expect(hits[1]!.distanceM).toBeLessThan(hits[2]!.distanceM!)
+		// gers_id round-trips: Cafe Alpha was seeded with one, the others with null.
+		expect(hits[0]!.gersID).toBe(CAFE_ALPHA.gersID)
+		expect(hits[1]!.gersID).toBeNull()
 
-			// Sanity: the app-level distance matches a plain haversine of the same pair.
-			expect(hits[0]!.distanceM).toBeCloseTo(
-				haversineKm(SPRINGFIELD.latitude, SPRINGFIELD.longitude, CAFE_ALPHA.latitude, CAFE_ALPHA.longitude) * 1000,
-				0
-			)
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		// Sanity: the app-level distance matches a plain haversine of the same pair.
+		expect(hits[0]!.distanceM).toBeCloseTo(
+			haversineKm(SPRINGFIELD.latitude, SPRINGFIELD.longitude, CAFE_ALPHA.latitude, CAFE_ALPHA.longitude) * 1000,
+			0
+		)
 	})
 
 	test("brand search finds the QID rows (category unconstrained), nearest-first", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
-			// Both Q38076 rows surface: the near Springfield one AND the ~280 km Chicago one — the brand path is a
-			// brand-wide fetch, not a k-ring walk, so the Chicago row (far outside the ~4 km ring budget) is reached.
-			expect(hits.map((h) => h.name)).toEqual(["McDonald's", "McDonald's (Loop)"])
-			expect(hits.every((h) => h.brandWikidata === "Q38076")).toBe(true)
-			expect(hits[0]!.categoryID).toBe("fast_food")
-			expect(hits[0]!.distanceM).toBeLessThan(hits[1]!.distanceM!)
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
+		// Both Q38076 rows surface: the near Springfield one AND the ~280 km Chicago one — the brand path is a
+		// brand-wide fetch, not a k-ring walk, so the Chicago row (far outside the ~4 km ring budget) is reached.
+		expect(hits.map((h) => h.name)).toEqual(["McDonald's", "McDonald's (Loop)"])
+		expect(hits.every((h) => h.brandWikidata === "Q38076")).toBe(true)
+		expect(hits[0]!.categoryID).toBe("fast_food")
+		expect(hits[0]!.distanceM).toBeLessThan(hits[1]!.distanceM!)
 	})
 
 	test("brand search reaches instances far beyond any k-ring budget (distance-sorted)", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			// The Chicago McDonald's is ~280 km from Springfield — hundreds of rings out. k-ring could never reach it;
-			// the brand-wide fetch returns it, and its reported distance confirms it's the far instance.
-			const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
-			const chicago = hits.find((h) => h.name === "McDonald's (Loop)")!
-			expect(chicago).toBeDefined()
-			expect(chicago.distanceM! / 1000).toBeGreaterThan(200)
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		const hits = lk.search({ brandWikidata: "Q38076", center: SPRINGFIELD })
+		const chicago = hits.find((h) => h.name === "McDonald's (Loop)")!
+		expect(chicago).toBeDefined()
+		expect(chicago.distanceM! / 1000).toBeGreaterThan(200)
 	})
 
 	test("brand search drops instances past the 500 km sanity radius", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			// Two Costco (Q715583) rows: one near Springfield, one ~2,800 km away in SF. Only the near one is within
-			// the sanity radius — the SF one is dropped, so "Costco near Springfield" is not answered with an SF hit.
-			const hits = lk.search({ brandWikidata: "Q715583", center: SPRINGFIELD })
-			expect(hits.map((h) => h.name)).toEqual(["Costco Springfield"])
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		const hits = lk.search({ brandWikidata: "Q715583", center: SPRINGFIELD })
+		expect(hits.map((h) => h.name)).toEqual(["Costco Springfield"])
 	})
 
 	test("a brand QID with no rows returns [] cleanly", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			expect(lk.search({ brandWikidata: "Q00000000", center: SPRINGFIELD })).toEqual([])
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		expect(lk.search({ brandWikidata: "Q00000000", center: SPRINGFIELD })).toEqual([])
 	})
 
 	test("name FTS finds 'Pier 39' with no center required", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			const hits = lk.search({ name: "Pier 39" })
-			expect(hits.some((h) => h.name === "Pier 39")).toBe(true)
-			const pier = hits.find((h) => h.name === "Pier 39")!
-			expect(pier.categoryID).toBeNull()
-			expect(pier.distanceM).toBeUndefined()
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		const hits = lk.search({ name: "Pier 39" })
+		expect(hits.some((h) => h.name === "Pier 39")).toBe(true)
+		const pier = hits.find((h) => h.name === "Pier 39")!
+		expect(pier.categoryID).toBeNull()
+		expect(pier.distanceM).toBeUndefined()
 	})
 
 	test("name FTS still sorts by distance when a center is given", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			const hits = lk.search({ name: "Cafe", center: SPRINGFIELD })
-			// Every "Cafe"-named row matches (Alpha/Beta/Gamma near, Windy City/Loop Cafe far) — near ones first.
-			expect(hits[0]!.distanceM).toBeLessThanOrEqual(hits.at(-1)!.distanceM!)
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		const hits = lk.search({ name: "Cafe", center: SPRINGFIELD })
+		// Every "Cafe"-named row matches (Alpha/Beta/Gamma near, Windy City/Loop Cafe far) — near ones first.
+		expect(hits[0]!.distanceM).toBeLessThanOrEqual(hits.at(-1)!.distanceM!)
 	})
 
 	test("category/brand search without a center throws", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			expect(() => lk.search({ categoryID: "cafe" })).toThrow(/center/)
-			expect(() => lk.search({ brandWikidata: "Q38076" })).toThrow(/center/)
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		expect(() => lk.search({ categoryID: "cafe" })).toThrow(/center/)
+		expect(() => lk.search({ brandWikidata: "Q38076" })).toThrow(/center/)
 	})
 
 	test("limit is respected", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			const hits = lk.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 2 })
-			expect(hits).toHaveLength(2)
-			expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta"])
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		const hits = lk.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 2 })
+		expect(hits).toHaveLength(2)
+		expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta"])
 	})
 
 	test("a category with no rows within maxRings returns []", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			// The only `museum` rows in the fixture sit ~280 km away in Chicago — far outside the
-			// default ~5.4 km (16-ring) budget from Springfield.
-			expect(lk.search({ categoryID: "museum", center: SPRINGFIELD })).toEqual([])
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		expect(lk.search({ categoryID: "museum", center: SPRINGFIELD })).toEqual([])
 	})
 
 	test("sparse category: the default budget reaches a gridDistance-13 instance the old 12-ring budget missed (nm-04)", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			// The single `trail` row sits exactly 13 rings out — the nm-04 "hiking trail near Marseille" boundary.
-			// The default budget (16 rings, covers gridDistance ≤ 15) reaches it.
-			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD }).map((h) => h.name)).toEqual(["Ridge Trail"])
-			// The OLD 12-ring budget (covers gridDistance ≤ 11) does NOT — this is the exact boundary miss nm-04 exposed.
-			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 12 })).toEqual([])
-			// It first appears at maxRings 14 (disk radius 13) — the bare threshold the default clears with 2 rings of margin.
-			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 13 })).toEqual([])
+		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD }).map((h) => h.name)).toEqual(["Ridge Trail"])
+		// The OLD 12-ring budget (covers gridDistance ≤ 11) does NOT — this is the exact boundary miss nm-04 exposed.
+		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 12 })).toEqual([])
+		// It first appears at maxRings 14 (disk radius 13) — the bare threshold the default clears with 2 rings of margin.
+		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 13 })).toEqual([])
 
-			expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 14 }).map((h) => h.name)).toEqual([
-				"Ridge Trail",
-			])
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		expect(lk.search({ categoryID: "trail", center: SPRINGFIELD, maxRings: 14 }).map((h) => h.name)).toEqual([
+			"Ridge Trail",
+		])
 	})
 
 	test("categoryIDs fan-out unions rows across every resolved leaf, nearest-first", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			// `cafe` + `fast_food` near Springfield = the 3 cafes + McDonald's, unioned and distance-sorted.
-			const hits = lk.search({ categoryIDs: ["cafe", "fast_food"], center: SPRINGFIELD, limit: 10 })
-			expect(new Set(hits.map((h) => h.name))).toEqual(new Set(["Cafe Alpha", "Cafe Beta", "Cafe Gamma", "McDonald's"]))
+		const hits = lk.search({ categoryIDs: ["cafe", "fast_food"], center: SPRINGFIELD, limit: 10 })
+		expect(new Set(hits.map((h) => h.name))).toEqual(new Set(["Cafe Alpha", "Cafe Beta", "Cafe Gamma", "McDonald's"]))
 
-			for (let i = 1; i < hits.length; i++) {
-				expect(hits[i]!.distanceM).toBeGreaterThanOrEqual(hits[i - 1]!.distanceM!)
-			}
-		} finally {
-			lk[Symbol.dispose]()
+		for (let i = 1; i < hits.length; i++) {
+			expect(hits[i]!.distanceM).toBeGreaterThanOrEqual(hits[i - 1]!.distanceM!)
 		}
 	})
 
 	test("categoryIDs skips leaves the dictionary doesn't carry, keeping the resolvable ones", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			const hits = lk.search({ categoryIDs: ["cafe", "zoo"], center: SPRINGFIELD, limit: 10 })
-			expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta", "Cafe Gamma"])
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		const hits = lk.search({ categoryIDs: ["cafe", "zoo"], center: SPRINGFIELD, limit: 10 })
+		expect(hits.map((h) => h.name)).toEqual(["Cafe Alpha", "Cafe Beta", "Cafe Gamma"])
 	})
 
 	test("categoryIDs with no resolvable leaf is a clean miss, not a throw", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			expect(lk.search({ categoryIDs: ["zoo", "aquarium"], center: SPRINGFIELD })).toEqual([])
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		expect(lk.search({ categoryIDs: ["zoo", "aquarium"], center: SPRINGFIELD })).toEqual([])
 	})
 
 	test("an unknown category id is a clean miss, not a throw", () => {
-		const lk = new POILookup({ databasePath: dbPath })
+		using lk = new POILookup({ databasePath: dbPath })
 
-		try {
-			expect(lk.search({ categoryID: "zoo", center: SPRINGFIELD })).toEqual([])
-		} finally {
-			lk[Symbol.dispose]()
-		}
+		expect(lk.search({ categoryID: "zoo", center: SPRINGFIELD })).toEqual([])
 	})
 
 	test("the name_key index exists (FTS-hydration path, not a full table scan)", () => {
-		const raw = new DatabaseSync(dbPath, { readOnly: true })
+		using raw = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
-		try {
-			const found = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?").get("poi_name_key")
-			expect(found).toBeDefined()
-		} finally {
-			raw.close()
-		}
+		const found = raw.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?").get("poi_name_key")
+		expect(found).toBeDefined()
 	})
 
 	test("the brand_wikidata partial index exists (brand-wide fetch, not a full table scan)", () => {
-		const raw = new DatabaseSync(dbPath, { readOnly: true })
+		using raw = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
-		try {
-			const found = raw
-				.prepare("SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?")
-				.get("poi_brand_wikidata") as { sql: string } | undefined
+		const found = raw
+			.prepare("SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?")
+			.get("poi_brand_wikidata") as { sql: string } | undefined
 
-			expect(found).toBeDefined()
-			// PARTIAL: the DDL carries the `WHERE brand_wikidata IS NOT NULL` predicate.
-			expect(found!.sql.toLowerCase()).toContain("where")
-			expect(found!.sql.toLowerCase()).toContain("brand_wikidata")
-		} finally {
-			raw.close()
-		}
+		expect(found).toBeDefined()
+		// PARTIAL: the DDL carries the `WHERE brand_wikidata IS NOT NULL` predicate.
+		expect(found!.sql.toLowerCase()).toContain("where")
+		expect(found!.sql.toLowerCase()).toContain("brand_wikidata")
 	})
 
 	test("Disposable: Symbol.dispose closes the lookup", () => {

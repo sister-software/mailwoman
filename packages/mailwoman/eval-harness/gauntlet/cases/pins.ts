@@ -14,10 +14,9 @@
  *   three constant lines so the pin test's dated history comments survive byte-identically.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import { ablationBoardID } from "../ablation.ts"
 import { loadRegressionCases, regressionCorpusHash } from "./load.ts"

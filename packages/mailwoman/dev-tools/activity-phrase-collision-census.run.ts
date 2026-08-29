@@ -17,12 +17,12 @@
  * instead is what makes it fast and what makes it wrong — see `CensusPOIReader`.
  */
 
-import { writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import {
 	type CensusVenue,
@@ -34,8 +34,8 @@ import { createPOINameLookup } from "../poi-intent.ts"
 const { values } = parseArgs({ options: { db: { type: "string" }, out: { type: "string" } } })
 
 const databasePath = values.db ?? String(dataRootPath("poi", "poi.db"))
-const database = new DatabaseSync(databasePath, { readOnly: true })
-const lookup = new POILookup({ database })
+using database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })
+using lookup = new POILookup({ database })
 const shippedRung = createPOINameLookup(lookup)
 
 // A complete key scan rather than a ranked read — see `CensusPOIReader` for the measurement that made the ranked one
@@ -59,20 +59,15 @@ function candidates(probes: ReadonlyArray<string>): CensusVenue[] {
 	}))
 }
 
-try {
-	const census = runPhraseCollisionCensus({
-		databasePath,
-		reader: { candidates, claimedByShippedRung: (probe) => shippedRung(probe).length > 0 },
-	})
+const census = runPhraseCollisionCensus({
+	databasePath,
+	reader: { candidates, claimedByShippedRung: (probe) => shippedRung(probe).length > 0 },
+})
 
-	printPhraseCollisionCensus(census)
+printPhraseCollisionCensus(census)
 
-	if (values.out) {
-		writeFileSync(values.out, `${JSON.stringify(census, null, "\t")}\n`)
+if (values.out) {
+	writeFileSync(values.out, `${JSON.stringify(census, null, "\t")}\n`)
 
-		console.log(`\nwrote ${values.out}`)
-	}
-} finally {
-	lookup[Symbol.dispose]()
-	database.close()
+	console.log(`\nwrote ${values.out}`)
 }

@@ -19,12 +19,11 @@
  *   the pinned cldr-core release from jsdelivr.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 /**
  * The committed output path, resolved relative to this module (codex/tools/ → codex/country/). The codegen is

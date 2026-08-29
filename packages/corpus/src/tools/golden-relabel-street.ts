@@ -56,12 +56,11 @@
  *   fails.
  */
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, join } from "node:path"
-
 import { isStreetDirectionalToken, matchTrailingSuffix, type USStreetSuffix } from "@mailwoman/codex/us"
 import { isPresent, parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256File } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 import { NAME_PRONE_US_SUFFIXES } from "../name-prone-us-suffixes.ts"

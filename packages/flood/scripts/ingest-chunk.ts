@@ -15,9 +15,10 @@
  *   parse the last stdout line without a framing convention.
  */
 
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
+import { parseArgs } from "@mailwoman/platform/util"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { FloodDatabase } from "../schema.ts"
 import { ingestFloodChunk } from "../sdk/ingest-chunk.ts"
 import { createGeodatabaseFeatureSource } from "../sdk/ingest.ts"
 
@@ -40,7 +41,7 @@ function required(name: string, value: string | undefined): string {
 	return value
 }
 
-const database = new DatabaseSync(required("database", values.database))
+const database = new DatabaseClient<FloodDatabase>(required("database", values.database))
 
 try {
 	database.exec("PRAGMA journal_mode = OFF")
@@ -61,5 +62,5 @@ try {
 
 	console.log(JSON.stringify(result))
 } finally {
-	database.close()
+	await database.destroy()
 }

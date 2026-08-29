@@ -9,10 +9,9 @@
  * seam the CLI builds. Each dispatched record is geocoded by `makeGeocodeHandler`.
  */
 
-import { workerData } from "node:worker_threads"
-
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { workerData } from "@mailwoman/platform/worker_threads"
 import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/registry"
 import { createWOFResolver } from "@mailwoman/resolver"
 

@@ -2,10 +2,9 @@
  * Guard command-owned flags against root-owned --help/--version and -h/-v.
  */
 
-import { readFile, readdir } from "node:fs/promises"
-import { join, relative, sep } from "node:path"
-
 import { workspacePath } from "@mailwoman/core/utils"
+import { readFile, readdir } from "@mailwoman/platform/fs/promises"
+import { join, relative, sep } from "@mailwoman/platform/path"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 

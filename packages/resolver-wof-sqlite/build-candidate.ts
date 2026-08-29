@@ -39,11 +39,9 @@
  *   `candidate-ancestors-schema.ts` owns the encoding decision and the DAG/absence semantics.
  */
 
-import { existsSync, rmSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { existsSync, rmSync } from "@mailwoman/platform/fs"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { createCandidateFTS } from "./candidate-fts.ts"
 import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "./candidate-importance.ts"
@@ -62,6 +60,7 @@ import { foldShard } from "./candidate/shard-fold.ts"
 import { createCapitalTable } from "./capital-schema.ts"
 import type { CapitalPoint } from "./capitals.ts"
 import { resurrectCurrencyHoles } from "./currency-backfill.ts"
+import type { WOFDatabase } from "./schema.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 // The build's contract is this module path; the passes behind it live in `./candidate/`. Re-exported
@@ -206,12 +205,12 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		rmSync(opts.output)
 	}
 
-	const src = new DatabaseSync(opts.input, { readOnly: true })
-	const out = new DatabaseSync(opts.output)
+	const src = new DatabaseClient<WOFDatabase>(opts.input, { readOnly: true })
+	await using kdb = new DatabaseClient<CandidateDatabase>(opts.output)
 	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA). The code dictionaries + the transient
 	// staging table come from the SHARED schema DDL, so they can't drift from {@link CandidateDatabase}.
-	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<CandidateDatabase>({ database: out })
+	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
+
 	await createCandidateStagingTables(kdb)
 
 	// --- compact code maps (country/placetype → small int, shrinks the clustered key). The ids are
@@ -296,13 +295,13 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// The hot path — millions of clustered rows. Kept a single positional prepared statement (the fastest
 	// node:sqlite insert) rather than a per-row query builder. Placeholders come from CANDIDATE_COLUMNS so
 	// the column COUNT can't drift; the positional run() args below MUST stay in CANDIDATE_COLUMNS order.
-	const insStage = out.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
+	const insStage = kdb.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
 
 	// --- pass 1: primaries (and the per-place attrs the alias/abbrev passes reuse) ---
 	progress("primaries", "indexing place names")
 	const attrs = new Map<number, PlaceAttrs>()
 	let nPrim = 0
-	out.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for (const r of src
 		.prepare(
@@ -374,7 +373,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		}
 	}
 
-	out.exec("COMMIT")
+	kdb.exec("COMMIT")
 	progress("primaries", `${nPrim.toLocaleString()} primaries; ${attrs.size.toLocaleString()} places`)
 
 	if (importance) {
@@ -417,7 +416,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 			iso2ByID: new Map([...ccodes].map(([code, id]) => [id, code])),
 			countryPtID: ptID("country"),
 			stageRow,
-			tx: out,
+			tx: kdb,
 		}).toLocaleString()} country surfaces`
 	)
 
@@ -426,7 +425,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	if (opts.currencyBackfill) {
 		const nBackfill = await resurrectCurrencyHoles({
 			src,
-			tx: out,
+			tx: kdb,
 			geonamesDir: opts.currencyBackfill.geonamesDir,
 			countries: opts.currencyBackfill.countries,
 			attrs,
@@ -447,12 +446,12 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	// --- pass 2: distinct normalized aliases from place_search.alt_names (explodeAliasBags owns the loop) ---
 	progress("aliases", "exploding alias bags")
-	const { nAlias, keyCounts } = explodeAliasBags(src, out, attrs, stageRow)
+	const { nAlias, keyCounts } = explodeAliasBags(src, kdb, attrs, stageRow)
 	progress("aliases", `${nAlias.toLocaleString()} aliases`)
 
 	// --- pass 3: region abbreviations (place_abbr) ---
 	let nAbbr = 0
-	out.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for (const r of src.prepare("SELECT id, abbr FROM place_abbr").iterate()) {
 		const a = attrs.get(Number(r.id))
@@ -466,7 +465,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		nAbbr++
 	}
 
-	out.exec("COMMIT")
+	kdb.exec("COMMIT")
 	progress("abbrevs", `${nAbbr.toLocaleString()} abbrevs`)
 
 	// --- pass 3b: name roles (#1730 prototype — stampNameRoles owns the detectors) ---
@@ -474,7 +473,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	// interval tables, and neither reads the other's output. Ordered by label only.
 	const roles = stampNameRoles({
 		src,
-		out,
+		out: kdb,
 		attrs,
 		keyCounts,
 		glossThreshold: opts.glossKeyThreshold ?? GLOSS_KEY_THRESHOLD,
@@ -484,7 +483,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	})
 
 	// --- pass 3c: the ancestors sidecar (candidate-ancestors-schema.ts owns the encoding decision) ---
-	const sidecar = await buildAncestorsSidecar({ src, out, kdb, attrs, ptID, progress })
+	const sidecar = await buildAncestorsSidecar({ src, out: kdb, attrs, ptID, progress })
 
 	// --- pass 4 + 4b: postcode and locality shards (foldShard owns the per-shard loop) ---
 	let nPostcode = 0
@@ -492,7 +491,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	for (const pcDB of opts.postcodes ?? []) {
 		const folded = foldShard({
-			out,
+			out: kdb,
 			shardPath: pcDB,
 			shardPlacetype: "postalcode",
 			ccID,
@@ -513,7 +512,7 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 
 	for (const locDB of opts.localities ?? []) {
 		const folded = foldShard({
-			out,
+			out: kdb,
 			shardPath: locDB,
 			shardPlacetype: "locality",
 			ccID,
@@ -574,25 +573,24 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 	await createCandidateTable(kdb)
 	// OR IGNORE: an abbrev/alias can normalize to a place's primary key (same place, same rank) → any one
 	// row. The bulk sorted INSERT…SELECT (clustered materialization) stays raw — a single hot bulk statement.
-	out.exec(`INSERT OR IGNORE INTO candidate (${cols}) SELECT ${cols} FROM cand_stage ORDER BY ${keyOrder};`)
+	kdb.exec(`INSERT OR IGNORE INTO candidate (${cols}) SELECT ${cols} FROM cand_stage ORDER BY ${keyOrder};`)
 	await kdb.schema.dropTable("cand_stage").execute()
 	// Typo-tolerant fallback index (the unified gazetteer's second mode): the exact name_key probe can't
 	// recover misspellings, so FTS5-trigram over `name` lets the reader fuzzy-match on an exact+strip miss.
 	progress("fts", "building FTS5-trigram fuzzy index")
-	createCandidateFTS(out)
+	createCandidateFTS(kdb)
 	// page_size MUST be set right before VACUUM: node:sqlite initializes the file at the 4096 default on
 	// `new DatabaseSync`, so the creation-time pragma is a no-op — only a VACUUM rebuilds at the new size.
 	// 8192 matches the sql.js-httpvfs 64 KiB request chunk cleanly (8 pages) and shallows the B-tree.
-	out.exec("PRAGMA page_size=8192")
-	out.exec("VACUUM")
+	kdb.exec("PRAGMA page_size=8192")
+	kdb.exec("VACUUM")
 
 	const { n: rows } = await kdb
 		.selectFrom("candidate")
 		.select((eb) => eb.fn.countAll<number>().as("n"))
 		.executeTakeFirstOrThrow()
 
-	src.close()
-	await kdb.destroy()
+	await src.destroy()
 
 	// closes the underlying `out` connection
 	return {

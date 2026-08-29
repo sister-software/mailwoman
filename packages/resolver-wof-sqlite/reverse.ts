@@ -28,13 +28,13 @@
  *   says so per result rather than pretending.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { ancestorLineage, placetypeDepth } from "./ancestry.ts"
 import { PLACE_BBOX_TABLE } from "./fts.ts"
+import type { WOFDatabase } from "./schema.ts"
 import { allRows } from "./sqlite-utils.ts"
 import type { PlaceCandidate, WOFPlacetype } from "./types.ts"
 
@@ -80,7 +80,7 @@ export interface WOFReverseGeocoderOpts {
 	/**
 	 * Pre-opened admin DB — primarily for tests against an inline fixture.
 	 */
-	adminDatabase?: DatabaseSync
+	adminDatabase?: DatabaseClient<WOFDatabase>
 	/**
 	 * Path to the polygon sidecar DB (`wof-polygons.db`, table `polygons(id, geom)`). OPTIONAL — without it every result
 	 * is `containment: "approximate"` (centroid-only mode). Mutually exclusive with `polygonDatabase`.
@@ -89,7 +89,7 @@ export interface WOFReverseGeocoderOpts {
 	/**
 	 * Pre-opened polygon DB — primarily for tests.
 	 */
-	polygonDatabase?: DatabaseSync
+	polygonDatabase?: DatabaseClient<WOFDatabase>
 }
 
 export interface ReverseGeocodeOpts {
@@ -160,9 +160,9 @@ function toPlaceCandidate(row: CandidateRow, distanceKm?: number): PlaceCandidat
 }
 
 export class WOFReverseGeocoder implements Disposable {
-	readonly #admin: DatabaseSync
+	readonly #admin: DatabaseClient<WOFDatabase>
 	readonly #ownsAdmin: boolean
-	readonly #polygons: DatabaseSync | null
+	readonly #polygons: DatabaseClient<WOFDatabase> | null
 	readonly #ownsPolygons: boolean
 	/**
 	 * Parsed-geometry cache. Reverse queries cluster geographically (an eval run hits the same ~15 county polygons 1400
@@ -186,11 +186,12 @@ export class WOFReverseGeocoder implements Disposable {
 			throw new Error("WOFReverseGeocoder: pass either `polygonDatabase` or `polygonDBPath`, not both")
 		}
 
-		this.#admin = opts.adminDatabase ?? new DatabaseSync(opts.adminDBPath!, { readOnly: true })
+		this.#admin = opts.adminDatabase ?? new DatabaseClient<WOFDatabase>(opts.adminDBPath!, { readOnly: true })
 		this.#ownsAdmin = !opts.adminDatabase
 
 		this.#polygons =
-			opts.polygonDatabase ?? (opts.polygonDBPath ? new DatabaseSync(opts.polygonDBPath, { readOnly: true }) : null)
+			opts.polygonDatabase ??
+			(opts.polygonDBPath ? new DatabaseClient<WOFDatabase>(opts.polygonDBPath, { readOnly: true }) : null)
 
 		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDBPath)
 
@@ -458,11 +459,11 @@ export class WOFReverseGeocoder implements Disposable {
 
 	close(): void {
 		if (this.#ownsAdmin) {
-			this.#admin.close()
+			this.#admin.destroy()
 		}
 
 		if (this.#ownsPolygons) {
-			this.#polygons?.close()
+			this.#polygons?.destroy()
 		}
 	}
 

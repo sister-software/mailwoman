@@ -28,12 +28,10 @@
  *   list to resolve FRNs FOR.
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
-import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/core/kysley/client"
 import type { FilerDatabase } from "@mailwoman/filer"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { existsSync } from "@mailwoman/platform/fs"
+import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -86,7 +84,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 			retrieveFilingDates,
 		} = await import("@mailwoman/bdc/sdk")
 
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { parseProviderList } = await import("@mailwoman/filer/sdk")
 
@@ -168,7 +166,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		if (filerDBPath) {
 			console.error(`▸ provider list: ${options.providerListPath} (filer.db: ${filerDBPath})`)
 
-			filerDB = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(filerDBPath, { readOnly: true }) })
+			filerDB = new DatabaseClient<FilerDatabase>(filerDBPath, { readOnly: true })
 		}
 
 		try {

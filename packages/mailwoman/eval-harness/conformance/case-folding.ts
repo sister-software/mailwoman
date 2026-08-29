@@ -27,8 +27,8 @@
  *   something else under its own name.
  */
 
-import { existsSync } from "node:fs"
-import { fileURLToPath } from "node:url"
+import { existsSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture } from "./fixture.ts"
 

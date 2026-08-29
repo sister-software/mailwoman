@@ -1,7 +1,6 @@
-import { execSync } from "node:child_process"
-
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
+import { execSync } from "@mailwoman/platform/child_process"
 import { themes as prismThemes } from "prism-react-renderer"
 
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"

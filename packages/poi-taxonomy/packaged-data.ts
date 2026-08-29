@@ -7,8 +7,8 @@
  *   takes its table from the caller and never reaches the filesystem.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 const moduleDir = import.meta.dirname
 

@@ -11,11 +11,10 @@
  *   build project, so it is never emitted into `out/` and never reaches the published tarball.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 
 import type { ShardRecipeOpts } from "../src/shard-recipes/scaffold.ts"
 

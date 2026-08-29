@@ -22,10 +22,11 @@
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
 
-import { rmSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
-import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
+import { rmSync } from "@mailwoman/platform/fs"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { CSVSpliterator } from "spliterator"
 
 /**
@@ -61,7 +62,7 @@ export async function buildNLPC6Shard(
 	const tmpPath = `${outPath}.tmp`
 
 	rmSync(tmpPath, { force: true })
-	const db = new DatabaseSync(tmpPath)
+	const db = new DatabaseClient<WOFDatabase>(tmpPath)
 	db.exec("PRAGMA journal_mode = OFF")
 	db.exec("PRAGMA synchronous = OFF")
 	await createUnifiedSchema(db)
@@ -123,7 +124,7 @@ export async function buildNLPC6Shard(
 	process.stderr.write(`spr rows: ${inserted} (skipped ${skipped}) — building place_search + place_bbox…\n`)
 	buildPlaceSearchFTS(db, { drop: true })
 	db.exec("ANALYZE")
-	db.close()
+	await db.destroy()
 
 	// Build-on-copy: the previous version moves aside; the new artifact swaps in atomically.
 	swapDatabaseIntoPlace(tmpPath, outPath)

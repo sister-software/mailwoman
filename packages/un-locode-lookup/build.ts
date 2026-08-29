@@ -8,12 +8,12 @@
  *   IATA, Coordinates, Remarks). One row per assigned location; coordinates parsed where present.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { readFileSync } from "@mailwoman/platform/fs"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CSVSpliterator } from "spliterator"
 
 import { foldName, parseUnLocodeCoords } from "./index.ts"
+import type { UNLocodeDatabase } from "./schema.ts"
 
 interface CSVRow {
 	Country: string
@@ -36,7 +36,7 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 		enableQuoteHandling: true,
 	}) as Iterable<CSVRow>
 
-	const db = new DatabaseSync(dbPath)
+	using db = new DatabaseClient<UNLocodeDatabase>(dbPath)
 	db.exec("DROP TABLE IF EXISTS un_locode")
 
 	db.exec(
@@ -66,7 +66,6 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 	db.exec("COMMIT")
 	db.exec("CREATE INDEX idx_locode_name ON un_locode (country, nameNorm)")
 	db.exec("CREATE INDEX idx_locode_bbox ON un_locode (lat, lon)")
-	db.close()
 
 	return { rows, withCoords }
 }

@@ -15,11 +15,10 @@
  *   scopes missed). Multiple hits return the first by rowid — unit siblings share the building coord.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/resolver"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { AddressPointTable } from "./address-point-schema.ts"
+import type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.ts"
 import { hasTable, prepareGet, type PreparedGet } from "./sqlite-utils.ts"
 import {
 	normalizeLocalityForKey,
@@ -43,8 +42,10 @@ type AddressPointRow = Pick<AddressPointTable, "lat" | "lon" | "source" | "relea
  */
 const SELECT_COLS = "lat, lon, source, release, locality_norm, postcode"
 
-export class AddressPointSqliteLookup implements AddressPointLookup {
-	readonly #db: DatabaseSync
+export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressPointDatabase>
+	implements AddressPointLookup, Disposable
+{
+	readonly #db: DatabaseClient<DB>
 	readonly #locale: StreetLocale
 	readonly #byPostcode: PreparedGet<[postcode: string, street: StreetKey, number: string], AddressPointRow> | undefined
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey, number: string], AddressPointRow> | undefined
@@ -61,7 +62,7 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 	 *   misses. Defaults to `"us"` (the situs tier), so existing callers are unchanged.
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
-		this.#db = new DatabaseSync(dbPath, { readOnly: true })
+		this.#db = new DatabaseClient<DB>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "us"
 
 		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
@@ -213,6 +214,10 @@ export class AddressPointSqliteLookup implements AddressPointLookup {
 	}
 
 	close(): void {
-		this.#db.close()
+		this.#db[Symbol.dispose]()
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }

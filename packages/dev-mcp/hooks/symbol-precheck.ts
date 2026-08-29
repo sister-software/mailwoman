@@ -19,10 +19,9 @@
  *   Register it in `.claude/settings.json` under `hooks.PreToolUse` with a `Write|Edit` matcher.
  */
 
-import { readFileSync } from "node:fs"
-import { relative } from "node:path"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { relative } from "@mailwoman/platform/path"
 
 import {
 	extractDeclaredSymbols,

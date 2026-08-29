@@ -8,9 +8,8 @@
  *   `docs/articles/evals/` comes from a run of this emitter.
  */
 
-import { writeFileSync } from "node:fs"
-
 import { percentile } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import type { Agg, AggPair, OAResolverEvalOptions } from "./oa-resolver-eval.ts"
 

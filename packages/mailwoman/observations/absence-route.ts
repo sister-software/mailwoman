@@ -57,9 +57,6 @@
  *   so a caller who never builds a route never loads it.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	type CoverageCell,
@@ -78,6 +75,7 @@ import type {
 } from "@mailwoman/geographic-model"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { recoverShortCellResolution, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
 import { resolvePOISearchCenter } from "../poi-executor.ts"
@@ -394,8 +392,7 @@ export async function createAbsenceObservationRoute(
 		)
 	}
 
-	const database = new DatabaseSync(options.coverageDatabasePath, { readOnly: true })
-	const db = new DatabaseClient<POIDatabase>({ database })
+	const db = new DatabaseClient<POIDatabase>(options.coverageDatabasePath, { readOnly: true })
 
 	try {
 		const coverageLayer = await readLayerManifest(db)
@@ -435,7 +432,7 @@ export async function createAbsenceObservationRoute(
 			close: () => db.destroy(),
 		}
 	} catch (error) {
-		db.destroy()
+		await db.destroy()
 
 		throw error
 	}

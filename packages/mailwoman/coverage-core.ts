@@ -31,9 +31,8 @@
  *   native dependency on end users who only ever run parse/geocode.
  */
 
-import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs"
-import * as path from "node:path"
-
+import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
 import { $ } from "zx"
 
 /**
@@ -513,7 +512,7 @@ export async function buildCoverageTiles(
 		throw new Error(`tippecanoe exited ${tip.exitCode}: ${tip.stderr.slice(-400)}`)
 	}
 
-	const { statSync } = await import("node:fs")
+	const { statSync } = await import("@mailwoman/platform/fs")
 	const pmtilesBytes = statSync(opts.out).size
 
 	if (!opts.keepNdjson) {

@@ -8,14 +8,16 @@
  *   no-op MISS, not throw `no such table` at construction and take down a whole state's geocode.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address-point"
 import { AddressPointInterpolator } from "@mailwoman/resolver-wof-sqlite/address-point-interpolation"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, it } from "vitest"
 
 const query = { street: "Main St", number: "100", postcode: "03301" }
@@ -25,9 +27,8 @@ function tablelessDBFile(): string {
 	const dir = mkdtempSync(join(tmpdir(), "mw-empty-shard-"))
 	dirs.push(dir)
 	const path = join(dir, "empty.db")
-	const seed = new DatabaseSync(path)
-	seed.exec("CREATE TABLE unrelated (x)") // a valid db file, but no address_point / street_segment table
-	seed.close()
+	using seed = new DatabaseClient<AddressPointDatabase>(path)
+	seed.exec("CREATE TABLE unrelated (x)")
 
 	return path
 }
@@ -47,15 +48,19 @@ describe("empty/tableless shard degrades gracefully (#568)", () => {
 	})
 
 	it("StreetInterpolator: missing street_segment table → constructs, find() returns null", () => {
-		const db = new DatabaseSync(":memory:")
+		const db = new DatabaseClient<AddressPointDatabase>(":memory:")
 		db.exec("CREATE TABLE unrelated (x)")
 		let interp: StreetInterpolator | undefined
-		expect(() => (interp = new StreetInterpolator({ database: db }))).not.toThrow()
+
+		expect(
+			() => (interp = new StreetInterpolator({ database: new DatabaseClient<StreetSegmentDatabase>(":memory:") }))
+		).not.toThrow()
+
 		expect(interp!.find(query)).toBeNull()
 	})
 
 	it("AddressPointInterpolator: missing address_point table → defers to fallback (null with none)", () => {
-		const db = new DatabaseSync(":memory:")
+		const db = new DatabaseClient<AddressPointDatabase>(":memory:")
 		db.exec("CREATE TABLE unrelated (x)")
 		let interp: AddressPointInterpolator | undefined
 		expect(() => (interp = new AddressPointInterpolator({ database: db }))).not.toThrow()

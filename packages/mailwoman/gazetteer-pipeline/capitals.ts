@@ -19,10 +19,9 @@
  *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
-
 import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, join } from "@mailwoman/platform/path"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
 /**

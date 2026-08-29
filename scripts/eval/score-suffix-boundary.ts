@@ -5,13 +5,12 @@
  * Usage: node scripts/eval/score-suffix-boundary.ts --weights-cache <cache-root> [--json out.json]
  */
 
-import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { classifySuffixBoundaryStreet } from "@mailwoman/corpus/shard-recipes/street-affix"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 

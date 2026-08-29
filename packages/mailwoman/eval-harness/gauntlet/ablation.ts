@@ -57,14 +57,12 @@
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, percentile, sha256Hex } from "@mailwoman/core/utils"
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import {
 	ABLATION_ABSENT,
@@ -452,7 +450,7 @@ interface CaseRow {
  * every pin until someone rebuilt a database this layer has no business rebuilding. The seed is the authoring surface
  * either way (`cases/<cc>/*.jsonl`), so the two agree by construction once the rebuild happens.
  */
-export async function ablationOverrides(db: DatabaseSync): Promise<{
+export async function ablationOverrides(db: DatabaseClient<GauntletDatabase>): Promise<{
 	byCaseID: Map<string, Record<string, string>>
 	source: "column" | "seed"
 }> {
@@ -514,8 +512,7 @@ function timestampDir(now: Date): string {
 export async function runAblationLayer(
 	options: AblationLayerOptions = {}
 ): Promise<{ pass: boolean; outDir: string; cells: AblationCell[] }> {
-	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	const kdb = new DatabaseClient<GauntletDatabase>({ database: raw })
+	const kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	// Same refusal as the regression layer: this artifact's board id claims to identify a corpus, so a stale DB
 	// would publish an ablation board under a fingerprint the corpus no longer has (corpus-stamp.ts).
 	await assertCorpusStampFresh(kdb)
@@ -537,7 +534,7 @@ export async function runAblationLayer(
 		.execute()) as CaseRow[]
 
 	// Read the pins off the SAME handle before it closes — see `ablationOverrides` for why the column may not be there.
-	const overrides = await ablationOverrides(raw)
+	const overrides = await ablationOverrides(kdb)
 
 	await kdb.destroy()
 

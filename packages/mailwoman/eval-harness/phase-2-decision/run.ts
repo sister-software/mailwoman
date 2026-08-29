@@ -25,13 +25,12 @@
  *   Nothing here writes a verdict onto the issue.
  */
 
-import { readFileSync } from "node:fs"
-import { basename } from "node:path"
-
 import { readActivityLexicon } from "@mailwoman/activity-lexicon/lexicon"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { basename } from "@mailwoman/platform/path"
 
 import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"
 import { createSemanticObservationRoute, semanticObservationMarkers } from "../../observations/index.ts"

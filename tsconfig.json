@@ -19,9 +19,11 @@
 	},
 	"include": [],
 	"references": [
+		{ "path": "./packages/platform" },
 		{ "path": "./packages/core" },
 		{ "path": "./packages/resolver" },
 		{ "path": "./packages/spatial" },
+		{ "path": "./packages/sqlite" },
 		{ "path": "./packages/tiger" },
 		{ "path": "./packages/osm" },
 		{ "path": "./packages/ban" },
@@ -113,12 +115,16 @@
 		{ "path": "./packages/resolver-wof-sqlite/tsconfig.test.json" },
 		{ "path": "./packages/resolver-wof-wasm/tsconfig.test.json" },
 		{ "path": "./packages/resolver/tsconfig.test.json" },
+		{ "path": "./docs" },
+		{ "path": "./scripts" },
 		{ "path": "./scripts/tsconfig.test.json" },
 		{ "path": "./packages/soil/tsconfig.test.json" },
 		{ "path": "./packages/spatial/tsconfig.test.json" },
+		{ "path": "./packages/sqlite/tsconfig.test.json" },
 		{ "path": "./packages/timezone-lookup/tsconfig.test.json" },
 		{ "path": "./packages/un-locode-lookup/tsconfig.test.json" },
 		{ "path": "./packages/variant-aliases/tsconfig.test.json" },
-		{ "path": "./packages/zoning/tsconfig.test.json" }
+		{ "path": "./packages/zoning/tsconfig.test.json" },
+		{ "path": "./packages/platform/tsconfig.test.json" }
 	]
 }

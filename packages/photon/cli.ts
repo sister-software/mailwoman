@@ -14,11 +14,10 @@
  *   autocomplete tier is the eventual front for `/api`; geocode resolution is the MVP path.
  */
 
-import { parseArgs } from "node:util"
-
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
 import { pyTitle } from "@mailwoman/core"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	corsBannerLine,

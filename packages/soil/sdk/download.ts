@@ -30,12 +30,11 @@
  *   bytes, 97 files, no `.mdb`).
  */
 
-import { execFile } from "node:child_process"
-import { mkdir } from "node:fs/promises"
-import { join } from "node:path"
-import { promisify } from "node:util"
-
 import { pathExists, streamToDisk } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 
 const execFileAsync = promisify(execFile)
 

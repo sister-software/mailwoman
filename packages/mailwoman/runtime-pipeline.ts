@@ -14,8 +14,6 @@
  *   See `docs/engineering/reference/STAGES.md` for the full contract.
  */
 
-import { readFileSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
 import {
 	runPipeline,
@@ -35,6 +33,7 @@ import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"

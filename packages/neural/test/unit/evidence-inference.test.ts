@@ -15,12 +15,11 @@
  *   longest-first multi-token matches, the lowercase register (operator doctrine), negatives.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { buildGazetteerFeatures, parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
 import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 interface FixtureCase {

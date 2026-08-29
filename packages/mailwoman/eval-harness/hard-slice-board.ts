@@ -49,9 +49,8 @@
  *   graded through `createRuntimePipeline`, the only path an FST prior actually reaches (see the runner).
  */
 
-import { existsSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
+import { existsSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { JSONSpliterator } from "spliterator"
 import zod from "zod"
 

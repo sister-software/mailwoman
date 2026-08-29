@@ -7,12 +7,12 @@
  *   The output requires an HTTP origin because the tile server does not serve `file:` origins.
  */
 
-import { writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { type MapFeatureData, toMapHTML } from "#index"
 
@@ -81,7 +81,7 @@ export function sourceProvenanceMap(
 	const OA_MOD = options.oaMod ?? 120 // keep ~1/120 of OpenAddresses points
 	const CAP = options.cap ?? 7000 // per-source marker cap
 
-	const db = new DatabaseSync(DB, { readOnly: true })
+	const db = new DatabaseClient<AddressPointDatabase>(DB, { readOnly: true })
 
 	// Two stratified samples so the smaller source (OpenAddresses, ~1/6 of NY) stays visible next to NAD.
 	// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction; LIMIT caps the marker count.
@@ -99,7 +99,7 @@ export function sourceProvenanceMap(
 		...sample("source LIKE 'overture:OpenAddresses%'", OA_MOD),
 	]
 
-	db.close()
+	db.destroy()
 
 	const counts = new Map<string, number>()
 

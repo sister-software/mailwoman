@@ -11,10 +11,6 @@
  *   against it would read the shortfall as the world rather than as the file.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { resolve } from "node:path"
-
 import type { ActivityPhraseEntry, ActivityPhraseLexicon } from "@mailwoman/activity-lexicon"
 import {
 	auditActivityLexicon,
@@ -22,6 +18,9 @@ import {
 	readActivityLexicon,
 	resolveActivityPhraseLocale,
 } from "@mailwoman/activity-lexicon/lexicon"
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const committed = readActivityLexicon()

@@ -32,13 +32,13 @@
  *   Usage: node packages/mailwoman/dev-tools/probe-referential-delta.run.ts [--board <path>]
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
 
@@ -55,7 +55,7 @@ console.log(`### 1. Live gazetteer census (\`${adminPath}\`)\n`)
 if (!existsSync(adminPath)) {
 	console.log(`- admin DB absent — census skipped\n`)
 } else {
-	const db = new DatabaseSync(adminPath, { open: true })
+	using db = new DatabaseClient<WOFDatabase>(adminPath, { open: true })
 
 	// `!` because the OUTER count(*) carries no GROUP BY, so SQLite always returns exactly one row.
 	const saturated = getRow<{ c: number }>(
@@ -94,8 +94,6 @@ if (!existsSync(adminPath)) {
 	}
 
 	console.log("")
-
-	db.close()
 }
 
 //#endregion
@@ -122,7 +120,7 @@ if (!wofPaths.length) {
 	console.log(`- no WOF shards found — replay skipped\n`)
 } else {
 	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
+	using lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
 	const board = await loadHardSliceBoard(values.board)
 
 	// Board inputs AND their probe surfaces: the input is what a user types, the surface is the token
@@ -163,8 +161,6 @@ if (!wofPaths.length) {
 	console.log(`- queries compared (≥2 candidates): **${compared}** of ${queries.length}`)
 	console.log(`- candidates at or above saturation across all result sets: **${saturatedCandidates}**`)
 	console.log(`- result sets whose ORDER differs pre-split vs post-split: **${differing}**\n`)
-
-	lookup.close()
 }
 
 //#endregion

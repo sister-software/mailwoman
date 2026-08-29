@@ -22,11 +22,10 @@
  *   node's dependent-locality share and lift rather than trusting the write.
  */
 
-import { existsSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
+import { existsSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"

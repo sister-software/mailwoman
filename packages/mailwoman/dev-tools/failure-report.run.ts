@@ -20,12 +20,11 @@
  *   Writes the MDX (default docs/articles/evals/competitive-parity/failure-report.mdx) + scratchpad/failure-report.json.
  */
 
-import { readdirSync, writeFileSync } from "node:fs"
-import { basename, resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { readdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "../eval-harness/parity-corpus.ts"

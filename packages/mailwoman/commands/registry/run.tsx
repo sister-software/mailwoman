@@ -19,12 +19,11 @@
  *   operator-verifiable (not CI).
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-
 import { Spinner } from "@inkjs/ui"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"

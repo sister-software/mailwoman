@@ -17,10 +17,9 @@
  *   — `mailwoman/test-kit/index.ts` imports it on the same grounds.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach } from "vitest"
 

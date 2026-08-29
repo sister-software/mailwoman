@@ -40,12 +40,13 @@
  *   Baked into `meta` verbatim, alongside the source md5 and OS's own `Doc/licence.txt`.
  */
 
-import { existsSync, unlinkSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-import { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, unlinkSync } from "@mailwoman/platform/fs"
+import { readFile } from "@mailwoman/platform/fs/promises"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
 import { buildFTS } from "../fts.ts"
@@ -62,6 +63,7 @@ import {
 	extractCodePointOpen,
 	readCodePointCSV,
 } from "./codepoint/index.ts"
+import type { ShardMetaDatabase } from "./geonames-tail.ts"
 import { createShardMetaTable } from "./geonames-tail.ts"
 
 /**
@@ -221,7 +223,7 @@ export async function buildPostcodeCodePoint(
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseSync(ingestPath)
+	const db = new DatabaseClient<WOFDatabase>(ingestPath)
 
 	db.exec(`
 		PRAGMA page_size = 8192;
@@ -308,7 +310,7 @@ export async function buildPostcodeCodePoint(
 	}
 
 	db.prepare("VACUUM INTO ?").run(out)
-	db.close()
+	await db.destroy()
 
 	for (const sidecar of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
 		if (existsSync(sidecar)) {
@@ -317,9 +319,9 @@ export async function buildPostcodeCodePoint(
 	}
 
 	phase("fts")
-	const outDB = new DatabaseSync(out)
+	const outDB = new DatabaseClient<WOFDatabase>(out)
 	const fts = await buildFTS(outDB, { onProgress: phase })
-	outDB.close()
+	await outDB.destroy()
 
 	phase("seal")
 	sealDatabase(out)
@@ -404,7 +406,7 @@ interface ShardMetaInput {
  * The attribution year comes from OS's own `COPYRIGHT DATE`, not from the build clock: republishing a 2026 cut in 2027
  * still attributes the 2026 data. Both dates are stored so the distinction stays visible.
  */
-async function writeShardMeta(db: DatabaseSync, input: ShardMetaInput): Promise<void> {
+async function writeShardMeta(db: DatabaseClient<WOFDatabase>, input: ShardMetaInput): Promise<void> {
 	await createShardMetaTable(db)
 
 	const copyrightYear = Number(input.metadata.copyrightDate.slice(0, 4)) || input.now.getUTCFullYear()

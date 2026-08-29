@@ -31,14 +31,13 @@
  *   the image and can be run as alternative commands — see `docker/README.md`.
  */
 
-import { existsSync } from "node:fs"
-
 import { createMailwomanAPI } from "@mailwoman/api"
 import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { $public } from "@mailwoman/core/env"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { existsSync } from "@mailwoman/platform/fs"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import {

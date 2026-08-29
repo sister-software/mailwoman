@@ -1,3 +1,5 @@
+import { runIfScript } from "@mailwoman/core/scripting"
+import { dataRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -14,11 +16,8 @@
  *   Snapshot provenance: `$MAILWOMAN_DATA_ROOT/ppd/<date>/pp-complete.csv` (md5 sibling).
  *   License: OGL v3 (attribution: HM Land Registry).
  */
-import { createReadStream, createWriteStream } from "node:fs"
-import { parseArgs } from "node:util"
-
-import { runIfScript } from "@mailwoman/core/scripting"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { createReadStream, createWriteStream } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { CSVSpliterator } from "spliterator"
 
 import { titleCaseGB } from "../gb-title-case.ts"

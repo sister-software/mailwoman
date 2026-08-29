@@ -73,14 +73,13 @@
  *   PPD source CSV. Either mismatch forces a loud rebuild instead of a silent skip.
  */
 
-import { spawnSync } from "node:child_process"
-import { createHash } from "node:crypto"
-import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { createHash } from "@mailwoman/platform/crypto"
+import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
 	pairIndexStaleReason,

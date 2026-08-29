@@ -9,21 +9,21 @@
  *   Node too (it's the same .wasm built once and used everywhere).
  */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
 import { WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm/lookup"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 let scratch: string
 let slimBytes: Uint8Array
 
 function buildFixtureWOF(path: string): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -110,8 +110,6 @@ function buildFixtureWOF(path: string): void {
 			PRIMARY KEY (admin_id, locality_id));
 		INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000);
 	`)
-
-	db.close()
 }
 
 beforeAll(async () => {

@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { Stats } from "node:fs"
-import { stat } from "node:fs/promises"
-
+import type { Stats } from "@mailwoman/platform/fs"
+import { stat } from "@mailwoman/platform/fs/promises"
 import type { PathBuilderLike } from "path-ts"
 
-export { existsSync } from "node:fs"
+export { existsSync } from "@mailwoman/platform/fs"
 
 /**
  * Attempts to stat a file or directory.

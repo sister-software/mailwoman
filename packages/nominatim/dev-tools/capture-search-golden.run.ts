@@ -10,9 +10,8 @@
  *   `node nominatim/dev-tools/capture-search-golden.run.ts`
  */
 
-import { spawn } from "node:child_process"
-import { writeFileSync } from "node:fs"
-
+import { spawn } from "@mailwoman/platform/child_process"
+import { writeFileSync } from "@mailwoman/platform/fs"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 const PORT = 8199

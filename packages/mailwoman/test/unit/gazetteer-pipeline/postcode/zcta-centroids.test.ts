@@ -10,8 +10,8 @@
  *       no-GeoNames → placeholder; no-overwrite: ZCTA-already-filled row stays ZCTA, not geonames.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	fillGeonamesPlaceholders,
 	fillPlaceholderCentroids,
@@ -47,8 +47,8 @@ const GEONAMES_FIXTURE = [
 	"DE\t10115\tBerlin\t\t\t\t\t\t\t52.5200\t13.4050\t1", // non-US → included in map, no US spr match
 ].join("\n")
 
-function seedDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function seedDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`CREATE TABLE spr (
 		id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL DEFAULT -1, name TEXT NOT NULL DEFAULT '',

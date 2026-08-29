@@ -21,13 +21,20 @@
  *   ```
  */
 
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "node:fs"
-import { relative, resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { $public } from "@mailwoman/core/env"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot, md5File, repoRootPath, workspacePath } from "@mailwoman/core/utils"
+import {
+	copyFileSync,
+	existsSync,
+	lstatSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	symlinkSync,
+} from "@mailwoman/platform/fs"
+import { relative, resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { readWeightsRecipe } from "./weights-recipe.ts"
 

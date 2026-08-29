@@ -12,11 +12,11 @@
  *   against the new file for the life of the process.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { computeSurfaceCountryCounts } from "mailwoman/gazetteer-pipeline/fst"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -26,7 +26,7 @@ let scratch: string
  * The columns {@link computeSurfaceCountryCounts} reads: `spr` primaries plus the `names` alias table.
  */
 function buildFixture(path: string, extraName?: string): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -42,8 +42,6 @@ function buildFixture(path: string, extraName?: string): void {
 	if (extraName) {
 		db.prepare("INSERT INTO names VALUES (?, ?)").run(3, extraName)
 	}
-
-	db.close()
 }
 
 beforeEach(async () => {

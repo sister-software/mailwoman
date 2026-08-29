@@ -46,7 +46,13 @@
  *       ~3 before the flip could invert.
  */
 
-import { execFileSync } from "node:child_process"
+import { $public } from "@mailwoman/core/env"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
+import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { execFileSync } from "@mailwoman/platform/child_process"
 import {
 	existsSync,
 	mkdirSync,
@@ -57,16 +63,9 @@ import {
 	statSync,
 	symlinkSync,
 	writeFileSync,
-} from "node:fs"
-import { tmpdir } from "node:os"
-import { dirname, join } from "node:path"
-
-import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
-import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
-import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+} from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { dirname, join } from "@mailwoman/platform/path"
 import { describe, expect, test, vi } from "vitest"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")

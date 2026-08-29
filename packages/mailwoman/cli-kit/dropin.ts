@@ -25,10 +25,9 @@
  *   subpath, deliberately NOT re-exported through the barrel.
  */
 
-import { existsSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { existsSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "../freshness.ts"
 import {

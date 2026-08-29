@@ -13,10 +13,9 @@
  *   neural or resolver modules.
  */
 
-import { join } from "node:path"
-
 import { $public } from "@mailwoman/core/env"
 import { tempRootPath } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 
 /**
  * The default demo stage directory. This is a staged release path rather than a data-root artifact.

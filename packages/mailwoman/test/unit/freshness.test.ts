@@ -11,12 +11,12 @@
  *   indistinguishable from a measured answer, and whether a measured answer exists is the question.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ManifestState, readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
 import { afterEach, describe, expect, it } from "vitest"
@@ -66,10 +66,9 @@ async function stamped(path: string, name: string, createdAt: string): Promise<s
  * A built database with no manifest — the state of every artifact built before the layer contract.
  */
 function bare(path: string): string {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
-	db.close()
 
 	return path
 }

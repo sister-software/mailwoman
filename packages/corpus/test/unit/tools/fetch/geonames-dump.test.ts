@@ -8,14 +8,13 @@
  *   paths reading as coverage until the capitals build found them capital-less).
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs"
-import { createServer, type Server } from "node:http"
-import type { AddressInfo } from "node:net"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
+import { mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { createServer, type Server } from "@mailwoman/platform/http"
+import type { AddressInfo } from "@mailwoman/platform/net"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import ADMZip from "adm-zip"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 

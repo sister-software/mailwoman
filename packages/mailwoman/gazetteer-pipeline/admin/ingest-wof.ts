@@ -9,12 +9,12 @@
  *   pragmas + `createUnifiedSchema`); this function only enumerates + ingests.
  */
 
-import { readFile } from "node:fs/promises"
-import type { DatabaseSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whosonfirst"
+import { readFile } from "@mailwoman/platform/fs/promises"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import FastGlob from "fast-glob"
 import { parallelMap } from "spliterator"
 
@@ -245,7 +245,7 @@ export interface IngestWOFResult {
  * — enumerating + reading millions of postcode files the admin build filters out anyway was the bulk of the ingest time
  * (#1015/#1021).
  */
-export async function ingestWOF(db: DatabaseSync, opts: IngestWOFOptions): Promise<IngestWOFResult> {
+export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOFOptions): Promise<IngestWOFResult> {
 	const placetypes = opts.placetypes ?? ADMIN_PLACETYPES
 	const concurrency = opts.concurrency ?? 64
 	const batchCommitSize = opts.batchCommitSize ?? 500

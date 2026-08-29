@@ -34,11 +34,11 @@
  *   lands on stdout.
  */
 
-import { existsSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { allRows } from "@mailwoman/core/utils"
+import { existsSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -127,7 +127,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 				continue
 			}
 
-			const conn = new DatabaseSync(db, { readOnly: true })
+			const conn = new DatabaseClient<WOFDatabase>(db, { readOnly: true })
 
 			const rows = allRows<PostcodeShardRow>(
 				conn.prepare(
@@ -137,7 +137,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 				country
 			)
 
-			conn.close()
+			await conn.destroy()
 
 			const { entries, skipped, outwardKeys } = buildPostcodeBinaryEntries(country, rows, {
 				gbGranularity: granularity,

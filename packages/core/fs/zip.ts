@@ -15,12 +15,11 @@
  *   size and offset slots and carries the real values in the entry's extra field.
  */
 
-import { createWriteStream } from "node:fs"
-import { mkdir } from "node:fs/promises"
-import { basename, dirname, join } from "node:path"
-import { pipeline } from "node:stream/promises"
-import { crc32 } from "node:zlib"
-
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { basename, dirname, join } from "@mailwoman/platform/path"
+import { pipeline } from "@mailwoman/platform/stream/promises"
+import { crc32 } from "@mailwoman/platform/zlib"
 import ADMZip from "adm-zip"
 import type { PathBuilderLike } from "path-ts"
 import { open as openArchive } from "yauzl-promise"
@@ -145,7 +144,7 @@ export async function* readZipEntry(
 			try {
 				yield* contents
 			} finally {
-				contents.destroy()
+				await contents.destroy()
 			}
 
 			return

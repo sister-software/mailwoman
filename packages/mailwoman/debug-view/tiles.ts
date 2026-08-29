@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
 
 /**
  * --tiles flag → $MAILWOMAN_TILES → dataRootPath("tiles", "planet.pmtiles") if it exists → null (degrade).

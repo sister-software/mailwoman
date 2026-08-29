@@ -15,9 +15,8 @@
  *   Sources street types from `core/data/libpostal/dictionaries/fr/street_types.txt`.
  */
 
-import { readFileSync } from "node:fs"
-
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 /**

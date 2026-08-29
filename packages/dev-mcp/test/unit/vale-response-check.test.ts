@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { spawnSync } from "node:child_process"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, it } from "vitest"
 
 const HOOK_PATH = fileURLToPath(new URL("../../hooks/vale-response-check.ts", import.meta.url))

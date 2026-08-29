@@ -37,16 +37,15 @@
  *   re-downloading.
  */
 
-import { execFile, spawn, type ChildProcess } from "node:child_process"
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { promisify } from "node:util"
-
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
+import { execFile, spawn, type ChildProcess } from "@mailwoman/platform/child_process"
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { afterEach, describe, expect, test } from "vitest"
 

@@ -4,9 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { createLayerCoverageTable, createLayerManifestTable } from "@mailwoman/core/layers"
 import {
 	createPOISearchFTS,
@@ -16,13 +13,14 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
-function openMemory(): { raw: DatabaseSync; kdb: DatabaseClient<POIDatabase> } {
-	const raw = new DatabaseSync(":memory:")
+function openMemory(): { raw: DatabaseClient<POIDatabase>; kdb: DatabaseClient<POIDatabase> } {
+	const raw = new DatabaseClient<POIDatabase>(":memory:")
 
-	return { raw, kdb: new DatabaseClient<POIDatabase>({ database: raw }) }
+	return { raw, kdb: raw }
 }
 
 describe("poi schema", () => {

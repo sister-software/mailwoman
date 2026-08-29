@@ -12,10 +12,6 @@
  *   negative check fails loudly on an artifact that would answer Zone 1 outside England.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { buildFloodDatabase } from "@mailwoman/flood/sdk/build-flood"
 import { realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
 import { verifyFloodDatabase, type ServiceFeatureReader } from "@mailwoman/flood/sdk/verify"
@@ -28,6 +24,9 @@ import {
 	rectangleRing,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**

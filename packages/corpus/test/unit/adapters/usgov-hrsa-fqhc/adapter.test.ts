@@ -4,15 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { rm } from "node:fs/promises"
-import { join } from "node:path"
-
 import { workspacePath } from "@mailwoman/core/utils"
 import {
 	USGOV_HRSA_FQHC_ADAPTER_ID,
 	USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 	createUsgovHrsaFqhcAdapter,
 } from "@mailwoman/corpus/adapters/usgov-hrsa-fqhc/adapter"
+import { rm } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

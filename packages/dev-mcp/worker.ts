@@ -27,8 +27,7 @@
  *   MCP channel. All protocol traffic rides the IPC channel via `process.send`.
  */
 
-import { parseArgs } from "node:util"
-
+import { parseArgs } from "@mailwoman/platform/util"
 import { z } from "zod"
 
 import { EngineRegistry } from "./engine-registry.ts"

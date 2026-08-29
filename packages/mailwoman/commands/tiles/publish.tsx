@@ -24,9 +24,8 @@
  *   SECRET/ENDPOINT) before running.
  */
 
-import { existsSync, statSync } from "node:fs"
-
 import { Spinner } from "@inkjs/ui"
+import { existsSync, statSync } from "@mailwoman/platform/fs"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"

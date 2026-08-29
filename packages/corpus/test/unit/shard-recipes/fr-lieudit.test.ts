@@ -9,14 +9,14 @@
  *   determinism under a fixed seed, and the `--country-fraction` append.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { gzipSync } from "node:zlib"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { frLieuditRecipe } from "@mailwoman/corpus/shard-recipes/fr-lieudit"
 import type { ShardRecipeOpts } from "@mailwoman/corpus/shard-recipes/scaffold"
+import { gzip } from "@mailwoman/platform/compression"
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { writeFile } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, describe, expect, it } from "vitest"
 
 import type { ShardRow } from "#test-kit/shard-recipe"
@@ -183,7 +183,7 @@ describe("fr-lieudit recipe", () => {
 			row("2", "8", "Route de Pomaret", "48800", "Altier", "Le Village"), // different id/lieu-dit
 		].join("\n")
 
-		writeFileSync(join(banDir, "adresses-48.csv.gz"), gzipSync(csvBody + "\n"))
+		await writeFile(join(banDir, "adresses-48.csv.gz"), await gzip(csvBody + "\n"))
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), () => {})
 

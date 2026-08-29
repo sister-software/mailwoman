@@ -15,9 +15,8 @@
  *   separate, confidence-gated tier (never synthesize a number line from scattered points).
  */
 
-import { spawn } from "node:child_process"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawn } from "@mailwoman/platform/child_process"
 import { TextSpliterator } from "spliterator"
 
 import { representativePoint } from "./representative-point.ts"

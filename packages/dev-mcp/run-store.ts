@@ -26,11 +26,10 @@
  *   across fingerprints anyway, and says which two it saw.
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 /**
  * Where runs land. Under the data root, never the repo — see the module docstring on cache-versus-record.

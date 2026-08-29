@@ -16,17 +16,18 @@
  *   server spends its resident memory, and it spends it on sessions.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { basename } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
 import { readRequiredChannels, resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { basename } from "@mailwoman/platform/path"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolveCandidateDBPath, resolveWOFShardPaths } from "mailwoman/resolver-backend"
 import { resolvePath } from "path-ts"
 
@@ -92,7 +93,7 @@ export interface LookupArgs {
  * — is the same shape a genuine absence has, and a caller reading it would conclude the gazetteer lacks fifty places
  * when what it lacks is a file.
  */
-export async function runLookup(
+export async function runLookup<DB>(
 	registry: EngineRegistry,
 	args: LookupArgs
 ): Promise<LookupResult | CandidateCompareResult> {
@@ -129,7 +130,9 @@ export async function runLookup(
 				// artifacts — the join every fame-contest diagnosis needs, attached rather than scripted.
 				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
 
-				const importanceDB = existsSync(importancePath) ? new DatabaseSync(importancePath, { readOnly: true }) : null
+				const importanceDB = existsSync(importancePath)
+					? new DatabaseClient<PlaceImportanceDatabase>(importancePath, { readOnly: true })
+					: null
 
 				try {
 					const candidateOptions = {
@@ -159,7 +162,7 @@ export async function runLookup(
 
 					if (args.compareCandidateDB) {
 						const comparePath = resolveCandidateDB({ ...config, candidate_db: args.compareCandidateDB }, dataRoot)
-						const openedB = openSealedArtifact(comparePath)
+						const openedB = openSealedArtifact<WOFDatabase>(comparePath)
 
 						if ("unavailable" in openedB || !comparePath) {
 							return {
@@ -193,7 +196,7 @@ export async function runLookup(
 								],
 							}
 						} finally {
-							openedB.db.close()
+							openedB.db.destroy()
 						}
 					}
 
@@ -211,7 +214,7 @@ export async function runLookup(
 						],
 					}
 				} finally {
-					importanceDB?.close()
+					importanceDB?.destroy()
 				}
 			})
 		}
@@ -275,9 +278,9 @@ function resolveCandidateDB(config: EngineConfig, dataRoot: string): string | un
 function withArtifact<T extends LookupResult>(
 	source: LookupSource,
 	path: string | undefined,
-	build: (db: DatabaseSync, path: string) => T
+	build: (db: DatabaseClient<WOFDatabase>, path: string) => T
 ): T | LookupResult {
-	const opened = openSealedArtifact(path)
+	const opened = openSealedArtifact<WOFDatabase>(path)
 
 	if ("unavailable" in opened || !path) {
 		const unavailable = "unavailable" in opened ? opened.unavailable : "No artifact path was resolved for this source."
@@ -288,7 +291,7 @@ function withArtifact<T extends LookupResult>(
 	try {
 		return build(opened.db, path)
 	} finally {
-		opened.db.close()
+		opened.db.destroy()
 	}
 }
 
@@ -306,11 +309,11 @@ const UNAVAILABLE_NOTE =
  */
 function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
 	const paths = resolveWOFShardPaths(args.config?.resolve_db, dataRoot)
-	const shards: WOFShard[] = []
+	const shards: WOFShard<WOFDatabase>[] = []
 	const skipped: string[] = []
 
 	for (const path of paths) {
-		const opened = openSealedArtifact(path)
+		const opened = openSealedArtifact<WOFDatabase>(path)
 
 		if ("unavailable" in opened) {
 			skipped.push(opened.unavailable)
@@ -356,7 +359,7 @@ function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
 		}
 	} finally {
 		for (const shard of shards) {
-			shard.db.close()
+			shard.db.destroy()
 		}
 	}
 }

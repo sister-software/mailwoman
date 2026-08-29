@@ -4,8 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { existsSync } from "node:fs"
-
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildFSTEmissionPriors,
@@ -19,6 +17,7 @@ import {
 } from "@mailwoman/neural/fst-prior"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, it, test } from "vitest"
 
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")

@@ -8,9 +8,8 @@
  *   are the regression fence around that tuition.
  */
 
-import { tmpdir } from "node:os"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { tmpdir } from "@mailwoman/platform/os"
 import {
 	buildStreetTypeLexicon,
 	clearsProminenceFloor,
@@ -166,7 +165,7 @@ describe("street-type lexicon build", () => {
 		const built = await buildStreetTypeLexicon({ output: tmp })
 
 		expect(built.entries).toBeGreaterThan(400)
-		const { readFileSync } = await import("node:fs")
+		const { readFileSync } = await import("@mailwoman/platform/fs")
 		const j = parseJSONStrict<StreetTypeLexicon>(readFileSync(tmp, "utf8"))
 
 		// "rue" must match lowercase (the FR probe class); "R" only as an uppercase code.
@@ -182,7 +181,7 @@ describe("street-type lexicon build", () => {
 		const built = await buildStreetTypeLexicon({ output: tmp })
 
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)
-		const { readFileSync } = await import("node:fs")
+		const { readFileSync } = await import("@mailwoman/platform/fs")
 		const j = parseJSONStrict<StreetTypeLexicon>(readFileSync(tmp, "utf8"))
 
 		// "MOUNTAIN WAY WY 82601" / "SUSIE CT WY 83101" — the state token must carry NO street evidence.

@@ -13,7 +13,7 @@
  *        while building the tarball. npm's own publish step does NOT do this translation, and
  *        shipping `workspace:*` to consumers breaks `npm install` (EUNSUPPORTEDPROTOCOL).
  *   2. Derive the PUBLISH exports map from the dev map inside the tarball — every `node → .ts`
- *        condition is stripped (the repo runs source under node; consumers get `out/`). The dev
+ *        condition is rewritten to emitted JavaScript (the repo runs source under node; consumers get `out/`). The dev
  *        `exports` in each workspace's package.json is the single source of truth; there is no
  *        hand-maintained `publishConfig.exports` (that duplication shipped a fully-broken v7.2.0
  *        when it was removed without a replacement — this transform IS the replacement). A guard
@@ -36,13 +36,12 @@
  *   monorepo version-synced in git while npm doesn't see a weights tick.
  */
 
-import { spawnSync } from "node:child_process"
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
-
 import { $private, $public } from "@mailwoman/core/env"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join, resolve } from "@mailwoman/platform/path"
 
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "./pack-workspace.ts"
 import { verifyTarball } from "./verify-tarball.ts"

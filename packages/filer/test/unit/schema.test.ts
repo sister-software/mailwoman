@@ -4,9 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -24,10 +21,11 @@ import {
 	type FilerEdgeTable,
 	type FilerFamilyTable,
 } from "@mailwoman/filer/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(":memory:") })
+	return new DatabaseClient<FilerDatabase>(":memory:")
 }
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {

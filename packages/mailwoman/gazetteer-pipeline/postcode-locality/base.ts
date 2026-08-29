@@ -35,14 +35,13 @@
  *   `--country` runs (a temp-build would wipe prior countries' rows).
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { assertDatabaseIntegrity, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { pyRound } from "@mailwoman/core/utils"
+import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
 import {
 	createPostcodeLocalityIndex,
@@ -127,7 +126,7 @@ export interface PostcodeLocalityBaseOptions {
  * journal mode so there's no sidecar, and a VACUUM to compact.
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
-	const db = new DatabaseSync(output)
+	const db = new DatabaseClient<PostcodeLocalityDatabase>(output)
 
 	const counts = db
 		.prepare(
@@ -156,9 +155,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 			.join(", ") +
 		"}"
 
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
-
-	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
+	await createPostcodeLocalityMetaTable(db, { ifNotExists: true })
 
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality"],
@@ -189,7 +186,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 	assertDatabaseIntegrity(db, output)
 
 	db.exec("VACUUM")
-	db.close()
+	await db.destroy()
 
 	// Python prints the dict repr (insertion order rows→containing, single quotes).
 	const summaryRepr =
@@ -289,30 +286,29 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		}
 	}
 
-	const con = new DatabaseSync(postcodeDB!)
+	const con = new DatabaseClient<PostcodeLocalityDatabase>(postcodeDB!)
 
 	const postcodes = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE country=? AND placetype='postalcode' AND is_current!=0")
 		.all(country!) as Array<{ name: string; latitude: number | null; longitude: number | null }>
 
-	con.close()
+	await con.destroy()
 
 	console.log(`  ${postcodes.length} ${country} postcode centroids`)
 
-	const out = new DatabaseSync(output)
+	const db = new DatabaseClient<PostcodeLocalityDatabase>(output)
 	// Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality shard
 	// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
 	// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: out })
 
-	await createPostcodeLocalityTable(kdb, { ifNotExists: true })
+	await createPostcodeLocalityTable(db, { ifNotExists: true })
 
-	out.prepare("DELETE FROM postcode_locality WHERE country = ?").run(country!)
+	db.prepare("DELETE FROM postcode_locality WHERE country = ?").run(country!)
 
-	const insert = out.prepare(POSTCODE_LOCALITY_INSERT_SQL)
+	const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
 	let rows = 0
 	let nContained = 0
-	out.exec("BEGIN")
+	db.exec("BEGIN")
 
 	for (const pcRow of postcodes) {
 		const pc = pcRow.name
@@ -383,15 +379,15 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		}
 	}
 
-	out.exec("COMMIT")
+	db.exec("COMMIT")
 
-	await createPostcodeLocalityIndex(kdb, { ifNotExists: true })
+	await createPostcodeLocalityIndex(db, { ifNotExists: true })
 
 	console.log(
 		`  wrote ${rows} rows (${nContained}/${postcodes.length} postcodes have a containing locality) → ${output}`
 	)
 
-	out.close()
+	await db.destroy()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(output)
 }

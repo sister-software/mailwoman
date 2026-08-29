@@ -19,10 +19,10 @@
  *   dilute its FTS doc score (the real-world trigger). This isolates the TIERING logic.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { RankingWeights } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, test } from "vitest"
 
 interface SeedRegion {
@@ -42,8 +42,8 @@ interface SeedRegion {
  * lookup.test.ts seed has no population path). Opened with `buildFTS: true` by the lookup; the lazy FTS build leaves
  * the pre-existing `place_population` untouched (it only (re)builds it from geojson, which we don't carry).
  */
-function buildDB(regions: SeedRegion[]): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildDB(regions: SeedRegion[]): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (

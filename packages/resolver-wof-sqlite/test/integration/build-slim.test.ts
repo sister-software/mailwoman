@@ -13,18 +13,18 @@
  *   population straight from that table.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: string
 
 function buildFixtureWOF(path: string): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -72,8 +72,6 @@ function buildFixtureWOF(path: string): void {
 		INSERT INTO place_population VALUES (202, 8000);
 		INSERT INTO place_population VALUES (400, 2100000);
 	`)
-
-	db.close()
 }
 
 beforeEach(async () => {
@@ -100,7 +98,7 @@ describe("buildSlimWOFDatabase", () => {
 		expect(result.rowCounts.placeSearch).toBe(6)
 		expect(result.rowCounts.placeBbox).toBe(6)
 
-		const slim = new DatabaseSync(output, { readOnly: true })
+		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const names = slim
@@ -115,7 +113,7 @@ describe("buildSlimWOFDatabase", () => {
 			expect(names).not.toContain("Paris")
 			expect(names).not.toContain("Old Town")
 		} finally {
-			slim.close()
+			await slim.destroy()
 		}
 	})
 
@@ -126,7 +124,7 @@ describe("buildSlimWOFDatabase", () => {
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 1 })
 
-		const slim = new DatabaseSync(output, { readOnly: true })
+		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const nameIDs = slim
@@ -156,7 +154,7 @@ describe("buildSlimWOFDatabase", () => {
 			const geojsonExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'geojson'`).get()
 			expect(geojsonExists).toBeUndefined()
 		} finally {
-			slim.close()
+			await slim.destroy()
 		}
 	})
 
@@ -167,7 +165,7 @@ describe("buildSlimWOFDatabase", () => {
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
 
-		const slim = new DatabaseSync(output, { readOnly: true })
+		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const rows = slim
@@ -177,7 +175,7 @@ describe("buildSlimWOFDatabase", () => {
 			expect(rows[0]?.id).toBe(100) // US country, biggest population
 			expect(rows[0]?.population).toBe(331_000_000)
 		} finally {
-			slim.close()
+			await slim.destroy()
 		}
 	})
 
@@ -210,7 +208,7 @@ describe("buildSlimWOFDatabase", () => {
 		expect(result.rowCounts.names).toBeGreaterThan(0)
 		expect(result.rowCounts.placeSearch).toBe(6)
 
-		const slim = new DatabaseSync(output, { readOnly: true })
+		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const namesExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'`).get()
@@ -223,7 +221,7 @@ describe("buildSlimWOFDatabase", () => {
 
 			expect(hit?.wof_id).toBe(200)
 		} finally {
-			slim.close()
+			await slim.destroy()
 		}
 	})
 
@@ -243,7 +241,7 @@ describe("buildSlimWOFDatabase", () => {
 		const output = join(scratch, "slim.db")
 		buildFixtureWOF(source)
 		// A dual-role relation: Illinois(101) ⊃ Springfield(201) [survives top-2] and ⊃ Mascoutah(202) [trimmed].
-		const s = new DatabaseSync(source)
+		const s = new DatabaseClient<WOFDatabase>(source)
 
 		s.exec(`CREATE TABLE coincident_roles (
 			admin_id INTEGER NOT NULL, locality_id INTEGER NOT NULL, relationship_type TEXT NOT NULL,
@@ -252,18 +250,18 @@ describe("buildSlimWOFDatabase", () => {
 
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000)`)
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 202, 'capital-seat', 'region', 6.0, 8000)`)
-		s.close()
+		await s.destroy()
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 }) // keeps Springfield, drops Mascoutah
 
-		const slim = new DatabaseSync(output, { readOnly: true })
+		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const rows = slim.prepare(`SELECT admin_id, locality_id FROM coincident_roles ORDER BY locality_id`).all()
 			// Only the surviving pair — Mascoutah's row is dropped because 202 was trimmed from spr.
 			expect(rows).toEqual([{ admin_id: 101, locality_id: 201 }])
 		} finally {
-			slim.close()
+			await slim.destroy()
 		}
 	})
 
@@ -271,15 +269,15 @@ describe("buildSlimWOFDatabase", () => {
 		const source = join(scratch, "src.db")
 		const output = join(scratch, "slim.db")
 		buildFixtureWOF(source)
-		const s = new DatabaseSync(source)
+		const s = new DatabaseClient<WOFDatabase>(source)
 		s.exec(`INSERT INTO names (id, language, name) VALUES (101, 'abbr', 'IL')`) // Illinois (region) — survives
 		s.exec(`INSERT INTO names (id, language, name) VALUES (202, 'abbr', 'MZ')`) // Mascoutah (locality) — trimmed
-		s.close()
+		await s.destroy()
 
 		// top-2 keeps Springfield, drops Mascoutah; dropNames removes the source names table afterward.
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
 
-		const slim = new DatabaseSync(output, { readOnly: true })
+		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
@@ -288,7 +286,7 @@ describe("buildSlimWOFDatabase", () => {
 			expect(rows).toEqual([{ id: 101, abbr: "IL" }])
 			expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()
 		} finally {
-			slim.close()
+			await slim.destroy()
 		}
 	})
 })

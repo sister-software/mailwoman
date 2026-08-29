@@ -25,9 +25,6 @@
  *   is broken.
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import type {
 	BatchResultEntry,
 	GeocodeCallback,
@@ -43,6 +40,8 @@ import { $public } from "@mailwoman/core/env"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
+import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
 

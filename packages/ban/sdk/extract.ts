@@ -20,10 +20,9 @@
  *   {@link cleanLieuDit} (`.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
  */
 
-import { createReadStream } from "node:fs"
-import { createGunzip } from "node:zlib"
-
+import { gunzipChunks } from "@mailwoman/platform/compression"
 import { CSVSpliterator } from "spliterator"
+import { createReadStream } from "spliterator/node/fs"
 
 /**
  * One BAN address point. Every field but `rep`/`postcode`/`city`/`lieuDit` is guaranteed present by the source.
@@ -64,6 +63,11 @@ export interface BANAddrRecord {
  * The BAN CSV columns this ingest reads (validated against the first parsed row — header drift fails LOUDLY).
  */
 const REQUIRED_COLUMNS = ["numero", "rep", "nom_voie", "code_postal", "nom_commune", "nom_ld", "lon", "lat"] as const
+
+/**
+ * Chunk size used while streaming BAN CSV bytes from disk.
+ */
+const CSV_READ_HIGH_WATER_MARK = 64 * 1024
 
 /**
  * Literal header-leak: an upstream ingestion bug in the government CSV emits the column name itself as a `nom_ld` value
@@ -118,12 +122,12 @@ function assertRequiredColumns(row: Record<string, unknown>): void {
 }
 
 /**
- * A readable stream over `csvPath`, transparently gunzipping a `.csv.gz` input.
+ * An asynchronous byte source over `csvPath`, transparently gunzipping a `.csv.gz` input.
  */
-function openCSV(csvPath: string): NodeJS.ReadableStream {
-	const raw = createReadStream(csvPath)
+async function openCSV(csvPath: string): Promise<AsyncIterable<Uint8Array | string>> {
+	const raw = await createReadStream(csvPath, CSV_READ_HIGH_WATER_MARK)
 
-	return csvPath.endsWith(".gz") ? raw.pipe(createGunzip()) : raw
+	return csvPath.endsWith(".gz") ? gunzipChunks(raw) : raw
 }
 
 /**
@@ -137,7 +141,7 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 	// doubled inner quotes fold, and a quoted `;` no longer mis-splits the row.
 	let checkedHeader = false
 
-	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(openCSV(csvPath), {
+	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(await openCSV(csvPath), {
 		mode: "object",
 		columnDelimiter: ";",
 		// Opt-in end-to-end quoting: wrapping quotes strip, doubled quotes unescape, quoted `;` does

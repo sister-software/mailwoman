@@ -12,10 +12,9 @@
  *   state rather than hide.
  */
 
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { listGateSpecs } from "mailwoman/eval-harness/promotion-gate"
 import { z } from "zod"
 

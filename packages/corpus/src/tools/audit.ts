@@ -15,10 +15,9 @@
  *   Emits warnings to stderr and the audit table to stdout; never throws on an empty corpus.
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs"
-import { basename, join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { existsSync, readFileSync, readdirSync } from "@mailwoman/platform/fs"
+import { basename, join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 /**

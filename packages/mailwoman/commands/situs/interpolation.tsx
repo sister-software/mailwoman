@@ -25,14 +25,20 @@
  *   lands on stdout.
  */
 
-import { spawnSync } from "node:child_process"
-import { createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
-import * as https from "node:https"
-import * as path from "node:path"
-import { pipeline } from "node:stream/promises"
-
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import {
+	createWriteStream,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	writeFileSync,
+} from "@mailwoman/platform/fs"
+import * as https from "@mailwoman/platform/https"
+import * as path from "@mailwoman/platform/path"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 import { Box, Text } from "ink"
 import { TextSpliterator } from "spliterator"
 

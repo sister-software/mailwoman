@@ -8,8 +8,8 @@
  *   are asserted on data small enough to read.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	PLACETYPE_PROJECTION,
 	WOF_PLACETYPES,
@@ -25,7 +25,7 @@ import { describe, expect, it } from "vitest"
  */
 function fixtureDB(): string {
 	const path = `/tmp/census-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT)`)
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER)`)
@@ -57,8 +57,6 @@ function fixtureDB(): string {
 	for (const [id, ancestorID] of links) {
 		db.prepare(`INSERT INTO ancestors VALUES (?, ?)`).run(id, ancestorID)
 	}
-
-	db.close()
 
 	return path
 }

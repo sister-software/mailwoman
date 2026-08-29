@@ -12,10 +12,9 @@
  *   scripts/build-anchor-absorption-shard.mjs.
  */
 
-import { readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
 
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
 import { alignRow } from "#utils"

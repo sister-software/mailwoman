@@ -18,13 +18,12 @@
  *   Usage: node scripts/probe-shaped-obligation.ts --cache-root <dir> [--locale en-gb]
  */
 
-import { existsSync } from "node:fs"
-import { join } from "node:path"
-import { parseArgs } from "node:util"
-
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const { values } = parseArgs({
 	options: {

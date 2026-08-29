@@ -19,10 +19,14 @@ export function isTypeScriptSource(path: string): boolean {
 /**
  * Rewrite the packed manifest's `exports` for consumers, in place inside the tarball.
  *
- * The dev map's `node` conditions point at `.ts` source (the repo runs source directly under node); published packages
- * ship only `out/`. This drops every `node` condition whose target is TypeScript source, reorders each entry
- * `types`-first, strips any legacy `publishConfig.exports`, then HARD-FAILS unless every remaining non-pattern target
- * exists inside the tarball and nothing resolves to `.ts`/`.tsx`. Exported for tests.
+ * The dev map points at `.ts` source wherever the repo runs source directly (`node` everywhere, plus `browser` and
+ * `worker` in `@mailwoman/platform`, whose runtime-specific entry points are source too); published packages ship only
+ * `out/`. This rewrites EVERY such condition to its emitted JavaScript counterpart, reorders each entry `types`-first,
+ * and strips any legacy `publishConfig.exports`. Keeping the conditions themselves is significant for
+ * `@mailwoman/platform`, whose Node target and unsupported-runtime target are different files.
+ *
+ * The rewrite is keyed on the TARGET being TypeScript source, not on the condition name — a condition-name rule only
+ * covers the conditions someone thought of. {@link assertNoSourceTargets} refuses whatever this misses.
  */
 export function transformExportsForPublish(exports: unknown): unknown {
 	if (typeof exports !== "object" || exports === null) return exports
@@ -39,7 +43,7 @@ export function transformExportsForPublish(exports: unknown): unknown {
 		const conditions = value as Record<string, unknown>
 		const rewritten: Record<string, unknown> = {}
 
-		// types first (npm requires it precede default to take effect), then the rest minus node→.ts.
+		// Types first (npm requires it precede default to take effect), then consumer-safe runtime targets.
 		if (typeof conditions["types"] === "string") {
 			rewritten["types"] = conditions["types"]
 		}
@@ -47,8 +51,10 @@ export function transformExportsForPublish(exports: unknown): unknown {
 		for (const [condition, target] of Object.entries(conditions)) {
 			if (condition === "types") continue
 
-			if (condition === "node" && typeof target === "string" && isTypeScriptSource(target)) continue
-			rewritten[condition] = target
+			rewritten[condition] =
+				typeof target === "string" && isTypeScriptSource(target)
+					? `./out/${target.replace(/^\.\//, "").replace(/\.tsx?$/, ".js")}`
+					: target
 		}
 
 		out[subpath] = rewritten
@@ -62,7 +68,7 @@ export function transformExportsForPublish(exports: unknown): unknown {
  *
  * These use the same development shape as exports: `node` points at source TypeScript so Node's native type stripping
  * can run the checkout directly, while `default` points at emitted JavaScript. A package installed under `node_modules`
- * cannot type-strip that source, so the packed map must drop every `node → .ts` condition.
+ * cannot type-strip that source, so the packed map rewrites every `node → .ts` condition to emitted JavaScript.
  */
 export function transformImportsForPublish(imports: unknown): unknown {
 	if (typeof imports !== "object" || imports === null) return imports
@@ -87,6 +93,26 @@ export function transformImportsForPublish(imports: unknown): unknown {
 	}
 
 	return out
+}
+
+/**
+ * Refuse a transformed map that still resolves to TypeScript source.
+ *
+ * Node will not type-strip under `node_modules` (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`), and consumer bundlers
+ * do not compile dependencies. A `.ts` target therefore breaks the package, and the tarball audit will not say so: it
+ * checks that each target is present, and a shipped `.ts` file is present.
+ *
+ * `label` names the workspace, so a failure says which manifest to edit.
+ */
+export function assertNoSourceTargets(label: string, transformed: unknown): void {
+	const leaked = collectExportTargets(transformed).filter((target) => isTypeScriptSource(target))
+
+	if (leaked.length) {
+		throw new Error(
+			`${label}: publish map resolves to TypeScript source, which no consumer can load: ${leaked.join(", ")}. ` +
+				`Point the condition at its emitted out/ counterpart.`
+		)
+	}
 }
 
 /**

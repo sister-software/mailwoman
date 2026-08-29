@@ -19,15 +19,14 @@
  *   shard overrides, expecting a street-level coordinate near 30.5, -97.6.
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync, mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { existsSync, mkdtempSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
 

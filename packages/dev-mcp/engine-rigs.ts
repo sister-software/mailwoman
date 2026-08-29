@@ -21,10 +21,9 @@
  *   engines into a number.
  */
 
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-
 import { APIClient } from "@mailwoman/core/api"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 
 import { assertScorableEndpoint } from "./external-arm.ts"

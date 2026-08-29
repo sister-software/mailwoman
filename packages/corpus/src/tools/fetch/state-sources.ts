@@ -17,11 +17,10 @@
  *   (gzip/brotli) and streaming sha256 instead of curl + sha256sum.
  */
 
-import { mkdirSync } from "node:fs"
-import { join } from "node:path"
-
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
+import { mkdirSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, writeManifest } from "./download.ts"

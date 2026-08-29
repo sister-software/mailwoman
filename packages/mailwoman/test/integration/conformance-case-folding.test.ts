@@ -24,10 +24,9 @@
  *   Cheap enough to belong: measured 6.2 s end to end for 29 rows — two geocodes each plus one engine load.
  */
 
-import { existsSync } from "node:fs"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync } from "@mailwoman/platform/fs"
 import { auditCaseFoldingSuite, CASE_FOLDING_SUITE_PATH } from "mailwoman/eval-harness/conformance/case-folding"
 import { runConformanceCommand } from "mailwoman/eval-harness/conformance/command"
 import { loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"

@@ -9,12 +9,11 @@
  *   street-key consistency is covered by `@mailwoman/osm`'s `street-locale.test.ts` (same normalizer).
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { cleanLieuDit, extractBANAddrPoints } from "@mailwoman/ban/sdk/extract"
 import { streetLocaleForBANCountry, supportedBANCountries } from "@mailwoman/ban/sdk/street-locale"
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { expect, test } from "vitest"
 
 const HEADER =

@@ -26,8 +26,8 @@
  *       is not there.
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync } from "node:fs"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { existsSync } from "@mailwoman/platform/fs"
 
 import { type ForkProbe, type RepoOrigin, resolveWOFRepoOrigin } from "./wof-repo-origin.ts"
 

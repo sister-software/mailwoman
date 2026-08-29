@@ -5,10 +5,9 @@
  * @file Docusaurus demo asset staging and bundle-policy entry point.
  */
 
-import { mkdirSync } from "node:fs"
-import { resolve } from "node:path"
-
 import type { LoadContext, Plugin } from "@docusaurus/types"
+import { mkdirSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import { stagePairIndexes, stageSQLJSHTTPVFS } from "./artifacts.ts"
 import { configureDemoWebpack } from "./webpack-policy.ts"

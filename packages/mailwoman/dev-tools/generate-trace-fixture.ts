@@ -15,11 +15,10 @@
  *   fully-fed fixture when that state matters.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
 
 const DEFAULT_OUT = String(
 	repoRootPathBuilder("docs", "src", "components", "ModelVisualizer", "fixtures", "white-house.trace.json")

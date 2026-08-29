@@ -11,9 +11,8 @@
  *   that resolves a real file, so nothing above it can catch a broken resolution.
  */
 
-import { readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
 import {
 	CheckStatus,
 	defaultDoctorDeps,

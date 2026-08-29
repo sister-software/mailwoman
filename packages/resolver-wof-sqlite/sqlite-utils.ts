@@ -6,9 +6,8 @@
  *   Small shared helpers for the SQLite-backed lookups.
  */
 
-import type { DatabaseSync, SQLInputValue } from "node:sqlite"
-
 import { allRows, getRow } from "@mailwoman/core/utils"
+import type { DatabaseClient, SQLInputValue } from "@mailwoman/sqlite/client"
 
 // The row-shape assertion itself lives in `core` so the readers that cannot depend on this package reach the same
 // seam; re-exported here because this module is where this package's readers already look for it.
@@ -23,8 +22,8 @@ export type PreparedGet<Parameters extends SQLInputValue[], Row> = (...parameter
 /**
  * Prepare a single-row query while preserving its exact parameter tuple at every call site.
  */
-export function prepareGet<Parameters extends SQLInputValue[], Row>(
-	db: DatabaseSync,
+export function prepareGet<Parameters extends SQLInputValue[], Row, DB>(
+	db: DatabaseClient<DB>,
 	sql: string
 ): PreparedGet<Parameters, Row> {
 	const statement = db.prepare(sql)
@@ -40,8 +39,8 @@ export type PreparedAll<Parameters extends SQLInputValue[], Row> = (...parameter
 /**
  * Prepare a multi-row query while preserving its exact parameter tuple at every call site.
  */
-export function prepareAll<Parameters extends SQLInputValue[], Row>(
-	db: DatabaseSync,
+export function prepareAll<Parameters extends SQLInputValue[], Row, DB>(
+	db: DatabaseClient<DB>,
 	sql: string
 ): PreparedAll<Parameters, Row> {
 	const statement = db.prepare(sql)
@@ -55,7 +54,7 @@ export function prepareAll<Parameters extends SQLInputValue[], Row>(
  * CREATES one) — rather than throwing `no such table` at construction and taking down a whole state's geocode (#568). A
  * missing table makes the lookup a no-op miss.
  */
-export function hasTable(db: DatabaseSync, name: string): boolean {
+export function hasTable<DB>(db: DatabaseClient<DB>, name: string): boolean {
 	try {
 		const row = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1").get(name)
 
@@ -76,7 +75,7 @@ export function hasTable(db: DatabaseSync, name: string): boolean {
  * Note the interpolation: PRAGMA does not take bound parameters, so `table` is spliced. Every caller passes a
  * module-level constant; never pass user input.
  */
-export function hasColumn(db: DatabaseSync, table: string, column: string): boolean {
+export function hasColumn<DB>(db: DatabaseClient<DB>, table: string, column: string): boolean {
 	try {
 		const rows = allRows<{ name: string }>(db.prepare(`PRAGMA table_info(${table})`))
 

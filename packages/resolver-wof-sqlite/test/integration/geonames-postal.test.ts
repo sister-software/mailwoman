@@ -9,16 +9,16 @@
  *   the p50-tax law).
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	GEONAMES_POSTAL_ID_BASE,
 	ingestGeonamesPostal,
 	normalizePostcodeName,
 } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 describe("normalizePostcodeName (the #920 name law)", () => {
@@ -36,8 +36,8 @@ describe("normalizePostcodeName (the #920 name law)", () => {
 	})
 })
 
-function fixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function fixtureDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (

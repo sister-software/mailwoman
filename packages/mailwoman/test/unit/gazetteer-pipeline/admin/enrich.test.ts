@@ -1,16 +1,16 @@
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
-import { DatabaseSync } from "node:sqlite"
-
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { enrichAdmin } from "mailwoman/gazetteer-pipeline/admin/enrich"
 import { expect, test } from "vitest"
 
 test("enrichAdmin adds region abbreviations (VT→Vermont) and builds place_abbr", async () => {
-	const db = new DatabaseSync(":memory:")
+	await using db = new DatabaseClient<WOFDatabase>(":memory:")
 	await createUnifiedSchema(db)
 
 	db.prepare(
@@ -35,11 +35,10 @@ test("enrichAdmin adds region abbreviations (VT→Vermont) and builds place_abbr
 		.get() as { name: string } | undefined
 
 	expect(abbr?.name).toBe("Vermont")
-	db.close()
 })
 
 test("enrichAdmin is idempotent — a re-run doesn't duplicate abbr rows", async () => {
-	const db = new DatabaseSync(":memory:")
+	await using db = new DatabaseClient<WOFDatabase>(":memory:")
 	await createUnifiedSchema(db)
 
 	db.prepare(
@@ -53,6 +52,4 @@ test("enrichAdmin is idempotent — a re-run doesn't duplicate abbr rows", async
 	expect((db.prepare("SELECT COUNT(*) n FROM names WHERE language = 'abbr'").get() as { n: number }).n).toBe(
 		first.abbrevNamesAdded
 	)
-
-	db.close()
 })

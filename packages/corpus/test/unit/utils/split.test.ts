@@ -4,10 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import {
 	defaultHoldouts,
@@ -17,6 +13,9 @@ import {
 	writeSplitManifests,
 	writeSplitManifestsFromLabeledFiles,
 } from "@mailwoman/corpus/utils/split"
+import { mkdtemp, readFile, rm, writeFile } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 

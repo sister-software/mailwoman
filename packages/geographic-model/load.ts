@@ -26,8 +26,8 @@
  *   keys it uses are tables.
  */
 
-import { readdirSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import { compareIdentifiers } from "./artifact.ts"
 import type { GeographicModelDocument } from "./schema.ts"

@@ -1,9 +1,3 @@
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
 import {
 	createOSMAddressPointIndexes,
@@ -12,14 +6,17 @@ import {
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk/address-point-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/osm/sdk/street-locale"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 describe("OSM address-point layer schema", () => {
 	it("adds an indexed H3 spine and honest empty coverage to the shared rooftop table", async () => {
-		const raw = new DatabaseSync(":memory:")
-		const db = new DatabaseClient<OSMAddressPointDatabase>({ database: raw })
+		using db = new DatabaseClient<OSMAddressPointDatabase>(":memory:")
 
 		await createOSMAddressPointTables(db)
 
@@ -66,12 +63,10 @@ describe("OSM address-point layer schema", () => {
 		expect(manifest.spineKeys).toEqual({ h3: { column: "h3_cell", resolution: 9 } })
 		expect(await readLayerCoverage(db, 123_456)).toBeUndefined()
 
-		const columns = raw.prepare("PRAGMA table_info(address_point)").all() as Array<{ name: string; notnull: number }>
+		const columns = db.prepare("PRAGMA table_info(address_point)").all() as Array<{ name: string; notnull: number }>
 		expect(columns.find((column) => column.name === "h3_cell")?.notnull).toBe(1)
-		const indexes = raw.prepare("PRAGMA index_list(address_point)").all() as Array<{ name: string }>
+		const indexes = db.prepare("PRAGMA index_list(address_point)").all() as Array<{ name: string }>
 		expect(indexes.some((index) => index.name === "idx_ap_h3")).toBe(true)
-
-		await db.destroy()
 	})
 
 	it("remains readable through the unchanged shared address-point lookup", async () => {
@@ -79,8 +74,7 @@ describe("OSM address-point layer schema", () => {
 		const path = join(dir, "address-points-fr.db")
 
 		try {
-			const raw = new DatabaseSync(path)
-			const db = new DatabaseClient<OSMAddressPointDatabase>({ database: raw })
+			const db = new DatabaseClient<OSMAddressPointDatabase>(path)
 			await createOSMAddressPointTables(db)
 			const street = "Rue de Rivoli"
 			const streetNorm = normalizeStreetForKeyLocale(street, "fr")
@@ -105,15 +99,13 @@ describe("OSM address-point layer schema", () => {
 
 			await db.destroy()
 
-			const lookup = new AddressPointSqliteLookup(path, { streetLocale: "fr" })
+			using lookup = new AddressPointSqliteLookup(path, { streetLocale: "fr" })
 
 			expect(lookup.find({ street, number: "2", postcode: "75001" })).toMatchObject({
 				lat: 48.8566,
 				lon: 2.3522,
 				source: "openstreetmap:fr",
 			})
-
-			lookup.close()
 		} finally {
 			rmSync(dir, { recursive: true, force: true })
 		}

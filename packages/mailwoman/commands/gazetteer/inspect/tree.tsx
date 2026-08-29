@@ -11,12 +11,11 @@
  *   `--compact` disables pretty-printing.
  */
 
-import * as fs from "node:fs/promises"
-import { availableParallelism } from "node:os"
-
 import { Spinner } from "@inkjs/ui"
 import type { PlacetypeRole } from "@mailwoman/core"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
+import * as fs from "@mailwoman/platform/fs/promises"
+import { availableParallelism } from "@mailwoman/platform/os"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 

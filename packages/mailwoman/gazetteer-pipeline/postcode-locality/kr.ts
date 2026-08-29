@@ -38,11 +38,10 @@
  *   preserving behavior.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { assertDatabaseIntegrity, pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { pyFloat, pyRound } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { TSVSpliterator } from "spliterator"
 
 import {
@@ -93,7 +92,7 @@ export interface PostcodeLocalityKROptions {
 }
 
 export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): Promise<void> {
-	const admin = new DatabaseSync(args.adminDB)
+	const admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
 
 	// Locality point index + id->name (romanized spr.name, for the human-readable row label).
 	const loc = admin
@@ -156,7 +155,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		}
 	}
 
-	admin.close()
+	await admin.destroy()
 
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first. Korean place names repeat heavily across the country
@@ -204,8 +203,8 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		}
 	}
 
-	const db = new DatabaseSync(args.output)
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(args.output)
+
 	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
@@ -247,14 +246,14 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		}
 	}
 
-	const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
-	db.exec("BEGIN")
+	const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
+	kdb.exec("BEGIN")
 
 	for (const r of rows) {
 		insert.run(...r)
 	}
 
-	db.exec("COMMIT")
+	kdb.exec("COMMIT")
 
 	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
 
@@ -292,18 +291,18 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		["built_at", isoSeconds()],
 	]
 
-	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+	const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
 
 	for (const [k, v] of meta) {
 		insMeta.run(k, v)
 	}
 
-	db.exec("PRAGMA journal_mode=DELETE")
-	db.exec("ANALYZE")
-	assertDatabaseIntegrity(db, args.output)
+	kdb.exec("PRAGMA journal_mode=DELETE")
+	kdb.exec("ANALYZE")
+	assertDatabaseIntegrity(kdb, args.output)
 
-	db.exec("VACUUM")
-	db.close()
+	kdb.exec("VACUUM")
+	await kdb.destroy()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
 

@@ -7,10 +7,9 @@
  *   and rejects bad input, and that a model-independent fast-path input runs through the compiled CLI.
  */
 
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-
 import { workspacePath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"

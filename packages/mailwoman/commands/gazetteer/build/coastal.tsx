@@ -76,7 +76,7 @@ interface Options {
 
 const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { execFileSync } = await import("node:child_process")
+		const { execFileSync } = await import("@mailwoman/platform/child_process")
 
 		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { dataRootPath } = await import("@mailwoman/core/utils")

@@ -22,13 +22,13 @@
  *      tier, which the builder refuses to raise while the licence is unresolved.
  */
 
-import { mkdtempSync, rmSync, statSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { CoverageBasis, LayerTier, supportsExclusion } from "@mailwoman/core/layers"
+import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ZoningContainmentPath, ZoningLookup, ZoningReadingKind } from "@mailwoman/zoning"
+import type { ZoningDatabase } from "@mailwoman/zoning/schema"
 import {
 	assertCrosswalkIsNotATable,
 	assertNoNegativeClaim,
@@ -133,7 +133,7 @@ describe("the sealed artifact", () => {
 	})
 
 	it("keys the truth table by the authority's own feature id", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const rows = database.prepare("SELECT area_id, jurisdiction_id, plan_id FROM zoning_area").all() as Array<{
@@ -149,12 +149,12 @@ describe("the sealed artifact", () => {
 				new Set([FIXTURE_PLANS.development.id, FIXTURE_PLANS.localArea.id])
 			)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("indexes a polygon smaller than a cell rather than dropping it", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const sliver = database.prepare("SELECT count(*) AS n FROM zoning_cell WHERE area_id = ?").get("4") as {
@@ -166,12 +166,12 @@ describe("the sealed artifact", () => {
 			// that would be 86.8% of the real product's polygons.
 			expect(sliver.n).toBeGreaterThan(0)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("keeps the crosswalk edge table EMPTY, because the mapping is not a function of the pair", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const edges = database.prepare("SELECT count(*) AS n FROM zoning_crosswalk_edge").get() as { n: number }
@@ -183,7 +183,7 @@ describe("the sealed artifact", () => {
 			expect(extents.n).toBe(0)
 			expect(lookup.identity.mappedExtents).toEqual([])
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 })
@@ -203,7 +203,7 @@ describe("the vocabulary decision", () => {
 	})
 
 	it("records a generic type the publisher uses without declaring, rather than coercing or dropping it", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			// Ireland declares 54 generic types and its data uses 55: `N/A` appears on a handful of rows and in no domain.
@@ -228,12 +228,12 @@ describe("the vocabulary decision", () => {
 			// code the publisher never declared.
 			expect(reading.designations[0]!.crosswalk?.label).toBe("N/A")
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("keeps a declared code the data never uses, at zero observed rows", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			// The domain is the publisher's statement of what a value MAY be, not a census of what it is. `SDZ` is the real
@@ -246,12 +246,12 @@ describe("the vocabulary decision", () => {
 			expect(row!.declared).toBe(1)
 			expect(row!.observed_rows).toBe(0)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("scopes the local vocabulary to its own authority, because local codes collide across them", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const schemes = (
@@ -264,12 +264,12 @@ describe("the vocabulary decision", () => {
 			expect(schemes).toContain("IE-GZT")
 			expect(schemes).toContain("IE-SZO")
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("populates no definition URL, because the publisher's own points at a host with no DNS record", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const withURL = database
@@ -278,7 +278,7 @@ describe("the vocabulary decision", () => {
 
 			expect(withURL.n).toBe(0)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
@@ -387,7 +387,7 @@ describe("the meaning-of-zero rule", () => {
 	})
 
 	it("writes every coverage row on source_present, so none of them supports an exclusion", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const rows = database
@@ -406,7 +406,7 @@ describe("the meaning-of-zero rule", () => {
 				expect(row.observed_rows).toBeGreaterThan(0)
 			}
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
@@ -429,15 +429,15 @@ describe("the meaning-of-zero rule", () => {
 
 		// The sealed artifact is copied and one coverage row is promoted to `designated`, which is exactly what a builder
 		// generalizing the flood layer's rule would have produced. The reader must refuse rather than answer confidently.
-		const source = new DatabaseSync(databasePath, { readOnly: true })
+		const source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			source.exec(`VACUUM INTO '${path}'`)
 		} finally {
-			source.close()
+			source.destroy()
 		}
 
-		const tampered = new DatabaseSync(path)
+		const tampered = new DatabaseClient<ZoningDatabase>(path)
 
 		try {
 			// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `WITHOUT ROWID` and has none.
@@ -446,7 +446,7 @@ describe("the meaning-of-zero rule", () => {
 					"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
 			)
 		} finally {
-			tampered.close()
+			tampered.destroy()
 		}
 
 		expect(() => new ZoningLookup({ databasePath: path })).toThrow(/supports an EXCLUSION/u)
@@ -455,7 +455,7 @@ describe("the meaning-of-zero rule", () => {
 
 describe("the provenance grade", () => {
 	it("stamps every row authoritative and rejects a blank at the storage layer", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const grades = (
@@ -466,21 +466,21 @@ describe("the provenance grade", () => {
 
 			expect(grades).toEqual(["authoritative"])
 		} finally {
-			database.close()
+			database.destroy()
 		}
 
 		// The CHECK is what makes the grade a constraint rather than a convention. `NOT NULL` alone accepts `''`, and a
 		// blank matches neither half of every read that splits on grade.
 		const path = join(scratch, "grade-check.db")
-		const source = new DatabaseSync(databasePath, { readOnly: true })
+		const source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			source.exec(`VACUUM INTO '${path}'`)
 		} finally {
-			source.close()
+			source.destroy()
 		}
 
-		const copy = new DatabaseSync(path)
+		const copy = new DatabaseClient<ZoningDatabase>(path)
 
 		try {
 			expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = '' WHERE area_id = '1'")).toThrow(
@@ -495,28 +495,28 @@ describe("the provenance grade", () => {
 			// and keeping the grades apart is the artifact's job rather than the column's.
 			expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'inferred' WHERE area_id = '1'")).not.toThrow()
 		} finally {
-			copy.close()
+			copy.destroy()
 		}
 	})
 
 	it("rejects a blank local code at the storage layer too, because the local code is the claim", () => {
 		const path = join(scratch, "code-check.db")
-		const source = new DatabaseSync(databasePath, { readOnly: true })
+		const source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
 		try {
 			source.exec(`VACUUM INTO '${path}'`)
 		} finally {
-			source.close()
+			source.destroy()
 		}
 
-		const copy = new DatabaseSync(path)
+		const copy = new DatabaseClient<ZoningDatabase>(path)
 
 		try {
 			expect(() => copy.exec("UPDATE zoning_area SET local_code = '  ' WHERE area_id = '1'")).toThrow(
 				/CHECK constraint failed/u
 			)
 		} finally {
-			copy.close()
+			copy.destroy()
 		}
 	})
 })

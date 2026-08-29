@@ -9,13 +9,12 @@
  *   runner boundary via a stub — the same seam the ONNX session sees.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 interface Fixture {

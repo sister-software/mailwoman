@@ -18,18 +18,19 @@
  *        delivery-city aliases (#1495).
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	buildCandidateTable,
 	type PlaceAttrs,
 	stageCountryDisplayNames,
 } from "@mailwoman/resolver-wof-sqlite/build-candidate"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { allRows } from "#sqlite-utils"
@@ -40,7 +41,7 @@ let scratch: string
  * A minimal admin WOF with the tables `buildCandidateTable` reads.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -85,8 +86,6 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (201, 101, 'region');
 		INSERT INTO ancestors VALUES (202, 101, 'region');
 	`)
-
-	db.close()
 }
 
 /**
@@ -97,7 +96,7 @@ function buildFixtureAdmin(path: string): void {
  * @param withNames Build the shard WITHOUT a `names` table, to cover the tolerate-and-say-so path.
  */
 function buildFixturePostcodes(path: string, withNames = true): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -131,8 +130,6 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 			INSERT INTO names VALUES (20500, 'The White House', 'postalcode', 'US', '', '', 0, 0);
 		`)
 	}
-
-	db.close()
 }
 
 interface CandRow {
@@ -150,7 +147,7 @@ interface CandRow {
 /**
  * Resolve a normalized key the way the query side does — join the code maps back to strings.
  */
-function probe(db: DatabaseSync, key: string): CandRow[] {
+function probe(db: DatabaseClient<WOFDatabase>, key: string): CandRow[] {
 	return allRows<CandRow>(
 		db.prepare(
 			`SELECT c.name_key, c.name, cc.code AS country, pc.placetype AS placetype,
@@ -183,7 +180,7 @@ describe("buildCandidateTable", () => {
 		expect(result.primaries).toBe(5)
 		expect(result.places).toBe(5)
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const [chi] = probe(db, normalizeLocalityForKey("Chicago"))
@@ -199,7 +196,7 @@ describe("buildCandidateTable", () => {
 			// Deprecated row must not resolve.
 			expect(probe(db, normalizeLocalityForKey("Old Town"))).toHaveLength(0)
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -210,13 +207,13 @@ describe("buildCandidateTable", () => {
 
 		// Georgia the country, with NO place_population row — the measured state of 147 of 237 primary
 		// country records. Without the fallback it enters every prominence race at an asserted zero.
-		const src = new DatabaseSync(input)
+		const src = new DatabaseClient<WOFDatabase>(input)
 		src.exec(`INSERT INTO spr VALUES (300, 'Georgia', 'country', 'GE', 42.0, 43.5, 41.0, 40.0, 43.6, 46.7, -1, 0)`)
-		src.close()
+		await src.destroy()
 
 		await buildCandidateTable({ input, output })
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const rows = probe(db, normalizeLocalityForKey("Georgia"))
@@ -228,7 +225,7 @@ describe("buildCandidateTable", () => {
 			const [springfield] = probe(db, normalizeLocalityForKey("Springfield"))
 			expect(springfield?.population).toBe(114_000)
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -237,7 +234,7 @@ describe("buildCandidateTable", () => {
 		const output = join(scratch, "candidate.db")
 		buildFixtureAdmin(input)
 
-		const src = new DatabaseSync(input)
+		const src = new DatabaseClient<WOFDatabase>(input)
 
 		src.exec(`
 			-- The gloss shape: a common-noun-named locality, NO population, NO importance, key volume over threshold.
@@ -266,12 +263,12 @@ describe("buildCandidateTable", () => {
 			INSERT INTO names VALUES (201, 'SPR', 'locality', 'US', 'abbr', '', 0, 0);
 		`)
 
-		src.close()
+		await src.destroy()
 
 		// Fixture-scale threshold: 5 staged keys (primary + 4 aliases) crosses it.
 		await buildCandidateTable({ input, output, glossKeyThreshold: 5 })
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		const role = (key: string): Array<{ name: string; role: string | null; primary: number }> =>
 			allRows<{ name: string; role: string | null; primary: number }>(
@@ -297,7 +294,7 @@ describe("buildCandidateTable", () => {
 			// The abbreviation KIND stamps by kind alone — no official-language test.
 			expect(role("spr")[0]).toMatchObject({ role: "abbr", primary: 0 })
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -307,7 +304,7 @@ describe("buildCandidateTable", () => {
 		buildFixtureAdmin(input)
 		await buildCandidateTable({ input, output })
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			// The query side normalizes the user's input the same way; "Saint-Étienne" → "saint-etienne".
@@ -317,7 +314,7 @@ describe("buildCandidateTable", () => {
 			expect(hit?.name).toBe("Saint-Étienne")
 			expect(hit?.country).toBe("FR")
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -329,7 +326,7 @@ describe("buildCandidateTable", () => {
 		// Chicago: Chi-Town + Windy City; Saint-Étienne: St Etienne = 3 aliases.
 		expect(result.aliases).toBe(3)
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const [windy] = probe(db, normalizeLocalityForKey("Windy City"))
@@ -337,7 +334,7 @@ describe("buildCandidateTable", () => {
 			expect(windy?.is_primary).toBe(0)
 			expect(windy?.latitude).toBeCloseTo(41.88, 2)
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -348,14 +345,14 @@ describe("buildCandidateTable", () => {
 		const result = await buildCandidateTable({ input, output })
 		expect(result.abbrevs).toBe(1)
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const [il] = probe(db, normalizeLocalityForKey("IL"))
 			expect(il?.name).toBe("Illinois")
 			expect(il?.placetype).toBe("region")
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -370,7 +367,7 @@ describe("buildCandidateTable", () => {
 		// The real-coord 60601 + 11201 survive; the 0,0 placeholder 20500 is filtered.
 		expect(result.postcodes).toBe(2)
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const [zip] = probe(db, normalizeLocalityForKey("60601"))
@@ -378,7 +375,7 @@ describe("buildCandidateTable", () => {
 			expect(zip?.latitude).toBeCloseTo(41.885, 3)
 			expect(probe(db, normalizeLocalityForKey("20500"))).toHaveLength(0)
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -394,7 +391,7 @@ describe("buildCandidateTable", () => {
 		// 'The White House' hangs off 20500, which the coord filter never staged.
 		expect(result.postcodeAliases).toBe(1)
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			// Before the fix this probe returned nothing: the delivery-city names reached
@@ -419,7 +416,7 @@ describe("buildCandidateTable", () => {
 
 			expect(probe(db, normalizeLocalityForKey("The White House"))).toHaveLength(0)
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -451,7 +448,7 @@ describe("buildCandidateTable", () => {
 		buildFixtureAdmin(input)
 		await buildCandidateTable({ input, output })
 
-		const db = new DatabaseSync(output, { readOnly: true })
+		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		try {
 			const { page_size } = db.prepare("PRAGMA page_size").get() as { page_size: number }
@@ -460,7 +457,7 @@ describe("buildCandidateTable", () => {
 			const sql = (db.prepare("SELECT sql FROM sqlite_master WHERE name='candidate'").get() as { sql: string }).sql
 			expect(sql).toMatch(/WITHOUT ROWID/i)
 		} finally {
-			db.close()
+			await db.destroy()
 		}
 	})
 
@@ -470,7 +467,7 @@ describe("buildCandidateTable", () => {
 		 * Saint-Étienne are scored; Springfield deliberately is NOT (the unmeasured case).
 		 */
 		function buildFixtureImportance(path: string): void {
-			const db = new DatabaseSync(path)
+			using db = new DatabaseClient<WOFDatabase>(path)
 
 			db.exec(`
 				CREATE TABLE spr (
@@ -492,11 +489,9 @@ describe("buildCandidateTable", () => {
 				INSERT INTO place_importance VALUES (7000000000201, 0.6126);
 				INSERT INTO place_importance VALUES (7000000060601, 0.1000);
 			`)
-
-			db.close()
 		}
 
-		function importanceOf(db: DatabaseSync, key: string): Array<number | null> {
+		function importanceOf(db: DatabaseClient<WOFDatabase>, key: string): Array<number | null> {
 			return allRows<{ importance: number | null }>(
 				db.prepare("SELECT importance FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC"),
 				key
@@ -514,7 +509,7 @@ describe("buildCandidateTable", () => {
 			expect(result.importanceScored).toBe(2) // Chicago + Saint-Étienne
 			expect(result.importanceGated).toBe(1) // Springfield — same key, wrong town
 
-			const db = new DatabaseSync(output, { readOnly: true })
+			const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			try {
 				expect(importanceOf(db, normalizeLocalityForKey("Chicago"))).toEqual([0.8125])
@@ -527,7 +522,7 @@ describe("buildCandidateTable", () => {
 				expect(importanceOf(db, normalizeLocalityForKey("Saint-Étienne"))).toEqual([0.44])
 				expect(importanceOf(db, normalizeLocalityForKey("St Etienne"))).toEqual([0.44])
 			} finally {
-				db.close()
+				await db.destroy()
 			}
 		})
 
@@ -539,7 +534,7 @@ describe("buildCandidateTable", () => {
 			buildFixtureImportance(importance)
 			await buildCandidateTable({ input, output, importance })
 
-			const db = new DatabaseSync(output, { readOnly: true })
+			const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			try {
 				// Springfield's only same-key scored place is 1,500 km away — a different town. The gate
@@ -549,7 +544,7 @@ describe("buildCandidateTable", () => {
 				expect(importanceOf(db, normalizeLocalityForKey("Illinois"))).toEqual([null])
 				expect(importanceOf(db, normalizeLocalityForKey("IL"))).toEqual([null])
 			} finally {
-				db.close()
+				await db.destroy()
 			}
 		})
 
@@ -563,7 +558,7 @@ describe("buildCandidateTable", () => {
 			buildFixtureImportance(importance)
 			await buildCandidateTable({ input, output, postcodes: [pc], importance })
 
-			const db = new DatabaseSync(output, { readOnly: true })
+			const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			try {
 				// A postcode has no toponym fame; the score source's 60601 row must not leak onto it.
@@ -571,7 +566,7 @@ describe("buildCandidateTable", () => {
 				// …including the delivery-city alias hanging off the same postcode row.
 				expect(importanceOf(db, normalizeLocalityForKey("Brooklyn"))).toEqual([null])
 			} finally {
-				db.close()
+				await db.destroy()
 			}
 		})
 
@@ -585,7 +580,7 @@ describe("buildCandidateTable", () => {
 			expect(result.importanceScored).toBeUndefined()
 			expect(result.importanceGated).toBeUndefined()
 
-			const db = new DatabaseSync(output, { readOnly: true })
+			const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			try {
 				const { n } = db.prepare("SELECT COUNT(*) AS n FROM candidate WHERE importance IS NOT NULL").get() as {
@@ -594,7 +589,7 @@ describe("buildCandidateTable", () => {
 
 				expect(n).toBe(0)
 			} finally {
-				db.close()
+				await db.destroy()
 			}
 		})
 	})
@@ -690,7 +685,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	 * unattested blob, a near-live block, an under-floor hamlet, and a superseded record the pass must never judge.
 	 */
 	function buildFixtureCurrency(path: string): void {
-		const db = new DatabaseSync(path)
+		using db = new DatabaseClient<WOFDatabase>(path)
 
 		db.exec(`
 			CREATE TABLE spr (
@@ -723,8 +718,6 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 
 			INSERT INTO place_population VALUES (301, 318);
 		`)
-
-		db.close()
 	}
 
 	/**
@@ -747,13 +740,13 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		return f.join("\t")
 	}
 
-	async function buildWithBackfill(withOption: boolean): Promise<DatabaseSync> {
+	async function buildWithBackfill(withOption: boolean): Promise<DatabaseClient<CandidateDatabase>> {
 		const input = join(scratch, "admin-currency.db")
 		const output = join(scratch, "candidate-currency.db")
 		const geonamesDir = join(scratch, "geonames")
 
 		buildFixtureCurrency(input)
-		const { mkdir, writeFile } = await import("node:fs/promises")
+		const { mkdir, writeFile } = await import("@mailwoman/platform/fs/promises")
 
 		await mkdir(geonamesDir, { recursive: true })
 
@@ -774,7 +767,7 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 			...(withOption ? { currencyBackfill: { geonamesDir, countries: ["GB"] } } : {}),
 		})
 
-		return new DatabaseSync(output, { readOnly: true })
+		return new DatabaseClient<CandidateDatabase>(output, { readOnly: true })
 	}
 
 	test("resurrects the Rochester class: dead + attested + only a DISTANT namesake alive", async () => {
@@ -793,11 +786,11 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		expect(kent.population).toBe(28_671)
 
 		expect(kent.is_primary).toBe(1)
-		;(await db).close()
+		;(await db).destroy()
 	})
 
 	test("keeps the gates: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
-		const db = await buildWithBackfill(true)
+		await using db = await buildWithBackfill(true)
 
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
 			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
@@ -806,15 +799,12 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 			// stage nothing at all.
 			expect(rows.map((r) => r.spr_id)).toEqual(key === "nearlive" ? [304] : [])
 		}
-
-		db.close()
 	})
 
 	test("without the option the pass never runs and every hole stays dead", async () => {
-		const db = await buildWithBackfill(false)
+		await using db = await buildWithBackfill(false)
 		const { n } = db.prepare(`SELECT COUNT(*) AS n FROM candidate WHERE spr_id = 300`).get() as { n: number }
 
 		expect(n).toBe(0)
-		db.close()
 	})
 })

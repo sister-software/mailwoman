@@ -26,10 +26,9 @@
  *   rather than failing.
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 /**
  * Build inputs for one country's placetype-pair index. Shape mirrored from `release.config.json`; only `db` is read

@@ -1,3 +1,6 @@
+import { $public } from "@mailwoman/core/env"
+import { childEnv } from "@mailwoman/core/scripting/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -18,13 +21,9 @@
  *   The unit tests (the locale→country inference + the override precedence) are CI-safe. The
  *   end-to-end resolution check needs the GLOBAL admin DB, so it skips when that DB is absent.
  */
-import { execFile } from "node:child_process"
-import { existsSync } from "node:fs"
-import { promisify } from "node:util"
-
-import { $public } from "@mailwoman/core/env"
-import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { existsSync } from "@mailwoman/platform/fs"
+import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { localeToCountry, resolverDefaultCountry, spec as parseSpec } from "mailwoman/commands/parse"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"

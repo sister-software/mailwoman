@@ -34,10 +34,9 @@
  *   renamed fails as a SQL error naming the column rather than as a stream of null distances.
  */
 
-import { execFile, spawn } from "node:child_process"
-import { promisify } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { execFile, spawn } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { assertRingsInsideExtent, type MultiPolygonRings, type PolygonRings } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
 import { JSONSpliterator } from "spliterator"

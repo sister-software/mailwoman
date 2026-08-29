@@ -17,12 +17,8 @@
  *   two contradictory numbers under one name.
  */
 
-import { mkdtempSync, rmSync, statSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { CoastalContainmentPath, CoastalErosionLookup, CoastalReadingKind } from "@mailwoman/coastal"
+import type { CoastalDatabase } from "@mailwoman/coastal/schema"
 import {
 	assertNoNegativeClaim,
 	buildCoastalDatabase,
@@ -41,6 +37,10 @@ import {
 } from "@mailwoman/coastal/test-kit"
 import { NCERM_LAYER_NAME } from "@mailwoman/coastal/vocabulary"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/core/layers"
+import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 10
@@ -129,7 +129,7 @@ describe("the sealed artifact", () => {
 	})
 
 	it("keys the truth table by scenario and by the authority's feature id, never by the frontage", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const rows = database.prepare("SELECT area_id, scenario_key, frontage_id FROM coastal_zone_area").all() as Array<{
@@ -145,12 +145,12 @@ describe("the sealed artifact", () => {
 			expect(new Set(rows.map((row) => row.area_id)).size).toBe(5)
 			expect(rows.filter((row) => row.scenario_key === NFI)).toHaveLength(4)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
 	it("indexes a polygon narrower than a cell rather than dropping it", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const sliver = database
@@ -161,7 +161,7 @@ describe("the sealed artifact", () => {
 			// downstream as an absence — the failure the per-part zero-cell guard exists to make impossible.
 			expect(sliver.n).toBeGreaterThan(0)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 })
@@ -220,7 +220,7 @@ describe("the meaning-of-zero inversion", () => {
 	})
 
 	it("writes every coverage row on source_present, so none of them supports an exclusion", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const rows = database
@@ -239,7 +239,7 @@ describe("the meaning-of-zero inversion", () => {
 				expect(row.observed_rows).toBeGreaterThan(0)
 			}
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 
@@ -262,15 +262,15 @@ describe("the meaning-of-zero inversion", () => {
 
 		// The sealed artifact is copied and one coverage row is promoted to `designated`, which is exactly what a builder
 		// generalizing the flood layer's rule would have produced. The reader must refuse rather than answer confidently.
-		const source = new DatabaseSync(databasePath, { readOnly: true })
+		const source = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
 		try {
 			source.exec(`VACUUM INTO '${path}'`)
 		} finally {
-			source.close()
+			source.destroy()
 		}
 
-		const tampered = new DatabaseSync(path)
+		const tampered = new DatabaseClient<CoastalDatabase>(path)
 
 		try {
 			// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `WITHOUT ROWID` and has none.
@@ -279,7 +279,7 @@ describe("the meaning-of-zero inversion", () => {
 					"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
 			)
 		} finally {
-			tampered.close()
+			tampered.destroy()
 		}
 
 		expect(() => new CoastalErosionLookup({ databasePath: path })).toThrow(/supports an EXCLUSION/u)
@@ -306,7 +306,7 @@ describe("ground instability", () => {
 	})
 
 	it("keeps ground-instability polygons out of the erosion cell index entirely", () => {
-		const database = new DatabaseSync(databasePath, { readOnly: true })
+		const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
 		try {
 			const rows = database
@@ -317,7 +317,7 @@ describe("ground instability", () => {
 
 			expect(rows.n).toBe(0)
 		} finally {
-			database.close()
+			database.destroy()
 		}
 	})
 })
@@ -344,14 +344,14 @@ describe("the declared domains", () => {
 		const features = fixtureFeatures()
 		const built = await build([{ ...features[0]!, defenceType: "Sheet piles" }], "folded-defence.db")
 
-		const database = new DatabaseSync(built.path, { readOnly: true })
+		const database = new DatabaseClient<CoastalDatabase>(built.path, { readOnly: true })
 
 		try {
 			const row = database.prepare("SELECT defence_type FROM coastal_zone_area").get() as { defence_type: string }
 
 			expect(row.defence_type).toBe("Sheet piles")
 		} finally {
-			database.close()
+			await database.destroy()
 		}
 	})
 
@@ -374,7 +374,7 @@ describe("the declared domains", () => {
 			"anomalous.db"
 		)
 
-		const database = new DatabaseSync(built.path, { readOnly: true })
+		const database = new DatabaseClient<CoastalDatabase>(built.path, { readOnly: true })
 
 		try {
 			const row = database.prepare("SELECT mt_policy, published_year FROM coastal_zone_area").get() as {
@@ -386,7 +386,7 @@ describe("the declared domains", () => {
 			expect(row.mt_policy).toBe(" ")
 			expect(row.published_year).toBe(0)
 		} finally {
-			database.close()
+			await database.destroy()
 		}
 	})
 })

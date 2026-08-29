@@ -47,14 +47,6 @@
  *   not in any OS OpenData product.
  */
 
-import { createWriteStream, existsSync, unlinkSync } from "node:fs"
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -65,7 +57,12 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { createWriteStream, existsSync, unlinkSync } from "@mailwoman/platform/fs"
+import { mkdir, readdir, readFile, stat, writeFile } from "@mailwoman/platform/fs/promises"
+import { dirname } from "@mailwoman/platform/path"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import {
 	LATITUDE_MAX,
@@ -75,6 +72,8 @@ import {
 	shortCellToInt,
 	type H3Cell,
 } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent } from "h3-js"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
@@ -634,9 +633,9 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseSync(ingestPath)
+	const kdb = new DatabaseClient<UPRNDatabase>(ingestPath)
 
-	db.exec(`
+	kdb.exec(`
 		PRAGMA page_size = 8192;
 		PRAGMA journal_mode = WAL;
 		PRAGMA synchronous = NORMAL;
@@ -644,8 +643,6 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		PRAGMA temp_store = MEMORY;
 		PRAGMA cache_size = -400000;
 	`)
-
-	const kdb = new DatabaseClient<UPRNDatabase>({ database: db })
 
 	await createUPRNTable(kdb)
 	await createUPRNMetaTable(kdb)
@@ -655,7 +652,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	// Hot positional INSERT — raw prepared statement, per the AGENTS.md bulk-load carve-out. OR IGNORE so a
 	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 41M-row load; the
 	// accounting gate then reports any as a defect.
-	const insert = db.prepare("INSERT OR IGNORE INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
+	const insert = kdb.prepare("INSERT OR IGNORE INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 
 	const coverage = new Map<number, number>()
 	let read = 0
@@ -665,7 +662,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	let headerSeen = false
 
 	phase("ingest", extracted.csvPath)
-	db.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for await (const rawLine of TextSpliterator.fromAsync(extracted.csvPath)) {
 		if (!headerSeen) {
@@ -675,8 +672,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 			const header = withoutBOM.endsWith("\r") ? withoutBOM.slice(0, -1) : withoutBOM
 
 			if (header !== OPEN_UPRN_HEADER) {
-				db.exec("ROLLBACK")
-				db.close()
+				kdb.exec("ROLLBACK")
+				await kdb.destroy()
 				throw new Error(
 					`buildUPRNLayer: header drift — expected ${JSON.stringify(OPEN_UPRN_HEADER)}, found ${JSON.stringify(header)}`
 				)
@@ -715,8 +712,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		coverage.set(parent, (coverage.get(parent) ?? 0) + 1)
 
 		if (inserted % 1_000_000 === 0) {
-			db.exec("COMMIT")
-			db.exec("BEGIN")
+			kdb.exec("COMMIT")
+			kdb.exec("BEGIN")
 
 			if (inserted % 5_000_000 === 0) {
 				phase("ingest", `${inserted.toLocaleString()} rows…`)
@@ -724,7 +721,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		}
 	}
 
-	db.exec("COMMIT")
+	kdb.exec("COMMIT")
 	phase("ingest", `${inserted.toLocaleString()} UPRNs (${read.toLocaleString()} lines read)`)
 
 	// --- Gates. No upstream row-count manifest exists for this product (see the module docstring), so the
@@ -823,7 +820,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	}
 
 	phase("freeze")
-	db.exec("ANALYZE")
+	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
 	phase("seal", out)

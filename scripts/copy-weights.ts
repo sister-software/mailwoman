@@ -34,16 +34,15 @@
  *   Idempotent. Used by .release-it.json's before:init hook.
  */
 
-import { spawnSync } from "node:child_process"
-import type { PathLike } from "node:fs"
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, unlinkSync } from "node:fs"
-import { copyFile, mkdir, stat, unlink } from "node:fs/promises"
-import { resolve } from "node:path"
-
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import type { PathLike } from "@mailwoman/platform/fs"
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, unlinkSync } from "@mailwoman/platform/fs"
+import { copyFile, mkdir, stat, unlink } from "@mailwoman/platform/fs/promises"
+import { resolve } from "@mailwoman/platform/path"
 
 import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
 

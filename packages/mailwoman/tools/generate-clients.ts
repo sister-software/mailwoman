@@ -33,13 +33,20 @@
  *   rotting silently in a file nobody compiles.
  */
 
-import { spawnSync } from "node:child_process"
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 import type { Check } from "#cli-kit"
 

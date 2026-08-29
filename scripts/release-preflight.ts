@@ -19,13 +19,12 @@
  *   version from the base package's model card unless `--version` names another.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { copyWeights } from "./copy-weights.ts"
 import { fetchHFWeights, reportHFMaterialization } from "./fetch-hf-weights.ts"

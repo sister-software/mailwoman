@@ -35,13 +35,13 @@
  *   Usage: node packages/mailwoman/dev-tools/build-gb-anchor-bin.run.ts --out <dir>
  */
 
-import { writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * A GB unit postcode in the space-stripped key form the train painter writes. Verbatim from
@@ -64,13 +64,13 @@ const { values } = parseArgs({
 if (!values.out) throw new Error("--out <dir> is required")
 
 const shardPath = values.shard!.startsWith("/") ? values.shard! : String(dataRootPath("wof", values.shard!))
-const con = new DatabaseSync(shardPath, { readOnly: true })
+const con = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 
 const rows = con
 	.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
 	.all() as Array<{ name: string; latitude: number; longitude: number }>
 
-con.close()
+await con.destroy()
 
 const entries: PostcodeBinaryEntry[] = []
 const outward = new Map<string, { lat: number; lon: number; n: number }>()

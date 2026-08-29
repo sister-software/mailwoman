@@ -14,10 +14,6 @@
  *   directory path produces that same answer twice.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { resolve } from "node:path"
-
 import { compileGeographicModel, serializeCompiledModel, ValidationIssueCode } from "@mailwoman/geographic-model"
 import {
 	type GeographicModelSourceFile,
@@ -27,6 +23,9 @@ import {
 	mergeGeographicModelFiles,
 	MODEL_MANIFEST_FILENAME,
 } from "@mailwoman/geographic-model/load"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { resolve } from "@mailwoman/platform/path"
 import { afterEach, describe, expect, it } from "vitest"
 
 const manifest = { version: "0.1.0" }

@@ -60,6 +60,11 @@
 			"node": "./index.ts",
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
+		},
+		"./sdk/schema": {
+			"node": "./sdk/schema.ts",
+			"default": "./out/sdk/schema.js",
+			"types": "./out/sdk/schema.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -70,7 +75,9 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@turf/boolean-contains": "^7.3.5",
 		"kysely": "^0.29.4",
 		"spliterator": "^6.2.0",

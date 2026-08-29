@@ -8,13 +8,11 @@
  * measurement contract, truth unit, and leakage controls.
  */
 
-import { chmodSync } from "node:fs"
-import { mkdtemp, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { chmodSync } from "@mailwoman/platform/fs"
+import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { FilerIdentifierType, FilerRelationship, type FilerDatabase } from "../schema.ts"
 import { buildFilerDatabase } from "../sdk/build-filer.ts"
@@ -598,7 +596,7 @@ export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<L
 		// first (mirrors filer-lookup.test.ts's "REAL builder + REAL clusterAuthoritativeComponents" gate).
 		chmodSync(out, 0o644)
 
-		using db = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(out) })
+		using db = new DatabaseClient<FilerDatabase>(out)
 
 		// Run the full shipped pipeline, not just the builder — the entity-resolution pass is part of what produces a
 		// real filer.db, and its counters belong in the report even though this eval scores a different table.

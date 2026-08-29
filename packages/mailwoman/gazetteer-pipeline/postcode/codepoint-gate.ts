@@ -25,10 +25,10 @@
  *      explicitly rather than left inside the general "only in incumbent" bucket.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { percentile } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Metres per kilometre — {@link haversineKm} returns km and every figure here is reported in metres.
@@ -211,8 +211,8 @@ export interface RunCodePointGateOptions {
 export function runCodePointGate(options: RunCodePointGateOptions): CodePointGateReport {
 	const phase = options.onPhase ?? (() => {})
 
-	const codepoint = new DatabaseSync(options.codepointPath, { readOnly: true })
-	const incumbent = new DatabaseSync(options.incumbentPath, { readOnly: true })
+	const codepoint = new DatabaseClient<WOFDatabase>(options.codepointPath, { readOnly: true })
+	const incumbent = new DatabaseClient<WOFDatabase>(options.incumbentPath, { readOnly: true })
 
 	try {
 		phase("load", "incumbent GB rows")
@@ -312,7 +312,7 @@ export function runCodePointGate(options: RunCodePointGateOptions): CodePointGat
 			over10km,
 		}
 
-		const areaCount = (db: DatabaseSync, areas: readonly string[]): Record<string, number> => {
+		const areaCount = (db: DatabaseClient<WOFDatabase>, areas: readonly string[]): Record<string, number> => {
 			const counts: Record<string, number> = {}
 
 			for (const area of areas) {
@@ -389,8 +389,8 @@ export function runCodePointGate(options: RunCodePointGateOptions): CodePointGat
 			probes,
 		}
 	} finally {
-		codepoint.close()
-		incumbent.close()
+		codepoint.destroy()
+		incumbent.destroy()
 	}
 }
 

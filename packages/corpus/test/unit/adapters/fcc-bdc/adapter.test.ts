@@ -4,10 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readFile, rm } from "node:fs/promises"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { workspacePath } from "@mailwoman/core/utils"
 import {
 	FCC_BDC_ADAPTER_ID,
@@ -15,6 +12,9 @@ import {
 	buildPostcode,
 	createFccBdcAdapter,
 } from "@mailwoman/corpus/adapters/fcc-bdc/adapter"
+import { readFile, rm } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"
@@ -31,9 +31,8 @@ let dbPath: string
 async function buildFixtureDB(): Promise<string> {
 	const sql = await readFile(fixtureSQLPath, "utf8")
 	const path = join(scratch.path, "fcc-bdc-fixture.db")
-	const db = new DatabaseSync(path)
+	await using db = new DatabaseClient<BDCDatabase>(path)
 	db.exec(sql)
-	db.close()
 
 	return path
 }

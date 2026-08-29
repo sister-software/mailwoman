@@ -7,8 +7,7 @@
  *   layout used in core/vitest.config.ts.
  */
 
-import { resolve } from "node:path"
-
+import { resolve } from "@mailwoman/platform/path"
 // `defineConfig` from "vitest/config" (not "vite"): vitest's overload carries the `test` field.
 // vite 8 (pulled in by docs/ Storybook) no longer applies the `vitest/config` type augmentation to
 // vite's own `defineConfig`, so importing from "vite" makes `test` a type error under vite 8.

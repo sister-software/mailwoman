@@ -28,11 +28,10 @@
  *   - `--check-only` — resolve + validate + print, but write nothing (the dry-run path).
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import semver from "semver"
 
 import { bumpReleaseConfigVersion } from "./release-config-version.ts"

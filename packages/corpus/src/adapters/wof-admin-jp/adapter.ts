@@ -29,10 +29,10 @@
  *   from MLIT/JapanPost).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { isPresent } from "@mailwoman/core/objects"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
@@ -142,7 +142,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 				throw new Error(`wof-admin-jp adapter: only JP supported, got country=${opts.country}`)
 			}
 
-			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
+			const db = new DatabaseClient<WOFDatabase>(opts.inputPath, { readOnly: true })
 
 			try {
 				const jpnNamesStmt = db.prepare(`SELECT id, name FROM names WHERE language = 'jpn'`)
@@ -204,7 +204,7 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 					emitted++
 				}
 			} finally {
-				db.close()
+				await db.destroy()
 			}
 		},
 	}

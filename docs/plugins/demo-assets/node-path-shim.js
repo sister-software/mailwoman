@@ -6,7 +6,7 @@
  *   Browser stand-in for `node:path`, wired as the webpack `fallback` in `plugin.ts`. The previous
  *   fallback was `false` (empty module), which works until client-reachable code uses a NAMED import
  *   — an ESM named import of a missing export is a hard compile error, not a runtime `undefined`.
- *   `path-ts`'s `path-builder.js` does `import { posix } from "node:path"`, and the demo's
+ *   `path-ts`'s `path-builder.js` does `import { posix } from "@mailwoman/platform/path"`, and the demo's
  *   source-aliased `@mailwoman/*` graph pulls it into the client bundle (2026-08-05 build break).
  *
  *   Posix-only semantics on purpose: the browser has no platform paths, and every in-repo consumer

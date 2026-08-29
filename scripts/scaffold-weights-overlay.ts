@@ -33,12 +33,11 @@
  *     node scripts/scaffold-weights-overlay.ts --locale es-ES --artifact pair-index-es.bin
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const { values } = parseArgs({
 	options: {

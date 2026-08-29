@@ -21,10 +21,9 @@
  *   Zone-1-by-absence rule.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
 import {
 	OUTSIDE_PUBLICATION_POINTS,

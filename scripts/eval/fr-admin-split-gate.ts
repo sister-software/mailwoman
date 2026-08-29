@@ -20,14 +20,13 @@
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
  */
 
-import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { dataRootPath, percentile, tempRootPath } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 

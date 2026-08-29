@@ -24,8 +24,7 @@
  *   `gazetteer build poi`.
  */
 
-import { execFileSync } from "node:child_process"
-
+import { execFileSync } from "@mailwoman/platform/child_process"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 

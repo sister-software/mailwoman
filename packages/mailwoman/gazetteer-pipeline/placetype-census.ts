@@ -24,11 +24,11 @@
  *   about (`dependent_locality`) is exactly the one the rule keeps.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * The complete Who's on First placetype vocabulary (35 as of 2026-08-02). {@link PLACETYPE_PROJECTION} must carry a key
@@ -175,7 +175,7 @@ export interface PlacetypeCensusBuildResult {
  * some) would attribute a child's evidence to the wrong locale's artifact.
  */
 export function buildPlacetypeCensus(adminDBPath: string, country: string): PlacetypeCensusBuildResult {
-	const db = new DatabaseSync(adminDBPath, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
 	try {
 		const parentList = PARENT_PLACETYPES.map((placetype) => `'${placetype}'`).join(", ")
@@ -236,7 +236,7 @@ export function buildPlacetypeCensus(adminDBPath: string, country: string): Plac
 
 		return { nodes, countryTotals, links, unmappedPlacetypes: [...unmapped].toSorted() }
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }
 

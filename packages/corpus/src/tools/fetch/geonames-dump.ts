@@ -17,12 +17,11 @@
  *   the basename) is reported as `wrong_format_present`, never counted as coverage.
  */
 
-import { existsSync, mkdirSync } from "node:fs"
-import { open, readFile, rm } from "node:fs/promises"
-import { join } from "node:path"
-
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync } from "@mailwoman/platform/fs"
+import { open, readFile, rm } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, HTTPStatusError, writeManifest } from "./download.ts"

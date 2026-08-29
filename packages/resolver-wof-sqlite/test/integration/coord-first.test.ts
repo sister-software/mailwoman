@@ -1,3 +1,5 @@
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -11,13 +13,11 @@
  *   unambiguous city over the postcode's fine-grained Ortsteil, and the path is inert without a
  *   postcode.
  */
-import { DatabaseSync } from "node:sqlite"
-
-import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-function buildDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,

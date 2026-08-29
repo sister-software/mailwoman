@@ -20,10 +20,9 @@
  *   WOF SQLite), so a row-major loop would evict and rebuild a multi-second engine on nearly every iteration.
  */
 
-import { readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { haversineKm } from "@mailwoman/spatial"
 import type { GeocodeSessionOptions } from "mailwoman/geocode-session"
 

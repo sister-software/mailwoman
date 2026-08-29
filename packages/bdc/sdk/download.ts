@@ -5,10 +5,9 @@
  * @file FCC BDC availability-file download + zip extraction.
  */
 
-import * as fs from "node:fs/promises"
-import * as path from "node:path"
-
 import { extractSingleFileZip } from "@mailwoman/core/fs/zip"
+import * as fs from "@mailwoman/platform/fs/promises"
+import * as path from "@mailwoman/platform/path"
 
 import type { BDCClient } from "./client.ts"
 import { BDCFilingDataType, type BDCFile } from "./common.ts"

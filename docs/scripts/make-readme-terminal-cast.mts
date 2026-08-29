@@ -19,7 +19,7 @@
  *   illegal inside an XML comment and breaks the image).
  */
 
-import { writeFileSync } from "node:fs"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Deterministic stand-in for Math.random (mulberry32) — reruns must be byte-identical.

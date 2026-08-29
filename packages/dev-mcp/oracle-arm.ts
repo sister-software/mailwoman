@@ -21,8 +21,6 @@
  *   spending money; the operator has to have written it down first.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
@@ -30,6 +28,7 @@ import {
 	createGoogleGeocoderClient,
 	type OracleGeocodeResult,
 } from "@mailwoman/geocode-oracle"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 
 import type { ExternalAnswer } from "./external-arm.ts"
 

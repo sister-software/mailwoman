@@ -27,11 +27,10 @@
  *   matching how `.codex/config.toml` addresses `packages/dev-mcp/cli.ts`.
  */
 
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 
 import { lintReply, renderVerdict } from "./vale-check-core.ts"
 

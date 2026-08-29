@@ -24,13 +24,13 @@
  *   instead of being the silent cause of a wrong "absent".
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { candidateSystemsForPostcode, us } from "@mailwoman/codex"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { AnchorSpanMode } from "@mailwoman/neural/anchor-inference"
 import { sanitizeFTSQuery } from "@mailwoman/resolver-wof-sqlite/fts-query"
+import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { normalizeLocalityForKey, stripLocalityQualifier } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { LookupRow } from "./lookup.ts"
 import { type PlaceIDProvenance, placeIDProvenance } from "./place-id-provenance.ts"
@@ -70,7 +70,7 @@ const CandidateRoute = {
 
 type CandidateRoute = (typeof CandidateRoute)[keyof typeof CandidateRoute]
 
-export interface CandidateLookupOptions {
+export interface CandidateLookupOptions<DB> {
 	/**
 	 * ISO alpha-2 filter. A country the artifact carries no dictionary entry for is reported as a COVERAGE gap, never as
 	 * a miss on the name.
@@ -84,7 +84,7 @@ export interface CandidateLookupOptions {
 	 * same-generation only: a cross-era pair re-keys Overture-minted ids, and the miss surfaces as `importance_split:
 	 * null` on rows whose blended `importance` is measured — which is why the caller's note reports the join rate.
 	 */
-	importance?: { db: DatabaseSync; artifact: string }
+	importance?: { db: DatabaseClient<PlaceImportanceDatabase>; artifact: string }
 }
 
 interface CandidateEntry extends PlaceIDProvenance {
@@ -145,10 +145,10 @@ function candidateSelect(hasNameRole: boolean): string {
  *   is a coverage gap; a country it DOES carry, with rows under the key elsewhere, is a filter miss and reports the
  *   third state (`hit`, no entries).
  */
-export function lookupCandidate(
-	db: DatabaseSync,
+export function lookupCandidate<DB>(
+	db: DatabaseClient<DB>,
 	queries: string[],
-	options: CandidateLookupOptions = {}
+	options: CandidateLookupOptions<DB> = {}
 ): LookupRow[] {
 	const limit = options.limit ?? DEFAULT_ENTRY_LIMIT
 	const wantCountry = options.country?.toUpperCase()
@@ -451,12 +451,12 @@ export function diffCandidateRows(rowsA: LookupRow[], rowsB: LookupRow[]): Candi
 /**
  * One opened WOF admin/postcode shard.
  */
-export interface WOFShard {
+export interface WOFShard<DB> {
 	/**
 	 * How the shard is named in output — its basename, which is how every runbook refers to it.
 	 */
 	name: string
-	db: DatabaseSync
+	db: DatabaseClient<DB>
 }
 
 /**
@@ -553,8 +553,8 @@ function wofStatements(from: string, order: string, scoped: boolean): { rows: st
  * string; read the returned `name`. The `names` route is byte-exact under the index's binary collation, so case and
  * punctuation matter there — which is why a double miss says what was checked rather than "WOF does not have it".
  */
-export function lookupWOF(
-	shards: WOFShard[],
+export function lookupWOF<DB>(
+	shards: WOFShard<DB>[],
 	queries: string[],
 	options: { limit?: number; country?: string } = {}
 ): LookupRow[] {
@@ -575,7 +575,12 @@ export function lookupWOF(
 		// record, so the raw sum overstates; `matched` reports the de-duplicated figure and `scanned` the sum.
 		let scanned = 0
 
-		const collect = (shard: WOFShard, route: WOFRoute, statements: { rows: string; count: string }, bind: string) => {
+		const collect = (
+			shard: WOFShard<DB>,
+			route: WOFRoute,
+			statements: { rows: string; count: string },
+			bind: string
+		) => {
 			const params = scoped ? [bind, country!] : [bind]
 
 			let rows: WOFRow[]
@@ -662,7 +667,7 @@ export function lookupWOF(
 	})
 }
 
-export interface POILookupOptions {
+export interface POILookupOptions<DB> {
 	country?: string
 	limit?: number
 }
@@ -691,7 +696,11 @@ const POI_SELECT =
  * 1.3 ms warm and 3,158 ms on the FIRST probe against a cold page cache — worth knowing before reading a slow first
  * call as a hang, and not worth trading the true denominator for.
  */
-export function lookupPOI(db: DatabaseSync, queries: string[], options: POILookupOptions = {}): LookupRow[] {
+export function lookupPOI<DB>(
+	db: DatabaseClient<DB>,
+	queries: string[],
+	options: POILookupOptions<DB> = {}
+): LookupRow[] {
 	const limit = options.limit ?? DEFAULT_ENTRY_LIMIT
 	const wantCountry = options.country?.toUpperCase()
 	const countAll = db.prepare("SELECT count(*) AS n FROM poi WHERE name_key = ?")

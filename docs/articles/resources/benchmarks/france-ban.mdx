@@ -149,7 +149,7 @@ defects they exposed. It does not support a national accuracy figure for France,
 
 ## Reproduce
 
-The script is [`fr-ban-panel.mjs`](/benchmarks/fr-ban-panel.mjs), the panel is
+The script is [`fr-ban-panel.ts`](/benchmarks/fr-ban-panel.ts), the panel is
 [`fr-ban-sample.json`](/benchmarks/fr-ban-sample.json), and the output above is
 [`fr-ban-results.json`](/benchmarks/fr-ban-results.json) verbatim, including a per-row record for
 every address in both arms.
@@ -167,7 +167,7 @@ npm install mailwoman @mailwoman/neural @mailwoman/neural-weights-fr-fr \
             @mailwoman/resolver @mailwoman/resolver-wof-sqlite @mailwoman/ban \
             @mailwoman/core @mailwoman/spatial
 mailwoman data pull candidate fr
-node fr-ban-panel.mjs --data-root <DATA_ROOT> --out fr-ban-results.json
+node fr-ban-panel.ts --data-root <DATA_ROOT> --out fr-ban-results.json
 ```
 
 The two bundles are about 8.6 GB together. [`run-all.sh`](/benchmarks/run-all.sh) does the pull and
@@ -176,7 +176,7 @@ runs both published panels in one pass.
 To redraw the panel against a newer BAN release rather than grading the committed one:
 
 ```bash
-node fr-ban-panel.mjs --resample --data-root <DATA_ROOT>
+node fr-ban-panel.ts --resample --data-root <DATA_ROOT>
 ```
 
 The seed is a constant in the script, not a flag, because changing it changes which addresses are

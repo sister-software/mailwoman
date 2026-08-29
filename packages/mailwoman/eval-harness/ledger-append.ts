@@ -24,9 +24,8 @@
  *       [--card neural-weights-en-us/model-card.json] [--notes "..."] [--replace]
  */
 
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { existsSync, readFileSync, renameSync, writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Options for {@linkcode ledgerAppend}.

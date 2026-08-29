@@ -10,12 +10,6 @@
  *   path set but the file missing, path set and the file present.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	assertBDCDatabaseExists,
 	assertFilerDatabaseExists,
@@ -23,12 +17,16 @@ import {
 	openFilerDatabaseIfPresent,
 	openPlausibilityPOIDeps,
 } from "@mailwoman/mcp/layer-guards"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	createPOISearchFTS,
 	createPOIStagingTables,
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, it } from "vitest"
 
 let scratch: string | undefined
@@ -49,7 +47,7 @@ async function emptySqliteFile(name: string): Promise<string> {
 	scratch = await mkdtemp(join(tmpdir(), "mcp-layer-guards-"))
 	const path = join(scratch, name)
 
-	new DatabaseSync(path).close()
+	new DatabaseClient<POIDatabase>(path).destroy()
 
 	return path
 }
@@ -63,15 +61,12 @@ async function emptySqliteFile(name: string): Promise<string> {
 async function poiFixtureFile(name: string): Promise<string> {
 	scratch = await mkdtemp(join(tmpdir(), "mcp-layer-guards-"))
 	const path = join(scratch, name)
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	await using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// Also creates `poi_category_codes`, per `poi-schema.ts`'s naming.
 	await createPOIStagingTables(kdb)
-	createPOISearchFTS(raw)
-
-	await kdb.destroy()
+	createPOISearchFTS(kdb)
 
 	return path
 }
@@ -87,11 +82,9 @@ describe("openBDCDatabaseIfPresent", () => {
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("bdc.db")
-		const db = openBDCDatabaseIfPresent(path)
+		await using db = openBDCDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
-
-		await db?.destroy()
 	})
 })
 
@@ -141,11 +134,9 @@ describe("openFilerDatabaseIfPresent", () => {
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("filer.db")
-		const db = openFilerDatabaseIfPresent(path)
+		await using db = openFilerDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
-
-		await db?.destroy()
 	})
 })
 

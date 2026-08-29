@@ -13,11 +13,10 @@
  *   later ordering API trips it on the commit that adds it.
  */
 
-import { readFileSync } from "node:fs"
-import { createRequire } from "node:module"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import * as geographicModel from "@mailwoman/geographic-model"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { createRequire } from "@mailwoman/platform/module"
 import { describe, expect, it } from "vitest"
 
 interface Manifest {

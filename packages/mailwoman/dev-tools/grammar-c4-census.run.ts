@@ -5,11 +5,10 @@
 
 /* oxlint-disable sister-software/multiline-statement-padding -- each row's evidence assembly reads as one operation */
 
-import { writeFile } from "node:fs/promises"
-import { parseArgs } from "node:util"
-
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
+import { writeFile } from "@mailwoman/platform/fs/promises"
+import { parseArgs } from "@mailwoman/platform/util"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
 

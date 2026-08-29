@@ -16,10 +16,10 @@
  *   streams to stderr; the summary lands on stdout.
  */
 
-import { readdirSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { readdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -80,10 +80,10 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 
 		for (const file of shardFiles) {
 			const slug = file.replace(/^address-points-us-/, "").replace(/\.db$/, "")
-			let db: DatabaseSync
+			let db: DatabaseClient<AddressPointDatabase>
 
 			try {
-				db = new DatabaseSync(path.join(outDir, file), { readOnly: true })
+				db = new DatabaseClient<AddressPointDatabase>(path.join(outDir, file), { readOnly: true })
 			} catch {
 				manifest.states[slug] = { ok: false, error: "unreadable" }
 
@@ -111,7 +111,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 
 				console.error(`${slug.padEnd(8)} ${points.toLocaleString().padStart(12)} points · ${rows.length} sources`)
 			} finally {
-				db.close()
+				await db.destroy()
 			}
 		}
 

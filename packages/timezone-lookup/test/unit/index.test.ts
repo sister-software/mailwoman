@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	makeTimezoneAnnotator,
 	offsetSecForTimezone,
 	pointInMultiPolygon,
 	TimezoneLookup,
 } from "@mailwoman/timezone-lookup"
+import type { TimezoneDatabase } from "@mailwoman/timezone-lookup/schema"
 import { expect, test } from "vitest"
 
 const SQUARE: number[][][][] = [
@@ -41,8 +41,8 @@ test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
 })
 
-function fixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function fixtureDB(): DatabaseClient<TimezoneDatabase> {
+	const db = new DatabaseClient<TimezoneDatabase>(":memory:")
 	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
 
 	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run(
@@ -58,13 +58,16 @@ function fixtureDB(): DatabaseSync {
 }
 
 test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", () => {
-	const lookup = new TimezoneLookup({ database: fixtureDB() })
+	using db = fixtureDB()
+	using lookup = new TimezoneLookup({ database: db })
 	expect(lookup.find(5, 5)).toBe("Test/Zone")
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
 test("makeTimezoneAnnotator: fills AnnotationSet.timezone", () => {
-	const annotate = makeTimezoneAnnotator(new TimezoneLookup({ database: fixtureDB() }))
+	using db = fixtureDB()
+	using lookup = new TimezoneLookup({ database: db })
+	const annotate = makeTimezoneAnnotator(lookup)
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone" } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

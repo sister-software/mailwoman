@@ -17,12 +17,11 @@
  *   survey area raises NOTHING — an advisory there would report a survey nobody ran.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { QueryKind } from "@mailwoman/core/pipeline"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import type { Resolver } from "@mailwoman/resolver"
 import { buildSoilDatabase } from "@mailwoman/soil/sdk/build-soil"
 import {

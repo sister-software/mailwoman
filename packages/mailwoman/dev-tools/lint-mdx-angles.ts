@@ -15,9 +15,8 @@
  *   mailwoman dev lint mdx-angles [files...]
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync, readFileSync } from "node:fs"
-
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 /**

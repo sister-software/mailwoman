@@ -14,11 +14,10 @@
  *   drawn from, because a denominator that travels with the number is the only kind that survives a relay.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, mulberry32, repoRootPath } from "@mailwoman/core/utils"
 import { sha256Hex } from "@mailwoman/core/utils/hash"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"

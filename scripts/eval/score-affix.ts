@@ -6,9 +6,8 @@
  *   Command-line adapter for `mailwoman/eval-harness/score-affix.ts`.
  */
 
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { scoreAffix } from "mailwoman/eval-harness/score-affix"
 
 async function main(): Promise<void> {

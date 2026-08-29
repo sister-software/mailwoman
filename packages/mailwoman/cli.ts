@@ -15,8 +15,8 @@
  *   if it reaches React, pins the development build.
  */
 
-import { enableCompileCache, findPackageJSON } from "node:module"
-import { parseArgs } from "node:util"
+import { enableCompileCache, findPackageJSON } from "@mailwoman/platform/module"
+import { parseArgs } from "@mailwoman/platform/util"
 
 // The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of a `--help` run. V8's
 // on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s, `parse` 2.95 s → 2.63 s. The cache is
@@ -69,7 +69,7 @@ async function printVersion(): Promise<number> {
 	if (!packageJSONPath) throw new Error("Could not find package.json for mailwoman/cli")
 
 	const [{ readFile }, { parseJSONStrict }] = await Promise.all([
-		import("node:fs/promises"),
+		import("@mailwoman/platform/fs/promises"),
 		import("@mailwoman/core/objects"),
 	])
 

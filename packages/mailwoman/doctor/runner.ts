@@ -13,16 +13,14 @@
  *   geocode` uses, and the POI path from `gazetteer build poi`'s own default.
  */
 
-import { accessSync, constants, existsSync, readFileSync, statSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-
 import { $public, defaultMailwomanPaths } from "@mailwoman/core/env"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
+import { accessSync, constants, existsSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
 import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFShardPaths } from "../resolver-backend.ts"
@@ -155,8 +153,7 @@ function defaultConventionCandidatePath(dataRoot: string): string | undefined {
  * Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
 async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
-	const raw = new DatabaseSync(path, { readOnly: true })
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: raw })
+	const kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
 
 	try {
 		const manifest = await readLayerManifest(kdb)

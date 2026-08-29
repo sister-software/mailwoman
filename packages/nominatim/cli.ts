@@ -14,13 +14,12 @@
  *   timezone, UN/LOCODE, NUTS — composed from the `@mailwoman/*` annotators.
  */
 
-import { existsSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
+import { existsSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"

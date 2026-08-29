@@ -20,13 +20,11 @@
  *      (city-states like Berlin). Every coordinate still comes from our own admin DB.
  */
 
-import { existsSync } from "node:fs"
-import type { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
@@ -240,11 +238,15 @@ async function geonamesNameFill(
 	return inserted
 }
 
-async function geonamesFill(db: DatabaseSync, geonamesDir: string, combinedPath: string): Promise<number> {
+async function geonamesFill(
+	db: DatabaseClient<WOFDatabase>,
+	geonamesDir: string,
+	combinedPath: string
+): Promise<number> {
 	// The GeoNames UPDATE matches on (country, name); the build only indexes placetype/country/parent,
 	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows). `kdb`
 	// wraps `db` for the DDL; the caller owns `db`'s lifecycle, so we don't destroy it here.
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+	const kdb = db
 	await kdb.schema.createIndex("spr_by_country_name").ifNotExists().on("spr").columns(["country", "name"]).execute()
 
 	const countries = (
@@ -285,7 +287,7 @@ async function geonamesFill(db: DatabaseSync, geonamesDir: string, combinedPath:
  * absent from the admin DB — common for city-states like Berlin), borrow the finest available ANCESTOR centroid from
  * the GeoJSON hierarchy. County is preferred over region for tighter placement.
  */
-function ancestorFallback(db: DatabaseSync, reposDir: string): number {
+function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: string): number {
 	// Resolved once per country rather than composed per row: the answer depends on which layout the repository was
 	// cloned in, and a row-rate stat over an unplaced set is wasted work.
 	const dataDirByCountry = new Map<string, string | null>()
@@ -357,7 +359,7 @@ function ancestorFallback(db: DatabaseSync, reposDir: string): number {
  * Run the fill ladder (passes 2–4) on an OPEN staging postcode DB. See the module docstring for priorities.
  */
 export async function fillPostcodeCentroids(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	opts: CentroidFillOptions = {}
 ): Promise<CentroidFillResult> {
 	const phase = opts.onPhase ?? (() => {})
@@ -386,11 +388,7 @@ export async function fillPostcodeCentroids(
 
 		phase("name-geonames", "delivery-city names")
 
-		geonamesNames = await geonamesNameFill(
-			new DatabaseClient<WOFDatabase>({ database: db }),
-			opts.geonamesDir,
-			combinedPath
-		)
+		geonamesNames = await geonamesNameFill(db, opts.geonamesDir, combinedPath)
 	}
 
 	if (opts.adminPath && existsSync(opts.adminPath)) {

@@ -9,13 +9,13 @@
  *   that's syntactically valid but logically wrong.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-function buildFixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildFixtureDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (

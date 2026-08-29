@@ -15,10 +15,9 @@
  * Node runs the `.ts` entry directly, which is the same thing the repo's other source-first tooling relies on.
  */
 
-import { spawn } from "node:child_process"
-import { accessSync, constants } from "node:fs"
-import { fileURLToPath } from "node:url"
-
+import { spawn } from "@mailwoman/platform/child_process"
+import { accessSync, constants } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, it } from "vitest"
 
 const ESC = "\u001B"

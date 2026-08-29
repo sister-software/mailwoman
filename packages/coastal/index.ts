@@ -48,8 +48,6 @@
  *   `schema.ts`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	assertCoverageLicensesNoExclusion,
 	CoverageBasis,
@@ -60,9 +58,11 @@ import {
 	type LayerManifest,
 } from "@mailwoman/core/layers"
 import { recoverShortCellResolution, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
 import { pointInEncodedRings } from "./rings.ts"
+import type { CoastalDatabase } from "./schema.ts"
 import { CoastalCellContainment } from "./schema.ts"
 import {
 	NCERM_COVERAGE_LIMIT,
@@ -262,21 +262,21 @@ interface AreaRow {
 export class CoastalErosionLookup {
 	readonly identity: CoastalLayerIdentity
 
-	readonly #database: DatabaseSync
-	readonly #selectCell: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectArea: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectAreaRings: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectCoverage: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectInstability: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectInstabilityRings: ReturnType<DatabaseSync["prepare"]>
+	readonly #database: DatabaseClient<CoastalDatabase>
+	readonly #selectCell: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectArea: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectAreaRings: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectCoverage: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectInstability: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectInstabilityRings: ReturnType<DatabaseClient["prepare"]>
 
 	constructor(options: CoastalErosionLookupOptions) {
-		this.#database = new DatabaseSync(options.databasePath, { readOnly: true })
+		this.#database = new DatabaseClient<CoastalDatabase>(options.databasePath, { readOnly: true })
 
 		try {
 			this.identity = readIdentity(this.#database, options.databasePath)
 		} catch (error) {
-			this.#database.close()
+			this.#database.destroy()
 
 			throw error
 		}
@@ -394,7 +394,7 @@ export class CoastalErosionLookup {
 	}
 
 	public close(): void {
-		this.#database.close()
+		this.#database.destroy()
 	}
 
 	/**
@@ -532,7 +532,7 @@ function toDesignation(area: AreaRow, containment: CoastalContainmentPath): Coas
 /**
  * Read and check the layer's identity.
  */
-function readIdentity(database: DatabaseSync, databasePath: string): CoastalLayerIdentity {
+function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: string): CoastalLayerIdentity {
 	const manifestRows = database.prepare("SELECT * FROM layer_manifest").all() as Array<
 		Record<string, string | number | null>
 	>

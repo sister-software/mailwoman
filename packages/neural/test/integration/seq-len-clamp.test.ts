@@ -16,11 +16,10 @@
  *   the difference invites diagnosing this as a word-consistency bug.
  */
 
-import { existsSync } from "node:fs"
-
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 function modelIsMaterialized(): boolean {

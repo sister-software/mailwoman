@@ -39,8 +39,6 @@
  *   shape. The DDL that created these tables IS Kysely — see `schema.ts`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	singleManifestRow,
 	toCoverageCell,
@@ -51,8 +49,10 @@ import {
 } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
+import type { SoilDatabase } from "./schema.ts"
 import { SOIL_LAYER_NAME_PREFIX, SSURGO_PRODUCT_LIMITS } from "./vocabulary.ts"
 
 export { FarmlandScope, farmlandScope, SSURGO_PRODUCT_LIMITS } from "./vocabulary.ts"
@@ -207,15 +207,15 @@ export interface SoilCapabilityLookupOptions {
 export class SoilCapabilityLookup {
 	readonly identity: SoilLayerIdentity
 
-	readonly #database: DatabaseSync
-	readonly #selectCell: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectCoverage: ReturnType<DatabaseSync["prepare"]>
+	readonly #database: DatabaseClient<SoilDatabase>
+	readonly #selectCell: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectCoverage: ReturnType<DatabaseClient["prepare"]>
 	readonly #definitions: Map<string, string>
 	readonly #surveyAreaByBounds: SoilSurveyAreaRecord[]
 	readonly #bounds: Array<{ minLat: number; minLon: number; maxLat: number; maxLon: number }>
 
 	constructor(options: SoilCapabilityLookupOptions) {
-		this.#database = new DatabaseSync(options.databasePath, { readOnly: true })
+		this.#database = new DatabaseClient<SoilDatabase>(options.databasePath, { readOnly: true })
 
 		try {
 			const identity = readIdentity(this.#database, options.databasePath)
@@ -225,7 +225,7 @@ export class SoilCapabilityLookup {
 			this.#surveyAreaByBounds = identity.identity.surveyAreas
 			this.#bounds = identity.bounds
 		} catch (error) {
-			this.#database.close()
+			this.#database.destroy()
 
 			throw error
 		}
@@ -312,7 +312,7 @@ export class SoilCapabilityLookup {
 	}
 
 	public close(): void {
-		this.#database.close()
+		this.#database.destroy()
 	}
 
 	/**
@@ -362,7 +362,7 @@ export class SoilCapabilityLookup {
  * Read and check the layer's identity.
  */
 function readIdentity(
-	database: DatabaseSync,
+	database: DatabaseClient<SoilDatabase>,
 	databasePath: string
 ): {
 	identity: SoilLayerIdentity

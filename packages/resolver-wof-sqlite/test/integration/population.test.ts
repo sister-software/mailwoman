@@ -8,10 +8,10 @@
  *   `wof:population` into it at ingest) — then verifies the ranking boost behaves as documented.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 interface FixturePlace {
@@ -34,8 +34,8 @@ const FIXTURE: FixturePlace[] = [
 	{ id: 1100, name: "Tokyo", country: "JP", lat: 35.68, lon: 139.69, population: 13_500_000 },
 ]
 
-function buildFixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildFixtureDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -82,7 +82,7 @@ afterEach(() => {
 
 describe("buildPlaceSearchFTS — done-phase summary", () => {
 	test("reports the FTS + bbox table counts (population is built upstream, not here)", () => {
-		const db = buildFixtureDB()
+		using db = buildFixtureDB()
 		let doneDetail: string | undefined
 
 		buildPlaceSearchFTS(db, {
@@ -95,7 +95,6 @@ describe("buildPlaceSearchFTS — done-phase summary", () => {
 
 		expect(doneDetail).toMatch(/FTS rows/)
 		expect(doneDetail).toMatch(/bbox rows/)
-		db.close()
 	})
 })
 
@@ -123,19 +122,15 @@ describe("findPlace — population boost", () => {
 	})
 
 	test("the population boost can be tuned to 0 — falls back to BM25-only ordering", async () => {
-		const dbg = new WOFSQLitePlaceLookup({ database: buildFixtureDB(), buildFTS: true }, { populationBoost: 0 })
+		using dbg = new WOFSQLitePlaceLookup({ database: buildFixtureDB(), buildFTS: true }, { populationBoost: 0 })
 
-		try {
-			const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
-			const springfields = candidates.filter((c) => c.name === "Springfield")
-			expect(springfields).toHaveLength(4)
-			// With boost=0, the four Springfields tie on BM25 + everything else. Ordering is
-			// implementation-defined but ALL should have identical scores.
-			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
-			expect(scores.size).toBe(1)
-		} finally {
-			dbg.close()
-		}
+		const candidates = await dbg.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
+		const springfields = candidates.filter((c) => c.name === "Springfield")
+		expect(springfields).toHaveLength(4)
+		// With boost=0, the four Springfields tie on BM25 + everything else. Ordering is
+		// implementation-defined but ALL should have identical scores.
+		const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
+		expect(scores.size).toBe(1)
 	})
 
 	test("population boost caps at populationBoost magnitude (Tokyo doesn't exceed it)", async () => {
@@ -154,23 +149,19 @@ describe("findPlace — population boost", () => {
 		const db = buildFixtureDB()
 		buildPlaceSearchFTS(db)
 		db.exec(`DROP TABLE place_population`)
-		const fallback = new WOFSQLitePlaceLookup({ database: db })
+		using fallback = new WOFSQLitePlaceLookup({ database: db })
 
-		try {
-			const candidates = await fallback.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
-			// All 4 Springfields returned, none with `population` field (the aux table was dropped).
-			const springfields = candidates.filter((c) => c.name === "Springfield")
-			expect(springfields).toHaveLength(4)
+		const candidates = await fallback.findPlace({ text: "Springfield", placetype: "locality", limit: 10 })
+		// All 4 Springfields returned, none with `population` field (the aux table was dropped).
+		const springfields = candidates.filter((c) => c.name === "Springfield")
+		expect(springfields).toHaveLength(4)
 
-			for (const c of springfields) {
-				expect(c.population).toBeUndefined()
-			}
-
-			// Their scores should all be equal (no population boost differentiation).
-			const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
-			expect(scores.size).toBe(1)
-		} finally {
-			fallback.close()
+		for (const c of springfields) {
+			expect(c.population).toBeUndefined()
 		}
+
+		// Their scores should all be equal (no population boost differentiation).
+		const scores = new Set(springfields.map((c) => c.score.toFixed(6)))
+		expect(scores.size).toBe(1)
 	})
 })

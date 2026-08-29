@@ -8,8 +8,7 @@
  *   `node packages/mailwoman/dev-tools/extract-parity-corpus.run.ts`
  */
 
-import { readdirSync, readFileSync } from "node:fs"
-
+import { readdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 

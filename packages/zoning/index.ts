@@ -49,8 +49,6 @@
  *   `schema.ts`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	assertCoverageLicensesNoExclusion,
 	CoverageBasis,
@@ -61,9 +59,11 @@ import {
 	type LayerManifest,
 } from "@mailwoman/core/layers"
 import { recoverShortCellResolution, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
 import { pointInEncodedRings } from "./rings.ts"
+import type { ZoningDatabase } from "./schema.ts"
 import { ZoningCellContainment } from "./schema.ts"
 import {
 	GZT_COVERAGE_LIMIT,
@@ -301,22 +301,22 @@ interface PlanRow {
 export class ZoningLookup {
 	readonly identity: ZoningLayerIdentity
 
-	readonly #database: DatabaseSync
-	readonly #selectCell: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectArea: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectAreaRings: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectPlan: ReturnType<DatabaseSync["prepare"]>
-	readonly #selectCoverage: ReturnType<DatabaseSync["prepare"]>
+	readonly #database: DatabaseClient<ZoningDatabase>
+	readonly #selectCell: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectArea: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectAreaRings: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectPlan: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectCoverage: ReturnType<DatabaseClient["prepare"]>
 	readonly #crosswalkTerms: ReadonlyMap<string, { label: string; declared: boolean }>
 
 	constructor(options: ZoningLookupOptions) {
-		this.#database = new DatabaseSync(options.databasePath, { readOnly: true })
+		this.#database = new DatabaseClient<ZoningDatabase>(options.databasePath, { readOnly: true })
 
 		try {
 			this.identity = readIdentity(this.#database, options.databasePath)
 			this.#crosswalkTerms = readCrosswalkTerms(this.#database)
 		} catch (error) {
-			this.#database.close()
+			this.#database.destroy()
 
 			throw error
 		}
@@ -364,7 +364,7 @@ export class ZoningLookup {
 	}
 
 	public close(): void {
-		this.#database.close()
+		this.#database.destroy()
 	}
 
 	/**
@@ -516,7 +516,9 @@ export class ZoningLookup {
 /**
  * The publisher's crosswalk domain, by code — its label and whether the publisher DECLARED it.
  */
-function readCrosswalkTerms(database: DatabaseSync): ReadonlyMap<string, { label: string; declared: boolean }> {
+function readCrosswalkTerms(
+	database: DatabaseClient<ZoningDatabase>
+): ReadonlyMap<string, { label: string; declared: boolean }> {
 	const rows = database
 		.prepare("SELECT code, label, declared FROM zoning_vocabulary WHERE scheme = ?")
 		.all(GZT_CROSSWALK_SCHEME) as Array<{ code: string; label: string; declared: number }>
@@ -527,7 +529,7 @@ function readCrosswalkTerms(database: DatabaseSync): ReadonlyMap<string, { label
 /**
  * Read and check the layer's identity.
  */
-function readIdentity(database: DatabaseSync, databasePath: string): ZoningLayerIdentity {
+function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: string): ZoningLayerIdentity {
 	const manifest = parseManifestRows(
 		database.prepare("SELECT * FROM layer_manifest").all() as Array<Record<string, string | number | null>>,
 		GZT_LAYER_NAME,

@@ -14,11 +14,10 @@
  *   weights or a database.
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync } from "@mailwoman/platform/fs"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"

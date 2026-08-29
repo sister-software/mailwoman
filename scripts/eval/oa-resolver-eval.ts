@@ -6,9 +6,8 @@
  *   Command-line adapter for `mailwoman/eval-harness/oa-resolver-eval.ts`.
  */
 
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { oaResolverEval } from "mailwoman/eval-harness/oa-resolver-eval"
 
 async function main(): Promise<void> {

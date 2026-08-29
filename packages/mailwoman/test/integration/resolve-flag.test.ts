@@ -10,14 +10,13 @@
  *   `resolver-wof-sqlite/integration.test.ts`.
  */
 
-import { execFile } from "node:child_process"
-import { existsSync } from "node:fs"
-import { promisify } from "node:util"
-
 import { $public } from "@mailwoman/core/env"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { existsSync } from "@mailwoman/platform/fs"
+import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"

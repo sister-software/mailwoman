@@ -21,10 +21,9 @@
  *     node packages/mailwoman/dev-tools/probe-comma-free-locality.run.ts --cache-root <dir> --label cand --country FR
  */
 
-import { parseArgs } from "node:util"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"

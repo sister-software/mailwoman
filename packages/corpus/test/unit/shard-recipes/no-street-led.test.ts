@@ -16,9 +16,8 @@
  *   downstream — the board just reads high. So it gets a test with a diacritic surface specifically.
  */
 
-import { writeFileSync } from "node:fs"
-
 import { noStreetLedRecipe } from "@mailwoman/corpus/shard-recipes/no-street-led"
+import { writeFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, it } from "vitest"
 
 import { scratch, shardRunner } from "#test-kit/shard-recipe"

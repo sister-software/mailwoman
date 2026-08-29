@@ -9,16 +9,17 @@
  *   between the primaries pass and the alias pass.
  */
 
-import { existsSync } from "node:fs"
-import { resolve } from "node:path"
-import type { DatabaseSync } from "node:sqlite"
-
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
+import { existsSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"
 
 import type { loadImportanceIndex } from "./candidate-importance.ts"
+import type { CandidateDatabase } from "./candidate-schema.ts"
 import type { PlaceAttrs, StageRow } from "./candidate/place-attrs.ts"
+import type { WOFDatabase } from "./schema.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 /**
@@ -57,8 +58,8 @@ const CURRENCY_BACKFILL_POP_FLOOR = 1000
  * country; the resurrected place joins `attrs`, so the alias pass explodes its alt names like any primary's.
  */
 export async function resurrectCurrencyHoles(ctx: {
-	src: DatabaseSync
-	tx: DatabaseSync
+	src: DatabaseClient<WOFDatabase>
+	tx: DatabaseClient<CandidateDatabase>
 	geonamesDir: string
 	countries: readonly string[]
 	attrs: Map<number, PlaceAttrs>

@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readFile } from "node:fs/promises"
-import { createServer } from "node:http"
-import type { AddressInfo } from "node:net"
-import { fileURLToPath } from "node:url"
-
 import { readAttribution, TileSource } from "@mailwoman/map-tui/tile-source"
+import { readFile } from "@mailwoman/platform/fs/promises"
+import { createServer } from "@mailwoman/platform/http"
+import type { AddressInfo } from "@mailwoman/platform/net"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { afterAll, describe, expect, it } from "vitest"
 
 const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.meta.url))

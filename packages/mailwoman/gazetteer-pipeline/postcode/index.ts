@@ -11,12 +11,12 @@
  *   read-only from the moment it exists.
  */
 
-import { existsSync, readFileSync, unlinkSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { sealDatabase } from "@mailwoman/core/utils"
+import { existsSync, readFileSync, unlinkSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
 import { dataRootPath } from "../../resolver-backend.ts"
 import { ingestWOF } from "../admin/ingest-wof.ts"
@@ -95,7 +95,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseSync(ingestPath)
+	const db = new DatabaseClient<WOFDatabase>(ingestPath)
 
 	db.exec(`
 		PRAGMA page_size = 8192;
@@ -166,7 +166,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	}
 
 	db.prepare("VACUUM INTO ?").run(out)
-	db.close()
+	await db.destroy()
 	unlinkSync(ingestPath)
 
 	for (const sidecar of [ingestPath + "-wal", ingestPath + "-shm"]) {
@@ -176,9 +176,9 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	}
 
 	phase("fts")
-	const outDB = new DatabaseSync(out)
+	const outDB = new DatabaseClient<WOFDatabase>(out)
 	await buildFTS(outDB, { onProgress: phase })
-	outDB.close()
+	await outDB.destroy()
 
 	phase("seal")
 	sealDatabase(out)

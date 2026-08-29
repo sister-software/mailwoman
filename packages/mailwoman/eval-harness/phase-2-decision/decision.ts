@@ -35,11 +35,10 @@
  *   the definition's `recordingNote` says so on the receipt.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 // The canonical-JSON encoder is IMPORTED rather than re-typed, for the reason the absence probe imports it.
 import { canonicalJSON } from "../semantic-utility/probe.ts"

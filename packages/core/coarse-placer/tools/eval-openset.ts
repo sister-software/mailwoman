@@ -33,9 +33,8 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
 import { parseJSONStrict } from "#objects"

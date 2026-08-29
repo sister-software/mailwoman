@@ -35,10 +35,9 @@
  *   [--out-json /tmp/lint-report.json]
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { ParquetReader } from "../parquet-wrapper/index.ts"
 

@@ -19,7 +19,9 @@
  *   countries to build its country posterior, so it queries each shard directly.
  */
 
-import { DatabaseSync } from "node:sqlite"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { WOFDatabase } from "./schema.ts"
 
 /**
  * A gazetteer hit. `lat`/`lon` of 0 means the postcode is known but has no centroid (no admin parent).
@@ -34,14 +36,14 @@ const LOOKUP_SQL =
 	"SELECT country, latitude AS lat, longitude AS lon FROM spr WHERE name = ? AND placetype = 'postalcode' AND is_current != 0"
 
 export class WOFPostcodeLookup {
-	readonly #dbs: DatabaseSync[]
-	readonly #stmts: ReturnType<DatabaseSync["prepare"]>[]
+	readonly #dbs: DatabaseClient<WOFDatabase>[]
+	readonly #stmts: ReturnType<DatabaseClient["prepare"]>[]
 
 	/**
 	 * Open each shard read-only and prepare its exact-match statement.
 	 */
 	constructor(dbPaths: readonly string[]) {
-		this.#dbs = dbPaths.map((p) => new DatabaseSync(p, { readOnly: true }))
+		this.#dbs = dbPaths.map((p) => new DatabaseClient<WOFDatabase>(p, { readOnly: true }))
 		this.#stmts = this.#dbs.map((db) => db.prepare(LOOKUP_SQL))
 	}
 
@@ -62,7 +64,7 @@ export class WOFPostcodeLookup {
 
 	close(): void {
 		for (const db of this.#dbs) {
-			db.close()
+			db.destroy()
 		}
 	}
 }

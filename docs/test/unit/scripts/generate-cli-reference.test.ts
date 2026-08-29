@@ -22,9 +22,6 @@
  *   with that instruction rather than skipping — a silently-skipped drift gate is not a gate.
  */
 
-import { existsSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-
 import {
 	collectCLISurface,
 	COMMANDS_DIRECTORY,
@@ -35,6 +32,8 @@ import {
 	renderTable,
 	type CLISurface,
 } from "@mailwoman/docs/scripts/generate-cli-reference"
+import { existsSync } from "@mailwoman/platform/fs"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import { beforeAll, describe, expect, it } from "vitest"
 
 /**

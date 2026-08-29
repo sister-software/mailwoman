@@ -12,9 +12,8 @@
  *   artifacts / malformed rows. Do not add logic here.
  */
 
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { demoCascadeSmoke } from "../../mailwoman/eval-harness/demo-cascade-smoke.ts"
 

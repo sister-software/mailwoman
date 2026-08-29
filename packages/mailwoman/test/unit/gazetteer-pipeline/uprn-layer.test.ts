@@ -9,17 +9,15 @@
  *   artifact back through the production reader.
  */
 
-import { statSync } from "node:fs"
-import { mkdtemp, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { CoverageBasis, readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { statSync } from "@mailwoman/platform/fs"
+import { mkdtemp, writeFile } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import { UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent } from "h3-js"
 import {
 	buildUPRNLayer,
@@ -160,9 +158,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(lookup.coordinateOf(906_700_601_612)).toEqual({ latitude: 55.8823426, longitude: -4.2786558 })
 		expect(lookup.nearestUPRN(51.4526, -2.602, 100)?.uprn).toBe(1)
 
-		const kdb = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(out, { readOnly: true }),
-		})
+		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -181,8 +177,6 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
 		expect(surveyed?.completeness).toBe(1)
 		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
-
-		await kdb.destroy()
 	})
 
 	it("fails loudly on header drift", async () => {

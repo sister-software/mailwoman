@@ -24,12 +24,12 @@
  *   country) over the same DB.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { GEONAMES_ID_BASE, ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 type Row = Record<string, string | number | null>
@@ -50,8 +50,8 @@ function row(over: Record<number, string>): string {
 	return f.join("\t")
 }
 
-function freshDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function freshDB(): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(":memory:")
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -104,7 +104,7 @@ afterAll(() => {
 })
 
 test("a re-fold with a different country list leaves no name bound to another country's place", async () => {
-	const db = freshDB()
+	await using db = freshDB()
 
 	// Fold A — the 2-country recipe baked into the admin artifact.
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir, () => {})
@@ -119,12 +119,10 @@ test("a re-fold with a different country list leaves no name bound to another co
 		.get(GEONAMES_ID_BASE) as Row
 
 	expect(disagreeing.n).toBe(0)
-
-	db.close()
 })
 
 test("a re-fold rewrites the range wholesale — no row survives from the previous run", async () => {
-	const db = freshDB()
+	await using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir, () => {})
 	await ingestGeonamesAliases(db, ["AT"], dir, () => {})
@@ -142,16 +140,14 @@ test("a re-fold rewrites the range wholesale — no row survives from the previo
 
 	const sprRows = db.prepare(`SELECT COUNT(*) AS n FROM spr WHERE id >= ?`).get(GEONAMES_ID_BASE) as Row
 
-	expect(sprRows.n).toBe(2) // Wien + Aichegg, and nothing else
-
-	db.close()
+	expect(sprRows.n).toBe(2)
 })
 
 test("a stale population cannot outlive the place it belonged to", async () => {
 	// The `pop > 0` guard on the population write is what made this the worst of the three tables:
 	// an unpopulated place inheriting a metropolis's population is not a name error, it is a ranking
 	// error, and it moves the wrong row to the top of every candidate list.
-	const db = freshDB()
+	await using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir, () => {})
 
@@ -167,12 +163,10 @@ test("a stale population cannot outlive the place it belonged to", async () => {
 		| undefined
 
 	expect(pop).toBeUndefined()
-
-	db.close()
 })
 
 test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
-	const db = freshDB()
+	await using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir, () => {})
 	const first = db.prepare(`SELECT COUNT(*) AS n FROM names WHERE id >= ?`).get(GEONAMES_ID_BASE) as Row
@@ -181,8 +175,6 @@ test("re-folding the SAME list twice is a no-op, not a doubling", async () => {
 	const second = db.prepare(`SELECT COUNT(*) AS n FROM names WHERE id >= ?`).get(GEONAMES_ID_BASE) as Row
 
 	expect(second.n).toBe(first.n)
-
-	db.close()
 })
 
 test("every folded locality gets its self-ancestor row, admin fold or not", async () => {
@@ -190,7 +182,7 @@ test("every folded locality gets its self-ancestor row, admin fold or not", asyn
 	// phase's `populateAncestors` closure — so the fold owes the closure's output for its own rows. The
 	// self row is the part that used to be gated on the #267 admin fold and so went missing for every
 	// country that already had WOF/Overture admin.
-	const db = freshDB()
+	await using db = freshDB()
 
 	await ingestGeonamesAliases(db, ["BW", "AT"], dir, () => {})
 
@@ -207,15 +199,13 @@ test("every folded locality gets its self-ancestor row, admin fold or not", asyn
 
 	expect(selves.n).toBe(localities.n)
 	expect(localities.n).toBe(3)
-
-	db.close()
 })
 
 test("the purge stops at the GeoNames-POSTAL namespace above it", async () => {
 	// The alias fold owns [9e12, 9.5e12). The postal fold, the NL-PC6 shard (9.6e12), Code-Point
 	// (9.7e12) and NI (9.8e12) each own their own range — a purge that ran to the end of the id space
 	// would silently delete them.
-	const db = freshDB()
+	await using db = freshDB()
 
 	db.prepare(`INSERT INTO names (id, name, placetype, country, language, privateuse, official, lastmodified)
 	            VALUES (?, 'AD500', 'postalcode', 'AD', '', '', 0, 0)`).run(9_500_000_000_000)
@@ -225,6 +215,4 @@ test("the purge stops at the GeoNames-POSTAL namespace above it", async () => {
 	const postal = db.prepare(`SELECT COUNT(*) AS n FROM names WHERE id >= ?`).get(9_500_000_000_000) as Row
 
 	expect(postal.n).toBe(1)
-
-	db.close()
 })

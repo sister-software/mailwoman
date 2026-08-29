@@ -17,9 +17,6 @@
  *   entities decoded, and whitespace collapsed.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import {
 	decodeEntities,
 	fetchExhibit21,
@@ -28,6 +25,8 @@ import {
 	type SECDocumentClient,
 	stripTags,
 } from "@mailwoman/filer/sdk/exhibit21"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 function fixture(name: string): string {

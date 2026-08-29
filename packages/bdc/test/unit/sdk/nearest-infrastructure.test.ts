@@ -32,17 +32,11 @@
  *   {@link nearestInfrastructure} itself uses, cross-checked against a direct `readLayerCoverage` call).
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { res9ShortCellToRes6Parent } from "@mailwoman/bdc/sdk/filing-landscape"
 import {
 	nearestInfrastructure,
 	NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS,
 } from "@mailwoman/bdc/sdk/nearest-infrastructure"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -52,6 +46,9 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { POI_H3_RESOLUTION, POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -63,6 +60,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -144,8 +142,7 @@ function cellFor(latitude: number, longitude: number): number {
  * `buildPOIDatabase`, see this file's header docstring for why.
  */
 async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promise<void> {
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` (unused here) — the category-codes dictionary
@@ -153,7 +150,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 	await createPOIStagingTables(kdb)
 	// POILookup's constructor unconditionally prepares a statement against `poi_search` — the FTS5 table
 	// must exist even though these tests never search by name.
-	createPOISearchFTS(raw)
+	createPOISearchFTS(kdb)
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {
 		await kdb.insertInto("poi_category_codes").values({ id, category }).execute()
@@ -187,8 +184,6 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 	// Index-after-load, matching the builder's own discipline (poi-schema.ts / poi-lookup.test.ts).
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
-
-	await kdb.destroy()
 }
 
 /**
@@ -196,7 +191,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
  * against whatever database the caller passes, independent of poi.db's own coverage.
  */
 async function openEmptyContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+	const kdb = new DatabaseClient<LayerContractDatabase>(":memory:")
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)

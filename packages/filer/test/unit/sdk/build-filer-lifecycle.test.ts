@@ -9,16 +9,15 @@
  *   below pins that a TSV-shaped row still produces byte-identical output.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { FilerIdentifierType, FilerRelationship } from "@mailwoman/filer/schema"
+import { type FilerDatabase, FilerIdentifierType, FilerRelationship } from "@mailwoman/filer/schema"
 import { buildFilerDatabase } from "@mailwoman/filer/sdk/build-filer"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { parseForm499Notes } from "@mailwoman/filer/sdk/form499-notes"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 let scratch: string
@@ -67,7 +66,7 @@ async function build(rows: Form499Row[]) {
 		buildSHA: "deadbeef",
 	})
 
-	const db = new DatabaseSync(out, { readOnly: true })
+	await using db = new DatabaseClient<FilerDatabase>(out, { readOnly: true })
 
 	const edges = db
 		.prepare("SELECT from_node_id, to_node_id, relationship, valid_from, valid_to FROM filer_edge ORDER BY 1, 2, 3")
@@ -84,8 +83,6 @@ async function build(rows: Form499Row[]) {
 		key: string
 		value: string
 	}>
-
-	db.close()
 
 	return { result, edges, attributes }
 }

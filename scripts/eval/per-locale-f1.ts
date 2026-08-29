@@ -6,9 +6,8 @@
  *   Command-line adapter for `mailwoman/eval-harness/per-locale-f1.ts`.
  */
 
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { perLocaleF1 } from "mailwoman/eval-harness/per-locale-f1"
 
 async function main(): Promise<void> {

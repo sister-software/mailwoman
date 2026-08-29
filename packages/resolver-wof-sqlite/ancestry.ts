@@ -15,8 +15,9 @@
  *   geocoding always does).
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { WOFDatabase } from "./schema.ts"
 import { allRows } from "./sqlite-utils.ts"
 
 /**
@@ -61,7 +62,7 @@ export interface AncestorPlaceRow {
  * The ancestor lineage of `id` — self excluded, nearest-first. Returns `[]` when the place has no recorded ancestry.
  * NOT memoized here; `WOFSQLitePlaceLookup` keeps its own per-id cache.
  */
-export function ancestorLineage(db: DatabaseSync, id: number, schemaName = "main"): AncestorPlaceRow[] {
+export function ancestorLineage<DB>(db: DatabaseClient<DB>, id: number, schemaName = "main"): AncestorPlaceRow[] {
 	const rows = allRows<AncestorPlaceRow>(
 		db.prepare(
 			`SELECT a.ancestor_id AS id, a.ancestor_placetype AS placetype, s.name AS name,

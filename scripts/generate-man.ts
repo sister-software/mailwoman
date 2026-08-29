@@ -18,11 +18,10 @@
  *   same binary consumers run).
  */
 
-import { execFileSync } from "node:child_process"
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, resolve } from "@mailwoman/platform/path"
 
 const REPO_ROOT = resolve(import.meta.dirname, "..")
 

@@ -11,12 +11,11 @@
  *   mitigation into a hard failure at every load.
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { workspacePath } from "@mailwoman/core/utils"
 import { readDeclaredArtifactFile, unfedAnchorDetail } from "@mailwoman/neural/weights"
+import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 function packageDir(card?: unknown, siblings: string[] = []): string {

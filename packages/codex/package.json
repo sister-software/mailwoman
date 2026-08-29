@@ -303,6 +303,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/platform": "workspace:*",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {

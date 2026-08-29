@@ -15,11 +15,10 @@
  * - Max-attempts reached (default 50, override via $MAX_ATTEMPTS)
  */
 
-import { openSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
 import { passThroughCLIArguments } from "@mailwoman/core/scripting/utils"
 import { tempRootPath } from "@mailwoman/core/utils"
+import { openSync } from "@mailwoman/platform/fs"
 import { $, sleep } from "zx"
 
 const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)

@@ -21,17 +21,16 @@
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
-import { existsSync, mkdirSync, rmSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
-import { dataRootPath, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { latLngToCell } from "h3-js"
 
 import {
@@ -127,12 +126,11 @@ async function main(): Promise<void> {
 		rmSync(tmp)
 	}
 
-	const out = new DatabaseSync(tmp)
-	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<OSMAddressPointDatabase>({ database: out })
+	const kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)
+	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 	await createOSMAddressPointTables(kdb)
 
-	const insert = out.prepare(
+	const insert = kdb.prepare(
 		`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 	)
 
@@ -145,7 +143,7 @@ async function main(): Promise<void> {
 
 	console.error(`[osm] building ${args.country}/${args.slug} rooftop shard from ${args.pbf}`)
 
-	out.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for await (const rec of extractAddrPoints(args.pbf)) {
 		total++
@@ -208,8 +206,8 @@ async function main(): Promise<void> {
 		written++
 
 		if (written % BATCH === 0) {
-			out.exec("COMMIT")
-			out.exec("BEGIN")
+			kdb.exec("COMMIT")
+			kdb.exec("BEGIN")
 
 			if (written % 500_000 === 0) {
 				console.error(`[osm]   ${written.toLocaleString()} written…`)
@@ -217,7 +215,7 @@ async function main(): Promise<void> {
 		}
 	}
 
-	out.exec("COMMIT")
+	kdb.exec("COMMIT")
 
 	console.error(`[osm] indexing…`)
 
@@ -244,7 +242,7 @@ async function main(): Promise<void> {
 		createdAt: args.createdAt,
 	})
 
-	out.exec("ANALYZE")
+	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
 	// Build-on-copy: only now swap the freshly-built shard into place.

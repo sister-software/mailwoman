@@ -30,12 +30,11 @@
  *   [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
  */
 
-import { writeFileSync } from "node:fs"
-import { resolve as resolvePath } from "node:path"
-import { pathToFileURL } from "node:url"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { GBT } from "@mailwoman/match"
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { resolve as resolvePath } from "@mailwoman/platform/path"
+import { pathToFileURL } from "@mailwoman/platform/url"
 
 import {
 	ingestRows,

@@ -54,8 +54,10 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@sqlite.org/sqlite-wasm": "^3.53.0-build1"
 	}
 }

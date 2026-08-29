@@ -11,8 +11,7 @@
  *   never catch the accident. Both failures print a clean result.
  */
 
-import { readFileSync } from "node:fs"
-
+import { readFileSync } from "@mailwoman/platform/fs"
 import { planCountryMove, servingSources } from "mailwoman/gazetteer-pipeline/country-plan"
 import {
 	ACCEPTED_TWO_SOURCE_COUNTRIES,

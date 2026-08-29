@@ -30,8 +30,6 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
-import { existsSync } from "node:fs"
-
 import { isAuDeliveryService, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
@@ -39,6 +37,7 @@ import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
 import { TextSpliterator, TSVSpliterator } from "spliterator"
 
 import {

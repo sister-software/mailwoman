@@ -38,10 +38,9 @@
  *   while it is gone from `promotion-gate.ts`.
  */
 
-import { copyFileSync, mkdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { tempRootPath } from "@mailwoman/core/utils"
+import { copyFileSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 

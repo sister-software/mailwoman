@@ -4,17 +4,16 @@
  * @author Teffen Ellis, et al.
  */
 
-import { execFileSync } from "node:child_process"
-import { mkdtempSync, mkdirSync, writeFileSync, utimesSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	computeTreeFingerprint,
 	FINGERPRINTED_WORKSPACES,
 	staleEngineMessage,
 } from "@mailwoman/dev-mcp/tree-fingerprint"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { mkdtempSync, mkdirSync, writeFileSync, utimesSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 const scratchRoots: string[] = []

@@ -4,11 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { rm } from "node:fs/promises"
-import { join } from "node:path"
-
 import { workspacePath } from "@mailwoman/core/utils"
 import { BAN_ADAPTER_ID, createBanAdapter } from "@mailwoman/corpus/adapters/ban/adapter"
+import { rm } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

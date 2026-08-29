@@ -26,14 +26,14 @@
  *   `AddressPointLookup.find()` to keep that wiring mechanical.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { InterpolationLookup } from "@mailwoman/resolver"
 import { clampFraction, haversineKm, pointAlong } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { hasTable, prepareAll, type PreparedAll } from "./sqlite-utils.ts"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "./street-normalize.ts"
+import type { StreetSegmentDatabase } from "./street-segment-schema.ts"
 
 /**
  * How an interpolated answer was computed (#483 Method 2):
@@ -166,22 +166,26 @@ function nearestPostcodeGroup(pool: readonly SegmentRow[], near: { lat: number; 
 	return winner.rows
 }
 
-export class StreetInterpolator implements InterpolationLookup {
-	readonly #db: DatabaseSync
-	readonly #ownsDB: boolean
+export class StreetInterpolator<
+	DB extends StreetSegmentDatabase = StreetSegmentDatabase,
+> implements InterpolationLookup {
+	readonly #db: DatabaseClient<DB>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	readonly #byPostcode:
 		| PreparedAll<[postcode: string, street: RouteKey, minNumber: number, maxNumber: number], SegmentRow>
 		| undefined
 	readonly #byStreet: PreparedAll<[street: RouteKey, minNumber: number, maxNumber: number], SegmentRow> | undefined
 	readonly #radiusCalibration: number | undefined
 
-	constructor(opts: { dbPath?: string; database?: DatabaseSync }) {
+	constructor(opts: { dbPath?: string; database?: DatabaseClient<DB> }) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.dbPath) {
-			this.#db = new DatabaseSync(opts.dbPath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<DB>(opts.dbPath, { readOnly: true }))
 		} else {
 			throw new Error("StreetInterpolator: one of dbPath or database is required")
 		}
@@ -324,8 +328,6 @@ export class StreetInterpolator implements InterpolationLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDB) {
-			this.#db.close()
-		}
+		this.#resources.dispose()
 	}
 }

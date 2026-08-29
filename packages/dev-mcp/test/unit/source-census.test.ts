@@ -10,12 +10,12 @@
  *   never an exception that takes the whole census down with it.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { censusArtifact, gazetteerArtifacts } from "@mailwoman/dev-mcp/source-census"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let root: string
@@ -24,7 +24,7 @@ let root: string
  * A shard with `spr` and the ancestry tables — the shape a corpus builder can extract triples from.
  */
 function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, country TEXT);
@@ -39,23 +39,19 @@ function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): voi
 			db.prepare("INSERT INTO spr (id, parent_id, name, country) VALUES (?, ?, ?, ?)").run(id++, 42, `p${i}`, country)
 		}
 	}
-
-	db.close()
 }
 
 /**
  * `spr` only, and every `parent_id` is the -1 sentinel — countable, not joinable, not walkable.
  */
 function writeCountOnly(path: string, country: string, n: number): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, country TEXT)")
 
 	for (let i = 0; i < n; i++) {
 		db.prepare("INSERT INTO spr (id, parent_id, name, country) VALUES (?, -1, ?, ?)").run(i + 1, `p${i}`, country)
 	}
-
-	db.close()
 }
 
 beforeAll(() => {
@@ -68,7 +64,7 @@ beforeAll(() => {
 	])
 
 	writeCountOnly(join(root, "wof", "postalcode-geonames-intl.db"), "PT", 5)
-	new DatabaseSync(join(root, "wof", "postalcode-fr.db")).close()
+	new DatabaseClient<WOFDatabase>(join(root, "wof", "postalcode-fr.db")).destroy()
 	writeJoinable(join(root, "wof", "postalcode-us.db.prev"), [["US", 9]])
 	writeFileSync(join(root, "wof", "notes.txt"), "not a database")
 })

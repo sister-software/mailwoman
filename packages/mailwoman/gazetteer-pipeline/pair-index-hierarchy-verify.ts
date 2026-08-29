@@ -28,11 +28,6 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-verify.ts [--countries us,fr] [--db <path>] [--dir <dir>]`
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
 import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
@@ -42,6 +37,11 @@ import {
 	PairIndexResolver,
 	peekPairIndexHeader,
 } from "@mailwoman/neural/pair-index-resolver"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).
@@ -96,7 +96,11 @@ function readPairCount(bytes: Uint8Array): number {
  * (spr.name ∪ official names) as CTEs, edges joined SQL-side — then fold in JS. Returns folded pairs keyed
  * length-prefixed (the pairKey convention).
  */
-function expectedPairSet(db: DatabaseSync, country: string, parentPlacetypes: string[]): Map<string, [string, string]> {
+function expectedPairSet(
+	db: DatabaseClient<WOFDatabase>,
+	country: string,
+	parentPlacetypes: string[]
+): Map<string, [string, string]> {
 	// Explicitly NUMBERED placeholders throughout: `?1` (country) and `?2..?N` (parent placetypes) are
 	// each reused across several clauses. Mixing `?1` with anonymous `?` silently mis-numbers the
 	// anonymous ones past the bound arguments (they bind NULL and the INs match nothing) — the first
@@ -167,7 +171,7 @@ function main(): void {
 	const dbPath = values.db ?? dataRootPath("wof", "admin-global-priority.db")
 	const dir = values.dir ?? dataRootPath("wof", "pair-index-hierarchy-probe")
 
-	const db = new DatabaseSync(dbPath, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 	let failures = 0
 
 	const fail = (msg: string): void => {
@@ -293,7 +297,7 @@ function main(): void {
 		}
 	}
 
-	db.close()
+	db.destroy()
 
 	if (failures > 0) {
 		throw new Error(`pair-index-hierarchy-verify: ${failures} failure(s)`)

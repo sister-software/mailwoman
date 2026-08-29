@@ -160,7 +160,7 @@ export class MailwomanTokenizer {
 	 * instead.
 	 */
 	static async loadFromFile(modelPath: string): Promise<MailwomanTokenizer> {
-		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
+		const { readFile } = await import(/* webpackIgnore: true */ "@mailwoman/platform/fs/promises")
 		const buf = await readFile(modelPath)
 
 		return MailwomanTokenizer.loadFromBytes(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength))

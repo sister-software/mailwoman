@@ -14,9 +14,8 @@
  *   keeps the coordinate radius from promoting a capital's same-name neighbours (`capitals.ts`).
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
 
 import type { CapitalPoint } from "./capitals.ts"
@@ -63,7 +62,7 @@ export async function createCapitalTable<DB extends { capital: CapitalTable }>(d
  * back to its next source rather than treating an old artifact as "no capitals" (the meaning-of-zero rule: a missing
  * table is UNMEASURED, an empty one is a finding).
  */
-export function readCapitalPoints(db: DatabaseSync): CapitalPoint[] | null {
+export function readCapitalPoints<DB>(db: DatabaseClient<DB>): CapitalPoint[] | null {
 	if (!hasTable(db, CAPITAL_TABLE)) return null
 
 	const points: CapitalPoint[] = []

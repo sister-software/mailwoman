@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { assertCompiledFresh, checkCompiledFreshness } from "@mailwoman/dev-mcp/compiled-tree"
 import { FINGERPRINTED_WORKSPACES } from "@mailwoman/dev-mcp/tree-fingerprint"
+import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 const roots: string[] = []

@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import { fileURLToPath } from "node:url"
-
 import { frameToANSILines } from "@mailwoman/map-tui/frame"
 import { TILE_SIZE, worldPxToLonLat } from "@mailwoman/map-tui/mercator"
 import { MapRenderer } from "@mailwoman/map-tui/renderer"
 import { type DecodedTile, type TileProvider, TileSource } from "@mailwoman/map-tui/tile-source"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { afterAll, describe, expect, it } from "vitest"
 
 const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.meta.url))

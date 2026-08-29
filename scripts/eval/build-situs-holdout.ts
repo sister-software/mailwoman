@@ -1,3 +1,6 @@
+import { writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -12,9 +15,7 @@
  *   Usage: node scripts/eval/build-situs-holdout.ts --shard <situs.db> --region <ABBR> [--n 2500]
  *   [--out /tmp/<region>-situs-holdout.jsonl]
  */
-import { writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 const { values: a } = parseArgs({
 	options: {
@@ -30,7 +31,7 @@ const N = Number(a.n)
 const region = a.region!.toUpperCase()
 const out = a.out || `/tmp/${region.toLowerCase() || "x"}-situs-holdout.jsonl`
 
-const db = new DatabaseSync(a.shard, { readOnly: true })
+const db = new DatabaseClient<AddressPointDatabase>(a.shard, { readOnly: true })
 // Even, deterministic spread across the shard (not the first N clustered rows): sample by rowid modulo.
 const total = (db.prepare("SELECT count(*) c FROM address_point").get() as { c: number }).c
 const stride = Math.max(1, Math.floor(total / (N * 1.4)))
@@ -67,7 +68,7 @@ for (const r of rows) {
 	lines.push(JSON.stringify({ input, lat: r.lat, lon: r.lon }))
 }
 
-db.close()
+db.destroy()
 writeFileSync(out, lines.join("\n") + "\n")
 
 console.log(

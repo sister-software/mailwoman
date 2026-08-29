@@ -8,5 +8,11 @@
 	},
 	"include": ["./src/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx", "./fixtures/**/*", "./test-kit/**/*"],
-	"references": [{ "path": "../core" }, { "path": "../codex" }, { "path": "../formatter" }]
+	"references": [
+		{ "path": "../bdc" },
+		{ "path": "../sqlite" },
+		{ "path": "../core" },
+		{ "path": "../codex" },
+		{ "path": "../formatter" }
+	]
 }

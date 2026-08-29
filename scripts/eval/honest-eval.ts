@@ -30,11 +30,10 @@
  *   the report [--out docs/articles/evals/experiments/2026-06-08-honest-eval.md] [--tmp /tmp/honest]
  */
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 

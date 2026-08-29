@@ -25,10 +25,9 @@
  *   the old one in place.
  */
 
-import { mkdir } from "node:fs/promises"
-import { join } from "node:path"
-
 import { pathExists, streamToDisk } from "@mailwoman/core/utils"
+import { mkdir } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 
 /**
  * The file name one vintage's export is kept under.

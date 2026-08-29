@@ -16,12 +16,11 @@
  *   hermetic: no model file required, just tmp model-card.json fixtures.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { workspacePath } from "@mailwoman/core/utils"
 import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
+import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")

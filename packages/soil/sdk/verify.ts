@@ -33,8 +33,6 @@
  *   reason the index exists.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import {
 	decodeRings,
 	interiorPointOfEncodedRings,
@@ -43,9 +41,11 @@ import {
 	shortCellToInt,
 	type H3Cell,
 } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
 import { SoilCapabilityLookup, SoilReadingKind } from "../index.ts"
+import type { SoilDatabase } from "../schema.ts"
 import type { SoilDataAccessClient } from "./client.ts"
 
 /**
@@ -142,7 +142,7 @@ export interface VerifySoilOptions {
  * Run both halves.
  */
 export async function verifySoilDatabase(options: VerifySoilOptions): Promise<VerifySoilResult> {
-	const database = new DatabaseSync(options.databasePath, { readOnly: true })
+	const database = new DatabaseClient<SoilDatabase>(options.databasePath, { readOnly: true })
 	const lookup = new SoilCapabilityLookup({ databasePath: options.databasePath })
 
 	// Read once: the stored index is mixed-resolution because the whole tier is compacted, and a probe that assumed one
@@ -193,7 +193,7 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 		}
 	} finally {
 		lookup.close()
-		database.close()
+		await database.destroy()
 	}
 }
 
@@ -210,7 +210,7 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
  * as an absence — the same ancestor walk the reader does, and the same false negative it avoids.
  */
 function candidateDelineations(
-	database: DatabaseSync,
+	database: DatabaseClient<SoilDatabase>,
 	resolutions: readonly number[],
 	indexResolution: number,
 	latitude: number,
@@ -257,7 +257,7 @@ function candidateDelineations(
  * is reported with a distance rather than with nothing.
  */
 function localDelineationAt(
-	database: DatabaseSync,
+	database: DatabaseClient<SoilDatabase>,
 	resolutions: readonly number[],
 	indexResolution: number,
 	latitude: number,
@@ -329,7 +329,7 @@ export function sampleAgreementPoints(
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number }> {
 	const count = options.count ?? 60
-	const database = new DatabaseSync(databasePath, { readOnly: true })
+	const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
 	try {
 		const total = (database.prepare("SELECT count(*) AS n FROM soil_map_unit_area").get() as { n: number }).n
@@ -368,6 +368,6 @@ export function sampleAgreementPoints(
 
 		return points
 	} finally {
-		database.close()
+		database.destroy()
 	}
 }

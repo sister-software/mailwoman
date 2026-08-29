@@ -21,9 +21,8 @@
  *   over a row the pipeline already fails says nothing about spacing.
  */
 
-import { existsSync } from "node:fs"
-import { join } from "node:path"
-
+import { existsSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
 	auditWhitespaceSuite,

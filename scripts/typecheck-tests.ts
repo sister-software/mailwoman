@@ -14,14 +14,13 @@
  *   so siblings resolve through their built `.d.ts`. This runs them all and reports per workspace.
  */
 
-import { execFile } from "node:child_process"
-import { existsSync } from "node:fs"
-import { readdir } from "node:fs/promises"
-import { cpus } from "node:os"
-import { join, relative } from "node:path"
-import { promisify } from "node:util"
-
 import { repoRootPath, workspacePath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { existsSync } from "@mailwoman/platform/fs"
+import { readdir } from "@mailwoman/platform/fs/promises"
+import { cpus } from "@mailwoman/platform/os"
+import { join, relative } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 
 const run = promisify(execFile)

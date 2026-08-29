@@ -12,7 +12,7 @@
  *   transfer failure rather than as a cache miss.
  */
 
-import { stat } from "node:fs/promises"
+import { stat } from "@mailwoman/platform/fs/promises"
 
 /**
  * Whether `path` names something on disk.

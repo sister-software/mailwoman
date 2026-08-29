@@ -25,9 +25,8 @@
  *   the same env var `mailwoman reverse` reads.
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { existsSync } from "@mailwoman/platform/fs"
 import type { WOFReverseGeocoder as WOFReverseGeocoderType } from "@mailwoman/resolver-wof-sqlite"
 
 import { wofShardPaths } from "./resolver-backend.ts"

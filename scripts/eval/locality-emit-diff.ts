@@ -1,5 +1,3 @@
-import { parseArgs } from "node:util"
-
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
@@ -15,6 +13,7 @@ import { parseArgs } from "node:util"
  */
 import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { JSONSpliterator } from "spliterator"
 

@@ -21,10 +21,9 @@
  *   if a bad row says WHICH file and WHICH line; a bare `SyntaxError` over 306 rows is a scavenger hunt.
  */
 
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { mkdtempSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { ablationBoardID } from "mailwoman/eval-harness/gauntlet/ablation"
 import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { canonicalizeSeedCase, SeedCaseSchema } from "mailwoman/eval-harness/gauntlet/cases/seed-case"

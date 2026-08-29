@@ -24,7 +24,7 @@
  *   [--out-svg docs/records/evals/charts/dedup-yardstick.svg]`
  */
 
-import { writeFileSync } from "node:fs"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Options for {@linkcode yardstickFigure}.

@@ -32,14 +32,13 @@
  *   --set-default
  */
 
-import { spawnSync } from "node:child_process"
-import { existsSync, statSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { basename, resolve } from "node:path"
-
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { existsSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { basename, resolve } from "@mailwoman/platform/path"
 
 /**
  * The parseArgs option names of the required per-release artifacts.

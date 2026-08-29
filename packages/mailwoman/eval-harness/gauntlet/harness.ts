@@ -9,10 +9,6 @@
  *   paid for once (#566 / reconcile-retirement).
  */
 
-import { createHash } from "node:crypto"
-import { existsSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -20,6 +16,9 @@ import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { createHash } from "@mailwoman/platform/crypto"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import type { AdminCoherenceReport } from "../../admin-coherence.ts"

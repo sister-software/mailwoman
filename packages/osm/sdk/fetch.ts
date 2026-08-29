@@ -19,9 +19,9 @@
  *   never holds it: a web stream piped to a write stream.
  */
 
-import { createWriteStream } from "node:fs"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 
 const GEOFABRIK_BASE = "https://download.geofabrik.de"
 

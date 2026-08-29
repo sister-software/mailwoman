@@ -20,15 +20,15 @@
  *   Run: node scripts/eval/fr-parse-recall.ts
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { allRows, dataRootPath, mailwomanDataRoot, workspacePath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import type { OSMAddressPointDatabase } from "@mailwoman/osm/sdk/address-point-schema"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
 
 const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
@@ -189,7 +189,9 @@ export async function frParseRecall(
 
 	const rows: FRRow[] = args.fromDB
 		? (() => {
-				const db = new DatabaseSync(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, { readOnly: true })
+				const db = new DatabaseClient<OSMAddressPointDatabase>(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, {
+					readOnly: true,
+				})
 
 				// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
 				// DETERMINISTIC (GROUP BY + ORDER BY, no RANDOM) — the same shard yields the same 40 rows.

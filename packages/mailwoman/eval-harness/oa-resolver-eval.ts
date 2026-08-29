@@ -52,11 +52,10 @@
  *   `--postcode-anchor`, which swaps the resolved COORDINATE, not the model input.
  */
 
-import { writeFileSync } from "node:fs"
-
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { renderOaResolverReport } from "./oa-resolver-report.ts"

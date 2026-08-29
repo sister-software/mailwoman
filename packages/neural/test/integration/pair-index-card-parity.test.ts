@@ -22,10 +22,9 @@
  *   by each package's `link-dev-weights.ts`, so a lean checkout legitimately has none.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 /**

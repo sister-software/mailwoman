@@ -8,11 +8,10 @@
  *   there is to assert is the empty-registry messaging.
  */
 
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as runSpec } from "mailwoman/commands/corpus/run"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"

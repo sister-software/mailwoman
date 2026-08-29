@@ -9,8 +9,7 @@
  *   and worker is precisely the failure this file must catch.
  */
 
-import { fileURLToPath } from "node:url"
-
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"

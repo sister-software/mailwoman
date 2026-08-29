@@ -12,9 +12,8 @@
  *   wire keys outside it.
  */
 
-import { readFileSync } from "node:fs"
-
 import { normalizeReleasesManifest } from "@mailwoman/docs/shared/demo-helpers"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 import type { WireReleaseEntry } from "#shared/demo-helpers"

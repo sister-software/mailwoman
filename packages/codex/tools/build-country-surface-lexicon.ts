@@ -40,8 +40,8 @@
  *   Regenerate: `node codex/tools/build-country-surface-lexicon.ts`
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, resolve } from "@mailwoman/platform/path"
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
 import { wordNorm, wordNormLower } from "../normalize.ts"

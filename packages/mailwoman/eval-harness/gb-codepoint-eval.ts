@@ -29,11 +29,10 @@
  *   Run: node packages/mailwoman/eval-harness/gb-codepoint-eval.ts [--stamp 2026-08-05] [--per-area 5] [--out <jsonl>]
  */
 
-import { readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { basename, join } from "node:path"
-import { parseArgs } from "node:util"
-
 import { dataRootPath, mulberry32 } from "@mailwoman/core/utils"
+import { readdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
 
 import { createGeocodeCommandOptions } from "../geocode-command-options.ts"

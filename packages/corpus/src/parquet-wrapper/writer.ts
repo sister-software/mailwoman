@@ -13,13 +13,12 @@
  *   dispose calls don't race.
  */
 
-import * as fs from "node:fs/promises"
-import * as path from "node:path"
-
 import { ParquetWriter as BaseParquetWriter } from "@dsnp/parquetjs"
 import type { WriterOptions } from "@dsnp/parquetjs/dist/lib/declare.js"
 import { osopen, type WriteStreamMinimal } from "@dsnp/parquetjs/dist/lib/util.js"
 import { ParquetEnvelopeWriter } from "@dsnp/parquetjs/dist/lib/writer.js"
+import * as fs from "@mailwoman/platform/fs/promises"
+import * as path from "@mailwoman/platform/path"
 
 import {
 	type ParquetRecordLike,

@@ -11,12 +11,19 @@
  *   that a dirty tree says so in the commit it reports, and that neither leaves litter behind.
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { runWorktreeArm, WORKING_TREE_REF } from "@mailwoman/dev-mcp/worktree-arm"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readdirSync,
+	rmSync,
+	symlinkSync,
+	writeFileSync,
+} from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, describe, expect, it } from "vitest"
 
 const roots: string[] = []

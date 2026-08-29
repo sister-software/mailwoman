@@ -48,12 +48,11 @@
  *   Usage: node packages/mailwoman/dev-tools/score-hard-slice-board.run.ts [--arms none,pop,imp] [--out-json <p>]
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver, mostSpecificResolved } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { haversineKm } from "@mailwoman/spatial"

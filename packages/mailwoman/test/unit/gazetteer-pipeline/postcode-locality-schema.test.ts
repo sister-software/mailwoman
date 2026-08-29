@@ -12,10 +12,8 @@
  *   under test.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { allRows } from "@mailwoman/core/utils"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	createPostcodeLocalityIndex,
 	createPostcodeLocalityMetaTable,
@@ -38,24 +36,23 @@ interface TableInfoRow {
 /**
  * A fresh in-memory shard with both tables and the index.
  */
-async function buildShard(ifNotExists: boolean): Promise<DatabaseSync> {
-	const database = new DatabaseSync(":memory:")
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database })
+async function buildShard(ifNotExists: boolean): Promise<DatabaseClient<PostcodeLocalityDatabase>> {
+	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(":memory:")
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists })
 	await createPostcodeLocalityIndex(kdb, { ifNotExists })
 	await createPostcodeLocalityMetaTable(kdb, { ifNotExists })
 
-	return database
+	return kdb
 }
 
-function tableInfo(db: DatabaseSync, table: string): TableInfoRow[] {
+function tableInfo(db: DatabaseClient<PostcodeLocalityDatabase>, table: string): TableInfoRow[] {
 	return allRows<TableInfoRow>(db.prepare(`PRAGMA table_info(${table})`))
 }
 
 describe("createPostcodeLocalityTable", () => {
 	it("declares the shipped column shape", async () => {
-		const db = await buildShard(false)
+		await using db = await buildShard(false)
 
 		expect(
 			tableInfo(db, "postcode_locality").map((c) => ({
@@ -74,24 +71,19 @@ describe("createPostcodeLocalityTable", () => {
 			{ cid: 5, name: "distance_km", type: "REAL", notnull: 1 },
 			{ cid: 6, name: "is_containing", type: "INTEGER", notnull: 1 },
 		])
-
-		db.close()
 	})
 
 	it("declares the meta key/value shape with `key` as the primary key", async () => {
-		const db = await buildShard(false)
+		await using db = await buildShard(false)
 
 		expect(tableInfo(db, "meta").map((c) => ({ name: c.name, type: c.type.toUpperCase(), pk: c.pk }))).toEqual([
 			{ name: "key", type: "TEXT", pk: 1 },
 			{ name: "value", type: "TEXT", pk: 0 },
 		])
-
-		db.close()
 	})
 
 	it("is re-runnable under `ifNotExists` — the accumulative build fills one shard country by country", async () => {
-		const database = new DatabaseSync(":memory:")
-		const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database })
+		await using kdb = new DatabaseClient<PostcodeLocalityDatabase>(":memory:")
 
 		await createPostcodeLocalityTable(kdb, { ifNotExists: true })
 		await createPostcodeLocalityIndex(kdb, { ifNotExists: true })
@@ -103,14 +95,12 @@ describe("createPostcodeLocalityTable", () => {
 
 		// Without the flag the same statement is an error — that is what makes a rebuild build a rebuild.
 		await expect(createPostcodeLocalityTable(kdb, { ifNotExists: false })).rejects.toThrow(/already exists/)
-
-		database.close()
 	})
 })
 
 describe("createPostcodeLocalityIndex", () => {
 	it("creates the non-unique (postcode, country) probe index", async () => {
-		const db = await buildShard(false)
+		await using db = await buildShard(false)
 
 		expect(db.prepare("PRAGMA index_list(postcode_locality)").all()).toEqual([
 			expect.objectContaining({ name: "postcode_locality_by_pc", unique: 0, partial: 0 }),
@@ -125,14 +115,12 @@ describe("createPostcodeLocalityIndex", () => {
 			[0, "postcode"],
 			[1, "country"],
 		])
-
-		db.close()
 	})
 })
 
 describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 	it("binds in the DDL's column order", async () => {
-		const db = await buildShard(false)
+		await using db = await buildShard(false)
 		const declared = tableInfo(db, "postcode_locality").map((c) => c.name)
 
 		expect([...POSTCODE_LOCALITY_COLUMNS]).toEqual(declared)
@@ -142,12 +130,10 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 		expect(named).not.toBeNull()
 		expect(named![1]!.split(",").map((c) => c.trim())).toEqual(declared)
 		expect(named![2]!.split(",").map((c) => c.trim())).toEqual(declared.map(() => "?"))
-
-		db.close()
 	})
 
 	it("lands each positional value in its own column", async () => {
-		const db = await buildShard(false)
+		await using db = await buildShard(false)
 
 		const values: PostcodeLocalityInsertValues = ["10115", "DE", 101_752_063, "Berlin", "Berlin|Berlino", 0, 1]
 
@@ -162,12 +148,10 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 			distance_km: 0,
 			is_containing: 1,
 		})
-
-		db.close()
 	})
 
 	it("accepts a null alias list", async () => {
-		const db = await buildShard(false)
+		await using db = await buildShard(false)
 
 		db.prepare(POSTCODE_LOCALITY_INSERT_SQL).run("10115", "DE", 101_752_063, "Berlin", null, 1.5, 0)
 
@@ -175,7 +159,5 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 			aliases: null,
 			distance_km: 1.5,
 		})
-
-		db.close()
 	})
 })

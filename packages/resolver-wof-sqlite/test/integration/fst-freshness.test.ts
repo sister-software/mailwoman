@@ -11,11 +11,10 @@
  *   writes a trailer at a non-zero offset and the reader is never handed the buffer.
  */
 
-import { createHash } from "node:crypto"
-import { mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { createHash } from "@mailwoman/platform/crypto"
+import { mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import {
 	fstFreshnessWarning,
 	fstStaleReason,

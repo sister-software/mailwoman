@@ -27,7 +27,7 @@
  *   finished value before the file is opened.
  */
 
-import { writeFile } from "node:fs/promises"
+import { writeFile } from "@mailwoman/platform/fs/promises"
 
 import type { PremiseLinkageReport, PremiseLinkageResultRow } from "./schema.ts"
 import { PREMISE_LINKAGE_SHAPE_CLASSES } from "./schema.ts"

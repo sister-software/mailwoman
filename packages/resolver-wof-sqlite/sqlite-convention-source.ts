@@ -15,14 +15,13 @@
  *   swallowed.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { ADDRESS_CONVENTION_TABLE, type Convention, type ConventionSource } from "./convention.ts"
 
-export class SqliteConventionSource implements ConventionSource {
-	readonly #db: DatabaseSync
+export class SqliteConventionSource<DB> implements ConventionSource {
+	readonly #db: DatabaseClient<DB>
 	readonly #schema: string
 	/**
 	 * Memoize per-id lookups (including misses, as `null`) so a hot ancestor chain is queried once.
@@ -34,7 +33,7 @@ export class SqliteConventionSource implements ConventionSource {
 	 * @param schema The schema name the `address_convention` table lives under (`main` or an ATTACHed shard name —
 	 *   `WOFSQLitePlaceLookup` auto-detects which shard carries the table).
 	 */
-	constructor(db: DatabaseSync, schema: string) {
+	constructor(db: DatabaseClient<DB>, schema: string) {
 		this.#db = db
 		this.#schema = schema
 	}

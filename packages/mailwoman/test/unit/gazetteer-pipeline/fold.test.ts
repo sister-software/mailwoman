@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { accessSync, constants, mkdirSync, mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { sealDatabase } from "@mailwoman/core/utils"
+import { accessSync, constants, mkdirSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { foldGeonamesIntoAdmin } from "mailwoman/gazetteer-pipeline"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
@@ -30,9 +30,9 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 	// dies with "attempt to write a readonly database" — exactly how the 2026-08-04 candidate rebuild
 	// failed against the freshly-sealed admin DB.
 	const adminIn = join(root, "admin-sealed.db")
-	const db = new DatabaseSync(adminIn)
+	const db = new DatabaseClient<WOFDatabase>(adminIn)
 	await createUnifiedSchema(db)
-	db.close()
+	await db.destroy()
 	sealDatabase(adminIn)
 
 	const adminOut = join(root, "admin-folded.db")
@@ -55,18 +55,18 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 
 test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", async () => {
 	const adminIn = join(root, "admin-sealed-2.db")
-	const db = new DatabaseSync(adminIn)
+	const db = new DatabaseClient<WOFDatabase>(adminIn)
 	await createUnifiedSchema(db)
-	db.close()
+	await db.destroy()
 	sealDatabase(adminIn)
 
 	// A prior fold output at the destination — itself sealed, the worst case: copyFileSync writes
 	// THROUGH an existing destination and keeps its mode, so a stale 0444 copy re-poisons every
 	// subsequent fold unless the fold removes it first.
 	const adminOut = join(root, "admin-folded-2.db")
-	const stale = new DatabaseSync(adminOut)
+	const stale = new DatabaseClient<WOFDatabase>(adminOut)
 	stale.exec("CREATE TABLE stale_marker (id INTEGER)")
-	stale.close()
+	await stale.destroy()
 	sealDatabase(adminOut)
 
 	const emptyDumps = join(root, "geonames-empty-2")
@@ -80,9 +80,9 @@ test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", asyn
 		alternateDir: emptyDumps,
 	})
 
-	const folded = new DatabaseSync(adminOut, { readOnly: true })
+	const folded = new DatabaseClient<WOFDatabase>(adminOut, { readOnly: true })
 	const marker = folded.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='stale_marker'").all()
-	folded.close()
+	await folded.destroy()
 
 	expect(marker).toHaveLength(0)
 })
@@ -92,7 +92,7 @@ test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existin
 	// whole id range — so folding a NARROWER list against one deletes the difference. The 2026-08-05
 	// build did exactly that with the old 14-country default and nothing said a word.
 	const adminIn = join(root, "admin-prefolded.db")
-	const db = new DatabaseSync(adminIn)
+	const db = new DatabaseClient<WOFDatabase>(adminIn)
 	await createUnifiedSchema(db)
 
 	const insert = db.prepare(
@@ -103,7 +103,7 @@ test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existin
 
 	insert.run(9_000_000_000_000, "Gaborone", "BW")
 	insert.run(9_000_000_000_001, "Wien", "AT")
-	db.close()
+	await db.destroy()
 	sealDatabase(adminIn)
 
 	const emptyDumps = join(root, "geonames-empty-3")
@@ -122,7 +122,7 @@ test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existin
 
 test("foldGeonamesIntoAdmin: a country list covering the source's coverage passes the guard", async () => {
 	const adminIn = join(root, "admin-prefolded-2.db")
-	const db = new DatabaseSync(adminIn)
+	const db = new DatabaseClient<WOFDatabase>(adminIn)
 	await createUnifiedSchema(db)
 
 	db.prepare(
@@ -131,7 +131,7 @@ test("foldGeonamesIntoAdmin: a country list covering the source's coverage passe
 		 VALUES (?, -1, 'Wien', 'locality', 'AT', 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)`
 	).run(9_000_000_000_000)
 
-	db.close()
+	await db.destroy()
 	sealDatabase(adminIn)
 
 	const emptyDumps = join(root, "geonames-empty-4")
@@ -151,9 +151,9 @@ test("foldGeonamesIntoAdmin: a country list covering the source's coverage passe
 	// The dumps are absent, so both countries skip — and the pre-existing row is gone anyway, because the
 	// fold rewrites its range rather than patching it. A silent survivor is what bound Gaborone's names
 	// to an Austrian village.
-	const folded = new DatabaseSync(adminOut, { readOnly: true })
+	const folded = new DatabaseClient<WOFDatabase>(adminOut, { readOnly: true })
 	const left = folded.prepare("SELECT COUNT(*) AS n FROM spr WHERE id >= 9000000000000").get() as { n: number }
-	folded.close()
+	await folded.destroy()
 
 	expect(left.n).toBe(0)
 })

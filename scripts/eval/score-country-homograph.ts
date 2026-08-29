@@ -10,9 +10,8 @@
  *   every printed line. Do not add logic here.
  */
 
-import { parseArgs } from "node:util"
-
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { scoreCountryHomograph } from "mailwoman/eval-harness/score-country-homograph"
 
 async function main(): Promise<void> {

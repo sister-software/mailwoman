@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { join, resolve } from "node:path"
-
 import { defaultMailwomanPaths } from "@mailwoman/core/env"
+import { join, resolve } from "@mailwoman/platform/path"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import type { CapitalTable } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import {
 	conventionCandidateDBPath,
@@ -93,10 +93,9 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 })
 
 test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {
-	const { mkdtempSync, writeFileSync } = await import("node:fs")
-	const { tmpdir } = await import("node:os")
-	const { DatabaseSync } = await import("node:sqlite")
-	const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+	const { mkdtempSync, writeFileSync } = await import("@mailwoman/platform/fs")
+	const { tmpdir } = await import("@mailwoman/platform/os")
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	const { createCapitalTable } = await import("@mailwoman/resolver-wof-sqlite/capital-schema")
 	const { loadCapitalIndex } = await import("mailwoman/resolver-backend")
 
@@ -104,15 +103,15 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 
 	// An artifact carrying the table: the CR capital only.
 	const artifactPath = join(dir, "candidate.db")
-	const artifact = new DatabaseSync(artifactPath)
+	const artifact = new DatabaseClient<CandidateDatabase>(artifactPath)
 
-	await createCapitalTable(new DatabaseClient<{ capital: CapitalTable }>({ database: artifact }))
+	await createCapitalTable<CandidateDatabase>(artifact)
 
 	artifact
 		.prepare("INSERT INTO capital (country, latitude, longitude, level, keys) VALUES (?, ?, ?, ?, ?)")
 		.run("CR", 9.9333, -84.0833, "national", JSON.stringify(["san jose"]))
 
-	artifact.close()
+	await artifact.destroy()
 
 	// A repo-style file carrying a DIFFERENT entry (GD), so which source served is observable.
 	const repoPath = join(dir, "capitals-v1.json")
@@ -134,7 +133,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	// An artifact WITHOUT the table falls through to the repo file.
 	const barePath = join(dir, "bare.db")
 
-	new DatabaseSync(barePath).close()
+	new DatabaseClient<CandidateDatabase>(barePath).destroy()
 	const fromRepo = loadCapitalIndex({ candidateDB: barePath, path: repoPath })
 
 	expect(fromRepo!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)

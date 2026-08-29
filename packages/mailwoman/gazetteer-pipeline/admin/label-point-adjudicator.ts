@@ -27,9 +27,8 @@
  *   existing label-first behavior byte-identically.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
 

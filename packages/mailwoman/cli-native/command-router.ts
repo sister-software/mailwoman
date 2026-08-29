@@ -1,5 +1,4 @@
-import { access, readdir } from "node:fs/promises"
-
+import { access, readdir } from "@mailwoman/platform/fs/promises"
 import { render } from "ink"
 import { createElement } from "react"
 import type { ComponentType } from "react"

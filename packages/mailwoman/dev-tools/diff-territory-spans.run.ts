@@ -17,10 +17,9 @@
  *   `--rows` is a plain text file of `id<TAB>input` lines (blank lines and `#` comments skipped).
  */
 
-import { parseArgs } from "node:util"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"

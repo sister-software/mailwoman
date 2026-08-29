@@ -54,13 +54,12 @@
  *   Invoke via `mailwoman corpus fetch wikidata-subvenue --out-root <path>`.
  */
 
-import { mkdirSync } from "node:fs"
-import { writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import { APIClient, type ClockLike } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { sha256File } from "@mailwoman/core/utils"
+import { mkdirSync } from "@mailwoman/platform/fs"
+import { writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { writeManifest } from "./download.ts"

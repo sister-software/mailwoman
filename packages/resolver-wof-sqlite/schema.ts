@@ -163,7 +163,17 @@ export interface CoincidentRolesTable {
  * build/augment WRITERS adopt it so a column rename is a compile error on both sides (the drift that bit the corpus
  * TIGER adapter).
  */
+/**
+ * The provenance row every built extract carries: source fingerprints travelling WITH the database rather than in a
+ * document that can drift from it. Written by the postcode builders in `mailwoman/gazetteer-pipeline`.
+ */
+export interface ShardMetaTable {
+	key: string
+	value: string | null
+}
+
 export interface WOFDatabase {
+	meta: ShardMetaTable
 	place_search: PlaceSearchTable
 	spr: SprTable
 	names: NamesTable

@@ -16,9 +16,9 @@
  *   2500]`
  */
 
-import { appendFileSync } from "node:fs"
-import * as path from "node:path"
-import { DatabaseSync } from "node:sqlite"
+import { appendFileSync } from "@mailwoman/platform/fs"
+import * as path from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { dataRootPath, repoRootPath } from "#utils"
 
@@ -145,6 +145,17 @@ function addressVariant(name: string, h: number): string {
 /**
  * Coarse-placer non-Latin outlier-exposure builder — see the module doc.
  */
+/**
+ * The one column this tool reads out of `wof.db`.
+ *
+ * Not `WOFDatabase` from `@mailwoman/resolver-wof-sqlite`: that package depends on this one, so importing its schema
+ * here would invert the layering. A tool in `@mailwoman/core` reaching a resolver artifact at all is the odd part; this
+ * names the narrowest read it needs rather than pretending the dependency is fine.
+ */
+interface WOFNameRead {
+	names: { name: string; language: string }
+}
+
 export async function buildOutlierExposure(
 	options: BuildOutlierExposureOptions = {},
 	report?: (line: string) => void
@@ -153,7 +164,7 @@ export async function buildOutlierExposure(
 	const wofPath = options.wof || dataRootPath("wof", "admin-global-priority.db")
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const db = new DatabaseSync(wofPath, { readOnly: true })
+	const db = new DatabaseClient<WOFNameRead>(wofPath, { readOnly: true })
 	const pool: string[] = []
 	const seen = new Set<string>()
 
@@ -180,7 +191,7 @@ export async function buildOutlierExposure(
 		report?.(`  ${lang}: ${kept}`)
 	}
 
-	db.close()
+	await db.destroy()
 
 	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as OTHER.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))

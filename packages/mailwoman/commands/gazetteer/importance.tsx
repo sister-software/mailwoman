@@ -32,15 +32,14 @@
  *   which is what they had before Wikipedia importance existed.
  */
 
-import { createReadStream, existsSync, mkdirSync, writeFileSync } from "node:fs"
-import { get as httpsGet } from "node:https"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { createGunzip } from "node:zlib"
-
-import { allRows, cacheRootPath, getRow } from "@mailwoman/core/utils"
+import { allRows, cacheRootPath, getRow, pathExists } from "@mailwoman/core/utils"
+import { gunzipChunks } from "@mailwoman/platform/compression"
+import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { get as httpsGet } from "@mailwoman/platform/https"
+import { dirname } from "@mailwoman/platform/path"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import { Box, Text } from "ink"
+import { createReadStream } from "spliterator/node/fs"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -60,6 +59,11 @@ const HTTP_FOUND = 302
  * Columns a Wikidata concordance row needs before it carries a usable mapping.
  */
 const MIN_WIKIDATA_COLUMNS = 5
+
+/**
+ * Chunk size used while streaming the compressed Wikimedia importance table.
+ */
+const IMPORTANCE_READ_HIGH_WATER_MARK = 64 * 1024
 
 const IMPORTANCE_URL = "https://nominatim.org/data/wikimedia-importance.csv.gz"
 
@@ -92,8 +96,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 						res2.on("data", (chunk) => chunks.push(chunk))
 
 						res2.on("end", () => {
-							writeFileSync(dest, Buffer.concat(chunks))
-							resolve()
+							void writeFile(dest, Buffer.concat(chunks)).then(() => resolve(), reject)
 						})
 
 						res2.on("error", reject)
@@ -107,8 +110,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 			res.on("data", (chunk) => chunks.push(chunk))
 
 			res.on("end", () => {
-				writeFileSync(dest, Buffer.concat(chunks))
-				resolve()
+				void writeFile(dest, Buffer.concat(chunks)).then(() => resolve(), reject)
 			})
 
 			res.on("error", reject)
@@ -118,7 +120,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 
 const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
 		const { blendImportance, createPlaceImportanceTable, referentialFromPopulation } =
 			await import("@mailwoman/resolver-wof-sqlite/place-importance-schema")
@@ -132,11 +134,11 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		const tsvPath = options.tsv
 		const t0 = performance.now()
 
-		if (!existsSync(dbPath)) throw new CommandError(`Database not found: ${dbPath}`)
+		if (!(await pathExists(dbPath))) throw new CommandError(`Database not found: ${dbPath}`)
 
-		const db = new DatabaseSync(dbPath, { open: true })
+		const kdb = new DatabaseClient<PlaceImportanceDatabase>(dbPath, { open: true })
+
 		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `db` handle.
-		const kdb = new DatabaseClient<PlaceImportanceDatabase>({ database: db })
 
 		// Step 1: Load Wikidata concordances from WOF
 		console.error("Loading Wikidata concordances from WOF...")
@@ -149,7 +151,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			// `is_current = 1` — a deprecated place is not in any consumer's read path, and leaving it
 			// in would let a dead row win a fan-out group. DISTINCT because `concordances` carries
 			// duplicate (id, other_id) rows (Q18125 appears twice for the same place).
-			const stmt = db.prepare(
+			const stmt = kdb.prepare(
 				`SELECT DISTINCT c.other_id AS other_id, s.id AS id, s.placetype AS placetype,
 				        s.latitude AS lat, s.longitude AS lon, COALESCE(p.population, 0) AS population
 				 FROM concordances c
@@ -204,12 +206,12 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		if (!gzPath) {
 			gzPath = cacheRootPath("wikimedia-importance.csv.gz")
 
-			if (existsSync(gzPath)) {
+			if (await pathExists(gzPath)) {
 				console.error(`  Using cached TSV: ${gzPath}`)
 			} else {
 				console.error(`  Downloading ${IMPORTANCE_URL}...`)
 
-				mkdirSync(dirname(gzPath), { recursive: true })
+				await mkdir(dirname(gzPath), { recursive: true })
 
 				await downloadToFile(IMPORTANCE_URL, gzPath)
 
@@ -223,11 +225,10 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		const importanceMap = new Map<string, number>()
 		let totalRows = 0
 
-		const gunzip = createGunzip()
-		const fileStream = createReadStream(gzPath)
+		const fileChunks = await createReadStream(gzPath, IMPORTANCE_READ_HIGH_WATER_MARK)
 
 		// crlf: the wikidata id is the last column — a CRLF source would leave a stray \r on it.
-		for await (const line of TextSpliterator.fromAsync(fileStream.pipe(gunzip), { crlf: true })) {
+		for await (const line of TextSpliterator.fromAsync(gunzipChunks(fileChunks), { crlf: true })) {
 			totalRows++
 
 			if (totalRows === 1 && line.startsWith("language")) continue
@@ -292,7 +293,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			const popRows = allRows<{
 				id: number
 				population: number
-			}>(db.prepare("SELECT id, population FROM place_population"))
+			}>(kdb.prepare("SELECT id, population FROM place_population"))
 
 			for (const row of popRows) {
 				const score = referentialFromPopulation(row.population)
@@ -305,7 +306,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			console.error("  No place_population table — every referential score will be 0")
 		}
 
-		const insertStmt = db.prepare(
+		const insertStmt = kdb.prepare(
 			"INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)"
 		)
 
@@ -316,7 +317,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		// that we measured no salience rather than that we measured nothing.
 		const allIDs = new Set<number>([...wofReferential.keys(), ...wofEncyclopedic.keys()])
 
-		db.exec("BEGIN TRANSACTION")
+		kdb.exec("BEGIN TRANSACTION")
 
 		for (const wofID of allIDs) {
 			const referential = wofReferential.get(wofID) ?? 0
@@ -332,12 +333,12 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			insertStmt.run(wofID, referential, encyclopedic ?? null, blendImportance(referential, encyclopedic))
 		}
 
-		db.exec("COMMIT")
+		kdb.exec("COMMIT")
 
 		// The total is READ BACK, never derived by adding the two counters. The counters describe what
 		// this run tried to do; the table is what it did, and when those disagreed nobody noticed
 		// because the derived number looked plausible. `SELECT count(*)` cannot drift.
-		const total = getRow<{ c: number }>(db.prepare("SELECT count(*) AS c FROM place_importance"))!.c
+		const total = getRow<{ c: number }>(kdb.prepare("SELECT count(*) AS c FROM place_importance"))!.c
 
 		await kdb.destroy() // closes the underlying `db` handle
 

@@ -32,10 +32,9 @@
  *   own `meta` table; see {@link OSM_ATTRIBUTION} and {@link NI_OSM_BUILD_LOCAL_NOTE}.
  */
 
-import { mkdir, stat, writeFile } from "node:fs/promises"
-
 import { APIClient } from "@mailwoman/core/api"
 import { md5File, md5Hex } from "@mailwoman/core/utils"
+import { mkdir, stat, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "path-ts"
 
 /**

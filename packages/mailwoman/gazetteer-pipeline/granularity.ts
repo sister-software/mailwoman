@@ -24,9 +24,9 @@
  *   Read-only against the admin DB: no network, no model, no writes.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { ComponentTag } from "@mailwoman/core/types"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { OVERTURE_ID_BASE } from "./admin/fold-overture.ts"
 import { DEFAULT_COVERAGE_FLOOR } from "./defaults.ts"
@@ -157,7 +157,7 @@ function ladderPlacetypes(): string[] {
  * parents per placetype and summing in JS would double it.
  */
 export function buildGranularityLadder(adminDBPath: string): CountryGranularity[] {
-	const db = new DatabaseSync(adminDBPath, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
 	try {
 		const placetypeList = ladderPlacetypes()
@@ -268,7 +268,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 
 		return [...byCountry.values()].toSorted((a, b) => a.country.localeCompare(b.country))
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }
 

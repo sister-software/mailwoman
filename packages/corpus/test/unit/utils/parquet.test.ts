@@ -7,10 +7,6 @@
 /* oxlint-disable unicorn/text-encoding-identifier-case -- these assertions mirror ParquetType enum
    members (`"UTF8"`), not text-encoding identifiers; see the note in parquet.ts. */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import {
 	LABELED_ROW_SCHEMA,
@@ -21,6 +17,9 @@ import {
 	writeShards,
 	type ParquetRow,
 } from "@mailwoman/corpus/utils/parquet"
+import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ParquetReader } from "#parquet-wrapper"
@@ -52,7 +51,7 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
  * Read every row from a `.parquet` file in on-disk order.
  */
 async function readParquet(path: string): Promise<ParquetRow[]> {
-	const reader = await ParquetReader.openFile<ParquetRow>(path)
+	await using reader = await ParquetReader.openFile<ParquetRow>(path)
 	const cursor = reader.getCursor()
 	const out: ParquetRow[] = []
 	let row: ParquetRow | null
@@ -61,8 +60,6 @@ async function readParquet(path: string): Promise<ParquetRow[]> {
 	while ((row = (await cursor.next()) as ParquetRow | null)) {
 		out.push(row)
 	}
-
-	await reader.close()
 
 	return out
 }

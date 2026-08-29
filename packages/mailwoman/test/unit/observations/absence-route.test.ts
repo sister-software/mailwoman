@@ -17,13 +17,7 @@
  *   that happen while the loader still reported a clean load.
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -35,8 +29,12 @@ import {
 } from "@mailwoman/core/layers"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
+import { mkdtempSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 import {
 	auditAbsenceProbeDefinition,
@@ -99,9 +97,7 @@ async function scratchLayer(options: ScratchLayerOptions = {}): Promise<string> 
 
 	built.push(path)
 
-	const database = new DatabaseSync(path)
-
-	using db = new DatabaseClient<POIDatabase>({ database })
+	using db = new DatabaseClient<POIDatabase>(path)
 
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)

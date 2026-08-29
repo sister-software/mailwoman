@@ -13,9 +13,9 @@
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { allRows } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -89,10 +89,10 @@ const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) =
 		const dbPath = options.db ?? dataRootPath("wof", "admin-global-priority.db").toString()
 		const country = options.country
 
-		let db: DatabaseSync
+		let db: DatabaseClient<WOFDatabase>
 
 		try {
-			db = new DatabaseSync(dbPath, { readOnly: true })
+			db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 		} catch (error) {
 			throw new CommandError(`Cannot open WOF DB ${dbPath}: ${(error as Error).message}`)
 		}
@@ -127,7 +127,7 @@ const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) =
 			...params
 		)
 
-		db.close()
+		await db.destroy()
 
 		const byParent = new Map<string, Array<{ placetype: string; n: number }>>()
 

@@ -5,9 +5,8 @@
  * @file Package-aware source resolution for the docs webpack build.
  */
 
-import { existsSync } from "node:fs"
-import { createRequire } from "node:module"
-
+import { existsSync } from "@mailwoman/platform/fs"
+import { createRequire } from "@mailwoman/platform/module"
 import { dirname, join } from "path-ts"
 
 const requireFromPlugin = createRequire(import.meta.url)

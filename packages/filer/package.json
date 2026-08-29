@@ -181,8 +181,10 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"kysely": "^0.29.4",
 		"read-excel-file": "^9.3.5",
 		"spliterator": "^6.2.0",

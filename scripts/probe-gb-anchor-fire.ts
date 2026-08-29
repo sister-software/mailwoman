@@ -21,9 +21,6 @@
  *   Usage: node scripts/probe-gb-anchor-fire.ts --bin <postcode-gb.bin>
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 // `@mailwoman/neural` exports neither `./postcode-repair` nor `./case-normalize` as a subpath, and both
 // are required here: `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode
 // reads, and `normalizeInputCase` is what the text has been through by the time the anchor sees it
@@ -32,6 +29,8 @@ import { parseArgs } from "node:util"
 import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
 import { collectMatches } from "@mailwoman/neural/postcode-repair"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 /**

@@ -18,11 +18,10 @@
  *   `expected 47878 to be 49033`. The generating code is part of the input, not context around it.
  */
 
-import { createHash } from "node:crypto"
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
-import { join, relative, resolve } from "node:path"
-
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
+import { createHash } from "@mailwoman/platform/crypto"
+import { existsSync, readdirSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { join, relative, resolve } from "@mailwoman/platform/path"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
 
 /**

@@ -8,15 +8,13 @@
  *   `scripts/build-unified-wof.ts` (#1015/#1021) into the pipeline module.
  */
 
-import type { DatabaseSync, StatementSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { simpleSHA3 } from "@mailwoman/core/crypto"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 // Type-only, so it is erased at build and adds no runtime edge to what is an optional peer here (the
 // caller reaches the package through a lazy `await import`).
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
+import type { DatabaseClient, StatementSync } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 
 /**
@@ -158,7 +156,7 @@ function compileInsert(
  * column tuples against the `WOFDatabase` INTERFACE, which is a different artifact from the DDL that builds the tables
  * — the two can drift, and the only thing that catches it is binding a row.
  */
-export function prepareInserts(db: DatabaseSync): {
+export function prepareInserts(db: DatabaseClient<WOFDatabase>): {
 	spr: StatementSync
 	names: StatementSync
 	population: StatementSync
@@ -166,7 +164,7 @@ export function prepareInserts(db: DatabaseSync): {
 } {
 	// Wraps the caller's handle for statement compilation only — the same one-connection idiom
 	// `createUnifiedSchema` uses for its DDL. The caller owns `db`'s lifecycle, so this is not destroyed.
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+	const kdb = db
 
 	return {
 		spr: db.prepare(compileInsert(kdb, "spr", SPR_COLUMNS, true)),
@@ -190,7 +188,7 @@ export function prepareInserts(db: DatabaseSync): {
  * @returns The number of divisions ingested.
  */
 export async function ingestOvertureDivisions(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	countries: readonly string[],
 	release: string,
 	/**

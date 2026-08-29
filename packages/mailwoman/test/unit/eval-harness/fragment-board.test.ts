@@ -10,8 +10,7 @@
  *   because it launders an anecdote into a decimal.
  */
 
-import { readFileSync } from "node:fs"
-
+import { readFileSync } from "@mailwoman/platform/fs"
 import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "mailwoman/eval-harness/fragment-board"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"

@@ -35,10 +35,9 @@
  *   [--data-root <dir>] [--seed 1] [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import {
 	addressFrequencyKey,

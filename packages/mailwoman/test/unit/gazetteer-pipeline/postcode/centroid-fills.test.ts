@@ -1,14 +1,14 @@
+import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  */
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { fillPostcodeCentroids } from "mailwoman/gazetteer-pipeline/postcode/centroid-fills"
 import { expect, test } from "vitest"
 
@@ -16,7 +16,7 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 	// The staging shard: two postcodes — one placeholder (parented), one already placed.
 	const dir = mkdtempSync(join(tmpdir(), "centroid-fills-"))
 	const shardPath = join(dir, "postalcode-tl.db")
-	const shard = new DatabaseSync(shardPath)
+	const shard = new DatabaseClient<WOFDatabase>(shardPath)
 	await createUnifiedSchema(shard)
 
 	const ins = shard.prepare(
@@ -25,11 +25,11 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 
 	ins.run(100, 9, "1000", "postalcode", "TL", 0, 0) // placeholder → should fill from parent 9
 	ins.run(101, 9, "2000", "postalcode", "TL", 5.5, 6.5) // real coordinate → must be untouched
-	shard.close()
+	await shard.destroy()
 
 	// The admin gazetteer carrying the parent locality.
 	const adminPath = join(dir, "admin.db")
-	const admin = new DatabaseSync(adminPath)
+	const admin = new DatabaseClient<WOFDatabase>(adminPath)
 	await createUnifiedSchema(admin)
 
 	admin
@@ -38,9 +38,9 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 		)
 		.run()
 
-	admin.close()
+	await admin.destroy()
 
-	const db = new DatabaseSync(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(shardPath)
 	const r = await fillPostcodeCentroids(db, { adminPath })
 	expect(r.placedBefore).toBe(1)
 	expect(r.placedAfter).toBe(2)
@@ -59,7 +59,6 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 	}
 
 	expect(untouched).toEqual({ latitude: 5.5, longitude: 6.5 })
-	db.close()
 })
 
 test("GeoNames postal names each postcode's delivery city, including territories filed under their own ISO code", async () => {
@@ -67,7 +66,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	// and Queens uses neighbourhood names rather than the borough. Both shapes are here on purpose.
 	const dir = mkdtempSync(join(tmpdir(), "centroid-names-"))
 	const shardPath = join(dir, "postalcode-us.db")
-	const shard = new DatabaseSync(shardPath)
+	const shard = new DatabaseClient<WOFDatabase>(shardPath)
 
 	await createUnifiedSchema(shard)
 
@@ -78,7 +77,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(1, -1, "11201", "postalcode", "US", 40.69, -73.99) // already placed, still nameless
 	ins.run(2, -1, "11375", "postalcode", "US", 40.72, -73.85) // Queens: a neighbourhood delivery city
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
-	shard.close()
+	await shard.destroy()
 
 	// GeoNames files a US territory under PR, not US. The shard files it under US. Reading only `US`
 	// rows leaves every territory postcode unnamed — 149 of them against the 2024 Census ZCTA list.
@@ -95,7 +94,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 		].join("\n")
 	)
 
-	const db = new DatabaseSync(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(shardPath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir })
 
@@ -118,8 +117,6 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	const pr = db.prepare("SELECT latitude FROM spr WHERE id = 3").get() as { latitude: number }
 
 	expect(pr.latitude).toBeCloseTo(18.1801, 3)
-
-	db.close()
 })
 
 test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
@@ -127,7 +124,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 	// without this branch the whole GeoNames pass short-circuits on existsSync and writes nothing.
 	const dir = mkdtempSync(join(tmpdir(), "centroid-combined-"))
 	const shardPath = join(dir, "postalcode-us.db")
-	const shard = new DatabaseSync(shardPath)
+	const shard = new DatabaseClient<WOFDatabase>(shardPath)
 
 	await createUnifiedSchema(shard)
 
@@ -137,7 +134,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 		)
 		.run()
 
-	shard.close()
+	await shard.destroy()
 
 	// An EMPTY per-country directory — the shape on disk that made this branch required.
 	const geonamesDir = join(dir, "geonames-postal")
@@ -153,7 +150,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 		)
 	)
 
-	const db = new DatabaseSync(shardPath)
+	await using db = new DatabaseClient<WOFDatabase>(shardPath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir, geonamesCombined })
 
@@ -167,6 +164,4 @@ test("falls back to the combined dump for a country the per-country directory ha
 	const placed = db.prepare("SELECT latitude FROM spr WHERE id = 1").get() as { latitude: number }
 
 	expect(placed.latitude).toBeCloseTo(40.694, 3)
-
-	db.close()
 })

@@ -19,10 +19,9 @@
  *   [--data-root <dir>] [--out-md docs/articles/evals/matcher-dedup/<date>-...md]`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 import {
 	addressFrequencyKey,

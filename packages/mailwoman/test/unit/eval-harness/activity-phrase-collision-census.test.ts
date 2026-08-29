@@ -10,13 +10,12 @@
  *   synthetic one — the case matters enough to be pinned somewhere a run without `poi.db` still executes it.
  */
 
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
-
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join, resolve } from "@mailwoman/platform/path"
 import {
 	candidateSubjects,
 	type CensusVenue,

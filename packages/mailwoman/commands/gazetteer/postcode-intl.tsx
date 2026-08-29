@@ -37,9 +37,7 @@
  *   verbatim.
  */
 
-import { copyFileSync, existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { copyFileSync, existsSync } from "@mailwoman/platform/fs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 
@@ -209,14 +207,13 @@ const SPR_COLUMNS = [
 ] as const
 
 async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normalizeKey: NormalizeKey): Promise<number> {
-	const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
 	if (existsSync(outPath)) {
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
 
-	const db = new DatabaseSync(outPath)
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
+	await using kdb = new DatabaseClient<WOFDatabase>(outPath)
 	// Regenerated artifact — drop any prior table so a re-run with a different country set fully
 	// replaces it (and synthetic ids restart cleanly without colliding with stale rows).
 	await kdb.schema.dropTable("spr").ifExists().execute()
@@ -245,13 +242,13 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 		.execute()
 
 	// Hot bulk write — positional prepared statement (the leave-as-raw fast path), columns from SPR_COLUMNS.
-	const ins = db.prepare(
+	const ins = kdb.prepare(
 		`INSERT INTO spr (${SPR_COLUMNS.join(", ")}) VALUES (${SPR_COLUMNS.map(() => "?").join(", ")})`
 	)
 
 	let id = SYNTH_ID_BASE
 	let rows = 0
-	db.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for (const a of acc.values()) {
 		const lat = a.sumLat / a.n
@@ -264,8 +261,7 @@ async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normal
 		}
 	}
 
-	db.exec("COMMIT")
-	db.close()
+	kdb.exec("COMMIT")
 
 	return rows
 }
@@ -282,8 +278,10 @@ async function foldIntoCandidate(
 	normalizeKey: NormalizeKey
 ): Promise<number> {
 	copyFileSync(srcPath, dstPath)
-	const out = new DatabaseSync(dstPath)
-	const shard = new DatabaseSync(shardPath, { readOnly: true })
+
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
+	await using out = new DatabaseClient<WOFDatabase>(dstPath)
+	const shard = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 
 	const ptRow = out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'").get() as
 		| { id: number }
@@ -363,8 +361,7 @@ async function foldIntoCandidate(
 	out.exec("COMMIT")
 	// Re-cluster the WITHOUT ROWID B-tree contiguously after the mid-tree inserts.
 	out.exec("VACUUM")
-	shard.close()
-	out.close()
+	await shard.destroy()
 
 	return n
 }

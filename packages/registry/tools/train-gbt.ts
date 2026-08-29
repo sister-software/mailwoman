@@ -18,11 +18,10 @@
  *   [--data-root <dir>] [--out registry/models/dedup-gbt-en-us.ts]`
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
 
 import {
 	addressFrequencyKey,

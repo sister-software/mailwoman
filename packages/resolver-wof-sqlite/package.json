@@ -333,6 +333,16 @@
 			"node": "./polygon-schema.ts",
 			"default": "./out/polygon-schema.js",
 			"types": "./out/polygon-schema.d.ts"
+		},
+		"./schema": {
+			"node": "./schema.ts",
+			"default": "./out/schema.js",
+			"types": "./out/schema.d.ts"
+		},
+		"./coverage-manifest-schema": {
+			"node": "./coverage-manifest-schema.ts",
+			"default": "./out/coverage-manifest-schema.js",
+			"types": "./out/coverage-manifest-schema.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -343,8 +353,10 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.4",
 		"path-ts": "^2.1.0",

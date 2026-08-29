@@ -22,13 +22,12 @@
  *   short and reasoned rather than long and tolerated.
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import { validateTree } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { parseForGeocode } from "mailwoman/geocode-core"
 import { describe, expect, it } from "vitest"
 

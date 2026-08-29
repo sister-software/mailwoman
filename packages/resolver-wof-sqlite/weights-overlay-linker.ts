@@ -6,7 +6,9 @@
  * placetype-pair index build.
  */
 
-import { spawnSync } from "node:child_process"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { spawnSync } from "@mailwoman/platform/child_process"
 import {
 	existsSync,
 	lstatSync,
@@ -17,11 +19,8 @@ import {
 	symlinkSync,
 	unlinkSync,
 	writeFileSync,
-} from "node:fs"
-import { resolve } from "node:path"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+} from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import { fstFreshnessWarning } from "./fst-freshness.ts"
 

@@ -20,8 +20,8 @@
  *   ZERO DEPENDENCIES, deliberately: a vocabulary any package may read must not drag a graph behind it.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import type {
 	ActivityPhraseEntry,

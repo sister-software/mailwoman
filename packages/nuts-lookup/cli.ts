@@ -14,7 +14,7 @@
  *   The `--` separates flags from coordinates so negative coordinates parse as positionals.
  */
 
-import { parseArgs } from "node:util"
+import { parseArgs } from "@mailwoman/platform/util"
 
 import { buildNUTSDB } from "./build.ts"
 import { NUTSLookup } from "./index.ts"
@@ -48,10 +48,8 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 
-	const lookup = new NUTSLookup({ databasePath: values.db })
+	using lookup = new NUTSLookup({ databasePath: values.db })
 
 	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
 	console.log(JSON.stringify({ nuts: lookup.find(lat, lon) }))
-
-	lookup.close()
 }

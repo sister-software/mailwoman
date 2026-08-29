@@ -10,10 +10,9 @@
  *   Phase-3 verdict; this file exists so it is reproducible.
  */
 
-import { existsSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
+import { existsSync } from "@mailwoman/platform/fs"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import { describe, expect, it } from "vitest"
 
 const V264 = "scratchpad/v264-cache/node_modules/@mailwoman/neural-weights-en-us/model.onnx"

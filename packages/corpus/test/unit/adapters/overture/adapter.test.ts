@@ -4,14 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { rm, writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import {
 	OVERTURE_ADAPTER_ID,
 	OVERTURE_DEFAULT_LICENSE,
 	createOvertureAdapter,
 } from "@mailwoman/corpus/adapters/overture/adapter"
+import { rm, writeFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"

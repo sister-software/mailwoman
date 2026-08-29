@@ -28,13 +28,12 @@
  *   Register in `.claude/settings.json` under `hooks.PostToolUse` with a `TodoWrite` matcher.
  */
 
-import { execFileSync, spawn } from "node:child_process"
-import { existsSync, mkdirSync, readFileSync, renameSync, rmdirSync, writeFileSync } from "node:fs"
-import { join, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { execFileSync, spawn } from "@mailwoman/platform/child_process"
+import { existsSync, mkdirSync, readFileSync, renameSync, rmdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join, resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const STDIN = 0
 

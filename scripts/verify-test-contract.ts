@@ -5,11 +5,10 @@
  * @file Enforce tests as external consumers of workspace package contracts.
  */
 
-import { readFileSync } from "node:fs"
-import { relative, resolve, sep } from "node:path"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { relative, resolve, sep } from "@mailwoman/platform/path"
 import ts from "typescript"
 
 interface RootManifest {

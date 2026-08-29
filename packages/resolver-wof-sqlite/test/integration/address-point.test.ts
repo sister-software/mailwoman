@@ -8,12 +8,9 @@
  *   where a source carries one verbatim, is never second-guessed).
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { mkdtempSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address-point"
 import {
 	ADDRESS_POINT_COLUMNS,
@@ -21,6 +18,7 @@ import {
 	createAddressPointTable,
 } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { beforeAll, describe, expect, it } from "vitest"
 
 let lookup: AddressPointSqliteLookup
@@ -28,12 +26,11 @@ let lookup: AddressPointSqliteLookup
 beforeAll(async () => {
 	const dir = mkdtempSync(join(tmpdir(), "ap-lookup-"))
 	const path = join(dir, "fixture.db")
-	const db = new DatabaseSync(path)
-	const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+	const kdb = new DatabaseClient<AddressPointDatabase>(path)
 
 	await createAddressPointTable(kdb)
 
-	const insert = db.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
+	const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
 	// (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release)
 	insert.run(

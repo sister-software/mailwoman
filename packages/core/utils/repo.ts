@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { basename, dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
+import { basename, dirname, resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { createPathBuilderResolver, createPathResolver, type Join, type PathBuilder } from "path-ts"
 
 /**
@@ -125,7 +124,7 @@ export function tsOutPathBuilder<S extends string[]>(
 	return repoRootPathBuilder(OutDirectoryName, ...pathSegments) as any
 }
 
-export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "internal" | "whosonfirst"
+export type AddressResource = "chromium-i18n/ssl-address" | "libpostal" | "internal"
 
 /**
  * Path builder relative to a address resource dictionary directory.

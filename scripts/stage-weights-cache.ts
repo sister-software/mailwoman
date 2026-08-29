@@ -27,11 +27,10 @@
  *       --card /path/to/model-card-eval-en-gb.json
  */
 
-import { existsSync, mkdirSync, rmSync, statSync, symlinkSync, readdirSync } from "node:fs"
-import { basename, isAbsolute, join, resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { existsSync, mkdirSync, rmSync, statSync, symlinkSync, readdirSync } from "@mailwoman/platform/fs"
+import { basename, isAbsolute, join, resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const { values } = parseArgs({
 	options: {

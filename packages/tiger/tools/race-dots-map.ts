@@ -17,9 +17,8 @@
  *   http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html`
  */
 
-import { writeFileSync } from "node:fs"
-
 import { tempRootPath } from "@mailwoman/core/utils"
+import { writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Options for {@linkcode raceDotsMap}.

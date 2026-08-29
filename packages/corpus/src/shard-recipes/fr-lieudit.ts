@@ -24,14 +24,13 @@
  *   pool).
  */
 
-import { readdirSync } from "node:fs"
-import { join } from "node:path"
-
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { readdirSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 import { stableSourceID } from "#adapters/utils"
 import type { CanonicalRow } from "#types"

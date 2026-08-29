@@ -22,11 +22,9 @@
  *      canonical-parent cycle degrades to unlabeled places, never a hung or corrupt build.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import {
 	CANDIDATE_ANCESTOR_TABLE,
@@ -35,7 +33,9 @@ import {
 	type IntervalLabel,
 } from "@mailwoman/resolver-wof-sqlite/candidate-ancestors-schema"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { allRows, getRow } from "#sqlite-utils"
@@ -57,7 +57,7 @@ const AMBIVILLE = 300
  * row, and an edge to a place with no current spr row.
  */
 function buildFixtureAdmin(path: string): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -116,8 +116,6 @@ function buildFixtureAdmin(path: string): void {
 		INSERT INTO ancestors VALUES (${WEIMAR_DE}, 998, 'continent');
 		INSERT INTO ancestors VALUES (${WEIMAR_DE}, 999, 'region');
 	`)
-
-	db.close()
 }
 
 let scratch: string
@@ -135,199 +133,175 @@ afterEach(async () => {
 	await rm(scratch, { recursive: true, force: true }).catch(() => {})
 })
 
-function intervalOf(db: DatabaseSync, id: number): IntervalLabel | undefined {
+function intervalOf(db: DatabaseClient<WOFDatabase>, id: number): IntervalLabel | undefined {
 	return getRow<IntervalLabel>(db.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`), id)
 }
 
 describe("the candidate ancestors sidecar", () => {
 	test("closure rows round-trip denormalized, nearest-first, under the shared fold", () => {
-		const db = new DatabaseSync(candidatePath, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
-		try {
-			const rows = allRows<{
-				depth: number
-				parent_spr_id: number
-				placetype: string
-				parent_name: string
-				parent_name_key: string
-			}>(
-				db.prepare(
-					`SELECT a.depth, a.parent_spr_id, pc.placetype AS placetype, a.parent_name, a.parent_name_key
-					 FROM ${CANDIDATE_ANCESTOR_TABLE} a JOIN placetype_codes pc ON pc.id = a.parent_placetype_id
-					 WHERE a.spr_id = ? ORDER BY a.depth ASC`
-				),
-				WEIMAR_DE
-			)
+		const rows = allRows<{
+			depth: number
+			parent_spr_id: number
+			placetype: string
+			parent_name: string
+			parent_name_key: string
+		}>(
+			db.prepare(
+				`SELECT a.depth, a.parent_spr_id, pc.placetype AS placetype, a.parent_name, a.parent_name_key
+				 FROM ${CANDIDATE_ANCESTOR_TABLE} a JOIN placetype_codes pc ON pc.id = a.parent_placetype_id
+				 WHERE a.spr_id = ? ORDER BY a.depth ASC`
+			),
+			WEIMAR_DE
+		)
 
-			// Nearest-first: county → region → country. The self row, the continent row and the edge to
-			// the absent place 999 contributed nothing.
-			expect(rows.map((r) => r.parent_spr_id)).toEqual([WEIMARER_LAND, THURINGEN, GERMANY])
-			expect(rows.map((r) => r.placetype)).toEqual(["county", "region", "country"])
-			expect(rows.map((r) => r.depth)).toEqual([1, 2, 3])
-			// Denormalized display name + the SHARED normalizeLocalityForKey fold — the same fold the
-			// candidate keys and the coherence check use, agreeing by construction.
-			expect(rows[1]!.parent_name).toBe("Thüringen")
-			expect(rows[1]!.parent_name_key).toBe(normalizeLocalityForKey("Thüringen"))
-		} finally {
-			db.close()
-		}
+		// Nearest-first: county → region → country. The self row, the continent row and the edge to
+		// the absent place 999 contributed nothing.
+		expect(rows.map((r) => r.parent_spr_id)).toEqual([WEIMARER_LAND, THURINGEN, GERMANY])
+		expect(rows.map((r) => r.placetype)).toEqual(["county", "region", "country"])
+		expect(rows.map((r) => r.depth)).toEqual([1, 2, 3])
+		// Denormalized display name + the SHARED normalizeLocalityForKey fold — the same fold the
+		// candidate keys and the coherence check use, agreeing by construction.
+		expect(rows[1]!.parent_name).toBe("Thüringen")
+		expect(rows[1]!.parent_name_key).toBe(normalizeLocalityForKey("Thüringen"))
 	})
 
 	test("the reader serves the chain as Ancestor rows, nearest-first and memo-stable", () => {
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			expect(typeof lk.ancestors).toBe("function")
+		expect(typeof lk.ancestors).toBe("function")
 
-			const chain = lk.ancestors!(WEIMAR_DE)
+		const chain = lk.ancestors!(WEIMAR_DE)
 
-			expect(chain).toEqual([
-				{ id: WEIMARER_LAND, placetype: "county", name: "Weimarer Land" },
-				{ id: THURINGEN, placetype: "region", name: "Thüringen" },
-				{ id: GERMANY, placetype: "country", name: "Germany" },
-			])
+		expect(chain).toEqual([
+			{ id: WEIMARER_LAND, placetype: "county", name: "Weimarer Land" },
+			{ id: THURINGEN, placetype: "region", name: "Thüringen" },
+			{ id: GERMANY, placetype: "country", name: "Germany" },
+		])
 
-			// Memoized: the second read is the same array, and a string id folds to the same place.
-			expect(lk.ancestors!(WEIMAR_DE)).toBe(chain)
-			expect(lk.ancestors!(String(WEIMAR_US)).map((a) => a.name)).toEqual(["Texas", "United States"])
-			// No recorded ancestry (a country) and an unknown id both answer empty, never throw.
-			expect(lk.ancestors!(GERMANY)).toEqual([])
-			expect(lk.ancestors!(424_242)).toEqual([])
-		} finally {
-			lk.close()
-		}
+		// Memoized: the second read is the same array, and a string id folds to the same place.
+		expect(lk.ancestors!(WEIMAR_DE)).toBe(chain)
+		expect(lk.ancestors!(String(WEIMAR_US)).map((a) => a.name)).toEqual(["Texas", "United States"])
+		// No recorded ancestry (a country) and an unknown id both answer empty, never throw.
+		expect(lk.ancestors!(GERMANY)).toEqual([])
+		expect(lk.ancestors!(424_242)).toEqual([])
 	})
 
 	test("interval containment truth table: ancestor, descendant, sibling, self, disjoint", () => {
-		const db = new DatabaseSync(candidatePath, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
-		try {
-			const germany = intervalOf(db, GERMANY)!
-			const thuringen = intervalOf(db, THURINGEN)!
-			const weimarDE = intervalOf(db, WEIMAR_DE)!
-			const erfurt = intervalOf(db, ERFURT)!
-			const texas = intervalOf(db, TEXAS)!
-			const weimarUS = intervalOf(db, WEIMAR_US)!
+		const germany = intervalOf(db, GERMANY)!
+		const thuringen = intervalOf(db, THURINGEN)!
+		const weimarDE = intervalOf(db, WEIMAR_DE)!
+		const erfurt = intervalOf(db, ERFURT)!
+		const texas = intervalOf(db, TEXAS)!
+		const weimarUS = intervalOf(db, WEIMAR_US)!
 
-			// ancestor → descendant, at any distance and with no tier knowledge on either side
-			expect(intervalContains(thuringen, weimarDE)).toBe(true)
-			expect(intervalContains(germany, weimarDE)).toBe(true)
-			expect(intervalContains(texas, weimarUS)).toBe(true)
-			// descendant does not contain its ancestor
-			expect(intervalContains(weimarDE, thuringen)).toBe(false)
-			// siblings under one region
-			expect(intervalContains(weimarDE, erfurt)).toBe(false)
-			expect(intervalContains(erfurt, weimarDE)).toBe(false)
-			// self: containment degenerates to identity
-			expect(intervalContains(weimarDE, weimarDE)).toBe(true)
-			// disjoint across hierarchies — the Weimar-class verdict itself
-			expect(intervalContains(thuringen, weimarUS)).toBe(false)
-			expect(intervalContains(texas, weimarDE)).toBe(false)
+		// ancestor → descendant, at any distance and with no tier knowledge on either side
+		expect(intervalContains(thuringen, weimarDE)).toBe(true)
+		expect(intervalContains(germany, weimarDE)).toBe(true)
+		expect(intervalContains(texas, weimarUS)).toBe(true)
+		// descendant does not contain its ancestor
+		expect(intervalContains(weimarDE, thuringen)).toBe(false)
+		// siblings under one region
+		expect(intervalContains(weimarDE, erfurt)).toBe(false)
+		expect(intervalContains(erfurt, weimarDE)).toBe(false)
+		// self: containment degenerates to identity
+		expect(intervalContains(weimarDE, weimarDE)).toBe(true)
+		// disjoint across hierarchies — the Weimar-class verdict itself
+		expect(intervalContains(thuringen, weimarUS)).toBe(false)
+		expect(intervalContains(texas, weimarDE)).toBe(false)
 
-			// Descendant enumeration is a contiguous range scan.
-			const descendants = allRows<{ spr_id: number }>(
-				db.prepare(`SELECT spr_id FROM ${CANDIDATE_INTERVAL_TABLE} WHERE pre > ? AND post < ? ORDER BY spr_id`),
-				thuringen.pre,
-				thuringen.post
-			)
+		// Descendant enumeration is a contiguous range scan.
+		const descendants = allRows<{ spr_id: number }>(
+			db.prepare(`SELECT spr_id FROM ${CANDIDATE_INTERVAL_TABLE} WHERE pre > ? AND post < ? ORDER BY spr_id`),
+			thuringen.pre,
+			thuringen.post
+		)
 
-			expect(descendants.map((d) => d.spr_id)).toEqual([WEIMAR_DE, ERFURT, WEIMARER_LAND])
-		} finally {
-			db.close()
-		}
+		expect(descendants.map((d) => d.spr_id)).toEqual([WEIMAR_DE, ERFURT, WEIMARER_LAND])
 	})
 
 	test("every candidate under one name_key enumerates WITH its chain from the one artifact (#1722)", () => {
-		const db = new DatabaseSync(candidatePath, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
-		try {
-			const rows = allRows<{
-				spr_id: number
-				country: string
-				parent_name_key: string | null
-				parent_placetype: string | null
-			}>(
-				db.prepare(
-					`SELECT c.spr_id, cc.code AS country, a.parent_name_key, pc.placetype AS parent_placetype
-					 FROM candidate c
-					 JOIN country_codes cc ON cc.id = c.country_id
-					 LEFT JOIN ${CANDIDATE_ANCESTOR_TABLE} a ON a.spr_id = c.spr_id
-					 LEFT JOIN placetype_codes pc ON pc.id = a.parent_placetype_id
-					 WHERE c.name_key = ?
-					 ORDER BY c.neg_rank ASC, a.depth ASC`
-				),
-				normalizeLocalityForKey("Weimar")
-			)
+		const rows = allRows<{
+			spr_id: number
+			country: string
+			parent_name_key: string | null
+			parent_placetype: string | null
+		}>(
+			db.prepare(
+				`SELECT c.spr_id, cc.code AS country, a.parent_name_key, pc.placetype AS parent_placetype
+				 FROM candidate c
+				 JOIN country_codes cc ON cc.id = c.country_id
+				 LEFT JOIN ${CANDIDATE_ANCESTOR_TABLE} a ON a.spr_id = c.spr_id
+				 LEFT JOIN placetype_codes pc ON pc.id = a.parent_placetype_id
+				 WHERE c.name_key = ?
+				 ORDER BY c.neg_rank ASC, a.depth ASC`
+			),
+			normalizeLocalityForKey("Weimar")
+		)
 
-			const regionKeyOf = (sprID: number): string | undefined =>
-				rows.find((r) => r.spr_id === sprID && r.parent_placetype === "region")?.parent_name_key ?? undefined
+		const regionKeyOf = (sprID: number): string | undefined =>
+			rows.find((r) => r.spr_id === sprID && r.parent_placetype === "region")?.parent_name_key ?? undefined
 
-			// Both bearers of the key are present — the outranked DE original included — and each is
-			// discriminated by its region-class containment, from one probe over one artifact.
-			expect(new Set(rows.map((r) => r.spr_id))).toEqual(new Set([WEIMAR_DE, WEIMAR_US]))
-			expect(regionKeyOf(WEIMAR_DE)).toBe(normalizeLocalityForKey("Thüringen"))
-			expect(regionKeyOf(WEIMAR_US)).toBe(normalizeLocalityForKey("Texas"))
-		} finally {
-			db.close()
-		}
+		// Both bearers of the key are present — the outranked DE original included — and each is
+		// discriminated by its region-class containment, from one probe over one artifact.
+		expect(new Set(rows.map((r) => r.spr_id))).toEqual(new Set([WEIMAR_DE, WEIMAR_US]))
+		expect(regionKeyOf(WEIMAR_DE)).toBe(normalizeLocalityForKey("Thüringen"))
+		expect(regionKeyOf(WEIMAR_US)).toBe(normalizeLocalityForKey("Texas"))
 	})
 
 	test("a multi-parent place keeps EVERY parent in the closure rows; the interval forest commits to one", () => {
-		const db = new DatabaseSync(candidatePath, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
-		try {
-			const parents = allRows<{ parent_spr_id: number }>(
-				db.prepare(`SELECT parent_spr_id FROM ${CANDIDATE_ANCESTOR_TABLE} WHERE spr_id = ? ORDER BY depth ASC`),
-				AMBIVILLE
-			)
+		const parents = allRows<{ parent_spr_id: number }>(
+			db.prepare(`SELECT parent_spr_id FROM ${CANDIDATE_ANCESTOR_TABLE} WHERE spr_id = ? ORDER BY depth ASC`),
+			AMBIVILLE
+		)
 
-			// The complete containment record: both regions, then the country. Texas (lower id at the
-			// same tier) sorts first, which makes it the canonical depth-1 parent.
-			expect(parents.map((p) => p.parent_spr_id)).toEqual([TEXAS, LOUISIANA, USA])
+		// The complete containment record: both regions, then the country. Texas (lower id at the
+		// same tier) sorts first, which makes it the canonical depth-1 parent.
+		expect(parents.map((p) => p.parent_spr_id)).toEqual([TEXAS, LOUISIANA, USA])
 
-			const ambiville = intervalOf(db, AMBIVILLE)!
-			const texas = intervalOf(db, TEXAS)!
-			const louisiana = intervalOf(db, LOUISIANA)!
+		const ambiville = intervalOf(db, AMBIVILLE)!
+		const texas = intervalOf(db, TEXAS)!
+		const louisiana = intervalOf(db, LOUISIANA)!
 
-			// The interval verdict is "contained along the CANONICAL hierarchy": true under Texas, false
-			// under Louisiana even though the closure rows attest the Louisiana edge. A consumer needing
-			// the non-canonical hierarchy consults the closure rows — that is the recorded division of
-			// labor, not a defect.
-			expect(intervalContains(texas, ambiville)).toBe(true)
-			expect(intervalContains(louisiana, ambiville)).toBe(false)
+		// The interval verdict is "contained along the CANONICAL hierarchy": true under Texas, false
+		// under Louisiana even though the closure rows attest the Louisiana edge. A consumer needing
+		// the non-canonical hierarchy consults the closure rows — that is the recorded division of
+		// labor, not a defect.
+		expect(intervalContains(texas, ambiville)).toBe(true)
+		expect(intervalContains(louisiana, ambiville)).toBe(false)
 
-			// One interval row per place — the forest stayed a forest.
-			const { n } = getRow<{ n: number }>(
-				db.prepare(`SELECT COUNT(*) AS n FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`),
-				AMBIVILLE
-			)!
+		// One interval row per place — the forest stayed a forest.
+		const { n } = getRow<{ n: number }>(
+			db.prepare(`SELECT COUNT(*) AS n FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`),
+			AMBIVILLE
+		)!
 
-			expect(n).toBe(1)
-		} finally {
-			db.close()
-		}
+		expect(n).toBe(1)
 	})
 
 	test("an artifact without the sidecar reports the capability ABSENT — never [] dressed as an answer", () => {
 		// The tests may patch the built (unsealed) fixture directly — the same shape as an older
 		// candidate.db that predates the sidecar.
-		const db = new DatabaseSync(candidatePath)
+		const db = new DatabaseClient<WOFDatabase>(candidatePath)
 		db.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
-		db.close()
+		db.destroy()
 
-		const lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
+		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
-		try {
-			expect(lk.ancestors).toBeUndefined()
-		} finally {
-			lk.close()
-		}
+		expect(lk.ancestors).toBeUndefined()
 	})
 
 	test("a canonical-parent cycle degrades to unlabeled places — closure rows kept, no hang, no labels", async () => {
 		const input = join(scratch, "cycle-admin.db")
 		const output = join(scratch, "cycle-candidate.db")
-		const db = new DatabaseSync(input)
+		const db = new DatabaseClient<WOFDatabase>(input)
 
 		// Two localities each naming the other as an ancestor (corrupt source ancestry), beside one
 		// healthy chain that must still label.
@@ -353,7 +327,7 @@ describe("the candidate ancestors sidecar", () => {
 			INSERT INTO ancestors VALUES (10, 11, 'region');
 		`)
 
-		db.close()
+		await db.destroy()
 
 		const result = await buildCandidateTable({ input, output })
 
@@ -362,14 +336,10 @@ describe("the candidate ancestors sidecar", () => {
 		expect(result.ancestorPlaces).toBe(3)
 		expect(result.intervalPlaces).toBe(2)
 
-		const built = new DatabaseSync(output, { readOnly: true })
+		using built = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		try {
-			expect(intervalOf(built, 1)).toBeUndefined()
-			expect(intervalOf(built, 2)).toBeUndefined()
-			expect(intervalContains(intervalOf(built, 11)!, intervalOf(built, 10)!)).toBe(true)
-		} finally {
-			built.close()
-		}
+		expect(intervalOf(built, 1)).toBeUndefined()
+		expect(intervalOf(built, 2)).toBeUndefined()
+		expect(intervalContains(intervalOf(built, 11)!, intervalOf(built, 10)!)).toBe(true)
 	})
 })

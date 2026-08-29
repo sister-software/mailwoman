@@ -37,12 +37,6 @@
  *     agreement test; the "100-1000" bucket is otherwise never exercised by the gates.
  */
 
-import { chmodSync, existsSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { BDC_H3_RESOLUTION, type BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase } from "@mailwoman/bdc/sdk/build-bdc"
 import {
@@ -55,10 +49,14 @@ import {
 	speedBucketForDownloadSpeed,
 } from "@mailwoman/bdc/sdk/filing-landscape"
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import { openBuiltDatabase } from "@mailwoman/core/utils"
+import { chmodSync, existsSync } from "@mailwoman/platform/fs"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -180,7 +178,7 @@ afterAll(async () => {
 })
 
 function openFixture(): DatabaseClient<BDCDatabase> {
-	return new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+	return new DatabaseClient<BDCDatabase>(out, { readOnly: true })
 }
 
 describe("filingLandscape — Gate 1: contract conformance", () => {
@@ -264,7 +262,7 @@ describe("filingLandscape — Gate 2 (extended): coverage-check is required, not
 
 		chmodSync(corruptOut, 0o644)
 
-		using writable = new DatabaseClient<BDCDatabase>({ database: openBuiltDatabase(corruptOut, { write: true }) })
+		using writable = openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 
 		const sfRow = await writable
 			.selectFrom("bdc_availability")
@@ -423,11 +421,11 @@ describe("filingLandscape — Gate 4: vintage-or-throw", () => {
 		})
 
 		// `buildBDCDatabase` seals (chmod 0444). Unseal so the manifest row can be deleted, per
-		// `openBuiltDatabase`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
+		// `openBuiltClient`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
 		chmodSync(corruptOut, 0o644)
 		expect(existsSync(corruptOut)).toBe(true)
 
-		using writable = new DatabaseClient<BDCDatabase>({ database: openBuiltDatabase(corruptOut, { write: true }) })
+		using writable = openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 		await writable.deleteFrom("layer_manifest").execute()
 
 		await expect(filingLandscape(writable, { geoids: [GEOID_SF] })).rejects.toThrow(/manifest/)
@@ -488,7 +486,7 @@ describe("speed bucket boundaries", () => {
 		})
 
 		it("groups the 7 boundary speeds into exactly the 4 buckets the JS mirror predicts", async () => {
-			using db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(boundaryOut, { readOnly: true }) })
+			using db = new DatabaseClient<BDCDatabase>(boundaryOut, { readOnly: true })
 
 			const result = await filingLandscape(db, { geoids: BOUNDARY_SPEEDS.map(boundaryGeoid) })
 

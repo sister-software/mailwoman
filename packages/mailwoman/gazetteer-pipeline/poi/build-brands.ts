@@ -25,14 +25,13 @@
  *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { allRows, dataRootPath, workspacePath } from "@mailwoman/core/utils"
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "./defaults.ts"
 
@@ -77,7 +76,7 @@ export interface BrandNameCount {
  * builder only ever reads a sealed `poi.db`, never writes one.
  */
 export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
-	const db = new DatabaseSync(dbPath, { readOnly: true })
+	const db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
 	try {
 		return allRows<BrandNameCount>(
@@ -89,7 +88,7 @@ export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
 			)
 		)
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }
 
@@ -97,8 +96,7 @@ export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
  * Reads `dbPath`'s layer manifest and narrows it to what {@link POIBrandSourceLayer} needs.
  */
 export async function readSourceLayer(dbPath: string): Promise<POIBrandSourceLayer> {
-	const raw = new DatabaseSync(dbPath, { readOnly: true })
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: raw })
+	const kdb = new DatabaseClient<LayerContractDatabase>(dbPath, { readOnly: true })
 
 	try {
 		const manifest = await readLayerManifest(kdb)

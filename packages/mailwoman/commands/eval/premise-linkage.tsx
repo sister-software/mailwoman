@@ -99,7 +99,9 @@ const EvalPremiseLinkage: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 		}
 
-		const salt = declaredSalt ?? (await import("node:crypto")).randomBytes(GENERATED_SALT_BYTES).toString("hex")
+		const salt =
+			declaredSalt ?? (await import("@mailwoman/platform/crypto")).randomBytes(GENERATED_SALT_BYTES).toString("hex")
+
 		const minCellSize = options.minCellSize ?? SYNTHETIC_MIN_CELL_SIZE
 
 		const config = controlled
@@ -197,13 +199,13 @@ async function loadSyntheticConfig() {
  * The version stamped onto every result row, read from the package this command ships in.
  */
 async function readMailwomanVersion(): Promise<string> {
-	const { findPackageJSON } = await import("node:module")
+	const { findPackageJSON } = await import("@mailwoman/platform/module")
 	const manifestPath = findPackageJSON(import.meta.url)
 
 	if (!manifestPath) throw new Error("premise-linkage: could not locate the mailwoman package manifest.")
 
 	const [{ readFile }, { parseJSONStrict }] = await Promise.all([
-		import("node:fs/promises"),
+		import("@mailwoman/platform/fs/promises"),
 		import("@mailwoman/core/objects"),
 	])
 

@@ -48,17 +48,15 @@
  *   ```
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { existsSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline, type PipelineResult } from "mailwoman"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import { emitOverpassQL } from "mailwoman/poi-overpass"
@@ -262,9 +260,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async layerManifest(databasePath) {
-		using db = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(databasePath, { readOnly: true }),
-		})
+		using db = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 		const manifest = await readLayerManifest(db)
 
@@ -286,7 +282,7 @@ const deps: MCPToolDeps = {
 		// never the raw `node:sqlite` "unable to open database file" message.
 		assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
 
-		using db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(q.databasePath, { readOnly: true }) })
+		using db = new DatabaseClient<BDCDatabase>(q.databasePath, { readOnly: true })
 
 		return filingLandscape(db, { geoids: q.geoids, h3Cells: q.h3Cells })
 	},

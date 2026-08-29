@@ -28,13 +28,10 @@
  *     node ban/out/scripts/build-address-point-shard.js --depts 48,2A,05 --out /tmp/ban-sample.db
  */
 
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
@@ -47,6 +44,8 @@ import {
 	normalizeStreetForKeyLocale,
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
 import { extractBANAddrPoints } from "../sdk/extract.ts"
 import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.ts"
@@ -137,12 +136,11 @@ async function main(): Promise<void> {
 		rmSync(tmp + sfx, { force: true })
 	}
 
-	const out = new DatabaseSync(tmp)
-	out.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<AddressPointDatabase>({ database: out })
+	const kdb = new DatabaseClient<AddressPointDatabase>(tmp)
+	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 	await createAddressPointTable(kdb)
 
-	const insert = out.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
+	const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
 	let total = 0
 	let written = 0
@@ -152,7 +150,7 @@ async function main(): Promise<void> {
 
 	console.error(`[ban] building ${args.country} rooftop shard from ${files.size} départements in ${args.csvDir}`)
 
-	out.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for (const dept of deptList) {
 		const path = files.get(dept)!
@@ -193,8 +191,8 @@ async function main(): Promise<void> {
 			written++
 
 			if (written % BATCH === 0) {
-				out.exec("COMMIT")
-				out.exec("BEGIN")
+				kdb.exec("COMMIT")
+				kdb.exec("BEGIN")
 
 				if (written % 2_000_000 === 0) {
 					console.error(`[ban]   ${written.toLocaleString()} written…`)
@@ -205,12 +203,12 @@ async function main(): Promise<void> {
 		console.error(`[ban]   dept ${dept}: ${written.toLocaleString()} cumulative`)
 	}
 
-	out.exec("COMMIT")
+	kdb.exec("COMMIT")
 
 	console.error(`[ban] indexing…`)
 
 	await createAddressPointIndexes(kdb)
-	out.exec("ANALYZE")
+	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
 	swapDatabaseIntoPlace(tmp, args.output)

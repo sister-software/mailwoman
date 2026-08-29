@@ -12,8 +12,7 @@
  *   Kept exported because `@mailwoman/core` is published; they go in the next major.
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 /**

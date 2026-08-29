@@ -30,13 +30,12 @@
  *   The census REPORTS. It changes no ranking, demotes nothing, and writes nothing back into the lexicon.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs"
-import { join } from "node:path"
-
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
+import { existsSync, readFileSync, readdirSync, statSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 import { type LayerManifest, probeManifest } from "../../data-inventory.ts"

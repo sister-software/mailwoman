@@ -17,10 +17,6 @@
  *   determination nobody made.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import type { AddressNode } from "@mailwoman/core/decoder"
 import type { QueryKind } from "@mailwoman/core/pipeline"
 import { buildFloodDatabase } from "@mailwoman/flood/sdk/build-flood"
@@ -33,6 +29,9 @@ import {
 	FIXTURE_SIDE,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import type { Resolver } from "@mailwoman/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode-core"
 import { createAuthorityDesignationRoute } from "mailwoman/observations"

@@ -19,13 +19,6 @@
  *   apart?), not clustering internals, which `cluster-filers.test.ts` already gates.
  */
 
-import { chmodSync, existsSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -57,11 +50,16 @@ import {
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
+import { chmodSync, existsSync } from "@mailwoman/platform/fs"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Insertable } from "kysely"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(":memory:") })
+	return new DatabaseClient<FilerDatabase>(":memory:")
 }
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {
@@ -111,7 +109,7 @@ function authoritativeEdge(
  * uses.
  */
 function openFilerDB(path: string): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(path, { readOnly: true }) })
+	return new DatabaseClient<FilerDatabase>(path, { readOnly: true })
 }
 
 let scratch: string | undefined
@@ -1174,7 +1172,7 @@ describe("§7-3b gates", () => {
 				// buildFilerDatabase seals the artifact read-only (core/utils/sealed-db.ts) — clusterAuthoritativeComponents
 				// writes filer_cluster, so this unseals it first, the same as a real incremental-clustering pass would.
 				chmodSync(out, 0o644)
-				using db = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(out) })
+				using db = new DatabaseClient<FilerDatabase>(out)
 
 				await clusterAuthoritativeComponents(db)
 
@@ -1799,7 +1797,7 @@ describe("§7-3b gates", () => {
 				})
 
 				chmodSync(out, 0o644)
-				using db = new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(out) })
+				using db = new DatabaseClient<FilerDatabase>(out)
 
 				await clusterAuthoritativeComponents(db)
 

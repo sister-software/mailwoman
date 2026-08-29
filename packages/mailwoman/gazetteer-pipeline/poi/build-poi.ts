@@ -33,11 +33,6 @@
  *   `<out>.building` instruction, per the brief's own "follow the anchor, record the deviation" rule.
  */
 
-import { existsSync, mkdirSync, rmSync } from "node:fs"
-import { dirname, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -46,7 +41,9 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { dirname, join } from "@mailwoman/platform/path"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -60,6 +57,8 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell, polygonToCells } from "h3-js"
 
 import { DEFAULT_RELEASE } from "./defaults.ts"
@@ -513,10 +512,9 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	const rowSource: AsyncIterable<POISourceRow> | Iterable<POISourceRow> =
 		opts.rows ?? readParquetRows(opts.parquetPaths!)
 
-	const db = new DatabaseSync(opts.out)
+	const kdb = new DatabaseClient<POIDatabase>(opts.out)
 	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA), matching build-candidate.ts's discipline.
-	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<POIDatabase>({ database: db })
+	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
 	progress("stage", "creating staging + dictionary tables")
 	await createPOIStagingTables(kdb)
@@ -547,7 +545,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	 */
 	const coverage = new Map<number, number>()
 
-	const insStage = db.prepare(`INSERT INTO poi_stage VALUES (${POI_COLUMNS.map(() => "?").join(", ")})`)
+	const insStage = kdb.prepare(`INSERT INTO poi_stage VALUES (${POI_COLUMNS.map(() => "?").join(", ")})`)
 
 	let rowidKey = 0
 	let inserted = 0
@@ -555,7 +553,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	let batch = 0
 
 	progress("load", "streaming rows into poi_stage")
-	db.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for await (const row of rowSource) {
 		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) {
@@ -597,13 +595,13 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		batch++
 
 		if (batch >= STAGE_BATCH_SIZE) {
-			db.exec("COMMIT")
-			db.exec("BEGIN")
+			kdb.exec("COMMIT")
+			kdb.exec("BEGIN")
 			batch = 0
 		}
 	}
 
-	db.exec("COMMIT")
+	kdb.exec("COMMIT")
 	progress("load", `${inserted.toLocaleString()} staged, ${skipped.toLocaleString()} skipped (non-finite coords)`)
 
 	if (categoryCodes.size) {
@@ -616,7 +614,11 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	progress("materialize", "building clustered poi table")
 	await createPOITable(kdb)
 	const cols = POI_COLUMNS.join(", ")
-	db.exec(`INSERT INTO poi (${cols}) SELECT ${cols} FROM poi_stage ORDER BY h3_cell, category_id, neg_rank, rowid_key;`)
+
+	kdb.exec(
+		`INSERT INTO poi (${cols}) SELECT ${cols} FROM poi_stage ORDER BY h3_cell, category_id, neg_rank, rowid_key;`
+	)
+
 	await kdb.schema.dropTable("poi_stage").execute()
 
 	progress("index", "name_key + brand_wikidata indexes (index-after-load)")
@@ -624,9 +626,9 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	await createPOIBrandIndex(kdb)
 
 	progress("fts", "building FTS5 name index")
-	createPOISearchFTS(db)
+	createPOISearchFTS(kdb)
 
-	db.exec(
+	kdb.exec(
 		`INSERT INTO ${POI_FTS_TABLE} (name, name_key, h3_cell) SELECT name, name_key, h3_cell FROM poi WHERE name IS NOT NULL;`
 	)
 
@@ -684,12 +686,12 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	await writeLayerCoverage(kdb, coverageCells)
 
 	progress("finalize", "ANALYZE + VACUUM")
-	db.exec("ANALYZE")
+	kdb.exec("ANALYZE")
 	// page_size MUST be set right before VACUUM (node:sqlite initializes the file at the 4096 default
 	// on `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size)
 	// — the same discipline build-candidate.ts uses.
-	db.exec("PRAGMA page_size=8192")
-	db.exec("VACUUM")
+	kdb.exec("PRAGMA page_size=8192")
+	kdb.exec("VACUUM")
 	await kdb.destroy()
 
 	progress("seal", opts.out)

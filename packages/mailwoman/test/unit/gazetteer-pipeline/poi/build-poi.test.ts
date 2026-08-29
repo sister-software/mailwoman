@@ -15,17 +15,15 @@
  *   coordinates the loader must skip (and count) rather than insert.
  */
 
-import { statSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { CoverageBasis, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
+import { statSync } from "@mailwoman/platform/fs"
+import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 import {
 	bboxCoverageCells,
@@ -123,8 +121,7 @@ describe("buildPOIDatabase", () => {
 
 		// `kdb`'s dispose closes the underlying connection — don't ALSO `using` `raw`, or both dispose
 		// paths race to close() the same DatabaseSync and one throws "database is not open".
-		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
 		// --- dictionary round-trip: insert-on-first-sight, 0 reserved for uncategorized ---
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
@@ -314,8 +311,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		expect(result.rows).toBe(2)
 		expect(result.coverageCells).toBe(coverageCellsOverride.length)
 
-		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -363,8 +359,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		// the Overture path's "rows-present only" behavior when no override is supplied.
 		expect(result.coverageCells).toBe(1)
 
-		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 
 		expect(coverageRows).toHaveLength(1)
@@ -444,8 +439,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		expect(result.rows).toBe(1)
 		expect(result.coverageCells).toBe(1)
 
-		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 		const contractDB = kdb
 
 		const builderWrittenCoverage = await readLayerCoverage(contractDB, overrideCell.h3Cell)

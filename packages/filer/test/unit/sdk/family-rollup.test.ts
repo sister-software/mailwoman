@@ -41,9 +41,6 @@
  *   into the primary key) live in `filer-lookup.test.ts`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createFilerEdgeTable,
 	createFilerFamilyTable,
@@ -57,10 +54,11 @@ import {
 } from "@mailwoman/filer/schema"
 import { mintFamilyID } from "@mailwoman/filer/sdk/family-id"
 import { familyRollup } from "@mailwoman/filer/sdk/family-rollup"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(":memory:") })
+	return new DatabaseClient<FilerDatabase>(":memory:")
 }
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {

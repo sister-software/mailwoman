@@ -8,11 +8,10 @@
  *   semantics against a cache layout, and the probe's rejection of metadata-only installs.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { buildWeightsInstallArgs, probeWeights } from "mailwoman/cli-kit/weights-guard"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 

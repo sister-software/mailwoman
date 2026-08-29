@@ -6,8 +6,8 @@
  *   File and content hashing utilities.
  */
 
-import { createHash } from "node:crypto"
-import { createReadStream } from "node:fs"
+import { createHash } from "@mailwoman/platform/crypto"
+import { createReadStream } from "@mailwoman/platform/fs"
 
 /**
  * Streaming SHA-256 of a file, hex-encoded.

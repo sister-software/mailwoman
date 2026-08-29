@@ -10,8 +10,8 @@
  *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 
 import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.ts"
 

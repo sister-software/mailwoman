@@ -13,15 +13,14 @@
  *   does not speak. Both stamp non-primary rows only.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CANDIDATE_COLUMNS,
 	type CandidateDatabase,
 	createCandidateStagingTables,
 } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
 import { GLOSS_EXCLUDED_PLACETYPES, stampNameRoles } from "#candidate/name-roles"
@@ -67,9 +66,8 @@ interface NameSpec {
  * the stamps back.
  */
 async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
-	const src = new DatabaseSync(":memory:")
-	const out = new DatabaseSync(":memory:")
-	const kdb = new DatabaseClient<CandidateDatabase>({ database: out })
+	const src = new DatabaseClient<WOFDatabase>(":memory:")
+	const kdb = new DatabaseClient<CandidateDatabase>(":memory:")
 
 	await createCandidateStagingTables(kdb)
 
@@ -87,7 +85,7 @@ async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
 
 	const attrs = new Map<number, PlaceAttrs>()
 	const keyCounts = new Map<number, number>()
-	const insStage = out.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
+	const insStage = kdb.prepare(`INSERT INTO cand_stage VALUES (${CANDIDATE_COLUMNS.map(() => "?").join(", ")})`)
 
 	for (const spec of places) {
 		const pkey = normalizeLocalityForKey(spec.name)
@@ -142,7 +140,7 @@ async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
 
 	const result = stampNameRoles({
 		src,
-		out,
+		out: kdb,
 		attrs,
 		keyCounts,
 		glossThreshold: THRESHOLD,
@@ -156,9 +154,9 @@ async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
 		name_key: string
 		is_primary: number
 		name_role: string | null
-	}>(out.prepare("SELECT spr_id, name_key, is_primary, name_role FROM cand_stage"))
+	}>(kdb.prepare("SELECT spr_id, name_key, is_primary, name_role FROM cand_stage"))
 
-	src.close()
+	await src.destroy()
 	await kdb.destroy()
 
 	const roleOf = new Map(rows.map((r) => [`${r.spr_id}:${r.name_key}`, r.name_role]))

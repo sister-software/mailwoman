@@ -34,11 +34,6 @@
  *   that at 4.1% over a national layer.
  */
 
-import { rmSync, statSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -50,7 +45,11 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
-import { runChunkProcess, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { runChunkProcess } from "@mailwoman/core/utils"
+import { rmSync, statSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
 import { createCoastalTables, type CoastalDatabase } from "../schema.ts"
 import {
@@ -239,12 +238,11 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 	let streamed: StreamResult
 
 	{
-		const database = new DatabaseSync(tmpPath)
-		const kdb = new DatabaseClient<CoastalDatabase>({ database })
+		await using kdb = new DatabaseClient<CoastalDatabase>(tmpPath)
 
 		try {
-			database.exec("PRAGMA journal_mode = OFF")
-			database.exec("PRAGMA synchronous = OFF")
+			kdb.exec("PRAGMA journal_mode = OFF")
+			kdb.exec("PRAGMA synchronous = OFF")
 
 			await createCoastalTables(kdb)
 			await createLayerManifestTable(kdb)
@@ -252,7 +250,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 
 			if (!("batched" in options)) {
 				streamed = aggregateChunks([
-					await ingestCoastalChunk(database, {
+					await ingestCoastalChunk(kdb, {
 						source: options.source,
 						indexResolution: options.indexResolution,
 						coverageResolution: options.coverageResolution,
@@ -266,8 +264,6 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 
 			throw error
 		}
-
-		await kdb.destroy()
 	}
 
 	if ("batched" in options) {
@@ -280,12 +276,11 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 		}
 	}
 
-	const database = new DatabaseSync(tmpPath)
-	const kdb = new DatabaseClient<CoastalDatabase>({ database })
+	const kdb = new DatabaseClient<CoastalDatabase>(tmpPath)
 
 	try {
-		database.exec("PRAGMA journal_mode = OFF")
-		database.exec("PRAGMA synchronous = OFF")
+		kdb.exec("PRAGMA journal_mode = OFF")
+		kdb.exec("PRAGMA synchronous = OFF")
 
 		const ingested = streamed!
 		const totalFeatures = ingested.erosionFeatures + ingested.instabilityFeatures
@@ -309,7 +304,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 
 		await writeLayerCoverage(kdb, coverage)
 
-		writeVocabularyRows(database)
+		writeVocabularyRows(kdb)
 
 		await writeLayerManifest(kdb, {
 			name: NCERM_LAYER_NAME,
@@ -330,7 +325,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 		})
 
 		const storedResolutions = (
-			database.prepare("SELECT DISTINCT resolution FROM coastal_zone_cell ORDER BY resolution").all() as Array<{
+			kdb.prepare("SELECT DISTINCT resolution FROM coastal_zone_cell ORDER BY resolution").all() as Array<{
 				resolution: number
 			}>
 		).map((row) => row.resolution)
@@ -341,7 +336,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 		// `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `WITHOUT ROWID` table carries the primary key in
 		// every entry, so it would roughly double the cell tier to serve a scan that is already short — size for a reader
 		// that does not exist.
-		database.exec("VACUUM")
+		kdb.exec("VACUUM")
 
 		await kdb.destroy()
 
@@ -635,7 +630,7 @@ function buildCoverageCells(observed: Map<number, number>): CoverageCell[] {
 /**
  * Insert the authority's declared domains.
  */
-function writeVocabularyRows(database: DatabaseSync): void {
+function writeVocabularyRows(database: DatabaseClient<CoastalDatabase>): void {
 	const insert = database.prepare(
 		"INSERT INTO coastal_scenario_vocabulary (field, value, label, definition, definition_url) VALUES (?, ?, ?, ?, ?)"
 	)

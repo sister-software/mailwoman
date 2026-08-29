@@ -14,12 +14,13 @@
  *   a recipe; the recipe is `../defaults.ts`).
  */
 
-import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { md5File, repoRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { md5File, repoRootPath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
 import { dataRootPath } from "../../resolver-backend.ts"
 import {
@@ -110,7 +111,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	if (!releaseCheck.present) throw new Error(releaseCheck.message)
 
 	phase("staging", ingestPath)
-	const db = new DatabaseSync(ingestPath)
+	const db = new DatabaseClient<WOFDatabase>(ingestPath)
 
 	db.exec(`
 		PRAGMA page_size = 8192;
@@ -170,7 +171,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	}
 
 	db.prepare("VACUUM INTO ?").run(out)
-	db.close()
+	await db.destroy()
 	unlinkSync(ingestPath)
 
 	for (const sidecar of [ingestPath + "-wal", ingestPath + "-shm"]) {
@@ -180,18 +181,18 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	}
 
 	phase("fts")
-	const outDB = new DatabaseSync(out)
+	const outDB = new DatabaseClient<WOFDatabase>(out)
 	const fts = await buildFTS(outDB, { onProgress: phase })
-	outDB.close()
+	await outDB.destroy()
 	phase("fts", `${fts.ftsRows.toLocaleString()} FTS rows / ${fts.bboxRows.toLocaleString()} bbox rows`)
 
 	let verify: VerifyResult | null = null
 
 	if (!opts.skipVerify) {
 		phase("verify", "structural checks")
-		const verifyDB = new DatabaseSync(out, { readOnly: true })
+		const verifyDB = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 		const structural = verifyAdmin(verifyDB, loadDefaultBaseline())
-		verifyDB.close()
+		await verifyDB.destroy()
 
 		phase("verify", "reverse panel")
 		const reverse = await verifyReversePanel(out)

@@ -15,10 +15,6 @@
  *   this is the check that would have caught a builder generalizing the flood layer's Zone-1-by-absence rule.
  */
 
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { buildCoastalDatabase } from "@mailwoman/coastal/sdk/build-coastal"
 import {
 	OUTSIDE_MAPPING_POINTS,
@@ -35,6 +31,9 @@ import {
 	FIXTURE_SIDE,
 	rectangleRing,
 } from "@mailwoman/coastal/test-kit"
+import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const NFI = FIXTURE_SCENARIOS.noIntervention.key

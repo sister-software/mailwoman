@@ -22,10 +22,9 @@
  *   is the punctuation leg.
  */
 
-import { existsSync } from "node:fs"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { existsSync } from "@mailwoman/platform/fs"
 import { runConformanceCommand } from "mailwoman/eval-harness/conformance/command"
 import { loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import { auditPunctuationSuite, PUNCTUATION_SUITE_PATH } from "mailwoman/eval-harness/conformance/punctuation"

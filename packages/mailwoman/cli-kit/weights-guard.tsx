@@ -22,10 +22,9 @@
  *   (board issue filed with this plan).
  */
 
-import { spawn } from "node:child_process"
-
 import { Spinner } from "@inkjs/ui"
 import { resolveWeights, weightsCacheDir, weightsPackageName } from "@mailwoman/neural/weights"
+import { spawn } from "@mailwoman/platform/child_process"
 import { Box, Text, useInput, useStdin } from "ink"
 import React, { useEffect, useState } from "react"
 

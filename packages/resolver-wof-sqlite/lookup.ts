@@ -10,11 +10,11 @@
  *   See `docs/plan/phases/PHASE_4_2_wof_sqlite.md` for the design rationale.
  */
 
-import { DatabaseSync, type SQLInputValue } from "node:sqlite"
-
-import { SqliteDialect } from "@mailwoman/core/kysley/dialect"
 import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import type { SQLInputValue } from "@mailwoman/sqlite/client"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { SqliteDialect } from "@mailwoman/sqlite/dialect"
 import { Kysely } from "kysely"
 
 import { ancestorLineage } from "./ancestry.ts"
@@ -73,10 +73,10 @@ export interface WOFSQLitePlaceLookupOpts {
 	 */
 	databasePath?: string | ReadonlyArray<string | ShardConfig>
 	/**
-	 * Pre-opened DatabaseSync — primarily for tests against an inline fixture DB. Mutually exclusive with `databasePath`.
+	 * Pre-opened connection — primarily for tests against an inline fixture DB. Mutually exclusive with `databasePath`.
 	 * Multi-shard requires `databasePath` (so the lookup owns the ATTACH).
 	 */
-	database?: DatabaseSync
+	database?: DatabaseClient<WOFDatabase>
 	/**
 	 * If true, build the FTS5 `place_search` virtual table on construction if it doesn't already exist. The upstream WOF
 	 * distribution does NOT ship FTS5, so callers either set this once on first open or pre-build it via the
@@ -139,9 +139,12 @@ const CF_PC_DECAY_KM = 8
 const CF_MISMATCH_KM = 50
 
 export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
-	readonly #db: DatabaseSync
-	readonly #ownsDB: boolean
-	readonly #kysely: Kysely<WOFDatabase>
+	readonly #db: DatabaseClient<WOFDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	readonly #weights: RankingWeights
 	/**
 	 * Cached at construction so we don't `sqlite_master` query on every findPlace call. Bbox + near- with-radius queries
@@ -216,7 +219,6 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 			this.#shards = [{ path: ":memory:", schemaName: "main", placetypes: [] }]
 		} else {
 			const shards = resolveShards(opts.databasePath!)
@@ -227,8 +229,7 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 			// ONLY when that build was explicitly requested. Every read query (FTS5 MATCH, the aux-table
 			// SELECTs, ATTACH, and the `busy_timeout` PRAGMA) works read-only. See the docker read-only
 			// mount limitation (#1213).
-			this.#db = new DatabaseSync(shards[0]!.path, { readOnly: !opts.buildFTS })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<WOFDatabase>(shards[0]!.path, { readOnly: !opts.buildFTS }))
 
 			// ATTACH each non-main shard. Schema names were validated by resolveShards, so safe to
 			// interpolate directly (SQLite ATTACH doesn't accept parameters for the schema name).
@@ -245,10 +246,6 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		} else {
 			this.#assertFTSExists()
 		}
-
-		this.#kysely = new Kysely<WOFDatabase>({
-			dialect: new SqliteDialect({ database: this.#db }),
-		})
 
 		this.#weights = { ...DEFAULT_WEIGHTS, ...weights }
 
@@ -841,13 +838,9 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 	}
 
 	close(): void {
-		// Destroying the Kysely instance closes the underlying connection IF we own it. If the caller
-		// passed in a pre-opened DatabaseSync (test fixture), respect their ownership.
-		void this.#kysely.destroy()
-
-		if (this.#ownsDB) {
-			this.#db.close()
-		}
+		// Only when we opened it. A caller who passed a pre-opened client keeps using it after this returns — the FTS
+		// build this lookup performed lives on their connection, and closing it would take that with us.
+		this.#resources.dispose()
 	}
 
 	[Symbol.dispose](): void {

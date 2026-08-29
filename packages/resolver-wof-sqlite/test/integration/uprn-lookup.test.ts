@@ -8,12 +8,6 @@
  *   never disagree on which cell a coordinate keys to.
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -26,6 +20,9 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
+import { mkdtempSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { UPRN_MAX_NEAREST_RADIUS_M, UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import {
 	createUPRNIndexes,
@@ -34,6 +31,7 @@ import {
 	type UPRNDatabase,
 } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { beforeAll, describe, expect, it } from "vitest"
 
 /**
@@ -54,15 +52,14 @@ beforeAll(async () => {
 
 	databasePath = join(dir, "uprn.db")
 
-	const db = new DatabaseSync(databasePath)
-	const kdb = new DatabaseClient<UPRNDatabase>({ database: db })
+	const kdb = new DatabaseClient<UPRNDatabase>(databasePath)
 	const contract = kdb
 
 	await createUPRNTable(kdb)
 	await createLayerManifestTable(contract)
 	await createLayerCoverageTable(contract)
 
-	const insert = db.prepare("INSERT INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
+	const insert = kdb.prepare("INSERT INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 
 	for (const point of FIXTURE_POINTS) {
 		insert.run(point.uprn, point.lat, point.lon, uprnH3Cell(point.lat, point.lon))
@@ -149,29 +146,21 @@ describe("nearestUPRN", () => {
 
 describe("layer contract", () => {
 	it("round-trips the manifest, spine declaration included", async () => {
-		const kdb = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(databasePath, { readOnly: true }),
-		})
+		using kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest.name).toBe("os-open-uprn-fixture")
 		expect(manifest.tier).toBe(LayerTier.BuildLocal)
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
-
-		await kdb.destroy()
 	})
 
 	it("keeps unsurveyed cells UNKNOWN — the meaning-of-zero rule", async () => {
-		const kdb = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(databasePath, { readOnly: true }),
-		})
+		using kdb = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
 		const surveyed = await readLayerCoverage(kdb, 1)
 
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
 		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
-
-		await kdb.destroy()
 	})
 })

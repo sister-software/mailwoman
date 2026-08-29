@@ -15,10 +15,9 @@
  *   issue per commit.
  */
 
-import { parseArgs } from "node:util"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArgs } from "@mailwoman/platform/util"
 import { checkBoardPins, PIN_TEST_PATH } from "mailwoman/eval-harness/gauntlet/cases/pins"
 import { $ } from "zx"
 

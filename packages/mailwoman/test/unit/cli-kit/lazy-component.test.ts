@@ -17,11 +17,10 @@
  *   empty stderr is proof it went through Ink's `<Text color="red">` frame instead.
  */
 
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)

@@ -23,9 +23,8 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { readdirSync, readFileSync, statSync } from "node:fs"
-import { join } from "node:path"
-
+import { readdirSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 import type { FSTNode } from "./fst-matcher.ts"

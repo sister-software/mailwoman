@@ -31,9 +31,8 @@
  *   should read it; new code reads the split columns.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { referentialFromPopulation } from "@mailwoman/core/resolver"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Kysely } from "kysely"
 
 import { allRows } from "./sqlite-utils.ts"
@@ -210,7 +209,7 @@ export type ImportanceSplitSource = (typeof IMPORTANCE_SPLIT_SOURCES)[keyof type
  *
  * Call it ONCE per shard and cache the result — it runs a `PRAGMA`, and the callers are per-keystroke hot.
  */
-export function encyclopedicClauses(db: DatabaseSync, schemaName: string): { select: string; join: string } {
+export function encyclopedicClauses<DB>(db: DatabaseClient<DB>, schemaName: string): { select: string; join: string } {
 	let present: boolean
 
 	try {
@@ -300,7 +299,7 @@ export interface ImportanceSplit {
 /**
  * Does `table` exist in `db`, and if so which of `columns` does it have?
  */
-function tableColumns(db: DatabaseSync, table: string): Set<string> {
+function tableColumns<DB>(db: DatabaseClient<DB>, table: string): Set<string> {
 	try {
 		const rows = allRows<{ name: string }>(db.prepare(`PRAGMA table_info(${table})`))
 
@@ -317,7 +316,7 @@ function tableColumns(db: DatabaseSync, table: string): Set<string> {
  * builder in particular must read the shipped population-only databases, the read-only 2026-08-05 staging database
  * (legacy conflated column), and post-split builds with one code path.
  */
-export function loadImportanceSplit(db: DatabaseSync): ImportanceSplit {
+export function loadImportanceSplit<DB>(db: DatabaseClient<DB>): ImportanceSplit {
 	const referential = new Map<number, number>()
 	const encyclopedic = new Map<number, number>()
 	const population = new Map<number, number>()

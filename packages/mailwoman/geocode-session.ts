@@ -26,8 +26,6 @@
  *   imports React, Ink, or the parse command.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import {
@@ -41,6 +39,7 @@ import {
 import type { ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath } from "path-ts"

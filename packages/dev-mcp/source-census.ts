@@ -25,11 +25,11 @@
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
-import { existsSync, readdirSync, statSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
+import { existsSync, readdirSync, statSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * What a shard can be joined THROUGH, which decides what a corpus builder can extract from it.
@@ -68,7 +68,7 @@ export interface SourceCensusRow {
 	reason?: string
 }
 
-function tableNames(db: DatabaseSync): string[] {
+function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
 	return (db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as Array<{ name: string }>).map(
 		(row) => row.name
 	)
@@ -86,10 +86,10 @@ export function censusArtifact(path: string, countries?: readonly string[]): Sou
 
 	const bytes = statSync(path).size
 
-	let db: DatabaseSync
+	let db: DatabaseClient<WOFDatabase>
 
 	try {
-		db = new DatabaseSync(path, { readOnly: true })
+		db = new DatabaseClient<WOFDatabase>(path, { readOnly: true })
 	} catch (error) {
 		return { artifact, bytes, tables: 0, join: [], readable: false, reason: (error as Error).message.slice(0, 120) }
 	}
@@ -150,7 +150,7 @@ export function censusArtifact(path: string, countries?: readonly string[]): Sou
 	} catch (error) {
 		return { artifact, bytes, tables: 0, join: [], readable: false, reason: (error as Error).message.slice(0, 120) }
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }
 

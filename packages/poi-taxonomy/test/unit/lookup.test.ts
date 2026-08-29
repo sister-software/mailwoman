@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
+import { readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import {
 	getAllCategories,
 	getPOICategory,
@@ -220,15 +219,15 @@ describe("full Overture snapshot + curated overlay", () => {
 
 describe("taxonomy integrity — malformed table", () => {
 	afterEach(() => {
-		vi.doUnmock("node:fs")
+		vi.doUnmock("@mailwoman/platform/fs")
 		vi.resetModules()
 	})
 
 	it("throws at module init when a synonym's categoryID points at a nonexistent category", async () => {
 		vi.resetModules()
 
-		vi.doMock("node:fs", async () => {
-			const actual = await vi.importActual<typeof import("node:fs")>("node:fs")
+		vi.doMock("@mailwoman/platform/fs", async () => {
+			const actual = await vi.importActual<typeof import("@mailwoman/platform/fs")>("@mailwoman/platform/fs")
 
 			const malformed = JSON.stringify({
 				version: "0.0.0",

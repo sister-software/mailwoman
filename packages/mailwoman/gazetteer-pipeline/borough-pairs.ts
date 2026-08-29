@@ -22,10 +22,10 @@
  *   columns rather than rejected, so filtering them is the reader's job and this reader was not doing it.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import type { ComponentTag } from "@mailwoman/core/types"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { PLACETYPE_PROJECTION } from "./placetype-census.ts"
 
@@ -145,7 +145,7 @@ const LATIN_SURFACE_PATTERN = /^[\p{Script=Latin}\p{Mark}0-9 '\-.,()/]+$/u
  * placetype sets are per-country.
  */
 export function extractBoroughPairs(adminDBPath: string, country: string): BoroughPair[] {
-	const db = new DatabaseSync(adminDBPath, { readOnly: true })
+	const db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
 	try {
 		const { children, parents, expandParentAliases } = PAIR_PLACETYPES_BY_COUNTRY[country] ?? DEFAULT_PAIR_PLACETYPES
@@ -247,6 +247,6 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 		return pairs
 	} finally {
-		db.close()
+		db.destroy()
 	}
 }

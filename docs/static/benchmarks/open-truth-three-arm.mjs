@@ -41,11 +41,11 @@
 // standalone on purpose (node builtins only, no monorepo install), so the PRNG and haversine are
 // local copies of the shared implementations.
 
-import { spawn } from "node:child_process"
-import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
+import { spawn } from "@mailwoman/platform/child_process"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, join } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 

@@ -20,11 +20,10 @@
  *   not have, so the agent weighs them.
  */
 
-import { spawnSync } from "node:child_process"
-import { createRequire } from "node:module"
-import { fileURLToPath } from "node:url"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { createRequire } from "@mailwoman/platform/module"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 const MAX_MATCHES_PER_RULE = 8
 

@@ -27,12 +27,11 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
-import { existsSync, readFileSync, rmSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { allRows, dataRootPath, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { allRows, dataRootPath } from "@mailwoman/core/utils"
+import { existsSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
+import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
 import { resolvePath } from "path-ts"
 
@@ -183,7 +182,7 @@ function simplify(geom: RawGeometry, tol: number): RawGeometry | null {
 
 const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 		const { createPolygonsTable } = await import("@mailwoman/resolver-wof-sqlite/polygon-schema")
 		const { isPresent, tryParsingJSON } = await import("@mailwoman/core/objects")
 
@@ -212,7 +211,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 		const tol = options.tol
 
 		const srcPath = points || admin
-		const src = new DatabaseSync(srcPath, { readOnly: true })
+		const src = new DatabaseClient<PolygonDatabase>(srcPath, { readOnly: true })
 
 		const where = countries
 			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
@@ -223,7 +222,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
-		src.close()
+		await src.destroy()
 
 		// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
 		// readonly artifact — never write the live path in case the build dies halfway). The
@@ -236,18 +235,17 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		const dbOut = new DatabaseSync(tmpOut)
-		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `dbOut` handle.
-		const kdb = new DatabaseClient<PolygonDatabase>({ database: dbOut })
+		const kdb = new DatabaseClient<PolygonDatabase>(tmpOut)
+		// DDL via the Kysely schema-builder; the hot INSERT loop below stays on the raw `kdb` handle.
 
 		await createPolygonsTable(kdb)
 
-		const insert = dbOut.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
+		const insert = kdb.prepare(`INSERT OR IGNORE INTO polygons (id, geom) VALUES (?, ?)`)
 
 		let done = 0
 		let missing = 0
 		let dropped = 0
-		dbOut.exec("BEGIN")
+		kdb.exec("BEGIN")
 
 		for (const r of rows) {
 			const path = geojsonPath(repos, r.country, r.id)
@@ -281,10 +279,10 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		dbOut.exec("COMMIT")
-		dbOut.exec("VACUUM")
+		kdb.exec("COMMIT")
+		kdb.exec("VACUUM")
 
-		const bytes = dbOut.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
+		const bytes = kdb.prepare(`SELECT count(*) n, sum(length(geom)) b FROM polygons`).get() as {
 			n: number
 			b: number | null
 		}

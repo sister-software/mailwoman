@@ -7,10 +7,10 @@
  *   ordered — the weighted-sum score and the exact-match tiering that ranks over it.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { haversineKm } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { CandidateDatabase } from "./candidate-schema.ts"
 import { exactMatchIDs, officialNameIDs } from "./exact-match.ts"
 import { compareReferential, referentialFromPopulation } from "./place-importance-schema.ts"
 import type { RankingWeights } from "./ranking-weights.ts"
@@ -157,10 +157,10 @@ export function candidateFromSearchRow(
  * Order `candidates` IN PLACE — the exact-match tier first when the shard can answer the name probes, otherwise plain
  * weighted-score order. Every candidate is stamped with its `exactMatch` flag on the way through.
  */
-export function rankCandidates(
+export function rankCandidates<DB>(
 	candidates: PlaceCandidate[],
 	options: {
-		db: DatabaseSync
+		db: DatabaseClient<DB>
 		schemaName: string
 		query: FindPlaceQuery
 		weights: RankingWeights

@@ -25,10 +25,10 @@
  *   CREATE TABLE, but don't import
  */
 
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
-import { basename, dirname, extname, join } from "node:path"
-import type { SQLInputValue } from "node:sqlite"
-
+import { existsSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { basename, dirname, extname, join } from "@mailwoman/platform/path"
+import type { SQLInputValue } from "@mailwoman/sqlite/client"
+import type { Database } from "@mailwoman/sqlite/database-schema"
 import { TextSpliterator } from "spliterator"
 
 //#region Core: quote-aware CSV field splitting
@@ -252,10 +252,13 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	}
 
 	// --- Create database + import ---
-	const { DatabaseSync } = await import("node:sqlite")
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	mkdirSync(dirname(opts.outputPath), { recursive: true })
 
-	const db = new DatabaseSync(opts.outputPath)
+	// `Database` — the EMPTY schema — deliberately, not by default: `createTableSQL` is built from the columns and
+	// types inferred from the CSV at runtime, so there is no table this file could name at compile time. Every write
+	// below goes through `exec`/`prepare` for the same reason.
+	const db = new DatabaseClient<Database>(opts.outputPath)
 	db.exec("PRAGMA journal_mode = OFF") // faster for bulk import
 	db.exec("PRAGMA synchronous = OFF")
 
@@ -358,10 +361,10 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		)
 	}
 
-	db.close()
+	await db.destroy()
 
 	// Write MANIFEST
-	const stat = await (await import("node:fs/promises")).stat(opts.outputPath)
+	const stat = await (await import("@mailwoman/platform/fs/promises")).stat(opts.outputPath)
 
 	const manifest = {
 		ingested_at: new Date().toISOString(),

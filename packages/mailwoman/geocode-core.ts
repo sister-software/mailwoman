@@ -22,8 +22,6 @@
  *   how.
  */
 
-import { existsSync } from "node:fs"
-
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core"
@@ -46,6 +44,7 @@ import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwom
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
+import { existsSync } from "@mailwoman/platform/fs"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import {
 	adminLadderForNodes,
@@ -769,7 +768,7 @@ interface ShardCacheEntry extends StateShards {
  * `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic switchover
  * when a new version is published. Call {@link close} when done to release every cached handle.
  */
-export class ShardProvider {
+export class ShardProvider implements Disposable {
 	readonly #factory: ShardLookupFactory
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, ShardCacheEntry>()
@@ -858,6 +857,10 @@ export class ShardProvider {
 
 		this.#cache.clear()
 		this.#retired = []
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }
 

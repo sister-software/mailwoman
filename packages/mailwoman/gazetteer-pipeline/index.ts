@@ -17,7 +17,9 @@
  *   passed in.
  */
 
-import { execFileSync } from "node:child_process"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
 import {
 	chmodSync,
 	copyFileSync,
@@ -28,12 +30,8 @@ import {
 	rmSync,
 	symlinkSync,
 	writeFileSync,
-} from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath, repoRootPathBuilder, sealDatabase } from "@mailwoman/core/utils"
+} from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -41,6 +39,9 @@ import { repoRootPath, repoRootPathBuilder, sealDatabase } from "@mailwoman/core
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { resolvePath } from "path-ts"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
@@ -273,7 +274,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	// Pre-flight on the SOURCE, before the copy: what does it already carry in the fold's range?
 	opts.onPhase?.("preflight", "reading the source's existing alias-fold coverage")
-	const source = new DatabaseSync(opts.adminIn, { readOnly: true })
+	const source = new DatabaseClient<WOFDatabase>(opts.adminIn, { readOnly: true })
 
 	const refoldedCountries = (
 		source
@@ -283,7 +284,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 		.map((r) => r.country)
 
-	source.close()
+	await source.destroy()
 
 	const requested = new Set(countries)
 	const dropped = refoldedCountries.filter((cc) => !requested.has(cc))
@@ -309,7 +310,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	copyFileSync(opts.adminIn, opts.adminOut)
 	chmodSync(opts.adminOut, 0o644)
 
-	const db = new DatabaseSync(opts.adminOut)
+	await using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
 
 	// #1026 + #1514: the purge clears the A-class country/region nodes and the locality ancestry too, so a fold that
 	// does not pass adminForCountries un-parents the 95 zero-coverage locales' localities. Default it to the same
@@ -325,7 +326,6 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })
 	db.exec("ANALYZE")
-	db.close()
 
 	return { ingested, placeSearchRows: res.indexedRows, bboxRows: res.bboxIndexedRows, refoldedCountries }
 }

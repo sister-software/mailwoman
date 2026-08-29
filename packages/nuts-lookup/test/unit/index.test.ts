@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { makeNUTSAnnotator, nutsFromID, NUTSLookup, pointInMultiPolygon } from "@mailwoman/nuts-lookup"
+import type { NUTSDatabase } from "@mailwoman/nuts-lookup/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { expect, test } from "vitest"
 
 test("nutsFromID: derives nested levels by prefix", () => {
@@ -32,8 +32,8 @@ test("pointInMultiPolygon: inside vs outside", () => {
 	expect(pointInMultiPolygon(20, 20, square)).toBe(false)
 })
 
-function fixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function fixtureDB(): DatabaseClient<NUTSDatabase> {
+	const db = new DatabaseClient<NUTSDatabase>(":memory:")
 
 	db.exec(
 		"CREATE TABLE nuts_regions (nutsID TEXT, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)"
@@ -59,13 +59,16 @@ function fixtureDB(): DatabaseSync {
 }
 
 test("NUTSLookup.find: deepest containing region → nested codes", () => {
-	const lookup = new NUTSLookup({ database: fixtureDB() })
+	using db = fixtureDB()
+	using lookup = new NUTSLookup({ database: db })
 	expect(lookup.find(5, 5)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
 test("makeNUTSAnnotator: fills nuts inside, abstains outside", () => {
-	const annotate = makeNUTSAnnotator(new NUTSLookup({ database: fixtureDB() }))
+	using db = fixtureDB()
+	using lookup = new NUTSLookup({ database: db })
+	const annotate = makeNUTSAnnotator(lookup)
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ nuts: { level1: "XX3", level2: "XX30", level3: "XX300" } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

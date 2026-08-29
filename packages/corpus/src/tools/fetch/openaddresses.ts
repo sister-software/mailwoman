@@ -54,18 +54,25 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import { execFile, spawn } from "node:child_process"
-import { createReadStream, createWriteStream, existsSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs"
-import { join } from "node:path"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
-import { setTimeout as sleep } from "node:timers/promises"
-import { promisify } from "node:util"
-
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { ByteFormatter } from "@mailwoman/core/fs/utils"
 import { sha256File } from "@mailwoman/core/utils"
+import { execFile, spawn } from "@mailwoman/platform/child_process"
+import {
+	createReadStream,
+	createWriteStream,
+	existsSync,
+	mkdirSync,
+	renameSync,
+	rmSync,
+	statSync,
+} from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
+import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
+import { promisify } from "@mailwoman/platform/util"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { isTransientStatus, writeManifest } from "./download.ts"

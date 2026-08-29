@@ -36,13 +36,12 @@
  *     row's core capability, so the pair is "gained but not register-flat", not a lost capability.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { resolve } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"

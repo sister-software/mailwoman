@@ -23,11 +23,10 @@
  *   Usage: node packages/mailwoman/dev-tools/probe-fst-bias.run.ts [--locale en-us] [--raw] <surface>...
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { dataRootPath } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 

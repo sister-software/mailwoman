@@ -24,13 +24,12 @@
  *     throw) with `openFilerDatabaseIfPresent` (the actual open) the same way `bdcFilingLandscape`'s handler does.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import type { BDCDatabase, PlausibilityDeps } from "@mailwoman/bdc"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import type { FilerDatabase } from "@mailwoman/filer"
+import { existsSync } from "@mailwoman/platform/fs"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Open a bdc.db, or return `undefined` when `databasePath` is unset or the file is missing — NEVER a raw sqlite throw.
@@ -39,7 +38,7 @@ import type { FilerDatabase } from "@mailwoman/filer"
 export function openBDCDatabaseIfPresent(databasePath: string | undefined): DatabaseClient<BDCDatabase> | undefined {
 	if (!databasePath || !existsSync(databasePath)) return undefined
 
-	return new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(databasePath, { readOnly: true }) })
+	return new DatabaseClient<BDCDatabase>(databasePath, { readOnly: true })
 }
 
 /**
@@ -56,11 +55,11 @@ export async function openPlausibilityPOIDeps(databasePath: string | undefined):
 	if (!databasePath || !existsSync(databasePath)) return undefined
 
 	const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi-lookup")
-	const database = new DatabaseSync(databasePath, { readOnly: true })
+	const database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })
 
 	return {
 		lookup: new POILookup({ database }),
-		contractDB: new DatabaseClient<LayerContractDatabase>({ database }),
+		contractDB: database,
 	}
 }
 
@@ -85,7 +84,7 @@ export function openFilerDatabaseIfPresent(
 ): DatabaseClient<FilerDatabase> | undefined {
 	if (!databasePath || !existsSync(databasePath)) return undefined
 
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(databasePath, { readOnly: true }) })
+	return new DatabaseClient<FilerDatabase>(databasePath, { readOnly: true })
 }
 
 /**

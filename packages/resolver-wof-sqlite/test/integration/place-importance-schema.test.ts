@@ -8,9 +8,6 @@
  *   reconstruction the read-only 2026-08-05 staging database needs.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	compareReferential,
 	createPlaceImportanceTable,
@@ -21,6 +18,7 @@ import {
 	referentialFromPopulation,
 	splitLegacyImportance,
 } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 describe("referentialFromPopulation", () => {
@@ -158,7 +156,7 @@ describe("splitLegacyImportance", () => {
 
 //#region loadImportanceSplit
 
-function seedPopulation(db: DatabaseSync, rows: ReadonlyArray<[number, number]>): void {
+function seedPopulation(db: DatabaseClient<PlaceImportanceDatabase>, rows: ReadonlyArray<[number, number]>): void {
 	db.exec("CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0)")
 	const insert = db.prepare("INSERT INTO place_population (id, population) VALUES (?, ?)")
 
@@ -169,38 +167,30 @@ function seedPopulation(db: DatabaseSync, rows: ReadonlyArray<[number, number]>)
 
 describe("loadImportanceSplit", () => {
 	it("reads the split columns verbatim when they exist", async () => {
-		const db = new DatabaseSync(":memory:")
-		seedPopulation(db, [[1, 96_128]])
-		const kdb = new DatabaseClient<PlaceImportanceDatabase>({ database: db })
+		await using kdb = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		seedPopulation(kdb, [[1, 96_128]])
+
 		await createPlaceImportanceTable(kdb)
 
-		db.prepare("INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)").run(
-			1,
-			0.25,
-			0.1173,
-			0.1173
-		)
+		kdb
+			.prepare("INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)")
+			.run(1, 0.25, 0.1173, 0.1173)
 
-		db.prepare("INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)").run(
-			2,
-			0.5,
-			null,
-			0.5
-		)
+		kdb
+			.prepare("INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)")
+			.run(2, 0.5, null, 0.5)
 
-		const split = loadImportanceSplit(db)
+		const split = loadImportanceSplit(kdb)
 
 		expect(split.source).toBe(IMPORTANCE_SPLIT_SOURCES.splitColumns)
 		expect(split.referential.get(1)).toBe(0.25)
 		expect(split.encyclopedic.get(1)).toBe(0.1173)
 		// NULL encyclopedic is ABSENT, not 0.
 		expect(split.encyclopedic.has(2)).toBe(false)
-
-		await kdb.destroy()
 	})
 
 	it("reconstructs the split from a legacy conflated table", () => {
-		const db = new DatabaseSync(":memory:")
+		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 
 		seedPopulation(db, [
 			[1, 418],
@@ -224,12 +214,10 @@ describe("loadImportanceSplit", () => {
 		expect(split.encyclopedic.has(3)).toBe(false)
 		expect(split.referential.get(1)).toBe(referentialFromPopulation(418))
 		expect(split.referential.get(2)).toBe(referentialFromPopulation(96_128))
-
-		db.close()
 	})
 
 	it("falls back to population alone when there is no importance table", () => {
-		const db = new DatabaseSync(":memory:")
+		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 		seedPopulation(db, [[1, 96_128]])
 
 		const split = loadImportanceSplit(db)
@@ -237,19 +225,15 @@ describe("loadImportanceSplit", () => {
 		expect(split.source).toBe(IMPORTANCE_SPLIT_SOURCES.populationOnly)
 		expect(split.referential.get(1)).toBe(referentialFromPopulation(96_128))
 		expect(split.encyclopedic.size).toBe(0)
-
-		db.close()
 	})
 
 	it("reports `none` rather than a table of zeros when the database carries no salience at all", () => {
-		const db = new DatabaseSync(":memory:")
+		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
 
 		const split = loadImportanceSplit(db)
 
 		expect(split.source).toBe(IMPORTANCE_SPLIT_SOURCES.none)
 		expect(split.referential.size).toBe(0)
-
-		db.close()
 	})
 })
 

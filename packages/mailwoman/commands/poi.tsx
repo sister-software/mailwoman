@@ -25,11 +25,10 @@
  *   (no resolver — anchors stay coordinate-less) with a stderr note, never a hard failure.
  */
 
-import { existsSync } from "node:fs"
-
 import { Spinner } from "@inkjs/ui"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
+import { existsSync } from "@mailwoman/platform/fs"
 import type { Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 

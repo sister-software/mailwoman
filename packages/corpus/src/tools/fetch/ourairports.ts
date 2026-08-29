@@ -36,11 +36,10 @@
  *   Invoke via `mailwoman corpus fetch ourairports --out-root <path>`.
  */
 
-import { mkdirSync } from "node:fs"
-import { join } from "node:path"
-
 import { APIClient } from "@mailwoman/core/api"
 import { sha256File } from "@mailwoman/core/utils"
+import { mkdirSync } from "@mailwoman/platform/fs"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, writeManifest } from "./download.ts"

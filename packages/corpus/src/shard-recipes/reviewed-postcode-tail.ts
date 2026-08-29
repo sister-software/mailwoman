@@ -8,10 +8,9 @@
  *   only transformations that do not create another postcode-to-place join.
  */
 
-import { readFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readFileSync } from "@mailwoman/platform/fs"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { alignAndWrite, type ShardRecipe, shardSourceID } from "./scaffold.ts"
 

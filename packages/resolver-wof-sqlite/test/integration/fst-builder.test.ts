@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { existsSync } from "node:fs"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import { existsSync } from "@mailwoman/platform/fs"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import type { BuildFSTResult, FSTProvenance } from "@mailwoman/resolver-wof-sqlite/fst-types"

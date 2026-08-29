@@ -8,10 +8,9 @@
  *   handles). Uses a fake lookup factory + on-disk touch files — no WOF / weights needed.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { readReleaseManifest, resolveShardPath } from "mailwoman/data-release"
 import { ShardProvider } from "mailwoman/geocode-core"
 import { afterAll, describe, expect, test } from "vitest"
@@ -146,10 +145,9 @@ describe("ShardProvider atomic switchover", () => {
 		const apDir = dirEnsure(join(root, "address-points"))
 		writeFileSync(join(apDir, "address-points-us-tx-v1.db"), "")
 		writeFileSync(join(root, "releases.json"), JSON.stringify({ "address-points": "v1" }))
-		const provider = new ShardProvider(factory, root)
+		using provider = new ShardProvider(factory, root)
 		const first = provider.for("tx").addressPoints
 		provider.reload()
-		expect(provider.for("tx").addressPoints).toBe(first) // same instance — not reopened
-		provider.close()
+		expect(provider.for("tx").addressPoints).toBe(first)
 	})
 })

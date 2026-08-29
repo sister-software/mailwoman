@@ -23,8 +23,6 @@
  *   `bbox` field on {@link FindPlaceQuery}).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { jaroWinkler, levenshteinSimilarity } from "@mailwoman/match/comparators"
 import {
 	expandPlacetypeFilter,
@@ -33,6 +31,7 @@ import {
 	type GazetteerArtifactCoverage,
 } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import {
 	CANDIDATE_ANCESTOR_TABLE,
@@ -42,7 +41,7 @@ import {
 	type IntervalLabel,
 } from "./candidate-ancestors-schema.ts"
 import { CANDIDATE_FTS_TABLE } from "./candidate-fts.ts"
-import type { CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
+import type { CandidateDatabase, CandidateTable, CountryCodeTable, PlacetypeCodeTable } from "./candidate-schema.ts"
 import { readGazetteerCoverageManifest } from "./coverage-manifest-schema.ts"
 import { referentialFromPopulation } from "./place-importance-schema.ts"
 import { POSTAL_CITY_CANDIDATE_TABLE, type PostalCityCandidateTable } from "./postal-city-candidate-schema.ts"
@@ -64,7 +63,7 @@ export interface WOFCandidateTableLookupOpts {
 	/**
 	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
 	 */
-	database?: DatabaseSync
+	database?: DatabaseClient<CandidateDatabase>
 	/**
 	 * #1882 opt-in: exempt `name_role = 'variant'` aliases — the holder's own primary name in another orthography,
 	 * stamped by the build's own-name detector — from the cross-country primary-preference penalty. No-ops on an artifact
@@ -156,9 +155,13 @@ function ftsTrigramQuery(s: string): string {
  * Node {@link PlaceLookup} over `candidate.db`. Drop-in for {@link WOFSQLitePlaceLookup} in `createWOFResolver(backend)`
  * — same `findPlace` contract, population-first ranking.
  */
-export class WOFCandidateTableLookup implements PlaceLookup {
-	#db: DatabaseSync
-	#ownsDB: boolean
+export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
+	#db: DatabaseClient<CandidateDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 	readonly #countryToID = new Map<string, number>()
 	readonly #idToCountry = new Map<number, string>()
 	readonly #placetypeToID = new Map<string, number>()
@@ -167,12 +170,12 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 * Prepared `(name_key, postcode)` probe for the #741 postal-city side-index — `undefined` when the
 	 * `postal_city_candidate` table isn't present, so a candidate.db built without it is byte-stable.
 	 */
-	readonly #postalCityProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #postalCityProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
 	 * Prepared FTS5-trigram MATCH probe for the typo-tolerant fallback — `undefined` when the `candidate_fts` index isn't
 	 * present, so a candidate.db built without it is byte-stable (the fuzzy path is skipped, exactly like today).
 	 */
-	readonly #ftsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #ftsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
 	 * Prepared UNFILTERED existence probe (`name_key` present anywhere, ignoring country/placetype/bbox). Gates the fuzzy
 	 * fallback: fuzzy is a TYPO corrector, so it engages only when the name doesn't exist in the gazetteer at all. A name
@@ -180,7 +183,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 * not a spelling miss — fuzzing it would scrape an unrelated same-country place and defeat the cascade's
 	 * country-agnostic retry. Prepared only alongside `#ftsProbe`.
 	 */
-	readonly #nameKeyExistsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #nameKeyExistsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
 	 * Facts this candidate DB declares about itself — the coverage manifest (`country_coverage` + `country_bbox`) the
 	 * gazetteer build emits, read once at open. `undefined` when the artifact predates the manifest, so every consumer
@@ -208,7 +211,7 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	/**
 	 * Prepared chain probe over the `candidate_ancestor` sidecar — `undefined` when the artifact predates it.
 	 */
-	readonly #ancestorsProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #ancestorsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
 	/**
 	 * Prepared interval-label probe over `candidate_interval` — `undefined` when the artifact predates the sidecar, which
@@ -216,14 +219,14 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	 * `FindPlaceQuery.regionQualifier` is ignored, no candidate carries a `containedByQualifier` stamp, and the resolver
 	 * walk reports the lever `unavailable` instead of silently dead.
 	 */
-	readonly #intervalProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #intervalProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #intervalCache = new Map<number, IntervalLabel | null>()
 	/**
 	 * Prepared qualifier probe: the region-band rows (plus `country` — the region SLOT can hold a mislabeled country
 	 * name, "Moscow, Russia" parses region="Russia") for one folded qualifier key. `undefined` when the artifact lacks
 	 * the sidecar or the placetype dictionary lacks the band entirely.
 	 */
-	readonly #qualifierProbe: ReturnType<DatabaseSync["prepare"]> | undefined
+	readonly #qualifierProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
 	 * The ancestor lineage of a resolved place — nearest-first (locality-tier → county → region → … → country), the same
 	 * order the FTS backend's `ancestorLineage` serves, read from the `candidate_ancestor` sidecar in one clustered
@@ -240,10 +243,8 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.databasePath) {
-			this.#db = new DatabaseSync(opts.databasePath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<CandidateDatabase>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("WOFCandidateTableLookup needs `databasePath` or `database`")
 		}
@@ -969,8 +970,10 @@ export class WOFCandidateTableLookup implements PlaceLookup {
 	}
 
 	close(): void {
-		if (this.#ownsDB) {
-			this.#db.close()
-		}
+		this.#resources.dispose()
+	}
+
+	[Symbol.dispose](): void {
+		this.close()
 	}
 }

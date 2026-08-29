@@ -101,8 +101,8 @@ describe("createPOITaxonomyLookup", () => {
 	it("agrees with the node entry on a shared phrase from the real taxonomy table", async () => {
 		// Load the same JSON the node entry loads, via node:fs directly (this test file itself runs under node, so
 		// this doesn't exercise bundler-safety — it just proves the two entries agree over the real table).
-		const { readFileSync } = await import("node:fs")
-		const { resolve } = await import("node:path")
+		const { readFileSync } = await import("@mailwoman/platform/fs")
+		const { resolve } = await import("@mailwoman/platform/path")
 
 		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
 		const table = JSON.parse(
@@ -191,8 +191,8 @@ describe("createPOIBrandLookup", () => {
 	})
 
 	it("agrees with the node entry on a shared phrase from the real committed brand table", async () => {
-		const { readFileSync } = await import("node:fs")
-		const { resolve } = await import("node:path")
+		const { readFileSync } = await import("@mailwoman/platform/fs")
+		const { resolve } = await import("@mailwoman/platform/path")
 
 		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
 		const table = JSON.parse(

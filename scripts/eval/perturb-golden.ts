@@ -19,12 +19,11 @@
  * it through harness-neural (formerly harness-v0-neural with --symmetric-match).
  */
 
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
-import { parseArgs } from "node:util"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { tempRootPath } from "@mailwoman/core/utils"
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { dirname, join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({

@@ -114,7 +114,7 @@
  *   read path calls it.
  */
 
-import type { DatabaseClient } from "@mailwoman/core/kysley/client"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import {
 	FILER_FAMILY_SCHEMA_VERSION,
