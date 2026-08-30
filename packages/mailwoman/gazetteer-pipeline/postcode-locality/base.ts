@@ -388,5 +388,5 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	)
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(output)
+	await sealDatabase(output)
 }

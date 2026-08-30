@@ -72,7 +72,7 @@ const committedModel = await readCommittedModel()
 async function readCommittedModel(): Promise<CompiledGeographicModel> {
 	const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/scripts/build-artifact")
 
-	return readCompiledGeographicModel()
+	return await readCompiledGeographicModel()
 }
 
 interface ScratchLayerOptions {
@@ -392,25 +392,25 @@ describe("what an observation carries", () => {
 
 describe("construction refusals", () => {
 	it("refuses a layer holding more than one class — a pooled completeness supports no per-class exclusion", async () => {
-		await expect(routeOver({ categories: ["pharmacy", "cafe"] })).rejects.toThrow(/holds 2 classes/)
+		await expect(await routeOver({ categories: ["pharmacy", "cafe"] })).rejects.toThrow(/holds 2 classes/)
 	})
 
 	it("refuses a layer with no coverage rows at all", async () => {
-		await expect(routeOver({ cells: [] })).rejects.toThrow(/holds no cells/)
+		await expect(await routeOver({ cells: [] })).rejects.toThrow(/holds no cells/)
 	})
 
 	it("refuses an artifact that defines no affords relation", async () => {
 		const model = structuredClone(committedModel)
 		model.relations = model.relations.filter((relation) => String(relation.id) !== "affords")
 
-		await expect(routeOver({}, model)).rejects.toThrow(/defines no `affords` relation/)
+		await expect(await routeOver({}, model)).rejects.toThrow(/defines no `affords` relation/)
 	})
 
 	it("refuses an artifact whose concepts assert no affordance the vocabulary maps", async () => {
 		const model = structuredClone(committedModel)
 		model.mappings = []
 
-		await expect(routeOver({}, model)).rejects.toThrow(/could never fire/)
+		await expect(await routeOver({}, model)).rejects.toThrow(/could never fire/)
 	})
 })
 

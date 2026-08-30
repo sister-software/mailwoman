@@ -203,7 +203,7 @@ async function main(): Promise<void> {
 	}
 
 	swapDatabaseIntoPlace(tmp, args.output)
-	sealDatabase(args.output)
+	await sealDatabase(args.output)
 
 	const md5 = await md5File(args.output)
 	const bytes = (await statPath(args.output)).size

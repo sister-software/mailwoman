@@ -194,19 +194,19 @@ function ParseTask({
 				)
 			}
 
-			return runBenchmark(input, options, options.benchmark)
+			return await runBenchmark(input, options, options.benchmark)
 		}
 
 		// --policy implies the neural proposal/policy path.
 		if (options.policy && options.policy.length) {
 			const policyOverrides = parsePolicySpecs(options.policy)
 
-			return runNeural(input, options, policyOverrides)
+			return await runNeural(input, options, policyOverrides)
 		}
 
 		// --neural without --policy: legacy direct-neural path (kept for parity with old behavior).
 		if (options.neural) {
-			return runNeural(input, options, [])
+			return await runNeural(input, options, [])
 		}
 
 		// Guard said degraded (user declined the download, download failed, or --degraded): the real
@@ -256,7 +256,7 @@ async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefine
 	try {
 		if (!(await pathExists(dbPath))) return undefined
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
-		const { matcher } = buildFSTFromWOF({ dbPath })
+		const { matcher } = await buildFSTFromWOF({ dbPath })
 
 		return matcher
 	} catch {
@@ -519,7 +519,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	const { createRuntimePipeline } = await import("#index")
 
 	if (options.resolve) {
-		return withResolver(options, async (resolver) => {
+		return await withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
 			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence, poiQueryKind: options.poi })
 			const result = await pipeline(input, pipelineOpts)

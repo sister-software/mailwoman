@@ -24,7 +24,7 @@ async function makeDB(): Promise<string> {
 describe("sealDatabase", () => {
 	it("chmods the file 0444, switches journal_mode to delete, and removes sidecars", async () => {
 		const path = await makeDB()
-		sealDatabase(path)
+		await sealDatabase(path)
 		expect((await statPath(path)).mode & 0o777).toBe(0o444)
 		expect(isSealed(path)).toBe(true)
 		using db = new DatabaseSync(path, { readOnly: true })
@@ -33,8 +33,8 @@ describe("sealDatabase", () => {
 
 	it("is idempotent — sealing a sealed artifact leaves it sealed", async () => {
 		const path = await makeDB()
-		sealDatabase(path)
-		sealDatabase(path)
+		await sealDatabase(path)
+		await sealDatabase(path)
 		expect(isSealed(path)).toBe(true)
 	})
 })
@@ -42,14 +42,14 @@ describe("sealDatabase", () => {
 describe("openBuiltClient", () => {
 	it("opens a sealed artifact read-only by default", async () => {
 		const path = await makeDB()
-		sealDatabase(path)
+		await sealDatabase(path)
 		using db = openBuiltClient(path)
 		expect((db.prepare("SELECT v FROM t").get() as { v: string }).v).toBe("x")
 	})
 
 	it("throws SealedArtifactError (naming the rebuild command) on a write open of a sealed artifact", async () => {
 		const path = await makeDB()
-		sealDatabase(path)
+		await sealDatabase(path)
 		expect(() => openBuiltClient(path, { write: true })).toThrow(SealedArtifactError)
 		expect(() => openBuiltClient(path, { write: true })).toThrow(/sealed read-only artifact/)
 		expect(() => openBuiltClient(path, { write: true })).toThrow(/gazetteer build/)

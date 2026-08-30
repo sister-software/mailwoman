@@ -22,8 +22,9 @@
  *   dependency graph.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { existsSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import { type CompiledGeographicModel, parseCompiledGeographicModel } from "../artifact.ts"
@@ -67,8 +68,8 @@ export function compileAuthoredGeographicModel(): CompiledGeographicModel {
  * Read the committed artifact. The format version is checked; the records are not re-validated, because they were
  * validated on the way in.
  */
-export function readCompiledGeographicModel(): CompiledGeographicModel {
-	const text = readFileSync(packagedModelPaths().artifact, "utf8")
+export async function readCompiledGeographicModel(): Promise<CompiledGeographicModel> {
+	const text = await readLocalTextFile(packagedModelPaths().artifact)
 
 	// A corrupt committed artifact is a broken build, and the `SyntaxError` names the offset. The package's parse
 	// wrappers live in `@mailwoman/core`, which this package deliberately does not depend on.

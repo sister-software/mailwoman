@@ -46,10 +46,9 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -203,10 +202,10 @@ export function taxonomyPaths() {
 /**
  * Read the committed CSV + overlay, merge, and return the table (no write).
  */
-export function generateTaxonomyTable(): POITaxonomyTable {
+export async function generateTaxonomyTable(): Promise<POITaxonomyTable> {
 	const paths = taxonomyPaths()
-	const snapshot = parseOvertureCSV(readFileSync(paths.csv, "utf8"))
-	const overlay = parseJSONStrict<CuratedOverlay>(readFileSync(paths.overlay, "utf8"))
+	const snapshot = parseOvertureCSV(await readLocalTextFile(paths.csv))
+	const overlay = await readLocalJSONFile<CuratedOverlay>(paths.overlay)
 
 	return buildTaxonomyTable(snapshot, overlay)
 }
@@ -226,7 +225,7 @@ async function main(): Promise<void> {
 		console.log(`fetched snapshot → ${paths.csv}`)
 	}
 
-	const table = generateTaxonomyTable()
+	const table = await generateTaxonomyTable()
 
 	await writeLocalJSONFile(table, paths.out)
 

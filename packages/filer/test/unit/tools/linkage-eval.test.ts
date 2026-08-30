@@ -69,10 +69,12 @@ const INJECTED_FAMILY_ID = "cik:0001234567"
  */
 let cached: Promise<FilerLinkageEvalResult> | undefined
 
-function runEval(): Promise<FilerLinkageEvalResult> {
+async function runEval(): Promise<FilerLinkageEvalResult> {
+	// The PROMISE is what is cached, not its value: `??=` on an awaited call would run the eval once per concurrent
+	// caller, and the point of the memo is that it runs once.
 	cached ??= filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })
 
-	return cached
+	return await cached
 }
 
 describe("buildFilteredEvalInputs — decision 4's leakage exclusion (gate 4)", () => {
@@ -457,7 +459,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 
-		return runLinkagePass({
+		return await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),
 			truthGroupOf: buildTruthFamilyGroups(form499Rows, providerRows),
@@ -498,7 +500,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("keeps the leakage gate armed while the probe runs — the gate sees the untouched build", async () => {
 		// The injection adds exactly the ownership rows the gate refuses. It does not throw, because the gate reads the
 		// census BEFORE the probe writes; break that ordering and this test starts throwing instead of scoring.
-		await expect(runInjected()).resolves.toBeDefined()
+		await expect(await runInjected()).resolves.toBeDefined()
 	})
 
 	/**

@@ -68,11 +68,11 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
-import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, statPath, readDirectory } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { existsSync, readdirSync, statSync } from "@mailwoman/platform/fs"
+import { readdirSync, statSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -197,19 +197,17 @@ export async function resolveGateSpecPath(gate: string): Promise<string> {
 		if (await pathExists(sourceTree)) return fileURLToPath(sourceTree)
 	}
 
-	throw new Error(`Gate spec not found: "${gate}". Known specs: ${listGateSpecs().join(", ") || "(none)"}`)
+	throw new Error(`Gate spec not found: "${gate}". Known specs: ${(await listGateSpecs()).join(", ") || "(none)"}`)
 }
 
 /**
  * Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling.
  */
-export function listGateSpecs(): string[] {
+export async function listGateSpecs(): Promise<string[]> {
 	for (const dir of [new URL("./gates/", import.meta.url), new URL("../../eval-harness/gates/", import.meta.url)]) {
-		if (!existsSync(dir)) continue
+		if (!(await pathExists(dir))) continue
 
-		return readdirSync(fileURLToPath(dir))
-			.filter((file) => file.endsWith(".json"))
-			.toSorted()
+		return (await readDirectory(fileURLToPath(dir))).filter((file) => file.endsWith(".json")).toSorted()
 	}
 
 	return []

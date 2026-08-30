@@ -206,15 +206,15 @@ describe("full Overture snapshot + curated overlay", () => {
 
 	it("regenerates deterministically and matches the committed table by content", async () => {
 		// The generator is self-deterministic: two runs produce byte-identical output (no Map/sort nondeterminism).
-		const once = prettyJSON(generateTaxonomyTable())
-		expect(prettyJSON(generateTaxonomyTable())).toBe(once)
+		const once = prettyJSON(await generateTaxonomyTable())
+		expect(prettyJSON(await generateTaxonomyTable())).toBe(once)
 
 		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON is
 		// oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte). So the committed
 		// file is compared by PARSED content, not raw bytes: same data, formatting aside.
 		const committed = await readLocalJSONFile(resolve(import.meta.dirname, "../../data/taxonomy.json"))
 
-		expect(committed).toEqual(generateTaxonomyTable())
+		expect(committed).toEqual(await generateTaxonomyTable())
 	})
 })
 

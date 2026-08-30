@@ -373,8 +373,12 @@ class CapabilityViolationError extends Error {
  */
 let warnedNoCapabilities = false
 
-function assertConventionsRespectCapabilities(modelCardPath: string, tier: string, strict: boolean): void {
-	const manifest = readCapabilityManifest(modelCardPath)
+async function assertConventionsRespectCapabilities(
+	modelCardPath: string,
+	tier: string,
+	strict: boolean
+): Promise<void> {
+	const manifest = await readCapabilityManifest(modelCardPath)
 
 	if (!manifest) {
 		// No certified capabilities → nothing to protect. Old cards still load (warn ONCE per process).
@@ -457,7 +461,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// is a property of the model-card + codex pairing, independent of any per-instance `overrides` —
 	// an ablation scorer still loads the same shipped conventions table production will use, so the
 	// gate runs unconditionally. Makes the D2/#719 bug-class structurally impossible to ship.
-	assertConventionsRespectCapabilities(opts.modelCardPath, opts.tier ?? "server", strict)
+	await assertConventionsRespectCapabilities(opts.modelCardPath, opts.tier ?? "server", strict)
 
 	// --- Anchor channel ---------------------------------------------------------------------------
 	// Caller-pinned path wins (explicit `--anchor-lookup`, always JSON); else fall back to the

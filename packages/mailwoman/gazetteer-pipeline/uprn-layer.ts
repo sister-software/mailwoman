@@ -811,7 +811,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	await kdb.destroy()
 
 	phase("seal", out)
-	sealDatabase(ingestPath)
+	await sealDatabase(ingestPath)
 	swapDatabaseIntoPlace(ingestPath, out)
 
 	return {

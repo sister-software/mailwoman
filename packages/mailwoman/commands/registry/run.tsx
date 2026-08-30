@@ -521,7 +521,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 	const state = useCommandTask(async () => {
 		// `loadSources` can throw on a malformed config — the hook routes its error to the same handler.
 		if (options.sources) {
-			return runMultiSource(await loadSources(options.sources), options)
+			return await runMultiSource(await loadSources(options.sources), options)
 		}
 
 		const csv = args?.[0]

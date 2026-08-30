@@ -379,7 +379,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	}
 
 	phase("seal")
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	return {
 		out,

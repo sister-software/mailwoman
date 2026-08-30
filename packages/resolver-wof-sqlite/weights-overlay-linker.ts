@@ -6,12 +6,12 @@
  * placetype-pair index build.
  */
 
-import { pathExists, readLocalTextFile, statPath, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { pathExists, readLocalTextFile, statPath, readLocalBuffer, statLink } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalTextFile, removePath } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { existsSync, lstatSync, renameSync, symlinkSync, unlinkSync } from "@mailwoman/platform/fs"
+import { existsSync, renameSync, symlinkSync, unlinkSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import { fstFreshnessWarning } from "./fst-freshness.ts"
@@ -35,14 +35,14 @@ export function linkForce(src: string, dest: string): void {
 /**
  * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
  */
-export function removeIfPresent(dest: string): void {
+export async function removeIfPresent(dest: string): Promise<void> {
 	try {
-		lstatSync(dest)
+		await statLink(dest)
 	} catch {
 		return
 	}
 
-	unlinkSync(dest)
+	await removePath(dest)
 
 	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
 }

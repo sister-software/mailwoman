@@ -648,7 +648,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		const providerOut = scratch.resolve("bdc-providers-no-filerdb.db")
 
 		await expect(
-			buildBDCDatabase({
+			await buildBDCDatabase({
 				rows: fixtureRows(),
 				out: providerOut,
 				asOfDate: "2026-06-30",

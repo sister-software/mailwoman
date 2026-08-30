@@ -205,7 +205,7 @@ test("buildPostcodeNIOSM: a response modified since acquisition is refused, not 
 		join(dir, "acquisition.json")
 	)
 
-	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: root.resolve("tampered.db"), offline: true })).rejects.toThrow(
-		/has been modified since acquisition/
-	)
+	await expect(
+		await buildPostcodeNIOSM({ sourceDir: dir, out: root.resolve("tampered.db"), offline: true })
+	).rejects.toThrow(/has been modified since acquisition/)
 })

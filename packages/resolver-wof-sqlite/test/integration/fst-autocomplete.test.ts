@@ -18,8 +18,8 @@ const HAS_WOF = await pathExists(WOF_DB)
 describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 	let matcher: FSTMatcher
 
-	beforeAll(() => {
-		const built = buildFSTFromWOF({
+	beforeAll(async () => {
+		const built = await buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],

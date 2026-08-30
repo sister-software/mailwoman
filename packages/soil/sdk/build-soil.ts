@@ -353,7 +353,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 
 		await kdb.destroy()
 
-		sealDatabase(tmpPath)
+		await sealDatabase(tmpPath)
 		swapDatabaseIntoPlace(tmpPath, options.out)
 
 		const totalCellRows = cells.wholeRows + cells.partialRows

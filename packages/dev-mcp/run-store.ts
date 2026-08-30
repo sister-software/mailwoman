@@ -26,9 +26,10 @@
  *   across fingerprints anyway, and says which two it saw.
  */
 
+import { pathExists, readDirectory, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 
 /**
@@ -117,9 +118,9 @@ function runPath(runID: string, dir: string): string {
 /**
  * Persist a run and return its id.
  */
-export function putRun(run: StoredRun, dir: string = RUN_STORE_DIR): string {
-	mkdirSync(dir, { recursive: true })
-	writeFileSync(runPath(run.run_id, dir), JSON.stringify(run))
+export async function putRun(run: StoredRun, dir: string = RUN_STORE_DIR): Promise<string> {
+	await makeDirectories(dir)
+	await writeLocalJSONFile(run, runPath(run.run_id, dir))
 
 	return run.run_id
 }
@@ -132,10 +133,10 @@ export function putRun(run: StoredRun, dir: string = RUN_STORE_DIR): string {
  * cost more than the cache is worth. The caller carries the returned sentence into its warnings, so the loss is
  * reported rather than discovered later as a run_id that "was pruned".
  */
-export function tryPutRun(run: StoredRun, dir: string, now: Date): string | null {
+export async function tryPutRun(run: StoredRun, dir: string, now: Date): Promise<string | null> {
 	try {
-		putRun(run, dir)
-		pruneRuns(now, dir)
+		await putRun(run, dir)
+		await pruneRuns(now, dir)
 
 		return null
 	} catch (error) {
@@ -152,13 +153,13 @@ export function tryPutRun(run: StoredRun, dir: string, now: Date): string | null
  * `undefined` here means pruned or never stored, and those are not distinguishable after the fact — which is why
  * {@link RETENTION_DAYS} is documented rather than silent. A caller that finds nothing has to re-measure.
  */
-export function getRun(runID: string, dir: string = RUN_STORE_DIR): StoredRun | undefined {
+export async function getRun(runID: string, dir: string = RUN_STORE_DIR): Promise<StoredRun | undefined> {
 	const path = runPath(runID, dir)
 
-	if (!existsSync(path)) return undefined
+	if (!(await pathExists(path))) return undefined
 
 	try {
-		return parseJSONStrict<StoredRun>(readFileSync(path, "utf8"))
+		return await readLocalJSONFile<StoredRun>(path)
 	} catch {
 		return undefined
 	}
@@ -188,16 +189,16 @@ export function replayIndex(run: StoredRun, arm: string): Map<string, RecordedAn
 	return new Map(answers.map((answer) => [answer.id, answer]))
 }
 
-function readAll(dir: string): Array<{ run: StoredRun; bytes: number; file: string }> {
-	if (!existsSync(dir)) return []
+async function readAll(dir: string): Promise<Array<{ run: StoredRun; bytes: number; file: string }>> {
+	if (!(await pathExists(dir))) return []
 
 	const out: Array<{ run: StoredRun; bytes: number; file: string }> = []
 
-	for (const file of readdirSync(dir)) {
+	for (const file of await readDirectory(dir)) {
 		if (!file.endsWith(".json")) continue
 
 		try {
-			const raw = readFileSync(join(dir, file), "utf8")
+			const raw = await readLocalTextFile(join(dir, file))
 
 			out.push({ run: parseJSONStrict<StoredRun>(raw), bytes: raw.length, file })
 		} catch {
@@ -209,8 +210,8 @@ function readAll(dir: string): Array<{ run: StoredRun; bytes: number; file: stri
 	return out.toSorted((a, b) => b.run.created_at.localeCompare(a.run.created_at))
 }
 
-export function listRuns(dir: string = RUN_STORE_DIR, currentFingerprint?: string): RunSummary[] {
-	return readAll(dir).map(({ run, bytes }) => ({
+export async function listRuns(dir: string = RUN_STORE_DIR, currentFingerprint?: string): Promise<RunSummary[]> {
+	return (await readAll(dir)).map(({ run, bytes }) => ({
 		run_id: run.run_id,
 		tool: run.tool,
 		created_at: run.created_at,
@@ -235,8 +236,12 @@ export interface PruneReport {
  * `now` is injected rather than read from the clock so the rule is testable without sleeping, and so a caller that has
  * to be deterministic can pass its own.
  */
-export function pruneRuns(now: Date, dir: string = RUN_STORE_DIR, keep: number = RETENTION_MAX_RUNS): PruneReport {
-	const all = readAll(dir)
+export async function pruneRuns(
+	now: Date,
+	dir: string = RUN_STORE_DIR,
+	keep: number = RETENTION_MAX_RUNS
+): Promise<PruneReport> {
+	const all = await readAll(dir)
 	const cutoff = now.getTime() - RETENTION_DAYS * 24 * 60 * 60 * 1000
 
 	const byAge: string[] = []
@@ -249,7 +254,7 @@ export function pruneRuns(now: Date, dir: string = RUN_STORE_DIR, keep: number =
 		// describe a current tree, and keeping it forever is the worse failure.
 		if (!Number.isFinite(created) || created < cutoff) {
 			byAge.push(entry.run.run_id)
-			rmSync(join(dir, entry.file), { force: true })
+			await removePathIfPresent(join(dir, entry.file))
 
 			continue
 		}
@@ -261,7 +266,7 @@ export function pruneRuns(now: Date, dir: string = RUN_STORE_DIR, keep: number =
 
 	for (const entry of survivors.slice(keep)) {
 		byCount.push(entry.run.run_id)
-		rmSync(join(dir, entry.file), { force: true })
+		await removePathIfPresent(join(dir, entry.file))
 	}
 
 	return { pruned_by_age: byAge, pruned_by_count: byCount, kept: Math.min(survivors.length, keep) }

@@ -46,8 +46,8 @@ const DEST_DIR = String(weightsOverlayPath("en-au"))
 
 await makeDirectories(DEST_DIR)
 
-removeIfPresent(resolve(DEST_DIR, "model.onnx"))
-removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
+await removeIfPresent(resolve(DEST_DIR, "model.onnx"))
+await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree country-OFF gap) -----.

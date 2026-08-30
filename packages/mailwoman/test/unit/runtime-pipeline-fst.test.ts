@@ -41,7 +41,7 @@ async function writeTinyFST(dir: string): Promise<string> {
 	db.prepare("INSERT INTO names (id, name, language) VALUES (1, 'testville', 'eng')").run()
 	db.prepare("INSERT INTO place_importance (id, importance) VALUES (1, 0.5)").run()
 
-	const { matcher, provenance } = buildFSTFromWOF({ dbPath, countries: ["US"], languages: ["*"] })
+	const { matcher, provenance } = await buildFSTFromWOF({ dbPath, countries: ["US"], languages: ["*"] })
 	const fstPath = join(dir, "fst-en-us.bin")
 	await writeLocalFile(serializeFST(matcher, provenance), fstPath)
 

@@ -28,8 +28,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
-	it("holds on the current tree: 54 published, every absence sanctioned by name", () => {
-		const identity = checkReleaseListIdentity(String(repoRootPath()))
+	it("holds on the current tree: 54 published, every absence sanctioned by name", async () => {
+		const identity = await checkReleaseListIdentity(String(repoRootPath()))
 
 		expect(identity.publishCount).toBe(54)
 		expect(identity.unexpectedAbsences).toEqual([])
@@ -54,7 +54,7 @@ describe("checkReleaseListIdentity", () => {
 			join(root, ".release-it.json")
 		)
 
-		const identity = checkReleaseListIdentity(root)
+		const identity = await checkReleaseListIdentity(root)
 
 		// The en-au class: a workspace outside the release list with no stated reason is FROZEN, and the
 		// failure must carry its name, not "expected 3, found 2".
@@ -154,10 +154,10 @@ describe("the Hugging Face materialization plan", () => {
 		return new Set([...TextSpliterator.from(listing.stdout)].filter(isPresent))
 	}
 
-	it("puts every destination under packages/ — the lost-prefix class", () => {
+	it("puts every destination under packages/ — the lost-prefix class", async () => {
 		// The v9.2.0 cut's FIRST dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
 		// moved under `packages/`. Destinations are now derived from one prefix in one function, and this pins it.
-		const plans = planWeightsMaterialization(repoRoot)
+		const plans = await planWeightsMaterialization(repoRoot)
 
 		expect(plans.length).toBeGreaterThan(0)
 		expect(plans.filter((plan) => !plan.workspace.startsWith("packages/neural-weights-"))).toEqual([])
@@ -170,7 +170,11 @@ describe("the Hugging Face materialization plan", () => {
 		// published. The manifests and the git listing are read here independently of the recipe, so a planner
 		// rewritten around a hand-kept list fails this the first time a manifest gains an entry.
 		const tracked = trackedPaths()
-		const planned = new Set(planWeightsMaterialization(repoRoot).map((plan) => `${plan.workspace}/${plan.filename}`))
+
+		const planned = new Set(
+			(await planWeightsMaterialization(repoRoot)).map((plan) => `${plan.workspace}/${plan.filename}`)
+		)
+
 		const unaccounted: string[] = []
 
 		for (const workspace of await weightsWorkspaces()) {
@@ -188,12 +192,12 @@ describe("the Hugging Face materialization plan", () => {
 		expect(unaccounted).toEqual([])
 	})
 
-	it("never plans over a file git already tracks", () => {
+	it("never plans over a file git already tracks", async () => {
 		// The other direction: a recipe that materialized `model-card.json` or `calibration.json` would overwrite
 		// committed content in the checkout on the publish path, where the destination root IS the checkout.
 		const tracked = trackedPaths()
 
-		const clobbered = planWeightsMaterialization(repoRoot)
+		const clobbered = (await planWeightsMaterialization(repoRoot))
 			.map((plan) => `${plan.workspace}/${plan.filename}`)
 			.filter((path) => tracked.has(path))
 

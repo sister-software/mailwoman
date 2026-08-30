@@ -38,7 +38,7 @@ async function buildSealed(
 		await populate(db)
 	}
 
-	sealDatabase(path)
+	await sealDatabase(path)
 }
 
 test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging copy", async () => {
@@ -81,7 +81,7 @@ test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", asyn
 		stale.exec("CREATE TABLE stale_marker (id INTEGER)")
 	}
 
-	sealDatabase(adminOut)
+	await sealDatabase(adminOut)
 
 	const emptyDumps = root.resolve("geonames-empty-2")
 	await makeDirectories(emptyDumps)

@@ -677,7 +677,7 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	// Build-then-move: the destination only ever sees a fully-built, integrity-checked artifact.
 	await movePath(buildPath, args.output)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(args.output)
+	await sealDatabase(args.output)
 
 	console.log(
 		`TW: ${districts.length} postal districts, ${matched} matched (${matchRate}; tiers ${JSON.stringify(tierCounts)}), ` +

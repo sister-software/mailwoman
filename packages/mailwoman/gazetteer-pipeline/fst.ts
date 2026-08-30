@@ -152,7 +152,7 @@ export interface FSTFreshnessRow {
  * reason that matters.
  */
 export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FSTFreshnessRow[]> {
-	const source = readWOFSourceIdentity(dbPath)
+	const source = await readWOFSourceIdentity(dbPath)
 	const wofRoot = String(dataRootPath("wof"))
 
 	return ADMIN_DERIVED_FST_ARTIFACTS.map((relative): FSTFreshnessRow => {
@@ -440,7 +440,7 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 
 		progress(`building fst-${locale} (countries=[${countries}]) from ${dbPath}`)
 
-		const { matcher, provenance } = buildFSTFromWOF({
+		const { matcher, provenance } = await buildFSTFromWOF({
 			dbPath,
 			countries,
 			...(exclusion

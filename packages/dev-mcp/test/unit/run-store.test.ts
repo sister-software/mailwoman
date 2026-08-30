@@ -45,13 +45,13 @@ describe("putRun / getRun", () => {
 	it("round-trips a run with its payload intact", async () => {
 		const dir = await store()
 
-		putRun(run("r1"), dir)
+		await putRun(run("r1"), dir)
 
-		expect(getRun("r1", dir)?.payload).toEqual({ rows: 3 })
+		expect((await getRun("r1", dir))?.payload).toEqual({ rows: 3 })
 	})
 
 	it("returns undefined for a run that is not there", async () => {
-		expect(getRun("missing", await store())).toBeUndefined()
+		expect(await getRun("missing", await store())).toBeUndefined()
 	})
 
 	it("returns undefined rather than throwing on a corrupt file", async () => {
@@ -59,7 +59,7 @@ describe("putRun / getRun", () => {
 
 		await writeLocalTextFile('{"run_id":"half"', join(dir, "half.json"))
 
-		expect(getRun("half", dir)).toBeUndefined()
+		expect(await getRun("half", dir)).toBeUndefined()
 	})
 })
 
@@ -67,38 +67,38 @@ describe("listRuns", () => {
 	it("orders newest first", async () => {
 		const dir = await store()
 
-		putRun(run("older", { created_at: daysAgo(5) }), dir)
-		putRun(run("newer", { created_at: daysAgo(1) }), dir)
+		await putRun(run("older", { created_at: daysAgo(5) }), dir)
+		await putRun(run("newer", { created_at: daysAgo(1) }), dir)
 
-		expect(listRuns(dir).map((r) => r.run_id)).toEqual(["newer", "older"])
+		expect((await listRuns(dir)).map((r) => r.run_id)).toEqual(["newer", "older"])
 	})
 
 	it("reports fingerprint agreement only when the caller supplies one to compare", async () => {
 		const dir = await store()
 
-		putRun(run("r1", { tree_fingerprint: "abc123" }), dir)
+		await putRun(run("r1", { tree_fingerprint: "abc123" }), dir)
 
-		expect(listRuns(dir)[0]!.fingerprint_matches_now).toBeNull()
-		expect(listRuns(dir, "abc123")[0]!.fingerprint_matches_now).toBe(true)
-		expect(listRuns(dir, "def456")[0]!.fingerprint_matches_now).toBe(false)
+		expect((await listRuns(dir))[0]!.fingerprint_matches_now).toBeNull()
+		expect((await listRuns(dir, "abc123"))[0]!.fingerprint_matches_now).toBe(true)
+		expect((await listRuns(dir, "def456"))[0]!.fingerprint_matches_now).toBe(false)
 	})
 
 	it("skips a corrupt file instead of failing the whole listing", async () => {
 		const dir = await store()
 
-		putRun(run("good"), dir)
+		await putRun(run("good"), dir)
 		await writeLocalTextFile("not json at all", join(dir, "bad.json"))
 
-		expect(listRuns(dir).map((r) => r.run_id)).toEqual(["good"])
+		expect((await listRuns(dir)).map((r) => r.run_id)).toEqual(["good"])
 	})
 
 	it("ignores non-JSON files in the directory", async () => {
 		const dir = await store()
 
-		putRun(run("good"), dir)
+		await putRun(run("good"), dir)
 		await writeLocalTextFile("notes", join(dir, "README.txt"))
 
-		expect(listRuns(dir)).toHaveLength(1)
+		expect(await listRuns(dir)).toHaveLength(1)
 	})
 })
 
@@ -106,13 +106,13 @@ describe("pruneRuns — the retention rule", () => {
 	it("prunes strictly past the age ceiling and keeps what is inside it", async () => {
 		const dir = await store()
 
-		putRun(run("fresh", { created_at: daysAgo(RETENTION_DAYS - 1) }), dir)
-		putRun(run("stale", { created_at: daysAgo(RETENTION_DAYS + 1) }), dir)
+		await putRun(run("fresh", { created_at: daysAgo(RETENTION_DAYS - 1) }), dir)
+		await putRun(run("stale", { created_at: daysAgo(RETENTION_DAYS + 1) }), dir)
 
-		const report = pruneRuns(NOW, dir)
+		const report = await pruneRuns(NOW, dir)
 
 		expect(report.pruned_by_age).toEqual(["stale"])
-		expect(listRuns(dir).map((r) => r.run_id)).toEqual(["fresh"])
+		expect((await listRuns(dir)).map((r) => r.run_id)).toEqual(["fresh"])
 	})
 
 	it("treats an unparseable timestamp as old", async () => {
@@ -120,42 +120,42 @@ describe("pruneRuns — the retention rule", () => {
 		// the worse failure.
 		const dir = await store()
 
-		putRun(run("undated", { created_at: "whenever" }), dir)
+		await putRun(run("undated", { created_at: "whenever" }), dir)
 
-		expect(pruneRuns(NOW, dir).pruned_by_age).toEqual(["undated"])
-		expect(listRuns(dir)).toHaveLength(0)
+		expect((await pruneRuns(NOW, dir)).pruned_by_age).toEqual(["undated"])
+		expect(await listRuns(dir)).toHaveLength(0)
 	})
 
 	it("applies the count ceiling to runs the age rule kept", async () => {
 		const dir = await store()
 
 		for (let index = 0; index < 5; index++) {
-			putRun(run(`r${index}`, { created_at: daysAgo(index + 1) }), dir)
+			await putRun(run(`r${index}`, { created_at: daysAgo(index + 1) }), dir)
 		}
 
-		const report = pruneRuns(NOW, dir, 2)
+		const report = await pruneRuns(NOW, dir, 2)
 
 		expect(report.kept).toBe(2)
 		expect(report.pruned_by_count).toEqual(["r2", "r3", "r4"])
-		expect(listRuns(dir).map((r) => r.run_id)).toEqual(["r0", "r1"])
+		expect((await listRuns(dir)).map((r) => r.run_id)).toEqual(["r0", "r1"])
 	})
 
 	it("keeps the NEWEST under the count ceiling, not the first written", async () => {
 		const dir = await store()
 
-		putRun(run("written-first-but-old", { created_at: daysAgo(9) }), dir)
-		putRun(run("written-second-but-new", { created_at: daysAgo(2) }), dir)
+		await putRun(run("written-first-but-old", { created_at: daysAgo(9) }), dir)
+		await putRun(run("written-second-but-new", { created_at: daysAgo(2) }), dir)
 
-		pruneRuns(NOW, dir, 1)
+		await pruneRuns(NOW, dir, 1)
 
-		expect(listRuns(dir).map((r) => r.run_id)).toEqual(["written-second-but-new"])
+		expect((await listRuns(dir)).map((r) => r.run_id)).toEqual(["written-second-but-new"])
 	})
 
 	it("removes the files, not just the listing", async () => {
 		const dir = await store()
 
-		putRun(run("stale", { created_at: daysAgo(RETENTION_DAYS + 1) }), dir)
-		pruneRuns(NOW, dir)
+		await putRun(run("stale", { created_at: daysAgo(RETENTION_DAYS + 1) }), dir)
+		await pruneRuns(NOW, dir)
 
 		expect(await readDirectory(dir)).toEqual([])
 	})
@@ -165,17 +165,17 @@ describe("pruneRuns — the retention rule", () => {
 		// which two fingerprints it saw; deleting it silently would be the worse answer.
 		const dir = await store()
 
-		putRun(run("other-tree", { tree_fingerprint: "somethingelse" }), dir)
+		await putRun(run("other-tree", { tree_fingerprint: "somethingelse" }), dir)
 
-		const report = pruneRuns(NOW, dir)
+		const report = await pruneRuns(NOW, dir)
 
 		expect(report.pruned_by_age).toEqual([])
 		expect(report.pruned_by_count).toEqual([])
-		expect(listRuns(dir, "abc123")[0]!.fingerprint_matches_now).toBe(false)
+		expect((await listRuns(dir, "abc123"))[0]!.fingerprint_matches_now).toBe(false)
 	})
 
 	it("is a no-op on a store that does not exist yet", async () => {
-		expect(pruneRuns(NOW, join(await store(), "never-created"))).toEqual({
+		expect(await pruneRuns(NOW, join(await store(), "never-created"))).toEqual({
 			pruned_by_age: [],
 			pruned_by_count: [],
 			kept: 0,

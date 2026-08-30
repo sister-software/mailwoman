@@ -181,13 +181,13 @@ describe("defaultDoctorDeps — engines floor via package self-reference", () =>
 		)
 
 		expect(manifest.engines?.node).toBeTruthy()
-		expect(defaultDoctorDeps().enginesFloor).toBe(manifest.engines!.node)
+		expect((await defaultDoctorDeps()).enginesFloor).toBe(manifest.engines!.node)
 	})
 })
 
 describe("describeEnvironment (--verbose)", () => {
-	it("reports the resolved paths through the same seams the checks used", () => {
-		const entries = describeEnvironment(healthyDeps())
+	it("reports the resolved paths through the same seams the checks used", async () => {
+		const entries = await describeEnvironment(healthyDeps())
 		const byKey = new Map(entries.map((entry) => [entry.key, entry]))
 
 		expect(byKey.get("data root (resolved)")?.value).toBe("/data")
@@ -199,18 +199,18 @@ describe("describeEnvironment (--verbose)", () => {
 		expect(byKey.get("WOF shard [0]")).toEqual({ key: "WOF shard [0]", value: "/data/wof/admin.db", source: "on disk" })
 	})
 
-	it("keys with no value are present and marked, never dropped", () => {
+	it("keys with no value are present and marked, never dropped", async () => {
 		// The dump exists to tell "set to something surprising" apart from "never set". A row that
 		// disappears when the variable is unset answers neither question.
-		const entries = describeEnvironment({ ...healthyDeps(), conventionCandidatePath: () => undefined })
+		const entries = await describeEnvironment({ ...healthyDeps(), conventionCandidatePath: () => undefined })
 		const convention = entries.find((entry) => entry.key === "candidate.db (convention)")
 
 		expect(convention).toBeDefined()
 		expect(convention?.value).toBeUndefined()
 	})
 
-	it("an unresolvable weights package is reported, not thrown", () => {
-		const entries = describeEnvironment({
+	it("an unresolvable weights package is reported, not thrown", async () => {
+		const entries = await describeEnvironment({
 			...healthyDeps(),
 			resolveWeights: () => {
 				throw new Error("Could not resolve @mailwoman/neural-weights-en-us")

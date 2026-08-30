@@ -70,7 +70,7 @@ async function serveFromDerivedStore(dir: string, filename: string): Promise<boo
 
 	// A poisoned entry is worse than a miss: it reports HIT while feeding a channel nothing (#1528's
 	// empty postcode-gb.bin). Refuse, evict, rebuild.
-	const violation = derivedStoreServeViolation(filename, cached)
+	const violation = await derivedStoreServeViolation(filename, cached)
 
 	if (violation) {
 		process.stderr.write(`derived store POISONED entry evicted → ${filename}: ${violation}\n`)
@@ -107,7 +107,7 @@ async function stashDerived(dir: string, filename: string): Promise<void> {
 	// Never poison the store: a below-floor build must not become the artifact every future run
 	// receives as a HIT. The build-time floors are the primary gate; this holds when they are
 	// bypassed (a stale-compiled builder predating them was #1528's exact shape).
-	const violation = derivedStoreServeViolation(filename, resolve(dir, filename))
+	const violation = await derivedStoreServeViolation(filename, resolve(dir, filename))
 
 	if (violation) {
 		process.stderr.write(`derived store stash REFUSED for ${filename}: ${violation}\n`)

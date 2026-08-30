@@ -134,8 +134,8 @@ describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () =
 	let buf: Buffer
 	let restored: FSTMatcher
 
-	beforeAll(() => {
-		const { matcher } = buildFSTFromWOF({
+	beforeAll(async () => {
+		const { matcher } = await buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],

@@ -8,8 +8,8 @@
  *   `docs/articles/evals/` comes from a run of this emitter.
  */
 
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { percentile } from "@mailwoman/core/utils"
-import { writeFileSync } from "@mailwoman/platform/fs"
 
 import type { Agg, AggPair, OAResolverEvalOptions } from "./oa-resolver-eval.ts"
 
@@ -43,7 +43,7 @@ export interface OaReportInput {
 /**
  * Render the run's markdown report. Pure — every number comes from `input`.
  */
-export function renderOaResolverReport(input: OaReportInput): string {
+export async function renderOaResolverReport(input: OaReportInput): Promise<string> {
 	const {
 		agg,
 		assembledAgg,
@@ -160,7 +160,7 @@ export function renderOaResolverReport(input: OaReportInput): string {
 			// Dump ALL full-parse misses for the standalone shard-membership categorization (segment-not-found
 			// vs in-shard-range-miss vs normalization). Bump cap done at collection site.
 			if (diagMisses.length) {
-				writeFileSync("/tmp/interp-misses.txt", diagMisses.join("\n"))
+				await writeLocalTextFile(diagMisses.join("\n"), "/tmp/interp-misses.txt")
 				lines.push("")
 				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
 				lines.push("sample (house_number | street | postcode ← input):")

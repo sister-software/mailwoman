@@ -83,6 +83,6 @@ const FACTORIES = [
 export async function buildToolTable(deps: DevToolDeps): Promise<DevTool[]> {
 	return [
 		...(await Promise.all(FACTORIES.map((factory) => factory(deps)))),
-		...buildSpawnTools(deps.registry, deps.jobs),
+		...(await buildSpawnTools(deps.registry, deps.jobs)),
 	]
 }

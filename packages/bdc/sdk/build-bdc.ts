@@ -872,7 +872,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	}
 
 	progress("seal")
-	sealDatabase(buildingPath)
+	await sealDatabase(buildingPath)
 
 	// Atomic move-into-place via the shared helper (the AGENTS.md database house rule): prior
 	// version aside first, forward rename restored on failure so the slot is never left empty.

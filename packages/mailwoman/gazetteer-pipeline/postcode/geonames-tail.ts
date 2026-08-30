@@ -242,7 +242,7 @@ export async function buildPostcodeGeonamesTail(
 	}
 
 	phase("seal")
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	return {
 		out,

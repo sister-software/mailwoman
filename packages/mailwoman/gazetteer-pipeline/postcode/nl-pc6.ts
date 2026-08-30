@@ -132,7 +132,7 @@ export async function buildNLPC6Shard(
 	// Build-on-copy: the previous version moves aside; the new artifact swaps in atomically.
 	swapDatabaseIntoPlace(tmpPath, outPath)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(outPath)
+	await sealDatabase(outPath)
 
 	return { out: outPath, inserted, skipped }
 }

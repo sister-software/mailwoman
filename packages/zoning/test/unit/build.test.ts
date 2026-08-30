@@ -484,7 +484,7 @@ describe("the area cross-check", () => {
 		const doubled = 2 * one.rings.signedAreaM2
 
 		await expect(
-			buildZoningDatabase({
+			await buildZoningDatabase({
 				source: fixtureSource([one]),
 				out: scratch.resolve("bad-area.db"),
 				sourceVintage: "2026-05-13",
@@ -534,7 +534,7 @@ describe("the area cross-check", () => {
 describe("the build-local posture", () => {
 	it("refuses a shipped tier while the licence is unresolved", async () => {
 		await expect(
-			buildZoningDatabase({
+			await buildZoningDatabase({
 				source: fixtureSource(fixtureFeatures()),
 				out: scratch.resolve("shipped.db"),
 				sourceVintage: "2026-05-13",
@@ -550,7 +550,7 @@ describe("the build-local posture", () => {
 
 	it("refuses a coverage resolution finer than the index resolution", async () => {
 		await expect(
-			buildZoningDatabase({
+			await buildZoningDatabase({
 				source: fixtureSource(fixtureFeatures()),
 				out: scratch.resolve("bad-resolutions.db"),
 				sourceVintage: "2026-05-13",
@@ -568,7 +568,7 @@ describe("the build-local posture", () => {
 		const source = fixtureSource(features)
 
 		await expect(
-			buildZoningDatabase({
+			await buildZoningDatabase({
 				source: { ...source, declaredFeatureCount: features.length + 1 },
 				out: scratch.resolve("short-read.db"),
 				sourceVintage: "2026-05-13",

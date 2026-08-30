@@ -104,7 +104,7 @@ function peliasBody(point: { lat: number; lon: number } | null) {
 /**
  * @param outcomes Scripted wire responses AFTER the identity probe's two requests, in row order.
  */
-function comparison(
+async function comparison(
 	registry: EngineRegistry,
 	outcomes: Parameters<typeof stubTransport>[0],
 	args: Record<string, unknown> = {}
@@ -116,7 +116,7 @@ function comparison(
 		...outcomes,
 	])
 
-	return runCompare(
+	return (await runCompare(
 		registry,
 		{
 			inputs: { kind: "board", country: "AD" },
@@ -130,7 +130,7 @@ function comparison(
 				new ExternalGeocoderClient(arm.engine, arm.endpoint, { axios: transport.axios }),
 			runStoreDir: RUN_STORE.path,
 		}
-	) as Promise<Record<string, unknown>>
+	)) as Promise<Record<string, unknown>>
 }
 
 describe("mwdev_compare — external arm", () => {
@@ -225,7 +225,7 @@ describe("mwdev_compare — external arm", () => {
 
 	it("refuses to grade a set with no truth when grading was explicitly asked for", async () => {
 		await expect(
-			comparison(registryAt(ANDORRA_LA_VELLA), [{ body: peliasBody(ANDORRA_LA_VELLA) }], {
+			await comparison(registryAt(ANDORRA_LA_VELLA), [{ body: peliasBody(ANDORRA_LA_VELLA) }], {
 				inputs: { kind: "literal", inputs: ["Andorra la Vella"], why: "a set with no truth" },
 				grade: "truth",
 			})
@@ -261,7 +261,7 @@ describe("mwdev_compare — an external arm that stops answering", () => {
 		const transport = stubTransport([{ status: 200, body: "status: ok" }, { body: peliasBody(ANDORRA_LA_VELLA) }, dead])
 
 		await expect(
-			runCompare(
+			await runCompare(
 				registryAt(ANDORRA_LA_VELLA),
 				{
 					inputs: {

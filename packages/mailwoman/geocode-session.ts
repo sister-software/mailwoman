@@ -277,7 +277,7 @@ export interface GeocodeSession extends Disposable {
 
 //#region Path + flag helpers
 
-function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): string[] {
+async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): Promise<string[]> {
 	// The shared shard SELECTION (explicit list, then $MAILWOMAN_WOF_DB, then the default set) with this
 	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
 	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
@@ -483,7 +483,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
 	const candidateDB = resolveCandidateDBPath(options.candidateDB, options.dataRoot)
-	const wofPath = candidateDB ? [] : resolveWOFPath(options)
+	const wofPath = candidateDB ? [] : await resolveWOFPath(options)
 	const pathsResolvedAt = performance.now()
 
 	// Load the neural classifier (required for street-level; weights must be present).

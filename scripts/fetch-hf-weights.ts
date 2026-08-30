@@ -29,7 +29,7 @@ import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { md5Hex, repoRootPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
@@ -163,15 +163,15 @@ function trackedFiles(repoRoot: string, workspaces: readonly string[]): Set<stri
  * declaring DIFFERENT md5s for one filename is refused outright — one bucket object cannot satisfy both, and a fetch
  * has no basis to choose.
  */
-function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Map<string, string> {
+async function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Promise<Map<string, string>> {
 	const declared = new Map<string, string>()
 
 	for (const workspace of workspaces) {
 		const cardPath = resolve(repoRoot, workspace, "model-card.json")
 
-		if (!existsSync(cardPath)) continue
+		if (!(await pathExists(cardPath))) continue
 
-		const card = parseJSONStrict<{ files_md5?: Record<string, unknown> }>(readFileSync(cardPath, "utf8"))
+		const card = await readLocalJSONFile<{ files_md5?: Record<string, unknown> }>(cardPath)
 
 		for (const [filename, md5] of Object.entries(card.files_md5 ?? {})) {
 			// `$comment` keys carry the block's prose, not a checksum.
@@ -218,11 +218,11 @@ function resolveBaseLocale(repoRoot: string, locales: readonly string[]): string
  * The model version a release publishes: the base package's model-card `version`, which is exactly what the publish
  * workflow read out of that card before this script existed.
  */
-export function readBaseModelVersion(repoRoot: string): string {
+export async function readBaseModelVersion(repoRoot: string): Promise<string> {
 	const config = readReleaseConfig(repoRoot)
 	const baseLocale = resolveBaseLocale(repoRoot, config.locales)
 	const cardPath = resolve(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
-	const card = parseJSONStrict<{ version?: unknown }>(readFileSync(cardPath, "utf8"))
+	const card = await readLocalJSONFile<{ version?: unknown }>(cardPath)
 
 	if (typeof card.version !== "string") {
 		throw new TypeError(`fetch-hf-weights: ${cardPath} declares no string "version" — cannot name a bucket directory.`)
@@ -283,12 +283,12 @@ export function hfVersionBase(repoRoot: string, version: string): string {
  * Derived from three machine-readable owners and nothing else: `release.config.json` names the locales, each package's
  * `files` array names its artifacts, and `git ls-files` says which are already here.
  */
-export function planWeightsMaterialization(repoRoot: string): WeightsArtifactPlan[] {
+export async function planWeightsMaterialization(repoRoot: string): Promise<WeightsArtifactPlan[]> {
 	const config = readReleaseConfig(repoRoot)
 	const repoSources = repoCommittedSoftFeedSources(repoRoot, config.softFeed ?? {})
 	const workspaces = config.locales.map((locale) => weightsWorkspace(locale))
 	const tracked = trackedFiles(repoRoot, workspaces)
-	const checksums = declaredChecksums(repoRoot, workspaces)
+	const checksums = await declaredChecksums(repoRoot, workspaces)
 	const plans: WeightsArtifactPlan[] = []
 
 	for (const workspace of workspaces) {
@@ -402,9 +402,9 @@ export async function fetchHFWeights(
 ): Promise<HFMaterializationReport> {
 	const config = readReleaseConfig(repoRoot)
 	const baseLocale = resolveBaseLocale(repoRoot, config.locales)
-	const resolvedVersion = version ?? readBaseModelVersion(repoRoot)
+	const resolvedVersion = version ?? (await readBaseModelVersion(repoRoot))
 	const base = hfVersionBase(repoRoot, resolvedVersion)
-	const plans = planWeightsMaterialization(repoRoot)
+	const plans = await planWeightsMaterialization(repoRoot)
 	const remoteNames = new Set<string>()
 
 	for (const plan of plans) {

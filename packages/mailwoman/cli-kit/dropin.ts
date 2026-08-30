@@ -25,6 +25,7 @@
  *   subpath, deliberately NOT re-exported through the barrel.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
@@ -118,8 +119,8 @@ export interface GazetteerPaths {
  * - No candidate DB AND no shards prints the named-artifact message with the one command that fixes it, instead of
  *   letting the resolver throw its internal "resolveShards: at least one shard is required".
  */
-export function resolveGazetteerOrExit(candidateDBFlag: string | undefined): GazetteerPaths {
-	if (candidateDBFlag && !existsSync(candidateDBFlag)) {
+export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
+	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}
 

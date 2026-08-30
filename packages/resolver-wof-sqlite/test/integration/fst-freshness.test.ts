@@ -102,7 +102,7 @@ describe("readWOFSourceIdentity", () => {
 	it("computes and caches the digest in an md5sum-format sidecar", async () => {
 		const path = TMP.resolve("sidecar-source.db")
 		await writeLocalTextFile("abc", path)
-		const identity = readWOFSourceIdentity(path)
+		const identity = await readWOFSourceIdentity(path)
 
 		expect(identity.md5).toBe(md5FileSync(path))
 		expect(identity.bytes).toBe(3)
@@ -117,7 +117,7 @@ describe("readWOFSourceIdentity", () => {
 		// Sidecar predates the source: the guard must not trust it.
 		await setTimestamps(`${path}.md5`, new Date(1000), new Date(1000))
 
-		expect(readWOFSourceIdentity(path).md5).toBe(md5FileSync(path))
+		expect((await readWOFSourceIdentity(path)).md5).toBe(md5FileSync(path))
 	})
 
 	it("trusts a sidecar at or after the source's mtime without reading the source", async () => {
@@ -128,7 +128,7 @@ describe("readWOFSourceIdentity", () => {
 
 		// The lie proves the sidecar was READ rather than the file re-hashed — the property that keeps
 		// the guard cheap enough to leave switched on for a 5 GB source.
-		expect(readWOFSourceIdentity(path).md5).toBe(lie)
+		expect((await readWOFSourceIdentity(path)).md5).toBe(lie)
 	})
 })
 

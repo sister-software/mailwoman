@@ -427,7 +427,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	)
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(opts.out)
+	await sealDatabase(opts.out)
 
 	return result
 }

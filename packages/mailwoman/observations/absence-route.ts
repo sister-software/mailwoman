@@ -575,5 +575,5 @@ export function describeAbsenceObservation(observation: AbsenceObservation): str
 async function readCommittedModel(): Promise<CompiledGeographicModel> {
 	const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/scripts/build-artifact")
 
-	return readCompiledGeographicModel()
+	return await readCompiledGeographicModel()
 }

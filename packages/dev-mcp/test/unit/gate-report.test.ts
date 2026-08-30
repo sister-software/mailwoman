@@ -42,7 +42,7 @@ const PASSING = {
 
 describe("readGateReport", () => {
 	it("reads floors with their margins", async () => {
-		const report = readGateReport(await outDir(PASSING), "", "")
+		const report = await readGateReport(await outDir(PASSING), "", "")
 
 		expect(report.verdict).toBe("PASS")
 		expect(report.floors).toHaveLength(2)
@@ -53,7 +53,7 @@ describe("readGateReport", () => {
 	it("distinguishes an unmeasured floor from one that missed the bar", async () => {
 		// The gate marks an unmeasured floor failing so it cannot pass by default. Reading that as "missed the bar"
 		// sends someone tuning a metric that never ran.
-		const report = readGateReport(
+		const report = await readGateReport(
 			await outDir({
 				...PASSING,
 				verdict: "FAIL",
@@ -76,7 +76,7 @@ describe("readGateReport", () => {
 	})
 
 	it("reports an absent verdict.json as not-graded, never as FAIL", async () => {
-		const report = readGateReport(await outDir(), "", "")
+		const report = await readGateReport(await outDir(), "", "")
 
 		expect(report.verdict).toBeNull()
 		expect(report.notes.join(" ")).toContain("different outcomes")
@@ -88,7 +88,7 @@ describe("readGateReport", () => {
 			"  node packages/mailwoman/out/cli.js eval ledger-append \\\n" +
 			"    --out-dir /tmp/x --model-version <npm-semver>\n"
 
-		const report = readGateReport(await outDir(PASSING), log, "")
+		const report = await readGateReport(await outDir(PASSING), log, "")
 
 		expect(report.ledger_command).toContain("eval ledger-append")
 		expect(report.ledger_command).toContain("--out-dir /tmp/x")
@@ -96,14 +96,18 @@ describe("readGateReport", () => {
 	})
 
 	it("passes the lore-guard refusal through verbatim rather than working around it", async () => {
-		const report = readGateReport(await outDir(), "", "✗ recompile packages/core/out before evaluating — it is stale\n")
+		const report = await readGateReport(
+			await outDir(),
+			"",
+			"✗ recompile packages/core/out before evaluating — it is stale\n"
+		)
 
 		expect(report.lore_guard_refusal).toContain("recompile")
 	})
 
 	it("carries provenance when the run wrote it, and says so when it did not", async () => {
-		expect(readGateReport(await outDir(PASSING, "md5 abc123\n"), "", "").provenance).toContain("md5 abc123")
-		expect(readGateReport(await outDir(PASSING), "", "").notes.join(" ")).toContain("md5s are unrecorded")
+		expect((await readGateReport(await outDir(PASSING, "md5 abc123\n"), "", "")).provenance).toContain("md5 abc123")
+		expect((await readGateReport(await outDir(PASSING), "", "")).notes.join(" ")).toContain("md5s are unrecorded")
 	})
 })
 
@@ -111,7 +115,7 @@ describe("summarizeGateReport", () => {
 	it("names the graded artifact before the verdict", async () => {
 		// A verdict diffed without this field attributes a quantization delta to the model — it said "fp32" for a
 		// verifiably int8 cache on 2026-07-16.
-		const summary = summarizeGateReport(readGateReport(await outDir(PASSING), "", ""))
+		const summary = summarizeGateReport(await readGateReport(await outDir(PASSING), "", ""))
 
 		expect(summary).toContain("graded the weights-cache artifact")
 		expect(summary).toContain("PASS")
@@ -120,7 +124,7 @@ describe("summarizeGateReport", () => {
 
 	it("says UNRECORDED rather than guessing when the artifact is unknown", async () => {
 		const summary = summarizeGateReport(
-			readGateReport(await outDir({ ...PASSING, graded_artifact: undefined }), "", "")
+			await readGateReport(await outDir({ ...PASSING, graded_artifact: undefined }), "", "")
 		)
 
 		expect(summary).toContain("UNRECORDED")
@@ -128,7 +132,7 @@ describe("summarizeGateReport", () => {
 
 	it("counts missed and unmeasured floors separately", async () => {
 		const summary = summarizeGateReport(
-			readGateReport(
+			await readGateReport(
 				await outDir({
 					...PASSING,
 					verdict: "FAIL",

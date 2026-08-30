@@ -126,7 +126,7 @@ describe("buildFloodDatabase", () => {
 
 	it("refuses a coverage resolution finer than the index resolution", async () => {
 		await expect(
-			buildFloodDatabase({
+			await buildFloodDatabase({
 				source: fixtureSource(fixtureFeatures()),
 				out: scratch.resolve("inverted.db"),
 				sourceVintage: "2026-05-20",
@@ -150,7 +150,7 @@ describe("buildFloodDatabase", () => {
 		const features = fixtureFeatures()
 
 		await expect(
-			buildFloodDatabase({
+			await buildFloodDatabase({
 				source: { ...fixtureSource(features), declaredFeatureCount: features.length + 1 },
 				out: scratch.resolve("short.db"),
 				sourceVintage: "2026-05-20",

@@ -126,7 +126,7 @@ export async function buildCZDistrictsShard(
 	}
 
 	swapDatabaseIntoPlace(tmpPath, outPath)
-	sealDatabase(outPath)
+	await sealDatabase(outPath)
 
 	return { out: outPath, inserted, sourceMD5 }
 }

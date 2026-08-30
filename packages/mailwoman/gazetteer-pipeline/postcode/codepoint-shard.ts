@@ -332,7 +332,7 @@ export async function buildPostcodeCodePoint(
 	}
 
 	phase("seal")
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	return {
 		out,

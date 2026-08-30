@@ -29,7 +29,7 @@ const board = new Map(
 )
 
 const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/scripts/build-artifact")
-const model: CompiledGeographicModel = readCompiledGeographicModel()
+const model: CompiledGeographicModel = await readCompiledGeographicModel()
 
 interface CuratedOverlay {
 	synonyms: Array<{ phrase: string; categoryID: string; locales?: string[] }>

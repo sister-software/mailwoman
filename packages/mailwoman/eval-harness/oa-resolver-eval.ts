@@ -359,7 +359,7 @@ export async function oaResolverEval(
 	}
 
 	// self-emitted; eval figures are NEVER hand-typed into docs)
-	const markdown = renderOaResolverReport({
+	const markdown = await renderOaResolverReport({
 		agg,
 		assembledAgg,
 		neuralAnchorAgg,

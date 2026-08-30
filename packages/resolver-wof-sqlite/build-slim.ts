@@ -265,7 +265,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	}
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(opts.output)
+	await sealDatabase(opts.output)
 
 	return result
 }

@@ -29,18 +29,11 @@
  *   and continue.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { createHash } from "@mailwoman/platform/crypto"
-import {
-	closeSync,
-	existsSync,
-	openSync,
-	readFileSync,
-	readSync,
-	statSync,
-	writeFileSync,
-} from "@mailwoman/platform/fs"
+import { closeSync, existsSync, openSync, readSync, statSync } from "@mailwoman/platform/fs"
 
 import { FST_FORMAT_VERSION } from "./fst-serialize.ts"
 import type { FSTProvenance } from "./fst-types.ts"
@@ -205,8 +198,8 @@ export function md5FileSync(path: string): string {
  * write and the caller still gets its answer, because refusing to check freshness on a read-only tree would be the
  * wrong trade.
  */
-export function readWOFSourceIdentity(path: string, { refreshSidecar = true } = {}): FSTSourceIdentity {
-	const stats = statSync(path)
+export async function readWOFSourceIdentity(path: string, { refreshSidecar = true } = {}): Promise<FSTSourceIdentity> {
+	const stats = await statPath(path)
 	const memoKey = `${path}\0${stats.mtimeMs}\0${stats.size}`
 	const hit = sourceIdentityMemo.get(memoKey)
 
@@ -214,11 +207,11 @@ export function readWOFSourceIdentity(path: string, { refreshSidecar = true } = 
 	const sidecarPath = `${path}.md5`
 	let md5: string | undefined
 
-	if (existsSync(sidecarPath)) {
-		const sidecarStats = statSync(sidecarPath)
+	if (await pathExists(sidecarPath)) {
+		const sidecarStats = await statPath(sidecarPath)
 
 		if (sidecarStats.mtimeMs >= stats.mtimeMs) {
-			const [hash] = readFileSync(sidecarPath, "utf8").trim().split(/\s+/)
+			const [hash] = (await readLocalTextFile(sidecarPath)).trim().split(/\s+/)
 
 			if (hash && hash.length === MD5_HEX_LENGTH) {
 				md5 = hash
@@ -231,7 +224,7 @@ export function readWOFSourceIdentity(path: string, { refreshSidecar = true } = 
 
 		if (refreshSidecar) {
 			try {
-				writeFileSync(sidecarPath, `${md5}  ${path.split("/").pop()}\n`)
+				await writeLocalTextFile(`${md5}  ${path.split("/").pop()}\n`, sidecarPath)
 			} catch {
 				// Read-only data root — the digest is still correct, it just isn't cached.
 			}
@@ -317,7 +310,7 @@ export async function fstFreshnessWarning({
 	if (!(await pathExists(fstPath)) || !(await pathExists(sourceDBPath))) return undefined
 
 	const reason = fstStaleReason(peekFSTStampFields(fstPath), {
-		source: readWOFSourceIdentity(sourceDBPath),
+		source: await readWOFSourceIdentity(sourceDBPath),
 		...(formatVersion === undefined ? {} : { formatVersion }),
 		...(exclusionPolicy === undefined ? {} : { exclusionPolicy }),
 	})

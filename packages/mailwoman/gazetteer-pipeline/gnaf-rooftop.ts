@@ -356,7 +356,7 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 	}
 
 	swapDatabaseIntoPlace(tmp, out)
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	return counts
 }

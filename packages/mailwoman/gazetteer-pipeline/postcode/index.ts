@@ -195,7 +195,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	}
 
 	phase("seal")
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	return { out, postcodesIngested: ingest.placesIngested, zctaFilled, geonamesUSFilled, fills, sealed: true }
 }

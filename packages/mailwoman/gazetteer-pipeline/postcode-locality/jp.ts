@@ -277,7 +277,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 	}
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(args.output)
+	await sealDatabase(args.output)
 
 	console.log(
 		`${args.country}: ${keys.length.toLocaleString("en-US")} postcodes (KEN_ALL∩GeoNames), ` +

@@ -18,10 +18,10 @@
  *   sibling version exactly as the publish path does.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { mkdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
 
@@ -92,10 +92,8 @@ export interface ReleaseListIdentity {
  * The named-absence identity: root `workspaces` minus the release list must equal the sanctioned set exactly. Every
  * discrepancy is reported by NAME, so the failure is actionable without counting.
  */
-export function checkReleaseListIdentity(repoRoot: string): ReleaseListIdentity {
-	const root = parseJSONStrict<{ workspaces: string[] }>(
-		readFileSync(resolve(repoRoot, "package.json"), "utf8")
-	).workspaces
+export async function checkReleaseListIdentity(repoRoot: string): Promise<ReleaseListIdentity> {
+	const root = (await readLocalJSONFile<{ workspaces: string[] }>(resolve(repoRoot, "package.json"))).workspaces
 
 	const release = new Set(releaseWorkspaces(repoRoot))
 	const rootSet = new Set(root)
@@ -155,10 +153,13 @@ export interface WorkspaceAuditResult {
  * package instead of stopping at the first (the v9.2.0 tarball-guard failures surfaced one dispatch apart because the
  * publish loop's per-workspace isolation was the only sweep that existed).
  */
-export function auditStagedWorkspaces(stagingRoot: string, workspaces: readonly string[]): WorkspaceAuditResult[] {
+export async function auditStagedWorkspaces(
+	stagingRoot: string,
+	workspaces: readonly string[]
+): Promise<WorkspaceAuditResult[]> {
 	const tarballDir = join(stagingRoot, ".preflight-tarballs")
 
-	mkdirSync(tarballDir, { recursive: true })
+	await makeDirectories(tarballDir)
 
 	return workspaces.map((workspace) => {
 		const tarball = join(tarballDir, `${workspace.replaceAll("/", "__")}.tgz`)

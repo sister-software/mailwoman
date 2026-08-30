@@ -14,6 +14,7 @@
  *   silent gate drift the eval discipline exists to catch.
  */
 
+import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { existsSync, readFileSync } from "@mailwoman/platform/fs"
@@ -107,16 +108,16 @@ export const LEDGER_NOTE =
 /**
  * Assemble a report from a finished gate run's out-dir plus its log.
  */
-export function readGateReport(outDir: string, stdout: string, stderr: string): GateReport {
+export async function readGateReport(outDir: string, stdout: string, stderr: string): Promise<GateReport> {
 	const notes: string[] = []
 	const verdictPath = join(outDir, "verdict.json")
 	const provenancePath = join(outDir, "provenance.txt")
 
 	let raw: RawVerdict | null = null
 
-	if (existsSync(verdictPath)) {
+	if (await pathExists(verdictPath)) {
 		try {
-			raw = parseJSONStrict<RawVerdict>(readFileSync(verdictPath, "utf8"))
+			raw = await readLocalJSONFile<RawVerdict>(verdictPath)
 		} catch (error) {
 			notes.push(`verdict.json exists but did not parse: ${(error as Error).message}`)
 		}
@@ -174,7 +175,7 @@ export function readGateReport(outDir: string, stdout: string, stderr: string): 
 		}
 	}
 
-	if (!existsSync(provenancePath)) {
+	if (!(await pathExists(provenancePath))) {
 		notes.push(`No provenance.txt at ${provenancePath}, so the graded artifacts' md5s are unrecorded for this run.`)
 	}
 
@@ -185,7 +186,7 @@ export function readGateReport(outDir: string, stdout: string, stderr: string): 
 		floors,
 		int8_vs_fp32_deltas: raw?.int8_vs_fp32_deltas ?? {},
 		out_dir: outDir,
-		provenance: existsSync(provenancePath) ? readFileSync(provenancePath, "utf8") : null,
+		provenance: (await pathExists(provenancePath)) ? await readLocalTextFile(provenancePath) : null,
 		ledger_command: ledgerCommand,
 		ledger_note: LEDGER_NOTE,
 		lore_guard_refusal: loreGuardRefusal,

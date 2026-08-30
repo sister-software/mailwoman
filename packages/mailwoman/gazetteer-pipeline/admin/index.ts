@@ -243,7 +243,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	phase("manifest", "layer_manifest written")
 
 	phase("seal")
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	// Build log — an auto-appended record (what ran, when, fingerprint), so the manifest can't lag the
 	// artifact again (#1015's reconstruct-from-artifact). The recipe itself lives in defaults.ts.

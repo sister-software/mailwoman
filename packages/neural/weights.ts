@@ -1332,12 +1332,14 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * declared contract is a loud artifact bug, not a silent skip. Tier/system/tag sub-shapes are read leniently (a
  * malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
  */
-export function readCapabilityManifest(modelCardPath: string | undefined): CapabilityManifest | undefined {
-	if (!modelCardPath || !existsSync(modelCardPath)) return undefined
+export async function readCapabilityManifest(
+	modelCardPath: string | undefined
+): Promise<CapabilityManifest | undefined> {
+	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
 	let raw: string
 
 	try {
-		raw = readFileSync(modelCardPath, "utf8")
+		raw = await readLocalTextFile(modelCardPath)
 	} catch {
 		return undefined
 	}

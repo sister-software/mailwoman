@@ -263,7 +263,7 @@ describe("§7-3a gates", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				buildFilerDatabase({
+				await buildFilerDatabase({
 					form499Rows: [minimalForm499Row({ lastFiledAt: "   " })],
 					out,
 					sourceVintage: "2026-Q1",
@@ -279,7 +279,7 @@ describe("§7-3a gates", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				buildFilerDatabase({
+				await buildFilerDatabase({
 					form499Rows: [minimalForm499Row({ lastFiledAt: "" })],
 					out,
 					sourceVintage: "2026-Q1",
@@ -295,7 +295,7 @@ describe("§7-3a gates", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				buildFilerDatabase({
+				await buildFilerDatabase({
 					form499Rows: [minimalForm499Row({ form499ID: "   " })],
 					out,
 					sourceVintage: "2026-Q1",
@@ -315,7 +315,7 @@ describe("§7-3a gates", () => {
 			]
 
 			await expect(
-				buildFilerDatabase({
+				await buildFilerDatabase({
 					providerRows: malformedRows,
 					out,
 					sourceVintage: "2026-Q1",

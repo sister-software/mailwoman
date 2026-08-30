@@ -155,22 +155,23 @@ describe("the authored pharmacy records", () => {
 })
 
 describe("the committed artifact", () => {
-	it("is what the authored records compile to", () => {
-		expect(readCompiledGeographicModel(), `stale artifact — regenerate with: ${REGENERATE_ARTIFACT_COMMAND}`).toEqual(
-			compileAuthoredGeographicModel()
-		)
+	it("is what the authored records compile to", async () => {
+		expect(
+			await readCompiledGeographicModel(),
+			`stale artifact — regenerate with: ${REGENERATE_ARTIFACT_COMMAND}`
+		).toEqual(compileAuthoredGeographicModel())
 	})
 
-	it("is byte-identical to a fresh compile once both are canonically serialized", () => {
+	it("is byte-identical to a fresh compile once both are canonically serialized", async () => {
 		expect(
-			serializeCompiledModel(readCompiledGeographicModel()),
+			serializeCompiledModel(await readCompiledGeographicModel()),
 			`stale artifact — regenerate with: ${REGENERATE_ARTIFACT_COMMAND}`
 		).toBe(serializeCompiledModel(compileAuthoredGeographicModel()))
 	})
 
-	it("carries the ancestry the slice states", () => {
+	it("carries the ancestry the slice states", async () => {
 		const closure = new Map(
-			readCompiledGeographicModel().inheritanceClosure.map((entry) => [String(entry.concept), entry.ancestors])
+			(await readCompiledGeographicModel()).inheritanceClosure.map((entry) => [String(entry.concept), entry.ancestors])
 		)
 
 		expect(closure.get(String(PHARMACY))).toEqual(["establishment", "healthcare_facility", "place"])
@@ -184,13 +185,13 @@ describe("the committed artifact", () => {
 		expect(closure.get(String(DRUGSTORE))).not.toContain("healthcare_facility")
 	})
 
-	it("derives nothing, because no ancestor asserts anything", () => {
+	it("derives nothing, because no ancestor asserts anything", async () => {
 		// Both affordances are authored on leaves — `pharmacy` and `drugstore` have no descendants — and the only
 		// ancestor either of them has that COULD assert (`establishment`) asserts nothing, deliberately: a claim
 		// authored there would be inherited by every later establishment class. So `isA` inheritance has nothing to
 		// materialize. An empty table here is the truthful answer, not an unread one — `compile.test.ts` exercises
 		// the derivation itself.
-		const model = readCompiledGeographicModel()
+		const model = await readCompiledGeographicModel()
 		const everyAncestor = new Set(model.inheritanceClosure.flatMap((entry) => entry.ancestors.map(String)))
 
 		const ancestorsWithAssertions = model.concepts
@@ -260,8 +261,8 @@ describe("the wave-1 records", () => {
 })
 
 describe("reading the slice through the runtime lookups", () => {
-	it("answers the proposition from the external category id, with provenance", () => {
-		const index = createGeographicModelIndex(readCompiledGeographicModel())
+	it("answers the proposition from the external category id, with provenance", async () => {
+		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 		const concepts = index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, POI_CATEGORY)
 
 		expect(concepts).toEqual([PHARMACY])
@@ -283,8 +284,8 @@ describe("reading the slice through the runtime lookups", () => {
 		expect(index.ancestorsOf(PHARMACY)).toEqual(["establishment", "healthcare_facility", "place"])
 	})
 
-	it("distinguishes a concept it carries from one it has never heard of", () => {
-		const index = createGeographicModelIndex(readCompiledGeographicModel())
+	it("distinguishes a concept it carries from one it has never heard of", async () => {
+		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
 		// The model carries `pharmacy` and has derived nothing about it; it does not carry `chemist` at all, which
 		// is a different answer and stays a different answer.
@@ -296,8 +297,8 @@ describe("reading the slice through the runtime lookups", () => {
 	// like the external lookup returning `[]` and a reader meeting one alone would take it for the other. The model
 	// CARRIES the concept and states what it affords, its external identifier DOES translate into it since W1-3
 	// landed, and nothing has been DERIVED about it — which is an empty derivation, not an unmapped class.
-	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", () => {
-		const index = createGeographicModelIndex(readCompiledGeographicModel())
+	it("carries `drugstore`, translates its external identifier, and has derived nothing about it", async () => {
+		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
 		expect(index.concept(DRUGSTORE)).toBeDefined()
 		expect(index.concept(DRUGSTORE)?.assertions).toHaveLength(1)
@@ -308,8 +309,8 @@ describe("reading the slice through the runtime lookups", () => {
 	// The two kinds `obtain_medication` reaches, read off the committed artifact rather than off the route. Each
 	// external identifier translates into ITS OWN concept and not into the other: the mapping table states which id
 	// names which class, and nothing in it states a preference between the two.
-	it("reaches two mapped kinds for one activity, each from its own external identifier", () => {
-		const index = createGeographicModelIndex(readCompiledGeographicModel())
+	it("reaches two mapped kinds for one activity, each from its own external identifier", async () => {
+		const index = createGeographicModelIndex(await readCompiledGeographicModel())
 
 		expect(index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, POI_CATEGORY)).toEqual([PHARMACY])
 		expect(index.conceptsForExternalID(ExternalVocabulary.POITaxonomy, DRUGSTORE_CATEGORY)).toEqual([DRUGSTORE])

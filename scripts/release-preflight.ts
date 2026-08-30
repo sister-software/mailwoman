@@ -87,7 +87,7 @@ async function releasePreflight(): Promise<void> {
 	}
 
 	// 1. The named-absence identity — every workspace outside the release list must be sanctioned by name.
-	const identity = checkReleaseListIdentity(repoRoot)
+	const identity = await checkReleaseListIdentity(repoRoot)
 
 	const identityProblems = [
 		...identity.unexpectedAbsences.map(
@@ -125,7 +125,7 @@ async function releasePreflight(): Promise<void> {
 		reportHFMaterialization(materialization)
 	}
 
-	const results = auditStagedWorkspaces(stagingRoot, releaseWorkspaces(repoRoot))
+	const results = await auditStagedWorkspaces(stagingRoot, releaseWorkspaces(repoRoot))
 	const failed = results.filter((result) => !result.ok)
 
 	for (const result of results) {

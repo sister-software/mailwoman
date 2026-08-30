@@ -513,7 +513,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 	}
 
 	progress("seal")
-	sealDatabase(buildingPath)
+	await sealDatabase(buildingPath)
 
 	// Atomic move-into-place — the previous version is moved ASIDE FIRST, per the AGENTS.md database house
 	// rule and build-bdc.ts's identical `${out}.prev` swap.

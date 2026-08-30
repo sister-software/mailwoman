@@ -100,8 +100,8 @@ function shipsInPackage(files: string[], path: string): boolean {
 }
 
 describe("listGateSpecs", () => {
-	it("finds the shipped specs", () => {
-		const specs = listGateSpecs()
+	it("finds the shipped specs", async () => {
+		const specs = await listGateSpecs()
 
 		expect(specs.length).toBeGreaterThan(0)
 		expect(specs).toContain("v5.3.0-family.json")
@@ -141,7 +141,7 @@ describe("resolveGateSpecPath", () => {
 	it("throws a USEFUL error naming the known specs, not a bare ENOENT", async () => {
 		// The old behaviour returned the string and let readFileSync throw, which told the operator
 		// nothing about what they could have typed instead.
-		await expect(resolveGateSpecPath("v9.9.9-nope")).rejects.toThrow(
+		await expect(await resolveGateSpecPath("v9.9.9-nope")).rejects.toThrow(
 			/Gate spec not found.*Known specs.*v5\.3\.0-family/s
 		)
 	})
@@ -152,7 +152,7 @@ describe("resolveGateSpecPath", () => {
 		// installed `mailwoman eval gate --gate <name>` found an empty gates dir.
 		const pkg = await readLocalJSONFile<{ files: string[] }>(new URL("../../../package.json", import.meta.url))
 
-		for (const spec of listGateSpecs()) {
+		for (const spec of await listGateSpecs()) {
 			const rel = `eval-harness/gates/${spec}`
 			expect(shipsInPackage(pkg.files, rel), `${rel} must be covered by package.json files`).toBe(true)
 		}

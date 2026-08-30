@@ -18,6 +18,7 @@
  *   `expected 47878 to be 49033`. The generating code is part of the input, not context around it.
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { createHash } from "@mailwoman/platform/crypto"
 import { existsSync, readdirSync, readFileSync, statSync } from "@mailwoman/platform/fs"
@@ -185,7 +186,7 @@ export function derivedWeightsDir(key: string): string {
  */
 const PCB1_HEADER_BYTES = 9
 
-export function derivedStoreServeViolation(filename: string, path: string): string | null {
+export async function derivedStoreServeViolation(filename: string, path: string): Promise<string | null> {
 	const match = /^postcode-([a-z]{2})\.bin$/.exec(filename)
 
 	if (!match) return null
@@ -195,7 +196,7 @@ export function derivedStoreServeViolation(filename: string, path: string): stri
 	let header: Buffer
 
 	try {
-		header = readFileSync(path)
+		header = await readLocalBuffer(path)
 	} catch (error) {
 		return `unreadable store entry: ${String(error)}`
 	}

@@ -700,7 +700,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	}
 
 	progress("seal", opts.out)
-	sealDatabase(opts.out)
+	await sealDatabase(opts.out)
 
 	return {
 		out: opts.out,

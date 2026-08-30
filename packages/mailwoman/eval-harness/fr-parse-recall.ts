@@ -56,7 +56,7 @@ const MAX_REPORTED_FAILURES = 12
  * Throws with every path it tried rather than returning a default. A missing anchor lexicon changes the parse, so a
  * silent fallback here would produce a well-formed wrong floor reading.
  */
-function resolveWeightsSibling(fileName: string, weightsCache?: string): string {
+async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<string> {
 	const candidates = [
 		...(weightsCache ? [`${weightsCache}/node_modules/@mailwoman/neural-weights-en-us/${fileName}`] : []),
 		String(dataRootPath("weights", "en-us", fileName)),
@@ -215,10 +215,10 @@ export async function frParseRecall(
 		const card = await readLocalJSONFile<{ labels: string[] }>(args.modelCard)
 
 		const anchor = new PostcodeBinaryResolver(
-			await readLocalBuffer(resolveWeightsSibling("postcode-us.bin", options.weightsCache))
+			await readLocalBuffer(await resolveWeightsSibling("postcode-us.bin", options.weightsCache))
 		).toAnchorLookup()
 
-		const lexiconPath = resolveWeightsSibling("anchor-lexicon-v1.json", options.weightsCache)
+		const lexiconPath = await resolveWeightsSibling("anchor-lexicon-v1.json", options.weightsCache)
 		const lexicon = parseGazetteerLexicon(await readLocalJSONFile(lexiconPath))
 
 		const [tokenizer, runner] = await Promise.all([

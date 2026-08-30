@@ -18,8 +18,8 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 	let matcher: FSTMatcher
 	let result: BuildFSTResult
 
-	beforeAll(() => {
-		const built = buildFSTFromWOF({
+	beforeAll(async () => {
+		const built = await buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],
@@ -104,8 +104,8 @@ describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", (
 	let matcher: FSTMatcher
 	let provenance: FSTProvenance
 
-	beforeAll(() => {
-		const built = buildFSTFromWOF({
+	beforeAll(async () => {
+		const built = await buildFSTFromWOF({
 			dbPath: ADMIN_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],

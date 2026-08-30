@@ -331,7 +331,7 @@ async function pullBundles(
 				}
 
 				await makeDirectories(dirname(localAbsPath))
-				sealDatabase(tmpPath)
+				await sealDatabase(tmpPath)
 				swapDatabaseIntoPlace(tmpPath, localAbsPath)
 
 				checks.push({ ok: true, check: label, detail: `${verifyDetail} → ${localAbsPath}` })

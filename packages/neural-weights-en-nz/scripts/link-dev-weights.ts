@@ -110,8 +110,8 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	return hash
 }
 
-removeIfPresent(resolve(DEST_DIR, "model.onnx"))
-removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
+await removeIfPresent(resolve(DEST_DIR, "model.onnx"))
+await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----.

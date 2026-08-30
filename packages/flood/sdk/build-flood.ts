@@ -312,7 +312,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 
 		await kdb.destroy()
 
-		sealDatabase(tmpPath)
+		await sealDatabase(tmpPath)
 		swapDatabaseIntoPlace(tmpPath, options.out)
 
 		const totalCellRows = cells.wholeRows + cells.partialRows

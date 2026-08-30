@@ -15,7 +15,9 @@
  *   built-artifact lifecycle, and because a rule the project states in prose and implements more than
  *   once in code should be a function.
  */
-import { chmodSync, existsSync, renameSync, rmSync, statSync, unlinkSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { changeMode, removePath } from "@mailwoman/core/fs/writers"
+import { existsSync, renameSync, rmSync, statSync } from "@mailwoman/platform/fs"
 import { basename } from "@mailwoman/platform/path"
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
@@ -60,10 +62,10 @@ export function isSealed(path: string): boolean {
  * Finalize a built DB: WAL-checkpoint → `journal_mode = DELETE` → remove `-wal`/`-shm` sidecars → `chmod 0o444`.
  * Idempotent. Throws if the checkpoint cannot complete (another writer holds the DB).
  */
-export function sealDatabase(path: string): void {
+export async function sealDatabase(path: string): Promise<void> {
 	// A previously sealed artifact needs the write bit back for the journal-mode switch.
 	if (isSealed(path)) {
-		chmodSync(path, 0o644)
+		await changeMode(path, 0o644)
 	}
 
 	let mode: { journal_mode: string }
@@ -84,12 +86,12 @@ export function sealDatabase(path: string): void {
 	}
 
 	for (const sidecar of [`${path}-wal`, `${path}-shm`]) {
-		if (existsSync(sidecar)) {
-			unlinkSync(sidecar)
+		if (await pathExists(sidecar)) {
+			await removePath(sidecar)
 		}
 	}
 
-	chmodSync(path, 0o444)
+	await changeMode(path, 0o444)
 }
 
 /**
