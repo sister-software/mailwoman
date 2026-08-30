@@ -23,13 +23,13 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { promisify } from "@mailwoman/platform/util"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
@@ -200,7 +200,7 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 // output + exit 0 combination the audit's test (1) calls for on the full --resolve path.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH
-const hasWOFDB = existsSync(wofPath)
+const hasWOFDB = await pathExists(wofPath)
 
 describe.skipIf(!hasWOFDB)("#1108 loud weights fallback — --resolve degraded end-to-end (WOF DB present)", () => {
 	test("missing weights + --resolve: warns on stderr, resolver-decorated output on stdout, exit 0", async () => {

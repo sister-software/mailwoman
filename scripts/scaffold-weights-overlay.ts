@@ -34,9 +34,8 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { mkdirSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -76,7 +75,7 @@ const rootVersion = await readLocalJSONFile<{ version: string }>(repoRootPath("p
 	(res) => res.version
 )
 
-mkdirSync(resolve(pkgDir, "scripts"), { recursive: true })
+await makeDirectories(resolve(pkgDir, "scripts"))
 
 await writeLocalJSONFile(
 	{

@@ -14,12 +14,12 @@
  *   type-checks, tests, and publishes — and only the consumer who typed `mw` finds out.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { promisify } from "@mailwoman/platform/util"
 import { BUNDLES } from "mailwoman/data-bundles"
@@ -37,7 +37,7 @@ const emptyDataRoot = await temporaryDirectory("mw-data-cli-")
 
 afterAll(() => emptyDataRoot[Symbol.asyncDispose]())
 
-describe.skipIf(!existsSync(cliBin))("mailwoman data (group landing page)", () => {
+describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page)", () => {
 	test("bare `data` explains why the command exists and points at pull / status / doctor", async () => {
 		const { stdout } = await exec("node", [cliBin, "data"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRoot.path }),

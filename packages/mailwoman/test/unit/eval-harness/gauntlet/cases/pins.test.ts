@@ -7,8 +7,8 @@
  *   and a reshaped test file refuses instead of being partially rewritten.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import {
 	checkBoardPins,
@@ -18,7 +18,7 @@ import {
 } from "mailwoman/eval-harness/gauntlet/cases/pins"
 import { describe, expect, it } from "vitest"
 
-const realTestText = readFileSync(resolve(String(repoRootPath()), PIN_TEST_PATH), "utf8")
+const realTestText = await readLocalTextFile(resolve(String(repoRootPath()), PIN_TEST_PATH))
 
 describe("the committed-pin read/write contract", () => {
 	it("reads the three constants out of the real pin test", () => {

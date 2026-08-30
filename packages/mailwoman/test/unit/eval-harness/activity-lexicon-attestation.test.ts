@@ -15,10 +15,9 @@
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { POI_BOARD_FIXTURES, type POIBoardFixture } from "mailwoman/eval-harness/poi-board"
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
@@ -36,8 +35,8 @@ interface CuratedOverlay {
 	synonyms: Array<{ phrase: string; categoryID: string; locales?: string[] }>
 }
 
-const overlay = parseJSONStrict<CuratedOverlay>(
-	readFileSync(repoRootPath("packages", "poi-taxonomy", "data", "curated-overlay.json"), "utf8")
+const overlay = await readLocalJSONFile<CuratedOverlay>(
+	repoRootPath("packages", "poi-taxonomy", "data", "curated-overlay.json")
 )
 
 /**

@@ -34,7 +34,7 @@ import { describe, expect, it } from "vitest"
 
 import { SUBVENUE_PROMOTIONS } from "#tools"
 
-const lexicon = readSubVenueLexicon(defaultLexiconPath())
+const lexicon = await readSubVenueLexicon(defaultLexiconPath())
 const shippedModifiers = lexicon.modifiers.filter((m) => m.shipped).map((m) => m.id)
 const legFor = (locale: string): SubVenueLeg => SUBVENUE_LEGS.find((l) => l.locale === locale)!
 

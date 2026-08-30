@@ -11,11 +11,10 @@
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { removePathIfPresent, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import {
 	candidateSubjects,
@@ -31,7 +30,7 @@ const COMMITTED_CENSUS = "packages/mailwoman/eval-harness/activity-lexicon/colli
 const lexicon = readActivityLexicon()
 
 const committedCensusPath = resolve(String(repoRootPath()), COMMITTED_CENSUS)
-const committed = parseJSONStrict<PhraseCollisionCensus>(readFileSync(committedCensusPath, "utf8"))
+const committed = await readLocalJSONFile<PhraseCollisionCensus>(committedCensusPath)
 
 /**
  * A repository root carrying one committed query, so the carrier-prefix family is exercised without reading the real
@@ -41,12 +40,12 @@ const scratchRoot = await temporaryDirectory("collision-census-")
 
 afterAll(() => scratchRoot[Symbol.asyncDispose]())
 
-mkdirSync(scratchRoot.resolve("packages/mailwoman/eval-harness/fixtures"), { recursive: true })
+await makeDirectories(scratchRoot.resolve("packages/mailwoman/eval-harness/fixtures"))
 
-writeFileSync(
-	scratchRoot.resolve("packages/mailwoman/eval-harness/fixtures/rows.jsonl"),
+await writeLocalTextFile(
 	`${JSON.stringify({ id: "sem-act-fr-01", query: "somewhere to fill a prescription near Toulouse" })}\n` +
-		`${JSON.stringify({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`
+		`${JSON.stringify({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`,
+	scratchRoot.resolve("packages/mailwoman/eval-harness/fixtures/rows.jsonl")
 )
 
 afterAll(async () => {

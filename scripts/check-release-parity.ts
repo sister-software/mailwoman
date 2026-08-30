@@ -21,7 +21,7 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
@@ -128,10 +128,10 @@ const checks: ParityCheck[] = []
 // compares against the SHIPPED model identity: `packages/neural-weights-en-us/model-card.json#version`
 // (the same source verify-release-metadata keys off). The docs matrix row stays vs npm latest —
 // that surface documents package releases.
-const localCard = parseJSONStrict<{
+const localCard = await readLocalJSONFile<{
 	version: string
 	files_md5?: Record<string, string>
-}>(readFileSync(MODEL_CARD_PATH, "utf8"))
+}>(MODEL_CARD_PATH)
 
 const cardModelVersion = normalizeVersion(localCard.version)
 

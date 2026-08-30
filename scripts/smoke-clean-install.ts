@@ -1,4 +1,5 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
@@ -25,7 +26,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
 import { execFileSync, spawn } from "@mailwoman/platform/child_process"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -413,10 +414,7 @@ try {
 		deps[name] = `file:${tgz}`
 	}
 
-	writeFileSync(
-		join(proj, "package.json"),
-		JSON.stringify({ name: "mw-smoke", private: true, dependencies: deps }, null, 2)
-	)
+	await writeLocalJSONFile({ name: "mw-smoke", private: true, dependencies: deps }, join(proj, "package.json"))
 
 	console.log("[smoke] npm install (tarballs only — no hoisting)…")
 
@@ -466,24 +464,20 @@ try {
 		const solo = tmp.resolve(`solo-${leafDir}`)
 		execFileSync("mkdir", ["-p", solo])
 
-		writeFileSync(
-			join(solo, "package.json"),
-			JSON.stringify(
-				{
-					name: `mw-solo-${leafDir}`,
-					private: true,
-					type: "module",
-					dependencies: Object.fromEntries(
-						[leaf, ...firstPartyDependencies].map((name) => {
-							const workspaceDir = WORKSPACES[name]!
+		await writeLocalJSONFile(
+			{
+				name: `mw-solo-${leafDir}`,
+				private: true,
+				type: "module",
+				dependencies: Object.fromEntries(
+					[leaf, ...firstPartyDependencies].map((name) => {
+						const workspaceDir = WORKSPACES[name]!
 
-							return [name, `file:${join(tarDir, `${workspaceDir}.tgz`)}`]
-						})
-					),
-				},
-				null,
-				2
-			)
+						return [name, `file:${join(tarDir, `${workspaceDir}.tgz`)}`]
+					})
+				),
+			},
+			join(solo, "package.json")
 		)
 
 		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], solo)

@@ -38,11 +38,11 @@
  *     CycloneDX:  cyclonedx-cli validate --input-file docs/static/sbom/mailwoman-<version>.cdx.json
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, movePath } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { readFileSync, renameSync } from "@mailwoman/platform/fs"
 import { dirname, join, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -57,8 +57,7 @@ const { values } = parseArgs({
 
 const version =
 	values.version ??
-	parseJSONStrict<{ version: string }>(readFileSync(join(repoRoot, "packages", "mailwoman", "package.json"), "utf8"))
-		.version
+	(await readLocalJSONFile<{ version: string }>(join(repoRoot, "packages", "mailwoman", "package.json"))).version
 
 const outDir = values.out ? resolve(values.out) : join(repoRoot, "docs", "static", "sbom")
 
@@ -117,11 +116,11 @@ run("tar", ["xzf", `mailwoman-${version}.tgz`], tmp.path)
 
 // npm always extracts to `package/`; rename so CycloneDX's basename-derived root name reads `mailwoman`.
 const pkgDir = tmp.resolve("mailwoman")
-renameSync(tmp.resolve("package"), pkgDir)
+await movePath(tmp.resolve("package"), pkgDir)
 
 // Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`) — never part of the consumer closure.
 const manifestPath = join(pkgDir, "package.json")
-const manifest = parseJSONStrict<Record<string, unknown>>(readFileSync(manifestPath, "utf8"))
+const manifest = await readLocalJSONFile<Record<string, unknown>>(manifestPath)
 delete manifest.devDependencies
 
 await writeLocalJSONFile(manifest, manifestPath)

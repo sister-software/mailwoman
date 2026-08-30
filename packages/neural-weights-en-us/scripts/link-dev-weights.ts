@@ -40,13 +40,12 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { readLocalTextFile, statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalTextFile, statPath, pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
 import { createHash } from "@mailwoman/platform/crypto"
-import { existsSync, readFileSync, mkdirSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
@@ -85,15 +84,15 @@ const PKG_DIR = workspacePath("neural-weights-en-us")
  */
 const DEST_DIR = String(weightsOverlayPath("en-us"))
 
-mkdirSync(DEST_DIR, { recursive: true })
+await makeDirectories(DEST_DIR)
 
 /**
  * The shipped-bytes truth (#397 guard): the card's files_md5 block, which release Step 4 re-verifies against the
  * published tarball — so dev symlinks, the card, and npm agree.
  */
-const CARD = parseJSONStrict<{
+const CARD = await readLocalJSONFile<{
 	files_md5?: Record<string, string>
-}>(readFileSync(resolve(PKG_DIR, "model-card.json"), "utf8"))
+}>(resolve(PKG_DIR, "model-card.json"))
 
 /**
  * Expected model digest from the model card, checked so a stale or truncated link is caught here rather than at
@@ -132,14 +131,14 @@ const SRC_MODEL = $public.MAILWOMAN_DEV_MODEL || DEFAULT_MODEL
  */
 const SRC_TOKENIZER = $public.MAILWOMAN_DEV_TOKENIZER || DEFAULT_TOKENIZER
 
-if (!existsSync(SRC_MODEL)) {
+if (!(await pathExists(SRC_MODEL))) {
 	console.error(`missing source model: ${SRC_MODEL}`)
 	console.error("set MAILWOMAN_DEV_MODEL to override")
 
 	process.exit(1)
 }
 
-if (!existsSync(SRC_TOKENIZER)) {
+if (!(await pathExists(SRC_TOKENIZER))) {
 	console.error(`missing source tokenizer: ${SRC_TOKENIZER}`)
 	console.error("set MAILWOMAN_DEV_TOKENIZER to override")
 
@@ -209,7 +208,7 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
  */
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
-if (existsSync(SRC_GAZETTEER_LEXICON)) {
+if (await pathExists(SRC_GAZETTEER_LEXICON)) {
 	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
@@ -217,7 +216,7 @@ if (existsSync(SRC_GAZETTEER_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
 }
 
-if (existsSync(SRC_COUNTRY_LEXICON)) {
+if (await pathExists(SRC_COUNTRY_LEXICON)) {
 	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
@@ -232,7 +231,7 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 const SRC_STREET_TYPE_LEXICON = repoRootPath("data", "gazetteer", "street-type-lexicon-v3.json")
 const SRC_LOCALITY_SURFACE_LEXICON = dataRootPath("gazetteer", "locality-surface-lexicon-v7.json")
 
-if (existsSync(SRC_STREET_TYPE_LEXICON)) {
+if (await pathExists(SRC_STREET_TYPE_LEXICON)) {
 	linkForce(SRC_STREET_TYPE_LEXICON, resolve(DEST_DIR, "street-type-lexicon-v3.json"))
 
 	console.log(`linked ${DEST_DIR}/street-type-lexicon-v3.json`)
@@ -240,7 +239,7 @@ if (existsSync(SRC_STREET_TYPE_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_STREET_TYPE_LEXICON} — street_type channel will resolve OFF in this worktree.`)
 }
 
-if (existsSync(SRC_LOCALITY_SURFACE_LEXICON)) {
+if (await pathExists(SRC_LOCALITY_SURFACE_LEXICON)) {
 	linkForce(SRC_LOCALITY_SURFACE_LEXICON, resolve(DEST_DIR, "locality-surface-lexicon-v7.json"))
 
 	console.log(`linked ${DEST_DIR}/locality-surface-lexicon-v7.json`)
@@ -263,13 +262,13 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
  */
 const POSTCODE_BIN_DEST = resolve(DEST_DIR, "postcode-us.bin")
 
-if (existsSync(POSTCODE_BIN_DEST)) {
+if (await pathExists(POSTCODE_BIN_DEST)) {
 	console.log(`skipped postcode-us.bin build — ${POSTCODE_BIN_DEST} already present`)
-} else if (!existsSync(CLI)) {
+} else if (!(await pathExists(CLI))) {
 	console.error(
 		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build postcode-us.bin.`
 	)
-} else if (!existsSync(US_WOF_DB)) {
+} else if (!(await pathExists(US_WOF_DB))) {
 	console.error(
 		`WARNING: missing ${US_WOF_DB} — postcode-us.bin not built; the anchor channel will resolve OFF for US.`
 	)
@@ -280,7 +279,7 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 		{ stdio: "inherit" }
 	)
 
-	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
+	if (result.status !== 0 || !(await pathExists(POSTCODE_BIN_DEST))) {
 		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
 
 		process.exit(1)
@@ -301,7 +300,7 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-us.bin")
  */
 const FST_DEST = resolve(DEST_DIR, "fst-en-us.bin")
 
-if (existsSync(FST_SRC)) {
+if (await pathExists(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-en-us.bin ← ${FST_SRC}`)
@@ -324,7 +323,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
  */
 const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
-if (existsSync(MORPHOLOGY_SRC)) {
+if (await pathExists(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
 
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
@@ -404,18 +403,18 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	return hash
 }
 
-if (!existsSync(CLI)) {
+if (!(await pathExists(CLI))) {
 	console.error(
 		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script for pair-index-us.bin.`
 	)
-} else if (!existsSync(String(PAIR_INDEX_SOURCE_DB))) {
+} else if (!(await pathExists(String(PAIR_INDEX_SOURCE_DB)))) {
 	console.error(
 		`WARNING: missing ${PAIR_INDEX_SOURCE_DB} — pair-index-us.bin not built; the placetype-pair prior stays inert for US.`
 	)
 } else {
 	let needsRebuild = true
 
-	if (existsSync(PAIR_INDEX_BIN_DEST)) {
+	if (await pathExists(PAIR_INDEX_BIN_DEST)) {
 		try {
 			const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
 			// EVERY md5 the header records has to match. A comparison that covers only some of them leaves the
@@ -480,7 +479,7 @@ if (!existsSync(CLI)) {
 			{ stdio: "inherit" }
 		)
 
-		if (result.status !== 0 || !existsSync(PAIR_INDEX_BIN_DEST)) {
+		if (result.status !== 0 || !(await pathExists(PAIR_INDEX_BIN_DEST))) {
 			console.error(`FAILED: gazetteer pair-index --country us (exit ${result.status})`)
 
 			process.exit(1)

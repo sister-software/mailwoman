@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { FSTMatcher, type FSTNode } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST, serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -127,7 +127,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 // --- Integration tests with real WOF data ---
 
 const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
-const HAS_WOF = existsSync(WOF_DB)
+const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () => {
 	let original: FSTMatcher

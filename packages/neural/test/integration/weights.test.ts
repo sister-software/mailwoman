@@ -47,7 +47,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { readDirectory, readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { readDirectory, readLocalBuffer, readLocalJSONFile, statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
@@ -55,7 +55,6 @@ import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
@@ -69,7 +68,7 @@ const MODEL_PATH =
 	$public.MAILWOMAN_TEST_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
 
-const haveModel = existsSync(MODEL_PATH)
+const haveModel = await pathExists(MODEL_PATH)
 
 /**
  * Run each locale's `link-dev-weights.ts` at most ONCE per process.
@@ -109,19 +108,19 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 // postcode-gb.bin, so the GB WOF postcode shard is no longer a precondition for any test here — and
 // a guard that names a file nothing reads skips tests for a reason that no longer exists.
 const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
-const haveCLI = existsSync(CLI_PATH)
+const haveCLI = await pathExists(CLI_PATH)
 
 // The en-gb smoke's link-dev-weights run ALSO shells out to `gazetteer pair-index` to build
 // pair-index-gb.bin from the PPD tuples CSV (see that script's header) — needs the source CSV on disk
 // same as the postcode-binary build needs the WOF shard above.
 const PPD_SOURCE_CSV_PATH = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
-const havePPDSource = existsSync(String(PPD_SOURCE_CSV_PATH))
+const havePPDSource = await pathExists(String(PPD_SOURCE_CSV_PATH))
 
 // The en-nz auto-resolve test's link-dev-weights run shells out to `gazetteer pair-index` to build
 // pair-index-nz.bin from the LINZ-derived OpenAddresses NZ countrywide CSV (see that script's
 // header) — same on-disk precondition shape as the GB PPD source above.
 const NZ_SOURCE_CSV_PATH = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
-const haveNZSource = existsSync(String(NZ_SOURCE_CSV_PATH))
+const haveNZSource = await pathExists(String(NZ_SOURCE_CSV_PATH))
 
 // Every test that shells out to a link-dev-weights.ts needs this, for two different cold-start
 // costs. en-gb builds pair-index-gb.bin from the ~25.6M-row PPD tuples CSV — several minutes. en-us

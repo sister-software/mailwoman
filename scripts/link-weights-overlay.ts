@@ -22,17 +22,11 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot, md5File, repoRootPath, workspacePath } from "@mailwoman/core/utils"
-import {
-	copyFileSync,
-	existsSync,
-	lstatSync,
-	mkdirSync,
-	readFileSync,
-	rmSync,
-	symlinkSync,
-} from "@mailwoman/platform/fs"
+import { existsSync, lstatSync, readFileSync, rmSync, symlinkSync } from "@mailwoman/platform/fs"
 import { relative, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -99,7 +93,7 @@ for (const locale of locales) {
 	const digests = recordedDigests(locale)
 
 	if (!values.plan) {
-		mkdirSync(dir, { recursive: true })
+		await makeDirectories(dir)
 	}
 
 	process.stdout.write(`\n${locale}  →  ${relative(dataRoot, dir)}\n`)
@@ -115,16 +109,16 @@ for (const locale of locales) {
 	// symlink to the card would make the whole overlay depend on one working tree still existing at that
 	// path — and a worktree removed after linking would leave the overlay resolving a dangling card, which
 	// degrades to STAGE2_BIO_LABELS against a 33-logit model rather than to an error.
-	if (existsSync(cardSource) && !values.plan) {
-		mkdirSync(dir, { recursive: true })
-		rmSync(resolve(dir, "model-card.json"), { force: true })
-		copyFileSync(cardSource, resolve(dir, "model-card.json"))
+	if ((await pathExists(cardSource)) && !values.plan) {
+		await makeDirectories(dir)
+		await removePathIfPresent(resolve(dir, "model-card.json"))
+		await copyFileTo(cardSource, resolve(dir, "model-card.json"))
 	}
 
 	const artifacts = recipe.linkableFor(locale)
 
 	for (const { shippedName, sourcePath } of artifacts) {
-		if (!existsSync(sourcePath)) {
+		if (!(await pathExists(sourcePath))) {
 			missing++
 			process.stdout.write(`  ✗ ${shippedName}  source missing: ${sourcePath}\n`)
 
@@ -166,13 +160,13 @@ for (const locale of locales) {
 	// AGENTS.md documents for the publish path, reappearing one directory over. The per-locale
 	// `link-dev-weights.ts` scripts build these into the overlay directly; this only says whether they have.
 	for (const { shippedName, buildCommand, inputPath } of recipe.buildableFor(locale)) {
-		const present = existsSync(resolve(dir, shippedName))
+		const present = await pathExists(resolve(dir, shippedName))
 
 		process.stdout.write(
 			present
 				? `  ✓ ${shippedName}  already built\n`
 				: `  — ${shippedName}  NOT built (${buildCommand}` +
-						`${inputPath ? `; input ${existsSync(inputPath) ? "present" : "MISSING"}` : ""})\n`
+						`${inputPath ? `; input ${(await pathExists(inputPath)) ? "present" : "MISSING"}` : ""})\n`
 		)
 	}
 }

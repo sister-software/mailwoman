@@ -30,6 +30,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { placetypeSpecificity } from "@mailwoman/core/resources/whosonfirst"
 import { allRows, dataRootPath, percentile } from "@mailwoman/core/utils"
 import { parseArgs } from "@mailwoman/platform/util"
@@ -303,8 +304,7 @@ const out = [
 const outPath = values["out"] || ""
 
 if (outPath) {
-	const { writeFileSync } = await import("@mailwoman/platform/fs")
-	writeFileSync(outPath, out)
+	await writeLocalFile(out, outPath)
 
 	console.error(`[fr-split] wrote ${outPath}`)
 }

@@ -75,12 +75,12 @@
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { normalize } from "@mailwoman/normalize"
-import { existsSync } from "@mailwoman/platform/fs"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -140,20 +140,20 @@ const POSTCODE_DB = dataRootPath("wof", "postcode-locality-intl.db")
 
 const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
-function weightsPresent(): boolean {
+async function weightsPresent(): Promise<boolean> {
 	try {
 		// ASK THE RESOLVER. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
 		// while the dev linker materializes binaries into that package — and a skip-guard that stops matching
 		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
-		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
 	} catch {
 		return false
 	}
 }
 
-const gazetteerPresent = () => existsSync(ADMIN_DB) && existsSync(POSTCODE_DB)
+const gazetteerPresent = async () => (await pathExists(ADMIN_DB)) && (await pathExists(POSTCODE_DB))
 
 /**
  * Flatten a tree to its node list, depth-first.
@@ -207,7 +207,7 @@ interface Measured {
 	agree: Partial<Record<string, boolean>>
 }
 
-describe.skipIf(!weightsPresent() || !gazetteerPresent())(
+describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"v7 swap gate — coordinate acceptability + plausibility",
 	() => {
 		test("neural resolution is coordinate-safe and the garbage tail is bounded by the plausibility guard", async () => {

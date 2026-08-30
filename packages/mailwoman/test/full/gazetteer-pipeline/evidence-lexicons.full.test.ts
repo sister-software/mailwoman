@@ -21,15 +21,14 @@
  *   claims about the gazetteer rather than about the laws.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { describe, expect, it } from "vitest"
 
 const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
 
-describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (admin DB)", () => {
+describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integration (admin DB)", () => {
 	it("applies all three laws end to end", async () => {
 		const { buildLocalitySurfaceLexicon } = await import("mailwoman/gazetteer-pipeline/evidence-lexicons")
 		const tmp = `${tmpdir()}/locality-surface-lexicon-test.json`

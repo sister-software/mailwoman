@@ -26,6 +26,7 @@
  *   identical adjacent segments; the repeat draws no bias from the identity pair.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
@@ -38,7 +39,6 @@ import {
 } from "@mailwoman/neural/pair-index-resolver"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "@mailwoman/neural/placetype-pair-prior"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, it, test } from "vitest"
 
 const LABELS = STAGE2_BIO_LABELS
@@ -48,7 +48,7 @@ const FIXTURE_TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "toke
 // Production tokenizer, gated (mirrors weights.test.ts's `haveModel` skipIf idiom). Not present in
 // stripped-down CI; runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
-const haveProductionTokenizer = existsSync(PRODUCTION_TOKENIZER_PATH)
+const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
 
 function labelCol(label: string): number {
 	return LABELS.indexOf(label as (typeof LABELS)[number])

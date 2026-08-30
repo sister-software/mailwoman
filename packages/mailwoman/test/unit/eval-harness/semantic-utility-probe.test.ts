@@ -48,7 +48,7 @@ afterAll(() => fixtures.disposeAsync())
 
 const committed = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))
 const definition = loadProbeDefinition()
-const freeze = parseJSONStrict<ProbeFreezeRecord>(readFileSync(PROBE_FREEZE_PATH, "utf8"))
+const freeze = await readLocalJSONFile<ProbeFreezeRecord>(PROBE_FREEZE_PATH)
 
 interface BaselineReceipt {
 	probeID: string

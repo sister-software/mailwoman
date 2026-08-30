@@ -18,16 +18,15 @@
  *        non-Latin-script edge cases the v0.1.0 tokenizer hits byte-fallback on.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
-import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 const MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 const LARGE_FIXTURE_PATH = String(workspacePath("neural", "test", "fixtures", "tokenizer-parity-large-v0.1.0.json"))
 
-const haveLargeFixture = existsSync(LARGE_FIXTURE_PATH)
+const haveLargeFixture = await pathExists(LARGE_FIXTURE_PATH)
 
 interface FixtureEntry {
 	raw: string

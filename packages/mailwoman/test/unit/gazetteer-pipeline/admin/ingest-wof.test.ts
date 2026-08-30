@@ -12,7 +12,6 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
@@ -38,26 +37,26 @@ function feature(id: number, props: Record<string, unknown>): string {
 	})
 }
 
-mkdirSync(DATA_DIR, { recursive: true })
+await makeDirectories(DATA_DIR)
 
 // France-shaped: both centroids present, 600 km apart. The ingest must store lbl:, whole.
-writeFileSync(
-	join(DATA_DIR, "1.geojson"),
+await writeLocalFile(
 	feature(1, {
 		"geom:latitude": 42.191716,
 		"geom:longitude": -2.735141,
 		"lbl:latitude": 46.714842,
 		"lbl:longitude": 2.464483,
-	})
+	}),
+	join(DATA_DIR, "1.geojson")
 )
 
 // No label centroid: the math centroid remains the fallback.
-writeFileSync(join(DATA_DIR, "2.geojson"), feature(2, { "geom:latitude": 10.5, "geom:longitude": 20.25 }))
+await writeLocalFile(feature(2, { "geom:latitude": 10.5, "geom:longitude": 20.25 }), join(DATA_DIR, "2.geojson"))
 
 // A lone lbl:latitude with no longitude must NOT produce a mixed point — geom: wins as a pair.
-writeFileSync(
-	join(DATA_DIR, "3.geojson"),
-	feature(3, { "geom:latitude": 30, "geom:longitude": 40, "lbl:latitude": 55 })
+await writeLocalFile(
+	feature(3, { "geom:latitude": 30, "geom:longitude": 40, "lbl:latitude": 55 }),
+	join(DATA_DIR, "3.geojson")
 )
 
 afterAll(() => ROOT[Symbol.asyncDispose]())

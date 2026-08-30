@@ -24,33 +24,36 @@
  *   Cheap enough to belong: measured 6.2 s end to end for 29 rows — two geocodes each plus one engine load.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync } from "@mailwoman/platform/fs"
 import { auditCaseFoldingSuite, CASE_FOLDING_SUITE_PATH } from "mailwoman/eval-harness/conformance/case-folding"
 import { runConformanceCommand } from "mailwoman/eval-harness/conformance/command"
 import { loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import { describe, expect, it } from "vitest"
 
-function weightsPresent(): boolean {
+async function weightsPresent(): Promise<boolean> {
 	try {
 		// ASK THE RESOLVER — see the module docstring, and `v1-parse-gate.test.ts`, which carries the incident.
-		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
 	} catch {
 		return false
 	}
 }
 
-const gazetteerPresent = (): boolean =>
-	existsSync(String(dataRootPath("wof", "admin-global-priority.db"))) &&
-	existsSync(String(dataRootPath("wof", "postcode-locality-intl.db")))
+const gazetteerPresent = async (): Promise<boolean> =>
+	(await pathExists(String(dataRootPath("wof", "admin-global-priority.db")))) &&
+	(await pathExists(String(dataRootPath("wof", "postcode-locality-intl.db"))))
 
-describe.skipIf(!weightsPresent() || !gazetteerPresent())("case-folding invariance — live pipeline", () => {
-	it("audits the committed suite before anything is geocoded", async () => {
-		expect(auditCaseFoldingSuite(await loadConformanceFixtures(CASE_FOLDING_SUITE_PATH))).toEqual([])
-	})
+describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
+	"case-folding invariance — live pipeline",
+	() => {
+		it("audits the committed suite before anything is geocoded", async () => {
+			expect(auditCaseFoldingSuite(await loadConformanceFixtures(CASE_FOLDING_SUITE_PATH))).toEqual([])
+		})
 
-	it("holds on every gating row, and prints the tracked ones", async () => {
-		expect(await runConformanceCommand({ suite: CASE_FOLDING_SUITE_PATH })).toBe(0)
-	}, 600_000)
-})
+		it("holds on every gating row, and prints the tracked ones", async () => {
+			expect(await runConformanceCommand({ suite: CASE_FOLDING_SUITE_PATH })).toBe(0)
+		}, 600_000)
+	}
+)

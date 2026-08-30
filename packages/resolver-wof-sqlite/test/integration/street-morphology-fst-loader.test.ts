@@ -15,9 +15,8 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
+import { writeLocalBuffer, changeMode, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
-import { chmodSync, writeFileSync } from "@mailwoman/platform/fs"
 import { deserializeFSTWeb } from "@mailwoman/resolver-wof-sqlite/fst-deserialize-web"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { PlaceEntry } from "@mailwoman/resolver-wof-sqlite/fst-types"
@@ -41,9 +40,9 @@ const tempDir = await temporaryDirectory("morphology-fst-loader-")
 const artifactPath = tempDir.resolve("fst-street-morphology.bin")
 const built = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR })
 
-writeFileSync(artifactPath, serializeFST(built.matcher, built.provenance))
+await writeLocalFile(serializeFST(built.matcher, built.provenance), artifactPath)
 // The sealed posture `mailwoman gazetteer build street-morphology` leaves.
-chmodSync(artifactPath, 0o444)
+await changeMode(artifactPath, 0o444)
 
 afterAll(() => tempDir[Symbol.asyncDispose]())
 

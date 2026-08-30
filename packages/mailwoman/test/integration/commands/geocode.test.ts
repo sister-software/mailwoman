@@ -20,12 +20,12 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
 // MARK: Paths
@@ -65,10 +65,10 @@ const CLI_TEST_TIMEOUT_MS = 120_000
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
-const hasWOFDB = existsSync(wofPath)
-const hasCLICompiled = existsSync(CLI_PATH)
-const hasTxAddressPoints = existsSync(TX_ADDRESS_POINTS_DB)
-const hasTxInterpolation = existsSync(TX_INTERPOLATION_DB)
+const hasWOFDB = await pathExists(wofPath)
+const hasCLICompiled = await pathExists(CLI_PATH)
+const hasTxAddressPoints = await pathExists(TX_ADDRESS_POINTS_DB)
+const hasTxInterpolation = await pathExists(TX_INTERPOLATION_DB)
 
 // MARK: Argument-validation tests (unconditional — no DB required)
 

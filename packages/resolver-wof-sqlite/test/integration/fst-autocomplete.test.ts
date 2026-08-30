@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
@@ -13,7 +13,7 @@ import type { PlaceEntry, PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst
 import { beforeAll, describe, expect, it } from "vitest"
 
 const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
-const HAS_WOF = existsSync(WOF_DB)
+const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 	let matcher: FSTMatcher

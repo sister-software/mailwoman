@@ -25,9 +25,8 @@
  *       smoke output, not predicted; the docstrings name the strings that produced them.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -56,8 +55,8 @@ export function defaultLexiconPath(): string {
 /**
  * Read and parse the lexicon. Strict: a corrupt lexicon is a build failure, not a fallback.
  */
-export function readSubVenueLexicon(path: string = defaultLexiconPath()): SubVenueLexiconTable {
-	return parseJSONStrict<SubVenueLexiconTable>(readFileSync(path, "utf8"))
+export async function readSubVenueLexicon(path: string = defaultLexiconPath()): Promise<SubVenueLexiconTable> {
+	return await readLocalJSONFile<SubVenueLexiconTable>(path)
 }
 
 //#endregion

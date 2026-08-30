@@ -38,14 +38,13 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
 import { execFile, spawn, type ChildProcess } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
@@ -66,11 +65,11 @@ const MAILWOMAN_CLI = workspacePath("mailwoman", "out", "cli.js")
 const MCP_CLI = workspacePath("mcp", "out", "cli.js")
 const MCP_PACKAGE_JSON = workspacePath("mcp", "package.json")
 
-const hasPhotonCLI = existsSync(PHOTON_CLI)
-const hasNominatimCLI = existsSync(NOMINATIM_CLI)
-const hasMCPCLI = existsSync(MCP_CLI)
-const hasLibpostalCLI = existsSync(LIBPOSTAL_CLI)
-const hasMailwomanCLI = existsSync(MAILWOMAN_CLI)
+const hasPhotonCLI = await pathExists(PHOTON_CLI)
+const hasNominatimCLI = await pathExists(NOMINATIM_CLI)
+const hasMCPCLI = await pathExists(MCP_CLI)
+const hasLibpostalCLI = await pathExists(LIBPOSTAL_CLI)
+const hasMailwomanCLI = await pathExists(MAILWOMAN_CLI)
 
 // Dedicated test-only ports, clear of the documented defaults (2322/8080/8081) and of the ports a manual cold-start
 // check might already be using. One named constant per server so the string arg (CLI `--port`) and the numeric arg

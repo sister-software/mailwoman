@@ -10,9 +10,8 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { WorkerHost } from "@mailwoman/dev-mcp/worker-host"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { afterAll, describe, expect, it } from "vitest"
 
 const STUB_DIR = await temporaryDirectory("mwdev-stub-worker-")
@@ -22,8 +21,7 @@ const TOOLS_PATH = STUB_DIR.resolve("tools.json")
 /**
  * A minimal worker speaking the IPC protocol: ready on handshake with the sidecar's tool metas, echo on call.
  */
-writeFileSync(
-	STUB_PATH,
+await writeLocalTextFile(
 	`const { readFileSync } = process.getBuiltinModule("node:fs")
 const tools = JSON.parse(readFileSync(process.argv[2], "utf8"))
 process.on("message", (message) => {
@@ -34,7 +32,8 @@ process.on("message", (message) => {
 		process.send({ type: "result", id: message.id, ok: true, value: message.args })
 	}
 })
-`
+`,
+	STUB_PATH
 )
 
 async function writeTools(schema: Record<string, unknown>): Promise<void> {

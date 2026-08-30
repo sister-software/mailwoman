@@ -9,11 +9,10 @@
  *   picks up a directory the loader excludes. None of them throws; each returns a confident number.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import {
 	buildCorpusCensus,
@@ -164,7 +163,7 @@ const CORPUS = String(
 	)
 )
 
-describe.skipIf(!existsSync(CORPUS))("buildCorpusCensus against a real shard", () => {
+describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real shard", () => {
 	it("counts street rows on a shard whose PROJECTION drops the labels column", async () => {
 		// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era writer's shards — silently,
 		// with no error — while the v0.5.0 base returns both. A dropped label column reads as "this country has no

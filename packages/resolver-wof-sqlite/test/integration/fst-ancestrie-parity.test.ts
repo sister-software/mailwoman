@@ -28,9 +28,8 @@
  *       stale-format file.
  */
 
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import type {
 	AutocompleteOpts,
 	AutocompleteResult,
@@ -320,7 +319,7 @@ const CURATED_QUERIES: Record<string, readonly string[]> = {
 
 for (const locale of ["en-gb", "es-es", "it-it"]) {
 	const artifactPath = String(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
-	const present = existsSync(artifactPath)
+	const present = await pathExists(artifactPath)
 
 	describe.skipIf(!present)(`fst-autocomplete ↔ ancestrie parity — shipped ${locale}`, () => {
 		it("answers identically across the derived + curated battery", async () => {

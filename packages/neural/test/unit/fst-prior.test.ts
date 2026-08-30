@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildFSTEmissionPriors,
@@ -17,7 +18,6 @@ import {
 } from "@mailwoman/neural/fst-prior"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, it, test } from "vitest"
 
 const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
@@ -26,7 +26,7 @@ const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokeni
 // only occur in ITS vocab, not the small fixture's. Not present in stripped-down CI, so this whole block skips
 // there; it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
-const haveProductionTokenizer = existsSync(PRODUCTION_TOKENIZER_PATH)
+const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
 
 function labelCol(label: string): number {
 	return STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])

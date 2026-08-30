@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveInputSet } from "@mailwoman/dev-mcp/input-sets"
-import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, it } from "vitest"
 
 /**
@@ -17,14 +17,14 @@ import { describe, expect, it } from "vitest"
  * A skipped suite is not a passing one: these assertions hold only on a machine carrying the artifacts, and CI's green
  * tick says nothing about them.
  */
-const havePanel = existsSync(String(dataRootPath("pelias-rig", "panel", "panel-v2.jsonl")))
-const havePanel21 = existsSync(String(dataRootPath("pelias-rig", "panel", "panel-v2.1.jsonl")))
-const haveGolden = existsSync(String(dataRootPath("eval", "golden", "v0.1.3", "dev", "us.jsonl")))
+const havePanel = await pathExists(String(dataRootPath("pelias-rig", "panel", "panel-v2.jsonl")))
+const havePanel21 = await pathExists(String(dataRootPath("pelias-rig", "panel", "panel-v2.1.jsonl")))
+const haveGolden = await pathExists(String(dataRootPath("eval", "golden", "v0.1.3", "dev", "us.jsonl")))
 /**
  * The `us` holdout source only. `fr` is a 5.06 GB CSV that a reservoir draw reads end to end — measured at 45.5 s
  * against `us`'s 113 ms — so exercising it in a unit suite would cost more than every other test here combined.
  */
-const haveHoldoutUS = existsSync(String(dataRootPath("corpus", "staging", "fdic-us.csv")))
+const haveHoldoutUS = await pathExists(String(dataRootPath("corpus", "staging", "fdic-us.csv")))
 
 describe("resolveInputSet — board", () => {
 	it("defaults to the whole board and reports its live corpus hash", async () => {

@@ -16,7 +16,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
 import { afterAll, describe, expect, test, vi } from "vitest"
@@ -26,7 +25,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
-const hasCLICompiled = existsSync(CLI_PATH)
+const hasCLICompiled = await pathExists(CLI_PATH)
 
 /**
  * Wall-clock budget for a CLI spawn — see the note in `geocode.test.ts`. A single spawn costs ~5.6 s, 2.7 s of it node

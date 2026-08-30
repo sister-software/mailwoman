@@ -40,7 +40,7 @@ export class ByteFormatter {
 	public static SI_UNITS = ["byte", "kilobyte", "megabyte", "gigabyte", "terabyte"] as const
 	public static IEC_UNITS = ["B", "KiB", "MiB", "GiB", "TiB"] as const
 
-	protected static shared = new ByteFormatter()
+	public static shared = new ByteFormatter()
 
 	/**
 	 * Formats a file size in bytes into a human-readable string with appropriate SI units (B, kB, MB, GB, TB).

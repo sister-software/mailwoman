@@ -35,14 +35,12 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
+import { pathExists, tryStat, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
 import type { PathLike } from "@mailwoman/platform/fs"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { copyFile, mkdir, unlink } from "@mailwoman/platform/fs/promises"
 import { resolve } from "@mailwoman/platform/path"
 
@@ -170,7 +168,7 @@ interface ReleaseConfig {
 	softFeed?: SoftFeedConfig
 }
 
-const config = parseJSONStrict<ReleaseConfig>(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
+const config = await readLocalJSONFile<ReleaseConfig>(resolve(repoRoot, "release.config.json"))
 const dataRoot = String(mailwomanDataRoot())
 /**
  * Model binary to copy into each weights workspace before packing.

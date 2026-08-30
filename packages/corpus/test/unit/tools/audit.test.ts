@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -12,12 +13,11 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { audit } from "@mailwoman/corpus/tools/audit"
 // Lightweight integration smoke against the actual corpus on this host. Skipped when the data
 // isn't present (CI / fresh clones); only the file-format-parsing tests run unconditionally.
-import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const CORPUS_PATH = dataRootPath("corpus", "versioned", "v0.3.0", "corpus-v0.3.0")
-const hasCorpus = existsSync(CORPUS_PATH)
+const hasCorpus = await pathExists(CORPUS_PATH)
 
 describe.skipIf(!hasCorpus)("audit — integration", () => {
 	it("emits a report without throwing on the v0.3.0 corpus + v0.4.0 config", async () => {

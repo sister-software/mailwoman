@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { execSync } from "@mailwoman/platform/child_process"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname, relative, resolve } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -80,7 +81,7 @@ const importRe = /(from\s+|require\(\s*)(["'])([^"'\n]+)\2/g
 let changed = 0
 
 for (const file of listFiles()) {
-	const src = readFileSync(file, "utf8")
+	const src = await readLocalTextFile(file)
 	let touched = false
 
 	const out = src.replace(importRe, (match, head, q, spec) => {
@@ -93,7 +94,7 @@ for (const file of listFiles()) {
 	})
 
 	if (touched) {
-		writeFileSync(file, out)
+		await writeLocalFile(out, file)
 
 		changed++
 	}

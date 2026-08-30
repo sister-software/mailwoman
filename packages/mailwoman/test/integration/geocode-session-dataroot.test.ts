@@ -15,16 +15,16 @@
  *   Before the fix this test's expectation fails: weights resolve from the env root and the session comes up.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession } from "mailwoman/geocode-session"
 import { afterAll, describe, expect, it } from "vitest"
 
 const REAL_CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
-const haveArtifacts = existsSync(REAL_CANDIDATE_DB)
+const haveArtifacts = await pathExists(REAL_CANDIDATE_DB)
 
 const BOGUS_ROOT = await temporaryDirectory("mw-bogus-root-")
 

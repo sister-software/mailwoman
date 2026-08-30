@@ -16,13 +16,14 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 
 const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
 const TRAIN_REMOTE = "corpus-python/modal/train_remote.py"
 
-if (!existsSync(PYTHON)) {
+if (!(await pathExists(PYTHON))) {
 	console.error(`✗ ${PYTHON} not found — create the corpus-python venv first`)
 
 	process.exit(2)

@@ -11,11 +11,10 @@
  *   writes a trailer at a non-zero offset and the reader is never handed the buffer.
  */
 
-import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalBuffer, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { setTimestamps, writeLocalBuffer, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { createHash } from "@mailwoman/platform/crypto"
-import { statSync, writeFileSync } from "@mailwoman/platform/fs"
 import {
 	fstFreshnessWarning,
 	fstStaleReason,
@@ -79,8 +78,8 @@ function provenanceOf(overrides: Partial<FSTProvenance> = {}): FSTProvenance {
 }
 
 const SOURCE = TMP.resolve("source.db")
-writeFileSync(SOURCE, "source bytes")
-const SOURCE_IDENTITY = { md5: md5FileSync(SOURCE), bytes: statSync(SOURCE).size }
+await writeLocalTextFile("source bytes", SOURCE)
+const SOURCE_IDENTITY = { md5: md5FileSync(SOURCE), bytes: (await statPath(SOURCE)).size }
 
 describe("md5FileSync", () => {
 	it("matches the digest of the same bytes hashed in one pass", () => {

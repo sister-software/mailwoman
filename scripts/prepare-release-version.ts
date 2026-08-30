@@ -28,7 +28,7 @@
  *   - `--check-only` — resolve + validate + print, but write nothing (the dry-run path).
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { readFileSync } from "@mailwoman/platform/fs"
@@ -84,9 +84,9 @@ if (values.version === "major" || values.version === "minor" || values.version =
 }
 
 // The SAME workspace list the publish loop uses (#756) — root + these is the full bump surface.
-const releaseItConfig = parseJSONStrict<{
+const releaseItConfig = await readLocalJSONFile<{
 	plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+}>(resolve(repoRoot, ".release-it.json"))
 
 const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
 
@@ -122,7 +122,7 @@ for (const { path, manifest } of parsed) {
 // the stringify write path used for the manifests would reformat it wholesale, moving the `weights` block a
 // code-only release must never touch (release-config-bump.test.ts pins the exact-one-line contract).
 const releaseConfigPath = resolve(repoRoot, "release.config.json")
-const releaseConfigText = readFileSync(releaseConfigPath, "utf8")
+const releaseConfigText = await readLocalTextFile(releaseConfigPath)
 const releaseConfig = parseJSONStrict<{ version?: string }>(releaseConfigText)
 
 if (releaseConfig.version !== rootManifest.version) {

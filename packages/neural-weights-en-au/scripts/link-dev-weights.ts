@@ -30,8 +30,9 @@
  *   checked-in repo files symlinked in place; there's nothing to go stale.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { linkForce, removeIfPresent } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
@@ -43,7 +44,7 @@ import { linkForce, removeIfPresent } from "@mailwoman/resolver-wof-sqlite/weigh
  */
 const DEST_DIR = String(weightsOverlayPath("en-au"))
 
-mkdirSync(DEST_DIR, { recursive: true })
+await makeDirectories(DEST_DIR)
 
 removeIfPresent(resolve(DEST_DIR, "model.onnx"))
 removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
@@ -54,7 +55,7 @@ removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
-if (existsSync(SRC_COUNTRY_LEXICON)) {
+if (await pathExists(SRC_COUNTRY_LEXICON)) {
 	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
@@ -73,7 +74,7 @@ if (existsSync(SRC_COUNTRY_LEXICON)) {
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
-if (existsSync(MORPHOLOGY_SRC)) {
+if (await pathExists(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
 
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)

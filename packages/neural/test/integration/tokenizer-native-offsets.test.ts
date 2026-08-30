@@ -23,15 +23,15 @@
  *      byte-identical across all 1,066).
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 // The dev tokenizer, same source link-dev-weights pins (v0.9.0-multisplice) — resolved via the
 // data root; skip cleanly on hosts without it.
 const TOKENIZER_PATH = String(dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model"))
-const haveTokenizer = existsSync(TOKENIZER_PATH)
+const haveTokenizer = await pathExists(TOKENIZER_PATH)
 
 describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 	test.skipIf(!haveTokenizer)("non-BMP input stays aligned after the surrogate pair", async () => {

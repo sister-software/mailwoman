@@ -10,7 +10,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	ANCHOR_DECISIVE_RATIO,
 	choosePoint,
@@ -76,12 +76,12 @@ describe("choosePoint (#1905)", () => {
 const GN_ROOT = await temporaryDirectory("mw-gn-anchor-")
 
 // Two rows in the standard GeoNames country-file layout: id, name, asciiname, alternates, lat, lon, …
-writeFileSync(
-	GN_ROOT.resolve("US.txt"),
+await writeLocalTextFile(
 	[
 		"4140963\tWashington\tWashington\t\t38.89511\t-77.03637\tP\tPPLC\tUS",
 		"999\tElsewhere\tElsewhere\t\t10\t20\tP\tPPL\tUS",
-	].join("\n")
+	].join("\n"),
+	GN_ROOT.resolve("US.txt")
 )
 
 afterAll(() => GN_ROOT[Symbol.asyncDispose]())

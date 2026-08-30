@@ -49,7 +49,7 @@
  *   ```
  */
 
-import { statPath, realPath } from "@mailwoman/core/fs/readers"
+import { statPath, realPath, pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath, median, percentile, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
 import { createReadStream, existsSync, readFileSync, statSync } from "@mailwoman/platform/fs"
@@ -233,40 +233,40 @@ function tryResolveWeights(): ResolvedWeights | null {
  * Ask a package where one of its files lives. Never assemble a path into another package's install directory by hand —
  * the layout is its owner's to change.
  */
-function tryResolveFile(specifier: string): string | null {
+async function tryResolveFile(specifier: string): Promise<string | null> {
 	try {
 		const resolved = requireFromHere.resolve(specifier)
 
-		return existsSync(resolved) ? resolved : null
+		return (await pathExists(resolved)) ? resolved : null
 	} catch {
 		return null
 	}
 }
 
-function tryChromiumExecutable(): string | null {
+async function tryChromiumExecutable(): Promise<string | null> {
 	try {
 		const executable = chromium.executablePath()
 
-		return existsSync(executable) ? executable : null
+		return (await pathExists(executable)) ? executable : null
 	} catch {
 		return null
 	}
 }
 
 const weights = tryResolveWeights()
-const haveModel = weights !== null && existsSync(weights.modelPath) && existsSync(weights.tokenizerPath)
-const haveBrowser = tryChromiumExecutable() !== null
+const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (await pathExists(weights.tokenizerPath))
+const haveBrowser = (await tryChromiumExecutable()) !== null
 
 /**
  * A LOCATOR for the onnxruntime-web asset directory, not the file the runtime will fetch: ORT picks its own `.wasm`
  * variant at load time, and the whole directory is mounted at `/ort/` so whichever it asks for is served and counted.
  */
-const ORT_DIST_LOCATOR = tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
+const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
-const SQLJS_ENTRY_FILE = tryResolveFile("sql.js-httpvfs/dist/index.js")
+const SQLJS_ENTRY_FILE = await tryResolveFile("sql.js-httpvfs/dist/index.js")
 const CANDIDATE_DB_PATH = String(dataRootPath("wof", "candidate.db"))
 
-const haveGazetteer = SQLJS_ENTRY_FILE !== null && existsSync(CANDIDATE_DB_PATH)
+const haveGazetteer = SQLJS_ENTRY_FILE !== null && (await pathExists(CANDIDATE_DB_PATH))
 const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null
 
 /**

@@ -54,7 +54,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 const definition = loadPhase2Definition()
-const freeze = parseJSONStrict<Phase2FreezeRecord>(readFileSync(PHASE2_FREEZE_PATH, "utf8"))
+const freeze = await readLocalJSONFile<Phase2FreezeRecord>(PHASE2_FREEZE_PATH)
 
 /**
  * The committed receipt's shape, narrowed to what this suite reads. Typing it here rather than importing the runner's

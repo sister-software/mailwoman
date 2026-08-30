@@ -382,6 +382,24 @@ function callbackHost(fn: SgNode<Lang>): string | undefined {
 let promoteNames = new Set<string>()
 
 /**
+ * Path fragments naming files where a call at MODULE SCOPE may become a top-level `await`, supplied by `--param
+ * topLevelAwait=…`.
+ *
+ * Off for everything by default. Top-level await makes a module's evaluation asynchronous, and this repository has
+ * already had to undo one for cause (`packages/core/resources/libpostal.ts`, #481). It is safe where the file is an
+ * ENTRY rather than an import — a `*.test.ts` vitest collects, a script run by `node` — and the caller says which those
+ * are rather than the codemod guessing.
+ */
+let topLevelAwaitPaths: string[] = []
+
+/**
+ * Whether this file may hold a top-level `await`.
+ */
+function allowsTopLevelAwait(filename: string): boolean {
+	return topLevelAwaitPaths.some((fragment) => filename.includes(fragment))
+}
+
+/**
  * The name a function is declared under, if it has one. The DECLARATION, not any ancestor: walking up names the arrow
  * inside `const rows = paths.map((p) => …)` as `rows`.
  */
@@ -1006,7 +1024,10 @@ function rewriteFilesystemCalls(pass: Pass): void {
 		const host = enclosing(call)
 		let plannedCascade: Cascade | undefined
 
-		if (!host.isAsync && !host.promotable && !host.inPromotionSet) {
+		// At module scope in a file the caller marked an entry, the `await` is legal as it stands.
+		const topLevel = !host.fn && allowsTopLevelAwait(root.filename())
+
+		if (!topLevel && !host.isAsync && !host.promotable && !host.inPromotionSet) {
 			// The call stands in a plain synchronous function. It can still move, but only if that function and every
 			// caller of it inside this file can become `async` — which `cascade` answers all-or-nothing.
 			const owner = host.fn && [...locals.values()].find((candidate) => candidate.fn.id() === host.fn?.id())
@@ -1201,11 +1222,17 @@ function reconcileImports(pass: Pass): void {
 const codemod: Codemod<Lang> = async (root, options) => {
 	const rootNode = root.root()
 
+	const params = options?.params as Record<string, unknown> | undefined
+
 	promoteNames = new Set(
-		String((options?.params as Record<string, unknown> | undefined)?.promote ?? "")
+		String(params?.promote ?? "")
 			.split(",")
 			.filter(Boolean)
 	)
+
+	topLevelAwaitPaths = String(params?.topLevelAwait ?? "")
+		.split(",")
+		.filter(Boolean)
 
 	const bindings = syncBindings(rootNode)
 	const namespaces = namespaceBindings(rootNode)

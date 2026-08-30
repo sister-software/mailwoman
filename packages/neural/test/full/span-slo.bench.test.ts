@@ -14,10 +14,10 @@
  *   pulling the onnxruntime web graph into the fast leg's shared module graph at collection time.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { existsSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
@@ -34,7 +34,7 @@ function stagedModel(cacheName: string): string {
 
 const V264 = stagedModel("v264-cache")
 const V301 = stagedModel("v301-cache")
-const have = existsSync(V264) && existsSync(V301)
+const have = (await pathExists(V264)) && (await pathExists(V301))
 
 describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 	it("reports the browser-runtime cost of the span graph", async () => {

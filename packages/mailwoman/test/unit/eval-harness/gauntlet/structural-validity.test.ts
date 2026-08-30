@@ -23,18 +23,17 @@
  */
 
 import { validateTree } from "@mailwoman/core/decoder"
-import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readDirectory, readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { parseForGeocode } from "mailwoman/geocode-core"
 import { describe, expect, it } from "vitest"
 
-function weightsPresent(): boolean {
+async function weightsPresent(): Promise<boolean> {
 	try {
-		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
 	} catch {
 		return false
 	}
@@ -87,7 +86,7 @@ async function boardRows(): Promise<Row[]> {
 	return rows
 }
 
-describe.skipIf(!weightsPresent())("board structural validity", () => {
+describe.skipIf(!(await weightsPresent()))("board structural validity", () => {
 	it("flags exactly the rows on the known-invalid list, and no others", { timeout: 300_000 }, async () => {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })

@@ -376,6 +376,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	const manifestPath = opts.outputPath.replace(/\.db$/, ".manifest.json")
 	await writeLocalJSONFile(manifest, manifestPath)
 
+	// TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
 	process.stderr.write(
 		`Done. ${imported.toLocaleString()} rows → ${opts.outputPath} (${(stat!.size / 1024 / 1024).toFixed(0)} MB)\n`
 	)

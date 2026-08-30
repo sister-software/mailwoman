@@ -285,6 +285,13 @@ export * from "./ingest-wof.ts"
 
 /**
  * Byte-size of the built artifact — a convenience for command summaries.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND
+ * REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
+ *
+ * THIS LIKELY NEEDS SOMETHNIG like a `readFileSize(pathLike, formatter = ByteFormatter.shared)` in core/fs.
+ *
+ * @deprecated use `ByteFormatter.formatIEC` from `@mailwoman/core/fs/formatters` instead.
  */
 export async function artifactSizeMB(path: string): Promise<number> {
 	return Math.round(((await statPath(path)).size / 1024 / 1024) * 10) / 10

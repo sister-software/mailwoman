@@ -5,7 +5,7 @@
  * @file Enforce tests as external consumers of workspace package contracts.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { readFileSync } from "@mailwoman/platform/fs"
 import { relative, resolve, sep } from "@mailwoman/platform/path"
@@ -16,7 +16,7 @@ interface RootManifest {
 }
 
 const root = String(repoRootPath())
-const manifest = parseJSONStrict<RootManifest>(readFileSync(resolve(root, "package.json"), "utf8"))
+const manifest = await readLocalJSONFile<RootManifest>(resolve(root, "package.json"))
 const failures: string[] = []
 const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const packageSuites = new Set(["full", "integration", "unit"])

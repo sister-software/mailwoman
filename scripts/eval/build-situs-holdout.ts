@@ -1,4 +1,4 @@
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 /**
@@ -68,7 +68,7 @@ for (const r of rows) {
 	lines.push(JSON.stringify({ input, lat: r.lat, lon: r.lon }))
 }
 
-writeFileSync(out, lines.join("\n") + "\n")
+await writeLocalTextFile(lines.join("\n") + "\n", out)
 
 console.log(
 	`${region || a.shard}: ${lines.length} holdout rows (of ${total.toLocaleString()} situs points, stride ${stride}) → ${out}`

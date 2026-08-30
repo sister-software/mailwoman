@@ -912,7 +912,7 @@ export const subVenueRecipe: ShardRecipe = {
 		const extractsDir = opts.extractsDir ?? dataRootPath("sub-venue", "extracts")
 		const poiDB = opts.poiDB ?? dataRootPath("poi", "poi.db")
 		const tuplesPath = opts.subVenueTuples ?? dataRootPath("corpus", "intermediate", "house-venue-tuples-v3.jsonl")
-		const lexicon: SubVenueLexiconTable = readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
+		const lexicon: SubVenueLexiconTable = await readSubVenueLexicon(opts.lexicon ?? defaultLexiconPath())
 
 		const context: EmitContext = {
 			write,
