@@ -23,8 +23,7 @@
  *   every one of which the hand-written suite was happy with. Do not regenerate it from parser output.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { decodeEntities, normalizeWhitespace, parseExhibit21, stripTags } from "@mailwoman/filer/sdk/exhibit21"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
@@ -46,8 +45,8 @@ const expected = await readLocalJSONFile<ExpectedFixtures>(join(FIXTURE_DIRECTOR
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
 
-function fixture(name: string): string {
-	return readLocalTextFileSync(join(FIXTURE_DIRECTORY, name))
+async function fixture(name: string): Promise<string> {
+	return await readLocalTextFile(join(FIXTURE_DIRECTORY, name))
 }
 
 /**
@@ -65,14 +64,14 @@ function normalized(html: string): string {
 const EXPECTED_TO_ABSTAIN_ENTIRELY = new Set(["alti-global-2025.htm"])
 
 describe("parseExhibit21 — real EDGAR filings", () => {
-	it.each(FIXTURE_NAMES)("%s reproduces the subsidiary list the document states", (name) => {
-		const result = parseExhibit21(fixture(name))
+	it.each(FIXTURE_NAMES)("%s reproduces the subsidiary list the document states", async (name) => {
+		const result = parseExhibit21(await fixture(name))
 
 		expect(result.subsidiaries).toEqual(expected.fixtures[name]!.subsidiaries)
 	})
 
-	it.each(FIXTURE_NAMES)("%s never throws, and counts what it abstained from", (name) => {
-		const result = parseExhibit21(fixture(name))
+	it.each(FIXTURE_NAMES)("%s never throws, and counts what it abstained from", async (name) => {
+		const result = parseExhibit21(await fixture(name))
 
 		expect(Number.isInteger(result.unparseable)).toBe(true)
 		expect(result.unparseable).toBeGreaterThanOrEqual(0)
@@ -80,13 +79,17 @@ describe("parseExhibit21 — real EDGAR filings", () => {
 
 	it.each(FIXTURE_NAMES.filter((name) => !EXPECTED_TO_ABSTAIN_ENTIRELY.has(name)))(
 		"%s yields at least one subsidiary",
-		(name) => {
-			expect(parseExhibit21(fixture(name)).subsidiaries.length).toBeGreaterThan(0)
+		async (name) => {
+			expect(parseExhibit21(await fixture(name)).subsidiaries.length).toBeGreaterThan(0)
 		}
 	)
 
-	it("recovers 142 subsidiaries across the corpus", () => {
-		const total = FIXTURE_NAMES.reduce((sum, name) => sum + parseExhibit21(fixture(name)).subsidiaries.length, 0)
+	it("recovers 142 subsidiaries across the corpus", async () => {
+		let total = 0
+
+		for (const name of FIXTURE_NAMES) {
+			total += parseExhibit21(await fixture(name)).subsidiaries.length
+		}
 
 		expect(total).toBe(142)
 	})
@@ -107,15 +110,18 @@ describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 		/^[([]?\d{1,3}[)\]]?$/,
 	]
 
-	it.each(FIXTURE_NAMES)("%s emits no SGML envelope token, filename, bullet or footnote marker as a name", (name) => {
-		for (const subsidiary of parseExhibit21(fixture(name)).subsidiaries) {
-			for (const pattern of NEVER_A_SUBSIDIARY_NAME) {
-				expect(subsidiary.name, `${name}: ${JSON.stringify(subsidiary.name)}`).not.toMatch(pattern)
+	it.each(FIXTURE_NAMES)(
+		"%s emits no SGML envelope token, filename, bullet or footnote marker as a name",
+		async (name) => {
+			for (const subsidiary of parseExhibit21(await fixture(name)).subsidiaries) {
+				for (const pattern of NEVER_A_SUBSIDIARY_NAME) {
+					expect(subsidiary.name, `${name}: ${JSON.stringify(subsidiary.name)}`).not.toMatch(pattern)
+				}
 			}
 		}
-	})
+	)
 
-	it.each(FIXTURE_NAMES)("%s emits no column header as a name or a jurisdiction", (name) => {
+	it.each(FIXTURE_NAMES)("%s emits no column header as a name or a jurisdiction", async (name) => {
 		const HEADER_LABELS = new Set([
 			"entity name",
 			"legal name",
@@ -134,7 +140,7 @@ describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 			"% of ownership",
 		])
 
-		for (const subsidiary of parseExhibit21(fixture(name)).subsidiaries) {
+		for (const subsidiary of parseExhibit21(await fixture(name)).subsidiaries) {
 			expect(HEADER_LABELS.has(subsidiary.name.toLowerCase()), `${name}: name ${subsidiary.name}`).toBe(false)
 
 			if (subsidiary.jurisdiction) {
@@ -146,10 +152,10 @@ describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 		}
 	})
 
-	it.each(FIXTURE_NAMES)("%s keeps the substring invariant — nothing assembled, nothing truncated", (name) => {
-		const haystack = normalized(fixture(name))
+	it.each(FIXTURE_NAMES)("%s keeps the substring invariant — nothing assembled, nothing truncated", async (name) => {
+		const haystack = normalized(await fixture(name))
 
-		for (const subsidiary of parseExhibit21(fixture(name)).subsidiaries) {
+		for (const subsidiary of parseExhibit21(await fixture(name)).subsidiaries) {
 			expect(haystack, `${name}: name ${JSON.stringify(subsidiary.name)}`).toContain(subsidiary.name)
 
 			if (subsidiary.jurisdiction) {
@@ -162,37 +168,37 @@ describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 })
 
 describe("parseExhibit21 — real EDGAR filings, named regressions", () => {
-	it("reads AT&T's second table, which continues the first under no header of its own", () => {
-		const names = parseExhibit21(fixture("att-2025.htm")).subsidiaries.map((subsidiary) => subsidiary.name)
+	it("reads AT&T's second table, which continues the first under no header of its own", async () => {
+		const names = parseExhibit21(await fixture("att-2025.htm")).subsidiaries.map((subsidiary) => subsidiary.name)
 
 		expect(names).toContain("Illinois Bell Telephone Company, LLC")
 		expect(names).toContain("BellSouth Telecommunications, LLC")
 		expect(names).toContain("Cricket Wireless LLC")
 	})
 
-	it("reads Cable One through its all-blank spacer column", () => {
-		expect(parseExhibit21(fixture("cable-one-2025.htm")).subsidiaries).toContainEqual({
+	it("reads Cable One through its all-blank spacer column", async () => {
+		expect(parseExhibit21(await fixture("cable-one-2025.htm")).subsidiaries).toContainEqual({
 			name: "Hargray Communications Group, Inc.",
 			jurisdiction: "South Carolina",
 		})
 	})
 
-	it("reads Shenandoah's block-text list, whose two tables are entirely blank", () => {
-		const names = parseExhibit21(fixture("shentel-2025.htm")).subsidiaries.map((subsidiary) => subsidiary.name)
+	it("reads Shenandoah's block-text list, whose two tables are entirely blank", async () => {
+		const names = parseExhibit21(await fixture("shentel-2025.htm")).subsidiaries.map((subsidiary) => subsidiary.name)
 
 		expect(names).toContain("The Chillicothe Telephone Company")
 		expect(names).not.toContain("SHENANDOAH TELECOMMUNICATIONS COMPANY AND SUBSIDIARIES")
 	})
 
-	it("splits Bandwidth's bulleted 'Name (Jurisdiction)' lines on the parenthetical, not the bullet", () => {
-		expect(parseExhibit21(fixture("bandwidth-2025.htm")).subsidiaries).toContainEqual({
+	it("splits Bandwidth's bulleted 'Name (Jurisdiction)' lines on the parenthetical, not the bullet", async () => {
+		expect(parseExhibit21(await fixture("bandwidth-2025.htm")).subsidiaries).toContainEqual({
 			name: "Voxbone Telekomunikasyon ve Iletisim Hizmetleri Ticaret Limited Sirketi",
 			jurisdiction: "Turkey",
 		})
 	})
 
-	it("abstains on IDT's two-across name/name table rather than calling one company another's jurisdiction", () => {
-		const result = parseExhibit21(fixture("idt-2025.htm"))
+	it("abstains on IDT's two-across name/name table rather than calling one company another's jurisdiction", async () => {
+		const result = parseExhibit21(await fixture("idt-2025.htm"))
 
 		for (const subsidiary of result.subsidiaries) {
 			expect(subsidiary.jurisdiction ?? "").not.toMatch(/IDT Payment Services/)
@@ -201,14 +207,14 @@ describe("parseExhibit21 — real EDGAR filings, named regressions", () => {
 		expect(result.subsidiaries.map((subsidiary) => subsidiary.name)).not.toContain("IDT America, Corp. (NJ)")
 	})
 
-	it("abstains on Ooma's one cell holding five entities in five <p> blocks", () => {
-		for (const subsidiary of parseExhibit21(fixture("ooma-2025.htm")).subsidiaries) {
+	it("abstains on Ooma's one cell holding five entities in five <p> blocks", async () => {
+		for (const subsidiary of parseExhibit21(await fixture("ooma-2025.htm")).subsidiaries) {
 			expect(subsidiary.name).not.toMatch(/FluentStream/)
 		}
 	})
 
-	it("skips EchoStar's four footnote tables while reading its four-column list", () => {
-		const result = parseExhibit21(fixture("echostar-2025.htm"))
+	it("skips EchoStar's four footnote tables while reading its four-column list", async () => {
+		const result = parseExhibit21(await fixture("echostar-2025.htm"))
 
 		expect(result.subsidiaries).toContainEqual({ name: "DISH Wireless L.L.C.", jurisdiction: "Colorado" })
 

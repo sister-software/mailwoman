@@ -29,7 +29,6 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { resolve } from "@mailwoman/platform/path"
@@ -97,15 +96,17 @@ if (!Array.isArray(workspaces) || !workspaces.length) {
 const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolve(repoRoot, ws, "package.json"))]
 
 // Validate the whole set BEFORE writing anything — a half-bumped tree is worse than a failed run.
-const parsed = manifestPaths.map((path) => {
-	const manifest = readLocalJSONFileSync<Record<string, unknown>>(path)
+const parsed: Array<{ path: string; manifest: Record<string, unknown> }> = []
+
+for (const path of manifestPaths) {
+	const manifest = await readLocalJSONFile<Record<string, unknown>>(path)
 
 	if (typeof manifest.version !== "string") {
 		fail(`${path} has no version field`)
 	}
 
-	return { path, manifest }
-})
+	parsed.push({ path, manifest })
+}
 
 for (const { path, manifest } of parsed) {
 	if (manifest.version !== rootManifest.version) {

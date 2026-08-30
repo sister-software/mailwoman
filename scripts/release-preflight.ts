@@ -125,7 +125,7 @@ async function releasePreflight(): Promise<void> {
 		reportHFMaterialization(materialization)
 	}
 
-	const results = await auditStagedWorkspaces(stagingRoot, releaseWorkspaces(repoRoot))
+	const results = await auditStagedWorkspaces(stagingRoot, await releaseWorkspaces(repoRoot))
 	const failed = results.filter((result) => !result.ok)
 
 	for (const result of results) {

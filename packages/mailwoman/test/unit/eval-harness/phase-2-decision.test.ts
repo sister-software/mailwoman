@@ -13,7 +13,6 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
@@ -71,6 +70,8 @@ interface CommittedReceipt {
 	recorded: boolean
 	recordingNote: string
 }
+
+const receipt = await readLocalJSONFile<CommittedReceipt>(PHASE2_RECEIPT_PATH)
 
 /**
  * Write a definition + freeze pair into a scratch directory, so a refusal can be provoked without touching the
@@ -469,8 +470,6 @@ describe("the pre-registration agrees with the artifacts it names", () => {
 })
 
 describe("the committed receipt", () => {
-	const receipt = readLocalJSONFileSync<CommittedReceipt>(PHASE2_RECEIPT_PATH)
-
 	it("was measured against this exact ruler", async () => {
 		expect(receipt.decisionID).toBe(definition.decisionID)
 		expect(receipt.definitionVersion).toBe(definition.version)

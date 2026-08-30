@@ -50,7 +50,7 @@ const repoRoot = repoRootPath()
  * The derived-artifact store for THIS checkout's inputs. Computed once — the key is a hash over files that do not
  * change mid-run.
  */
-const derivedStore = derivedWeightsDir(derivedWeightsKey())
+const derivedStore = derivedWeightsDir(await derivedWeightsKey())
 
 /**
  * Serve `filename` into `dir` from the derived store, if this checkout's key already has it.

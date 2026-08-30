@@ -22,7 +22,7 @@
  *   PATH, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
  */
 
-import { isExecutableSync } from "@mailwoman/core/fs/readers-sync"
+import { isExecutable } from "@mailwoman/core/fs/readers"
 import { spawn } from "@mailwoman/platform/child_process"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, it } from "vitest"
@@ -48,11 +48,13 @@ const READY_TIMEOUT_MS = 20_000
 const KEYSTROKE_GAP_MS = 250
 const TEST_TIMEOUT_MS = 60_000
 
-function hasLinuxScript(): boolean {
+async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false
 
-	return isExecutableSync("/usr/bin/script")
+	return await isExecutable("/usr/bin/script")
 }
+
+const HAS_LINUX_SCRIPT = await hasLinuxScript()
 
 function delay(ms: number): Promise<void> {
 	return new Promise((resolve) => {
@@ -111,7 +113,7 @@ function valueSamples(output: string): string[] {
 	return output.replaceAll(/\u001B\[[\d;?]*[a-zA-Z]/gu, "").match(/VALUE=\[[^\]]*\]/gu) ?? []
 }
 
-describe.skipIf(!hasLinuxScript())("debug-view input field (pty)", () => {
+describe.skipIf(!HAS_LINUX_SCRIPT)("debug-view input field (pty)", () => {
 	it(
 		"deletes the word before the cursor on meta+backspace and on ctrl+W, inserting nothing",
 		async () => {

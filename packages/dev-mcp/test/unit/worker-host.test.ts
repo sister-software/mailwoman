@@ -22,8 +22,8 @@ const TOOLS_PATH = STUB_DIR.resolve("tools.json")
  * A minimal worker speaking the IPC protocol: ready on handshake with the sidecar's tool metas, echo on call.
  */
 await writeLocalTextFile(
-	`const { readFileSync } = process.getBuiltinModule("node:fs")
-const tools = JSON.parse(readFileSync(process.argv[2], "utf8"))
+	`const { promises: fs } = process.getBuiltinModule("node:fs")
+const tools = JSON.parse(await fs.readFile(process.argv[2], "utf8"))
 process.on("message", (message) => {
 	if (message.type === "handshake") {
 		process.send({ type: "ready", pid: process.pid, bootFingerprint: "stub", tools })

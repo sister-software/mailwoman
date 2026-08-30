@@ -5,8 +5,7 @@
  * @file Enforce tests as external consumers of workspace package contracts.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { relative, resolve, sep } from "@mailwoman/platform/path"
 import ts from "typescript"
@@ -22,8 +21,8 @@ const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const packageSuites = new Set(["full", "integration", "unit"])
 const docsSuites = new Set([...packageSuites, "browser", "build", "e2e"])
 
-function moduleSpecifiers(filePath: string): string[] {
-	const sourceText = readLocalTextFileSync(filePath)
+async function moduleSpecifiers(filePath: string): Promise<string[]> {
+	const sourceText = await readLocalTextFile(filePath)
 	const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 	const specifiers: string[] = []
 
@@ -66,7 +65,7 @@ for (const workspace of manifest.workspaces) {
 			)
 		}
 
-		for (const specifier of moduleSpecifiers(filePath)) {
+		for (const specifier of await moduleSpecifiers(filePath)) {
 			if (specifier.startsWith(".")) {
 				failures.push(
 					`${relative(root, filePath)}: relative module import ${JSON.stringify(specifier)} bypasses the package contract`

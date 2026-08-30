@@ -19,8 +19,8 @@
  * it through harness-neural (formerly harness-v0-neural with --symmetric-match).
  */
 
-import { readDirectorySync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
-import { makeDirectoriesSync, writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
+import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { dirname, join } from "@mailwoman/platform/path"
@@ -59,18 +59,16 @@ const PERTURBATIONS: Array<{ name: string; apply: (raw: string) => string }> = [
 	{ name: "glue", apply: glue },
 ]
 
-function main(): void {
-	makeDirectoriesSync(dirname(OUT))
+async function main(): Promise<void> {
+	await makeDirectories(dirname(OUT))
 	const out: string[] = []
 	let base = 0
 
-	for (const file of readDirectorySync(GOLDEN).filter((f) => f.endsWith(".jsonl"))) {
+	for (const file of (await readDirectory(GOLDEN)).filter((f) => f.endsWith(".jsonl"))) {
 		// The stride below needs the row COUNT before it can pick a row, then indexes them, so the whole
 		// set has to be resident either way — streaming would only move the materialization.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- see above
-		const lines = readLocalTextFileSync(join(GOLDEN, file))
-			.split("\n")
-			.filter((l) => l.trim())
+		const lines = (await readLocalTextFile(join(GOLDEN, file))).split("\n").filter((l) => l.trim())
 
 		// Deterministic spread: every Nth row up to PER_FILE.
 		const step = Math.max(1, Math.floor(lines.length / PER_FILE))
@@ -110,9 +108,9 @@ function main(): void {
 		base += PER_FILE
 	}
 
-	writeLocalTextFileSync(out.join("\n") + "\n", OUT)
+	await writeLocalTextFile(out.join("\n") + "\n", OUT)
 
 	console.log(`wrote ${out.length} perturbed cases (${PERTURBATIONS.map((p) => p.name).join(", ")}) → ${OUT}`)
 }
 
-main()
+await main()

@@ -54,7 +54,7 @@ export async function checkVersionSync(repoRoot: string): Promise<VersionSyncRes
 		throw new TypeError(`verify-version-sync: ${repoRoot}/package.json declares no string "version".`)
 	}
 
-	const workspaces = releaseWorkspaces(repoRoot)
+	const workspaces = await releaseWorkspaces(repoRoot)
 	const drift: VersionDrift[] = []
 
 	for (const workspace of workspaces) {

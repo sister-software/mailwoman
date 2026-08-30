@@ -17,8 +17,7 @@
  *       output shape, no API divergence.
  */
 
-import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
@@ -30,11 +29,11 @@ import { describe, expect, test } from "vitest"
 // `scripts/link-dev-weights.ts` after a training run. Skip the real-model tests when the weights
 // package's `model.onnx` isn't on disk; the runner's structural behavior still gets exercised by
 // `web-onnx-runner.unit.test.ts`, which mocks the runtime and needs no model.
-function probeWeights(): { modelPath: string; tokenizerPath: string; modelCardPath?: string } | null {
+async function probeWeights(): Promise<{ modelPath: string; tokenizerPath: string; modelCardPath?: string } | null> {
 	try {
 		const r = resolveWeights({})
 
-		if (!pathExistsSync(r.modelPath) || !pathExistsSync(r.tokenizerPath)) return null
+		if (!(await pathExists(r.modelPath)) || !(await pathExists(r.tokenizerPath))) return null
 
 		return r
 	} catch {
@@ -42,7 +41,7 @@ function probeWeights(): { modelPath: string; tokenizerPath: string; modelCardPa
 	}
 }
 
-const weights = probeWeights()
+const weights = await probeWeights()
 const haveWeights = weights !== null
 
 describe.skipIf(!haveWeights)("WebONNXRunner", () => {

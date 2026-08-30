@@ -14,7 +14,7 @@
 
 /// <reference types="vitest/config" />
 
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import type { Alias } from "vite"
@@ -44,17 +44,17 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  * `parseJSONStrict` lives behind the very aliases {@link workspaceAliases} generates, so importing it here would make
  * the config depend on its own output. A malformed manifest should abort the run, which is what a bare throw does.
  */
-function readManifest<T>(path: string): T {
+async function readManifest<T>(path: string): Promise<T> {
 	// oxlint-disable-next-line no-restricted-properties -- see above.
-	return readLocalJSONFileSync<T>(path)
+	return await readLocalJSONFile<T>(path)
 }
 
-function workspaceAliases(): Alias[] {
-	const root = readManifest<{ workspaces: string[] }>(resolve(here, "package.json"))
+async function workspaceAliases(): Promise<Alias[]> {
+	const root = await readManifest<{ workspaces: string[] }>(resolve(here, "package.json"))
 	const aliases: Array<Alias & { specificity: number; wildcard: boolean }> = []
 
 	for (const workspace of root.workspaces) {
-		const manifest = readManifest<{
+		const manifest = await readManifest<{
 			name?: string
 			exports?: Record<string, string | Record<string, string>>
 		}>(resolve(here, workspace, "package.json"))
@@ -87,7 +87,7 @@ function workspaceAliases(): Alias[] {
 export default defineConfig({
 	resolve: {
 		alias: [
-			...workspaceAliases(),
+			...(await workspaceAliases()),
 			// onnxruntime-web's `/webgpu` subpath ships browser-only bundles: under Node they fetch()
 			// their Emscripten loader as a file:// URL (undici rejects the scheme) and then import() a
 			// blob: URL (Node's ESM loader rejects that too). The root export carries a `node`

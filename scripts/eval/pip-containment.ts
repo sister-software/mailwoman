@@ -19,8 +19,8 @@
  *   NAME] [--json OUT]
  */
 
-import { globPathsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
-import { writeLocalJSONFileSync } from "@mailwoman/core/fs/writers-sync"
+import { globPaths, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, pyFixed } from "@mailwoman/core/utils"
@@ -33,11 +33,11 @@ const MAX_LISTED_ARTIFACTS = 12
 
 const WOF_REPOS = dataRootPath("wof", "repos")
 
-function adminRoots(): string[] {
+async function adminRoots(): Promise<string[]> {
 	let matched: string[]
 
 	try {
-		matched = globPathsSync(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)
+		matched = await globPaths(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)
 	} catch {
 		matched = []
 	}
@@ -47,7 +47,7 @@ function adminRoots(): string[] {
 	return [...matched, `${WOF_REPOS}/whosonfirst-data-admin-us/data`]
 }
 
-const ADMIN_ROOTS = adminRoots()
+const ADMIN_ROOTS = await adminRoots()
 
 type Ring = number[][]
 
@@ -167,7 +167,7 @@ interface ResolvedRow {
 	neuralLoc?: unknown
 }
 
-function main(): number {
+async function main(): Promise<number> {
 	// --- arg parsing: <resolved.json> [--label NAME] [--json OUT] ---------------
 	// node:util parseArgs — flags + one positional source path (old scan parity: unknown flags tolerated).
 	const { values, positionals } = parseArgs({
@@ -186,7 +186,7 @@ function main(): number {
 		return 2
 	}
 
-	const rows = readLocalJSONFileSync<ResolvedRow[]>(src)
+	const rows = await readLocalJSONFile<ResolvedRow[]>(src)
 	const overall: Counter = {}
 	const byState: Record<string, Counter> = {}
 	const artifactExamples: string[] = []
@@ -253,7 +253,7 @@ function main(): number {
 			no_polygon: noPoly,
 		}
 
-		writeLocalJSONFileSync(summary, jsonOut)
+		await writeLocalJSONFile(summary, jsonOut)
 
 		console.error(`\nwrote summary → ${jsonOut}`)
 	}

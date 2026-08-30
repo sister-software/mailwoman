@@ -19,7 +19,6 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { join, resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
@@ -61,8 +60,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 /**
  * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from.
  */
-export function releaseWorkspaces(repoRoot: string): string[] {
-	const config = readLocalJSONFileSync<{
+export async function releaseWorkspaces(repoRoot: string): Promise<string[]> {
+	const config = await readLocalJSONFile<{
 		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
 	}>(resolve(repoRoot, ".release-it.json"))
 
@@ -94,7 +93,7 @@ export interface ReleaseListIdentity {
 export async function checkReleaseListIdentity(repoRoot: string): Promise<ReleaseListIdentity> {
 	const root = (await readLocalJSONFile<{ workspaces: string[] }>(resolve(repoRoot, "package.json"))).workspaces
 
-	const release = new Set(releaseWorkspaces(repoRoot))
+	const release = new Set(await releaseWorkspaces(repoRoot))
 	const rootSet = new Set(root)
 	const absences = root.filter((workspace) => !release.has(workspace))
 
@@ -122,7 +121,7 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: string): P
 
 	await $({ cwd: repoRoot })`git archive HEAD`.pipe($`tar -x -C ${stagingRoot}`)
 
-	for (const workspace of releaseWorkspaces(repoRoot)) {
+	for (const workspace of await releaseWorkspaces(repoRoot)) {
 		const compiled = resolve(repoRoot, workspace, "out")
 
 		if (await pathExists(compiled)) {
@@ -160,17 +159,19 @@ export async function auditStagedWorkspaces(
 
 	await makeDirectories(tarballDir)
 
-	return workspaces.map((workspace) => {
+	const results: WorkspaceAuditResult[] = []
+
+	for (const workspace of workspaces) {
 		const tarball = join(tarballDir, `${workspace.replaceAll("/", "__")}.tgz`)
 
 		try {
-			packWorkspaceForPublish(join(stagingRoot, workspace), tarball)
+			await packWorkspaceForPublish(join(stagingRoot, workspace), tarball)
 
 			// Throws with every violation listed when the tarball does not honor its manifest — the catch below
 			// is the collection point, so one sweep reports every broken package.
 			const audit = verifyTarball(tarball)
 
-			return {
+			results.push({
 				workspace,
 				ok: true,
 				failures: [],
@@ -179,9 +180,11 @@ export async function auditStagedWorkspaces(
 					exportTargets: audit.exportTargets,
 					binTargets: audit.binTargets,
 				},
-			}
+			})
 		} catch (error) {
-			return { workspace, ok: false, failures: [(error as Error).message] }
+			results.push({ workspace, ok: false, failures: [(error as Error).message] })
 		}
-	})
+	}
+
+	return results
 }

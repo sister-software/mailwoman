@@ -56,17 +56,17 @@ describe("derivedWeightsKeyFrom", () => {
 		const a = scratch.resolve("a.json")
 		await writeLocalTextFile('{"x":1}', a)
 
-		expect(derivedWeightsKeyFrom([at(a)])).toBe(derivedWeightsKeyFrom([at(a)]))
+		expect(await derivedWeightsKeyFrom([at(a)])).toBe(await derivedWeightsKeyFrom([at(a)]))
 	})
 
 	it("changes when a hashed input's CONTENT changes", async () => {
 		const a = scratch.resolve("a.json")
 		await writeLocalTextFile('{"x":1}', a)
-		const before = derivedWeightsKeyFrom([at(a)])
+		const before = await derivedWeightsKeyFrom([at(a)])
 
 		await writeLocalTextFile('{"x":2}', a)
 
-		expect(derivedWeightsKeyFrom([at(a)])).not.toBe(before)
+		expect(await derivedWeightsKeyFrom([at(a)])).not.toBe(before)
 	})
 
 	it("changes when a GENERATING MODULE changes — the currency-filter regression", async () => {
@@ -74,12 +74,12 @@ describe("derivedWeightsKeyFrom", () => {
 		const generator = scratch.resolve("pair-index.tsx")
 		await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', config)
 		await writeLocalTextFile("export const delta = 1", generator)
-		const before = derivedWeightsKeyFrom([at(config), at(generator)])
+		const before = await derivedWeightsKeyFrom([at(config), at(generator)])
 
 		// The config is untouched; only the code that produces the binaries changed.
 		await writeLocalTextFile("export const delta = 2", generator)
 
-		expect(derivedWeightsKeyFrom([at(config), at(generator)])).not.toBe(before)
+		expect(await derivedWeightsKeyFrom([at(config), at(generator)])).not.toBe(before)
 	})
 
 	it("is order-independent across the input list", async () => {
@@ -88,23 +88,23 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeLocalTextFile("1", a)
 		await writeLocalTextFile("2", b)
 
-		expect(derivedWeightsKeyFrom([at(a), at(b)])).toBe(derivedWeightsKeyFrom([at(b), at(a)]))
+		expect(await derivedWeightsKeyFrom([at(a), at(b)])).toBe(await derivedWeightsKeyFrom([at(b), at(a)]))
 	})
 
 	it("treats a MISSING input as a distinct state, not as empty", async () => {
 		const a = scratch.resolve("a.json")
 		await writeLocalTextFile("1", a)
-		const present = derivedWeightsKeyFrom([at(a)])
+		const present = await derivedWeightsKeyFrom([at(a)])
 
 		await removePath(a)
-		const absent = derivedWeightsKeyFrom([at(a)])
+		const absent = await derivedWeightsKeyFrom([at(a)])
 
 		const empty = scratch.resolve("empty.json")
 		await writeLocalTextFile("", empty)
 
 		// Absence is not zero: a file that is gone must not hash like a file that is empty.
 		expect(absent).not.toBe(present)
-		expect(absent).not.toBe(derivedWeightsKeyFrom([at(empty)]))
+		expect(absent).not.toBe(await derivedWeightsKeyFrom([at(empty)]))
 	})
 
 	it("distinguishes inputs by NAME", async () => {
@@ -114,7 +114,7 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeLocalTextFile("same", b)
 
 		// Renaming an input is a change, even when the bytes are identical.
-		expect(derivedWeightsKeyFrom([at(a)])).not.toBe(derivedWeightsKeyFrom([at(b)]))
+		expect(await derivedWeightsKeyFrom([at(a)])).not.toBe(await derivedWeightsKeyFrom([at(b)]))
 	})
 
 	it("is INVARIANT to checkout location — the whole point of a shared store", async () => {
@@ -136,17 +136,17 @@ describe("derivedWeightsKeyFrom", () => {
 			at(join(root, "pair-index.tsx"), "packages/mailwoman/commands/gazetteer/pair-index.tsx"),
 		]
 
-		expect(derivedWeightsKeyFrom(inputsFor(checkoutA))).toBe(derivedWeightsKeyFrom(inputsFor(checkoutB)))
+		expect(await derivedWeightsKeyFrom(inputsFor(checkoutA))).toBe(await derivedWeightsKeyFrom(inputsFor(checkoutB)))
 	})
 
-	it("returns a 16-hex-char key", () => {
-		expect(derivedWeightsKeyFrom([])).toMatch(/^[0-9a-f]{16}$/)
+	it("returns a 16-hex-char key", async () => {
+		expect(await derivedWeightsKeyFrom([])).toMatch(/^[0-9a-f]{16}$/)
 	})
 })
 
 describe("derivedWeightsKey", () => {
-	it("resolves against the real repo and returns a well-formed key", () => {
-		expect(derivedWeightsKey()).toMatch(/^[0-9a-f]{16}$/)
+	it("resolves against the real repo and returns a well-formed key", async () => {
+		expect(await derivedWeightsKey()).toMatch(/^[0-9a-f]{16}$/)
 	})
 
 	it("names the generating CLI modules, not just the config and data", () => {

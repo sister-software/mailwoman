@@ -66,7 +66,7 @@ trap cleanup EXIT
 PACK_HELPER="$TAR_DIR/pack-closure.mjs"
 
 cat >"$PACK_HELPER" <<'NODE_EOF'
-import { readFileSync, writeFileSync } from "node:fs"
+import { readFile, writeFile } from "node:fs/promises"
 import { resolve } from "node:path"
 
 const [, , repoRoot, tarDir] = process.argv
@@ -74,12 +74,12 @@ const seeds = ["mailwoman", "@mailwoman/neural", "@mailwoman/neural-weights-en-u
 
 const { packWorkspaceForPublish } = await import(resolve(repoRoot, "scripts/pack-workspace.ts"))
 
-const rootPkg = JSON.parse(readFileSync(resolve(repoRoot, "package.json"), "utf8"))
+const rootPkg = JSON.parse(await readFile(resolve(repoRoot, "package.json"), "utf8"))
 const nameToDir = {}
 
 for (const dir of rootPkg.workspaces) {
 	try {
-		const pkg = JSON.parse(readFileSync(resolve(repoRoot, dir, "package.json"), "utf8"))
+		const pkg = JSON.parse(await readFile(resolve(repoRoot, dir, "package.json"), "utf8"))
 		nameToDir[pkg.name] = dir
 	} catch {
 		// A workspace entry with no package.json yet (shouldn't happen here) — skip rather than crash.
@@ -101,7 +101,7 @@ while (queue.length) {
 	const dir = nameToDir[name]
 	if (!dir) throw new Error(`no workspace directory found for ${name} (checked root package.json workspaces)`)
 
-	const pkg = JSON.parse(readFileSync(resolve(repoRoot, dir, "package.json"), "utf8"))
+	const pkg = JSON.parse(await readFile(resolve(repoRoot, dir, "package.json"), "utf8"))
 
 	for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"]) {
 		for (const [dep, spec] of Object.entries(pkg[depType] ?? {})) {
@@ -123,7 +123,7 @@ for (const name of [...closure].sort()) {
 	deps[name] = `file:${tgz}`
 }
 
-writeFileSync(resolve(tarDir, "closure-deps.json"), JSON.stringify(deps, null, 2))
+await writeFile(resolve(tarDir, "closure-deps.json"), JSON.stringify(deps, null, 2))
 console.error(`[pack-closure] packed ${closure.size} workspaces`)
 NODE_EOF
 
@@ -134,14 +134,14 @@ node "$PACK_HELPER" "$REPO_ROOT" "$TAR_DIR"
 # Install the tarballs into a project OUTSIDE the repo — nothing here can resolve via the monorepo's
 # own hoisted node_modules, which is the entire point of the probe.
 # ---------------------------------------------------------------------------------------------------
-node -e '
-const fs = require("node:fs")
-const path = require("node:path")
+node --input-type=module -e '
+import { readFile, writeFile } from "node:fs/promises"
+import { join } from "node:path"
 const tarDir = process.argv[1]
 const projDir = process.argv[2]
-const deps = JSON.parse(fs.readFileSync(path.join(tarDir, "closure-deps.json"), "utf8"))
-fs.writeFileSync(
-	path.join(projDir, "package.json"),
+const deps = JSON.parse(await readFile(join(tarDir, "closure-deps.json"), "utf8"))
+await writeFile(
+	join(projDir, "package.json"),
 	JSON.stringify({ name: "mw-verify-getstarted", private: true, type: "module", dependencies: deps }, null, 2)
 )
 ' "$TAR_DIR" "$PROJ_DIR"

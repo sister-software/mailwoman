@@ -22,10 +22,8 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalTextFileSync, statLinkSync } from "@mailwoman/core/fs/readers-sync"
-import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { createSymbolicLinkSync, removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
+import { pathExists, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
+import { copyFileTo, createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot, md5File, repoRootPath, workspacePath } from "@mailwoman/core/utils"
 import { relative, resolve } from "@mailwoman/platform/path"
@@ -43,7 +41,7 @@ const { values } = parseArgs({
 const repoRoot = String(repoRootPath())
 const dataRoot = String(mailwomanDataRoot())
 
-const recipe = readWeightsRecipe(repoRoot, dataRoot, {
+const recipe = await readWeightsRecipe(repoRoot, dataRoot, {
 	...($public.MAILWOMAN_DEV_MODEL ? { model: $public.MAILWOMAN_DEV_MODEL } : {}),
 	...($public.MAILWOMAN_DEV_TOKENIZER ? { tokenizer: $public.MAILWOMAN_DEV_TOKENIZER } : {}),
 })
@@ -59,12 +57,12 @@ const locales = values.locale ? [values.locale.toLowerCase()] : recipe.locales
  * across the ten workspaces: only `en-us` populates `files_md5`. Every overlay's is empty, which is defensible for the
  * shared base binaries and is not defensible for the artifacts an overlay actually owns.
  */
-function recordedDigests(locale: string): Record<string, string> {
+async function recordedDigests(locale: string): Promise<Record<string, string>> {
 	const card = resolve(String(workspacePath(`neural-weights-${locale}`)), "model-card.json")
 
-	if (!pathExistsSync(card)) return {}
+	if (!(await pathExists(card))) return {}
 
-	return tryParsingJSON<{ files_md5?: Record<string, string> }>(readLocalTextFileSync(card))?.files_md5 ?? {}
+	return tryParsingJSON<{ files_md5?: Record<string, string> }>(await readLocalTextFile(card))?.files_md5 ?? {}
 }
 
 /**
@@ -73,15 +71,15 @@ function recordedDigests(locale: string): Record<string, string> {
  * `rmSync` before `symlinkSync` rather than after a check: a dangling symlink fails `existsSync` (which follows the
  * link) while still occupying the name, so a check-then-create leaves the stale link in place and reports success.
  */
-function linkForce(source: string, dest: string): void {
+async function linkForce(source: string, dest: string): Promise<void> {
 	try {
-		statLinkSync(dest)
-		removePathIfPresentSync(dest)
+		await statLink(dest)
+		await removePathIfPresent(dest)
 	} catch {
 		// Nothing there. The lstat throw IS the check — `existsSync` would answer the wrong question.
 	}
 
-	createSymbolicLinkSync(source, dest)
+	await createSymbolicLink(source, dest)
 }
 
 let linked = 0
@@ -91,7 +89,7 @@ let unrecorded = 0
 
 for (const locale of locales) {
 	const dir = resolve(overlayRoot, locale)
-	const digests = recordedDigests(locale)
+	const digests = await recordedDigests(locale)
 
 	if (!values.plan) {
 		await makeDirectories(dir)
@@ -142,7 +140,7 @@ for (const locale of locales) {
 		}
 
 		if (!values.plan) {
-			linkForce(sourcePath, resolve(dir, shippedName))
+			await linkForce(sourcePath, resolve(dir, shippedName))
 		}
 
 		linked++

@@ -19,7 +19,7 @@
  *   `labels` key. Existence and completeness are different questions.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
@@ -31,23 +31,29 @@ import { describe, expect, test } from "vitest"
  */
 const LOCALES = ["en-US", "en-GB", "fr-FR", "de-DE", "en-IN", "es-ES", "it-IT", "en-NZ"] as const
 
-function haveWeights(locale: string): boolean {
+async function haveWeights(locale: string): Promise<boolean> {
 	try {
 		const w = resolveWeights({ locale })
 
-		return !!w.modelPath && pathExistsSync(w.modelPath)
+		return !!w.modelPath && (await pathExists(w.modelPath))
 	} catch {
 		return false
 	}
 }
 
-describe("weights overlays inherit their base's label vocabulary", () => {
-	const baseline = haveWeights("en-US")
-		? readLabelsFromModelCard(resolveWeights({ locale: "en-US" }).modelCardPath)
-		: undefined
+const HAVE_WEIGHTS = new Map<string, boolean>()
 
+for (const locale of LOCALES) {
+	HAVE_WEIGHTS.set(locale, await haveWeights(locale))
+}
+
+const baseline = HAVE_WEIGHTS.get("en-US")
+	? readLabelsFromModelCard(resolveWeights({ locale: "en-US" }).modelCardPath)
+	: undefined
+
+describe("weights overlays inherit their base's label vocabulary", () => {
 	for (const locale of LOCALES) {
-		test.skipIf(!haveWeights(locale))(`${locale} decodes with the model's full vocabulary`, async () => {
+		test.skipIf(!HAVE_WEIGHTS.get(locale))(`${locale} decodes with the model's full vocabulary`, async () => {
 			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 
 			// Reaching into `labels` rather than asserting on a parse: a wrong vocabulary throws on the first
@@ -59,7 +65,7 @@ describe("weights overlays inherit their base's label vocabulary", () => {
 			)
 		})
 
-		test.skipIf(!haveWeights(locale))(`${locale} parses without an emission-width mismatch`, async () => {
+		test.skipIf(!HAVE_WEIGHTS.get(locale))(`${locale} parses without an emission-width mismatch`, async () => {
 			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 
 			await expect(classifier.parse("350 5th Ave, New York, NY 10118")).resolves.toBeDefined()

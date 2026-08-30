@@ -49,8 +49,7 @@
  *   ```
  */
 
-import { statPath, realPath, pathExists } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalBufferSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { statPath, realPath, pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { dataRootPath, median, percentile, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
@@ -440,8 +439,8 @@ async function createAssetServer(
 		res.end(req.method === "HEAD" ? undefined : payload)
 	}
 
-	const serveRange = (req: IncomingMessage, res: ServerResponse, mount: RangeMount): void => {
-		const size = statPathSync(mount.file).size
+	const serveRange = async (req: IncomingMessage, res: ServerResponse, mount: RangeMount): Promise<void> => {
+		const size = (await statPath(mount.file)).size
 
 		if (req.method === "HEAD") {
 			res.writeHead(HTTP_OK, { "Content-Length": String(size), "Accept-Ranges": "bytes" })
@@ -474,23 +473,35 @@ async function createAssetServer(
 		openReadStream(mount.file, { start: range.start, end: range.end }).pipe(res)
 	}
 
-	const serveMount = (
+	const serveMount = async (
 		req: IncomingMessage,
 		res: ServerResponse,
 		mount: DirectoryMount,
 		requestPath: string
-	): boolean => {
+	): Promise<boolean> => {
 		const filePath = safeJoin(mount.directory, requestPath.slice(mount.prefix.length))
 
-		if (!filePath || !pathExistsSync(filePath) || !statPathSync(filePath).isFile()) return false
+		if (!filePath || !(await pathExists(filePath))) return false
+		const stats = await statPath(filePath)
+
+		if (!stats.isFile()) return false
 		const compressible = COMPRESSIBLE_EXTENSIONS.has(extname(filePath))
 		const assetClass = mount.classify(basename(filePath))
-		sendBuffer(req, res, requestPath, readLocalBufferSync(filePath), contentTypeFor(filePath), assetClass, compressible)
+
+		sendBuffer(
+			req,
+			res,
+			requestPath,
+			await readLocalBuffer(filePath),
+			contentTypeFor(filePath),
+			assetClass,
+			compressible
+		)
 
 		return true
 	}
 
-	const handler = (req: IncomingMessage, res: ServerResponse): void => {
+	const handler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
 		const requestPath = (req.url ?? "/").split("?")[0] ?? "/"
 		const inline = inlineRoutes.get(requestPath)
 
@@ -501,7 +512,7 @@ async function createAssetServer(
 		}
 
 		if (rangeMount && requestPath === rangeMount.path) {
-			serveRange(req, res, rangeMount)
+			await serveRange(req, res, rangeMount)
 
 			return
 		}
@@ -509,7 +520,7 @@ async function createAssetServer(
 		for (const mount of mounts) {
 			if (!requestPath.startsWith(mount.prefix)) continue
 
-			if (serveMount(req, res, mount, requestPath)) return
+			if (await serveMount(req, res, mount, requestPath)) return
 
 			break
 		}
@@ -920,7 +931,13 @@ async function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: stri
 		resolved.pairIndexPath,
 	]
 
-	const present = candidates.filter((path): path is string => typeof path === "string" && pathExistsSync(path))
+	const present: string[] = []
+
+	for (const path of candidates) {
+		if (typeof path === "string" && (await pathExists(path))) {
+			present.push(path)
+		}
+	}
 
 	return present.map((path) => `${origin}/weights/${path.slice(weightsDirectory.length + 1)}`)
 }

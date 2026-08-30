@@ -1,4 +1,4 @@
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
@@ -372,11 +372,11 @@ const run = (cmd: string, args: string[], cwd: string) =>
  * smoke exists to catch) — and hard-fails with ETARGET on a version-bumped release branch (the v7.6.0 chicken-and-egg:
  * neural-weights, then variant-aliases). Fail loud at pack time instead, naming the edge.
  */
-function assertClosureComplete() {
+async function assertClosureComplete(): Promise<void> {
 	const missing = new Map<string, string[]>()
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
-		const manifest = readLocalJSONFileSync<Record<string, Record<string, string>>>(
+		const manifest = await readLocalJSONFile<Record<string, Record<string, string>>>(
 			resolve(repoRoot, dir, "package.json")
 		)
 
@@ -399,7 +399,7 @@ function assertClosureComplete() {
 }
 
 try {
-	assertClosureComplete()
+	await assertClosureComplete()
 
 	console.log(`[smoke] packing ${Object.keys(WORKSPACES).length} workspaces…`)
 
@@ -410,7 +410,7 @@ try {
 		// Pack via the SHARED publish path (injected publishConfig.exports) — a raw `yarn pack`
 		// ships the dev map (node → .ts), which consumers can never load (node_modules type-strip
 		// refusal) and which this smoke exists to catch.
-		packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
+		await packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
 		deps[name] = `file:${tgz}`
 	}
 

@@ -16,8 +16,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { execFileSync } from "@mailwoman/platform/child_process"
 
 const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
@@ -39,8 +38,8 @@ const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 /**
  * Read the pinned `"pkg==1.2.3"` literals straight out of the Modal training-image source of truth.
  */
-function pinnedVersions(): Array<[string, string]> {
-	const src = readLocalTextFileSync(TRAIN_REMOTE)
+async function pinnedVersions(): Promise<Array<[string, string]>> {
+	const src = await readLocalTextFile(TRAIN_REMOTE)
 	const matches = src.matchAll(/"(torch|transformers|onnx|onnxruntime|onnxscript)==([0-9.]+)"/g)
 
 	return [...matches].map((m) => [m[1], m[2]] as [string, string])
@@ -61,7 +60,7 @@ function installedVersion(pkg: string): string {
 
 let fail = false
 
-for (const [pkg, pinned] of pinnedVersions()) {
+for (const [pkg, pinned] of await pinnedVersions()) {
 	const actual = installedVersion(pkg)
 
 	if (actual === pinned) {

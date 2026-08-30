@@ -25,7 +25,6 @@
 import { APIClient } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
@@ -131,10 +130,10 @@ const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: t
 /**
  * Read a workspace's `package.json`.
  */
-function readWorkspaceManifest(repoRoot: string, workspace: string): { files?: unknown } {
+async function readWorkspaceManifest(repoRoot: string, workspace: string): Promise<{ files?: unknown }> {
 	const manifestPath = resolve(repoRoot, workspace, "package.json")
 
-	return readLocalJSONFileSync<{ files?: unknown }>(manifestPath)
+	return readLocalJSONFile<{ files?: unknown }>(manifestPath)
 }
 
 /**
@@ -196,12 +195,16 @@ async function declaredChecksums(repoRoot: string, workspaces: readonly string[]
 /**
  * The locale whose package ships the model itself — the BASE, and the directory every artifact is staged under.
  */
-function resolveBaseLocale(repoRoot: string, locales: readonly string[]): string {
-	const carriers = locales.filter((locale) => {
-		const manifest = readWorkspaceManifest(repoRoot, weightsWorkspace(locale))
+async function resolveBaseLocale(repoRoot: string, locales: readonly string[]): Promise<string> {
+	const carriers: string[] = []
 
-		return literalFilesEntries(manifest.files).includes(MODEL_FILENAME)
-	})
+	for (const locale of locales) {
+		const manifest = await readWorkspaceManifest(repoRoot, weightsWorkspace(locale))
+
+		if (literalFilesEntries(manifest.files).includes(MODEL_FILENAME)) {
+			carriers.push(locale)
+		}
+	}
 
 	if (carriers.length !== 1) {
 		throw new Error(
@@ -219,8 +222,8 @@ function resolveBaseLocale(repoRoot: string, locales: readonly string[]): string
  * workflow read out of that card before this script existed.
  */
 export async function readBaseModelVersion(repoRoot: string): Promise<string> {
-	const config = readReleaseConfig(repoRoot)
-	const baseLocale = resolveBaseLocale(repoRoot, config.locales)
+	const config = await readReleaseConfig(repoRoot)
+	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
 	const cardPath = resolve(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
 	const card = await readLocalJSONFile<{ version?: unknown }>(cardPath)
 
@@ -257,8 +260,8 @@ async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string)
  * fixture server; unset, the prefix is built from `release.config.json`'s `assets.hfBucket`. Nothing about either path
  * needs a token — the bucket is public, and a credential here would only hide the day it stops being public.
  */
-export function hfVersionBase(repoRoot: string, version: string): string {
-	const config = readReleaseConfig(repoRoot)
+export async function hfVersionBase(repoRoot: string, version: string): Promise<string> {
+	const config = await readReleaseConfig(repoRoot)
 	const bucket = config.assets?.hfBucket
 
 	if (!bucket && !$private.HF_BUCKET_RESOLVE_URL) {
@@ -272,7 +275,7 @@ export function hfVersionBase(repoRoot: string, version: string): string {
 	// copy ends in one, which would otherwise put an empty path segment between the root and the locale.
 	const configured = $private.HF_BUCKET_RESOLVE_URL ?? `${DEFAULT_HF_RESOLVE_ROOT}/${bucket}/resolve`
 	const resolveRoot = configured.replace(/\/+$/, "")
-	const baseLocale = resolveBaseLocale(repoRoot, config.locales)
+	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
 
 	return `${resolveRoot}/${baseLocale}/v${version}`
 }
@@ -284,7 +287,7 @@ export function hfVersionBase(repoRoot: string, version: string): string {
  * `files` array names its artifacts, and `git ls-files` says which are already here.
  */
 export async function planWeightsMaterialization(repoRoot: string): Promise<WeightsArtifactPlan[]> {
-	const config = readReleaseConfig(repoRoot)
+	const config = await readReleaseConfig(repoRoot)
 	const repoSources = repoCommittedSoftFeedSources(repoRoot, config.softFeed ?? {})
 	const workspaces = config.locales.map((locale) => weightsWorkspace(locale))
 	const tracked = trackedFiles(repoRoot, workspaces)
@@ -292,7 +295,7 @@ export async function planWeightsMaterialization(repoRoot: string): Promise<Weig
 	const plans: WeightsArtifactPlan[] = []
 
 	for (const workspace of workspaces) {
-		const manifest = readWorkspaceManifest(repoRoot, workspace)
+		const manifest = await readWorkspaceManifest(repoRoot, workspace)
 
 		for (const filename of literalFilesEntries(manifest.files)) {
 			if (tracked.has(`${workspace}/${filename}`)) continue
@@ -400,10 +403,10 @@ export async function fetchHFWeights(
 	destRoot: string,
 	{ repoRoot = String(repoRootPath()), version }: FetchHFWeightsOptions = {}
 ): Promise<HFMaterializationReport> {
-	const config = readReleaseConfig(repoRoot)
-	const baseLocale = resolveBaseLocale(repoRoot, config.locales)
+	const config = await readReleaseConfig(repoRoot)
+	const baseLocale = await resolveBaseLocale(repoRoot, config.locales)
 	const resolvedVersion = version ?? (await readBaseModelVersion(repoRoot))
-	const base = hfVersionBase(repoRoot, resolvedVersion)
+	const base = await hfVersionBase(repoRoot, resolvedVersion)
 	const plans = await planWeightsMaterialization(repoRoot)
 	const remoteNames = new Set<string>()
 

@@ -1,5 +1,4 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
@@ -27,8 +26,8 @@ const CANONICAL_URL = "https://github.com/sister-software/mailwoman.git"
 /**
  * The published workspace set — the single source of truth release-it iterates.
  */
-function releaseWorkspaces(): string[] {
-	const releaseIt = readLocalJSONFileSync<{
+async function releaseWorkspaces(): Promise<string[]> {
+	const releaseIt = await readLocalJSONFile<{
 		plugins?: { "@release-it-plugins/workspaces"?: { workspaces?: unknown } }
 	}>(resolve(repoRoot, ".release-it.json"))
 
@@ -41,9 +40,9 @@ function releaseWorkspaces(): string[] {
 	return ws as string[]
 }
 
-describe("#757 release provenance: every published workspace declares its repository", () => {
-	const workspaces = releaseWorkspaces()
+const workspaces = await releaseWorkspaces()
 
+describe("#757 release provenance: every published workspace declares its repository", () => {
 	it.each(workspaces)("%s/package.json has the canonical repository block", async (ws) => {
 		const pkg = await readLocalJSONFile<{
 			repository?: { type?: string; url?: string; directory?: string }

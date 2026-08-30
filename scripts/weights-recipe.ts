@@ -26,7 +26,7 @@
  *   rather than failing.
  */
 
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolve } from "@mailwoman/platform/path"
 
 /**
@@ -69,8 +69,8 @@ export interface ReleaseConfig {
 /**
  * Read `release.config.json`. The one parse, so a second reader cannot invent a different shape for the same file.
  */
-export function readReleaseConfig(repoRoot: string): ReleaseConfig {
-	return readLocalJSONFileSync<ReleaseConfig>(resolve(repoRoot, "release.config.json"))
+export async function readReleaseConfig(repoRoot: string): Promise<ReleaseConfig> {
+	return readLocalJSONFile<ReleaseConfig>(resolve(repoRoot, "release.config.json"))
 }
 
 /**
@@ -168,12 +168,12 @@ export interface WeightsRecipe {
  * `MAILWOMAN_PUBLISH_TOKENIZER`) and their dev twins, so a caller experimenting with a non-default model passes it here
  * rather than each consumer re-reading the environment and disagreeing about precedence.
  */
-export function readWeightsRecipe(
+export async function readWeightsRecipe(
 	repoRoot: string,
 	dataRoot: string,
 	overrides: { model?: string; tokenizer?: string } = {}
-): WeightsRecipe {
-	const config = readReleaseConfig(repoRoot)
+): Promise<WeightsRecipe> {
+	const config = await readReleaseConfig(repoRoot)
 	const softFeed = config.softFeed ?? {}
 
 	const model = overrides.model ?? resolve(dataRoot, config.weights.model)

@@ -34,8 +34,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExists, readLink, statLink, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLink, readLocalTextFile, statLink, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -51,13 +50,13 @@ import { resolvePackagePath, resolvePackageSpecifier } from "./workspace-resolut
 /**
  * Read the model-card.json from the weights package to get version metadata.
  */
-export function readModelCard(): ReleaseInfo | null {
+export async function readModelCard(): Promise<ReleaseInfo | null> {
 	const cardPath = resolvePackagePath("@mailwoman/neural-weights-en-us", "model-card.json")
 
-	if (!cardPath || !pathExistsSync(cardPath)) return null
+	if (!cardPath || !(await pathExists(cardPath))) return null
 
 	// Both generics: with only <ReleaseInfo>, F defaults to T and the null fallback fails to type.
-	return tryParsingJSON<ReleaseInfo, null>(readLocalTextFileSync(cardPath), null)
+	return tryParsingJSON<ReleaseInfo, null>(await readLocalTextFile(cardPath), null)
 }
 
 /**
@@ -259,7 +258,7 @@ export async function buildFSTBinary(fstPath: string, opts: { repoRoot: string; 
 	const script = `
 		import { buildFSTFromWOF } from '@mailwoman/resolver-wof-sqlite/fst-builder'
 		import { serializeFST } from '@mailwoman/resolver-wof-sqlite/fst-serialize'
-		import { writeFileSync } from '@mailwoman/platform/fs'
+		import { writeFile } from 'node:fs/promises'
 		const { matcher, provenance } = buildFSTFromWOF({
 			dbPath: ${JSON.stringify(wofDB)},
 			countries: ${countries},
@@ -267,7 +266,7 @@ export async function buildFSTBinary(fstPath: string, opts: { repoRoot: string; 
 			onProgress: (phase, msg) => process.stderr.write(phase + ': ' + msg + '\\n'),
 		})
 		const buf = serializeFST(matcher, provenance)
-		writeFileSync(${JSON.stringify(fstPath)}, buf)
+		await writeFile(${JSON.stringify(fstPath)}, buf)
 		process.stderr.write('FST binary: ' + (buf.length / 1024 / 1024).toFixed(2) + ' MB\\n')
 	`
 

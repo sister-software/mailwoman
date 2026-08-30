@@ -11,7 +11,6 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { POIIntent, POIResult } from "@mailwoman/core/pipeline"
@@ -58,6 +57,8 @@ interface BaselineReceipt {
 	rows: ProbeRowOutcome[]
 	verdict: { decision: string }
 }
+
+const receipt = await readLocalJSONFile<BaselineReceipt>(PROBE_BASELINE_RECEIPT_PATH)
 
 /**
  * Write a definition + freeze pair into a scratch directory, so a refusal can be provoked without touching the
@@ -365,8 +366,6 @@ describe("the decision", () => {
 })
 
 describe("the committed baseline receipt", () => {
-	const receipt = readLocalJSONFileSync<BaselineReceipt>(PROBE_BASELINE_RECEIPT_PATH)
-
 	it("was measured against this version of the pre-registration", async () => {
 		expect(receipt.probeID).toBe(definition.probeID)
 		expect(receipt.definitionVersion).toBe(definition.version)

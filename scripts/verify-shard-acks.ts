@@ -51,7 +51,7 @@
  *   scripts/verify-shard-acks.ts --manifest /tmp/MANIFEST.json
  */
 
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 
 interface ShardEntry {
@@ -99,9 +99,9 @@ function parseArgs(): Args {
 	return out as Args
 }
 
-function main(): void {
+async function main(): Promise<void> {
 	const args = parseArgs()
-	const m = readLocalJSONFileSync<Manifest>(args.manifestPath)
+	const m = await readLocalJSONFile<Manifest>(args.manifestPath)
 	const shards = m.shards ?? []
 
 	const unacknowledged: ShardEntry[] = []
@@ -179,4 +179,4 @@ function main(): void {
 	console.error("VERIFY PASSED.")
 }
 
-main()
+await main()

@@ -21,8 +21,7 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -107,8 +106,8 @@ async function readDemoDefaultVersion(): Promise<string> {
 	return normalizeVersion(defaultVersion)
 }
 
-function readDocsCurrentVersion(): string {
-	const mdx = readLocalTextFileSync(RELEASES_MDX_PATH)
+async function readDocsCurrentVersion(): Promise<string> {
+	const mdx = await readLocalTextFile(RELEASES_MDX_PATH)
 	const version = mdx.match(/^\|\s*\*\*([\d.]+)\*\*\s*\(current\)/m)?.[1]
 
 	if (!version) throw new Error(`${RELEASES_MDX_PATH} has no "| **X.Y.Z** (current)" row`)
@@ -176,7 +175,7 @@ checks.push({
 	expected: demoNote,
 })
 
-const docsCurrent = readDocsCurrentVersion()
+const docsCurrent = await readDocsCurrentVersion()
 
 checks.push({
 	name: "docs/records/site-2026-08/releases.mdx (current) row",
