@@ -386,3 +386,18 @@ Acronyms are capitalized as whole camelCase components: `createWOFResolver`, `pa
 `yarn lint` enforces this via `sister-software/no-title-case-acronym` from `@sister.software/oxlint-config`. It reads the AST, so it sees exported declarations, the MEMBERS of exported interfaces/classes/enums, and the exported half of a re-export — the standalone script it replaced matched `^export <keyword> <name>` and missed every member. Configure it in `oxlint.config.ts`: `extraAcronyms` layers this project's vocabulary onto the shipped list, `ignoreNames` exempts names whose casing is not ours. Prefer a scoped `// oxlint-disable-next-line sister-software/no-title-case-acronym -- <reason>` at the one site that needs it; a config entry silently covers every future declaration of that name. When adding an acronym, cap the whole component.
 
 **Known gaps (#875) — CLOSED 2026-08-03.** The eighteen public renames the old checker was holding behind a `DEFERRED` map — `@mailwoman/codex/nz`'s `NZ*` family, `@mailwoman/nuts-lookup`'s `NUTS*`, `@mailwoman/neural/weights`'s `CRFTransitions`/`readCRFTransitions`, `@mailwoman/annotations`'s `NUTS`, and `@mailwoman/registry`'s `createGBTScorer` — landed in the v9 major (#1432), and the same commit deleted `scripts/lint-acronym-casing.ts` along with the map. **There is no deferral list any more, and no script to add one to.** Enforcement is entirely the `acronymCasing` block in `oxlint.config.ts` driving `sister-software/no-title-case-acronym`, run by `yarn lint:oxlint` — which is what CI requires. That makes the check stricter than any sweep was: a fresh violation gets renamed in the commit that introduced it, and the only escape hatches are the two the paragraph above names (a scoped disable comment, or an `ignoreNames` entry when the casing is not ours to choose). Local (non-exported) identifiers stay out of scope — renaming one is free at any time, and flagging them is noise. **Correction to the pre-2026-08-03 text:** `outJsonl`/`outJson` were listed here as "residual internal cosmetic, no caller/def split". They are MEMBERS of exported options interfaces (`packages/registry/tools/gold-set-sample.ts`'s `outJsonl?: string`), so a consumer constructing the options object types the name — caller-visible, and renamed with the rest. `ID` is enforced too: the house form is `ID`, never `Id`.
+
+<!-- codemod-skill-discovery:begin -->
+
+## Codemod Skill Discovery
+
+This section is managed by `codemod` CLI.
+
+- Core skill: `.agents/skills/codemod/SKILL.md`
+- Package skills: `.agents/skills/<package-skill>/SKILL.md`
+- Marker note: the core Codemod skill uses `codemod-compatibility: mcs-v1`; authored package skills for workflow `install-skill` use `codemod-compatibility: skill-package-v1`.
+- Codemod AI CLI tools: `npx codemod ai docs`, `npx codemod ai dump-ast`, `npx codemod ai node-types`, `npx codemod ai tools`, `npx codemod ai resources`
+- Codemod MCP: optional direct tool/resource integration for the same Codemod AI capabilities exposed by `npx codemod ai ...`.
+- List installed Codemod skills: `npx codemod ai list --harness codex --format json`
+
+<!-- codemod-skill-discovery:end -->
