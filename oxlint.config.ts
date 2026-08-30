@@ -239,17 +239,16 @@ export default {
 			},
 		},
 		{
-			// File-DESCRIPTOR work, which no helper covers: a partial read at an offset, a streaming append through
-			// `writeSync`, a `FileHandle` held across calls, a log opened in append mode for a child's stdio. A handle is
-			// OWNED, and moving ownership is not a rename — so these keep the mirror, and each says so in place.
+			// File-DESCRIPTOR work no helper covers: a `FileHandle` held across calls, and a log opened in append mode for
+			// a child's stdio. A handle is OWNED, and moving ownership is not a rename — so these keep the mirror, and
+			// each says so in place. The two shapes that DID have an idiom left this list: a positional header peek is
+			// `readFileRangeSync`, and a chunked hash is `readFileChunksSync` under `md5FileSync`.
 			files: [
 				"corpus-python/scripts/train_with_resume.ts",
 				"packages/bdc/sdk/build-bdc.ts",
 				"packages/core/tools/generate-language-types.ts",
 				"packages/corpus/src/tools/fetch/geonames-dump.ts",
-				"packages/mailwoman/gazetteer-pipeline/anchor-lookup.ts",
 				"packages/map-tui/tile-source.ts",
-				"packages/resolver-wof-sqlite/fst-freshness.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",

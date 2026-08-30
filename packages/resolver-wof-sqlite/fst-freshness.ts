@@ -30,11 +30,10 @@
  */
 
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExistsSync, readFileRangeSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { createHash } from "@mailwoman/platform/crypto"
-import { closeSync, openSync, readSync } from "@mailwoman/platform/fs"
+import { md5FileSync } from "@mailwoman/core/utils/hash"
 
 import { FST_FORMAT_VERSION } from "./fst-serialize.ts"
 import type { FSTProvenance } from "./fst-types.ts"
@@ -66,12 +65,6 @@ export const MIN_STAMPED_FORMAT_VERSION = 3
  * Hex characters in an md5 digest.
  */
 const MD5_HEX_LENGTH = 32
-
-/**
- * Bytes per read in {@link md5FileSync}. 8 MiB measured at 7.3 s for the 5.27 GB admin DB on the lab playpen — the same
- * throughput as `md5sum(1)`, so the sidecar below is what makes the check cheap, not the chunk size.
- */
-const MD5_CHUNK_BYTES = 8 * 1024 * 1024
 
 /**
  * What an FST was built from, recorded so a later reader can tell whether that thing still exists.
@@ -128,64 +121,32 @@ export function peekFSTStampFields(path: string): FSTStampFields | undefined {
 	const size = statPathSync(path).size
 
 	if (size < HEADER_SIZE) return undefined
-	const fd = openSync(path, "r")
+	const header = readFileRangeSync(path, 0, HEADER_SIZE)
 
-	try {
-		const header = Buffer.alloc(HEADER_SIZE)
-		readSync(fd, header, 0, HEADER_SIZE, 0)
+	if (header.readUInt32LE(0) !== MAGIC) return undefined
+	const formatVersion = header.readUInt16LE(4)
 
-		if (header.readUInt32LE(0) !== MAGIC) return undefined
-		const formatVersion = header.readUInt16LE(4)
+	if (formatVersion < MIN_STAMPED_FORMAT_VERSION) return { formatVersion, provenance: undefined }
+	const trailerStart = header.readUInt32LE(PROVENANCE_OFFSET_FIELD)
 
-		if (formatVersion < MIN_STAMPED_FORMAT_VERSION) return { formatVersion, provenance: undefined }
-		const trailerStart = header.readUInt32LE(PROVENANCE_OFFSET_FIELD)
+	// 0 = "this build wrote no trailer" (the serializer's own encoding); anything past EOF is a
+	// truncated file. Both read as "no stamp", which is what the caller does with them anyway.
+	if (trailerStart === 0 || trailerStart + 4 > size) return { formatVersion, provenance: undefined }
 
-		// 0 = "this build wrote no trailer" (the serializer's own encoding); anything past EOF is a
-		// truncated file. Both read as "no stamp", which is what the caller does with them anyway.
-		if (trailerStart === 0 || trailerStart + 4 > size) return { formatVersion, provenance: undefined }
+	const jsonLength = readFileRangeSync(path, trailerStart, 4).readUInt32LE(0)
 
-		const lengthBytes = Buffer.alloc(4)
-		readSync(fd, lengthBytes, 0, 4, trailerStart)
-		const jsonLength = lengthBytes.readUInt32LE(0)
+	if (jsonLength === 0 || trailerStart + 4 + jsonLength > size) return { formatVersion, provenance: undefined }
 
-		if (jsonLength === 0 || trailerStart + 4 + jsonLength > size) return { formatVersion, provenance: undefined }
+	const json = readFileRangeSync(path, trailerStart + 4, jsonLength)
 
-		const json = Buffer.alloc(jsonLength)
-		readSync(fd, json, 0, jsonLength, trailerStart + 4)
-
-		return { formatVersion, provenance: tryParsingJSON<FSTProvenance>(json.toString("utf8")) ?? undefined }
-	} finally {
-		closeSync(fd)
-	}
+	return { formatVersion, provenance: tryParsingJSON<FSTProvenance>(json.toString("utf8")) ?? undefined }
 }
 
 /**
- * Streaming MD5 of a file, SYNCHRONOUS.
- *
- * The async `md5File` in `@mailwoman/core/utils` is the one to reach for anywhere else. This exists because the FST
- * builder and its whole call chain are synchronous by design (`buildFSTFromWOF` → `buildLocaleFSTs`), and making them
- * async to stamp a checksum would cascade through command callers and tests for one hash. It reads in
- * {@link MD5_CHUNK_BYTES} chunks rather than `readFileSync` — the source is a multi-gigabyte database.
+ * Re-exported from `@mailwoman/core/utils/hash`, where it lives beside its asynchronous twin. Two builders and this
+ * package's own test import it from here, and the sidecar convention below is what it is for.
  */
-export function md5FileSync(path: string): string {
-	const hash = createHash("md5")
-	const fd = openSync(path, "r")
-
-	try {
-		const chunk = Buffer.alloc(MD5_CHUNK_BYTES)
-
-		for (;;) {
-			const read = readSync(fd, chunk, 0, MD5_CHUNK_BYTES, null)
-
-			if (read <= 0) break
-			hash.update(chunk.subarray(0, read))
-		}
-	} finally {
-		closeSync(fd)
-	}
-
-	return hash.digest("hex")
-}
+export { md5FileSync } from "@mailwoman/core/utils/hash"
 
 /**
  * The source identity an FST build should stamp, or a check should compare against.

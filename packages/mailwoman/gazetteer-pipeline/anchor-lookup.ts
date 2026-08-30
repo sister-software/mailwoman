@@ -61,8 +61,10 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
-import { closeSync, openSync, writeSync } from "@mailwoman/platform/fs"
+import { once } from "@mailwoman/platform/events"
+import { finished } from "@mailwoman/platform/stream/promises"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"
@@ -490,7 +492,7 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 	// Serialize from the SORTED key array, streaming: JS hoists integer-like string keys (e.g. "10000")
 	// ahead of insertion order, so an object's own iteration order would unsort the output — and at the
 	// v2 set's ~2.2M keys, materializing every row before writing costs more memory than the build.
-	const fd = openSync(args.output, "w")
+	const output = openWriteStream(args.output)
 	let buffer = "{"
 	let written = 0
 
@@ -545,13 +547,18 @@ export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<Anch
 		written++
 
 		if (written % WRITE_FLUSH_ENTRIES === 0) {
-			writeSync(fd, buffer)
+			// Backpressure honoured explicitly. `writeSync` blocked, which bounded memory for free; a stream buffers
+			// whatever it is handed, and at ~2.2M keys that is the cost this loop exists to avoid.
+			if (!output.write(buffer)) {
+				await once(output, "drain")
+			}
+
 			buffer = ""
 		}
 	}
 
-	writeSync(fd, buffer + "}")
-	closeSync(fd)
+	output.end(buffer + "}")
+	await finished(output)
 
 	const placeholders = bySource.get(null) ?? 0
 
