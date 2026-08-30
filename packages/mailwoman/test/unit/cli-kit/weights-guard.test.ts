@@ -52,8 +52,8 @@ describe("buildWeightsInstallArgs", () => {
 })
 
 describe("probeWeights", () => {
-	test("ok=false with an actionable detail when nothing resolves", () => {
-		const probe = probeWeights(LOCALE, cacheRoot.path)
+	test("ok=false with an actionable detail when nothing resolves", async () => {
+		const probe = await probeWeights(LOCALE, cacheRoot.path)
 
 		expect(probe.ok).toBe(false)
 		expect(probe.detail).toMatch(/Could not resolve/)
@@ -67,7 +67,7 @@ describe("probeWeights", () => {
 		await writeLocalTextFile("stub", join(packageDir, "model.onnx"))
 		await writeLocalTextFile("stub", join(packageDir, "tokenizer.model"))
 
-		expect(probeWeights(LOCALE, cacheRoot.path)).toEqual({ ok: true })
+		expect(await probeWeights(LOCALE, cacheRoot.path)).toEqual({ ok: true })
 	})
 
 	test("ok=false against a metadata-only cache install (the code-only-release tarball)", async () => {
@@ -76,6 +76,6 @@ describe("probeWeights", () => {
 		await makeDirectories(packageDir)
 		await writeLocalTextFile("{}", join(packageDir, "model-card.json"))
 
-		expect(probeWeights(LOCALE, cacheRoot.path).ok).toBe(false)
+		expect((await probeWeights(LOCALE, cacheRoot.path)).ok).toBe(false)
 	})
 })

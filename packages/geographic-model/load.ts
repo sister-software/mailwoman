@@ -26,7 +26,7 @@
  *   keys it uses are tables.
  */
 
-import { readDirectoryEntriesSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readDirectoryEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isPlainObject } from "@mailwoman/core/objects"
 import { resolve } from "@mailwoman/platform/path"
 
@@ -363,15 +363,15 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
  * the tree and not of the filesystem that stored it. Symbolic links are not followed: a model directory is source, and
  * a link out of it is a record whose home nobody can state.
  */
-function listSourceFiles(root: string, prefix = ""): string[] {
-	const entries = readDirectoryEntriesSync(resolve(root, prefix))
+async function listSourceFiles(root: string, prefix = ""): Promise<string[]> {
+	const entries = await readDirectoryEntries(resolve(root, prefix))
 	const found: string[] = []
 
 	for (const entry of entries.toSorted((left, right) => compareIdentifiers(left.name, right.name))) {
 		const path = prefix ? `${prefix}/${entry.name}` : entry.name
 
 		if (entry.isDirectory()) {
-			found.push(...listSourceFiles(root, path))
+			found.push(...(await listSourceFiles(root, path)))
 
 			continue
 		}
@@ -389,8 +389,13 @@ function listSourceFiles(root: string, prefix = ""): string[] {
  *
  * Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file.
  */
-export function loadGeographicModelDirectory(root: string): GeographicModelDocument {
-	const files = listSourceFiles(root).map((path) => ({ path, text: readLocalTextFileSync(resolve(root, path)) }))
+export async function loadGeographicModelDirectory(root: string): Promise<GeographicModelDocument> {
+	const paths = await listSourceFiles(root)
+	const files: GeographicModelSourceFile[] = []
+
+	for (const path of paths) {
+		files.push({ path, text: await readLocalTextFile(resolve(root, path)) })
+	}
 
 	return mergeGeographicModelFiles(files)
 }

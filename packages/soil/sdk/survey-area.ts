@@ -89,11 +89,14 @@ export interface SurveyAreaAttributes {
  * @throws {Error} When the metadata's use constraints no longer carry the public-information sentence, when a `Choice`
  *   column holds a value outside the authority's own declared domain, or when the export declares no legend row.
  */
-export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: string): SurveyAreaAttributes {
-	const dictionary = readTabularDictionary(tabularDirectory)
-	const domains = readDeclaredDomains(tabularDirectory)
+export async function readSurveyAreaAttributes(
+	tabularDirectory: string,
+	areaSymbol: string
+): Promise<SurveyAreaAttributes> {
+	const dictionary = await readTabularDictionary(tabularDirectory)
+	const domains = await readDeclaredDomains(tabularDirectory)
 
-	const catalog = readTable(tabularDirectory, dictionary, "sacatalog", [
+	const catalog = await readTable(tabularDirectory, dictionary, "sacatalog", [
 		"areasymbol",
 		"areaname",
 		"saverest",
@@ -110,7 +113,7 @@ export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: s
 	const catalogRow = catalog.rows[0]!
 	const metadata = readFGDCMetadata(catalogRow.fgdcmetadata!, areaSymbol)
 
-	const legend = readTable(tabularDirectory, dictionary, "legend", [
+	const legend = await readTable(tabularDirectory, dictionary, "legend", [
 		"areasymbol",
 		"areaname",
 		"areaacres",
@@ -123,7 +126,7 @@ export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: s
 
 	const legendRow = legend.rows.find((row) => row.areasymbol === areaSymbol) ?? legend.rows[0]!
 
-	const mapUnitRows = readTable(tabularDirectory, dictionary, "mapunit", [
+	const mapUnitRows = await readTable(tabularDirectory, dictionary, "mapunit", [
 		"mukey",
 		"musym",
 		"muname",
@@ -132,10 +135,10 @@ export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: s
 		"farmlndcl",
 	])
 
-	const aggregate = readTable(tabularDirectory, dictionary, "muaggatt", ["mukey", "niccdcd", "niccdcdpct"])
+	const aggregate = await readTable(tabularDirectory, dictionary, "muaggatt", ["mukey", "niccdcd", "niccdcdpct"])
 	const aggregateByMukey = new Map(aggregate.rows.map((row) => [row.mukey!, row]))
 
-	const componentRows = readTable(tabularDirectory, dictionary, "component", [
+	const componentRows = await readTable(tabularDirectory, dictionary, "component", [
 		"cokey",
 		"mukey",
 		"comppct_r",
@@ -147,7 +150,7 @@ export function readSurveyAreaAttributes(tabularDirectory: string, areaSymbol: s
 		"irrcapscl",
 	])
 
-	const nccpiByCokey = readNCCPI(tabularDirectory, dictionary)
+	const nccpiByCokey = await readNCCPI(tabularDirectory, dictionary)
 
 	const classCodes = domainCodes(domains, "capability_class")
 	const subclassCodes = domainCodes(domains, "capability_subclass")
@@ -268,11 +271,17 @@ function nullable(value: string | undefined): string | null {
  * value. Sub-rules at greater depths are the submodels (corn, soybeans, small grains, cotton), which this layer does
  * not carry.
  */
-function readNCCPI(
+async function readNCCPI(
 	tabularDirectory: string,
-	dictionary: ReturnType<typeof readTabularDictionary>
-): Map<string, number> {
-	const rows = readTable(tabularDirectory, dictionary, "cointerp", ["cokey", "mrulename", "ruledepth", "interphr"])
+	dictionary: Awaited<ReturnType<typeof readTabularDictionary>>
+): Promise<Map<string, number>> {
+	const rows = await readTable(tabularDirectory, dictionary, "cointerp", [
+		"cokey",
+		"mrulename",
+		"ruledepth",
+		"interphr",
+	])
+
 	const byCokey = new Map<string, number>()
 
 	for (const row of rows.rows) {

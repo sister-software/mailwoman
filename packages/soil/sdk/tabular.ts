@@ -26,7 +26,7 @@
  *   classifications, the six component kinds. The layer stores them and validates against them.
  */
 
-import { readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { join } from "@mailwoman/platform/path"
 import { CSVSpliterator } from "spliterator"
 
@@ -41,10 +41,10 @@ export type TabularRow = ReadonlyArray<string>
  * `enableQuoteHandling` is what makes the embedded newlines above survive; `header: false` is what keeps the first
  * record from being eaten, since these files carry none.
  */
-function readPipeDelimited(path: string): TabularRow[] {
+async function readPipeDelimited(path: string): Promise<TabularRow[]> {
 	const rows: TabularRow[] = []
 
-	for (const row of CSVSpliterator.from(readLocalBufferSync(path), {
+	for (const row of CSVSpliterator.from(await readLocalBuffer(path), {
 		mode: "array",
 		header: false,
 		columnDelimiter: "|",
@@ -100,9 +100,9 @@ const MSTABCOL_WIDTH = 14
  *
  * @throws {Error} When either bootstrap file is missing or is not the declared width.
  */
-export function readTabularDictionary(tabularDirectory: string): TabularDictionary {
-	const mstab = readPipeDelimited(join(tabularDirectory, "mstab.txt"))
-	const mstabcol = readPipeDelimited(join(tabularDirectory, "mstabcol.txt"))
+export async function readTabularDictionary(tabularDirectory: string): Promise<TabularDictionary> {
+	const mstab = await readPipeDelimited(join(tabularDirectory, "mstab.txt"))
+	const mstabcol = await readPipeDelimited(join(tabularDirectory, "mstabcol.txt"))
 
 	assertWidth(mstab, MSTAB_WIDTH, "mstab.txt")
 	assertWidth(mstabcol, MSTABCOL_WIDTH, "mstabcol.txt")
@@ -166,12 +166,12 @@ export interface TabularTable {
  * @throws {Error} When the archive declares no file for the table, when a requested column is not in the shipped
  *   dictionary, or when a record is narrower than the position a requested column sits at.
  */
-export function readTable(
+export async function readTable(
 	tabularDirectory: string,
 	dictionary: TabularDictionary,
 	table: string,
 	wanted: ReadonlyArray<string>
-): TabularTable {
+): Promise<TabularTable> {
 	const file = dictionary.files.get(table)
 
 	if (!file) {
@@ -199,7 +199,7 @@ export function readTable(
 	}
 
 	const rows: Array<Record<string, string>> = []
-	const raw = readPipeDelimited(join(tabularDirectory, `${file}.txt`))
+	const raw = await readPipeDelimited(join(tabularDirectory, `${file}.txt`))
 
 	for (const [index, row] of raw.entries()) {
 		const record: Record<string, string> = {}
@@ -242,8 +242,8 @@ const MSDOMDET_WIDTH = 5
  *
  * @throws {Error} When the file is not the declared width.
  */
-export function readDeclaredDomains(tabularDirectory: string): DomainMember[] {
-	const rows = readPipeDelimited(join(tabularDirectory, "msdomdet.txt"))
+export async function readDeclaredDomains(tabularDirectory: string): Promise<DomainMember[]> {
+	const rows = await readPipeDelimited(join(tabularDirectory, "msdomdet.txt"))
 
 	assertWidth(rows, MSDOMDET_WIDTH, "msdomdet.txt")
 

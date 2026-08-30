@@ -210,7 +210,7 @@ async function compareMailwomanArms(
 
 	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds } = arms
 
-	const fingerprint = registry.fingerprint()
+	const fingerprint = await registry.fingerprint()
 
 	const rows: ComparedRow[] = []
 	const errors: Array<{ id: string; input: string; arm: "a" | "b"; message: string }> = []
@@ -570,7 +570,7 @@ async function compareAcrossEngines(
 ): Promise<unknown> {
 	const clients: AsyncDisposable[] = []
 	const identities: Record<string, ExternalArmIdentity | OracleArmIdentity> = {}
-	const meter = deps.oracleMeter ?? new OracleMeter()
+	const meter = deps.oracleMeter ?? (await OracleMeter.create())
 
 	const build = async (arm: ArmSpec, side: "a" | "b"): Promise<ArmRunner> => {
 		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
@@ -784,7 +784,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		run_id: (deps.newRunID ?? randomUUID)(),
 		tool: "mwdev_compare",
 		created_at: now(deps).toISOString(),
-		tree_fingerprint: registry.fingerprint().digest,
+		tree_fingerprint: (await registry.fingerprint()).digest,
 		engine_id: null,
 		input_set_id: set.setID,
 		answers: {

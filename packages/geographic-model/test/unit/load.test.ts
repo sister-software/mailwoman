@@ -153,14 +153,14 @@ describe("the authoring layout carries no meaning", () => {
 
 	it("reads a directory the same way twice", async () => {
 		const root = writeModelDirectory(slice())
-		const once = serializeCompiledModel(compileGeographicModel(loadGeographicModelDirectory(await root)))
+		const once = serializeCompiledModel(compileGeographicModel(await loadGeographicModelDirectory(await root)))
 
-		expect(serializeCompiledModel(compileGeographicModel(loadGeographicModelDirectory(await root)))).toBe(once)
+		expect(serializeCompiledModel(compileGeographicModel(await loadGeographicModelDirectory(await root)))).toBe(once)
 		expect(once).toContain(`"modelVersion": "0.1.0"`)
 	})
 
 	it("merges a table split across files, and one file holding several tables", async () => {
-		const document = loadGeographicModelDirectory(await writeModelDirectory(slice()))
+		const document = await loadGeographicModelDirectory(await writeModelDirectory(slice()))
 
 		expect(document.concepts.map((concept) => concept.id)).toEqual(["obtain_medication", "pharmacy"])
 		expect(document.mappings).toHaveLength(1)

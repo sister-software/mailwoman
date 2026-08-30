@@ -27,18 +27,18 @@ import { describe, expect, it } from "vitest"
  */
 function healthyDeps(): DoctorDeps {
 	return {
-		existsSync: () => true,
-		fileSize: () => 40_000_000,
-		isWritable: () => true,
-		resolveWeights: (locale) => ({
+		exists: async () => true,
+		fileSize: async () => 40_000_000,
+		isWritable: async () => true,
+		resolveWeights: async (locale) => ({
 			source: `package:@mailwoman/neural-weights-${locale}`,
 			modelPath: `/w/${locale}/model.onnx`,
 			tokenizerPath: `/w/${locale}/tokenizer.model`,
 		}),
 		weightsPackageName: (locale) => `@mailwoman/neural-weights-${locale}`,
 		dataRoot: () => ({ path: "/data", fromEnv: true }),
-		envCandidatePath: () => "/data/wof/candidate.db",
-		conventionCandidatePath: () => "/data/wof/candidate.db",
+		envCandidatePath: async () => "/data/wof/candidate.db",
+		conventionCandidatePath: async () => "/data/wof/candidate.db",
 		wofShardPaths: () => ["/data/wof/admin.db"],
 		poiPath: () => "/data/poi/poi.db",
 		readPOIManifest: async () => ({ name: "poi", version: "2026-07-20a", sourceVintage: "2026-07" }),
@@ -80,7 +80,7 @@ describe("runDoctor (injected seams)", () => {
 	it("missing weights → core failure, exit 1, but optional layers still reported", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			resolveWeights: (locale) => {
+			resolveWeights: async (locale) => {
 				if (locale === "en-us") throw new Error("Could not resolve @mailwoman/neural-weights-en-us")
 
 				return {
@@ -112,9 +112,9 @@ describe("runDoctor (injected seams)", () => {
 	it("gazetteer discovery falls back to a WOF shard only when NO candidate.db is reachable", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			envCandidatePath: () => undefined,
-			conventionCandidatePath: () => undefined,
-			existsSync: (p) => p === "/data/wof/admin.db",
+			envCandidatePath: async () => undefined,
+			conventionCandidatePath: async () => undefined,
+			exists: async (p) => p === "/data/wof/admin.db",
 		})
 
 		const gaz = byID(report.checks, "gazetteer")
@@ -126,9 +126,9 @@ describe("runDoctor (injected seams)", () => {
 		const report = await runDoctor({
 			...healthyDeps(),
 			// Env resolves nothing (no $MAILWOMAN_CANDIDATE_DB), no WOF shard exists, the file sits at the convention path.
-			envCandidatePath: () => undefined,
-			existsSync: () => false,
-			conventionCandidatePath: () => "/data/wof/candidate.db",
+			envCandidatePath: async () => undefined,
+			exists: async () => false,
+			conventionCandidatePath: async () => "/data/wof/candidate.db",
 			readPOIManifest: async () => {
 				throw new Error("unreachable — poi path does not exist")
 			},
@@ -144,9 +144,9 @@ describe("runDoctor (injected seams)", () => {
 	it("no gazetteer at all → optional missing, exit still 0 (core intact)", async () => {
 		const report = await runDoctor({
 			...healthyDeps(),
-			envCandidatePath: () => undefined,
-			conventionCandidatePath: () => undefined,
-			existsSync: () => false,
+			envCandidatePath: async () => undefined,
+			conventionCandidatePath: async () => undefined,
+			exists: async () => false,
 			readPOIManifest: async () => {
 				throw new Error("unreachable — poi path does not exist")
 			},
@@ -202,7 +202,7 @@ describe("describeEnvironment (--verbose)", () => {
 	it("keys with no value are present and marked, never dropped", async () => {
 		// The dump exists to tell "set to something surprising" apart from "never set". A row that
 		// disappears when the variable is unset answers neither question.
-		const entries = await describeEnvironment({ ...healthyDeps(), conventionCandidatePath: () => undefined })
+		const entries = await describeEnvironment({ ...healthyDeps(), conventionCandidatePath: async () => undefined })
 		const convention = entries.find((entry) => entry.key === "candidate.db (convention)")
 
 		expect(convention).toBeDefined()
@@ -212,7 +212,7 @@ describe("describeEnvironment (--verbose)", () => {
 	it("an unresolvable weights package is reported, not thrown", async () => {
 		const entries = await describeEnvironment({
 			...healthyDeps(),
-			resolveWeights: () => {
+			resolveWeights: async () => {
 				throw new Error("Could not resolve @mailwoman/neural-weights-en-us")
 			},
 		})

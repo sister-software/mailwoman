@@ -50,7 +50,7 @@ const fullEngine: MailwomanAPIEngine<GeocodeResultWithAddress> = {
 	}),
 	resolveTree: async (tree) => ({ tree }),
 	reload: async () => ({ reloaded: true, versions: { wof: "v1" } }),
-	health: () => ({ model: { name: "test-model", version: "0.0.0" } }),
+	health: async () => ({ model: { name: "test-model", version: "0.0.0" } }),
 }
 
 // MARK: /v1/parse

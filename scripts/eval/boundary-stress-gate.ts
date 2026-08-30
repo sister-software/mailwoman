@@ -81,7 +81,7 @@ if (args.model && !args["model-card"])
 // model/tokenizer/model-card paths instead of the symlink auto-resolve.
 const resolved = args.model
 	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
-	: resolveWeights({ locale: "en-us" })
+	: await resolveWeights({ locale: "en-us" })
 
 if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
 	throw new Error("createScorer needs model + tokenizer + model-card paths; resolveWeights returned incomplete paths")

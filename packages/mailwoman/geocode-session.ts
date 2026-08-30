@@ -29,7 +29,6 @@
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -280,7 +279,13 @@ async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | 
 	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
 	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
 	// when nothing survives, which is part of the CLI's construction-order contract.
-	const paths = resolveWOFShardPaths(options.resolveDB, options.dataRoot).filter((p: string) => pathExistsSync(p))
+	const paths: string[] = []
+
+	for (const p of resolveWOFShardPaths(options.resolveDB, options.dataRoot)) {
+		if (await pathExists(p)) {
+			paths.push(p)
+		}
+	}
 
 	if (!paths.length) {
 		throw new CommandError(
@@ -326,7 +331,7 @@ export interface ForkEntityProbe {
  * itself and would put a sealed database open on the default construction path. No `flood.db` in the data root, no
  * route, and the geocode result is byte-identical to a build without the field.
  *
- * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * Tolerate-and-degrade past the `pathExists` check: a layer that is present but refuses to open — a truncated file, a
  * manifest naming a different product — must not take the geocoder down over an advisory it was never asked for.
  */
 export async function loadAuthorityDesignationRoute(
@@ -353,7 +358,7 @@ export async function loadAuthorityDesignationRoute(
  * path. No `soil.db` in the data root, no route, and the geocode result is byte-identical to a build without the
  * field.
  *
- * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * Tolerate-and-degrade past the `pathExists` check: a layer that is present but refuses to open — a truncated file, a
  * manifest naming a different product — must not take the geocoder down over an advisory it was never asked for.
  */
 export async function loadSoilCapabilityRoute(
@@ -385,7 +390,7 @@ export async function loadSoilCapabilityRoute(
  * carries a property-level prohibition of its own, and Northern Ireland publishes 122 line segments carrying one
  * attribute. A file called `coastal.db` would invite one of them to overwrite the other.
  *
- * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * Tolerate-and-degrade past the `pathExists` check: a layer that is present but refuses to open — a truncated file, a
  * manifest naming a different product, a coverage row that would license a negative claim — must not take the geocoder
  * down over an advisory it was never asked for.
  */
@@ -418,7 +423,7 @@ export async function loadCoastalErosionRoute(
  * them, and a California or a Washington layer would carry its own vocabulary under the same word. A file called
  * `zoning.db` would invite one jurisdiction's codes to answer for another's.
  *
- * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * Tolerate-and-degrade past the `pathExists` check: a layer that is present but refuses to open — a truncated file, a
  * manifest naming a different product, a coverage row that would license a negative claim — must not take the geocoder
  * down over an advisory it was never asked for.
  */
@@ -454,7 +459,7 @@ export async function loadForkEntityDeps(
 		import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
 	])
 
-	const morphology = loadStreetMorphologyFST()
+	const morphology = await loadStreetMorphologyFST()
 	const poiLookup = new POILookup({ databasePath: poiDBPath })
 
 	return {
@@ -480,7 +485,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// a missing gazetteer must report the gazetteer error even when the weights are also absent.) A
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
-	const candidateDB = resolveCandidateDBPath(options.candidateDB, options.dataRoot)
+	const candidateDB = await resolveCandidateDBPath(options.candidateDB, options.dataRoot)
 	const wofPath = candidateDB ? [] : await resolveWOFPath(options)
 	const pathsResolvedAt = performance.now()
 
@@ -543,10 +548,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		if (fst) {
 			try {
-				streetMorphology = loadStreetMorphologyFST({
-					...(classifier.streetMorphologyPath ? { artifactPath: classifier.streetMorphologyPath } : {}),
-					onWarn: (message) => console.warn(`[mailwoman] ${message}`),
-				}).matcher
+				streetMorphology = (
+					await loadStreetMorphologyFST({
+						...(classifier.streetMorphologyPath ? { artifactPath: classifier.streetMorphologyPath } : {}),
+						onWarn: (message) => console.warn(`[mailwoman] ${message}`),
+					})
+				).matcher
 			} catch (error) {
 				console.warn(`[mailwoman] street-morphology FST unavailable: ${(error as Error).message} — gate off`)
 			}
@@ -571,7 +578,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const resolverImportedAt = performance.now()
 
-	const lookup = createResolverBackend(mod, {
+	const lookup = await createResolverBackend(mod, {
 		candidateDB,
 		dataRoot: options.dataRoot,
 		wofPaths: wofPath,
@@ -585,14 +592,14 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	const capitals =
 		options.capitalTier === false
 			? undefined
-			: loadCapitalIndex({ candidateDB, missing: options.capitalTier === true ? "throw" : "degrade" })
+			: await loadCapitalIndex({ candidateDB, missing: options.capitalTier === true ? "throw" : "degrade" })
 
 	const capitalLevel = capitals
 		? (place: { name: string; country?: string; lat: number; lon: number }): number =>
 				capitals.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const shardProvider = new ShardProvider(mod, options.dataRoot)
+	const shardProvider = await ShardProvider.create(mod, options.dataRoot)
 	// Explicit --address-points-db / --interpolation-db flags override per-state selection (testing a
 	// specific file); an unset tier still falls back to the region-derived per-state shard. The street-key
 	// locale follows --locale's region (fr-FR → "fr") — the shard's keys were built with its country's
@@ -626,7 +633,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	try {
 		const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-		nationalShards = new BANShardProvider(options.dataRoot).for
+		nationalShards = (await BANShardProvider.create(options.dataRoot)).for
 	} catch {
 		nationalShards = undefined
 	}
@@ -638,7 +645,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	try {
 		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
-		osmProvider = new OSMShardProvider(options.dataRoot)
+		osmProvider = await OSMShardProvider.create(options.dataRoot)
 	} catch {
 		osmProvider = undefined
 	}

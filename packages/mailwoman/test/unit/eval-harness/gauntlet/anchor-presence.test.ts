@@ -50,21 +50,21 @@ describe("the anchor-artifact presence assertion", () => {
 	it("passes when the declared binary is on disk", async () => {
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } }, ["postcode-zz.bin"])
 
-		expect(() => assertDeclaredAnchorBins(["zz-zz"], root)).not.toThrow()
+		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).resolves.toBeUndefined()
 	})
 
 	it("REFUSES when a package declares a binary it does not have", async () => {
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 
-		expect(() => assertDeclaredAnchorBins(["zz-zz"], root)).toThrow(/postcode-zz\.bin/)
+		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/postcode-zz\.bin/)
 	})
 
 	it("names the repair — the package's own link-dev-weights script", async () => {
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 
-		const error = (() => {
+		const error = await (async () => {
 			try {
-				assertDeclaredAnchorBins(["zz-zz"], root)
+				await assertDeclaredAnchorBins(["zz-zz"], root)
 			} catch (caught) {
 				return caught as Error
 			}
@@ -85,7 +85,7 @@ describe("the anchor-artifact presence assertion", () => {
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },
 		})
 
-		expect(() => assertDeclaredAnchorBins(["zz-zz"], root)).not.toThrow()
+		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).resolves.toBeUndefined()
 	})
 
 	it("stays silent for a package with no card at all", async () => {
@@ -97,7 +97,7 @@ describe("the anchor-artifact presence assertion", () => {
 		await writeLocalTextFile("", join(dir, "model.onnx"))
 		await writeLocalTextFile("", join(dir, "tokenizer.model"))
 
-		expect(() => assertDeclaredAnchorBins(["zz-zz"], root)).not.toThrow()
+		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).resolves.toBeUndefined()
 	})
 
 	it("reports EVERY missing package, not just the first", async () => {
@@ -106,13 +106,13 @@ describe("the anchor-artifact presence assertion", () => {
 		// is per-locale and carries the locale tag, which is what makes a six-overlay run diagnosable.
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 
-		expect(() => assertDeclaredAnchorBins(["zz-zz"], root)).toThrow(/✗ zz-zz:/)
+		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/✗ zz-zz:/)
 	})
 
 	it("skips a locale whose package does not resolve at all — a different failure with a different repair", async () => {
 		await using rootDirectory = await temporaryDirectory("gauntlet-weights-")
 		const root = rootDirectory.path
 
-		expect(() => assertDeclaredAnchorBins(["zz-zz"], root)).not.toThrow()
+		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).resolves.toBeUndefined()
 	})
 })

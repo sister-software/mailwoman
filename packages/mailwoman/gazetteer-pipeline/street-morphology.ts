@@ -74,7 +74,7 @@ export async function buildStreetMorphologyArtifact(
 
 	progress(`building street-morphology FST from ${dictionariesDir}`)
 
-	const result = buildStreetMorphologyFST({
+	const result = await buildStreetMorphologyFST({
 		dictionariesDir,
 		...(opts.locales && opts.locales.length ? { locales: opts.locales } : {}),
 		...(opts.minVariantLength !== undefined ? { minVariantLength: opts.minVariantLength } : {}),

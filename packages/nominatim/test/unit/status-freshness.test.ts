@@ -71,7 +71,7 @@ function bare(path: string): string {
 }
 
 async function statusBody(paths: Array<{ name: string; path: string }>): Promise<NominatimStatus> {
-	const status = nominatimStatus(readFreshness(paths))
+	const status = nominatimStatus(await readFreshness(paths))
 	const app = createNominatimApp({ status: async () => status })
 	const res = await app.request("/status")
 

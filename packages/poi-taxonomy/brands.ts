@@ -20,7 +20,7 @@ import { createBrandLookupCore } from "./brands-lookup-core.ts"
 import { readPackagedTable } from "./packaged-data.ts"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "./types.ts"
 
-const TABLE = readPackagedTable<POIBrandTable>("brands.json")
+const TABLE = await readPackagedTable<POIBrandTable>("brands.json")
 const CORE = createBrandLookupCore(TABLE)
 
 export type { BrandMatch } from "./brands-lookup-core.ts"

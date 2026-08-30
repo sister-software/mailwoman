@@ -71,5 +71,5 @@ export interface MailwomanAPIEngine<T extends Partial<GeocodeOutcomeLike> = Geoc
 	batch?(addresses: string[], opts?: ParseInit): Promise<{ results: BatchResultEntry<T>[] }>
 	resolveTree?(tree: AddressTree, opts: Record<string, unknown>): Promise<ResolveTreeOutcome>
 	reload?(): Promise<{ reloaded: boolean; versions: unknown }>
-	health?(): HealthData
+	health?(): Promise<HealthData>
 }

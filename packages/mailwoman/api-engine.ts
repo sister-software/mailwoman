@@ -37,7 +37,7 @@ import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
-import { pathExistsSync, readDirectorySync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
@@ -75,7 +75,7 @@ interface GeocodeDepsBundle {
 /**
  * Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional shards).
  */
-function wofPaths(): string[] {
+async function wofPaths(): Promise<string[]> {
 	const env = $public.MAILWOMAN_WOF_DB
 
 	if (env)
@@ -84,7 +84,15 @@ function wofPaths(): string[] {
 			.map((p) => p.trim())
 			.filter(isPresent)
 
-	return wofShardPaths().filter((p) => pathExistsSync(p))
+	const paths: string[] = []
+
+	for (const shardPath of wofShardPaths()) {
+		if (await pathExists(shardPath)) {
+			paths.push(shardPath)
+		}
+	}
+
+	return paths
 }
 
 /**
@@ -102,7 +110,7 @@ function buildPreflightMessage(): string {
  * Best-effort model-card read: env override → installed weights package → dev-tree fallback. Ported from
  * `HealthRouter`.
  */
-function readModelCard(): Record<string, unknown> | null {
+async function readModelCard(): Promise<Record<string, unknown> | null> {
 	const candidates: string[] = []
 
 	if ($public.MAILWOMAN_MODEL_CARD) {
@@ -114,7 +122,7 @@ function readModelCard(): Record<string, unknown> | null {
 		// map, so the subpath resolves as a plain file inside the package, and (unlike `node:module`'s
 		// `findPackageJSON`) `import.meta.resolve` realpaths through the workspace symlink — the same string the CJS
 		// `require.resolve` this replaced returned. It does NOT throw for a missing FILE inside a resolvable package,
-		// only for an unresolvable package; the `existsSync` below already gates every candidate, so that is a no-op
+		// only for an unresolvable package; the `pathExists` below already gates every candidate, so that is a no-op
 		// here.
 		candidates.push(fileURLToPath(import.meta.resolve("@mailwoman/neural-weights-en-us/model-card.json")))
 	} catch {
@@ -125,8 +133,8 @@ function readModelCard(): Record<string, unknown> | null {
 
 	for (const p of candidates) {
 		try {
-			if (pathExistsSync(p)) {
-				const card = tryParsingJSON<Record<string, unknown>>(readLocalTextFileSync(p))
+			if (await pathExists(p)) {
+				const card = tryParsingJSON<Record<string, unknown>>(await readLocalTextFile(p))
 
 				if (card) return card
 			}
@@ -142,11 +150,11 @@ function readModelCard(): Record<string, unknown> | null {
  * Count canonical per-state shards (`<prefix>-us-<2-letter>.db`) in a data subdir; 0 if absent. Ported from
  * `HealthRouter`.
  */
-function countShards(subdir: string, prefix: string): number {
+async function countShards(subdir: string, prefix: string): Promise<number> {
 	try {
 		const re = new RegExp(`^${prefix}-us-[a-z]{2}\\.db$`)
 
-		return readDirectorySync(`${DATA_ROOT}/${subdir}`).filter((f) => re.test(f)).length
+		return (await readDirectory(`${DATA_ROOT}/${subdir}`)).filter((f) => re.test(f)).length
 	} catch {
 		return 0
 	}
@@ -156,8 +164,18 @@ function countShards(subdir: string, prefix: string): number {
  * The `/health` data block: model card + data-root inventory. Ported from `HealthRouter`'s `healthHandler`. Always
  * available — reads files best-effort and never throws, regardless of preflight status.
  */
-function buildHealthData(): HealthData {
-	const card = readModelCard()
+async function buildHealthData(): Promise<HealthData> {
+	const card = await readModelCard()
+	// The express HealthRouter existence-filtered here where GeocodeRouter's wofPaths() didn't (for
+	// env-supplied paths); this diagnostic field keeps the health-side behavior (no phantom env paths in
+	// "what's deployed").
+	const wofDBs: string[] = []
+
+	for (const p of await wofPaths()) {
+		if (await pathExists(p)) {
+			wofDBs.push(p)
+		}
+	}
 
 	return {
 		model: card
@@ -172,12 +190,10 @@ function buildHealthData(): HealthData {
 		data: {
 			data_root: DATA_ROOT,
 			// Versioned-switchover provenance (#485): the releases.json pin, or null in legacy mode.
-			versions: readReleaseManifest(DATA_ROOT),
-			// The express HealthRouter existsSync-filtered here where GeocodeRouter's wofPaths() didn't;
-			// this diagnostic field keeps the health-side behavior (no phantom env paths in "what's deployed").
-			wof_dbs: wofPaths().filter((p) => pathExistsSync(p)),
-			situs_states: countShards("address-points", "address-points"),
-			interpolation_states: countShards("interpolation", "interpolation"),
+			versions: await readReleaseManifest(DATA_ROOT),
+			wof_dbs: wofDBs,
+			situs_states: await countShards("address-points", "address-points"),
+			interpolation_states: await countShards("interpolation", "interpolation"),
 		},
 	}
 }
@@ -292,13 +308,13 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
 	}
 
-	const paths = wofPaths()
+	const paths = await wofPaths()
 	// Candidate backend → country-agnostic default (demo's global, population-first behavior); a per-request `country`
 	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin shard) is a valid boot
 	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight gate below checks BOTH,
 	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` gate rather than `GeocodeRouter`'s WOF-only check.
 	// This gate governs geocode/batch/resolveTree/reload ONLY — `parse` is already wired above and unaffected.
-	const candidateDB = resolveCandidateDBPath()
+	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {
 		console.error("createServeEngine: no WOF DBs found — set MAILWOMAN_WOF_DB or MAILWOMAN_CANDIDATE_DB")
@@ -306,9 +322,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		return { engine: { parse, health }, preflight: { ok: false, message: buildPreflightMessage() } }
 	}
 
-	const backend = createResolverBackend(resolverMod, { wofPaths: paths })
+	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
-	const shards = new ShardProvider(resolverMod, DATA_ROOT)
+	const shards = await ShardProvider.create(resolverMod, DATA_ROOT)
 	const deps: GeocodeDepsBundle = { classifier, resolver, shards, defaultCountry: candidateDB ? undefined : "US" }
 
 	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) — the engine records nothing extra
@@ -393,7 +409,7 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 	// Ported from `GeocodeRouter`'s `reloadHandler`.
 	const reload: MailwomanAPIEngine["reload"] = async () => {
-		const versions = deps.shards.reload()
+		const versions = await deps.shards.reload()
 
 		return { reloaded: true, versions }
 	}

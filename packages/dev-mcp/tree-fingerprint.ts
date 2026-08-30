@@ -16,7 +16,7 @@
  *   imports, plus `HEAD` and the dirty set, and a change makes the engine UNREACHABLE rather than wrong.
  */
 
-import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { readDirectoryEntries, statPath } from "@mailwoman/core/fs/readers"
 import { execFileSync } from "@mailwoman/platform/child_process"
 import { createHash } from "@mailwoman/platform/crypto"
 import { join } from "@mailwoman/platform/path"
@@ -75,7 +75,7 @@ export interface TreeFingerprint {
 	filesWalked: number
 }
 
-function newestSourceMtime(root: string): { mtimeMs: number; path: string | null; count: number } {
+async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path: string | null; count: number }> {
 	let newest = 0
 	let newestPath: string | null = null
 	let count = 0
@@ -86,7 +86,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 		let entries
 
 		try {
-			entries = readDirectoryEntriesSync(dir)
+			entries = await readDirectoryEntries(dir)
 		} catch {
 			// A workspace that does not exist in this checkout contributes nothing rather than throwing — the caller's
 			// emptiness check is what catches a list that is wrong in total.
@@ -107,7 +107,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 			count++
 
 			const full = join(dir, entry.name)
-			const { mtimeMs } = statPathSync(full)
+			const { mtimeMs } = await statPath(full)
 
 			if (mtimeMs > newest) {
 				newest = mtimeMs
@@ -140,13 +140,13 @@ function git(repoRoot: string, args: string[]): string {
  *
  * @throws If the walk found no source files at all — see {@link TreeFingerprint.filesWalked}.
  */
-export function computeTreeFingerprint(repoRoot: string): TreeFingerprint {
+export async function computeTreeFingerprint(repoRoot: string): Promise<TreeFingerprint> {
 	let newestMtimeMs = 0
 	let newestPath: string | null = null
 	let filesWalked = 0
 
 	for (const workspace of FINGERPRINTED_WORKSPACES) {
-		const result = newestSourceMtime(join(repoRoot, workspace))
+		const result = await newestSourceMtime(join(repoRoot, workspace))
 
 		filesWalked += result.count
 

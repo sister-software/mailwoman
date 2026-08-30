@@ -229,7 +229,7 @@ async function pullBundles(
 	opts: { dryRun: boolean; only?: string; force: boolean; dataRoot: string; host?: string }
 ): Promise<PullOutcome> {
 	const { dataRoot } = opts
-	const manifest = readReleaseManifest(dataRoot)
+	const manifest = await readReleaseManifest(dataRoot)
 	const checks: Check[] = []
 	let ok = true
 	let pulledCandidate = false

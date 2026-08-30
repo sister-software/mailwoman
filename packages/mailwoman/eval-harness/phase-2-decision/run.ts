@@ -632,7 +632,7 @@ async function measureMarker(
  * Run the phase-2 decision ruler and emit a receipt.
  */
 export async function runPhase2Decision(options: Phase2RunOptions = {}): Promise<Phase2Receipt> {
-	const definition = loadPhase2Definition(options.definitionPath, options.freezePath)
+	const definition = await loadPhase2Definition(options.definitionPath, options.freezePath)
 	const { readings, instruments, artifact, deviations } = await measure(definition, options)
 	const byMeasurement = new Map(readings.map((reading) => [reading.measurement, reading]))
 	const checks = evaluatePhase2Checks(definition, byMeasurement)

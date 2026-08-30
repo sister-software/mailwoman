@@ -21,7 +21,6 @@
  */
 
 import { statPath, pathExists, readDirectory } from "@mailwoman/core/fs/readers"
-import { statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
@@ -64,13 +63,19 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		// By MTIME, not filename: the version scheme sorts neither lexically nor numerically — `v8-leg2-sp.yaml` beats
 		// `v4.8.0-...` both ways, and picking it reports every country as DROPPED, which reads as a catastrophic
 		// finding rather than as the wrong file. The report always names the config it used.
-		const newest = (await pathExists(configDir))
-			? (await readDirectory(configDir))
-					.filter((n) => n.endsWith(".yaml") && !n.includes("smoke"))
-					.map((n) => ({ n, at: statPathSync(`${configDir}/${n}`).mtimeMs }))
-					.toSorted((a, b) => b.at - a.at)
-					.at(0)?.n
-			: undefined
+		let newest: string | undefined
+
+		if (await pathExists(configDir)) {
+			const pairs: Array<{ n: string; at: number }> = []
+
+			for (const n of await readDirectory(configDir)) {
+				if (n.endsWith(".yaml") && !n.includes("smoke")) {
+					pairs.push({ n, at: (await statPath(`${configDir}/${n}`)).mtimeMs })
+				}
+			}
+
+			newest = pairs.toSorted((a, b) => b.at - a.at).at(0)?.n
+		}
 
 		const versioned = String(dataRootPath("corpus", "versioned"))
 		const manifests: Array<{ path: string; at: number }> = []

@@ -29,8 +29,8 @@
  *   Run: node packages/mailwoman/eval-harness/gb-codepoint-eval.ts [--stamp 2026-08-05] [--per-area 5] [--out <jsonl>]
  */
 
-import { readDirectorySync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
-import { writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
+import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, mulberry32 } from "@mailwoman/core/utils"
 import { basename, join } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
@@ -68,12 +68,12 @@ const PQ_NO_COORDINATE = 90
  * behavior; only a mutant absent from the register demands abstention. Reasoning "the mutant almost never exists" was
  * measured wrong on the first run (346/600 resolved), which is why this set exists.
  */
-function allPostcodes(csvDir: string): Set<string> {
+async function allPostcodes(csvDir: string): Promise<Set<string>> {
 	const out = new Set<string>()
 
-	for (const file of readDirectorySync(csvDir).filter((f) => f.endsWith(".csv"))) {
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one synchronous pass
-		for (const line of readLocalTextFileSync(join(csvDir, file)).split("\n")) {
+	for (const file of (await readDirectory(csvDir)).filter((f) => f.endsWith(".csv"))) {
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
+		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
 			const pc = line.split(",")[0]?.replaceAll('"', "").trim()
 
 			if (pc) {
@@ -85,18 +85,16 @@ function allPostcodes(csvDir: string): Set<string> {
 	return out
 }
 
-function samplePostcodes(csvDir: string, perArea: number, seed: number): SampledPostcode[] {
+async function samplePostcodes(csvDir: string, perArea: number, seed: number): Promise<SampledPostcode[]> {
 	const random = mulberry32(seed)
 	const out: SampledPostcode[] = []
 
-	for (const file of readDirectorySync(csvDir)
-		.filter((f) => f.endsWith(".csv"))
-		.toSorted()) {
+	for (const file of (await readDirectory(csvDir)).filter((f) => f.endsWith(".csv")).toSorted()) {
 		const rows: SampledPostcode[] = []
 
 		// Code-Point area files are small (the largest ~90k rows); whole-file split is bounded here.
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, synchronous sampling pass
-		for (const line of readLocalTextFileSync(join(csvDir, file)).split("\n")) {
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
+		for (const line of (await readLocalTextFile(join(csvDir, file))).split("\n")) {
 			if (!line) continue
 			// Columns: PC,PQ,EA,NO,… — quoted postcode, then numerics. Code-Point carries no embedded
 			// commas inside quotes, so a plain split is faithful to this source.
@@ -162,8 +160,8 @@ const { values } = parseArgs({
 const csvDir = String(dataRootPath("codepoint", values.stamp!, "Data", "CSV"))
 const perArea = Number.parseInt(values["per-area"]!, 10)
 const seed = Number.parseInt(values.seed!, 10)
-const sample = samplePostcodes(csvDir, perArea, seed)
-const register = allPostcodes(csvDir)
+const sample = await samplePostcodes(csvDir, perArea, seed)
+const register = await allPostcodes(csvDir)
 
 console.log(`[gb-codepoint] existence oracle: ${register.size.toLocaleString()} unit postcodes`)
 
@@ -199,7 +197,7 @@ for (const locale of ["en-US", "en-GB"]) {
 
 const outPath = values.out ?? String(dataRootPath("eval", `gb-codepoint-${values.stamp}-seed${seed}.jsonl`))
 
-writeLocalTextFileSync(results.map((r) => JSON.stringify(r)).join("\n") + "\n", outPath)
+await writeLocalTextFile(results.map((r) => JSON.stringify(r)).join("\n") + "\n", outPath)
 
 for (const locale of ["en-US", "en-GB"]) {
 	console.log(`\n=== ${locale} ===`)

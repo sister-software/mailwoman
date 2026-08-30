@@ -148,7 +148,7 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 	// fails closed in strict mode if a declared channel can't actually be fed; `--no-strict` opts out.
 	const resolved = options.model
 		? { modelPath: options.model, tokenizerPath: options.tokenizer!, modelCardPath: options.modelCard! }
-		: resolveWeights({ locale: "en-us" })
+		: await resolveWeights({ locale: "en-us" })
 
 	if (!resolved.modelPath || !resolved.tokenizerPath || !resolved.modelCardPath)
 		throw new Error("createScorer needs model + tokenizer + model-card; resolveWeights returned incomplete paths")

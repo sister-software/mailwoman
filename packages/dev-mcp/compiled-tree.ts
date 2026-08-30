@@ -16,7 +16,7 @@
  *   for the same reason. The failure mode is silence, so the answer is a refusal rather than a warning.
  */
 
-import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { readDirectoryEntries, statPath } from "@mailwoman/core/fs/readers"
 import { basename, join, relative, sep } from "@mailwoman/platform/path"
 
 import { FINGERPRINTED_WORKSPACES } from "./tree-fingerprint.ts"
@@ -42,11 +42,11 @@ function isEmittingSource(workspaceRoot: string, path: string): boolean {
  * Newest mtime under a directory, restricted to files matching a predicate. Returns `null` when the directory does not
  * exist, which a caller must distinguish from "old" — a missing `out/` means never compiled, not stale.
  */
-function newestMtime(
+async function newestMtime(
 	root: string,
 	matches: (name: string) => boolean,
 	pathAllowed: (path: string) => boolean = () => true
-): { mtimeMs: number; path: string } | null {
+): Promise<{ mtimeMs: number; path: string } | null> {
 	let newest: { mtimeMs: number; path: string } | null = null
 	const stack = [root]
 
@@ -55,7 +55,7 @@ function newestMtime(
 		let entries
 
 		try {
-			entries = readDirectoryEntriesSync(dir)
+			entries = await readDirectoryEntries(dir)
 		} catch {
 			continue
 		}
@@ -75,7 +75,7 @@ function newestMtime(
 
 			if (!pathAllowed(full)) continue
 
-			const { mtimeMs } = statPathSync(full)
+			const { mtimeMs } = await statPath(full)
 
 			if (!newest || mtimeMs > newest.mtimeMs) {
 				newest = { mtimeMs, path: full }
@@ -99,7 +99,7 @@ export interface CompiledFreshness {
 /**
  * Compare the newest source file against the newest compiled output across the workspaces a spawned CLI will load.
  */
-export function checkCompiledFreshness(repoRoot: string): CompiledFreshness {
+export async function checkCompiledFreshness(repoRoot: string): Promise<CompiledFreshness> {
 	let newestSource: { mtimeMs: number; path: string } | null = null
 	let newestCompiled: { mtimeMs: number; path: string } | null = null
 
@@ -108,13 +108,14 @@ export function checkCompiledFreshness(repoRoot: string): CompiledFreshness {
 
 		// Emitted `.d.ts` files live under out/ and are newer than everything by construction, so counting them as
 		// source would make the guard permanently unsatisfiable. Excluded by extension AND by path.
-		const source = newestMtime(
-			workspaceRoot,
-			(name) => /\.tsx?$/.test(name) && !name.endsWith(".d.ts"),
-			(path) => !path.includes(`${workspace}/out/`) && isEmittingSource(workspaceRoot, path)
-		)
-
-		const compiled = newestMtime(join(workspaceRoot, "out"), (name) => name.endsWith(".js"))
+		const [source, compiled] = await Promise.all([
+			newestMtime(
+				workspaceRoot,
+				(name) => /\.tsx?$/.test(name) && !name.endsWith(".d.ts"),
+				(path) => !path.includes(`${workspace}/out/`) && isEmittingSource(workspaceRoot, path)
+			),
+			newestMtime(join(workspaceRoot, "out"), (name) => name.endsWith(".js")),
+		])
 
 		if (source && (!newestSource || source.mtimeMs > newestSource.mtimeMs)) {
 			newestSource = source
@@ -154,8 +155,8 @@ export function checkCompiledFreshness(repoRoot: string): CompiledFreshness {
 /**
  * @throws When the compiled tree predates its source.
  */
-export function assertCompiledFresh(repoRoot: string): CompiledFreshness {
-	const freshness = checkCompiledFreshness(repoRoot)
+export async function assertCompiledFresh(repoRoot: string): Promise<CompiledFreshness> {
+	const freshness = await checkCompiledFreshness(repoRoot)
 
 	if (!freshness.fresh) throw new Error(freshness.reason!)
 

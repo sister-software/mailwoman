@@ -68,8 +68,14 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
-import { pathExists, readLocalJSONFile, statPath, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import {
+	pathExists,
+	readDirectory,
+	readDirectoryEntries,
+	readLocalBuffer,
+	readLocalJSONFile,
+	statPath,
+} from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
@@ -251,23 +257,23 @@ async function runLoreGuards(env: {
 	if (await pathExists("packages/core/out")) {
 		const reference = (await statPath("packages/core/out")).mtimeMs
 
-		const staleSource = ((): string | undefined => {
-			for (const depth1 of readDirectoryEntriesSync("packages/core")) {
+		const staleSource = await (async (): Promise<string | undefined> => {
+			for (const depth1 of await readDirectoryEntries("packages/core")) {
 				const path1 = join("packages/core", depth1.name)
 
 				if (depth1.isFile()) {
-					if (depth1.name.endsWith(".ts") && statPathSync(path1).mtimeMs > reference) return path1
+					if (depth1.name.endsWith(".ts") && (await statPath(path1)).mtimeMs > reference) return path1
 
 					continue
 				}
 
 				if (!depth1.isDirectory()) continue
 
-				for (const depth2 of readDirectoryEntriesSync(path1)) {
+				for (const depth2 of await readDirectoryEntries(path1)) {
 					if (!depth2.isFile() || !depth2.name.endsWith(".ts")) continue
 					const path2 = join(path1, depth2.name)
 
-					if (statPathSync(path2).mtimeMs > reference) return path2
+					if ((await statPath(path2)).mtimeMs > reference) return path2
 				}
 			}
 

@@ -23,7 +23,7 @@
  */
 
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { parseArgs } from "@mailwoman/platform/util"
@@ -63,10 +63,20 @@ if (backendName !== "fts" && backendName !== "candidate") {
 
 const candidatePath = conventionCandidateDBPath()
 
+const wofPaths: string[] = []
+
+if (backendName === "fts") {
+	for (const shardPath of wofShardPaths()) {
+		if (await pathExists(shardPath)) {
+			wofPaths.push(shardPath)
+		}
+	}
+}
+
 const backend: ResolverBackend =
 	backendName === "candidate"
 		? new WOFCandidateTableLookup({ databasePath: candidatePath })
-		: new WOFSQLitePlaceLookup({ databasePath: wofShardPaths().filter(pathExistsSync) })
+		: new WOFSQLitePlaceLookup({ databasePath: wofPaths })
 
 //#region 1. Row counts
 
@@ -88,7 +98,7 @@ if (backendName === "candidate") {
 		rows.set((r.country ?? "").toUpperCase(), r.n)
 	}
 } else {
-	for (const path of wofShardPaths().filter(pathExistsSync)) {
+	for (const path of wofPaths) {
 		using db = new DatabaseClient<CandidateDatabase>(path, { readOnly: true })
 
 		for (const r of db
@@ -104,9 +114,7 @@ if (backendName === "candidate") {
 
 //#region 2. Live reachability, through the pass's own lookups
 
-console.log(
-	`\n### ${backendName} backend · ${backendName === "fts" ? wofShardPaths().filter(pathExistsSync).length : 1} source(s)`
-)
+console.log(`\n### ${backendName} backend · ${backendName === "fts" ? wofPaths.length : 1} source(s)`)
 console.log(`\n| system | country | postcode rows | postcode resolves | exact locality | pair coherent |`)
 console.log(`| --- | --- | ---: | --- | --- | --- |`)
 

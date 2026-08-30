@@ -22,8 +22,7 @@
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
 
-import { readDirectory, readDirectoryEntries } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readDirectorySync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectory, readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
 import { basename, join } from "@mailwoman/platform/path"
@@ -51,10 +50,11 @@ const MALFORMED_EXCERPT_CHARS = 60
  * `mailwoman/out/eval-harness/gauntlet/cases/` reads the source-tree copy. Same bridge as `baseline-assert.ts`'s
  * `resolveBaselineFilePath` and `promotion-gate.ts`'s `resolveGateSpecPath`.
  */
-export const CASES_DIR = ((): string => {
+export const CASES_DIR = await (async (): Promise<string> => {
 	const sibling = fileURLToPath(new URL(".", import.meta.url))
 
-	if (pathExistsSync(sibling) && readDirectorySync(sibling).some((name) => COUNTRY_DIR.test(name))) return sibling
+	if ((await pathExists(sibling)) && (await readDirectory(sibling)).some((name) => COUNTRY_DIR.test(name)))
+		return sibling
 
 	return fileURLToPath(new URL("../../../../eval-harness/gauntlet/cases/", import.meta.url))
 })()

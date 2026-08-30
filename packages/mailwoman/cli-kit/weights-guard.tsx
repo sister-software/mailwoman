@@ -36,9 +36,9 @@ export type WeightsOutcome = "neural" | "declined" | "unavailable"
 /**
  * Probe whether weights resolve for a locale without loading the model. Cheap (fs checks only).
  */
-export function probeWeights(locale?: string, cacheRoot?: string): { ok: boolean; detail?: string } {
+export async function probeWeights(locale?: string, cacheRoot?: string): Promise<{ ok: boolean; detail?: string }> {
 	try {
-		resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
+		await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
 
 		return { ok: true }
 	} catch (error) {
@@ -102,21 +102,23 @@ export function downloadWeights(
 				return
 			}
 
-			const probe = probeWeights(opts.locale, cacheRoot)
+			// probeWeights never rejects (it catches internally), so this chained probe cannot produce an
+			// unhandled rejection.
+			void probeWeights(opts.locale, cacheRoot).then((probe) => {
+				if (!probe.ok) {
+					resolvePromise({
+						ok: false,
+						message:
+							`${packageName} installed but carries no model binaries — most likely a code-only release ` +
+							`tarball. Try again after the next model release, or install a known model version, e.g. ` +
+							`npm install --prefix ${cacheRoot} ${packageName}@6.0.0`,
+					})
 
-			if (!probe.ok) {
-				resolvePromise({
-					ok: false,
-					message:
-						`${packageName} installed but carries no model binaries — most likely a code-only release ` +
-						`tarball. Try again after the next model release, or install a known model version, e.g. ` +
-						`npm install --prefix ${cacheRoot} ${packageName}@6.0.0`,
-				})
+					return
+				}
 
-				return
-			}
-
-			resolvePromise({ ok: true, message: `Weights ready in ${cacheRoot}.` })
+				resolvePromise({ ok: true, message: `Weights ready in ${cacheRoot}.` })
+			})
 		})
 	})
 }
@@ -145,6 +147,7 @@ export interface WeightsGuardProps {
 }
 
 type GuardPhase =
+	| { phase: "probing" }
 	| { phase: "prompt" }
 	| { phase: "downloading"; status: string }
 	| { phase: "settled"; outcome: WeightsOutcome }
@@ -165,12 +168,38 @@ export function WeightsGuard({
 	const [state, setState] = useState<GuardPhase>(() => {
 		if (forceDegraded) return { phase: "settled", outcome: "declined" }
 
-		if (probeWeights(locale, cacheRoot).ok) return { phase: "settled", outcome: "neural" }
-
-		if (autoDownload) return { phase: "downloading", status: "Starting download…" }
-
-		return isRawModeSupported ? { phase: "prompt" } : { phase: "settled", outcome: "unavailable" }
+		return { phase: "probing" }
 	})
+
+	const probing = state.phase === "probing"
+
+	useEffect(() => {
+		if (!probing) return
+
+		let cancelled = false
+
+		void probeWeights(locale, cacheRoot).then((probe) => {
+			if (cancelled) return
+
+			if (probe.ok) {
+				setState({ phase: "settled", outcome: "neural" })
+
+				return
+			}
+
+			if (autoDownload) {
+				setState({ phase: "downloading", status: "Starting download…" })
+
+				return
+			}
+
+			setState(isRawModeSupported ? { phase: "prompt" } : { phase: "settled", outcome: "unavailable" })
+		})
+
+		return () => {
+			cancelled = true
+		}
+	}, [probing, locale, cacheRoot, autoDownload, isRawModeSupported])
 
 	const downloading = state.phase === "downloading"
 
@@ -211,6 +240,8 @@ export function WeightsGuard({
 	)
 
 	switch (state.phase) {
+		case "probing":
+			return <></>
 		case "settled":
 			return children(state.outcome)
 		case "prompt":

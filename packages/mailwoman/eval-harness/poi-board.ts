@@ -51,7 +51,7 @@
  *   so the interval/distance math is tested against synthetic outcomes.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -481,11 +481,15 @@ export interface POIBoardOptions {
 async function loadResolver(
 	options: POIBoardOptions
 ): Promise<({ resolver: Resolver; backend: POIBoardResolverBackend } & Disposable) | undefined> {
-	const wofPaths = options.candidateDB
+	const wofCandidates = options.candidateDB
 		? []
-		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
-				pathExistsSync(p)
-			)
+		: options.resolveDB
+			? options.resolveDB.split(",").map((p) => p.trim())
+			: wofShardPaths()
+
+	const wofPaths = (await Promise.all(wofCandidates.map(async (path) => ({ path, exists: await pathExists(path) }))))
+		.filter((entry) => entry.exists)
+		.map((entry) => entry.path)
 
 	if (!options.candidateDB && !wofPaths.length) {
 		console.error(
@@ -498,7 +502,7 @@ async function loadResolver(
 
 	try {
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const lookup = createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
+		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return {
 			resolver: createWOFResolver(lookup),

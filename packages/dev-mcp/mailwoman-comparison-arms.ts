@@ -36,7 +36,7 @@ export async function prepareMailwomanArms(
 	deps: PrepareMailwomanArmDeps
 ): Promise<PreparedMailwomanArms> {
 	using resources = new DisposableStack()
-	const fingerprint = registry.fingerprint()
+	const fingerprint = await registry.fingerprint()
 	const effectiveA = resolveConfig(configA)
 	const effectiveB = resolveConfig(configB)
 
@@ -78,7 +78,7 @@ export async function prepareMailwomanArms(
 
 	const confounds = checkConfounds({ ...effectiveA }, { ...effectiveB }, declared)
 
-	if (registry.sourceMoved) {
+	if (await registry.sourceMoved()) {
 		throw new Error(
 			`The dev worker imported source tree ${registry.bootFingerprint.digest}, but the working tree is now ` +
 				`${fingerprint.digest}. Call mwdev_restart before grading.`

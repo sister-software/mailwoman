@@ -79,11 +79,11 @@ interface ParsedFeature {
 	names: Array<{ name: string; language: string; privateuse: string; official: number }>
 }
 
-function parseFeature(
+async function parseFeature(
 	text: string,
 	placetypes: ReadonlySet<string>,
 	anchorLookup?: GeoNamesAnchorLookup
-): ParsedFeature | null {
+): Promise<ParsedFeature | null> {
 	// Typed against the schema `@mailwoman/core/resources/whosonfirst` already owns (`WOFFeature`/`WOFProperties`,
 	// admin.ts) rather than reading `any`. This file used to name all seventeen `wof:`/`geom:`/`edtf:`/`mz:` keys as
 	// bare strings, which meant a typo — `wof:superceded_by` — would have compiled, read `undefined`, and silently
@@ -126,7 +126,9 @@ function parseFeature(
 	// The census the rule is sized against is locality-scoped; so is the gate.
 	if (placetype === "locality" && hasLbl && hasGeom && anchorLookup) {
 		const gnID = props["wof:concordances"]?.["gn:id"]
-		const anchor = gnID !== undefined && props["wof:country"] ? anchorLookup(props["wof:country"], gnID) : undefined
+
+		const anchor =
+			gnID !== undefined && props["wof:country"] ? await anchorLookup(props["wof:country"], gnID) : undefined
 
 		const chosen = choosePoint(
 			{ latitude: props["geom:latitude"]!, longitude: props["geom:longitude"]! },
@@ -298,7 +300,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 	const readResults = parallelMap(filePaths, (filePath) => readLocalTextFile(filePath), { concurrency })
 
 	for await (const text of readResults) {
-		const feature = parseFeature(text, placetypes, opts.anchorLookup)
+		const feature = await parseFeature(text, placetypes, opts.anchorLookup)
 
 		if (!feature) {
 			skipped++

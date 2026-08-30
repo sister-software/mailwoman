@@ -56,7 +56,7 @@ await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
+	await linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
@@ -75,7 +75,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
 if (await pathExists(MORPHOLOGY_SRC)) {
-	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
 
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
 } else {

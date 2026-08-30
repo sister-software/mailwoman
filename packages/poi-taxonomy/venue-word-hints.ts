@@ -56,7 +56,7 @@ export interface VenueWordHintTable {
 	hints: Record<string, VenueWordHint>
 }
 
-const TABLE = readPackagedTable<VenueWordHintTable>("venue-word-hints.json")
+const TABLE = await readPackagedTable<VenueWordHintTable>("venue-word-hints.json")
 const HINTS = new Map<string, VenueWordHint>(Object.entries(TABLE.hints))
 
 /**

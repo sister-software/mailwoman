@@ -94,7 +94,7 @@ export async function acquireRegion(options: AcquireRegionOptions): Promise<Acqu
 
 		archives.push(archive)
 
-		const attributes = readSurveyAreaAttributes(archive.tabularDirectory, entry.areasymbol)
+		const attributes = await readSurveyAreaAttributes(archive.tabularDirectory, entry.areasymbol)
 		const shapefilePath = mapUnitShapefile(archive.spatialDirectory, entry.areasymbol)
 		const identity = await readSoilSourceIdentity({ shapefilePath })
 		const outline = await readSurveyAreaOutline(surveyAreaShapefile(archive.spatialDirectory, entry.areasymbol))

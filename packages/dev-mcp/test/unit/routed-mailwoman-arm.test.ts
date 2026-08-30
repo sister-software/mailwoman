@@ -61,8 +61,8 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 
 	return {
 		buildDeps: vi.fn(async () => gauntlet),
-		resolveWeights: vi.fn(({ locale }) => resolved(locale)),
-		realpath: (path) => path,
+		resolveWeights: vi.fn(async ({ locale }) => resolved(locale)),
+		realpath: async (path) => path,
 		runOne: vi.fn(async () => EMPTY_RESULT),
 		...overrides,
 	}
@@ -164,7 +164,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 	it("refuses an overlay artifact that escapes the candidate cache", async () => {
 		const deps = fakeDeps({
-			resolveWeights: ({ locale }) => ({
+			resolveWeights: async ({ locale }) => ({
 				...resolved(locale),
 				artifacts: [{ name: "pair-index-gb.bin", path: "/installed/pair-index-gb.bin", origin: "package" }],
 			}),
@@ -177,7 +177,7 @@ describe("buildRoutedMailwomanArm", () => {
 
 	it("refuses an overlay that resolves a model other than candidate en-US", async () => {
 		const deps = fakeDeps({
-			resolveWeights: ({ locale }) =>
+			resolveWeights: async ({ locale }) =>
 				locale === "en-GB"
 					? resolved(locale, "/candidate/node_modules/@mailwoman/neural-weights-en-gb/model.onnx")
 					: resolved(locale),

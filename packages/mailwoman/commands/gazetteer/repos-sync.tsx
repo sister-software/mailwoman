@@ -19,7 +19,7 @@
  *   six months behind produces a plausible artifact and no complaint.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
@@ -121,21 +121,28 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
+		// Existing clones live under `<root>/<owner>/<name>` when nested; prefer wherever the repo already is. The
+		// existence probes are materialized up front because `planReposSync`'s `directoryFor` is a synchronous callback.
+		const directories = new Map<string, string>()
+
+		for (const repo of repos) {
+			const nested = join(root, UPSTREAM_ORG, repo)
+			const flat = join(root, repo)
+
+			if (await pathExists(nested)) {
+				directories.set(repo, nested)
+			} else if (await pathExists(flat)) {
+				directories.set(repo, flat)
+			} else {
+				directories.set(repo, nested)
+			}
+		}
+
 		const plans = await planReposSync({
 			root,
 			repos,
 			probe: forkProbe,
-			// Existing clones live under `<root>/<owner>/<name>` when nested; prefer wherever the repo already is.
-			directoryFor: (repo) => {
-				const nested = join(root, UPSTREAM_ORG, repo)
-				const flat = join(root, repo)
-
-				if (pathExistsSync(nested)) return nested
-
-				if (pathExistsSync(flat)) return flat
-
-				return nested
-			},
+			directoryFor: (repo) => directories.get(repo)!,
 			fetchFirst: !options.offline,
 		})
 

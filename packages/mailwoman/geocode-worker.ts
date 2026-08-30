@@ -29,9 +29,9 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: cfg.l
 const wof = await import("@mailwoman/resolver-wof-sqlite")
 // Through the selector, not a direct FTS construction: a batch worker must resolve the same way the CLI and the
 // drop-in servers do, or a row geocoded in bulk answers differently from the same row geocoded singly.
-const lookup = createResolverBackend(wof, { dataRoot: cfg.dataRoot, wofPaths: cfg.wofDBPath })
+const lookup = await createResolverBackend(wof, { dataRoot: cfg.dataRoot, wofPaths: cfg.wofDBPath })
 const resolver = createWOFResolver(lookup)
-const shards = new ShardProvider(wof, cfg.dataRoot)
+const shards = await ShardProvider.create(wof, cfg.dataRoot)
 
 const geoDeps = {
 	classifier,

@@ -29,7 +29,7 @@
  *   the whole chain corpus-attested rather than merely self-consistent.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture } from "./fixture.ts"
@@ -127,10 +127,10 @@ export function statableSteps(text: string): RefinementStep[] {
  * `new URL`-relative with a compiled-tree fallback: `tsc` emits no `.jsonl` into `out/`, so a compiled caller reads the
  * source-tree copy. Same bridge as `gauntlet/cases/load.ts`'s `CASES_DIR`.
  */
-export const REFINEMENT_MONOTONICITY_SUITE_PATH = ((): string => {
+export const REFINEMENT_MONOTONICITY_SUITE_PATH: string = await (async (): Promise<string> => {
 	const sibling = fileURLToPath(new URL("refinement-monotonicity.jsonl", import.meta.url))
 
-	if (pathExistsSync(sibling)) return sibling
+	if (await pathExists(sibling)) return sibling
 
 	return fileURLToPath(new URL("../../../eval-harness/conformance/refinement-monotonicity.jsonl", import.meta.url))
 })()

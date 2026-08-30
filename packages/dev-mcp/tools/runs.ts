@@ -27,7 +27,7 @@ export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => (
 		limit: z.number().int().positive().max(200).default(25),
 	}),
 	handler: async (args) => {
-		const fingerprint = registry.fingerprint().digest
+		const fingerprint = (await registry.fingerprint()).digest
 
 		if (args["action"] === "get") {
 			const runID = args["run_id"] as string | undefined

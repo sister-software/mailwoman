@@ -20,7 +20,7 @@
  *   measured answer, and whether a measured answer exists is the whole question `/status` is asked.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 
 import { probeManifest } from "./data-inventory.ts"
 
@@ -117,8 +117,8 @@ export interface FreshnessArtifact {
  * date over an unrelated field would report absence where a fact exists, which is the failure this whole reader is
  * built against.
  */
-function readArtifact({ name, path }: FreshnessArtifact): ArtifactFreshness {
-	if (!pathExistsSync(path)) {
+async function readArtifact({ name, path }: FreshnessArtifact): Promise<ArtifactFreshness> {
+	if (!(await pathExists(path))) {
 		return { name, path, manifest: ManifestState.Absent, reason: "artifact is not on disk" }
 	}
 
@@ -165,8 +165,13 @@ function readArtifact({ name, path }: FreshnessArtifact): ArtifactFreshness {
  * server holds its database handles open for its whole life, so the artifact it is serving from is the one it opened at
  * start, whatever a later symlink swap points at.
  */
-export function readFreshness(artifacts: readonly FreshnessArtifact[]): FreshnessReport {
-	const read = artifacts.map(readArtifact)
+export async function readFreshness(artifacts: readonly FreshnessArtifact[]): Promise<FreshnessReport> {
+	const read: ArtifactFreshness[] = []
+
+	for (const artifact of artifacts) {
+		read.push(await readArtifact(artifact))
+	}
+
 	let dataUpdated: string | undefined
 	let newest = Number.NEGATIVE_INFINITY
 

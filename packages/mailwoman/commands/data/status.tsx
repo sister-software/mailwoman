@@ -80,7 +80,7 @@ async function statusForBundles(
 	dataRoot: string,
 	checkRemote: boolean
 ): Promise<{ ok: boolean; checks: Check[] }> {
-	const manifest = readReleaseManifest(dataRoot)
+	const manifest = await readReleaseManifest(dataRoot)
 	const checks: Check[] = []
 	let ok = true
 

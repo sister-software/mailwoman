@@ -7,7 +7,7 @@
  *   takes its table from the caller and never reaches the filesystem.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolve } from "@mailwoman/platform/path"
 
 const moduleDir = import.meta.dirname
@@ -22,9 +22,15 @@ const moduleDir = import.meta.dirname
  * failures into one: a corrupt `taxonomy.json` throws, gets swallowed as "not this candidate", and the package reports
  * a missing table it is in fact looking straight at.
  */
-function resolvePackagedDataPath(filename: string): string {
+async function resolvePackagedDataPath(filename: string): Promise<string> {
 	const candidates = [resolve(moduleDir, "data", filename), resolve(moduleDir, "..", "data", filename)]
-	const found = candidates.find((candidate) => pathExistsSync(candidate))
+	const probes: Array<[string, boolean]> = []
+
+	for (const candidate of candidates) {
+		probes.push([candidate, await pathExists(candidate)])
+	}
+
+	const found = probes.find(([, exists]) => exists)?.[0]
 
 	if (!found) {
 		throw new Error(`poi-taxonomy: could not find data/${filename} — looked in ${candidates.join(", ")}`)
@@ -36,11 +42,11 @@ function resolvePackagedDataPath(filename: string): string {
 /**
  * Read and parse one of the package's shipped `data/` tables.
  */
-export function readPackagedTable<T>(filename: string): T {
-	const path = resolvePackagedDataPath(filename)
+export async function readPackagedTable<T>(filename: string): Promise<T> {
+	const path = await resolvePackagedDataPath(filename)
 
 	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. `poi-taxonomy` declares zero
 	// dependencies, so `@mailwoman/core`'s parse wrappers are deliberately out of reach.
 	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
-	return readLocalJSONFileSync(path) as T
+	return (await readLocalJSONFile(path)) as T
 }

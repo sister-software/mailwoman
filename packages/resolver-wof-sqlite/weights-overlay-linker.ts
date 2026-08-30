@@ -7,9 +7,13 @@
  */
 
 import { pathExists, readLocalTextFile, statPath, readLocalBuffer, statLink } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
-import { makeDirectories, writeLocalTextFile, removePath } from "@mailwoman/core/fs/writers"
-import { createSymbolicLinkSync, movePathSync, removePathSync } from "@mailwoman/core/fs/writers-sync"
+import {
+	createSymbolicLink,
+	makeDirectories,
+	movePath,
+	removePath,
+	writeLocalTextFile,
+} from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
@@ -22,15 +26,15 @@ import { fstFreshnessWarning } from "./fst-freshness.ts"
  * unlink-then-symlink leaves a no-file window that concurrent vitest workers can hit mid-suite — bit CI on 2026-07-24.
  * rename(2) replaces the destination atomically.
  */
-export function linkForce(src: string, dest: string): void {
+export async function linkForce(src: string, dest: string): Promise<void> {
 	const tmp = `${dest}.tmp-link`
 
-	if (pathExistsSync(tmp)) {
-		removePathSync(tmp)
+	if (await pathExists(tmp)) {
+		await removePath(tmp)
 	}
 
-	createSymbolicLinkSync(src, tmp)
-	movePathSync(tmp, dest)
+	await createSymbolicLink(src, tmp)
+	await movePath(tmp, dest)
 }
 
 /**
@@ -66,7 +70,7 @@ export async function linkSoftFeedSibling(
 		return false
 	}
 
-	linkForce(source, destination)
+	await linkForce(source, destination)
 
 	console.log(`linked ${destination} \u2190 ${source}`)
 

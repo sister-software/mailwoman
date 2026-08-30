@@ -61,7 +61,7 @@ describe("resolveWeights — the data-root overlay rung", () => {
 
 		await weightsDir(root, ABSENT, BINARIES)
 
-		const resolved = resolveWeights({ locale: ABSENT, overlayRoot: root })
+		const resolved = await resolveWeights({ locale: ABSENT, overlayRoot: root })
 
 		expect(resolved.modelPath).toBe(join(root, ABSENT, "model.onnx"))
 		expect(resolved.tokenizerPath).toBe(join(root, ABSENT, "tokenizer.model"))
@@ -75,7 +75,7 @@ describe("resolveWeights — the data-root overlay rung", () => {
 		// otherwise produce arrives much later, inside the ONNX session.
 		await weightsDir(root, ABSENT, { "tokenizer.model": "sp" })
 
-		expect(() => resolveWeights({ locale: ABSENT, overlayRoot: root })).toThrow(/Could not resolve/)
+		await expect(resolveWeights({ locale: ABSENT, overlayRoot: root })).rejects.toThrow(/Could not resolve/)
 	})
 
 	it("falls through to the user cache when the overlay is empty", async () => {
@@ -85,7 +85,7 @@ describe("resolveWeights — the data-root overlay rung", () => {
 		await makeDirectories(join(overlay, ABSENT))
 		await weightsDir(join(cache, "node_modules", "@mailwoman"), `neural-weights-${ABSENT}`, BINARIES)
 
-		const resolved = resolveWeights({ locale: ABSENT, overlayRoot: overlay, cacheRoot: cache })
+		const resolved = await resolveWeights({ locale: ABSENT, overlayRoot: overlay, cacheRoot: cache })
 
 		expect(resolved.source).toContain("cache")
 	})
@@ -97,7 +97,7 @@ describe("resolveWeights — the data-root overlay rung", () => {
 		let message = ""
 
 		try {
-			resolveWeights({ locale: ABSENT, overlayRoot: overlay, cacheRoot: cache })
+			await resolveWeights({ locale: ABSENT, overlayRoot: overlay, cacheRoot: cache })
 		} catch (error) {
 			message = (error as Error).message
 		}
@@ -116,7 +116,7 @@ describe("resolveWeights — the artifact report", () => {
 
 		await weightsDir(root, ABSENT, { ...BINARIES, "model-card.json": "{}" })
 
-		const { artifacts } = resolveWeights({ locale: ABSENT, overlayRoot: root })
+		const { artifacts } = await resolveWeights({ locale: ABSENT, overlayRoot: root })
 		const by = new Map(artifacts.map((a) => [a.name, a]))
 
 		expect(by.get("model.onnx")?.origin).toBe(WeightsOrigin.Overlay)
@@ -136,7 +136,7 @@ describe("resolveWeights — the artifact report", () => {
 
 		await weightsDir(root, ABSENT, BINARIES)
 
-		const { artifacts } = resolveWeights({ locale: ABSENT, overlayRoot: root })
+		const { artifacts } = await resolveWeights({ locale: ABSENT, overlayRoot: root })
 
 		// A report whose length varied with what happened to resolve could not answer "how much am I
 		// missing" — the question the rung makes newly askable.
@@ -149,7 +149,7 @@ describe("resolveWeights — the artifact report", () => {
 		const root = await scratch()
 		const dir = await weightsDir(root, ABSENT, BINARIES)
 
-		const { artifacts } = resolveWeights({
+		const { artifacts } = await resolveWeights({
 			modelPath: join(dir, "model.onnx"),
 			tokenizerPath: join(dir, "tokenizer.model"),
 		})

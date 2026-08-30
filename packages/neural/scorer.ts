@@ -99,7 +99,7 @@ async function resolveAnchorSource(
 	}
 
 	try {
-		return resolveWeights({ locale }).anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
+		return (await resolveWeights({ locale })).anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 	} catch {
 		return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
 	}
@@ -114,7 +114,7 @@ async function defaultGazetteerLexicon(locale: string | undefined): Promise<stri
 	if (await pathExists(DEFAULT_GAZETTEER_LEXICON)) return DEFAULT_GAZETTEER_LEXICON
 
 	try {
-		return resolveWeights({ locale }).gazetteerLexiconPath
+		return (await resolveWeights({ locale })).gazetteerLexiconPath
 	} catch {
 		return undefined
 	}
@@ -128,7 +128,7 @@ async function defaultCountryLexicon(locale: string | undefined): Promise<string
 	if (await pathExists(DEFAULT_COUNTRY_LEXICON)) return DEFAULT_COUNTRY_LEXICON
 
 	try {
-		return resolveWeights({ locale }).countryLexiconPath
+		return (await resolveWeights({ locale })).countryLexiconPath
 	} catch {
 		return undefined
 	}
@@ -148,13 +148,13 @@ async function defaultStreetTypeLexicon(
 	locale: string | undefined,
 	modelCardPath: string
 ): Promise<string | undefined> {
-	const declared = readRequiredChannels(modelCardPath)?.street_type?.lexicon
+	const declared = (await readRequiredChannels(modelCardPath))?.street_type?.lexicon
 	const repoDefault = `data/gazetteer/${declared ?? "street-type-lexicon-v3.json"}`
 
 	if (await pathExists(repoDefault)) return repoDefault
 
 	try {
-		return resolveWeights({ locale }).streetTypeLexiconPath
+		return (await resolveWeights({ locale })).streetTypeLexiconPath
 	} catch {
 		return undefined
 	}
@@ -171,9 +171,9 @@ function fstPathEntry(fstPath: string | undefined): { fstPath?: string } {
 	return fstPath ? { fstPath } : {}
 }
 
-function defaultLocalitySurfaceLexicon(locale: string | undefined): string | undefined {
+async function defaultLocalitySurfaceLexicon(locale: string | undefined): Promise<string | undefined> {
 	try {
-		return resolveWeights({ locale }).localitySurfaceLexiconPath
+		return (await resolveWeights({ locale })).localitySurfaceLexiconPath
 	} catch {
 		return undefined
 	}
@@ -442,7 +442,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		throw new Error(`createScorer: modelCardPath does not exist: ${opts.modelCardPath}`)
 	}
 
-	const labels = readLabelsFromModelCard(opts.modelCardPath)
+	const labels = await readLabelsFromModelCard(opts.modelCardPath)
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(opts.tokenizerPath),
@@ -453,7 +453,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// fall back to the ONNX graph's declared inputs — a model exporting anchor_features/gazetteer_features
 	// trained with those channels mandatory. Conventions/bridge are card-only (not graph-observable).
 	const declared: RequiredChannels =
-		readRequiredChannels(opts.modelCardPath) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
+		(await readRequiredChannels(opts.modelCardPath)) ?? inferRequiredChannelsFromInputs(await runner.inputNames())
 
 	// --- Capability-manifest delta-gate (#718/#719) -----------------------------------------------
 	// BEFORE wiring the conventions mask, prove the shipped codex `forbiddenTags` don't destroy a tag
@@ -587,7 +587,9 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	}
 
-	const localitySurfaceLexiconPath = opts.localitySurfaceLexiconPath ?? defaultLocalitySurfaceLexicon(opts.locale)
+	const localitySurfaceLexiconPath =
+		opts.localitySurfaceLexiconPath ?? (await defaultLocalitySurfaceLexicon(opts.locale))
+
 	const localitySurfaceRequired = declared.locality_surface?.required ?? false
 	let localitySurfaceLexicon: GazetteerLexicon | undefined
 

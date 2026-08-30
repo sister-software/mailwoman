@@ -40,8 +40,8 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 		maxResident: 2,
 		size: 1,
 		bootFingerprint: STUB_FINGERPRINT,
-		sourceMoved: false,
-		fingerprint: () => STUB_FINGERPRINT,
+		sourceMoved: async () => false,
+		fingerprint: async () => STUB_FINGERPRINT,
 		acquire: () => {
 			throw new Error("stubEngineRegistry: this case was not given an engine to acquire")
 		},

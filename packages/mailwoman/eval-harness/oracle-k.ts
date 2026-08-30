@@ -433,7 +433,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			)
 		}
 
-		const verdict = assertProfile(options.assertBaseline, readings)
+		const verdict = await assertProfile(options.assertBaseline, readings)
 
 		if (!verdict.checked) {
 			throw new Error(

@@ -15,7 +15,6 @@
  */
 
 import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { join, resolve } from "@mailwoman/platform/path"
 
@@ -227,13 +226,13 @@ export function summarizeGateReport(report: GateReport): string {
  * Read from `files_md5` rather than from a list here, so a card that starts declaring a new sibling is checked without
  * anyone remembering to update this file. `$comment` is a documentation key, not an artifact.
  */
-function declaredArtifacts(packageDir: string): string[] {
+async function declaredArtifacts(packageDir: string): Promise<string[]> {
 	const cardPath = resolve(packageDir, "model-card.json")
 
-	if (!pathExistsSync(cardPath)) return []
+	if (!(await pathExists(cardPath))) return []
 
 	try {
-		const card = readLocalJSONFileSync<{ files_md5?: Record<string, unknown> }>(cardPath)
+		const card = await readLocalJSONFile<{ files_md5?: Record<string, unknown> }>(cardPath)
 
 		return Object.keys(card.files_md5 ?? {}).filter((key) => !key.startsWith("$"))
 	} catch {
@@ -256,16 +255,22 @@ function declaredArtifacts(packageDir: string): string[] {
  * @returns `kind` distinguishes a wrong-shaped root from a correctly-shaped one that is under-staged; the two need
  *   different fixes and one message for both sends the reader to the wrong place. `paths` is empty when well-formed.
  */
-export function missingWeightsCacheArtifacts(
+export async function missingWeightsCacheArtifacts(
 	cacheRoot: string,
 	locale = "en-us"
-): { kind: "ok" | "wrong-shape" | "under-staged"; paths: string[] } {
+): Promise<{ kind: "ok" | "wrong-shape" | "under-staged"; paths: string[] }> {
 	const packageDir = weightsCachePackageDir(cacheRoot, locale)
 	const required = ["model.onnx", "tokenizer.model", "model-card.json"]
 
-	const missingRequired = required
-		.map((artifact) => resolve(packageDir, artifact))
-		.filter((path) => !pathExistsSync(path))
+	const missingRequired: string[] = []
+
+	for (const artifact of required) {
+		const path = resolve(packageDir, artifact)
+
+		if (!(await pathExists(path))) {
+			missingRequired.push(path)
+		}
+	}
 
 	// Without a card there is nothing to check the rest against, and the caller already has a fatal answer.
 	if (missingRequired.length) return { kind: "wrong-shape", paths: missingRequired }
@@ -274,9 +279,15 @@ export function missingWeightsCacheArtifacts(
 	// signal of its own: the channel resolves off, the run scores several cases lower, and the operator reads a model
 	// regression. Measured here on 2026-08-16 — a hand-staged three-file cache graded to completion and reported
 	// `us.country_homograph_f1` at 0.0 against a 64.8 floor, which reads exactly like a collapsed country channel.
-	const undeclared = declaredArtifacts(packageDir)
-		.map((artifact) => resolve(packageDir, artifact))
-		.filter((path) => !pathExistsSync(path))
+	const undeclared: string[] = []
+
+	for (const artifact of await declaredArtifacts(packageDir)) {
+		const path = resolve(packageDir, artifact)
+
+		if (!(await pathExists(path))) {
+			undeclared.push(path)
+		}
+	}
 
 	return undeclared.length ? { kind: "under-staged", paths: undeclared } : { kind: "ok", paths: [] }
 }

@@ -22,7 +22,7 @@
  *   a read-only artifact, called once per rung and once per component per variant.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
@@ -151,9 +151,23 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 * SHARES this object's already-open admin handle (`adminDatabase`), so it opens nothing and disposal stays the single
 	 * owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
 	 * (nearest-centroid descent) mode — good enough to name a chain, and the chain is all this model wants from it.
+	 *
+	 * The availability check lives here, not in the constructor: it reads the filesystem, and a constructor cannot await.
 	 */
 	static async create(opts: { ancestryPath?: string; candidatePath?: string } = {}): Promise<AblationGazetteer> {
-		const gazetteer = new AblationGazetteer(opts)
+		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
+		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
+		const missing: string[] = []
+
+		if (!(await pathExists(ancestryPath))) {
+			missing.push(ancestryPath)
+		}
+
+		if (!(await pathExists(candidatePath))) {
+			missing.push(candidatePath)
+		}
+
+		const gazetteer = new AblationGazetteer({ ancestryPath, candidatePath, missingPaths: missing })
 
 		if (!gazetteer.available) return gazetteer
 
@@ -164,10 +178,15 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 		return gazetteer
 	}
 
-	constructor(opts: { ancestryPath?: string; candidatePath?: string } = {}) {
+	/**
+	 * Construct the probe. The existence check a constructor cannot perform is the caller's: `missingPaths` is the answer
+	 * {@linkcode AblationGazetteer.create} computed with `pathExists`, and the constructor opens nothing while any path is
+	 * named there.
+	 */
+	constructor(opts: { ancestryPath?: string; candidatePath?: string; missingPaths?: readonly string[] } = {}) {
 		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
 		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
-		const missing = [ancestryPath, candidatePath].filter((p) => !pathExistsSync(p))
+		const missing = opts.missingPaths ?? []
 
 		if (missing.length) {
 			this.available = false

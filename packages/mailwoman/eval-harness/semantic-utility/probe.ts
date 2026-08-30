@@ -32,7 +32,7 @@
  *   green. A control set that cannot fail is not a control set.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/utils"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
@@ -263,12 +263,12 @@ export interface ProbeFreezeRecord {
 	note: string
 }
 
-function sourceRelative(name: string): string {
+async function sourceRelative(name: string): Promise<string> {
 	// `tsc` emits no `.json` into `out/`, so a compiled caller reads the source-tree copy — the same bridge
 	// `conformance/case-folding.ts` uses for its `.jsonl`.
 	const sibling = fileURLToPath(new URL(name, import.meta.url))
 
-	if (pathExistsSync(sibling)) return sibling
+	if (await pathExists(sibling)) return sibling
 
 	return fileURLToPath(new URL(`../../../eval-harness/semantic-utility/${name}`, import.meta.url))
 }
@@ -276,17 +276,17 @@ function sourceRelative(name: string): string {
 /**
  * The committed pre-registration.
  */
-export const PROBE_DEFINITION_PATH = sourceRelative("probe-definition.json")
+export const PROBE_DEFINITION_PATH = await sourceRelative("probe-definition.json")
 
 /**
  * The committed freeze record for it.
  */
-export const PROBE_FREEZE_PATH = sourceRelative("probe-freeze.json")
+export const PROBE_FREEZE_PATH = await sourceRelative("probe-freeze.json")
 
 /**
  * The committed baseline receipt — the pre-injection measurement the #1930 decision compares against.
  */
-export const PROBE_BASELINE_RECEIPT_PATH = sourceRelative("baseline-receipt.json")
+export const PROBE_BASELINE_RECEIPT_PATH = await sourceRelative("baseline-receipt.json")
 
 /**
  * Canonical JSON for hashing: keys sorted at every depth, array order preserved, no insignificant whitespace.
@@ -451,12 +451,12 @@ function auditThresholds(definition: SemanticProbeDefinition): string[] {
  * Three refusals, in order: the freeze record must name this definition and version, the definition's content hash must
  * equal the frozen hash, and the audit must be clean. A caller never receives a definition it may only partly trust.
  */
-export function loadProbeDefinition(
+export async function loadProbeDefinition(
 	definitionPath: string = PROBE_DEFINITION_PATH,
 	freezePath: string = PROBE_FREEZE_PATH
-): SemanticProbeDefinition {
-	const definition = readLocalJSONFileSync<SemanticProbeDefinition>(definitionPath)
-	const freeze = readLocalJSONFileSync<ProbeFreezeRecord>(freezePath)
+): Promise<SemanticProbeDefinition> {
+	const definition = await readLocalJSONFile<SemanticProbeDefinition>(definitionPath)
+	const freeze = await readLocalJSONFile<ProbeFreezeRecord>(freezePath)
 
 	if (freeze.probeID !== definition.probeID) {
 		throw new Error(

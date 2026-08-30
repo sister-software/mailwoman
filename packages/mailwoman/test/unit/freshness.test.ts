@@ -71,7 +71,7 @@ describe("readFreshness — a stamped artifact", () => {
 	it("reports the build date, the identity, and what it was built from", async () => {
 		const path = await stamped(join(await scratch(), "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
 
-		const [entry] = readFreshness([{ name: "gazetteer", path }]).artifacts
+		const [entry] = (await readFreshness([{ name: "gazetteer", path }])).artifacts
 
 		expect(entry?.manifest).toBe(ManifestState.Present)
 		expect(entry?.built).toBe("2026-08-17T19:21:17.000Z")
@@ -87,7 +87,7 @@ describe("readFreshness — a stamped artifact", () => {
 		const older = await stamped(join(await root, "admin.db"), "admin-global-priority", "2026-08-10T00:00:00.000Z")
 		const newer = await stamped(join(await root, "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
 
-		const report = readFreshness([
+		const report = await readFreshness([
 			{ name: "gazetteer", path: newer },
 			{ name: "reverse-admin", path: older },
 		])
@@ -102,7 +102,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 	it("reports an unstamped artifact's own absence rather than omitting it", async () => {
 		const path = bare(join(await scratch(), "candidate.db"))
 
-		const report = readFreshness([{ name: "gazetteer", path }])
+		const report = await readFreshness([{ name: "gazetteer", path }])
 		const [entry] = report.artifacts
 
 		expect(entry?.manifest).toBe(ManifestState.Absent)
@@ -117,7 +117,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 	it("reports a missing file as absence, not as a throw", async () => {
 		const path = join(await scratch(), "never-built.db")
 
-		const [entry] = readFreshness([{ name: "gazetteer", path }]).artifacts
+		const [entry] = (await readFreshness([{ name: "gazetteer", path }])).artifacts
 
 		expect(entry?.manifest).toBe(ManifestState.Absent)
 		expect(entry?.reason).toBe("artifact is not on disk")
@@ -128,7 +128,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 
 		await writeLocalTextFile("this is not a database", path)
 
-		const [entry] = readFreshness([{ name: "gazetteer", path }]).artifacts
+		const [entry] = (await readFreshness([{ name: "gazetteer", path }])).artifacts
 
 		// A fault to chase, not a rebuild to schedule. Collapsing the two would file a corrupt artifact under
 		// the same heading as one that is merely old.
@@ -139,7 +139,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 	it("refuses a stamp it cannot date instead of dropping it from the maximum", async () => {
 		const path = await stamped(join(await scratch(), "candidate.db"), "candidate", "whenever")
 
-		const report = readFreshness([{ name: "gazetteer", path }])
+		const report = await readFreshness([{ name: "gazetteer", path }])
 		const [entry] = report.artifacts
 
 		expect(entry?.manifest).toBe(ManifestState.Unreadable)
@@ -153,7 +153,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 		const good = await stamped(join(await root, "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
 		const missing = bare(join(await root, "admin.db"))
 
-		const report = readFreshness([
+		const report = await readFreshness([
 			{ name: "gazetteer", path: good },
 			{ name: "reverse-admin", path: missing },
 		])

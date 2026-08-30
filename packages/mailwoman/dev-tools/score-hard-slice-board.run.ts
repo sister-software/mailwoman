@@ -50,7 +50,6 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -97,12 +96,18 @@ console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
 //#region Resolver + pipelines
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-const wofPaths = wofShardPaths().filter(pathExistsSync)
+const wofPaths: string[] = []
+
+for (const shardPath of wofShardPaths()) {
+	if (await pathExists(shardPath)) {
+		wofPaths.push(shardPath)
+	}
+}
 
 if (!wofPaths.length)
 	throw new Error("no WOF shards found — this board grades the RESOLVED place, so it needs the gazetteer")
 
-const resolver = createWOFResolver(createResolverBackend(resolverMod, { wofPaths }))
+const resolver = createWOFResolver(await createResolverBackend(resolverMod, { wofPaths }))
 
 const classifiers = new Map<string, Awaited<ReturnType<typeof NeuralAddressClassifier.loadFromWeights>>>()
 

@@ -54,7 +54,6 @@ import { wordNorm } from "@mailwoman/codex"
 import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@mailwoman/codex/de"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPathBuilder, resourceDictionaryPath } from "@mailwoman/core/utils"
 import { dirname, join } from "@mailwoman/platform/path"
@@ -238,8 +237,8 @@ export function isSubPhraseAlias(alt: readonly string[], primary: readonly strin
 /**
  * Load the 1-token person-name surface set (libpostal given_names + surnames + personal_titles).
  */
-export function loadPersonNameSurfaces(): Set<string> {
-	personNameSurfacesMemo ??= scanPersonNameSurfaces()
+export async function loadPersonNameSurfaces(): Promise<Set<string>> {
+	personNameSurfacesMemo ??= await scanPersonNameSurfaces()
 
 	return personNameSurfacesMemo
 }
@@ -256,7 +255,7 @@ export function loadPersonNameSurfaces(): Set<string> {
  */
 let personNameSurfacesMemo: Set<string> | undefined
 
-function scanPersonNameSurfaces(): Set<string> {
+async function scanPersonNameSurfaces(): Promise<Set<string>> {
 	const dictionariesDir = resourceDictionaryPath("libpostal")
 	const files = [join(dictionariesDir, "all", "given_names.txt"), join(dictionariesDir, "all", "surnames.txt")]
 
@@ -267,9 +266,9 @@ function scanPersonNameSurfaces(): Set<string> {
 	const names = new Set<string>()
 
 	for (const f of files) {
-		if (!pathExistsSync(f)) continue
+		if (!(await pathExists(f))) continue
 
-		for (const line of TextSpliterator.from(readLocalTextFileSync(f))) {
+		for (const line of TextSpliterator.from(await readLocalTextFile(f))) {
 			for (const surface of line.split("|")) {
 				const tokens = painterFold(surface)
 
@@ -377,7 +376,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	}
 
 	const countryCounts = await computeSurfaceCountryCounts(dbPath)
-	const personNames = loadPersonNameSurfaces()
+	const personNames = await loadPersonNameSurfaces()
 
 	using db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
 	const importanceByID = new Map<number, number>()

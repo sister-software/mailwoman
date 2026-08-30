@@ -62,7 +62,7 @@ describe("resolveWeights cache fallback", () => {
 			"crf-transitions.json",
 		])
 
-		const resolved = resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })
+		const resolved = await resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe(`cache:${PACKAGE_NAME}`)
 		expect(resolved.modelPath).toBe(join(packageDir, "model.onnx"))
@@ -75,11 +75,11 @@ describe("resolveWeights cache fallback", () => {
 	test("a binary-less cache install without a base declaration does not resolve", async () => {
 		await layoutCachedPackage(["model-card.json"])
 
-		expect(() => resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).toThrow(/missing model files/)
+		await expect(resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).rejects.toThrow(/missing model files/)
 	})
 
-	test("the not-found error names the probed cache path", () => {
-		expect(() => resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).toThrow(
+	test("the not-found error names the probed cache path", async () => {
+		await expect(resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).rejects.toThrow(
 			new RegExp(cacheRoot.resolve("node_modules", PACKAGE_NAME).replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
 		)
 	})
@@ -94,7 +94,7 @@ describe("resolveWeights cache fallback", () => {
 		}
 
 		// The workspace package exists and resolves, but the explicit cacheRoot.path names the candidate.
-		const resolved = resolveWeights({ locale: "en-US", cacheRoot: cacheRoot.path })
+		const resolved = await resolveWeights({ locale: "en-US", cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-us")
 		expect(resolved.modelPath).toBe(join(packageDir, "model.onnx"))
@@ -122,7 +122,7 @@ describe("resolveWeights cache fallback", () => {
 
 		await writeLocalTextFile("overlay-pairs", join(overlayDir, "pair-index-gb.bin"))
 
-		const resolved = resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
+		const resolved = await resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-gb+base")
 		expect(resolved.modelPath).toBe(join(baseDir, "model.onnx"))
@@ -147,7 +147,7 @@ describe("resolveWeights cache fallback", () => {
 		let message = ""
 
 		try {
-			resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
+			await resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
 		} catch (error) {
 			message = (error as Error).message
 		}

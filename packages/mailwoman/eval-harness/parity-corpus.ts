@@ -147,7 +147,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to
 		// inline (with a cwd-relative dictionaries path, no less).
 		const { loadStreetMorphologyFST } = await import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader")
-		const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
+		const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.warn(message) })
 		fstStreetMorphology = loaded.matcher
 
 		console.log(

@@ -27,7 +27,7 @@
  *   existing label-first behavior byte-identically.
  */
 
-import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
@@ -63,7 +63,7 @@ export interface AdjudicatedPoint extends PointPair {
  * this record — and the caller must fall back to the label preference rather than treating it as a zero-distance
  * anchor.
  */
-export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => PointPair | undefined
+export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<PointPair | undefined>
 
 /**
  * Choose the stored point for a record carrying both a label and a geometric centroid.
@@ -105,43 +105,47 @@ const GN_COLUMN_LON = 5
  *
  * A country file loads on the FIRST anchor request for that country and is cached as an id → point map; a country whose
  * file is absent caches an empty map, so a data root without GeoNames extracts degrades to "no anchor anywhere" — the
- * label preference, byte-identical to a build without this module. Loading is synchronous by design: the consult
- * happens inside the ingest's per-feature parse, and it fires only for the rare wide-disagreement records, so the cost
- * is one file read per country that HAS such a record.
+ * label preference, byte-identical to a build without this module. Loading is lazy by design: the consult fires only
+ * for the rare wide-disagreement records, so the cost is one asynchronous file read per country that HAS such a
+ * record.
  */
 export async function createGeoNamesAnchorLookup(geonamesDir: string): Promise<GeoNamesAnchorLookup> {
-	const byCountry = new Map<string, Map<string, PointPair>>()
+	const byCountry = new Map<string, Promise<Map<string, PointPair>>>()
 
-	const load = (country: string): Map<string, PointPair> => {
+	const load = (country: string): Promise<Map<string, PointPair>> => {
 		const cached = byCountry.get(country)
 
 		if (cached) return cached
 
-		const points = new Map<string, PointPair>()
-		const path = join(geonamesDir, `${country.toUpperCase()}.txt`)
+		const pending = (async (): Promise<Map<string, PointPair>> => {
+			const points = new Map<string, PointPair>()
+			const path = join(geonamesDir, `${country.toUpperCase()}.txt`)
 
-		// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses CONTENT
-		// (a path argument would be parsed as one row of itself), so the file is read once and streamed through the
-		// TSV parser — the sync shape this in-parse consult needs.
-		if (pathExistsSync(path)) {
-			for (const cols of TSVSpliterator.from(readLocalTextFileSync(path), { header: false })) {
-				const latitude = Number(cols[GN_COLUMN_LAT])
-				const longitude = Number(cols[GN_COLUMN_LON])
+			// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses CONTENT
+			// (a path argument would be parsed as one row of itself), so the file is read once and streamed through the
+			// TSV parser.
+			if (await pathExists(path)) {
+				for (const cols of TSVSpliterator.from(await readLocalTextFile(path), { header: false })) {
+					const latitude = Number(cols[GN_COLUMN_LAT])
+					const longitude = Number(cols[GN_COLUMN_LON])
 
-				if (cols[GN_COLUMN_ID] && Number.isFinite(latitude) && Number.isFinite(longitude)) {
-					points.set(String(cols[GN_COLUMN_ID]), { latitude, longitude })
+					if (cols[GN_COLUMN_ID] && Number.isFinite(latitude) && Number.isFinite(longitude)) {
+						points.set(String(cols[GN_COLUMN_ID]), { latitude, longitude })
+					}
 				}
 			}
-		}
 
-		byCountry.set(country, points)
+			return points
+		})()
 
-		return points
+		byCountry.set(country, pending)
+
+		return pending
 	}
 
-	return (country, gnID) => {
+	return async (country, gnID) => {
 		if (!country) return undefined
 
-		return load(country).get(String(gnID))
+		return (await load(country)).get(String(gnID))
 	}
 }

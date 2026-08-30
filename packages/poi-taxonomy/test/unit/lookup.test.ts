@@ -220,15 +220,17 @@ describe("full Overture snapshot + curated overlay", () => {
 
 describe("taxonomy integrity — malformed table", () => {
 	afterEach(() => {
-		vi.doUnmock("@mailwoman/platform/fs")
+		vi.doUnmock("@mailwoman/platform/fs/promises")
 		vi.resetModules()
 	})
 
 	it("throws at module init when a synonym's categoryID points at a nonexistent category", async () => {
 		vi.resetModules()
 
-		vi.doMock("@mailwoman/platform/fs", async () => {
-			const actual = await vi.importActual<typeof import("@mailwoman/platform/fs")>("@mailwoman/platform/fs")
+		vi.doMock("@mailwoman/platform/fs/promises", async () => {
+			const actual = await vi.importActual<typeof import("@mailwoman/platform/fs/promises")>(
+				"@mailwoman/platform/fs/promises"
+			)
 
 			const malformed = JSON.stringify({
 				version: "0.0.0",
@@ -241,7 +243,7 @@ describe("taxonomy integrity — malformed table", () => {
 
 			return {
 				...actual,
-				readFileSync: () => malformed,
+				readFile: async () => malformed,
 			}
 		})
 

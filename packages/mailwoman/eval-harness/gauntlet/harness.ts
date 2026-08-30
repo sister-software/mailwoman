@@ -10,7 +10,6 @@
  */
 
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -277,19 +276,19 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  * Exported for `anchor-presence.test.ts`, which poses both postures against fixture packages — the real ones cannot
  * express "declared and missing" without mutating the workspace.
  */
-export function assertDeclaredAnchorBins(locales: readonly string[], cacheRoot?: string): void {
+export async function assertDeclaredAnchorBins(locales: readonly string[], cacheRoot?: string): Promise<void> {
 	const missing: string[] = []
 
 	for (const locale of locales) {
 		let packageDir: string | undefined
 
 		try {
-			packageDir = resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) }).packageDir
+			packageDir = (await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })).packageDir
 		} catch {
 			continue
 		}
 
-		const declared = readDeclaredArtifactFile(packageDir)
+		const declared = await readDeclaredArtifactFile(packageDir)
 
 		if (!declared || declared.present) continue
 
@@ -343,7 +342,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// node_modules) the stamp goes quiet, `assertShippedModelMatchesCard` never runs, and the gate grades a model it
 	// never verified. That is #1024 exactly, re-created by a path literal: a guard that fails OPEN when its
 	// assumption stops holding. `resolveWeights` answers with the file `loadFromWeights` will actually open.
-	const resolvedModel = opts.modelPath ? undefined : resolveWeights({ locale: "en-us" }).modelPath
+	const resolvedModel = opts.modelPath ? undefined : (await resolveWeights({ locale: "en-us" })).modelPath
 	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolvedModel!)
 
 	if (await pathExists(effModel)) {
@@ -371,7 +370,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 					// Same rule as the stamp above: when the caller overrides only the TOKENIZER, the model still comes
 					// from the resolver rather than a package literal. This branch would fail loudly rather than
 					// silently, but a second spelling of the same assumption is a second thing to move.
-					modelPath: opts.modelPath ? resolve(opts.modelPath) : resolveWeights({ locale: "en-us" }).modelPath,
+					modelPath: opts.modelPath ? resolve(opts.modelPath) : (await resolveWeights({ locale: "en-us" })).modelPath,
 					tokenizerPath: resolve(opts.tokenizerPath),
 					modelCardPath: resolve(opts.modelCardPath ?? "packages/neural-weights-en-us/model-card.json"),
 					locale: "en-us",
@@ -394,7 +393,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// the run simply scores lower, and the operator reads a model regression. Checked for the base locale plus
 	// every overlay the corpus can route to (the map above), because the anchor artifact is per-package.
 	if (!opts.modelPath && !opts.tokenizerPath) {
-		assertDeclaredAnchorBins(["en-US", ...Object.values(OVERLAY_LOCALE_BY_COUNTRY)], opts.weightsCacheRoot)
+		await assertDeclaredAnchorBins(["en-US", ...Object.values(OVERLAY_LOCALE_BY_COUNTRY)], opts.weightsCacheRoot)
 	}
 
 	const overlayClassifiers = new Map<string, typeof classifier>()
@@ -443,9 +442,17 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const poiKindClassifier: NonNullable<GeocodeDeps["classifyKind"]> = (input, shape) =>
 		kindClassifierWithLexicon(input, shape, { locale: "en-US", confidence: 1, alternatives: [], source: "caller" })
 
+	// The shard set is the paths that EXIST. Presence is materialized up front so the keep-test below stays a plain,
+	// synchronous filter over facts already read.
+	const wofShardPresence = await Promise.all(
+		wofShardPaths().map(async (path) => ({ path, present: await pathExists(path) }))
+	)
+
+	const presentWofShards = wofShardPresence.filter((entry) => entry.present).map((entry) => entry.path)
+
 	const resolver = createWOFResolver(
-		createResolverBackend(resolverMod, {
-			wofPaths: wofShardPaths().filter(pathExistsSync),
+		await createResolverBackend(resolverMod, {
+			wofPaths: presentWofShards,
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
 			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
 		})
@@ -458,8 +465,8 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const capitalIndex =
 		opts.levers?.capitalTier === false
 			? undefined
-			: loadCapitalIndex({
-					candidateDB: resolveCandidateDBPath(opts.candidateDB),
+			: await loadCapitalIndex({
+					candidateDB: await resolveCandidateDBPath(opts.candidateDB),
 					missing: opts.levers?.capitalTier === true ? "throw" : "degrade",
 				})
 
@@ -468,18 +475,18 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				capitalIndex.levelOfPlace(place.name, place.country, place.lat, place.lon)
 		: undefined
 
-	const shardProvider = new ShardProvider(resolverMod, mailwomanDataRoot())
+	const shardProvider = await ShardProvider.create(resolverMod, mailwomanDataRoot())
 	// Lazy like the resolver module above: `@mailwoman/osm` is an in-repo (unpublished) workspace, and
 	// A static import here would break the
 	// published `mailwoman` CLI outright rather than only this maintainer-run gate.
 	const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
-	const osmProvider = new OSMShardProvider(mailwomanDataRoot())
+	const osmProvider = await OSMShardProvider.create(mailwomanDataRoot())
 	// The BAN national-register tier (#1012) sits AHEAD of OSM in production (geocode.tsx wires it the
 	// same way) — without it here the gauntlet graded an OSM-first cascade production never runs, and
 	// the fr-chevaleret-bare pin silently guarded the wrong tier (caught 2026-07-10 when the BAN tier's
 	// missing bbox fall-through regressed the bare form in production while this gate stayed green).
 	const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-	const banProvider = new BANShardProvider(mailwomanDataRoot())
+	const banProvider = await BANShardProvider.create(mailwomanDataRoot())
 
 	const leverDeps = resolverLeverDeps(opts.levers)
 
@@ -533,7 +540,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		let deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
 
 		try {
-			deps = { fst: deserializeFST(await readLocalBuffer(fstPath)), streetMorphology: loadMorph().matcher }
+			deps = { fst: deserializeFST(await readLocalBuffer(fstPath)), streetMorphology: (await loadMorph()).matcher }
 		} catch (error) {
 			// A missing or unreadable artifact degrades to no prior, which is the incumbent behaviour — but it is named,
 			// because a silently absent prior scores lower and reads as a model difference.
@@ -562,7 +569,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
 		])
 
-		const morphology = loadStreetMorphologyFST()
+		const morphology = await loadStreetMorphologyFST()
 
 		forkEntityDeps = {
 			poiLookup: new POILookup({ databasePath: poiDBPath }),

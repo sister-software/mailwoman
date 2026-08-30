@@ -33,7 +33,7 @@
  *   regardless.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawn } from "@mailwoman/platform/child_process"
 import * as os from "@mailwoman/platform/os"
@@ -180,8 +180,8 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// A shard is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
 		// index is the last build step, so its presence means insert + index + VACUUM all finished.
-		const isComplete = (dbPath: string): boolean => {
-			if (!pathExistsSync(dbPath)) return false
+		const isComplete = async (dbPath: string): Promise<boolean> => {
+			if (!(await pathExists(dbPath))) return false
 
 			try {
 				using db = new DatabaseClient<AddressPointDatabase>(dbPath, { readOnly: true })
@@ -199,10 +199,10 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		const buildOneState = (stateCode: string): Promise<StateResult> => {
+		const buildOneState = async (stateCode: string): Promise<StateResult> => {
 			const dbPath = path.join(outDir, `address-points-us-${stateCode.toLowerCase()}.db`)
 
-			if (!options.force && isComplete(dbPath)) return Promise.resolve({ state: stateCode, skipped: true })
+			if (!options.force && (await isComplete(dbPath))) return { state: stateCode, skipped: true }
 
 			return new Promise((resolve) => {
 				const argv = [

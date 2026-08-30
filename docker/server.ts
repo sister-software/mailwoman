@@ -36,7 +36,7 @@ import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike, BatchResu
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { $public } from "@mailwoman/core/env"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress } from "mailwoman/geocode-core"
@@ -47,6 +47,7 @@ import {
 	resolveCandidateDBPath,
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
+import { AsyncSequence } from "spliterator"
 
 const PORT = 3000
 const HOST = "0.0.0.0"
@@ -55,18 +56,24 @@ const DATA_ROOT = mailwomanDataRoot()
 /**
  * Same WOF-path resolution as `mailwoman/api-engine.ts`: the `$MAILWOMAN_WOF_DB` comma-separated override, else the
  * conventional per-shard `wof/` paths that actually exist on disk.
+ *
+ * TODO: pull this in directly from a shared module.
  */
-function wofPaths() {
+function wofPaths(): Promise<string[]> {
 	const env = $public.MAILWOMAN_WOF_DB
 
 	if (env) {
-		return env
-			.split(",")
-			.map((p) => p.trim())
-			.filter((p) => p.length > 0)
+		return Promise.resolve(
+			env
+				.split(",")
+				.map((p) => p.trim())
+				.filter((p) => p.length)
+		)
 	}
 
-	return wofShardPaths().filter((p) => pathExistsSync(p))
+	const paths = wofShardPaths()
+
+	return new AsyncSequence<string>(paths).filter((p) => pathExists(p)).toArray()
 }
 
 /**
@@ -74,7 +81,7 @@ function wofPaths() {
  */
 async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() {
 	const engine: MailwomanAPIEngine<T> = {
-		health: () => ({
+		health: async () => ({
 			data: {
 				data_root: DATA_ROOT,
 			},
@@ -108,15 +115,15 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 	// gazetteer leaves these methods undefined so @mailwoman/api answers 503 (the clean degrade) — and,
 	// in its own try, never takes parse down with it.
 	if (classifier) {
-		const candidateDB = resolveCandidateDBPath()
-		const paths = wofPaths()
+		const candidateDB = await resolveCandidateDBPath()
+		const paths = await wofPaths()
 
 		if (candidateDB || paths.length) {
 			try {
 				const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-				const backend = createResolverBackend(resolverMod, { wofPaths: paths })
+				const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 				const resolver = createWOFResolver(backend)
-				const shards = new ShardProvider(resolverMod, DATA_ROOT)
+				const shards = await ShardProvider.create(resolverMod, DATA_ROOT)
 				// Candidate backend → country-agnostic (population-first, demo parity); FTS backend keeps US.
 				const defaultCountry = candidateDB ? undefined : "US"
 

@@ -185,15 +185,15 @@ function findChildPieceIndex(pieces: ReadonlyArray<{ piece: string }>, word: str
 const NO_MATCH_PAIR_INDEX: PairIndexLike = { probe: () => undefined }
 
 describe("resolveWeights — explicit-path mode", () => {
-	test.skipIf(!haveModel)("returns the explicit paths verbatim when both are valid", () => {
-		const r = resolveWeights({ modelPath: MODEL_PATH, tokenizerPath: TOKENIZER_PATH })
+	test.skipIf(!haveModel)("returns the explicit paths verbatim when both are valid", async () => {
+		const r = await resolveWeights({ modelPath: MODEL_PATH, tokenizerPath: TOKENIZER_PATH })
 		expect(r.modelPath).toBe(MODEL_PATH)
 		expect(r.tokenizerPath).toBe(TOKENIZER_PATH)
 		expect(r.source).toBe("explicit")
 	})
 
-	test("throws actionably when explicit modelPath is missing", () => {
-		expect(() => resolveWeights({ modelPath: "/no/such/model.onnx", tokenizerPath: TOKENIZER_PATH })).toThrow(
+	test("throws actionably when explicit modelPath is missing", async () => {
+		await expect(resolveWeights({ modelPath: "/no/such/model.onnx", tokenizerPath: TOKENIZER_PATH })).rejects.toThrow(
 			/Explicit modelPath does not exist/
 		)
 	})
@@ -218,10 +218,10 @@ describe("resolveWeights — package auto-resolve", () => {
 	// fstPath undefined — byte-stable.
 	test.skipIf(!haveModel)(
 		"surfaces fstPath for a weights package shipping fst-<locale>.bin",
-		() => {
+		async () => {
 			ensureDevWeightsLinked("en-us")
 
-			const r = resolveWeights({ locale: "en-us" })
+			const r = await resolveWeights({ locale: "en-us" })
 			expect(r.fstPath).toMatch(/\/fst-en-us\.bin$/)
 		},
 		LINK_SCRIPT_TIMEOUT_MS
@@ -229,10 +229,10 @@ describe("resolveWeights — package auto-resolve", () => {
 
 	test.skipIf(!haveModel)(
 		"finds model.onnx + tokenizer.model after running link-dev-weights.ts",
-		() => {
+		async () => {
 			ensureDevWeightsLinked("en-us")
 
-			const r = resolveWeights({ locale: "en-us" })
+			const r = await resolveWeights({ locale: "en-us" })
 			// WHICH RUNG answered is an environment fact, not the contract. The dev linkers materialize into
 			// $MAILWOMAN_DATA_ROOT/weights/<locale>/, so a checkout resolves `overlay:`; a consumer with the npm
 			// package installed resolves `package:`; a `--download-weights` install resolves `cache:`. Pinning one
@@ -270,7 +270,7 @@ describe("resolveWeights — package auto-resolve", () => {
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
-			const r = resolveWeights({ locale: "en-gb" })
+			const r = await resolveWeights({ locale: "en-gb" })
 			// `+base` is exercised hermetically below; here the point is that en-gb RESOLVES.
 			expect(r.source).toMatch(/^(package|overlay):/)
 			expect(r.modelPath).toMatch(/\/model\.onnx$/)
@@ -329,7 +329,7 @@ describe("resolveWeights — package auto-resolve", () => {
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-nz")
 
-			const r = resolveWeights({ locale: "en-nz" })
+			const r = await resolveWeights({ locale: "en-nz" })
 			expect(r.source).toMatch(/^(package|overlay):/)
 			expect(r.modelPath).toMatch(/\/model\.onnx$/)
 			expect(r.tokenizerPath).toMatch(/\/tokenizer\.model$/)
@@ -374,7 +374,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
-			const r = resolveWeights({ locale: "en-gb" })
+			const r = await resolveWeights({ locale: "en-gb" })
 			expect(r.pairIndexPath).toMatch(/\/pair-index-gb\.bin$/)
 
 			// Probe the built artifact directly FIRST (per the brief) — establishes that
@@ -399,7 +399,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
-			const r = resolveWeights({ locale: "en-gb" })
+			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
@@ -468,7 +468,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
-			const r = resolveWeights({ locale: "en-gb" })
+			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			// Setup precondition: confirm the pair is genuinely PROBE OK in THIS build before
 			// trusting the parse below to prove anything about the flip. "Holland Fen" is folded to a
@@ -518,7 +518,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 		async () => {
 			ensureDevWeightsLinked("en-us", "en-gb")
 
-			const r = resolveWeights({ locale: "en-gb" })
+			const r = await resolveWeights({ locale: "en-gb" })
 			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
 			// The re-cut artifact's header contract: delta stays 10, transitionBeta 5 (the link script's
@@ -558,7 +558,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			// don't contain GB place names (measured: the US index misses all five GB canonical pairs).
 			ensureDevWeightsLinked("en-us")
 
-			const r = resolveWeights({ locale: "en-us" })
+			const r = await resolveWeights({ locale: "en-us" })
 			expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })
@@ -587,7 +587,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			// them only while the dev linkers materialized into the tracked package; they now land in the
 			// data-root overlay, and a fixture mirroring an empty directory produces a cache with no binaries —
 			// so the resolve under test silently answers from somewhere else and the gate never fires.
-			const packageDir = dirname(resolveWeights({ locale: "en-us" }).modelPath)
+			const packageDir = dirname((await resolveWeights({ locale: "en-us" })).modelPath)
 			const cacheRoot = fixtures.use(await temporaryDirectory("mailwoman-pair-gate-")).path
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
 			await makeDirectories(fakePackageDir)
@@ -624,7 +624,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 
 			try {
 				// The sibling RESOLVES (filename matches the locale's country) — the gate is downstream.
-				const r = resolveWeights({ locale: "en-us", cacheRoot })
+				const r = await resolveWeights({ locale: "en-us", cacheRoot })
 				expect(r.pairIndexPath).toMatch(/pair-index-us\.bin$/)
 
 				const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us", cacheRoot })

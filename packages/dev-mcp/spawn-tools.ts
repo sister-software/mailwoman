@@ -61,7 +61,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// The gauntlet writes its whole report to stdout, and stdout here is the JSON-RPC channel — so it is
 				// spawned rather than imported. That puts the COMPILED tree back on the path, which is what this guard is
 				// for: a stale out/ would grade replaced code and report a verdict rather than an error.
-				const freshness = assertCompiledFresh(registry.repoRoot)
+				const freshness = await assertCompiledFresh(registry.repoRoot)
 
 				const layer = (args["layer"] as string) ?? "regression"
 				const argv = ["packages/mailwoman/out/cli.js", "eval", "gauntlet"]
@@ -159,7 +159,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				const weightsCache = args["weights_cache"] as string | undefined
 
 				if (weightsCache) {
-					const cache = missingWeightsCacheArtifacts(weightsCache)
+					const cache = await missingWeightsCacheArtifacts(weightsCache)
 
 					if (cache.kind === "wrong-shape") {
 						throw new Error(
@@ -183,7 +183,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 				// Spawned for the same reason the gauntlet is: it writes its battery report to stdout, which here is the
 				// JSON-RPC channel. The gate ALSO runs its own recompile-before-eval guard, stricter than this one and meant
 				// to fire — it is surfaced verbatim rather than pre-empted.
-				const freshness = assertCompiledFresh(registry.repoRoot)
+				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const outDir = (args["out_dir"] as string | undefined) ?? join(tmpdir(), `mwdev-gate-${jobs.list().length}`)
 				const argv = ["packages/mailwoman/out/cli.js", "eval", "gate", "--gate", gate, "--out-dir", outDir]
 
@@ -234,7 +234,7 @@ export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobReg
 
 				if (!verdict.allowed) throw new Error(`mwdev_cli refused: ${verdict.reason}`)
 
-				const freshness = assertCompiledFresh(registry.repoRoot)
+				const freshness = await assertCompiledFresh(registry.repoRoot)
 				const verb = argv.find((argument) => !argument.startsWith("-")) ?? "help"
 
 				const job = jobs.start(

@@ -23,7 +23,7 @@ function registry(): EngineRegistryLike {
 
 	return stubEngineRegistry({
 		bootFingerprint: fingerprint,
-		fingerprint: () => fingerprint,
+		fingerprint: async () => fingerprint,
 		acquire: () => {
 			throw new Error("board-routed comparisons must not acquire a single-config engine")
 		},

@@ -248,7 +248,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	// A splice/multisplice candidate (--tokenizer or --weights-cache) swaps the vocab, so production must ALSO run
 	// through the SHIPPED (model, tokenizer, card) trio via createScorer — otherwise the two sides have different
 	// anchor/gazetteer wiring and the z-test is confounded. resolveWeights gives the shipped trio for production.
-	const shipped = CAND_TOKENIZER || CAND_CACHE ? resolveWeights({ locale: "en-us" }) : null
+	const shipped = CAND_TOKENIZER || CAND_CACHE ? await resolveWeights({ locale: "en-us" }) : null
 	const levers = options.levers ? { levers: options.levers } : {}
 
 	const prodDeps = await buildGauntletDeps(

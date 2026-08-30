@@ -33,7 +33,7 @@ import { describe, expect, it } from "vitest"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
 	}

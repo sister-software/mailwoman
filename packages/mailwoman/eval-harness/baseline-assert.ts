@@ -30,12 +30,12 @@
  *   Usage — declare what the harness depends on, pass observations, let it refuse:
  *
  *   ```ts
- *   const verdict = assertBaselines([
+ *   const verdict = await assertBaselines([
  *   	{ id: "parity.street.token_at_1@v264", observed: streetTokenAt1 },
  *   	{ id: "paris.resolver.street_evidence_rate@ban-street-centroids", observed: withStreet / total },
  *   ])
  *   if (!verdict.ok) throw new BaselineDeviationError(verdict)
- *   // …or simply: guardReport([...]) — which throws on your behalf.
+ *   // …or simply: await guardReport([...]) — which throws on your behalf.
  *   ```
  *
  *   A harness with several readings should use a PROFILE instead (`assertProfile("v264", {…})`),
@@ -48,7 +48,7 @@
  *   a deviation quiet. That's the silent-gate-drift failure wearing a different hat.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 /**
@@ -160,21 +160,21 @@ export interface BaselineVerdict {
 let cachedFile: BaselineFile | undefined
 
 /**
- * `new URL`-relative for the source tree, with a compiled-tree fallback — tsc does not emit readFileSync'd JSON into
+ * `new URL`-relative for the source tree, with a compiled-tree fallback — tsc does not emit `baselines.json` into
  * `out/`, so `mailwoman/out/eval-harness/` reads the source-tree copy at `mailwoman/eval-harness/baselines.json`. Same
  * bridge as `resolveGateSpecPath`.
  */
-function resolveBaselineFilePath(): string {
+async function resolveBaselineFilePath(): Promise<string> {
 	const sibling = new URL("./baselines.json", import.meta.url)
 
-	if (pathExistsSync(sibling)) return fileURLToPath(sibling)
+	if (await pathExists(sibling)) return fileURLToPath(sibling)
 
 	return fileURLToPath(new URL("../../eval-harness/baselines.json", import.meta.url))
 }
 
-function loadBaselineFile(): BaselineFile {
+async function loadBaselineFile(): Promise<BaselineFile> {
 	if (!cachedFile) {
-		cachedFile = readLocalJSONFileSync<BaselineFile>(resolveBaselineFilePath())
+		cachedFile = await readLocalJSONFile<BaselineFile>(await resolveBaselineFilePath())
 	}
 
 	return cachedFile
@@ -183,27 +183,27 @@ function loadBaselineFile(): BaselineFile {
 /**
  * Every registered baseline, for tooling that wants to list or audit them.
  */
-export function listBaselines(): RegisteredBaseline[] {
-	return loadBaselineFile().baselines
+export async function listBaselines(): Promise<RegisteredBaseline[]> {
+	return (await loadBaselineFile()).baselines
 }
 
-export function findBaseline(id: string): RegisteredBaseline | undefined {
-	return loadBaselineFile().baselines.find((b) => b.id === id)
+export async function findBaseline(id: string): Promise<RegisteredBaseline | undefined> {
+	return (await loadBaselineFile()).baselines.find((b) => b.id === id)
 }
 
-export function listProfiles(): string[] {
-	return Object.keys(loadBaselineFile().profiles)
+export async function listProfiles(): Promise<string[]> {
+	return Object.keys((await loadBaselineFile()).profiles)
 }
 
 /**
  * Look up a profile, refusing loudly on a typo rather than silently checking nothing.
  */
-export function resolveProfile(name: string): BaselineProfile {
-	const profile = loadBaselineFile().profiles[name]
+export async function resolveProfile(name: string): Promise<BaselineProfile> {
+	const profile = (await loadBaselineFile()).profiles[name]
 
 	if (!profile) {
 		throw new Error(
-			`Unknown baseline profile "${name}". Registered: ${listProfiles().join(", ") || "(none)"}. ` +
+			`Unknown baseline profile "${name}". Registered: ${(await listProfiles()).join(", ") || "(none)"}. ` +
 				`Add one to mailwoman/eval-harness/baselines.json, or omit the flag for an unregistered candidate.`
 		)
 	}
@@ -215,8 +215,8 @@ export function resolveProfile(name: string): BaselineProfile {
  * Check a harness's readings against a profile. Metric keys the profile doesn't map are ignored — a profile declares
  * what it can vouch for, not everything a harness happens to compute.
  */
-export function assertProfile(name: string, readings: Record<string, number>): BaselineVerdict {
-	const profile = resolveProfile(name)
+export async function assertProfile(name: string, readings: Record<string, number>): Promise<BaselineVerdict> {
+	const profile = await resolveProfile(name)
 	const observations: BaselineObservation[] = []
 
 	for (const [metricKey, id] of Object.entries(profile.observe)) {
@@ -233,12 +233,12 @@ export function assertProfile(name: string, readings: Record<string, number>): B
  * Check observations against the registry. An unregistered id is a violation, not a pass — an unverifiable reading is
  * exactly the state both incidents were in.
  */
-export function assertBaselines(observations: BaselineObservation[]): BaselineVerdict {
-	const file = loadBaselineFile()
+export async function assertBaselines(observations: BaselineObservation[]): Promise<BaselineVerdict> {
+	const file = await loadBaselineFile()
 	const violations: BaselineViolation[] = []
 
 	for (const observation of observations) {
-		const baseline = findBaseline(observation.id)
+		const baseline = await findBaseline(observation.id)
 
 		if (!baseline) {
 			violations.push({ id: observation.id, kind: "unregistered", observed: observation.observed })
@@ -352,8 +352,8 @@ export function formatVerdict(verdict: BaselineVerdict): string {
 /**
  * Assert, or throw. The one-liner a harness puts before it prints anything.
  */
-export function guardReport(observations: BaselineObservation[]): void {
-	const verdict = assertBaselines(observations)
+export async function guardReport(observations: BaselineObservation[]): Promise<void> {
+	const verdict = await assertBaselines(observations)
 
 	if (!verdict.ok) throw new BaselineDeviationError(verdict)
 }

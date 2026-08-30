@@ -77,7 +77,7 @@ export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 			}
 		}
 
-		const rows = paths.map((path) => censusArtifact(path, countries))
+		const rows = await Promise.all(paths.map(async (path) => await censusArtifact(path, countries)))
 		const usable = rows.filter((row) => row.readable)
 
 		// Per COUNTRY across artifacts, so "where is VE data" is one read rather than a scan of every row.

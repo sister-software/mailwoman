@@ -127,7 +127,7 @@ async function readWeightsIdentity(options: AbsenceProbeOptions): Promise<{
 	weightsVersion: string
 }> {
 	const locale = options.locale ?? "en-US"
-	const resolved = resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
+	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
 
 	if (!cardPath) {
@@ -165,7 +165,7 @@ async function readArtifactIdentity(
  * were never compared. Pass `db` explicitly only to measure that mismatch on purpose.
  */
 export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = {}): Promise<AbsenceProbeReceipt> {
-	const definition = loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)
+	const definition = await loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)
 
 	const coverageDatabasePath = options.coverageDatabasePath ?? String(dataRootPath("poi", definition.coverageLayerFile))
 

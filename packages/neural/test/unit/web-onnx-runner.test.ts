@@ -31,7 +31,7 @@ import { describe, expect, test } from "vitest"
 // `web-onnx-runner.unit.test.ts`, which mocks the runtime and needs no model.
 async function probeWeights(): Promise<{ modelPath: string; tokenizerPath: string; modelCardPath?: string } | null> {
 	try {
-		const r = resolveWeights({})
+		const r = await resolveWeights({})
 
 		if (!(await pathExists(r.modelPath)) || !(await pathExists(r.tokenizerPath))) return null
 
@@ -74,7 +74,7 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 		// Thread the trained label vocabulary from the model card, same as loadFromWeights — the
 		// dev-linked weights are a Stage 3 bundle whose emission width exceeds the compile-time
 		// STAGE2_BIO_LABELS default.
-		const labels = readLabelsFromModelCard(weights!.modelCardPath)
+		const labels = await readLabelsFromModelCard(weights!.modelCardPath)
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner, labels })
 
 		const tree = await classifier.parse("123 Main St, Springfield, IL 62704")

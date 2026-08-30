@@ -221,9 +221,9 @@ const CANDIDATE_PROBE_SQL =
  */
 const requireFromHere = createRequire(import.meta.url)
 
-function tryResolveWeights(): ResolvedWeights | null {
+async function tryResolveWeights(): Promise<ResolvedWeights | null> {
 	try {
-		return resolveWeights({ locale: "en-us" })
+		return await resolveWeights({ locale: "en-us" })
 	} catch {
 		return null
 	}
@@ -253,7 +253,7 @@ async function tryChromiumExecutable(): Promise<string | null> {
 	}
 }
 
-const weights = tryResolveWeights()
+const weights = await tryResolveWeights()
 const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (await pathExists(weights.tokenizerPath))
 const haveBrowser = (await tryChromiumExecutable()) !== null
 

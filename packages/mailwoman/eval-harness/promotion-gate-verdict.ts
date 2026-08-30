@@ -13,8 +13,7 @@
  *   can't be found is a FAIL, never a skip).
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import * as path from "@mailwoman/platform/path"
@@ -142,18 +141,18 @@ export async function assemblePromotionVerdict(
 	}>(options.gate)
 
 	const dir = options.outDir
-	const read = (f: string) => readLocalTextFileSync(path.join(dir, f))
+	const read = (f: string): Promise<string> => readLocalTextFile(path.join(dir, f))
 
-	function maybeRead(f: string): string | undefined {
+	async function maybeRead(f: string): Promise<string | undefined> {
 		try {
-			return read(f)
+			return await read(f)
 		} catch {
 			return undefined
 		}
 	}
 
-	function sidecar(f: string): ScorerSidecar | undefined {
-		const raw = maybeRead(f)
+	async function sidecar(f: string): Promise<ScorerSidecar | undefined> {
+		const raw = await maybeRead(f)
 
 		return raw === undefined ? undefined : parseJSONStrict<ScorerSidecar>(raw)
 	}
@@ -166,19 +165,21 @@ export async function assemblePromotionVerdict(
 		return scorerF1(md, tag)
 	}
 
-	function collect(tag: "fp32" | "int8"): Record<string, number | undefined> {
-		const pl = read(`${tag}-per-locale.md`)
-		const affix = read(`${tag}-affix.md`)
-		const unit = read(`${tag}-unit.md`)
-		const country = read(`${tag}-country.md`)
-		const affixJ = sidecar(`${tag}-affix.json`)
-		const unitJ = sidecar(`${tag}-unit.json`)
-		const countryJ = sidecar(`${tag}-country.json`)
-		const poboxJ = sidecar(`${tag}-pobox.json`)
-		const intersectionJ = sidecar(`${tag}-intersection.json`)
-		const pobox = maybeRead(`${tag}-pobox.md`)
-		const intersection = maybeRead(`${tag}-intersection.md`)
-		const deorder = read(`${tag}-deorder.md`)
+	async function collect(tag: "fp32" | "int8"): Promise<Record<string, number | undefined>> {
+		const pl = await read(`${tag}-per-locale.md`)
+		const affix = await read(`${tag}-affix.md`)
+		const unit = await read(`${tag}-unit.md`)
+		const country = await read(`${tag}-country.md`)
+		const affixJ = await sidecar(`${tag}-affix.json`)
+		const unitJ = await sidecar(`${tag}-unit.json`)
+		const countryJ = await sidecar(`${tag}-country.json`)
+		const poboxJ = await sidecar(`${tag}-pobox.json`)
+		const intersectionJ = await sidecar(`${tag}-intersection.json`)
+		const pobox = await maybeRead(`${tag}-pobox.md`)
+		const intersection = await maybeRead(`${tag}-intersection.md`)
+		const deorder = await read(`${tag}-deorder.md`)
+		const arenas = await maybeRead("arenas.md")
+		const cascadeJ = await sidecar("cascade-smoke.json")
 		// Capture the anchor-ON native-DE locality (the gated value) regardless of the anchor-OFF cell —
 		// the OFF cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
 		// `anchor.required` strict scorer (`[^|]*` tolerates that empty cell instead of false-failing).
@@ -211,22 +212,18 @@ export async function assemblePromotionVerdict(
 			// Arena leg runs once on the ship artifact (int8); the fp32 pass reads undefined and the
 			// delta loop skips it. The `neural` column of the `perturb` row, located by header — the
 			// column order changed when #1151 dropped the v0 comparison (see arenaColumn).
-			"arena.perturb": (() => {
-				const md = maybeRead("arenas.md")
-
-				return md ? arenaColumn(md, "perturb", "neural") : undefined
-			})(),
+			"arena.perturb": arenas ? arenaColumn(arenas, "perturb", "neural") : undefined,
 			// Demo-cascade smoke pass rate (#524) — whole-stack parse→reconcile→resolve against the slim
 			// hot DB. Like the arena leg it runs ONCE on the ship artifact (no fp32/int8 split); sidecar
 			// only (the leg is new — there are no pre-sidecar out-dirs to replay). Absent sidecar (DB not
 			// staged / runner errored) reads undefined → a floored spec FAILS loudly, an unfloored spec
 			// ignores it.
-			"cascade.demo_smoke": sidecar("cascade-smoke.json")?.summary?.pass_rate_pct,
+			"cascade.demo_smoke": cascadeJ?.summary?.pass_rate_pct,
 		}
 	}
 
-	const fp32 = collect("fp32")
-	const int8 = options.withInt8 ? collect("int8") : undefined
+	const fp32 = await collect("fp32")
+	const int8 = options.withInt8 ? await collect("int8") : undefined
 	const graded = int8 ?? fp32 // floors are graded on the ship artifact when present
 
 	// Floors owned by a DEDICATED leg in promotion-gate.ts (not a per-tag F1 in `graded`) — that leg
@@ -249,7 +246,7 @@ export async function assemblePromotionVerdict(
 	for (const [key, floor] of Object.entries(gate.floors)) {
 		if (LEG_HANDLED_FLOORS.has(key)) {
 			const legSidecar = legSidecars[key]
-			const raw = legSidecar ? maybeRead(legSidecar.file) : undefined
+			const raw = legSidecar ? await maybeRead(legSidecar.file) : undefined
 
 			if (raw) {
 				const actual = parseJSONStrict<Record<string, number>>(raw)[legSidecar!.rate]

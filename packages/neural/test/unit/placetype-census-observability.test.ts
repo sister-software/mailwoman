@@ -216,9 +216,9 @@ describe("census observability — what lands on the trace", () => {
 // resolver's answer (package, data-root overlay, or user cache) and not a directory this file can name. A
 // skip-guard keyed on the wrong directory does not fail — it SKIPS, and the suite reports success while
 // testing nothing.
-const resolved = (() => {
+const resolved = await (async () => {
 	try {
-		return resolveWeights({ locale: "en-us" })
+		return await resolveWeights({ locale: "en-us" })
 	} catch {
 		return undefined
 	}

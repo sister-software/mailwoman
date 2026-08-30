@@ -18,7 +18,7 @@ import { Text } from "ink"
 import type React from "react"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import { probeWeights, WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
+import { WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
 import type { createRuntimePipeline } from "#index"
 
 import { resolverDefaultCountry } from "../country-scope.ts"
@@ -161,7 +161,9 @@ const ParseCommand: ParsedCommandComponent<ParseOptions> = ({ options, args }) =
 		!options.model &&
 		!options.tokenizer
 
-	if (guardEligible && (options.degraded || options.downloadWeights || !probeWeights(options.locale).ok)) {
+	// The guard owns the probe now (it is async, so a render-time check is not possible); it settles
+	// to the same "neural" path when weights resolve and nothing else was forced.
+	if (guardEligible) {
 		return (
 			<WeightsGuard locale={options.locale} autoDownload={options.downloadWeights} forceDegraded={options.degraded}>
 				{(outcome) => <ParseTask options={options} args={args} weightsOutcome={outcome} />}
@@ -303,7 +305,7 @@ async function resolveWithCandidates(
 	}
 
 	const { resolveCandidateDBPath } = await import("../resolver-backend.ts")
-	const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
+	const dc = resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 	if (dc) {
 		opts.defaultCountry = dc
@@ -335,8 +337,8 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 	}
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend (no WOF admin path required); else FTS.
-	const lookup = createResolverBackend(mod, {
-		wofPaths: resolveCandidateDBPath() ? "" : await resolveWOFPath(options),
+	const lookup = await createResolverBackend(mod, {
+		wofPaths: (await resolveCandidateDBPath()) ? "" : await resolveWOFPath(options),
 	})
 
 	try {
@@ -482,7 +484,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
 		const { resolveCandidateDBPath } = await import("../resolver-backend.ts")
-		const dc = resolverDefaultCountry(options, !!resolveCandidateDBPath())
+		const dc = resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 		if (dc) {
 			resolveOpts.defaultCountry = dc

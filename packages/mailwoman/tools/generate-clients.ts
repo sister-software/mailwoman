@@ -34,7 +34,6 @@
  */
 
 import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	copyFileTo,
 	makeDirectories,
@@ -173,7 +172,13 @@ async function readMailwomanVersion(): Promise<string> {
  * not from source.
  */
 async function checkCompiled(): Promise<void> {
-	const missing = CLIENT_SURFACES.filter((surface) => !pathExistsSync(emitterCLIPath(surface)))
+	const missing: string[] = []
+
+	for (const surface of CLIENT_SURFACES) {
+		if (!(await pathExists(emitterCLIPath(surface)))) {
+			missing.push(surface)
+		}
+	}
 
 	if (missing.length) {
 		fail(

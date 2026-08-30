@@ -49,7 +49,7 @@
  *   graded through `createRuntimePipeline`, the only path an FST prior actually reaches (see the runner).
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { JSONSpliterator } from "spliterator"
 import zod from "zod"
@@ -251,23 +251,21 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	keyof HardSliceCase
 >
 
+// Probe the DIRECTORY, not the board file: the builder that WRITES the board resolves this constant
+// before the file exists, and a file-existence probe would send the first build to the compiled-tree
+// fallback (which resolves outside the workspace). The fixtures dir is committed, so it is the stable
+// discriminator between source and compiled trees.
+const HARD_SLICE_FIXTURES_DIR = fileURLToPath(new URL("fixtures/", import.meta.url))
+
 /**
  * The committed board.
  *
  * `new URL`-relative for the source tree with a compiled-tree fallback — tsc emits no `.jsonl` into `out/`, so a
  * compiled runner reads the source-tree copy. Same bridge as `gauntlet/cases/load.ts`'s `CASES_DIR`.
  */
-export const HARD_SLICE_BOARD_PATH = ((): string => {
-	// Probe the DIRECTORY, not the board file: the builder that WRITES the board resolves this constant
-	// before the file exists, and a file-existence probe would send the first build to the compiled-tree
-	// fallback (which resolves outside the workspace). The fixtures dir is committed, so it is the stable
-	// discriminator between source and compiled trees.
-	const sibling = fileURLToPath(new URL("fixtures/", import.meta.url))
-
-	if (pathExistsSync(sibling)) return `${sibling}hard-slice-board.jsonl`
-
-	return fileURLToPath(new URL("../../eval-harness/fixtures/hard-slice-board.jsonl", import.meta.url))
-})()
+export const HARD_SLICE_BOARD_PATH = (await pathExists(HARD_SLICE_FIXTURES_DIR))
+	? `${HARD_SLICE_FIXTURES_DIR}hard-slice-board.jsonl`
+	: fileURLToPath(new URL("../../eval-harness/fixtures/hard-slice-board.jsonl", import.meta.url))
 
 /**
  * Re-key a case into {@linkcode HARD_SLICE_KEY_ORDER}, dropping absent optionals — used by any emitter so the board's

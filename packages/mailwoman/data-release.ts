@@ -15,7 +15,7 @@
  *   Example `releases.json`: { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
  */
 
-import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { join } from "path-ts"
 
@@ -25,11 +25,11 @@ import { join } from "path-ts"
 export type DataReleaseManifest = Record<string, string>
 
 /**
- * Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed. TODO: Should be async.
+ * Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed.
  */
-export function readReleaseManifest(dataRoot: string): DataReleaseManifest | null {
+export async function readReleaseManifest(dataRoot: string): Promise<DataReleaseManifest | null> {
 	try {
-		const raw = tryParsingJSON(readLocalTextFileSync(join(dataRoot, "releases.json")))
+		const raw = tryParsingJSON(await readLocalTextFile(join(dataRoot, "releases.json")))
 
 		if (!raw || typeof raw !== "object") return null
 		const out: DataReleaseManifest = {}
@@ -50,21 +50,21 @@ export function readReleaseManifest(dataRoot: string): DataReleaseManifest | nul
  * Resolve a shard's on-disk path: the manifest-pinned `<family>-us-<slug>-<version>.db` when present, else the legacy
  * unversioned `<family>-us-<slug>.db`, else null if neither exists.
  */
-export function resolveShardPath(
+export async function resolveShardPath(
 	dataRoot: string,
 	family: string,
 	slug: string,
 	manifest: DataReleaseManifest | null
-): string | null {
+): Promise<string | null> {
 	const version = manifest?.[family]
 
 	if (version) {
 		const versioned = join(dataRoot, family, `${family}-us-${slug}-${version}.db`)
 
-		if (pathExistsSync(versioned)) return versioned
+		if (await pathExists(versioned)) return versioned
 	}
 
 	const legacy = join(dataRoot, family, `${family}-us-${slug}.db`)
 
-	return pathExistsSync(legacy) ? legacy : null
+	return (await pathExists(legacy)) ? legacy : null
 }

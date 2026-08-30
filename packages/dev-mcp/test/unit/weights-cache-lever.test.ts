@@ -86,11 +86,11 @@ describe("weights_cache — the lever", () => {
 		expect(resolveConfig({ weights_cache: "/tmp/v440-cache" }).weightsCacheRoot).toBe("/tmp/v440-cache")
 	})
 
-	it("makes two candidates two engines", () => {
+	it("makes two candidates two engines", async () => {
 		// The whole point of the lever: shipped-vs-candidate must not share a warm session. `engineID` hashes the
 		// effective config, so this holds automatically — and this test is what notices if the key ever stops being
 		// part of that config.
-		const fingerprint = computeTreeFingerprint(process.cwd())
+		const fingerprint = await computeTreeFingerprint(process.cwd())
 		const shipped = engineID(resolveConfig({}), fingerprint)
 		const candidate = engineID(resolveConfig({ weights_cache: "/tmp/v440-cache" }), fingerprint)
 		const other = engineID(resolveConfig({ weights_cache: "/tmp/v433-cache" }), fingerprint)
@@ -103,14 +103,14 @@ describe("weights_cache — the guard", () => {
 	it("accepts a fully staged cache", async () => {
 		const staged = await stageCache("ok")
 
-		expect(() => assertWeightsCacheStaged(staged)).not.toThrow()
+		await expect(assertWeightsCacheStaged(staged)).resolves.toBeUndefined()
 	})
 
 	it("names the missing binaries on a wrong-shaped root", async () => {
 		const root = await stageCache("wrong-shape")
 
-		expect(() => assertWeightsCacheStaged(root)).toThrow(/model\.onnx/)
-		expect(() => assertWeightsCacheStaged(root)).toThrow(/tokenizer\.model/)
+		await expect(assertWeightsCacheStaged(root)).rejects.toThrow(/model\.onnx/)
+		await expect(assertWeightsCacheStaged(root)).rejects.toThrow(/tokenizer\.model/)
 	})
 
 	it("separates under-staged from wrong-shape", async () => {
@@ -119,8 +119,8 @@ describe("weights_cache — the guard", () => {
 		// reader to the wrong place.
 		const root = await stageCache("under-staged", ["fst-en-us.bin", "postcode-en-us.bin"])
 
-		expect(() => assertWeightsCacheStaged(root)).toThrow(/declares/)
-		expect(() => assertWeightsCacheStaged(root)).toThrow(/postcode-en-us\.bin/)
+		await expect(assertWeightsCacheStaged(root)).rejects.toThrow(/declares/)
+		await expect(assertWeightsCacheStaged(root)).rejects.toThrow(/postcode-en-us\.bin/)
 	})
 
 	it("checks the locale the engine will actually load", async () => {
@@ -128,11 +128,11 @@ describe("weights_cache — the guard", () => {
 		// installed fr-fr package rather than report that.
 		const root = await stageCache("ok")
 
-		expect(() => assertWeightsCacheStaged(root, "fr-fr")).toThrow(/fr-fr/)
+		await expect(assertWeightsCacheStaged(root, "fr-fr")).rejects.toThrow(/fr-fr/)
 	})
 
 	it("refuses at acquire BEFORE building a session", async () => {
-		const registry = new EngineRegistry(process.cwd())
+		const registry = await EngineRegistry.create(process.cwd())
 
 		await expect(registry.acquire({ weights_cache: "/nonexistent/v999-cache" })).rejects.toThrow(/v999-cache/)
 

@@ -57,7 +57,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		repoRoot: "/tmp/stub",
 		maxResident: 2,
 		size: 1,
-		fingerprint: () => ({
+		fingerprint: async () => ({
 			digest: "tree0",
 			gitHead: "head0",
 			dirtyFiles: [],

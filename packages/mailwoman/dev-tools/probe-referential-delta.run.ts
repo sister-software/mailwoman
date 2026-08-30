@@ -33,7 +33,6 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
 import { parseArgs } from "@mailwoman/platform/util"
@@ -113,7 +112,13 @@ const preSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number =>
  */
 const postSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number => compareReferential(a, b) || b.score - a.score
 
-const wofPaths = wofShardPaths().filter(pathExistsSync)
+const wofPaths: string[] = []
+
+for (const shardPath of wofShardPaths()) {
+	if (await pathExists(shardPath)) {
+		wofPaths.push(shardPath)
+	}
+}
 
 console.log(`### 2. Live query replay\n`)
 

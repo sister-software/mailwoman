@@ -23,7 +23,7 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { readDirectorySync, readLocalTextFileSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { readDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -95,7 +95,9 @@ function parseLine(line: string): { canonical: string; variants: string[] } | nu
 	return { canonical: parts[0]!, variants: parts }
 }
 
-export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): BuildStreetMorphologyFSTResult {
+export async function buildStreetMorphologyFST(
+	opts: BuildStreetMorphologyFSTOpts
+): Promise<BuildStreetMorphologyFSTResult> {
 	const progress = opts.onProgress ?? (() => {})
 	const minVariantLength = opts.minVariantLength ?? 3
 
@@ -106,19 +108,28 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	if (opts.locales && opts.locales.length) {
 		locales = opts.locales
 	} else {
-		locales = readDirectorySync(opts.dictionariesDir).filter((entry) => {
+		const entries = await readDirectory(opts.dictionariesDir)
+		const localeProbes: Array<[string, boolean]> = []
+
+		for (const entry of entries) {
 			const localePath = join(opts.dictionariesDir, entry)
 
-			if (!statPathSync(localePath).isDirectory()) return false
+			if (!(await statPath(localePath)).isDirectory()) {
+				localeProbes.push([entry, false])
+
+				continue
+			}
 
 			try {
-				statPathSync(join(localePath, STREET_TYPES_FILENAME))
+				await statPath(join(localePath, STREET_TYPES_FILENAME))
 
-				return true
+				localeProbes.push([entry, true])
 			} catch {
-				return false
+				localeProbes.push([entry, false])
 			}
-		})
+		}
+
+		locales = localeProbes.filter(([, hasFile]) => hasFile).map(([entry]) => entry)
 	}
 
 	progress("discover", `Found ${locales.length} locales with ${STREET_TYPES_FILENAME}`)
@@ -129,7 +140,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 
 	for (const locale of locales) {
 		const filePath = join(opts.dictionariesDir, locale, STREET_TYPES_FILENAME)
-		const content = readLocalTextFileSync(filePath)
+		const content = await readLocalTextFile(filePath)
 
 		for (const line of TextSpliterator.from(content)) {
 			const parsed = parseLine(line)

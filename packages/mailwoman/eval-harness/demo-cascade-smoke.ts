@@ -49,8 +49,7 @@
  */
 
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
-import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import type { AnchorLookup } from "@mailwoman/neural"
@@ -193,7 +192,7 @@ export async function demoCascadeSmoke(
 	const refused: DemoCascadeSmokeResult = { exitCode: 2, total: 0, pass: 0, passRatePct: 0 }
 
 	// ── Preflight: every artifact loud-missing, never a vague ENOENT mid-run ────────────────────────
-	const missing = Object.entries({
+	const artifacts = Object.entries({
 		db: DB,
 		model: MODEL,
 		tokenizer: TOK,
@@ -202,8 +201,10 @@ export async function demoCascadeSmoke(
 		gazetteer: GAZ,
 		rows: FILE,
 	})
-		.filter(([, p]) => !pathExistsSync(p))
-		.map(([k, p]) => `  ${k}: ${p}`)
+
+	const missing = (await Promise.all(artifacts.map(async ([k, p]) => ({ k, p, exists: await pathExists(p) }))))
+		.filter((entry) => !entry.exists)
+		.map(({ k, p }) => `  ${k}: ${p}`)
 
 	if (missing.length) {
 		reportError(
@@ -227,9 +228,17 @@ export async function demoCascadeSmoke(
 	// ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromURLs defaults) ─────────
 	const card = await readLocalJSONFile<{ labels?: readonly string[] }>(CARD)
 
-	const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
-		.map((f) => join(STAGE, f))
-		.filter((p) => pathExistsSync(p))
+	const postcodeBinaries = (
+		await Promise.all(
+			["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"].map(async (f) => {
+				const p = join(STAGE, f)
+
+				return { p, exists: await pathExists(p) }
+			})
+		)
+	)
+		.filter((entry) => entry.exists)
+		.map((entry) => entry.p)
 
 	if (!postcodeBinaries.length) {
 		reportError(`⚠ no postcode-*.bin under ${STAGE} — anchor channel unfed (anchor-trained models will degrade)`)
@@ -237,7 +246,9 @@ export async function demoCascadeSmoke(
 
 	const anchorLookup = postcodeBinaries.length
 		? mergeAnchorLookups(
-				postcodeBinaries.map((p) => new PostcodeBinaryResolver(readLocalBufferSync(p)).toAnchorLookup())
+				await Promise.all(
+					postcodeBinaries.map(async (p) => new PostcodeBinaryResolver(await readLocalBuffer(p)).toAnchorLookup())
+				)
 			)
 		: undefined
 

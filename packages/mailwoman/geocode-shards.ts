@@ -158,6 +158,11 @@ export interface ShardCacheEntry extends StateShards {
  * state's (possibly multi-GB) shards once, not once per row. Versioned-data aware (#485): paths resolve through the
  * `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic switchover
  * when a new version is published. Call {@link close} when done to release every cached handle.
+ *
+ * `for` is synchronous, so on-disk existence is probed asynchronously ONCE instead of per call: {@linkcode warm} awaits
+ * the #2029-async manifest read + `resolveShardPath` for every US state/territory slug and records what exists; `for`
+ * then consults that map. Prefer {@linkcode ShardProvider.create}, which constructs AND warms before answering — the
+ * constructor itself is private because it cannot await those probes.
  */
 export class ShardProvider implements Disposable {
 	readonly #factory: ShardLookupFactory
@@ -168,16 +173,51 @@ export class ShardProvider implements Disposable {
 	 */
 	#retired: Disposable[] = []
 	#manifest: DataReleaseManifest | null
+	/**
+	 * Per-slug resolved shard paths, preloaded by {@linkcode warm} so `for` never touches the filesystem.
+	 */
+	readonly #paths = new Map<string, { apPath: string | null; ipPath: string | null }>()
 
-	constructor(factory: ShardLookupFactory, dataRoot: string) {
+	private constructor(factory: ShardLookupFactory, dataRoot: string, manifest: DataReleaseManifest | null) {
 		this.#factory = factory
 		this.#dataRoot = dataRoot
-		this.#manifest = readReleaseManifest(dataRoot)
+		this.#manifest = manifest
+	}
+
+	/**
+	 * Construct a provider and warm its path map before answering. The constructor cannot await the #2029-async manifest
+	 * read + shard-path probes, so this static factory does.
+	 */
+	static async create(factory: ShardLookupFactory, dataRoot: string): Promise<ShardProvider> {
+		const provider = new ShardProvider(factory, dataRoot, await readReleaseManifest(dataRoot))
+
+		await provider.warm()
+
+		return provider
+	}
+
+	/**
+	 * Preload shard paths for every US state/territory slug. Awaits `resolveShardPath` for each slug's rooftop shard and
+	 * its interpolation tier, recording the paths that exist so `for` never touches the filesystem. Safe to call more
+	 * than once: it re-probes the same slug set and overwrites the map, which is how {@linkcode reload} re-reads the disk.
+	 */
+	async warm(): Promise<void> {
+		this.#paths.clear()
+
+		for (const abbreviation of Object.keys(US_STATE_BY_ABBREVIATION)) {
+			const slug = abbreviation.toLowerCase()
+
+			const [apPath, ipPath] = await Promise.all([
+				resolveShardPath(this.#dataRoot, "address-points", slug, this.#manifest),
+				resolveShardPath(this.#dataRoot, "interpolation", slug, this.#manifest),
+			])
+
+			this.#paths.set(slug, { apPath, ipPath })
+		}
 	}
 
 	#open(stateSlug: string): ShardCacheEntry {
-		const apPath = resolveShardPath(this.#dataRoot, "address-points", stateSlug, this.#manifest)
-		const ipPath = resolveShardPath(this.#dataRoot, "interpolation", stateSlug, this.#manifest)
+		const { apPath, ipPath } = this.#paths.get(stateSlug.toLowerCase()) ?? { apPath: null, ipPath: null }
 		const ap = apPath ? new this.#factory.AddressPointSqliteLookup(apPath) : undefined
 		const ip = ipPath ? new this.#factory.StreetInterpolator({ dbPath: ipPath }) : undefined
 
@@ -204,22 +244,22 @@ export class ShardProvider implements Disposable {
 	}
 
 	/**
-	 * Re-read the manifest and atomically swap any cached shard whose resolved path changed. New requests see the new
-	 * version immediately; the old handles are RETIRED and closed on the next reload (one-generation grace — safe because
-	 * find() is synchronous, so no in-flight query can still hold a handle once a request yields). Returns the new
-	 * version map.
+	 * Re-read the manifest, re-probe the shard paths, and atomically swap any cached shard whose resolved path changed.
+	 * New requests see the new version immediately; the old handles are RETIRED and closed on the next reload
+	 * (one-generation grace — safe because find() is synchronous, so no in-flight query can still hold a handle once a
+	 * request yields). Returns the new version map.
 	 */
-	reload(): DataReleaseManifest | null {
+	async reload(): Promise<DataReleaseManifest | null> {
 		for (const h of this.#retired) {
 			h[Symbol.dispose]()
 		}
 
 		this.#retired = []
-		this.#manifest = readReleaseManifest(this.#dataRoot)
+		this.#manifest = await readReleaseManifest(this.#dataRoot)
+		await this.warm()
 
 		for (const [slug, old] of this.#cache) {
-			const apPath = resolveShardPath(this.#dataRoot, "address-points", slug, this.#manifest)
-			const ipPath = resolveShardPath(this.#dataRoot, "interpolation", slug, this.#manifest)
+			const { apPath, ipPath } = this.#paths.get(slug.toLowerCase()) ?? { apPath: null, ipPath: null }
 
 			if (apPath === old.apPath && ipPath === old.ipPath) continue // unchanged — keep the open handle
 			this.#cache.set(slug, this.#open(slug))

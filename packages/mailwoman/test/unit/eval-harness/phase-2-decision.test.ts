@@ -51,7 +51,7 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const definition = loadPhase2Definition()
+const definition = await loadPhase2Definition()
 const freeze = await readLocalJSONFile<Phase2FreezeRecord>(PHASE2_FREEZE_PATH)
 
 /**
@@ -147,7 +147,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 			copy.thresholds.minimumResolutionChecks = 1
 		})
 
-		expect(() => loadPhase2Definition(definitionPath, PHASE2_FREEZE_PATH)).toThrow(/content hash .* !== frozen/)
+		await expect(loadPhase2Definition(definitionPath, PHASE2_FREEZE_PATH)).rejects.toThrow(/content hash .* !== frozen/)
 	})
 
 	it("refuses a freeze record pinning another version", async () => {
@@ -158,7 +158,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 			{ version: "1.0.0" }
 		)
 
-		expect(() => loadPhase2Definition(definitionPath, freezePath)).toThrow(
+		await expect(loadPhase2Definition(definitionPath, freezePath)).rejects.toThrow(
 			/pins version 1\.0\.0, definition is 1\.1\.0/
 		)
 	})
@@ -166,7 +166,7 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 	it("refuses a freeze record naming another decision", async () => {
 		const { definitionPath, freezePath } = await scratchPair(() => {}, { decisionID: "phase-3-decision" })
 
-		expect(() => loadPhase2Definition(definitionPath, freezePath)).toThrow(/freeze record names/)
+		await expect(loadPhase2Definition(definitionPath, freezePath)).rejects.toThrow(/freeze record names/)
 	})
 })
 

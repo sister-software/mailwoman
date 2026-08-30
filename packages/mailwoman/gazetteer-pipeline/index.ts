@@ -18,7 +18,6 @@
  */
 
 import { pathExists, readLocalJSONFile, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	changeMode,
 	copyFileTo,
@@ -61,7 +60,7 @@ import { buildSHA, stampLayerManifest } from "./stamp-manifest.ts"
  * not fatal.
  *
  * That skip is not merely tolerant — it is the **build-local tier's mechanism**. `postalcode-ni-osm.db` is ODbL and is
- * never published, so on every machine but the one that built it the `existsSync` filter in
+ * never published, so on every machine but the one that built it the `pathExists` filter in
  * {@link resolvePostcodeShards} removes it and the set degrades to the permissive shards alone. Nothing else enforces
  * the tier, and nothing else needs to.
  *
@@ -93,7 +92,7 @@ export const DEFAULT_POSTCODE_SHARDS = [
 	//
 	// BUILD-LOCAL TIER — ODbL 1.0 is share-alike on a Derived Database, so this artifact is never
 	// published to npm, R2 or the demo. It is present only on a machine that built it, and the
-	// `existsSync` filter in `resolvePostcodeShards` IS that tier's mechanism: a deployment without the
+	// `pathExists` filter in `resolvePostcodeShards` IS that tier's mechanism: a deployment without the
 	// file simply has no NI coverage, exactly as before.
 	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from the saved
 	// Overpass response rather than re-querying a volunteer endpoint).
@@ -150,7 +149,17 @@ export async function resolvePostcodeShards(
 	shards: readonly string[] = DEFAULT_POSTCODE_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
 ): Promise<string[]> {
-	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => pathExistsSync(p))
+	const paths: string[] = []
+
+	for (const shard of shards) {
+		const path = resolvePath(wofDir(dataRoot), shard)
+
+		if (await pathExists(path)) {
+			paths.push(path)
+		}
+	}
+
+	return paths
 }
 
 /**
@@ -173,7 +182,17 @@ export async function resolveLocalityShards(
 	shards: readonly string[] = DEFAULT_LOCALITY_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
 ): Promise<string[]> {
-	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => pathExistsSync(p))
+	const paths: string[] = []
+
+	for (const shard of shards) {
+		const path = resolvePath(wofDir(dataRoot), shard)
+
+		if (await pathExists(path)) {
+			paths.push(path)
+		}
+	}
+
+	return paths
 }
 
 /**
@@ -299,7 +318,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	}
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
-	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileSync
+	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileTo
 	// stamps the source mode onto a fresh copy — or writes THROUGH an existing destination keeping
 	// ITS mode. Remove any stale copy, then restore the write bit: the copy is fold staging, not the
 	// sealed artifact (2026-08-04: first candidate build against a sealed admin died on this).

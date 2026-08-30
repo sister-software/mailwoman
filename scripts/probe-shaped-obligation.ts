@@ -34,7 +34,7 @@ const { values } = parseArgs({
 
 const locale = values.locale!
 const cacheRoot = values["cache-root"]
-const resolved = resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
+const resolved = await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
 
 console.log(`card    ${resolved.modelCardPath}`)
 console.log(`anchor  ${resolved.anchorLookupPath?.path ?? "(none)"}`)

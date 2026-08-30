@@ -21,7 +21,7 @@
  *   `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
-import { pathExistsSync, readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
 
 import type { FSTMatcher } from "./fst-matcher.ts"
@@ -76,13 +76,15 @@ export interface LoadedStreetMorphologyFST {
 /**
  * Load the street-morphology matcher: sealed artifact first, per-process dictionary build as the degrade path.
  */
-export function loadStreetMorphologyFST(opts: LoadStreetMorphologyFSTOpts = {}): LoadedStreetMorphologyFST {
+export async function loadStreetMorphologyFST(
+	opts: LoadStreetMorphologyFSTOpts = {}
+): Promise<LoadedStreetMorphologyFST> {
 	const warn = opts.onWarn ?? (() => {})
 	const artifactPath = opts.artifactPath ?? defaultStreetMorphologyArtifactPath()
 
-	if (pathExistsSync(artifactPath)) {
+	if (await pathExists(artifactPath)) {
 		try {
-			const buf = readLocalBufferSync(artifactPath)
+			const buf = await readLocalBuffer(artifactPath)
 			const matcher = deserializeFST(buf)
 			const provenance = readFSTProvenance(buf)
 
@@ -94,7 +96,7 @@ export function loadStreetMorphologyFST(opts: LoadStreetMorphologyFSTOpts = {}):
 		}
 	}
 
-	const built = buildStreetMorphologyFST({
+	const built = await buildStreetMorphologyFST({
 		dictionariesDir: opts.dictionariesDir ?? resourceDictionaryPath("libpostal"),
 	})
 

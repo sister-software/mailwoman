@@ -172,7 +172,7 @@ async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Pro
 			import("mailwoman/resolver-backend"),
 		])
 
-		const backend = createResolverBackend(resolverMod, { wofPaths: opts.resolveDatabasePath })
+		const backend = await createResolverBackend(resolverMod, { wofPaths: opts.resolveDatabasePath })
 		resolver = createWOFResolver(backend)
 	}
 

@@ -72,16 +72,20 @@ async function dirEnsure(d: string): Promise<string> {
 describe("readReleaseManifest", () => {
 	test("reads a valid manifest; null for absent or malformed", async () => {
 		const root = tmp()
-		expect(readReleaseManifest(await root)).toBeNull()
+		expect(await readReleaseManifest(await root)).toBeNull()
 
 		await writeLocalJSONFile(
 			{ "address-points": "2026-05-20.0", interpolation: "TIGER2023" },
 			join(await root, "releases.json")
 		)
 
-		expect(readReleaseManifest(await root)).toEqual({ "address-points": "2026-05-20.0", interpolation: "TIGER2023" })
+		expect(await readReleaseManifest(await root)).toEqual({
+			"address-points": "2026-05-20.0",
+			interpolation: "TIGER2023",
+		})
+
 		await writeLocalTextFile("{ not json", join(await root, "releases.json"))
-		expect(readReleaseManifest(await root)).toBeNull()
+		expect(await readReleaseManifest(await root)).toBeNull()
 	})
 })
 
@@ -120,7 +124,7 @@ describe("ShardProvider atomic switchover", () => {
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, join(await root, "releases.json"))
 
-		const provider = new ShardProvider(factory, await root)
+		const provider = await ShardProvider.create(factory, await root)
 		const v1 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v1.dbPath).toContain("address-points-us-tx-v1.db")
 		expect(provider.versions()).toEqual({ "address-points": "v1" })
@@ -128,7 +132,7 @@ describe("ShardProvider atomic switchover", () => {
 		// Publish v2 alongside, flip the manifest, reload.
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v2.db"))
 		await writeLocalJSONFile({ "address-points": "v2" }, join(await root, "releases.json"))
-		expect(provider.reload()).toEqual({ "address-points": "v2" })
+		expect(await provider.reload()).toEqual({ "address-points": "v2" })
 
 		const v2 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v2.dbPath).toContain("address-points-us-tx-v2.db")
@@ -136,7 +140,7 @@ describe("ShardProvider atomic switchover", () => {
 		expect(v1.closed).toBe(false)
 
 		// A second reload (no version change) closes the retired v1 handle.
-		provider.reload()
+		await provider.reload()
 		expect(v1.closed).toBe(true)
 
 		provider[Symbol.dispose]()
@@ -150,10 +154,10 @@ describe("ShardProvider atomic switchover", () => {
 		await writeLocalTextFile("", join(apDir, "address-points-us-tx-v1.db"))
 		await writeLocalJSONFile({ "address-points": "v1" }, join(await root, "releases.json"))
 
-		using provider = new ShardProvider(factory, await root)
+		await using provider = await ShardProvider.create(factory, await root)
 
 		const first = provider.for("tx").addressPoints
-		provider.reload()
+		await provider.reload()
 		expect(provider.for("tx").addressPoints).toBe(first)
 	})
 })

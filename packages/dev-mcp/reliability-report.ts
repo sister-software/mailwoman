@@ -158,7 +158,7 @@ async function placerRun(registry: EngineRegistryLike, args: Record<string, unkn
 		// measurement are the corpus and the tree.
 		provenance: {
 			corpus,
-			tree_fingerprint: registry.fingerprint().digest,
+			tree_fingerprint: (await registry.fingerprint()).digest,
 			note: "coarse-placer surface: no geocode engine is involved, so no engine_id or input_set applies",
 		},
 		nRequested: sample.observations.length + sample.excluded.reduce((total, entry) => total + entry.n, 0),

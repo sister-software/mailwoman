@@ -34,11 +34,11 @@ const rows: Array<{
 	boundaries: ClassifiedC4BoundaryReceipt[]
 }> = []
 
-let streetMorphology: ReturnType<typeof loadStreetMorphologyFST> | null = null
+let streetMorphology: Awaited<ReturnType<typeof loadStreetMorphologyFST>> | null = null
 let streetMorphologyUnavailable: string | null = null
 
 try {
-	streetMorphology = loadStreetMorphologyFST()
+	streetMorphology = await loadStreetMorphologyFST()
 } catch (error) {
 	streetMorphologyUnavailable = (error as Error).message
 }

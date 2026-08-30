@@ -284,7 +284,7 @@ async function resample(): Promise<void> {
  */
 async function versionStamp() {
 	const require = createRequire(import.meta.url)
-	const resolved = resolveWeights({ locale: LOCALE })
+	const resolved = await resolveWeights({ locale: LOCALE })
 
 	// `resolveWeights` answers `undefined` when the bundle ships no card. The stamp is the point of this function, so a
 	// missing card is a failure to report rather than a field to omit.

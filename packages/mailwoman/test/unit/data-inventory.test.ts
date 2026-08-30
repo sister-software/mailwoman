@@ -198,7 +198,7 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 		// reaches it, and the artifact still passes every "has a manifest" check.
 		const root = await dataRoot()
 
-		expect(buildCommandGaps("node osm/out/scripts/build-rooftop-shard.js", root)).toEqual([
+		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-shard.js", root)).toEqual([
 			"osm/out/scripts/build-rooftop-shard.js",
 		])
 	})
@@ -206,7 +206,7 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 	it("treats a bare CLI verb as runnable rather than guessing", async () => {
 		// Verifying `mailwoman gazetteer build poi` means running the CLI. Reporting it as a gap would flood the
 		// report with the artifacts that are actually in the best shape.
-		expect(buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).toEqual([])
+		expect(await buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).toEqual([])
 	})
 
 	it("passes a path that does exist", async () => {
@@ -215,6 +215,6 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 		await makeDirectories(join(root, "scripts"))
 		await writeLocalTextFile("", join(root, "scripts", "build.ts"))
 
-		expect(buildCommandGaps("node scripts/build.ts", root)).toEqual([])
+		expect(await buildCommandGaps("node scripts/build.ts", root)).toEqual([])
 	})
 })

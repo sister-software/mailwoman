@@ -125,7 +125,7 @@ export async function runLookup(
 		}
 
 		case LookupSource.Candidate: {
-			return await withArtifact(source, resolveCandidateDB(config, dataRoot), async (db, path) => {
+			return await withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
 				// The score source's split channels ride along whenever the conventional importance DB exists beside the
 				// artifacts — the join every fame-contest diagnosis needs, attached rather than scripted.
 				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
@@ -161,7 +161,7 @@ export async function runLookup(
 							"the split channels are UNREAD here, not absent from the world."
 
 					if (args.compareCandidateDB) {
-						const comparePath = resolveCandidateDB({ ...config, candidate_db: args.compareCandidateDB }, dataRoot)
+						const comparePath = await resolveCandidateDB({ ...config, candidate_db: args.compareCandidateDB }, dataRoot)
 						const openedB = await openSealedArtifact<WOFDatabase>(comparePath)
 
 						if ("unavailable" in openedB || !comparePath) {
@@ -262,8 +262,8 @@ export async function runLookup(
  * distinguish them (all three mean "no candidate backend"), but a probe that reported the third as "no path was
  * resolved" would tell someone who typo'd `--candidate-db` that the gazetteer is missing.
  */
-function resolveCandidateDB(config: EngineConfig, dataRoot: string): string | undefined {
-	const resolved = resolveCandidateDBPath(config.candidate_db, dataRoot)
+async function resolveCandidateDB(config: EngineConfig, dataRoot: string): Promise<string | undefined> {
+	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
 
 	if (resolved || !config.candidate_db || config.candidate_db === "none") return resolved
 
@@ -372,10 +372,10 @@ async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupR
  */
 async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	const locale = args.locale ?? args.config?.locale ?? "en-us"
-	let resolved: ReturnType<typeof resolveWeights>
+	let resolved: Awaited<ReturnType<typeof resolveWeights>>
 
 	try {
-		resolved = resolveWeights({ locale })
+		resolved = await resolveWeights({ locale })
 	} catch (error) {
 		return {
 			source: LookupSource.Postcode,
@@ -396,7 +396,7 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 		}
 	}
 
-	const spanMode = readRequiredChannels(resolved.modelCardPath)?.anchor?.span_mode ?? "alnum-run"
+	const spanMode = (await readRequiredChannels(resolved.modelCardPath))?.anchor?.span_mode ?? "alnum-run"
 	let resolver: PostcodeAnchorResolver
 
 	try {

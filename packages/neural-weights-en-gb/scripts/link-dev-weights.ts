@@ -179,8 +179,8 @@ async function md5FileWithSidecar(path: string): Promise<string> {
  */
 const BASE_CARD_PATH = resolve(String(workspacePath("neural-weights-en-us")), "model-card.json")
 
-linkForce(SRC_MODEL, resolve(DEST_DIR, "model.onnx"))
-linkForce(SRC_TOKENIZER, resolve(DEST_DIR, "tokenizer.model"))
+await linkForce(SRC_MODEL, resolve(DEST_DIR, "model.onnx"))
+await linkForce(SRC_TOKENIZER, resolve(DEST_DIR, "tokenizer.model"))
 
 console.log(`linked ${DEST_DIR}/{model.onnx,tokenizer.model}`)
 
@@ -239,7 +239,7 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (await pathExists(SRC_GAZETTEER_LEXICON)) {
-	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
+	await linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
@@ -247,7 +247,7 @@ if (await pathExists(SRC_GAZETTEER_LEXICON)) {
 }
 
 if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
+	await linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
@@ -292,7 +292,7 @@ for (const { channel, source } of EVIDENCE_LEXICONS) {
 	const src = source(declared)
 
 	if (await pathExists(src)) {
-		linkForce(src, resolve(DEST_DIR, declared))
+		await linkForce(src, resolve(DEST_DIR, declared))
 
 		console.log(`linked ${DEST_DIR}/${declared}`)
 	} else {
@@ -552,7 +552,7 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-en-gb.bin")
 const FST_DEST = resolve(DEST_DIR, "fst-en-gb.bin")
 
 if (await pathExists(FST_SRC)) {
-	linkForce(FST_SRC, FST_DEST)
+	await linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-en-gb.bin ← ${FST_SRC}`)
 
@@ -575,7 +575,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
 if (await pathExists(MORPHOLOGY_SRC)) {
-	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
+	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
 
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
 } else {

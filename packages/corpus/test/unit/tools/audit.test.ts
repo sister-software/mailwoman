@@ -44,7 +44,7 @@ describe.skipIf(!hasCorpus)("audit — integration", () => {
 			configPath
 		)
 
-		expect(() => audit({ corpusDir: CORPUS_PATH, configPath })).not.toThrow()
+		await expect(audit({ corpusDir: CORPUS_PATH, configPath })).resolves.toBeUndefined()
 	})
 })
 
@@ -85,7 +85,7 @@ describe("audit — config parser", () => {
 		console.log = (...args: unknown[]) => logLines.push(args.join(" "))
 
 		try {
-			audit({ corpusDir: tmp, configPath })
+			await audit({ corpusDir: tmp, configPath })
 		} finally {
 			console.error = origError
 			console.log = origLog

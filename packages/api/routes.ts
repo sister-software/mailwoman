@@ -417,10 +417,10 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 		return c.json({ formatted, canonicalKey: canonicalKey(dict) }, 200)
 	})
 
-	app.openapi(healthRoute, (c) => {
+	app.openapi(healthRoute, async (c) => {
 		const uptimeSeconds = Math.round((Date.now() - startedAt) / 1000)
 
-		return c.json({ status: "ok", uptime_s: uptimeSeconds, ...engine.health?.() }, 200)
+		return c.json({ status: "ok", uptime_s: uptimeSeconds, ...(await engine.health?.()) }, 200)
 	})
 
 	app.openapi(metricsRoute, (c) => c.json(metricsSnapshot(), 200))

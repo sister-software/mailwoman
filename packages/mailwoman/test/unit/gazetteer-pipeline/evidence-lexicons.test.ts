@@ -25,9 +25,9 @@ import {
 import { loadDegenerateSurfaces } from "mailwoman/gazetteer-pipeline/fst"
 import { describe, expect, it } from "vitest"
 
-describe("three-law selectivity — pure units", () => {
-	const personNames = loadPersonNameSurfaces()
+const personNames = await loadPersonNameSurfaces()
 
+describe("three-law selectivity — pure units", () => {
 	it("law 3: person-name surfaces exist and carry the flip-row names", () => {
 		// The v3.17→v3.18 flip rows: given names that are prominent-place homographs.
 		for (const name of ["joseph", "pierre", "louis", "thomas"]) {

@@ -35,7 +35,7 @@
  *   the definition's `recordingNote` says so on the receipt.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { sha256Hex } from "@mailwoman/core/utils"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
@@ -358,12 +358,12 @@ export interface Phase2FreezeRecord {
 	note: string
 }
 
-function sourceRelative(name: string): string {
+async function sourceRelative(name: string): Promise<string> {
 	// `tsc` emits no `.json` into `out/`, so a compiled caller reads the source-tree copy — the same bridge the two
 	// earlier pre-registrations use.
 	const sibling = fileURLToPath(new URL(name, import.meta.url))
 
-	if (pathExistsSync(sibling)) return sibling
+	if (await pathExists(sibling)) return sibling
 
 	return fileURLToPath(new URL(`../../../eval-harness/phase-2-decision/${name}`, import.meta.url))
 }
@@ -371,12 +371,12 @@ function sourceRelative(name: string): string {
 /**
  * The committed pre-registration.
  */
-export const PHASE2_DEFINITION_PATH = sourceRelative("decision-definition.json")
+export const PHASE2_DEFINITION_PATH = await sourceRelative("decision-definition.json")
 
 /**
  * The committed freeze record for it.
  */
-export const PHASE2_FREEZE_PATH = sourceRelative("decision-freeze.json")
+export const PHASE2_FREEZE_PATH = await sourceRelative("decision-freeze.json")
 
 /**
  * The committed receipt — the measured run the decision package on #1967 lays its arithmetic out of.
@@ -384,7 +384,7 @@ export const PHASE2_FREEZE_PATH = sourceRelative("decision-freeze.json")
  * Committed rather than left in a PR body for the reason this whole ruler exists: the numbers a decision rests on have
  * to be readable next to the definition that registered them, by someone who was not there.
  */
-export const PHASE2_RECEIPT_PATH = sourceRelative("decision-receipt.json")
+export const PHASE2_RECEIPT_PATH = await sourceRelative("decision-receipt.json")
 
 /**
  * The content hash of one definition.
@@ -685,12 +685,12 @@ export function auditPhase2Definition(definition: Phase2DecisionDefinition): str
  * Three refusals, in order: the freeze record must name this definition and version, the definition's content hash must
  * equal the frozen hash, and the audit must be clean. A caller never receives a definition it may only partly trust.
  */
-export function loadPhase2Definition(
+export async function loadPhase2Definition(
 	definitionPath: string = PHASE2_DEFINITION_PATH,
 	freezePath: string = PHASE2_FREEZE_PATH
-): Phase2DecisionDefinition {
-	const definition = readLocalJSONFileSync<Phase2DecisionDefinition>(definitionPath)
-	const freeze = readLocalJSONFileSync<Phase2FreezeRecord>(freezePath)
+): Promise<Phase2DecisionDefinition> {
+	const definition = await readLocalJSONFile<Phase2DecisionDefinition>(definitionPath)
+	const freeze = await readLocalJSONFile<Phase2FreezeRecord>(freezePath)
 
 	if (freeze.decisionID !== definition.decisionID) {
 		throw new Error(

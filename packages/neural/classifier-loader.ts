@@ -68,13 +68,15 @@ export async function loadClassifierFromWeights(
 	])
 
 	/* oxlint-enable typescript/no-restricted-imports */
-	const resolved: ResolvedWeights = resolveWeights(opts)
+	const resolved: ResolvedWeights = await resolveWeights(opts)
 
 	// The vocabulary belongs to the MODEL, so an overlay that shares a base model inherits it rather than
 	// restating it. A carrier package's own card describes the overlay — its version, its own artifacts —
 	// and omitting `labels` there is correct; copying them in would be a second copy to go stale on the
 	// next retrain. Falling back is what keeps the two facts in one place.
-	const labels = readLabelsFromModelCard(resolved.modelCardPath) ?? readLabelsFromModelCard(resolved.baseModelCardPath)
+	const labels =
+		(await readLabelsFromModelCard(resolved.modelCardPath)) ??
+		(await readLabelsFromModelCard(resolved.baseModelCardPath))
 
 	const crf = await readCRFTransitions(resolved.crfTransitionsPath)
 	// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
@@ -118,7 +120,7 @@ export async function loadClassifierFromWeights(
 	// SOFT: each channel is best-effort. A caller-passed `postcodeAnchorLookup` always wins. When
 	// the model-card declares a channel REQUIRED but the package didn't ship its data, we warn ONCE
 	// (mirroring neural-web's `warnOnUnfedTrainedChannels`) and run that channel OFF — never crash.
-	const declared = readRequiredChannels(resolved.modelCardPath)
+	const declared = await readRequiredChannels(resolved.modelCardPath)
 
 	let postcodeAnchorLookup = opts.postcodeAnchorLookup
 
@@ -144,7 +146,7 @@ export async function loadClassifierFromWeights(
 	// returns undefined for the packages that ship no binary on purpose, e.g. en-gb under #1476).
 	const anchorDetail =
 		declared?.anchor?.required && !(postcodeAnchorLookup && postcodeAnchorLookup.size)
-			? unfedAnchorDetail(resolved.packageDir)
+			? await unfedAnchorDetail(resolved.packageDir)
 			: undefined
 
 	if (anchorDetail) {

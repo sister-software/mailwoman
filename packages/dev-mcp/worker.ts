@@ -73,7 +73,7 @@ if (!values["repo-root"]) {
 	throw new Error("worker: --repo-root is required (the shim always passes it)")
 }
 
-const registry = new EngineRegistry(
+const registry = await EngineRegistry.create(
 	values["repo-root"],
 	values["max-resident"] ? Number.parseInt(values["max-resident"], 10) : 2
 )

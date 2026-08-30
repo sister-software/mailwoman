@@ -34,7 +34,7 @@ const { values } = parseArgs({ options: { "out-json": { type: "string" } } })
 const cases = await loadRegressionCases()
 const deps = await buildGauntletDeps()
 const reports: C6RowReport[] = []
-const candidateDBPath = resolveCandidateDBPath()
+const candidateDBPath = await resolveCandidateDBPath()
 
 const candidateDB = candidateDBPath
 	? new DatabaseClient<CandidateDatabase>(candidateDBPath, { readOnly: true })

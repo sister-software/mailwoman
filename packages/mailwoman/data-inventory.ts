@@ -23,8 +23,7 @@
  *   visible instead of leaving it as a filesystem detail.
  */
 
-import { readDirectoryEntries, type Dirent } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, readLinkSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectoryEntries, readLink, statLink, statPath, type Dirent } from "@mailwoman/core/fs/readers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { basename, join, relative } from "@mailwoman/platform/path"
@@ -203,11 +202,11 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
  * `lstat` before `stat`: a symlinked artifact must report BOTH the link and the size of what it points at, and `stat`
  * alone silently answers for the target while `lstat` alone silently answers for the link.
  */
-function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
+async function inventoryEntry(dataRoot: string, path: string): Promise<InventoryEntry> {
 	const rel = relative(dataRoot, path)
 	const segment = rel.split("/")[0] ?? ""
-	const link = statLinkSync(path).isSymbolicLink() ? readLinkSync(path) : undefined
-	const bytes = pathExistsSync(path) ? statPathSync(path).size : 0
+	const link = (await statLink(path)).isSymbolicLink() ? await readLink(path) : undefined
+	const bytes = (await pathExists(path)) ? (await statPath(path)).size : 0
 
 	const base: InventoryEntry = {
 		path: rel,
@@ -233,7 +232,7 @@ function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
 export async function takeInventory(options: { dataRoot: string; maxDepth?: number }): Promise<InventoryReport> {
 	const maxDepth = options.maxDepth ?? 2
 	const { paths, skippedForeign } = await findDatabases(options.dataRoot, maxDepth)
-	const entries = paths.map((path) => inventoryEntry(options.dataRoot, path))
+	const entries = await Promise.all(paths.map((path) => inventoryEntry(options.dataRoot, path)))
 
 	const counts: Record<Provenance, number> = {
 		[Provenance.Manifested]: 0,
@@ -284,11 +283,18 @@ export function inventorySentence(report: InventoryReport): string {
  * resolve under the repo root. A command with no such token — `mailwoman gazetteer build poi` — is treated as runnable,
  * because verifying a CLI verb means running the CLI.
  */
-export function buildCommandGaps(buildCmd: string, repoRoot: string): string[] {
-	return buildCmd
+export async function buildCommandGaps(buildCmd: string, repoRoot: string): Promise<string[]> {
+	const gaps: string[] = []
+
+	for (const token of buildCmd
 		.split(/\s+/)
-		.filter((token) => token.includes("/") && !/[$`|><*]/.test(token))
-		.filter((token) => !pathExistsSync(join(repoRoot, token)))
+		.filter((candidate) => candidate.includes("/") && !/[$`|><*]/.test(candidate))) {
+		if (!(await pathExists(join(repoRoot, token)))) {
+			gaps.push(token)
+		}
+	}
+
+	return gaps
 }
 
 /**

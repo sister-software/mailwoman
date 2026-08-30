@@ -31,17 +31,19 @@ async function configFile(contents: string): Promise<string> {
 }
 
 describe("readOracleConfig", () => {
-	it("treats an absent config as off", () => {
-		expect(readOracleConfig("/nonexistent/oracle-config.json")).toEqual({})
+	it("treats an absent config as off", async () => {
+		expect(await readOracleConfig("/nonexistent/oracle-config.json")).toEqual({})
 	})
 
 	it("treats a MALFORMED config as off, never as enabled", async () => {
 		// The failure that matters: a truncated or half-written file must not read as an opt-in to spend money.
-		expect(readOracleConfig(await configFile("{ not json"))).toEqual({})
+		expect(await readOracleConfig(await configFile("{ not json"))).toEqual({})
 	})
 
 	it("reads a well-formed opt-in", async () => {
-		const config = readOracleConfig(await configFile('{"google":{"enabled":true,"maxCallsPerDaemonLifetime":25}}'))
+		const config = await readOracleConfig(
+			await configFile('{"google":{"enabled":true,"maxCallsPerDaemonLifetime":25}}')
+		)
 
 		expect(config.google).toEqual({ enabled: true, maxCallsPerDaemonLifetime: 25 })
 	})

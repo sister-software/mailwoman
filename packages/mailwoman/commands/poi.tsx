@@ -26,7 +26,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { Resolver } from "@mailwoman/resolver"
@@ -87,13 +87,22 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
  */
 async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
 	const { resolveCandidateDBPath, wofShardPaths } = await import("../resolver-backend.ts")
-	const candidateDB = resolveCandidateDBPath(options.candidateDB)
+	const candidateDB = await resolveCandidateDBPath(options.candidateDB)
 
-	const wofPaths = candidateDB
+	const wofPathCandidates = candidateDB
 		? []
-		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
-				pathExistsSync(p)
-			)
+		: options.resolveDB
+			? options.resolveDB.split(",").map((p) => p.trim())
+			: wofShardPaths()
+
+	// Existence is probed sequentially so the filter callback can stay synchronous.
+	const wofPaths: string[] = []
+
+	for (const p of wofPathCandidates) {
+		if (await pathExists(p)) {
+			wofPaths.push(p)
+		}
+	}
 
 	if (!candidateDB && !wofPaths.length) {
 		console.error(
@@ -110,7 +119,7 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const { createResolverBackend } = await import("../resolver-backend.ts")
 		const { createWOFResolver } = await import("@mailwoman/resolver")
-		const lookup = createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
+		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
 		return { resolver: createWOFResolver(lookup), [Symbol.dispose]: () => lookup[Symbol.dispose]() }
 	} catch {

@@ -39,7 +39,7 @@
  *   else under its own name.
  */
 
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture, OutcomeComparatorName } from "./fixture.ts"
@@ -323,10 +323,10 @@ export function punctuationApplicability(
  * `new URL`-relative with a compiled-tree fallback: `tsc` emits no `.jsonl` into `out/`, so a compiled caller reads the
  * source-tree copy. Same bridge as `gauntlet/cases/load.ts`'s `CASES_DIR`.
  */
-export const PUNCTUATION_SUITE_PATH = ((): string => {
+export const PUNCTUATION_SUITE_PATH: string = await (async (): Promise<string> => {
 	const sibling = fileURLToPath(new URL("punctuation.jsonl", import.meta.url))
 
-	if (pathExistsSync(sibling)) return sibling
+	if (await pathExists(sibling)) return sibling
 
 	return fileURLToPath(new URL("../../../eval-harness/conformance/punctuation.jsonl", import.meta.url))
 })()

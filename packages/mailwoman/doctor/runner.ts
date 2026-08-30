@@ -14,8 +14,7 @@
  */
 
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { isWritableSync, pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { isWritable, pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
@@ -56,19 +55,19 @@ export interface DoctorDeps {
 	/**
 	 * File-existence probe.
 	 */
-	existsSync(path: string): boolean
+	exists(path: string): Promise<boolean>
 	/**
 	 * Byte size of a file, or `undefined` when it can't be stat'd.
 	 */
-	fileSize(path: string): number | undefined
+	fileSize(path: string): Promise<number | undefined>
 	/**
 	 * Whether a path is writable (W_OK).
 	 */
-	isWritable(path: string): boolean
+	isWritable(path: string): Promise<boolean>
 	/**
 	 * Resolve a locale's weights package (throws when unresolvable) — mirrors `@mailwoman/neural`.
 	 */
-	resolveWeights(locale: string): ResolvedWeightsLike
+	resolveWeights(locale: string): Promise<ResolvedWeightsLike>
 	/**
 	 * The npm package name for a locale's weights (e.g. `@mailwoman/neural-weights-fr-fr`).
 	 */
@@ -81,11 +80,11 @@ export interface DoctorDeps {
 	 * The candidate.db the TOOLS would actually use — `resolveCandidateDBPath` (explicit ?? `$MAILWOMAN_CANDIDATE_DB`),
 	 * on disk. NO convention-path fallback: that's exactly what geocode/serve do.
 	 */
-	envCandidatePath(): string | undefined
+	envCandidatePath(): Promise<string | undefined>
 	/**
 	 * The `<data-root>/wof/candidate.db` convention path IF it exists on disk — used to detect the env-unset trap.
 	 */
-	conventionCandidatePath(): string | undefined
+	conventionCandidatePath(): Promise<string | undefined>
 	/**
 	 * The WOF admin shard paths to probe ($MAILWOMAN_WOF_DB split, else the default shard set).
 	 */
@@ -141,12 +140,12 @@ async function readEnginesFloor(): Promise<string> {
 /**
  * The `<data-root>/wof/candidate.db` convention path if it exists on disk — the file a fresh consumer downloads.
  */
-function defaultConventionCandidatePath(dataRoot: string): string | undefined {
+async function defaultConventionCandidatePath(dataRoot: string): Promise<string | undefined> {
 	if ($public.MAILWOMAN_CANDIDATE_DB === "none") return undefined
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return pathExistsSync(convention) ? convention : undefined
+	return (await pathExists(convention)) ? convention : undefined
 }
 
 /**
@@ -167,19 +166,20 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 	const dataRoot = mailwomanDataRoot()
 
 	return {
-		existsSync: pathExistsSync,
-		fileSize: (path) => {
+		exists: pathExists,
+		fileSize: async (path) => {
 			try {
-				return statPathSync(path).size
+				return (await statPath(path)).size
 			} catch {
 				return undefined
 			}
 		},
-		isWritable: isWritableSync,
+		isWritable,
 		resolveWeights: (locale) => resolveWeights({ locale }),
 		weightsPackageName,
 		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== DefaultMailwomanPaths.data }),
-		envCandidatePath: () => ($public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath(undefined, dataRoot) : undefined),
+		envCandidatePath: async () =>
+			$public.MAILWOMAN_CANDIDATE_DB ? await resolveCandidateDBPath(undefined, dataRoot) : undefined,
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
 		wofShardPaths: () => resolveWOFShardPaths(undefined, dataRoot),
 		poiPath: () => resolvePath(dataRoot, "poi", "poi.db"),
@@ -195,14 +195,14 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 
 // MARK: Fact gathering → checks
 
-function gatherWeights(deps: DoctorDeps): WeightsObservation {
+async function gatherWeights(deps: DoctorDeps): Promise<WeightsObservation> {
 	try {
-		const resolved = deps.resolveWeights("en-us")
+		const resolved = await deps.resolveWeights("en-us")
 
 		return {
 			resolved,
-			modelSize: deps.fileSize(resolved.modelPath),
-			tokenizerSize: deps.fileSize(resolved.tokenizerPath),
+			modelSize: await deps.fileSize(resolved.modelPath),
+			tokenizerSize: await deps.fileSize(resolved.tokenizerPath),
 		}
 	} catch (error) {
 		return { error: error instanceof Error ? error.message : String(error) }
@@ -213,23 +213,35 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 	// Same precedence the tools apply: explicit/env candidate.db → convention-path candidate.db → WOF FTS shards.
 	// The convention probe must come BEFORE the shards, or a machine holding both reports the FTS shard while every
 	// tool on it uses the candidate table — doctor's one job is to name the backend actually in use.
-	const envCandidate = deps.envCandidatePath()
+	const envCandidate = await deps.envCandidatePath()
 
 	if (envCandidate) {
-		return { envCandidate: { path: envCandidate, sizeBytes: deps.fileSize(envCandidate) }, probed: [envCandidate] }
+		return {
+			envCandidate: { path: envCandidate, sizeBytes: await deps.fileSize(envCandidate) },
+			probed: [envCandidate],
+		}
 	}
 
-	const convention = deps.conventionCandidatePath()
+	const convention = await deps.conventionCandidatePath()
 	const shards = deps.wofShardPaths()
 
 	if (convention) {
 		return { conventionCandidate: convention, probed: [convention, ...shards] }
 	}
 
-	const existing = shards.find((p) => deps.existsSync(p))
+	// Existence is materialized before the first-hit search so the search loop can await directly.
+	let existing: string | undefined
+
+	for (const p of shards) {
+		if (await deps.exists(p)) {
+			existing = p
+
+			break
+		}
+	}
 
 	if (existing) {
-		return { wofShard: { path: existing, sizeBytes: deps.fileSize(existing) }, probed: shards }
+		return { wofShard: { path: existing, sizeBytes: await deps.fileSize(existing) }, probed: shards }
 	}
 
 	return { probed: shards }
@@ -238,7 +250,7 @@ async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> 
 async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
 	const path = deps.poiPath()
 
-	if (!deps.existsSync(path)) return { path, exists: false }
+	if (!(await deps.exists(path))) return { path, exists: false }
 
 	try {
 		return { path, exists: true, manifest: await deps.readPOIManifest(path) }
@@ -247,11 +259,11 @@ async function gatherPOI(deps: DoctorDeps): Promise<POIObservation> {
 	}
 }
 
-function gatherOverlay(deps: DoctorDeps, locale: string): DoctorCheck {
+async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCheck> {
 	const packageName = deps.weightsPackageName(locale)
 
 	try {
-		const resolved = deps.resolveWeights(locale)
+		const resolved = await deps.resolveWeights(locale)
 
 		return localeOverlayCheck({ locale, packageName, resolved: true, source: resolved.source })
 	} catch {
@@ -273,7 +285,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const deps: DoctorDeps = { ...(await defaultDoctorDeps()), ...overrides }
 
 	// Core: weights + runtime.
-	const weights = weightsCheck(gatherWeights(deps))
+	const weights = weightsCheck(await gatherWeights(deps))
 	const nodeCheck = nodeVersionCheck({ nodeVersion: deps.nodeVersion, enginesFloor: deps.enginesFloor })
 
 	let onnxLoadable = false
@@ -293,8 +305,8 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 
 	const dataRoot = dataRootCheck({
 		path: root.path,
-		exists: deps.existsSync(root.path),
-		writable: deps.isWritable(root.path),
+		exists: await deps.exists(root.path),
+		writable: await deps.isWritable(root.path),
 		fromEnv: root.fromEnv,
 	})
 
@@ -302,7 +314,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 	const poi = checkPOI(await gatherPOI(deps))
 
 	// Informational: locale overlays.
-	const overlays = deps.overlayLocales.map((locale) => gatherOverlay(deps, locale))
+	const overlays = await Promise.all(deps.overlayLocales.map((locale) => gatherOverlay(deps, locale)))
 
 	return assembleReport([nodeCheck, onnx, weights, dataRoot, gazetteer, poi, ...overlays])
 }
@@ -343,7 +355,7 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 		{ key: "MAILWOMAN_DATA_ROOT", value: $public.MAILWOMAN_DATA_ROOT, source: root.fromEnv ? "env" : "unset" },
 		{ key: "data root (resolved)", value: root.path, source: root.fromEnv ? "env" : "default" },
 		{ key: "MAILWOMAN_CANDIDATE_DB", value: $public.MAILWOMAN_CANDIDATE_DB, source: "env" },
-		{ key: "candidate.db (convention)", value: deps.conventionCandidatePath(), source: "derived" },
+		{ key: "candidate.db (convention)", value: await deps.conventionCandidatePath(), source: "derived" },
 		{ key: "MAILWOMAN_WOF_DB", value: $public.MAILWOMAN_WOF_DB, source: "env" },
 		{ key: "POI layer", value: deps.poiPath(), source: "derived" },
 	]
@@ -352,12 +364,12 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 		entries.push({
 			key: `WOF shard [${index}]`,
 			value: shard,
-			source: deps.existsSync(shard) ? "on disk" : "absent",
+			source: (await deps.exists(shard)) ? "on disk" : "absent",
 		})
 	}
 
 	try {
-		const resolved = deps.resolveWeights("en-us")
+		const resolved = await deps.resolveWeights("en-us")
 
 		entries.push(
 			{ key: "weights model.onnx", value: resolved.modelPath, source: resolved.source },

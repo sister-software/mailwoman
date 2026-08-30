@@ -31,7 +31,7 @@
  */
 
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
-import { pathExistsSync, readDirectorySync, readLocalTextFileSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
@@ -336,16 +336,16 @@ export function candidateSubjects(input: string): string[] {
 /**
  * Every `.jsonl` under a committed input tree, recursively.
  */
-function jsonlFiles(root: string): string[] {
-	if (!pathExistsSync(root)) return []
+async function jsonlFiles(root: string): Promise<string[]> {
+	if (!(await pathExists(root))) return []
 
 	const found: string[] = []
 
-	for (const name of readDirectorySync(root)) {
+	for (const name of await readDirectory(root)) {
 		const path = join(root, name)
 
-		if (statPathSync(path).isDirectory()) {
-			found.push(...jsonlFiles(path))
+		if ((await statPath(path)).isDirectory()) {
+			found.push(...(await jsonlFiles(path)))
 
 			continue
 		}
@@ -361,15 +361,15 @@ function jsonlFiles(root: string): string[] {
 /**
  * Read every committed input string out of the named trees.
  */
-function committedInputs(repositoryRoot: string): { inputs: Set<string>; files: number } {
+async function committedInputs(repositoryRoot: string): Promise<{ inputs: Set<string>; files: number }> {
 	const inputs = new Set<string>()
 	let files = 0
 
 	for (const relative of COMMITTED_INPUT_ROOTS) {
-		for (const path of jsonlFiles(join(repositoryRoot, relative))) {
+		for (const path of await jsonlFiles(join(repositoryRoot, relative))) {
 			files++
 
-			for (const line of TextSpliterator.from(readLocalTextFileSync(path))) {
+			for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
 				if (!line.trim()) continue
 
 				const row = parseJSONStrict<Record<string, unknown>>(line)
@@ -430,7 +430,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 		}
 	}
 
-	const { inputs, files } = committedInputs(repositoryRoot)
+	const { inputs, files } = await committedInputs(repositoryRoot)
 	let routeClaimable = 0
 
 	for (const input of inputs) {

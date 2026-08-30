@@ -766,7 +766,7 @@ async function main(): Promise<void> {
 		} else {
 			// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
 			// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to inline.
-			const loaded = loadStreetMorphologyFST({ onWarn: (message) => console.error(`  WARN: ${message}`) })
+			const loaded = await loadStreetMorphologyFST({ onWarn: (message) => console.error(`  WARN: ${message}`) })
 			morphologyFST = loaded.matcher
 
 			console.error(

@@ -185,10 +185,10 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 	}
 
 	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend; else FTS over wofPath.
-	const lookup = createResolverBackend(mod, { wofPaths: wofPath })
-	const shardProvider = new ShardProvider(mod, options.dataRoot)
+	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
+	const shardProvider = await ShardProvider.create(mod, options.dataRoot)
 	const shards: ShardResolver = shardProvider.for
-	const defaultCountry = resolverDefaultCountry(options, !!resolveCandidateDBPath()) || undefined
+	const defaultCountry = resolverDefaultCountry(options, !!(await resolveCandidateDBPath())) || undefined
 	const resolver = createWOFResolver(lookup)
 
 	const seam = geocodeAddressVia({
@@ -271,7 +271,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSQLitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
-		const shardProvider = new ShardProvider(mod, dataRoot)
+		const shardProvider = await ShardProvider.create(mod, dataRoot)
 
 		const geocode = (raw: string) =>
 			geocodeAddress(raw, {

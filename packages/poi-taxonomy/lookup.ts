@@ -16,7 +16,7 @@ import { createLookupCore } from "./lookup-core.ts"
 import { readPackagedTable } from "./packaged-data.ts"
 import type { CategoryRecord, POITaxonomyTable } from "./types.ts"
 
-const TABLE = readPackagedTable<POITaxonomyTable>("taxonomy.json")
+const TABLE = await readPackagedTable<POITaxonomyTable>("taxonomy.json")
 const CORE = createLookupCore(TABLE)
 
 export type { CategoryMatch } from "./lookup-core.ts"

@@ -81,7 +81,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		const { ShardProvider } = await import("#geocode-shards")
 		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 
-		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
+		cascadeProvider = await ShardProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)
 	}
 
 	// The addrpt + interp arms run when EITHER a single-state shard was given OR --cascade is on.

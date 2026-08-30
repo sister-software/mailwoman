@@ -66,7 +66,7 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 			"locality-surface-lexicon-v7.json",
 		])
 
-		const resolved = resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
+		const resolved = await resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
 
 		expect(resolved.localitySurfaceLexiconPath).toMatch(/locality-surface-lexicon-v7\.json$/)
 	})
@@ -77,7 +77,7 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 		let thrown: unknown
 
 		try {
-			resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
+			await resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
 		} catch (error) {
 			thrown = error
 		}
@@ -94,7 +94,9 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 		// createScorer's declared-required fail-closed is what covers this case, not a resolution throw.
 		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [])
 
-		expect(resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path }).localitySurfaceLexiconPath).toBeUndefined()
+		expect(
+			(await resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })).localitySurfaceLexiconPath
+		).toBeUndefined()
 	})
 
 	test("a card with NO lexicon field resolves the legacy filename WITH a warning", async () => {
@@ -102,7 +104,7 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
 		try {
-			const resolved = resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
+			const resolved = await resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
 
 			expect(resolved.localitySurfaceLexiconPath).toMatch(/locality-surface-lexicon-v6\.json$/)
 
@@ -123,7 +125,7 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), ["locality-surface-lexicon-v6.json"])
 
 		expect(
-			resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path, tier: "pocket" }).localitySurfaceLexiconPath
+			(await resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path, tier: "pocket" })).localitySurfaceLexiconPath
 		).toBeUndefined()
 	})
 
@@ -132,7 +134,7 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 			"locality-surface-lexicon-v6.json",
 		])
 
-		expect(() => resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })).toThrow(
+		await expect(resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })).rejects.toThrow(
 			/malformed `requires.locality_surface.lexicon`/
 		)
 	})

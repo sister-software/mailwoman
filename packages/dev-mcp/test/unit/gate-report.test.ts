@@ -155,7 +155,7 @@ describe("missingWeightsCacheArtifacts", () => {
 		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
 		const root = rootDirectory.path
 
-		const missing = missingWeightsCacheArtifacts(root)
+		const missing = await missingWeightsCacheArtifacts(root)
 
 		expect(missing.kind).toBe("wrong-shape")
 		expect(missing.paths).toHaveLength(3)
@@ -181,7 +181,7 @@ describe("missingWeightsCacheArtifacts", () => {
 			join(packageDir, "model-card.json")
 		)
 
-		const missing = missingWeightsCacheArtifacts(root)
+		const missing = await missingWeightsCacheArtifacts(root)
 
 		expect(missing.kind).toBe("under-staged")
 		expect(missing.paths).toHaveLength(1)
@@ -202,7 +202,7 @@ describe("missingWeightsCacheArtifacts", () => {
 
 		await writeLocalJSONFile({ files_md5: { $comment: "docs only" } }, join(packageDir, "model-card.json"))
 
-		expect(missingWeightsCacheArtifacts(root).kind).toBe("ok")
+		expect((await missingWeightsCacheArtifacts(root)).kind).toBe("ok")
 	})
 
 	it("passes a well-formed cache", async () => {
@@ -222,6 +222,6 @@ describe("missingWeightsCacheArtifacts", () => {
 			join(packageDir, "model-card.json")
 		)
 
-		expect(missingWeightsCacheArtifacts(root).kind).toBe("ok")
+		expect((await missingWeightsCacheArtifacts(root)).kind).toBe("ok")
 	})
 })

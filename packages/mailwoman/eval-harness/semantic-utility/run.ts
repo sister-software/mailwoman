@@ -155,7 +155,7 @@ async function readWeightsIdentity(options: SemanticProbeOptions): Promise<{
 	weightsVersion: string
 }> {
 	const locale = options.locale ?? "en-US"
-	const resolved = resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
+	const resolved = await resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
 
 	if (!cardPath) {
@@ -192,7 +192,7 @@ async function readArtifactIdentity(
  * a control that has been edited on the board stops the run instead of quietly grading a different row.
  */
 export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}): Promise<ProbeReceipt> {
-	const definition = loadProbeDefinition(options.definitionPath, options.freezePath)
+	const definition = await loadProbeDefinition(options.definitionPath, options.freezePath)
 	const boardPath = options.boardFixturesPath ?? POI_BOARD_FIXTURES
 	const committed = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(boardPath))
 	const controls = resolveControlRows(definition, committed)

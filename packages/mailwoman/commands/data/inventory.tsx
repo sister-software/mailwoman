@@ -119,10 +119,13 @@ const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		// because these artifacts PASS every "has a manifest" check.
 		const repoRoot = String(repoRootPath())
 
-		const broken = report.entries
-			.filter((e) => e.provenance === Provenance.Manifested)
-			.map((e) => ({ entry: e, gaps: buildCommandGaps(e.manifest!.build_cmd, repoRoot) }))
-			.filter(({ gaps }) => gaps.length > 0)
+		const manifested = report.entries.filter((e) => e.provenance === Provenance.Manifested)
+
+		const broken = (
+			await Promise.all(
+				manifested.map(async (e) => ({ entry: e, gaps: await buildCommandGaps(e.manifest!.build_cmd, repoRoot) }))
+			)
+		).filter(({ gaps }) => gaps.length > 0)
 
 		if (broken.length) {
 			lines.push(

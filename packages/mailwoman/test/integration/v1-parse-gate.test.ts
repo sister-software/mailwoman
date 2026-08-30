@@ -147,7 +147,7 @@ async function weightsPresent(): Promise<boolean> {
 		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
-		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
 	}

@@ -25,8 +25,7 @@
  *   lands on stdout.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readDirectorySync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
@@ -625,12 +624,15 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		// ── Step 3: determine which states have ≥1 county SHP ─────────────────
 		console.error("Step 3: building per-state shards")
 
-		// States from our target list that have at least one downloaded county SHP
+		// States from our target list that have at least one downloaded county SHP. The listing is materialized once
+		// so the filter callback stays synchronous.
+		const edgesEntries = await readDirectory(EDGES_DIR)
+
 		const availableStates = TARGET_STATES.filter((abbr) => {
 			const fips = STATE_FIPS[abbr]
 			const pattern = new RegExp(`tl_\\d+_${fips}\\d{3}_edges\\.shp$`)
 
-			return readDirectorySync(EDGES_DIR).some((f) => pattern.test(f))
+			return edgesEntries.some((f) => pattern.test(f))
 		})
 
 		if (!availableStates.length) {

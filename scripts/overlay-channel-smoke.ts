@@ -43,7 +43,7 @@ const { values } = parseArgs({
 
 const locale = values.locale!
 const cacheRoot = values["cache-root"]
-const resolved = resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
+const resolved = await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
 
 console.log(`locale            ${locale}`)
 console.log(`source            ${resolved.source}`)

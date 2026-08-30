@@ -295,17 +295,21 @@ async function autoLoadWeightsFST(
  * per-process build from core's bundled libpostal dictionaries — the pre-artifact behavior kept as the degrade path.
  * Failures degrade to `undefined` (gate off, byte-stable).
  */
-function autoLoadStreetMorphology(classifier: CreateRuntimePipelineOpts["classifier"]): FSTMatcher | undefined {
+async function autoLoadStreetMorphology(
+	classifier: CreateRuntimePipelineOpts["classifier"]
+): Promise<FSTMatcher | undefined> {
 	const artifactPath =
 		classifier && typeof classifier === "object" && "streetMorphologyPath" in classifier
 			? (classifier as { streetMorphologyPath?: string }).streetMorphologyPath
 			: undefined
 
 	try {
-		return loadStreetMorphologyFST({
+		const loaded = await loadStreetMorphologyFST({
 			...(artifactPath ? { artifactPath } : {}),
 			onWarn: (message) => console.warn(`[mailwoman] ${message}`),
-		}).matcher
+		})
+
+		return loaded.matcher
 	} catch (error) {
 		console.warn(`[mailwoman] failed to load the street-morphology FST: ${(error as Error).message} — gate off`)
 
@@ -522,7 +526,7 @@ export function createRuntimePipeline(
 
 			// The gate needs BOTH matchers — skip the load when there's no gazetteer for it to gate.
 			if (stages.fst) {
-				const morph = autoLoadStreetMorphology(opts.classifier)
+				const morph = await autoLoadStreetMorphology(opts.classifier)
 
 				if (morph) {
 					stages.streetMorphology = morph
