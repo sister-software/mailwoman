@@ -10,6 +10,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { countryFromPostcodeFormat } from "@mailwoman/core/resolver"
 
 /**
  * The resolved tree's own country — the first `resolver_country` stamp on any node (constant across one address's
@@ -89,4 +90,72 @@ export function postcodeCountryScopeOf(tree: AddressTree): string | undefined {
 	}
 
 	return undefined
+}
+
+/**
+ * The first `postcode` node's value in a parsed tree, or undefined.
+ */
+export function treePostcodeValue(tree: AddressTree): string | undefined {
+	const stack = [...tree.roots]
+
+	while (stack.length) {
+		const node = stack.pop()!
+
+		if (node.tag === "postcode") return node.value
+
+		stack.push(...node.children)
+	}
+
+	return undefined
+}
+
+/**
+ * Retag a WHOLE-INPUT span the model read as something else when the string is an unambiguous postcode — the
+ * bare-postcode class (#22).
+ *
+ * `mailwoman geocode --locale en-GB "N7 0BT"` parses to `{ street: "N7 0BT" }` and returns no coordinate, while the
+ * same code inside a full address (`… London, N7 0BT`) parses as a postcode and resolves to a point 38 m from the
+ * rooftop. Nothing downstream can recover it: the walk only looks up a `postcode` node, and span-rescore's
+ * confident-constituent guard treats the street span as un-recoverable material (correctly — that guard is what stops
+ * "Ave" resolving to Ave, France).
+ *
+ * The gate is deliberately the narrowest one that fixes the class:
+ *
+ * - The tree carries NO postcode node already (never second-guess a parse that found one),
+ * - The retagged node is the ONLY value-bearing node in the tree, and
+ * - Its value matches a format that is UNFORGEABLE across the systems we resolve ({@link POSTCODE_FORMAT_COUNTRY} —
+ *   GB/CA/IE, the same table #928 already trusts to name a country outright).
+ *
+ * So it fires on `N7 0BT` and `K2P 1L4` and on nothing that is also a plausible street, venue or city name. A US ZIP is
+ * out of scope by construction: `90210` alone is five digits, which the model already tags `postcode`, and the format
+ * table would not distinguish it from a DE PLZ anyway.
+ *
+ * Mutates and returns the tree (same posture as `recognizeUSRegions`).
+ */
+export function recognizeBarePostcode(tree: AddressTree): AddressTree {
+	const valued: AddressNode[] = []
+	const stack = [...tree.roots]
+
+	while (stack.length) {
+		const n = stack.pop()!
+
+		// The parse already found a postcode — never second-guess it.
+		if (n.tag === "postcode") return tree
+
+		if (n.value.trim().length) {
+			valued.push(n)
+		}
+
+		stack.push(...n.children)
+	}
+
+	if (valued.length !== 1) return tree
+	const only = valued[0]!
+
+	if (!countryFromPostcodeFormat(only.value)) return tree
+	only.tag = "postcode"
+
+	only.metadata = { ...only.metadata, bare_postcode_retag: true }
+
+	return tree
 }
