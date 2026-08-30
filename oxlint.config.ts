@@ -80,6 +80,9 @@ const config = createOxlintConfig({
 		"**/*.egg-info/**",
 		// Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
+		// A codemod's fixtures ARE the shape it rewrites, so they are data rather than source. Linting the forbidden
+		// form out of an `input.ts` would leave the codemod asserting a transformation nothing still needs.
+		"codemods/*/tests/**",
 	],
 })
 
@@ -135,6 +138,27 @@ const NODE_ONLY_NEURAL_MODULES = [
  */
 const NODE_BUILTIN_PATTERN = "node:*"
 
+/**
+ * `mkdtemp` answers a STRING, so nothing owns the directory and nothing removes it. A 2026-08-29 census of the 205 call
+ * sites outside `@mailwoman/platform` found 89 that never removed theirs — 43%, and none of them looked wrong at the
+ * call site, because a leaked scratch directory has no symptom a test can see.
+ *
+ * `@mailwoman/core/fs/temporary` answers a handle instead, rooted at `$MAILWOMAN_TEMP_ROOT` rather than the operating
+ * system's `tmpdir()`: `path`, `resolve(...)`, `use(...)` for whatever must be released before the directory goes, and
+ * `move()`/`moveWith(...)` for a factory handing one to a caller that outlives it. Reaching the builtin through the
+ * platform mirror is the correct FIRST hop and the wrong LAST one, which is why this names the second.
+ */
+const TEMPORARY_DIRECTORY_REDIRECTS = ["@mailwoman/platform/fs", "@mailwoman/platform/fs/promises"].map((name) => ({
+	name,
+	importNames: ["mkdtemp", "mkdtempSync", "mkdtempDisposable", "mkdtempDisposableSync"],
+	message:
+		"A temporary directory is owned, not named. Use `await temporaryDirectory(prefix)` from " +
+		"`@mailwoman/core/fs/temporary` and bind it with `await using`, so the directory is removed when the scope " +
+		"ends. It carries `resolve(...)` for a path inside it, `use(...)` for a resource that must be released first, " +
+		"and `moveWith(...)` for a fixture handed to a longer-lived scope. Where the lifetime is a suite rather than a " +
+		"scope, register it on a file-level `AsyncDisposableStack` that one `afterAll` disposes.",
+}))
+
 export default {
 	...config,
 	// The repo-local plugin (`oxlint.plugin.ts`) rides alongside the bundled Sister Software one.
@@ -184,22 +208,42 @@ export default {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
+		{
+			// `@mailwoman/core/fs/temporary` is the module the redirect below points AT, so it is the one place that
+			// reaches `mkdtempDisposable` directly.
+			files: ["packages/core/fs/temporary.ts"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
+			// A codemod reads argument COUNTS to tell one builtin overload from another. `args.length === 3` is an arity,
+			// not a tuned threshold, and naming each one costs a constant per overload and explains nothing.
+			files: ["codemods/**/*.ts"],
+			rules: {
+				"sister-software/no-unnamed-threshold": "off",
+			},
+		},
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),
 		"guard-for-in": "error",
 		"mailwoman/no-database-boundary-cast": "error",
 		"mailwoman/no-database-handle-cast": "error",
+		"mailwoman/no-sync-fs-in-async": "error",
 		"mailwoman/require-database-schema-argument": "error",
 		"mailwoman/require-disable-reason": "error",
 		"typescript/no-restricted-imports": [
 			"error",
 			{
+				paths: TEMPORARY_DIRECTORY_REDIRECTS,
 				patterns: [
 					{
 						group: [NODE_BUILTIN_PATTERN],
 						message:
-							"Node builtins are isolated behind @mailwoman/platform. Import the matching platform subpath instead.",
+							"Node builtins are isolated behind @mailwoman/platform. Import the matching platform subpath instead — " +
+							"and where the subpath carries a house idiom (a scratch directory, a database connection), reach for " +
+							"the idiom rather than the raw builtin it is built on.",
 					},
 					{
 						group: ["@mailwoman/platform/sqlite"],
