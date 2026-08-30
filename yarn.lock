@@ -4898,6 +4898,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/map-tui@workspace:packages/map-tui"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/platform": "workspace:*"
     "@mapbox/vector-tile": "npm:^2.0.3"
     "@sister.software/asciify": "npm:^4.1.0"
@@ -5292,7 +5293,6 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
