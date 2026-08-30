@@ -115,6 +115,12 @@ const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 /**
  * Whether a call reaches the synchronous filesystem directly, bypassing `@mailwoman/core/fs`.
  *
+ * The baseline is SEVEN, and every one is in a workspace that does not depend on `@mailwoman/core` — `api-kit`,
+ * `nuts-lookup`, `timezone-lookup`, `un-locode-lookup`, `variant-aliases`. Reaching the idiom would install core's ~9
+ * MB of data into a small alias table and three lookups, so they keep the mirror and `oxlint.config.ts` exempts them by
+ * name. They collapse to zero the day the fs helpers can be reached without that tarball; until then the number stays
+ * checkable, and an eighth call anywhere fails this check.
+ *
  * A bare identifier is counted; a property access is counted only when the receiver is spelled `fs`. That receiver rule
  * is what separates this population from two unrelated ones that share a method name: `node:sqlite`'s
  * `DatabaseSync.closeSync()`, and an INJECTED dependency (`deps.existsSync`), which is a parameter a test substitutes

@@ -239,6 +239,25 @@ export default {
 			},
 		},
 		{
+			// These workspaces do not depend on `@mailwoman/core`, so for them the mirror IS the filesystem surface.
+			// Three of them say so at the call site, next to a `JSON.parse` that reaches for no wrapper for the same
+			// reason. The dependency is what the exemption buys back: `@mailwoman/core` ships ~9 MB of libpostal + WOF
+			// data under `packages/core/data/`, and npm installs a tarball whether or not a subpath import touches it —
+			// so adding it to a small alias table or a point-in-polygon lookup is a shipped-artifact cost, not a style
+			// one. `@mailwoman/platform` itself is already exempt above, and must be: it declares NO dependencies, and
+			// core depends on IT.
+			files: [
+				"packages/api-kit/openapi.ts",
+				"packages/nuts-lookup/build.ts",
+				"packages/timezone-lookup/build.ts",
+				"packages/un-locode-lookup/build.ts",
+				"packages/variant-aliases/lookup.ts",
+			],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
 			// File-DESCRIPTOR work no helper covers: a `FileHandle` held across calls, and a log opened in append mode for
 			// a child's stdio. A handle is OWNED, and moving ownership is not a rename — so these keep the mirror, and
 			// each says so in place. The two shapes that DID have an idiom left this list: a positional header peek is

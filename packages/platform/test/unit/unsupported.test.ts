@@ -1,11 +1,11 @@
-import { pathExists } from "@mailwoman/core/fs/readers"
 import { NotImplementedError } from "@mailwoman/platform"
+import { existsSync } from "@mailwoman/platform/fs"
 import { createNotImplementedError, createNotImplementedFunction } from "@mailwoman/platform/internal"
 import { describe, expect, it } from "vitest"
 
 describe("platform capability boundaries", () => {
-	it("selects the Node implementation under the Node condition", async () => {
-		expect(await pathExists(import.meta.filename)).toBe(true)
+	it("selects the Node implementation under the Node condition", () => {
+		expect(existsSync(import.meta.filename)).toBe(true)
 	})
 
 	it("creates a named error carrying the unavailable package", () => {

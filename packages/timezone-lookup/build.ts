@@ -9,7 +9,7 @@
  *   prefilter), and the geometry normalized to MultiPolygon coordinates as JSON.
  */
 
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { MultiPolygonCoords } from "./index.ts"
@@ -25,7 +25,7 @@ interface TimezoneFeature {
  */
 export function buildTimezoneDB(geojsonPath: string, dbPath: string): { features: number } {
 	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/timezone-lookup` does not depend on @mailwoman/core.
-	const data = readLocalJSONFileSync(geojsonPath) as { features: TimezoneFeature[] }
+	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: TimezoneFeature[] }
 	using db = new DatabaseClient<TimezoneDatabase>(dbPath)
 	db.exec("DROP TABLE IF EXISTS timezone_polygons")
 
