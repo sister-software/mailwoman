@@ -134,7 +134,7 @@
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
-		"kysely": "^0.29.4",
+		"kysely": "^0.29.5",
 		"path-ts": "^2.1.0",
 		"spliterator": "^6.3.1",
 		"type-fest": "^5.8.0"

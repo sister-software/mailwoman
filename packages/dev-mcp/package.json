@@ -288,6 +288,6 @@
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
-		"@vvago/vale": "^3.17.0"
+		"@vvago/vale": "^3.17.1"
 	}
 }
