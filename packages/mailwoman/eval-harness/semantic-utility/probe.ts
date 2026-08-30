@@ -32,9 +32,8 @@
  *   green. A control set that cannot fail is not a control set.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import {
@@ -269,7 +268,7 @@ function sourceRelative(name: string): string {
 	// `conformance/case-folding.ts` uses for its `.jsonl`.
 	const sibling = fileURLToPath(new URL(name, import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL(`../../../eval-harness/semantic-utility/${name}`, import.meta.url))
 }
@@ -456,8 +455,8 @@ export function loadProbeDefinition(
 	definitionPath: string = PROBE_DEFINITION_PATH,
 	freezePath: string = PROBE_FREEZE_PATH
 ): SemanticProbeDefinition {
-	const definition = parseJSONStrict<SemanticProbeDefinition>(readFileSync(definitionPath, "utf8"))
-	const freeze = parseJSONStrict<ProbeFreezeRecord>(readFileSync(freezePath, "utf8"))
+	const definition = readLocalJSONFileSync<SemanticProbeDefinition>(definitionPath)
+	const freeze = readLocalJSONFileSync<ProbeFreezeRecord>(freezePath)
 
 	if (freeze.probeID !== definition.probeID) {
 		throw new Error(

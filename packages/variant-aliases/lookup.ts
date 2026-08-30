@@ -10,7 +10,7 @@
  *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resolve } from "@mailwoman/platform/path"
 
 import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.ts"
@@ -31,7 +31,7 @@ const moduleDir = import.meta.dirname
  */
 function loadTable(): VariantAliasTable {
 	const candidates = [resolve(moduleDir, "data", "aliases.json"), resolve(moduleDir, "..", "data", "aliases.json")]
-	const found = candidates.find((candidate) => existsSync(candidate))
+	const found = candidates.find((candidate) => pathExistsSync(candidate))
 
 	if (!found) {
 		throw new Error(`variant-aliases: could not find data/aliases.json — looked in ${candidates.join(", ")}`)
@@ -40,7 +40,7 @@ function loadTable(): VariantAliasTable {
 	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. Zero dependencies here, so
 	// `@mailwoman/core`'s parse wrappers are deliberately out of reach.
 	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
-	return JSON.parse(readFileSync(found, "utf8")) as VariantAliasTable
+	return readLocalJSONFileSync(found) as VariantAliasTable
 }
 
 const TABLE = loadTable()

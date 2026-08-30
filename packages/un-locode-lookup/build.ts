@@ -8,7 +8,7 @@
  *   IATA, Coordinates, Remarks). One row per assigned location; coordinates parsed where present.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CSVSpliterator } from "spliterator"
 
@@ -30,7 +30,7 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 	// `normalizeKeys: false` keeps the UNECE header casing the row shape above is written against
 	// (`NameWoDiacritics`, not `name_wo_diacritics`). Location names carry commas, so quote handling
 	// is on — it is off by default.
-	const records = CSVSpliterator.from(readFileSync(csvPath), {
+	const records = CSVSpliterator.from(readLocalBufferSync(csvPath), {
 		mode: "object",
 		normalizeKeys: false,
 		enableQuoteHandling: true,

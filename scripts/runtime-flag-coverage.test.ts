@@ -26,8 +26,8 @@
  */
 
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -79,7 +79,7 @@ async function testFilesUnder(directory: string, found: string[] = []): Promise<
 }
 
 describe("runtime-flag register", () => {
-	const markdown = readFileSync(REGISTER, "utf8")
+	const markdown = readLocalTextFileSync(REGISTER)
 	const flags = registerFlags(markdown)
 
 	it("parses a plausible number of flags out of the register", () => {
@@ -88,7 +88,7 @@ describe("runtime-flag register", () => {
 	})
 
 	it("every registered flag is touched by at least one test — removal or missing coverage, never neither", async () => {
-		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readFileSync(path, "utf8"))
+		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readLocalTextFileSync(path))
 
 		const uncovered = flags.filter((flag) => {
 			const pattern = new RegExp(`\\b${flag}\\b`)
@@ -107,7 +107,7 @@ describe("runtime-flag register", () => {
 	})
 
 	it("the allowlist carries no flag that has since gained coverage, or left the register", async () => {
-		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readFileSync(path, "utf8"))
+		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readLocalTextFileSync(path))
 
 		for (const flag of Object.keys(UNCOVERED_ALLOWLIST)) {
 			const covered = corpus.some((source) => new RegExp(`\\b${flag}\\b`).test(source))

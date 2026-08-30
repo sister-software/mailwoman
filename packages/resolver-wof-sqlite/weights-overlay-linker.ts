@@ -7,11 +7,12 @@
  */
 
 import { pathExists, readLocalTextFile, statPath, readLocalBuffer, statLink } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalTextFile, removePath } from "@mailwoman/core/fs/writers"
+import { createSymbolicLinkSync, movePathSync, removePathSync } from "@mailwoman/core/fs/writers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { existsSync, renameSync, symlinkSync, unlinkSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import { fstFreshnessWarning } from "./fst-freshness.ts"
@@ -24,12 +25,12 @@ import { fstFreshnessWarning } from "./fst-freshness.ts"
 export function linkForce(src: string, dest: string): void {
 	const tmp = `${dest}.tmp-link`
 
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
+	if (pathExistsSync(tmp)) {
+		removePathSync(tmp)
 	}
 
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
+	createSymbolicLinkSync(src, tmp)
+	movePathSync(tmp, dest)
 }
 
 /**

@@ -22,7 +22,7 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -108,7 +108,7 @@ async function readDemoDefaultVersion(): Promise<string> {
 }
 
 function readDocsCurrentVersion(): string {
-	const mdx = readFileSync(RELEASES_MDX_PATH, "utf8")
+	const mdx = readLocalTextFileSync(RELEASES_MDX_PATH)
 	const version = mdx.match(/^\|\s*\*\*([\d.]+)\*\*\s*\(current\)/m)?.[1]
 
 	if (!version) throw new Error(`${RELEASES_MDX_PATH} has no "| **X.Y.Z** (current)" row`)

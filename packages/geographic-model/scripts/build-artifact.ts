@@ -23,8 +23,8 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { existsSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import { type CompiledGeographicModel, parseCompiledGeographicModel } from "../artifact.ts"
@@ -47,7 +47,7 @@ export const REGENERATE_ARTIFACT_COMMAND =
  */
 export function packagedModelPaths(): { source: string; artifact: string } {
 	const candidates = [resolve(import.meta.dirname, "../data"), resolve(import.meta.dirname, "../../data")]
-	const found = candidates.find((candidate) => existsSync(resolve(candidate, "model/model.json")))
+	const found = candidates.find((candidate) => pathExistsSync(resolve(candidate, "model/model.json")))
 
 	if (!found) {
 		throw new Error(`geographic-model: could not find data/model — looked in ${candidates.join(", ")}`)

@@ -9,7 +9,7 @@
  */
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { makeDirectoriesSync, writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
 import { dirname } from "@mailwoman/platform/path"
 
 type OpenAPISecurityRequirements = Parameters<OpenAPIHono["getOpenAPI31Document"]>[0]["security"]
@@ -98,8 +98,8 @@ export function printOpenAPIDocument(
 	const json = JSON.stringify(opts.flavor === "3.0" ? v30 : v31)
 
 	if (opts.out) {
-		mkdirSync(dirname(opts.out), { recursive: true })
-		writeFileSync(opts.out, `${json}\n`)
+		makeDirectoriesSync(dirname(opts.out))
+		writeLocalTextFileSync(`${json}\n`, opts.out)
 	} else {
 		console.log(json)
 	}

@@ -54,9 +54,9 @@ import { wordNorm } from "@mailwoman/codex"
 import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@mailwoman/codex/de"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPathBuilder, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -267,9 +267,9 @@ function scanPersonNameSurfaces(): Set<string> {
 	const names = new Set<string>()
 
 	for (const f of files) {
-		if (!existsSync(f)) continue
+		if (!pathExistsSync(f)) continue
 
-		for (const line of TextSpliterator.from(readFileSync(f, "utf8"))) {
+		for (const line of TextSpliterator.from(readLocalTextFileSync(f))) {
 			for (const surface of line.split("|")) {
 				const tokens = painterFold(surface)
 

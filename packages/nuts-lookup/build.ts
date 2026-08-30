@@ -8,7 +8,7 @@
  *   region, with its level and bounding box for the lookup's prefilter.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import type { GeoFeature, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -27,7 +27,7 @@ export type NUTSFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, NUTSP
  */
 export function buildNUTSDB(geojsonPath: string, dbPath: string): { regions: number } {
 	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/nuts-lookup` does not depend on @mailwoman/core.
-	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NUTSFeature[] }
+	const data = readLocalJSONFileSync(geojsonPath) as { features: NUTSFeature[] }
 	using db = new DatabaseClient<NUTSDatabase>(dbPath)
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
 

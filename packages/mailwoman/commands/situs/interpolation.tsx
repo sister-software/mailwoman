@@ -26,11 +26,12 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readDirectorySync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { createWriteStream, readdirSync } from "@mailwoman/platform/fs"
+import { createWriteStream } from "@mailwoman/platform/fs"
 import * as https from "@mailwoman/platform/https"
 import * as path from "@mailwoman/platform/path"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -631,7 +632,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 			const fips = STATE_FIPS[abbr]
 			const pattern = new RegExp(`tl_\\d+_${fips}\\d{3}_edges\\.shp$`)
 
-			return readdirSync(EDGES_DIR).some((f) => pattern.test(f))
+			return readDirectorySync(EDGES_DIR).some((f) => pattern.test(f))
 		})
 
 		if (!availableStates.length) {

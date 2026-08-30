@@ -31,6 +31,8 @@ const SOURCE_MODULES = new Set(["@mailwoman/platform/fs", "node:fs", "fs"])
 
 const READERS = "readers"
 const WRITERS = "writers"
+const READERS_SYNC = "readers-sync"
+const WRITERS_SYNC = "writers-sync"
 
 interface Plan {
 	helper: string
@@ -42,7 +44,7 @@ interface Plan {
 	 * times, several frames downstream of the rewrite.
 	 */
 	typeArguments?: string
-	module: typeof READERS | typeof WRITERS
+	module: typeof READERS | typeof WRITERS | typeof READERS_SYNC | typeof WRITERS_SYNC
 	args: string[]
 	/**
 	 * The node the rewrite replaces, when it is wider than the filesystem call itself — `parseJSONStrict(readFileSync(p,
@@ -394,6 +396,31 @@ let promoteNames = new Set<string>()
  * are rather than the codemod guessing.
  */
 let topLevelAwaitPaths: string[] = []
+
+/**
+ * Whether this run may fall back to the SYNCHRONOUS helper where the call cannot become asynchronous, supplied by
+ * `--param syncFallback=true`.
+ *
+ * The second pass of the campaign. After everything that could move has moved, what remains sits in a slot whose caller
+ * is synchronous and not ours to change — a React state initializer, a Docusaurus plugin method, a class constructor, a
+ * `.filter()` predicate. Those still reach a HELPER rather than the builtin, which is what leaves
+ * `@mailwoman/platform/fs` to `packages/core/fs/*` alone.
+ */
+let syncFallback = false
+
+/**
+ * The synchronous sibling of an asynchronous plan.
+ *
+ * Derived rather than tabulated: every helper in `@mailwoman/core/fs/{readers,writers}` has a `Sync`-suffixed twin in
+ * the `-sync` module beside it, carrying the same contract. A second table would be a second thing to keep in step.
+ */
+function asSynchronous(plan: Plan): Plan {
+	return {
+		...plan,
+		helper: `${plan.helper}Sync`,
+		module: plan.module === READERS ? READERS_SYNC : WRITERS_SYNC,
+	}
+}
 
 /**
  * Whether this file may hold a top-level `await`.
@@ -1030,22 +1057,32 @@ function rewriteFilesystemCalls(pass: Pass): void {
 		// At module scope in a file the caller marked an entry, the `await` is legal as it stands.
 		const topLevel = !host.fn && allowsTopLevelAwait(root.filename())
 
+		let stayingSynchronous = false
+
 		if (!topLevel && !host.isAsync && !host.promotable && !host.inPromotionSet) {
 			// The call stands in a plain synchronous function. It can still move, but only if that function and every
 			// caller of it inside this file can become `async` — which `cascade` answers all-or-nothing.
 			const owner = host.fn && [...locals.values()].find((candidate) => candidate.fn.id() === host.fn?.id())
+			const reachable = owner ? (cascades.get(owner.name) ?? cascade(rootNode, owner, locals)) : undefined
 
-			if (!owner) continue
+			if (owner && reachable) {
+				cascades.set(owner.name, reachable)
+			}
 
-			plannedCascade = cascades.get(owner.name) ?? cascade(rootNode, owner, locals)
-			cascades.set(owner.name, plannedCascade)
-
-			if (!plannedCascade.ok) continue
+			if (reachable?.ok) {
+				plannedCascade = reachable
+			} else if (syncFallback) {
+				stayingSynchronous = true
+			} else {
+				continue
+			}
 		}
 
-		const plan = mapping(call, callArguments(call))
+		const mapped = mapping(call, callArguments(call))
 
-		if (!plan) continue
+		if (!mapped) continue
+
+		const plan = stayingSynchronous ? asSynchronous(mapped) : mapped
 
 		if (host.promotable && host.fn) {
 			promoted.set(host.fn.range().start.index, host.fn)
@@ -1066,9 +1103,11 @@ function rewriteFilesystemCalls(pass: Pass): void {
 		}
 
 		const target = plan.replaces ?? call
-		const expression = `await ${plan.helper}${plan.typeArguments ?? ""}(${plan.args.join(", ")})`
+		const keyword = stayingSynchronous ? "" : "await "
+		const expression = `${keyword}${plan.helper}${plan.typeArguments ?? ""}(${plan.args.join(", ")})`
+		const wrap = !stayingSynchronous && needsParentheses(target)
 
-		edits.push(target.replace(needsParentheses(target) ? `(${expression})` : expression))
+		edits.push(target.replace(wrap ? `(${expression})` : expression))
 		replaced.push(target)
 		rewritten.add(name)
 
@@ -1236,6 +1275,12 @@ const codemod: Codemod<Lang> = async (root, options) => {
 	topLevelAwaitPaths = String(params?.topLevelAwait ?? "")
 		.split(",")
 		.filter(Boolean)
+
+	syncFallback = String(params?.syncFallback ?? "") === "true"
+
+	// `packages/core/fs/*` IS the destination. Rewriting it would point the helpers at themselves, and the synchronous
+	// pair exists precisely so this directory is the only reader of `@mailwoman/platform/fs`.
+	if (/packages\/core\/fs\//.test(root.filename())) return null
 
 	const bindings = syncBindings(rootNode)
 	const namespaces = namespaceBindings(rootNode)

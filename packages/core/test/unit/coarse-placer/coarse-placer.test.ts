@@ -16,12 +16,12 @@ import {
 	featurize,
 	inMapPosterior,
 } from "@mailwoman/core/coarse-placer"
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, test } from "vitest"
 
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
+import { makeDirectoriesSync, writeLocalBufferSync, writeLocalJSONFileSync } from "#fs/writers-sync"
 
 const tmpRoot = await temporaryDirectory("coarse-placer-test-")
 afterAll(() => tmpRoot[Symbol.asyncDispose]())
@@ -73,16 +73,20 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 function writeArtifacts(classes: string[], dim: number, weights: Float32Array, bias: number[], temperature = 1) {
 	const fp32Dir = tmpRoot.resolve(`fp32-${classes.join("")}-${dim}`)
 	const int8Dir = tmpRoot.resolve(`int8-${classes.join("")}-${dim}`)
-	mkdirSync(fp32Dir, { recursive: true })
-	mkdirSync(int8Dir, { recursive: true })
+	makeDirectoriesSync(fp32Dir)
+	makeDirectoriesSync(int8Dir)
 
 	const baseMeta = { classes, featureDim: dim, temperature, bias }
-	writeFileSync(join(fp32Dir, "meta.json"), JSON.stringify(baseMeta))
-	writeFileSync(join(fp32Dir, "weights.bin"), Buffer.from(weights.buffer, weights.byteOffset, weights.byteLength))
+	writeLocalJSONFileSync(baseMeta, join(fp32Dir, "meta.json"))
+
+	writeLocalBufferSync(
+		Buffer.from(weights.buffer, weights.byteOffset, weights.byteLength),
+		join(fp32Dir, "weights.bin")
+	)
 
 	const { int8, scales } = quantize(weights, classes.length, dim)
-	writeFileSync(join(int8Dir, "meta.json"), JSON.stringify({ ...baseMeta, quantization: "int8-per-row", scales }))
-	writeFileSync(join(int8Dir, "weights.bin"), Buffer.from(int8.buffer))
+	writeLocalJSONFileSync({ ...baseMeta, quantization: "int8-per-row", scales }, join(int8Dir, "meta.json"))
+	writeLocalBufferSync(Buffer.from(int8.buffer), join(int8Dir, "weights.bin"))
 
 	return { fp32Dir, int8Dir }
 }

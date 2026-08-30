@@ -8,8 +8,8 @@
  */
 
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { statSync } from "@mailwoman/platform/fs"
 import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage-census"
 import { z } from "zod"
 
@@ -33,7 +33,7 @@ async function newestConfig(repoRoot: string): Promise<string> {
 
 	const named = (await readDirectory(dir))
 		.filter((n) => n.endsWith(".yaml") && !n.includes("smoke"))
-		.map((n) => ({ n, at: statSync(`${dir}/${n}`).mtimeMs }))
+		.map((n) => ({ n, at: statPathSync(`${dir}/${n}`).mtimeMs }))
 		.toSorted((a, b) => b.at - a.at)
 
 	return named.length ? `${dir}/${named[0]!.n}` : ""

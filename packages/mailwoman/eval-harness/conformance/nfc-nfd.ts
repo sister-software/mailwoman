@@ -36,7 +36,7 @@
  *   first place to look is whichever stage received the two forms still distinct.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture } from "./fixture.ts"
@@ -201,7 +201,7 @@ export function canonicalApplicability(text: string, form: CanonicalFormName): C
 export const NFC_NFD_SUITE_PATH = ((): string => {
 	const sibling = fileURLToPath(new URL("nfc-nfd.jsonl", import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL("../../../eval-harness/conformance/nfc-nfd.jsonl", import.meta.url))
 })()

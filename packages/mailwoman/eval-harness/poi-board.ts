@@ -51,10 +51,10 @@
  *   so the interval/distance math is tested against synthetic outcomes.
  */
 
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import type { PipelineOpts, PipelineResult, POIIntentOutcome } from "@mailwoman/core/pipeline"
 import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -484,7 +484,7 @@ async function loadResolver(
 	const wofPaths = options.candidateDB
 		? []
 		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
-				existsSync(p)
+				pathExistsSync(p)
 			)
 
 	if (!options.candidateDB && !wofPaths.length) {

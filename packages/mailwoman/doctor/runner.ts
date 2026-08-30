@@ -15,10 +15,11 @@
 
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
-import { accessSync, constants, existsSync, statSync } from "@mailwoman/platform/fs"
+import { accessSync, constants } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
@@ -146,7 +147,7 @@ function defaultConventionCandidatePath(dataRoot: string): string | undefined {
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return existsSync(convention) ? convention : undefined
+	return pathExistsSync(convention) ? convention : undefined
 }
 
 /**
@@ -167,10 +168,10 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 	const dataRoot = mailwomanDataRoot()
 
 	return {
-		existsSync,
+		existsSync: pathExistsSync,
 		fileSize: (path) => {
 			try {
-				return statSync(path).size
+				return statPathSync(path).size
 			} catch {
 				return undefined
 			}

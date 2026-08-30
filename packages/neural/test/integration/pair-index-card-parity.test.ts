@@ -23,9 +23,9 @@
  */
 
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -89,7 +89,7 @@ describe("pair-index ↔ model-card parity", () => {
 		const binPath = String(repoRootPath(pkg, `pair-index-${country}.bin`))
 		const cardPath = String(repoRootPath(pkg, "model-card.json"))
 
-		test.skipIf(!existsSync(binPath))(`${pkg}: the card describes the artifact on disk`, async () => {
+		test.skipIf(!pathExistsSync(binPath))(`${pkg}: the card describes the artifact on disk`, async () => {
 			const card = await readLocalJSONFile<Record<string, unknown>>(cardPath)
 			const [outerKey, innerKey] = cardKeys
 			const outer = card[outerKey] as Record<string, unknown> | undefined

@@ -19,11 +19,12 @@
  *   NAME] [--json OUT]
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFileSync } from "@mailwoman/core/fs/writers-sync"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, pyFixed } from "@mailwoman/core/utils"
-import { globSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { globSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 
 /**
@@ -186,7 +187,7 @@ function main(): number {
 		return 2
 	}
 
-	const rows = parseJSONStrict<ResolvedRow[]>(readFileSync(src, "utf8"))
+	const rows = readLocalJSONFileSync<ResolvedRow[]>(src)
 	const overall: Counter = {}
 	const byState: Record<string, Counter> = {}
 	const artifactExamples: string[] = []
@@ -253,7 +254,7 @@ function main(): number {
 			no_polygon: noPoly,
 		}
 
-		writeFileSync(jsonOut, JSON.stringify(summary, null, 2))
+		writeLocalJSONFileSync(summary, jsonOut)
 
 		console.error(`\nwrote summary → ${jsonOut}`)
 	}

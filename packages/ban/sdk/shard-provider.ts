@@ -13,7 +13,7 @@
  *   generalises to any other national open register (the coverage story, one country at a time).
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { join } from "path-ts"
 
@@ -66,14 +66,14 @@ export class BANShardProvider implements Disposable {
 			const locale = streetLocaleForBANCountry(cc)
 			const path = this.#shardPath(cc)
 
-			if (existsSync(path)) {
+			if (pathExistsSync(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })
 			}
 
 			// The #1042 derived street tier — purely additive, opened only when its artifact is on disk.
 			const streetPath = this.#streetCentroidPath(cc)
 
-			if (existsSync(streetPath)) {
+			if (pathExistsSync(streetPath)) {
 				entry.streetCentroids = new StreetCentroidSqliteLookup(streetPath, { streetLocale: locale })
 			}
 		}

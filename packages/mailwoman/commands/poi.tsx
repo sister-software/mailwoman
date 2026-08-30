@@ -26,9 +26,9 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import type { Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 
@@ -92,7 +92,7 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 	const wofPaths = candidateDB
 		? []
 		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
-				existsSync(p)
+				pathExistsSync(p)
 			)
 
 	if (!candidateDB && !wofPaths.length) {

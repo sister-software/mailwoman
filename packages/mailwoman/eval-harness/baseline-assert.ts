@@ -48,8 +48,7 @@
  *   a deviation quiet. That's the silent-gate-drift failure wearing a different hat.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 /**
@@ -168,14 +167,14 @@ let cachedFile: BaselineFile | undefined
 function resolveBaselineFilePath(): string {
 	const sibling = new URL("./baselines.json", import.meta.url)
 
-	if (existsSync(sibling)) return fileURLToPath(sibling)
+	if (pathExistsSync(sibling)) return fileURLToPath(sibling)
 
 	return fileURLToPath(new URL("../../eval-harness/baselines.json", import.meta.url))
 }
 
 function loadBaselineFile(): BaselineFile {
 	if (!cachedFile) {
-		cachedFile = parseJSONStrict<BaselineFile>(readFileSync(resolveBaselineFilePath(), "utf8"))
+		cachedFile = readLocalJSONFileSync<BaselineFile>(resolveBaselineFilePath())
 	}
 
 	return cachedFile

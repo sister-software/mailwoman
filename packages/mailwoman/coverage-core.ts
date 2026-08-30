@@ -32,8 +32,9 @@
  */
 
 import { readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { createWriteStream, existsSync } from "@mailwoman/platform/fs"
+import { createWriteStream } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { $ } from "zx"
 
@@ -178,7 +179,7 @@ async function resolveStates(opts: CoverageBuildOptions): Promise<StateShard[]> 
 			return {
 				slug,
 				file: path.join(opts.dataRoot, file),
-				interp: opts.interpRoot && existsSync(interpFile) ? interpFile : null,
+				interp: opts.interpRoot && pathExistsSync(interpFile) ? interpFile : null,
 			}
 		})
 }

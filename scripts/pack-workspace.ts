@@ -11,9 +11,16 @@
  *   let the v7.2.0 ship-break class through untested.
  */
 
+import { readLocalJSONFileSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import {
+	copyFileToSync,
+	removePathSync,
+	writeLocalFileSync,
+	writeLocalJSONFileSync,
+} from "@mailwoman/core/fs/writers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { copyFileSync, lstatSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
+import { lstatSync, readlinkSync } from "@mailwoman/platform/fs"
 import { dirname, resolve } from "@mailwoman/platform/path"
 
 import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
@@ -27,7 +34,7 @@ import { assertNoSourceTargets, transformExportsForPublish, transformImportsForP
  * `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */
 export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
-	const pkg = parseJSONStrict<{ files?: unknown[] }>(readFileSync(resolve(workspaceDir, "package.json"), "utf8"))
+	const pkg = readLocalJSONFileSync<{ files?: unknown[] }>(resolve(workspaceDir, "package.json"))
 
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
@@ -37,8 +44,8 @@ export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
 		if (!st?.isSymbolicLink()) continue
 		const linkDest = readlinkSync(target)
 		const resolved = resolve(dirname(target), linkDest)
-		unlinkSync(target)
-		copyFileSync(resolved, target)
+		removePathSync(target)
+		copyFileToSync(resolved, target)
 
 		console.error(`pack-workspace: dereferenced ${entry} ← ${resolved}`)
 	}
@@ -51,7 +58,7 @@ export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
  */
 export function packWorkspaceForPublish(workspaceDir: string, outFile: string): void {
 	const manifestPath = resolve(workspaceDir, "package.json")
-	const originalManifest = readFileSync(manifestPath, "utf8")
+	const originalManifest = readLocalTextFileSync(manifestPath)
 
 	dereferenceWorkspaceSymlinks(workspaceDir)
 
@@ -75,7 +82,7 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 				...(imports ? { imports } : {}),
 			}
 
-			writeFileSync(manifestPath, JSON.stringify(manifest))
+			writeLocalJSONFileSync(manifest, manifestPath)
 		}
 
 		const result = spawnSync("yarn", ["pack", "-o", outFile], { cwd: workspaceDir, stdio: ["ignore", "pipe", "pipe"] })
@@ -84,6 +91,6 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 			throw new Error(`pack-workspace: yarn pack failed for ${workspaceDir} (exit ${result.status}): ${result.stderr}`)
 		}
 	} finally {
-		writeFileSync(manifestPath, originalManifest)
+		writeLocalFileSync(originalManifest, manifestPath)
 	}
 }

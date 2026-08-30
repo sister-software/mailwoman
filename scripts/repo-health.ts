@@ -9,11 +9,11 @@
  * failure disappear.
  */
 
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { relative, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
@@ -178,7 +178,7 @@ function trackedSourcePaths(): string[] {
 
 // A tracked path can be absent from the working tree (a deletion staged but not committed); skip it
 // rather than failing the whole gate on a file the next commit removes anyway.
-const paths = trackedSourcePaths().filter((path) => existsSync(path))
+const paths = trackedSourcePaths().filter((path) => pathExistsSync(path))
 
 const counters = emptyCounters()
 const rootManifest = parseJSONStrict<{ workspaces: string[] }>(await readFile(resolve(root, "package.json"), "utf8"))

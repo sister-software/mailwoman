@@ -26,8 +26,8 @@
  */
 
 import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
-import { existsSync, statSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -81,11 +81,11 @@ function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
 export function censusArtifact(path: string, countries?: readonly string[]): SourceCensusRow {
 	const artifact = path.split("/").pop() ?? path
 
-	if (!existsSync(path)) {
+	if (!pathExistsSync(path)) {
 		return { artifact, bytes: 0, tables: 0, join: [], readable: false, reason: "not on disk" }
 	}
 
-	const bytes = statSync(path).size
+	const bytes = statPathSync(path).size
 
 	let db: DatabaseClient<WOFDatabase>
 

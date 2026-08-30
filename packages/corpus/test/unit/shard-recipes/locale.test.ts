@@ -14,6 +14,7 @@
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
 import {
 	applyCountryAppend,
 	applyDistrictAsLocalityOverride,
@@ -24,7 +25,6 @@ import {
 	resolveLocaleParts,
 } from "@mailwoman/corpus/shard-recipes/locale"
 import { makeMulberry32 } from "@mailwoman/corpus/shard-recipes/scaffold"
-import { rmSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -84,7 +84,7 @@ describe("readTuples (OA CSV parse)", () => {
 		return d
 	}
 
-	afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
+	afterAll(() => dirs.forEach((d) => removePathIfPresentSync(d)))
 
 	// A tiny OA slice exercising exactly what the CSVSpliterator migration touches: a CRLF terminator
 	// (the real OA files are CRLF), a quoted field with an embedded comma, an empty REGION cell that

@@ -41,9 +41,9 @@
 // standalone on purpose (node builtins only, no monorepo install), so the PRNG and haversine are
 // local copies of the shared implementations.
 
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { spawn } from "@mailwoman/platform/child_process"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { parseArgs } from "@mailwoman/platform/util"
@@ -98,7 +98,7 @@ function mulberry32(a) {
 
 function readJSONL(path) {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- standalone script; the committed panel is small and bounded
-	const rawLines = readFileSync(path, "utf8").trim().split("\n")
+	const rawLines = readLocalTextFileSync(path).trim().split("\n")
 
 	// oxlint-disable-next-line no-restricted-properties -- standalone script (no monorepo install); a throw on a corrupt committed file is the contract
 	return rawLines.map((l) => JSON.parse(l))

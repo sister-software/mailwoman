@@ -13,11 +13,10 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import {
 	ABSENCE_PROBE_FREEZE_PATH,
@@ -470,7 +469,7 @@ describe("the pre-registration agrees with the artifacts it names", () => {
 })
 
 describe("the committed receipt", () => {
-	const receipt = parseJSONStrict<CommittedReceipt>(readFileSync(PHASE2_RECEIPT_PATH, "utf8"))
+	const receipt = readLocalJSONFileSync<CommittedReceipt>(PHASE2_RECEIPT_PATH)
 
 	it("was measured against this exact ruler", async () => {
 		expect(receipt.decisionID).toBe(definition.decisionID)

@@ -20,7 +20,7 @@
  *   measured answer, and whether a measured answer exists is the whole question `/status` is asked.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 
 import { probeManifest } from "./data-inventory.ts"
 
@@ -118,7 +118,7 @@ export interface FreshnessArtifact {
  * built against.
  */
 function readArtifact({ name, path }: FreshnessArtifact): ArtifactFreshness {
-	if (!existsSync(path)) {
+	if (!pathExistsSync(path)) {
 		return { name, path, manifest: ManifestState.Absent, reason: "artifact is not on disk" }
 	}
 

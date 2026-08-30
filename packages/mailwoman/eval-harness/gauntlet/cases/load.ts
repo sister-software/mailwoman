@@ -22,9 +22,9 @@
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
 
+import { pathExistsSync, readDirectorySync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { existsSync, readdirSync } from "@mailwoman/platform/fs"
 import { readdir } from "@mailwoman/platform/fs/promises"
 import { basename, join } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -54,7 +54,7 @@ const MALFORMED_EXCERPT_CHARS = 60
 export const CASES_DIR = ((): string => {
 	const sibling = fileURLToPath(new URL(".", import.meta.url))
 
-	if (existsSync(sibling) && readdirSync(sibling).some((name) => COUNTRY_DIR.test(name))) return sibling
+	if (pathExistsSync(sibling) && readDirectorySync(sibling).some((name) => COUNTRY_DIR.test(name))) return sibling
 
 	return fileURLToPath(new URL("../../../../eval-harness/gauntlet/cases/", import.meta.url))
 })()

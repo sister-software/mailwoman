@@ -39,7 +39,7 @@
  *   else under its own name.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture, OutcomeComparatorName } from "./fixture.ts"
@@ -326,7 +326,7 @@ export function punctuationApplicability(
 export const PUNCTUATION_SUITE_PATH = ((): string => {
 	const sibling = fileURLToPath(new URL("punctuation.jsonl", import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL("../../../eval-harness/conformance/punctuation.jsonl", import.meta.url))
 })()

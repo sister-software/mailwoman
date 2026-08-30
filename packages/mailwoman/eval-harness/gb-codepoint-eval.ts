@@ -29,8 +29,9 @@
  *   Run: node packages/mailwoman/eval-harness/gb-codepoint-eval.ts [--stamp 2026-08-05] [--per-area 5] [--out <jsonl>]
  */
 
+import { readDirectorySync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
 import { dataRootPath, mulberry32 } from "@mailwoman/core/utils"
-import { readdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { basename, join } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
@@ -70,9 +71,9 @@ const PQ_NO_COORDINATE = 90
 function allPostcodes(csvDir: string): Set<string> {
 	const out = new Set<string>()
 
-	for (const file of readdirSync(csvDir).filter((f) => f.endsWith(".csv"))) {
+	for (const file of readDirectorySync(csvDir).filter((f) => f.endsWith(".csv"))) {
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one synchronous pass
-		for (const line of readFileSync(join(csvDir, file), "utf8").split("\n")) {
+		for (const line of readLocalTextFileSync(join(csvDir, file)).split("\n")) {
 			const pc = line.split(",")[0]?.replaceAll('"', "").trim()
 
 			if (pc) {
@@ -88,14 +89,14 @@ function samplePostcodes(csvDir: string, perArea: number, seed: number): Sampled
 	const random = mulberry32(seed)
 	const out: SampledPostcode[] = []
 
-	for (const file of readdirSync(csvDir)
+	for (const file of readDirectorySync(csvDir)
 		.filter((f) => f.endsWith(".csv"))
 		.toSorted()) {
 		const rows: SampledPostcode[] = []
 
 		// Code-Point area files are small (the largest ~90k rows); whole-file split is bounded here.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, synchronous sampling pass
-		for (const line of readFileSync(join(csvDir, file), "utf8").split("\n")) {
+		for (const line of readLocalTextFileSync(join(csvDir, file)).split("\n")) {
 			if (!line) continue
 			// Columns: PC,PQ,EA,NO,… — quoted postcode, then numerics. Code-Point carries no embedded
 			// commas inside quotes, so a plain split is faithful to this source.
@@ -198,7 +199,7 @@ for (const locale of ["en-US", "en-GB"]) {
 
 const outPath = values.out ?? String(dataRootPath("eval", `gb-codepoint-${values.stamp}-seed${seed}.jsonl`))
 
-writeFileSync(outPath, results.map((r) => JSON.stringify(r)).join("\n") + "\n")
+writeLocalTextFileSync(results.map((r) => JSON.stringify(r)).join("\n") + "\n", outPath)
 
 for (const locale of ["en-US", "en-GB"]) {
 	console.log(`\n=== ${locale} ===`)

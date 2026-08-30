@@ -30,10 +30,11 @@
  */
 
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { createHash } from "@mailwoman/platform/crypto"
-import { closeSync, existsSync, openSync, readSync, statSync } from "@mailwoman/platform/fs"
+import { closeSync, openSync, readSync } from "@mailwoman/platform/fs"
 
 import { FST_FORMAT_VERSION } from "./fst-serialize.ts"
 import type { FSTProvenance } from "./fst-types.ts"
@@ -123,8 +124,8 @@ export interface FSTExpectation {
  * business to diagnose.
  */
 export function peekFSTStampFields(path: string): FSTStampFields | undefined {
-	if (!existsSync(path)) return undefined
-	const size = statSync(path).size
+	if (!pathExistsSync(path)) return undefined
+	const size = statPathSync(path).size
 
 	if (size < HEADER_SIZE) return undefined
 	const fd = openSync(path, "r")

@@ -20,9 +20,8 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { mailwomanDataRoot, repoRootPathBuilder, wofShardPaths } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type {
 	PlaceLookup,
@@ -57,11 +56,11 @@ export function resolveCandidateDBPath(explicit?: string, dataRoot: string = mai
 
 	if (pinned === "none") return undefined
 
-	if (pinned) return existsSync(pinned) ? pinned : undefined
+	if (pinned) return pathExistsSync(pinned) ? pinned : undefined
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return existsSync(convention) ? convention : undefined
+	return pathExistsSync(convention) ? convention : undefined
 }
 
 /**
@@ -95,7 +94,7 @@ export function resolveWOFShardPaths(explicit?: string, dataRoot: string = mailw
 export function resolvePostalCityAliasDBPath(explicit?: string): string | undefined {
 	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
 
-	return p && existsSync(p) ? p : undefined
+	return p && pathExistsSync(p) ? p : undefined
 }
 
 export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
@@ -212,7 +211,7 @@ export function loadCapitalIndex(opts: {
 	path?: string
 	missing?: "throw" | "degrade"
 }): CapitalIndex | undefined {
-	if (opts.candidateDB && existsSync(opts.candidateDB)) {
+	if (opts.candidateDB && pathExistsSync(opts.candidateDB)) {
 		using db = new DatabaseClient<WOFDatabase>(opts.candidateDB, { readOnly: true })
 
 		const points = readCapitalPoints(db)
@@ -228,7 +227,7 @@ export function loadCapitalIndex(opts: {
 
 	const path = opts.path ?? conventionCapitalsPath()
 
-	if (!existsSync(path)) {
+	if (!pathExistsSync(path)) {
 		if (opts.missing === "degrade") {
 			console.error(
 				`[resolver] capital reference: none in the candidate artifact or at ${path} — capital promotion degrades to a no-op`
@@ -243,7 +242,7 @@ export function loadCapitalIndex(opts: {
 		)
 	}
 
-	const parsed = parseJSONStrict<{ version?: number; entries?: CapitalPoint[] }>(readFileSync(path, "utf8"))
+	const parsed = readLocalJSONFileSync<{ version?: number; entries?: CapitalPoint[] }>(path)
 
 	if (parsed.version !== 1 || !Array.isArray(parsed.entries)) {
 		throw new Error(`${path} is not a v1 capitals reference — rebuild with \`mailwoman gazetteer capitals\``)

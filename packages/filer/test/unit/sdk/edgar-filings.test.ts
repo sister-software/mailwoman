@@ -13,6 +13,7 @@
  *   this manifest, a real-EDGAR quirk this suite counts rather than papers over).
  */
 
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	accessionArchiveURL,
 	fetchCompanyTickers,
@@ -31,7 +32,6 @@ import {
 	type SECGetClient,
 } from "@mailwoman/filer/sdk/edgar-filings"
 import type { SECDocumentClient } from "@mailwoman/filer/sdk/exhibit21"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -318,9 +318,8 @@ describe("fetchTenKFilings", () => {
 })
 
 describe("Exhibit 21 document discovery", () => {
-	const headerHTML = readFileSync(
-		join(import.meta.dirname, "../../../test-fixtures/edgar/lumen-2025-index-headers.html"),
-		"utf8"
+	const headerHTML = readLocalTextFileSync(
+		join(import.meta.dirname, "../../../test-fixtures/edgar/lumen-2025-index-headers.html")
 	)
 
 	const LUMEN_CIK = "0000018926" as CIK

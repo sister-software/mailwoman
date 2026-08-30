@@ -1,5 +1,5 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
@@ -18,7 +18,6 @@ import { repoRootPath } from "@mailwoman/core/utils"
  *   This asserts EVERY workspace in the `.release-it.json` publish set carries the canonical
  *   `repository` block, so a drift fails at PR/CI time instead of mid-release.
  */
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -29,9 +28,9 @@ const CANONICAL_URL = "https://github.com/sister-software/mailwoman.git"
  * The published workspace set — the single source of truth release-it iterates.
  */
 function releaseWorkspaces(): string[] {
-	const releaseIt = parseJSONStrict<{
+	const releaseIt = readLocalJSONFileSync<{
 		plugins?: { "@release-it-plugins/workspaces"?: { workspaces?: unknown } }
-	}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+	}>(resolve(repoRoot, ".release-it.json"))
 
 	const ws = releaseIt?.plugins?.["@release-it-plugins/workspaces"]?.workspaces
 

@@ -26,8 +26,7 @@
  *   rather than failing.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resolve } from "@mailwoman/platform/path"
 
 /**
@@ -71,7 +70,7 @@ export interface ReleaseConfig {
  * Read `release.config.json`. The one parse, so a second reader cannot invent a different shape for the same file.
  */
 export function readReleaseConfig(repoRoot: string): ReleaseConfig {
-	return parseJSONStrict<ReleaseConfig>(readFileSync(resolve(repoRoot, "release.config.json"), "utf8"))
+	return readLocalJSONFileSync<ReleaseConfig>(resolve(repoRoot, "release.config.json"))
 }
 
 /**

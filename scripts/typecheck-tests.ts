@@ -14,9 +14,9 @@
  *   so siblings resolve through their built `.d.ts`. This runs them all and reports per workspace.
  */
 
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { repoRootPath, workspacePath } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { readdir } from "@mailwoman/platform/fs/promises"
 import { cpus } from "@mailwoman/platform/os"
 import { join, relative } from "@mailwoman/platform/path"
@@ -65,7 +65,7 @@ const workspaces = (
 			const entries = await readdir(directory, { withFileTypes: true })
 
 			return entries
-				.filter((entry) => entry.isDirectory() && existsSync(join(directory, entry.name, "tsconfig.test.json")))
+				.filter((entry) => entry.isDirectory() && pathExistsSync(join(directory, entry.name, "tsconfig.test.json")))
 				.map((entry) => relative(repoRoot, join(directory, entry.name)))
 		})
 	)

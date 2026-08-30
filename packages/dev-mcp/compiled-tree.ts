@@ -16,7 +16,7 @@
  *   for the same reason. The failure mode is silence, so the answer is a refusal rather than a warning.
  */
 
-import { readdirSync, statSync } from "@mailwoman/platform/fs"
+import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { basename, join, relative, sep } from "@mailwoman/platform/path"
 
 import { FINGERPRINTED_WORKSPACES } from "./tree-fingerprint.ts"
@@ -55,7 +55,7 @@ function newestMtime(
 		let entries
 
 		try {
-			entries = readdirSync(dir, { withFileTypes: true })
+			entries = readDirectoryEntriesSync(dir)
 		} catch {
 			continue
 		}
@@ -75,7 +75,7 @@ function newestMtime(
 
 			if (!pathAllowed(full)) continue
 
-			const { mtimeMs } = statSync(full)
+			const { mtimeMs } = statPathSync(full)
 
 			if (!newest || mtimeMs > newest.mtimeMs) {
 				newest = { mtimeMs, path: full }

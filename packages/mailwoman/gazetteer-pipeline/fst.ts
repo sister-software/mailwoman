@@ -29,9 +29,9 @@
  */
 
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
@@ -164,7 +164,7 @@ export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FST
 			? `mailwoman gazetteer build fst --locales ${locale}`
 			: `NO BUILDER — ${locale ?? "this artifact"} has no FST_LOCALES entry (built by the pre-#1318 flow)`
 
-		if (!existsSync(path)) return { artifact: relative, present: false, rebuildCommand }
+		if (!pathExistsSync(path)) return { artifact: relative, present: false, rebuildCommand }
 
 		const fields = peekFSTStampFields(path)
 

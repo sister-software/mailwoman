@@ -19,9 +19,9 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readDirectorySync, readLocalBufferSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { createHash } from "@mailwoman/platform/crypto"
-import { existsSync, readdirSync, readFileSync, statSync } from "@mailwoman/platform/fs"
 import { join, relative, resolve } from "@mailwoman/platform/path"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
 
@@ -61,9 +61,9 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 function gazetteerDataPaths(): string[] {
 	const dir = resolve(repoRootPath(), "data", "gazetteer")
 
-	if (!existsSync(dir)) return []
+	if (!pathExistsSync(dir)) return []
 
-	return readdirSync(dir)
+	return readDirectorySync(dir)
 		.filter((name) => name.endsWith(".json") || name.endsWith(".jsonl"))
 		.map((name) => join(dir, name))
 }
@@ -82,9 +82,9 @@ function postcodePipelinePaths(): string[] {
 	]
 
 	return dirs.flatMap((dir) => {
-		if (!existsSync(dir)) return []
+		if (!pathExistsSync(dir)) return []
 
-		return readdirSync(dir)
+		return readDirectorySync(dir)
 			.filter(
 				(name) => (name.endsWith(".ts") || name.endsWith(".js")) && !name.includes(".test.") && !name.endsWith(".map")
 			)
@@ -141,8 +141,8 @@ export function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): s
 		hash.update("\0")
 
 		try {
-			statSync(path)
-			hash.update(readFileSync(path))
+			statPathSync(path)
+			hash.update(readLocalBufferSync(path))
 		} catch {
 			hash.update("\0absent")
 		}

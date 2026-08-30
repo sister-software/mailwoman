@@ -18,6 +18,7 @@
  */
 
 import { pathExists, readLocalJSONFile, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	changeMode,
 	copyFileTo,
@@ -29,7 +30,6 @@ import {
 } from "@mailwoman/core/fs/writers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
@@ -150,7 +150,7 @@ export async function resolvePostcodeShards(
 	shards: readonly string[] = DEFAULT_POSTCODE_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
 ): Promise<string[]> {
-	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => existsSync(p))
+	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => pathExistsSync(p))
 }
 
 /**
@@ -173,7 +173,7 @@ export async function resolveLocalityShards(
 	shards: readonly string[] = DEFAULT_LOCALITY_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
 ): Promise<string[]> {
-	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => existsSync(p))
+	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => pathExistsSync(p))
 }
 
 /**

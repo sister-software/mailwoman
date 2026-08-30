@@ -11,7 +11,7 @@
  *   deleted an entry would take the reason with it, and the resulting diff would look clean.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { addCountry, removeCountry } from "mailwoman/gazetteer-pipeline/recipe-edit"
 import { describe, expect, it } from "vitest"
 
@@ -97,7 +97,7 @@ describe("removeCountry", () => {
 })
 
 describe("against the real defaults.ts", () => {
-	const source = readFileSync(new URL("../../../gazetteer-pipeline/defaults.ts", import.meta.url), "utf8")
+	const source = readLocalTextFileSync(new URL("../../../gazetteer-pipeline/defaults.ts", import.meta.url))
 
 	it("would refuse to remove IN from the WOF list — the entry that carries the measurement", () => {
 		const result = removeCountry(source, "DEFAULT_WOF_PRIORITY_COUNTRIES", "IN")

@@ -20,7 +20,7 @@
  *   ZERO DEPENDENCIES, deliberately: a vocabulary any package may read must not drag a graph behind it.
  */
 
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resolve } from "@mailwoman/platform/path"
 
 import type {
@@ -50,7 +50,7 @@ export const ACTIVITY_LEXICON_PATH: string = (() => {
 		resolve(moduleDir, "..", "data", "activity-lexicon.json"),
 	]
 
-	const found = candidates.find((candidate) => existsSync(candidate))
+	const found = candidates.find((candidate) => pathExistsSync(candidate))
 
 	if (!found) {
 		throw new Error(`activity-lexicon: could not find data/activity-lexicon.json — looked in ${candidates.join(", ")}`)
@@ -236,7 +236,7 @@ export function readActivityLexicon(path: string = ACTIVITY_LEXICON_PATH): Activ
 	// A corrupt shipped vocabulary is a broken build, and the SyntaxError names the offset. Zero dependencies here, so
 	// `@mailwoman/core`'s parse wrappers are deliberately out of reach.
 	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
-	const lexicon = JSON.parse(readFileSync(path, "utf8")) as ActivityPhraseLexicon
+	const lexicon = readLocalJSONFileSync(path) as ActivityPhraseLexicon
 	const problems = auditActivityLexicon(lexicon)
 
 	if (problems.length) {

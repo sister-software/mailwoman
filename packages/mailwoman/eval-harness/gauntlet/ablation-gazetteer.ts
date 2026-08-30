@@ -22,8 +22,8 @@
  *   a read-only artifact, called once per rung and once per component per variant.
  */
 
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { haversineKm } from "@mailwoman/spatial"
@@ -167,7 +167,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	constructor(opts: { ancestryPath?: string; candidatePath?: string } = {}) {
 		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
 		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
-		const missing = [ancestryPath, candidatePath].filter((p) => !existsSync(p))
+		const missing = [ancestryPath, candidatePath].filter((p) => !pathExistsSync(p))
 
 		if (missing.length) {
 			this.available = false

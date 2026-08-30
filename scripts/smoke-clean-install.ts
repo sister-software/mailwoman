@@ -1,6 +1,7 @@
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
@@ -26,7 +27,6 @@ import { repoRootPath } from "@mailwoman/core/utils"
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
 import { execFileSync, spawn } from "@mailwoman/platform/child_process"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -376,8 +376,8 @@ function assertClosureComplete() {
 	const missing = new Map<string, string[]>()
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
-		const manifest = parseJSONStrict<Record<string, Record<string, string>>>(
-			readFileSync(resolve(repoRoot, dir, "package.json"), "utf8")
+		const manifest = readLocalJSONFileSync<Record<string, Record<string, string>>>(
+			resolve(repoRoot, dir, "package.json")
 		)
 
 		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {

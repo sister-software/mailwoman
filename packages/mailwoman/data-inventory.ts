@@ -24,10 +24,11 @@
  */
 
 import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import type { Dirent } from "@mailwoman/platform/fs"
-import { existsSync, lstatSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
+import { readlinkSync } from "@mailwoman/platform/fs"
 import { basename, join, relative } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -207,8 +208,8 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
 	const rel = relative(dataRoot, path)
 	const segment = rel.split("/")[0] ?? ""
-	const link = lstatSync(path).isSymbolicLink() ? readlinkSync(path) : undefined
-	const bytes = existsSync(path) ? statSync(path).size : 0
+	const link = statLinkSync(path).isSymbolicLink() ? readlinkSync(path) : undefined
+	const bytes = pathExistsSync(path) ? statPathSync(path).size : 0
 
 	const base: InventoryEntry = {
 		path: rel,
@@ -289,7 +290,7 @@ export function buildCommandGaps(buildCmd: string, repoRoot: string): string[] {
 	return buildCmd
 		.split(/\s+/)
 		.filter((token) => token.includes("/") && !/[$`|><*]/.test(token))
-		.filter((token) => !existsSync(join(repoRoot, token)))
+		.filter((token) => !pathExistsSync(join(repoRoot, token)))
 }
 
 /**

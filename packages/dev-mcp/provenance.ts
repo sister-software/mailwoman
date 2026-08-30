@@ -24,7 +24,8 @@
  */
 
 import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
-import { existsSync, lstatSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
+import { pathExistsSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { readlinkSync } from "@mailwoman/platform/fs"
 
 interface ArtifactState {
 	name: string
@@ -74,12 +75,12 @@ export interface ProvenanceReport {
 }
 
 function artifactState(name: string, path: string): ArtifactState {
-	if (!existsSync(path)) {
+	if (!pathExistsSync(path)) {
 		return { name, path, exists: false, bytes: null, modified: null, linkTarget: null, sealed: null }
 	}
 
-	const link = lstatSync(path)
-	const stat = statSync(path)
+	const link = statLinkSync(path)
+	const stat = statPathSync(path)
 
 	return {
 		name,

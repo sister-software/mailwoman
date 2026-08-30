@@ -29,6 +29,7 @@
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -40,7 +41,6 @@ import {
 import type { ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath } from "path-ts"
@@ -282,7 +282,7 @@ async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | 
 	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
 	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
 	// when nothing survives, which is part of the CLI's construction-order contract.
-	const paths = resolveWOFShardPaths(options.resolveDB, options.dataRoot).filter((p: string) => existsSync(p))
+	const paths = resolveWOFShardPaths(options.resolveDB, options.dataRoot).filter((p: string) => pathExistsSync(p))
 
 	if (!paths.length) {
 		throw new CommandError(

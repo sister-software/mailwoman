@@ -23,10 +23,11 @@
 
 import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalTextFileSync, statLinkSync } from "@mailwoman/core/fs/readers-sync"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { createSymbolicLinkSync, removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot, md5File, repoRootPath, workspacePath } from "@mailwoman/core/utils"
-import { existsSync, lstatSync, readFileSync, rmSync, symlinkSync } from "@mailwoman/platform/fs"
 import { relative, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -61,9 +62,9 @@ const locales = values.locale ? [values.locale.toLowerCase()] : recipe.locales
 function recordedDigests(locale: string): Record<string, string> {
 	const card = resolve(String(workspacePath(`neural-weights-${locale}`)), "model-card.json")
 
-	if (!existsSync(card)) return {}
+	if (!pathExistsSync(card)) return {}
 
-	return tryParsingJSON<{ files_md5?: Record<string, string> }>(readFileSync(card, "utf8"))?.files_md5 ?? {}
+	return tryParsingJSON<{ files_md5?: Record<string, string> }>(readLocalTextFileSync(card))?.files_md5 ?? {}
 }
 
 /**
@@ -74,13 +75,13 @@ function recordedDigests(locale: string): Record<string, string> {
  */
 function linkForce(source: string, dest: string): void {
 	try {
-		lstatSync(dest)
-		rmSync(dest, { force: true })
+		statLinkSync(dest)
+		removePathIfPresentSync(dest)
 	} catch {
 		// Nothing there. The lstat throw IS the check — `existsSync` would answer the wrong question.
 	}
 
-	symlinkSync(source, dest)
+	createSymbolicLinkSync(source, dest)
 }
 
 let linked = 0

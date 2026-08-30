@@ -29,9 +29,9 @@
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import semver from "semver"
@@ -98,7 +98,7 @@ const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolve(repoR
 
 // Validate the whole set BEFORE writing anything — a half-bumped tree is worse than a failed run.
 const parsed = manifestPaths.map((path) => {
-	const manifest = parseJSONStrict<Record<string, unknown>>(readFileSync(path, "utf8"))
+	const manifest = readLocalJSONFileSync<Record<string, unknown>>(path)
 
 	if (typeof manifest.version !== "string") {
 		fail(`${path} has no version field`)

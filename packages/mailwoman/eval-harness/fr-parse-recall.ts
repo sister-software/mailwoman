@@ -21,6 +21,7 @@
  */
 
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { allRows, dataRootPath, mailwomanDataRoot, workspacePath } from "@mailwoman/core/utils"
@@ -28,7 +29,6 @@ import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver 
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import type { OSMAddressPointDatabase } from "@mailwoman/osm/sdk/address-point-schema"
-import { existsSync } from "@mailwoman/platform/fs"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
@@ -63,7 +63,7 @@ async function resolveWeightsSibling(fileName: string, weightsCache?: string): P
 		`${String(workspacePath("neural-weights-en-us"))}/${fileName}`,
 	]
 
-	const found = candidates.find((path) => existsSync(path))
+	const found = candidates.find((path) => pathExistsSync(path))
 
 	if (!found) {
 		throw new Error(

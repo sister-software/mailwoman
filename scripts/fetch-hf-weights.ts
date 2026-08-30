@@ -25,11 +25,11 @@
 import { APIClient } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
-import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
+import { isPresent } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { md5Hex, repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
@@ -134,7 +134,7 @@ const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: t
 function readWorkspaceManifest(repoRoot: string, workspace: string): { files?: unknown } {
 	const manifestPath = resolve(repoRoot, workspace, "package.json")
 
-	return parseJSONStrict<{ files?: unknown }>(readFileSync(manifestPath, "utf8"))
+	return readLocalJSONFileSync<{ files?: unknown }>(manifestPath)
 }
 
 /**

@@ -17,8 +17,13 @@
  *   in a `finally` — a leaked test lock turns one failure into a whole-suite timeout.
  */
 
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
+import {
+	makeDirectoryExclusiveSync,
+	removePathIfPresentSync,
+	writeLocalTextFileSync,
+} from "@mailwoman/core/fs/writers-sync"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 
@@ -52,7 +57,7 @@ function sleepSync(ms: number): void {
  */
 function releaseQuietly(): void {
 	try {
-		rmSync(LOCK_DIR, { recursive: true, force: true })
+		removePathIfPresentSync(LOCK_DIR)
 	} catch {
 		// Another worker is mid-removal or mid-write; its stale check will reclaim.
 	}
@@ -60,7 +65,7 @@ function releaseQuietly(): void {
 
 function staleHolder(): boolean {
 	try {
-		const pid = Number.parseInt(readFileSync(PID_FILE, "utf8"), 10)
+		const pid = Number.parseInt(readLocalTextFileSync(PID_FILE), 10)
 
 		if (!Number.isInteger(pid) || pid <= 0) return true
 		// Signal 0 tests for existence without delivering anything.
@@ -87,8 +92,8 @@ export function withCLISpawnLock<T>(fn: () => T): T {
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt
 	while (Date.now() < deadline) {
 		try {
-			mkdirSync(LOCK_DIR)
-			writeFileSync(PID_FILE, String(process.pid))
+			makeDirectoryExclusiveSync(LOCK_DIR)
+			writeLocalTextFileSync(String(process.pid), PID_FILE)
 			held = true
 
 			break

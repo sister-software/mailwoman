@@ -14,9 +14,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -142,7 +142,7 @@ export async function assemblePromotionVerdict(
 	}>(options.gate)
 
 	const dir = options.outDir
-	const read = (f: string) => readFileSync(path.join(dir, f), "utf8")
+	const read = (f: string) => readLocalTextFileSync(path.join(dir, f))
 
 	function maybeRead(f: string): string | undefined {
 		try {

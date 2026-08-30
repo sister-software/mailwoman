@@ -50,9 +50,10 @@
  */
 
 import { statPath, realPath, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalBufferSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { dataRootPath, median, percentile, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
-import { createReadStream, existsSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { createReadStream } from "@mailwoman/platform/fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
 import { createRequire } from "@mailwoman/platform/module"
 import { arch, cpus, platform, totalmem } from "@mailwoman/platform/os"
@@ -440,7 +441,7 @@ async function createAssetServer(
 	}
 
 	const serveRange = (req: IncomingMessage, res: ServerResponse, mount: RangeMount): void => {
-		const size = statSync(mount.file).size
+		const size = statPathSync(mount.file).size
 
 		if (req.method === "HEAD") {
 			res.writeHead(HTTP_OK, { "Content-Length": String(size), "Accept-Ranges": "bytes" })
@@ -481,10 +482,10 @@ async function createAssetServer(
 	): boolean => {
 		const filePath = safeJoin(mount.directory, requestPath.slice(mount.prefix.length))
 
-		if (!filePath || !existsSync(filePath) || !statSync(filePath).isFile()) return false
+		if (!filePath || !pathExistsSync(filePath) || !statPathSync(filePath).isFile()) return false
 		const compressible = COMPRESSIBLE_EXTENSIONS.has(extname(filePath))
 		const assetClass = mount.classify(basename(filePath))
-		sendBuffer(req, res, requestPath, readFileSync(filePath), contentTypeFor(filePath), assetClass, compressible)
+		sendBuffer(req, res, requestPath, readLocalBufferSync(filePath), contentTypeFor(filePath), assetClass, compressible)
 
 		return true
 	}
@@ -919,7 +920,7 @@ async function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: stri
 		resolved.pairIndexPath,
 	]
 
-	const present = candidates.filter((path): path is string => typeof path === "string" && existsSync(path))
+	const present = candidates.filter((path): path is string => typeof path === "string" && pathExistsSync(path))
 
 	return present.map((path) => `${origin}/weights/${path.slice(weightsDirectory.length + 1)}`)
 }

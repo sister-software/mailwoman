@@ -26,7 +26,7 @@
  *   classifications, the six component kinds. The layer stores them and validates against them.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
 import { join } from "@mailwoman/platform/path"
 import { CSVSpliterator } from "spliterator"
 
@@ -44,7 +44,7 @@ export type TabularRow = ReadonlyArray<string>
 function readPipeDelimited(path: string): TabularRow[] {
 	const rows: TabularRow[] = []
 
-	for (const row of CSVSpliterator.from(readFileSync(path), {
+	for (const row of CSVSpliterator.from(readLocalBufferSync(path), {
 		mode: "array",
 		header: false,
 		columnDelimiter: "|",

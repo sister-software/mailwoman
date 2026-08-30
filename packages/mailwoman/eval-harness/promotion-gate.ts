@@ -69,10 +69,10 @@
  */
 
 import { pathExists, readLocalJSONFile, statPath, readDirectory } from "@mailwoman/core/fs/readers"
+import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { readdirSync, statSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -253,22 +253,22 @@ async function runLoreGuards(env: {
 		const reference = (await statPath("packages/core/out")).mtimeMs
 
 		const staleSource = ((): string | undefined => {
-			for (const depth1 of readdirSync("packages/core", { withFileTypes: true })) {
+			for (const depth1 of readDirectoryEntriesSync("packages/core")) {
 				const path1 = join("packages/core", depth1.name)
 
 				if (depth1.isFile()) {
-					if (depth1.name.endsWith(".ts") && statSync(path1).mtimeMs > reference) return path1
+					if (depth1.name.endsWith(".ts") && statPathSync(path1).mtimeMs > reference) return path1
 
 					continue
 				}
 
 				if (!depth1.isDirectory()) continue
 
-				for (const depth2 of readdirSync(path1, { withFileTypes: true })) {
+				for (const depth2 of readDirectoryEntriesSync(path1)) {
 					if (!depth2.isFile() || !depth2.name.endsWith(".ts")) continue
 					const path2 = join(path1, depth2.name)
 
-					if (statSync(path2).mtimeMs > reference) return path2
+					if (statPathSync(path2).mtimeMs > reference) return path2
 				}
 			}
 

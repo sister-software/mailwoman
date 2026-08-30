@@ -17,11 +17,11 @@
  *       output shape, no API divergence.
  */
 
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { describe, expect, test } from "vitest"
 
@@ -33,7 +33,7 @@ function probeWeights(): { modelPath: string; tokenizerPath: string; modelCardPa
 	try {
 		const r = resolveWeights({})
 
-		if (!existsSync(r.modelPath) || !existsSync(r.tokenizerPath)) return null
+		if (!pathExistsSync(r.modelPath) || !pathExistsSync(r.tokenizerPath)) return null
 
 		return r
 	} catch {

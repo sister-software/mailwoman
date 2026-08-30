@@ -11,8 +11,9 @@
  *   Internal helper module — no standalone command.
  */
 
+import { statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { mailwomanTempRoot } from "@mailwoman/core/utils"
-import { createReadStream, statSync, type Stats } from "@mailwoman/platform/fs"
+import { createReadStream, type Stats } from "@mailwoman/platform/fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
 import { extname, join, normalize } from "@mailwoman/platform/path"
 
@@ -64,7 +65,7 @@ export async function serveWithRangeSupport(
 		let st: Stats
 
 		try {
-			st = statSync(path)
+			st = statPathSync(path)
 		} catch {
 			res.writeHead(404)
 

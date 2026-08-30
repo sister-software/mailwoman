@@ -33,9 +33,9 @@
  *   regardless.
  */
 
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawn } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import * as os from "@mailwoman/platform/os"
 import * as path from "@mailwoman/platform/path"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
@@ -181,7 +181,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		// A shard is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
 		// index is the last build step, so its presence means insert + index + VACUUM all finished.
 		const isComplete = (dbPath: string): boolean => {
-			if (!existsSync(dbPath)) return false
+			if (!pathExistsSync(dbPath)) return false
 
 			try {
 				using db = new DatabaseClient<AddressPointDatabase>(dbPath, { readOnly: true })

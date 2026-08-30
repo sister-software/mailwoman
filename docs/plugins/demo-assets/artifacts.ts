@@ -35,11 +35,12 @@
 
 import { $public } from "@mailwoman/core/env"
 import { pathExists, statLink, statPath } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { existsSync, readFileSync, readlinkSync } from "@mailwoman/platform/fs"
+import { readlinkSync } from "@mailwoman/platform/fs"
 import { dirname, resolve } from "@mailwoman/platform/path"
 
 import type { ReleaseInfo } from "#shared/demo-helpers"
@@ -54,10 +55,10 @@ import { resolvePackagePath, resolvePackageSpecifier } from "./workspace-resolut
 export function readModelCard(): ReleaseInfo | null {
 	const cardPath = resolvePackagePath("@mailwoman/neural-weights-en-us", "model-card.json")
 
-	if (!cardPath || !existsSync(cardPath)) return null
+	if (!cardPath || !pathExistsSync(cardPath)) return null
 
 	// Both generics: with only <ReleaseInfo>, F defaults to T and the null fallback fails to type.
-	return tryParsingJSON<ReleaseInfo, null>(readFileSync(cardPath, "utf8"), null)
+	return tryParsingJSON<ReleaseInfo, null>(readLocalTextFileSync(cardPath), null)
 }
 
 /**

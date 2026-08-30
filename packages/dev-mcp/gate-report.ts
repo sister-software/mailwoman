@@ -15,9 +15,8 @@
  */
 
 import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 
 /**
@@ -231,10 +230,10 @@ export function summarizeGateReport(report: GateReport): string {
 function declaredArtifacts(packageDir: string): string[] {
 	const cardPath = resolve(packageDir, "model-card.json")
 
-	if (!existsSync(cardPath)) return []
+	if (!pathExistsSync(cardPath)) return []
 
 	try {
-		const card = parseJSONStrict<{ files_md5?: Record<string, unknown> }>(readFileSync(cardPath, "utf8"))
+		const card = readLocalJSONFileSync<{ files_md5?: Record<string, unknown> }>(cardPath)
 
 		return Object.keys(card.files_md5 ?? {}).filter((key) => !key.startsWith("$"))
 	} catch {
@@ -263,7 +262,10 @@ export function missingWeightsCacheArtifacts(
 ): { kind: "ok" | "wrong-shape" | "under-staged"; paths: string[] } {
 	const packageDir = weightsCachePackageDir(cacheRoot, locale)
 	const required = ["model.onnx", "tokenizer.model", "model-card.json"]
-	const missingRequired = required.map((artifact) => resolve(packageDir, artifact)).filter((path) => !existsSync(path))
+
+	const missingRequired = required
+		.map((artifact) => resolve(packageDir, artifact))
+		.filter((path) => !pathExistsSync(path))
 
 	// Without a card there is nothing to check the rest against, and the caller already has a fatal answer.
 	if (missingRequired.length) return { kind: "wrong-shape", paths: missingRequired }
@@ -274,7 +276,7 @@ export function missingWeightsCacheArtifacts(
 	// `us.country_homograph_f1` at 0.0 against a 64.8 floor, which reads exactly like a collapsed country channel.
 	const undeclared = declaredArtifacts(packageDir)
 		.map((artifact) => resolve(packageDir, artifact))
-		.filter((path) => !existsSync(path))
+		.filter((path) => !pathExistsSync(path))
 
 	return undeclared.length ? { kind: "under-staged", paths: undeclared } : { kind: "ok", paths: [] }
 }

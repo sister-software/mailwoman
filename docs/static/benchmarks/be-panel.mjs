@@ -52,10 +52,10 @@
 // `--data-root` defaults to $MAILWOMAN_DATA_ROOT. The candidate gazetteer is read from
 // <DATA_ROOT>/wof/candidate.db. No other artifact is needed — that is the point of the panel.
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFileSync, realPathSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { readFileSync, realpathSync, writeFileSync } from "@mailwoman/platform/fs"
 import { createRequire } from "@mailwoman/platform/module"
 import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -159,11 +159,11 @@ function inBox(box, lat, lon) {
  */
 function weightsStamp(locale) {
 	const resolved = resolveWeights({ locale })
-	const card = parseJSONStrict(readFileSync(resolved.modelCardPath, "utf8"))
+	const card = readLocalJSONFileSync(resolved.modelCardPath)
 
 	return {
 		locale,
-		model: basename(realpathSync(resolved.modelPath)),
+		model: basename(realPathSync(resolved.modelPath)),
 		modelCard: `${card.name}@${card.version}`,
 		source: resolved.source,
 	}
@@ -182,7 +182,7 @@ function versionStamp() {
 		mailwoman: require("mailwoman/package.json").version,
 		model: base.model,
 		modelCard: base.modelCard,
-		gazetteer: basename(realpathSync(candidatePath)),
+		gazetteer: basename(realPathSync(candidatePath)),
 	}
 }
 
@@ -311,7 +311,7 @@ async function runArm(arm, panel) {
 	}
 }
 
-const panel = parseJSONStrict(readFileSync(flags.panel, "utf8"))
+const panel = readLocalJSONFileSync(flags.panel)
 const startedAt = Date.now()
 const results = {}
 
@@ -337,7 +337,7 @@ const report = {
 	records: Object.fromEntries(Object.entries(results).map(([name, arm]) => [name, arm.records])),
 }
 
-writeFileSync(flags.out, `${JSON.stringify(report, null, "\t")}\n`)
+writeLocalTextFileSync(`${JSON.stringify(report, null, "\t")}\n`, flags.out)
 
 for (const [name, summary] of Object.entries(report.arms)) {
 	console.log(

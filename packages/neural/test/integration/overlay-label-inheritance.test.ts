@@ -19,9 +19,9 @@
  *   `labels` key. Existence and completeness are different questions.
  */
 
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -34,7 +34,7 @@ function haveWeights(locale: string): boolean {
 	try {
 		const w = resolveWeights({ locale })
 
-		return !!w.modelPath && existsSync(w.modelPath)
+		return !!w.modelPath && pathExistsSync(w.modelPath)
 	} catch {
 		return false
 	}

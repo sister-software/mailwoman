@@ -11,11 +11,10 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { POIIntent, POIResult } from "@mailwoman/core/pipeline"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardOutcome } from "mailwoman/eval-harness/poi-board"
 import {
@@ -366,7 +365,7 @@ describe("the decision", () => {
 })
 
 describe("the committed baseline receipt", () => {
-	const receipt = parseJSONStrict<BaselineReceipt>(readFileSync(PROBE_BASELINE_RECEIPT_PATH, "utf8"))
+	const receipt = readLocalJSONFileSync<BaselineReceipt>(PROBE_BASELINE_RECEIPT_PATH)
 
 	it("was measured against this version of the pre-registration", async () => {
 		expect(receipt.probeID).toBe(definition.probeID)

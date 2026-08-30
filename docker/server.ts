@@ -36,8 +36,8 @@ import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike, BatchResu
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { $public } from "@mailwoman/core/env"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import {
@@ -65,7 +65,7 @@ function wofPaths() {
 			.filter(Boolean)
 	}
 
-	return wofShardPaths().filter((p) => existsSync(p))
+	return wofShardPaths().filter((p) => pathExistsSync(p))
 }
 
 /**

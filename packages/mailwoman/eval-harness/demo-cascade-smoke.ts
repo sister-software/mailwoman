@@ -50,6 +50,7 @@
 
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import type { AnchorLookup } from "@mailwoman/neural"
@@ -57,7 +58,6 @@ import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver 
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -202,7 +202,7 @@ export async function demoCascadeSmoke(
 		gazetteer: GAZ,
 		rows: FILE,
 	})
-		.filter(([, p]) => !existsSync(p))
+		.filter(([, p]) => !pathExistsSync(p))
 		.map(([k, p]) => `  ${k}: ${p}`)
 
 	if (missing.length) {
@@ -229,14 +229,16 @@ export async function demoCascadeSmoke(
 
 	const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
 		.map((f) => join(STAGE, f))
-		.filter((p) => existsSync(p))
+		.filter((p) => pathExistsSync(p))
 
 	if (!postcodeBinaries.length) {
 		reportError(`⚠ no postcode-*.bin under ${STAGE} — anchor channel unfed (anchor-trained models will degrade)`)
 	}
 
 	const anchorLookup = postcodeBinaries.length
-		? mergeAnchorLookups(postcodeBinaries.map((p) => new PostcodeBinaryResolver(readFileSync(p)).toAnchorLookup()))
+		? mergeAnchorLookups(
+				postcodeBinaries.map((p) => new PostcodeBinaryResolver(readLocalBufferSync(p)).toAnchorLookup())
+			)
 		: undefined
 
 	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])

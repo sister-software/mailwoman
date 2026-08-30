@@ -1,3 +1,4 @@
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
@@ -44,7 +45,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { execFile } = await import("@mailwoman/platform/child_process")
 		const { promisify } = await import("@mailwoman/platform/util")
-		const { existsSync } = await import("@mailwoman/platform/fs")
+
 		const { join } = await import("@mailwoman/platform/path")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { auditReposRoot } = await import("../../gazetteer-pipeline/repos-audit.ts")
@@ -108,9 +109,9 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 				const nested = join(root, UPSTREAM_ORG, repo)
 				const flat = join(root, repo)
 
-				if (existsSync(nested)) return nested
+				if (pathExistsSync(nested)) return nested
 
-				if (existsSync(flat)) return flat
+				if (pathExistsSync(flat)) return flat
 
 				return nested
 			},

@@ -11,10 +11,10 @@
  *   parsed record has.
  */
 
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { resolvePath } from "path-ts"
 
 import { statPath } from "#fs/readers"
+import { pathExistsSync, readLocalTextFileSync } from "#fs/readers-sync"
 import { tryParsingJSON } from "#objects"
 
 import type { WOFFeature } from "./placetypes/admin.ts"
@@ -108,10 +108,10 @@ export function readWOFFeature(id: number, roots: readonly string[]): WOFFeature
 	for (const root of roots) {
 		const path = resolvePath(root, ...segments)
 
-		if (!existsSync(path)) continue
+		if (!pathExistsSync(path)) continue
 
 		try {
-			return tryParsingJSON<WOFFeature>(readFileSync(path, "utf8"))
+			return tryParsingJSON<WOFFeature>(readLocalTextFileSync(path))
 		} catch {
 			// The file vanished or turned unreadable between existsSync and the read — same "no evidence" verdict.
 			return null

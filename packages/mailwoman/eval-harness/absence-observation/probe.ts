@@ -29,9 +29,8 @@
  *   only fail one way is not a control set.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { ABSENCE_REFUSALS } from "../../observations/index.ts"
@@ -120,7 +119,7 @@ function sourceRelative(name: string): string {
 	// the semantic-utility pre-registration uses.
 	const sibling = fileURLToPath(new URL(name, import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL(`../../../eval-harness/absence-observation/${name}`, import.meta.url))
 }
@@ -218,8 +217,8 @@ export function loadAbsenceProbeDefinition(
 	definitionPath: string = ABSENCE_PROBE_DEFINITION_PATH,
 	freezePath: string = ABSENCE_PROBE_FREEZE_PATH
 ): AbsenceProbeDefinition {
-	const definition = parseJSONStrict<AbsenceProbeDefinition>(readFileSync(definitionPath, "utf8"))
-	const freeze = parseJSONStrict<AbsenceProbeFreezeRecord>(readFileSync(freezePath, "utf8"))
+	const definition = readLocalJSONFileSync<AbsenceProbeDefinition>(definitionPath)
+	const freeze = readLocalJSONFileSync<AbsenceProbeFreezeRecord>(freezePath)
 
 	if (freeze.probeID !== definition.probeID) {
 		throw new Error(

@@ -27,7 +27,7 @@
  *   existing label-first behavior byte-identically.
  */
 
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
@@ -123,8 +123,8 @@ export async function createGeoNamesAnchorLookup(geonamesDir: string): Promise<G
 		// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses CONTENT
 		// (a path argument would be parsed as one row of itself), so the file is read once and streamed through the
 		// TSV parser — the sync shape this in-parse consult needs.
-		if (existsSync(path)) {
-			for (const cols of TSVSpliterator.from(readFileSync(path, "utf8"), { header: false })) {
+		if (pathExistsSync(path)) {
+			for (const cols of TSVSpliterator.from(readLocalTextFileSync(path), { header: false })) {
 				const latitude = Number(cols[GN_COLUMN_LAT])
 				const longitude = Number(cols[GN_COLUMN_LON])
 

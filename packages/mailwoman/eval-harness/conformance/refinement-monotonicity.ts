@@ -29,7 +29,7 @@
  *   the whole chain corpus-attested rather than merely self-consistent.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture } from "./fixture.ts"
@@ -130,7 +130,7 @@ export function statableSteps(text: string): RefinementStep[] {
 export const REFINEMENT_MONOTONICITY_SUITE_PATH = ((): string => {
 	const sibling = fileURLToPath(new URL("refinement-monotonicity.jsonl", import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL("../../../eval-harness/conformance/refinement-monotonicity.jsonl", import.meta.url))
 })()

@@ -35,9 +35,8 @@
  *   the definition's `recordingNote` says so on the receipt.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 // The canonical-JSON encoder is IMPORTED rather than re-typed, for the reason the absence probe imports it.
@@ -364,7 +363,7 @@ function sourceRelative(name: string): string {
 	// earlier pre-registrations use.
 	const sibling = fileURLToPath(new URL(name, import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL(`../../../eval-harness/phase-2-decision/${name}`, import.meta.url))
 }
@@ -690,8 +689,8 @@ export function loadPhase2Definition(
 	definitionPath: string = PHASE2_DEFINITION_PATH,
 	freezePath: string = PHASE2_FREEZE_PATH
 ): Phase2DecisionDefinition {
-	const definition = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(definitionPath, "utf8"))
-	const freeze = parseJSONStrict<Phase2FreezeRecord>(readFileSync(freezePath, "utf8"))
+	const definition = readLocalJSONFileSync<Phase2DecisionDefinition>(definitionPath)
+	const freeze = readLocalJSONFileSync<Phase2FreezeRecord>(freezePath)
 
 	if (freeze.decisionID !== definition.decisionID) {
 		throw new Error(

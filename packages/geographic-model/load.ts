@@ -26,8 +26,8 @@
  *   keys it uses are tables.
  */
 
+import { readDirectoryEntriesSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { isPlainObject } from "@mailwoman/core/objects"
-import { readdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import { compareIdentifiers } from "./artifact.ts"
@@ -364,7 +364,7 @@ export function mergeGeographicModelFiles(files: readonly GeographicModelSourceF
  * a link out of it is a record whose home nobody can state.
  */
 function listSourceFiles(root: string, prefix = ""): string[] {
-	const entries = readdirSync(resolve(root, prefix), { withFileTypes: true })
+	const entries = readDirectoryEntriesSync(resolve(root, prefix))
 	const found: string[] = []
 
 	for (const entry of entries.toSorted((left, right) => compareIdentifiers(left.name, right.name))) {
@@ -390,7 +390,7 @@ function listSourceFiles(root: string, prefix = ""): string[] {
  * Throws {@link GeographicModelLoadError} with every issue, each addressed to its source file.
  */
 export function loadGeographicModelDirectory(root: string): GeographicModelDocument {
-	const files = listSourceFiles(root).map((path) => ({ path, text: readFileSync(resolve(root, path), "utf8") }))
+	const files = listSourceFiles(root).map((path) => ({ path, text: readLocalTextFileSync(resolve(root, path)) }))
 
 	return mergeGeographicModelFiles(files)
 }

@@ -12,7 +12,7 @@
  *   distribution boundary and the lawyer sign-off gate before shipping any of them.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { join } from "path-ts"
 
@@ -56,7 +56,7 @@ export class OSMShardProvider implements Disposable {
 		if (supportedOSMCountries().includes(cc)) {
 			const path = this.#shardPath(cc)
 
-			if (existsSync(path)) {
+			if (pathExistsSync(path)) {
 				entry = { addressPoints: new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForCountry(cc) }) }
 			}
 		}

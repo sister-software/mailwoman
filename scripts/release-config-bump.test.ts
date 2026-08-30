@@ -10,9 +10,9 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -20,7 +20,7 @@ import { bumpReleaseConfigVersion } from "./release-config-version.ts"
 
 describe("release.config.json under the prepare bump", () => {
 	const path = resolve(String(repoRootPath()), "release.config.json")
-	const original = readFileSync(path, "utf8")
+	const original = readLocalTextFileSync(path)
 	const currentVersion = parseJSONStrict<{ version: string }>(original).version
 
 	it("a bump changes exactly one line and leaves the weights block byte-equivalent", () => {

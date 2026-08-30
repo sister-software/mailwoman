@@ -19,9 +19,8 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
 
@@ -63,9 +62,9 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
  * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from.
  */
 export function releaseWorkspaces(repoRoot: string): string[] {
-	const config = parseJSONStrict<{
+	const config = readLocalJSONFileSync<{
 		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-	}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+	}>(resolve(repoRoot, ".release-it.json"))
 
 	return config.plugins["@release-it-plugins/workspaces"].workspaces
 }

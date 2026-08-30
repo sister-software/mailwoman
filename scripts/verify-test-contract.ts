@@ -6,8 +6,8 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { relative, resolve, sep } from "@mailwoman/platform/path"
 import ts from "typescript"
 
@@ -23,7 +23,7 @@ const packageSuites = new Set(["full", "integration", "unit"])
 const docsSuites = new Set([...packageSuites, "browser", "build", "e2e"])
 
 function moduleSpecifiers(filePath: string): string[] {
-	const sourceText = readFileSync(filePath, "utf8")
+	const sourceText = readLocalTextFileSync(filePath)
 	const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 	const specifiers: string[] = []
 

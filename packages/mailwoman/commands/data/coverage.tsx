@@ -21,6 +21,7 @@
  */
 
 import { statPath, pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
@@ -56,7 +57,6 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { censusCoverage } = await import("../../coverage-census.ts")
 		const { dataRootPath, repoRootPath } = await import("@mailwoman/core/utils")
-		const { statSync } = await import("@mailwoman/platform/fs")
 
 		const repoRoot = String(repoRootPath())
 		const configDir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
@@ -67,7 +67,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		const newest = (await pathExists(configDir))
 			? (await readDirectory(configDir))
 					.filter((n) => n.endsWith(".yaml") && !n.includes("smoke"))
-					.map((n) => ({ n, at: statSync(`${configDir}/${n}`).mtimeMs }))
+					.map((n) => ({ n, at: statPathSync(`${configDir}/${n}`).mtimeMs }))
 					.toSorted((a, b) => b.at - a.at)
 					.at(0)?.n
 			: undefined

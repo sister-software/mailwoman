@@ -31,10 +31,10 @@
  */
 
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
+import { pathExistsSync, readDirectorySync, readLocalTextFileSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
-import { existsSync, readFileSync, readdirSync, statSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -337,14 +337,14 @@ export function candidateSubjects(input: string): string[] {
  * Every `.jsonl` under a committed input tree, recursively.
  */
 function jsonlFiles(root: string): string[] {
-	if (!existsSync(root)) return []
+	if (!pathExistsSync(root)) return []
 
 	const found: string[] = []
 
-	for (const name of readdirSync(root)) {
+	for (const name of readDirectorySync(root)) {
 		const path = join(root, name)
 
-		if (statSync(path).isDirectory()) {
+		if (statPathSync(path).isDirectory()) {
 			found.push(...jsonlFiles(path))
 
 			continue
@@ -369,7 +369,7 @@ function committedInputs(repositoryRoot: string): { inputs: Set<string>; files: 
 		for (const path of jsonlFiles(join(repositoryRoot, relative))) {
 			files++
 
-			for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
+			for (const line of TextSpliterator.from(readLocalTextFileSync(path))) {
 				if (!line.trim()) continue
 
 				const row = parseJSONStrict<Record<string, unknown>>(line)

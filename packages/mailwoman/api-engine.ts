@@ -37,10 +37,10 @@ import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { pathExistsSync, readDirectorySync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
-import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
@@ -83,7 +83,7 @@ function wofPaths(): string[] {
 			.map((p) => p.trim())
 			.filter(isPresent)
 
-	return wofShardPaths().filter((p) => existsSync(p))
+	return wofShardPaths().filter((p) => pathExistsSync(p))
 }
 
 /**
@@ -124,8 +124,8 @@ function readModelCard(): Record<string, unknown> | null {
 
 	for (const p of candidates) {
 		try {
-			if (existsSync(p)) {
-				const card = tryParsingJSON<Record<string, unknown>>(readFileSync(p, "utf8"))
+			if (pathExistsSync(p)) {
+				const card = tryParsingJSON<Record<string, unknown>>(readLocalTextFileSync(p))
 
 				if (card) return card
 			}
@@ -145,7 +145,7 @@ function countShards(subdir: string, prefix: string): number {
 	try {
 		const re = new RegExp(`^${prefix}-us-[a-z]{2}\\.db$`)
 
-		return readdirSync(`${DATA_ROOT}/${subdir}`).filter((f) => re.test(f)).length
+		return readDirectorySync(`${DATA_ROOT}/${subdir}`).filter((f) => re.test(f)).length
 	} catch {
 		return 0
 	}
@@ -174,7 +174,7 @@ function buildHealthData(): HealthData {
 			versions: readReleaseManifest(DATA_ROOT),
 			// The express HealthRouter existsSync-filtered here where GeocodeRouter's wofPaths() didn't;
 			// this diagnostic field keeps the health-side behavior (no phantom env paths in "what's deployed").
-			wof_dbs: wofPaths().filter((p) => existsSync(p)),
+			wof_dbs: wofPaths().filter((p) => pathExistsSync(p)),
 			situs_states: countShards("address-points", "address-points"),
 			interpolation_states: countShards("interpolation", "interpolation"),
 		},
