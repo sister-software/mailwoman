@@ -1,3 +1,19 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman gazetteer triage` — the WOF currency-hole ledger (`gazetteer-pipeline/wof-triage.ts`).
+ *
+ *   REPORT ONLY. Nothing this command emits changes a resolve; the ledger exists so an upstream coverage hole is
+ *   reviewable instead of invisible, and so a decision to supplement one is recorded rather than inferred. The
+ *   motivating case is in the module docstring (`Rochester, Kent`, deprecated in a January 2019 batch with no
+ *   successor, resolving 474 km away until the currency backfill).
+ *
+ *   Run it after every WOF pull. The summary alone answers "did upstream just delete a country's worth of places",
+ *   which no build step asks today.
+ */
+
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"

@@ -1,3 +1,16 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   The source-conflict gate, and the baseline it is measured against.
+ *
+ *   The property under test is the DISTINCTION the gate exists to draw: fourteen countries are two-source
+ *   today because someone traded duplication for coverage, and a fifteenth appearing is an accident. A gate
+ *   that refused all multi-source countries would refuse the trade; one that accepted all of them would
+ *   never catch the accident. Both failures print a clean result.
+ */
+
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { planCountryMove, servingSources } from "mailwoman/gazetteer-pipeline/country-plan"
 import {

@@ -1,3 +1,15 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman gazetteer build coincident-roles <admin.db>... [--no-drop]` — derive the
+ *   `coincident_roles` relation (dual-role places: city-states, capital-seat provinces, consolidated
+ *   city-counties — #403/#402) into one or more admin gazetteers. Additive + idempotent; rebuilds by
+ *   default so the relation reflects the current spr/ancestors (`--no-drop` appends — incremental
+ *   tests only). Absorbs the retired `mailwoman-wof-build-coincident-roles` bin.
+ */
+
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

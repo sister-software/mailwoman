@@ -1,3 +1,39 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   #920 — fold GeoNames POSTAL codes into a WOF/unified postcode shard as first-class
+ *   `postalcode` places, for the countries whose WOF postalcode repos don't exist (the
+ *   namesake-tail locales: FI/CZ/SK/SI/DK/NO/HR/PL and any future gap).
+ *
+ *   Why: the night-31 taxonomy measured the cross-locale resolve tail as NAMESAKE COLLISION
+ *   (FI 300/1k … PL 75/1k offender rows), and the controlled experiment showed postcode-shard
+ *   coverage alone collapses it (FI 300→1, CZ 131→4): a resolvable postcode node feeds the
+ *   resolver's coordinate-first sibling-postcode candidate injection, which binds the locality
+ *   pick to its postcode neighborhood. The implementation already ships; it was coverage-starved.
+ *
+ *   Two hard-won laws from the experiment are enforced HERE, in code, not in a runbook:
+ *
+ *   1. **The name law (#920 format law):** a postcode row's `name` is stored in the
+ *      SANITIZED-QUERY token shape — every non-letter/number stripped — because that is what
+ *      `sanitizeFTSQuery` reduces the parsed token to at lookup time. Stored `"110 00"` (CZ) or
+ *      `"11-041"` (PL) can never match the query `"11000"`/`"11041"`; the spaced CZ build
+ *      measured WORSE than no coverage (+13 namesake rows) because its bigrams partial-matched
+ *      WRONG codes. The display form is preserved as an alt row in `names`.
+ *   2. **Medoid centroids:** GeoNames postal is one row per (postcode, settlement); the naive
+ *      mean-of-members centroid displaced tighter village coordinates on already-correct rows
+ *      (the p50-tax that ni-failed SK/SI/HR at 1.10–1.94 km CI). The MEDOID — the member point
+ *      nearest the mean — keeps the coordinate on a real settlement.
+ *
+ *   Package home for the same reason as `geonames-aliases.ts`: `build-unified-wof
+ *   --geonames-postal-countries`, any standalone fold, and the `mailwoman gazetteer` commands
+ *   share ONE implementation. GeoNames postal dump = `download.geonames.org/export/zip/<CC>.zip`
+ *   → `<CC>.txt` (TSV: country, postcode, place, admin1, code1, admin2, code2, admin3, code3,
+ *   lat, lon, accuracy). License CC BY 4.0 — attribution rides the shard's `meta` provenance and
+ *   the model card like the existing GeoNames alias fold.
+ */
+
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"

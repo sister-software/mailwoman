@@ -1,3 +1,28 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Latin-script off-map outlier exposure for the #244 coarse-placer (milestone 3). M2's OTHER class
+ *   was trained on NON-Latin/non-CJK scripts (Cyrillic, Arabic, …) from WOF names, so off-map
+ *   COUNTRIES written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained
+ *   Latin country (the "Latin-off-map residual"). The fix is REAL off-map addresses (not synthetic
+ *   name variants — see #564: synthetic mass fits its own quirks): assemble address strings from
+ *   the Overture per-country address parquet and append them as `country: "OTHER"`.
+ *
+ *   Discipline: countries split into TRAIN (their rows feed train/val OTHER) and HELDOUT (rows go
+ *   ONLY to the dedicated test file), so we can measure generalization to off-map countries the
+ *   model never saw — not just memorization. The in-map test.jsonl is left UNTOUCHED so the
+ *   before/after in-map regression check stays clean; the Latin metric lives in its own file.
+ *
+ *   Run AFTER build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
+ *   dedicated test file and appends fresh OTHER rows (so don't run it twice onto the same splits
+ *   without rebuilding train/val).
+ *
+ *   Run: `mailwoman placer build-dataset --outliers latin [--per-country 6000] [--overture
+ *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]`
+ */
+
 import * as path from "@mailwoman/platform/path"
 
 import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"

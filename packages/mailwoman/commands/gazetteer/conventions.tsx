@@ -1,3 +1,27 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman gazetteer conventions` — build the **convention asset** (#290, Direction E) FROM
+ *   SOURCE: compile the authored convention profiles in `data/conventions/conventions.json` into a
+ *   read-only, provenance-stamped sqlite asset (`address_convention` keyed by WOF polygon id + a
+ *   `meta` row), the same distributable-asset shape as `postcode-locality-intl.db`.
+ *
+ *   The authored JSON is the human-editable source of truth (diffable, code-reviewed); the `.db` is
+ *   the queryable, immutable compiled form the resolver reads ON DEMAND (one indexed lookup per id,
+ *   not the whole table paged into memory). Per the provenance-first design value: every row
+ *   carries `source` provenance, and a convention that names a strategy this build doesn't register
+ *   is rejected HERE, loudly, rather than silently no-opping at runtime.
+ *
+ *   Authored entry shape (each element of the JSON array): { "wof_id": 85633111, "source": "…why this
+ *   row exists…", "convention": { …Convention… } }
+ *
+ *   The build writes the asset DIRECTLY to `--output` (the original `scripts/build-conventions.ts`
+ *   behavior); it then VACUUMs + integrity-checks before returning. Progress is quiet — only the
+ *   final summary lands on stdout.
+ */
+
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
@@ -84,7 +108,6 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { parseJSONStrict } = await import("@mailwoman/core/objects")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { assertDatabaseIntegrity } = await import("@mailwoman/sqlite/sealed-db")
 

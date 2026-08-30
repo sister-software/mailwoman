@@ -1,3 +1,24 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   #822 PLACER-FRONTIER PROBE (night 2026-06-28, Phase A) — for the placer-recoverable countries (a
+ *   country hint resolves them, so growing the placer captures the win), measure whether the DEPLOYED
+ *   coarse placer can actually emit that country. Per query (`<City>, <Country>` from cities15000):
+ *
+ *   - `in_class_set`  — is the true country even in the placer's class set? (a class the model can't
+ *                       represent can't be recovered by any threshold change — that's a DATA gap)
+ *   - `top1_correct`  — did the placer's argmax land on the true country?
+ *   - `prob_1`        — the calibrated top-class confidence (vs `HARD_PLACE_COUNTRY_MIN_CONF` = 0.9)
+ *
+ *   Branch (plan Phase 2): `in_class_set` false >5% → DATA GAP, defer to a class-set-widening retrain.
+ *   in-set + top1>80% + median prob_1 < 0.9 → UNDER-CONFIDENT, M2 mass-rule fix. in-set + top1<80% →
+ *   low-quality signal, defer. The probe is a LINEAR model (no ONNX), so it is heat-safe.
+ *
+ *   Run: `mailwoman placer probe-frontier [--model <dir>] [--n 2000] [--out <md>]`
+ */
+
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 

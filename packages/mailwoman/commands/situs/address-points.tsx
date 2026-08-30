@@ -1,3 +1,32 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman situs address-points --state VT` — build a per-state ADDRESS-POINT shard (#476) from
+ *   the pinned-release Overture Parquet: exact `(street, number)` within a `(postcode | locality)`
+ *   scope → exact point. The geocoder's street-level opening move — when the point exists you look
+ *   it up; you interpolate (#483) only on miss. This shard is also the gold standard the future
+ *   TIGER interpolation is graded against.
+ *
+ *   Keying uses THE shared normalizer (`@mailwoman/resolver-wof-sqlite/street-normalize`) — the same
+ *   function the lookup tier applies at query time. Provenance per row (epic #470 rules): source
+ *   dataset + release pinned in-table.
+ *
+ *   County scoping (#483 density characterization): Overture carries no county field, so an optional
+ *   --county-fips filter does a point-in-polygon against the TIGER COUNTY boundary shapefile
+ *   (--county-boundary, same TIGER vintage as the EDGES the interpolation shard reads) — keeps a
+ *   county-scoped gold comparable to a county-scoped segment table.
+ *
+ *   Alternate source: --oa-csv builds from OpenAddresses conformed CSV(s) instead of the Overture
+ *   parquet, for states Overture's US addresses theme does NOT carry (HI, NH).
+ *
+ *   Maintainer-only: needs the local parquet/CSV inputs + the @duckdb/node-api dev dep + the optional
+ * @mailwoman/resolver-wof-sqlite peer (the shared schema + normalizer). Progress streams to stderr;
+ *   the final summary lands on stdout. The build writes to a temp path, then atomically swaps into
+ *   place (scripts/AGENTS.md) — the original script rebuilt in place.
+ */
+
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { basename, dirname } from "@mailwoman/platform/path"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"

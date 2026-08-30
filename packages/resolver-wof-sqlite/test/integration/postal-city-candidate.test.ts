@@ -1,4 +1,3 @@
-import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -11,6 +10,8 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
  *   geographic locality; a bare query (no postcode), a postcode miss, a non-locality request, and a
  *   candidate.db WITHOUT the side-index are all untouched (byte-stable).
  */
+
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
 import {

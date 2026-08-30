@@ -6,9 +6,10 @@
  *   File and content hashing utilities.
  */
 
-import { readFileChunksSync } from "@mailwoman/core/fs/readers-sync"
-import { openReadStream } from "@mailwoman/core/fs/streams"
 import { createHash } from "@mailwoman/platform/crypto"
+
+import { readFileChunksSync } from "#fs/readers-sync"
+import { openReadStream } from "#fs/streams"
 
 /**
  * Streaming SHA-256 of a file, hex-encoded.

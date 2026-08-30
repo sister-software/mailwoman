@@ -1,3 +1,26 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman eval semantic-utility-probe` — the pre-registered geographic-model semantic-utility probe
+ *   (#1928). Runs the frozen target and control rows through the same pipeline construction the POI
+ *   query board uses, grades them with the board's own `gradeCase`, and prints the measured counts
+ *   beside the frozen bars.
+ *
+ *   The command chooses nothing. Rows, comparator, metric arithmetic, baseline and thresholds all come
+ *   from `probe-definition.json`, which the loader refuses to hand over if its content hash has moved.
+ *   `--arm` labels which run a receipt describes; `--out` writes the receipt for the decision record.
+ *
+ *   `--semantic-observation` is what makes the second arm a second arm: it builds the one route (#1929)
+ *   and injects it into the pipeline this run constructs. Without it the run is the un-injected pipeline,
+ *   whatever `--arm` is called — and the receipt records which of the two actually happened, because a
+ *   route dropped on the way in and a route that changed nothing produce the same numbers.
+ *
+ *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
+ *   unresolved control row, a missing database. A recorded STOP-REDESIGN is a result, not a failure.
+ */
+
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Text } from "ink"
 

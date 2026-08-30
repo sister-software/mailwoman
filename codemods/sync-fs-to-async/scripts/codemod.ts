@@ -21,12 +21,10 @@ import type { Codemod, Edit, SgNode } from "codemod:ast-grep"
 
 import {
 	callArguments,
-	jsonParseWrapper,
 	jsonStringifyValue,
 	JSON_PARSE_WRAPPERS,
 	type Lang,
 	MAPPINGS,
-	type Mapping,
 	type Plan,
 	PROMISE_MAPPINGS,
 	READERS,
@@ -593,7 +591,9 @@ function promiseBindings(rootNode: SgNode<Lang>): Set<string> {
 		const holder = statement.find({ rule: { kind: "named_imports" } })
 
 		if (holder) {
-			for (const name of specifierNames(holder)) names.add(name)
+			for (const name of specifierNames(holder)) {
+				names.add(name)
+			}
 		}
 	}
 

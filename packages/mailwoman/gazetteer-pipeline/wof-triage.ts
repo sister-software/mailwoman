@@ -1,3 +1,37 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   WOF currency triage — a REPORT over the admin gazetteer's non-current records, so a coverage hole
+ *   that upstream created is reviewable instead of invisible.
+ *
+ *   The motivating case (2026-08-19): `Rochester, Kent` — a ~28k cathedral city — resolved 474 km away
+ *   to a Northumberland hamlet, because WOF deprecated the record in a January 2019 batch
+ *   (`edtf:deprecated: 2019-01-16` on 53 of the 66 readable GB deprecated-no-successor localities)
+ *   without writing successors. The Medway cluster shows the shape: `Chatham` stayed current,
+ *   `Rochester` and `Gillingham` were deprecated, and the replacement `Medway` localadmin is itself
+ *   NOT current. Every record looks individually plausible; only the cluster is wrong.
+ *
+ *   THIS MODULE DECIDES NOTHING. It measures and reports, because the non-current population is a
+ *   MIXTURE that no rule separates — measured over the shipped artifact:
+ *
+ *   - genuine ghost towns (`Treece`, Kansas — evacuated),
+ *   - abolished administrative districts (`Shepway District` → Folkestone & Hythe, 2018),
+ *   - legal-form duplicates of live places (`Town of Gilbert`, `Commonwealth of Pennsylvania`,
+ *     `Arrondissement de Lyon` — the place is alive under the name people type),
+ *   - and live places wrongly marked (`Carter Lake` IA, `Dwarka` Delhi, `Briey` FR, `South
+ *     Lanarkshire`).
+ *
+ *   A blanket "fall back to non-current records" would inject the third class into every ranking race —
+ *   the wrong-instance hazard wearing a coverage costume. So the ledger's job is to hand a reviewer the
+ *   evidence per row: which class, whether a live record already covers the place, and whether a second
+ *   source attests it.
+ *
+ *   Absence is reported as absence throughout: a country with no GeoNames dump reads `unmeasured`,
+ *   never `unattested`.
+ */
+
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { resolve } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"

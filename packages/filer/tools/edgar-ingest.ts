@@ -1,3 +1,14 @@
+/**
+ * @copyright Sister Software.
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman filer edgar-ingest`'s library half — the EDGAR chain against a live SEC client, with the
+ *   full registrant index. No argv, no `process.exit`: the command owns argument parsing, rendering, and
+ *   exit codes. Every field on the result is a number the command can render without importing another
+ *   module.
+ */
+
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 

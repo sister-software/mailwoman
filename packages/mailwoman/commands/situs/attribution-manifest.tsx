@@ -1,3 +1,21 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman situs attribution-manifest` — regenerate a COMPLETE situs attribution manifest from
+ *   the address-point shards on disk. The national build driver (`mailwoman situs build`) only
+ *   records the states it built in a given run, so after incremental / resumed builds its
+ *   `ATTRIBUTION.json` undercounts. This reads every `address-points-us-*.db` in the directory and
+ *   aggregates the per-row `source` (`overture:<dataset>`) provenance into a full ledger — the
+ *   document we owe consumers for the OpenAddresses attribution obligation (NAD is US public
+ *   domain; the named OA sources want credit).
+ *
+ *   This regenerates a small JSON manifest from read-only shards (it builds no large DB), so — as in
+ *   the original script — `ATTRIBUTION.json` is written directly in place. Per-shard progress
+ *   streams to stderr; the summary lands on stdout.
+ */
+
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import * as path from "@mailwoman/platform/path"

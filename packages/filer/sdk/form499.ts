@@ -1,3 +1,39 @@
+/**
+ * @copyright Sister Software.
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file FCC Form 499 filer TSV — column vocabulary, row shape, classification mapping, and a
+ *   streaming parser (3a decisions 3 & 8).
+ *
+ *   Re-homed from Nexus's `sync/fcc/universal-service.ts` (relicense-by-copy, no provenance
+ *   headers) — ONLY the 17-column vocabulary (:27-44) and the `principalCommType` → classification
+ *   mapping (:164-176) survive the port; everything else about the Nexus loader is rewritten:
+ *
+ *   - The Nexus loader reads the ENTIRE TSV into memory via `fs.readFile`, then parses it with the
+ *     `csv` package configured `relax_column_count_less: true` — a short row is silently truncated,
+ *     never surfaced. {@linkcode parseForm499} instead streams line-by-line off a `ReadStream` (the
+ *     file is never held in memory whole) and throws a descriptive error naming the file and the
+ *     1-indexed line number the moment a row's column count doesn't match
+ *     {@linkcode FORM_499_COLUMNS}'s 17 — decision 8's "malformed input must be loud" discipline,
+ *     the same one 2a's `peekProviderID` (`bdc/sdk/build-bdc.ts`) applies to a bad `provider_id`.
+ *   - Nexus's `RawFCCForm499Filing` interface declares an `otherTradeName1` field that its own
+ *     column tuple never lists — meaning it was NEVER actually populated by that loader, a live bug
+ *     in the salvage source. This port omits the field entirely rather than perpetuate one that can
+ *     never carry data.
+ *   - `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string).
+ *   - Nexus's row type carries `holdingCompany` AND `managementCompany` as two separate string
+ *     fields; this port keeps both (spec §3.1 finding 1 — ownership and operational control are
+ *     different assertions, not synonyms to collapse into one).
+ *
+ *   On the DC agent: the 499 "DC agent" is the registered agent for service of process, a role
+ *   dominated by a handful of firms (CT Corporation, CSC, Cogency Global) serving tens of thousands
+ *   of otherwise-unrelated filers. The `dcAgent*` fields below are carried as plain string
+ *   attributes ONLY — nothing in this file, or anywhere downstream, may treat a shared DC agent as
+ *   evidence that two filers are related. That inference is the single most likely false-positive
+ *   generator in the whole crosswalk design (spec §3.1 finding 3) and is out of scope here by
+ *   design, not by oversight.
+ */
+
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { createInterface } from "@mailwoman/platform/readline"
 

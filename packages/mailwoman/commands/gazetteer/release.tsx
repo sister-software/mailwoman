@@ -1,4 +1,3 @@
-import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -10,6 +9,8 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
  *   only); `--dry-run` previews the R2 upload. Creds: `RCLONE_S3_PUBLIC_*` in the env (source
  *   `.env`) for the publish step.
  */
+
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 

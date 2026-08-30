@@ -13,7 +13,6 @@
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 
 import { $public } from "../env/index.ts"
-import { parseJSONStrict } from "../objects.ts"
 import { featurize } from "./featurize.ts"
 
 export { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"

@@ -1,3 +1,10 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ * @file Shared exact-match per-tag scoring for weight-dependent evaluation gates.
+ */
+
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { JSONSpliterator } from "spliterator"
 

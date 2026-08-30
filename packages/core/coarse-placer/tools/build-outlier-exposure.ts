@@ -1,3 +1,21 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Outlier-exposure data for the #244 coarse-placer's explicit "OTHER" (off-map) class — milestone
+ *   2. The closed-set model is confidently wrong on scripts it never saw (Cyrillic→DE@0.71). The
+ *   fix is to TRAIN an "off my loaded map" class on those scripts. Source: the WOF `names` table,
+ *   which carries native-script alternate names in dozens of languages
+ *   (rus/ukr/ara/ell/heb/hin/tha/kat/hye/…) — i.e. exactly the off-map scripts we want the model to
+ *   learn to abstain on. Balanced per-language for script diversity, filtered to a genuinely
+ *   off-map dominant script (not Latin, not CJK — those are the in-map countries), then APPENDED to
+ *   the train/val/test splits as `country: "OTHER"`.
+ *
+ *   Run AFTER build-dataset. Run: `mailwoman placer build-dataset --outliers exposure [--per-lang
+ *   2500]`
+ */
+
 import * as path from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 

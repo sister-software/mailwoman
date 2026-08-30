@@ -1,4 +1,3 @@
-import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -12,6 +11,8 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
  *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a; . ./.env; set +a` first. This
  *   is an in-repo operator command (it needs the upload script + the demo's resources file).
  */
+
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 

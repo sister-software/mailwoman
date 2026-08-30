@@ -1,4 +1,3 @@
-import { pathExists } from "@mailwoman/core/fs/readers"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -16,6 +15,8 @@ import { pathExists } from "@mailwoman/core/fs/readers"
  *   built-artifact lifecycle, and because a rule the project states in prose and implements more than
  *   once in code should be a function.
  */
+
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { changeMode, removePath } from "@mailwoman/core/fs/writers"
 import { movePathSync, removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"

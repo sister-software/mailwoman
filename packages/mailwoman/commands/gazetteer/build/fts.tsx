@@ -1,3 +1,14 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman gazetteer build fts <wof.db>... [--drop]` — add the `place_search` FTS5 +
+ *   `place_bbox` R*Tree virtual tables to one or more WOF SQLite distributions so production
+ *   `WOFSQLitePlaceLookup` instances skip the lazy-build cost at first open. Absorbs the retired
+ *   `mailwoman-wof-build-fts` bin.
+ */
+
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"

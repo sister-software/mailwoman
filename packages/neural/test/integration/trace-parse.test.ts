@@ -442,6 +442,6 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const trace = await classifier.traceParse(text, { addressSystemConventions: "auto", spanProposer: false })
 
-		await expect(prettyJSON(trace)).toMatchFileSnapshot("../fixtures/trace-schema.snap.json")
+		await expect(prettyJSON(trace, false)).toMatchFileSnapshot("../fixtures/trace-schema.snap.json")
 	})
 })

@@ -79,7 +79,6 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		const { execFileSync } = await import("@mailwoman/platform/child_process")
 
 		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
-		const { parseJSONStrict } = await import("@mailwoman/core/objects")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const {

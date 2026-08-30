@@ -1,3 +1,24 @@
+/**
+ * @copyright Sister Software.
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Geofabrik extract URLs + a streaming downloader. Geofabrik is the OSM ecosystem's de-facto
+ *   regional-extract host: a cascade of continent → country → sub-region `.osm.pbf` files
+ *   (`europe/france/ile-de-france-latest.osm.pbf`). We pull per-COUNTRY extracts (the ecosystem's
+ *   default shard unit — matching Photon's per-country dumps and our own per-locale weights), and a
+ *   smaller sub-region extract when we only need to smoke a build (Île-de-France for the Paris
+ *   acceptance). The bytes are ODbL OpenStreetMap data — see `osm/README.md`.
+ *
+ *   RAW `fetch` HERE IS DELIBERATE. `AGENTS.md` requires HTTP clients to extend or instantiate
+ *   `APIClient`, and that rule is about API REQUESTS — small bodies, repeated calls, rate-limited
+ *   hosts, where its pacing, bounded retry, response caching and `ResourceError` mapping all earn
+ *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
+ *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
+ *   non-stream response type in memory. The primitive that fits a body this large is the one that
+ *   never holds it: a web stream piped to a write stream.
+ */
+
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"

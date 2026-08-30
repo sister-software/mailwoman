@@ -1,3 +1,16 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Evaluate the #244 coarse-placer: in-distribution accuracy + per-class + calibration (ECE) on the
+ *   held-out test split, AND the abstention story on the multi-script set — off-map scripts
+ *   (Cyrillic, Arabic, Thai, …, none of them in the 11 trained countries) SHOULD draw low
+ *   confidence → abstain, which is the "probably off my loaded map" behavior the design wants.
+ *
+ *   Run: `mailwoman placer eval in-distribution [--model <dir>] [--abstain 0.5]`
+ */
+
 import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 

@@ -233,8 +233,6 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
  * the cached JSON file.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
-	const { parseJSONStrict } = await import("@mailwoman/core/objects")
-
 	if (await pathExists(RANKED_FILE)) {
 		return await readLocalJSONFile<CountyRecord[]>(RANKED_FILE)
 	}

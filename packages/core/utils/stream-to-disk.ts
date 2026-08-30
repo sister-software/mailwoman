@@ -1,7 +1,33 @@
-import { openWriteStream } from "@mailwoman/core/fs/streams"
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Stream one large file to disk through a `.part` rename — the shape every layer acquisition uses, and the
+ *   one thing about it that is a correctness rule rather than a convenience.
+ *
+ *   THIS IS A FILE TRANSFER, NOT AN API REQUEST, AND IT IS RAW `fetch` ON PURPOSE. The repo's rule sends HTTP
+ *   clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class is
+ *   for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls. None
+ *   of it applies to a multi-hundred-megabyte archive. Caching one through a JSON-validating disk cache would
+ *   write a second, unreadable copy of a file already on disk; there is nothing to pace, because a transfer
+ *   like this runs once per product vintage; and axios buffers any non-stream response type in memory. The
+ *   METADATA reads around such a transfer DO go through `APIClient`, and each caller's client module says so.
+ *
+ *   THE `.part` RENAME IS THE RULE. An interrupted transfer must never present as a complete file: the next
+ *   run would find it, skip the download and ingest a truncated archive, which reads as a smaller source
+ *   rather than as a failure. The rename is atomic within a filesystem, so a file at the final path is a file
+ *   that finished.
+ *
+ *   SHARED BY EVERY LAYER ACQUISITION rather than copied into each, because it is stream plumbing that knows
+ *   nothing about any product. What stays with each caller is where the URL came from, what the cache is keyed
+ *   on, and what to do with the bytes afterwards.
+ */
+
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
 
+import { openWriteStream } from "#fs/streams"
 import { movePath, removePathIfPresent } from "#fs/writers"
 
 /**

@@ -1,3 +1,17 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Train the #244 coarse-placer: a multinomial logistic-regression over the hashed char-n-gram +
+ *   script features ({@link featurize}), via plain SGD. CPU-only, a few minutes — no GPU/Modal.
+ *   After training, fits a single temperature on val (NLL minimization) for calibrated confidence.
+ *   Writes a `meta.json` + `weights.bin` (Float32, row-major [class][feature]) artifact.
+ *
+ *   Run: `mailwoman placer train [--epochs 12] [--lr 0.1] [--l2 1e-6] [--out
+ *   $MAILWOMAN_DATA_ROOT/coarse-placer/model]`
+ */
+
 import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 

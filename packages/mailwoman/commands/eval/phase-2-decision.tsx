@@ -1,3 +1,24 @@
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   `mailwoman eval phase-2-decision` — the pre-registered phase-2 decision ruler (#1967). Runs the
+ *   instruments the frozen definition's checks read, prints each measurement beside the bar it was
+ *   registered against, and reports which of the three decisions the arithmetic maps to.
+ *
+ *   The command chooses nothing. Lanes, checks, denominators, bars, artifact pins and the one marker query
+ *   all come from `decision-definition.json`, which the loader refuses to hand over if its content hash has
+ *   moved.
+ *
+ *   A blocked lane is printed with what it will measure once unblocked and is scored nowhere. Mapping
+ *   breadth is blocked by #1980 today, so every run prints `coverage partial`.
+ *
+ *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, an
+ *   instrument that could not run, a missing database. A recorded decision is a result, not a failure, and
+ *   the RECORDING itself is the operator's.
+ */
+
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Text } from "ink"
 
