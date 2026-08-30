@@ -40,12 +40,24 @@ export class ByteFormatter {
 	public static SI_UNITS = ["byte", "kilobyte", "megabyte", "gigabyte", "terabyte"] as const
 	public static IEC_UNITS = ["B", "KiB", "MiB", "GiB", "TiB"] as const
 
-	public static shared = new ByteFormatter()
+	protected static shared = new ByteFormatter()
 
+	/**
+	 * Formats a file size in bytes into a human-readable string with appropriate SI units (B, kB, MB, GB, TB).
+	 *
+	 * @param bytes The file size in bytes.
+	 * @param options Formatting options.
+	 */
 	public static formatSI(bytes: number, options?: ByteFormatterOptions): string {
 		return ByteFormatter.shared.formatSI(bytes, options)
 	}
 
+	/**
+	 * Formats a file size in bytes into a human-readable string with appropriate IEC units (B, KiB, MiB, GiB, TiB).
+	 *
+	 * @param bytes The file size in bytes.
+	 * @param options Formatting options.
+	 */
 	public static formatIEC(bytes: number, options?: ByteFormatterOptions): string {
 		return ByteFormatter.shared.formatIEC(bytes, options)
 	}

@@ -22,7 +22,40 @@ import { pipeline } from "@mailwoman/platform/stream/promises"
 import { crc32 } from "@mailwoman/platform/zlib"
 import ADMZip from "adm-zip"
 import type { PathBuilderLike } from "path-ts"
-import { open as openArchive } from "yauzl-promise"
+import { open as openArchive, type Entry, type ZipFileOptions } from "yauzl-promise"
+
+import { tryStat } from "./readers.ts"
+
+type StreamingArchive = Awaited<ReturnType<typeof openArchive>>
+
+type EntryStream = Awaited<ReturnType<Entry["openReadStream"]>>
+
+/**
+ * The one place this package touches yauzl's own lifecycle. Every reader below ends an archive by leaving scope, so
+ * `close()` is called here and nowhere else.
+ */
+async function openStreamingArchive(archivePath: PathBuilderLike): Promise<StreamingArchive & AsyncDisposable> {
+	const archive = await openArchive(String(archivePath))
+
+	return Object.assign(archive, { [Symbol.asyncDispose]: () => archive.close() })
+}
+
+/**
+ * One member's decompressed byte stream, ended when the owning scope exits.
+ *
+ * Node's own `Readable[Symbol.asyncDispose]` cannot serve here. A consumer that stops early has already destroyed the
+ * stream with an `AbortError`, and that disposer waits on the stream's end event and re-raises it — turning a
+ * deliberate `break` into a throw. Destroying without a reason ends the stream on every path and reports none of them.
+ */
+async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<EntryStream & AsyncDisposable> {
+	const contents = await entry.openReadStream(options)
+
+	return Object.assign(contents, {
+		[Symbol.asyncDispose]: async () => {
+			contents.destroy()
+		},
+	})
+}
 
 export type ZipEntryContentPair = [entry: ADMZip.IZipEntry, content: Buffer]
 
@@ -101,19 +134,15 @@ function selectorMatches(selector: ZipEntrySelector, name: string): boolean {
  * @category Files
  */
 export async function listZipEntries(archivePath: PathBuilderLike): Promise<ZipEntryInfo[]> {
-	const archive = await openArchive(String(archivePath))
+	await using archive = await openStreamingArchive(archivePath)
 	const entries: ZipEntryInfo[] = []
 
-	try {
-		for await (const entry of archive) {
-			entries.push({
-				name: entry.filename,
-				compressedSize: entry.compressedSize,
-				uncompressedSize: entry.uncompressedSize,
-			})
-		}
-	} finally {
-		await archive.close()
+	for await (const entry of archive) {
+		entries.push({
+			name: entry.filename,
+			compressedSize: entry.compressedSize,
+			uncompressedSize: entry.uncompressedSize,
+		})
 	}
 
 	return entries
@@ -133,27 +162,19 @@ export async function* readZipEntry(
 	archivePath: PathBuilderLike,
 	selector: ZipEntrySelector
 ): AsyncGenerator<Uint8Array> {
-	const archive = await openArchive(String(archivePath))
+	await using archive = await openStreamingArchive(archivePath)
 
-	try {
-		for await (const entry of archive) {
-			if (!selectorMatches(selector, entry.filename)) continue
+	for await (const entry of archive) {
+		if (!selectorMatches(selector, entry.filename)) continue
 
-			const contents = await entry.openReadStream()
+		await using contents = await openEntryStream(entry)
 
-			try {
-				yield* contents
-			} finally {
-				await contents.destroy()
-			}
+		yield* contents
 
-			return
-		}
-
-		throw new Error(`No entry matching ${selector} in ${archivePath}`)
-	} finally {
-		await archive.close()
+		return
 	}
+
+	throw new Error(`No entry matching ${selector} in ${archivePath}`)
 }
 
 /**
@@ -169,18 +190,14 @@ export async function extractZipEntry(
 	selector: ZipEntrySelector,
 	destinationPath: PathBuilderLike
 ): Promise<number> {
-	const archive = await openArchive(String(archivePath))
+	await using archive = await openStreamingArchive(archivePath)
 
-	try {
-		for await (const entry of archive) {
-			if (!selectorMatches(selector, entry.filename)) continue
+	for await (const entry of archive) {
+		if (!selectorMatches(selector, entry.filename)) continue
 
-			await pipeline(await entry.openReadStream(), createWriteStream(String(destinationPath)))
+		await pipeline(await entry.openReadStream(), createWriteStream(String(destinationPath)))
 
-			return entry.uncompressedSize
-		}
-	} finally {
-		await archive.close()
+		return entry.uncompressedSize
 	}
 
 	throw new Error(`No entry matching ${selector} in ${archivePath}`)
@@ -198,6 +215,10 @@ export interface ExtractZipEntriesOptions {
 	 * them flat.
 	 */
 	flatten?: boolean
+	/**
+	 * Reuse a destination file when its byte length matches the member's uncompressed length.
+	 */
+	skipExisting?: boolean
 }
 
 /**
@@ -213,30 +234,30 @@ export interface ExtractZipEntriesOptions {
 export async function extractZipEntries(
 	archivePath: PathBuilderLike,
 	destinationDirectory: PathBuilderLike,
-	{ selector, flatten = false }: ExtractZipEntriesOptions = {}
+	{ selector, flatten = false, skipExisting = false }: ExtractZipEntriesOptions = {}
 ): Promise<string[]> {
-	const archive = await openArchive(String(archivePath))
+	await using archive = await openStreamingArchive(archivePath)
 	const written: string[] = []
 
-	try {
-		for await (const entry of archive) {
-			if (entry.filename.endsWith("/")) continue
+	for await (const entry of archive) {
+		if (entry.filename.endsWith("/")) continue
 
-			if (selector && !selectorMatches(selector, entry.filename)) continue
+		if (selector && !selectorMatches(selector, entry.filename)) continue
 
-			const relative = flatten ? basename(entry.filename) : entry.filename
-			const destination = join(String(destinationDirectory), relative)
+		const relative = flatten ? basename(entry.filename) : entry.filename
+		const destination = join(String(destinationDirectory), relative)
 
-			if (!flatten) {
-				await mkdir(dirname(destination), { recursive: true })
-			}
-
-			await pipeline(await entry.openReadStream(), createWriteStream(destination))
-
-			written.push(entry.filename)
+		if (!flatten) {
+			await mkdir(dirname(destination), { recursive: true })
 		}
-	} finally {
-		await archive.close()
+
+		const existing = skipExisting ? await tryStat(destination) : null
+
+		if (existing?.size !== entry.uncompressedSize) {
+			await pipeline(await entry.openReadStream(), createWriteStream(destination))
+		}
+
+		written.push(entry.filename)
 	}
 
 	return written
@@ -258,38 +279,34 @@ export async function extractZipEntries(
  * disagrees with its header.
  */
 export async function verifyZipIntegrity(archivePath: PathBuilderLike): Promise<number> {
-	const archive = await openArchive(String(archivePath))
+	await using archive = await openStreamingArchive(archivePath)
 	let checked = 0
 
-	try {
-		for await (const entry of archive) {
-			if (entry.filename.endsWith("/")) continue
+	for await (const entry of archive) {
+		if (entry.filename.endsWith("/")) continue
 
-			const contents = await entry.openReadStream({ validateCrc32: false })
-			let checksum = 0
-			let length = 0
+		await using contents = await openEntryStream(entry, { validateCrc32: false })
+		let checksum = 0
+		let length = 0
 
-			for await (const chunk of contents) {
-				checksum = crc32(chunk as Uint8Array, checksum)
-				length += (chunk as Uint8Array).length
-			}
-
-			if (checksum !== entry.crc32) {
-				throw new Error(
-					`CRC mismatch in ${archivePath}: ${entry.filename} is 0x${checksum.toString(16)}, header claims 0x${entry.crc32.toString(16)}`
-				)
-			}
-
-			if (length !== entry.uncompressedSize) {
-				throw new Error(
-					`Length mismatch in ${archivePath}: ${entry.filename} is ${length} bytes, header claims ${entry.uncompressedSize}`
-				)
-			}
-
-			checked++
+		for await (const chunk of contents) {
+			checksum = crc32(chunk as Uint8Array, checksum)
+			length += (chunk as Uint8Array).length
 		}
-	} finally {
-		await archive.close()
+
+		if (checksum !== entry.crc32) {
+			throw new Error(
+				`CRC mismatch in ${archivePath}: ${entry.filename} is 0x${checksum.toString(16)}, header claims 0x${entry.crc32.toString(16)}`
+			)
+		}
+
+		if (length !== entry.uncompressedSize) {
+			throw new Error(
+				`Length mismatch in ${archivePath}: ${entry.filename} is ${length} bytes, header claims ${entry.uncompressedSize}`
+			)
+		}
+
+		checked++
 	}
 
 	return checked

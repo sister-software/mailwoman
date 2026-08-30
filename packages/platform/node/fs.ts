@@ -17,7 +17,6 @@ export {
 	mkdirSync,
 	mkdtempSync,
 	openSync,
-	promises,
 	readFileSync,
 	readSync,
 	readdirSync,
