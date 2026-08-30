@@ -14,11 +14,10 @@
  *   pulling the onnxruntime web graph into the fast leg's shared module graph at collection time.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -41,7 +40,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 		const ids = Array.from({ length: 24 }, (_, i) => 100 + i)
 
 		const bench = async (path: string): Promise<{ ms: number; spans: boolean }> => {
-			const runner = await WebONNXRunner.fromBytes(new Uint8Array(await readFile(path)), { useWebGPU: false })
+			const runner = await WebONNXRunner.fromBytes(new Uint8Array(await readLocalBuffer(path)), { useWebGPU: false })
 
 			for (let i = 0; i < 8; i++) {
 				await runner.infer(ids)

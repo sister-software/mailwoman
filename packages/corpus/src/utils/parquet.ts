@@ -38,9 +38,8 @@
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import { ParquetWriter, type ParquetSchemaDefinition } from "#parquet-wrapper"
@@ -285,7 +284,7 @@ export function appendShape(row: ParquetRow): ParquetRow {
 export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptions): Promise<ShardManifest> {
 	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
 	const corpusDir = join(opts.outputDir, `corpus-v${opts.corpusVersion}`)
-	await mkdir(corpusDir, { recursive: true })
+	await makeDirectories(corpusDir)
 
 	const shards: ShardDescriptor[] = []
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
@@ -305,7 +304,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 		const openShard = async (): Promise<void> => {
 			const splitDir = join(corpusDir, split)
-			await mkdir(splitDir, { recursive: true })
+			await makeDirectories(splitDir)
 			path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.parquet`)
 
 			writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {

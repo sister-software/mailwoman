@@ -29,9 +29,8 @@
  */
 
 import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
@@ -157,7 +156,7 @@ export async function buildTranslitShard(
 
 	const corpusDir = join(options.outDir, `corpus-v${corpusVersion}`)
 	const trainDir = join(corpusDir, "train")
-	await mkdir(trainDir, { recursive: true })
+	await makeDirectories(trainDir)
 
 	// Bucket canonical rows by source. Quarantined rows are logged.
 	const buckets = new Map<string, LabeledRow[]>()

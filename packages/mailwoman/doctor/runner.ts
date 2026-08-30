@@ -15,11 +15,10 @@
 
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { isWritableSync, pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
-import { accessSync, constants } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
@@ -176,15 +175,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 				return undefined
 			}
 		},
-		isWritable: (path) => {
-			try {
-				accessSync(path, constants.W_OK)
-
-				return true
-			} catch {
-				return false
-			}
-		},
+		isWritable: isWritableSync,
 		resolveWeights: (locale) => resolveWeights({ locale }),
 		weightsPackageName,
 		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== DefaultMailwomanPaths.data }),

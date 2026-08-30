@@ -38,9 +38,8 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -201,7 +200,7 @@ async function fetchChunk(
 		}
 	}
 
-	await writeFile(chunkPath, !lines.length ? "" : lines.join("\n") + "\n")
+	await writeLocalTextFile(!lines.length ? "" : lines.join("\n") + "\n", chunkPath)
 
 	return { recordCount: lines.length, errors }
 }

@@ -21,6 +21,8 @@ export const constants = createNotImplementedFunction<typeof Native.constants>("
 export const copyFileSync = createNotImplementedFunction<typeof Native.copyFileSync>("node:fs")
 export const cpSync = createNotImplementedFunction<typeof Native.cpSync>("node:fs")
 export const createReadStream = createNotImplementedFunction<typeof Native.createReadStream>("node:fs")
+
+export type ReadStream = Native.ReadStream
 export const createWriteStream = createNotImplementedFunction<typeof Native.createWriteStream>("node:fs")
 export const existsSync = createNotImplementedFunction<typeof Native.existsSync>("node:fs")
 export const globSync = createNotImplementedFunction<typeof Native.globSync>("node:fs")

@@ -10,12 +10,11 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { frLieuditRecipe } from "@mailwoman/corpus/shard-recipes/fr-lieudit"
 import type { ShardRecipeOpts } from "@mailwoman/corpus/shard-recipes/scaffold"
 import { gzip } from "@mailwoman/platform/compression"
-import { writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -177,7 +176,7 @@ describe("fr-lieudit recipe", () => {
 			row("2", "8", "Route de Pomaret", "48800", "Altier", "Le Village"), // different id/lieu-dit
 		].join("\n")
 
-		await writeFile(join(banDir, "adresses-48.csv.gz"), await gzip(csvBody + "\n"))
+		await writeLocalFile(await gzip(csvBody + "\n"), join(banDir, "adresses-48.csv.gz"))
 
 		const stats = await frLieuditRecipe.run(baseOpts({ banDir }), () => {})
 

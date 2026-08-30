@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  */
 
+import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	OVERTURE_ADAPTER_ID,
 	OVERTURE_DEFAULT_LICENSE,
 	createOvertureAdapter,
 } from "@mailwoman/corpus/adapters/overture/adapter"
-import { rm, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -25,7 +25,7 @@ const loadRows = () => readCanonicalRows(scratch.path, OVERTURE_ADAPTER_ID)
  */
 async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
 	const p = join(scratch.path, "overture-es.corpus.jsonl")
-	await writeFile(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf8")
+	await writeLocalTextFile(rows.map((r) => JSON.stringify(r)).join("\n") + "\n", p)
 
 	return p
 }
@@ -139,8 +139,7 @@ describe("overture adapter", () => {
 	it("skips blanks, comments, garbage, and street-less rows", async () => {
 		const p = join(scratch.path, "messy.jsonl")
 
-		await writeFile(
-			p,
+		await writeLocalTextFile(
 			[
 				"",
 				"# comment",
@@ -149,7 +148,7 @@ describe("overture adapter", () => {
 				JSON.stringify({ street: "PLAZA MAYOR", number: "1", postcode: "28012", locality: "Madrid" }),
 				"",
 			].join("\n") + "\n",
-			"utf8"
+			p
 		)
 
 		const manifest = await runAdapter({
@@ -173,7 +172,7 @@ describe("overture adapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch.path, OVERTURE_ADAPTER_ID), { recursive: true, force: true })
+		await removePathIfPresent(join(scratch.path, OVERTURE_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createOvertureAdapter(),

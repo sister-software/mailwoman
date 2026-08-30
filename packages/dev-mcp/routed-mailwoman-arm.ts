@@ -7,8 +7,8 @@
  * each case's country. This wrapper makes that routing and its artifact provenance inspectable before a board run.
  */
 
+import { realPathSync } from "@mailwoman/core/fs/readers-sync"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
-import { realpathSync } from "@mailwoman/platform/fs"
 import { relative, resolve, sep } from "@mailwoman/platform/path"
 import {
 	buildGauntletDeps,
@@ -69,7 +69,7 @@ export interface RoutedMailwomanArmDeps {
 const DEFAULT_DEPS: RoutedMailwomanArmDeps = {
 	buildDeps: buildGauntletDeps,
 	resolveWeights,
-	realpath: realpathSync,
+	realpath: realPathSync,
 	runOne,
 }
 

@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "@mailwoman/corpus/adapters/tiger/adapter"
-import { readFile, rm } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
@@ -24,7 +25,7 @@ const fixtureSQLPath = workspacePath("corpus", "fixtures", "tiger", "fixture.sql
 let dbPath: string
 
 async function buildFixtureDB(): Promise<string> {
-	const sql = await readFile(fixtureSQLPath, "utf8")
+	const sql = await readLocalTextFile(fixtureSQLPath)
 	const path = join(scratch.path, "tiger-fixture.db")
 	await using db = new DatabaseClient<TIGERDatabase>(path)
 	db.exec(sql)
@@ -233,7 +234,7 @@ describe("tiger adapter against fixture.sql", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch.path, TIGER_ADAPTER_ID), { recursive: true, force: true })
+		await removePathIfPresent(join(scratch.path, TIGER_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createTigerAdapter(),

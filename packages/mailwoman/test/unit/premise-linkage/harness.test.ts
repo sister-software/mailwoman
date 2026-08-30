@@ -12,10 +12,9 @@
  *   that refuses before it opens a file.
  */
 
+import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { AuthoritativeResponseStatus, type AuthoritativeQuery } from "@mailwoman/core/resolver"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import {
 	syntheticFixtureAdapter,
@@ -395,7 +394,7 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 		injected.arms[0]!.providerName = "12 Downing Terrace"
 
 		await expect(writePremiseLinkageReport(target, { ...run, report: injected })).rejects.toThrow(/refusing to write/u)
-		await expect(readFile(target, "utf8")).rejects.toThrow(/ENOENT/u)
+		await expect(readLocalTextFile(target)).rejects.toThrow(/ENOENT/u)
 	})
 
 	it("writes the suppressed report when every check passes", async () => {
@@ -404,7 +403,7 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 		const directory = directoryDirectory.path
 		const target = join(directory, "report.json")
 		const written = await writePremiseLinkageReport(target, run)
-		const roundTripped = parseJSONStrict<PremiseLinkageReport>(await readFile(target, "utf8"))
+		const roundTripped = await readLocalJSONFile<PremiseLinkageReport>(target)
 
 		expect(roundTripped).toEqual(written)
 	})

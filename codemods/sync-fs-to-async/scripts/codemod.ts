@@ -18,10 +18,22 @@
  */
 
 import type { Codemod, Edit, SgNode } from "codemod:ast-grep"
-import type TSX from "codemod:ast-grep/langs/tsx"
-import type TS from "codemod:ast-grep/langs/typescript"
 
-type Lang = TS | TSX
+import {
+	callArguments,
+	jsonParseWrapper,
+	jsonStringifyValue,
+	JSON_PARSE_WRAPPERS,
+	type Lang,
+	MAPPINGS,
+	type Mapping,
+	type Plan,
+	PROMISE_MAPPINGS,
+	READERS,
+	READERS_SYNC,
+	WRITERS,
+	WRITERS_SYNC,
+} from "./mappings.ts"
 
 /**
  * The modules a synchronous `node:fs` name may arrive from. A binding from anywhere else is left alone: this codemod
@@ -29,312 +41,23 @@ type Lang = TS | TSX
  */
 const SOURCE_MODULES = new Set(["@mailwoman/platform/fs", "node:fs", "fs"])
 
-const READERS = "readers"
-const WRITERS = "writers"
-const READERS_SYNC = "readers-sync"
-const WRITERS_SYNC = "writers-sync"
-
-interface Plan {
-	helper: string
-	/**
-	 * The type argument to carry across, spelled with its angle brackets.
-	 *
-	 * `parseJSONStrict<Manifest>(…)` states what the file holds, and `readLocalJSONFile` defaults to `Record<string,
-	 * unknown>` without it. Dropping it turned 101 typed reads into untyped ones and the compiler reported the loss 254
-	 * times, several frames downstream of the rewrite.
-	 */
-	typeArguments?: string
-	module: typeof READERS | typeof WRITERS | typeof READERS_SYNC | typeof WRITERS_SYNC
-	args: string[]
-	/**
-	 * The node the rewrite replaces, when it is wider than the filesystem call itself — `parseJSONStrict(readFileSync(p,
-	 * "utf8"))` collapses to one `readLocalJSONFile(p)`, so the whole wrapper goes.
-	 */
-	replaces?: SgNode<Lang>
-}
-
 /**
- * The named children of a call's argument list, punctuation excluded.
- */
-function callArguments(call: SgNode<Lang>): SgNode<Lang>[] {
-	const list = call.field("arguments")
-
-	if (!list) return []
-
-	// A COMMENT is a named node, so `import(/* webpackIgnore: true */ "…")` reports the comment as argument zero. That
-	// hid eight `fs.readFileSync` calls in `packages/neural/classifier.ts`, whose module alias is bound from exactly
-	// that shape — and anywhere else it would have handed a mapping the comment's text where a path belongs.
-	return list.children().filter((child) => child.isNamed() && child.kind() !== "comment")
-}
-
-/**
- * Whether a node is an object literal carrying exactly the given properties, each set to `true`.
- */
-function optionsAre(node: SgNode<Lang> | undefined, ...expected: string[]): boolean {
-	if (!node) return expected.length === 0
-
-	if (node.kind() !== "object") return false
-
-	const pairs = node.children().filter((child) => child.kind() === "pair")
-
-	if (pairs.length !== expected.length) return false
-
-	return pairs.every((pair) => {
-		const key = pair.field("key")?.text()
-		const value = pair.field("value")?.text()
-
-		return key !== undefined && expected.includes(key) && value === "true"
-	})
-}
-
-/**
- * Whether a node is a `utf8` encoding argument, in either the bare-string or the options-object spelling.
- */
-function isUTF8(node: SgNode<Lang> | undefined): boolean {
-	if (!node) return false
-
-	const text = node.text()
-
-	if (/^["'`]utf-?8["'`]$/i.test(text)) return true
-
-	return node.kind() === "object" && /^\{\s*encoding:\s*["'`]utf-?8["'`]\s*,?\s*\}$/i.test(text)
-}
-
-/**
- * Whether an expression is syntactically certain to be a string.
+ * Files a CI workflow runs BEFORE `yarn install`, and the modules they reach.
  *
- * Syntactic rather than type-directed: JSSG's semantic analysis answers within one file, and the value written here is
- * routinely produced somewhere else. When neither this nor {@linkcode isCertainlyBytes} is sure, the rewrite uses
- * `writeLocalFile`, which accepts both — a wrong-but-plausible narrowing is the outcome worth avoiding.
+ * Kept in step with `PRE_INSTALL_ENTRY_POINTS` in `scripts/preinstall-scripts.test.ts`, which is what fails when one of
+ * these gains a workspace import.
  */
-function isCertainlyText(node: SgNode<Lang>): boolean {
-	const kind = node.kind()
-
-	if (kind === "string" || kind === "template_string") return true
-
-	const text = node.text()
-
-	if (text.startsWith("JSON.stringify(")) return true
-
-	if (text.startsWith("String(")) return true
-
-	if (/\.join\(/.test(text) && !/Buffer/.test(text)) return true
-
-	if (kind === "binary_expression" && node.field("operator")?.text() === "+") {
-		const left = node.field("left")
-
-		return left ? isCertainlyText(left) : false
-	}
-
-	return false
-}
+const PRE_INSTALL_FILES = [
+	"docs/scripts/check-docs-structure.ts",
+	"docs/scripts/list-stale-docs.ts",
+	"docs/scripts/docs-frontmatter.ts",
+]
 
 /**
- * Whether an expression is syntactically certain to be bytes.
+ * The PROMISES mirror. Its names already answer a promise, so a rewrite here adds no `await` — the call site already
+ * has whatever handling it needs, whether that is an `await`, a `.then`, or a slot in `Promise.all`.
  */
-function isCertainlyBytes(node: SgNode<Lang>): boolean {
-	return /^(Buffer\.(from|alloc|concat)|new (Uint8Array|Buffer))\(/.test(node.text())
-}
-
-/**
- * The value a `JSON.stringify(…)` call serializes, when the call is a plain serialization this codemod can move to
- * {@linkcode writeLocalJSONFile}.
- *
- * A REPLACER — the second argument, when it is anything but `null` or `undefined` — chooses which keys survive, so the
- * output is not the value and the swap would silently change what is written.
- */
-function jsonStringifyValue(node: SgNode<Lang>): string | undefined {
-	if (node.kind() !== "call_expression") return undefined
-
-	if (node.field("function")?.text() !== "JSON.stringify") return undefined
-
-	const args = callArguments(node)
-
-	if (!args.length) return undefined
-
-	const replacer = args[1]?.text()
-
-	if (replacer !== undefined && replacer !== "null" && replacer !== "undefined") return undefined
-
-	return args[0]!.text()
-}
-
-/**
- * Wrappers that parse a file's text as JSON, so `WRAPPER(readFileSync(p, "utf8"))` is a JSON READ spelled out.
- *
- * `tryParsingJSON` is deliberately absent: it answers `null` where these throw, and `readLocalJSONFile` throws.
- * `JSON.parse` is present, and it is the one inexact mapping here — `parseJSONStrict` raises `JSONParseError` where the
- * builtin raises `SyntaxError`, so a `catch` that tests the class sees a different one.
- */
-const JSON_PARSE_WRAPPERS = new Set(["JSON.parse", "parseJSONStrict"])
-
-/**
- * The `WRAPPER(…)` call this filesystem read is the sole argument of, when that wrapper parses JSON.
- */
-function jsonParseWrapper(call: SgNode<Lang>): SgNode<Lang> | undefined {
-	const list = call.parent()
-
-	if (list?.kind() !== "arguments") return undefined
-
-	const outer = list.parent()
-
-	if (outer?.kind() !== "call_expression") return undefined
-
-	if (!JSON_PARSE_WRAPPERS.has(outer.field("function")?.text() ?? "")) return undefined
-
-	// The sole argument. `JSON.parse(text, reviver)` transforms what it parses, and no reader here does that.
-	return callArguments(outer).length === 1 ? outer : undefined
-}
-
-type Mapping = (call: SgNode<Lang>, args: SgNode<Lang>[]) => Plan | null
-
-const MAPPINGS: Record<string, Mapping> = {
-	existsSync: (_call, args) =>
-		args.length === 1 ? { helper: "pathExists", module: READERS, args: [args[0]!.text()] } : null,
-
-	readFileSync: (call, args) => {
-		// `readFileSync(0, "utf8")` reads STDIN: the first argument is a file DESCRIPTOR, and no path helper accepts one.
-		// Only the literal form is visible here — a descriptor behind a name (`readFileSync(STDIN, …)`) reads exactly
-		// like a path, and typecheck is what catches it.
-		if (args[0]?.kind() === "number") return null
-
-		if (args.length === 1) return { helper: "readLocalBuffer", module: READERS, args: [args[0]!.text()] }
-
-		if (args.length !== 2 || !isUTF8(args[1])) return null
-
-		const wrapper = jsonParseWrapper(call)
-
-		if (wrapper) {
-			return {
-				helper: "readLocalJSONFile",
-				module: READERS,
-				args: [args[0]!.text()],
-				replaces: wrapper,
-				typeArguments: wrapper.field("type_arguments")?.text(),
-			}
-		}
-
-		return { helper: "readLocalTextFile", module: READERS, args: [args[0]!.text()] }
-	},
-
-	writeFileSync: (_call, args) => {
-		if (args.length < 2 || args.length > 3) return null
-
-		if (args.length === 3 && !isUTF8(args[2])) return null
-
-		const [path, content] = args as [SgNode<Lang>, SgNode<Lang>]
-
-		// `writeFileSync(p, JSON.stringify(x))` is a JSON write spelled out. `writeLocalJSONFile` is the same write with
-		// the house formatting — tab-indented, one trailing newline — so the BYTES change even though the value does not.
-		// A serializer with a replacer function is not that, and stays text.
-		const serialized = jsonStringifyValue(content)
-
-		if (serialized) return { helper: "writeLocalJSONFile", module: WRITERS, args: [serialized, path.text()] }
-
-		const helper = isCertainlyText(content)
-			? "writeLocalTextFile"
-			: isCertainlyBytes(content)
-				? "writeLocalBuffer"
-				: "writeLocalFile"
-
-		return { helper, module: WRITERS, args: [content.text(), path.text()] }
-	},
-
-	appendFileSync: (_call, args) => {
-		if (args.length < 2 || args.length > 3) return null
-
-		if (args.length === 3 && !isUTF8(args[2])) return null
-
-		return { helper: "appendLocalTextFile", module: WRITERS, args: [args[1]!.text(), args[0]!.text()] }
-	},
-
-	mkdirSync: (call, args) => {
-		// The created path is the difference between the two helpers' return values, so a call whose value is read is
-		// asking a question neither answers the same way.
-		if (call.parent()?.kind() !== "expression_statement") return null
-
-		if (args.length === 1) return { helper: "makeDirectoryExclusive", module: WRITERS, args: [args[0]!.text()] }
-
-		if (optionsAre(args[1], "recursive")) {
-			return { helper: "makeDirectories", module: WRITERS, args: [args[0]!.text()] }
-		}
-
-		return null
-	},
-
-	rmSync: (_call, args) => {
-		const path = args[0]?.text()
-
-		if (path === undefined) return null
-
-		// The two removal helpers are told apart by which absence they forgive, so the options decide which one this was.
-		if (optionsAre(args[1], "recursive", "force") || optionsAre(args[1], "force", "recursive")) {
-			return { helper: "removePathIfPresent", module: WRITERS, args: [path] }
-		}
-
-		if (optionsAre(args[1], "force")) return { helper: "removePathIfPresent", module: WRITERS, args: [path] }
-
-		if (optionsAre(args[1], "recursive") || args.length === 1) {
-			return { helper: "removePath", module: WRITERS, args: [path] }
-		}
-
-		return null
-	},
-
-	unlinkSync: (_call, args) =>
-		args.length === 1 ? { helper: "removePath", module: WRITERS, args: [args[0]!.text()] } : null,
-
-	readdirSync: (_call, args) => {
-		if (args.length === 1) return { helper: "readDirectory", module: READERS, args: [args[0]!.text()] }
-
-		if (optionsAre(args[1], "withFileTypes")) {
-			return { helper: "readDirectoryEntries", module: READERS, args: [args[0]!.text()] }
-		}
-
-		if (optionsAre(args[1], "recursive")) {
-			return { helper: "readDirectoryRecursive", module: READERS, args: [args[0]!.text()] }
-		}
-
-		return null
-	},
-
-	statSync: (_call, args) =>
-		args.length === 1 ? { helper: "statPath", module: READERS, args: [args[0]!.text()] } : null,
-
-	lstatSync: (_call, args) =>
-		args.length === 1 ? { helper: "statLink", module: READERS, args: [args[0]!.text()] } : null,
-
-	realpathSync: (_call, args) =>
-		args.length === 1 ? { helper: "realPath", module: READERS, args: [args[0]!.text()] } : null,
-
-	renameSync: (_call, args) =>
-		args.length === 2 ? { helper: "movePath", module: WRITERS, args: [args[0]!.text(), args[1]!.text()] } : null,
-
-	copyFileSync: (_call, args) =>
-		args.length === 2 ? { helper: "copyFileTo", module: WRITERS, args: [args[0]!.text(), args[1]!.text()] } : null,
-
-	// `fs.cp` defaults `force` to true, so `{ recursive, force }` asks for what `{ recursive }` already gives.
-	cpSync: (_call, args) =>
-		args.length === 3 &&
-		(optionsAre(args[2], "recursive") ||
-			optionsAre(args[2], "recursive", "force") ||
-			optionsAre(args[2], "force", "recursive"))
-			? { helper: "copyPath", module: WRITERS, args: [args[0]!.text(), args[1]!.text()] }
-			: null,
-
-	symlinkSync: (_call, args) =>
-		args.length === 2 || args.length === 3
-			? { helper: "createSymbolicLink", module: WRITERS, args: args.map((argument) => argument.text()) }
-			: null,
-
-	chmodSync: (_call, args) =>
-		args.length === 2 ? { helper: "changeMode", module: WRITERS, args: [args[0]!.text(), args[1]!.text()] } : null,
-
-	utimesSync: (_call, args) =>
-		args.length === 3
-			? { helper: "setTimestamps", module: WRITERS, args: args.map((argument) => argument.text()) }
-			: null,
-}
+const PROMISE_MODULES = new Set(["@mailwoman/platform/fs/promises", "node:fs/promises"])
 
 const FUNCTION_KINDS = new Set(["arrow_function", "function_declaration", "function_expression", "method_definition"])
 
@@ -719,7 +442,7 @@ function syncBindings(rootNode: SgNode<Lang>): Binding[] {
 	for (const statement of rootNode.findAll({ rule: { kind: "import_statement" } })) {
 		const source = statement.field("source")?.text().slice(1, -1)
 
-		if (source === undefined || !SOURCE_MODULES.has(source)) continue
+		if (source === undefined || !(SOURCE_MODULES.has(source) || PROMISE_MODULES.has(source))) continue
 
 		const holder = statement.find({ rule: { kind: "named_imports" } })
 
@@ -742,7 +465,7 @@ function syncBindings(rootNode: SgNode<Lang>): Binding[] {
 
 		const source = callArguments(call)[0]?.text().slice(1, -1)
 
-		if (source === undefined || !SOURCE_MODULES.has(source)) continue
+		if (source === undefined || !(SOURCE_MODULES.has(source) || PROMISE_MODULES.has(source))) continue
 
 		bindings.push({ holder: name, names: specifierNames(name) })
 	}
@@ -831,6 +554,50 @@ function importSource(node: SgNode<Lang>): string | undefined {
 	const specifier = callArguments(node)[0]
 
 	return specifier?.kind() === "string" ? specifier.text().slice(1, -1) : undefined
+}
+
+/**
+ * The names this file binds from the PROMISES mirror, so `readFile` can be told from a same-named local helper.
+ */
+function promiseBindings(rootNode: SgNode<Lang>): Set<string> {
+	const names = new Set<string>()
+
+	// The deferred form too — `const { readFile } = await import("@mailwoman/platform/fs/promises")` is how a
+	// Node-only module reaches a file the bundler also reads, and it is invisible to an import-statement query.
+	for (const declarator of rootNode.findAll({ rule: { kind: "variable_declarator" } })) {
+		const name = declarator.field("name")
+		const value = declarator.field("value")
+
+		if (!name || name.kind() !== "object_pattern" || !value) continue
+
+		const call = value.kind() === "await_expression" ? value.children().find((child) => child.isNamed()) : value
+
+		if (!call || call.kind() !== "call_expression") continue
+
+		if (call.field("function")?.text() !== "import") continue
+
+		const source = callArguments(call)[0]?.text().slice(1, -1)
+
+		if (source === undefined || !PROMISE_MODULES.has(source)) continue
+
+		for (const bound of specifierNames(name)) {
+			names.add(bound)
+		}
+	}
+
+	for (const statement of rootNode.findAll({ rule: { kind: "import_statement" } })) {
+		const source = statement.field("source")?.text().slice(1, -1)
+
+		if (source === undefined || !PROMISE_MODULES.has(source)) continue
+
+		const holder = statement.find({ rule: { kind: "named_imports" } })
+
+		if (holder) {
+			for (const name of specifierNames(holder)) names.add(name)
+		}
+	}
+
+	return names
 }
 
 /**
@@ -932,6 +699,10 @@ interface Pass {
 	bindings: Binding[]
 	namespaces: Set<string>
 	bound: Set<string>
+	/**
+	 * Names bound from the PROMISES mirror, which already answer a promise.
+	 */
+	promiseNames: Set<string>
 }
 
 function collapseJSONSpellings(pass: Pass): void {
@@ -1028,6 +799,7 @@ function rewriteFilesystemCalls(pass: Pass): void {
 		cascades,
 		namespaces,
 		bound,
+		promiseNames,
 	} = pass
 
 	for (const call of rootNode.findAll({ rule: { kind: "call_expression" } })) {
@@ -1039,7 +811,7 @@ function rewriteFilesystemCalls(pass: Pass): void {
 		// (`fs.readFileSync(…)`). The second is how a Node-only module reaches a file the bundler also reads.
 		let name: string | undefined
 
-		if (callee.kind() === "identifier" && bound.has(callee.text())) {
+		if (callee.kind() === "identifier" && (bound.has(callee.text()) || promiseNames.has(callee.text()))) {
 			name = callee.text()
 		} else if (callee.kind() === "member_expression" && namespaces.has(callee.field("object")?.text() ?? "")) {
 			name = callee.field("property")?.text()
@@ -1047,7 +819,8 @@ function rewriteFilesystemCalls(pass: Pass): void {
 
 		if (!name) continue
 
-		const mapping = MAPPINGS[name]
+		const alreadyPromise = promiseNames.has(name)
+		const mapping = alreadyPromise ? PROMISE_MAPPINGS[name] : MAPPINGS[name]
 
 		if (!mapping) continue
 
@@ -1059,7 +832,7 @@ function rewriteFilesystemCalls(pass: Pass): void {
 
 		let stayingSynchronous = false
 
-		if (!topLevel && !host.isAsync && !host.promotable && !host.inPromotionSet) {
+		if (!alreadyPromise && !topLevel && !host.isAsync && !host.promotable && !host.inPromotionSet) {
 			// The call stands in a plain synchronous function. It can still move, but only if that function and every
 			// caller of it inside this file can become `async` — which `cascade` answers all-or-nothing.
 			const owner = host.fn && [...locals.values()].find((candidate) => candidate.fn.id() === host.fn?.id())
@@ -1103,9 +876,9 @@ function rewriteFilesystemCalls(pass: Pass): void {
 		}
 
 		const target = plan.replaces ?? call
-		const keyword = stayingSynchronous ? "" : "await "
+		const keyword = stayingSynchronous || alreadyPromise ? "" : "await "
 		const expression = `${keyword}${plan.helper}${plan.typeArguments ?? ""}(${plan.args.join(", ")})`
-		const wrap = !stayingSynchronous && needsParentheses(target)
+		const wrap = !stayingSynchronous && !alreadyPromise && needsParentheses(target)
 
 		edits.push(target.replace(wrap ? `(${expression})` : expression))
 		replaced.push(target)
@@ -1282,9 +1055,16 @@ const codemod: Codemod<Lang> = async (root, options) => {
 	// pair exists precisely so this directory is the only reader of `@mailwoman/platform/fs`.
 	if (/packages\/core\/fs\//.test(root.filename())) return null
 
+	// PRE-INSTALL entry points and what they reach. The Docs workflow runs these before `yarn install`, so every module
+	// they import must resolve from the checkout alone — a relative path or a `node:` builtin. A workspace import here
+	// resolves on a developer machine, passes review, and fails only on CI as `ERR_MODULE_NOT_FOUND`, which reads as a
+	// broken checkout. `scripts/preinstall-scripts.test.ts` is the executable half of that exemption.
+	if (PRE_INSTALL_FILES.some((name) => root.filename().endsWith(name))) return null
+
 	const bindings = syncBindings(rootNode)
 	const namespaces = namespaceBindings(rootNode)
 	const bound = new Set(bindings.flatMap((binding) => binding.names))
+	const promiseNames = promiseBindings(rootNode)
 	const edits: Edit[] = []
 	const rewritten = new Set<string>()
 	const replaced: SgNode<Lang>[] = []
@@ -1316,6 +1096,7 @@ const codemod: Codemod<Lang> = async (root, options) => {
 		bindings,
 		namespaces,
 		bound,
+		promiseNames,
 	}
 
 	collapseJSONSpellings(pass)

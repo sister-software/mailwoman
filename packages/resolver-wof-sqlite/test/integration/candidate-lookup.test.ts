@@ -17,7 +17,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { copyFile } from "@mailwoman/platform/fs/promises"
+import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { rankByPrimaryPreference, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
@@ -988,7 +988,7 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 		// Reproduce a pre-#28 gazetteer by removing the column from a real build, rather than hand-writing
 		// an old DDL that could drift from what the old builder actually emitted.
 		const legacyPath = scratch.resolve("candidate-legacy.db")
-		await copyFile(scoredPath, legacyPath)
+		await copyFileTo(scoredPath, legacyPath)
 		using rw = new DatabaseClient<WOFDatabase>(legacyPath)
 		rw.exec("ALTER TABLE candidate DROP COLUMN importance")
 
@@ -1244,7 +1244,7 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 		// Reproduce a pre-sidecar candidate.db by dropping the tables from a real build — the same
 		// vintage discipline as the pre-#28 importance-column test above.
 		const preSidecarPath = scratch.resolve("candidate-pre-sidecar.db")
-		await copyFile(candidatePath, preSidecarPath)
+		await copyFileTo(candidatePath, preSidecarPath)
 		using rw = new DatabaseClient<WOFDatabase>(preSidecarPath)
 		rw.exec("DROP TABLE candidate_ancestor; DROP TABLE candidate_interval;")
 

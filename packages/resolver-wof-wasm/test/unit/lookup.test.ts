@@ -9,8 +9,8 @@
  *   Node too (it's the same .wasm built once and used everywhere).
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
@@ -117,7 +117,7 @@ beforeAll(async () => {
 	const output = scratch.resolve("slim.db")
 	buildFixtureWOF(source)
 	await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 10 })
-	slimBytes = await readFile(output)
+	slimBytes = await readLocalBuffer(output)
 })
 
 afterAll(async () => {

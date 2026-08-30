@@ -33,8 +33,8 @@
 
 import { readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { createWriteStream } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { $ } from "zx"
 
@@ -347,7 +347,7 @@ export async function buildCoverageTiles(
 	// --- Stream features to NDJSON ---
 	await makeDirectories(path.dirname(opts.out))
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
-	const sink = createWriteStream(ndjsonPath)
+	const sink = openWriteStream(ndjsonPath)
 	let featureCount = 0
 
 	const emitResolution = async (res: number, sql: string, bandOverride?: [number, number]): Promise<void> => {

@@ -13,14 +13,13 @@
  *   fixture shape.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/utils"
 import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
 import { buildCorpus, type BuildStage } from "@mailwoman/corpus/build"
 import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"
 import type { ParquetRow } from "@mailwoman/corpus/utils/parquet"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -62,20 +61,20 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.splits.counts.train).toBeGreaterThan(0)
 
 		// Top-level manifest written
-		const onDisk = parseJSONStrict<{ corpus_version: string }>(await readFile(join(outDir, "MANIFEST.json"), "utf8"))
+		const onDisk = await readLocalJSONFile<{ corpus_version: string }>(join(outDir, "MANIFEST.json"))
 		expect(onDisk.corpus_version).toBe("0.1.0")
 
 		// Per-stage artifacts exist
-		const corpusManifest = parseJSONStrict<{
+		const corpusManifest = await readLocalJSONFile<{
 			total_rows: number
 			shards: Array<{ split: string; format: string; path: string }>
-		}>(await readFile(join(outDir, "corpus-v0.1.0", "MANIFEST.json"), "utf8"))
+		}>(join(outDir, "corpus-v0.1.0", "MANIFEST.json"))
 
 		expect(corpusManifest.total_rows).toBe(manifest.total_aligned_rows)
 		expect(corpusManifest.shards.length).toBeGreaterThanOrEqual(1)
 
-		const splitManifest = parseJSONStrict<{ corpus_version: string; holdouts: Record<string, string[]> }>(
-			await readFile(join(outDir, "splits", "SPLIT_MANIFEST.json"), "utf8")
+		const splitManifest = await readLocalJSONFile<{ corpus_version: string; holdouts: Record<string, string[]> }>(
+			join(outDir, "splits", "SPLIT_MANIFEST.json")
 		)
 
 		expect(splitManifest.corpus_version).toBe("0.1.0")

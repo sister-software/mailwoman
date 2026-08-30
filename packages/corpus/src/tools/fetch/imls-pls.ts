@@ -25,10 +25,9 @@
 
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { rm } from "@mailwoman/platform/fs/promises"
 import { basename, join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -136,7 +135,7 @@ export async function fetchIMLSPLS(
 
 	// MARK: Remove ZIP (small, but keep destDir clean)
 
-	await rm(zipDest, { force: true })
+	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")
 
 	// MARK: Write MANIFEST

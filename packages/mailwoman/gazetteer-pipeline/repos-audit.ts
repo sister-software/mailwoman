@@ -28,9 +28,8 @@
  *   the two as one number would either overstate the risk or hide it.
  */
 
-import { pathExists, readDirectoryEntries, realPath, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readDirectoryEntries, realPath, statPath, type Dirent } from "@mailwoman/core/fs/readers"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import type { Dirent } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 
 /**

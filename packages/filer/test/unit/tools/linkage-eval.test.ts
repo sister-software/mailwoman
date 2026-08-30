@@ -11,6 +11,7 @@
  *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { FilerEdgeAssertion, FilerRelationship, type FilerDatabase } from "@mailwoman/filer/schema"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import {
@@ -32,7 +33,6 @@ import {
 	type FilerLinkageEvalResult,
 	type LinkageEvalRun,
 } from "@mailwoman/filer/tools/linkage-eval"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
@@ -324,7 +324,7 @@ describe("filerLinkageEval — reproducibility (gate 4)", () => {
 	it("regenerates the committed scorecard byte for byte", async () => {
 		const { markdown } = await runEval()
 
-		expect(markdown).toBe(await readFile(PUBLISHED_REPORT_PATH, "utf8"))
+		expect(markdown).toBe(await readLocalTextFile(PUBLISHED_REPORT_PATH))
 	})
 
 	it("emits a markdown report — no embedded JSON, headed by a dated H1", async () => {

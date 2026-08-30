@@ -30,9 +30,9 @@
  *   License: stamped `"Public Domain"` per 17 U.S.C. § 105 (US federal works).
  */
 
+import { readDirectory } from "@mailwoman/core/fs/readers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
-import { readdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -251,7 +251,7 @@ export function createUsgovNADAdapter(): CorpusAdapter {
 			// inputPath is a directory of NDJSON shards (per fetch-nad.ts featureserver output).
 			// Single-file inputs (e.g. a bulk-extracted CSV) are not currently supported — the
 			// featureserver shard pattern is the primary distribution.
-			const entries = await readdir(opts.inputPath)
+			const entries = await readDirectory(opts.inputPath)
 			const shards = entries.filter((n) => n.endsWith(".ndjson")).toSorted()
 
 			let emitted = 0

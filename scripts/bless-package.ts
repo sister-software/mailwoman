@@ -22,10 +22,8 @@
  *   is on file, releases run from CI over OIDC with no second factor at all.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import * as path from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { $, type ProcessPromise } from "zx"
@@ -140,7 +138,7 @@ interface Pkg {
 }
 
 async function readPkg(dir: string): Promise<Pkg> {
-	return parseJSONStrict<Pkg>(await readFile(path.join(dir, "package.json"), "utf8"))
+	return await readLocalJSONFile<Pkg>(path.join(dir, "package.json"))
 }
 
 function parseRepo(repository: Pkg["repository"]): string | undefined {

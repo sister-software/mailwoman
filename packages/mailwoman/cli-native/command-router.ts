@@ -1,5 +1,4 @@
-import { tryStat } from "@mailwoman/core/fs/readers"
-import { readdir } from "@mailwoman/platform/fs/promises"
+import { tryStat, readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { render } from "ink"
 import { createElement } from "react"
 import type { ComponentType } from "react"
@@ -51,7 +50,7 @@ async function runCommand(module: CommandModule, commandPath: string, argv: read
 }
 
 async function groupHelp(parts: readonly string[]): Promise<number> {
-	const entries = await readdir(new URL(`../commands/${parts.join("/")}/`, import.meta.url), { withFileTypes: true })
+	const entries = await readDirectoryEntries(new URL(`../commands/${parts.join("/")}/`, import.meta.url))
 
 	const commands = entries
 		.filter(
@@ -70,7 +69,7 @@ async function groupHelp(parts: readonly string[]): Promise<number> {
 }
 
 async function rootHelp(): Promise<number> {
-	const entries = await readdir(new URL("../commands/", import.meta.url), { withFileTypes: true })
+	const entries = await readDirectoryEntries(new URL("../commands/", import.meta.url))
 
 	const filesystemCommands = entries
 		.filter(

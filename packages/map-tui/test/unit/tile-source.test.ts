@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { readAttribution, TileSource } from "@mailwoman/map-tui/tile-source"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { createServer } from "@mailwoman/platform/http"
 import type { AddressInfo } from "@mailwoman/platform/net"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -52,7 +52,7 @@ describe("TileSource", async () => {
 
 describe("TileSource over HTTP", async () => {
 	// A minimal static server honoring single Range requests — all a remote PMTiles archive requires of its host.
-	const fixture = await readFile(FIXTURE)
+	const fixture = await readLocalBuffer(FIXTURE)
 
 	const server = createServer((request, response) => {
 		const range = /^bytes=(\d+)-(\d+)$/u.exec(request.headers.range ?? "")

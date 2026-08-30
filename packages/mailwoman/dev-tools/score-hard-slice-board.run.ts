@@ -50,10 +50,10 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver, mostSpecificResolved } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -97,7 +97,7 @@ console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
 //#region Resolver + pipelines
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-const wofPaths = wofShardPaths().filter(existsSync)
+const wofPaths = wofShardPaths().filter(pathExistsSync)
 
 if (!wofPaths.length)
 	throw new Error("no WOF shards found — this board grades the RESOLVED place, so it needs the gazetteer")

@@ -24,10 +24,10 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
+import { globPaths } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { globSync } from "@mailwoman/platform/fs"
 import { basename, dirname } from "@mailwoman/platform/path"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -194,7 +194,7 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 
 		const { canonicalizeRouteKey, normalizeStreetForKey } = streetNormalize
 
-		const shapefiles = globSync(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`).toSorted()
+		const shapefiles = await globPaths(`${options.edgesDir}/tl_*_${STATE_FIPS[STATE]}???_edges.shp`)
 
 		if (!shapefiles.length) {
 			throw new CommandError(

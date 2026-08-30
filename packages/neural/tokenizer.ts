@@ -36,6 +36,7 @@
  *       bundle clean).
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import createSentencePiece, {
 	type SentencePieceModule,
 	type SentencePieceProcessor,
@@ -160,8 +161,7 @@ export class MailwomanTokenizer {
 	 * instead.
 	 */
 	static async loadFromFile(modelPath: string): Promise<MailwomanTokenizer> {
-		const { readFile } = await import(/* webpackIgnore: true */ "@mailwoman/platform/fs/promises")
-		const buf = await readFile(modelPath)
+		const buf = await readLocalBuffer(modelPath)
 
 		return MailwomanTokenizer.loadFromBytes(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength))
 	}

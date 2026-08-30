@@ -17,8 +17,7 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { mkdir } from "@mailwoman/platform/fs/promises"
+import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
@@ -82,7 +81,7 @@ export async function buildKryptoniteShard(
 
 	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
-	await mkdir(options.outDir, { recursive: true })
+	await makeDirectories(options.outDir)
 
 	const quarantine: string[] = []
 

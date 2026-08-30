@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import {
 	WOF_POSTALCODE_ADAPTER_ID,
 	createWOFPostalcodeAdapter,
 	postcodeVariantsFor,
 } from "@mailwoman/corpus/adapters/wof-postalcode-json/adapter"
-import { rm } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -167,7 +167,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch.path, WOF_POSTALCODE_ADAPTER_ID), { recursive: true, force: true })
+		await removePathIfPresent(join(scratch.path, WOF_POSTALCODE_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),

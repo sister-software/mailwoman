@@ -24,8 +24,7 @@
  */
 
 import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
-import { readlinkSync } from "@mailwoman/platform/fs"
+import { pathExistsSync, readLinkSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 
 interface ArtifactState {
 	name: string
@@ -88,7 +87,7 @@ function artifactState(name: string, path: string): ArtifactState {
 		exists: true,
 		bytes: stat.size,
 		modified: stat.mtime.toISOString(),
-		linkTarget: link.isSymbolicLink() ? readlinkSync(path) : null,
+		linkTarget: link.isSymbolicLink() ? readLinkSync(path) : null,
 		// The house convention seals a finished database 0444. Owner-write means it is not finished.
 		sealed: (stat.mode & 0o200) === 0,
 	}

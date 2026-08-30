@@ -11,8 +11,8 @@
 
 import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { CoverageBasis, readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import { UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
@@ -120,7 +120,7 @@ async function writeFixtureSource(
 	const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
 	const csv = fixtureCSV(headerLine)
 
-	await writeFile(csvPath, csv, "utf8")
+	await writeLocalFile(csv, csvPath)
 
 	return {
 		sourceDir,
@@ -197,7 +197,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		const sourceDir = sourceDirDirectory.path
 		const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
 
-		await writeFile(csvPath, `${BOM}${OPEN_UPRN_HEADER}\r\n1,0.0,0.0,51.5,\r\n26,0.0,0.0,51.5,-2.6\r\n`, "utf8")
+		await writeLocalTextFile(`${BOM}${OPEN_UPRN_HEADER}\r\n1,0.0,0.0,51.5,\r\n26,0.0,0.0,51.5,-2.6\r\n`, csvPath)
 
 		const result = await buildUPRNLayer({
 			sourceDir,

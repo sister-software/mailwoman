@@ -40,11 +40,10 @@
  *   Baked into `meta` verbatim, alongside the source md5 and OS's own `Doc/licence.txt`.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -156,7 +155,7 @@ interface AcquisitionSidecar {
  * {@link UNKNOWN_PROVENANCE} and says so in the shard.
  */
 async function readAcquisitionSidecar(sourceDir: string): Promise<AcquisitionSidecar | null> {
-	const raw = await readFile(String(join(sourceDir, "acquisition.json")), "utf8").catch(() => null)
+	const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
 
 	return raw ? tryParsingJSON<AcquisitionSidecar>(raw) : null
 }

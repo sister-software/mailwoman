@@ -27,11 +27,11 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { readDirectorySync } from "@mailwoman/core/fs/readers-sync"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { createWriteStream } from "@mailwoman/platform/fs"
 import * as https from "@mailwoman/platform/https"
 import * as path from "@mailwoman/platform/path"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -328,7 +328,7 @@ function _downloadOnce(url: string, dest: string): Promise<void> {
 					return reject(new Error(`HTTP ${status} for ${u}`))
 				}
 
-				const out = createWriteStream(dest)
+				const out = openWriteStream(dest)
 				pipeline(res, out).then(resolve).catch(reject)
 			})
 

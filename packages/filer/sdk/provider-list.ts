@@ -1,37 +1,4 @@
-/**
- * @copyright Sister Software.
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- * @file BDC provider list CSV — streaming parser preserving multi-FRN cardinality (decision 6).
- *
- *   Source shape reference: Nexus's `sync/scripts/registrations.ts` parses `bdc_us_provider_list_*.csv`
- *   into `{frn, provider_id, holding_company}` rows via `csv.parse(contents, { columns: true })` — a
- *   whole-file, header-keyed read. This port keeps the header-keyed shape (so extra or reordered
- *   real-world columns, e.g. `provider_name`/`dba_name`, don't break it — only the three named columns
- *   below are required, anywhere in the header), but rewrites the loader per decision 8: it streams
- *   line-by-line off a `ReadStream` (`node:readline`, the same construction as {@linkcode parseForm499}
- *   in `form499.ts`) rather than reading the file whole, and it throws a descriptive error naming the
- *   file and 1-indexed line number the instant a row's column count doesn't match the header — no
- *   partial/truncated row is ever silently yielded.
- *
- *   Decision 6 is the entire point of this file, so it bears repeating exactly what NOT to copy: Nexus's
- *   `parseBDCProvidersFiles` folds every row sharing a `provider_id` into ONE `BroadbandProvider` via a
- *   `Map<ProviderID, BroadbandProvider>` — a later row's FRN is added to a `Set` (cardinality preserved
- *   there, incidentally) but its `holdingCompany` silently OVERWRITES the previous value, only warning
- *   to the console when the two strings differ. That fold happens at PARSE time, before anything
- *   downstream ever sees the discarded string. {@linkcode parseProviderList} does none of that: it is a
- *   flat streaming pass with NO `Map` keyed by `provider_id`, NO dedup, and NO last-wins — every row in
- *   the file is yielded exactly once, in file order. A `provider_id` appearing on N rows yields N
- *   {@linkcode ProviderListRow}s, full stop. The crosswalk graph (`filer.db`) is where that cardinality gets
- *   to mean something; collapsing it here would be unrecoverable downstream.
- *
- *   `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string). Unlike
- *   `Form499Row.frn`, this field is NOT nullable: the provider list — unlike a 499 filing — has no
- *   legitimate row without a resolvable FRN, so a row whose `frn` field doesn't parse is treated as
- *   malformed input and throws (decision 8), not silently coerced to `null`.
- */
-
-import { createReadStream } from "@mailwoman/platform/fs"
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { createInterface } from "@mailwoman/platform/readline"
 
 import { toFRN, type FRN } from "./frn.ts"
@@ -191,7 +158,7 @@ function toProviderListRow(
  */
 export async function* parseProviderList(csvPath: string): AsyncIterable<ProviderListRow> {
 	const lines = createInterface({
-		input: createReadStream(csvPath, { encoding: "utf8" }),
+		input: openReadStream(csvPath, { encoding: "utf8" }),
 		crlfDelay: Infinity,
 	})
 

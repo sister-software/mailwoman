@@ -6,9 +6,9 @@
  *   Download and manifest utilities for `mailwoman corpus fetch <source>`.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
 import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
 
 /**
@@ -150,7 +150,7 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 
 		try {
 			const buffer = Buffer.from(await res.arrayBuffer())
-			await writeFile(dest, buffer)
+			await writeLocalFile(buffer, dest)
 
 			return { bytes: buffer.byteLength }
 		} catch (error) {
@@ -170,7 +170,7 @@ export async function readManifest<T>(path: string): Promise<T | null> {
 
 	// A read failure (e.g. the file vanished after the existsSync probe) maps to null like corrupt
 	// JSON does; tryParsingJSON returns null for the non-string sentinel.
-	const text = await readFile(path, "utf8").catch(() => null)
+	const text = await readLocalTextFile(path).catch(() => null)
 
 	return tryParsingJSON<T>(text)
 }
@@ -193,5 +193,5 @@ export async function loadManifestEntries<T>(path: string, key: (entry: T) => st
  * Write a MANIFEST.json in the house shape: pretty-printed, trailing newline.
  */
 export async function writeManifest(path: string, manifest: unknown): Promise<void> {
-	await writeFile(path, JSON.stringify(manifest, null, 2) + "\n")
+	await writeLocalTextFile(JSON.stringify(manifest, null, 2) + "\n", path)
 }

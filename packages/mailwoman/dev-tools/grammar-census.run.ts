@@ -2,9 +2,9 @@
  * Report-only C6 census over the committed Gauntlet corpus. This command is not a release gate.
  */
 
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
-import { writeFile } from "@mailwoman/platform/fs/promises"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
@@ -171,8 +171,8 @@ for (const id of TARGET_IDS) {
 }
 
 if (values["out-json"]) {
-	await writeFile(
-		values["out-json"],
-		`${JSON.stringify({ summary, requiredIDs: TARGET_IDS, rows: reports }, null, 2)}\n`
+	await writeLocalTextFile(
+		`${JSON.stringify({ summary, requiredIDs: TARGET_IDS, rows: reports }, null, 2)}\n`,
+		values["out-json"]
 	)
 }

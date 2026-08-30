@@ -22,7 +22,7 @@
  *   with that instruction rather than skipping — a silently-skipped drift gate is not a gate.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import {
 	collectCLISurface,
 	COMMANDS_DIRECTORY,
@@ -33,7 +33,6 @@ import {
 	renderTable,
 	type CLISurface,
 } from "@mailwoman/docs/scripts/generate-cli-reference"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { beforeAll, describe, expect, it } from "vitest"
 
 /**
@@ -102,7 +101,7 @@ describe("generate-cli-reference", () => {
 	})
 
 	it("matches the committed page", async () => {
-		const committed = await readFile(OUTPUT_PATH, "utf8")
+		const committed = await readLocalTextFile(OUTPUT_PATH)
 
 		expect(
 			committed,

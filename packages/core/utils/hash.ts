@@ -6,8 +6,8 @@
  *   File and content hashing utilities.
  */
 
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { createHash } from "@mailwoman/platform/crypto"
-import { createReadStream } from "@mailwoman/platform/fs"
 
 /**
  * Streaming SHA-256 of a file, hex-encoded.
@@ -15,7 +15,7 @@ import { createReadStream } from "@mailwoman/platform/fs"
 export async function sha256File(path: string): Promise<string> {
 	const hash = createHash("sha256")
 
-	for await (const chunk of createReadStream(path)) {
+	for await (const chunk of openReadStream(path)) {
 		hash.update(chunk as Buffer)
 	}
 
@@ -41,7 +41,7 @@ export function sha256Hex(data: string | NodeJS.ArrayBufferView | string[]): str
 export async function md5File(path: string): Promise<string> {
 	const hash = createHash("md5")
 
-	for await (const chunk of createReadStream(path)) {
+	for await (const chunk of openReadStream(path)) {
 		hash.update(chunk as Buffer)
 	}
 

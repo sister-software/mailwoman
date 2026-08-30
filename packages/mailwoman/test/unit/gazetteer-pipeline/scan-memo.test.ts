@@ -13,7 +13,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { rm } from "@mailwoman/platform/fs/promises"
+import { removePath } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { computeSurfaceCountryCounts } from "mailwoman/gazetteer-pipeline/fst"
@@ -75,7 +75,7 @@ describe("computeSurfaceCountryCounts memoization", () => {
 		expect(first.get("roazhon")).toBeUndefined()
 
 		// Rebuild the artifact in place with different content, exactly as a gazetteer rebuild does.
-		await rm(path)
+		await removePath(path)
 		buildFixture(path, "Roazhon")
 		const second = await computeSurfaceCountryCounts(path)
 

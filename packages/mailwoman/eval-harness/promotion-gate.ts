@@ -68,12 +68,11 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
-import { pathExists, readLocalJSONFile, statPath, readDirectory } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, statPath, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
@@ -294,7 +293,7 @@ async function runLoreGuards(env: {
 	// interpolated verbatim into provenance.txt and compared against the literal "0".
 	const dql = async (p: string): Promise<string> => {
 		const needle = Buffer.from("DynamicQuantizeLinear", "latin1")
-		const buffer = await readFile(p)
+		const buffer = await readLocalBuffer(p)
 
 		const NEWLINE = 0x0a
 

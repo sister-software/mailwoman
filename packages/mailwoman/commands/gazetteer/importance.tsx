@@ -33,9 +33,9 @@
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { allRows, cacheRootPath, getRow } from "@mailwoman/core/utils"
 import { gunzipChunks } from "@mailwoman/platform/compression"
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
 import { get as httpsGet } from "@mailwoman/platform/https"
 import { dirname } from "@mailwoman/platform/path"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
@@ -97,7 +97,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 						res2.on("data", (chunk) => chunks.push(chunk))
 
 						res2.on("end", () => {
-							void writeFile(dest, Buffer.concat(chunks)).then(() => resolve(), reject)
+							void writeLocalBuffer(Buffer.concat(chunks), dest).then(() => resolve(), reject)
 						})
 
 						res2.on("error", reject)
@@ -111,7 +111,7 @@ function downloadToFile(url: string, dest: string): Promise<void> {
 			res.on("data", (chunk) => chunks.push(chunk))
 
 			res.on("end", () => {
-				void writeFile(dest, Buffer.concat(chunks)).then(() => resolve(), reject)
+				void writeLocalBuffer(Buffer.concat(chunks), dest).then(() => resolve(), reject)
 			})
 
 			res.on("error", reject)
@@ -212,7 +212,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 			} else {
 				console.error(`  Downloading ${IMPORTANCE_URL}...`)
 
-				await mkdir(dirname(gzPath), { recursive: true })
+				await makeDirectories(dirname(gzPath))
 
 				await downloadToFile(IMPORTANCE_URL, gzPath)
 

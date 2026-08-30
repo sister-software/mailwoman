@@ -18,7 +18,7 @@ import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase, geometryCentroid, peekProviderID, type BuildBDCResult } from "@mailwoman/bdc/sdk/build-bdc"
 import type { ProviderID } from "@mailwoman/bdc/sdk/common"
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
-import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, statPath, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
@@ -36,7 +36,6 @@ import {
 	type FilerDatabase,
 } from "@mailwoman/filer"
 import { toFRN, type ProviderListRow } from "@mailwoman/filer/sdk"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -273,7 +272,7 @@ describe("buildBDCDatabase", () => {
 				blockCentroids,
 			})
 
-			expect(await readFile(firstOut)).toEqual(await readFile(secondOut))
+			expect(await readLocalBuffer(firstOut)).toEqual(await readLocalBuffer(secondOut))
 		} finally {
 			vi.useRealTimers()
 		}

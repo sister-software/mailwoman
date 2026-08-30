@@ -19,9 +19,9 @@
  *   creep in over time as new entries land.
  */
 
+import { readDirectory } from "@mailwoman/core/fs/readers"
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/core/types"
 import { reconcileComponents } from "@mailwoman/formatter"
-import { readdir } from "@mailwoman/platform/fs/promises"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -155,7 +155,7 @@ export async function validateGoldenFile(path: string): Promise<GoldenIssue[]> {
  * Validate every `.jsonl` in a golden directory.
  */
 export async function validateGoldenDir(dir: string): Promise<GoldenReport> {
-	const files = (await readdir(dir)).filter((n) => n.endsWith(".jsonl")).toSorted()
+	const files = (await readDirectory(dir)).filter((n) => n.endsWith(".jsonl")).toSorted()
 	const issues: GoldenIssue[] = []
 	let entries = 0
 

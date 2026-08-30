@@ -9,8 +9,7 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { changeMode } from "@mailwoman/core/fs/writers"
-import { writeFile } from "@mailwoman/platform/fs/promises"
+import { changeMode, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -968,7 +967,7 @@ export async function filerLinkageEval(
 	}
 
 	if (options.outMd) {
-		await writeFile(options.outMd, markdown)
+		await writeLocalFile(markdown, options.outMd)
 		progress(`[written] ${options.outMd}`)
 	}
 

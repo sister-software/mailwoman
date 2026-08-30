@@ -12,7 +12,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeFile } from "@mailwoman/platform/fs/promises"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CoverageVerdict, CurrencyClass, triageWOFCurrency } from "mailwoman/gazetteer-pipeline/wof-triage"
@@ -191,13 +191,13 @@ describe("triageWOFCurrency", () => {
 
 		buildFixtureAdmin(adminDB)
 
-		await writeFile(
-			scratch.resolve("GB.txt"),
+		await writeLocalTextFile(
 			[
 				geonamesLine(1, "Rochester", 51.388, 0.505, "P", 28_671),
 				// An S-class row for Gillingham must not attest — feature class is the gate.
 				geonamesLine(2, "Gillingham", 51.376, 0.577, "S", 90_000),
-			].join("\n") + "\n"
+			].join("\n") + "\n",
+			scratch.resolve("GB.txt")
 		)
 
 		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch.path })

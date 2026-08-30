@@ -14,7 +14,7 @@
 
 /// <reference types="vitest/config" />
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import type { Alias } from "vite"
@@ -46,7 +46,7 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  */
 function readManifest<T>(path: string): T {
 	// oxlint-disable-next-line no-restricted-properties -- see above.
-	return JSON.parse(readFileSync(path, "utf8")) as T
+	return readLocalJSONFileSync<T>(path)
 }
 
 function workspaceAliases(): Alias[] {

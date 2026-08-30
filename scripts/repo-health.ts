@@ -9,12 +9,11 @@
  * failure disappear.
  */
 
+import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { relative, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import ts from "typescript"
@@ -181,17 +180,17 @@ function trackedSourcePaths(): string[] {
 const paths = trackedSourcePaths().filter((path) => pathExistsSync(path))
 
 const counters = emptyCounters()
-const rootManifest = parseJSONStrict<{ workspaces: string[] }>(await readFile(resolve(root, "package.json"), "utf8"))
+const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolve(root, "package.json"))
 
 const workspacePackages = await Promise.all(
 	rootManifest.workspaces.map(async (workspace) => ({
 		directory: resolve(root, workspace),
-		name: parseJSONStrict<{ name: string }>(await readFile(resolve(root, workspace, "package.json"), "utf8")).name,
+		name: (await readLocalJSONFile<{ name: string }>(resolve(root, workspace, "package.json"))).name,
 	}))
 )
 
 for (const path of paths) {
-	const text = await readFile(path, "utf8")
+	const text = await readLocalTextFile(path)
 
 	const source = ts.createSourceFile(
 		path,
@@ -230,7 +229,7 @@ if (values["write-baseline"]) {
 
 	process.stdout.write(`Updated ${relative(root, baselinePath)}\n`)
 } else {
-	const baseline = parseJSONStrict<DebtCounters>(await readFile(baselinePath, "utf8"))
+	const baseline = await readLocalJSONFile<DebtCounters>(baselinePath)
 	const regressions = Object.entries(counters).filter(([name, count]) => count > baseline[name as keyof DebtCounters])
 
 	for (const [name, count] of Object.entries(counters)) {

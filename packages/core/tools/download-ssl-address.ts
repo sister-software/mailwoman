@@ -25,9 +25,9 @@
  *   - `--concurrency <n>` — parallel per-country fetches; default `8`
  */
 
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
+import { makeDirectories, writeLocalFile } from "#fs/writers"
 import { corePackagePath } from "#utils"
 
 import { APIClient, pluckResponseData } from "../api/index.ts"
@@ -81,7 +81,7 @@ async function fetchCountry(cc: string, outDir: string): Promise<void> {
 		.fetch<string>({ url: `${BASE_URL}/${cc}`, responseType: "text" })
 		.then(pluckResponseData)
 
-	await writeFile(join(outDir, `${cc}.json`), body)
+	await writeLocalFile(body, join(outDir, `${cc}.json`))
 }
 
 /**
@@ -94,7 +94,7 @@ export async function downloadSSLAddress(
 ): Promise<{ written: number; failed: number }> {
 	const outDir = options.outDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
 	const concurrency = options.concurrency ?? 8
-	await mkdir(outDir, { recursive: true })
+	await makeDirectories(outDir)
 
 	const codes = await fetchCountryCodes()
 	report?.(`=== ssl-address: ${codes.length} countries → ${outDir}`)

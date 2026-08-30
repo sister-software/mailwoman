@@ -49,9 +49,8 @@
 
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { createWriteStream, type WriteStream } from "@mailwoman/platform/fs"
-import { mkdir } from "@mailwoman/platform/fs/promises"
+import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
+import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
@@ -158,9 +157,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
 	const built_at = new Date().toISOString()
 
-	await mkdir(opts.outputDir, { recursive: true })
+	await makeDirectories(opts.outputDir)
 	const intermediateDir = join(opts.outputDir, "intermediate")
-	await mkdir(intermediateDir, { recursive: true })
+	await makeDirectories(intermediateDir)
 
 	// 1. Adapter runs.
 	const adapterRuns: AdapterRunManifest[] = []
@@ -220,13 +219,13 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	}
 
 	const labeledStreams: Record<SplitName, WriteStream> = {
-		train: createWriteStream(labeledPaths.train, { encoding: "utf8" }),
-		val: createWriteStream(labeledPaths.val, { encoding: "utf8" }),
-		test: createWriteStream(labeledPaths.test, { encoding: "utf8" }),
+		train: openWriteStream(labeledPaths.train, { encoding: "utf8" }),
+		val: openWriteStream(labeledPaths.val, { encoding: "utf8" }),
+		test: openWriteStream(labeledPaths.test, { encoding: "utf8" }),
 	}
 
 	const quarantinePath = join(intermediateDir, "quarantine.jsonl")
-	const quarantineStream = createWriteStream(quarantinePath, { encoding: "utf8" })
+	const quarantineStream = openWriteStream(quarantinePath, { encoding: "utf8" })
 
 	let aligned = 0
 	let quarantined = 0

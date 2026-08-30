@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import { isWritableSync } from "@mailwoman/core/fs/readers-sync"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { accessSync, constants } from "@mailwoman/platform/fs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -64,7 +64,7 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 
 	expect(result.ingested).toBe(0)
 	// The staging copy must carry the write bit even though the source is sealed.
-	expect(() => accessSync(adminOut, constants.W_OK)).not.toThrow()
+	expect(() => isWritableSync(adminOut)).not.toThrow()
 })
 
 test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", async () => {

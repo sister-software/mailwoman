@@ -17,7 +17,17 @@
  *   `@mailwoman/platform/fs` is the `node:fs` mirror, and `packages/core/fs/*` is the only place that reaches it.
  */
 
-import { lstatSync, readFileSync, readdirSync, realpathSync, statSync } from "@mailwoman/platform/fs"
+import {
+	accessSync,
+	constants,
+	globSync,
+	lstatSync,
+	readFileSync,
+	readdirSync,
+	readlinkSync,
+	realpathSync,
+	statSync,
+} from "@mailwoman/platform/fs"
 import type { Dirent, Stats } from "@mailwoman/platform/fs"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -55,6 +65,22 @@ export function statLinkSync(path: PathBuilderLike | URL): Stats {
 }
 
 /**
+ * Stat a path without following a symbolic link, answering `null` when nothing is there.
+ *
+ * The link-level counterpart to {@linkcode tryStatSync}, and what `lstatSync(p, { throwIfNoEntry: false })` was spelling
+ * out.
+ */
+export function tryStatLinkSync(path: PathBuilderLike | URL): Stats | null {
+	try {
+		return lstatSync(path instanceof URL ? path : path.toString())
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === "ENOENT") return null
+
+		throw error
+	}
+}
+
+/**
  * Whether a path exists, whatever it is.
  *
  * Unlike the builtin `existsSync`, a path that cannot be READ raises rather than reporting absence: EACCES on a parent
@@ -86,6 +112,53 @@ export function isFileSync(path: PathBuilderLike | URL): boolean {
  */
 export function realPathSync(path: PathBuilderLike): string {
 	return realpathSync(path.toString())
+}
+
+/**
+ * The target a symbolic link points at, verbatim.
+ */
+export function readLinkSync(path: PathBuilderLike): string {
+	return readlinkSync(path.toString())
+}
+
+/**
+ * Whether the process may WRITE to a path. Absence reads as `false`.
+ */
+export function isWritableSync(path: PathBuilderLike): boolean {
+	try {
+		accessSync(path.toString(), constants.W_OK)
+
+		return true
+	} catch {
+		return false
+	}
+}
+
+/**
+ * Whether the process may EXECUTE a path. Absence reads as `false`.
+ */
+export function isExecutableSync(path: PathBuilderLike): boolean {
+	try {
+		accessSync(path.toString(), constants.X_OK)
+
+		return true
+	} catch {
+		return false
+	}
+}
+
+/**
+ * Every path matching a glob pattern, sorted.
+ */
+export function globPathsSync(pattern: string | string[]): string[] {
+	return [...globSync(pattern)].toSorted()
+}
+
+/**
+ * A `file:` URL is passed through whole: `node:fs` accepts the object and rejects the string it prints.
+ */
+function asTarget(path: PathBuilderLike | URL): URL | string {
+	return path instanceof URL ? path : path.toString()
 }
 
 // #endregion
@@ -142,22 +215,30 @@ export function readLocalBufferSync<S extends Array<PathBuilderLike | URL>>(...p
 /**
  * List the entry names directly inside a directory.
  */
-export function readDirectorySync(path: PathBuilderLike): string[] {
-	return readdirSync(path.toString())
+export function readDirectorySync(path: PathBuilderLike | URL): string[] {
+	return readdirSync(asTarget(path))
 }
 
 /**
  * List a directory's entries with their types, so a caller can tell a file from a directory without a stat apiece.
  */
-export function readDirectoryEntriesSync(path: PathBuilderLike): Dirent[] {
-	return readdirSync(path.toString(), { withFileTypes: true })
+export function readDirectoryEntriesSync(path: PathBuilderLike | URL): Dirent[] {
+	return readdirSync(asTarget(path), { withFileTypes: true })
 }
 
 /**
  * List every entry under a directory, at any depth, as paths relative to it.
  */
-export function readDirectoryRecursiveSync(path: PathBuilderLike): string[] {
-	return readdirSync(path.toString(), { recursive: true }) as string[]
+export function readDirectoryRecursiveSync(path: PathBuilderLike | URL): string[] {
+	return readdirSync(asTarget(path), { recursive: true }) as string[]
+}
+
+/**
+ * List every entry under a directory, at any depth, WITH its type — `Dirent.parentPath` names the directory each was
+ * found in, which a plain recursive read leaves the caller to reconstruct.
+ */
+export function readDirectoryEntriesRecursiveSync(path: PathBuilderLike | URL): Dirent[] {
+	return readdirSync(asTarget(path), { recursive: true, withFileTypes: true })
 }
 
 /**
@@ -166,9 +247,9 @@ export function readDirectoryRecursiveSync(path: PathBuilderLike): string[] {
  * An absent directory and an empty one are the same answer here. Where absence means something, use
  * {@linkcode readDirectorySync} and let the ENOENT reach you.
  */
-export function tryReadDirectorySync(path: PathBuilderLike): string[] {
+export function tryReadDirectorySync(path: PathBuilderLike | URL): string[] {
 	try {
-		return readdirSync(path.toString())
+		return readdirSync(asTarget(path))
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code === "ENOENT") return []
 

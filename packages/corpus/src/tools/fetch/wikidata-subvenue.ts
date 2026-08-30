@@ -56,9 +56,8 @@
 
 import { APIClient, type ClockLike } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
-import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -313,7 +312,7 @@ async function writePayload(
 ): Promise<WikidataFileEntry> {
 	const path = join(destDir, filename)
 	const body = JSON.stringify(results, null, 2) + "\n"
-	await writeFile(path, body)
+	await writeLocalFile(body, path)
 
 	return {
 		filename,

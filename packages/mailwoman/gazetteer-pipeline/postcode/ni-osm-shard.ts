@@ -42,11 +42,10 @@
  *   is `codepoint-shard.ts` with an Overpass-JSON reader in place of a CSV one.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -235,7 +234,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	}
 
 	phase("read", `${responsePath} (md5 ${responseMD5})`)
-	const response = parseJSONStrict<OverpassResponse>(await readFile(responsePath, "utf8"))
+	const response = await readLocalJSONFile<OverpassResponse>(responsePath)
 	const osmTimestamp = response.osm3s?.timestamp_osm_base ?? UNKNOWN_PROVENANCE
 
 	const stats = createNIOSMParseStats()
@@ -404,7 +403,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
  * in the shard.
  */
 async function readAcquisitionSidecar(sourceDir: string): Promise<NIAcquisitionSidecar | null> {
-	const raw = await readFile(String(join(sourceDir, "acquisition.json")), "utf8").catch(() => null)
+	const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
 
 	return raw ? tryParsingJSON<NIAcquisitionSidecar>(raw) : null
 }

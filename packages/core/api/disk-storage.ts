@@ -24,9 +24,11 @@
  */
 
 import { randomUUID } from "@mailwoman/platform/crypto"
-import { mkdir, readFile, rename, rm, unlink, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
+
+import { readLocalTextFile } from "#fs/readers"
+import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
 
 import { ConsoleLogger, type IRuntimeLogger } from "../logging/index.ts"
 import { tryParsingJSON } from "../objects.ts"
@@ -111,7 +113,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 		overlay.delete(key)
 
 		try {
-			await unlink(entryPath(key))
+			await removePath(entryPath(key))
 		} catch {
 			// A miss is the expected case for a key that was never persisted (or was already evicted).
 		}
@@ -152,7 +154,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			let raw: string
 
 			try {
-				raw = await readFile(entryPath(key), "utf8")
+				raw = await readLocalTextFile(entryPath(key))
 			} catch {
 				return undefined
 			}
@@ -199,9 +201,9 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			const buildingPath = `${finalPath}.${process.pid}.${randomUUID()}.building`
 
 			try {
-				await mkdir(directory, { recursive: true })
-				await writeFile(buildingPath, serialized)
-				await rename(buildingPath, finalPath)
+				await makeDirectories(directory)
+				await writeLocalFile(serialized, buildingPath)
+				await movePath(buildingPath, finalPath)
 			} catch (error) {
 				// A CACHE WRITE IS A SIDE EFFECT OF A SUCCESSFUL REQUEST, AND A FAILED SIDE EFFECT MUST NOT
 				// FAIL THE REQUEST.
@@ -221,7 +223,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				)
 
 				// Best-effort cleanup of the temp file, if the failure came after it was created.
-				await unlink(buildingPath).catch(() => undefined)
+				await removePath(buildingPath).catch(() => undefined)
 			} finally {
 				overlay.delete(key)
 			}
@@ -234,8 +236,8 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 			// Recreated rather than left absent: "the cache is empty" and "the cache directory vanished"
 			// are different states to anything inspecting the data root, and only the first is intended.
-			await rm(directory, { recursive: true, force: true })
-			await mkdir(directory, { recursive: true })
+			await removePathIfPresent(directory)
+			await makeDirectories(directory)
 		},
 	})
 }

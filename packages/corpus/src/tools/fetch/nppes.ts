@@ -26,10 +26,9 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { rm } from "@mailwoman/platform/fs/promises"
 import { basename, join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -152,7 +151,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 
 	// MARK: Remove the ZIP to reclaim ~1 GB
 
-	await rm(zipDest, { force: true })
+	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")
 
 	// MARK: Write MANIFEST (records the extracted CSV, not the ZIP)

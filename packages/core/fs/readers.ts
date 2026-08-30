@@ -13,10 +13,26 @@
  */
 
 import type { Dirent, Stats } from "@mailwoman/platform/fs"
-import { lstat, readFile, readdir, realpath, stat } from "@mailwoman/platform/fs/promises"
+import {
+	access,
+	constants,
+	glob,
+	lstat,
+	readFile,
+	readdir,
+	readlink,
+	realpath,
+	stat,
+} from "@mailwoman/platform/fs/promises"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { parseJSONStrict } from "#objects"
+
+/**
+ * The runtime's own filesystem types, re-exported so a consumer reaches `@mailwoman/core/fs` for the type as well as
+ * the function. `@mailwoman/platform/fs` stays the mirror `packages/core/fs/*` alone imports.
+ */
+export type { Dirent, PathLike, Stats } from "@mailwoman/platform/fs"
 
 // #region Stat utils
 
@@ -55,6 +71,19 @@ export function statPath(path: PathBuilderLike | URL): Promise<Stats> {
  */
 export function statLink(path: PathBuilderLike | URL): Promise<Stats> {
 	return lstat(path instanceof URL ? path : path.toString())
+}
+
+/**
+ * Stat a path without following a symbolic link, answering `null` when nothing is there.
+ *
+ * The link-level counterpart to {@linkcode tryStat}.
+ */
+export function tryStatLink(path: PathBuilderLike | URL): Promise<Stats | null> {
+	return lstat(path instanceof URL ? path : path.toString()).catch((error) => {
+		if (error.code === "ENOENT") return null
+
+		throw error
+	})
 }
 
 /**
@@ -102,6 +131,56 @@ export function tryRealPath(path: PathBuilderLike): Promise<string | null> {
 
 		throw error
 	})
+}
+
+/**
+ * The target a symbolic link points at, verbatim — relative if it was written relative.
+ *
+ * @throws EINVAL when the path is not a link, ENOENT when nothing is there.
+ */
+export function readLink(path: PathBuilderLike): Promise<string> {
+	return readlink(path.toString())
+}
+
+/**
+ * Whether the process may WRITE to a path.
+ *
+ * A permission question, not an existence one: `access` answers about the caller's credentials against the file as it
+ * stands, where a stat answers about the file. Absence reads as `false` here, which is what a caller checking "can I
+ * write here" means by it.
+ */
+export function isWritable(path: PathBuilderLike): Promise<boolean> {
+	return access(path.toString(), constants.W_OK).then(
+		() => true,
+		() => false
+	)
+}
+
+/**
+ * Whether the process may EXECUTE a path.
+ */
+export function isExecutable(path: PathBuilderLike): Promise<boolean> {
+	return access(path.toString(), constants.X_OK).then(
+		() => true,
+		() => false
+	)
+}
+
+/**
+ * Every path matching a glob pattern.
+ *
+ * Sorted, because `glob` answers in directory order and a build that names its inputs in a receipt should name them the
+ * same way twice.
+ */
+export async function globPaths(pattern: string | string[]): Promise<string[]> {
+	return (await Array.fromAsync(glob(pattern))).toSorted()
+}
+
+/**
+ * A `file:` URL is passed through whole: `node:fs` accepts the object and rejects the string it prints.
+ */
+function asTarget(path: PathBuilderLike | URL): URL | string {
+	return path instanceof URL ? path : path.toString()
 }
 
 // #endregion
@@ -173,8 +252,8 @@ export function readLocalBuffer<S extends Array<PathBuilderLike | URL>>(...pathS
  * @category Node
  * @category Files
  */
-export function readDirectory(path: PathBuilderLike): Promise<string[]> {
-	return readdir(path.toString())
+export function readDirectory(path: PathBuilderLike | URL): Promise<string[]> {
+	return readdir(asTarget(path))
 }
 
 /**
@@ -183,8 +262,8 @@ export function readDirectory(path: PathBuilderLike): Promise<string[]> {
  * @category Node
  * @category Files
  */
-export function readDirectoryEntries(path: PathBuilderLike): Promise<Dirent[]> {
-	return readdir(path.toString(), { withFileTypes: true })
+export function readDirectoryEntries(path: PathBuilderLike | URL): Promise<Dirent[]> {
+	return readdir(asTarget(path), { withFileTypes: true })
 }
 
 /**
@@ -196,8 +275,16 @@ export function readDirectoryEntries(path: PathBuilderLike): Promise<Dirent[]> {
  * @category Node
  * @category Files
  */
-export function readDirectoryRecursive(path: PathBuilderLike): Promise<string[]> {
-	return readdir(path.toString(), { recursive: true })
+export function readDirectoryRecursive(path: PathBuilderLike | URL): Promise<string[]> {
+	return readdir(asTarget(path), { recursive: true })
+}
+
+/**
+ * List every entry under a directory, at any depth, WITH its type — `Dirent.parentPath` names the directory each was
+ * found in, which a plain recursive read leaves the caller to reconstruct.
+ */
+export function readDirectoryEntriesRecursive(path: PathBuilderLike | URL): Promise<Dirent[]> {
+	return readdir(asTarget(path), { recursive: true, withFileTypes: true })
 }
 
 /**
@@ -210,8 +297,8 @@ export function readDirectoryRecursive(path: PathBuilderLike): Promise<string[]>
  * @category Node
  * @category Files
  */
-export function tryReadDirectory(path: PathBuilderLike): Promise<string[]> {
-	return readdir(path.toString()).catch((error) => {
+export function tryReadDirectory(path: PathBuilderLike | URL): Promise<string[]> {
+	return readdir(asTarget(path)).catch((error) => {
 		if (error.code === "ENOENT") return []
 
 		throw error

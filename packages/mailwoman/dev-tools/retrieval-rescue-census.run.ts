@@ -6,8 +6,8 @@
  * classified against the row's coordinate truth by `retrieval-rescue-census.ts`.
  */
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
-import { writeFile } from "@mailwoman/platform/fs/promises"
 import { parseArgs } from "@mailwoman/platform/util"
 
 import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
@@ -109,7 +109,7 @@ if (gateRows.length) {
 }
 
 if (values["out-json"]) {
-	await writeFile(values["out-json"], JSON.stringify({ summary, rows: reports }, null, 1))
+	await writeLocalJSONFile({ summary, rows: reports }, values["out-json"])
 
 	console.log(`\nwrote ${values["out-json"]}`)
 }

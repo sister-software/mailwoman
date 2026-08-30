@@ -32,10 +32,10 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
-import { createReadStream } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -236,7 +236,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// row consumed by the parser (`header: false`), so we build the column index off the first yielded row
 		// ourselves and skip forward from there.
 		if (sourcePath) {
-			for await (const cells of CSVSpliterator.fromAsync<string[]>(createReadStream(sourcePath), {
+			for await (const cells of CSVSpliterator.fromAsync<string[]>(openReadStream(sourcePath), {
 				mode: "array",
 				header: false,
 				enableQuoteHandling: true,

@@ -34,9 +34,8 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { tryStat } from "@mailwoman/core/fs/readers"
-import { writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { writeLocalBuffer, writeLocalJSONFile, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File, md5Hex } from "@mailwoman/core/utils"
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "path-ts"
 
 /**
@@ -270,7 +269,7 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 	const acquisitionPath = String(join(destDir, "acquisition.json"))
 	const queryMD5 = niPostcodeQueryMD5()
 
-	await mkdir(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	if (reuseExisting) {
 		const stats = await tryStat(responsePath)
@@ -325,7 +324,7 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 
 	phase("saved", `${body.byteLength.toLocaleString()} bytes → ${responsePath} (md5 ${md5})`)
 
-	await writeFile(`${responsePath}.md5`, `${md5}  response.json\n`, "utf8")
+	await writeLocalTextFile(`${md5}  response.json\n`, `${responsePath}.md5`)
 
 	await writeAcquisitionSidecar(acquisitionPath, {
 		endpoint,

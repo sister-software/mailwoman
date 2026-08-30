@@ -25,9 +25,9 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { createWriteStream } from "@mailwoman/platform/fs"
 import { basename, join } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -95,7 +95,7 @@ async function streamDownload(
 			const res = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(opts.timeoutMs) })
 
 			if (res.ok && res.body) {
-				await pipeline(Readable.fromWeb(res.body), createWriteStream(dest))
+				await pipeline(Readable.fromWeb(res.body), openWriteStream(dest))
 
 				return res.status
 			}

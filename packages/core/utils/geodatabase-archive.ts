@@ -22,11 +22,11 @@
  */
 
 import { execFile } from "@mailwoman/platform/child_process"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 
 import { tryStat } from "#fs/readers"
+import { makeDirectories } from "#fs/writers"
 
 import { streamToDisk } from "./stream-to-disk.ts"
 
@@ -77,7 +77,7 @@ export async function downloadZippedGeodatabase(options: DownloadZippedGeodataba
 		return geodatabasePath
 	}
 
-	await mkdir(vintageDir, { recursive: true })
+	await makeDirectories(vintageDir)
 
 	const archivePath = join(vintageDir, options.resource)
 
@@ -94,7 +94,7 @@ export async function downloadZippedGeodatabase(options: DownloadZippedGeodataba
 
 	options.onProgress?.("unzipping")
 
-	await mkdir(geodatabasePath, { recursive: true })
+	await makeDirectories(geodatabasePath)
 	await execFileAsync("unzip", ["-o", "-q", archivePath, "-d", geodatabasePath])
 
 	return geodatabasePath

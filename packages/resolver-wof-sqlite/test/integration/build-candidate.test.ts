@@ -19,6 +19,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import {
 	buildCandidateTable,
@@ -694,19 +695,18 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		const geonamesDir = scratch.resolve("geonames")
 
 		buildFixtureCurrency(input)
-		const { mkdir, writeFile } = await import("@mailwoman/platform/fs/promises")
 
-		await mkdir(geonamesDir, { recursive: true })
+		await makeDirectories(geonamesDir)
 
-		await writeFile(
-			join(geonamesDir, "GB.txt"),
+		await writeLocalTextFile(
 			[
 				geonamesLine(1, "Rochester", 51.388, 0.505, "P", 28_671),
 				geonamesLine(2, "Tinyham", 54.001, -1.001, "P", 300),
 				geonamesLine(3, "Ghosttown", 55.001, -1.201, "P", 5000),
 				// an S-class row must never attest
 				geonamesLine(4, "Oldblob", 52.001, -1.001, "S", 90_000),
-			].join("\n") + "\n"
+			].join("\n") + "\n",
+			join(geonamesDir, "GB.txt")
 		)
 
 		await buildCandidateTable({

@@ -23,12 +23,10 @@
  *   visible instead of leaving it as a filesystem detail.
  */
 
-import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
-import { pathExistsSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { readDirectoryEntries, type Dirent } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLinkSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
-import type { Dirent } from "@mailwoman/platform/fs"
-import { readlinkSync } from "@mailwoman/platform/fs"
 import { basename, join, relative } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -208,7 +206,7 @@ async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ path
 function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
 	const rel = relative(dataRoot, path)
 	const segment = rel.split("/")[0] ?? ""
-	const link = statLinkSync(path).isSymbolicLink() ? readlinkSync(path) : undefined
+	const link = statLinkSync(path).isSymbolicLink() ? readLinkSync(path) : undefined
 	const bytes = pathExistsSync(path) ? statPathSync(path).size : 0
 
 	const base: InventoryEntry = {

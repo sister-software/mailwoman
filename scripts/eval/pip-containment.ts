@@ -19,12 +19,11 @@
  *   NAME] [--json OUT]
  */
 
-import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { globPathsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { writeLocalJSONFileSync } from "@mailwoman/core/fs/writers-sync"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, pyFixed } from "@mailwoman/core/utils"
-import { globSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 
 /**
@@ -38,7 +37,7 @@ function adminRoots(): string[] {
 	let matched: string[]
 
 	try {
-		matched = [...globSync(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)]
+		matched = globPathsSync(`${WOF_REPOS}/whosonfirst-data/whosonfirst-data-admin-*/data`)
 	} catch {
 		matched = []
 	}

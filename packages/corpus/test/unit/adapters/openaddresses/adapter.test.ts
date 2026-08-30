@@ -4,13 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
+import { removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import {
 	OPENADDRESSES_ADAPTER_ID,
 	OPENADDRESSES_DEFAULT_LICENSE,
 	createOpenaddressesAdapter,
 } from "@mailwoman/corpus/adapters/openaddresses/adapter"
-import { rm, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -178,7 +178,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			}),
 		]
 
-		await writeFile(inline, `${lines.join("\n")}\n`, "utf8")
+		await writeLocalTextFile(`${lines.join("\n")}\n`, inline)
 
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
@@ -218,7 +218,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			"",
 		]
 
-		await writeFile(messy, `${lines.join("\n")}\n`, "utf8")
+		await writeLocalTextFile(`${lines.join("\n")}\n`, messy)
 
 		const manifest = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
@@ -240,7 +240,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch.path, OPENADDRESSES_ADAPTER_ID), { recursive: true, force: true })
+		await removePathIfPresent(join(scratch.path, OPENADDRESSES_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
@@ -310,7 +310,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			},
 		})
 
-		await writeFile(upper, `${line}\n`, "utf8")
+		await writeLocalTextFile(`${line}\n`, upper)
 
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),

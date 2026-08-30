@@ -17,9 +17,9 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePath, movePath } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWriteStream } from "@mailwoman/platform/fs"
 
 /**
  * Southern edge of the US including Puerto Rico and Hawaii.
@@ -97,7 +97,7 @@ export async function buildFDICHoldout(): Promise<void> {
 		await removePath(tmp)
 	}
 
-	const sink = createWriteStream(tmp, { encoding: "utf8" })
+	const sink = openWriteStream(tmp, { encoding: "utf8" })
 	sink.write("address;city;state;zip;lat;lon\n")
 
 	let total = 0

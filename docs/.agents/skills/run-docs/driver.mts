@@ -19,10 +19,10 @@
  *   Env: MAILWOMAN_DOCS_URL base URL (default http://localhost:7770)
  */
 
-import { mkdir } from "node:fs/promises"
 import { dirname, resolve } from "node:path"
 import { parseArgs } from "node:util"
 
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { chromium, type Page } from "@playwright/test"
 
 // oxlint-disable-next-line sister-software/no-process-globals
@@ -65,7 +65,7 @@ function url(path: string | URL) {
 
 async function cmdScreenshot(path: string, outArg?: string) {
 	const out = resolve(outArg ?? `${SCREENSHOT_DIR}/${path.replaceAll(/[/]+/g, "_") || "root"}.png`)
-	await mkdir(dirname(out), { recursive: true })
+	await makeDirectories(dirname(out))
 
 	const result = await withPage(async (page) => {
 		const resp = await page.goto(url(path), { waitUntil: "networkidle", timeout: 60_000 })

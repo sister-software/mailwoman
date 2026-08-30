@@ -22,10 +22,9 @@
 
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
 import { spawn, spawnSync } from "@mailwoman/platform/child_process"
-import { unlink } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -186,7 +185,7 @@ export async function fetchStateHISchools(
 	const csvSha = await sha256File(csvDest)
 
 	// Remove XLSX (CSV is the canonical artifact the adapter consumes).
-	await unlink(xlsxDest)
+	await removePath(xlsxDest)
 	report?.(`  Removed XLSX (CSV kept)`)
 
 	// Write MANIFEST.

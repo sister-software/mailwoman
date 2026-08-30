@@ -34,13 +34,12 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExists, statLink, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readLink, statLink, statPath } from "@mailwoman/core/fs/readers"
 import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { readlinkSync } from "@mailwoman/platform/fs"
 import { dirname, resolve } from "@mailwoman/platform/path"
 
 import type { ReleaseInfo } from "#shared/demo-helpers"
@@ -75,7 +74,7 @@ export async function resolveWeightsArtifact(filename: string): Promise<string |
 	const st = await statLink(filePath)
 
 	if (st.isSymbolicLink()) {
-		const target = readlinkSync(filePath)
+		const target = await readLink(filePath)
 		const resolved = resolve(dirname(filePath), target)
 
 		return (await pathExists(resolved)) ? resolved : null

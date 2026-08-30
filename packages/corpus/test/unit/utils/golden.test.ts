@@ -5,6 +5,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	parseGoldenLine,
@@ -12,7 +13,6 @@ import {
 	validateGoldenDir,
 	validateGoldenFile,
 } from "@mailwoman/corpus/utils/golden"
-import { writeFile } from "@mailwoman/platform/fs/promises"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const goldenDir = repoRootPath("data", "eval", "golden", "v0.1.0")
@@ -84,15 +84,14 @@ describe("validateGoldenFile", () => {
 	it("flags both schema + reachability issues in one pass", async () => {
 		const path = scratch.resolve("test.jsonl")
 
-		await writeFile(
-			path,
+		await writeLocalTextFile(
 			[
 				'{"raw":"OK","components":{"locality":"OK"},"country":"FR","source":"golden"}',
 				'{"raw":"missing-region","components":{"locality":"missing-region","region":"Île-de-France"},"country":"FR","source":"golden"}',
 				'{"raw":"bad","components":{},"country":"fr","source":"golden"}',
 				"",
 			].join("\n"),
-			"utf8"
+			path
 		)
 
 		const issues = await validateGoldenFile(path)

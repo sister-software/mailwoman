@@ -11,9 +11,10 @@
  *   Internal helper module — no standalone command.
  */
 
+import type { Stats } from "@mailwoman/core/fs/readers"
 import { statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { mailwomanTempRoot } from "@mailwoman/core/utils"
-import { createReadStream, type Stats } from "@mailwoman/platform/fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
 import { extname, join, normalize } from "@mailwoman/platform/path"
 
@@ -87,10 +88,10 @@ export async function serveWithRangeSupport(
 				"Content-Length": end - start + 1,
 			})
 
-			createReadStream(path, { start, end }).pipe(res)
+			openReadStream(path, { start, end }).pipe(res)
 		} else {
 			res.writeHead(200, { ...base, "Content-Length": st.size })
-			createReadStream(path).pipe(res)
+			openReadStream(path).pipe(res)
 		}
 	})
 

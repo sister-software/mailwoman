@@ -26,8 +26,8 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 
 import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "../freshness.ts"
@@ -124,7 +124,7 @@ export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}
 
-	const wofPaths = wofShardPaths().filter(existsSync)
+	const wofPaths = wofShardPaths().filter(pathExistsSync)
 	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the FTS5-trigram typo
 	// fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the `<data-root>/wof/candidate.db` convention
 	// path. Absent → the admin FTS shards.

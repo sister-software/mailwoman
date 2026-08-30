@@ -35,13 +35,11 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExists, tryStat, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { copyFileTo, makeDirectories, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
+import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import type { PathLike } from "@mailwoman/platform/fs"
-import { copyFile, mkdir, unlink } from "@mailwoman/platform/fs/promises"
 import { resolve } from "@mailwoman/platform/path"
 
 import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
@@ -84,11 +82,7 @@ async function serveFromDerivedStore(dir: string, filename: string): Promise<boo
 	// Unlink first. `fs.copyFile` FOLLOWS a symlink at the destination and writes THROUGH it, leaving
 	// the symlink in place — and the registry refuses a tarball containing one (HTTP 415, YN0035).
 	// Same discipline as the rest of this script; see AGENTS.md "symlinks in the publish tarball".
-	try {
-		await removePath(dest)
-	} catch {
-		// Nothing there to remove.
-	}
+	await removePathIfPresent(dest)
 
 	await copyFileTo(cached, dest)
 	process.stderr.write(`derived store HIT → ${filename}\n`)
@@ -247,17 +241,17 @@ export async function copyWeights(destRoot: string = repoRoot) {
 
 	for (const workspace of TARGETS) {
 		const dir = resolve(destRoot, workspace)
-		await mkdir(dir, { recursive: true })
+		await makeDirectories(dir)
 		const modelDest = resolve(dir, "model.onnx")
 		const tokenizerDest = resolve(dir, "tokenizer.model")
 		// Unlink first so a pre-existing symlink (from link-dev-weights.ts) is
 		// replaced with a real file. Otherwise copyFile follows the symlink and
 		// writes through it, leaving the symlink in place — which yarn refuses
 		// to publish (npm registry rejects symlinks with HTTP 415).
-		await removeIfPresent(modelDest)
-		await removeIfPresent(tokenizerDest)
-		await copyFile(SOURCE_MODEL, modelDest)
-		await copyFile(SOURCE_TOKENIZER, tokenizerDest)
+		await removePathIfPresent(modelDest)
+		await removePathIfPresent(tokenizerDest)
+		await copyFileTo(SOURCE_MODEL, modelDest)
+		await copyFileTo(SOURCE_TOKENIZER, tokenizerDest)
 		process.stderr.write(`copied weights → ${workspace}/{model.onnx,tokenizer.model}\n`)
 
 		await materializeSoftFeed(workspace, dir)
@@ -285,8 +279,8 @@ async function materializeFST(workspace: string, dir: string) {
 	}
 
 	const dest = resolve(dir, `fst-${locale}.bin`)
-	await removeIfPresent(dest)
-	await copyFile(src, dest)
+	await removePathIfPresent(dest)
+	await copyFileTo(src, dest)
 	process.stderr.write(`copied FST → ${workspace}/fst-${locale}.bin\n`)
 }
 
@@ -310,8 +304,8 @@ async function materializeStreetMorphology(workspace: string, dir: string) {
 	}
 
 	const dest = resolve(dir, "fst-street-morphology.bin")
-	await removeIfPresent(dest)
-	await copyFile(src, dest)
+	await removePathIfPresent(dest)
+	await copyFileTo(src, dest)
 	process.stderr.write(`copied street-morphology FST → ${workspace}/fst-street-morphology.bin\n`)
 }
 
@@ -330,8 +324,8 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		}
 
 		const dest = resolve(dir, "anchor-lexicon-v1.json")
-		await removeIfPresent(dest)
-		await copyFile(SOURCE_GAZETTEER, dest)
+		await removePathIfPresent(dest)
+		await copyFileTo(SOURCE_GAZETTEER, dest)
 		process.stderr.write(`copied soft-feed → ${workspace}/anchor-lexicon-v1.json\n`)
 	}
 
@@ -343,8 +337,8 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		}
 
 		const dest = resolve(dir, "country-surface-lexicon-v1.json")
-		await removeIfPresent(dest)
-		await copyFile(SOURCE_COUNTRY, dest)
+		await removePathIfPresent(dest)
+		await copyFileTo(SOURCE_COUNTRY, dest)
 		process.stderr.write(`copied soft-feed → ${workspace}/country-surface-lexicon-v1.json\n`)
 	}
 
@@ -362,8 +356,8 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 		}
 
 		const dest = resolve(dir, basename)
-		await removeIfPresent(dest)
-		await copyFile(source, dest)
+		await removePathIfPresent(dest)
+		await copyFileTo(source, dest)
 		process.stderr.write(`copied soft-feed → ${workspace}/${basename}\n`)
 	}
 
@@ -392,7 +386,7 @@ async function materializeSoftFeed(workspace: string, dir: string) {
 
 	if (await serveFromDerivedStore(dir, `postcode-${country}.bin`)) return
 
-	await removeIfPresent(binDest)
+	await removePathIfPresent(binDest)
 	// `.release-it.json` runs `yarn compile` before invoking `gazetteer postcode-binary`,
 	// script, so packages/mailwoman/out/cli.js exists. --out is the workspace dir, so the command writes
 	// postcode-<cc>.bin directly where the `files` array expects it.
@@ -466,7 +460,7 @@ async function materializePairIndex(workspace: string, dir: string) {
 
 	if (await serveFromDerivedStore(dir, `pair-index-${country}.bin`)) return
 
-	await removeIfPresent(binDest)
+	await removePathIfPresent(binDest)
 	// `.release-it.json` runs `yarn compile` before invoking `gazetteer pair-index`, so
 	// packages/mailwoman/out/cli.js exists (same precondition as postcode-binary above).
 	const cli = resolve(repoRoot, "packages/mailwoman/out/cli.js")
@@ -498,14 +492,6 @@ async function materializePairIndex(workspace: string, dir: string) {
 	if (!(await pathExists(binDest))) throw new Error(`gazetteer pair-index ran but ${binDest} was not produced`)
 	await stashDerived(dir, `pair-index-${country}.bin`)
 	process.stderr.write(`built soft-feed → ${workspace}/pair-index-${country}.bin (delta=${entry.delta})\n`)
-}
-
-async function removeIfPresent(path: PathLike) {
-	try {
-		await unlink(path)
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error
-	}
 }
 
 runIfScript(import.meta, () => copyWeights())

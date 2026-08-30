@@ -11,7 +11,12 @@
  *   let the v7.2.0 ship-break class through untested.
  */
 
-import { readLocalJSONFileSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import {
+	readLinkSync,
+	readLocalJSONFileSync,
+	readLocalTextFileSync,
+	tryStatLinkSync,
+} from "@mailwoman/core/fs/readers-sync"
 import {
 	copyFileToSync,
 	removePathSync,
@@ -20,7 +25,6 @@ import {
 } from "@mailwoman/core/fs/writers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { lstatSync, readlinkSync } from "@mailwoman/platform/fs"
 import { dirname, resolve } from "@mailwoman/platform/path"
 
 import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
@@ -39,10 +43,10 @@ export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
 		const target = resolve(workspaceDir, entry)
-		const st = lstatSync(target, { throwIfNoEntry: false })
+		const st = tryStatLinkSync(target)
 
 		if (!st?.isSymbolicLink()) continue
-		const linkDest = readlinkSync(target)
+		const linkDest = readLinkSync(target)
 		const resolved = resolve(dirname(target), linkDest)
 		removePathSync(target)
 		copyFileToSync(resolved, target)

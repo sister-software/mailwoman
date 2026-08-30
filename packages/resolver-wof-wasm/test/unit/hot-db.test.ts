@@ -25,7 +25,7 @@
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder/types"
 import { $public } from "@mailwoman/core/env"
-import { readFile } from "@mailwoman/platform/fs/promises"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
@@ -47,7 +47,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as unknown as MailwomanLookupLike
 
 	aroundAll(async (runSuite) => {
-		const bytes = await readFile(HOT_DB_PATH!)
+		const bytes = await readLocalBuffer(HOT_DB_PATH!)
 		const { db } = await loadSlimWOFDatabase({ source: bytes })
 		using lookup = new WOFWasmPlaceLookup({ db })
 

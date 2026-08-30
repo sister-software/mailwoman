@@ -47,8 +47,9 @@
  *   not in any OS OpenData product.
  */
 
-import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
-import { removePath } from "@mailwoman/core/fs/writers"
+import { tryStat, pathExists, readDirectory, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import {
 	CoverageBasis,
@@ -61,8 +62,6 @@ import {
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { createWriteStream } from "@mailwoman/platform/fs"
-import { mkdir, readdir, readFile, writeFile } from "@mailwoman/platform/fs/promises"
 import { dirname } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -296,16 +295,15 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 		)
 	}
 
-	await mkdir(destDir, { recursive: true })
+	await makeDirectories(destDir)
 	const archivePath = String(join(destDir, download.fileName))
 
 	const writeSidecars = async (md5: string, bytes: number): Promise<void> => {
-		await writeFile(`${archivePath}.md5`, `${md5}  ${download.fileName}\n`, "utf8")
+		await writeLocalTextFile(`${md5}  ${download.fileName}\n`, `${archivePath}.md5`)
 
-		await writeFile(
-			String(join(destDir, "acquisition.json")),
+		await writeLocalTextFile(
 			`${JSON.stringify({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }, null, 2)}\n`,
-			"utf8"
+			String(join(destDir, "acquisition.json"))
 		)
 	}
 
@@ -338,7 +336,7 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 		},
 	})
 
-	await pipeline(Readable.fromWeb(response.body.pipeThrough(counter)), createWriteStream(archivePath))
+	await pipeline(Readable.fromWeb(response.body.pipeThrough(counter)), openWriteStream(archivePath))
 
 	phase("verify", `md5 vs OS-published ${download.md5}`)
 	const md5 = await md5File(archivePath)
@@ -394,7 +392,7 @@ export async function extractOpenUPRN(options: {
 	const phase = options.onPhase ?? (() => {})
 	const extractedDir = String(join(options.destDir, "extracted"))
 
-	await mkdir(extractedDir, { recursive: true })
+	await makeDirectories(extractedDir)
 
 	let csvPath: string | null = null
 	let csvBytes = 0
@@ -423,20 +421,20 @@ export async function extractOpenUPRN(options: {
 	const licensePath = String(join(extractedDir, "licence.txt"))
 	const versionsPath = String(join(extractedDir, "versions.txt"))
 
-	const licenseText = await readFile(licensePath)
+	const licenseText = await readLocalBuffer(licensePath)
 		.then(decodeProvenanceText)
 		.catch(() => "")
 
-	const versionsText = await readFile(versionsPath)
+	const versionsText = await readLocalBuffer(versionsPath)
 		.then(decodeProvenanceText)
 		.catch(() => "")
 
 	if (licenseText) {
-		await writeFile(licensePath, licenseText, "utf8")
+		await writeLocalFile(licenseText, licensePath)
 	}
 
 	if (versionsText) {
-		await writeFile(versionsPath, versionsText, "utf8")
+		await writeLocalFile(versionsText, versionsPath)
 	}
 
 	if (!csvPath) {
@@ -541,7 +539,7 @@ interface UPRNAcquisitionSidecar {
  * Locate the acquired archive in an offline `sourceDir`.
  */
 async function resolveOfflineArchive(sourceDir: string): Promise<string> {
-	const entries = await readdir(sourceDir).catch(() => [] as string[])
+	const entries = await readDirectory(sourceDir).catch(() => [] as string[])
 	const archive = entries.find((name) => /^osopenuprn_.*\.zip$/i.test(name))
 
 	if (!archive) {
@@ -569,7 +567,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	let osVersion: string
 
 	const readSidecarProvenance = async (): Promise<UPRNAcquisitionSidecar | null> => {
-		const raw = await readFile(String(join(sourceDir, "acquisition.json")), "utf8").catch(() => null)
+		const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
 
 		return raw ? tryParsingJSON<UPRNAcquisitionSidecar>(raw) : null
 	}
@@ -611,7 +609,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	const ingestPath = `${out}.ingest`
 
-	await mkdir(dirname(out), { recursive: true })
+	await makeDirectories(dirname(out))
 
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
 		if (await pathExists(stale)) {

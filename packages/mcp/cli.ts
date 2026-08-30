@@ -49,10 +49,10 @@
  */
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
@@ -113,7 +113,7 @@ const CORE_FREE_TOOLS =
 function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: ShardProvider }> {
 	corePromise ??= (async () => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-		const wofPaths = wofShardPaths().filter(existsSync)
+		const wofPaths = wofShardPaths().filter(pathExistsSync)
 		const candidateDB = resolveCandidateDBPath()
 
 		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an

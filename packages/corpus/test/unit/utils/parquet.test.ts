@@ -7,8 +7,9 @@
 /* oxlint-disable unicorn/text-encoding-identifier-case -- these assertions mirror ParquetType enum
    members (`"UTF8"`), not text-encoding identifiers; see the note in parquet.ts. */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
@@ -18,7 +19,6 @@ import {
 	writeShards,
 	type ParquetRow,
 } from "@mailwoman/corpus/utils/parquet"
-import { readFile, rm } from "@mailwoman/platform/fs/promises"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ParquetReader } from "#parquet-wrapper"
@@ -248,8 +248,8 @@ describe("writeShards", () => {
 		const valBack = await readParquet(valShard.path)
 		expect(valBack[0]!.locale).toBe("fr-FR")
 
-		const manifestOnDisk = parseJSONStrict<{ total_rows: number; schema: string[]; row_group_size: number }>(
-			await readFile(scratch.resolve("corpus-v0.1.0", "MANIFEST.json"), "utf8")
+		const manifestOnDisk = await readLocalJSONFile<{ total_rows: number; schema: string[]; row_group_size: number }>(
+			scratch.resolve("corpus-v0.1.0", "MANIFEST.json")
 		)
 
 		expect(manifestOnDisk.total_rows).toBe(4)
@@ -346,7 +346,7 @@ describe("writeShards", () => {
 	it("two runs over the same rows produce a byte-identical parquet file (deterministic sha256)", async () => {
 		const rows = [labeled({ source_id: "t-1", raw: "A" }), labeled({ source_id: "t-2", raw: "B" })]
 		const a = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
-		await rm(scratch.resolve("corpus-v0.1.0"), { recursive: true, force: true })
+		await removePathIfPresent(scratch.resolve("corpus-v0.1.0"))
 		const b = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 		expect(a.shards[0]!.sha256).toBe(b.shards[0]!.sha256)
 	})

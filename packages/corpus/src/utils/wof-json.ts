@@ -29,8 +29,8 @@
  *   silently emitted zero rows from the real corpus.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import FastGlob from "fast-glob"
 
 /**
@@ -190,7 +190,7 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 		let text: string
 
 		try {
-			text = await readFile(filePath, "utf8")
+			text = await readLocalTextFile(filePath)
 		} catch {
 			continue
 		}

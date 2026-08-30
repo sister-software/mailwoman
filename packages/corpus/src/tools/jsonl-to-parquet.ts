@@ -30,9 +30,9 @@
  *   /tmp/part-po-box.parquet
  */
 
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { createWriteStream } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -161,7 +161,7 @@ export async function jsonlToParquet(
 	// mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
 	const stagePath = join(staging.path, "rows.ndjson")
-	const stage = staging.use(createWriteStream(stagePath, { encoding: "utf8" }))
+	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))
 
 	let rows = 0
 	let lineNo = 0

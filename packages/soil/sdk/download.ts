@@ -31,9 +31,9 @@
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { streamToDisk } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 
@@ -114,7 +114,7 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 	const archivePath = join(vintageDirectory, `wss_SSA_${options.areaSymbol}.zip`)
 
 	if (!(await tryStat(root))) {
-		await mkdir(vintageDirectory, { recursive: true })
+		await makeDirectories(vintageDirectory)
 
 		if (await tryStat(archivePath)) {
 			options.onProgress?.(`${options.areaSymbol}: archive for ${options.versionDate} already downloaded`)

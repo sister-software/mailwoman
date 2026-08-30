@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-import { createWriteStream } from "@mailwoman/platform/fs"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -37,7 +36,7 @@ export interface AlignShardOptions {
 
 export async function alignCanonicalShard(args: AlignShardOptions): Promise<void> {
 	// Read phase only — the write path stays on createWriteStream.
-	const outStream = createWriteStream(args.output, { encoding: "utf8" })
+	const outStream = openWriteStream(args.output, { encoding: "utf8" })
 	let labeled = 0
 	let quarantined = 0
 	const quarantineReasons: Record<string, number> = {}

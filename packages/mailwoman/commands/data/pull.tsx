@@ -38,9 +38,9 @@
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot, md5File } from "@mailwoman/core/utils"
-import { createWriteStream } from "@mailwoman/platform/fs"
 import { basename, dirname } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -213,7 +213,7 @@ async function downloadToDisk(url: string, destPath: string): Promise<number> {
 		},
 	})
 
-	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), createWriteStream(destPath))
+	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(destPath))
 
 	return bytes
 }

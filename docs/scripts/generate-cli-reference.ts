@@ -29,7 +29,8 @@
  *   Table cells are padded the way `oxfmt` pads them, so the emitted file is already formatted.
  */
 
-import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dirname, join } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
@@ -563,10 +564,10 @@ export async function generateCLIReference(): Promise<string> {
 
 if (import.meta.main) {
 	const rendered = await generateCLIReference()
-	const existing = await readFile(OUTPUT_PATH, "utf8").catch(() => null)
+	const existing = await readLocalTextFile(OUTPUT_PATH).catch(() => null)
 
 	if (existing !== rendered) {
-		await writeFile(OUTPUT_PATH, rendered)
+		await writeLocalFile(rendered, OUTPUT_PATH)
 	}
 
 	console.log(

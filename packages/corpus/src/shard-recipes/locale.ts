@@ -26,10 +26,10 @@
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createReadStream } from "@mailwoman/platform/fs"
 import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
@@ -235,7 +235,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 	// No `encoding` on the file path — CSVSpliterator delimits raw bytes and decodes utf-8 itself; a string stream
 	// (from `{ encoding: "utf8" }`) would defeat its byte-range scanner.
 	const input: NodeJS.ReadableStream | AsyncIterable<Uint8Array> = part.path
-		? createReadStream(part.path)
+		? openReadStream(part.path)
 		: readZipEntry(part.zip!, part.csv!)
 
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")

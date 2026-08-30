@@ -10,9 +10,9 @@
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whosonfirst"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import FastGlob from "fast-glob"
@@ -295,7 +295,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 		}
 	}
 
-	const readResults = parallelMap(filePaths, (filePath) => readFile(filePath, "utf8"), { concurrency })
+	const readResults = parallelMap(filePaths, (filePath) => readLocalTextFile(filePath), { concurrency })
 
 	for await (const text of readResults) {
 		const feature = parseFeature(text, placetypes, opts.anchorLookup)

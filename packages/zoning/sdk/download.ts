@@ -26,8 +26,8 @@
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { streamToDisk } from "@mailwoman/core/utils"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 /**
@@ -65,7 +65,7 @@ export async function downloadZoningExport(options: DownloadZoningExportOptions)
 		return exportPath
 	}
 
-	await mkdir(vintageDir, { recursive: true })
+	await makeDirectories(vintageDir)
 
 	await streamToDisk({
 		url: options.url,

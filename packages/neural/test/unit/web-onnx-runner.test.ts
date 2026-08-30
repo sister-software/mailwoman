@@ -17,12 +17,12 @@
  *       output shape, no API divergence.
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { describe, expect, test } from "vitest"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via
@@ -46,7 +46,7 @@ const haveWeights = weights !== null
 
 describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 	test("loads a real model and produces logits of the expected shape", async () => {
-		const modelBytes = new Uint8Array(await readFile(weights!.modelPath))
+		const modelBytes = new Uint8Array(await readLocalBuffer(weights!.modelPath))
 		const runner = await WebONNXRunner.fromBytes(modelBytes, { useWebGPU: false })
 		const tokenIDs = [1, 2, 3, 4, 5] // arbitrary; the SP vocab assigns these to common pieces
 		const result = await runner.infer(tokenIDs)
@@ -64,7 +64,7 @@ describe.skipIf(!haveWeights)("WebONNXRunner", () => {
 	})
 
 	test("classifier.parse() works with a WebONNXRunner injected", async () => {
-		const modelBytes = new Uint8Array(await readFile(weights!.modelPath))
+		const modelBytes = new Uint8Array(await readLocalBuffer(weights!.modelPath))
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(weights!.tokenizerPath),

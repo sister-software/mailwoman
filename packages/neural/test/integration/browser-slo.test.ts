@@ -51,9 +51,9 @@
 
 import { statPath, realPath, pathExists } from "@mailwoman/core/fs/readers"
 import { pathExistsSync, readLocalBufferSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { dataRootPath, median, percentile, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
-import { createReadStream } from "@mailwoman/platform/fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
 import { createRequire } from "@mailwoman/platform/module"
 import { arch, cpus, platform, totalmem } from "@mailwoman/platform/os"
@@ -471,7 +471,7 @@ async function createAssetServer(
 			"Accept-Ranges": "bytes",
 		})
 
-		createReadStream(mount.file, { start: range.start, end: range.end }).pipe(res)
+		openReadStream(mount.file, { start: range.start, end: range.end }).pipe(res)
 	}
 
 	const serveMount = (

@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
-import { readFile, rm } from "@mailwoman/platform/fs/promises"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -95,9 +95,7 @@ describe("runAdapter", () => {
 		expect(lines[0]!.corpus_version).toBe("0.1.0")
 		expect(lines[0]!.source).toBe("syn")
 
-		const manifestOnDisk = parseJSONStrict<{ sha256: string }>(
-			await readFile(scratch.resolve("syn", "MANIFEST.json"), "utf8")
-		)
+		const manifestOnDisk = await readLocalJSONFile<{ sha256: string }>(scratch.resolve("syn", "MANIFEST.json"))
 
 		expect(manifestOnDisk.sha256).toBe(manifest.sha256)
 	})
@@ -235,8 +233,8 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const firstJsonl = await readFile(scratch.resolve("syn", "canonical.jsonl"), "utf8")
-		await rm(scratch.resolve("syn"), { recursive: true, force: true })
+		const firstJsonl = await readLocalTextFile(scratch.resolve("syn", "canonical.jsonl"))
+		await removePathIfPresent(scratch.resolve("syn"))
 
 		const second = await runAdapter({
 			adapter: make(),
@@ -245,7 +243,7 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const secondJsonl = await readFile(scratch.resolve("syn", "canonical.jsonl"), "utf8")
+		const secondJsonl = await readLocalTextFile(scratch.resolve("syn", "canonical.jsonl"))
 
 		expect(firstJsonl).toBe(secondJsonl)
 		expect(first.sha256).toBe(second.sha256)

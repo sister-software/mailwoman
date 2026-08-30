@@ -10,6 +10,7 @@
  */
 
 import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -18,7 +19,6 @@ import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@m
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { createHash } from "@mailwoman/platform/crypto"
-import { existsSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { createWOFResolver } from "@mailwoman/resolver"
 
@@ -448,7 +448,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, {
-			wofPaths: wofShardPaths().filter(existsSync),
+			wofPaths: wofShardPaths().filter(pathExistsSync),
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
 			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
 		})

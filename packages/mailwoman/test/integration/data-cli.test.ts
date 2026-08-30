@@ -14,13 +14,11 @@
  *   type-checks, tests, and publishes — and only the consumer who typed `mw` finds out.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { promisify } from "@mailwoman/platform/util"
 import { BUNDLES } from "mailwoman/data-bundles"
 import { afterAll, describe, expect, test } from "vitest"
@@ -80,8 +78,8 @@ describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page
 
 describe("the published bin names", () => {
 	test("`mailwoman` and `mw` both point at the compiled CLI", async () => {
-		const manifest = parseJSONStrict<{ bin: Record<string, string> }>(
-			await readFile(workspacePath("mailwoman", "package.json"), "utf8")
+		const manifest = await readLocalJSONFile<{ bin: Record<string, string> }>(
+			workspacePath("mailwoman", "package.json")
 		)
 
 		expect(manifest.bin).toEqual({ mailwoman: "./out/cli.js", mw: "./out/cli.js" })

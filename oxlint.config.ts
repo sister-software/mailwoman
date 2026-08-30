@@ -159,6 +159,28 @@ const TEMPORARY_DIRECTORY_REDIRECTS = ["@mailwoman/platform/fs", "@mailwoman/pla
 		"scope, register it on a file-level `AsyncDisposableStack` that one `afterAll` disposes.",
 }))
 
+/**
+ * `@mailwoman/platform/fs` and `/fs/promises` mirror `node:fs` one name for one name, because a mirror that omitted a
+ * builtin would lie about the runtime. `@mailwoman/core/fs/*` is the house idiom over that mirror, and after the
+ * 2026-08-30 migration it is the only importer left — the same posture `@mailwoman/platform/sqlite` has toward
+ * `@mailwoman/sqlite`.
+ *
+ * Both surfaces exist, and the name carries the contract on each: `statPath` raises where `tryStat` answers null,
+ * `removePath` raises where `removePathIfPresent` forgives, `makeDirectories` is idempotent where
+ * `makeDirectoryExclusive` raises EEXIST — which is what holds a lock. Reach for `readers`/`writers` first;
+ * `readers-sync`/`writers-sync` are for the slots whose caller is synchronous and not ours to change.
+ */
+const FILESYSTEM_MIRROR_REDIRECT = ["@mailwoman/platform/fs", "@mailwoman/platform/fs/promises"].map((name) => ({
+	name,
+	allowTypeImports: true,
+	message:
+		"`@mailwoman/core/fs` is the house filesystem surface, and the only importer of this mirror. Use " +
+		"`@mailwoman/core/fs/readers` + `/writers` (asynchronous, preferred), `/readers-sync` + `/writers-sync` where " +
+		"the caller is synchronous and not yours to change, `/streams` for `createReadStream`/`createWriteStream`, or " +
+		"`/temporary` for a scratch directory. Every helper takes a `PathBuilderLike` and states its contract in its " +
+		"name. File-DESCRIPTOR work has no helper yet and is the one reason to reach past this.",
+}))
+
 export default {
 	...config,
 	// The repo-local plugin (`oxlint.plugin.ts`) rides alongside the bundled Sister Software one.
@@ -209,9 +231,26 @@ export default {
 			},
 		},
 		{
-			// `@mailwoman/core/fs/temporary` is the module the redirect below points AT, so it is the one place that
-			// reaches `mkdtempDisposable` directly.
-			files: ["packages/core/fs/temporary.ts"],
+			// `packages/core/fs/*` IS the idiom the redirects below point AT, so it is the one place that reaches the
+			// `node:fs` mirror directly.
+			files: ["packages/core/fs/**/*.ts"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
+			// File-DESCRIPTOR work, which no helper covers: a partial read at an offset, a streaming append through
+			// `writeSync`, a `FileHandle` held across calls, a log opened in append mode for a child's stdio. A handle is
+			// OWNED, and moving ownership is not a rename — so these keep the mirror, and each says so in place.
+			files: [
+				"corpus-python/scripts/train_with_resume.ts",
+				"packages/bdc/sdk/build-bdc.ts",
+				"packages/core/tools/generate-language-types.ts",
+				"packages/corpus/src/tools/fetch/geonames-dump.ts",
+				"packages/mailwoman/gazetteer-pipeline/anchor-lookup.ts",
+				"packages/map-tui/tile-source.ts",
+				"packages/resolver-wof-sqlite/fst-freshness.ts",
+			],
 			rules: {
 				"typescript/no-restricted-imports": "off",
 			},
@@ -236,7 +275,7 @@ export default {
 		"typescript/no-restricted-imports": [
 			"error",
 			{
-				paths: TEMPORARY_DIRECTORY_REDIRECTS,
+				paths: [...TEMPORARY_DIRECTORY_REDIRECTS, ...FILESYSTEM_MIRROR_REDIRECT],
 				patterns: [
 					{
 						group: [NODE_BUILTIN_PATTERN],

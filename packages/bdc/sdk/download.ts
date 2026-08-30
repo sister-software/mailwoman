@@ -6,8 +6,8 @@
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { extractSingleFileZip } from "@mailwoman/core/fs/zip"
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
 import type { PathBuilderLike } from "path-ts"
 import { resolvePath } from "path-ts/resolve"
 
@@ -48,8 +48,8 @@ export async function downloadBDCFile(
 
 	const csvBuffer = await extractSingleFileZip(Buffer.from(zippedArrayBuffer))
 
-	await mkdir(destinationDir.toString(), { recursive: true })
-	await writeFile(csvPath.toString(), csvBuffer)
+	await makeDirectories(destinationDir.toString())
+	await writeLocalFile(csvBuffer, csvPath.toString())
 
 	return csvPath.toString()
 }

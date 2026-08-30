@@ -17,11 +17,11 @@
  *   the basename) is reported as `wrong_format_present`, never counted as coverage.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { open, readFile, rm } from "@mailwoman/platform/fs/promises"
+import { open } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -182,7 +182,7 @@ export async function fetchGeonamesDumps(
 		report,
 	})
 
-	const catalog = parseCountryInfo(await readFile(countryInfoDest, "utf8"))
+	const catalog = parseCountryInfo(await readLocalTextFile(countryInfoDest))
 	const countries = options.countries?.map((code) => code.trim().toUpperCase()) ?? catalog.map((row) => row.country)
 
 	const entries: GeonamesDumpFileEntry[] = []
@@ -215,19 +215,19 @@ export async function fetchGeonamesDumps(
 		try {
 			await downloadToFile({ url, dest: zipDest, timeoutMs: 300_000, retries: 2, report })
 			await extractZipEntry(zipDest, `${country}.txt`, txtDest)
-			await rm(zipDest, { force: true })
+			await removePathIfPresent(zipDest)
 
 			entries.push({
 				country,
 				filename: `${country}.txt`,
 				source_url: url,
 				sha256: await sha256File(txtDest),
-				bytes: (await readFile(txtDest)).byteLength,
+				bytes: (await readLocalBuffer(txtDest)).byteLength,
 			})
 
 			fetched++
 		} catch (error) {
-			await rm(zipDest, { force: true })
+			await removePathIfPresent(zipDest)
 
 			const message = error instanceof Error ? error.message : String(error)
 
