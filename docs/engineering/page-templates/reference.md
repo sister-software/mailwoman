@@ -6,7 +6,7 @@ Register rules are in [`../writing-system.md`](../writing-system.md) under Regis
 
 ## Frontmatter skeleton
 
-Copy this to the top of the new page. `source-of-truth` is required for this role and names the files the
+Copy this to the top of the new page. `source-of-truth` is required for this role and lists the files the
 page describes, so a reader can check the page against the code.
 
 ```yaml
@@ -64,5 +64,5 @@ curl -sS localhost:3000/v1/parse -H 'content-type: application/json' \
 - On HTTP surfaces, curl comes first, then language tabs, every tab hitting the identical endpoint.
 - On library surfaces, examples are full files with their output, not fragments.
 - Placeholders use `<CAPS_PLACEHOLDER>` with an inline replace-me comment.
-- Facts precede rationale, and `source-of-truth:` names the files a reader can check against.
+- Facts precede rationale, and `source-of-truth:` lists the files a reader can check against.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

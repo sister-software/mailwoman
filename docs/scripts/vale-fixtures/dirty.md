@@ -28,6 +28,16 @@ This design is obviously, basically, and clearly a robust and comprehensive rewr
 
 This module is load-bearing and it's not just a convenience wrapper; it is the north star.
 
+The controls are real and worth preserving.
+
+The failure is real and worth tracing.
+
+The trace names the stage that diverged.
+
+The problem is in the name.
+
+The difference is worth spelling out.
+
 The resolver decides to drop low-confidence spans before the pipeline gives up.
 
 The false-positive rate is fairly high, and it happens often near the tile boundary.

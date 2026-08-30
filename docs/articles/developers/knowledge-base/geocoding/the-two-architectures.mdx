@@ -99,7 +99,7 @@ labeling half without the lookup half, which is why it is a parser rather than a
 - **A decomposition, not a match.** You get back which piece of the input was the street and which was
   the town, with offsets into your original string. Anything downstream that needs fields rather than
   a point — deduplication, validation, formatting, record matching — needs exactly this.
-- **Answers that carry their own provenance.** Each resolved span names the gazetteer record it
+- **Answers that carry their own provenance.** Each resolved span identifies the gazetteer record it
   landed on, so a wrong answer can be traced to the span that went wrong.
 - **A small resident footprint.** The model is a file; the gazetteer is a sealed read-only database
   read from disk.

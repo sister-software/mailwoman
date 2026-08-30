@@ -5,8 +5,8 @@ once. Register rules are in [`../writing-system.md`](../writing-system.md) under
 
 ## Frontmatter skeleton
 
-Copy this to the top of the new page. `verified-with` is required for this role and names the version the
-captured output was produced against.
+Copy this to the top of the new page. `verified-with` is required for this role and records the version
+used to produce the captured output.
 
 ```yaml
 ---

@@ -175,19 +175,19 @@ curl -sS localhost:3000/v1/parse -H 'content-type: application/json' -d '{}'
 The native surface returns one envelope: an `error` string a caller matches on, and an optional
 `detail` a human reads. No other key appears, and the raw validator output is never surfaced.
 
-| Status | `error`                                     | `detail`                                    | Meaning                                            | Next step                                                     |
-| ------ | ------------------------------------------- | ------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------- |
-| `400`  | `address is required`                       | absent                                      | `address` was missing, empty, or whitespace        | Send a non-empty `address`                                    |
-| `400`  | `body must be { addresses: string[] }`      | absent                                      | `/v1/batch` body failed validation                 | Fix the body shape                                            |
-| `400`  | `body must be { tree: AddressTree, opts? }` | absent                                      | `/v1/resolve` body failed validation               | Send a `{ tree }` object                                      |
-| `400`  | `invalid request body`                      | `<field>: <message>`                        | A validated field failed                           | Read `detail`; it names the field                             |
-| `400`  | `invalid request body`                      | `malformed JSON`                            | The body did not parse as JSON                     | Send well-formed JSON                                         |
-| `413`  | `request body too large`                    | absent                                      | The body exceeded the limit, 2 MiB by default      | Split the request                                             |
-| `413`  | `batch too large: <n> > <max>`              | absent                                      | More rows than the batch cap allows                | Chunk to the cap; set `MAILWOMAN_BATCH_MAX` to raise it       |
-| `500`  | `internal error`                            | the underlying message                      | The engine faulted                                 | Read `detail`, then report it                                 |
-| `501`  | `parse not implemented`                     | absent                                      | The engine has no `parse` — the model is not wired | Install the weights package for your locale                   |
-| `503`  | `geocoder not available`                    | the install line for the missing dependency | `geocode`, `batch` or `reload` is absent           | Follow `detail`. It names the packages and the database paths |
-| `503`  | `resolver not available`                    | the same install line                       | `resolveTree` is absent                            | Follow `detail`                                               |
+| Status | `error`                                     | `detail`                                    | Meaning                                            | Next step                                               |
+| ------ | ------------------------------------------- | ------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------- |
+| `400`  | `address is required`                       | absent                                      | `address` was missing, empty, or whitespace        | Send a non-empty `address`                              |
+| `400`  | `body must be { addresses: string[] }`      | absent                                      | `/v1/batch` body failed validation                 | Fix the body shape                                      |
+| `400`  | `body must be { tree: AddressTree, opts? }` | absent                                      | `/v1/resolve` body failed validation               | Send a `{ tree }` object                                |
+| `400`  | `invalid request body`                      | `<field>: <message>`                        | A validated field failed                           | Read `detail` for the failed field                      |
+| `400`  | `invalid request body`                      | `malformed JSON`                            | The body did not parse as JSON                     | Send well-formed JSON                                   |
+| `413`  | `request body too large`                    | absent                                      | The body exceeded the limit, 2 MiB by default      | Split the request                                       |
+| `413`  | `batch too large: <n> > <max>`              | absent                                      | More rows than the batch cap allows                | Chunk to the cap; set `MAILWOMAN_BATCH_MAX` to raise it |
+| `500`  | `internal error`                            | the underlying message                      | The engine faulted                                 | Read `detail`, then report it                           |
+| `501`  | `parse not implemented`                     | absent                                      | The engine has no `parse` — the model is not wired | Install the weights package for your locale             |
+| `503`  | `geocoder not available`                    | the install line for the missing dependency | `geocode`, `batch` or `reload` is absent           | Follow `detail` for the packages and database paths     |
+| `503`  | `resolver not available`                    | the same install line                       | `resolveTree` is absent                            | Follow `detail`                                         |
 
 The `501` and `503` split is deliberate. `501` means the surface exists and the capability was never
 wired. `503` means the code is present and a deployment dependency — a gazetteer database, a resolver

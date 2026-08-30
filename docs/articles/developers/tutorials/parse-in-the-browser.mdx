@@ -84,7 +84,7 @@ cp node_modules/onnxruntime-web/dist/*.wasm public/ort/
 ```
 
 Skipping this produces the failure that reads as a model problem and is not one. When the resolved
-`.wasm` path is not fetchable the session is never created, and the error names the backend rather
+`.wasm` path is not fetchable the session is never created, and the error reports the backend rather
 than the file:
 
 ```
