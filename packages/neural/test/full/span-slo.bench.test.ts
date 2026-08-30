@@ -8,15 +8,32 @@
  *
  *   Reported, not asserted: a wall-clock threshold in CI is a flake generator. The number goes in the
  *   Phase-3 verdict; this file exists so it is reproducible.
+ *
+ *   Lives in `test/full` rather than `test/unit` because it never runs on the fast leg: it is gated on two staged
+ *   weights caches under `$MAILWOMAN_TEMP_ROOT` that no CI checkout carries, so it always skipped there while still
+ *   pulling the onnxruntime web graph into the fast leg's shared module graph at collection time.
  */
 
+import { tempRootPath } from "@mailwoman/core/utils"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
+import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { existsSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
-const V264 = "scratchpad/v264-cache/node_modules/@mailwoman/neural-weights-en-us/model.onnx"
-const V301 = "scratchpad/v301-cache/node_modules/@mailwoman/neural-weights-en-us/model.onnx"
+/**
+ * The two staged weights caches this benchmark compares, under `$MAILWOMAN_TEMP_ROOT`.
+ *
+ * `weightsCachePackageDir` owns the `node_modules/<package>` segment — the layout belongs to the weights package, and a
+ * hand-assembled path into it reads a missing artifact as "absent" rather than "looked in the wrong place".
+ */
+function stagedModel(cacheName: string): string {
+	return join(weightsCachePackageDir(String(tempRootPath(cacheName)), "en-us"), "model.onnx")
+}
+
+const V264 = stagedModel("v264-cache")
+const V301 = stagedModel("v301-cache")
 const have = existsSync(V264) && existsSync(V301)
 
 describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {

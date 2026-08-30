@@ -6,8 +6,6 @@
 	"minTokens": 80,
 	"formats": ["typescript", "tsx"],
 	"ignore": [
-		"**/*.test.ts",
-		"**/*.test.tsx",
 		"**/out/**",
 		"docs/build/**",
 		"packages/sentencepiece-wasm/sentencepiece.mjs",

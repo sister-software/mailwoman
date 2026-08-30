@@ -126,6 +126,12 @@ export default defineConfig({
 		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural/web-loader.tolerance.test.ts).
 		isolate: false,
 		testTimeout: 15_000,
+		coverage: {
+			// `reportOnFailure` defaults to false, which means ONE failing test suppresses the entire report — and the
+			// symptom is an empty coverage directory, which reads as "coverage is broken" rather than "a test failed".
+			// A run that measured 64.45% statements on the unit leg is worth keeping when a suite goes red.
+			reportOnFailure: true,
+		},
 		exclude: [
 			"**/node_modules/**",
 			"**/dist/**",

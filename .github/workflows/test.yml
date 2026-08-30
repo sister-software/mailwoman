@@ -6,8 +6,14 @@
 #
 # STRUCTURE — six legs (static, unit-fast, unit-slow, lexicon-full, react, smoke), then the `test`
 # aggregator gates on all six. unit-fast and unit-slow run the root Vitest sweep concurrently — fast
-# leg is the pure unit/lexicon surface (~317 files, ~10s); slow leg is the DB-gated integration
-# suites (CLI harness, WOF resolver, model-load tests, ~86 files, ~95s).
+# leg is the pure unit/lexicon surface; slow leg is the DB-gated integration suites (CLI harness,
+# WOF resolver, model-load tests).
+#
+# SIZES, measured 2026-08-29 on the lab workstation: fast 593 files / ~46-156s, slow 126 files /
+# ~517s. The earlier figures here (317 files / 10s and 86 files / 95s, from 2026-08-02) were off by
+# 1.9x and 5.4x, which is enough to send someone triaging CI cost at the wrong leg. Wall times move
+# with contention and with the machine; the FILE COUNTS are the durable half, so re-read them from
+# `vitest list --filesOnly` rather than trusting a number in a comment.
 #
 # lexicon-full is the sixth leg and the newest (2026-08-02). It exists because ONE test file was
 # unit-slow's entire wall-clock: the full-scale locality-surface build was 236.9s of a 253s leg, and
@@ -387,7 +393,7 @@ jobs:
   # A job that reports `skipped` is legible in the UI; one that reports `success` having tested
   # nothing is not.
   unit-slow:
-    needs: data-fleet
+    needs: [data-fleet, conformance-scope]
     if: needs.data-fleet.outputs.up == 'true'
     runs-on:
       - self-hosted
@@ -462,7 +468,84 @@ jobs:
           done
 
       - name: Test (slow)
-        run: yarn ci:test:slow
+        env:
+          CONFORMANCE: ${{ needs.conformance-scope.outputs.needed }}
+        run: |
+          if [ "$CONFORMANCE" = "true" ]; then
+            yarn ci:test:slow
+          else
+            yarn ci:test:slow --exclude '**/test/integration/conformance-*.test.ts'
+          fi
+
+  # Do the five LIVE-PIPELINE conformance suites need to run? HOSTED, for the same reason
+  # `lexicon-gate` is: deciding on a hosted runner costs nothing and keeps the four-runner
+  # `mailwoman-data` fleet for work that needs the databases.
+  #
+  # WHAT THIS DECIDES. `conformance-{nfc-nfd,whitespace,punctuation,case-folding,refinement-monotonicity}.test.ts`
+  # drive the real pipeline over the gating rows: measured 2026-08-29 at 93.4s of unit-slow's 517s,
+  # or 18% of the leg. Unlike `lexicon-full` this is NOT its own job — a fourth data-hungry leg would
+  # queue against the same scarce slots the `lexicon-gate` header complains about — so the decision
+  # is threaded into unit-slow as a vitest exclude instead.
+  #
+  # WHAT STILL RUNS EVERY PR when this holds them back: the `*-suite.test.ts` files in unit-fast,
+  # which assert the same laws against the committed fixture rows without loading a model. Each
+  # integration file's own header states the difference, and it is real: the fast leg proves the
+  # Stage 1 claim about normalization, this leg proves the claim about the whole pipeline, because
+  # the tokenizer, the lexicons, the pair indices and the resolver all read text downstream of
+  # Stage 1 and any of them could hold one form and not the other.
+  #
+  # THE FILTER IS THE PARSE PATH, deliberately broad. A narrow filter here would be the failure it
+  # exists to prevent: a suite that stops running while reporting the same green tick.
+  conformance-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      needed: ${{ steps.decide.outputs.needed }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Detect parse-path changes
+        id: changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        with:
+          filters: |
+            conformance:
+              - 'packages/mailwoman/eval-harness/conformance/**'
+              - 'packages/mailwoman/eval-harness/gauntlet/**'
+              - 'packages/mailwoman/runtime-pipeline.ts'
+              - 'packages/normalize/**'
+              - 'packages/query-shape/**'
+              - 'packages/locale-gate/**'
+              - 'packages/kind-classifier/**'
+              - 'packages/phrase-grouper/**'
+              - 'packages/core/**'
+              - 'packages/neural/**'
+              - 'packages/resolver/**'
+              - 'packages/resolver-wof-sqlite/**'
+
+      - name: Decide
+        id: decide
+        env:
+          EVENT: ${{ github.event_name }}
+          CHANGED: ${{ steps.changes.outputs.conformance }}
+        run: |
+          if [ "$EVENT" != "pull_request" ] || [ "$CHANGED" = "true" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "needed=false" >> "$GITHUB_OUTPUT"
+          echo "::notice title=conformance integration SKIPPED::No parse-path change, so the five LIVE-PIPELINE conformance suites did not run. The same laws WERE asserted against the committed fixture rows by the *-suite.test.ts files in unit-fast. What was NOT exercised is the pipeline claim: that the tokenizer, lexicons, pair indices and resolver agree with Stage 1 on these rows."
+          {
+            echo "## conformance integration: skipped (parse path unchanged)"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| laws asserted | **yes**, committed fixture rows in \`unit-fast\` |"
+            echo "| live pipeline | **no**, nothing on the parse path changed |"
+            echo "| saved | ~93s of unit-slow (18% of the leg, measured 2026-08-29) |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # Does the full-scale lexicon build need to run? HOSTED, and deliberately separate from the job it
   # gates.
@@ -855,7 +938,7 @@ jobs:
   # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
   # check reads as "waiting forever" and blocks merges silently).
   test:
-    needs: [data-fleet, static, unit-fast, unit-slow, lexicon-gate, lexicon-full, react, smoke]
+    needs: [data-fleet, static, unit-fast, unit-slow, conformance-scope, lexicon-gate, lexicon-full, react, smoke]
     if: always()
     # Hosted, always: this job only reads its `needs`, and pinning the aggregator to the fleet would
     # make it unrunnable in exactly the situation the skip path exists for.
@@ -872,7 +955,7 @@ jobs:
         # designed behaviour when lexicon-gate says no lexicon path changed, and the gate itself
         # still has to pass. Every other leg is enumerated rather than wildcarded so that a leg
         # skipping for an unexpected reason stays fatal.
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && (needs.static.result == 'skipped' || needs.unit-fast.result == 'skipped' || needs.unit-slow.result == 'skipped' || needs.lexicon-gate.result == 'skipped' || needs.react.result == 'skipped' || needs.smoke.result == 'skipped')) }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && (needs.static.result == 'skipped' || needs.unit-fast.result == 'skipped' || needs.unit-slow.result == 'skipped' || needs.conformance-scope.result == 'skipped' || needs.lexicon-gate.result == 'skipped' || needs.react.result == 'skipped' || needs.smoke.result == 'skipped')) }}
         run: |
           echo "::error::a test leg did not succeed: ${{ toJSON(needs.*.result) }}"
           exit 1
