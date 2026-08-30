@@ -26,7 +26,8 @@ import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 
-import { pathExists } from "./path-exists.ts"
+import { tryStat } from "#fs/readers"
+
 import { streamToDisk } from "./stream-to-disk.ts"
 
 const execFileAsync = promisify(execFile)
@@ -70,7 +71,7 @@ export async function downloadZippedGeodatabase(options: DownloadZippedGeodataba
 	const vintageDir = join(options.cacheRoot, options.revisionDate)
 	const geodatabasePath = join(vintageDir, options.directory)
 
-	if (await pathExists(geodatabasePath)) {
+	if (await tryStat(geodatabasePath)) {
 		options.onProgress?.(`geodatabase for ${options.revisionDate} already unzipped`)
 
 		return geodatabasePath
@@ -80,7 +81,7 @@ export async function downloadZippedGeodatabase(options: DownloadZippedGeodataba
 
 	const archivePath = join(vintageDir, options.resource)
 
-	if (await pathExists(archivePath)) {
+	if (await tryStat(archivePath)) {
 		options.onProgress?.(`archive for ${options.revisionDate} already downloaded`)
 	} else {
 		await streamToDisk({

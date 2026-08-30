@@ -34,6 +34,8 @@
  *   that at 4.1% over a national layer.
  */
 
+import { statPath } from "@mailwoman/core/fs/readers"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -46,7 +48,6 @@ import {
 	type CoverageCell,
 } from "@mailwoman/core/layers"
 import { runChunkProcess } from "@mailwoman/core/utils"
-import { rmSync, statSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -81,8 +82,8 @@ export const COASTAL_SCHEMA_VERSION = 1
  *
  * Sized against the measured ceiling on the sibling product rather than guessed: single-process runs over that layer
  * died after roughly 510,000 and 798,000 features as h3's WASM heap fragmented. NCERM's largest layer holds 7,501
- * features, so this default puts one whole layer in one process — and it is the ceiling that makes the build
- * reproducible rather than the fact that this product happens to sit far below it.
+ * features, so this default puts one whole layer in one process. That ceiling makes the build reproducible rather than
+ * the fact that this product happens to sit far below it.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
 
@@ -260,7 +261,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 			}
 		} catch (error) {
 			await kdb.destroy().catch(() => undefined)
-			rmSync(tmpPath, { force: true })
+			await removePathIfPresent(tmpPath)
 
 			throw error
 		}
@@ -270,7 +271,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 		try {
 			streamed = await runBatchedIngest(tmpPath, options)
 		} catch (error) {
-			rmSync(tmpPath, { force: true })
+			await removePathIfPresent(tmpPath)
 
 			throw error
 		}
@@ -361,14 +362,14 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 			coverageBasis: CoverageBasis.SourcePresent,
 			defenceTypeCounts: ingested.defenceTypeCounts,
 			area: ingested.area,
-			sizeBytes: sizeOf(options.out),
+			sizeBytes: await sizeOf(options.out),
 		}
 	} catch (error) {
 		await kdb.destroy().catch(() => undefined)
 
 		// A failed build leaves a partial file whose name carries this process's pid, so nothing will ever pick it up
 		// again. Removing it is the difference between a retry loop that fails and one that fills a disk.
-		rmSync(tmpPath, { force: true })
+		await removePathIfPresent(tmpPath)
 
 		throw error
 	}
@@ -667,6 +668,6 @@ function writeVocabularyRows(database: DatabaseClient<CoastalDatabase>): void {
 /**
  * The artifact's size on disk, read once for the receipt.
  */
-function sizeOf(path: string): number {
-	return statSync(path).size
+async function sizeOf(path: string): Promise<number> {
+	return (await statPath(path)).size
 }

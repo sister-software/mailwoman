@@ -80,7 +80,7 @@ export async function freezeAdmin(
 
 	if (opts.dataDir) {
 		phase("hierarchy-backfill", "places whose ancestry chain never reaches a country")
-		const geojsonRoots = discoverAdminDataRoots(opts.dataDir)
+		const geojsonRoots = await discoverAdminDataRoots(opts.dataDir)
 
 		if (!geojsonRoots.length) {
 			phase(

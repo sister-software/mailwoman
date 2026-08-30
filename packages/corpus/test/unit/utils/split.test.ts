@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import {
 	defaultHoldouts,
@@ -13,9 +14,7 @@ import {
 	writeSplitManifests,
 	writeSplitManifestsFromLabeledFiles,
 } from "@mailwoman/corpus/utils/split"
-import { mkdtemp, readFile, rm, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
 import { TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -42,15 +41,19 @@ const row = (id: string, country: string, region?: string): MinRow => ({
 	components: region ? { region } : {},
 })
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-split-"))
+	scratch = await temporaryDirectory("mailwoman-split-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
+
+function splitTextIntoArray(text: string): string[] {
+	return Array.from(TextSpliterator.from(text.trim()))
+}
 
 describe("hashBucket", () => {
 	it("is deterministic", () => {
@@ -140,6 +143,7 @@ describe("splitRows — locality holdout", () => {
 		const rows: MinRow[] = [row("us-1", "US", "Vermont"), row("us-2", "US", "Vermont"), row("us-3", "US", "Wyoming")]
 		const m1 = splitRows(rows)
 		const m2 = splitRows(rows)
+
 		expect(m1.val).toEqual(m2.val)
 		expect(m1.test).toEqual(m2.test)
 	})
@@ -148,6 +152,7 @@ describe("splitRows — locality holdout", () => {
 describe("defaultHoldouts", () => {
 	it("returns US + FR sets at minimum", () => {
 		const d = defaultHoldouts()
+
 		expect(d.US).toContain("Vermont")
 		expect(d.US).toContain("Wyoming")
 		expect(d.US).toContain("North Dakota")
@@ -159,9 +164,11 @@ describe("defaultHoldouts", () => {
 describe("writeSplitManifests", () => {
 	it("writes train/val/test txt files + SPLIT_MANIFEST.json", async () => {
 		const m = splitRows([row("us-1", "US", "Vermont"), row("us-2", "US", "Oregon"), row("fr-1", "FR", "Corse")])
-		await writeSplitManifests(m, scratch)
-		const train = await readFile(join(scratch, "train.txt"), "utf8")
-		const summary = parseJSONStrict<SplitManifestOnDisk>(await readFile(join(scratch, "SPLIT_MANIFEST.json"), "utf8"))
+		await writeSplitManifests(m, scratch.path)
+
+		const train = await readFile(scratch.resolve("train.txt"), "utf8")
+
+		const summary = parseJSONStrict<SplitManifestOnDisk>(await readFile(scratch.resolve("SPLIT_MANIFEST.json"), "utf8"))
 		expect(train.trim()).toBe("us-2")
 		expect(summary.counts.total).toBe(3)
 		expect(summary.corpus_version).toBe("0.1.0")
@@ -170,12 +177,16 @@ describe("writeSplitManifests", () => {
 
 	it("manifests are sorted (diff-friendly) and reproducible", async () => {
 		const rows: MinRow[] = [row("a", "US", "Oregon"), row("c", "US", "Oregon"), row("b", "US", "Oregon")]
-		await writeSplitManifests(splitRows(rows), scratch)
-		const first = await readFile(join(scratch, "train.txt"), "utf8")
-		await writeSplitManifests(splitRows(rows), scratch)
-		const second = await readFile(join(scratch, "train.txt"), "utf8")
+		await writeSplitManifests(splitRows(rows), scratch.path)
+
+		const first = await readFile(scratch.resolve("train.txt"), "utf8")
+
+		await writeSplitManifests(splitRows(rows), scratch.path)
+
+		const second = await readFile(scratch.resolve("train.txt"), "utf8")
+
 		expect(first).toBe(second)
-		expect([...TextSpliterator.from(first.trim())]).toEqual(["a", "b", "c"])
+		expect(splitTextIntoArray(first)).toEqual(["a", "b", "c"])
 	})
 })
 
@@ -217,9 +228,9 @@ describe("splitForRow (pure per-row decision)", () => {
 describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 	it("writes sorted train/val/test.txt + SPLIT_MANIFEST.json from per-split labeled JSONL", async () => {
 		const labeledPaths = {
-			train: join(scratch, "labeled-train.jsonl"),
-			val: join(scratch, "labeled-val.jsonl"),
-			test: join(scratch, "labeled-test.jsonl"),
+			train: scratch.resolve("labeled-train.jsonl"),
+			val: scratch.resolve("labeled-val.jsonl"),
+			test: scratch.resolve("labeled-test.jsonl"),
 		}
 
 		// Write per-split labeled files in non-sorted order to exercise the external sort.
@@ -235,23 +246,26 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 
 		const result = await writeSplitManifestsFromLabeledFiles({
 			labeledPaths,
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.1",
 			counts,
 		})
 
 		expect(result).toEqual({ train: 3, val: 2, test: 1, total: 6 })
 
-		const train = await readFile(join(scratch, "train.txt"), "utf8")
-		expect([...TextSpliterator.from(train.trim())]).toEqual(["us-a", "us-b", "us-c"])
+		const train = await readFile(scratch.resolve("train.txt"), "utf8")
 
-		const val = await readFile(join(scratch, "val.txt"), "utf8")
-		expect([...TextSpliterator.from(val.trim())]).toEqual(["vt-1", "vt-2"])
+		expect(splitTextIntoArray(train)).toEqual(["us-a", "us-b", "us-c"])
 
-		const test = await readFile(join(scratch, "test.txt"), "utf8")
+		const val = await readFile(scratch.resolve("val.txt"), "utf8")
+
+		expect(splitTextIntoArray(val)).toEqual(["vt-1", "vt-2"])
+
+		const test = await readFile(scratch.resolve("test.txt"), "utf8")
+
 		expect(test.trim()).toBe("wy-1")
 
-		const summary = parseJSONStrict<SplitManifestOnDisk>(await readFile(join(scratch, "SPLIT_MANIFEST.json"), "utf8"))
+		const summary = parseJSONStrict<SplitManifestOnDisk>(await readFile(scratch.resolve("SPLIT_MANIFEST.json"), "utf8"))
 
 		expect(summary).toMatchObject({
 			corpus_version: "0.1.1",
@@ -263,9 +277,9 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 
 	it("handles an empty per-split file (no source_ids → empty .txt)", async () => {
 		const labeledPaths = {
-			train: join(scratch, "labeled-train.jsonl"),
-			val: join(scratch, "labeled-val.jsonl"),
-			test: join(scratch, "labeled-test.jsonl"),
+			train: scratch.resolve("labeled-train.jsonl"),
+			val: scratch.resolve("labeled-val.jsonl"),
+			test: scratch.resolve("labeled-test.jsonl"),
 		}
 
 		await writeFile(labeledPaths.train, '{"source_id":"only-train"}\n')
@@ -274,13 +288,13 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 
 		await writeSplitManifestsFromLabeledFiles({
 			labeledPaths,
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.1",
 			counts: { train: 1, val: 0, test: 0 },
 		})
 
-		expect((await readFile(join(scratch, "val.txt"), "utf8")).trim()).toBe("")
-		expect((await readFile(join(scratch, "test.txt"), "utf8")).trim()).toBe("")
-		expect((await readFile(join(scratch, "train.txt"), "utf8")).trim()).toBe("only-train")
+		expect((await readFile(scratch.resolve("val.txt"), "utf8")).trim()).toBe("")
+		expect((await readFile(scratch.resolve("test.txt"), "utf8")).trim()).toBe("")
+		expect((await readFile(scratch.resolve("train.txt"), "utf8")).trim()).toBe("only-train")
 	})
 })

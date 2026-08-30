@@ -9,17 +9,21 @@
  *   determinism under a fixed seed, and the `--country-fraction` append.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { frLieuditRecipe } from "@mailwoman/corpus/shard-recipes/fr-lieudit"
 import type { ShardRecipeOpts } from "@mailwoman/corpus/shard-recipes/scaffold"
 import { gzip } from "@mailwoman/platform/compression"
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
 import type { ShardRow } from "#test-kit/shard-recipe"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const HEADER =
 	"id;id_fantoir;numero;rep;nom_voie;code_postal;code_insee;nom_commune;code_insee_ancienne_commune;nom_ancienne_commune;x;y;lon;lat;type_position;alias;nom_ld;libelle_acheminement;nom_afnor;source_position;source_nom_voie;certification_commune;cad_parcelles"
@@ -28,25 +32,15 @@ function row(id: string, numero: string, street: string, postcode: string, commu
 	return `${id};;${numero};;${street};${postcode};48004;${commune};;;766812;6375458;3.840026;44.474983;entrée;;${nomLd};;;;;1;`
 }
 
-const dirs: string[] = []
-
-function fixtureBanDir(files: Record<string, string[]>): string {
-	const dir = mkdtempSync(join(tmpdir(), "mw-fr-lieudit-"))
-
-	dirs.push(dir)
+async function fixtureBanDir(files: Record<string, string[]>): Promise<string> {
+	const dir = fixtures.use(await temporaryDirectory("mw-fr-lieudit-")).path
 
 	for (const [dept, rows] of Object.entries(files)) {
-		writeFileSync(join(dir, `adresses-${dept}.csv`), [HEADER, ...rows].join("\n") + "\n")
+		await writeLocalTextFile([HEADER, ...rows].join("\n") + "\n", join(dir, `adresses-${dept}.csv`))
 	}
 
 	return dir
 }
-
-afterEach(() => {
-	while (dirs.length) {
-		rmSync(dirs.pop()!, { recursive: true, force: true })
-	}
-})
 
 function baseOpts(overrides: Partial<ShardRecipeOpts> = {}): ShardRecipeOpts {
 	return { output: "", seed: 42, variants: 1, count: 100, ...overrides }
@@ -54,7 +48,7 @@ function baseOpts(overrides: Partial<ShardRecipeOpts> = {}): ShardRecipeOpts {
 
 describe("fr-lieudit recipe", () => {
 	it("emits dependent_locality from nom_ld, locality from nom_commune, own-line raw", async () => {
-		const banDir = fixtureBanDir({
+		const banDir = await fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
 
@@ -77,7 +71,7 @@ describe("fr-lieudit recipe", () => {
 	})
 
 	it("excludes junk/dup nom_ld rows (delegated to ban/sdk's cleanLieuDit)", async () => {
-		const banDir = fixtureBanDir({
+		const banDir = await fixtureBanDir({
 			"48": [
 				row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg"), // clean
 				row("2", "8", "Route de Pomaret", "48800", "Altier", "lieudit_complement_nom"), // header-leak
@@ -95,7 +89,7 @@ describe("fr-lieudit recipe", () => {
 	})
 
 	it("is deterministic under a fixed seed (same output twice)", async () => {
-		const banDir = fixtureBanDir({
+		const banDir = await fixtureBanDir({
 			"48": Array.from({ length: 20 }, (_, i) =>
 				row(String(i), String(i + 1), "Route de Pomaret", "48800", "Altier", `Lieu ${i}`)
 			),
@@ -112,7 +106,7 @@ describe("fr-lieudit recipe", () => {
 	})
 
 	it("--country-fraction=1 appends France + a country component to every row", async () => {
-		const banDir = fixtureBanDir({
+		const banDir = await fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
 
@@ -126,7 +120,7 @@ describe("fr-lieudit recipe", () => {
 	})
 
 	it("--country-fraction=0 (default) never appends a country component", async () => {
-		const banDir = fixtureBanDir({
+		const banDir = await fixtureBanDir({
 			"48": Array.from({ length: 5 }, (_, i) =>
 				row(String(i), String(i + 1), "Route de Pomaret", "48800", "Altier", `Lieu ${i}`)
 			),
@@ -142,7 +136,7 @@ describe("fr-lieudit recipe", () => {
 	})
 
 	it("--source-name overrides the emitted source tag", async () => {
-		const banDir = fixtureBanDir({
+		const banDir = await fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
 
@@ -154,7 +148,7 @@ describe("fr-lieudit recipe", () => {
 	})
 
 	it("throws when no BAN dept files are found", async () => {
-		const banDir = fixtureBanDir({})
+		const banDir = await fixtureBanDir({})
 
 		await expect(frLieuditRecipe.run(baseOpts({ banDir }), () => {})).rejects.toThrow(
 			/No BAN adresses-<dept>\.csv files/
@@ -162,7 +156,7 @@ describe("fr-lieudit recipe", () => {
 	})
 
 	it("excludes the 'merged'/'france' aggregate files (double-count guard)", async () => {
-		const banDir = fixtureBanDir({
+		const banDir = await fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 			merged: [row("2", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 			france: [row("3", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
@@ -174,7 +168,7 @@ describe("fr-lieudit recipe", () => {
 	})
 
 	it("dedupes a dept present as BOTH .csv and .csv.gz, preferring the uncompressed .csv (observed on disk for 13/2A/48/69/75)", async () => {
-		const banDir = fixtureBanDir({
+		const banDir = await fixtureBanDir({
 			"48": [row("1", "6", "Route de Pomaret", "48800", "Altier", "Le Bourg")],
 		})
 

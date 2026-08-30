@@ -10,15 +10,14 @@
  *   never an exception that takes the whole census down with it.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { censusArtifact, gazetteerArtifacts } from "@mailwoman/dev-mcp/source-census"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-let root: string
+let root: TemporaryDirectory
 
 /**
  * A shard with `spr` and the ancestry tables — the shape a corpus builder can extract triples from.
@@ -54,28 +53,26 @@ function writeCountOnly(path: string, country: string, n: number): void {
 	}
 }
 
-beforeAll(() => {
-	root = mkdtempSync(join(tmpdir(), "mw-source-census-"))
-	mkdirSync(join(root, "wof"), { recursive: true })
+beforeAll(async () => {
+	root = await temporaryDirectory("mw-source-census-")
+	await makeDirectories(root.resolve("wof"))
 
-	writeJoinable(join(root, "wof", "postalcode-intl.db"), [
+	writeJoinable(root.resolve("wof", "postalcode-intl.db"), [
 		["FR", 3],
 		["DE", 2],
 	])
 
-	writeCountOnly(join(root, "wof", "postalcode-geonames-intl.db"), "PT", 5)
-	new DatabaseClient<WOFDatabase>(join(root, "wof", "postalcode-fr.db")).destroy()
-	writeJoinable(join(root, "wof", "postalcode-us.db.prev"), [["US", 9]])
-	writeFileSync(join(root, "wof", "notes.txt"), "not a database")
+	writeCountOnly(root.resolve("wof", "postalcode-geonames-intl.db"), "PT", 5)
+	new DatabaseClient<WOFDatabase>(root.resolve("wof", "postalcode-fr.db")).destroy()
+	writeJoinable(root.resolve("wof", "postalcode-us.db.prev"), [["US", 9]])
+	await writeLocalTextFile("not a database", root.resolve("wof", "notes.txt"))
 })
 
-afterAll(() => {
-	rmSync(root, { recursive: true, force: true })
-})
+afterAll(() => root[Symbol.asyncDispose]())
 
 describe("censusArtifact", () => {
 	it("reports rows AND what the shard can be joined through", () => {
-		const row = censusArtifact(join(root, "wof", "postalcode-intl.db"))
+		const row = censusArtifact(root.resolve("wof", "postalcode-intl.db"))
 
 		expect(row.readable).toBe(true)
 		expect(row.countries).toEqual({ FR: 3, DE: 2 })
@@ -86,7 +83,7 @@ describe("censusArtifact", () => {
 	it("separates COUNTABLE from JOINABLE — the distinction a row count hides", () => {
 		// 395,544 PT postcodes in a shard with no ancestry table is not 395,544 usable triples. This is the exact
 		// shape that made a real config declare PT unbuildable while the rows were sitting there.
-		const row = censusArtifact(join(root, "wof", "postalcode-geonames-intl.db"))
+		const row = censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db"))
 
 		expect(row.readable).toBe(true)
 		expect(row.countries).toEqual({ PT: 5 })
@@ -94,19 +91,19 @@ describe("censusArtifact", () => {
 	})
 
 	it("reports parent_id being the -1 sentinel, which no row count can show", () => {
-		expect(censusArtifact(join(root, "wof", "postalcode-geonames-intl.db")).parentLinked).toBe(false)
+		expect(censusArtifact(root.resolve("wof", "postalcode-geonames-intl.db")).parentLinked).toBe(false)
 	})
 
 	it("reports a country asked for and ABSENT as a zero, not a missing key", () => {
 		// A missing key reads as "not measured". The caller is deciding whether to go and acquire data, and those are
 		// opposite conclusions.
-		const row = censusArtifact(join(root, "wof", "postalcode-intl.db"), ["FR", "VE"])
+		const row = censusArtifact(root.resolve("wof", "postalcode-intl.db"), ["FR", "VE"])
 
 		expect(row.countries).toEqual({ FR: 3, VE: 0 })
 	})
 
 	it("treats a zero-byte shard as a FINDING, not an exception", () => {
-		const row = censusArtifact(join(root, "wof", "postalcode-fr.db"))
+		const row = censusArtifact(root.resolve("wof", "postalcode-fr.db"))
 
 		expect(row.readable).toBe(false)
 		expect(row.reason).toMatch(/zero bytes/)
@@ -114,7 +111,7 @@ describe("censusArtifact", () => {
 	})
 
 	it("reports a file that is not there rather than throwing", () => {
-		const row = censusArtifact(join(root, "wof", "nothing-here.db"))
+		const row = censusArtifact(root.resolve("wof", "nothing-here.db"))
 
 		expect(row.readable).toBe(false)
 		expect(row.reason).toBe("not on disk")
@@ -122,14 +119,14 @@ describe("censusArtifact", () => {
 })
 
 describe("gazetteerArtifacts", () => {
-	it("lists the .db shards and skips .prev / .bak siblings", () => {
+	it("lists the .db shards and skips .prev / .bak siblings", async () => {
 		// A `.prev` reports the same country a second time under a name nobody can act on.
-		const names = gazetteerArtifacts(root).map((path: string) => path.split("/").pop())
+		const names = (await gazetteerArtifacts(root.path)).map((path: string) => path.split("/").pop())
 
 		expect(names).toEqual(["postalcode-fr.db", "postalcode-geonames-intl.db", "postalcode-intl.db"])
 	})
 
-	it("returns nothing rather than throwing when the data root has no wof directory", () => {
-		expect(gazetteerArtifacts(join(root, "does-not-exist"))).toEqual([])
+	it("returns nothing rather than throwing when the data root.path has no wof directory", async () => {
+		expect(await gazetteerArtifacts(root.resolve("does-not-exist"))).toEqual([])
 	})
 })

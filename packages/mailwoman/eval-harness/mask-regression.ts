@@ -47,9 +47,10 @@
 
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { existsSync, writeFileSync } from "@mailwoman/platform/fs"
 
 import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "./per-tag-f1.ts"
 
@@ -153,7 +154,7 @@ export async function maskRegressionGate(
 	const THRESHOLD = options.threshold ?? 0.02
 
 	for (const p of [MODEL, TOKENIZER, MODEL_CARD]) {
-		if (!existsSync(p)) throw new Error(`required artifact not found: ${p}`)
+		if (!(await pathExists(p))) throw new Error(`required artifact not found: ${p}`)
 	}
 
 	report(`mask-regression-gate (#718): threshold ${(THRESHOLD * 100).toFixed(1)}pp`)
@@ -227,23 +228,19 @@ export async function maskRegressionGate(
 	const violations = deltas.filter((d) => d.inScope && d.delta > thresholdPp)
 
 	if (JSON_OUT) {
-		writeFileSync(
-			JSON_OUT,
-			JSON.stringify(
-				{
-					gate: "mask-regression-gate",
-					issue: 718,
-					thresholdPp,
-					model: MODEL,
-					tokenizer: TOKENIZER,
-					modelCard: MODEL_CARD,
-					pass: violations.length === 0,
-					deltas: deltas.filter((d) => d.inScope),
-					violations,
-				},
-				null,
-				"\t"
-			)
+		await writeLocalJSONFile(
+			{
+				gate: "mask-regression-gate",
+				issue: 718,
+				thresholdPp,
+				model: MODEL,
+				tokenizer: TOKENIZER,
+				modelCard: MODEL_CARD,
+				pass: violations.length === 0,
+				deltas: deltas.filter((d) => d.inScope),
+				violations,
+			},
+			JSON_OUT
 		)
 
 		report(`\nWrote per-tag delta table → ${JSON_OUT}`)

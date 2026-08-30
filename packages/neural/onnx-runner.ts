@@ -13,7 +13,7 @@
  *   cheap and synchronous.
  */
 
-import { promises as fs } from "@mailwoman/platform/fs"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import ort from "onnxruntime-node"
 
 import { ANCHOR_FEATURE_DIM } from "./anchor-inference.ts"
@@ -174,7 +174,7 @@ export class ONNXRunner {
 
 		if (!this.loadPromise) {
 			this.loadPromise = (async () => {
-				const bytes = this.modelBytes ?? new Uint8Array(await fs.readFile(this.modelPath))
+				const bytes = this.modelBytes ?? new Uint8Array(await readFile(this.modelPath))
 				this.session = await this.createSession(bytes)
 
 				return this.session

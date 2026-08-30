@@ -19,9 +19,9 @@
  *   [--data-root <dir>] [--out-md docs/articles/evals/matcher-dedup/<date>-...md]`
  */
 
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { writeFileSync } from "@mailwoman/platform/fs"
 
 import {
 	addressFrequencyKey,
@@ -317,7 +317,7 @@ export async function crossDatasetCorrelation(
 		records.push(...recs)
 	}
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	// --- Phase D: resolve to canonical entities. The proven levers are default-on (#86): collapsed
@@ -477,7 +477,7 @@ export async function crossDatasetCorrelation(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`\n[written] ${OUT_MD}`)
 	}
 
@@ -486,7 +486,7 @@ export async function crossDatasetCorrelation(
 	// and the geocode tier. QGIS-ready; this is the operator-verifiable output of the matcher. ---
 	if (OUT_GEOJSON) {
 		const fc = toGeoJSON(entities)
-		writeFileSync(OUT_GEOJSON, JSON.stringify(fc, null, 2))
+		await writeLocalJSONFile(fc, OUT_GEOJSON)
 		report?.(`[written] ${OUT_GEOJSON} — ${fc.features.length} entity features (${crossSource.length} cross-source)`)
 	}
 

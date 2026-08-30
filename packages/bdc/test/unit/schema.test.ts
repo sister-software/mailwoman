@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest"
 
 describe("bdc schema", () => {
 	it("co-resides with the layer contract, accepts a typed availability row, and reads it back", async () => {
-		using db = new DatabaseClient<BDCDatabase>(":memory:")
+		using db = DatabaseClient.temp<BDCDatabase>()
 		// `BDCDatabase extends LayerContractDatabase` structurally, but Kysely's `transaction()` makes
 		// `Kysely<DB>` INVARIANT in `DB` (see build-bdc.ts's `asContractDB` for the full rationale) —
 		// narrow the handle back down for these two shared layer-contract calls.

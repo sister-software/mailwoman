@@ -41,7 +41,7 @@ const MANIFEST: LayerManifest = {
 }
 
 async function openContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const db = new DatabaseClient<LayerContractDatabase>(":memory:")
+	const db = DatabaseClient.temp<LayerContractDatabase>()
 	await createLayerManifestTable(db)
 	await createLayerCoverageTable(db)
 

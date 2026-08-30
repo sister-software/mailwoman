@@ -48,9 +48,10 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { createWriteStream, existsSync, readFileSync, type WriteStream } from "@mailwoman/platform/fs"
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { createWriteStream, type WriteStream } from "@mailwoman/platform/fs"
+import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
@@ -185,10 +186,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 		if (
 			$public.MAILWOMAN_RESUME === "1" &&
-			existsSync(cachedManifest) &&
-			existsSync(join(adapterDir, "canonical.jsonl"))
+			(await pathExists(cachedManifest)) &&
+			(await pathExists(join(adapterDir, "canonical.jsonl")))
 		) {
-			const cached = parseJSONStrict<AdapterRunManifest>(readFileSync(cachedManifest, "utf8"))
+			const cached = await readLocalJSONFile<AdapterRunManifest>(cachedManifest)
 			opts.onProgress?.("adapter-run", `resumed ${adapter.id} (reused ${cached.yielded} canonical rows)`)
 			adapterRuns.push(cached)
 
@@ -365,7 +366,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		excluded_by_license: excludedByLicense,
 	}
 
-	await writeFile(join(opts.outputDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(manifest, opts.outputDir, "MANIFEST.json")
 
 	return manifest
 }

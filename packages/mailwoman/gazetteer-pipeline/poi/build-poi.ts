@@ -33,8 +33,11 @@
  *   `<out>.building` instruction, per the brief's own "follow the anchor, record the deviation" rule.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
 	CoverageBasis,
+	type CoverageCell,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerTier,
@@ -42,7 +45,6 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
@@ -186,7 +188,7 @@ export interface IngestPlacesResult {
 export async function ingestPlaces(opts: IngestPlacesOptions): Promise<IngestPlacesResult> {
 	const release = opts.release ?? DEFAULT_RELEASE
 	const outDir = opts.out ?? dataRootPath("overture", release, "places")
-	mkdirSync(outDir, { recursive: true })
+	await makeDirectories(outDir)
 	const phase = opts.onPhase ?? (() => {})
 
 	// @duckdb/node-api is an optional peer dep — lazy import so merely loading this module (e.g. via
@@ -503,196 +505,199 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 		throw new Error("buildPOIDatabase: pass either `rows` (test/injected source) or `parquetPaths` (from ingestPlaces)")
 	}
 
-	if (existsSync(opts.out)) {
-		rmSync(opts.out)
+	if (await pathExists(opts.out)) {
+		await removePath(opts.out)
 	}
 
-	mkdirSync(dirname(opts.out), { recursive: true })
+	await makeDirectories(dirname(opts.out))
 
 	const rowSource: AsyncIterable<POISourceRow> | Iterable<POISourceRow> =
 		opts.rows ?? readParquetRows(opts.parquetPaths!)
 
-	const kdb = new DatabaseClient<POIDatabase>(opts.out)
-	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA), matching build-candidate.ts's discipline.
-	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-
-	progress("stage", "creating staging + dictionary tables")
-	await createPOIStagingTables(kdb)
-	await createLayerManifestTable(kdb)
-	await createLayerCoverageTable(kdb)
-
 	const categoryCodes = new Map<string, number>()
-
-	const categoryID = (category: string | null): number => {
-		if (!category) return 0
-		let id = categoryCodes.get(category)
-
-		if (id === undefined) {
-			// 0 is reserved for "uncategorized" — first real category gets 1.
-			id = categoryCodes.size + 1
-			categoryCodes.set(category, id)
-		}
-
-		return id
-	}
-
-	/**
-	 * ISO country code → rows kept for it (skipped rows are NOT counted).
-	 */
 	const countries = new Map<string, number>()
-	/**
-	 * Res-6 short-cell int → observed row count, aggregated during the load (one pass, no second scan).
-	 */
-	const coverage = new Map<number, number>()
-
-	const insStage = kdb.prepare(`INSERT INTO poi_stage VALUES (${POI_COLUMNS.map(() => "?").join(", ")})`)
-
-	let rowidKey = 0
 	let inserted = 0
 	let skipped = 0
-	let batch = 0
 
-	progress("load", "streaming rows into poi_stage")
-	kdb.exec("BEGIN")
+	let coverageCells: CoverageCell[]
 
-	for await (const row of rowSource) {
-		if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) {
-			skipped++
+	{
+		using kdb = new DatabaseClient<POIDatabase>(opts.out)
+		// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA), matching build-candidate.ts's discipline.
+		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
-			continue
+		progress("stage", "creating staging + dictionary tables")
+		await createPOIStagingTables(kdb)
+		await createLayerManifestTable(kdb)
+		await createLayerCoverageTable(kdb)
+
+		const categoryID = (category: string | null): number => {
+			if (!category) return 0
+			let id = categoryCodes.get(category)
+
+			if (id === undefined) {
+				// 0 is reserved for "uncategorized" — first real category gets 1.
+				id = categoryCodes.size + 1
+				categoryCodes.set(category, id)
+			}
+
+			return id
 		}
 
-		const fullCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
-		const h3Cell = shortCellToInt(fullCell)
-		const catID = categoryID(row.category)
-		const negRank = -Math.log10(row.confidence + 1e-6)
-		const nameKey = row.name ? normalizeLocalityForKey(row.name) : null
+		/**
+		 * ISO country code → rows kept for it (skipped rows are NOT counted).
+		 */
+		/**
+		 * Res-6 short-cell int → observed row count, aggregated during the load (one pass, no second scan).
+		 */
+		const coverage = new Map<number, number>()
 
-		rowidKey++
+		const insStage = kdb.prepare(`INSERT INTO poi_stage VALUES (${POI_COLUMNS.map(() => "?").join(", ")})`)
 
-		insStage.run(
-			h3Cell,
-			catID,
-			negRank,
-			rowidKey,
-			row.name,
-			nameKey,
-			row.brandWikidata,
-			row.latitude,
-			row.longitude,
-			row.country,
-			row.confidence,
-			row.gersID
+		let rowidKey = 0
+		let batch = 0
+
+		progress("load", "streaming rows into poi_stage")
+		kdb.exec("BEGIN")
+
+		for await (const row of rowSource) {
+			if (!Number.isFinite(row.latitude) || !Number.isFinite(row.longitude)) {
+				skipped++
+
+				continue
+			}
+
+			const fullCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
+			const h3Cell = shortCellToInt(fullCell)
+			const catID = categoryID(row.category)
+			const negRank = -Math.log10(row.confidence + 1e-6)
+			const nameKey = row.name ? normalizeLocalityForKey(row.name) : null
+
+			rowidKey++
+
+			insStage.run(
+				h3Cell,
+				catID,
+				negRank,
+				rowidKey,
+				row.name,
+				nameKey,
+				row.brandWikidata,
+				row.latitude,
+				row.longitude,
+				row.country,
+				row.confidence,
+				row.gersID
+			)
+
+			inserted++
+			countries.set(row.country, (countries.get(row.country) ?? 0) + 1)
+
+			const parentCell = cellToParent(fullCell, COVERAGE_H3_RESOLUTION) as H3Cell
+			const coverageCell = shortCellToInt(parentCell)
+			coverage.set(coverageCell, (coverage.get(coverageCell) ?? 0) + 1)
+
+			batch++
+
+			if (batch >= STAGE_BATCH_SIZE) {
+				kdb.exec("COMMIT")
+				kdb.exec("BEGIN")
+				batch = 0
+			}
+		}
+
+		kdb.exec("COMMIT")
+		progress("load", `${inserted.toLocaleString()} staged, ${skipped.toLocaleString()} skipped (non-finite coords)`)
+
+		if (categoryCodes.size) {
+			await kdb
+				.insertInto("poi_category_codes")
+				.values([...categoryCodes].map(([category, id]) => ({ id, category })))
+				.execute()
+		}
+
+		progress("materialize", "building clustered poi table")
+		await createPOITable(kdb)
+		const cols = POI_COLUMNS.join(", ")
+
+		kdb.exec(
+			`INSERT INTO poi (${cols}) SELECT ${cols} FROM poi_stage ORDER BY h3_cell, category_id, neg_rank, rowid_key;`
 		)
 
-		inserted++
-		countries.set(row.country, (countries.get(row.country) ?? 0) + 1)
+		await kdb.schema.dropTable("poi_stage").execute()
 
-		const parentCell = cellToParent(fullCell, COVERAGE_H3_RESOLUTION) as H3Cell
-		const coverageCell = shortCellToInt(parentCell)
-		coverage.set(coverageCell, (coverage.get(coverageCell) ?? 0) + 1)
+		progress("index", "name_key + brand_wikidata indexes (index-after-load)")
+		await createPOINameKeyIndex(kdb)
+		await createPOIBrandIndex(kdb)
 
-		batch++
+		progress("fts", "building FTS5 name index")
+		createPOISearchFTS(kdb)
 
-		if (batch >= STAGE_BATCH_SIZE) {
-			kdb.exec("COMMIT")
-			kdb.exec("BEGIN")
-			batch = 0
-		}
+		kdb.exec(
+			`INSERT INTO ${POI_FTS_TABLE} (name, name_key, h3_cell) SELECT name, name_key, h3_cell FROM poi WHERE name IS NOT NULL;`
+		)
+
+		progress("manifest", "writing layer manifest + coverage")
+
+		const source = opts.source ?? "overture-places"
+		const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
+
+		await writeLayerManifest(kdb, {
+			name: "poi",
+			version: opts.version ?? opts.release,
+			schemaVersion: 1,
+			tier: opts.tier ?? LayerTier.Shipped,
+			license: sourceManifestDefaults.license,
+			attribution: sourceManifestDefaults.attribution,
+			source,
+			sourceVintage: opts.release,
+			buildCmd: "mailwoman gazetteer build poi",
+			buildSHA: opts.buildSHA,
+			freshnessPolicy: "sealed",
+			spineKeys: { h3: { column: "h3_cell", resolution: POI_H3_RESOLUTION } },
+			createdAt: opts.createdAt ?? new Date().toISOString(),
+		})
+
+		// Coverage is SOURCE-LEVEL, not survey completeness: a res-6 cell we have Overture Places rows in
+		// is recorded at completeness 1.0 (Overture claims global coverage for the theme); this is NOT a
+		// claim about how complete Overture's own Places extraction is within that cell. A cell absent
+		// from `layer_coverage` means no rows were observed there at all — the meaning-of-zero rule
+		// (missing = unknown, never `{completeness: 0}`).
+		//
+		// `coverageCellsOverride` (decision 5, the `--source osm` branch) REPLACES this rows-derived set
+		// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) — see
+		// `BuildPOIOptions.coverageCellsOverride`'s docstring. Default path (no override) is unchanged.
+		// `basis: source_present` states in the artifact what the paragraph above states in prose: the 1.0 is
+		// "Overture returned rows here", not "everything here is known". A consumer building an exclusion
+		// reads the basis and refuses; one reading `completeness` alone would have concluded the opposite.
+		//
+		// An override entry MAY carry its own `completeness`/`basis` — the only way a cell in this pipeline
+		// reaches an exclusion-grade basis. Omitting either falls back to the source-present pair above, so a
+		// caller that has not measured completeness cannot claim one by accident.
+		coverageCells = opts.coverageCellsOverride
+			? [...opts.coverageCellsOverride].map((c) => ({
+					h3Cell: c.h3Cell,
+					completeness: c.completeness ?? 1,
+					basis: c.basis ?? CoverageBasis.SourcePresent,
+					observedRows: c.observedRows,
+				}))
+			: [...coverage.entries()].map(([h3Cell, observedRows]) => ({
+					h3Cell,
+					completeness: 1,
+					basis: CoverageBasis.SourcePresent,
+					observedRows,
+				}))
+
+		await writeLayerCoverage(kdb, coverageCells)
+
+		progress("finalize", "ANALYZE + VACUUM")
+		kdb.exec("ANALYZE")
+		// page_size MUST be set right before VACUUM (node:sqlite initializes the file at the 4096 default
+		// on `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size)
+		// — the same discipline build-candidate.ts uses.
+		kdb.exec("PRAGMA page_size=8192")
+		kdb.exec("VACUUM")
 	}
-
-	kdb.exec("COMMIT")
-	progress("load", `${inserted.toLocaleString()} staged, ${skipped.toLocaleString()} skipped (non-finite coords)`)
-
-	if (categoryCodes.size) {
-		await kdb
-			.insertInto("poi_category_codes")
-			.values([...categoryCodes].map(([category, id]) => ({ id, category })))
-			.execute()
-	}
-
-	progress("materialize", "building clustered poi table")
-	await createPOITable(kdb)
-	const cols = POI_COLUMNS.join(", ")
-
-	kdb.exec(
-		`INSERT INTO poi (${cols}) SELECT ${cols} FROM poi_stage ORDER BY h3_cell, category_id, neg_rank, rowid_key;`
-	)
-
-	await kdb.schema.dropTable("poi_stage").execute()
-
-	progress("index", "name_key + brand_wikidata indexes (index-after-load)")
-	await createPOINameKeyIndex(kdb)
-	await createPOIBrandIndex(kdb)
-
-	progress("fts", "building FTS5 name index")
-	createPOISearchFTS(kdb)
-
-	kdb.exec(
-		`INSERT INTO ${POI_FTS_TABLE} (name, name_key, h3_cell) SELECT name, name_key, h3_cell FROM poi WHERE name IS NOT NULL;`
-	)
-
-	progress("manifest", "writing layer manifest + coverage")
-
-	const source = opts.source ?? "overture-places"
-	const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
-
-	await writeLayerManifest(kdb, {
-		name: "poi",
-		version: opts.version ?? opts.release,
-		schemaVersion: 1,
-		tier: opts.tier ?? LayerTier.Shipped,
-		license: sourceManifestDefaults.license,
-		attribution: sourceManifestDefaults.attribution,
-		source,
-		sourceVintage: opts.release,
-		buildCmd: "mailwoman gazetteer build poi",
-		buildSHA: opts.buildSHA,
-		freshnessPolicy: "sealed",
-		spineKeys: { h3: { column: "h3_cell", resolution: POI_H3_RESOLUTION } },
-		createdAt: opts.createdAt ?? new Date().toISOString(),
-	})
-
-	// Coverage is SOURCE-LEVEL, not survey completeness: a res-6 cell we have Overture Places rows in
-	// is recorded at completeness 1.0 (Overture claims global coverage for the theme); this is NOT a
-	// claim about how complete Overture's own Places extraction is within that cell. A cell absent
-	// from `layer_coverage` means no rows were observed there at all — the meaning-of-zero rule
-	// (missing = unknown, never `{completeness: 0}`).
-	//
-	// `coverageCellsOverride` (decision 5, the `--source osm` branch) REPLACES this rows-derived set
-	// entirely with a pre-computed one (typically `bboxCoverageCells` over the extract's bbox) — see
-	// `BuildPOIOptions.coverageCellsOverride`'s docstring. Default path (no override) is unchanged.
-	// `basis: source_present` states in the artifact what the paragraph above states in prose: the 1.0 is
-	// "Overture returned rows here", not "everything here is known". A consumer building an exclusion
-	// reads the basis and refuses; one reading `completeness` alone would have concluded the opposite.
-	//
-	// An override entry MAY carry its own `completeness`/`basis` — the only way a cell in this pipeline
-	// reaches an exclusion-grade basis. Omitting either falls back to the source-present pair above, so a
-	// caller that has not measured completeness cannot claim one by accident.
-	const coverageCells = opts.coverageCellsOverride
-		? [...opts.coverageCellsOverride].map((c) => ({
-				h3Cell: c.h3Cell,
-				completeness: c.completeness ?? 1,
-				basis: c.basis ?? CoverageBasis.SourcePresent,
-				observedRows: c.observedRows,
-			}))
-		: [...coverage.entries()].map(([h3Cell, observedRows]) => ({
-				h3Cell,
-				completeness: 1,
-				basis: CoverageBasis.SourcePresent,
-				observedRows,
-			}))
-
-	await writeLayerCoverage(kdb, coverageCells)
-
-	progress("finalize", "ANALYZE + VACUUM")
-	kdb.exec("ANALYZE")
-	// page_size MUST be set right before VACUUM (node:sqlite initializes the file at the 4096 default
-	// on `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size)
-	// — the same discipline build-candidate.ts uses.
-	kdb.exec("PRAGMA page_size=8192")
-	kdb.exec("VACUUM")
-	await kdb.destroy()
 
 	progress("seal", opts.out)
 	sealDatabase(opts.out)

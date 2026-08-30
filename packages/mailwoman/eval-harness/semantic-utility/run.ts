@@ -24,11 +24,10 @@
  *   behind it, so the receipt states on whose authority each answered row's category was chosen.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { JSONSpliterator } from "spliterator"
 
 import { type LayerManifest, probeManifest } from "../../data-inventory.ts"
@@ -150,11 +149,11 @@ interface ModelCard {
 	version: string
 }
 
-function readWeightsIdentity(options: SemanticProbeOptions): {
+async function readWeightsIdentity(options: SemanticProbeOptions): Promise<{
 	weightsLocale: string
 	weightsModelPath: string
 	weightsVersion: string
-} {
+}> {
 	const locale = options.locale ?? "en-US"
 	const resolved = resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
@@ -163,16 +162,16 @@ function readWeightsIdentity(options: SemanticProbeOptions): {
 		return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: "no model-card resolved" }
 	}
 
-	const card = parseJSONStrict<ModelCard>(readFileSync(cardPath, "utf8"))
+	const card = await readLocalJSONFile<ModelCard>(cardPath)
 
 	return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: card.version }
 }
 
-function readArtifactIdentity(
+async function readArtifactIdentity(
 	db: string,
 	backend: POIBoardResolverBackend,
 	options: SemanticProbeOptions
-): ProbeArtifactIdentity {
+): Promise<ProbeArtifactIdentity> {
 	const probed = probeManifest(db)
 
 	return {
@@ -182,7 +181,7 @@ function readArtifactIdentity(
 			? {}
 			: { poiLayerManifestNote: probed.error ?? "the database carries no layer_manifest table" }),
 		resolverBackend: backend,
-		...readWeightsIdentity(options),
+		...(await readWeightsIdentity(options)),
 	}
 }
 
@@ -201,28 +200,26 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 
 	const route = options.semanticObservation ? await createSemanticObservationRoute() : undefined
 
-	const { pipeline, db, backend, close } = await createPOIBoardPipeline({
+	using pipelineHandle = await createPOIBoardPipeline({
 		...options,
 		...(route ? { poiSemanticLookup: route.lookup } : {}),
 	})
 
+	const { pipeline, db, backend } = pipelineHandle
+
 	const rows: ProbeRowOutcome[] = []
 	const semanticObservations: ProbeRowObservation[] = []
 
-	try {
-		for (const target of definition.targetRows) {
-			rows.push(await gradeRow(pipeline, definition, target, "target"))
-			semanticObservations.push(...drainObservations(route, target.id))
-		}
+	for (const target of definition.targetRows) {
+		rows.push(await gradeRow(pipeline, definition, target, "target"))
+		semanticObservations.push(...drainObservations(route, target.id))
+	}
 
-		for (const control of controls) {
-			const outcome = await gradeRow(pipeline, definition, control, "control")
+	for (const control of controls) {
+		const outcome = await gradeRow(pipeline, definition, control, "control")
 
-			rows.push({ ...outcome, group: groupByID.get(control.id) })
-			semanticObservations.push(...drainObservations(route, control.id))
-		}
-	} finally {
-		close()
+		rows.push({ ...outcome, group: groupByID.get(control.id) })
+		semanticObservations.push(...drainObservations(route, control.id))
 	}
 
 	const counts = computeProbeCounts(definition, rows)
@@ -234,7 +231,7 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 		arm: options.arm ?? "baseline",
 		generatedAt: new Date().toISOString(),
 		gitCommit: options.gitCommit ?? buildSHA(String(repoRootPath())),
-		artifact: readArtifactIdentity(db, backend, options),
+		artifact: await readArtifactIdentity(db, backend, options),
 		semanticRoute: route ? { enabled: true, ...route.identity } : { enabled: false },
 		rows,
 		semanticObservations,

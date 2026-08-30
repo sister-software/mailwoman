@@ -11,6 +11,8 @@
  *   a layer that could not tell them apart would report every unmapped location as low-hazard.
  */
 
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { FloodContainmentPath, FloodReadingKind, FloodZoneLookup } from "@mailwoman/flood"
 import { buildFloodDatabase, type BuildFloodResult } from "@mailwoman/flood/sdk/build-flood"
 import { realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
@@ -24,16 +26,13 @@ import {
 	FIXTURE_SIDE,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL, EA_FLOOD_LAYER_NAME } from "@mailwoman/flood/vocabulary"
-import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 9
 const COVERAGE_RESOLUTION = 6
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 let result: BuildFloodResult
 let lookup: FloodZoneLookup
@@ -45,7 +44,7 @@ async function build(
 	features = fixtureFeatures(),
 	out = "flood.db"
 ): Promise<{ path: string; result: BuildFloodResult }> {
-	const path = join(scratch, out)
+	const path = scratch.resolve(out)
 
 	const built = await buildFloodDatabase({
 		source: fixtureSource(features),
@@ -69,7 +68,7 @@ async function build(
 }
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-flood-"))
+	scratch = await temporaryDirectory("mw-flood-")
 
 	const built = await build()
 
@@ -79,16 +78,16 @@ beforeAll(async () => {
 })
 
 afterAll(() => {
-	lookup?.close()
-	rmSync(scratch, { recursive: true, force: true })
+	lookup[Symbol.dispose]()
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("buildFloodDatabase", () => {
-	it("writes every feature, seals the artifact read-only, and swaps it into place", () => {
+	it("writes every feature, seals the artifact read-only, and swaps it into place", async () => {
 		expect(result.features).toBe(3)
 		expect(result.zoneCounts).toEqual({ FZ2: 1, FZ3: 2 })
 		// 0o444 — a layer database is a read-only artifact once built.
-		expect(statSync(databasePath).mode & 0o777).toBe(0o444)
+		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
 	})
 
 	it("carries the authority's identity, licence and attribution in the manifest", () => {
@@ -129,7 +128,7 @@ describe("buildFloodDatabase", () => {
 		await expect(
 			buildFloodDatabase({
 				source: fixtureSource(fixtureFeatures()),
-				out: join(scratch, "inverted.db"),
+				out: scratch.resolve("inverted.db"),
 				sourceVintage: "2026-05-20",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -153,7 +152,7 @@ describe("buildFloodDatabase", () => {
 		await expect(
 			buildFloodDatabase({
 				source: { ...fixtureSource(features), declaredFeatureCount: features.length + 1 },
-				out: join(scratch, "short.db"),
+				out: scratch.resolve("short.db"),
 				sourceVintage: "2026-05-20",
 				buildCmd: "vitest",
 				buildSHA: "fixture",

@@ -106,12 +106,8 @@ export class UnLocodeLookup implements Disposable {
 		return best?.code ?? null
 	}
 
-	close(): void {
-		this.#resources.dispose()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#resources[Symbol.dispose]()
 	}
 }
 

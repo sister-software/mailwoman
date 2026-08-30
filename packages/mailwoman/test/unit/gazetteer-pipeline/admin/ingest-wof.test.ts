@@ -10,8 +10,9 @@
  *   metropolitan France). Both fixtures below are shaped from that real record.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
@@ -19,8 +20,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ingestWOF } from "mailwoman/gazetteer-pipeline/admin/ingest-wof"
 import { afterAll, describe, expect, it } from "vitest"
 
-const ROOT = mkdtempSync(join(tmpdir(), "mw-ingest-wof-"))
-const DATA_DIR = join(ROOT, "whosonfirst-data-admin-xx", "data", "000", "000")
+const ROOT = await temporaryDirectory("mw-ingest-wof-")
+const DATA_DIR = ROOT.resolve("whosonfirst-data-admin-xx", "data", "000", "000")
 
 function feature(id: number, props: Record<string, unknown>): string {
 	return JSON.stringify({
@@ -59,16 +60,14 @@ writeFileSync(
 	feature(3, { "geom:latitude": 30, "geom:longitude": 40, "lbl:latitude": 55 })
 )
 
-afterAll(() => {
-	rmSync(ROOT, { recursive: true, force: true })
-})
+afterAll(() => ROOT[Symbol.asyncDispose]())
 
 describe("ingestWOF centroids (#1726)", () => {
 	it("stores the label centroid when present, the math centroid otherwise, and never a mix", async () => {
-		await using db = new DatabaseClient<WOFDatabase>(":memory:")
+		await using db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
-		await ingestWOF(db, { dataDir: ROOT })
+		await ingestWOF(db, { dataDir: ROOT.path })
 
 		const rows = db.prepare("SELECT id, latitude, longitude FROM spr ORDER BY id").all() as Array<{
 			id: number
@@ -86,13 +85,13 @@ describe("ingestWOF centroids (#1726)", () => {
 
 describe("ingestWOF label-point adjudication (#1905)", () => {
 	it("a Washington-shaped record stores the geometric point when the anchor overrides, and reports the count", async () => {
-		const root = mkdtempSync(join(tmpdir(), "mw-ingest-anchor-"))
+		await using rootDirectory = await temporaryDirectory("mw-ingest-anchor-")
+		const root = rootDirectory.path
 		const dataDir = join(root, "whosonfirst-data-admin-us", "data", "000", "000")
 
-		mkdirSync(dataDir, { recursive: true })
+		await makeDirectories(dataDir)
 
-		writeFileSync(
-			join(dataDir, "9.geojson"),
+		await writeLocalFile(
 			feature(9, {
 				"wof:placetype": "locality",
 				"wof:country": "US",
@@ -101,10 +100,11 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 				"geom:longitude": -77.016216,
 				"lbl:latitude": 38.82652,
 				"lbl:longitude": -77.01712,
-			})
+			}),
+			join(dataDir, "9.geojson")
 		)
 
-		const db = new DatabaseClient<WOFDatabase>(":memory:")
+		using db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
 
@@ -121,17 +121,14 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 
 		expect(row).toEqual({ latitude: 38.904831, longitude: -77.016216 })
 		expect(result.labelPointOverrides).toBe(1)
-
-		await db.destroy()
-		rmSync(root, { recursive: true, force: true })
 	})
 
 	it("without a lookup the label preference is unchanged and the override count is a measured zero", async () => {
-		await using db = new DatabaseClient<WOFDatabase>(":memory:")
+		await using db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
 
-		const result = await ingestWOF(db, { dataDir: ROOT })
+		const result = await ingestWOF(db, { dataDir: ROOT.path })
 
 		expect(result.labelPointOverrides).toBe(0)
 	})
@@ -139,15 +136,15 @@ describe("ingestWOF label-point adjudication (#1905)", () => {
 
 describe("ingestWOF adjudication scope (#1905)", () => {
 	it("a REGION with an anchor near its geometric centroid keeps the label point — the Texas shape", async () => {
-		const root = mkdtempSync(join(tmpdir(), "mw-ingest-region-"))
+		await using rootDirectory = await temporaryDirectory("mw-ingest-region-")
+		const root = rootDirectory.path
 		const dataDir = join(root, "whosonfirst-data-admin-us", "data", "000", "000")
 
-		mkdirSync(dataDir, { recursive: true })
+		await makeDirectories(dataDir)
 
 		// Modeled on wof:85688753 (Texas): lbl at the label placement, geom at the polygon centroid,
 		// and the GeoNames admin1 record sitting near the CENTROID — the anchor premise inverted.
-		writeFileSync(
-			join(dataDir, "8.geojson"),
+		await writeLocalFile(
 			feature(8, {
 				"wof:placetype": "region",
 				"wof:country": "US",
@@ -156,10 +153,11 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 				"geom:longitude": -99.317137,
 				"lbl:latitude": 31.030974,
 				"lbl:longitude": -98.326329,
-			})
+			}),
+			join(dataDir, "8.geojson")
 		)
 
-		const db = new DatabaseClient<WOFDatabase>(":memory:")
+		using db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
 
@@ -175,8 +173,5 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 
 		expect(row).toEqual({ latitude: 31.030974, longitude: -98.326329 })
 		expect(result.labelPointOverrides).toBe(0)
-
-		await db.destroy()
-		rmSync(root, { recursive: true, force: true })
 	})
 })

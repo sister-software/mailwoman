@@ -11,28 +11,22 @@
  *   indistinguishable from a measured answer, and whether a measured answer exists is the question.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ManifestState, readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
-const roots: string[] = []
+const fixtures = new AsyncDisposableStack()
 
-afterEach(() => {
-	for (const root of roots.splice(0)) {
-		rmSync(root, { recursive: true, force: true })
-	}
-})
+afterAll(() => fixtures.disposeAsync())
 
-function scratch(): string {
-	const root = mkdtempSync(join(tmpdir(), "mw-freshness-"))
-
-	roots.push(root)
+async function scratch(): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("mw-freshness-")).path
 
 	return root
 }
@@ -75,7 +69,7 @@ function bare(path: string): string {
 
 describe("readFreshness — a stamped artifact", () => {
 	it("reports the build date, the identity, and what it was built from", async () => {
-		const path = await stamped(join(scratch(), "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
+		const path = await stamped(join(await scratch(), "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
 
 		const [entry] = readFreshness([{ name: "gazetteer", path }]).artifacts
 
@@ -90,8 +84,8 @@ describe("readFreshness — a stamped artifact", () => {
 
 	it("dates the whole report from the newest artifact it read", async () => {
 		const root = scratch()
-		const older = await stamped(join(root, "admin.db"), "admin-global-priority", "2026-08-10T00:00:00.000Z")
-		const newer = await stamped(join(root, "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
+		const older = await stamped(join(await root, "admin.db"), "admin-global-priority", "2026-08-10T00:00:00.000Z")
+		const newer = await stamped(join(await root, "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
 
 		const report = readFreshness([
 			{ name: "gazetteer", path: newer },
@@ -105,8 +99,8 @@ describe("readFreshness — a stamped artifact", () => {
 })
 
 describe("readFreshness — an artifact that cannot state its provenance", () => {
-	it("reports an unstamped artifact's own absence rather than omitting it", () => {
-		const path = bare(join(scratch(), "candidate.db"))
+	it("reports an unstamped artifact's own absence rather than omitting it", async () => {
+		const path = bare(join(await scratch(), "candidate.db"))
 
 		const report = readFreshness([{ name: "gazetteer", path }])
 		const [entry] = report.artifacts
@@ -120,8 +114,8 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 		expect(report.dataUpdated).toBeUndefined()
 	})
 
-	it("reports a missing file as absence, not as a throw", () => {
-		const path = join(scratch(), "never-built.db")
+	it("reports a missing file as absence, not as a throw", async () => {
+		const path = join(await scratch(), "never-built.db")
 
 		const [entry] = readFreshness([{ name: "gazetteer", path }]).artifacts
 
@@ -129,10 +123,10 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 		expect(entry?.reason).toBe("artifact is not on disk")
 	})
 
-	it("keeps 'could not open it' apart from 'it has no manifest'", () => {
-		const path = join(scratch(), "truncated.db")
+	it("keeps 'could not open it' apart from 'it has no manifest'", async () => {
+		const path = join(await scratch(), "truncated.db")
 
-		writeFileSync(path, "this is not a database")
+		await writeLocalTextFile("this is not a database", path)
 
 		const [entry] = readFreshness([{ name: "gazetteer", path }]).artifacts
 
@@ -143,7 +137,7 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 	})
 
 	it("refuses a stamp it cannot date instead of dropping it from the maximum", async () => {
-		const path = await stamped(join(scratch(), "candidate.db"), "candidate", "whenever")
+		const path = await stamped(join(await scratch(), "candidate.db"), "candidate", "whenever")
 
 		const report = readFreshness([{ name: "gazetteer", path }])
 		const [entry] = report.artifacts
@@ -156,8 +150,8 @@ describe("readFreshness — an artifact that cannot state its provenance", () =>
 
 	it("dates a report from the artifacts that could be read, and still lists the ones that could not", async () => {
 		const root = scratch()
-		const good = await stamped(join(root, "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
-		const missing = bare(join(root, "admin.db"))
+		const good = await stamped(join(await root, "candidate.db"), "candidate", "2026-08-17T19:21:17.000Z")
+		const missing = bare(join(await root, "admin.db"))
 
 		const report = readFreshness([
 			{ name: "gazetteer", path: good },

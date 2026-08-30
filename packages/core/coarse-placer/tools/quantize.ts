@@ -1,25 +1,7 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   Int8-quantize the #244 coarse-placer (milestone 3). The placer is a linear classifier, so the
- *   only weight is a dense [class][feature] fp32 matrix (12×65536 = 3.0 MB). Per-CLASS symmetric
- *   int8 quantization — `scale[c] = max(|W[c]|) / 127`, `q = round(W / scale)` clamped to [-127,
- *   127] — shrinks it to 0.75 MB (4×) while preserving the linear math exactly up to rounding (the
- *   logit is `bias[c] + scale[c] * Σ int8`, dequantized on load by `CoarsePlacer.fromArtifactDir`).
- *   Per-class scales matter because class weight magnitudes differ (OTHER's outlier-exposure rows
- *   push bigger weights than the in-map countries).
- *
- *   Verify the accuracy cost with `mailwoman placer eval quant-compare` (target: within ~1pp).
- *
- *   Run: `mailwoman placer quantize [--in <fp32 dir>] [--out <int8 dir>]`
- */
-
-import { mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
+import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
 import { dataRootPath } from "#utils"
 
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -64,8 +46,8 @@ export async function quantizeCoarsePlacer(
 	const inDir = options.in || dataRootPath("coarse-placer", "model")
 	const outDir = options.out || dataRootPath("coarse-placer", "model-int8")
 
-	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(inDir, "meta.json"), "utf8"))
-	const buf = readFileSync(path.join(inDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(inDir, "meta.json"))
+	const buf = await readLocalBuffer(path.join(inDir, "weights.bin"))
 	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 	const w = new Float32Array(ab)
 	const C = meta.classes.length
@@ -114,13 +96,10 @@ export async function quantizeCoarsePlacer(
 		}
 	}
 
-	mkdirSync(outDir, { recursive: true })
-	writeFileSync(path.join(outDir, "weights.bin"), Buffer.from(int8.buffer))
+	await makeDirectories(outDir)
+	await writeLocalBuffer(Buffer.from(int8.buffer), path.join(outDir, "weights.bin"))
 
-	writeFileSync(
-		path.join(outDir, "meta.json"),
-		JSON.stringify({ ...meta, quantization: "int8-per-row", scales }, null, 2)
-	)
+	await writeLocalJSONFile({ ...meta, quantization: "int8-per-row", scales }, path.join(outDir, "meta.json"))
 
 	const fp32Bytes = w.length * 4
 	const int8Bytes = int8.length

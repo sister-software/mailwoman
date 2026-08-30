@@ -17,8 +17,8 @@
  *   http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html`
  */
 
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Options for {@linkcode raceDotsMap}.
@@ -193,7 +193,7 @@ export async function raceDotsMap(
 </html>
 `
 
-	writeFileSync(OUT, html)
+	await writeLocalFile(html, OUT)
 	report?.(`[written] ${OUT}  (pmtiles: ${PMTILES_URL})`)
 
 	return { outPath: OUT, pmtilesURL: PMTILES_URL }

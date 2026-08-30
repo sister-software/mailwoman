@@ -32,7 +32,8 @@
  *   which is what they had before Wikipedia importance existed.
  */
 
-import { allRows, cacheRootPath, getRow, pathExists } from "@mailwoman/core/utils"
+import { tryStat } from "@mailwoman/core/fs/readers"
+import { allRows, cacheRootPath, getRow } from "@mailwoman/core/utils"
 import { gunzipChunks } from "@mailwoman/platform/compression"
 import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
 import { get as httpsGet } from "@mailwoman/platform/https"
@@ -134,7 +135,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		const tsvPath = options.tsv
 		const t0 = performance.now()
 
-		if (!(await pathExists(dbPath))) throw new CommandError(`Database not found: ${dbPath}`)
+		if (!(await tryStat(dbPath))) throw new CommandError(`Database not found: ${dbPath}`)
 
 		const kdb = new DatabaseClient<PlaceImportanceDatabase>(dbPath, { open: true })
 
@@ -206,7 +207,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		if (!gzPath) {
 			gzPath = cacheRootPath("wikimedia-importance.csv.gz")
 
-			if (await pathExists(gzPath)) {
+			if (await tryStat(gzPath)) {
 				console.error(`  Using cached TSV: ${gzPath}`)
 			} else {
 				console.error(`  Downloading ${IMPORTANCE_URL}...`)

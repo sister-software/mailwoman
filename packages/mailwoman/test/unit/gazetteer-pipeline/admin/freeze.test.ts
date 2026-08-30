@@ -10,7 +10,7 @@ import { freezeAdmin } from "mailwoman/gazetteer-pipeline/admin/freeze"
 import { expect, test } from "vitest"
 
 test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and passes integrity", async () => {
-	await using db = new DatabaseClient<WOFDatabase>(":memory:")
+	await using db = DatabaseClient.temp<WOFDatabase>()
 	await createUnifiedSchema(db)
 
 	const ins = db.prepare(

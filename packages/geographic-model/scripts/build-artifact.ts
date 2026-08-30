@@ -22,10 +22,11 @@
  *   dependency graph.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
-import { type CompiledGeographicModel, parseCompiledGeographicModel, serializeCompiledModel } from "../artifact.ts"
+import { type CompiledGeographicModel, parseCompiledGeographicModel } from "../artifact.ts"
 import { compileGeographicModel } from "../compile.ts"
 import { loadGeographicModelDirectory } from "../load.ts"
 
@@ -79,7 +80,7 @@ function main(): void {
 	const { artifact } = packagedModelPaths()
 	const model = compileAuthoredGeographicModel()
 
-	writeFileSync(artifact, serializeCompiledModel(model))
+	writeLocalJSONFile(model, artifact)
 
 	console.log(
 		`wrote ${artifact}: ${model.concepts.length} concepts, ${model.relations.length} relations, ${model.mappings.length} mappings, ${model.observations.length} observations, ${model.derivedFacts.length} derived facts (model ${model.modelVersion})`

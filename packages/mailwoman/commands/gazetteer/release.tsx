@@ -1,3 +1,4 @@
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -9,9 +10,6 @@
  *   only); `--dry-run` previews the R2 upload. Creds: `RCLONE_S3_PUBLIC_*` in the env (source
  *   `.env`) for the publish step.
  */
-
-import { mkdtempSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -99,7 +97,7 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 			adminDB = foldOut
 		}
 
-		const shards = resolvePostcodeShards(undefined, root)
+		const shards = await resolvePostcodeShards(undefined, root)
 
 		console.error(`▸ build ← ${adminDB} (${shards.length} postcode shards; FTS baked in)`)
 
@@ -113,22 +111,22 @@ const GazetteerRelease: ParsedCommandComponent<Options> = ({ options }) => {
 		lines.push(`built ${out} — ${r.rows.toLocaleString()} rows, ${r.postcodes.toLocaleString()} postcodes`)
 
 		if (options.promote) {
-			const linkPath = promoteCandidate(out, root)
+			const linkPath = await promoteCandidate(out, root)
 			lines.push(`promoted ${linkPath} → ${out}`)
 		}
 
 		if (options.publish) {
 			const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
-			const stageDir = mkdtempSync(join(tmpdir(), "mailwoman-gazetteer-"))
+			await using stage = await temporaryDirectory("mailwoman-gazetteer-")
 
 			console.error(`▸ publish → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`)
 
-			const p = publishGazetteer({
+			const p = await publishGazetteer({
 				candidateDB: out,
 				version,
 				uploadScript: String(repoRootPathBuilder("scripts", "publish-demo-assets-to-r2.py")),
 				resourcesFile: String(repoRootPathBuilder("docs", "src", "shared", "resources.tsx")),
-				stageDir,
+				stageDir: stage.path,
 				prefix: "mailwoman",
 				dryRun: options.dryRun,
 				onPhase: (ph, d) => console.error(`  [${ph}]${d ? ` ${d}` : ""}`),

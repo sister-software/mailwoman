@@ -12,10 +12,10 @@
  *   that refuses before it opens a file.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { AuthoritativeResponseStatus, type AuthoritativeQuery } from "@mailwoman/core/resolver"
-import { mkdtemp, readFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import {
 	syntheticFixtureAdapter,
@@ -387,7 +387,8 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 
 	it("writes no file when it refuses", async () => {
 		const run = await syntheticRun()
-		const directory = await mkdtemp(join(tmpdir(), "premise-linkage-"))
+		await using directoryDirectory = await temporaryDirectory("premise-linkage-")
+		const directory = directoryDirectory.path
 		const target = join(directory, "report.json")
 		const injected = structuredClone(run.report)
 
@@ -399,7 +400,8 @@ describe("#1902: the public-report writer refuses an injected disclosure", () =>
 
 	it("writes the suppressed report when every check passes", async () => {
 		const run = await syntheticRun()
-		const directory = await mkdtemp(join(tmpdir(), "premise-linkage-"))
+		await using directoryDirectory = await temporaryDirectory("premise-linkage-")
+		const directory = directoryDirectory.path
 		const target = join(directory, "report.json")
 		const written = await writePremiseLinkageReport(target, run)
 		const roundTripped = parseJSONStrict<PremiseLinkageReport>(await readFile(target, "utf8"))

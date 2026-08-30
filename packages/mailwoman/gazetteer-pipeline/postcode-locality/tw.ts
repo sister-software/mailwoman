@@ -50,8 +50,9 @@
  *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-tw.db
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { movePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync, renameSync, rmSync } from "@mailwoman/platform/fs"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -156,8 +157,8 @@ export interface PostalDistrict {
  * Parse Chunghwa Post's `行政區經緯度(toPost).xml` (data.gov.tw dataset 25489). The document is flat and regular; entries
  * carry 行政區名 / 3碼郵遞區號 / 中心點經度 / 中心點緯度.
  */
-export function loadPostalDistricts(path: string): PostalDistrict[] {
-	const xml = readFileSync(path, "utf8")
+export async function loadPostalDistricts(path: string): Promise<PostalDistrict[]> {
+	const xml = await readLocalTextFile(path)
 
 	const re =
 		/<行政區名>([^<]+)<\/行政區名>\s*<_x0033_碼郵遞區號>(\d+)<\/_x0033_碼郵遞區號>\s*<中心點經度>([\d.]+)<\/中心點經度>\s*<中心點緯度>([\d.]+)<\/中心點緯度>/g
@@ -307,7 +308,7 @@ interface AdminPlace {
  * The database handle is closed before returning — everything downstream reads these indexes, not SQL.
  */
 function loadAdminIndexes(args: { adminDB: string }) {
-	const admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
+	using admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
 	const ph = PLACETYPES.map(() => "?").join(",")
 	const places = new Map<number, AdminPlace>()
 
@@ -399,8 +400,6 @@ function loadAdminIndexes(args: { adminDB: string }) {
 		}
 	}
 
-	admin.destroy()
-
 	// Proximity grid (0.5° cells, same shape as the JP/KR builders) — used by both the polygon
 	// candidate scan (bbox-scoped) and the no-polygon fallback.
 	const grid = new Map<string, AdminPlace[]>()
@@ -442,7 +441,7 @@ function loadAdminIndexes(args: { adminDB: string }) {
 }
 
 export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): Promise<void> {
-	const districts = loadPostalDistricts(args.postalXML)
+	const districts = await loadPostalDistricts(args.postalXML)
 
 	if (!districts.length) {
 		console.error(`no postal districts parsed from ${args.postalXML}`)
@@ -466,209 +465,217 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 	const { places, regionsByHan, placesByQID, nearby } = loadAdminIndexes(args)
 
 	const buildPath = `${args.output}.building`
-	rmSync(buildPath, { force: true })
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(buildPath)
-
-	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
+	await removePathIfPresent(buildPath)
 
 	const rows: PostcodeLocalityInsertValues[] = []
 	const tierCounts = { polygon: 0, wikidata: 0, name_in_polygon: 0, name_nearby: 0, region_fallback: 0 }
 	const unmatched: string[] = []
+	const matched = tierCounts.polygon + tierCounts.wikidata + tierCounts.name_in_polygon + tierCounts.name_nearby
+	const matchRate = `${((100 * matched) / districts.length).toFixed(1)}%`
 
-	for (const d of districts) {
-		const districtHan = normHan(d.district)
-		const stemHan = districtHan.replace(DISTRICT_SUFFIX, "")
-		const aliases = [d.name, d.district, normHan(d.name) !== d.name ? normHan(d.name) : ""].filter(isPresent).join("|")
+	{
+		using kdb = new DatabaseClient<PostcodeLocalityDatabase>(buildPath)
 
-		const hanMatches = (p: AdminPlace): boolean =>
-			p.hanNames.has(districtHan) || (stemHan.length >= 2 && p.hanNames.has(stemHan))
+		await createPostcodeLocalityTable(kdb, { ifNotExists: false })
 
-		// The Overture en name is per-polygon, so the closure is (re)bound after the polygon resolves.
-		let enStem = ""
+		for (const d of districts) {
+			const districtHan = normHan(d.district)
+			const stemHan = districtHan.replace(DISTRICT_SUFFIX, "")
 
-		const nameMatches = (p: AdminPlace): boolean =>
-			hanMatches(p) || (enStem.length >= MIN_ENGLISH_STEM_LENGTH && p.engNames.has(enStem))
+			const aliases = [d.name, d.district, normHan(d.name) !== d.name ? normHan(d.name) : ""]
+				.filter(isPresent)
+				.join("|")
 
-		// 1. The district polygon: name match (full Chinese form), disambiguated by whether it contains
-		//    the OFFICIAL district center (中正區 exists in both Taipei and Keelung; each official
-		//    center falls in exactly its own polygon).
-		const namesakes = polygonsByName.get(districtHan) ?? []
+			const hanMatches = (p: AdminPlace): boolean =>
+				p.hanNames.has(districtHan) || (stemHan.length >= 2 && p.hanNames.has(stemHan))
 
-		const polygon =
-			namesakes.length === 1 ? namesakes[0] : namesakes.find((p) => geometryContains(p.geometry, d.lon, d.lat) === true)
+			// The Overture en name is per-polygon, so the closure is (re)bound after the polygon resolves.
+			let enStem = ""
 
-		// 2. The WOF row, tiered:
-		//    a. district-tier (county/localadmin) point inside the polygon — real containment;
-		//    b. wikidata concordance (division.wikidata ↔ WOF wd:id) — identity survives a sloppy WOF
-		//       point that fell outside its own polygon;
-		//    c. Chinese-name match inside the polygon (locality/neighbourhood tiers);
-		//    d. no-polygon fallback: JP/KR-style authoritative-name + proximity net.
-		let hit: { d: number; place: AdminPlace } | undefined
-		let extras: Array<{ d: number; place: AdminPlace }> = []
+			const nameMatches = (p: AdminPlace): boolean =>
+				hanMatches(p) || (enStem.length >= MIN_ENGLISH_STEM_LENGTH && p.engNames.has(enStem))
 
-		if (polygon) {
-			enStem = polygon.nameEn ? normEn(polygon.nameEn) : ""
-			const [minLon, minLat, maxLon, maxLat] = polygon.bbox
-			const inside: Array<{ d: number; place: AdminPlace }> = []
+			// 1. The district polygon: name match (full Chinese form), disambiguated by whether it contains
+			//    the OFFICIAL district center (中正區 exists in both Taipei and Keelung; each official
+			//    center falls in exactly its own polygon).
+			const namesakes = polygonsByName.get(districtHan) ?? []
 
-			for (const p of places.values()) {
-				if (p.lo < minLon || p.lo > maxLon || p.la < minLat || p.la > maxLat) continue
+			const polygon =
+				namesakes.length === 1
+					? namesakes[0]
+					: namesakes.find((p) => geometryContains(p.geometry, d.lon, d.lat) === true)
 
-				if (geometryContains(polygon.geometry, p.lo, p.la) !== true) continue
-				inside.push({ d: haversineKm(d.lat, d.lon, p.la, p.lo), place: p })
-			}
+			// 2. The WOF row, tiered:
+			//    a. district-tier (county/localadmin) point inside the polygon — real containment;
+			//    b. wikidata concordance (division.wikidata ↔ WOF wd:id) — identity survives a sloppy WOF
+			//       point that fell outside its own polygon;
+			//    c. Chinese-name match inside the polygon (locality/neighbourhood tiers);
+			//    d. no-polygon fallback: JP/KR-style authoritative-name + proximity net.
+			let hit: { d: number; place: AdminPlace } | undefined
+			let extras: Array<{ d: number; place: AdminPlace }> = []
 
-			inside.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
+			if (polygon) {
+				enStem = polygon.nameEn ? normEn(polygon.nameEn) : ""
+				const [minLon, minLat, maxLon, maxLat] = polygon.bbox
+				const inside: Array<{ d: number; place: AdminPlace }> = []
 
-			// Name-confirmed district-tier first: sloppy WOF points put a NEIGHBORING district's row
-			// inside this polygon (Zhongshan's point sits in 中正區), so bare containment alone picks
-			// the wrong namesake when both are inside. Bare containment stays as the in-tier backup and
-			// OUTRANKS the wikidata bridge — measured, not assumed: promoting wd above bare containment
-			// dropped eval PIP 86.4→85.2% (2026-07-02, n=3000 seed 42), because WOF's TW wd
-			// concordances are themselves misattached (890468273 "Zhongzheng Qu" carries KEELUNG's
-			// Q712871 while its point sits in Taipei). A point inside the polygon is at least
-			// coordinate-correct; a wrong-side concordance is wrong everywhere.
-			hit =
-				inside.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place)) ??
-				inside.find((c) => DISTRICT_TIER.has(c.place.placetype))
+				for (const p of places.values()) {
+					if (p.lo < minLon || p.lo > maxLon || p.la < minLat || p.la > maxLat) continue
 
-			if (hit) {
-				tierCounts.polygon++
-			} else if (polygon.wikidata) {
-				const concordant = (placesByQID.get(polygon.wikidata) ?? [])
-					.map((place) => ({ d: haversineKm(d.lat, d.lon, place.la, place.lo), place }))
-					.toSorted(
-						(a, b) =>
-							Number(!DISTRICT_TIER.has(a.place.placetype)) - Number(!DISTRICT_TIER.has(b.place.placetype)) || a.d - b.d
-					)
+					if (geometryContains(polygon.geometry, p.lo, p.la) !== true) continue
+					inside.push({ d: haversineKm(d.lat, d.lon, p.la, p.lo), place: p })
+				}
 
-				hit = concordant[0]
+				inside.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
+
+				// Name-confirmed district-tier first: sloppy WOF points put a NEIGHBORING district's row
+				// inside this polygon (Zhongshan's point sits in 中正區), so bare containment alone picks
+				// the wrong namesake when both are inside. Bare containment stays as the in-tier backup and
+				// OUTRANKS the wikidata bridge — measured, not assumed: promoting wd above bare containment
+				// dropped eval PIP 86.4→85.2% (2026-07-02, n=3000 seed 42), because WOF's TW wd
+				// concordances are themselves misattached (890468273 "Zhongzheng Qu" carries KEELUNG's
+				// Q712871 while its point sits in Taipei). A point inside the polygon is at least
+				// coordinate-correct; a wrong-side concordance is wrong everywhere.
+				hit =
+					inside.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place)) ??
+					inside.find((c) => DISTRICT_TIER.has(c.place.placetype))
 
 				if (hit) {
-					tierCounts.wikidata++
+					tierCounts.polygon++
+				} else if (polygon.wikidata) {
+					const concordant = (placesByQID.get(polygon.wikidata) ?? [])
+						.map((place) => ({ d: haversineKm(d.lat, d.lon, place.la, place.lo), place }))
+						.toSorted(
+							(a, b) =>
+								Number(!DISTRICT_TIER.has(a.place.placetype)) - Number(!DISTRICT_TIER.has(b.place.placetype)) ||
+								a.d - b.d
+						)
+
+					hit = concordant[0]
+
+					if (hit) {
+						tierCounts.wikidata++
+					}
+				}
+
+				if (!hit) {
+					// Chinese or Overture-en name match inside the polygon — the romanization bridge for the
+					// zho-less `county`/`neighbourhood` rows (Lingya, Qianzhen, …).
+					hit = inside.find((c) => nameMatches(c.place))
+
+					if (hit) {
+						tierCounts.name_in_polygon++
+					}
+				}
+
+				if (hit) {
+					extras = inside.filter((c) => c.place.pid !== hit!.place.pid)
 				}
 			}
 
 			if (!hit) {
-				// Chinese or Overture-en name match inside the polygon — the romanization bridge for the
-				// zho-less `county`/`neighbourhood` rows (Lingya, Qianzhen, …).
-				hit = inside.find((c) => nameMatches(c.place))
+				// No polygon (or nothing usable in it): the JP/KR-style authoritative-name + proximity net.
+				// The en stem also rescues district rows whose WOF point fell OUTSIDE their own polygon
+				// (Wanhua sits ~5 km west of 萬華區, in New Taipei). Neighbourhood rows only qualify through
+				// the name gate, never by bare proximity — see the PLACETYPES note.
+				const cands = nearby(d.lat, d.lon, FALLBACK_RADIUS_KM)
+				const districtTierNameHit = cands.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place))
+				const nameHit = districtTierNameHit ?? cands.find((c) => nameMatches(c.place))
 
-				if (hit) {
-					tierCounts.name_in_polygon++
+				if (nameHit) {
+					tierCounts.name_nearby++
+					hit = nameHit
+					extras = cands.filter((c) => c.place.pid !== nameHit.place.pid && c.place.placetype !== "neighbourhood")
+				} else {
+					// 5. Containing-city (region) fallback: WOF has NO row for this district at all (the
+					//    Kaohsiung/Taichung/Tainan urban-core gaps, the offshore islands). The county-prefix
+					//    region row is a TRUE container — coarser granularity, honestly recorded (the meta
+					//    counts it separately), and the city coordinate beats a wrong-district neighbor.
+					const region = regionsByHan.get(normHan(d.county))
+					unmatched.push(d.name)
+
+					if (region) {
+						tierCounts.region_fallback++
+						const dist = haversineKm(d.lat, d.lon, region.la, region.lo)
+						rows.push([d.postcode, "TW", region.pid, region.nm, aliases, Math.round(dist * 1000) / 1000, 1])
+					}
+
+					// The weak candidate rides along either way — recorded non-containing so the resolver's
+					// soft score treats it as proximity evidence, never as an authoritative containment.
+					const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
+
+					if (weak) {
+						rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
+					}
+
+					continue
 				}
 			}
 
-			if (hit) {
-				extras = inside.filter((c) => c.place.pid !== hit!.place.pid)
+			rows.push([d.postcode, "TW", hit.place.pid, hit.place.nm, aliases, Math.round(hit.d * 1000) / 1000, 1])
+			let kept = 0
+
+			for (const c2 of extras) {
+				rows.push([d.postcode, "TW", c2.place.pid, c2.place.nm, aliases, Math.round(c2.d * 1000) / 1000, 0])
+
+				if (++kept >= NEARBY_KEEP) break
 			}
 		}
 
-		if (!hit) {
-			// No polygon (or nothing usable in it): the JP/KR-style authoritative-name + proximity net.
-			// The en stem also rescues district rows whose WOF point fell OUTSIDE their own polygon
-			// (Wanhua sits ~5 km west of 萬華區, in New Taipei). Neighbourhood rows only qualify through
-			// the name gate, never by bare proximity — see the PLACETYPES note.
-			const cands = nearby(d.lat, d.lon, FALLBACK_RADIUS_KM)
-			const districtTierNameHit = cands.find((c) => DISTRICT_TIER.has(c.place.placetype) && nameMatches(c.place))
-			const nameHit = districtTierNameHit ?? cands.find((c) => nameMatches(c.place))
+		const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
+		kdb.exec("BEGIN")
 
-			if (nameHit) {
-				tierCounts.name_nearby++
-				hit = nameHit
-				extras = cands.filter((c) => c.place.pid !== nameHit.place.pid && c.place.placetype !== "neighbourhood")
-			} else {
-				// 5. Containing-city (region) fallback: WOF has NO row for this district at all (the
-				//    Kaohsiung/Taichung/Tainan urban-core gaps, the offshore islands). The county-prefix
-				//    region row is a TRUE container — coarser granularity, honestly recorded (the meta
-				//    counts it separately), and the city coordinate beats a wrong-district neighbor.
-				const region = regionsByHan.get(normHan(d.county))
-				unmatched.push(d.name)
-
-				if (region) {
-					tierCounts.region_fallback++
-					const dist = haversineKm(d.lat, d.lon, region.la, region.lo)
-					rows.push([d.postcode, "TW", region.pid, region.nm, aliases, Math.round(dist * 1000) / 1000, 1])
-				}
-
-				// The weak candidate rides along either way — recorded non-containing so the resolver's
-				// soft score treats it as proximity evidence, never as an authoritative containment.
-				const weak = cands.find((c) => c.place.placetype !== "neighbourhood")
-
-				if (weak) {
-					rows.push([d.postcode, "TW", weak.place.pid, weak.place.nm, aliases, Math.round(weak.d * 1000) / 1000, 0])
-				}
-
-				continue
-			}
+		for (const r of rows) {
+			insert.run(...r)
 		}
 
-		rows.push([d.postcode, "TW", hit.place.pid, hit.place.nm, aliases, Math.round(hit.d * 1000) / 1000, 1])
-		let kept = 0
+		kdb.exec("COMMIT")
 
-		for (const c2 of extras) {
-			rows.push([d.postcode, "TW", c2.place.pid, c2.place.nm, aliases, Math.round(c2.d * 1000) / 1000, 0])
+		await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
 
-			if (++kept >= NEARBY_KEEP) break
+		// The build writes to a fresh `<output>.building` file, so `meta` can never already exist.
+		await createPostcodeLocalityMetaTable(kdb, { ifNotExists: false })
+
+		const meta: Array<[string, string]> = [
+			["name", "mailwoman-postcode-locality-tw"],
+			["description", "TW 3-digit postcode -> WOF district via official center + Overture division polygon bridge"],
+			[
+				"method",
+				"Chunghwa Post district table (official centers) -> containing Overture division polygon -> WOF row, tiered: " +
+					"district-tier-inside > wikidata concordance > Chinese-name-inside > JP/KR-style name+proximity fallback",
+			],
+			[
+				"source",
+				"Chunghwa Post 行政區經緯度(toPost).xml via data.gov.tw dataset 25489 (OGDL v1) + Overture divisions " +
+					"2026-06-17.0 (district polygons) + custom-built admin-tw.db (whosonfirst-data-admin-tw); built from source. " +
+					"Overture addresses 2026-06-17.0 carries 0 TW postcodes (verified) — the postal authority table is the " +
+					"only keying source. The 3+3 tail is road-segment granularity (below admin; full file account-gated at " +
+					"fpp.post.gov.tw); this table keys the 3-digit admin code.",
+			],
+			["country", "TW"],
+			["postcodes_total", String(districts.length)],
+			["postcodes_matched", String(matched)],
+			["postcodes_by_tier", JSON.stringify(tierCounts)],
+			["match_rate", matchRate],
+			["unmatched", unmatched.join("|") || "(none)"],
+			["built_at", isoSeconds()],
+		]
+
+		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+
+		for (const [k, v] of meta) {
+			insMeta.run(k, v)
 		}
+
+		kdb.exec("PRAGMA journal_mode=DELETE")
+		kdb.exec("ANALYZE")
+		assertDatabaseIntegrity(kdb, buildPath)
+
+		kdb.exec("VACUUM")
 	}
 
-	const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
-	kdb.exec("BEGIN")
-
-	for (const r of rows) {
-		insert.run(...r)
-	}
-
-	kdb.exec("COMMIT")
-
-	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
-
-	// The build writes to a fresh `<output>.building` file, so `meta` can never already exist.
-	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: false })
-
-	const matched = tierCounts.polygon + tierCounts.wikidata + tierCounts.name_in_polygon + tierCounts.name_nearby
-	const matchRate = `${((100 * matched) / districts.length).toFixed(1)}%`
-
-	const meta: Array<[string, string]> = [
-		["name", "mailwoman-postcode-locality-tw"],
-		["description", "TW 3-digit postcode -> WOF district via official center + Overture division polygon bridge"],
-		[
-			"method",
-			"Chunghwa Post district table (official centers) -> containing Overture division polygon -> WOF row, tiered: " +
-				"district-tier-inside > wikidata concordance > Chinese-name-inside > JP/KR-style name+proximity fallback",
-		],
-		[
-			"source",
-			"Chunghwa Post 行政區經緯度(toPost).xml via data.gov.tw dataset 25489 (OGDL v1) + Overture divisions " +
-				"2026-06-17.0 (district polygons) + custom-built admin-tw.db (whosonfirst-data-admin-tw); built from source. " +
-				"Overture addresses 2026-06-17.0 carries 0 TW postcodes (verified) — the postal authority table is the " +
-				"only keying source. The 3+3 tail is road-segment granularity (below admin; full file account-gated at " +
-				"fpp.post.gov.tw); this table keys the 3-digit admin code.",
-		],
-		["country", "TW"],
-		["postcodes_total", String(districts.length)],
-		["postcodes_matched", String(matched)],
-		["postcodes_by_tier", JSON.stringify(tierCounts)],
-		["match_rate", matchRate],
-		["unmatched", unmatched.join("|") || "(none)"],
-		["built_at", isoSeconds()],
-	]
-
-	const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
-
-	for (const [k, v] of meta) {
-		insMeta.run(k, v)
-	}
-
-	kdb.exec("PRAGMA journal_mode=DELETE")
-	kdb.exec("ANALYZE")
-	assertDatabaseIntegrity(kdb, buildPath)
-
-	kdb.exec("VACUUM")
-	await kdb.destroy()
 	// Build-then-move: the destination only ever sees a fully-built, integrity-checked artifact.
-	renameSync(buildPath, args.output)
+	await movePath(buildPath, args.output)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	sealDatabase(args.output)
 

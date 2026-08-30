@@ -18,9 +18,9 @@
  *      byte-stable `undefined` on no match.
  */
 
+import { readDirectoryEntries, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { PairIndexResolver, serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
 import { detectPairIndexCountry, type LoadedPairIndex, resolvePairIndexForText } from "@mailwoman/neural/web-loader"
-import { readdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { TextSpliterator } from "spliterator"
@@ -36,15 +36,15 @@ const browserSafePackageRoots = {
 /**
  * Every non-test `.ts` under `dir`, recursively (the runtime source the browser bundle would pull).
  */
-function sourceFiles(dir: string): string[] {
+async function sourceFiles(dir: string): Promise<string[]> {
 	const out: string[] = []
 
-	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+	for (const entry of await readDirectoryEntries(dir)) {
 		if (entry.name === "out" || entry.name === "node_modules") continue
 		const full = join(dir, entry.name)
 
 		if (entry.isDirectory()) {
-			out.push(...sourceFiles(full))
+			out.push(...(await sourceFiles(full)))
 		} else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
 			out.push(full)
 		}
@@ -76,14 +76,14 @@ function specifierOf(line: string): string {
 
 describe("browser-safety scope — locale-gate + query-shape are node-free (#1278 hard gate)", () => {
 	for (const pkg of ["locale-gate", "query-shape"]) {
-		test(`@mailwoman/${pkg}: no node:* / fs / path / process runtime import in the transitive source`, () => {
-			const files = sourceFiles(browserSafePackageRoots[pkg as keyof typeof browserSafePackageRoots])
+		test(`@mailwoman/${pkg}: no node:* / fs / path / process runtime import in the transitive source`, async () => {
+			const files = await sourceFiles(browserSafePackageRoots[pkg as keyof typeof browserSafePackageRoots])
 
 			expect(files.length).toBeGreaterThan(0)
 			const offenders: string[] = []
 
 			for (const file of files) {
-				const text = readFileSync(file, "utf8")
+				const text = await readLocalTextFile(file)
 
 				// Named node builtins must never appear as a value in browser-portable source.
 				if (/\brequire\s*\(/.test(text) || /\bprocess\.\w/.test(text) || /\b__dirname\b|\b__filename\b/.test(text)) {

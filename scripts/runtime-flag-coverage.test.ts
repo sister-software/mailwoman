@@ -25,8 +25,9 @@
  *   `arbitrate` shape — not to grade the quality of the coverage it finds.
  */
 
+import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { existsSync, readdirSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -59,15 +60,15 @@ function registerFlags(markdown: string): string[] {
  */
 const UNCOVERED_ALLOWLIST: Record<string, string> = {}
 
-function testFilesUnder(directory: string, found: string[] = []): string[] {
-	if (!existsSync(directory)) return found
+async function testFilesUnder(directory: string, found: string[] = []): Promise<string[]> {
+	if (!(await pathExists(directory))) return found
 
-	for (const entry of readdirSync(directory)) {
+	for (const entry of await readDirectory(directory)) {
 		if (entry === "node_modules" || entry === "out" || entry.startsWith(".")) continue
 
 		const full = join(directory, entry)
 
-		if (statSync(full).isDirectory()) {
+		if ((await statPath(full)).isDirectory()) {
 			testFilesUnder(full, found)
 		} else if (/\.test\.tsx?$/.test(entry)) {
 			found.push(full)
@@ -86,8 +87,8 @@ describe("runtime-flag register", () => {
 		expect(flags.length).toBeGreaterThan(20)
 	})
 
-	it("every registered flag is touched by at least one test — removal or missing coverage, never neither", () => {
-		const corpus = testFilesUnder(String(repoRootPath("packages"))).map((path) => readFileSync(path, "utf8"))
+	it("every registered flag is touched by at least one test — removal or missing coverage, never neither", async () => {
+		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readFileSync(path, "utf8"))
 
 		const uncovered = flags.filter((flag) => {
 			const pattern = new RegExp(`\\b${flag}\\b`)
@@ -105,8 +106,8 @@ describe("runtime-flag register", () => {
 		).toEqual([])
 	})
 
-	it("the allowlist carries no flag that has since gained coverage, or left the register", () => {
-		const corpus = testFilesUnder(String(repoRootPath("packages"))).map((path) => readFileSync(path, "utf8"))
+	it("the allowlist carries no flag that has since gained coverage, or left the register", async () => {
+		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readFileSync(path, "utf8"))
 
 		for (const flag of Object.keys(UNCOVERED_ALLOWLIST)) {
 			const covered = corpus.some((source) => new RegExp(`\\b${flag}\\b`).test(source))

@@ -123,7 +123,7 @@ export type ZoningDecision =
 	| { fired: true; observation: ZoningDesignationObservation }
 	| { fired: false; refusal: ZoningRefusal }
 
-export interface ZoningDesignationRoute {
+export interface ZoningDesignationRoute extends Disposable {
 	identity: ZoningLayerIdentity
 	/**
 	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
@@ -133,7 +133,6 @@ export interface ZoningDesignationRoute {
 	 * here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => ZoningDecision
-	close: () => void
 }
 
 export interface ZoningDesignationRouteOptions {
@@ -164,7 +163,7 @@ export function createZoningDesignationRoute(options: ZoningDesignationRouteOpti
 
 			return decide(lookup.lookup(latitude, longitude), lookup.identity, latitude, longitude, options.databasePath)
 		},
-		close: () => lookup.close(),
+		[Symbol.dispose]: () => lookup[Symbol.dispose](),
 	}
 }
 

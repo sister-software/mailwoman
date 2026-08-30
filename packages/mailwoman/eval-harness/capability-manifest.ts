@@ -40,10 +40,11 @@
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { parseJSONStrict, prettyJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 
 import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "./per-tag-f1.ts"
 
@@ -254,7 +255,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 	const capabilities = await buildManifest(paths)
 
 	console.log("\n--- capabilities block ---")
-	console.log(JSON.stringify({ capabilities }, null, "\t"))
+	console.log(prettyJSON({ capabilities }))
 
 	if (WRITE) {
 		// Provenance key alongside the tier keys; ignored by readers (`lookupTagCapability` skips it).
@@ -271,7 +272,7 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		// shipped artifact. Instead, append ONE new top-level key, byte-preserving everything else. The
 		// card is validated JSON, so its tail is `…\n}\n` (root close); we splice `,\n\t"capabilities":…`
 		// before that final brace, one indent level deep (each block line tab-prefixed).
-		const original = readFileSync(paths.modelCard, "utf8")
+		const original = await readLocalTextFile(paths.modelCard)
 		const lastBrace = original.lastIndexOf("}")
 
 		if (lastBrace === -1) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
@@ -287,14 +288,14 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 		}
 
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Re-indenting a string serialized on the line above, not reading anything.
-		const block = JSON.stringify(capabilities, null, "\t")
+		const block = prettyJSON(capabilities, false)
 			.split("\n")
 			.map((line) => "\t" + line)
 			.join("\n")
 
 		const before = original.slice(0, lastBrace).replace(/\s*$/, "")
 		const after = original.slice(lastBrace) // the final "}\n"
-		writeFileSync(paths.modelCard, `${before},\n\t"capabilities": ${block.trimStart()}\n${after}`)
+		await writeLocalTextFile(`${before},\n\t"capabilities": ${block.trimStart()}\n${after}`, paths.modelCard)
 
 		console.error(`\nSurgically inserted the \`capabilities\` block into ${paths.modelCard}`)
 	} else {

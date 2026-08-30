@@ -180,7 +180,7 @@ export async function runConstraintCensus(
 	// forced on regardless of what the caller passed — neither can change an answer, so neither is a lever.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 	const dataRoot = String(engine.effective.dataRoot ?? "")
-	const opened = (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)
+	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)
 
 	if (!("db" in opened)) {
 		throw new Error(

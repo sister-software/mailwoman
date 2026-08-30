@@ -23,7 +23,7 @@
  *   middle of someone else's build.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { existsSync, lstatSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
 
 interface ArtifactState {
@@ -107,7 +107,6 @@ export interface ProvenanceOptions {
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
 	const { dataRootPath, mailwomanDataRoot, repoRootPath } = await import("@mailwoman/core/utils")
-	const { readFileSync } = await import("@mailwoman/platform/fs")
 
 	const dataRoot = String(mailwomanDataRoot())
 
@@ -132,12 +131,12 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	let repos: RepoVintage[] | null = null
 	let reposStampAge: string | null = null
 
-	if (existsSync(reposStampPath)) {
+	if (await pathExists(reposStampPath)) {
 		try {
-			const stamp = parseJSONStrict(readFileSync(reposStampPath, "utf8")) as { repos?: RepoVintage[] }
+			const stamp = (await readLocalJSONFile(reposStampPath)) as { repos?: RepoVintage[] }
 
 			repos = stamp.repos ?? []
-			reposStampAge = statSync(reposStampPath).mtime.toISOString()
+			reposStampAge = (await statPath(reposStampPath)).mtime.toISOString()
 		} catch {
 			// A corrupt stamp is reported as no stamp. Guessing at its contents would be worse than saying nothing.
 			repos = null
@@ -147,11 +146,11 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	const buildLogPath = String(repoRootPath("scripts", "wof-build-manifest.json"))
 	let buildLog: string[] = []
 
-	if (existsSync(buildLogPath)) {
+	if (await pathExists(buildLogPath)) {
 		try {
 			// The build appends to `notes` — verified against the committed file, not assumed from the key's name. Each
 			// entry is one dated line carrying the record counts, the Overture release and whether it was swapped live.
-			const log = parseJSONStrict(readFileSync(buildLogPath, "utf8")) as { notes?: unknown }
+			const log = (await readLocalJSONFile(buildLogPath)) as { notes?: unknown }
 			const entries = Array.isArray(log.notes) ? log.notes.filter((n): n is string => typeof n === "string") : []
 
 			buildLog = entries.slice(-(options.buildLogEntries ?? 3))

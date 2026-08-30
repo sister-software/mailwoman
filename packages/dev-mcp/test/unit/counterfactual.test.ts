@@ -19,48 +19,48 @@ import {
 import { resolveConfig } from "@mailwoman/dev-mcp/engine-registry"
 import { describe, expect, it } from "vitest"
 
-function flipFor(lever: CounterfactualLever, locale: string, country: string | undefined) {
-	return enumerateFlips(resolveConfig({ locale }), country).flips.find((flip) => flip.lever === lever)
+async function flipFor(lever: CounterfactualLever, locale: string, country: string | undefined) {
+	return (await enumerateFlips(resolveConfig({ locale }), country)).flips.find((flip) => flip.lever === lever)
 }
 
 describe("enumerateFlips — one lever at a time", () => {
-	it("moves exactly one key per flip", () => {
-		const { flips } = enumerateFlips(resolveConfig({}), "US")
+	it("moves exactly one key per flip", async () => {
+		const { flips } = await enumerateFlips(resolveConfig({}), "US")
 
 		for (const flip of flips) {
 			expect(Object.keys(flip.patch)).toHaveLength(1)
 		}
 	})
 
-	it("offers every lever in the fixed space where it applies", () => {
-		const { flips } = enumerateFlips(resolveConfig({}), "GB")
+	it("offers every lever in the fixed space where it applies", async () => {
+		const { flips } = await enumerateFlips(resolveConfig({}), "GB")
 
 		expect(flips.map((flip) => flip.lever).toSorted()).toEqual([...COUNTERFACTUAL_LEVERS].toSorted())
 	})
 
-	it("flips a base-locale row TO its country's overlay", () => {
-		expect(flipFor("locale", BASE_LOCALE, "GB")).toMatchObject({ from: BASE_LOCALE, to: "en-GB" })
+	it("flips a base-locale row TO its country's overlay", async () => {
+		expect(await flipFor("locale", BASE_LOCALE, "GB")).toMatchObject({ from: BASE_LOCALE, to: "en-GB" })
 	})
 
-	it("flips a row already under its overlay BACK to the base — the only way to price the overlay", () => {
-		expect(flipFor("locale", "de-DE", "DE")).toMatchObject({ from: "de-DE", to: BASE_LOCALE })
+	it("flips a row already under its overlay BACK to the base — the only way to price the overlay", async () => {
+		expect(await flipFor("locale", "de-DE", "DE")).toMatchObject({ from: "de-DE", to: BASE_LOCALE })
 	})
 
-	it("skips the locale lever with a stated reason rather than omitting it", () => {
-		const noCountry = enumerateFlips(resolveConfig({}), undefined)
-		const noOverlay = enumerateFlips(resolveConfig({}), "JP")
+	it("skips the locale lever with a stated reason rather than omitting it", async () => {
+		const noCountry = await enumerateFlips(resolveConfig({}), undefined)
+		const noOverlay = await enumerateFlips(resolveConfig({}), "JP")
 
 		expect(noCountry.flips.some((flip) => flip.lever === "locale")).toBe(false)
 		expect(noCountry.skipped[0]!.why).toContain("no country for this row")
 		expect(noOverlay.skipped[0]!.why).toContain("no weights overlay ships for JP")
 	})
 
-	it("flips country_scope between auto and none in both directions", () => {
-		expect(enumerateFlips(resolveConfig({ country_scope: "none" }), "US").flips).toContainEqual(
+	it("flips country_scope between auto and none in both directions", async () => {
+		expect((await enumerateFlips(resolveConfig({ country_scope: "none" }), "US")).flips).toContainEqual(
 			expect.objectContaining({ lever: "country_scope", from: "none", to: "auto" })
 		)
 
-		expect(enumerateFlips(resolveConfig({ country_scope: "auto" }), "US").flips).toContainEqual(
+		expect((await enumerateFlips(resolveConfig({ country_scope: "auto" }), "US")).flips).toContainEqual(
 			expect.objectContaining({ lever: "country_scope", from: "auto", to: "none" })
 		)
 	})

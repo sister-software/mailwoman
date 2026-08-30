@@ -31,7 +31,7 @@ import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-c
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
 import { WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm/lookup"
-import { afterAll, beforeAll, describe, expect, test } from "vitest"
+import { aroundAll, describe, expect, test } from "vitest"
 
 const HOT_DB_PATH = $public.MAILWOMAN_WOF_HOT_DB
 
@@ -46,14 +46,13 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 	// placetype the cascade passes is valid; the mismatch is parameter variance, not a runtime one.
 	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as unknown as MailwomanLookupLike
 
-	beforeAll(async () => {
+	aroundAll(async (runSuite) => {
 		const bytes = await readFile(HOT_DB_PATH!)
 		const { db } = await loadSlimWOFDatabase({ source: bytes })
-		wasmLookup = new WOFWasmPlaceLookup({ db })
-	})
+		using lookup = new WOFWasmPlaceLookup({ db })
 
-	afterAll(() => {
-		wasmLookup?.close()
+		wasmLookup = lookup
+		await runSuite()
 	})
 
 	describe("WASM lookup", () => {

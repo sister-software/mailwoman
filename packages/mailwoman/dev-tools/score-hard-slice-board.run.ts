@@ -49,6 +49,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
@@ -434,7 +435,7 @@ if (arms.includes("pop") && arms.includes("imp")) {
 }
 
 if (values["out-json"]) {
-	writeFileSync(values["out-json"], `${JSON.stringify({ board: board.length, arms, results }, null, 2)}\n`)
+	await writeLocalJSONFile({ board: board.length, arms, results }, values["out-json"])
 
 	console.error(`[out] ${values["out-json"]}`)
 }

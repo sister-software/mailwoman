@@ -11,15 +11,16 @@
  *   read-only from the moment it exists.
  */
 
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { existsSync, readFileSync, unlinkSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
 import { dataRootPath } from "../../resolver-backend.ts"
-import { ingestWOF } from "../admin/ingest-wof.ts"
+import { ingestWOF, type IngestWOFResult } from "../admin/ingest-wof.ts"
 import { buildFTS } from "../fts.ts"
 import { type CentroidFillResult, fillPostcodeCentroids } from "./centroid-fills.ts"
 import {
@@ -75,7 +76,7 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 	const wofDir = dataRootPath("wof")
 	const reposDir = opts.reposDir ?? join(wofDir, "repos")
 	const repoName = wofRepoName("postalcode", cc)
-	const repoDir = resolveWOFRepo(reposDir, repoName)
+	const repoDir = await resolveWOFRepo(reposDir, repoName)
 	const out = opts.out ?? join(wofDir, `postalcode-${cc}.REBUILD.db`)
 
 	if (!repoDir) {
@@ -90,95 +91,108 @@ export async function buildPostcodeShard(opts: BuildPostcodeShardOptions): Promi
 
 	const ingestPath = out + ".ingest"
 
-	if (existsSync(ingestPath)) {
-		unlinkSync(ingestPath)
+	if (await pathExists(ingestPath)) {
+		await removePath(ingestPath)
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-	db.exec(`
-		PRAGMA page_size = 8192;
-		PRAGMA journal_mode = WAL;
-		PRAGMA synchronous = NORMAL;
-		PRAGMA busy_timeout = 30000;
-		PRAGMA temp_store = MEMORY;
-		PRAGMA cache_size = -200000;
-	`)
-
-	await createUnifiedSchema(db)
-
-	phase("ingest", repoDir)
-
-	const ingest = await ingestWOF(db, {
-		dataDir: repoDir,
-		placetypes: new Set(["postalcode"]),
-		onProgress: (processed, skipped, total) =>
-			phase("ingest", `${processed.toLocaleString()}/${total.toLocaleString()} (+${skipped.toLocaleString()} skipped)`),
-	})
-
-	phase("ingest", `${ingest.placesIngested.toLocaleString()} postcodes`)
-
-	// US pass 1: Census ZCTA + GeoNames US (provenance-stamped in centroid_source; see zcta-centroids.ts).
-	let zctaFilled = 0
 	let geonamesUSFilled = 0
+	let zctaFilled = 0
 
-	if (cc === "us") {
-		const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")
+	let ingest: IngestWOFResult
 
-		if (existsSync(zctaPath)) {
-			phase("fill-zcta", zctaPath)
-			zctaFilled = fillPlaceholderCentroids(db, parseZCTACentroids(readFileSync(zctaPath, "utf8")))
-		} else {
-			phase("fill-zcta", `SKIPPED (${zctaPath} not present)`)
+	let fills: CentroidFillResult
+
+	{
+		using db = new DatabaseClient<WOFDatabase>(ingestPath)
+
+		db.exec(`
+			PRAGMA page_size = 8192;
+			PRAGMA journal_mode = WAL;
+			PRAGMA synchronous = NORMAL;
+			PRAGMA busy_timeout = 30000;
+			PRAGMA temp_store = MEMORY;
+			PRAGMA cache_size = -200000;
+		`)
+
+		await createUnifiedSchema(db)
+
+		phase("ingest", repoDir)
+
+		ingest = await ingestWOF(db, {
+			dataDir: repoDir,
+			placetypes: new Set(["postalcode"]),
+			onProgress: (processed, skipped, total) =>
+				phase(
+					"ingest",
+					`${processed.toLocaleString()}/${total.toLocaleString()} (+${skipped.toLocaleString()} skipped)`
+				),
+		})
+
+		phase("ingest", `${ingest.placesIngested.toLocaleString()} postcodes`)
+
+		// US pass 1: Census ZCTA + GeoNames US (provenance-stamped in centroid_source; see zcta-centroids.ts).
+
+		if (cc === "us") {
+			const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")
+
+			if (await pathExists(zctaPath)) {
+				phase("fill-zcta", zctaPath)
+				zctaFilled = fillPlaceholderCentroids(db, parseZCTACentroids(await readLocalTextFile(zctaPath)))
+			} else {
+				phase("fill-zcta", `SKIPPED (${zctaPath} not present)`)
+			}
+
+			const usPostal = join(opts.geonamesPostalDir ?? dataRootPath("geonames-postal"), "US.txt")
+
+			if (await pathExists(usPostal)) {
+				phase("fill-geonames-us", usPostal)
+				geonamesUSFilled = fillGeonamesPlaceholders(db, parseGeonamesCentroids(await readLocalTextFile(usPostal)))
+			}
 		}
 
-		const usPostal = join(opts.geonamesPostalDir ?? dataRootPath("geonames-postal"), "US.txt")
+		// The general ladder (GeoNames postal → parent-borrow → ancestor fallback).
+		fills = await fillPostcodeCentroids(db, {
+			geonamesDir: opts.geonamesPostalDir ?? dataRootPath("geonames-postal"),
+			adminPath: opts.adminPath ?? join(wofDir, "admin-global-priority.db"),
+			reposDir,
+			onPhase: phase,
+		})
 
-		if (existsSync(usPostal)) {
-			phase("fill-geonames-us", usPostal)
-			geonamesUSFilled = fillGeonamesPlaceholders(db, parseGeonamesCentroids(readFileSync(usPostal, "utf8")))
+		phase(
+			"fills",
+			`${fills.placedBefore.toLocaleString()} → ${fills.placedAfter.toLocaleString()} placed of ${fills.total.toLocaleString()}`
+		)
+
+		phase("freeze")
+		db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
+		db.exec("PRAGMA journal_mode = DELETE")
+		db.exec("ANALYZE")
+
+		phase("vacuum", out)
+
+		if (await pathExists(out)) {
+			await removePath(out)
 		}
+
+		db.prepare("VACUUM INTO ?").run(out)
 	}
 
-	// The general ladder (GeoNames postal → parent-borrow → ancestor fallback).
-	const fills = await fillPostcodeCentroids(db, {
-		geonamesDir: opts.geonamesPostalDir ?? dataRootPath("geonames-postal"),
-		adminPath: opts.adminPath ?? join(wofDir, "admin-global-priority.db"),
-		reposDir,
-		onPhase: phase,
-	})
-
-	phase(
-		"fills",
-		`${fills.placedBefore.toLocaleString()} → ${fills.placedAfter.toLocaleString()} placed of ${fills.total.toLocaleString()}`
-	)
-
-	phase("freeze")
-	db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
-	db.exec("PRAGMA journal_mode = DELETE")
-	db.exec("ANALYZE")
-
-	phase("vacuum", out)
-
-	if (existsSync(out)) {
-		unlinkSync(out)
-	}
-
-	db.prepare("VACUUM INTO ?").run(out)
-	await db.destroy()
-	unlinkSync(ingestPath)
+	await removePath(ingestPath)
 
 	for (const sidecar of [ingestPath + "-wal", ingestPath + "-shm"]) {
-		if (existsSync(sidecar)) {
-			unlinkSync(sidecar)
+		if (await pathExists(sidecar)) {
+			await removePath(sidecar)
 		}
 	}
 
 	phase("fts")
-	const outDB = new DatabaseClient<WOFDatabase>(out)
-	await buildFTS(outDB, { onProgress: phase })
-	await outDB.destroy()
+
+	{
+		using outDB = new DatabaseClient<WOFDatabase>(out)
+		await buildFTS(outDB, { onProgress: phase })
+	}
 
 	phase("seal")
 	sealDatabase(out)

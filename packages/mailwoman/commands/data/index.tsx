@@ -14,7 +14,7 @@
  *   short terminal it would.
  */
 
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 

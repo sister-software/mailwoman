@@ -9,9 +9,8 @@
  *   agreeing pair — plus the lazy country-file lookup's absence semantics.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeFileSync } from "@mailwoman/platform/fs"
 import {
 	ANCHOR_DECISIVE_RATIO,
 	choosePoint,
@@ -74,31 +73,29 @@ describe("choosePoint (#1905)", () => {
 	})
 })
 
-const GN_ROOT = mkdtempSync(join(tmpdir(), "mw-gn-anchor-"))
+const GN_ROOT = await temporaryDirectory("mw-gn-anchor-")
 
 // Two rows in the standard GeoNames country-file layout: id, name, asciiname, alternates, lat, lon, …
 writeFileSync(
-	join(GN_ROOT, "US.txt"),
+	GN_ROOT.resolve("US.txt"),
 	[
 		"4140963\tWashington\tWashington\t\t38.89511\t-77.03637\tP\tPPLC\tUS",
 		"999\tElsewhere\tElsewhere\t\t10\t20\tP\tPPL\tUS",
 	].join("\n")
 )
 
-afterAll(() => {
-	rmSync(GN_ROOT, { recursive: true, force: true })
-})
+afterAll(() => GN_ROOT[Symbol.asyncDispose]())
 
 describe("createGeoNamesAnchorLookup (#1905)", () => {
-	it("resolves an id from the country file, tolerating numeric and string ids", () => {
-		const lookup = createGeoNamesAnchorLookup(GN_ROOT)
+	it("resolves an id from the country file, tolerating numeric and string ids", async () => {
+		const lookup = await createGeoNamesAnchorLookup(GN_ROOT.path)
 
 		expect(lookup("US", 4_140_963)).toEqual({ latitude: 38.89511, longitude: -77.03637 })
 		expect(lookup("US", "999")).toEqual({ latitude: 10, longitude: 20 })
 	})
 
-	it("an unknown id and a missing country file are both ABSENCE, never a zero point", () => {
-		const lookup = createGeoNamesAnchorLookup(GN_ROOT)
+	it("an unknown id and a missing country file are both ABSENCE, never a zero point", async () => {
+		const lookup = await createGeoNamesAnchorLookup(GN_ROOT.path)
 
 		expect(lookup("US", 123_456_789)).toBeUndefined()
 		expect(lookup("FR", 4_140_963)).toBeUndefined()

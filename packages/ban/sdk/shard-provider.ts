@@ -34,7 +34,7 @@ export interface BANShards {
  * Opens + caches per-country BAN rooftop lookups. A non-US geocode consults `for(country)`; the first hit for a country
  * opens its shard (with the matching street locale) once, subsequent calls reuse it.
  */
-export class BANShardProvider {
+export class BANShardProvider implements Disposable {
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, BANShards>()
 
@@ -81,12 +81,12 @@ export class BANShardProvider {
 		this.#cache.set(cc, entry)
 
 		return entry
-	}
+	};
 
-	close(): void {
+	[Symbol.dispose](): void {
 		for (const entry of this.#cache.values()) {
-			entry.addressPoints?.close()
-			entry.streetCentroids?.close()
+			entry.addressPoints?.[Symbol.dispose]()
+			entry.streetCentroids?.[Symbol.dispose]()
 		}
 
 		this.#cache.clear()

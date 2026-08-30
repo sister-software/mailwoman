@@ -41,32 +41,28 @@ function required(name: string, value: string | undefined): string {
 	return value
 }
 
-const database = new DatabaseClient<CoastalDatabase>(required("database", values.database))
+using database = new DatabaseClient<CoastalDatabase>(required("database", values.database))
 
-try {
-	database.exec("PRAGMA journal_mode = OFF")
-	database.exec("PRAGMA synchronous = OFF")
+database.exec("PRAGMA journal_mode = OFF")
+database.exec("PRAGMA synchronous = OFF")
 
-	const result = await ingestCoastalChunk(database, {
-		source: await createGeodatabaseFeatureSource({
-			geodatabasePath: required("gdb", values.gdb),
-			// A chunk reads ONE layer family: either one scenario's erosion zones, or the two ground-instability layers.
-			// Mixing them in one process would put the two hazards on one heap for no gain and would make the range bound
-			// mean two different things at once.
-			scenarioKeys: values.instability ? [] : [required("scenario", values.scenario)],
-			skipInstability: !values.instability,
-			...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
-			...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
-			// A RANGE's own count is not knowable up front — `ogrinfo` reports a layer's total and nothing narrower — so the
-			// chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
-			declaredFeatureCount: 0,
-		}),
-		indexResolution: Number(required("index-resolution", values["index-resolution"])),
-		coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
-		onProgress: (message) => console.error(`  [chunk] ${message}`),
-	})
+const result = await ingestCoastalChunk(database, {
+	source: await createGeodatabaseFeatureSource({
+		geodatabasePath: required("gdb", values.gdb),
+		// A chunk reads ONE layer family: either one scenario's erosion zones, or the two ground-instability layers.
+		// Mixing them in one process would put the two hazards on one heap for no gain and would make the range bound
+		// mean two different things at once.
+		scenarioKeys: values.instability ? [] : [required("scenario", values.scenario)],
+		skipInstability: !values.instability,
+		...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
+		...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
+		// A RANGE's own count is not knowable up front — `ogrinfo` reports a layer's total and nothing narrower — so the
+		// chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
+		declaredFeatureCount: 0,
+	}),
+	indexResolution: Number(required("index-resolution", values["index-resolution"])),
+	coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
+	onProgress: (message) => console.error(`  [chunk] ${message}`),
+})
 
-	console.log(JSON.stringify(result))
-} finally {
-	await database.destroy()
-}
+console.log(JSON.stringify(result))

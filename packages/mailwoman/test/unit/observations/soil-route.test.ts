@@ -18,10 +18,8 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import type { Resolver } from "@mailwoman/resolver"
 import { buildSoilDatabase } from "@mailwoman/soil/sdk/build-soil"
 import {
@@ -102,12 +100,12 @@ const INSIDE_UNRATED = {
  */
 const OUTSIDE_SURVEY = { latitude: FIXTURE_ORIGIN.lat + 5, longitude: FIXTURE_ORIGIN.lon + 5 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-soil-route-"))
-	databasePath = join(scratch, "soil.db")
+	scratch = await temporaryDirectory("mw-soil-route-")
+	databasePath = scratch.resolve("soil.db")
 
 	const delineations = fixtureDelineations()
 
@@ -132,9 +130,7 @@ beforeAll(async () => {
 	})
 })
 
-afterAll(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("#1991: the soil-capability route on the geocode path", () => {
 	it("with the layer absent, the result is byte-identical to a run with the route attached minus its marker", async () => {
@@ -158,7 +154,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			expect(withoutMarker).toEqual([])
 			expect(restWithRoute).toEqual(restBare)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -186,7 +182,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			expect(marker.message).toMatch(/not whether the land can be farmed/u)
 			expect(marker.message).toMatch(/% of the cell/u)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -205,7 +201,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			expect(evidence.surveyArea!.surveySourceDate).toBe("1960")
 			expect(evidence.layer!.attribution).toMatch(/Natural Resources Conservation Service/u)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -225,7 +221,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			expect(evidence.topClass).toBeUndefined()
 			expect(distribution.unratedShare).toBeGreaterThan(0.9)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -246,7 +242,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 				refusal: "outside_surveyed_area",
 			})
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -256,7 +252,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 		try {
 			expect(route.observe(undefined, undefined)).toEqual({ fired: false, refusal: "no_coordinate" })
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 })

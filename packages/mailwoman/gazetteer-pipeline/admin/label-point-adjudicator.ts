@@ -109,7 +109,7 @@ const GN_COLUMN_LON = 5
  * happens inside the ingest's per-feature parse, and it fires only for the rare wide-disagreement records, so the cost
  * is one file read per country that HAS such a record.
  */
-export function createGeoNamesAnchorLookup(geonamesDir: string): GeoNamesAnchorLookup {
+export async function createGeoNamesAnchorLookup(geonamesDir: string): Promise<GeoNamesAnchorLookup> {
 	const byCountry = new Map<string, Map<string, PointPair>>()
 
 	const load = (country: string): Map<string, PointPair> => {

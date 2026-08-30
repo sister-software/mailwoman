@@ -123,21 +123,21 @@ async function main(): Promise<number> {
 		return 0
 	}
 
-	let source: TileSource
+	let opened: TileSource
 
+	// A bad `--tiles` path is a usage error, not a crash — the guard stays around the open, and ownership passes to the
+	// `using` declaration only once the open succeeded.
 	try {
-		source = await openTiles(args.tiles)
+		opened = await openTiles(args.tiles)
 	} catch (error) {
 		process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
 
 		return EXIT_USAGE
 	}
 
-	try {
-		return await browse(source, args)
-	} finally {
-		await source.close()
-	}
+	await using source = opened
+
+	return await browse(source, args)
 }
 
 process.exitCode = await main()

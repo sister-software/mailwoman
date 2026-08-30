@@ -64,7 +64,7 @@ const GazetteerBuildPostcodeNIOSM: ParsedCommandComponent<Options> = ({ options 
 			.join(", ")
 
 		return [
-			`postcode ni-osm: ${result.out} (${artifactSizeMB(result.out)} MB)`,
+			`postcode ni-osm: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
 			`${result.inserted.toLocaleString()} unit postcodes — OSM data cut ${result.osmTimestamp}`,
 			`read ${stats.elements.toLocaleString()} elements (${Object.entries(stats.pointsByType)
 				.map(([type, n]) => `${n.toLocaleString()} ${type}`)

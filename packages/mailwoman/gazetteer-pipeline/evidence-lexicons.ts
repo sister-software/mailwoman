@@ -53,8 +53,10 @@
 import { wordNorm } from "@mailwoman/codex"
 import { DE_BUNDESLAENDER, DE_STATE_NAME_TO_CODE, type GermanStateCode } from "@mailwoman/codex/de"
 import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPathBuilder, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -113,14 +115,14 @@ export const EVIDENCE_SUPPLEMENTAL_DEGENERATE_SURFACES: readonly string[] = ["sc
  * (degenerate-surface-exclusion v1.1, baked into FST artifact trailers); evidence-lexicon curation extends it without
  * moving the FST policy.
  */
-export function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Set<string> {
+export async function loadDirectionalSurfaces(fold: (surface: string) => string[] = painterFold): Promise<Set<string>> {
 	// Memoized on the same grounds as loadPersonNameSurfaces: static dictionaries, process-lifetime,
 	// no invalidation key. Keyed by fold identity — the FST and painter folds must not share.
 	// The returned set is SHARED; every caller only iterates it.
 	let hit = directionalSurfacesMemo.get(fold)
 
 	if (!hit) {
-		hit = scanDirectionalSurfaces(fold)
+		hit = await scanDirectionalSurfaces(fold)
 		directionalSurfacesMemo.set(fold, hit)
 	}
 
@@ -129,16 +131,16 @@ export function loadDirectionalSurfaces(fold: (surface: string) => string[] = pa
 
 const directionalSurfacesMemo = new Map<(surface: string) => string[], Set<string>>()
 
-function scanDirectionalSurfaces(fold: (surface: string) => string[]): Set<string> {
+async function scanDirectionalSurfaces(fold: (surface: string) => string[]): Promise<Set<string>> {
 	const dictionariesDir = resourceDictionaryPath("libpostal")
 	const surfaces = new Set<string>()
 
 	for (const lang of CURATION_LANGUAGES) {
 		const path = join(dictionariesDir, lang, "directionals.txt")
 
-		if (!existsSync(path)) continue
+		if (!(await pathExists(path))) continue
 
-		for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
+		for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
 			for (const surface of line.split("|")) {
 				const tokens = fold(surface)
 
@@ -339,7 +341,7 @@ export interface BuiltLexicon {
 	maxNgram: number
 }
 
-export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts = {}): BuiltLexicon {
+export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpts = {}): Promise<BuiltLexicon> {
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
@@ -348,10 +350,10 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 
 	progress("loading curation + ambiguity + person-name inputs…")
 	// Painter-fold the curation sets so they compare against painter-folded entry keys.
-	const { surfaces: degenerate, stopwordTokens } = loadDegenerateSurfaces(undefined, painterFold)
+	const { surfaces: degenerate, stopwordTokens } = await loadDegenerateSurfaces(undefined, painterFold)
 
 	// Law-1 directional closure (v5): union the directionals in WITHOUT touching the shared FST policy set.
-	for (const s of loadDirectionalSurfaces()) {
+	for (const s of await loadDirectionalSurfaces()) {
 		degenerate.add(s)
 	}
 
@@ -374,10 +376,10 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		}
 	}
 
-	const countryCounts = computeSurfaceCountryCounts(dbPath)
+	const countryCounts = await computeSurfaceCountryCounts(dbPath)
 	const personNames = loadPersonNameSurfaces()
 
-	const db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
+	using db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
 	const importanceByID = new Map<number, number>()
 	const popStmt = db.prepare("SELECT id, population FROM place_population")
 
@@ -485,8 +487,6 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		add(row.name, row.id)
 	}
 
-	db.destroy()
-
 	// Laws 2 + 3, applied post-scan (a surface's floor input is its MAX importance across carriers;
 	// own vs parent tracked separately so law 3 can refuse parent-laundered person-names).
 	for (const [key, imp] of oneTokenMaxImportance) {
@@ -527,8 +527,8 @@ export function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexiconOpt
 		code_entries: {},
 	}
 
-	mkdirSync(dirname(output), { recursive: true })
-	writeFileSync(output, JSON.stringify(lexicon) + "\n")
+	await makeDirectories(dirname(output))
+	await writeLocalTextFile(JSON.stringify(lexicon) + "\n", output)
 
 	return {
 		path: output,
@@ -692,8 +692,8 @@ export async function buildStreetTypeLexicon(opts: BuildStreetTypeLexiconOpts = 
 		code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 	}
 
-	mkdirSync(dirname(output), { recursive: true })
-	writeFileSync(output, JSON.stringify(lexicon, null, 1) + "\n")
+	await makeDirectories(dirname(output))
+	await writeLocalJSONFile(lexicon, output)
 
 	return {
 		path: output,

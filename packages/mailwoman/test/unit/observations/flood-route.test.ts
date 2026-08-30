@@ -18,6 +18,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
 import { buildFloodDatabase } from "@mailwoman/flood/sdk/build-flood"
 import { realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
@@ -29,9 +30,6 @@ import {
 	FIXTURE_SIDE,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import type { Resolver } from "@mailwoman/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode-core"
 import { createAuthorityDesignationRoute } from "mailwoman/observations"
@@ -102,12 +100,12 @@ const DESIGNATED_ABSENCE = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXT
  */
 const OUTSIDE_FOOTPRINT = { latitude: FIXTURE_ORIGIN.lat + 5, longitude: FIXTURE_ORIGIN.lon + 5 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-flood-route-"))
-	databasePath = join(scratch, "flood.db")
+	scratch = await temporaryDirectory("mw-flood-route-")
+	databasePath = scratch.resolve("flood.db")
 
 	await buildFloodDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -128,9 +126,7 @@ beforeAll(async () => {
 	})
 })
 
-afterAll(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("#1989: the authority-designation route on the geocode path", () => {
 	it("with the layer absent, the result is byte-identical to a run with the route attached minus its marker", async () => {
@@ -154,7 +150,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 			expect(withoutMarker).toEqual([])
 			expect(restWithRoute).toEqual(restBare)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -183,7 +179,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 			// The licence condition rides with the claim.
 			expect((evidence.layer as { attribution?: string }).attribution).toMatch(/Environment Agency copyright/u)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -206,7 +202,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 			expect((evidence.coverage as { basis: string; observedRows: number }).basis).toBe("designated")
 			expect((evidence.coverage as { basis: string; observedRows: number }).observedRows).toBe(0)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -225,7 +221,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 
 			expect(result.intent_markers).toEqual([])
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -235,7 +231,7 @@ describe("#1989: the authority-designation route on the geocode path", () => {
 		try {
 			expect(route.observe(undefined, undefined)).toEqual({ fired: false, refusal: "no_coordinate" })
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 })

@@ -27,8 +27,6 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { CandidateDatabase } from "./candidate-schema.ts"
-
 /**
  * Name of the FTS5 trigram virtual table this module owns. The reader gates its fuzzy fallback on it.
  */

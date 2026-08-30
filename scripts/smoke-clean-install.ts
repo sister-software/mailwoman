@@ -1,3 +1,4 @@
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
@@ -24,8 +25,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
 import { execFileSync, spawn } from "@mailwoman/platform/child_process"
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -357,9 +357,9 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 	}
 }
 
-const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
-const tarDir = join(tmp, "tarballs")
-const proj = join(tmp, "proj")
+await using tmp = await temporaryDirectory("mw-smoke-")
+const tarDir = tmp.resolve("tarballs")
+const proj = tmp.resolve("proj")
 execFileSync("mkdir", ["-p", tarDir, proj])
 
 const run = (cmd: string, args: string[], cwd: string) =>
@@ -463,7 +463,7 @@ try {
 
 		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
 
-		const solo = join(tmp, `solo-${leafDir}`)
+		const solo = tmp.resolve(`solo-${leafDir}`)
 		execFileSync("mkdir", ["-p", solo])
 
 		writeFileSync(
@@ -500,6 +500,4 @@ try {
 	)
 
 	process.exitCode = 1
-} finally {
-	rmSync(tmp, { recursive: true, force: true })
 }

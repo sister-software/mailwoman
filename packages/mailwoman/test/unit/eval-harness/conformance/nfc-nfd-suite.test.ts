@@ -29,8 +29,8 @@
  *   question a violation raises, and it is answered without loading a model.
  */
 
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { normalize } from "@mailwoman/normalize"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
@@ -82,7 +82,7 @@ describe("the committed canonical-form suite", () => {
 		expect(auditCanonicalFormSuite(fixtures)).toEqual([])
 	})
 
-	it("draws every base from a committed board row, verbatim", () => {
+	it("draws every base from a committed board row, verbatim", async () => {
 		for (const fixture of fixtures) {
 			const { file, caseID } = splitRowRef(fixture.rowRef!)
 			const seedCase = corpus.get(caseID)
@@ -91,7 +91,7 @@ describe("the committed canonical-form suite", () => {
 			expect(fixture.base, `${fixture.id}: base is not the committed input`).toBe(seedCase!.input)
 
 			expect(
-				existsSync(join(CASES_DIR, file.replace(/^cases\//, ""))),
+				await pathExists(join(CASES_DIR, file.replace(/^cases\//, ""))),
 				`${fixture.id}: rowRef names no file (${file})`
 			).toBe(true)
 		}
@@ -118,8 +118,8 @@ describe("the committed canonical-form suite", () => {
 		}
 	})
 
-	it("writes every variant with its non-ASCII code points escaped, so a diff shows the decomposition", () => {
-		const committed = readFileSync(NFC_NFD_SUITE_PATH, "utf8")
+	it("writes every variant with its non-ASCII code points escaped, so a diff shows the decomposition", async () => {
+		const committed = await readLocalTextFile(NFC_NFD_SUITE_PATH)
 
 		expect(
 			committed,

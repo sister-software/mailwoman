@@ -17,8 +17,8 @@
  * instead is what makes it fast and what makes it wrong — see `CensusPOIReader`.
  */
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
@@ -67,7 +67,7 @@ const census = runPhraseCollisionCensus({
 printPhraseCollisionCensus(census)
 
 if (values.out) {
-	writeFileSync(values.out, `${JSON.stringify(census, null, "\t")}\n`)
+	await writeLocalJSONFile(census, values.out)
 
 	console.log(`\nwrote ${values.out}`)
 }

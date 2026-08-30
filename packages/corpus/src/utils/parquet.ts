@@ -37,8 +37,10 @@
  *   close — cheap relative to writing it).
  */
 
+import { tryStat } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { mkdir, stat, writeFile } from "@mailwoman/platform/fs/promises"
+import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import { ParquetWriter, type ParquetSchemaDefinition } from "#parquet-wrapper"
@@ -320,10 +322,10 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 		const closeShard = async (): Promise<void> => {
 			if (!writer) return
-			await writer.close()
+			await writer[Symbol.asyncDispose]()
 
 			if (shardRows > 0) {
-				const fileStat = await stat(path)
+				const fileStat = await tryStat(path)
 				const sha256 = await sha256File(path)
 
 				shards.push({
@@ -332,7 +334,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 					format: "parquet",
 					compression: SHARD_COMPRESSION,
 					rows: shardRows,
-					bytes: fileStat.size,
+					bytes: fileStat?.size ?? 0,
 					sha256,
 					first_source_id: firstSourceID,
 					last_source_id: lastSourceID,
@@ -384,7 +386,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 		total_rows: totalRows,
 	}
 
-	await writeFile(join(corpusDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(manifest, corpusDir, "MANIFEST.json")
 
 	return manifest
 }

@@ -6,7 +6,7 @@
  *   Generator for `data/taxonomy.json` — merges the FULL Overture Places category taxonomy snapshot
  *   with mailwoman's hand-maintained curated overlay. Two committed inputs, one committed output;
  *   the merge is a PURE, deterministic function so a regenerate against the same inputs is
- *   byte-identical (the {@link buildTaxonomyTable} → {@link serializeTaxonomyTable} pair is what the
+ *   byte-identical (the {@link buildTaxonomyTable} → {@link prettyJSON} pair is what the
  *   determinism test in `lookup.test.ts` exercises).
  *
  *   ── Provenance (the `overture-categories.csv` snapshot) ──────────────────────────────────────────
@@ -46,9 +46,10 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -93,6 +94,8 @@ export interface CuratedOverlay {
  * category code the db actually stores; for those the code is APPENDED as the true leaf so the invariant `lookup.ts`'s
  * integrity test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved. Throws only on a
  * structurally broken row (no code / empty path) or a repeated code.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY PORT THIS TO `CSVSpliterator` AND REMOVE ANY SIMILAR CODE.
  */
 export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 	const lines = csvText.replace(/^﻿/, "").split(/\r?\n/)
@@ -139,6 +142,9 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 
 /**
  * Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY CHANGE TO `smartSnakeCase` FROM `@mailwoman/core/identifiers` AND REMOVE
+ * ANY SIMILAR CODE.
  */
 export function humanizeCode(code: string): string {
 	const spaced = code.replaceAll("_", " ")
@@ -175,13 +181,6 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 	)
 
 	return { version: TAXONOMY_VERSION, overtureRelease: OVERTURE_RELEASE, categories, synonyms }
-}
-
-/**
- * Stable serialization — tab-indented, trailing newline. Matches `build-brands.ts`'s `serializeBrandTable`.
- */
-export function serializeTaxonomyTable(table: POITaxonomyTable): string {
-	return `${JSON.stringify(table, null, "\t")}\n`
 }
 
 /**
@@ -222,14 +221,14 @@ async function main(): Promise<void> {
 			.fetch<string>({ url: OVERTURE_CATEGORIES_URL, responseType: "text" })
 			.then(pluckResponseData)
 
-		writeFileSync(paths.csv, csv)
+		await writeLocalFile(csv, paths.csv)
 
 		console.log(`fetched snapshot → ${paths.csv}`)
 	}
 
 	const table = generateTaxonomyTable()
 
-	writeFileSync(paths.out, serializeTaxonomyTable(table))
+	await writeLocalJSONFile(table, paths.out)
 
 	console.log(
 		`wrote ${paths.out}: ${table.categories.length} categories (${table.synonyms.length} synonyms), Overture ${table.overtureRelease}`

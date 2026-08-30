@@ -16,8 +16,8 @@
  *   [--em] [--out-md <md>]`
  */
 
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { makeLcg } from "@mailwoman/core/utils"
-import { writeFileSync } from "@mailwoman/platform/fs"
 
 import { resolveEntities, type SourceRecord } from "#index"
 
@@ -189,7 +189,7 @@ export async function matcherScale(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`[written] ${OUT_MD}`)
 	}
 

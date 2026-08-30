@@ -22,9 +22,8 @@
  */
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 
 import {
 	parseAnchorLookup,
@@ -79,11 +78,11 @@ export const DEFAULT_COUNTRY_LEXICON = "data/gazetteer/country-surface-lexicon-v
  *
  * The one exception is a `shaped` card, which inverts the default order — see the comment on that branch.
  */
-function resolveAnchorSource(
+async function resolveAnchorSource(
 	pinned: string | undefined,
 	locale: string | undefined,
 	spanMode: AnchorSpanMode | undefined
-): { path: string; binary: boolean } | undefined {
+): Promise<{ path: string; binary: boolean } | undefined> {
 	// A caller-pinned path wins, and its FORMAT is read off the extension: a `.bin` is PCB1, anything
 	// else is the JSON pilot dump. The option used to be documented "always JSON" and pointing it at a
 	// candidate's own `postcode-<cc>.bin` threw a parse error — which left no way to grade a candidate
@@ -95,14 +94,14 @@ function resolveAnchorSource(
 	// reason the anchor-v2 retrain exists. A model that declares `shaped` was trained against a lookup
 	// with letter-bearing keys, so preferring the pilot file for it grades the candidate against a lookup
 	// that CANNOT carry the spans it learned. Silent, and the failure looks like "the retrain did nothing".
-	if (spanMode !== "shaped" && existsSync(DEFAULT_ANCHOR_LOOKUP)) {
+	if (spanMode !== "shaped" && (await pathExists(DEFAULT_ANCHOR_LOOKUP))) {
 		return { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 	}
 
 	try {
 		return resolveWeights({ locale }).anchorLookupPath ?? { path: DEFAULT_ANCHOR_LOOKUP, binary: false }
 	} catch {
-		return existsSync(DEFAULT_ANCHOR_LOOKUP) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
+		return (await pathExists(DEFAULT_ANCHOR_LOOKUP)) ? { path: DEFAULT_ANCHOR_LOOKUP, binary: false } : undefined
 	}
 }
 
@@ -111,8 +110,8 @@ function resolveAnchorSource(
  * prefer the repo-relative codex lexicon (the eval default — unchanged when present), else the soft-feed sibling
  * shipped in the weights package.
  */
-function defaultGazetteerLexicon(locale: string | undefined): string | undefined {
-	if (existsSync(DEFAULT_GAZETTEER_LEXICON)) return DEFAULT_GAZETTEER_LEXICON
+async function defaultGazetteerLexicon(locale: string | undefined): Promise<string | undefined> {
+	if (await pathExists(DEFAULT_GAZETTEER_LEXICON)) return DEFAULT_GAZETTEER_LEXICON
 
 	try {
 		return resolveWeights({ locale }).gazetteerLexiconPath
@@ -125,8 +124,8 @@ function defaultGazetteerLexicon(locale: string | undefined): string | undefined
  * Resolve the country lexicon path the scorer feeds when the caller passes no `countryLexiconPath` (#1104): prefer the
  * repo-relative codex lexicon (the eval default), else the soft-feed sibling shipped in the weights package.
  */
-function defaultCountryLexicon(locale: string | undefined): string | undefined {
-	if (existsSync(DEFAULT_COUNTRY_LEXICON)) return DEFAULT_COUNTRY_LEXICON
+async function defaultCountryLexicon(locale: string | undefined): Promise<string | undefined> {
+	if (await pathExists(DEFAULT_COUNTRY_LEXICON)) return DEFAULT_COUNTRY_LEXICON
 
 	try {
 		return resolveWeights({ locale }).countryLexiconPath
@@ -145,11 +144,14 @@ function defaultCountryLexicon(locale: string | undefined): string | undefined {
  * So when the card names a generation, the repo candidate is THAT filename; only an undeclared card falls back to the
  * historical literal.
  */
-function defaultStreetTypeLexicon(locale: string | undefined, modelCardPath: string): string | undefined {
+async function defaultStreetTypeLexicon(
+	locale: string | undefined,
+	modelCardPath: string
+): Promise<string | undefined> {
 	const declared = readRequiredChannels(modelCardPath)?.street_type?.lexicon
 	const repoDefault = `data/gazetteer/${declared ?? "street-type-lexicon-v3.json"}`
 
-	if (existsSync(repoDefault)) return repoDefault
+	if (await pathExists(repoDefault)) return repoDefault
 
 	try {
 		return resolveWeights({ locale }).streetTypeLexiconPath
@@ -206,10 +208,10 @@ function assertShapedKeyerObligation(
 /**
  * Load an `AnchorLookup` from either a PCB1 binary or a JSON pilot lookup (#718 D1).
  */
-function loadAnchorLookup(source: { path: string; binary: boolean }): AnchorLookup {
+async function loadAnchorLookup(source: { path: string; binary: boolean }): Promise<AnchorLookup> {
 	return source.binary
-		? new PostcodeBinaryResolver(new Uint8Array(readFileSync(source.path))).toAnchorLookup()
-		: parseAnchorLookup(parseJSONStrict(readFileSync(source.path, "utf8")))
+		? new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(source.path))).toAnchorLookup()
+		: parseAnchorLookup(await readLocalJSONFile(source.path))
 }
 
 /**
@@ -426,13 +428,13 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	const strict = opts.strict ?? true
 	const overrides = opts.overrides ?? {}
 
-	if (!existsSync(opts.modelPath)) throw new Error(`createScorer: modelPath does not exist: ${opts.modelPath}`)
+	if (!(await pathExists(opts.modelPath))) throw new Error(`createScorer: modelPath does not exist: ${opts.modelPath}`)
 
-	if (!existsSync(opts.tokenizerPath)) {
+	if (!(await pathExists(opts.tokenizerPath))) {
 		throw new Error(`createScorer: tokenizerPath does not exist: ${opts.tokenizerPath}`)
 	}
 
-	if (!existsSync(opts.modelCardPath)) {
+	if (!(await pathExists(opts.modelCardPath))) {
 		throw new Error(`createScorer: modelCardPath does not exist: ${opts.modelCardPath}`)
 	}
 
@@ -462,7 +464,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// operator pilot JSON or, failing that, the weights-package soft-feed sibling (PCB1 or JSON, #718).
 	const declaredSpanMode = declaredAnchorSpanMode(declared)
 
-	const anchorSource = resolveAnchorSource(opts.anchorLookupPath, opts.locale, declaredSpanMode)
+	const anchorSource = await resolveAnchorSource(opts.anchorLookupPath, opts.locale, declaredSpanMode)
 
 	const anchorRequired = declared.anchor?.required ?? false
 	let postcodeAnchorLookup: AnchorLookup | undefined
@@ -475,7 +477,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 			)
 		}
 	} else {
-		postcodeAnchorLookup = anchorSource && existsSync(anchorSource.path) ? loadAnchorLookup(anchorSource) : undefined
+		postcodeAnchorLookup =
+			anchorSource && (await pathExists(anchorSource.path)) ? await loadAnchorLookup(anchorSource) : undefined
 
 		// Fail closed: declared-required but the lookup is missing or parsed empty → the model would be
 		// fed zeros (the anchor-off identity) and silently go OOD. That's the #566/#685 trap.
@@ -493,7 +496,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	// --- Gazetteer channel ------------------------------------------------------------------------
-	const gazetteerLexiconPath = opts.gazetteerLexiconPath ?? defaultGazetteerLexicon(opts.locale)
+	const gazetteerLexiconPath = opts.gazetteerLexiconPath ?? (await defaultGazetteerLexicon(opts.locale))
 	const gazetteerRequired = declared.gazetteer?.required ?? false
 	let gazetteerLexicon: GazetteerLexicon | undefined
 
@@ -506,8 +509,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	} else {
 		gazetteerLexicon =
-			gazetteerLexiconPath && existsSync(gazetteerLexiconPath)
-				? parseGazetteerLexicon(parseJSONStrict(readFileSync(gazetteerLexiconPath, "utf8")))
+			gazetteerLexiconPath && (await pathExists(gazetteerLexiconPath))
+				? parseGazetteerLexicon(await readLocalJSONFile(gazetteerLexiconPath))
 				: undefined
 
 		if (gazetteerRequired && !gazetteerLexicon) {
@@ -521,7 +524,7 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	}
 
 	// --- Country-lexicon channel (#1104) ----------------------------------------------------------
-	const countryLexiconPath = opts.countryLexiconPath ?? defaultCountryLexicon(opts.locale)
+	const countryLexiconPath = opts.countryLexiconPath ?? (await defaultCountryLexicon(opts.locale))
 	const countryRequired = declared.country?.required ?? false
 	let countryLexicon: CountryLexicon | undefined
 
@@ -534,8 +537,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	} else {
 		countryLexicon =
-			countryLexiconPath && existsSync(countryLexiconPath)
-				? parseCountryLexicon(parseJSONStrict(readFileSync(countryLexiconPath, "utf8")))
+			countryLexiconPath && (await pathExists(countryLexiconPath))
+				? parseCountryLexicon(await readLocalJSONFile(countryLexiconPath))
 				: undefined
 
 		if (countryRequired && !countryLexicon) {
@@ -551,7 +554,9 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 	// --- Evidence-bundle channels (Option-A Phase 3) ------------------------------------------------
 	// Same load + fail-closed + declared-ablation pattern as the gazetteer; both lexicons share its
 	// JSON schema and parser. A bundle-trained card declares `street_type` + `locality_surface`.
-	const streetTypeLexiconPath = opts.streetTypeLexiconPath ?? defaultStreetTypeLexicon(opts.locale, opts.modelCardPath)
+	const streetTypeLexiconPath =
+		opts.streetTypeLexiconPath ?? (await defaultStreetTypeLexicon(opts.locale, opts.modelCardPath))
+
 	const streetTypeRequired = declared.street_type?.required ?? false
 	let streetTypeLexicon: GazetteerLexicon | undefined
 
@@ -564,8 +569,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	} else {
 		streetTypeLexicon =
-			streetTypeLexiconPath && existsSync(streetTypeLexiconPath)
-				? parseGazetteerLexicon(parseJSONStrict(readFileSync(streetTypeLexiconPath, "utf8")))
+			streetTypeLexiconPath && (await pathExists(streetTypeLexiconPath))
+				? parseGazetteerLexicon(await readLocalJSONFile(streetTypeLexiconPath))
 				: undefined
 
 		if (streetTypeRequired && !streetTypeLexicon) {
@@ -591,8 +596,8 @@ export async function createScorer(opts: CreateScorerOpts): Promise<NeuralAddres
 		}
 	} else {
 		localitySurfaceLexicon =
-			localitySurfaceLexiconPath && existsSync(localitySurfaceLexiconPath)
-				? parseGazetteerLexicon(parseJSONStrict(readFileSync(localitySurfaceLexiconPath, "utf8")))
+			localitySurfaceLexiconPath && (await pathExists(localitySurfaceLexiconPath))
+				? parseGazetteerLexicon(await readLocalJSONFile(localitySurfaceLexiconPath))
 				: undefined
 
 		if (localitySurfaceRequired && !localitySurfaceLexicon) {

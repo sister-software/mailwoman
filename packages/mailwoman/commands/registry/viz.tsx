@@ -60,31 +60,35 @@ async function runFigure(figure: Figure, options: Options): Promise<string> {
 
 	switch (figure) {
 		case "cross-dataset-map":
-			return crossDatasetMap(
-				{ in: options.in, outHTML: options.outHTML, crossAgencyOnly: options.crossAgencyOnly },
-				report
+			return (
+				await crossDatasetMap(
+					{ in: options.in, outHTML: options.outHTML, crossAgencyOnly: options.crossAgencyOnly },
+					report
+				)
 			).outHTML
 		case "geocode-first-surface":
-			return geocodeFirstSurface({ lambda: options.lambda, outHTML: options.outHTML }, report).outHTML
+			return (await geocodeFirstSurface({ lambda: options.lambda, outHTML: options.outHTML }, report)).outHTML
 		case "source-provenance-map":
-			return sourceProvenanceMap(
-				{
-					state: options.state,
-					db: options.db,
-					outHTML: options.outHTML,
-					nadMod: options.nadMod,
-					oaMod: options.oaMod,
-					cap: options.cap,
-				},
-				report
+			return (
+				await sourceProvenanceMap(
+					{
+						state: options.state,
+						db: options.db,
+						outHTML: options.outHTML,
+						nadMod: options.nadMod,
+						oaMod: options.oaMod,
+						cap: options.cap,
+					},
+					report
+				)
 			).outHTML
 		case "yardstick-figure":
-			return yardstickFigure({ outSVG: options.outSVG }, report).outSVG
+			return (await yardstickFigure({ outSVG: options.outSVG }, report)).outSVG
 	}
 }
 
 const RegistryViz: ParsedCommandComponent<Options, [Figure]> = ({ options, args }) => {
-	const state = useCommandTask(() => runFigure(args[0], options))
+	const state = useCommandTask(async () => await runFigure(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

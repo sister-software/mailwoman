@@ -40,35 +40,31 @@ function required(name: string, value: string | undefined): string {
 	return value
 }
 
-const database = new DatabaseClient<SoilDatabase>(required("database", values.database))
+using database = new DatabaseClient<SoilDatabase>(required("database", values.database))
 
-try {
-	database.exec("PRAGMA journal_mode = OFF")
-	database.exec("PRAGMA synchronous = OFF")
+database.exec("PRAGMA journal_mode = OFF")
+database.exec("PRAGMA synchronous = OFF")
 
-	const areaSymbol = required("area-symbol", values["area-symbol"])
-	const fidFrom = Number(required("fid-from", values["fid-from"]))
-	const fidTo = Number(required("fid-to", values["fid-to"]))
+const areaSymbol = required("area-symbol", values["area-symbol"])
+const fidFrom = Number(required("fid-from", values["fid-from"]))
+const fidTo = Number(required("fid-to", values["fid-to"]))
 
-	const result = await ingestSoilChunk(database, {
-		source: await createShapefileFeatureSource({
-			shapefilePath: required("shapefile", values.shapefile),
-			areaSymbol,
-			fidFrom,
-			fidTo,
-			// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower — so
-			// the chunk asserts nothing about its size and the PARENT checks the per-area sum against the shapefile's.
-			declaredFeatureCount: 0,
-		}),
-		indexResolution: Number(required("index-resolution", values["index-resolution"])),
-		coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
-		// An empty string is an empty set, not "every map unit": a build where nothing lacks soil mapping passes one, and
-		// `"".split(",")` yields one empty element that has to be dropped rather than joined against as a mukey.
-		noMappingMukeys: new Set((values["no-mapping-mukeys"] ?? "").split(",").filter((mukey) => mukey.length > 0)),
-		onProgress: (message) => console.error(`  [chunk] ${message}`),
-	})
+const result = await ingestSoilChunk(database, {
+	source: await createShapefileFeatureSource({
+		shapefilePath: required("shapefile", values.shapefile),
+		areaSymbol,
+		fidFrom,
+		fidTo,
+		// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower — so
+		// the chunk asserts nothing about its size and the PARENT checks the per-area sum against the shapefile's.
+		declaredFeatureCount: 0,
+	}),
+	indexResolution: Number(required("index-resolution", values["index-resolution"])),
+	coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
+	// An empty string is an empty set, not "every map unit": a build where nothing lacks soil mapping passes one, and
+	// `"".split(",")` yields one empty element that has to be dropped rather than joined against as a mukey.
+	noMappingMukeys: new Set((values["no-mapping-mukeys"] ?? "").split(",").filter((mukey) => mukey.length > 0)),
+	onProgress: (message) => console.error(`  [chunk] ${message}`),
+})
 
-	console.log(JSON.stringify(result))
-} finally {
-	await database.destroy()
-}
+console.log(JSON.stringify(result))

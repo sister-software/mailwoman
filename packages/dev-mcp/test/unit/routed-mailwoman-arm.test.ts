@@ -53,7 +53,7 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 		diagnoseParse: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.diagnoseParse")
 		}),
-		close: vi.fn(),
+		[Symbol.dispose]: vi.fn(),
 	}
 
 	return {

@@ -33,19 +33,18 @@
  *   rotting silently in a file nobody compiles.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import {
+	copyFileTo,
+	makeDirectories,
+	removePathIfPresent,
+	writeLocalFile,
+	writeLocalTextFile,
+} from "@mailwoman/core/fs/writers"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import {
-	copyFileSync,
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "@mailwoman/platform/fs"
+import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 
 import type { Check } from "#cli-kit"
@@ -85,9 +84,9 @@ const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
 /**
  * Copy the repo-root license files into `destDir` (a package/crate root) — shared by the Python + Rust assembly steps.
  */
-function copyLicenseFiles(destDir: string): void {
+async function copyLicenseFiles(destDir: string): Promise<void> {
 	for (const filename of LICENSE_FILENAMES) {
-		copyFileSync(repoRootPath(filename), join(destDir, filename))
+		await copyFileTo(repoRootPath(filename), join(destDir, filename))
 	}
 }
 
@@ -163,8 +162,8 @@ function run(cmd: string, args: string[], options: { cwd?: string } = {}): void 
  * The version every generated client syncs to — `mailwoman/package.json`, the same version the four surface packages
  * (`api`, `libpostal`, `photon`, `nominatim`) already release at in lockstep.
  */
-function readMailwomanVersion(): string {
-	const pkg = parseJSONStrict<{ version: string }>(readFileSync(workspacePath("mailwoman", "package.json"), "utf8"))
+async function readMailwomanVersion(): Promise<string> {
+	const pkg = await readLocalJSONFile<{ version: string }>(workspacePath("mailwoman", "package.json"))
 
 	return pkg.version
 }
@@ -173,7 +172,7 @@ function readMailwomanVersion(): string {
  * Verify each emitter's compiled CLI exists — the emitters run compiled (route-table introspection over a stub engine),
  * not from source.
  */
-function checkCompiled(): void {
+async function checkCompiled(): Promise<void> {
 	const missing = CLIENT_SURFACES.filter((surface) => !existsSync(emitterCLIPath(surface)))
 
 	if (missing.length) {
@@ -186,8 +185,8 @@ function checkCompiled(): void {
 /**
  * Emit all 8 documents (4 surfaces × 2 flavors) into `<outDir>/specs/`.
  */
-function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): SpecPaths {
-	mkdirSync(specsDir, { recursive: true })
+async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): Promise<SpecPaths> {
+	await makeDirectories(specsDir)
 
 	const v31 = {} as Record<ClientSurface, string>
 	const v30 = {} as Record<ClientSurface, string>
@@ -213,9 +212,13 @@ function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): Sp
  * layout the salvaged README documented (fully relative imports, so the four compose under one distributable with no
  * post-processing).
  */
-function generatePythonModules(specPaths: SpecPaths, pythonDir: string, phase: (p: string, d?: string) => void): void {
+async function generatePythonModules(
+	specPaths: SpecPaths,
+	pythonDir: string,
+	phase: (p: string, d?: string) => void
+): Promise<void> {
 	const packageDir = join(pythonDir, "mailwoman_client")
-	mkdirSync(packageDir, { recursive: true })
+	await makeDirectories(packageDir)
 
 	for (const surface of CLIENT_SURFACES) {
 		phase("python-generate", surface)
@@ -235,7 +238,7 @@ function generatePythonModules(specPaths: SpecPaths, pythonDir: string, phase: (
 
 	// The generator drops a .ruff_cache under each output dir (salvaged README precedent) — remove it.
 	for (const surface of CLIENT_SURFACES) {
-		rmSync(join(packageDir, surface, ".ruff_cache"), { recursive: true, force: true })
+		await removePathIfPresent(join(packageDir, surface, ".ruff_cache"))
 	}
 }
 
@@ -508,28 +511,35 @@ function pythonReadme(): string {
  * both built artifacts. The README's own "Usage" section already carries the same snippet inline, so it isn't lost —
  * just not duplicated as a file that never shipped.
  */
-function assemblePythonPackage(pythonDir: string, version: string, phase: (p: string, d?: string) => void): void {
+async function assemblePythonPackage(
+	pythonDir: string,
+	version: string,
+	phase: (p: string, d?: string) => void
+): Promise<void> {
 	phase("python-assemble", pythonDir)
-	writeFileSync(join(pythonDir, "pyproject.toml"), pythonPyproject(version))
-	writeFileSync(join(pythonDir, "README.md"), pythonReadme())
-	writeFileSync(join(pythonDir, "mailwoman_client", "__init__.py"), pythonInitPy())
-	writeFileSync(join(pythonDir, "mailwoman_client", "py.typed"), "")
+	await writeLocalFile(pythonPyproject(version), join(pythonDir, "pyproject.toml"))
+	await writeLocalFile(pythonReadme(), join(pythonDir, "README.md"))
+	await writeLocalFile(pythonInitPy(), join(pythonDir, "mailwoman_client", "__init__.py"))
+	await writeLocalTextFile("", join(pythonDir, "mailwoman_client", "py.typed"))
 	// AGPL conveyance + the LicenseRef-Commercial target (see license-files above): copied into the package root,
 	// not the mailwoman_client/ subpackage, matching where setuptools looks relative to pyproject.toml.
-	copyLicenseFiles(pythonDir)
+	await copyLicenseFiles(pythonDir)
 }
 
 /**
  * `uv build` the assembled package, then import-check the built wheel in an ephemeral env (`--no-project` so `uv run`
  * doesn't treat `pythonDir` itself as the active project).
  */
-function verifyPython(pythonDir: string, phase: (p: string, d?: string) => void): { wheel: string; sdist: string } {
+async function verifyPython(
+	pythonDir: string,
+	phase: (p: string, d?: string) => void
+): Promise<{ wheel: string; sdist: string }> {
 	phase("python-build", pythonDir)
-	rmSync(join(pythonDir, "dist"), { recursive: true, force: true })
+	await removePathIfPresent(join(pythonDir, "dist"))
 	run("uv", ["build"], { cwd: pythonDir })
 
 	const distDir = join(pythonDir, "dist")
-	const entries = existsSync(distDir) ? readdirSync(distDir) : []
+	const entries = (await pathExists(distDir)) ? await readDirectory(distDir) : []
 	const wheel = entries.find((f) => f.endsWith(".whl"))
 	const sdist = entries.find((f) => f.endsWith(".tar.gz"))
 
@@ -788,28 +798,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
  * Vendor the 3.0 specs + write Cargo.toml/src/lib.rs/README.md/examples/basic.rs + the license texts — the salvaged
  * crate pattern, adapted for the fourth `mailwoman` module.
  */
-function assembleRustCrate(
+async function assembleRustCrate(
 	specPaths: SpecPaths,
 	rustDir: string,
 	version: string,
 	phase: (p: string, d?: string) => void
-): void {
+): Promise<void> {
 	phase("rust-assemble", rustDir)
 	const openapiDir = join(rustDir, "openapi")
-	mkdirSync(openapiDir, { recursive: true })
-	mkdirSync(join(rustDir, "src"), { recursive: true })
-	mkdirSync(join(rustDir, "examples"), { recursive: true })
+	await makeDirectories(openapiDir)
+	await makeDirectories(join(rustDir, "src"))
+	await makeDirectories(join(rustDir, "examples"))
 
 	for (const surface of CLIENT_SURFACES) {
-		copyFileSync(specPaths.v30[surface], join(openapiDir, `${surface}.json`))
+		await copyFileTo(specPaths.v30[surface], join(openapiDir, `${surface}.json`))
 	}
 
-	writeFileSync(join(rustDir, "Cargo.toml"), rustCargoToml(version))
-	writeFileSync(join(rustDir, "src", "lib.rs"), rustLibRs())
-	writeFileSync(join(rustDir, "README.md"), rustReadme())
-	writeFileSync(join(rustDir, "examples", "basic.rs"), rustExample())
+	await writeLocalFile(rustCargoToml(version), join(rustDir, "Cargo.toml"))
+	await writeLocalFile(rustLibRs(), join(rustDir, "src", "lib.rs"))
+	await writeLocalFile(rustReadme(), join(rustDir, "README.md"))
+	await writeLocalFile(rustExample(), join(rustDir, "examples", "basic.rs"))
 	// AGPL conveyance + the LicenseRef-Commercial target (see the Cargo.toml `include` list above).
-	copyLicenseFiles(rustDir)
+	await copyLicenseFiles(rustDir)
 }
 
 /**
@@ -832,48 +842,48 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 	const specsDir = join(outDir, "specs")
 	const pythonDir = join(outDir, "python")
 	const rustDir = join(outDir, "rust")
-	const version = readMailwomanVersion()
+	const version = await readMailwomanVersion()
 
 	let specPaths: SpecPaths | null = null
 	let pythonWheel: string | null = null
 	let pythonSdist: string | null = null
 
-	const steps: Array<{ check: string; run: () => string | void }> = [
+	const steps: Array<{ check: string; run: () => Promise<string | void> }> = [
 		{
 			check: "compile-check: out/cli.js present (mailwoman, libpostal, photon, nominatim)",
-			run: () => {
-				checkCompiled()
+			run: async () => {
+				await checkCompiled()
 			},
 		},
 		{
 			check: "emit 8 specs (4 surfaces × 3.1 + 3.0) → clients-build/specs/",
-			run: () => {
+			run: async () => {
 				// A stale artifact from a prior version must never linger under a fresh run.
-				rmSync(outDir, { recursive: true, force: true })
-				mkdirSync(outDir, { recursive: true })
-				specPaths = emitSpecs(specsDir, phase)
+				await removePathIfPresent(outDir)
+				await makeDirectories(outDir)
+				specPaths = await emitSpecs(specsDir, phase)
 
 				return specsDir
 			},
 		},
 		{
 			check: "python generate ×4 (uvx openapi-python-client@0.29)",
-			run: () => {
-				generatePythonModules(specPaths!, pythonDir, phase)
+			run: async () => {
+				await generatePythonModules(specPaths!, pythonDir, phase)
 			},
 		},
 		{
 			check: "assemble python package (pyproject.toml, README.md, __init__.py — salvaged layout)",
-			run: () => {
-				assemblePythonPackage(pythonDir, version, phase)
+			run: async () => {
+				await assemblePythonPackage(pythonDir, version, phase)
 
 				return pythonDir
 			},
 		},
 		{
 			check: "assemble rust crate (Cargo.toml, src/lib.rs, vendored 3.0 specs — salvaged layout)",
-			run: () => {
-				assembleRustCrate(specPaths!, rustDir, version, phase)
+			run: async () => {
+				await assembleRustCrate(specPaths!, rustDir, version, phase)
 
 				return rustDir
 			},
@@ -884,8 +894,8 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 		steps.push(
 			{
 				check: "python: uv build + import-check wheel",
-				run: () => {
-					const built = verifyPython(pythonDir, phase)
+				run: async () => {
+					const built = await verifyPython(pythonDir, phase)
 					pythonWheel = built.wheel
 					pythonSdist = built.sdist
 
@@ -894,7 +904,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 			},
 			{
 				check: "rust: cargo check --examples",
-				run: () => {
+				run: async () => {
 					verifyRust(rustDir, phase)
 				},
 			}
@@ -905,7 +915,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 
 	for (const step of steps) {
 		try {
-			const detail = step.run()
+			const detail = await step.run()
 			checks.push({ ok: true, check: step.check, detail: detail || undefined })
 		} catch (error) {
 			checks.push({ ok: false, check: step.check, detail: error instanceof Error ? error.message : String(error) })

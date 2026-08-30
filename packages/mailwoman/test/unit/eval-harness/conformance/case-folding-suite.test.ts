@@ -16,7 +16,7 @@
  *   stated over a row the pipeline already fails says nothing about casing.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { join } from "@mailwoman/platform/path"
 import {
 	auditCaseFoldingSuite,
@@ -59,7 +59,7 @@ describe("the committed case-folding suite", () => {
 		expect(auditCaseFoldingSuite(fixtures)).toEqual([])
 	})
 
-	it("draws every base from a committed board row, verbatim", () => {
+	it("draws every base from a committed board row, verbatim", async () => {
 		for (const fixture of fixtures) {
 			const { file, caseID } = splitRowRef(fixture.rowRef!)
 			const seedCase = corpus.get(caseID)
@@ -68,7 +68,7 @@ describe("the committed case-folding suite", () => {
 			expect(fixture.base, `${fixture.id}: base is not the committed input`).toBe(seedCase!.input)
 
 			expect(
-				existsSync(join(CASES_DIR, file.replace(/^cases\//, ""))),
+				await pathExists(join(CASES_DIR, file.replace(/^cases\//, ""))),
 				`${fixture.id}: rowRef names no file (${file})`
 			).toBe(true)
 		}

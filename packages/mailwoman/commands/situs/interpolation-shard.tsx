@@ -24,9 +24,10 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
+import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { globSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { globSync } from "@mailwoman/platform/fs"
 import { basename, dirname } from "@mailwoman/platform/path"
 import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -203,20 +204,17 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 
 		console.error(`${shapefiles.length} county shapefiles for ${STATE}`)
 
-		mkdirSync(dirname(finalOut), { recursive: true })
+		await makeDirectories(dirname(finalOut))
 		// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
-			rmSync(tmpOut + sfx, { force: true })
+			await removePathIfPresent(tmpOut + sfx)
 		}
 
-		const kdb = new DatabaseClient<StreetSegmentDatabase>(tmpOut)
-		kdb.exec("PRAGMA journal_mode = WAL;")
-		// DDL via the SHARED street-segment-schema builder (the table the reader + tests use) so this
-		// producer can't drift. DuckDB below is the raw spatial reader; the hot INSERT stays on `db`.
-
-		await createStreetSegmentTable(kdb)
+		const parityCounts = { odd: 0, even: 0, mixed: 0 }
+		let sides = 0
+		let skippedNonNumeric = 0
 		// #374 doctrine: the conformal radius multiplier is a property of the calibration set, so it ships IN
 		// the artifact — bake the state's factor (or the conservative default for unmeasured states) into the
 		// shard's `interp_calibration` metadata table. `StreetInterpolator` reads it at open time; callers
@@ -229,102 +227,106 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 			region: measuredMultiplier === undefined ? "default" : STATE,
 		}
 
-		await writeInterpCalibration(kdb, calibration)
+		let stats: Record<string, number>
 
-		const insert = kdb.prepare(
-			`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
-					 VALUES (${STREET_SEGMENT_COLUMNS.map(() => "?").join(", ")})`
-		)
+		{
+			using kdb = new DatabaseClient<StreetSegmentDatabase>(tmpOut)
+			kdb.exec("PRAGMA journal_mode = WAL;")
+			// DDL via the SHARED street-segment-schema builder (the table the reader + tests use) so this
+			// producer can't drift. DuckDB below is the raw spatial reader; the hot INSERT stays on `db`.
 
-		const instance = await DuckDBInstance.create()
-		const duck = await instance.connect()
-		await duck.run("INSTALL spatial; LOAD spatial;")
+			await createStreetSegmentTable(kdb)
+			await writeInterpCalibration(kdb, calibration)
 
-		let sides = 0
-		let skippedNonNumeric = 0
-		const parityCounts = { odd: 0, even: 0, mixed: 0 }
+			const insert = kdb.prepare(
+				`INSERT INTO street_segment (${STREET_SEGMENT_COLUMNS.join(", ")})
+						 VALUES (${STREET_SEGMENT_COLUMNS.map(() => "?").join(", ")})`
+			)
 
-		kdb.exec("BEGIN")
+			const instance = await DuckDBInstance.create()
+			const duck = await instance.connect()
+			await duck.run("INSTALL spatial; LOAD spatial;")
 
-		for (const shp of shapefiles) {
-			const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
+			kdb.exec("BEGIN")
 
-			// Address-carrying road edges only; geometry as GeoJSON text so the JS side stays
-			// shapefile-free (same ST_Read approach as build-intersection-real.ts).
-			const result = await duck.runAndReadAll(`
-						SELECT FULLNAME AS name, LFROMADD, LTOADD, RFROMADD, RTOADD, ZIPL, ZIPR,
-							ST_AsGeoJSON(geom) AS geojson
-						FROM ST_Read('${shp}')
-						WHERE MTFCC LIKE 'S1%' AND FULLNAME IS NOT NULL
-							AND (LFROMADD IS NOT NULL OR RFROMADD IS NOT NULL)
-					`)
+			for (const shp of shapefiles) {
+				const countyFips = basename(shp).match(/tl_\d+_(\d{5})_edges/)?.[1] ?? "unknown"
 
-			for (const r of result.getRowObjects() as Record<string, unknown>[]) {
-				const streetRaw = String(r.name)
-				const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(streetRaw))
+				// Address-carrying road edges only; geometry as GeoJSON text so the JS side stays
+				// shapefile-free (same ST_Read approach as build-intersection-real.ts).
+				const result = await duck.runAndReadAll(`
+							SELECT FULLNAME AS name, LFROMADD, LTOADD, RFROMADD, RTOADD, ZIPL, ZIPR,
+								ST_AsGeoJSON(geom) AS geojson
+							FROM ST_Read('${shp}')
+							WHERE MTFCC LIKE 'S1%' AND FULLNAME IS NOT NULL
+								AND (LFROMADD IS NOT NULL OR RFROMADD IS NOT NULL)
+						`)
 
-				if (!streetNorm) continue
-				const geom = parseJSONStrict<{ type: string; coordinates: number[][] }>(String(r.geojson))
+				for (const r of result.getRowObjects() as Record<string, unknown>[]) {
+					const streetRaw = String(r.name)
+					const streetNorm = canonicalizeRouteKey(normalizeStreetForKey(streetRaw))
 
-				if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
+					if (!streetNorm) continue
+					const geom = parseJSONStrict<{ type: string; coordinates: number[][] }>(String(r.geojson))
 
-				// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
-				const polyline = JSON.stringify(
-					geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
-				)
+					if (geom.type !== "LineString" || geom.coordinates.length < 2) continue
 
-				for (const [side, fromRaw, toRaw, zip] of [
-					["L", r.LFROMADD, r.LTOADD, r.ZIPL],
-					["R", r.RFROMADD, r.RTOADD, r.ZIPR],
-				] as const) {
-					if (fromRaw === null && toRaw === null) continue
-					const from = parseHn(fromRaw)
-					const to = parseHn(toRaw)
-
-					if (from === null || to === null) {
-						skippedNonNumeric++
-
-						continue
-					}
-
-					const parity = parityOf(from, to)
-
-					parityCounts[parity]++
-
-					insert.run(
-						streetNorm,
-						side,
-						from,
-						to,
-						Math.min(from, to),
-						Math.max(from, to),
-						parity,
-						zip === null || zip === undefined ? null : String(zip),
-						countyFips,
-						streetRaw,
-						polyline,
-						"tiger:edges",
-						String(options.release)
+					// Round to 1e-6 deg (~0.1 m) — shapefile floats carry noise digits that bloat the JSON.
+					const polyline = JSON.stringify(
+						geom.coordinates.map(([lon, lat]) => [Math.round(lon! * 1e6) / 1e6, Math.round(lat! * 1e6) / 1e6])
 					)
 
-					sides++
+					for (const [side, fromRaw, toRaw, zip] of [
+						["L", r.LFROMADD, r.LTOADD, r.ZIPL],
+						["R", r.RFROMADD, r.RTOADD, r.ZIPR],
+					] as const) {
+						if (fromRaw === null && toRaw === null) continue
+						const from = parseHn(fromRaw)
+						const to = parseHn(toRaw)
+
+						if (from === null || to === null) {
+							skippedNonNumeric++
+
+							continue
+						}
+
+						const parity = parityOf(from, to)
+
+						parityCounts[parity]++
+
+						insert.run(
+							streetNorm,
+							side,
+							from,
+							to,
+							Math.min(from, to),
+							Math.max(from, to),
+							parity,
+							zip === null || zip === undefined ? null : String(zip),
+							countyFips,
+							streetRaw,
+							polyline,
+							"tiger:edges",
+							String(options.release)
+						)
+
+						sides++
+					}
 				}
+
+				console.error(`  ${countyFips}: done (${sides} sides so far)`)
 			}
 
-			console.error(`  ${countyFips}: done (${sides} sides so far)`)
+			kdb.exec("COMMIT")
+			await createStreetSegmentIndexes(kdb)
+			kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+
+			stats = kdb
+				.prepare(
+					"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment"
+				)
+				.get() as Record<string, number>
 		}
-
-		kdb.exec("COMMIT")
-		await createStreetSegmentIndexes(kdb)
-		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
-
-		const stats = kdb
-			.prepare(
-				"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM street_segment"
-			)
-			.get() as Record<string, number>
-
-		await kdb.destroy()
 
 		// Stamped on the TEMP file, before the swap: `swapDatabaseIntoPlace` is the moment the artifact
 		// becomes the live one, and a manifest written after it would be a write to a published file.

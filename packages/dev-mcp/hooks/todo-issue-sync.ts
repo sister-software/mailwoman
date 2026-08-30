@@ -28,14 +28,19 @@
  *   Register in `.claude/settings.json` under `hooks.PostToolUse` with a `TodoWrite` matcher.
  */
 
+import { pathExists, readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import {
+	makeDirectories,
+	makeDirectoryExclusive,
+	movePath,
+	removePath,
+	writeLocalJSONFile,
+} from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { execFileSync, spawn } from "@mailwoman/platform/child_process"
-import { existsSync, mkdirSync, readFileSync, renameSync, rmdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { parseArgs } from "@mailwoman/platform/util"
-
-const STDIN = 0
 
 /**
  * How many stabilization passes the worker makes before giving up. Each pass costs two `gh` round trips (~2s), so five
@@ -58,12 +63,12 @@ function stateDir(cwd: string): string {
 	return join(cwd, ".claude", "state")
 }
 
-function linkedIssue(cwd: string): number | null {
+async function linkedIssue(cwd: string): Promise<number | null> {
 	const path = join(stateDir(cwd), "linked-issue")
 
-	if (!existsSync(path)) return null
+	if (!(await pathExists(path))) return null
 
-	const parsed = Number.parseInt(readFileSync(path, "utf8").trim(), 10)
+	const parsed = Number.parseInt((await readLocalTextFile(path)).trim(), 10)
 
 	return Number.isInteger(parsed) && parsed > 0 ? parsed : null
 }
@@ -85,13 +90,14 @@ export function renderTaskList(todos: TodoItem[]): string {
 /**
  * Hook mode: stash the payload and hand off to a detached worker, so the turn never waits on `gh`.
  */
-function hookMain(): void {
-	const payload = tryParsingJSON<Record<string, unknown>>(readFileSync(STDIN, "utf8"))
+async function hookMain(): Promise<void> {
+	// A malformed payload is a hook that does nothing, not a hook that throws into the turn.
+	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 
 	if (payload?.tool_name !== "TodoWrite") return
 
 	const cwd = typeof payload.cwd === "string" ? payload.cwd : process.cwd()
-	const issue = linkedIssue(cwd)
+	const issue = await linkedIssue(cwd)
 
 	if (issue === null) return
 
@@ -101,12 +107,12 @@ function hookMain(): void {
 
 	const dir = join(stateDir(cwd), "todo-sync")
 
-	mkdirSync(dir, { recursive: true })
+	await makeDirectories(dir)
 	const payloadPath = join(dir, "payload.json")
 	const pendingPath = join(dir, `payload.${process.pid}.json`)
 
-	writeFileSync(pendingPath, JSON.stringify({ issue, todos }))
-	renameSync(pendingPath, payloadPath)
+	await writeLocalJSONFile({ issue, todos }, pendingPath)
+	await movePath(pendingPath, payloadPath)
 
 	const child = spawn(process.execPath, [import.meta.filename, "--worker", "--cwd", cwd], {
 		detached: true,
@@ -131,7 +137,7 @@ const delay: Delay = (milliseconds) =>
 async function acquireLock(lock: string, wait: Delay): Promise<boolean> {
 	for (let attempt = 0; attempt < MAX_LOCK_ATTEMPTS; attempt++) {
 		try {
-			mkdirSync(lock)
+			await makeDirectoryExclusive(lock)
 
 			return true
 		} catch {
@@ -161,7 +167,7 @@ export async function workerMain(
 		// Re-read until stable: a burst of TodoWrites overwrites payload.json, and publishing anything
 		// but the final state would show the operator a stale list with a fresh timestamp.
 		for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
-			const raw = readFileSync(join(dir, "payload.json"), "utf8")
+			const raw = await readLocalTextFile(join(dir, "payload.json"))
 
 			if (raw === previous) break
 
@@ -174,7 +180,7 @@ export async function workerMain(
 			sync(payload.issue, payload.todos, dryRun)
 		}
 	} finally {
-		rmdirSync(lock)
+		await removePath(lock)
 	}
 }
 
@@ -216,11 +222,7 @@ async function main(): Promise<void> {
 	})
 
 	try {
-		if (values.worker) {
-			await workerMain(values.cwd ?? process.cwd(), values["dry-run"] ?? false)
-		} else {
-			hookMain()
-		}
+		await (values.worker ? workerMain(values.cwd ?? process.cwd(), values["dry-run"] ?? false) : hookMain())
 	} catch {
 		// Silence on every failure path: a sync hook that can break a turn is a hook that gets switched off.
 	}

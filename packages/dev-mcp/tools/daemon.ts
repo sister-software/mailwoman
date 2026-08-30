@@ -41,7 +41,7 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 					throw new Error(staleEngineMessage(registry.bootFingerprint, fingerprint))
 				}
 
-				const closed = registry.closeAll()
+				const closed = registry.evictAll()
 
 				return {
 					action,

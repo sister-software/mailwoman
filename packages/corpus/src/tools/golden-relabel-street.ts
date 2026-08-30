@@ -57,9 +57,10 @@
  */
 
 import { isStreetDirectionalToken, matchTrailingSuffix, type USStreetSuffix } from "@mailwoman/codex/us"
+import { pathExists, readDirectoryEntries, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isPresent, parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256File } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { basename, join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -464,15 +465,15 @@ export async function relabelGoldenDirectory(
 ): Promise<RelabelGoldenReport> {
 	const { input, output } = options
 	const deckPath = options.deck ?? join(output, "REVIEW-DECK.jsonl")
-	mkdirSync(output, { recursive: true })
+	await makeDirectories(output)
 
 	const deck: GoldenRelabelDeckEntry[] = []
 	const files: RelabelGoldenReport["files"] = {}
 
-	const walk = (dirIn: string, dirOut: string, prefix: string): void => {
-		mkdirSync(dirOut, { recursive: true })
+	const walk = async (dirIn: string, dirOut: string, prefix: string): Promise<void> => {
+		await makeDirectories(dirOut)
 
-		for (const name of readdirSync(dirIn, { withFileTypes: true })) {
+		for (const name of await readDirectoryEntries(dirIn)) {
 			const from = join(dirIn, name.name)
 			const to = join(dirOut, name.name)
 
@@ -485,7 +486,7 @@ export async function relabelGoldenDirectory(
 			if (!name.name.endsWith(".jsonl")) {
 				// MANIFEST is rewritten below; everything else (README, SPLIT-MANIFEST) rides forward.
 				if (name.name !== "MANIFEST.json") {
-					writeFileSync(to, readFileSync(from))
+					await writeLocalFile(await readLocalBuffer(from), to)
 				}
 
 				continue
@@ -498,7 +499,7 @@ export async function relabelGoldenDirectory(
 			const out: string[] = []
 			let lineNumber = 0
 
-			for (const line of TextSpliterator.from(readFileSync(from, "utf8"))) {
+			for (const line of TextSpliterator.from(await readLocalTextFile(from))) {
 				if (!line.trim()) continue
 
 				lineNumber++
@@ -536,7 +537,7 @@ export async function relabelGoldenDirectory(
 				out.push(JSON.stringify(result.row))
 			}
 
-			writeFileSync(to, out.join("\n") + "\n")
+			await writeLocalTextFile(out.join("\n") + "\n", to)
 			files[`${prefix}${name.name}`] = { entries: lineNumber, changed, flagged, prefixSplit, counts }
 
 			report(
@@ -546,10 +547,10 @@ export async function relabelGoldenDirectory(
 	}
 
 	report(`relabel ${input} → ${output}`)
-	walk(input, output, "")
+	await walk(input, output, "")
 
-	writeFileSync(deckPath, deck.map((entry) => JSON.stringify(entry)).join("\n") + "\n")
-	writeFileSync(deckPath.replace(/\.jsonl$/, ".md"), renderDeckMarkdown(deck, basename(input), basename(output)))
+	await writeLocalTextFile(deck.map((entry) => JSON.stringify(entry)).join("\n") + "\n", deckPath)
+	await writeLocalFile(renderDeckMarkdown(deck, basename(input), basename(output)), deckPath.replace(/\.jsonl$/, ".md"))
 
 	const manifestFiles: Record<
 		string,
@@ -601,7 +602,7 @@ export async function relabelGoldenDirectory(
 		review_deck: basename(deckPath),
 	}
 
-	writeFileSync(join(output, "MANIFEST.json"), JSON.stringify(manifest, null, "\t") + "\n")
+	await writeLocalJSONFile(manifest, join(output, "MANIFEST.json"))
 	report(`✓ ${totalChanged} rows split, ${totalFlagged} flagged — deck at ${deckPath}`)
 
 	return { files, deckPath, outputDir: output, totalChanged, totalFlagged }
@@ -669,12 +670,12 @@ export function isLeftFolded(rowClass: GoldenRelabelClass): boolean {
 /**
  * True when a golden dir declares the US-split convention — i.e. it is safe to grade it with an UNFOLDED scorer.
  */
-export function goldenDeclaresSplitStreets(dir: string): boolean {
+export async function goldenDeclaresSplitStreets(dir: string): Promise<boolean> {
 	for (const candidate of [join(dir, "MANIFEST.json"), join(dir, "..", "MANIFEST.json")]) {
-		if (!existsSync(candidate)) continue
+		if (!(await pathExists(candidate))) continue
 
 		const manifest = tryParsingJSON<{ convention?: { street_convention?: Record<string, string> } }>(
-			readFileSync(candidate, "utf8")
+			await readLocalTextFile(candidate)
 		)
 
 		if (manifest?.convention?.street_convention?.US === "split") return true

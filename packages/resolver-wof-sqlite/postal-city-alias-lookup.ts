@@ -91,11 +91,7 @@ export class WOFPostalCityAliasLookup implements Disposable {
 		return rows.map((r) => ({ postalCity: String(r.postal_city), geoLocality: String(r.geo_locality), n: Number(r.n) }))
 	}
 
-	close(): void {
-		this.#resources.dispose()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#resources[Symbol.dispose]()
 	}
 }

@@ -25,10 +25,11 @@
  *     node ban/out/scripts/build-street-centroid-shard.js --country fr --out /tmp/sc-fr.db
  */
 
+import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { foldStreetSurface } from "@mailwoman/resolver"
@@ -53,7 +54,7 @@ interface BuildArgs {
 	output: string
 }
 
-function parse(): BuildArgs {
+async function parse(): Promise<BuildArgs> {
 	const { values } = parseArgs({
 		options: {
 			country: { type: "string" },
@@ -68,7 +69,9 @@ function parse(): BuildArgs {
 	streetLocaleForBANCountry(country)
 	const source = values.source ?? dataRootPath("ban", `address-points-${country}.db`)
 
-	if (!existsSync(source)) throw new Error(`sealed BAN rooftop shard not found: ${source} (build it via #1012 first)`)
+	if (!(await pathExists(source)))
+		throw new Error(`sealed BAN rooftop shard not found: ${source} (build it via #1012 first)`)
+
 	const release = values.release ?? "2026-05-18"
 	const output = values.out ?? dataRootPath("ban", `street-centroids-${country}.db`)
 
@@ -78,10 +81,10 @@ function parse(): BuildArgs {
 /**
  * The md5 the #1012 build recorded for the sealed rooftop input, for the derivation provenance chain.
  */
-function sourceMD5(country: string): string | null {
+async function sourceMD5(country: string): Promise<string | null> {
 	try {
 		const rec = tryParsingJSON<{ artifact?: string; md5?: string }>(
-			readFileSync(dataRootPath("ban", "ATTRIBUTION.json"), "utf8"),
+			await readLocalTextFile(dataRootPath("ban", "ATTRIBUTION.json")),
 			{}
 		)
 
@@ -92,14 +95,14 @@ function sourceMD5(country: string): string | null {
 }
 
 async function main(): Promise<void> {
-	const args = parse()
+	const args = await parse()
 	const source = `ban:${args.country}`
 	const tmp = `${args.output}.building-${process.pid}.db`
 
-	mkdirSync(dirname(args.output), { recursive: true })
+	await makeDirectories(dirname(args.output))
 
 	for (const sfx of ["", "-wal", "-shm"]) {
-		rmSync(tmp + sfx, { force: true })
+		await removePathIfPresent(tmp + sfx)
 	}
 
 	// The SEALED input — READ-ONLY, immutable; register the base-commune folder as a scalar SQL function.
@@ -113,103 +116,104 @@ async function main(): Promise<void> {
 		typeof loc === "string" && loc ? stripArrondissement(loc as NameKey) : ""
 	)
 
-	const kdb = new DatabaseClient<StreetCentroidDatabase>(tmp)
-	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-1000000;")
-
-	await createStreetCentroidTable(kdb)
-
-	const insert = kdb.prepare(
-		`INSERT INTO street_centroid VALUES (${STREET_CENTROID_COLUMNS.map(() => "?").join(", ")})`
-	)
-
-	// GROUP BY the sealed rooftop points into per-(street, postcode, commune) roll-ups. AVG(lat/lon) over the group's
-	// member points is the exact centroid; MIN/MAX is the extent; COUNT is the weight for the reader's cross-group mean.
-	// The base commune is emitted per group (2.2M calls), NOT per source row.
-	const agg = src.prepare(
-		`SELECT street_norm,
-		        postcode,
-		        ban_base_commune(locality_norm) AS locality_base,
-		        AVG(lat) AS lat, AVG(lon) AS lon,
-		        MIN(lat) AS min_lat, MAX(lat) AS max_lat, MIN(lon) AS min_lon, MAX(lon) AS max_lon,
-		        COUNT(*) AS n,
-		        MIN(street_raw) AS street_raw
-		 FROM address_point
-		 GROUP BY street_norm, postcode, locality_norm`
-	)
-
 	let written = 0
-	const BATCH = 50_000
 
-	console.error(`[ban] deriving ${args.country} street-centroid tier from ${args.source}`)
+	{
+		using kdb = new DatabaseClient<StreetCentroidDatabase>(tmp)
+		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-1000000;")
 
-	kdb.exec("BEGIN")
+		await createStreetCentroidTable(kdb)
 
-	for (const row of agg.iterate() as Iterable<{
-		street_norm: string
-		postcode: string | null
-		locality_base: string
-		lat: number
-		lon: number
-		min_lat: number
-		max_lat: number
-		min_lon: number
-		max_lon: number
-		n: number
-		street_raw: string
-	}>) {
-		// Positional, in STREET_CENTROID_COLUMNS order.
-		insert.run(
-			row.street_norm,
-			row.postcode,
-			row.locality_base,
-			row.lat,
-			row.lon,
-			row.min_lat,
-			row.max_lat,
-			row.min_lon,
-			row.max_lon,
-			row.n,
-			row.street_raw,
-			source,
-			args.release,
-			// #727 phase-4c name-existence key: the contract fold of the display name, quotes stripped (a rare CSV
-			// artifact). The rerank folds the model's street surface with this SAME function (the fold-parity contract).
-			foldStreetSurface(row.street_raw.replaceAll('"', ""))
+		const insert = kdb.prepare(
+			`INSERT INTO street_centroid VALUES (${STREET_CENTROID_COLUMNS.map(() => "?").join(", ")})`
 		)
 
-		written++
+		// GROUP BY the sealed rooftop points into per-(street, postcode, commune) roll-ups. AVG(lat/lon) over the group's
+		// member points is the exact centroid; MIN/MAX is the extent; COUNT is the weight for the reader's cross-group mean.
+		// The base commune is emitted per group (2.2M calls), NOT per source row.
+		const agg = src.prepare(
+			`SELECT street_norm,
+			        postcode,
+			        ban_base_commune(locality_norm) AS locality_base,
+			        AVG(lat) AS lat, AVG(lon) AS lon,
+			        MIN(lat) AS min_lat, MAX(lat) AS max_lat, MIN(lon) AS min_lon, MAX(lon) AS max_lon,
+			        COUNT(*) AS n,
+			        MIN(street_raw) AS street_raw
+			 FROM address_point
+			 GROUP BY street_norm, postcode, locality_norm`
+		)
 
-		if (written % BATCH === 0) {
-			kdb.exec("COMMIT")
-			kdb.exec("BEGIN")
+		const BATCH = 50_000
 
-			if (written % 500_000 === 0) {
-				console.error(`[ban]   ${written.toLocaleString()} streets…`)
+		console.error(`[ban] deriving ${args.country} street-centroid tier from ${args.source}`)
+
+		kdb.exec("BEGIN")
+
+		for (const row of agg.iterate() as Iterable<{
+			street_norm: string
+			postcode: string | null
+			locality_base: string
+			lat: number
+			lon: number
+			min_lat: number
+			max_lat: number
+			min_lon: number
+			max_lon: number
+			n: number
+			street_raw: string
+		}>) {
+			// Positional, in STREET_CENTROID_COLUMNS order.
+			insert.run(
+				row.street_norm,
+				row.postcode,
+				row.locality_base,
+				row.lat,
+				row.lon,
+				row.min_lat,
+				row.max_lat,
+				row.min_lon,
+				row.max_lon,
+				row.n,
+				row.street_raw,
+				source,
+				args.release,
+				// #727 phase-4c name-existence key: the contract fold of the display name, quotes stripped (a rare CSV
+				// artifact). The rerank folds the model's street surface with this SAME function (the fold-parity contract).
+				foldStreetSurface(row.street_raw.replaceAll('"', ""))
+			)
+
+			written++
+
+			if (written % BATCH === 0) {
+				kdb.exec("COMMIT")
+				kdb.exec("BEGIN")
+
+				if (written % 500_000 === 0) {
+					console.error(`[ban]   ${written.toLocaleString()} streets…`)
+				}
 			}
 		}
+
+		kdb.exec("COMMIT")
+
+		console.error(`[ban] indexing…`)
+
+		await createStreetCentroidIndexes(kdb)
+		kdb.exec("ANALYZE")
 	}
-
-	kdb.exec("COMMIT")
-
-	console.error(`[ban] indexing…`)
-
-	await createStreetCentroidIndexes(kdb)
-	kdb.exec("ANALYZE")
-	await kdb.destroy()
 
 	swapDatabaseIntoPlace(tmp, args.output)
 	sealDatabase(args.output)
 
 	const md5 = await md5File(args.output)
-	const bytes = statSync(args.output).size
-	const srcMD5 = sourceMD5(args.country)
+	const bytes = (await statPath(args.output)).size
+	const srcMD5 = await sourceMD5(args.country)
 
 	// Provenance manifest — additive, written at creation (house discipline). Records the DERIVATION chain: this
 	// artifact is derived from the sealed #1012 rooftop shard, itself derived from the BAN release.
 	const attributionPath = dataRootPath("ban", `street-centroids-${args.country}.ATTRIBUTION.json`)
 
-	writeFileSync(
-		attributionPath,
+	await writeLocalTextFile(
 		JSON.stringify(
 			{
 				artifact: `street-centroids-${args.country}.db`,
@@ -232,7 +236,8 @@ async function main(): Promise<void> {
 			},
 			null,
 			2
-		) + "\n"
+		) + "\n",
+		attributionPath
 	)
 
 	console.error(`[ban] wrote ${attributionPath}`)

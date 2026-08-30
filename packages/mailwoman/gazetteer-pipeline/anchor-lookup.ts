@@ -60,8 +60,9 @@
  *   also `$MAILWOMAN_DATA_ROOT` overridable.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
-import { closeSync, openSync, readFileSync, writeSync } from "@mailwoman/platform/fs"
+import { closeSync, openSync, writeSync } from "@mailwoman/platform/fs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"
@@ -280,10 +281,10 @@ function loadNLPC6(): Map<string, Centroid> {
  * Census ZCTA Gazetteer file → 5-digit code → internal-point centroid (mirror of
  * scripts/zcta-centroids.ts::parseZCTACentroids).
  */
-function loadZCTA(path: string): Map<string, [number, number]> {
+async function loadZCTA(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()
 
-	for (const row of TSVSpliterator.from(readFileSync(path, "utf8"), { header: false })) {
+	for (const row of TSVSpliterator.from(await readLocalTextFile(path), { header: false })) {
 		const fields = row.map((f) => f.trim())
 		const pc = fields.length ? fiveDigit(fields[0]) : null
 
@@ -453,7 +454,7 @@ export interface AnchorLookupStats {
 	zctaFilled: number
 }
 
-export function buildAnchorLookup(args: AnchorLookupOptions): AnchorLookupStats {
+export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<AnchorLookupStats> {
 	const countries = (args.include?.length ? args.include : ANCHOR_PILOT_COUNTRIES).map((c) => c.toUpperCase())
 
 	for (const country of countries) {
@@ -470,7 +471,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): AnchorLookupStats 
 		gbOutwardKeys = addGBOutwardKeys(sources.find(([c]) => c === "GB")![1])
 	}
 
-	const zcta = args.zcta ? loadZCTA(args.zcta) : new Map<string, [number, number]>()
+	const zcta = args.zcta ? await loadZCTA(args.zcta) : new Map<string, [number, number]>()
 	const allCodes = new Set<string>()
 
 	for (const [, d] of sources) {

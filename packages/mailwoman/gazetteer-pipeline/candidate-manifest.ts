@@ -21,10 +21,10 @@
  *   like provenance and carry none.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
@@ -33,8 +33,8 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * `unknown` is a measured state — the admin build had no manifest — and is deliberately distinguishable from an admin
  * build whose manifest says its version is literally unknown.
  */
-export function ancestorIdentity(adminDBPath: string): string {
-	if (!existsSync(adminDBPath)) return "unknown (admin gazetteer not found)"
+export async function ancestorIdentity(adminDBPath: string): Promise<string> {
+	if (!(await pathExists(adminDBPath))) return "unknown (admin gazetteer not found)"
 
 	let db: DatabaseClient<LayerContractDatabase> | undefined
 
@@ -82,8 +82,8 @@ export interface CandidateManifestInput {
 /**
  * Compose the candidate gazetteer's manifest.
  */
-export function candidateLayerManifest(input: CandidateManifestInput): LayerManifest {
-	const ancestor = ancestorIdentity(input.adminDBPath)
+export async function candidateLayerManifest(input: CandidateManifestInput): Promise<LayerManifest> {
+	const ancestor = await ancestorIdentity(input.adminDBPath)
 
 	return {
 		name: "candidate",

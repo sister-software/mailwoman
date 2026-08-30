@@ -25,7 +25,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { existsSync, statSync } from "@mailwoman/platform/fs"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
@@ -59,12 +59,12 @@ async function publishTiles(options: Options): Promise<string> {
 	const { $private } = await import("@mailwoman/core/env")
 	const { $ } = await import("zx")
 
-	if (!existsSync(options.file)) throw new CommandError(`--file not found: ${options.file}`)
+	if (!(await pathExists(options.file))) throw new CommandError(`--file not found: ${options.file}`)
 
 	if (!options.file.endsWith(".pmtiles")) throw new CommandError(`--file must be a .pmtiles archive: ${options.file}`)
 
 	const key = `${options.prefix}/${options.tileset}.pmtiles`
-	const sizeMb = statSync(options.file).size / 1024 / 1024
+	const sizeMb = (await statPath(options.file)).size / 1024 / 1024
 	const servedAt = `https://tiles.mailwoman.ai/${options.tileset}.json`
 
 	if (options.dryRun) {

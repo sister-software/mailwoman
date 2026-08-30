@@ -47,26 +47,21 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readDirectory, readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	readdirSync,
-	readFileSync,
-	rmSync,
-	statSync,
-	symlinkSync,
-	writeFileSync,
-} from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { existsSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
-import { describe, expect, test, vi } from "vitest"
+import { afterAll, describe, expect, test, vi } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
@@ -309,13 +304,11 @@ describe("resolveWeights — package auto-resolve", () => {
 	// must move together. Ship the bin under a non-shaped card and every GB parse feeds an untrained
 	// input direction (the measured 24-postcode regression); declare shaped without the bin and the
 	// channel is simply off. Each half is checkable, and neither alone is the contract.
-	test("neural-weights-en-gb names a postcode binary in `files` IFF its card declares span_mode shaped", () => {
-		const manifest = parseJSONStrict<{ files: string[] }>(
-			readFileSync(workspacePath("neural-weights-en-gb", "package.json"), "utf8")
-		)
+	test("neural-weights-en-gb names a postcode binary in `files` IFF its card declares span_mode shaped", async () => {
+		const manifest = await readLocalJSONFile<{ files: string[] }>(workspacePath("neural-weights-en-gb", "package.json"))
 
-		const card = parseJSONStrict<{ requires?: { anchor?: { span_mode?: string } } }>(
-			readFileSync(workspacePath("neural-weights-en-gb", "model-card.json"), "utf8")
+		const card = await readLocalJSONFile<{ requires?: { anchor?: { span_mode?: string } } }>(
+			workspacePath("neural-weights-en-gb", "model-card.json")
 		)
 
 		const shaped = card.requires?.anchor?.span_mode === "shaped"
@@ -351,7 +344,7 @@ describe("resolveWeights — package auto-resolve", () => {
 			// Probe the built artifact directly: header country gates to nz, and a known identity pair
 			// (the NZ repeated-name convention — 255/1178 census pairs are (x,x)) is
 			// genuinely present in THIS build.
-			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("nz")
 			expect(resolver.header.delta).toBe(10)
 			expect(resolver.probe("plimmerton", "porirua")?.tag).toBe("dependent_locality")
@@ -388,7 +381,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			// Probe the built artifact directly FIRST (per the brief) — establishes that
 			// ("fishburn", "stocktonontees") is genuinely a PROBE OK pair in THIS build before trusting
 			// the end-to-end parse below to prove anything about the wiring.
-			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			expect(resolver.header.country).toBe("gb")
 			expect(resolver.probe("fishburn", "stocktonontees")?.tag).toBe("dependent_locality")
 
@@ -408,7 +401,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
-			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({ locale: "en-gb" })
 
@@ -477,7 +470,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
-			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 			// Setup precondition: confirm the pair is genuinely PROBE OK in THIS build before
 			// trusting the parse below to prove anything about the flip. "Holland Fen" is folded to a
 			// SPACE-preserved token ("holland fen"), not concatenated — see pair-index-resolver.ts's header
@@ -527,7 +520,7 @@ describe("NeuralAddressClassifier.loadFromWeights — placetype-pair prior (smok
 			ensureDevWeightsLinked("en-us", "en-gb")
 
 			const r = resolveWeights({ locale: "en-gb" })
-			const resolver = new PairIndexResolver(new Uint8Array(readFileSync(r.pairIndexPath!)))
+			const resolver = new PairIndexResolver(new Uint8Array(await readLocalBuffer(r.pairIndexPath!)))
 
 			// The re-cut artifact's header contract: delta stays 10, transitionBeta 5 (the link script's
 			// PAIR_INDEX_TRANSITION_BETA lockstep guard rebuilds a stale binary before this line can see it).
@@ -596,11 +589,11 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 			// data-root overlay, and a fixture mirroring an empty directory produces a cache with no binaries —
 			// so the resolve under test silently answers from somewhere else and the gate never fires.
 			const packageDir = dirname(resolveWeights({ locale: "en-us" }).modelPath)
-			const cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-pair-gate-"))
+			const cacheRoot = fixtures.use(await temporaryDirectory("mailwoman-pair-gate-")).path
 			const fakePackageDir = weightsCachePackageDir(cacheRoot, "en-us")
-			mkdirSync(fakePackageDir, { recursive: true })
+			await makeDirectories(fakePackageDir)
 
-			for (const entry of readdirSync(packageDir)) {
+			for (const entry of await readDirectory(packageDir)) {
 				const source = join(packageDir, entry)
 
 				// NEVER symlink the artifact this test is about to overwrite. `writeFileSync` FOLLOWS a symlink, so
@@ -608,14 +601,13 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 				// clobbered the 49,033-pair production binary with the 1-entry stub below — silently, since the test
 				// still passes and every later test in the run would grade against the corrupted file. Same
 				// write-through-the-symlink hazard AGENTS.md documents for `fs.copyFile` in the publish path.
-				if (statSync(source).isFile() && entry !== "pair-index-us.bin") {
-					symlinkSync(source, join(fakePackageDir, entry))
+				if ((await statPath(source)).isFile() && entry !== "pair-index-us.bin") {
+					await createSymbolicLink(source, join(fakePackageDir, entry))
 				}
 			}
 
 			// The mispackaged artifact: named for en-us's country, but the header says gb.
-			writeFileSync(
-				join(fakePackageDir, "pair-index-us.bin"),
+			await writeLocalFile(
 				serializePairIndex(
 					{
 						country: "gb",
@@ -625,7 +617,8 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 						buildDate: "2026-07-23",
 					},
 					[{ child: "holland fen", parent: "boston", tag: "dependent_locality", parentTag: "locality" }]
-				)
+				),
+				join(fakePackageDir, "pair-index-us.bin")
 			)
 
 			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
@@ -655,7 +648,6 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 				expect(tree.roots.length).toBeGreaterThan(0)
 			} finally {
 				warnSpy.mockRestore()
-				rmSync(cacheRoot, { recursive: true, force: true })
 			}
 		},
 		LINK_SCRIPT_TIMEOUT_MS

@@ -24,8 +24,8 @@ test("parseUnLocodeCoords: DDMM hemisphere → decimal degrees", () => {
 	expect(parseUnLocodeCoords("nonsense")).toBeNull()
 })
 
-function fixtureDB(): DatabaseClient<UNLocodeDatabase> {
-	const db = new DatabaseClient<UNLocodeDatabase>(":memory:")
+async function fixtureDB(): Promise<DatabaseClient<UNLocodeDatabase>> {
+	const db = DatabaseClient.temp<UNLocodeDatabase>()
 	db.exec("CREATE TABLE un_locode (country TEXT, location TEXT, name TEXT, nameNorm TEXT, lat REAL, lon REAL)")
 	const ins = db.prepare("INSERT INTO un_locode VALUES (?,?,?,?,?,?)")
 	ins.run("NL", "RTM", "Rotterdam", "rotterdam", 51.92, 4.48)
@@ -34,23 +34,23 @@ function fixtureDB(): DatabaseClient<UNLocodeDatabase> {
 	return db
 }
 
-test("UnLocodeLookup.byName: country + folded name → code", () => {
-	using db = fixtureDB()
+test("UnLocodeLookup.byName: country + folded name → code", async () => {
+	using db = await fixtureDB()
 	using lookup = new UnLocodeLookup({ database: db })
 	expect(lookup.byName("NL", "Rotterdam")).toBe("NL RTM")
 	expect(lookup.byName("us", "new york")).toBe("US NYC")
 	expect(lookup.byName("NL", "Nowhere")).toBeNull()
 })
 
-test("UnLocodeLookup.nearest: closest coordinate within range", () => {
-	using db = fixtureDB()
+test("UnLocodeLookup.nearest: closest coordinate within range", async () => {
+	using db = await fixtureDB()
 	using lookup = new UnLocodeLookup({ database: db })
 	expect(lookup.nearest(40.71, -74.01)).toBe("US NYC")
 	expect(lookup.nearest(0, 0, 25)).toBeNull()
 })
 
-test("makeUnLocodeAnnotator: byName when available, else nearest", () => {
-	using db = fixtureDB()
+test("makeUnLocodeAnnotator: byName when available, else nearest", async () => {
+	using db = await fixtureDB()
 	using lookup = new UnLocodeLookup({ database: db })
 	const annotate = makeUnLocodeAnnotator(lookup)
 

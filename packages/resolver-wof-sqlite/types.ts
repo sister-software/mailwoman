@@ -250,7 +250,6 @@ export interface FindPlaceQuery {
  * interface is async even though `node:sqlite` is sync — leaves room for `Worker`-backed implementations later without
  * a public API break.
  */
-export interface PlaceLookup {
+export interface PlaceLookup extends Disposable {
 	findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]>
-	close(): void
 }

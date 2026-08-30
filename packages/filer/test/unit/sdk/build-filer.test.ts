@@ -9,6 +9,8 @@
  *   filesystem — matches `build-bdc.test.ts`'s injected-row convention.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import {
 	FilerEdgeAssertion,
@@ -21,10 +23,6 @@ import { buildFilerDatabase, type BuildFilerResult, type EdgarSubsidiaryRow } fr
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
-import { existsSync } from "@mailwoman/platform/fs"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
@@ -98,391 +96,340 @@ function providerFixtureRows(): ProviderListRow[] {
 	]
 }
 
-let scratch: string
-let out: string
-
-async function setupScratch(): Promise<void> {
-	scratch = await mkdtemp(join(tmpdir(), "filer-build-"))
-	out = join(scratch, "filer.db")
-}
-
-async function teardownScratch(): Promise<void> {
-	await rm(scratch, { recursive: true, force: true })
-}
-
 function openFilerDB(path: string): DatabaseClient<FilerDatabase> {
 	return new DatabaseClient<FilerDatabase>(path, { readOnly: true })
 }
 
 describe("buildFilerDatabase", () => {
 	it("builds a sealed file at `out`", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			await buildFilerDatabase({
-				form499Rows: form499FixtureRows(),
-				providerRows: providerFixtureRows(),
-				out,
-				sourceVintage: "2026-Q1",
-				validFrom: "2026-01-31",
-				buildSHA: "deadbeef",
-			})
+		await buildFilerDatabase({
+			form499Rows: form499FixtureRows(),
+			providerRows: providerFixtureRows(),
+			out,
+			sourceVintage: "2026-Q1",
+			validFrom: "2026-01-31",
+			buildSHA: "deadbeef",
+		})
 
-			expect(existsSync(out)).toBe(true)
-			expect(existsSync(`${out}.building`)).toBe(false)
-			expect(existsSync(`${out}.prev`)).toBe(false)
-		} finally {
-			await teardownScratch()
-		}
+		expect(await pathExists(out)).toBe(true)
+		expect(await pathExists(`${out}.building`)).toBe(false)
+		expect(await pathExists(`${out}.prev`)).toBe(false)
 	})
 
 	it("emits FRN↔form499ID, FRN↔holdingCompanyName, and FRN↔managementCompanyName (both) for a filed 499 row", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			await buildFilerDatabase({
-				form499Rows: form499FixtureRows(),
-				out,
-				sourceVintage: "2026-Q1",
-				buildSHA: "deadbeef",
-			})
+		await buildFilerDatabase({
+			form499Rows: form499FixtureRows(),
+			out,
+			sourceVintage: "2026-Q1",
+			buildSHA: "deadbeef",
+		})
 
-			using db = openFilerDB(out)
-			const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_ACME}`
+		using db = openFilerDB(out)
+		const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_ACME}`
 
-			const edges = await db.selectFrom("filer_edge").selectAll().where("from_node_id", "=", frnNodeID).execute()
-			const toIDs = edges.map((e) => e.to_node_id).toSorted()
+		const edges = await db.selectFrom("filer_edge").selectAll().where("from_node_id", "=", frnNodeID).execute()
+		const toIDs = edges.map((e) => e.to_node_id).toSorted()
 
-			expect(toIDs).toEqual(
-				[
-					`${FilerIdentifierType.Form499ID}:899901`,
-					`${FilerIdentifierType.HoldingCompanyName}:Acme Holdings Inc`,
-					`${FilerIdentifierType.ManagementCompanyName}:Acme Management Co`,
-				].toSorted()
-			)
+		expect(toIDs).toEqual(
+			[
+				`${FilerIdentifierType.Form499ID}:899901`,
+				`${FilerIdentifierType.HoldingCompanyName}:Acme Holdings Inc`,
+				`${FilerIdentifierType.ManagementCompanyName}:Acme Management Co`,
+			].toSorted()
+		)
 
-			for (const edge of edges) {
-				expect(edge.source).toBe("form-499")
-				expect(edge.source_vintage).toBe("2026-01-15")
-				expect(edge.valid_from).toBe("2026-01-15")
-				expect(edge.assertion).toBe("authoritative")
-			}
-		} finally {
-			await teardownScratch()
+		for (const edge of edges) {
+			expect(edge.source).toBe("form-499")
+			expect(edge.source_vintage).toBe("2026-01-15")
+			expect(edge.valid_from).toBe("2026-01-15")
+			expect(edge.assertion).toBe("authoritative")
 		}
 	})
 
 	it("records a 499 row with no FRN as a form499ID node with attributes, never throwing", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			await buildFilerDatabase({
-				form499Rows: form499FixtureRows(),
-				out,
-				sourceVintage: "2026-Q1",
-				buildSHA: "deadbeef",
-			})
+		await buildFilerDatabase({
+			form499Rows: form499FixtureRows(),
+			out,
+			sourceVintage: "2026-Q1",
+			buildSHA: "deadbeef",
+		})
 
-			using db = openFilerDB(out)
+		using db = openFilerDB(out)
 
-			const node = await db
-				.selectFrom("filer_node")
-				.selectAll()
-				.where("node_id", "=", `${FilerIdentifierType.Form499ID}:899902`)
-				.executeTakeFirst()
+		const node = await db
+			.selectFrom("filer_node")
+			.selectAll()
+			.where("node_id", "=", `${FilerIdentifierType.Form499ID}:899902`)
+			.executeTakeFirst()
 
-			expect(node).toBeDefined()
+		expect(node).toBeDefined()
 
-			const legalName = await db
-				.selectFrom("filer_attribute")
-				.selectAll()
-				.where("node_id", "=", `${FilerIdentifierType.Form499ID}:899902`)
-				.where("key", "=", "legal_name")
-				.executeTakeFirstOrThrow()
+		const legalName = await db
+			.selectFrom("filer_attribute")
+			.selectAll()
+			.where("node_id", "=", `${FilerIdentifierType.Form499ID}:899902`)
+			.where("key", "=", "legal_name")
+			.executeTakeFirstOrThrow()
 
-			expect(legalName.value).toBe("Beta Networks")
+		expect(legalName.value).toBe("Beta Networks")
 
-			const classification = await db
-				.selectFrom("filer_attribute")
-				.selectAll()
-				.where("node_id", "=", `${FilerIdentifierType.Form499ID}:899902`)
-				.where("key", "=", "classification")
-				.executeTakeFirstOrThrow()
+		const classification = await db
+			.selectFrom("filer_attribute")
+			.selectAll()
+			.where("node_id", "=", `${FilerIdentifierType.Form499ID}:899902`)
+			.where("key", "=", "classification")
+			.executeTakeFirstOrThrow()
 
-			expect(classification.value).toBe("clec")
-		} finally {
-			await teardownScratch()
-		}
+		expect(classification.value).toBe("clec")
 	})
 
 	it("a bdcProviderID with two FRNs yields two distinct bdcProviderID↔FRN edges (decision 6)", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			await buildFilerDatabase({
-				providerRows: providerFixtureRows(),
-				out,
-				sourceVintage: "2026-06-30",
-				validFrom: "2026-06-30",
-				buildSHA: "deadbeef",
-			})
+		await buildFilerDatabase({
+			providerRows: providerFixtureRows(),
+			out,
+			sourceVintage: "2026-06-30",
+			validFrom: "2026-06-30",
+			buildSHA: "deadbeef",
+		})
 
-			using db = openFilerDB(out)
-			const providerNodeID = `${FilerIdentifierType.BDCProviderID}:130077`
+		using db = openFilerDB(out)
+		const providerNodeID = `${FilerIdentifierType.BDCProviderID}:130077`
 
-			const frnEdges = await db
-				.selectFrom("filer_edge")
-				.selectAll()
-				.where("from_node_id", "=", providerNodeID)
-				.where("to_node_id", "like", `${FilerIdentifierType.FRN}:%`)
-				.execute()
+		const frnEdges = await db
+			.selectFrom("filer_edge")
+			.selectAll()
+			.where("from_node_id", "=", providerNodeID)
+			.where("to_node_id", "like", `${FilerIdentifierType.FRN}:%`)
+			.execute()
 
-			expect(frnEdges).toHaveLength(2)
+		expect(frnEdges).toHaveLength(2)
 
-			expect(frnEdges.map((e) => e.to_node_id).toSorted()).toEqual(
-				[`${FilerIdentifierType.FRN}:${FRN_ACME}`, `${FilerIdentifierType.FRN}:${FRN_BDC_ONLY}`].toSorted()
-			)
-		} finally {
-			await teardownScratch()
-		}
+		expect(frnEdges.map((e) => e.to_node_id).toSorted()).toEqual(
+			[`${FilerIdentifierType.FRN}:${FRN_ACME}`, `${FilerIdentifierType.FRN}:${FRN_BDC_ONLY}`].toSorted()
+		)
 	})
 
 	it("emits bdcProviderID↔holdingCompanyName only when holdingCompany is present, counting the rest as skipped", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			const result = await buildFilerDatabase({
-				providerRows: providerFixtureRows(),
-				out,
-				sourceVintage: "2026-06-30",
-				validFrom: "2026-06-30",
-				buildSHA: "deadbeef",
-			})
+		const result = await buildFilerDatabase({
+			providerRows: providerFixtureRows(),
+			out,
+			sourceVintage: "2026-06-30",
+			validFrom: "2026-06-30",
+			buildSHA: "deadbeef",
+		})
 
-			// Row 2 (providerID 130077, frn FRN_BDC_ONLY) has holdingCompany: null — no edge, counted as skipped.
-			expect(result.skipped).toBe(1)
+		// Row 2 (providerID 130077, frn FRN_BDC_ONLY) has holdingCompany: null — no edge, counted as skipped.
+		expect(result.skipped).toBe(1)
 
-			using db = openFilerDB(out)
+		using db = openFilerDB(out)
 
-			const holdingEdges = await db
-				.selectFrom("filer_edge")
-				.selectAll()
-				.where("to_node_id", "like", `${FilerIdentifierType.HoldingCompanyName}:%`)
-				.execute()
+		const holdingEdges = await db
+			.selectFrom("filer_edge")
+			.selectAll()
+			.where("to_node_id", "like", `${FilerIdentifierType.HoldingCompanyName}:%`)
+			.execute()
 
-			// Only providerID 130077 (row 1, Acme Holdings Inc) and providerID 130080 (Gamma Corp).
-			expect(holdingEdges).toHaveLength(2)
-		} finally {
-			await teardownScratch()
-		}
+		// Only providerID 130077 (row 1, Acme Holdings Inc) and providerID 130080 (Gamma Corp).
+		expect(holdingEdges).toHaveLength(2)
 	})
 
 	it("every edge carries non-empty provenance (source, source_vintage, assertion, valid_from), and valid_from is always ISO YYYY-MM-DD even when sourceVintage is a non-ISO label", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			await buildFilerDatabase({
-				form499Rows: form499FixtureRows(),
-				providerRows: providerFixtureRows(),
-				out,
-				sourceVintage: "2026-Q1",
-				validFrom: "2026-01-31",
-				buildSHA: "deadbeef",
-			})
+		await buildFilerDatabase({
+			form499Rows: form499FixtureRows(),
+			providerRows: providerFixtureRows(),
+			out,
+			sourceVintage: "2026-Q1",
+			validFrom: "2026-01-31",
+			buildSHA: "deadbeef",
+		})
 
-			using db = openFilerDB(out)
-			const edges = await db.selectFrom("filer_edge").selectAll().execute()
+		using db = openFilerDB(out)
+		const edges = await db.selectFrom("filer_edge").selectAll().execute()
 
-			expect(edges.length).toBeGreaterThan(0)
+		expect(edges.length).toBeGreaterThan(0)
 
-			for (const edge of edges) {
-				expect(edge.source.length).toBeGreaterThan(0)
-				expect(edge.source_vintage.length).toBeGreaterThan(0)
-				expect(edge.assertion).toBe("authoritative")
-				expect(edge.valid_from.length).toBeGreaterThan(0)
-				// sourceVintage above ("2026-Q1") is deliberately NOT ISO — valid_from must never inherit that shape
-				//: every edge's valid_from is ISO YYYY-MM-DD regardless of source.
-				expect(edge.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
-			}
-		} finally {
-			await teardownScratch()
+		for (const edge of edges) {
+			expect(edge.source.length).toBeGreaterThan(0)
+			expect(edge.source_vintage.length).toBeGreaterThan(0)
+			expect(edge.assertion).toBe("authoritative")
+			expect(edge.valid_from.length).toBeGreaterThan(0)
+			// sourceVintage above ("2026-Q1") is deliberately NOT ISO — valid_from must never inherit that shape
+			//: every edge's valid_from is ISO YYYY-MM-DD regardless of source.
+			expect(edge.valid_from).toMatch(/^\d{4}-\d{2}-\d{2}$/)
 		}
 	})
 
 	it("never emits an edge derived from a DC-agent field", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			await buildFilerDatabase({
-				form499Rows: form499FixtureRows(),
+		await buildFilerDatabase({
+			form499Rows: form499FixtureRows(),
+			out,
+			sourceVintage: "2026-Q1",
+			buildSHA: "deadbeef",
+		})
+
+		using db = openFilerDB(out)
+		const edges = await db.selectFrom("filer_edge").selectAll().execute()
+
+		for (const edge of edges) {
+			expect(edge.from_node_id).not.toContain("CT Corporation")
+			expect(edge.to_node_id).not.toContain("CT Corporation")
+			expect(edge.from_node_id).not.toContain("John Doe")
+			expect(edge.to_node_id).not.toContain("John Doe")
+		}
+
+		// DC-agent fields still recorded — but ONLY as plain attributes, never as relationship evidence.
+		const dcAgentAttr = await db
+			.selectFrom("filer_attribute")
+			.selectAll()
+			.where("key", "=", "dc_agent_organization_name")
+			.executeTakeFirstOrThrow()
+
+		expect(dcAgentAttr.value).toBe("CT Corporation")
+	})
+
+	it("the manifest carries the build's source vintage and the sources actually used", async () => {
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
+
+		await buildFilerDatabase({
+			form499Rows: form499FixtureRows(),
+			providerRows: providerFixtureRows(),
+			out,
+			sourceVintage: "2026-Q1",
+			validFrom: "2026-01-31",
+			buildSHA: "cafebabe",
+		})
+
+		using db = openFilerDB(out)
+		const manifest = await readFilerManifest(db)
+
+		expect(manifest.name).toBe("filer")
+		expect(manifest.source_vintage).toBe("2026-Q1")
+		expect(manifest.version).toBe("2026-Q1")
+		expect(manifest.build_sha).toBe("cafebabe")
+		expect(manifest.source).toBe("form-499,bdc-provider-list")
+	})
+
+	it("the manifest's source lists only the sources actually supplied", async () => {
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
+
+		await buildFilerDatabase({
+			providerRows: providerFixtureRows(),
+			out,
+			sourceVintage: "2026-Q1",
+			validFrom: "2026-01-31",
+			buildSHA: "cafebabe",
+		})
+
+		using db = openFilerDB(out)
+		const manifest = await readFilerManifest(db)
+
+		expect(manifest.source).toBe("bdc-provider-list")
+	})
+
+	it("a malformed row (empty form499ID) is loud, and no artifact is left behind", async () => {
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
+
+		const malformedRows: Form499Row[] = [
+			{
+				...form499FixtureRows()[0]!,
+				form499ID: "",
+			},
+		]
+
+		await expect(
+			buildFilerDatabase({
+				form499Rows: malformedRows,
 				out,
 				sourceVintage: "2026-Q1",
 				buildSHA: "deadbeef",
 			})
+		).rejects.toThrow(/malformed.*form499ID/i)
 
-			using db = openFilerDB(out)
-			const edges = await db.selectFrom("filer_edge").selectAll().execute()
-
-			for (const edge of edges) {
-				expect(edge.from_node_id).not.toContain("CT Corporation")
-				expect(edge.to_node_id).not.toContain("CT Corporation")
-				expect(edge.from_node_id).not.toContain("John Doe")
-				expect(edge.to_node_id).not.toContain("John Doe")
-			}
-
-			// DC-agent fields still recorded — but ONLY as plain attributes, never as relationship evidence.
-			const dcAgentAttr = await db
-				.selectFrom("filer_attribute")
-				.selectAll()
-				.where("key", "=", "dc_agent_organization_name")
-				.executeTakeFirstOrThrow()
-
-			expect(dcAgentAttr.value).toBe("CT Corporation")
-		} finally {
-			await teardownScratch()
-		}
-	})
-
-	it("the manifest carries the build's source vintage and the sources actually used", async () => {
-		await setupScratch()
-
-		try {
-			await buildFilerDatabase({
-				form499Rows: form499FixtureRows(),
-				providerRows: providerFixtureRows(),
-				out,
-				sourceVintage: "2026-Q1",
-				validFrom: "2026-01-31",
-				buildSHA: "cafebabe",
-			})
-
-			using db = openFilerDB(out)
-			const manifest = await readFilerManifest(db)
-
-			expect(manifest.name).toBe("filer")
-			expect(manifest.source_vintage).toBe("2026-Q1")
-			expect(manifest.version).toBe("2026-Q1")
-			expect(manifest.build_sha).toBe("cafebabe")
-			expect(manifest.source).toBe("form-499,bdc-provider-list")
-		} finally {
-			await teardownScratch()
-		}
-	})
-
-	it("the manifest's source lists only the sources actually supplied", async () => {
-		await setupScratch()
-
-		try {
-			await buildFilerDatabase({
-				providerRows: providerFixtureRows(),
-				out,
-				sourceVintage: "2026-Q1",
-				validFrom: "2026-01-31",
-				buildSHA: "cafebabe",
-			})
-
-			using db = openFilerDB(out)
-			const manifest = await readFilerManifest(db)
-
-			expect(manifest.source).toBe("bdc-provider-list")
-		} finally {
-			await teardownScratch()
-		}
-	})
-
-	it("a malformed row (empty form499ID) is loud, and no artifact is left behind", async () => {
-		await setupScratch()
-
-		try {
-			const malformedRows: Form499Row[] = [
-				{
-					...form499FixtureRows()[0]!,
-					form499ID: "",
-				},
-			]
-
-			await expect(
-				buildFilerDatabase({
-					form499Rows: malformedRows,
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
-			).rejects.toThrow(/malformed.*form499ID/i)
-
-			expect(existsSync(out)).toBe(false)
-		} finally {
-			await teardownScratch()
-		}
+		expect(await pathExists(out)).toBe(false)
 	})
 
 	it("an empty lastFiledAt is loud — never produces a blank-provenance edge (decision 7 / gate 1)", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			const malformedRows: Form499Row[] = [
-				{
-					...form499FixtureRows()[0]!,
-					lastFiledAt: "",
-				},
-			]
+		const malformedRows: Form499Row[] = [
+			{
+				...form499FixtureRows()[0]!,
+				lastFiledAt: "",
+			},
+		]
 
-			await expect(
-				buildFilerDatabase({
-					form499Rows: malformedRows,
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
-			).rejects.toThrow(/malformed.*lastFiledAt/i)
+		await expect(
+			buildFilerDatabase({
+				form499Rows: malformedRows,
+				out,
+				sourceVintage: "2026-Q1",
+				buildSHA: "deadbeef",
+			})
+		).rejects.toThrow(/malformed.*lastFiledAt/i)
 
-			expect(existsSync(out)).toBe(false)
-		} finally {
-			await teardownScratch()
-		}
+		expect(await pathExists(out)).toBe(false)
 	})
 
 	it("a blank provider-list frn is loud — never mints a shared degenerate FRN node", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			const malformedRows: ProviderListRow[] = [
-				// Two DIFFERENT, unrelated providers, both with a blank frn — without the guard these would
-				// silently share ONE degenerate `frn:` node, falsely asserting they are the same filer.
-				{ providerID: 900_001, frn: "" as ProviderListRow["frn"], holdingCompany: null },
-				{ providerID: 900_002, frn: "" as ProviderListRow["frn"], holdingCompany: null },
-			]
+		const malformedRows: ProviderListRow[] = [
+			// Two DIFFERENT, unrelated providers, both with a blank frn — without the guard these would
+			// silently share ONE degenerate `frn:` node, falsely asserting they are the same filer.
+			{ providerID: 900_001, frn: "" as ProviderListRow["frn"], holdingCompany: null },
+			{ providerID: 900_002, frn: "" as ProviderListRow["frn"], holdingCompany: null },
+		]
 
-			await expect(
-				buildFilerDatabase({
-					providerRows: malformedRows,
-					out,
-					sourceVintage: "2026-Q1",
-					validFrom: "2026-01-31",
-					buildSHA: "deadbeef",
-				})
-			).rejects.toThrow(/malformed.*empty frn/i)
+		await expect(
+			buildFilerDatabase({
+				providerRows: malformedRows,
+				out,
+				sourceVintage: "2026-Q1",
+				validFrom: "2026-01-31",
+				buildSHA: "deadbeef",
+			})
+		).rejects.toThrow(/malformed.*empty frn/i)
 
-			expect(existsSync(out)).toBe(false)
-		} finally {
-			await teardownScratch()
-		}
+		expect(await pathExists(out)).toBe(false)
 	})
 
 	it("throws when neither a 499 nor a provider-list source is supplied", async () => {
-		await setupScratch()
+		await using scratch = await temporaryDirectory("filer-build-")
+		const out = scratch.resolve("filer.db")
 
-		try {
-			await expect(
-				buildFilerDatabase({
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
-			).rejects.toThrow(/pass at least one/)
-		} finally {
-			await teardownScratch()
-		}
+		await expect(
+			buildFilerDatabase({
+				out,
+				sourceVintage: "2026-Q1",
+				buildSHA: "deadbeef",
+			})
+		).rejects.toThrow(/pass at least one/)
 	})
 
 	describe("idempotent write path", () => {
@@ -515,152 +462,140 @@ describe("buildFilerDatabase", () => {
 		}
 
 		it("collapses a same-source/same-vintage duplicate row within one build (filer_attribute has no PK of its own)", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const row = idempotencyFixtureRow()
+			const row = idempotencyFixtureRow()
 
-				// The SAME row twice — simulates a same-source/same-vintage double-insert opportunity.
-				const result = await buildFilerDatabase({
-					form499Rows: [row, row],
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
+			// The SAME row twice — simulates a same-source/same-vintage double-insert opportunity.
+			const result = await buildFilerDatabase({
+				form499Rows: [row, row],
+				out,
+				sourceVintage: "2026-Q1",
+				buildSHA: "deadbeef",
+			})
 
-				expect(result.nodes).toBe(3)
-				expect(result.edges).toBe(2)
-				expect(result.attributes).toBe(2)
-				expect(result.skipped).toBe(2)
+			expect(result.nodes).toBe(3)
+			expect(result.edges).toBe(2)
+			expect(result.attributes).toBe(2)
+			expect(result.skipped).toBe(2)
 
-				using db = openFilerDB(out)
-				const nodeCount = await db.selectFrom("filer_node").select(db.fn.countAll().as("c")).executeTakeFirstOrThrow()
-				const edgeCount = await db.selectFrom("filer_edge").select(db.fn.countAll().as("c")).executeTakeFirstOrThrow()
+			using db = openFilerDB(out)
+			const nodeCount = await db.selectFrom("filer_node").select(db.fn.countAll().as("c")).executeTakeFirstOrThrow()
+			const edgeCount = await db.selectFrom("filer_edge").select(db.fn.countAll().as("c")).executeTakeFirstOrThrow()
 
-				const attrCount = await db
-					.selectFrom("filer_attribute")
-					.select(db.fn.countAll().as("c"))
-					.executeTakeFirstOrThrow()
+			const attrCount = await db
+				.selectFrom("filer_attribute")
+				.select(db.fn.countAll().as("c"))
+				.executeTakeFirstOrThrow()
 
-				expect(Number(nodeCount.c)).toBe(3)
-				expect(Number(edgeCount.c)).toBe(2)
-				expect(Number(attrCount.c)).toBe(2)
-			} finally {
-				await teardownScratch()
-			}
+			expect(Number(nodeCount.c)).toBe(3)
+			expect(Number(edgeCount.c)).toBe(2)
+			expect(Number(attrCount.c)).toBe(2)
 		})
 
 		it("re-running the same build inputs against the same `out` does not grow row counts", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const row = idempotencyFixtureRow()
+			const row = idempotencyFixtureRow()
 
-				const first: BuildFilerResult = await buildFilerDatabase({
-					form499Rows: [row, row],
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
+			const first: BuildFilerResult = await buildFilerDatabase({
+				form499Rows: [row, row],
+				out,
+				sourceVintage: "2026-Q1",
+				buildSHA: "deadbeef",
+			})
 
-				const second: BuildFilerResult = await buildFilerDatabase({
-					form499Rows: [row, row],
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
+			const second: BuildFilerResult = await buildFilerDatabase({
+				form499Rows: [row, row],
+				out,
+				sourceVintage: "2026-Q1",
+				buildSHA: "deadbeef",
+			})
 
-				expect(second.nodes).toBe(first.nodes)
-				expect(second.edges).toBe(first.edges)
-				expect(second.attributes).toBe(first.attributes)
-				expect(second.skipped).toBe(first.skipped)
+			expect(second.nodes).toBe(first.nodes)
+			expect(second.edges).toBe(first.edges)
+			expect(second.attributes).toBe(first.attributes)
+			expect(second.skipped).toBe(first.skipped)
 
-				expect(first.nodes).toBe(3)
-				expect(first.edges).toBe(2)
-				expect(first.attributes).toBe(2)
+			expect(first.nodes).toBe(3)
+			expect(first.edges).toBe(2)
+			expect(first.attributes).toBe(2)
 
-				// The rebuild-and-swap discipline: no `.prev` left lingering.
-				expect(existsSync(`${out}.prev`)).toBe(false)
-			} finally {
-				await teardownScratch()
-			}
+			// The rebuild-and-swap discipline: no `.prev` left lingering.
+			expect(await pathExists(`${out}.prev`)).toBe(false)
 		})
 
 		it("two DIFFERENT classification values under the same key/source/vintage both survive (not collapsed by the stage PK)", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				// usfContributor: true + an Incumbent principalCommType -> two classification values
-				// ("usf_contributor", "incumbent_lec") sharing (node_id, key="classification", source, source_vintage) —
-				// only `value` differs. Proves the stage table's dedup key includes `value`, not just
-				// (node_id, key, source, source_vintage), or the second classification would be silently dropped.
-				const row: Form499Row = {
-					...idempotencyFixtureRow(),
-					principalCommType: "Incumbent Local Exchange Carrier",
-				}
-
-				await buildFilerDatabase({
-					form499Rows: [row],
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
-
-				using db = openFilerDB(out)
-
-				const classifications = await db
-					.selectFrom("filer_attribute")
-					.selectAll()
-					.where("node_id", "=", `${FilerIdentifierType.Form499ID}:700001`)
-					.where("key", "=", "classification")
-					.execute()
-
-				expect(classifications.map((c) => c.value).toSorted()).toEqual(["incumbent_lec", "usf_contributor"])
-			} finally {
-				await teardownScratch()
+			// usfContributor: true + an Incumbent principalCommType -> two classification values
+			// ("usf_contributor", "incumbent_lec") sharing (node_id, key="classification", source, source_vintage) —
+			// only `value` differs. Proves the stage table's dedup key includes `value`, not just
+			// (node_id, key, source, source_vintage), or the second classification would be silently dropped.
+			const row: Form499Row = {
+				...idempotencyFixtureRow(),
+				principalCommType: "Incumbent Local Exchange Carrier",
 			}
+
+			await buildFilerDatabase({
+				form499Rows: [row],
+				out,
+				sourceVintage: "2026-Q1",
+				buildSHA: "deadbeef",
+			})
+
+			using db = openFilerDB(out)
+
+			const classifications = await db
+				.selectFrom("filer_attribute")
+				.selectAll()
+				.where("node_id", "=", `${FilerIdentifierType.Form499ID}:700001`)
+				.where("key", "=", "classification")
+				.execute()
+
+			expect(classifications.map((c) => c.value).toSorted()).toEqual(["incumbent_lec", "usf_contributor"])
 		})
 	})
 
 	describe("single-vintage snapshot semantics", () => {
 		it("rebuilding at a later sourceVintage REPLACES the artifact — earlier-vintage rows do not survive", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				await buildFilerDatabase({
-					providerRows: [{ providerID: 500_001, frn: toFRN("0007777777")!, holdingCompany: "Old Co" }],
-					out,
-					sourceVintage: "2026-Q1",
-					validFrom: "2026-01-31",
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				providerRows: [{ providerID: 500_001, frn: toFRN("0007777777")!, holdingCompany: "Old Co" }],
+				out,
+				sourceVintage: "2026-Q1",
+				validFrom: "2026-01-31",
+				buildSHA: "deadbeef",
+			})
 
-				await buildFilerDatabase({
-					providerRows: [{ providerID: 500_002, frn: toFRN("0008888888")!, holdingCompany: "New Co" }],
-					out,
-					sourceVintage: "2026-Q2",
-					validFrom: "2026-04-30",
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				providerRows: [{ providerID: 500_002, frn: toFRN("0008888888")!, holdingCompany: "New Co" }],
+				out,
+				sourceVintage: "2026-Q2",
+				validFrom: "2026-04-30",
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
-				const edges = await db.selectFrom("filer_edge").selectAll().execute()
+			using db = openFilerDB(out)
+			const edges = await db.selectFrom("filer_edge").selectAll().execute()
 
-				// Every edge belongs to the SECOND build's vintage — none of the first build's rows survived
-				// alongside it as additional rows (that would be cross-build accumulation, which this artifact
-				// deliberately does not support — see the module docstring's MINOR-B note).
-				expect(edges.length).toBeGreaterThan(0)
-				expect(edges.every((e) => e.source_vintage === "2026-Q2")).toBe(true)
+			// Every edge belongs to the SECOND build's vintage — none of the first build's rows survived
+			// alongside it as additional rows (that would be cross-build accumulation, which this artifact
+			// deliberately does not support — see the module docstring's MINOR-B note).
+			expect(edges.length).toBeGreaterThan(0)
+			expect(edges.every((e) => e.source_vintage === "2026-Q2")).toBe(true)
 
-				const providerNodeIDs = (await db.selectFrom("filer_node").selectAll().execute()).map((n) => n.node_id)
-				expect(providerNodeIDs).not.toContain(`${FilerIdentifierType.BDCProviderID}:500001`)
-				expect(providerNodeIDs).toContain(`${FilerIdentifierType.BDCProviderID}:500002`)
+			const providerNodeIDs = (await db.selectFrom("filer_node").selectAll().execute()).map((n) => n.node_id)
+			expect(providerNodeIDs).not.toContain(`${FilerIdentifierType.BDCProviderID}:500001`)
+			expect(providerNodeIDs).toContain(`${FilerIdentifierType.BDCProviderID}:500002`)
 
-				const manifest = await readFilerManifest(db)
-				expect(manifest.source_vintage).toBe("2026-Q2")
-			} finally {
-				await teardownScratch()
-			}
+			const manifest = await readFilerManifest(db)
+			expect(manifest.source_vintage).toBe("2026-Q2")
 		})
 	})
 
@@ -693,242 +628,224 @@ describe("buildFilerDatabase", () => {
 		}
 
 		it("types holding/management edges to their named FilerRelationship, keeping identity edges SameEntity", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const row = familyFixtureRow({
-					form499ID: "800001",
-					frn: FRN_DELTA,
-					holdingCompany: "Alpha Holdco Inc",
-					managementCompany: "Beta Management Co",
-				})
+			const row = familyFixtureRow({
+				form499ID: "800001",
+				frn: FRN_DELTA,
+				holdingCompany: "Alpha Holdco Inc",
+				managementCompany: "Beta Management Co",
+			})
 
-				await buildFilerDatabase({
-					form499Rows: [row],
-					providerRows: [{ providerID: 210_001, frn: FRN_DELTA, holdingCompany: "Alpha Holdco Inc" }],
-					out,
-					sourceVintage: SOURCE_VINTAGE,
-					validFrom: "2026-05-01",
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				form499Rows: [row],
+				providerRows: [{ providerID: 210_001, frn: FRN_DELTA, holdingCompany: "Alpha Holdco Inc" }],
+				out,
+				sourceVintage: SOURCE_VINTAGE,
+				validFrom: "2026-05-01",
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
-				const edges = await db.selectFrom("filer_edge").selectAll().execute()
+			using db = openFilerDB(out)
+			const edges = await db.selectFrom("filer_edge").selectAll().execute()
 
-				const toTarget = (nodeID: string) => edges.filter((e) => e.to_node_id === nodeID)
+			const toTarget = (nodeID: string) => edges.filter((e) => e.to_node_id === nodeID)
 
-				// FRN<->form499ID: identity, never HoldingCompany/ManagementCompany.
-				expect(
-					toTarget(`${FilerIdentifierType.Form499ID}:800001`).every(
-						(e) => e.relationship === FilerRelationship.SameEntity
-					)
-				).toBe(true)
+			// FRN<->form499ID: identity, never HoldingCompany/ManagementCompany.
+			expect(
+				toTarget(`${FilerIdentifierType.Form499ID}:800001`).every(
+					(e) => e.relationship === FilerRelationship.SameEntity
+				)
+			).toBe(true)
 
-				// bdcProviderID<->FRN: identity too.
-				expect(
-					toTarget(`${FilerIdentifierType.FRN}:${FRN_DELTA}`).every(
-						(e) => e.relationship === FilerRelationship.SameEntity
-					)
-				).toBe(true)
+			// bdcProviderID<->FRN: identity too.
+			expect(
+				toTarget(`${FilerIdentifierType.FRN}:${FRN_DELTA}`).every(
+					(e) => e.relationship === FilerRelationship.SameEntity
+				)
+			).toBe(true)
 
-				// FRN->holdingCompanyName AND bdcProviderID->holdingCompanyName both assert HoldingCompany.
-				const holdingEdges = toTarget(`${FilerIdentifierType.HoldingCompanyName}:Alpha Holdco Inc`)
-				expect(holdingEdges).toHaveLength(2)
-				expect(holdingEdges.every((e) => e.relationship === FilerRelationship.HoldingCompany)).toBe(true)
+			// FRN->holdingCompanyName AND bdcProviderID->holdingCompanyName both assert HoldingCompany.
+			const holdingEdges = toTarget(`${FilerIdentifierType.HoldingCompanyName}:Alpha Holdco Inc`)
+			expect(holdingEdges).toHaveLength(2)
+			expect(holdingEdges.every((e) => e.relationship === FilerRelationship.HoldingCompany)).toBe(true)
 
-				// FRN->managementCompanyName asserts ManagementCompany, never collapsed into HoldingCompany.
-				const managementEdges = toTarget(`${FilerIdentifierType.ManagementCompanyName}:Beta Management Co`)
-				expect(managementEdges).toHaveLength(1)
-				expect(managementEdges[0]!.relationship).toBe(FilerRelationship.ManagementCompany)
-			} finally {
-				await teardownScratch()
-			}
+			// FRN->managementCompanyName asserts ManagementCompany, never collapsed into HoldingCompany.
+			const managementEdges = toTarget(`${FilerIdentifierType.ManagementCompanyName}:Beta Management Co`)
+			expect(managementEdges).toHaveLength(1)
+			expect(managementEdges[0]!.relationship).toBe(FilerRelationship.ManagementCompany)
 		})
 
 		it("three distinct FRNs sharing one holding company become one family with three members", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const rows = [
-					familyFixtureRow({ form499ID: "810001", frn: FRN_DELTA, holdingCompany: "Shared Holdco Inc" }),
-					familyFixtureRow({ form499ID: "810002", frn: FRN_EPSILON, holdingCompany: "Shared Holdco Inc" }),
-					familyFixtureRow({ form499ID: "810003", frn: FRN_ZETA, holdingCompany: "Shared Holdco Inc" }),
-				]
+			const rows = [
+				familyFixtureRow({ form499ID: "810001", frn: FRN_DELTA, holdingCompany: "Shared Holdco Inc" }),
+				familyFixtureRow({ form499ID: "810002", frn: FRN_EPSILON, holdingCompany: "Shared Holdco Inc" }),
+				familyFixtureRow({ form499ID: "810003", frn: FRN_ZETA, holdingCompany: "Shared Holdco Inc" }),
+			]
 
-				await buildFilerDatabase({
-					form499Rows: rows,
-					out,
-					sourceVintage: SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				form499Rows: rows,
+				out,
+				sourceVintage: SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
+			using db = openFilerDB(out)
 
-				const families = await db
-					.selectFrom("filer_family")
-					.selectAll()
-					.where("relationship", "=", FilerRelationship.HoldingCompany)
-					.execute()
+			const families = await db
+				.selectFrom("filer_family")
+				.selectAll()
+				.where("relationship", "=", FilerRelationship.HoldingCompany)
+				.execute()
 
-				expect(families).toHaveLength(3)
+			expect(families).toHaveLength(3)
 
-				const familyIDs = new Set(families.map((f) => f.family_id))
-				expect(familyIDs.size).toBe(1)
+			const familyIDs = new Set(families.map((f) => f.family_id))
+			expect(familyIDs.size).toBe(1)
 
-				const memberNodeIDs = families.map((f) => f.node_id).toSorted()
+			const memberNodeIDs = families.map((f) => f.node_id).toSorted()
 
-				expect(memberNodeIDs).toEqual(
-					[
-						`${FilerIdentifierType.FRN}:${FRN_DELTA}`,
-						`${FilerIdentifierType.FRN}:${FRN_EPSILON}`,
-						`${FilerIdentifierType.FRN}:${FRN_ZETA}`,
-					].toSorted()
-				)
+			expect(memberNodeIDs).toEqual(
+				[
+					`${FilerIdentifierType.FRN}:${FRN_DELTA}`,
+					`${FilerIdentifierType.FRN}:${FRN_EPSILON}`,
+					`${FilerIdentifierType.FRN}:${FRN_ZETA}`,
+				].toSorted()
+			)
 
-				for (const family of families) {
-					expect(family.source).toBe("form-499")
-					expect(family.source_vintage).toBe("2026-05-01")
-					expect(family.valid_from).toBe("2026-05-01")
-					expect(family.valid_to).toBeNull()
-					// A 499 row naming its own holding company IS the filing — nothing was matched. The EDGAR
-					// block below pins the opposite grading from the same builder.
-					expect(family.assertion).toBe(FilerEdgeAssertion.Authoritative)
-					expect(family.match_score).toBeNull()
-				}
-			} finally {
-				await teardownScratch()
+			for (const family of families) {
+				expect(family.source).toBe("form-499")
+				expect(family.source_vintage).toBe("2026-05-01")
+				expect(family.valid_from).toBe("2026-05-01")
+				expect(family.valid_to).toBeNull()
+				// A 499 row naming its own holding company IS the filing — nothing was matched. The EDGAR
+				// block below pins the opposite grading from the same builder.
+				expect(family.assertion).toBe(FilerEdgeAssertion.Authoritative)
+				expect(family.match_score).toBeNull()
 			}
 		})
 
 		it("a filer whose holding company differs from its management company gets two family memberships under different relationships", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const row = familyFixtureRow({
-					form499ID: "820001",
-					frn: FRN_DELTA,
-					holdingCompany: "Holdco Alpha Inc",
-					managementCompany: "Manager Beta LLC",
-				})
+			const row = familyFixtureRow({
+				form499ID: "820001",
+				frn: FRN_DELTA,
+				holdingCompany: "Holdco Alpha Inc",
+				managementCompany: "Manager Beta LLC",
+			})
 
-				await buildFilerDatabase({
-					form499Rows: [row],
-					out,
-					sourceVintage: SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				form499Rows: [row],
+				out,
+				sourceVintage: SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
-				const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_DELTA}`
+			using db = openFilerDB(out)
+			const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_DELTA}`
 
-				const families = await db.selectFrom("filer_family").selectAll().where("node_id", "=", frnNodeID).execute()
+			const families = await db.selectFrom("filer_family").selectAll().where("node_id", "=", frnNodeID).execute()
 
-				expect(families).toHaveLength(2)
+			expect(families).toHaveLength(2)
 
-				const byRelationship = new Map(families.map((f) => [f.relationship, f]))
-				expect(byRelationship.get(FilerRelationship.HoldingCompany)).toBeDefined()
-				expect(byRelationship.get(FilerRelationship.ManagementCompany)).toBeDefined()
+			const byRelationship = new Map(families.map((f) => [f.relationship, f]))
+			expect(byRelationship.get(FilerRelationship.HoldingCompany)).toBeDefined()
+			expect(byRelationship.get(FilerRelationship.ManagementCompany)).toBeDefined()
 
-				expect(byRelationship.get(FilerRelationship.HoldingCompany)!.family_id).not.toBe(
-					byRelationship.get(FilerRelationship.ManagementCompany)!.family_id
-				)
-			} finally {
-				await teardownScratch()
-			}
+			expect(byRelationship.get(FilerRelationship.HoldingCompany)!.family_id).not.toBe(
+				byRelationship.get(FilerRelationship.ManagementCompany)!.family_id
+			)
 		})
 
 		it("never emits a filer_family row derived from a DC-agent field", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				await buildFilerDatabase({
-					form499Rows: form499FixtureRows(),
-					out,
-					sourceVintage: "2026-Q1",
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				form499Rows: form499FixtureRows(),
+				out,
+				sourceVintage: "2026-Q1",
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
-				const families = await db.selectFrom("filer_family").selectAll().execute()
+			using db = openFilerDB(out)
+			const families = await db.selectFrom("filer_family").selectAll().execute()
 
-				// form499FixtureRows' FRN_ACME row has BOTH a holdingCompany and a managementCompany, so this suite
-				// isn't vacuously passing on account of there being no family rows at all.
-				expect(families.length).toBeGreaterThan(0)
+			// form499FixtureRows' FRN_ACME row has BOTH a holdingCompany and a managementCompany, so this suite
+			// isn't vacuously passing on account of there being no family rows at all.
+			expect(families.length).toBeGreaterThan(0)
 
-				for (const family of families) {
-					expect(family.family_id).not.toContain("CT Corporation")
-					expect(family.family_id).not.toContain("John Doe")
-					expect(family.node_id).not.toContain("CT Corporation")
-					expect(family.node_id).not.toContain("John Doe")
-				}
-			} finally {
-				await teardownScratch()
+			for (const family of families) {
+				expect(family.family_id).not.toContain("CT Corporation")
+				expect(family.family_id).not.toContain("John Doe")
+				expect(family.node_id).not.toContain("CT Corporation")
+				expect(family.node_id).not.toContain("John Doe")
 			}
 		})
 
 		it("collapses a same-source/same-vintage duplicate row's family rows within one build", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const row = familyFixtureRow({
-					form499ID: "830001",
-					frn: FRN_DELTA,
-					holdingCompany: "Dup Holdco Inc",
-				})
+			const row = familyFixtureRow({
+				form499ID: "830001",
+				frn: FRN_DELTA,
+				holdingCompany: "Dup Holdco Inc",
+			})
 
-				const result = await buildFilerDatabase({
-					form499Rows: [row, row],
-					out,
-					sourceVintage: SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			const result = await buildFilerDatabase({
+				form499Rows: [row, row],
+				out,
+				sourceVintage: SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				expect(result.families).toBe(1)
+			expect(result.families).toBe(1)
 
-				using db = openFilerDB(out)
-				const familyRows = await db.selectFrom("filer_family").selectAll().execute()
-				expect(familyRows).toHaveLength(1)
-			} finally {
-				await teardownScratch()
-			}
+			using db = openFilerDB(out)
+			const familyRows = await db.selectFrom("filer_family").selectAll().execute()
+			expect(familyRows).toHaveLength(1)
 		})
 
 		it("rebuilding the same inputs does not grow filer_family row counts", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const rows = [
-					familyFixtureRow({
-						form499ID: "840001",
-						frn: FRN_DELTA,
-						holdingCompany: "Repeat Holdco Inc",
-						managementCompany: "Repeat Mgmt Co",
-					}),
-				]
+			const rows = [
+				familyFixtureRow({
+					form499ID: "840001",
+					frn: FRN_DELTA,
+					holdingCompany: "Repeat Holdco Inc",
+					managementCompany: "Repeat Mgmt Co",
+				}),
+			]
 
-				const first = await buildFilerDatabase({
-					form499Rows: rows,
-					out,
-					sourceVintage: SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			const first = await buildFilerDatabase({
+				form499Rows: rows,
+				out,
+				sourceVintage: SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				const second = await buildFilerDatabase({
-					form499Rows: rows,
-					out,
-					sourceVintage: SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			const second = await buildFilerDatabase({
+				form499Rows: rows,
+				out,
+				sourceVintage: SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				expect(first.families).toBe(2)
-				expect(second.families).toBe(first.families)
+			expect(first.families).toBe(2)
+			expect(second.families).toBe(first.families)
 
-				using db = openFilerDB(out)
-				const familyRows = await db.selectFrom("filer_family").selectAll().execute()
-				expect(familyRows).toHaveLength(2)
-			} finally {
-				await teardownScratch()
-			}
+			using db = openFilerDB(out)
+			const familyRows = await db.selectFrom("filer_family").selectAll().execute()
+			expect(familyRows).toHaveLength(2)
 		})
 	})
 
@@ -969,195 +886,176 @@ describe("buildFilerDatabase", () => {
 		}
 
 		it("always writes the authoritative disclosure edge (cik -> subsidiary name), even with no matching FRN", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				await buildFilerDatabase({
-					edgarRows: [edgarFixtureRow({ subsidiaryName: "Unmatched Sub LLC", jurisdiction: "Delaware" })],
-					out,
-					sourceVintage: EDGAR_SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				edgarRows: [edgarFixtureRow({ subsidiaryName: "Unmatched Sub LLC", jurisdiction: "Delaware" })],
+				out,
+				sourceVintage: EDGAR_SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
-				const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
-				const subsidiaryNodeID = `${FilerIdentifierType.SubsidiaryName}:Unmatched Sub LLC`
+			using db = openFilerDB(out)
+			const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
+			const subsidiaryNodeID = `${FilerIdentifierType.SubsidiaryName}:Unmatched Sub LLC`
 
-				const cikNode = await db
-					.selectFrom("filer_node")
-					.selectAll()
-					.where("node_id", "=", cikNodeID)
-					.executeTakeFirst()
+			const cikNode = await db.selectFrom("filer_node").selectAll().where("node_id", "=", cikNodeID).executeTakeFirst()
 
-				expect(cikNode).toEqual({
-					node_id: cikNodeID,
-					identifier_type: FilerIdentifierType.CIK,
-					identifier_value: CIK_PARENT,
-				})
+			expect(cikNode).toEqual({
+				node_id: cikNodeID,
+				identifier_type: FilerIdentifierType.CIK,
+				identifier_value: CIK_PARENT,
+			})
 
-				const edges = await db.selectFrom("filer_edge").selectAll().where("from_node_id", "=", cikNodeID).execute()
-				expect(edges).toHaveLength(1)
+			const edges = await db.selectFrom("filer_edge").selectAll().where("from_node_id", "=", cikNodeID).execute()
+			expect(edges).toHaveLength(1)
 
-				expect(edges[0]).toMatchObject({
-					to_node_id: subsidiaryNodeID,
-					assertion: FilerEdgeAssertion.Authoritative,
-					relationship: FilerRelationship.Subsidiary,
-					source: "edgar-exhibit-21",
-					source_vintage: "2026-04-01",
-					valid_from: "2026-04-01",
-				})
+			expect(edges[0]).toMatchObject({
+				to_node_id: subsidiaryNodeID,
+				assertion: FilerEdgeAssertion.Authoritative,
+				relationship: FilerRelationship.Subsidiary,
+				source: "edgar-exhibit-21",
+				source_vintage: "2026-04-01",
+				valid_from: "2026-04-01",
+			})
 
-				// No corroboration possible (no form499Rows at all) — no family row for this build.
-				const familyRows = await db.selectFrom("filer_family").selectAll().execute()
-				expect(familyRows).toHaveLength(0)
-			} finally {
-				await teardownScratch()
-			}
+			// No corroboration possible (no form499Rows at all) — no family row for this build.
+			const familyRows = await db.selectFrom("filer_family").selectAll().execute()
+			expect(familyRows).toHaveLength(0)
 		})
 
 		it("edgarRows ALONE satisfies the 'at least one source' guard — it does not require form499/provider data", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				await expect(
-					buildFilerDatabase({
-						edgarRows: [edgarFixtureRow({ subsidiaryName: "Standalone Sub LLC" })],
-						out,
-						sourceVintage: EDGAR_SOURCE_VINTAGE,
-						buildSHA: "deadbeef",
-					})
-				).resolves.toBeDefined()
-			} finally {
-				await teardownScratch()
-			}
+			await expect(
+				buildFilerDatabase({
+					edgarRows: [edgarFixtureRow({ subsidiaryName: "Standalone Sub LLC" })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+			).resolves.toBeDefined()
 		})
 
 		it("the manifest's source includes edgar-exhibit-21 only when edgarRows was actually supplied", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				await buildFilerDatabase({
-					edgarRows: [edgarFixtureRow({ subsidiaryName: "Manifest Sub LLC" })],
-					out,
-					sourceVintage: EDGAR_SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				edgarRows: [edgarFixtureRow({ subsidiaryName: "Manifest Sub LLC" })],
+				out,
+				sourceVintage: EDGAR_SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
-				const manifest = await readFilerManifest(db)
-				expect(manifest.source).toBe("edgar-exhibit-21")
-			} finally {
-				await teardownScratch()
-			}
+			using db = openFilerDB(out)
+			const manifest = await readFilerManifest(db)
+			expect(manifest.source).toBe("edgar-exhibit-21")
 		})
 
 		it("a subsidiary name matching (canonically) exactly one FRN's legal name writes BOTH an inferred filer_edge AND a filer_family row — the family row is what the rollup reads, so one without the other is invisible", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const frn = toFRN("0009700001")!
+			const frn = toFRN("0009700001")!
 
-				await buildFilerDatabase({
-					form499Rows: [
-						corroborationForm499Row({ form499ID: "970001", frn, legalNameOfCarrier: "Trailhead Broadband LLC" }),
-					],
-					edgarRows: [edgarFixtureRow({ subsidiaryName: "Trailhead Broadband LLC" })],
-					out,
-					sourceVintage: EDGAR_SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				form499Rows: [
+					corroborationForm499Row({ form499ID: "970001", frn, legalNameOfCarrier: "Trailhead Broadband LLC" }),
+				],
+				edgarRows: [edgarFixtureRow({ subsidiaryName: "Trailhead Broadband LLC" })],
+				out,
+				sourceVintage: EDGAR_SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
-				const frnNodeID = `${FilerIdentifierType.FRN}:${frn}`
-				const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
+			using db = openFilerDB(out)
+			const frnNodeID = `${FilerIdentifierType.FRN}:${frn}`
+			const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
 
-				// The inferred FRN -> CIK edge.
-				const inferredEdges = await db
-					.selectFrom("filer_edge")
-					.selectAll()
-					.where("from_node_id", "=", frnNodeID)
-					.where("to_node_id", "=", cikNodeID)
-					.execute()
+			// The inferred FRN -> CIK edge.
+			const inferredEdges = await db
+				.selectFrom("filer_edge")
+				.selectAll()
+				.where("from_node_id", "=", frnNodeID)
+				.where("to_node_id", "=", cikNodeID)
+				.execute()
 
-				expect(inferredEdges).toHaveLength(1)
+			expect(inferredEdges).toHaveLength(1)
 
-				expect(inferredEdges[0]).toMatchObject({
-					assertion: FilerEdgeAssertion.Inferred,
-					relationship: FilerRelationship.ParentCompany,
-					source: "edgar-exhibit-21",
-					match_score: 0.9,
-				})
+			expect(inferredEdges[0]).toMatchObject({
+				assertion: FilerEdgeAssertion.Inferred,
+				relationship: FilerRelationship.ParentCompany,
+				source: "edgar-exhibit-21",
+				match_score: 0.9,
+			})
 
-				// THE PRECONDITION: the SAME fact also lands as a filer_family row, not just the edge above.
-				const familyRows = await db
-					.selectFrom("filer_family")
-					.selectAll()
-					.where("node_id", "=", frnNodeID)
-					.where("family_id", "=", cikNodeID)
-					.execute()
+			// THE PRECONDITION: the SAME fact also lands as a filer_family row, not just the edge above.
+			const familyRows = await db
+				.selectFrom("filer_family")
+				.selectAll()
+				.where("node_id", "=", frnNodeID)
+				.where("family_id", "=", cikNodeID)
+				.execute()
 
-				expect(familyRows).toHaveLength(1)
+			expect(familyRows).toHaveLength(1)
 
-				// The family row carries the SAME grading as the edge above — `source` alone
-				// cannot supply it, because this very build also writes an AUTHORITATIVE `edgar-exhibit-21`
-				// disclosure edge, so the source name spans both grades.
-				expect(familyRows[0]).toMatchObject({
-					naming_node_id: cikNodeID,
-					assertion: FilerEdgeAssertion.Inferred,
-					relationship: FilerRelationship.ParentCompany,
-					source: "edgar-exhibit-21",
-					valid_to: null,
-					match_score: inferredEdges[0]!.match_score,
-				})
-			} finally {
-				await teardownScratch()
-			}
+			// The family row carries the SAME grading as the edge above — `source` alone
+			// cannot supply it, because this very build also writes an AUTHORITATIVE `edgar-exhibit-21`
+			// disclosure edge, so the source name spans both grades.
+			expect(familyRows[0]).toMatchObject({
+				naming_node_id: cikNodeID,
+				assertion: FilerEdgeAssertion.Inferred,
+				relationship: FilerRelationship.ParentCompany,
+				source: "edgar-exhibit-21",
+				valid_to: null,
+				match_score: inferredEdges[0]!.match_score,
+			})
 		})
 
 		it("abstains (no inferred edge, no family row) when the subsidiary name matches TWO DIFFERENT FRNs — a genuine name collision, never picked arbitrarily", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				const frnA = toFRN("0009700002")!
-				const frnB = toFRN("0009700003")!
+			const frnA = toFRN("0009700002")!
+			const frnB = toFRN("0009700003")!
 
-				await buildFilerDatabase({
-					form499Rows: [
-						corroborationForm499Row({ form499ID: "970002", frn: frnA, legalNameOfCarrier: "Collision Sub LLC" }),
-						corroborationForm499Row({ form499ID: "970003", frn: frnB, legalNameOfCarrier: "Collision Sub, LLC" }),
-					],
-					edgarRows: [edgarFixtureRow({ subsidiaryName: "Collision Sub LLC" })],
-					out,
-					sourceVintage: EDGAR_SOURCE_VINTAGE,
-					buildSHA: "deadbeef",
-				})
+			await buildFilerDatabase({
+				form499Rows: [
+					corroborationForm499Row({ form499ID: "970002", frn: frnA, legalNameOfCarrier: "Collision Sub LLC" }),
+					corroborationForm499Row({ form499ID: "970003", frn: frnB, legalNameOfCarrier: "Collision Sub, LLC" }),
+				],
+				edgarRows: [edgarFixtureRow({ subsidiaryName: "Collision Sub LLC" })],
+				out,
+				sourceVintage: EDGAR_SOURCE_VINTAGE,
+				buildSHA: "deadbeef",
+			})
 
-				using db = openFilerDB(out)
-				const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
+			using db = openFilerDB(out)
+			const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
 
-				const inferredEdges = await db
-					.selectFrom("filer_edge")
-					.selectAll()
-					.where("to_node_id", "=", cikNodeID)
-					.where("assertion", "=", FilerEdgeAssertion.Inferred)
-					.execute()
+			const inferredEdges = await db
+				.selectFrom("filer_edge")
+				.selectAll()
+				.where("to_node_id", "=", cikNodeID)
+				.where("assertion", "=", FilerEdgeAssertion.Inferred)
+				.execute()
 
-				expect(inferredEdges).toHaveLength(0)
+			expect(inferredEdges).toHaveLength(0)
 
-				const familyRows = await db.selectFrom("filer_family").selectAll().where("family_id", "=", cikNodeID).execute()
-				expect(familyRows).toHaveLength(0)
+			const familyRows = await db.selectFrom("filer_family").selectAll().where("family_id", "=", cikNodeID).execute()
+			expect(familyRows).toHaveLength(0)
 
-				// The disclosure edge still stands — abstention is about the CORROBORATION only.
-				const disclosureEdges = await db
-					.selectFrom("filer_edge")
-					.selectAll()
-					.where("from_node_id", "=", cikNodeID)
-					.execute()
+			// The disclosure edge still stands — abstention is about the CORROBORATION only.
+			const disclosureEdges = await db
+				.selectFrom("filer_edge")
+				.selectAll()
+				.where("from_node_id", "=", cikNodeID)
+				.execute()
 
-				expect(disclosureEdges).toHaveLength(1)
-			} finally {
-				await teardownScratch()
-			}
+			expect(disclosureEdges).toHaveLength(1)
 		})
 
 		/**
@@ -1176,6 +1074,9 @@ describe("buildFilerDatabase", () => {
 		 */
 		describe("the subsidiary→FRN match score varies with what the match actually knows", () => {
 			async function scoreFor(legalNameOfCarrier: string, subsidiaryName: string): Promise<number | null> {
+				await using scratch = await temporaryDirectory("filer-build-")
+				const out = scratch.resolve("filer.db")
+
 				await buildFilerDatabase({
 					form499Rows: [
 						corroborationForm499Row({ form499ID: "980001", frn: toFRN("0009800001")!, legalNameOfCarrier }),
@@ -1199,146 +1100,104 @@ describe("buildFilerDatabase", () => {
 			}
 
 			it("byte-identical raw names score the ceiling — and the ceiling is below 1, because a shared name is evidence of identity, never proof", async () => {
-				await setupScratch()
-
-				try {
-					expect(await scoreFor("Trailhead Broadband LLC", "Trailhead Broadband LLC")).toBe(0.9)
-				} finally {
-					await teardownScratch()
-				}
+				expect(await scoreFor("Trailhead Broadband LLC", "Trailhead Broadband LLC")).toBe(0.9)
 			})
 
 			it("raw names differing only in case/punctuation, same legal designation, score lower than byte-identical", async () => {
-				await setupScratch()
-
-				try {
-					expect(await scoreFor("TRAILHEAD BROADBAND, LLC", "Trailhead Broadband LLC")).toBe(0.75)
-				} finally {
-					await teardownScratch()
-				}
+				expect(await scoreFor("TRAILHEAD BROADBAND, LLC", "Trailhead Broadband LLC")).toBe(0.75)
 			})
 
 			it("raw names differing in LEGAL DESIGNATION score weakest — canonicalization erased the only distinguishing part, and the abstention never sees this case", async () => {
-				await setupScratch()
-
-				try {
-					// The case the abstention cannot see: 499 carries only the LLC, Exhibit 21 discloses the Inc.
-					// EXACTLY ONE FRN matches, so an edge IS written — at the weakest score, not the ceiling.
-					expect(await scoreFor("American Broadband LLC", "American Broadband, Inc.")).toBe(0.5)
-				} finally {
-					await teardownScratch()
-				}
+				// The case the abstention cannot see: 499 carries only the LLC, Exhibit 21 discloses the Inc.
+				// EXACTLY ONE FRN matches, so an edge IS written — at the weakest score, not the ceiling.
+				expect(await scoreFor("American Broadband LLC", "American Broadband, Inc.")).toBe(0.5)
 			})
 
 			it("the three cases are strictly ordered — a constant would collapse them", async () => {
-				await setupScratch()
+				const identical = await scoreFor("Ordered Networks LLC", "Ordered Networks LLC")
+				const normalized = await scoreFor("ORDERED NETWORKS, LLC", "Ordered Networks LLC")
+				const designation = await scoreFor("Ordered Networks LLC", "Ordered Networks Inc")
 
-				try {
-					const identical = await scoreFor("Ordered Networks LLC", "Ordered Networks LLC")
-					await teardownScratch()
-
-					await setupScratch()
-					const normalized = await scoreFor("ORDERED NETWORKS, LLC", "Ordered Networks LLC")
-					await teardownScratch()
-
-					await setupScratch()
-					const designation = await scoreFor("Ordered Networks LLC", "Ordered Networks Inc")
-
-					expect(identical!).toBeGreaterThan(normalized!)
-					expect(normalized!).toBeGreaterThan(designation!)
-					expect(new Set([identical, normalized, designation]).size).toBe(3)
-				} finally {
-					await teardownScratch()
-				}
+				expect(identical!).toBeGreaterThan(normalized!)
+				expect(normalized!).toBeGreaterThan(designation!)
+				expect(new Set([identical, normalized, designation]).size).toBe(3)
 			})
 
 			it("evidence records BOTH raw spellings, so a reader can see what the score is grading", async () => {
-				await setupScratch()
+				await using scratch = await temporaryDirectory("filer-build-")
+				const out = scratch.resolve("filer.db")
 
-				try {
-					await buildFilerDatabase({
-						form499Rows: [
-							corroborationForm499Row({
-								form499ID: "980002",
-								frn: toFRN("0009800002")!,
-								legalNameOfCarrier: "American Broadband LLC",
-							}),
-						],
-						edgarRows: [edgarFixtureRow({ subsidiaryName: "American Broadband, Inc." })],
-						out,
-						sourceVintage: EDGAR_SOURCE_VINTAGE,
-						buildSHA: "deadbeef",
-					})
+				await buildFilerDatabase({
+					form499Rows: [
+						corroborationForm499Row({
+							form499ID: "980002",
+							frn: toFRN("0009800002")!,
+							legalNameOfCarrier: "American Broadband LLC",
+						}),
+					],
+					edgarRows: [edgarFixtureRow({ subsidiaryName: "American Broadband, Inc." })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
 
-					using db = openFilerDB(out)
+				using db = openFilerDB(out)
 
-					const edge = await db
-						.selectFrom("filer_edge")
-						.selectAll()
-						.where("to_node_id", "=", `${FilerIdentifierType.CIK}:${CIK_PARENT}`)
-						.where("assertion", "=", FilerEdgeAssertion.Inferred)
-						.executeTakeFirstOrThrow()
+				const edge = await db
+					.selectFrom("filer_edge")
+					.selectAll()
+					.where("to_node_id", "=", `${FilerIdentifierType.CIK}:${CIK_PARENT}`)
+					.where("assertion", "=", FilerEdgeAssertion.Inferred)
+					.executeTakeFirstOrThrow()
 
-					expect(parseJSONStrict(edge.evidence!)).toEqual({
-						subsidiaryName: "American Broadband, Inc.",
-						legalNameOfCarrier: "American Broadband LLC",
-						cik: CIK_PARENT,
-					})
-				} finally {
-					await teardownScratch()
-				}
+				expect(parseJSONStrict(edge.evidence!)).toEqual({
+					subsidiaryName: "American Broadband, Inc.",
+					legalNameOfCarrier: "American Broadband LLC",
+					cik: CIK_PARENT,
+				})
 			})
 		})
 
 		it("a malformed CIK (not zero-padded 10 digits) is loud", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				await expect(
-					buildFilerDatabase({
-						edgarRows: [{ cik: "123", subsidiaryName: "Bad CIK Sub LLC", filingDate: "2026-04-01" }],
-						out,
-						sourceVintage: EDGAR_SOURCE_VINTAGE,
-						buildSHA: "deadbeef",
-					})
-				).rejects.toThrow(/cik must be a zero-padded 10-digit string/)
-			} finally {
-				await teardownScratch()
-			}
+			await expect(
+				buildFilerDatabase({
+					edgarRows: [{ cik: "123", subsidiaryName: "Bad CIK Sub LLC", filingDate: "2026-04-01" }],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/cik must be a zero-padded 10-digit string/)
 		})
 
 		it("an empty subsidiaryName is loud", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				await expect(
-					buildFilerDatabase({
-						edgarRows: [edgarFixtureRow({ subsidiaryName: "" })],
-						out,
-						sourceVintage: EDGAR_SOURCE_VINTAGE,
-						buildSHA: "deadbeef",
-					})
-				).rejects.toThrow(/empty subsidiaryName/)
-			} finally {
-				await teardownScratch()
-			}
+			await expect(
+				buildFilerDatabase({
+					edgarRows: [edgarFixtureRow({ subsidiaryName: "" })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/empty subsidiaryName/)
 		})
 
 		it("a non-ISO filingDate is loud", async () => {
-			await setupScratch()
+			await using scratch = await temporaryDirectory("filer-build-")
+			const out = scratch.resolve("filer.db")
 
-			try {
-				await expect(
-					buildFilerDatabase({
-						edgarRows: [edgarFixtureRow({ subsidiaryName: "Bad Date Sub LLC", filingDate: "2026-Q1" })],
-						out,
-						sourceVintage: EDGAR_SOURCE_VINTAGE,
-						buildSHA: "deadbeef",
-					})
-				).rejects.toThrow(/not an ISO YYYY-MM-DD date/)
-			} finally {
-				await teardownScratch()
-			}
+			await expect(
+				buildFilerDatabase({
+					edgarRows: [edgarFixtureRow({ subsidiaryName: "Bad Date Sub LLC", filingDate: "2026-Q1" })],
+					out,
+					sourceVintage: EDGAR_SOURCE_VINTAGE,
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/not an ISO YYYY-MM-DD date/)
 		})
 	})
 })

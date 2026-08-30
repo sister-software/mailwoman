@@ -363,7 +363,7 @@ async function runOne(input: string, options: GeocodeOptions): Promise<void> {
 
 		process.stdout.write(`${await formatResult(geocoded.result, format, false)}\n`)
 	} finally {
-		session.close()
+		session[Symbol.dispose]()
 	}
 }
 
@@ -397,7 +397,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 			process.stdout.write(`${await formatResult(geocoded.result, format, true)}\n`)
 		}
 	} finally {
-		session.close()
+		session[Symbol.dispose]()
 	}
 }
 

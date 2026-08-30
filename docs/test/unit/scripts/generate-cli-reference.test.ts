@@ -22,6 +22,7 @@
  *   with that instruction rather than skipping — a silently-skipped drift gate is not a gate.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	collectCLISurface,
 	COMMANDS_DIRECTORY,
@@ -32,7 +33,6 @@ import {
 	renderTable,
 	type CLISurface,
 } from "@mailwoman/docs/scripts/generate-cli-reference"
-import { existsSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import { beforeAll, describe, expect, it } from "vitest"
 
@@ -54,7 +54,7 @@ describe("generate-cli-reference", () => {
 	let page: string
 
 	beforeAll(async () => {
-		if (!existsSync(COMMANDS_DIRECTORY)) {
+		if (!(await pathExists(COMMANDS_DIRECTORY))) {
 			throw new Error(`${COMMANDS_DIRECTORY} is missing — run \`yarn compile\` before the test suite`)
 		}
 

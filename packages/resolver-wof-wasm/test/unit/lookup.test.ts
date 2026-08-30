@@ -9,9 +9,8 @@
  *   Node too (it's the same .wasm built once and used everywhere).
  */
 
-import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
@@ -19,7 +18,7 @@ import { WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm/lookup"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 let slimBytes: Uint8Array
 
 function buildFixtureWOF(path: string): void {
@@ -113,16 +112,16 @@ function buildFixtureWOF(path: string): void {
 }
 
 beforeAll(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-wasm-"))
-	const source = join(scratch, "src.db")
-	const output = join(scratch, "slim.db")
+	scratch = await temporaryDirectory("mailwoman-wasm-")
+	const source = scratch.resolve("src.db")
+	const output = scratch.resolve("slim.db")
 	buildFixtureWOF(source)
 	await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 10 })
 	slimBytes = await readFile(output)
 })
 
 afterAll(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("WOFWasmPlaceLookup", () => {
@@ -144,7 +143,7 @@ describe("WOFWasmPlaceLookup", () => {
 
 			expect(lookup.coincidentLocalitiesFor(99_999)).toHaveLength(0)
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -160,7 +159,7 @@ describe("WOFWasmPlaceLookup", () => {
 			expect(matches[0]?.country).toBe("US")
 			expect(matches[0]?.lat).toBeCloseTo(41.88, 1)
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -177,7 +176,7 @@ describe("WOFWasmPlaceLookup", () => {
 			expect(matches[0]?.name).toBe("Vermontstate")
 			expect(matches[0]?.exactMatch).toBe(true)
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -190,7 +189,7 @@ describe("WOFWasmPlaceLookup", () => {
 			expect(matches).toHaveLength(1)
 			expect(matches[0]?.name).toBe("62701")
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -204,7 +203,7 @@ describe("WOFWasmPlaceLookup", () => {
 			// larger Greenville (id 211) must beat the lower-id small one (210) that raw bm25 favors.
 			expect(matches[0]?.id).toBe(211)
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -218,7 +217,7 @@ describe("WOFWasmPlaceLookup", () => {
 			const matches = await lookup.findPlace({ text: "York", placetype: "locality", country: "US", limit: 5 })
 			expect(matches[0]?.name).toBe("York")
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -234,7 +233,7 @@ describe("WOFWasmPlaceLookup", () => {
 			expect(matches[0]).toMatchObject({ id: 230, name: "Brooklyn", placetype: "borough" })
 			expect(matches[0]?.exactMatch).toBe(true)
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -255,7 +254,7 @@ describe("WOFWasmPlaceLookup", () => {
 
 			expect(matches.map((m) => m.id)).toEqual([230])
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -269,7 +268,7 @@ describe("WOFWasmPlaceLookup", () => {
 			// The alias lives only in the FTS alt_names bag on a slim DB — the tier must consult it.
 			expect(matches[0]?.exactMatch).toBe(true)
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -290,7 +289,7 @@ describe("WOFWasmPlaceLookup", () => {
 			expect(alias[0]).toMatchObject({ id: 240, name: "Twin Hamlet" })
 			expect(alias[0]?.exactMatch).toBe(true)
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -310,7 +309,7 @@ describe("WOFWasmPlaceLookup", () => {
 
 			expect(matches.map((m) => m.id)).toEqual([210])
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -322,7 +321,7 @@ describe("WOFWasmPlaceLookup", () => {
 			const matches = await lookup.findPlace({ text: "Springfield", country: "FR" })
 			expect(matches).toEqual([])
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 
@@ -334,7 +333,7 @@ describe("WOFWasmPlaceLookup", () => {
 			expect(await lookup.findPlace({ text: "" })).toEqual([])
 			expect(await lookup.findPlace({ text: "   " })).toEqual([])
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 })

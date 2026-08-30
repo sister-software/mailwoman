@@ -126,7 +126,7 @@ export type CoastalDecision =
 	| { fired: true; observation: CoastalErosionObservation }
 	| { fired: false; refusal: CoastalRefusal }
 
-export interface CoastalErosionRoute {
+export interface CoastalErosionRoute extends Disposable {
 	identity: CoastalLayerIdentity
 	/**
 	 * The scenario every reading from this route answers under.
@@ -140,7 +140,6 @@ export interface CoastalErosionRoute {
 	 * here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => CoastalDecision
-	close: () => void
 }
 
 export interface CoastalErosionRouteOptions {
@@ -183,7 +182,9 @@ export function createCoastalErosionRoute(options: CoastalErosionRouteOptions): 
 				options.databasePath
 			)
 		},
-		close: () => lookup.close(),
+		[Symbol.dispose]() {
+			lookup[Symbol.dispose]()
+		},
 	}
 }
 

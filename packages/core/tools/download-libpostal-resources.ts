@@ -24,11 +24,11 @@
  *   - `--force` — delete an existing `./dictionaries` directory instead of erroring out
  */
 
-import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
+import { cp, readdir, readFile, rm, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
-import { isDirectory } from "#fs"
+import { isDirectory } from "#fs/readers"
+import { temporaryDirectory } from "#fs/temporary"
 import { CommandError } from "#scripting/command"
 import { resourceDictionaryPath } from "#utils"
 
@@ -74,24 +74,20 @@ export async function downloadLibpostalResources(
 	}
 
 	const { $ } = await import("zx")
-	const tempDir = await mkdtemp(join(tmpdir(), "libpostal-"))
+	await using tempDir = await temporaryDirectory("libpostal-")
 
-	try {
-		const cloneDir = join(tempDir, "libpostal")
-		await $`git clone --depth 1 ${REPO_URL} ${cloneDir}`
+	const cloneDir = join(tempDir.path, "libpostal")
+	await $`git clone --depth 1 ${REPO_URL} ${cloneDir}`
 
-		const sourceDicts = join(cloneDir, "resources", "dictionaries")
+	const sourceDicts = join(cloneDir, "resources", "dictionaries")
 
-		// Alphabetize the contents of each dictionary file in place.
-		for (const entry of await readdir(sourceDicts, { withFileTypes: true })) {
-			if (entry.isFile()) {
-				await sortFileInPlace(join(sourceDicts, entry.name))
-			}
+	// Alphabetize the contents of each dictionary file in place.
+	for (const entry of await readdir(sourceDicts, { withFileTypes: true })) {
+		if (entry.isFile()) {
+			await sortFileInPlace(join(sourceDicts, entry.name))
 		}
-
-		// Copy the (now-sorted) dictionaries tree into the checked-in data home.
-		await cp(sourceDicts, DICTIONARIES_DIR, { recursive: true })
-	} finally {
-		await rm(tempDir, { recursive: true, force: true })
 	}
+
+	// Copy the (now-sorted) dictionaries tree into the checked-in data home.
+	await cp(sourceDicts, DICTIONARIES_DIR, { recursive: true })
 }

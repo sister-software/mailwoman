@@ -10,7 +10,7 @@
  *   because it launders an anecdote into a decimal.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { FRAGMENT_BOARD_FIXTURES, type FragmentFixture, wilson } from "mailwoman/eval-harness/fragment-board"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
@@ -133,11 +133,11 @@ describe("the FR fragment board fixture", () => {
 		}
 	})
 
-	it("reserves every street surface it uses, so a shard can exclude them", () => {
+	it("reserves every street surface it uses, so a shard can exclude them", async () => {
 		const reserved = new Set(
 			[
 				...TextSpliterator.from(
-					readFileSync("packages/mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt", "utf8")
+					await readLocalTextFile("packages/mailwoman/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
 				),
 			].filter((line) => line && !line.startsWith("#"))
 		)

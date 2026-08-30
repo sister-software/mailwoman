@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import {
 	DEFAULT_GOOGLE_CALL_CAP,
 	OracleMeter,
@@ -11,43 +13,35 @@ import {
 	ORACLE_GRADE_MODE,
 	readOracleConfig,
 } from "@mailwoman/dev-mcp/oracle-arm"
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
-const dirs: string[] = []
+const fixtures = new AsyncDisposableStack()
 
-function configFile(contents: string): string {
-	const dir = mkdtempSync(join(tmpdir(), "mwdev-oracle-"))
+afterAll(() => fixtures.disposeAsync())
 
-	dirs.push(dir)
+async function configFile(contents: string): Promise<string> {
+	const dir = fixtures.use(await temporaryDirectory("mwdev-oracle-")).path
 
 	const path = join(dir, "oracle-config.json")
 
-	writeFileSync(path, contents)
+	await writeLocalFile(contents, path)
 
 	return path
 }
-
-afterAll(() => {
-	for (const dir of dirs) {
-		rmSync(dir, { recursive: true, force: true })
-	}
-})
 
 describe("readOracleConfig", () => {
 	it("treats an absent config as off", () => {
 		expect(readOracleConfig("/nonexistent/oracle-config.json")).toEqual({})
 	})
 
-	it("treats a MALFORMED config as off, never as enabled", () => {
+	it("treats a MALFORMED config as off, never as enabled", async () => {
 		// The failure that matters: a truncated or half-written file must not read as an opt-in to spend money.
-		expect(readOracleConfig(configFile("{ not json"))).toEqual({})
+		expect(readOracleConfig(await configFile("{ not json"))).toEqual({})
 	})
 
-	it("reads a well-formed opt-in", () => {
-		const config = readOracleConfig(configFile('{"google":{"enabled":true,"maxCallsPerDaemonLifetime":25}}'))
+	it("reads a well-formed opt-in", async () => {
+		const config = readOracleConfig(await configFile('{"google":{"enabled":true,"maxCallsPerDaemonLifetime":25}}'))
 
 		expect(config.google).toEqual({ enabled: true, maxCallsPerDaemonLifetime: 25 })
 	})

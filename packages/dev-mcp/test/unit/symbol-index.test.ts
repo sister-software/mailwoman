@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import {
 	extractDeclaredSymbols,
 	findDeclarations,
@@ -13,43 +15,41 @@ import {
 	selectReportable,
 	type DeclarationSite,
 } from "@mailwoman/dev-mcp/symbol-index"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 /**
  * A miniature repository: one exported home, one deliberate local copy, one nested decoy.
  */
-function seedFixture(): string {
-	const root = mkdtempSync(join(tmpdir(), "mw-symbol-index-"))
+async function seedFixture(): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("mw-symbol-index-")).path
 
-	mkdirSync(join(root, "packages", "core", "utils"), { recursive: true })
-	mkdirSync(join(root, "packages", "api-kit"), { recursive: true })
+	await makeDirectories(join(root, "packages", "core", "utils"))
+	await makeDirectories(join(root, "packages", "api-kit"))
 
-	writeFileSync(
-		join(root, "packages", "core", "utils", "stats.ts"),
-		"/** `p` in [0, 100]. */\nexport function percentile(xs: readonly number[], p: number): number | null {\n\treturn null\n}\n"
+	await writeLocalTextFile(
+		"/** `p` in [0, 100]. */\nexport function percentile(xs: readonly number[], p: number): number | null {\n\treturn null\n}\n",
+		join(root, "packages", "core", "utils", "stats.ts")
 	)
 
-	writeFileSync(
-		join(root, "packages", "api-kit", "metrics.ts"),
-		"/** Deliberately NOT core's. */\nfunction percentile(sorted: number[], p: number): number {\n\tfunction unreachable() {}\n\treturn 0\n}\n"
+	await writeLocalTextFile(
+		"/** Deliberately NOT core's. */\nfunction percentile(sorted: number[], p: number): number {\n\tfunction unreachable() {}\n\treturn 0\n}\n",
+		join(root, "packages", "api-kit", "metrics.ts")
 	)
 
-	writeFileSync(
-		join(root, "packages", "api-kit", "panel.tsx"),
-		"export function percentile(sortedAsc: readonly number[], p: number): number {\n\treturn 0\n}\n"
+	await writeLocalTextFile(
+		"export function percentile(sortedAsc: readonly number[], p: number): number {\n\treturn 0\n}\n",
+		join(root, "packages", "api-kit", "panel.tsx")
 	)
 
 	return root
 }
 
-const FIXTURE_ROOT = seedFixture()
-
-afterAll(() => {
-	rmSync(FIXTURE_ROOT, { recursive: true, force: true })
-})
+const FIXTURE_ROOT = await seedFixture()
 
 describe("extractDeclaredSymbols", () => {
 	it("finds a top-level function declaration", () => {

@@ -1,3 +1,4 @@
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -11,9 +12,6 @@
  *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a; . ./.env; set +a` first. This
  *   is an in-repo operator command (it needs the upload script + the demo's resources file).
  */
-
-import { mkdtempSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -60,18 +58,18 @@ const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) =>
 			? String(repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts"))
 			: undefined
 
-		const stageDir = mkdtempSync(join(tmpdir(), "mailwoman-gazetteer-"))
+		await using stage = await temporaryDirectory("mailwoman-gazetteer-")
 
 		console.error(
 			`▸ publish ${candidateDB} → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`
 		)
 
-		const r = publishGazetteer({
+		const r = await publishGazetteer({
 			candidateDB,
 			version,
 			uploadScript,
 			resourcesFile,
-			stageDir,
+			stageDir: stage.path,
 			bucket: options.bucket,
 			prefix: options.prefix,
 			dryRun: options.dryRun,

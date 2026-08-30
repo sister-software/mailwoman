@@ -1,29 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `mailwoman eval absence-observation-probe` — the pre-registered negative-evidence probe (#1965). Runs
- *   the frozen rows through the same pipeline construction the POI query board uses, asks the absence
- *   route what it makes of each answer, and prints each row's registered outcome beside the observed one.
- *
- *   The command chooses nothing. Rows, expected outcomes and the coverage layer all come from
- *   `probe-definition.json`, which the loader refuses to hand over if its content hash has moved.
- *
- *   Nothing is injected into the runtime pipeline for the absence work: the pipeline answers, and the
- *   route reads the finished answer. The semantic phrase route (#1929) IS injected, because the
- *   activity-phrased rows cannot reach a category without it.
- *
- *   The coverage layer is BUILD-LOCAL (ODbL), so it is not committed and not published. Without it the run
- *   refuses at construction rather than reporting an empty board — see
- *   `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md` for the build command.
- *
- *   Report-only by design: the exit code is non-zero only when the HARNESS broke — a moved ruler, a
- *   missing coverage layer, a missing database. A recorded BREACHED is a result, not a crash, and it is
- *   the result the asymmetry claim is graded on.
- */
-
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -75,7 +50,7 @@ const EvalAbsenceObservationProbe: ParsedCommandComponent<Options> = ({ options 
 			})
 
 			if (options.out) {
-				writeFileSync(options.out, `${JSON.stringify(receipt, null, "\t")}\n`)
+				await writeLocalJSONFile(receipt, options.out)
 			}
 
 			if (!options.json) {

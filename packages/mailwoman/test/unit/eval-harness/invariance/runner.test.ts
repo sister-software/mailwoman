@@ -18,8 +18,8 @@ import {
 import { describe, expect, it } from "vitest"
 
 describe("loadSuite", () => {
-	it("loads the shipped suite.jsonl, skipping the // header comment and blank lines", () => {
-		const rows = loadSuite()
+	it("loads the shipped suite.jsonl, skipping the // header comment and blank lines", async () => {
+		const rows = await loadSuite()
 
 		// 19 base rows + 4 paired-punctuation rows = 23.
 		expect(rows.length).toBeGreaterThanOrEqual(16)
@@ -34,25 +34,25 @@ describe("loadSuite", () => {
 		}
 	})
 
-	it("carries the two gauntlet-famous landmark cases verbatim", () => {
-		const rows = loadSuite()
+	it("carries the two gauntlet-famous landmark cases verbatim", async () => {
+		const rows = await loadSuite()
 		const raws = rows.map((r) => r.raw)
 
 		expect(raws).toContain("1600 Pennsylvania Ave NW, Washington, DC 20500")
 		expect(raws).toContain("350 Fifth Avenue, New York, NY 10118")
 	})
 
-	it("spans all four target countries", () => {
-		const rows = loadSuite()
+	it("spans all four target countries", async () => {
+		const rows = await loadSuite()
 		const countries = new Set(rows.map((r) => r.country))
 
 		expect(countries).toEqual(new Set(["US", "FR", "DE", "GB"]))
 	})
 
-	it("every declared transform id is a real transform (no fixture typos)", () => {
+	it("every declared transform id is a real transform (no fixture typos)", async () => {
 		// loadSuite itself doesn't validate ids — runInvarianceSuite does, via getTransform. Exercise it here
 		// with a no-op parser so a fixture typo fails this test, not a real grading run.
-		const rows = loadSuite()
+		const rows = await loadSuite()
 		const noop: ParseFn = async (): Promise<Record<string, string>> => ({})
 
 		return expect(runInvarianceSuite({ rows, parse: noop })).resolves.toBeDefined()

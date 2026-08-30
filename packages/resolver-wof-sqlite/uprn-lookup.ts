@@ -200,11 +200,7 @@ export class UPRNLookup implements Disposable {
 		return best
 	}
 
-	close(): void {
-		this.#resources.dispose()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#resources[Symbol.dispose]()
 	}
 }

@@ -16,8 +16,6 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { WOFDatabase } from "./schema.ts"
-
 /**
  * Name of the FTS5 virtual table this module owns. Centralized so `WOFSQLitePlaceLookup` and the CLI can't drift apart.
  */

@@ -70,7 +70,7 @@ const CandidateRoute = {
 
 type CandidateRoute = (typeof CandidateRoute)[keyof typeof CandidateRoute]
 
-export interface CandidateLookupOptions<DB> {
+export interface CandidateLookupOptions {
 	/**
 	 * ISO alpha-2 filter. A country the artifact carries no dictionary entry for is reported as a COVERAGE gap, never as
 	 * a miss on the name.
@@ -148,7 +148,7 @@ function candidateSelect(hasNameRole: boolean): string {
 export function lookupCandidate<DB>(
 	db: DatabaseClient<DB>,
 	queries: string[],
-	options: CandidateLookupOptions<DB> = {}
+	options: CandidateLookupOptions = {}
 ): LookupRow[] {
 	const limit = options.limit ?? DEFAULT_ENTRY_LIMIT
 	const wantCountry = options.country?.toUpperCase()
@@ -667,7 +667,7 @@ export function lookupWOF<DB>(
 	})
 }
 
-export interface POILookupOptions<DB> {
+export interface POILookupOptions {
 	country?: string
 	limit?: number
 }
@@ -696,11 +696,7 @@ const POI_SELECT =
  * 1.3 ms warm and 3,158 ms on the FIRST probe against a cold page cache — worth knowing before reading a slow first
  * call as a hang, and not worth trading the true denominator for.
  */
-export function lookupPOI<DB>(
-	db: DatabaseClient<DB>,
-	queries: string[],
-	options: POILookupOptions<DB> = {}
-): LookupRow[] {
+export function lookupPOI<DB>(db: DatabaseClient<DB>, queries: string[], options: POILookupOptions = {}): LookupRow[] {
 	const limit = options.limit ?? DEFAULT_ENTRY_LIMIT
 	const wantCountry = options.country?.toUpperCase()
 	const countAll = db.prepare("SELECT count(*) AS n FROM poi WHERE name_key = ?")

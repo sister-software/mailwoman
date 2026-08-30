@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { defaultMailwomanPaths } from "./paths.ts"
+import { DefaultMailwomanPaths } from "./paths.ts"
 
 /**
  * Wrap a coerced schema so a BLANK value means the same as an absent one.
@@ -61,11 +61,11 @@ export const PublicEnvSchema = z.object({
 	// Platform-native application directories. Environment values override these defaults.
 	//
 	// A bare `.default()` fires only on `undefined`, so a present-but-empty variable passes validation intact.
-	MAILWOMAN_DATA_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.data)),
-	MAILWOMAN_CONFIG_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.config)),
-	MAILWOMAN_CACHE_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.cache)),
-	MAILWOMAN_LOG_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.log)),
-	MAILWOMAN_TEMP_ROOT: blankAsAbsent(z.string().default(defaultMailwomanPaths.temp)),
+	MAILWOMAN_DATA_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.data)),
+	MAILWOMAN_CONFIG_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.config)),
+	MAILWOMAN_CACHE_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.cache)),
+	MAILWOMAN_LOG_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.log)),
+	MAILWOMAN_TEMP_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.temp)),
 
 	// Corpus source-fetch tools (`corpus/src/tools/fetch/*` — env knobs are now command flags; these remain for compat). Callers do their own numeric/boolean parsing on these,
 	// so they stay raw strings — the schema only gates which keys surface, not how they're coerced.

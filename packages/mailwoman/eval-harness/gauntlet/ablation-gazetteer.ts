@@ -122,7 +122,7 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 const NAME_PROBE_LIMIT = 2000
 
 /**
- * The two-database probe. Construct once per run; `close()` releases both handles.
+ * The two-database probe. Construct once per run; disposal releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -148,8 +148,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 *
 	 * The dynamic import keeps this optional dependency off ordinary evaluation paths, and
 	 * `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for. The reverse geocoder
-	 * SHARES this object's already-open admin handle (`adminDatabase`), so it opens nothing and `close()` stays the
-	 * single owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
+	 * SHARES this object's already-open admin handle (`adminDatabase`), so it opens nothing and disposal stays the single
+	 * owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
 	 * (nearest-centroid descent) mode — good enough to name a chain, and the chain is all this model wants from it.
 	 */
 	static async create(opts: { ancestryPath?: string; candidatePath?: string } = {}): Promise<AblationGazetteer> {
@@ -343,7 +343,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 		return collapsed
 	}
 
-	close(): void {
+	[Symbol.dispose](): void {
 		this.#ancestry?.destroy()
 		this.#candidates?.destroy()
 		this.#ancestry = null

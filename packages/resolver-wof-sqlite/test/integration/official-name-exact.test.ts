@@ -36,7 +36,7 @@ interface SeedPlace {
  * Same production shape as the exact-match-tiering fixture, plus the #940 `official` column.
  */
 function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -103,7 +103,7 @@ const TURKU_ABO: SeedPlace[] = [
 const FLAG_ON: Partial<RankingWeights> = { officialNameExact: true }
 
 let lookup: WOFSQLitePlaceLookup
-afterEach(() => lookup?.close())
+afterEach(() => lookup[Symbol.dispose]())
 
 describe("findPlace — officialNameExact (#936 option 3)", () => {
 	test("flag OFF (explicit): the hamlet's own name beats Turku's official alias — the pre-#936 behavior", async () => {

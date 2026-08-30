@@ -8,7 +8,7 @@
  *   filter. Byte-identical to plain population order when no bias is passed.
  *
  *   This lives in its own platform-free module because it has to run identically in two places: the Node candidate
- *   reader and the browser byte-range twin. That is the #861 server↔demo parity contract, and it is the second thing
+ *   reader and the browser byte-range twin. That is the #861 server↔demo parity contract and the second thing
  *   here held by construction rather than by comment (`primary-preference.ts` was the first). Constants alone were not
  *   enough — the two copies agreed on every literal and still diverged on which field the population term reads and on
  *   whether the combined value is written back, which is the half that actually decides the answer.

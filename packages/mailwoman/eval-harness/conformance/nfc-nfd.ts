@@ -97,7 +97,7 @@ export function canonicallyVariant(text: string): boolean {
  * The three states a query's own text can be in with respect to the canonical forms.
  *
  * `mixed` is a real state and not a bookkeeping leftover: a string assembled from two sources can carry a composed `é`
- * beside a decomposed one, and it is then neither form while being canonically equivalent to both. A text that is not
+ * beside a decomposed one and then neither form while being canonically equivalent to both. A text that is not
  * {@linkcode canonicallyVariant} reads `nfc`, because it is — both forms are the same bytes.
  */
 export const CANONICAL_FORM_STATES = ["nfc", "nfd", "mixed"] as const

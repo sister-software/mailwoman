@@ -30,9 +30,10 @@
  *   rather than silently served as current.
  */
 
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { pathExists, readDirectory, readLocalJSONFile, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -177,10 +178,10 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 		ParquetReader: { openFile(path: string): Promise<ParquetLike> }
 	}
 
-	const manifest = parseJSONStrict<{
+	const manifest = await readLocalJSONFile<{
 		corpus_version?: string
 		shards?: Array<{ split?: string; path?: string }>
-	}>(readFileSync(manifestPath, "utf8"))
+	}>(manifestPath)
 
 	const shards = (manifest.shards ?? [])
 		.filter((s) => s.split === "train" && s.path)
@@ -191,46 +192,16 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 	let total = 0
 
 	for (const path of shards) {
-		let reader: ParquetLike
+		for await (const record of readShardRecords(path, (shardPath) => ParquetReader.openFile(shardPath))) {
+			total++
 
-		try {
-			reader = await ParquetReader.openFile(path)
-		} catch {
-			continue
-		}
+			const country = String(record["country"] ?? "").toUpperCase() || "??"
 
-		try {
-			// Column projection is what makes a full read affordable, and on SOME shards it silently drops `labels`
-			// rather than erroring: the overlay family written by the v0.17.0-era writer returns `{country}` alone for
-			// `getCursor(["country", "labels"])`, while the v0.5.0 base returns both. A dropped label column reads as
-			// "this country has no street rows", which is indistinguishable from the truth and is exactly the mistake
-			// this file exists to prevent — it reported 4 countries with street data where an unprojected read finds
-			// GB alone at 1,519 of 2,000 rows. So probe the first record and fall back for that shard.
-			let cursor = reader.getCursor(["country", "labels"])
-			let record = await cursor.next()
+			rows[country] = (rows[country] ?? 0) + 1
 
-			if (record && record["labels"] === undefined) {
-				await reader.close?.()
-				reader = await ParquetReader.openFile(path)
-				cursor = reader.getCursor()
-				record = await cursor.next()
+			if (normalizeArrowListColumn(record["labels"], "labels").some((label) => STREET_LABEL.test(String(label)))) {
+				streetRows[country] = (streetRows[country] ?? 0) + 1
 			}
-
-			while (record) {
-				total++
-
-				const country = String(record["country"] ?? "").toUpperCase() || "??"
-
-				rows[country] = (rows[country] ?? 0) + 1
-
-				if (normalizeArrowListColumn(record["labels"], "labels").some((label) => STREET_LABEL.test(String(label)))) {
-					streetRows[country] = (streetRows[country] ?? 0) + 1
-				}
-
-				record = await cursor.next()
-			}
-		} finally {
-			await reader.close?.()
 		}
 	}
 
@@ -244,9 +215,54 @@ export async function buildCorpusCensus(manifestPath: string): Promise<CorpusCen
 	}
 }
 
-interface ParquetLike {
+interface ParquetLike extends AsyncDisposable {
 	getCursor(columns?: string[]): { next(): Promise<Record<string, unknown> | null> }
-	close?(): Promise<void>
+}
+
+/**
+ * Every record of one shard, or nothing at all when the file will not open.
+ *
+ * Column projection is what makes a full read affordable, and on SOME shards it silently drops `labels` rather than
+ * erroring: the overlay family written by one writer era returns `{country}` alone for `getCursor(["country",
+ * "labels"])`, while the base returns both. A dropped label column reads as "this country has no street rows", which is
+ * indistinguishable from the truth and is exactly the mistake this file exists to prevent — it reported 4 countries
+ * with street data where an unprojected read finds GB alone at 1,519 of 2,000 rows. So the first record decides: when
+ * it arrives without `labels`, the shard is read again with no projection at all.
+ */
+async function* readShardRecords(
+	path: string,
+	open: (path: string) => Promise<ParquetLike>
+): AsyncGenerator<Record<string, unknown>> {
+	let opened: ParquetLike
+
+	try {
+		opened = await open(path)
+	} catch {
+		return
+	}
+
+	{
+		await using projected = opened
+		const cursor = projected.getCursor(["country", "labels"])
+		let record = await cursor.next()
+
+		if (!record || record["labels"] !== undefined) {
+			while (record) {
+				yield record
+
+				record = await cursor.next()
+			}
+
+			return
+		}
+	}
+
+	await using whole = await open(path)
+	const cursor = whole.getCursor()
+
+	for (let record = await cursor.next(); record; record = await cursor.next()) {
+		yield record
+	}
 }
 
 /**
@@ -260,11 +276,11 @@ interface ParquetLike {
  *
  * Returns undefined when the config states no corpus_dir; that is "cannot check", not "they match".
  */
-export function readConfiguredCorpusVersion(configPath: string): string | undefined {
-	if (!existsSync(configPath)) return undefined
+export async function readConfiguredCorpusVersion(configPath: string): Promise<string | undefined> {
+	if (!(await pathExists(configPath))) return undefined
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a training config is a few hundred lines, read sync
-	for (const line of readFileSync(configPath, "utf8").split("\n")) {
+	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
 		const match = /^\s*corpus_dir:\s*["']?([^"'\s]+)/.exec(line)
 
 		if (!match) continue
@@ -288,8 +304,8 @@ export function readConfiguredCorpusVersion(configPath: string): string | undefi
  * destroy here: a bare `NO` key stays the string `"NO"` rather than becoming the boolean `false`. That retyping is the
  * exact bug this file exists partly to surface, so the reader must not reproduce it.
  */
-export function readAdmittedCountries(configPath: string): Set<string> {
-	if (!existsSync(configPath)) return new Set()
+export async function readAdmittedCountries(configPath: string): Promise<Set<string>> {
+	if (!(await pathExists(configPath))) return new Set()
 
 	const admitted = new Set<string>()
 	let inBlock = false
@@ -298,7 +314,7 @@ export function readAdmittedCountries(configPath: string): Set<string> {
 	// block WITHOUT a YAML parser, so a bare `NO` key stays the string it is rather than becoming the boolean YAML 1.1
 	// makes of it.
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by contract
-	for (const line of readFileSync(configPath, "utf8").split("\n")) {
+	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
 		if (/^\s*country_weights:\s*$/.test(line)) {
 			inBlock = true
 
@@ -326,25 +342,25 @@ export function readAdmittedCountries(configPath: string): Set<string> {
  * Reads the cases tree the loader reads: two-letter directories only. `generalization/` is excluded by that same filter
  * and holds 279 rows, so a glob over `*\u200B/*.jsonl` overstates the board by 43%.
  */
-export function readBoardCoverage(casesRoot: string): Map<string, { rows: number; gated: number }> {
+export async function readBoardCoverage(casesRoot: string): Promise<Map<string, { rows: number; gated: number }>> {
 	const out = new Map<string, { rows: number; gated: number }>()
 
-	if (!existsSync(casesRoot)) return out
+	if (!(await pathExists(casesRoot))) return out
 
-	for (const dir of readdirSync(casesRoot)) {
+	for (const dir of await readDirectory(casesRoot)) {
 		if (!/^[a-z]{2}$/.test(dir)) continue
 
 		const dirPath = join(casesRoot, dir)
 
-		if (!statSync(dirPath).isDirectory()) continue
+		if (!(await statPath(dirPath)).isDirectory()) continue
 
-		for (const file of readdirSync(dirPath)) {
+		for (const file of await readDirectory(dirPath)) {
 			if (!file.endsWith(".jsonl")) continue
 
 			// One board case file: tens to hundreds of rows, and the whole 649-row board across every file is under a
 			// megabyte.
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by contract
-			for (const line of readFileSync(join(dirPath, file), "utf8").split("\n")) {
+			for (const line of (await readLocalTextFile(join(dirPath, file))).split("\n")) {
 				if (!line.trim()) continue
 
 				const row = tryParsingJSON<{ country?: string; status?: string }>(line)
@@ -371,14 +387,14 @@ export function readBoardCoverage(casesRoot: string): Map<string, { rows: number
 /**
  * Admin places per country in the serving gazetteer.
  */
-export function readGazetteerCoverage(dbPath: string): Map<string, number> {
+export async function readGazetteerCoverage(dbPath: string): Promise<Map<string, number>> {
 	const out = new Map<string, number>()
 
-	if (!existsSync(dbPath)) return out
-
-	const db = new DatabaseClient<CandidateDatabase>(dbPath, { readOnly: true })
+	if (!(await pathExists(dbPath))) return out
 
 	try {
+		using db = new DatabaseClient<CandidateDatabase>(dbPath, { readOnly: true })
+
 		const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as Array<{ name: string }>
 		const names = new Set(tables.map((t) => t.name))
 
@@ -395,8 +411,6 @@ export function readGazetteerCoverage(dbPath: string): Map<string, number> {
 		}
 	} catch {
 		// An unreadable gazetteer is a missing column, not a failed report.
-	} finally {
-		db.destroy()
 	}
 
 	return out
@@ -456,19 +470,19 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 	let census: CorpusCensus
 	let takenAt: string | null
 
-	if (!options.refresh && existsSync(cachePath)) {
-		census = parseJSONStrict<CorpusCensus>(readFileSync(cachePath, "utf8"))
+	if (!options.refresh && (await pathExists(cachePath))) {
+		census = await readLocalJSONFile<CorpusCensus>(cachePath)
 		takenAt = census.takenAt
 	} else {
 		census = await buildCorpusCensus(options.manifestPath)
-		writeFileSync(cachePath, JSON.stringify(census, null, 1))
+		await writeLocalJSONFile(census, cachePath)
 		takenAt = null
 	}
 
-	const admitted = readAdmittedCountries(options.configPath)
-	const board = readBoardCoverage(options.casesRoot)
+	const admitted = await readAdmittedCountries(options.configPath)
+	const board = await readBoardCoverage(options.casesRoot)
 	const gazetteerPath = options.gazetteerPath ?? String(dataRootPath("wof", "candidate.db"))
-	const gazetteer = readGazetteerCoverage(gazetteerPath)
+	const gazetteer = await readGazetteerCoverage(gazetteerPath)
 
 	const all = new Set<string>([
 		...Object.keys(census.rows),
@@ -501,7 +515,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 
 	const trains = (c: CountryCoverage): boolean => c.admitted && c.corpusRows > 0
 
-	const configuredCorpusVersion = readConfiguredCorpusVersion(options.configPath)
+	const configuredCorpusVersion = await readConfiguredCorpusVersion(options.configPath)
 
 	// A cached census and a config are two artifacts that both look authoritative and were never made to agree. When
 	// they name different corpora every row count below is about the WRONG corpus, and reads as a real absence.

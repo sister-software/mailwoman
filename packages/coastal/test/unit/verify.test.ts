@@ -31,14 +31,12 @@ import {
 	FIXTURE_SIDE,
 	rectangleRing,
 } from "@mailwoman/coastal/test-kit"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const NFI = FIXTURE_SCENARIOS.noIntervention.key
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 /**
@@ -67,8 +65,8 @@ const alwaysBand: ServiceFeatureReader = async () => [bandFeature()]
 const alwaysEmpty: ServiceFeatureReader = async () => []
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-coastal-verify-"))
-	databasePath = join(scratch, "coastal-england.db")
+	scratch = await temporaryDirectory("mw-coastal-verify-")
+	databasePath = scratch.resolve("coastal-england.db")
 
 	await buildCoastalDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -82,9 +80,7 @@ beforeAll(async () => {
 	})
 }, 120_000)
 
-afterAll(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("sampleAgreementPoints", () => {
 	it("draws points from more than one scenario, because a sample from one verifies one twelfth", () => {

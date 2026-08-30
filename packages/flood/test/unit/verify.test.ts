@@ -12,6 +12,7 @@
  *   negative check fails loudly on an artifact that would answer Zone 1 outside England.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildFloodDatabase } from "@mailwoman/flood/sdk/build-flood"
 import { realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
 import { verifyFloodDatabase, type ServiceFeatureReader } from "@mailwoman/flood/sdk/verify"
@@ -24,9 +25,6 @@ import {
 	rectangleRing,
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
@@ -64,12 +62,12 @@ const INSIDE_FZ3 = {
 	longitude: FIXTURE_ORIGIN.lon + FIXTURE_SIDE / 2,
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-flood-verify-"))
-	databasePath = join(scratch, "flood.db")
+	scratch = await temporaryDirectory("mw-flood-verify-")
+	databasePath = scratch.resolve("flood.db")
 
 	await buildFloodDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -90,9 +88,7 @@ beforeAll(async () => {
 	})
 })
 
-afterAll(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("verifyFloodDatabase", () => {
 	it("agrees when both channels assign the same zone", async () => {

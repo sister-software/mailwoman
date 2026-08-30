@@ -1,22 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer affix-relabel` — export the codex US street-affix vocab (directionals +
- *   Pub-28 street suffixes) as a JSON lexicon for the Python training loader's affix-split relabel
- *   pass (#511). Same one-source-of-truth pattern as `gazetteer anchor-lexicon`: the TS codex
- *   matchers stay canonical; Python consumes a dumb variant→canonical map so the relabel pass
- *   agrees with the affix shard builder (which calls the codex matchers directly) by construction.
- *
- *   v2 (2026-08-10, #1569 five-whys): adds `name_prone` — the codex name-prone canonicals
- *   (PARK/HILL/CREEK…) that license the positional split of e.g. `Menlo Park | Road` in the
- *   loader's relabel pass. A v1 artifact without the key leaves licensing off (old behavior).
- *
- *   Output: data/gazetteer/affix-relabel-lexicon-v2.json
- */
-
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -81,8 +63,8 @@ const GazetteerAffixRelabel: ParsedCommandComponent<Options> = ({ options }) => 
 			name_prone: [...NAME_PRONE_US_SUFFIXES].toSorted(),
 		}
 
-		mkdirSync(dirname(output), { recursive: true })
-		writeFileSync(output, JSON.stringify(lexicon, null, "\t") + "\n")
+		await makeDirectories(dirname(output))
+		await writeLocalJSONFile(lexicon, output)
 
 		return [
 			`${output}`,

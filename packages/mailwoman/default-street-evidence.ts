@@ -15,6 +15,7 @@
  *   "loading" is a cheap file-open + prepared statements, not a 563 MB read.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
 
 let cached: Promise<StreetLocalityEvidence | null> | null = null
@@ -28,11 +29,10 @@ export function loadDefaultStreetEvidence(): Promise<StreetLocalityEvidence | nu
 	if (!cached) {
 		cached = (async (): Promise<StreetLocalityEvidence | null> => {
 			try {
-				const { existsSync } = await import("@mailwoman/platform/fs")
 				const { dataRootPath } = await import("@mailwoman/core/utils")
 				const dbPath = dataRootPath("ban", "street-centroids-fr.db")
 
-				if (!existsSync(dbPath)) return null
+				if (!(await pathExists(dbPath))) return null
 				const { SQLiteStreetNameLookup } = await import("@mailwoman/resolver-wof-sqlite")
 
 				return new SQLiteStreetNameLookup(dbPath)

@@ -68,7 +68,7 @@ const EvalLedgerAppend: ParsedCommandComponent<Options> = ({ options }) => {
 		async () => {
 			const { ledgerAppend } = await import("../../eval-harness/ledger-append.ts")
 
-			return ledgerAppend(options)
+			return await ledgerAppend(options)
 		},
 		(exitCode) => exitCode
 	)

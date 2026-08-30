@@ -129,7 +129,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.on(signal, () => {
-		void host.shutdown().finally(() => process.exit(0))
+		void host[Symbol.asyncDispose]().finally(() => process.exit(0))
 	})
 }
 

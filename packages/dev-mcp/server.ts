@@ -5,8 +5,8 @@
  *
  *   MCP wiring — adapts `tools.ts`'s table to the SDK's `registerTool` signature.
  *
- *   One departure from `@mailwoman/mcp`'s envelope, and it is the reason this file exists separately rather than
- *   reusing that one: results here are returned as `structuredContent` as well as text. A denominator that only exists
+ *   One departure from `@mailwoman/mcp`'s envelope and the reason this file exists separately rather than
+ *   reusing that one. Results here are returned as `structuredContent` as well as text. A denominator that only exists
  *   inside a stringified blob is a denominator a wrapper cannot enforce and an agent can paraphrase away. The text
  *   block stays for clients that cannot read structured output.
  */
@@ -16,10 +16,10 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
 import { buildToolTable, type DevToolDeps } from "./tools/index.ts"
 
-export function createDevMCPServer(deps: DevToolDeps): McpServer {
+export async function createDevMCPServer(deps: DevToolDeps): Promise<McpServer> {
 	const server = new McpServer({ name: "mailwoman-dev", version: "9.1.0" })
 
-	for (const tool of buildToolTable(deps)) {
+	for (const tool of await buildToolTable(deps)) {
 		server.registerTool(
 			tool.name,
 			{ description: tool.description, inputSchema: tool.inputSchema.shape },

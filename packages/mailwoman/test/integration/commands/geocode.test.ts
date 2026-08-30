@@ -20,16 +20,14 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync, mkdtempSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { existsSync } from "@mailwoman/platform/fs"
 import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
-
 // MARK: Paths
 
 const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
@@ -154,7 +152,7 @@ describe("geocode argument validation", () => {
 		).toThrow(/Command failed/)
 	})
 
-	test("missing WOF DB exits 1 with a descriptive error (empty data root — the default shard set no longer exists)", () => {
+	test("missing WOF DB exits 1 with a descriptive error (empty data root — the default shard set no longer exists)", async () => {
 		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
@@ -163,7 +161,8 @@ describe("geocode argument validation", () => {
 
 		let threw = false
 		let output = ""
-		const emptyDataRoot = mkdtempSync(join(tmpdir(), "mw-empty-"))
+		await using emptyDataRootDirectory = await temporaryDirectory("mw-empty-")
+		const emptyDataRoot = emptyDataRootDirectory.path
 
 		try {
 			withCLISpawnLock(() =>

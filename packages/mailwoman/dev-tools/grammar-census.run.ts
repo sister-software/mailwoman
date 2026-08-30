@@ -125,7 +125,7 @@ try {
 		})
 	}
 } finally {
-	deps.close()
+	deps[Symbol.dispose]()
 	candidateDB?.destroy()
 }
 

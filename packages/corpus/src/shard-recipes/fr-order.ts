@@ -80,7 +80,7 @@ async function readTuples(limit: number): Promise<FrTuple[]> {
 	const tuples: FrTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readZippedCSVRecords(SOURCE.zip, SOURCE.csv)) {
+	for await (const row of await readZippedCSVRecords(SOURCE.zip, SOURCE.csv)) {
 		if (tuples.length >= limit) break
 		const street = row.street ?? ""
 		const locality = row.city ?? ""

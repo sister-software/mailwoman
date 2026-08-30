@@ -20,7 +20,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
  * the lookup auto-detects it.
  */
 function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,

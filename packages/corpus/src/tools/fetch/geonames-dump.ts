@@ -17,9 +17,10 @@
  *   the basename) is reported as `wrong_format_present`, never counted as coverage.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync } from "@mailwoman/platform/fs"
 import { open, readFile, rm } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
@@ -153,16 +154,11 @@ export function parseCountryInfo(text: string): Array<{ country: string; capital
 const FORMAT_SNIFF_BYTES = 65_536
 
 async function readFileHead(path: string): Promise<string> {
-	const handle = await open(path, "r")
+	await using handle = await open(path, "r")
+	const buffer = Buffer.alloc(FORMAT_SNIFF_BYTES)
+	const { bytesRead } = await handle.read(buffer, 0, FORMAT_SNIFF_BYTES, 0)
 
-	try {
-		const buffer = Buffer.alloc(FORMAT_SNIFF_BYTES)
-		const { bytesRead } = await handle.read(buffer, 0, FORMAT_SNIFF_BYTES, 0)
-
-		return buffer.subarray(0, bytesRead).toString("utf8")
-	} finally {
-		await handle.close()
-	}
+	return buffer.subarray(0, bytesRead).toString("utf8")
 }
 
 /**
@@ -173,7 +169,7 @@ export async function fetchGeonamesDumps(
 	options: FetchGeonamesDumpOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary & { skippedPresent: string[] }> {
-	mkdirSync(options.outRoot, { recursive: true })
+	await makeDirectories(options.outRoot)
 
 	const baseURL = options.baseURL ?? BASE_URL
 	const countryInfoDest = join(options.outRoot, "countryInfo.txt")
@@ -199,7 +195,7 @@ export async function fetchGeonamesDumps(
 	for (const country of countries) {
 		const txtDest = join(options.outRoot, `${country}.txt`)
 
-		if (!options.force && existsSync(txtDest)) {
+		if (!options.force && (await pathExists(txtDest))) {
 			if (looksLikeGazetteerDump(await readFileHead(txtDest))) {
 				skippedPresent.push(country)
 			} else {

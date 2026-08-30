@@ -37,7 +37,7 @@ interface TableInfoRow {
  * A fresh in-memory shard with both tables and the index.
  */
 async function buildShard(ifNotExists: boolean): Promise<DatabaseClient<PostcodeLocalityDatabase>> {
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(":memory:")
+	const kdb = DatabaseClient.temp<PostcodeLocalityDatabase>()
 
 	await createPostcodeLocalityTable(kdb, { ifNotExists })
 	await createPostcodeLocalityIndex(kdb, { ifNotExists })
@@ -83,7 +83,7 @@ describe("createPostcodeLocalityTable", () => {
 	})
 
 	it("is re-runnable under `ifNotExists` — the accumulative build fills one shard country by country", async () => {
-		await using kdb = new DatabaseClient<PostcodeLocalityDatabase>(":memory:")
+		await using kdb = DatabaseClient.temp<PostcodeLocalityDatabase>()
 
 		await createPostcodeLocalityTable(kdb, { ifNotExists: true })
 		await createPostcodeLocalityIndex(kdb, { ifNotExists: true })

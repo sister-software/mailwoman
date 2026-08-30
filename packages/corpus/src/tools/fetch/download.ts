@@ -6,8 +6,8 @@
  *   Download and manifest utilities for `mailwoman corpus fetch <source>`.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { existsSync } from "@mailwoman/platform/fs"
 import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
 import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
 
@@ -29,11 +29,24 @@ const HTTP_SERVER_ERROR_MAX = 599
 /**
  * The option base every `mailwoman corpus fetch <source>` module extends.
  */
+/**
+ * How long a failed transfer waits before the next attempt.
+ */
+export const DEFAULT_RETRY_DELAY_MS = 5000
+
 export interface BaseFetchOptions {
 	/**
 	 * Destination root for downloaded source data. Each source writes its own subdirectory.
 	 */
 	outRoot: string
+	/**
+	 * Pause between transfer retries, in milliseconds. Defaults to {@linkcode DEFAULT_RETRY_DELAY_MS}.
+	 *
+	 * A test that exercises the failure path pays this delay once per retry in real time — measured at 20.1 s for the two
+	 * failing-transfer cases in `geonames-postal.test.ts`, which is the whole cost of that file. The retry COUNT is the
+	 * behaviour under test there; the pause between attempts is not, so it is a caller's to shorten.
+	 */
+	retryDelayMs?: number
 }
 
 /**
@@ -94,7 +107,16 @@ export interface DownloadOptions {
  * or once retries are exhausted. Returns the byte count written.
  */
 export async function downloadToFile(options: DownloadOptions): Promise<{ bytes: number }> {
-	const { url, dest, timeoutMs = 600_000, retries = 0, retryDelayMs = 5000, headers, report } = options
+	const {
+		url,
+		dest,
+		timeoutMs = 600_000,
+		retries = 0,
+		retryDelayMs = DEFAULT_RETRY_DELAY_MS,
+		headers,
+		report,
+	} = options
+
 	let lastError: unknown
 
 	for (let attempt = 0; attempt <= retries; attempt++) {
@@ -144,7 +166,7 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
  * Read a MANIFEST.json; `null` when missing or corrupt (callers re-fetch from scratch).
  */
 export async function readManifest<T>(path: string): Promise<T | null> {
-	if (!existsSync(path)) return null
+	if (!(await pathExists(path))) return null
 
 	// A read failure (e.g. the file vanished after the existsSync probe) maps to null like corrupt
 	// JSON does; tryParsingJSON returns null for the non-string sentinel.

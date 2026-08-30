@@ -14,8 +14,9 @@
  *   never holds it: a web stream piped to a write stream.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
-import { createWriteStream, existsSync } from "@mailwoman/platform/fs"
+import { createWriteStream } from "@mailwoman/platform/fs"
 import { rename } from "@mailwoman/platform/fs/promises"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -29,7 +30,7 @@ import { pipeline } from "@mailwoman/platform/stream/promises"
  * renames, so `dest` is never a partial archive.
  */
 export async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
-	if (existsSync(dest)) {
+	if (await pathExists(dest)) {
 		try {
 			await verifyZipIntegrity(dest)
 

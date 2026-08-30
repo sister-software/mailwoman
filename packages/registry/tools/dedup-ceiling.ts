@@ -30,9 +30,9 @@
  *   [--out-md <md>]`
  */
 
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
-import { writeFileSync } from "@mailwoman/platform/fs"
 
 import { addressFrequencyKey, streamRows } from "#index"
 
@@ -338,7 +338,7 @@ export async function dedupCeiling(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`[written] ${OUT_MD}`)
 	}
 

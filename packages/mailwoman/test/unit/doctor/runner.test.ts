@@ -11,8 +11,7 @@
  *   that resolves a real file, so nothing above it can catch a broken resolution.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import {
 	CheckStatus,
 	defaultDoctorDeps,
@@ -176,9 +175,9 @@ describe("runDoctor (injected seams)", () => {
 // construction — that is the thing under test — and it degrades to ">=0" on any failure, so a broken resolution would
 // otherwise show up only as a doctor report that silently stops enforcing the Node floor.
 describe("defaultDoctorDeps — engines floor via package self-reference", () => {
-	it("reads the real engines.node, not the >=0 fallback", () => {
-		const manifest = parseJSONStrict<{ engines?: { node?: string } }>(
-			readFileSync(new URL("../../../package.json", import.meta.url), "utf8")
+	it("reads the real engines.node, not the >=0 fallback", async () => {
+		const manifest = await readLocalJSONFile<{ engines?: { node?: string } }>(
+			new URL("../../../package.json", import.meta.url)
 		)
 
 		expect(manifest.engines?.node).toBeTruthy()

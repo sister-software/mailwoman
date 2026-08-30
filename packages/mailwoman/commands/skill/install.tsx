@@ -36,7 +36,8 @@
  *   `eval-harness/baseline-assert.ts`'s `resolveBaselineFilePath` uses for its sibling JSON asset.
  */
 
-import { cpSync, existsSync, rmSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { copyPath, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
@@ -69,14 +70,14 @@ interface Options {
  * The packaged skill's source directory, resolved relative to THIS package's root. See the module docstring for why two
  * candidate distances are tried — exactly one exists on disk in any given tree.
  */
-function resolveSkillSourceDir(): string {
+async function resolveSkillSourceDir(): Promise<string> {
 	const compiledTreeCandidate = new URL("../../../skills/mailwoman", import.meta.url)
 
-	if (existsSync(compiledTreeCandidate)) return fileURLToPath(compiledTreeCandidate)
+	if (await pathExists(compiledTreeCandidate)) return fileURLToPath(compiledTreeCandidate)
 
 	const sourceTreeCandidate = new URL("../../skills/mailwoman", import.meta.url)
 
-	if (existsSync(sourceTreeCandidate)) return fileURLToPath(sourceTreeCandidate)
+	if (await pathExists(sourceTreeCandidate)) return fileURLToPath(sourceTreeCandidate)
 
 	throw new CommandError(
 		`Could not locate the packaged skill directory relative to ${import.meta.url}. ` +
@@ -89,16 +90,16 @@ interface InstallOutcome {
 	checks: Check[]
 }
 
-function installSkill(dest: string | undefined): InstallOutcome {
+async function installSkill(dest: string | undefined): Promise<InstallOutcome> {
 	const checks: Check[] = []
 
 	try {
-		const sourceDir = resolveSkillSourceDir()
+		const sourceDir = await resolveSkillSourceDir()
 		const destDir = resolvePath(dest ?? ".", ".claude", "skills", "mailwoman")
 
 		// Clean-slate, not merge — see the module docstring for why a bare cpSync isn't enough.
-		rmSync(destDir, { recursive: true, force: true })
-		cpSync(sourceDir, destDir, { recursive: true, force: true })
+		await removePathIfPresent(destDir)
+		await copyPath(sourceDir, destDir)
 
 		checks.push({ ok: true, check: "mailwoman skill", detail: `installed at ${destDir}` })
 
@@ -116,7 +117,7 @@ function installSkill(dest: string | undefined): InstallOutcome {
 
 const SkillInstall: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
-		() => Promise.resolve(installSkill(options.dest)),
+		async () => await installSkill(options.dest),
 		(result) => (result.ok ? 0 : 1)
 	)
 

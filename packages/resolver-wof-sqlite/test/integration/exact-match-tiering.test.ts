@@ -43,7 +43,7 @@ interface SeedRegion {
  * the pre-existing `place_population` untouched (it only (re)builds it from geojson, which we don't carry).
  */
 function buildDB(regions: SeedRegion[]): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -110,7 +110,7 @@ const REGIONS: SeedRegion[] = [
 const POP_DOMINATES: Partial<RankingWeights> = { populationBoost: 1000, populationScaleLog10: 6 }
 
 let lookup: WOFSQLitePlaceLookup
-afterEach(() => lookup?.close())
+afterEach(() => lookup[Symbol.dispose]())
 
 describe("findPlace — exact-match tiering", () => {
 	test("exact alias match beats a population-dominated partial match (ME → Maine)", async () => {

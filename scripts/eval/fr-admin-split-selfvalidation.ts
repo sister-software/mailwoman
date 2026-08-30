@@ -125,7 +125,7 @@ const DB = values["db"] || dataRootPath("wof", "admin-global-priority.db")
 const N = Number(values["n"] || "200")
 
 // --- sample FR communes (collision + unique strata) ----------------------------------------------
-const db = new DatabaseClient<WOFDatabase>(DB, { readOnly: true })
+using db = new DatabaseClient<WOFDatabase>(DB, { readOnly: true })
 
 interface Commune {
 	id: number
@@ -158,7 +158,6 @@ const rows = allRows<Commune>(
 const shuffled = [...rows].toSorted((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
 const collision = shuffled.filter((r) => r.collisionCount > 1).slice(0, N)
 const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
-await db.destroy()
 
 // --- resolver (production path) ------------------------------------------------------------------
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")

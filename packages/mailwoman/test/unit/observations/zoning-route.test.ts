@@ -20,10 +20,8 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import type { Resolver } from "@mailwoman/resolver"
 import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
 import { fixtureFeatures, fixtureSource, FIXTURE_ORIGIN, FIXTURE_PLANS, FIXTURE_SIDE } from "@mailwoman/zoning/test-kit"
@@ -97,12 +95,12 @@ const INSIDE_UNZONED = {
 	longitude: FIXTURE_ORIGIN.lon + 4.5 * FIXTURE_SIDE,
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-zoning-route-"))
-	databasePath = join(scratch, "zoning-ireland.db")
+	scratch = await temporaryDirectory("mw-zoning-route-")
+	databasePath = scratch.resolve("zoning-ireland.db")
 
 	await buildZoningDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -116,9 +114,7 @@ beforeAll(async () => {
 	})
 }, 120_000)
 
-afterAll(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("#1995: the zoning route on the geocode path", () => {
 	it("with the layer absent, the result is byte-identical to a run with the route attached minus its marker", async () => {
@@ -142,7 +138,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 			expect(withoutMarker).toEqual([])
 			expect(restWithRoute).toEqual(restBare)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -171,7 +167,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 			// And the PLAN is in the sentence, because a zone exists inside one.
 			expect(marker.message).toContain(FIXTURE_PLANS.development.name)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -205,7 +201,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 			expect(describeZoningDesignation(decision.observation)).toMatch(/R2 - Existing Residential/u)
 			expect(describeZoningDesignation(decision.observation)).toMatch(/build-local/u)
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -226,7 +222,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 			expect((evidence.limits as string[]).join(" ")).toMatch(/not published here as legal definitions/u)
 			expect((evidence.layer as Record<string, unknown>).tier).toBe("build-local")
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -251,7 +247,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 
 			expect(decision.refusal).toBe("no_designation_here")
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -268,7 +264,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 			expect(decision.observation.designations[0]!.unzoned).toBe(true)
 			expect(decision.observation.designations[0]!.localCode).toBe("UNZ - Unzoned")
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 
@@ -284,7 +280,7 @@ describe("#1995: the zoning route on the geocode path", () => {
 
 			expect(decision.refusal).toBe("no_coordinate")
 		} finally {
-			route.close()
+			route[Symbol.dispose]()
 		}
 	})
 })

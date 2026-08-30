@@ -22,15 +22,15 @@
  *   quietly stopped happening.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, it } from "vitest"
 
 const HARNESS = String(repoRootPath("packages", "mailwoman", "eval-harness", "gauntlet", "harness.ts"))
 
 describe("the #1024 shipped-model guard", () => {
-	it("derives the graded model from the resolver, never from a package path literal", () => {
-		const source = readFileSync(HARNESS, "utf8")
+	it("derives the graded model from the resolver, never from a package path literal", async () => {
+		const source = await readLocalTextFile(HARNESS)
 
 		// Any `neural-weights-<locale>/model.onnx` or `/tokenizer.model` spelled out in a path position. The card
 		// path is deliberately NOT matched: a model-card IS committed to its package, so reading it there is a fact
@@ -43,14 +43,14 @@ describe("the #1024 shipped-model guard", () => {
 		).toEqual([])
 	})
 
-	it("still asks the resolver for the default run", () => {
-		const source = readFileSync(HARNESS, "utf8")
+	it("still asks the resolver for the default run", async () => {
+		const source = await readLocalTextFile(HARNESS)
 
 		expect(source).toContain('resolveWeights({ locale: "en-us" })')
 	})
 
-	it("keeps the assertion reachable — it runs only for the SHIPPED default, and that branch still exists", () => {
-		const source = readFileSync(HARNESS, "utf8")
+	it("keeps the assertion reachable — it runs only for the SHIPPED default, and that branch still exists", async () => {
+		const source = await readLocalTextFile(HARNESS)
 
 		// A `--candidate` run grades a different artifact on purpose and is exempt. If that exemption ever widens to
 		// cover the default, the guard is off for every run and nothing else in the suite would notice.

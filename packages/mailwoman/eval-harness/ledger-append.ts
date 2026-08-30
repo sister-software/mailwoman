@@ -24,8 +24,8 @@
  *       [--card neural-weights-en-us/model-card.json] [--notes "..."] [--replace]
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { existsSync, readFileSync, renameSync, writeFileSync } from "@mailwoman/platform/fs"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { movePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 
 /**
  * Options for {@linkcode ledgerAppend}.
@@ -96,7 +96,7 @@ interface Ledger {
  * Append one gate run to the ledger. Returns 0 when appended and 1 when refused. (duplicate without `replace`, or an
  * un-excepted FAIL verdict), 2 = usage error.
  */
-export function ledgerAppend(options: LedgerAppendOptions): number {
+export async function ledgerAppend(options: LedgerAppendOptions): Promise<number> {
 	const card = options.card ?? "packages/neural-weights-en-us/model-card.json"
 	const ledgerPath = options.ledger ?? "evals/scores-by-version.json"
 	const notes = options.notes ?? ""
@@ -122,7 +122,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 		return 2
 	}
 
-	const verdict = parseJSONStrict<Verdict>(readFileSync(`${options.outDir}/verdict.json`, "utf8"))
+	const verdict = await readLocalJSONFile<Verdict>(`${options.outDir}/verdict.json`)
 	const exceptions = options.operatorException ?? []
 	let exceptionNote = ""
 
@@ -186,7 +186,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 		metrics[group][name] = entry.actual
 	}
 
-	const modelCard: ModelCard = existsSync(card) ? parseJSONStrict<ModelCard>(readFileSync(card, "utf8")) : {}
+	const modelCard: ModelCard = (await pathExists(card)) ? await readLocalJSONFile<ModelCard>(card) : {}
 	// The practiced corpus_version is the short label; the card's is a long provenance sentence.
 	const corpusVersion = (modelCard.training?.corpus_version ?? "unknown").split("=")[0]!.trim()
 
@@ -207,7 +207,7 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 			`${notes}${exceptionNote} [graded_artifact=${verdict.graded_artifact}; gate=${verdict.label}; out-dir=${options.outDir}]`.trim(),
 	}
 
-	const ledger = parseJSONStrict<Ledger>(readFileSync(ledgerPath, "utf8"))
+	const ledger = await readLocalJSONFile<Ledger>(ledgerPath)
 	const dup = ledger.runs.findIndex((r) => r.run_id === row.run_id || r.model_version === row.model_version)
 
 	if (dup !== -1 && !options.replace) {
@@ -226,9 +226,9 @@ export function ledgerAppend(options: LedgerAppendOptions): number {
 
 	const tmp = `${ledgerPath}.tmp`
 
-	writeFileSync(tmp, JSON.stringify(ledger, null, "\t") + "\n")
-	parseJSONStrict(readFileSync(tmp, "utf8")) // self-check before the swap
-	renameSync(tmp, ledgerPath)
+	await writeLocalJSONFile(ledger, tmp)
+	await readLocalJSONFile(tmp) // self-check before the swap
+	await movePath(tmp, ledgerPath)
 
 	console.log(`✓ appended ${row.model_version} (${row.run_id}) → ${ledgerPath} [${ledger.runs.length} runs]`)
 

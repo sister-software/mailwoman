@@ -60,12 +60,12 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const { normalizeLocalityForKey } = await import("@mailwoman/resolver-wof-sqlite/street-normalize")
 
-		const db = new DatabaseClient<PostalCityCandidateDatabase>(candidateDB)
+		using db = new DatabaseClient<PostalCityCandidateDatabase>(candidateDB)
 
 		// postcode → containing locality_id (the geo-locality the postcode sits in).
 		console.error(`▸ loading postcode → locality from ${postcodeLocalityDB}`)
 
-		const pcl = new DatabaseClient<PostalCityCandidateDatabase>(postcodeLocalityDB, { readOnly: true })
+		using pcl = new DatabaseClient<PostalCityCandidateDatabase>(postcodeLocalityDB, { readOnly: true })
 		const pcToLocality = new Map<string, number>()
 
 		for (const r of allRows<{ postcode: string; locality_id: number }>(
@@ -76,8 +76,6 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 				pcToLocality.set(String(r.postcode), Number(r.locality_id))
 			}
 		}
-
-		await pcl.destroy()
 
 		// spr_id → {name, lat, lon} from the candidate table's own rows (the coord bridge).
 		console.error(`▸ loading candidate coordinates from ${candidateDB}`)
@@ -95,13 +93,11 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 		// Divergent postal-city edges.
 		console.error(`▸ loading divergent postal-city edges from ${aliasDB}`)
 
-		const alias = new DatabaseClient<PostalCityCandidateDatabase>(aliasDB, { readOnly: true })
+		using alias = new DatabaseClient<PostalCityCandidateDatabase>(aliasDB, { readOnly: true })
 
 		const edges = allRows<{ postcode: string; postal_city: string }>(
 			alias.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
 		)
-
-		await alias.destroy()
 
 		// DDL via the Kysely schema-builder (the house idiom); the hot INSERT loop below stays on the
 		// raw `node:sqlite` handle for speed. `db` wraps `db` — the two share the one connection.
@@ -145,7 +141,6 @@ const GazetteerPostalCity: ParsedCommandComponent<Options> = ({ options }) => {
 
 		db.exec("COMMIT")
 		await db.schema.createIndex("idx_pcc_spr").ifNotExists().on(POSTAL_CITY_CANDIDATE_TABLE).column("spr_id").execute()
-		await db.destroy()
 
 		// closes the underlying `db` handle
 

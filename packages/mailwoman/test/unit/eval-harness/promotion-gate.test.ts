@@ -11,13 +11,17 @@
  *   file nobody asked for. Cost: one confused re-run on 2026-07-16, mid gate battery.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { listGateSpecs, resolveGateSpecPath, runPromotionGate } from "mailwoman/eval-harness/promotion-gate"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 /**
  * Minimal npm-`files`-glob matcher (`**` crosses directories, `*` stays in one), segment-based so no dynamic RegExp is
@@ -109,44 +113,44 @@ describe("listGateSpecs", () => {
 })
 
 describe("resolveGateSpecPath", () => {
-	it("resolves a bare spec NAME — what the help advertises and what people type", () => {
-		const path = resolveGateSpecPath("v5.3.0-family")
+	it("resolves a bare spec NAME — what the help advertises and what people type", async () => {
+		const path = await resolveGateSpecPath("v5.3.0-family")
 
-		expect(existsSync(path)).toBe(true)
+		expect(await pathExists(path)).toBe(true)
 		expect(path).toContain("v5.3.0-family.json")
 	})
 
-	it("resolves a spec name that already carries .json", () => {
-		const path = resolveGateSpecPath("v5.3.0-family.json")
+	it("resolves a spec name that already carries .json", async () => {
+		const path = await resolveGateSpecPath("v5.3.0-family.json")
 
-		expect(existsSync(path)).toBe(true)
+		expect(await pathExists(path)).toBe(true)
 	})
 
-	it("resolves by basename, so legacy scripts/eval/gates/<spec>.json invocations keep working", () => {
-		const path = resolveGateSpecPath("scripts/eval/gates/v5.3.0-family.json")
+	it("resolves by basename, so legacy scripts/eval/gates/<spec>.json invocations keep working", async () => {
+		const path = await resolveGateSpecPath("scripts/eval/gates/v5.3.0-family.json")
 
-		expect(existsSync(path)).toBe(true)
+		expect(await pathExists(path)).toBe(true)
 	})
 
-	it("prefers a real path verbatim", () => {
+	it("prefers a real path verbatim", async () => {
 		const real = "packages/mailwoman/eval-harness/gates/v5.3.0-family.json"
 
-		expect(resolveGateSpecPath(real)).toBe(real)
+		expect(await resolveGateSpecPath(real)).toBe(real)
 	})
 
-	it("throws a USEFUL error naming the known specs, not a bare ENOENT", () => {
+	it("throws a USEFUL error naming the known specs, not a bare ENOENT", async () => {
 		// The old behaviour returned the string and let readFileSync throw, which told the operator
 		// nothing about what they could have typed instead.
-		expect(() => resolveGateSpecPath("v9.9.9-nope")).toThrow(/Gate spec not found.*Known specs.*v5\.3\.0-family/s)
+		await expect(resolveGateSpecPath("v9.9.9-nope")).rejects.toThrow(
+			/Gate spec not found.*Known specs.*v5\.3\.0-family/s
+		)
 	})
 
-	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", () => {
+	it("SHIPS every resolvable spec in the npm tarball — an installed CLI resolves the shorthand too (#1056)", async () => {
 		// The source-tree fix alone left the packaged CLI broken: `files` covered only `**/*.ts` + `out/**`,
 		// and tsc does not emit readFileSync'd JSON, so the tarball carried ZERO gate specs and the
 		// installed `mailwoman eval gate --gate <name>` found an empty gates dir.
-		const pkg = parseJSONStrict<{ files: string[] }>(
-			readFileSync(new URL("../../../package.json", import.meta.url), "utf8")
-		)
+		const pkg = await readLocalJSONFile<{ files: string[] }>(new URL("../../../package.json", import.meta.url))
 
 		for (const spec of listGateSpecs()) {
 			const rel = `eval-harness/gates/${spec}`
@@ -166,32 +170,32 @@ describe("paired weights-caches (#47)", () => {
 	 * drift from what the gate resolves. Every guard under test returns exit 2 BEFORE any battery, so no real ONNX is
 	 * ever loaded.
 	 */
-	function stageFakeCache(kind: "fp32" | "int8", salt: string): string {
-		const root = mkdtempSync(join(tmpdir(), `gate-pair-${kind}-`))
+	async function stageFakeCache(kind: "fp32" | "int8", salt: string): Promise<string> {
+		const root = fixtures.use(await temporaryDirectory(`gate-pair-${kind}-`)).path
 		const pkg = weightsCachePackageDir(root, "en-us")
 
-		mkdirSync(pkg, { recursive: true })
+		await makeDirectories(pkg)
 
-		writeFileSync(
-			join(pkg, "model.onnx"),
-			kind === "int8" ? `fake-onnx ${salt}\nDynamicQuantizeLinear\n` : `fake-onnx ${salt}\n`
+		await writeLocalFile(
+			kind === "int8" ? `fake-onnx ${salt}\nDynamicQuantizeLinear\n` : `fake-onnx ${salt}\n`,
+			join(pkg, "model.onnx")
 		)
 
-		writeFileSync(join(pkg, "tokenizer.model"), "fake-tokenizer")
-		writeFileSync(join(pkg, "model-card.json"), JSON.stringify({ training: { tokenizer_version: "v0.6.0-a0" } }))
+		await writeLocalTextFile("fake-tokenizer", join(pkg, "tokenizer.model"))
+		await writeLocalJSONFile({ training: { tokenizer_version: "v0.6.0-a0" } }, join(pkg, "model-card.json"))
 
 		return root
 	}
 
 	it("refuses --int8-weights-cache without --weights-cache", async () => {
-		const int8 = stageFakeCache("int8", "a")
+		const int8 = await stageFakeCache("int8", "a")
 
 		expect(await runPromotionGate({ gate: "v9.0.0-base", int8WeightsCache: int8 })).toBe(2)
 	})
 
 	it("refuses --int8-weights-cache alongside the --model/--int8 flow", async () => {
-		const wc = stageFakeCache("fp32", "b")
-		const int8 = stageFakeCache("int8", "c")
+		const wc = await stageFakeCache("fp32", "b")
+		const int8 = await stageFakeCache("int8", "c")
 
 		expect(
 			await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, model: "x.onnx" })
@@ -199,25 +203,28 @@ describe("paired weights-caches (#47)", () => {
 	})
 
 	it("refuses a paired fp32 arm that carries quant nodes — the arms are swapped or mislabeled", async () => {
-		const wc = stageFakeCache("int8", "d")
-		const int8 = stageFakeCache("int8", "e")
-		const outDir = mkdtempSync(join(tmpdir(), "gate-pair-out-"))
+		const wc = await stageFakeCache("int8", "d")
+		const int8 = await stageFakeCache("int8", "e")
+		await using outDirDirectory = await temporaryDirectory("gate-pair-out-")
+		const outDir = outDirDirectory.path
 
 		expect(await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
 	})
 
 	it("refuses a paired int8 arm with no quant nodes", async () => {
-		const wc = stageFakeCache("fp32", "f")
-		const int8 = stageFakeCache("fp32", "g")
-		const outDir = mkdtempSync(join(tmpdir(), "gate-pair-out-"))
+		const wc = await stageFakeCache("fp32", "f")
+		const int8 = await stageFakeCache("fp32", "g")
+		await using outDirDirectory = await temporaryDirectory("gate-pair-out-")
+		const outDir = outDirDirectory.path
 
 		expect(await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })).toBe(2)
 	})
 
 	it("refuses byte-identical paired arms", async () => {
-		const wc = stageFakeCache("int8", "h")
-		const int8 = stageFakeCache("int8", "h")
-		const outDir = mkdtempSync(join(tmpdir(), "gate-pair-out-"))
+		const wc = await stageFakeCache("int8", "h")
+		const int8 = await stageFakeCache("int8", "h")
+		await using outDirDirectory = await temporaryDirectory("gate-pair-out-")
+		const outDir = outDirDirectory.path
 
 		// Same salt, same bytes: dql alone cannot tell them apart, the md5 identity check must.
 		const swapped = await runPromotionGate({ gate: "v9.0.0-base", weightsCache: wc, int8WeightsCache: int8, outDir })

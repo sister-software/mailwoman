@@ -6,7 +6,8 @@
 
 import { Spinner } from "@inkjs/ui"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -253,9 +254,7 @@ async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefine
 	if (!dbPath) return undefined
 
 	try {
-		const { existsSync } = await import("@mailwoman/platform/fs")
-
-		if (!existsSync(dbPath)) return undefined
+		if (!(await pathExists(dbPath))) return undefined
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
 		const { matcher } = buildFSTFromWOF({ dbPath })
 
@@ -347,7 +346,7 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 
 		return await fn(resolver)
 	} finally {
-		lookup.close()
+		lookup[Symbol.dispose]()
 	}
 }
 

@@ -28,10 +28,8 @@ import {
 	FIXTURE_SIDE,
 } from "@mailwoman/coastal/test-kit"
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { QueryKind } from "@mailwoman/core/pipeline"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import type { Resolver } from "@mailwoman/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode-core"
 import { createCoastalErosionRoute, describeCoastalErosion } from "mailwoman/observations"
@@ -98,12 +96,12 @@ const INSIDE_BAND = {
  */
 const NO_DESIGNATION = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-coastal-route-"))
-	databasePath = join(scratch, "coastal-england.db")
+	scratch = await temporaryDirectory("mw-coastal-route-")
+	databasePath = scratch.resolve("coastal-england.db")
 
 	await buildCoastalDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -117,151 +115,124 @@ beforeAll(async () => {
 	})
 }, 120_000)
 
-afterAll(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("#1993: the coastal-erosion route on the geocode path", () => {
 	it("with the layer absent, the result is byte-identical to a run with the route attached minus its marker", async () => {
-		const route = createCoastalErosionRoute({ databasePath })
+		using route = createCoastalErosionRoute({ databasePath })
 
-		try {
-			const bare = await geocodeAddress(INPUT, testDeps(INSIDE_BAND.latitude, INSIDE_BAND.longitude))
+		const bare = await geocodeAddress(INPUT, testDeps(INSIDE_BAND.latitude, INSIDE_BAND.longitude))
 
-			const withRoute = await geocodeAddress(INPUT, {
-				...testDeps(INSIDE_BAND.latitude, INSIDE_BAND.longitude),
-				coastalErosionRoute: route,
-			})
+		const withRoute = await geocodeAddress(INPUT, {
+			...testDeps(INSIDE_BAND.latitude, INSIDE_BAND.longitude),
+			coastalErosionRoute: route,
+		})
 
-			expect(bare.intent_markers).toEqual([])
-			expect(withRoute.intent_markers).toHaveLength(1)
+		expect(bare.intent_markers).toEqual([])
+		expect(withRoute.intent_markers).toHaveLength(1)
 
-			const { intent_markers: withMarker, ...restWithRoute } = withRoute
-			const { intent_markers: withoutMarker, ...restBare } = bare
+		const { intent_markers: withMarker, ...restWithRoute } = withRoute
+		const { intent_markers: withoutMarker, ...restBare } = bare
 
-			expect(withMarker).toHaveLength(1)
-			expect(withoutMarker).toEqual([])
-			expect(restWithRoute).toEqual(restBare)
-		} finally {
-			route.close()
-		}
+		expect(withMarker).toHaveLength(1)
+		expect(withoutMarker).toEqual([])
+		expect(restWithRoute).toEqual(restBare)
 	})
 
 	it("names the scenario in the message, not only in the evidence", async () => {
-		const route = createCoastalErosionRoute({ databasePath, scenarioKey: NFI })
+		using route = createCoastalErosionRoute({ databasePath, scenarioKey: NFI })
 
-		try {
-			const result = await geocodeAddress(INPUT, {
-				...testDeps(INSIDE_BAND.latitude, INSIDE_BAND.longitude),
-				coastalErosionRoute: route,
-			})
+		const result = await geocodeAddress(INPUT, {
+			...testDeps(INSIDE_BAND.latitude, INSIDE_BAND.longitude),
+			coastalErosionRoute: route,
+		})
 
-			const marker = result.intent_markers![0]!
+		const marker = result.intent_markers![0]!
 
-			expect(marker.code).toBe("authority_designation")
-			expect(marker.mechanism).toBe("layer:coastal_erosion")
-			expect(marker.kind).toBe(TEST_VERDICT_KIND)
+		expect(marker.code).toBe("authority_designation")
+		expect(marker.mechanism).toBe("layer:coastal_erosion")
+		expect(marker.kind).toBe(TEST_VERDICT_KIND)
 
-			// The scenario is in the SENTENCE. A message reading "at erosion risk" without naming which of twelve questions
-			// it answers would let a 2105 projection be taken for a present-day designation.
-			expect(marker.message).toMatch(/under scenario NFI_2055_0CC/u)
-			expect(marker.message).toMatch(/No Future Intervention/u)
-			expect(marker.message).toMatch(/not whether a property will erode/u)
+		// The scenario is in the SENTENCE. A message reading "at erosion risk" without naming which of twelve questions
+		// it answers would let a 2105 projection be taken for a present-day designation.
+		expect(marker.message).toMatch(/under scenario NFI_2055_0CC/u)
+		expect(marker.message).toMatch(/No Future Intervention/u)
+		expect(marker.message).toMatch(/not whether a property will erode/u)
 
-			const evidence = marker.evidence as Record<string, unknown>
-			const scenario = evidence.scenario as Record<string, unknown>
+		const evidence = marker.evidence as Record<string, unknown>
+		const scenario = evidence.scenario as Record<string, unknown>
 
-			expect(scenario.key).toBe(NFI)
-			expect(scenario.horizon).toBe(2055)
-			expect(scenario.climateAllowance).toBe("0CC")
-		} finally {
-			route.close()
-		}
+		expect(scenario.key).toBe(NFI)
+		expect(scenario.horizon).toBe(2055)
+		expect(scenario.climateAllowance).toBe("0CC")
 	})
 
 	it("answers the same coordinate differently under a different scenario", async () => {
-		const underNFI = createCoastalErosionRoute({ databasePath, scenarioKey: NFI })
-		const underSMP = createCoastalErosionRoute({ databasePath, scenarioKey: SMP })
+		using underNFI = createCoastalErosionRoute({ databasePath, scenarioKey: NFI })
+		using underSMP = createCoastalErosionRoute({ databasePath, scenarioKey: SMP })
 
-		try {
-			const nfiDecision = underNFI.observe(INSIDE_BAND.latitude, INSIDE_BAND.longitude)
-			const smpDecision = underSMP.observe(INSIDE_BAND.latitude, INSIDE_BAND.longitude)
+		const nfiDecision = underNFI.observe(INSIDE_BAND.latitude, INSIDE_BAND.longitude)
+		const smpDecision = underSMP.observe(INSIDE_BAND.latitude, INSIDE_BAND.longitude)
 
-			expect(nfiDecision.fired).toBe(true)
-			expect(smpDecision.fired).toBe(true)
+		expect(nfiDecision.fired).toBe(true)
+		expect(smpDecision.fired).toBe(true)
 
-			if (!nfiDecision.fired || !smpDecision.fired) return
+		if (!nfiDecision.fired || !smpDecision.fired) return
 
-			expect(nfiDecision.observation.designations[0]!.distanceM).toBe(12)
-			expect(smpDecision.observation.designations[0]!.distanceM).toBe(310)
+		expect(nfiDecision.observation.designations[0]!.distanceM).toBe(12)
+		expect(smpDecision.observation.designations[0]!.distanceM).toBe(310)
 
-			// The one-line description carries the scenario too, so a receipt cannot lose which question was answered.
-			expect(describeCoastalErosion(nfiDecision.observation)).toMatch(/NFI_2055_0CC/u)
-			expect(describeCoastalErosion(smpDecision.observation)).toMatch(/SMP_2105_95CC/u)
-		} finally {
-			underNFI.close()
-			underSMP.close()
-		}
+		// The one-line description carries the scenario too, so a receipt cannot lose which question was answered.
+		expect(describeCoastalErosion(nfiDecision.observation)).toMatch(/NFI_2055_0CC/u)
+		expect(describeCoastalErosion(smpDecision.observation)).toMatch(/SMP_2105_95CC/u)
 	})
 
 	it("carries the coverage limit, so an answer never reads as a claim about what is NOT at risk", async () => {
-		const route = createCoastalErosionRoute({ databasePath })
+		using route = createCoastalErosionRoute({ databasePath })
 
-		try {
-			const result = await geocodeAddress(INPUT, {
-				...testDeps(INSIDE_BAND.latitude, INSIDE_BAND.longitude),
-				coastalErosionRoute: route,
-			})
+		const result = await geocodeAddress(INPUT, {
+			...testDeps(INSIDE_BAND.latitude, INSIDE_BAND.longitude),
+			coastalErosionRoute: route,
+		})
 
-			const evidence = result.intent_markers![0]!.evidence as Record<string, unknown>
-			const coverage = evidence.coverage as Record<string, unknown>
+		const evidence = result.intent_markers![0]!.evidence as Record<string, unknown>
+		const coverage = evidence.coverage as Record<string, unknown>
 
-			expect(coverage.basis).toBe("source_present")
-			expect(evidence.coverageLimit).toMatch(/no coverage statement/u)
-			expect((evidence.limits as string[]).join(" ")).toMatch(/cannot provide details for individual properties/u)
-		} finally {
-			route.close()
-		}
+		expect(coverage.basis).toBe("source_present")
+		expect(evidence.coverageLimit).toMatch(/no coverage statement/u)
+		expect((evidence.limits as string[]).join(" ")).toMatch(/cannot provide details for individual properties/u)
 	})
 
 	it("raises NOTHING where the authority's mapping assigns no zone", async () => {
-		const route = createCoastalErosionRoute({ databasePath })
+		using route = createCoastalErosionRoute({ databasePath })
 
-		try {
-			const result = await geocodeAddress(INPUT, {
-				...testDeps(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude),
-				coastalErosionRoute: route,
-			})
+		const result = await geocodeAddress(INPUT, {
+			...testDeps(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude),
+			coastalErosionRoute: route,
+		})
 
-			// The INVERSION of the flood route, and the whole reason this layer is the second one: an advisory here would be
-			// a determination nobody made. The refusal is named instead.
-			expect(result.intent_markers).toEqual([])
+		// The INVERSION of the flood route, and the whole reason this layer is the second one: an advisory here would be
+		// a determination nobody made. The refusal is named instead.
+		expect(result.intent_markers).toEqual([])
 
-			const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)
+		const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)
 
-			expect(decision.fired).toBe(false)
+		expect(decision.fired).toBe(false)
 
-			if (decision.fired) return
+		if (decision.fired) return
 
-			expect(decision.refusal).toBe("no_designation_here")
-		} finally {
-			route.close()
-		}
+		expect(decision.refusal).toBe("no_designation_here")
 	})
 
 	it("names a coordinate-less answer as its own refusal rather than as a missing designation", async () => {
-		const route = createCoastalErosionRoute({ databasePath })
+		using route = createCoastalErosionRoute({ databasePath })
 
-		try {
-			const decision = route.observe(null, undefined)
+		const decision = route.observe(null, undefined)
 
-			expect(decision.fired).toBe(false)
+		expect(decision.fired).toBe(false)
 
-			if (decision.fired) return
+		if (decision.fired) return
 
-			expect(decision.refusal).toBe("no_coordinate")
-		} finally {
-			route.close()
-		}
+		expect(decision.refusal).toBe("no_coordinate")
 	})
 })

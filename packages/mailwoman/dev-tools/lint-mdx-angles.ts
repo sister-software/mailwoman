@@ -15,8 +15,8 @@
  *   mailwoman dev lint mdx-angles [files...]
  */
 
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -67,11 +67,11 @@ function stagedDocsMarkdown(): string[] {
 /**
  * Strip fenced code blocks, then inline code spans, then collect 1-based lines that hit {@link RAW_ANGLE}.
  */
-function violations(file: string): string[] {
+async function violations(file: string): Promise<string[]> {
 	const hits: string[] = []
 	let fenced = false
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- A synchronous pre-commit check over staged MDX; the async spliterator would make this function and its caller async for files of a few hundred lines.
-	const lines = readFileSync(file, "utf8").split("\n")
+	const lines = (await readLocalTextFile(file)).split("\n")
 
 	for (const [i, line] of lines.entries()) {
 		if (line.startsWith("```")) {
@@ -94,19 +94,19 @@ function violations(file: string): string[] {
 /**
  * Lint the given (or staged) docs markdown for build-breaking raw angles/braces.
  */
-export function lintMDXAngles(
+export async function lintMDXAngles(
 	options: LintMDXAnglesOptions = {},
 	report?: (line: string) => void
-): LintMDXAnglesSummary {
+): Promise<LintMDXAnglesSummary> {
 	const targets = options.files?.length ? options.files : stagedDocsMarkdown()
 	const findings: MDXAngleFinding[] = []
 	let filesChecked = 0
 
 	for (const f of targets) {
-		if (!existsSync(f)) continue
+		if (!(await pathExists(f))) continue
 
 		filesChecked++
-		const hits = violations(f)
+		const hits = await violations(f)
 
 		if (hits.length) {
 			report?.(`✗ ${f} — raw '<' before alphanumeric (MDX parses it as a JSX tag; build will fail):`)

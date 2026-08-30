@@ -22,8 +22,8 @@
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
 
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { rmSync } from "@mailwoman/platform/fs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -61,70 +61,73 @@ export async function buildNLPC6Shard(
 	const outPath = opts.out ?? String(dataRootPath("wof", "postalcode-nl-pc6.db"))
 	const tmpPath = `${outPath}.tmp`
 
-	rmSync(tmpPath, { force: true })
-	const db = new DatabaseClient<WOFDatabase>(tmpPath)
-	db.exec("PRAGMA journal_mode = OFF")
-	db.exec("PRAGMA synchronous = OFF")
-	await createUnifiedSchema(db)
-
-	const sprInsert = db.prepare(
-		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', 'NL', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
-	)
-
-	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', 'NL', '', 0)`
-	)
+	await removePathIfPresent(tmpPath)
 
 	let inserted = 0
 	let skipped = 0
-	db.exec("BEGIN")
 
-	// `header: false` so the header row arrives as data and can be CHECKED — the CBS export has
-	// reordered its columns before, and a silent lon/lat swap puts every Dutch postcode in Somalia.
-	let headerSeen = false
+	{
+		using db = new DatabaseClient<WOFDatabase>(tmpPath)
+		db.exec("PRAGMA journal_mode = OFF")
+		db.exec("PRAGMA synchronous = OFF")
+		await createUnifiedSchema(db)
 
-	for await (const [pc6Raw, lonS, latS] of CSVSpliterator.fromAsync(csvPath, { header: false })) {
-		if (!headerSeen) {
-			headerSeen = true
-			const header = [pc6Raw, lonS, latS].join(",")
+		const sprInsert = db.prepare(
+			`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', 'NL', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
+		)
 
-			if (header !== "pc6,lon,lat") throw new Error(`unexpected CSV header: ${header}`)
+		const namesInsert = db.prepare(
+			`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', 'NL', '', 0)`
+		)
 
-			continue
+		db.exec("BEGIN")
+
+		// `header: false` so the header row arrives as data and can be CHECKED — the CBS export has
+		// reordered its columns before, and a silent lon/lat swap puts every Dutch postcode in Somalia.
+		let headerSeen = false
+
+		for await (const [pc6Raw, lonS, latS] of CSVSpliterator.fromAsync(csvPath, { header: false })) {
+			if (!headerSeen) {
+				headerSeen = true
+				const header = [pc6Raw, lonS, latS].join(",")
+
+				if (header !== "pc6,lon,lat") throw new Error(`unexpected CSV header: ${header}`)
+
+				continue
+			}
+
+			const pc6 = (pc6Raw ?? "").trim().toUpperCase()
+			const lon = Number(lonS)
+			const lat = Number(latS)
+
+			// A valid PC6 is 4 digits + 2 letters; the CBS file is already normalized (no space).
+			if (!/^\d{4}[A-Z]{2}$/.test(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+				skipped++
+
+				continue
+			}
+
+			const name = normalizePostcodeName(pc6) // identity for the CBS form; keeps the convention explicit
+			const display = `${pc6.slice(0, 4)} ${pc6.slice(4)}`
+			const id = NL_PC6_ID_BASE + inserted
+
+			sprInsert.run(id, name, lat, lon, lat, lon, lat, lon)
+			namesInsert.run(id, name)
+
+			if (display !== name) {
+				namesInsert.run(id, display)
+			}
+
+			inserted++
 		}
 
-		const pc6 = (pc6Raw ?? "").trim().toUpperCase()
-		const lon = Number(lonS)
-		const lat = Number(latS)
+		db.exec("COMMIT")
+		await createUnifiedIndexes(db)
 
-		// A valid PC6 is 4 digits + 2 letters; the CBS file is already normalized (no space).
-		if (!/^\d{4}[A-Z]{2}$/.test(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-			skipped++
-
-			continue
-		}
-
-		const name = normalizePostcodeName(pc6) // identity for the CBS form; keeps the convention explicit
-		const display = `${pc6.slice(0, 4)} ${pc6.slice(4)}`
-		const id = NL_PC6_ID_BASE + inserted
-
-		sprInsert.run(id, name, lat, lon, lat, lon, lat, lon)
-		namesInsert.run(id, name)
-
-		if (display !== name) {
-			namesInsert.run(id, display)
-		}
-
-		inserted++
+		process.stderr.write(`spr rows: ${inserted} (skipped ${skipped}) — building place_search + place_bbox…\n`)
+		buildPlaceSearchFTS(db, { drop: true })
+		db.exec("ANALYZE")
 	}
-
-	db.exec("COMMIT")
-	await createUnifiedIndexes(db)
-
-	process.stderr.write(`spr rows: ${inserted} (skipped ${skipped}) — building place_search + place_bbox…\n`)
-	buildPlaceSearchFTS(db, { drop: true })
-	db.exec("ANALYZE")
-	await db.destroy()
 
 	// Build-on-copy: the previous version moves aside; the new artifact swaps in atomically.
 	swapDatabaseIntoPlace(tmpPath, outPath)

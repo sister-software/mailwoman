@@ -33,11 +33,10 @@ export interface ServeRangeOptions {
 /**
  * A running range-capable static server, resolved once listening.
  */
-export interface RangeServer {
+export interface RangeServer extends AsyncDisposable {
 	dir: string
 	port: number
 	server: Server
-	close: () => void
 }
 
 const TYPES: Record<string, string> = {
@@ -50,13 +49,13 @@ const TYPES: Record<string, string> = {
 
 /**
  * Serve `dir` over localhost with HTTP Range support. Resolves once the server is listening; the caller owns the
- * lifetime (`close()` to stop — commands typically hold the process open instead).
+ * lifetime (dispose it to stop; commands typically hold the process open instead).
  */
-export function serveWithRangeSupport(
+export async function serveWithRangeSupport(
 	options: ServeRangeOptions = {},
 	report?: (line: string) => void
 ): Promise<RangeServer> {
-	const dir = options.dir || mailwomanTempRoot()
+	const dir = options.dir || String(mailwomanTempRoot())
 	const port = options.port ?? 8899
 
 	const server = createServer((req: IncomingMessage, res: ServerResponse) => {
@@ -99,7 +98,13 @@ export function serveWithRangeSupport(
 
 		server.listen(port, () => {
 			report?.(`range server: ${dir} on http://localhost:${port}`)
-			resolve({ dir, port, server, close: () => server.close() })
+
+			resolve({
+				dir,
+				port,
+				server,
+				[Symbol.asyncDispose]: () => server[Symbol.asyncDispose](),
+			})
 		})
 	})
 }

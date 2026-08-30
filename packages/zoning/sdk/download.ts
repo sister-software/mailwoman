@@ -25,7 +25,8 @@
  *   the old one in place.
  */
 
-import { pathExists, streamToDisk } from "@mailwoman/core/utils"
+import { tryStat } from "@mailwoman/core/fs/readers"
+import { streamToDisk } from "@mailwoman/core/utils"
 import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
@@ -58,7 +59,7 @@ export async function downloadZoningExport(options: DownloadZoningExportOptions)
 	const vintageDir = join(options.cacheRoot, options.vintage)
 	const exportPath = join(vintageDir, GZT_EXPORT_FILE)
 
-	if (await pathExists(exportPath)) {
+	if (await tryStat(exportPath)) {
 		options.onProgress?.(`export for ${options.vintage} already downloaded`)
 
 		return exportPath

@@ -74,6 +74,9 @@ const TAG_PATTERN = /<[^>]*>/g
  * Exported (alongside {@linkcode decodeEntities}/{@linkcode normalizeWhitespace}) so `exhibit21.test.ts`'s
  * substring-invariant test can compute the same "normalized input" this module reasons about — see the module
  * docstring's invariant paragraph.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY PORT THIS TO A DOMPURIFY SANITIZER SUCH AS packages/react/trust-policies.ts
+ * ALSO, MOVE THE `trusted-policies` MODULE TO `@mailwoman/core/trust-policies.ts`
  */
 export function stripTags(html: string): string {
 	return html.replaceAll(TAG_PATTERN, (match: string, offset: number, whole: string) => {

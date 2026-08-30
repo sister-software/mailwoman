@@ -36,11 +36,12 @@
  *   md5 is recorded in the output's provenance block, and `data/PROVENANCE.md` carries the rest.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createHash } from "@mailwoman/platform/crypto"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import type { VenueWordHint, VenueWordHintTable } from "../venue-word-hints.ts"
@@ -135,14 +136,14 @@ function round4(n: number): number {
 
 async function main(): Promise<void> {
 	const sourcePath = String(dataRootPath("derived", "venue-word-lexicon-f6.json"))
-	const raw = readFileSync(sourcePath, "utf8")
+	const raw = await readLocalTextFile(sourcePath)
 	const source = parseJSONStrict<SourceLexicon>(raw)
 	const sourceMD5 = createHash("md5").update(raw).digest("hex")
 
 	const table = buildVenueWordHintTable(source, sourceMD5)
 	const outPath = resolve(import.meta.dirname, "../data/venue-word-hints.json")
 
-	writeFileSync(outPath, JSON.stringify(table, null, "\t") + "\n")
+	await writeLocalJSONFile(table, outPath)
 
 	console.log(
 		`venue-word-hints: ${Object.keys(table.hints).length} tokens (source md5 ${sourceMD5.slice(0, 8)}) → ${outPath}`

@@ -15,8 +15,8 @@
  *      broken prior. The bare-locality rows must exist and must carry no street-side label.
  */
 
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { frFragmentRecipe, frTitleCase } from "@mailwoman/corpus/shard-recipes/fr-fragment"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, it } from "vitest"
 
 import { scratch, shardRunner, type ShardRow } from "#test-kit/shard-recipe"
@@ -46,19 +46,22 @@ describe("frTitleCase", () => {
 
 describe("fr-fragment: the split", () => {
 	it("REFUSES to run without an exclusion list rather than mint a contaminated shard", async () => {
-		const { input } = scratch("fr-fragment", TUPLES, [])
+		await using inputs = await scratch("fr-fragment", TUPLES, [])
 
-		await expect(frFragmentRecipe.run({ output: "", seed: 1, variants: 1, input }, () => {})).rejects.toThrow(
-			/--exclude-surfaces is REQUIRED/
-		)
+		await expect(
+			frFragmentRecipe.run({ output: "", seed: 1, variants: 1, input: inputs.input }, () => {})
+		).rejects.toThrow(/--exclude-surfaces is REQUIRED/)
 	})
 
 	it("refuses an exclusion list that is present but empty", async () => {
-		const { input, exclude } = scratch("fr-fragment", TUPLES, [])
-		writeFileSync(exclude, "# only a comment\n")
+		await using inputs = await scratch("fr-fragment", TUPLES, [])
+		await writeLocalTextFile("# only a comment\n", inputs.exclude)
 
 		await expect(
-			frFragmentRecipe.run({ output: "", seed: 1, variants: 1, input, excludeSurfaces: exclude }, () => {})
+			frFragmentRecipe.run(
+				{ output: "", seed: 1, variants: 1, input: inputs.input, excludeSurfaces: inputs.exclude },
+				() => {}
+			)
 		).rejects.toThrow(/listed no surfaces/)
 	})
 

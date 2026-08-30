@@ -33,10 +33,11 @@
  */
 
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { existsSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { basename, resolve } from "@mailwoman/platform/path"
 
@@ -152,7 +153,7 @@ interface ReleaseManifest {
  * Resolve one comma-separated `--<artifact>` flag into a verified path list. Every listed file must exist and be
  * non-empty — a staged-but-truncated binary is a silent 404 at runtime, so it fails here instead.
  */
-function stageBinaryList(spec: string | undefined, label: string): string[] {
+async function stageBinaryList(spec: string | undefined, label: string): Promise<string[]> {
 	const paths = spec
 		? spec
 				.split(",")
@@ -161,7 +162,7 @@ function stageBinaryList(spec: string | undefined, label: string): string[] {
 		: []
 
 	for (const localPath of paths) {
-		if (!existsSync(localPath) || !statSync(localPath).size) {
+		if (!(await pathExists(localPath)) || !(await statPath(localPath)).size) {
 			fail(`${label} ${localPath} missing/empty`)
 		}
 	}
@@ -173,10 +174,10 @@ function stageBinaryList(spec: string | undefined, label: string): string[] {
  * Resolve one optional `--<artifact>` path, verifying it exists and is non-empty. `null` when the flag was not passed —
  * every caller of this is an artifact a locale MAY ship, not one it must.
  */
-function stageOptionalBinary(spec: string | undefined, label: string): string | null {
+async function stageOptionalBinary(spec: string | undefined, label: string): Promise<string | null> {
 	const localPath = spec || null
 
-	if (localPath && (!existsSync(localPath) || !statSync(localPath).size)) {
+	if (localPath && (!(await pathExists(localPath)) || !(await statPath(localPath)).size)) {
 		fail(`${label} ${localPath} missing/empty`)
 	}
 
@@ -220,7 +221,7 @@ async function verifyFlatByBasename(paths: string[], remoteBase: string): Promis
  * Phase 1: every REQUIRED_FILES entry must be present and non-empty before a single byte is uploaded. The last point at
  * which a bad release can be stopped for free — after this the bucket has partial state.
  */
-function verifyRequiredFiles(args: PublishHFOptions): void {
+async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
 	for (const f of REQUIRED_FILES) {
 		const localPath = args[OPTION_TO_FIELD[f.option]]
 
@@ -228,11 +229,11 @@ function verifyRequiredFiles(args: PublishHFOptions): void {
 			fail(`--${f.option} (${f.description}) is required`)
 		}
 
-		if (!existsSync(localPath)) {
+		if (!(await pathExists(localPath))) {
 			fail(`${localPath} does not exist`)
 		}
 
-		const size = statSync(localPath).size
+		const size = (await statPath(localPath)).size
 
 		if (size === 0) {
 			fail(`${localPath} is empty`)
@@ -268,60 +269,60 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		.join("-")
 
 	const fstRemoteName = `fst-${bcp47}.bin`
-	const fstPath = stageOptionalBinary(args.fst, "FST gazetteer")
+	const fstPath = await stageOptionalBinary(args.fst, "FST gazetteer")
 
 	console.error(`Publishing ${args.version} (${args.locale}) to HF Bucket...`)
 
 	// --- Phase 1: verify all local files exist ---
-	verifyRequiredFiles(args)
+	await verifyRequiredFiles(args)
 
 	// Optional postcode binaries for the anchor channel (#240): comma-separated --postcodes paths
 	// (e.g. postcode-us.bin,postcode-de.bin). Uploaded under the version dir by basename; the demo
 	// fetches them when the release's `hasAnchor` flag is set.
-	const postcodeBins = stageBinaryList(args.postcodes, "postcode binary")
+	const postcodeBins = await stageBinaryList(args.postcodes, "postcode binary")
 
 	// Optional placetype-pair-index binaries (placetype-pair-prior arc): comma-separated
 	// --pair-indexes paths (e.g. pair-index-gb.bin). COUNTRY-SPECIFIC BY DESIGN — mirrors
 	// postcodeBins exactly, but this artifact never falls back to a base package (see
 	// neural/weights.ts's resolvePairIndexSibling), so a locale that ships one MUST have it staged.
-	const pairIndexBins = stageBinaryList(args.pairIndexes, "pair-index binary")
+	const pairIndexBins = await stageBinaryList(args.pairIndexes, "pair-index binary")
 
 	// Per-locale FST gazetteer binaries for the NPM packages (#1318 FST-distribution): comma-separated
 	// --fsts paths (e.g. fst-en-us.bin,fst-fr-fr.bin,fst-en-gb.bin). Uploaded flat under the version dir
 	// by their LOWERCASE npm basename — this is what publish.yml fetches into each weights workspace so
 	// the published tarball carries its `fst-<locale>.bin` (files-guard requires it). Distinct from the
 	// singular --fst above, which stages the demo's BCP-47-cased `fst-en-US.bin`. en-nz ships no FST.
-	const fstBins = stageBinaryList(args.fsts, "FST binary")
+	const fstBins = await stageBinaryList(args.fsts, "FST binary")
 
 	// Optional gazetteer-anchor lexicon (#464): a single --gazetteer-lexicon path, uploaded as
 	// anchor-lexicon-v1.json. REQUIRED for gazetteer-trained models (v4.2.0+, ONNX declares
 	// gazetteer_features) — the demo loader fetches it beside model.onnx and degrades LOUDLY
 	// (console.error + zero-filled clues = the measured zero-fill quality trap) when it 404s.
-	const gazetteerLexicon = stageOptionalBinary(args.gazetteerLexicon, "gazetteer lexicon")
+	const gazetteerLexicon = await stageOptionalBinary(args.gazetteerLexicon, "gazetteer lexicon")
 
 	// country-surface-lexicon-v1.json (#1104). REQUIRED for country-channel models (v6.2.0+, ONNX
 	// declares country_features + the card carries requires.country); ships beside anchor-lexicon-v1.json.
-	const countryLexicon = stageOptionalBinary(args.countryLexicon, "country lexicon")
+	const countryLexicon = await stageOptionalBinary(args.countryLexicon, "country lexicon")
 
 	// Evidence-bundle lexicons (Option-A, 6.7.0-bundle): street-type-lexicon-v3.json +
 	// locality-surface-lexicon-v6.json. REQUIRED for bundle-trained models (ONNX declares
 	// street_type_features/locality_surface_features + the card requires them); the browser loader
 	// fetches them beside model.onnx and degrades LOUDLY (channel-off fragment parses) on a 404.
-	const streetTypeLexicon = stageOptionalBinary(args.streetTypeLexicon, "street-type lexicon")
-	const localitySurfaceLexicon = stageOptionalBinary(args.localitySurfaceLexicon, "locality-surface lexicon")
+	const streetTypeLexicon = await stageOptionalBinary(args.streetTypeLexicon, "street-type lexicon")
+	const localitySurfaceLexicon = await stageOptionalBinary(args.localitySurfaceLexicon, "locality-surface lexicon")
 
 	// Optional crisp-polygon DB (`mailwoman gazetteer polygons`): a single --polygons path. Uploaded as
 	// wof-polygons.db; the demo draws the real admin boundary instead of the bbox when `hasPolygons`
 	// is set. Keyed by WOF id (the candidate table returns the same spr ids), built from the admin DB
 	// via `mailwoman gazetteer polygons` --admin (the --points wof-hot.db source is retired).
-	const polygonsDB = stageOptionalBinary(args.polygons, "polygon DB")
+	const polygonsDB = await stageOptionalBinary(args.polygons, "polygon DB")
 
 	// Fisher consolidation artifacts (#1354): fisher-diag-v1-model-X.npz + its .json sidecar. The
 	// bundle-contract addition from the 7.0.0 base — "the weights bundle ships its Fisher" — so every
 	// fine-tune (ours and customers') can apply the EWC brake. HF/R2 distribution only: runtime never
 	// reads it, npm never ships it, publish.yml never fetches it (its preflight HEAD-checks it when
 	// the model card declares fisher_artifact). Versioned basenames, staged flat like the postcode bins.
-	const fisherArtifacts = stageBinaryList(args.fisher, "Fisher artifact")
+	const fisherArtifacts = await stageBinaryList(args.fisher, "Fisher artifact")
 
 	// --- Phase 2: upload to bucket ---
 	const remoteBase = `${args.locale}/${args.version}`
@@ -444,7 +445,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 		version: args.version,
 		label: args.label,
 		description: args.description,
-		modelSize: args.modelSize ?? `${Math.round(statSync(args.model!).size / 1024 / 1024)} MB`,
+		modelSize: args.modelSize ?? `${Math.round((await statPath(args.model!)).size / 1024 / 1024)} MB`,
 		tokenizerVocab: 48_000,
 		steps: args.steps ?? 100_000,
 		hasFST: !!fstPath,
@@ -471,7 +472,7 @@ export async function publishReleaseToHF(args: PublishHFOptions): Promise<void> 
 	}
 
 	const tmpReleases = resolve(tmpdir(), `releases-${args.locale}-${Date.now()}.json`)
-	writeFileSync(tmpReleases, JSON.stringify(releases, null, 2))
+	await writeLocalJSONFile(releases, tmpReleases)
 	run("hf", ["buckets", "cp", tmpReleases, `${BUCKET_PATH}/${args.locale}/releases.json`])
 
 	console.error(`  ✓ releases.json updated, defaultVersion=${releases.defaultVersion}`)

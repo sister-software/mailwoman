@@ -15,9 +15,9 @@
  *   Before the fix this test's expectation fails: weights resolve from the env root and the session comes up.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { existsSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession } from "mailwoman/geocode-session"
@@ -26,11 +26,9 @@ import { afterAll, describe, expect, it } from "vitest"
 const REAL_CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
 const haveArtifacts = existsSync(REAL_CANDIDATE_DB)
 
-const BOGUS_ROOT = mkdtempSync(join(tmpdir(), "mw-bogus-root-"))
+const BOGUS_ROOT = await temporaryDirectory("mw-bogus-root-")
 
-afterAll(() => {
-	rmSync(BOGUS_ROOT, { recursive: true, force: true })
-})
+afterAll(() => BOGUS_ROOT[Symbol.asyncDispose]())
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weights (#1732)", () => {
 	it("resolves nothing from the ENV overlay under a bogus dataRoot", async () => {
@@ -45,7 +43,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 			// registry derives from, so this pin cannot drift from the shipped configuration.
 			createGeocodeCommandOptions({
 				locale: "en-US",
-				dataRoot: BOGUS_ROOT,
+				dataRoot: BOGUS_ROOT.path,
 				// A real candidate.db keeps the gazetteer check (resolved first, by contract) from masking the weights
 				// step — the whole point is to reach weights resolution with the bogus root still in force.
 				candidateDB: REAL_CANDIDATE_DB,
@@ -70,7 +68,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 				expect(fstPath.startsWith(envOverlay)).toBe(false)
 			}
 		} finally {
-			outcome.session.close()
+			outcome.session[Symbol.dispose]()
 		}
 	}, 60_000)
 })

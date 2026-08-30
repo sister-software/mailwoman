@@ -241,7 +241,7 @@ async function runArm(arm, panel) {
 			})
 		}
 	} finally {
-		lookup.close()
+		lookup[Symbol.dispose]()
 	}
 
 	// Every pair the panel declares is reported, including the ones that cannot be measured. Dropping

@@ -151,4 +151,4 @@ for (const query of board) {
 	)
 }
 
-deps.close()
+deps[Symbol.dispose]()

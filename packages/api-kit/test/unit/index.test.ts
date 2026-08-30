@@ -5,7 +5,7 @@
  */
 
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
-import { attachOpenAPIDocs, emitOpenAPIDocuments, serveNode, type ServerHandle } from "@mailwoman/api-kit"
+import { attachOpenAPIDocs, emitOpenAPIDocuments, serveNode } from "@mailwoman/api-kit"
 import { expect, test } from "vitest"
 
 /**
@@ -82,22 +82,13 @@ test("emitOpenAPIDocuments: full-info options land servers/security/license/tags
 test("serveNode: binds, answers over real HTTP, closes cleanly", async () => {
 	const app = createPingApp()
 
-	let server: ServerHandle | undefined
+	await using server = await serveNode({
+		fetch: app.fetch,
+		port: 0,
+		hostname: "127.0.0.1",
+	})
 
-	try {
-		const bound = await new Promise<number>((resolve) => {
-			server = serveNode({
-				fetch: app.fetch,
-				port: 0, // ephemeral
-				hostname: "127.0.0.1",
-				onListen: (listened) => resolve(listened.port),
-			})
-		})
-
-		expect(bound).toBeGreaterThan(0)
-		const res = await fetch(`http://127.0.0.1:${bound}/ping`)
-		expect(await res.json()).toEqual({ ok: true })
-	} finally {
-		await server?.close()
-	}
+	expect(server.port).toBeGreaterThan(0)
+	const res = await fetch(`http://127.0.0.1:${server.port}/ping`)
+	expect(await res.json()).toEqual({ ok: true })
 })

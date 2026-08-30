@@ -79,7 +79,7 @@ const CRASH_LIMIT = 3
 const CRASH_WINDOW_MS = 60_000
 
 /**
- * How long a SIGTERM'd child gets to run its cleanup handler before SIGKILL. Generous because the worker's shutdown
+ * How long a SIGTERM'd child gets to run its cleanup handler before SIGKILL. Generous because the worker's teardown
  * closes SQLite handles and cancels spawned jobs.
  */
 const TERM_GRACE_MS = 5000
@@ -93,7 +93,7 @@ export interface RestartReport {
 	aborted_calls: number
 }
 
-export class WorkerHost {
+export class WorkerHost implements AsyncDisposable {
 	readonly #options: Required<Pick<WorkerHostOptions, "workerPath" | "workerArgs" | "handshakeTimeoutMs">> & {
 		log: NodeJS.WritableStream
 	}
@@ -105,8 +105,8 @@ export class WorkerHost {
 	#degraded: string | null = null
 	#stderrTail = ""
 	/**
-	 * True while {@link restart} or {@link shutdown} intentionally kills the child, so the exit handler can tell an ordered
-	 * death from a crash.
+	 * True while {@link restart} or disposal intentionally kills the child, so the exit handler can tell an ordered death
+	 * from a crash.
 	 */
 	#expectingExit = false
 
@@ -233,7 +233,10 @@ export class WorkerHost {
 		}
 	}
 
-	async shutdown(): Promise<void> {
+	/**
+	 * End the worker at scope exit: reject every in-flight call, then stop the child.
+	 */
+	async [Symbol.asyncDispose](): Promise<void> {
 		this.#rejectPending(new Error("The server is shutting down."))
 		await this.#stopChild()
 	}

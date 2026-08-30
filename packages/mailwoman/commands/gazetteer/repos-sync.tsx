@@ -1,25 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer repos-sync` — what state the WOF repos root is IN, and the one repair `inspect sync` cannot
- *   perform.
- *
- *   THE DIVISION OF LABOUR MATTERS, because two commands touching the same directories otherwise looks like an
- *   accident. `gazetteer inspect sync` clones and pulls; it now resolves each repo's origin through
- *   `resolveWOFRepoOrigin`, so a NEW clone comes from our fork when one exists. What it cannot do is fix an EXISTING
- *   checkout: `synchronizeRepo` pulls in place and never rewrites a remote, so a directory cloned from upstream before
- *   the fork existed keeps pulling upstream forever, silently, over corrections the build depends on. That repair is
- *   here, and it is opt-in twice (`--apply --repoint`) because it changes what the next build ingests.
- *
- *   REPORT FIRST. Without `--apply` nothing is written: the sweep resolves every origin, reads every checkout and
- *   prints the plan — remote, vintage, shallowness, and whether the tree is safe to touch. A plan nobody saw cannot be
- *   checked, and the vintage half is not available anywhere else: the admin build reads whatever is on disk, so a repo
- *   six months behind produces a plausible artifact and no complaint.
- */
-
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -81,7 +60,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 			.filter((cc) => cc.length > 0)
 			.map((cc) => `whosonfirst-data-admin-${cc}`)
 
-		const audit = auditReposRoot(root, { readCommits: false })
+		const audit = await auditReposRoot(root, { readCommits: false })
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()
 
 		/**
@@ -144,7 +123,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 			for (const plan of plans) {
 				try {
 					if (plan.action === SyncAction.Clone) {
-						mkdirSync(dirname(plan.directory), { recursive: true })
+						await makeDirectories(dirname(plan.directory))
 						await exec("git", ["clone", "--depth", "1", plan.origin.url, plan.directory])
 						performed.push(`cloned ${plan.repo} from ${plan.origin.source}`)
 					} else if (plan.action === SyncAction.FastForward) {
@@ -181,27 +160,22 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 		// more thing for that glob to consider.
 		const vintagePath = String(dataRootPath("wof", "repos-vintage.json"))
 
-		mkdirSync(dirname(vintagePath), { recursive: true })
+		await makeDirectories(dirname(vintagePath))
 
-		writeFileSync(
-			vintagePath,
-			JSON.stringify(
-				{
-					root,
-					repos: plans.map((p) => ({
-						repo: p.repo,
-						origin: p.origin.org,
-						source: p.origin.source,
-						head: p.state.head ?? null,
-						headDate: p.state.headDate ?? null,
-						shallow: p.state.shallow ?? null,
-						action: p.action,
-					})),
-				},
-				null,
-				1
-			),
-			"utf8"
+		await writeLocalJSONFile(
+			{
+				root,
+				repos: plans.map((p) => ({
+					repo: p.repo,
+					origin: p.origin.org,
+					source: p.origin.source,
+					head: p.state.head ?? null,
+					headDate: p.state.headDate ?? null,
+					shallow: p.state.shallow ?? null,
+					action: p.action,
+				})),
+			},
+			vintagePath
 		)
 
 		return { plans, sentence: syncSentence(plans), performed, vintagePath, applied: options.apply }

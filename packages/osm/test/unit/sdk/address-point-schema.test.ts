@@ -1,3 +1,4 @@
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { readLayerCoverage, readLayerManifest, writeLayerManifest } from "@mailwoman/core/layers"
 import {
 	createOSMAddressPointIndexes,
@@ -6,8 +7,6 @@ import {
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk/address-point-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/osm/sdk/street-locale"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { canonicalizeRouteKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
@@ -16,7 +15,7 @@ import { describe, expect, it } from "vitest"
 
 describe("OSM address-point layer schema", () => {
 	it("adds an indexed H3 spine and honest empty coverage to the shared rooftop table", async () => {
-		using db = new DatabaseClient<OSMAddressPointDatabase>(":memory:")
+		using db = DatabaseClient.temp<OSMAddressPointDatabase>()
 
 		await createOSMAddressPointTables(db)
 
@@ -70,11 +69,12 @@ describe("OSM address-point layer schema", () => {
 	})
 
 	it("remains readable through the unchanged shared address-point lookup", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "mailwoman-osm-address-schema-"))
+		await using dirDirectory = await temporaryDirectory("mailwoman-osm-address-schema-")
+		const dir = dirDirectory.path
 		const path = join(dir, "address-points-fr.db")
 
 		try {
-			const db = new DatabaseClient<OSMAddressPointDatabase>(path)
+			using db = new DatabaseClient<OSMAddressPointDatabase>(path)
 			await createOSMAddressPointTables(db)
 			const street = "Rue de Rivoli"
 			const streetNorm = normalizeStreetForKeyLocale(street, "fr")
@@ -97,8 +97,6 @@ describe("OSM address-point layer schema", () => {
 				})
 				.execute()
 
-			await db.destroy()
-
 			using lookup = new AddressPointSqliteLookup(path, { streetLocale: "fr" })
 
 			expect(lookup.find({ street, number: "2", postcode: "75001" })).toMatchObject({
@@ -107,7 +105,6 @@ describe("OSM address-point layer schema", () => {
 				source: "openstreetmap:fr",
 			})
 		} finally {
-			rmSync(dir, { recursive: true, force: true })
 		}
 	})
 })

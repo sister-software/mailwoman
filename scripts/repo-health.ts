@@ -9,11 +9,12 @@
  * failure disappear.
  */
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
 import { existsSync } from "@mailwoman/platform/fs"
-import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import { relative, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import ts from "typescript"
@@ -225,7 +226,8 @@ const { values } = parseArgs({
 })
 
 if (values["write-baseline"]) {
-	await writeFile(baselinePath, `${JSON.stringify(counters, null, "\t")}\n`)
+	await writeLocalJSONFile(counters, baselinePath)
+
 	process.stdout.write(`Updated ${relative(root, baselinePath)}\n`)
 } else {
 	const baseline = parseJSONStrict<DebtCounters>(await readFile(baselinePath, "utf8"))

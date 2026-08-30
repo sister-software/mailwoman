@@ -15,6 +15,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	runPipeline,
 	type MachinePreferences,
@@ -33,7 +34,6 @@ import { detectLocale as defaultDetectLocale } from "@mailwoman/locale-gate"
 import type { NeuralAddressClassifier, ParseOpts } from "@mailwoman/neural"
 import { normalize } from "@mailwoman/normalize"
 import { groupPhrases as defaultGroupPhrases } from "@mailwoman/phrase-grouper"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { getPOICategory, requiresBuildLocalLayer, resolveOvertureCategories } from "@mailwoman/poi-taxonomy"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { StreetLocalityEvidence } from "@mailwoman/resolver"
@@ -266,7 +266,9 @@ function wrapWithStreetEvidence(
  * lives here because `neural` deliberately carries no resolver-wof-sqlite dependency. Any failure (missing/corrupt
  * binary, a non-neural classifier) degrades to `undefined` — the byte-stable no-FST default.
  */
-function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"]): FSTMatcher | undefined {
+async function autoLoadWeightsFST(
+	classifier: CreateRuntimePipelineOpts["classifier"]
+): Promise<FSTMatcher | undefined> {
 	const fstPath =
 		classifier && typeof classifier === "object" && "fstPath" in classifier
 			? (classifier as { fstPath?: string }).fstPath
@@ -275,7 +277,7 @@ function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"])
 	if (!fstPath) return undefined
 
 	try {
-		return deserializeFST(readFileSync(fstPath))
+		return deserializeFST(await readLocalBuffer(fstPath))
 	} catch (error) {
 		console.warn(
 			`[mailwoman] failed to load weights FST at ${fstPath}: ${(error as Error).message} — parsing without it`
@@ -508,7 +510,7 @@ export function createRuntimePipeline(
 
 		if (!fstResolved) {
 			fstResolved = true
-			const matcher = autoLoadWeightsFST(opts.classifier)
+			const matcher = await autoLoadWeightsFST(opts.classifier)
 
 			if (matcher) {
 				stages.fst = matcher

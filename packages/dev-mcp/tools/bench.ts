@@ -42,7 +42,7 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 
 		if (args["include_cold"]) {
 			// Evicting is what makes this a COLD measurement rather than a second warm one.
-			registry.closeAll()
+			registry.evictAll()
 
 			const startedAt = Date.now()
 			const coldEngine = await registry.acquire(config)

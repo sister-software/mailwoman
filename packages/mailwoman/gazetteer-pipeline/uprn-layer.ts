@@ -47,6 +47,9 @@
  *   not in any OS OpenData product.
  */
 
+import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
+import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -58,8 +61,8 @@ import {
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { createWriteStream, existsSync, unlinkSync } from "@mailwoman/platform/fs"
-import { mkdir, readdir, readFile, stat, writeFile } from "@mailwoman/platform/fs/promises"
+import { createWriteStream } from "@mailwoman/platform/fs"
+import { mkdir, readdir, readFile, writeFile } from "@mailwoman/platform/fs/promises"
 import { dirname } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -77,7 +80,6 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { cellToParent } from "h3-js"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
-import { open as openZip } from "yauzl-promise"
 
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "./postcode/codepoint/fetch.ts"
 
@@ -394,62 +396,47 @@ export async function extractOpenUPRN(options: {
 
 	await mkdir(extractedDir, { recursive: true })
 
-	const zip = await openZip(options.archivePath)
-
 	let csvPath: string | null = null
 	let csvBytes = 0
-	let licenseText = ""
-	let versionsText = ""
+	const entries = await listZipEntries(options.archivePath)
+	const csvEntry = entries.find((entry) => /^osopenuprn_.*\.csv$/i.test(entry.name))
 
-	try {
-		for await (const entry of zip) {
-			const name = entry.filename
+	if (csvEntry) {
+		csvPath = String(join(extractedDir, csvEntry.name.slice(csvEntry.name.lastIndexOf("/") + 1)))
+		csvBytes = csvEntry.uncompressedSize
+		const existing = await tryStat(csvPath)
 
-			if (name.endsWith("/")) continue
+		phase(
+			"extract",
+			existing?.size === csvBytes
+				? `${csvEntry.name} already extracted (${existing.size.toLocaleString()} bytes)`
+				: `${csvEntry.name} (${csvBytes.toLocaleString()} bytes)`
+		)
+	}
 
-			const dest = String(join(extractedDir, name.slice(name.lastIndexOf("/") + 1)))
-			const isCSV = /^osopenuprn_.*\.csv$/i.test(name)
+	await extractZipEntries(options.archivePath, extractedDir, {
+		selector: /^(?:osopenuprn_.*\.csv|licence\.txt|versions\.txt)$/i,
+		flatten: true,
+		skipExisting: true,
+	})
 
-			if (isCSV) {
-				csvPath = dest
-				csvBytes = entry.uncompressedSize
+	const licensePath = String(join(extractedDir, "licence.txt"))
+	const versionsPath = String(join(extractedDir, "versions.txt"))
 
-				const existing = await stat(dest).catch(() => null)
+	const licenseText = await readFile(licensePath)
+		.then(decodeProvenanceText)
+		.catch(() => "")
 
-				if (existing && existing.size === entry.uncompressedSize) {
-					phase("extract", `${name} already extracted (${existing.size.toLocaleString()} bytes)`)
+	const versionsText = await readFile(versionsPath)
+		.then(decodeProvenanceText)
+		.catch(() => "")
 
-					continue
-				}
+	if (licenseText) {
+		await writeFile(licensePath, licenseText, "utf8")
+	}
 
-				phase("extract", `${name} (${entry.uncompressedSize.toLocaleString()} bytes)`)
-				const readStream = await entry.openReadStream()
-
-				await pipeline(readStream, createWriteStream(dest))
-			} else if (/^licence\.txt$/i.test(name)) {
-				const readStream = await entry.openReadStream()
-				const chunks: Buffer[] = []
-
-				for await (const chunk of readStream) {
-					chunks.push(chunk as Buffer)
-				}
-
-				licenseText = decodeProvenanceText(Buffer.concat(chunks))
-				await writeFile(dest, licenseText, "utf8")
-			} else if (/^versions\.txt$/i.test(name)) {
-				const readStream = await entry.openReadStream()
-				const chunks: Buffer[] = []
-
-				for await (const chunk of readStream) {
-					chunks.push(chunk as Buffer)
-				}
-
-				versionsText = decodeProvenanceText(Buffer.concat(chunks))
-				await writeFile(dest, versionsText, "utf8")
-			}
-		}
-	} finally {
-		await zip.close()
+	if (versionsText) {
+		await writeFile(versionsPath, versionsText, "utf8")
 	}
 
 	if (!csvPath) {
@@ -627,8 +614,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	await mkdir(dirname(out), { recursive: true })
 
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (existsSync(stale)) {
-			unlinkSync(stale)
+		if (await pathExists(stale)) {
+			await removePath(stale)
 		}
 	}
 

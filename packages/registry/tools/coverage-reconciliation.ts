@@ -29,8 +29,8 @@
  *   [--data-root <dir>] [--out-md <md>] [--out-geojson <geojson>]`
  */
 
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { writeFileSync } from "@mailwoman/platform/fs"
 
 import {
 	ingestRows,
@@ -147,7 +147,7 @@ export async function coverageReconciliation(
 		records.push(...recs)
 	}
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	report?.("[D] resolving + reconciling…")
@@ -183,12 +183,12 @@ export async function coverageReconciliation(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`[written] ${OUT_MD}`)
 	}
 
 	if (OUT_GEOJSON) {
-		writeFileSync(OUT_GEOJSON, JSON.stringify(geojson))
+		await writeLocalJSONFile(geojson, OUT_GEOJSON)
 		report?.(`[written] ${OUT_GEOJSON} (${geojson.features.length} features)`)
 	}
 

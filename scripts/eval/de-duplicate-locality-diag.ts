@@ -22,9 +22,8 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
@@ -108,15 +107,13 @@ async function main(): Promise<void> {
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 
-	const modelCard = parseJSONStrict<{ labels: string[] }>(
-		readFileSync(values["model-card"] || "packages/neural-weights-en-us/model-card.json", "utf8")
+	const modelCard = await readLocalJSONFile<{ labels: string[] }>(
+		values["model-card"] || "packages/neural-weights-en-us/model-card.json"
 	)
 
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 
-	const postcodeAnchorLookup = anchorPath
-		? parseAnchorLookup(parseJSONStrict(readFileSync(anchorPath, "utf8")))
-		: undefined
+	const postcodeAnchorLookup = anchorPath ? parseAnchorLookup(await readLocalJSONFile(anchorPath)) : undefined
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(

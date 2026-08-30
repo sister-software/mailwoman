@@ -6,9 +6,9 @@
  *   scorer, the lever progression, the adjudication packet, and the report renderer.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { jaccard, type TermFrequencyTable } from "@mailwoman/match"
-import { mkdtempSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import type { ResolvedEntity, SourceRecord } from "@mailwoman/registry/types"
 import { describe, expect, it } from "vitest"
@@ -241,12 +241,13 @@ describe("writeOvermergePacket", () => {
 		},
 	]
 
-	it("writes only the multi-label clusters and returns their count", () => {
-		const dir = mkdtempSync(join(tmpdir(), "nppes-packet-"))
+	it("writes only the multi-label clusters and returns their count", async () => {
+		await using dirDirectory = await temporaryDirectory("nppes-packet-")
+		const dir = dirDirectory.path
 		const path = join(dir, "packet.md")
 
 		try {
-			const clusters = writeOvermergePacket(path, {
+			const clusters = await writeOvermergePacket(path, {
 				entities: [entity("e1", [record("1"), record("3")]), entity("e2", [record("1"), record("1")])],
 				rows,
 				recordCount: 4,
@@ -255,7 +256,7 @@ describe("writeOvermergePacket", () => {
 				orgNameLabel: (rec) => rec.id,
 			})
 
-			const text = readFileSync(path, "utf8")
+			const text = await readLocalTextFile(path)
 
 			expect(clusters).toBe(1)
 			expect(text).toContain("## Cluster 1 —")
@@ -267,7 +268,6 @@ describe("writeOvermergePacket", () => {
 			expect(text).toContain("CA --max-npis 300")
 			expect(text).not.toContain("TX")
 		} finally {
-			rmSync(dir, { recursive: true, force: true })
 		}
 	})
 })

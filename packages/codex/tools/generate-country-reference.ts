@@ -15,7 +15,7 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 const SOURCE = "https://raw.githubusercontent.com/mledoze/countries/master/countries.json"
@@ -161,7 +161,7 @@ export interface CountryReference {
 /** ISO 3166-1 alpha-2 → reference. */
 export const COUNTRY_REFERENCE: Record<string, CountryReference> = {`
 
-	writeFileSync(outPath, `${header}\n${body}\n}\n`)
+	await writeLocalTextFile(`${header}\n${body}\n}\n`, outPath)
 	report?.(`wrote ${outPath} (${Object.keys(rows).length} countries)`)
 
 	return { countries: Object.keys(rows).length, outPath }

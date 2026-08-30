@@ -28,8 +28,9 @@
  *   overwritten, and the file is sealed read-only afterwards.
  */
 
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode-prefix-index"
-import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -153,7 +154,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 			["admin DB", adminPath],
 			...(polygonPath ? ([["polygon DB", polygonPath]] as const) : []),
 		] as const) {
-			if (!existsSync(path)) throw new Error(`postcode-prefix: ${label} not found: ${path}`)
+			if (!(await pathExists(path))) throw new Error(`postcode-prefix: ${label} not found: ${path}`)
 		}
 
 		const built = buildPostcodePrefixIndex({
@@ -200,9 +201,9 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 
 		const bytes = serializePostcodePrefixIndex(header, built.nodes)
 
-		mkdirSync(dirname(outPath), { recursive: true })
+		await makeDirectories(dirname(outPath))
 
-		if (existsSync(outPath)) {
+		if (await pathExists(outPath)) {
 			throw new Error(
 				`postcode-prefix: ${outPath} already exists. Prefix indexes are dated, immutable build outputs — ` +
 					`pass --out with a fresh path rather than overwriting one something may already be reading.`
@@ -212,14 +213,14 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 		// Write-then-rename so a reader can never observe a half-written index, then seal.
 		const tmpPath = join(dirname(outPath), `.${recipe.scope}-${process.pid}.tmp`)
 
-		writeFileSync(tmpPath, bytes)
-		renameSync(tmpPath, outPath)
-		chmodSync(outPath, SEALED_MODE)
+		await writeLocalFile(bytes, tmpPath)
+		await movePath(tmpPath, outPath)
+		await changeMode(outPath, SEALED_MODE)
 
 		// ── Self-verifying readback: B3-1's bar, graded by re-reading the FILE, not the buffer still in
 		// memory. Reading the buffer would verify the serializer against itself and prove nothing about
 		// what landed on disk — the whole point of a round-trip bar.
-		const resolver = new PostcodePrefixIndexResolver(readFileSync(outPath))
+		const resolver = new PostcodePrefixIndexResolver(await readLocalBuffer(outPath))
 		const readNodes = [...resolver.nodes()]
 		const readUnits = readNodes.reduce((sum, node) => sum + node.unitCount, 0)
 		const readRadii = readNodes.flatMap((node) => (node.radiusP95Km === undefined ? [] : [node.radiusP95Km]))

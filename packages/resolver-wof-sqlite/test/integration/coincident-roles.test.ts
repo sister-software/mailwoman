@@ -115,7 +115,7 @@ const ANCESTRY: Array<[number, number]> = [
 let db: DatabaseClient<WOFDatabase>
 
 beforeEach(() => {
-	db = new DatabaseClient<WOFDatabase>(":memory:")
+	db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -202,7 +202,7 @@ describe("buildCoincidentRoles", () => {
 	})
 
 	test("loadCoincidentRoles returns an empty map when the table is absent", () => {
-		using fresh = new DatabaseClient<WOFDatabase>(":memory:")
+		using fresh = DatabaseClient.temp<WOFDatabase>()
 		expect(loadCoincidentRoles(fresh).size).toBe(0)
 		expect(coincidentRolesExists(fresh)).toBe(false)
 	})

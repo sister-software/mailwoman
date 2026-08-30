@@ -129,15 +129,13 @@ describe("tiger adapter against fixture.sql", () => {
 	it("zipl !== zipr produces two street variants (one per side)", async () => {
 		// Build a mini DB with one segment whose left and right ZIPs differ.
 		const inline = join(scratch.path, "split-zip.db")
-		const db = new DatabaseClient<TIGERDatabase>(inline)
+		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
 			INSERT INTO tiger_streets VALUES ('110099999', 'Border Rd', '10001', '10002', '36');
 		`)
-
-		await db.destroy()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),
@@ -160,15 +158,13 @@ describe("tiger adapter against fixture.sql", () => {
 
 	it("street with no ZIPs emits a single zipless variant", async () => {
 		const inline = join(scratch.path, "no-zip.db")
-		const db = new DatabaseClient<TIGERDatabase>(inline)
+		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
 			INSERT INTO tiger_streets VALUES ('110099998', 'Unnamed Rd', NULL, NULL, '41');
 		`)
-
-		await db.destroy()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),
@@ -186,7 +182,7 @@ describe("tiger adapter against fixture.sql", () => {
 
 	it("rows with an unrecognized state FIPS code are dropped", async () => {
 		const inline = join(scratch.path, "bad-fips.db")
-		const db = new DatabaseClient<TIGERDatabase>(inline)
+		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
@@ -194,8 +190,6 @@ describe("tiger adapter against fixture.sql", () => {
 			INSERT INTO tiger_streets VALUES ('110099997', 'Phantom St', '00000', '00000', '99');
 			INSERT INTO tiger_places  VALUES ('9999000', 'Phantomville', '99', '25');
 		`)
-
-		await db.destroy()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),

@@ -8,9 +8,9 @@
  *   semantics against a cache layout, and the probe's rejection of metadata-only installs.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { buildWeightsInstallArgs, probeWeights } from "mailwoman/cli-kit/weights-guard"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -24,15 +24,13 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest"
 // the same way, and the fix is the same: move to a locale that is still unclaimed.
 const LOCALE = "pt-BR"
 
-let cacheRoot: string
+let cacheRoot: TemporaryDirectory
 
-beforeEach(() => {
-	cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-guard-"))
+beforeEach(async () => {
+	cacheRoot = await temporaryDirectory("mailwoman-guard-")
 })
 
-afterEach(() => {
-	rmSync(cacheRoot, { recursive: true, force: true })
-})
+afterEach(() => cacheRoot[Symbol.asyncDispose]())
 
 describe("buildWeightsInstallArgs", () => {
 	test("targets the cache prefix with the locale package at latest", () => {
@@ -55,29 +53,29 @@ describe("buildWeightsInstallArgs", () => {
 
 describe("probeWeights", () => {
 	test("ok=false with an actionable detail when nothing resolves", () => {
-		const probe = probeWeights(LOCALE, cacheRoot)
+		const probe = probeWeights(LOCALE, cacheRoot.path)
 
 		expect(probe.ok).toBe(false)
 		expect(probe.detail).toMatch(/Could not resolve/)
-		expect(probe.detail).toContain(weightsCachePackageDir(cacheRoot, LOCALE))
+		expect(probe.detail).toContain(weightsCachePackageDir(cacheRoot.path, LOCALE))
 	})
 
-	test("ok=true against a binary-carrying cache install", () => {
-		const packageDir = weightsCachePackageDir(cacheRoot, LOCALE)
+	test("ok=true against a binary-carrying cache install", async () => {
+		const packageDir = weightsCachePackageDir(cacheRoot.path, LOCALE)
 
-		mkdirSync(packageDir, { recursive: true })
-		writeFileSync(join(packageDir, "model.onnx"), "stub")
-		writeFileSync(join(packageDir, "tokenizer.model"), "stub")
+		await makeDirectories(packageDir)
+		await writeLocalTextFile("stub", join(packageDir, "model.onnx"))
+		await writeLocalTextFile("stub", join(packageDir, "tokenizer.model"))
 
-		expect(probeWeights(LOCALE, cacheRoot)).toEqual({ ok: true })
+		expect(probeWeights(LOCALE, cacheRoot.path)).toEqual({ ok: true })
 	})
 
-	test("ok=false against a metadata-only cache install (the code-only-release tarball)", () => {
-		const packageDir = weightsCachePackageDir(cacheRoot, LOCALE)
+	test("ok=false against a metadata-only cache install (the code-only-release tarball)", async () => {
+		const packageDir = weightsCachePackageDir(cacheRoot.path, LOCALE)
 
-		mkdirSync(packageDir, { recursive: true })
-		writeFileSync(join(packageDir, "model-card.json"), "{}")
+		await makeDirectories(packageDir)
+		await writeLocalTextFile("{}", join(packageDir, "model-card.json"))
 
-		expect(probeWeights(LOCALE, cacheRoot).ok).toBe(false)
+		expect(probeWeights(LOCALE, cacheRoot.path).ok).toBe(false)
 	})
 })

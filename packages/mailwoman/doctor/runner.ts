@@ -13,7 +13,7 @@
  *   geocode` uses, and the POI path from `gazetteer build poi`'s own default.
  */
 
-import { $public, defaultMailwomanPaths } from "@mailwoman/core/env"
+import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
@@ -153,15 +153,11 @@ function defaultConventionCandidatePath(dataRoot: string): string | undefined {
  * Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
 async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
-	const kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
+	using kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
 
-	try {
-		const manifest = await readLayerManifest(kdb)
+	const manifest = await readLayerManifest(kdb)
 
-		return { name: manifest.name, version: manifest.version, sourceVintage: manifest.sourceVintage }
-	} finally {
-		await kdb.destroy()
-	}
+	return { name: manifest.name, version: manifest.version, sourceVintage: manifest.sourceVintage }
 }
 
 /**
@@ -190,7 +186,7 @@ export function defaultDoctorDeps(): DoctorDeps {
 		},
 		resolveWeights: (locale) => resolveWeights({ locale }),
 		weightsPackageName,
-		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== defaultMailwomanPaths.data }),
+		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== DefaultMailwomanPaths.data }),
 		envCandidatePath: () => ($public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath(undefined, dataRoot) : undefined),
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
 		wofShardPaths: () => resolveWOFShardPaths(undefined, dataRoot),

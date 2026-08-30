@@ -24,7 +24,7 @@
  *   [--out-svg docs/records/evals/charts/dedup-yardstick.svg]`
  */
 
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 
 /**
  * Options for {@linkcode yardstickFigure}.
@@ -98,10 +98,10 @@ const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").re
 /**
  * Emit the dedup-yardstick slope chart as a self-contained SVG — see the module doc.
  */
-export function yardstickFigure(
+export async function yardstickFigure(
 	options: YardstickFigureOptions = {},
 	report?: (line: string) => void
-): { outSVG: string } {
+): Promise<{ outSVG: string }> {
 	const OUT = options.outSVG || "docs/records/evals/charts/dedup-yardstick.svg"
 
 	const parts: string[] = []
@@ -220,7 +220,7 @@ export function yardstickFigure(
 
 	push(`</svg>`)
 
-	writeFileSync(OUT, parts.join(""))
+	await writeLocalTextFile(parts.join(""), OUT)
 	report?.(`[written] ${OUT}`)
 
 	report?.(

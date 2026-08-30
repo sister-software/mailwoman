@@ -196,7 +196,7 @@ export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
  * unobservable from the ONNX graph — the inputs are identical either way — so the card is the only source of truth for
  * it, and a card that simply OMITS the field is indistinguishable from a legitimately-`alnum-run` bundle. What IS
  * observable is the artifact PAIRING: a lookup carrying GB unit keys next to a card that cannot reach them has no
- * legitimate reading, and it is the exact shape a v4.2.0 promote would ship if the card were copied forward unchanged.
+ * legitimate reading and the exact shape a v4.2.0 promote would ship if the card were copied forward unchanged.
  *
  * `createScorer` throws on it (fail closed, the eval path); `loadFromWeights` warns once (tolerant by contract).
  */

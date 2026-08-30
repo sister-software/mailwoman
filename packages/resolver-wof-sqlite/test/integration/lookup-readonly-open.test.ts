@@ -14,12 +14,16 @@
  *   invariant.)
  */
 
-import { chmodSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { changeMode } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 // Record every DatabaseSync construction (path + the readOnly option) while delegating to the real implementation.
 const spy = vi.hoisted(() => ({ opens: [] as Array<{ path: string; readOnly: boolean | undefined }> }))
@@ -97,21 +101,20 @@ describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 	let dir: string
 	let dbPath: string
 
-	beforeEach(() => {
-		dir = mkdtempSync(join(tmpdir(), "mw-wof-openmode-"))
+	beforeEach(async () => {
+		dir = fixtures.use(await temporaryDirectory("mw-wof-openmode-")).path
 		dbPath = join(dir, "admin-fixture.db")
 		seedFixture(dbPath)
 	})
 
-	afterEach(() => {
+	afterEach(async () => {
 		// Restore write permission (a test may have sealed the file) so the temp dir can be removed.
 		try {
-			chmodSync(dbPath, 0o644)
+			await changeMode(dbPath, 0o644)
 		} catch {
 			/* already gone */
 		}
 
-		rmSync(dir, { recursive: true, force: true })
 		spy.opens.length = 0
 	})
 
@@ -124,8 +127,8 @@ describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 
 	test("buildFTS omitted opens the main shard READ-ONLY, even against a sealed 0444 file, and still queries", async () => {
 		// Build the FTS index first (read-write), then seal the file 0444 to mimic a shipped shard.
-		new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true }).close()
-		chmodSync(dbPath, 0o444)
+		new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true })[Symbol.dispose]()
+		await changeMode(dbPath, 0o444)
 
 		spy.opens.length = 0
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath })

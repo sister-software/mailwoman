@@ -1,43 +1,5 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer postcode-intl` — build a postcode → point shard from GeoNames postal data,
- *   for countries WhosOnFirst does not cover (#193). The existing pipeline
- *   (`scripts/backfill-postcode-centroids.ts`) treats GeoNames as a COORDINATE source keyed by
- *   string onto WOF-sourced postcode _records_. That works wherever WOF ships the postcode entities
- *   (US/NL/FR/DE/IT/ES…). For PL/CZ/PT/AU and the rest of the #193 gap, WOF has zero postcode
- *   records — there's nothing to backfill onto — so GeoNames must supply the RECORD too, not just
- *   the coordinate.
- *
- *   This emits a standalone `spr` shard in the exact schema `build-candidate`'s `--postcodes` pass
- *   consumes (placetype='postalcode', real centroid + bbox), so it drops into a candidate rebuild
- *   alongside `postalcode-intl.db` with no other change.
- *
- *   Provenance: GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute
- *   "GeoNames (CC-BY 4.0)". These records carry NO WOF id, so they get synthetic ids in a high
- *   range (`SYNTH_ID_BASE`, well above WOF's ~907M ceiling) that can never be mistaken for — or
- *   collide with — a WOF entity id.
- *
- *   Separator variants: a postcode is stored under BOTH its written forms so the candidate name_key
- *   matches whichever form the parse emits — PL writes "26-300" (hyphen), CZ writes "58001" (no
- *   space) though GeoNames stores "580 01".
- *
- *   Optionally folds the shard straight into a COPY of an existing candidate gazetteer (`--fold-into
- *   <src> --fold-out <dst>`), mirroring `build-candidate` pass-4's row construction, so a
- *   demo-ready DB falls out without a full rebuild. The shard itself is the durable artifact for
- *   the canonical rebuild; the fold is the fast path to verify + stage.
- *
- *   Progress streams to stderr; the final summary is on stdout.
- *
- *   NOTE: the shard `--out` DB is written DIRECTLY (the table is dropped + recreated in place on
- *   re-run), and `--fold-out` is a build-on-copy of `--fold-into` — neither uses an atomic
- *   temp-swap. This preserves the original `scripts/build-geonames-postcode-shard.ts` behavior
- *   verbatim.
- */
-
-import { copyFileSync, existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { copyFileTo } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 
@@ -209,7 +171,7 @@ const SPR_COLUMNS = [
 async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normalizeKey: NormalizeKey): Promise<number> {
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
-	if (existsSync(outPath)) {
+	if (await pathExists(outPath)) {
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
 
@@ -277,11 +239,11 @@ async function foldIntoCandidate(
 	dstPath: string,
 	normalizeKey: NormalizeKey
 ): Promise<number> {
-	copyFileSync(srcPath, dstPath)
+	await copyFileTo(srcPath, dstPath)
 
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await using out = new DatabaseClient<WOFDatabase>(dstPath)
-	const shard = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
+	using shard = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 
 	const ptRow = out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'").get() as
 		| { id: number }
@@ -361,7 +323,6 @@ async function foldIntoCandidate(
 	out.exec("COMMIT")
 	// Re-cluster the WITHOUT ROWID B-tree contiguously after the mid-tree inserts.
 	out.exec("VACUUM")
-	await shard.destroy()
 
 	return n
 }
@@ -383,7 +344,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 		const foldInto = options.foldInto
 		const foldOut = options.foldOut
 
-		if (!existsSync(geonames)) {
+		if (!(await pathExists(geonames))) {
 			throw new CommandError(`Missing GeoNames file: ${geonames}`)
 		}
 
@@ -413,7 +374,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 		]
 
 		if (foldInto && foldOut) {
-			if (!existsSync(foldInto)) {
+			if (!(await pathExists(foldInto))) {
 				throw new CommandError(`Missing --fold-into candidate DB: ${foldInto}`)
 			}
 

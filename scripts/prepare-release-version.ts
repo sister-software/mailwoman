@@ -28,8 +28,10 @@
  *   - `--check-only` — resolve + validate + print, but write nothing (the dry-run path).
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import semver from "semver"
@@ -56,7 +58,7 @@ if (!values.version) {
 }
 
 const rootManifestPath = resolve(repoRoot, "package.json")
-const rootManifest = parseJSONStrict<{ version?: string }>(readFileSync(rootManifestPath, "utf8"))
+const rootManifest = await readLocalJSONFile<{ version?: string }>(rootManifestPath)
 
 if (typeof rootManifest.version !== "string" || !semver.valid(rootManifest.version)) {
 	fail(`root package.json version is not a valid semver: ${String(rootManifest.version)}`)
@@ -133,10 +135,13 @@ if (releaseConfig.version !== rootManifest.version) {
 if (!values["check-only"]) {
 	for (const { path, manifest } of parsed) {
 		manifest.version = targetVersion
-		writeFileSync(path, `${JSON.stringify(manifest, null, "\t")}\n`)
+		await writeLocalJSONFile(manifest, path)
 	}
 
-	writeFileSync(releaseConfigPath, bumpReleaseConfigVersion(releaseConfigText, rootManifest.version, targetVersion))
+	await writeLocalTextFile(
+		bumpReleaseConfigVersion(releaseConfigText, rootManifest.version, targetVersion),
+		releaseConfigPath
+	)
 
 	console.log(
 		`bumped ${parsed.length + 1} version-bearing files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`

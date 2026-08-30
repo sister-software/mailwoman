@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	parseGoldenLine,
@@ -11,21 +12,19 @@ import {
 	validateGoldenDir,
 	validateGoldenFile,
 } from "@mailwoman/corpus/utils/golden"
-import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { writeFile } from "@mailwoman/platform/fs/promises"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const goldenDir = repoRootPath("data", "eval", "golden", "v0.1.0")
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-golden-"))
+	scratch = await temporaryDirectory("mailwoman-golden-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("parseGoldenLine", () => {
@@ -83,7 +82,7 @@ describe("unreachableComponents", () => {
 
 describe("validateGoldenFile", () => {
 	it("flags both schema + reachability issues in one pass", async () => {
-		const path = join(scratch, "test.jsonl")
+		const path = scratch.resolve("test.jsonl")
 
 		await writeFile(
 			path,

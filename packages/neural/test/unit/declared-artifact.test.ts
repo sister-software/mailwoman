@@ -11,78 +11,82 @@
  *   mitigation into a hard failure at every load.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { readDeclaredArtifactFile, unfedAnchorDetail } from "@mailwoman/neural/weights"
-import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
-function packageDir(card?: unknown, siblings: string[] = []): string {
-	const dir = mkdtempSync(join(tmpdir(), "weights-card-"))
+const fixtures = new AsyncDisposableStack()
 
-	mkdirSync(dir, { recursive: true })
+afterAll(() => fixtures.disposeAsync())
+
+async function packageDir(card?: unknown, siblings: string[] = []): Promise<string> {
+	const dir = fixtures.use(await temporaryDirectory("weights-card-")).path
+
+	await makeDirectories(dir)
 
 	if (card !== undefined) {
-		writeFileSync(join(dir, "model-card.json"), typeof card === "string" ? card : JSON.stringify(card), "utf8")
+		await writeLocalFile(typeof card === "string" ? card : JSON.stringify(card), join(dir, "model-card.json"))
 	}
 
 	for (const sibling of siblings) {
-		writeFileSync(join(dir, sibling), "", "utf8")
+		await writeLocalTextFile("", join(dir, sibling))
 	}
 
 	return dir
 }
 
 describe("readDeclaredArtifactFile", () => {
-	it("reports a declared artifact that is present", () => {
+	it("reports a declared artifact that is present", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } }, ["postcode-us.bin"])
 
-		expect(readDeclaredArtifactFile(dir)).toMatchObject({
+		expect(readDeclaredArtifactFile(await dir)).toMatchObject({
 			key: "postcode_anchor",
 			file: "postcode-us.bin",
 			present: true,
 		})
 	})
 
-	it("reports a declared artifact that is absent — the case the whole guard exists for", () => {
+	it("reports a declared artifact that is absent — the case the whole guard exists for", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } })
 
-		expect(readDeclaredArtifactFile(dir)).toMatchObject({ file: "postcode-us.bin", present: false })
+		expect(readDeclaredArtifactFile(await dir)).toMatchObject({ file: "postcode-us.bin", present: false })
 	})
 
-	it("prefers the PCB1 binary over the legacy JSON lookup when a card names both", () => {
+	it("prefers the PCB1 binary over the legacy JSON lookup when a card names both", async () => {
 		const dir = packageDir({ files: { anchor_lookup: "anchor-lookup.json", postcode_anchor: "postcode-us.bin" } })
 
-		expect(readDeclaredArtifactFile(dir)?.key).toBe("postcode_anchor")
+		expect(readDeclaredArtifactFile(await dir)?.key).toBe("postcode_anchor")
 	})
 
-	it("falls back to the legacy JSON lookup when that is all the card names", () => {
+	it("falls back to the legacy JSON lookup when that is all the card names", async () => {
 		const dir = packageDir({ files: { anchor_lookup: "anchor-lookup.json" } }, ["anchor-lookup.json"])
 
-		expect(readDeclaredArtifactFile(dir)).toMatchObject({ key: "anchor_lookup", present: true })
+		expect(readDeclaredArtifactFile(await dir)).toMatchObject({ key: "anchor_lookup", present: true })
 	})
 
-	it("does NOT read a $comment_ sibling as a declaration (en-gb's documented absence)", () => {
+	it("does NOT read a $comment_ sibling as a declaration (en-gb's documented absence)", async () => {
 		const dir = packageDir({
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-gb.bin (deliberate)" },
 		})
 
-		expect(readDeclaredArtifactFile(dir)).toBeUndefined()
+		expect(readDeclaredArtifactFile(await dir)).toBeUndefined()
 	})
 
-	it("returns undefined for a card with no files block, no card, no dir, and a corrupt card", () => {
-		expect(readDeclaredArtifactFile(packageDir({ requires: { anchor: { required: true } } }))).toBeUndefined()
-		expect(readDeclaredArtifactFile(packageDir())).toBeUndefined()
+	it("returns undefined for a card with no files block, no card, no dir, and a corrupt card", async () => {
+		expect(readDeclaredArtifactFile(await packageDir({ requires: { anchor: { required: true } } }))).toBeUndefined()
+		expect(readDeclaredArtifactFile(await packageDir())).toBeUndefined()
 		expect(readDeclaredArtifactFile(undefined)).toBeUndefined()
-		expect(readDeclaredArtifactFile(packageDir("{not json"))).toBeUndefined()
+		expect(readDeclaredArtifactFile(await packageDir("{not json"))).toBeUndefined()
 	})
 
-	it("ignores a files entry that is not a filename", () => {
-		expect(readDeclaredArtifactFile(packageDir({ files: { postcode_anchor: "" } }))).toBeUndefined()
-		expect(readDeclaredArtifactFile(packageDir({ files: { postcode_anchor: 3 } }))).toBeUndefined()
-		expect(readDeclaredArtifactFile(packageDir({ files: ["postcode-us.bin"] }))).toBeUndefined()
+	it("ignores a files entry that is not a filename", async () => {
+		expect(readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: "" } }))).toBeUndefined()
+		expect(readDeclaredArtifactFile(await packageDir({ files: { postcode_anchor: 3 } }))).toBeUndefined()
+		expect(readDeclaredArtifactFile(await packageDir({ files: ["postcode-us.bin"] }))).toBeUndefined()
 	})
 
 	it("reads the SHIPPED cards: en-us/fr-fr/en-gb declare their binaries, en-nz declares none", () => {
@@ -99,19 +103,19 @@ describe("readDeclaredArtifactFile", () => {
 })
 
 describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warning", () => {
-	it("speaks when the package declares a binary it does not have", () => {
+	it("speaks when the package declares a binary it does not have", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } })
 
-		expect(unfedAnchorDetail(dir)).toMatch(/declares files\.postcode_anchor = postcode-us\.bin, which is NOT in/)
+		expect(unfedAnchorDetail(await dir)).toMatch(/declares files\.postcode_anchor = postcode-us\.bin, which is NOT in/)
 	})
 
-	it("speaks when the declared binary is present but parsed empty — the other broken-package shape", () => {
+	it("speaks when the declared binary is present but parsed empty — the other broken-package shape", async () => {
 		const dir = packageDir({ files: { postcode_anchor: "postcode-us.bin" } }, ["postcode-us.bin"])
 
-		expect(unfedAnchorDetail(dir)).toMatch(/parsed EMPTY/)
+		expect(unfedAnchorDetail(await dir)).toMatch(/parsed EMPTY/)
 	})
 
-	it("stays SILENT for a package that declares no binary — the #1516 false alarm", () => {
+	it("stays SILENT for a package that declares no binary — the #1516 false alarm", async () => {
 		// en-gb's shape. Its card says `requires.anchor.required: true` (about the shared encoder) and ships no
 		// binary on purpose, and the old condition read only the first half — so every process that loaded this
 		// overlay printed an anchor-OFF warning naming no package, which an operator whose primary bin was
@@ -121,7 +125,7 @@ describe("unfedAnchorDetail — whether an unfed anchor channel is worth a warni
 			files: { $comment_postcode_anchor: "NONE — deliberate" },
 		})
 
-		expect(unfedAnchorDetail(dir)).toBeUndefined()
+		expect(unfedAnchorDetail(await dir)).toBeUndefined()
 		expect(unfedAnchorDetail(undefined)).toBeUndefined()
 	})
 })

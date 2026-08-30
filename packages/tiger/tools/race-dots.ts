@@ -151,7 +151,7 @@ export async function raceDots(
 		return null
 	}
 
-	const db = new DatabaseClient<TIGERDatabase>(DB, { readOnly: true })
+	using db = new DatabaseClient<TIGERDatabase>(DB, { readOnly: true })
 
 	const rows = db
 		.prepare(
@@ -160,8 +160,6 @@ export async function raceDots(
 			 WHERE p.pop_total > 0`
 		)
 		.all() as Array<{ geometry: string } & Record<(typeof CATEGORIES)[number], number>>
-
-	await db.destroy()
 
 	const out = createWriteStream(OUT)
 	const totals = new Map<string, number>()

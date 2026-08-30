@@ -18,6 +18,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -29,9 +30,6 @@ import {
 } from "@mailwoman/core/layers"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { CompiledGeographicModel } from "@mailwoman/geographic-model"
-import { mkdtempSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -85,7 +83,9 @@ interface ScratchLayerOptions {
 	cells?: { h3Cell: number; completeness: number; basis: CoverageBasis; observedRows: number }[]
 }
 
-const scratchRoot = mkdtempSync(join(tmpdir(), "mw-absence-"))
+const scratchRoot = await temporaryDirectory("mw-absence-")
+
+afterAll(() => scratchRoot[Symbol.asyncDispose]())
 const built: string[] = []
 
 /**
@@ -93,7 +93,7 @@ const built: string[] = []
  * the scratch artifact and a real one differ in scale and nothing else.
  */
 async function scratchLayer(options: ScratchLayerOptions = {}): Promise<string> {
-	const path = join(scratchRoot, `layer-${built.length}.db`)
+	const path = scratchRoot.resolve(`layer-${built.length}.db`)
 
 	built.push(path)
 
@@ -210,7 +210,7 @@ async function routeOver(options: ScratchLayerOptions = {}, model?: CompiledGeog
 
 afterAll(() => {
 	for (const route of routes) {
-		route.close()
+		route[Symbol.dispose]()
 	}
 })
 

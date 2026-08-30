@@ -16,8 +16,10 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { removePath, movePath } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createWriteStream, existsSync, renameSync, rmSync } from "@mailwoman/platform/fs"
+import { createWriteStream } from "@mailwoman/platform/fs"
 
 /**
  * Southern edge of the US including Puerto Rico and Hawaii.
@@ -91,8 +93,8 @@ export async function buildFDICHoldout(): Promise<void> {
 	const OUT = String(dataRootPath("corpus", "staging", "fdic-us.csv"))
 	const tmp = `${OUT}.tmp-${process.pid}`
 
-	if (existsSync(tmp)) {
-		rmSync(tmp)
+	if (await pathExists(tmp)) {
+		await removePath(tmp)
 	}
 
 	const sink = createWriteStream(tmp, { encoding: "utf8" })
@@ -137,14 +139,14 @@ export async function buildFDICHoldout(): Promise<void> {
 		sink.end(resolvePromise)
 	})
 
-	if (existsSync(OUT)) {
-		renameSync(OUT, `${OUT}.prev`)
+	if (await pathExists(OUT)) {
+		await movePath(OUT, `${OUT}.prev`)
 	}
 
-	renameSync(tmp, OUT)
+	await movePath(tmp, OUT)
 
-	if (existsSync(`${OUT}.prev`)) {
-		rmSync(`${OUT}.prev`)
+	if (await pathExists(`${OUT}.prev`)) {
+		await removePath(`${OUT}.prev`)
 	}
 
 	console.error(

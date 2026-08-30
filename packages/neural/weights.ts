@@ -22,6 +22,7 @@
  *   naming all the paths it tried.
  */
 
+import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
 import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
@@ -36,9 +37,9 @@ import { PlacetypeCensusResolver } from "./placetype-census.ts"
  * A weights package's own directory, located with Node's native ESM resolver.
  *
  * WHY THE `package.json` SUBPATH AND NOT `findPackageJSON`. `node:module`'s `findPackageJSON` reads like the obvious
- * tool for "give me a package's root", and it is the one that keeps working if a weights package ever grows an
- * `exports` map that omits `./package.json` (none has one today — they are data-only packages with no `exports` at all,
- * which is why the subpath resolves). But measured in this yarn workspace it returns the node_modules SYMLINK path
+ * tool for "give me a package's root" and the one that keeps working if a weights package ever grows an `exports` map
+ * that omits `./package.json` (none has one today — they are data-only packages with no `exports` at all, which is why
+ * the subpath resolves). But measured in this yarn workspace it returns the node_modules SYMLINK path
  * (`node_modules/@mailwoman/neural-weights-en-us`) where `import.meta.resolve` — like the `require.resolve` this
  * replaced — realpaths through to the workspace directory (`neural-weights-en-us`). That string is not internal: it
  * lands in {@link ResolvedWeights.modelPath}, in the "missing model files" error, and (via the caller) in `mailwoman
@@ -848,12 +849,12 @@ function resolvePairIndexSibling(packageDir: string, country: string): string | 
  * `undefined` when the file is absent — the caller then wires no census and the feature is entirely inert, with no
  * warning: an absent build-local artifact is the NORMAL state for every consumer who never ran the build command.
  */
-export function resolvePlacetypeCensusPath(country: string): string | undefined {
+export async function resolvePlacetypeCensusPath(country: string): Promise<string | undefined> {
 	if (!country) return undefined
 
 	const candidate = String(dataRootPath("wof", `placetype-census-${country.toLowerCase()}.bin`))
 
-	return existsSync(candidate) ? candidate : undefined
+	return (await pathExists(candidate)) ? candidate : undefined
 }
 
 /**
@@ -867,13 +868,16 @@ export function resolvePlacetypeCensusPath(country: string): string | undefined 
  * is LOUD — those are build mistakes, and the country one in particular would otherwise have a census describing the
  * wrong country's hierarchy quietly riding the trace a calibration rung reads.
  */
-export function loadPlacetypeCensus(country: string, explicitPath?: string): PlacetypeCensusResolver | undefined {
-	const path = explicitPath ?? resolvePlacetypeCensusPath(country)
+export async function loadPlacetypeCensus(
+	country: string,
+	explicitPath?: string
+): Promise<PlacetypeCensusResolver | undefined> {
+	const path = explicitPath ?? (await resolvePlacetypeCensusPath(country))
 
 	if (!path) return undefined
 
 	try {
-		const census = new PlacetypeCensusResolver(new Uint8Array(readFileSync(path)))
+		const census = new PlacetypeCensusResolver(new Uint8Array(await readLocalBuffer(path)))
 
 		if (census.country === country) return census
 
@@ -1065,19 +1069,19 @@ export interface DeclaredArtifact {
 /**
  * What a weights package's OWN `model-card.json` declares it ships under `files`, for one family of keys.
  *
- * The card's `files` block is the package's manifest of intent, and it is the only per-package statement of what SHOULD
- * be on disk — `requires` describes the trained ENCODER, which is a different claim and is shared across every overlay
- * that inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares
- * `requires.anchor.required: true` (a true statement about the encoder) while deliberately shipping no
- * `postcode-gb.bin` under the #1476 mitigation, so a guard keyed on `requires` alone calls a supported configuration
- * broken, and — because the old warning fired once per PROCESS and named no package — the operator reads that as the
- * PRIMARY locale's bin being missing.
+ * The card's `files` block is the package's manifest of intent and the only per-package statement of what SHOULD be on
+ * disk — `requires` describes the trained ENCODER, which is a different claim and is shared across every overlay that
+ * inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares `requires.anchor.required:
+ * true` (a true statement about the encoder) while deliberately shipping no `postcode-gb.bin` under the #1476
+ * mitigation, so a guard keyed on `requires` alone calls a supported configuration broken, and — because the old
+ * warning fired once per PROCESS and named no package — the operator reads that as the PRIMARY locale's bin being
+ * missing.
  *
  * Reads the package's own card only, never the `baseWeights` fallback: an overlay that ships no card of its own is
  * making no claim about its files, and inheriting the base's manifest would attribute `postcode-us.bin` to it.
  *
  * @returns `undefined` when the package has no card, the card has no `files` block, or none of `keys` appears there —
- *   all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
+ * all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
  */
 export function readDeclaredArtifactFile(
 	packageDir: string | undefined,
@@ -1389,12 +1393,12 @@ export interface CRFTransitions {
  * Read learned CRF transition parameters from `crf-transitions.json`. Returns `undefined` when the file is missing or
  * malformed — callers fall back to the structural BIO mask only.
  */
-export function readCRFTransitions(crfPath: string | undefined): CRFTransitions | undefined {
-	if (!crfPath || !existsSync(crfPath)) return undefined
+export async function readCRFTransitions(crfPath: string | undefined): Promise<CRFTransitions | undefined> {
+	if (!crfPath || !(await pathExists(crfPath))) return undefined
 	let raw: string
 
 	try {
-		raw = readFileSync(crfPath, "utf8")
+		raw = await readLocalTextFile(crfPath)
 	} catch {
 		return undefined
 	}

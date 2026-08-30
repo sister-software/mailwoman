@@ -2,7 +2,8 @@
  * Read compiled command modules and assemble their native command specifications.
  */
 
-import { readdir, stat } from "@mailwoman/platform/fs/promises"
+import { isDirectory } from "@mailwoman/core/fs/readers"
+import { readdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { pathToFileURL } from "@mailwoman/platform/url"
 
@@ -47,7 +48,7 @@ export async function readCommands(
 		if (ignoredEntries.has(entry.replace(/\.[cm]?js$/u, ""))) continue
 		const path = join(directory, entry)
 
-		if ((await stat(path)).isDirectory()) {
+		if (await isDirectory(path)) {
 			const children = await readCommands(path)
 			const index = children.get("index")
 

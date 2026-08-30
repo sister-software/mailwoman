@@ -358,9 +358,9 @@ export type DerivationInput =
  * A fact a named procedure computed from named inputs. Never hand-authored: #1926's compiler writes this table, and the
  * validator refuses a fact whose derivation is unnamed or whose inputs do not resolve.
  *
- * There is no provenance field. The derivation plus the inputs is the provenance, and it is the stronger kind — a
- * source string can be copied onto a record that did not come from it, while an input list either resolves or the
- * document does not validate.
+ * There is no provenance field. The derivation plus the inputs is the provenance and the stronger kind — a source
+ * string can be copied onto a record that did not come from it, while an input list either resolves or the document
+ * does not validate.
  */
 export interface DerivedFactRecord {
 	id: DerivedFactID

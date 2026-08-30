@@ -28,8 +28,9 @@
  *     node ban/out/scripts/build-address-point-shard.js --depts 48,2A,05 --out /tmp/ban-sample.db
  */
 
+import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import {
@@ -59,7 +60,7 @@ interface BuildArgs {
 	depts: string[] | null
 }
 
-function parse(): BuildArgs {
+async function parse(): Promise<BuildArgs> {
 	const { values } = parseArgs({
 		options: {
 			country: { type: "string" },
@@ -75,7 +76,7 @@ function parse(): BuildArgs {
 	streetLocaleForBANCountry(country)
 	const csvDir = values["csv-dir"] ?? dataRootPath("corpus", "sources", "ban")
 
-	if (!existsSync(csvDir)) throw new Error(`BAN CSV dir not found: ${csvDir}`)
+	if (!(await pathExists(csvDir))) throw new Error(`BAN CSV dir not found: ${csvDir}`)
 	const release = values.release ?? "2026-05-18"
 	const output = values.out ?? dataRootPath("ban", `address-points-${country}.db`)
 
@@ -94,11 +95,11 @@ function parse(): BuildArgs {
  * aggregates (they duplicate the per-département rows), and prefers an uncompressed `.csv` over a `.csv.gz` when both
  * exist (the same dept, faster read). When `depts` is set, restricts to that list (for a fast validation build).
  */
-function departementFiles(csvDir: string, depts: string[] | null): Map<string, string> {
+async function departementFiles(csvDir: string, depts: string[] | null): Promise<Map<string, string>> {
 	const byDept = new Map<string, string>()
 	const wanted = depts ? new Set(depts.map((d) => d.toLowerCase())) : null
 
-	for (const name of readdirSync(csvDir).toSorted()) {
+	for (const name of (await readDirectory(csvDir)).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue
@@ -122,108 +123,109 @@ function departementFiles(csvDir: string, depts: string[] | null): Map<string, s
 }
 
 async function main(): Promise<void> {
-	const args = parse()
+	const args = await parse()
 	const locale = streetLocaleForBANCountry(args.country)
 	const source = `ban:${args.country}`
-	const files = departementFiles(args.csvDir, args.depts)
+	const files = await departementFiles(args.csvDir, args.depts)
 
 	if (!files.size) throw new Error(`no BAN département dumps found in ${args.csvDir}`)
 	const tmp = `${args.output}.building-${process.pid}.db`
 
-	mkdirSync(dirname(args.output), { recursive: true })
+	await makeDirectories(dirname(args.output))
 
 	for (const sfx of ["", "-wal", "-shm"]) {
-		rmSync(tmp + sfx, { force: true })
+		await removePathIfPresent(tmp + sfx)
 	}
 
-	const kdb = new DatabaseClient<AddressPointDatabase>(tmp)
-	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	await createAddressPointTable(kdb)
-
-	const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
-
+	const deptList = [...files.keys()].toSorted()
+	let noStreet = 0
 	let total = 0
 	let written = 0
-	let noStreet = 0
-	const BATCH = 50_000
-	const deptList = [...files.keys()].toSorted()
 
-	console.error(`[ban] building ${args.country} rooftop shard from ${files.size} départements in ${args.csvDir}`)
+	{
+		using kdb = new DatabaseClient<AddressPointDatabase>(tmp)
+		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
+		await createAddressPointTable(kdb)
 
-	kdb.exec("BEGIN")
+		const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
-	for (const dept of deptList) {
-		const path = files.get(dept)!
+		const BATCH = 50_000
 
-		for await (const rec of extractBANAddrPoints(path)) {
-			total++
-			const streetNorm = normalizeStreetForKeyLocale(rec.street, locale)
-			const numTrim = rec.numero.trim().toLowerCase()
+		console.error(`[ban] building ${args.country} rooftop shard from ${files.size} départements in ${args.csvDir}`)
 
-			if (!streetNorm || !numTrim) {
-				noStreet++
+		kdb.exec("BEGIN")
 
-				continue
-			}
+		for (const dept of deptList) {
+			const path = files.get(dept)!
 
-			// Fold `rep` into the house-number key: "8" + "bis" → "8 bis" (matches a parsed "8 bis Rue X").
-			const number = rec.rep ? `${numTrim} ${rec.rep}` : numTrim
+			for await (const rec of extractBANAddrPoints(path)) {
+				total++
+				const streetNorm = normalizeStreetForKeyLocale(rec.street, locale)
+				const numTrim = rec.numero.trim().toLowerCase()
 
-			// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
-			// locality_norm, street_raw, lat, lon, source, release.
-			insert.run(
-				streetNorm,
-				canonicalizeRouteKey(streetNorm),
-				number,
-				null,
-				rec.postcode,
-				// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris") —
-				// the SAME both-sides discipline the #1042 street-centroid key uses, so a query's
-				// "Paris" hits directly (fr-chevaleret-bare). No-op for every other commune.
-				rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
-				rec.street,
-				rec.lat,
-				rec.lon,
-				source,
-				args.release
-			)
+				if (!streetNorm || !numTrim) {
+					noStreet++
 
-			written++
+					continue
+				}
 
-			if (written % BATCH === 0) {
-				kdb.exec("COMMIT")
-				kdb.exec("BEGIN")
+				// Fold `rep` into the house-number key: "8" + "bis" → "8 bis" (matches a parsed "8 bis Rue X").
+				const number = rec.rep ? `${numTrim} ${rec.rep}` : numTrim
 
-				if (written % 2_000_000 === 0) {
-					console.error(`[ban]   ${written.toLocaleString()} written…`)
+				// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
+				// locality_norm, street_raw, lat, lon, source, release.
+				insert.run(
+					streetNorm,
+					canonicalizeRouteKey(streetNorm),
+					number,
+					null,
+					rec.postcode,
+					// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris") —
+					// the SAME both-sides discipline the #1042 street-centroid key uses, so a query's
+					// "Paris" hits directly (fr-chevaleret-bare). No-op for every other commune.
+					rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
+					rec.street,
+					rec.lat,
+					rec.lon,
+					source,
+					args.release
+				)
+
+				written++
+
+				if (written % BATCH === 0) {
+					kdb.exec("COMMIT")
+					kdb.exec("BEGIN")
+
+					if (written % 2_000_000 === 0) {
+						console.error(`[ban]   ${written.toLocaleString()} written…`)
+					}
 				}
 			}
+
+			console.error(`[ban]   dept ${dept}: ${written.toLocaleString()} cumulative`)
 		}
 
-		console.error(`[ban]   dept ${dept}: ${written.toLocaleString()} cumulative`)
+		kdb.exec("COMMIT")
+
+		console.error(`[ban] indexing…`)
+
+		await createAddressPointIndexes(kdb)
+		kdb.exec("ANALYZE")
 	}
-
-	kdb.exec("COMMIT")
-
-	console.error(`[ban] indexing…`)
-
-	await createAddressPointIndexes(kdb)
-	kdb.exec("ANALYZE")
-	await kdb.destroy()
 
 	swapDatabaseIntoPlace(tmp, args.output)
 	sealDatabase(args.output)
 
 	const md5 = await md5File(args.output)
-	const bytes = statSync(args.output).size
+	const bytes = (await statPath(args.output)).size
 
 	// Provenance manifest — additive, written at creation (house discipline). Only for a FULL national build
 	// (the fast --depts validation builds are transient and don't rewrite the record).
 	if (!args.depts) {
 		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")
 
-		writeFileSync(
-			attributionPath,
+		await writeLocalTextFile(
 			JSON.stringify(
 				{
 					artifact: `address-points-${args.country}.db`,
@@ -240,7 +242,8 @@ async function main(): Promise<void> {
 				},
 				null,
 				2
-			) + "\n"
+			) + "\n",
+			attributionPath
 		)
 
 		console.error(`[ban] wrote ${attributionPath}`)

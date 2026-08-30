@@ -17,7 +17,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 function buildDB(): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -60,7 +60,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-	lookup.close()
+	lookup[Symbol.dispose]()
 })
 
 describe("coordinate-first locality resolution", () => {

@@ -49,7 +49,7 @@ const WOF_DB = String(dataRootPath("wof", "fst-staging-2026-08-05", "admin-globa
 const POP_FST_DIR = String(dataRootPath("wof", "fst-per-locale"))
 const IMP_FST_DIR = String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix"))
 
-const db = new DatabaseClient<WOFDatabase>(WOF_DB, { readOnly: true })
+using db = new DatabaseClient<WOFDatabase>(WOF_DB, { readOnly: true })
 const pointStmt = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")
 
 interface Point {
@@ -207,7 +207,5 @@ const moved = sorted.filter((c) => c.popBias !== c.impBias).length
 console.error(`wrote ${sorted.length} rows → ${OUT}`)
 console.error(`  fstReach in=${inReach} out=${sorted.length - inReach}`)
 console.error(`  rows whose probe surface has a DIFFERENT bias between arms: ${moved}`)
-
-await db.destroy()
 
 //#endregion

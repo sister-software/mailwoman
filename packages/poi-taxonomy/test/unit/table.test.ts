@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { lookupPOIBrand as nodeLookupPOIBrand } from "@mailwoman/poi-taxonomy/brands"
 import { lookupPOICategory as nodeLookupPOICategory } from "@mailwoman/poi-taxonomy/lookup"
 import { createPOIBrandLookup, createPOITaxonomyLookup } from "@mailwoman/poi-taxonomy/table"
@@ -99,15 +100,14 @@ describe("createPOITaxonomyLookup", () => {
 	})
 
 	it("agrees with the node entry on a shared phrase from the real taxonomy table", async () => {
-		// Load the same JSON the node entry loads, via node:fs directly (this test file itself runs under node, so
+		// Load the same JSON the node entry loads, via the core reader (this test file itself runs under node, so
 		// this doesn't exercise bundler-safety — it just proves the two entries agree over the real table).
-		const { readFileSync } = await import("@mailwoman/platform/fs")
 		const { resolve } = await import("@mailwoman/platform/path")
 
 		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
-		const table = JSON.parse(
-			readFileSync(resolve(import.meta.dirname, "../../data/taxonomy.json"), "utf8")
-		) as POITaxonomyTable
+		const table = (await readLocalJSONFile(
+			resolve(import.meta.dirname, "../../data/taxonomy.json")
+		)) as POITaxonomyTable
 
 		const injectedLookup = createPOITaxonomyLookup(table)
 
@@ -191,13 +191,10 @@ describe("createPOIBrandLookup", () => {
 	})
 
 	it("agrees with the node entry on a shared phrase from the real committed brand table", async () => {
-		const { readFileSync } = await import("@mailwoman/platform/fs")
 		const { resolve } = await import("@mailwoman/platform/path")
 
 		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
-		const table = JSON.parse(
-			readFileSync(resolve(import.meta.dirname, "../../data/brands.json"), "utf8")
-		) as POIBrandTable
+		const table = (await readLocalJSONFile(resolve(import.meta.dirname, "../../data/brands.json"))) as POIBrandTable
 
 		const injectedLookup = createPOIBrandLookup(table)
 		const [firstBrand] = table.brands

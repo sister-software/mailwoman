@@ -28,8 +28,9 @@
  *   the two as one number would either overstate the risk or hide it.
  */
 
+import { pathExists, readDirectoryEntries, realPath, statPath } from "@mailwoman/core/fs/readers"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { type Dirent, existsSync, readdirSync, realpathSync, statSync } from "@mailwoman/platform/fs"
+import type { Dirent } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 
 /**
@@ -108,13 +109,13 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
  * repo as single-layout. Fast-glob does not skip it — `ingest-wof` passes no `followSymbolicLinks` and the default is
  * `true` — so the audit would be describing a tree the ingest does not see.
  */
-function leadsToDirectory(entry: Dirent, full: string): boolean {
+async function leadsToDirectory(entry: Dirent, full: string): Promise<boolean> {
 	if (entry.isDirectory()) return true
 
 	if (!entry.isSymbolicLink()) return false
 
 	try {
-		return statSync(full).isDirectory()
+		return (await statPath(full)).isDirectory()
 	} catch {
 		// A broken link leads nowhere, which is the correct answer rather than an error.
 		return false
@@ -141,12 +142,12 @@ function headOf(dir: string): string | undefined {
  * Only two levels are examined, because only two layouts exist: a repo directly under the root, and a repo under an
  * owner directory. Anything deeper is a repo's own contents.
  */
-export function auditReposRoot(root: string, options: { readCommits?: boolean } = {}): ReposAudit {
+export async function auditReposRoot(root: string, options: { readCommits?: boolean } = {}): Promise<ReposAudit> {
 	const byName = new Map<string, ClonedRepo>()
 
 	const realPaths = new Map<string, string[]>()
 
-	const record = (name: string, layout: CloneLayout, dir: string): void => {
+	const record = async (name: string, layout: CloneLayout, dir: string): Promise<void> => {
 		const existing = byName.get(name) ?? { name, layouts: [], commits: {}, aliased: false, ...parseRepoName(name) }
 
 		existing.layouts.push(layout)
@@ -154,7 +155,7 @@ export function auditReposRoot(root: string, options: { readCommits?: boolean } 
 		// `realpath` is what separates a second checkout from a second PATH to the first. Comparing directory
 		// listings cannot: both shapes look identical from `ls`.
 		try {
-			realPaths.set(name, [...(realPaths.get(name) ?? []), realpathSync(dir)])
+			realPaths.set(name, [...(realPaths.get(name) ?? []), await realPath(dir)])
 		} catch {
 			// Unresolvable (a broken link). Left out of the alias comparison rather than guessed at.
 		}
@@ -170,25 +171,25 @@ export function auditReposRoot(root: string, options: { readCommits?: boolean } 
 		byName.set(name, existing)
 	}
 
-	if (!existsSync(root)) return { root, repos: [], duplicated: [], aliased: [], diverged: [] }
+	if (!(await pathExists(root))) return { root, repos: [], duplicated: [], aliased: [], diverged: [] }
 
-	for (const entry of readdirSync(root, { withFileTypes: true })) {
+	for (const entry of await readDirectoryEntries(root)) {
 		const full = join(root, entry.name)
 
-		if (!leadsToDirectory(entry, full)) continue
+		if (!(await leadsToDirectory(entry, full))) continue
 
 		if (entry.name.startsWith("whosonfirst-data-") || entry.name.startsWith("whosonfirst-external-")) {
-			record(entry.name, CloneLayout.Flat, full)
+			await record(entry.name, CloneLayout.Flat, full)
 
 			continue
 		}
 
 		// An owner directory. Its children are the nested layout; a name that is itself a repo was handled above.
-		for (const child of readdirSync(full, { withFileTypes: true })) {
+		for (const child of await readDirectoryEntries(full)) {
 			const childPath = join(full, child.name)
 
-			if (child.name.startsWith("whosonfirst-") && leadsToDirectory(child, childPath)) {
-				record(child.name, CloneLayout.Nested, childPath)
+			if (child.name.startsWith("whosonfirst-") && (await leadsToDirectory(child, childPath))) {
+				await record(child.name, CloneLayout.Nested, childPath)
 			}
 		}
 	}

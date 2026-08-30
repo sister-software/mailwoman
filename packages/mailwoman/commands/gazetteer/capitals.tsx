@@ -36,7 +36,7 @@ const GazetteerCapitals: ParsedCommandComponent<Options> = ({ options }) => {
 		const { buildCapitalsReference } = await import("#gazetteer/capitals")
 		const { dataRootPath, repoRootPathBuilder } = await import("@mailwoman/core/utils")
 
-		const result = buildCapitalsReference({
+		const result = await buildCapitalsReference({
 			geonamesDir: options.geonames ?? String(dataRootPath("geonames")),
 			outPath: options.output ?? String(repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")),
 		})

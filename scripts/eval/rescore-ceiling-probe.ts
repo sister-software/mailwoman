@@ -17,8 +17,8 @@
  *   Run: node scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
@@ -82,7 +82,7 @@ async function main() {
 	const swapBest5: number[] = []
 
 	for (const [cc, file] of LOCALES) {
-		if (!existsSync(file)) {
+		if (!(await pathExists(file))) {
 			console.log(`${cc}: golden missing — skipped`)
 
 			continue

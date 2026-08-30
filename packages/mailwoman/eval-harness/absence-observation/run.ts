@@ -24,11 +24,10 @@
  *   read it says so in place rather than omitting the field.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { readFileSync } from "@mailwoman/platform/fs"
 
 import { type LayerManifest, probeManifest } from "../../data-inventory.ts"
 import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"
@@ -122,11 +121,11 @@ interface ModelCard {
 	version: string
 }
 
-function readWeightsIdentity(options: AbsenceProbeOptions): {
+async function readWeightsIdentity(options: AbsenceProbeOptions): Promise<{
 	weightsLocale: string
 	weightsModelPath: string
 	weightsVersion: string
-} {
+}> {
 	const locale = options.locale ?? "en-US"
 	const resolved = resolveWeights({ locale, cacheRoot: options.weightsCacheRoot })
 	const cardPath = resolved.modelCardPath ?? resolved.baseModelCardPath
@@ -135,16 +134,16 @@ function readWeightsIdentity(options: AbsenceProbeOptions): {
 		return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: "no model-card resolved" }
 	}
 
-	const card = parseJSONStrict<ModelCard>(readFileSync(cardPath, "utf8"))
+	const card = await readLocalJSONFile<ModelCard>(cardPath)
 
 	return { weightsLocale: locale, weightsModelPath: resolved.modelPath, weightsVersion: card.version }
 }
 
-function readArtifactIdentity(
+async function readArtifactIdentity(
 	db: string,
 	backend: POIBoardResolverBackend,
 	options: AbsenceProbeOptions
-): AbsenceArtifactIdentity {
+): Promise<AbsenceArtifactIdentity> {
 	const probed = probeManifest(db)
 
 	return {
@@ -154,7 +153,7 @@ function readArtifactIdentity(
 			? {}
 			: { poiLayerManifestNote: probed.error ?? "the database carries no layer_manifest table" }),
 		resolverBackend: backend,
-		...readWeightsIdentity(options),
+		...(await readWeightsIdentity(options)),
 	}
 }
 
@@ -174,13 +173,15 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 	const semanticRoute = needsSemanticRoute ? await createSemanticObservationRoute() : undefined
 	const absenceRoute = await createAbsenceObservationRoute({ coverageDatabasePath })
 
-	const { pipeline, db, backend, close } = await createPOIBoardPipeline({
+	using pipelineHandle = await createPOIBoardPipeline({
 		...options,
 		// After the spread, never before: `...options` carries an explicit `db: undefined` when the caller passed
 		// none, which would overwrite the default and send the executor to the data root's general poi.db.
 		db: options.db ?? coverageDatabasePath,
 		...(semanticRoute ? { poiSemanticLookup: semanticRoute.lookup } : {}),
 	})
+
+	const { pipeline, db, backend } = pipelineHandle
 
 	const rows: AbsenceRowOutcome[] = []
 	const observations: AbsenceRowObservation[] = []
@@ -196,8 +197,7 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 			}
 		}
 	} finally {
-		close()
-		absenceRoute.close()
+		absenceRoute[Symbol.dispose]()
 	}
 
 	return {
@@ -206,7 +206,7 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 		definitionSHA256: absenceProbeDefinitionHash(definition),
 		generatedAt: new Date().toISOString(),
 		gitCommit: options.gitCommit ?? buildSHA(String(repoRootPath())),
-		artifact: readArtifactIdentity(db, backend, options),
+		artifact: await readArtifactIdentity(db, backend, options),
 		absenceRoute: absenceRoute.identity,
 		semanticRouteInjected: Boolean(semanticRoute),
 		rows,

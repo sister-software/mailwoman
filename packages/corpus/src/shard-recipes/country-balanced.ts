@@ -162,7 +162,7 @@ async function readTuples(source: CountrySource, limit: number): Promise<Country
 	const tuples: CountryTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
+	for await (const row of await readZippedCSVRecords(source.zip, source.csv)) {
 		if (tuples.length >= limit) break
 
 		const street = row.street ?? "",

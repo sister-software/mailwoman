@@ -27,7 +27,7 @@
  *   finished value before the file is opened.
  */
 
-import { writeFile } from "@mailwoman/platform/fs/promises"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 
 import type { PremiseLinkageReport, PremiseLinkageResultRow } from "./schema.ts"
 import { PREMISE_LINKAGE_SHAPE_CLASSES } from "./schema.ts"
@@ -271,7 +271,7 @@ export async function writePremiseLinkageReport(
 ): Promise<PremiseLinkageReport> {
 	const report = publishableReport(input)
 
-	await writeFile(path, `${JSON.stringify(report, null, "\t")}\n`, "utf8")
+	await writeLocalJSONFile(report, path)
 
 	return report
 }

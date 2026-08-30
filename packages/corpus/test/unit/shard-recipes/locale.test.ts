@@ -12,6 +12,8 @@
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	applyCountryAppend,
 	applyDistrictAsLocalityOverride,
@@ -22,12 +24,15 @@ import {
 	resolveLocaleParts,
 } from "@mailwoman/corpus/shard-recipes/locale"
 import { makeMulberry32 } from "@mailwoman/corpus/shard-recipes/scaffold"
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { rmSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { SynthesizedLocaleRow } from "#synthesizers/german"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 describe("cleanCityNoise", () => {
 	it("drops ES cadastral pseudo-localities (comma / ≥4-digit run)", () => {
@@ -72,8 +77,8 @@ describe("cleanCityNoise", () => {
 describe("readTuples (OA CSV parse)", () => {
 	const dirs: string[] = []
 
-	const tmp = (): string => {
-		const d = mkdtempSync(join(tmpdir(), "mw-locale-"))
+	const tmp = async (): Promise<string> => {
+		const d = fixtures.use(await temporaryDirectory("mw-locale-")).path
 		dirs.push(d)
 
 		return d
@@ -87,17 +92,17 @@ describe("readTuples (OA CSV parse)", () => {
 	const OA_HEADER = "LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH"
 
 	it("parses quoted fields, CRLF terminators, and the region fallback", async () => {
-		const file = join(tmp(), "part.csv")
+		const file = join(await tmp(), "part.csv")
 
-		writeFileSync(
-			file,
+		await writeLocalTextFile(
 			[
 				OA_HEADER,
 				// Quoted street with an embedded comma; populated REGION.
 				'22.6,49.3,12,"Main St, West",,Springfield,dist,Bayern,38-710,id1,hash1',
 				// Empty REGION cell → must fall back to part.region.
 				"22.7,49.2,5,Elm Ave,,Shelbyville,dist,,38-711,id2,hash2",
-			].join("\r\n") + "\r\n"
+			].join("\r\n") + "\r\n",
+			file
 		)
 
 		const tuples = await readTuples({ path: file, region: "FallbackLand" }, () => 0)
@@ -109,17 +114,17 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("districtAsLocality (NZ) maps DISTRICT→locality, CITY→dependent_locality; falls back when DISTRICT empty", async () => {
-		const file = join(tmp(), "part.csv")
+		const file = join(await tmp(), "part.csv")
 
-		writeFileSync(
-			file,
+		await writeLocalTextFile(
 			[
 				OA_HEADER,
 				// NZ shape: CITY = suburb (Birkenhead), DISTRICT = city (Auckland). NZ OA carries no postcode.
 				"174.7,-36.8,31,Rawene Road,,Birkenhead,Auckland,,,id1,hash1",
 				// Empty DISTRICT (~18% of NZ rows) → CITY becomes the locality, no dependent_locality.
 				"174.4,-36.6,26A,Henley Road,,Kaukapakapa,,,,id2,hash2",
-			].join("\n") + "\n"
+			].join("\n") + "\n",
+			file
 		)
 
 		const tuples = await readTuples({ path: file, districtAsLocality: true }, () => 0)
@@ -138,15 +143,15 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLocality (empty CITY kept)", async () => {
-		const file = join(tmp(), "gb.csv")
+		const file = join(await tmp(), "gb.csv")
 
-		writeFileSync(
-			file,
+		await writeLocalTextFile(
 			[
 				"NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE",
 				'14,"Beulah Hill",,"London","Greater London",SE19 3NF',
 				'2,"High Street","Plaistow","Bromley","Greater London",BR1 4AA',
-			].join("\n")
+			].join("\n"),
+			file
 		)
 
 		const tuples = await readTuples({ path: file, districtAsLocality: true }, () => 0)
@@ -165,10 +170,9 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("districtAsLocality: drops dependent_locality when it equals locality (case-insensitive) instead of emitting a same-value pair", async () => {
-		const file = join(tmp(), "part.csv")
+		const file = join(await tmp(), "part.csv")
 
-		writeFileSync(
-			file,
+		await writeLocalTextFile(
 			[
 				OA_HEADER,
 				// CITY and DISTRICT name the same place (differing only in case) — the ES CNIG `poblacion ==
@@ -178,7 +182,8 @@ describe("readTuples (OA CSV parse)", () => {
 				// Genuinely distinct CITY/DISTRICT still produces dependent_locality (the districtAsLocality
 				// contract is otherwise unchanged).
 				"1,2,11,Elm Ave,,Baranbio,Amurrio,Araba,01450,id2,hash2",
-			].join("\n") + "\n"
+			].join("\n") + "\n",
+			file
 		)
 
 		const tuples = await readTuples({ path: file, districtAsLocality: true }, () => 0)
@@ -197,10 +202,9 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("ES pedanía (cnigRaw): joins tipo_vial+nombre_via→street, poblacion→dependent_locality, municipio→locality", async () => {
-		const file = join(tmp(), "es-raw.csv")
+		const file = join(await tmp(), "es-raw.csv")
 
-		writeFileSync(
-			file,
+		await writeLocalTextFile(
 			[
 				"X,Y,id_porpk,tipo,tipo_vial,nombre_via,numero,extension,id_pob,poblacion,cod_postal,ine_mun,municipio,provincia,comunidad_autonoma,fuente_datos,fecha_modificacion",
 				// poblacion filled + distinct from municipio (real pedanía row, mirrors the verified Amurrio/Baranbio sample).
@@ -208,7 +212,8 @@ describe("readTuples (OA CSV parse)", () => {
 				// poblacion empty → falls back to municipio→locality, no dependent_locality (the districtAsLocality
 				// NZ-pattern fallback, exercised here through the CNIG column names instead of CITY/DISTRICT).
 				'-2.503,42.836,"2","PK",CARRETERA,A-4136,15,,,,01240,01001,Alegría-Dulantzi,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
-			].join("\n") + "\n"
+			].join("\n") + "\n",
+			file
 		)
 
 		const tuples = await readTuples({ path: file, cnigRaw: true, districtAsLocality: true }, () => 0)
@@ -233,17 +238,17 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("skips rows missing street or city, and drops city-noise rows", async () => {
-		const file = join(tmp(), "part.csv")
+		const file = join(await tmp(), "part.csv")
 
-		writeFileSync(
-			file,
+		await writeLocalTextFile(
 			[
 				OA_HEADER,
 				"1,2,10,,,NoStreetCity,d,R,00000,i,h", // no street → skip
 				"1,2,11,SomeSt,,,d,R,00000,i,h", // no city → skip
 				'1,2,12,RealSt,,"Comunidad de 09076, 09150 y 09578",d,R,00000,i,h', // quoted city-noise → drop
 				"1,2,13,Keep St,,Keepville,d,R,00000,i,h", // kept
-			].join("\n") + "\n"
+			].join("\n") + "\n",
+			file
 		)
 
 		const tuples = await readTuples({ path: file }, () => 0)

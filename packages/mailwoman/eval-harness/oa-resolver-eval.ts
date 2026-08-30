@@ -54,8 +54,8 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { writeLocalJSONFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { renderOaResolverReport } from "./oa-resolver-report.ts"
@@ -341,19 +341,19 @@ export async function oaResolverEval(
 	}
 
 	if (collectErrors) {
-		writeFileSync(options.errorsJSON || "", JSON.stringify(errorRows, null, 2))
+		await writeLocalJSONFile(errorRows, options.errorsJSON || "")
 
 		reportError(`wrote ${errorRows.length} failure rows → ${options.errorsJSON || ""}`)
 	}
 
 	if (collectRows) {
-		writeFileSync(options.outRows || "", JSON.stringify(outRows))
+		await writeLocalJSONFile(outRows, options.outRows || "")
 
 		reportError(`wrote ${outRows.length} per-row outcomes → ${options.outRows || ""}`)
 	}
 
 	if (collectResolvedDump) {
-		writeFileSync(options.outResolved || "", JSON.stringify(resolvedRows))
+		await writeLocalJSONFile(resolvedRows, options.outResolved || "")
 
 		reportError(`wrote ${resolvedRows.length} resolved rows → ${options.outResolved || ""}`)
 	}
@@ -386,16 +386,16 @@ export async function oaResolverEval(
 	report(markdown)
 
 	if (options.outMd || "") {
-		writeFileSync(options.outMd || "", markdown + "\n")
+		await writeLocalFile(markdown + "\n", options.outMd || "")
 
 		reportError(`wrote markdown → ${options.outMd || ""}`)
 	}
 
 	if (options.outJSON || "") {
-		writeFileSync(options.outJSON || "", JSON.stringify({ neural: dumpAggPair(agg.neural) }, null, 2))
+		await writeLocalJSONFile({ neural: dumpAggPair(agg.neural) }, options.outJSON || "")
 
 		reportError(`wrote json → ${options.outJSON || ""}`)
 	}
 
-	postcodeLookup?.close()
+	postcodeLookup?.[Symbol.dispose]()
 }

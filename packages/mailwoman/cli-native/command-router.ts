@@ -1,4 +1,5 @@
-import { access, readdir } from "@mailwoman/platform/fs/promises"
+import { tryStat } from "@mailwoman/core/fs/readers"
+import { readdir } from "@mailwoman/platform/fs/promises"
 import { render } from "ink"
 import { createElement } from "react"
 import type { ComponentType } from "react"
@@ -9,12 +10,6 @@ interface CommandModule {
 	spec?: CommandSpec
 	default?: ComponentType<{ options: unknown; args: unknown[] }>
 }
-
-const exists = (url: URL): Promise<boolean> =>
-	access(url).then(
-		() => true,
-		() => false
-	)
 
 const commandURL = (parts: readonly string[], index = false): URL =>
 	new URL(`../commands/${parts.join("/")}${index ? "/index" : ""}.js`, import.meta.url)
@@ -109,13 +104,13 @@ export async function dispatchCommand(argv: readonly string[]): Promise<number> 
 		if (value.startsWith("-")) break
 		const candidate = [...commandParts, value]
 
-		if ((await exists(commandURL(candidate))) || (await exists(commandURL(candidate, true)))) {
+		if ((await tryStat(commandURL(candidate))) || (await tryStat(commandURL(candidate, true)))) {
 			commandParts.push(value)
 
 			continue
 		}
 
-		if (await exists(new URL(`../commands/${candidate.join("/")}/`, import.meta.url))) {
+		if (await tryStat(new URL(`../commands/${candidate.join("/")}/`, import.meta.url))) {
 			commandParts.push(value)
 
 			continue
@@ -127,7 +122,7 @@ export async function dispatchCommand(argv: readonly string[]): Promise<number> 
 	if (!commandParts.length) throw new CLIUsageError(`Unknown command: ${argv[0] ?? "(none)"}.`)
 	const direct = commandURL(commandParts)
 	const index = commandURL(commandParts, true)
-	const selected = (await exists(direct)) ? direct : (await exists(index)) ? index : undefined
+	const selected = (await tryStat(direct)) ? direct : (await tryStat(index)) ? index : undefined
 
 	if (!selected) return groupHelp(commandParts)
 

@@ -115,7 +115,7 @@ export class SqliteDriver implements Driver {
 	}
 
 	async destroy(): Promise<void> {
-		this.#db?.close()
+		this.#db?.[Symbol.dispose]()
 	}
 }
 

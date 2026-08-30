@@ -98,23 +98,19 @@ polygon-confirmed, the nearest centroid among the polygon-less candidates wins, 
 ```js
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
 
-const geocoder = new WOFReverseGeocoder({
+using geocoder = new WOFReverseGeocoder({
 	adminDBPath: process.env.MAILWOMAN_WOF_ADMIN_DB,
 	polygonDBPath: process.env.MAILWOMAN_WOF_POLYGONS_DB,
 })
 
-try {
-	for (const [lat, lon] of [
-		[44.5588, -72.5778],
-		[40.7128, -74.006],
-		[36.0, -45.0],
-	]) {
-		const { hierarchy, containment } = await geocoder.reverseGeocode(lat, lon)
-		const chain = hierarchy.map((p) => `${p.placetype}:${p.name}`).join(" ← ")
-		console.log(`${lat}, ${lon}  ${containment.padEnd(11)} ${chain || "(nothing — outside gazetteer coverage)"}`)
-	}
-} finally {
-	geocoder.close()
+for (const [lat, lon] of [
+	[44.5588, -72.5778],
+	[40.7128, -74.006],
+	[36.0, -45.0],
+]) {
+	const { hierarchy, containment } = await geocoder.reverseGeocode(lat, lon)
+	const chain = hierarchy.map((p) => `${p.placetype}:${p.name}`).join(" ← ")
+	console.log(`${lat}, ${lon}  ${containment.padEnd(11)} ${chain || "(nothing — outside gazetteer coverage)"}`)
 }
 ```
 

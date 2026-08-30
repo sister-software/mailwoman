@@ -17,7 +17,6 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { WOFDatabase } from "./schema.ts"
 import { allRows } from "./sqlite-utils.ts"
 
 /**

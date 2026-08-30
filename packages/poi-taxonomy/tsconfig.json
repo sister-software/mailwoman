@@ -8,5 +8,9 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": []
+	"references": [
+		{
+			"path": "../core"
+		}
+	]
 }

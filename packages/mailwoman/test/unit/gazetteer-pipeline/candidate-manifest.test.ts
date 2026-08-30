@@ -10,26 +10,20 @@
  *   as absent — substituting the file's name would look like provenance and carry none.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ancestorIdentity, candidateLayerManifest } from "mailwoman/gazetteer-pipeline/candidate-manifest"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
-const roots: string[] = []
+const fixtures = new AsyncDisposableStack()
 
-afterEach(() => {
-	for (const root of roots.splice(0)) {
-		rmSync(root, { recursive: true, force: true })
-	}
-})
+afterAll(() => fixtures.disposeAsync())
 
-function scratch(): string {
-	const root = mkdtempSync(join(tmpdir(), "mw-candidate-manifest-"))
-
-	roots.push(root)
+async function scratch(): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("mw-candidate-manifest-")).path
 
 	return root
 }
@@ -53,42 +47,41 @@ const BASE = {
 }
 
 describe("ancestorIdentity — the four states", () => {
-	it("names the ancestor when it carries a manifest", () => {
-		const root = scratch()
+	it("names the ancestor when it carries a manifest", async () => {
+		const root = await scratch()
 
 		manifested(join(root, "admin.db"), "admin-global-priority", "2026-08-17.0")
 
-		expect(ancestorIdentity(join(root, "admin.db"))).toBe("admin-global-priority@2026-08-17.0")
+		expect(await ancestorIdentity(join(root, "admin.db"))).toBe("admin-global-priority@2026-08-17.0")
 	})
 
-	it("says the ancestor PREDATES the contract, which is the live state today", () => {
+	it("says the ancestor PREDATES the contract, which is the live state today", async () => {
 		// Every admin build before phase 3 has no manifest. This is measured, not hypothetical.
-		const root = scratch()
-		const db = new DatabaseClient<WOFDatabase>(join(root, "admin.db"))
+		const root = await scratch()
+		using db = new DatabaseClient<WOFDatabase>(join(root, "admin.db"))
 
 		db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY)")
-		db.destroy()
 
-		expect(ancestorIdentity(join(root, "admin.db"))).toContain("predates the layer contract")
+		expect(await ancestorIdentity(join(root, "admin.db"))).toContain("predates the layer contract")
 	})
 
-	it("distinguishes a MISSING ancestor from an unmanifested one", () => {
+	it("distinguishes a MISSING ancestor from an unmanifested one", async () => {
 		// Different repairs: one needs a rebuild of the ancestor, the other needs the ancestor.
-		expect(ancestorIdentity(join(scratch(), "nope.db"))).toContain("not found")
+		expect(await ancestorIdentity(join(await scratch(), "nope.db"))).toContain("not found")
 	})
 
-	it("reports an unreadable ancestor rather than throwing mid-build", () => {
-		const root = scratch()
+	it("reports an unreadable ancestor rather than throwing mid-build", async () => {
+		const root = await scratch()
 
-		writeFileSync(join(root, "admin.db"), "not a database")
+		await writeLocalTextFile("not a database", join(root, "admin.db"))
 
-		expect(ancestorIdentity(join(root, "admin.db"))).toMatch(/^unknown \(/)
+		expect(await ancestorIdentity(join(root, "admin.db"))).toMatch(/^unknown \(/)
 	})
 
-	it("never returns a bare filename, which would look like provenance", () => {
+	it("never returns a bare filename, which would look like provenance", async () => {
 		for (const answer of [
-			ancestorIdentity(join(scratch(), "admin-global-priority.db")),
-			ancestorIdentity("/nope/admin-global-priority.db"),
+			await ancestorIdentity(join(await scratch(), "admin-global-priority.db")),
+			await ancestorIdentity("/nope/admin-global-priority.db"),
 		]) {
 			expect(answer.startsWith("unknown")).toBe(true)
 		}
@@ -96,50 +89,54 @@ describe("ancestorIdentity — the four states", () => {
 })
 
 describe("candidateLayerManifest", () => {
-	it("records the ancestor as its source, not the ancestor's sources", () => {
+	it("records the ancestor as its source, not the ancestor's sources", async () => {
 		// Restating "whosonfirst+overture+geonames" here would be true of the ancestor and unfalsifiable of
 		// this file — it could not say WHICH admin build this came from.
-		const root = scratch()
+		const root = await scratch()
 
 		manifested(join(root, "admin.db"), "admin-global-priority", "2026-08-17.0")
 
-		const manifest = candidateLayerManifest({ ...BASE, adminDBPath: join(root, "admin.db") })
+		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: join(root, "admin.db") })
 
 		expect(manifest.source).toBe("admin-global-priority@2026-08-17.0")
 		expect(manifest.source).not.toContain("whosonfirst+")
 	})
 
-	it("records the shard counts, which nothing else in the artifact says", () => {
-		const manifest = candidateLayerManifest({ ...BASE, adminDBPath: join(scratch(), "nope.db") })
+	it("records the shard counts, which nothing else in the artifact says", async () => {
+		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: join(await scratch(), "nope.db") })
 
 		expect(manifest.sourceVintage).toContain("postcode-shards=24")
 		expect(manifest.sourceVintage).toContain("locality-shards=3")
 		expect(manifest.sourceVintage).toContain("importance=yes")
 	})
 
-	it("distinguishes a build with no importance database, which ranks differently", () => {
-		const manifest = candidateLayerManifest({ ...BASE, importance: false, adminDBPath: join(scratch(), "n.db") })
+	it("distinguishes a build with no importance database, which ranks differently", async () => {
+		const manifest = await candidateLayerManifest({
+			...BASE,
+			importance: false,
+			adminDBPath: join(await scratch(), "n.db"),
+		})
 
 		expect(manifest.sourceVintage).toContain("importance=no")
 	})
 
-	it("carries the ancestor's obligations — ODbL is share-alike, so never `shipped`", () => {
-		const manifest = candidateLayerManifest({ ...BASE, adminDBPath: join(scratch(), "n.db") })
+	it("carries the ancestor's obligations — ODbL is share-alike, so never `shipped`", async () => {
+		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: join(await scratch(), "n.db") })
 
 		expect(manifest.tier).toBe("build-local")
 		expect(manifest.license).toContain("ODbL-1.0")
 	})
 
-	it("declares the spine that joins back to the ancestor", () => {
+	it("declares the spine that joins back to the ancestor", async () => {
 		// `spr_id` only means something against a KNOWN admin build, which is the reason the chain is worth
 		// having at all.
-		const manifest = candidateLayerManifest({ ...BASE, adminDBPath: join(scratch(), "n.db") })
+		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: join(await scratch(), "n.db") })
 
 		expect(manifest.spineKeys).toEqual({ wofID: "spr_id" })
 	})
 
-	it("names a build command with no path tokens, so a workspace move cannot stale it", () => {
-		const manifest = candidateLayerManifest({ ...BASE, adminDBPath: join(scratch(), "n.db") })
+	it("names a build command with no path tokens, so a workspace move cannot stale it", async () => {
+		const manifest = await candidateLayerManifest({ ...BASE, adminDBPath: join(await scratch(), "n.db") })
 
 		expect(manifest.buildCmd).toBe("mailwoman gazetteer build candidate")
 		expect(manifest.buildCmd).not.toContain("/")

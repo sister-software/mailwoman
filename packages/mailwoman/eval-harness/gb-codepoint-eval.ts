@@ -191,7 +191,7 @@ for (const locale of ["en-US", "en-GB"]) {
 		}
 	}
 
-	session.close()
+	session[Symbol.dispose]()
 
 	console.log(`[gb-codepoint] ${locale}: ${sample.length * 3} runs complete`)
 }

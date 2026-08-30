@@ -26,10 +26,9 @@
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon/lexicon"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { basename } from "@mailwoman/platform/path"
 
 import { buildSHA } from "../../gazetteer-pipeline/stamp-manifest.ts"
@@ -321,7 +320,7 @@ async function measure(
 
 	if (needed.has("committed_collision_census")) {
 		const censusPath = options.collisionCensusPath ?? String(repoRootPath(COLLISION_CENSUS_PATH))
-		const census = parseJSONStrict<CollisionCensus>(readFileSync(censusPath, "utf8"))
+		const census = await readLocalJSONFile<CollisionCensus>(censusPath)
 
 		const censusHolds =
 			census.lexicon.lexiconID === pins.phraseLexiconID &&
@@ -597,7 +596,8 @@ async function measureMarker(
 ): Promise<{ observed: number; detail: string }> {
 	const probe = definition.markerProbe
 	const route = await createSemanticObservationRoute()
-	const { pipeline, close } = await createPOIBoardPipeline({ ...options, poiSemanticLookup: route.lookup })
+	using pipelineHandle = await createPOIBoardPipeline({ ...options, poiSemanticLookup: route.lookup })
+	const { pipeline } = pipelineHandle
 
 	try {
 		const result = await pipeline(probe.query, probe.locale ? { locale: probe.locale } : {})
@@ -622,7 +622,6 @@ async function measureMarker(
 			detail: `marker kind ${first.kind}, code ${first.code}, mechanism ${first.mechanism}, evidence names assertion ${String((first.evidence as { assertion?: { id?: string } }).assertion?.id)}`,
 		}
 	} finally {
-		close()
 		// The runtime pipeline never opens the artifact reader itself, so the route owns nothing to close; draining
 		// keeps one query's firings from being attributed to the next.
 		route.takeObservations()

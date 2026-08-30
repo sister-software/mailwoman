@@ -15,11 +15,9 @@
  *   coordinates the loader must skip (and count) rather than insert.
  */
 
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import { statSync } from "@mailwoman/platform/fs"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -87,17 +85,15 @@ function* fixtureRows(): Iterable<POISourceRow> {
 	}
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let out: string
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "poi-build-"))
-	out = join(scratch, "poi.db")
+	scratch = await temporaryDirectory("poi-build-")
+	out = scratch.resolve("poi.db")
 })
 
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("buildPOIDatabase", () => {
 	it("loads, clusters, dictionary-encodes, seals, and is end-to-end queryable via POILookup", async () => {
@@ -117,7 +113,7 @@ describe("buildPOIDatabase", () => {
 		expect(Object.fromEntries(result.countries)).toEqual({ US: 15, FR: 15 })
 
 		// --- sealed: no write bits ---
-		expect(statSync(out).mode & 0o222).toBe(0)
+		expect((await statPath(out)).mode & 0o222).toBe(0)
 
 		// `kdb`'s dispose closes the underlying connection — don't ALSO `using` `raw`, or both dispose
 		// paths race to close() the same DatabaseSync and one throws "database is not open".
@@ -197,7 +193,7 @@ describe("buildPOIDatabase", () => {
 	})
 
 	it("bootstraps missing intermediate output directories", async () => {
-		const nestedOut = join(scratch, "nested", "deeper", "poi.db")
+		const nestedOut = scratch.resolve("nested", "deeper", "poi.db")
 
 		const result = await buildPOIDatabase({
 			rows: fixtureRows(),
@@ -208,7 +204,7 @@ describe("buildPOIDatabase", () => {
 		})
 
 		expect(result.rows).toBe(30)
-		expect(statSync(nestedOut).isFile()).toBe(true)
+		expect((await statPath(nestedOut)).isFile()).toBe(true)
 	})
 })
 

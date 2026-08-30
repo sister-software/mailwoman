@@ -35,8 +35,8 @@
  *   [--out-json /tmp/lint-report.json]
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { ParquetReader } from "../parquet-wrapper/index.ts"
@@ -71,10 +71,10 @@ const ALL_O_RATIO_CEILING = 0.9
  * corpus/src/tools/). In-repo the `node` exports condition loads this module from source anyway, so the sibling URL is
  * the common path.
  */
-function defaultRulesPath(): string {
+async function defaultRulesPath(): Promise<string> {
 	const sibling = new URL("./lint-rules.json", import.meta.url)
 
-	if (existsSync(sibling)) return fileURLToPath(sibling)
+	if (await pathExists(sibling)) return fileURLToPath(sibling)
 
 	return fileURLToPath(new URL("../../../src/tools/lint-rules.json", import.meta.url))
 }
@@ -475,9 +475,9 @@ export async function lintCorpusShard(
 	options: LintCorpusShardOptions,
 	report?: (line: string) => void
 ): Promise<LintCorpusShardSummary> {
-	const rulesPath = options.rulesPath ?? defaultRulesPath()
+	const rulesPath = options.rulesPath ?? (await defaultRulesPath())
 	report?.(`Reading corpus stats from ${options.statsPath}...`)
-	const corpus = parseJSONStrict<CorpusStats>(readFileSync(options.statsPath, "utf8"))
+	const corpus = await readLocalJSONFile<CorpusStats>(options.statsPath)
 
 	report?.(
 		`  ${corpus.row_count} rows from ${corpus.shard_paths.length} shard(s); ${Object.keys(corpus.tokens).length} tokens, ${Object.keys(corpus.bigrams).length} bigrams`
@@ -490,7 +490,7 @@ export async function lintCorpusShard(
 	report?.(`  ${shard.rowCount} rows`)
 
 	report?.(`Loading rules from ${rulesPath}...`)
-	const rulesFile = parseJSONStrict<LintRulesFile>(readFileSync(rulesPath, "utf8"))
+	const rulesFile = await readLocalJSONFile<LintRulesFile>(rulesPath)
 
 	report?.(`Running checks...`)
 
@@ -507,25 +507,21 @@ export async function lintCorpusShard(
 	console.log(rendered)
 
 	if (options.outMd) {
-		writeFileSync(options.outMd, rendered)
+		await writeLocalFile(rendered, options.outMd)
 	}
 
 	if (options.outJSON) {
-		writeFileSync(
-			options.outJSON,
-			JSON.stringify(
-				{
-					shard: options.shardPath,
-					stats: options.statsPath,
-					flags,
-					summary: {
-						errors: flags.filter((f) => f.severity === "error").length,
-						warnings: flags.filter((f) => f.severity === "warn").length,
-					},
+		await writeLocalJSONFile(
+			{
+				shard: options.shardPath,
+				stats: options.statsPath,
+				flags,
+				summary: {
+					errors: flags.filter((f) => f.severity === "error").length,
+					warnings: flags.filter((f) => f.severity === "warn").length,
 				},
-				null,
-				2
-			)
+			},
+			options.outJSON
 		)
 	}
 

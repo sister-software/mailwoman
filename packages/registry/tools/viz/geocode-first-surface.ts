@@ -7,8 +7,8 @@
  *   Fellegi-Sunter weights. The supplied prior is illustrative and the output is self-contained HTML.
  */
 
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Options for {@linkcode geocodeFirstSurface}.
@@ -81,10 +81,10 @@ function distanceWeight(km: number): number {
 /**
  * Emit the geocode-first decision-surface Plotly HTML — see the module doc.
  */
-export function geocodeFirstSurface(
+export async function geocodeFirstSurface(
 	options: GeocodeFirstSurfaceOptions = {},
 	report?: (line: string) => void
-): { outHTML: string } {
+): Promise<{ outHTML: string }> {
 	const LAMBDA = options.lambda ?? 0.02
 	const OUT_HTML = options.outHTML || tempRootPath("geocode-first-surface.html")
 
@@ -276,7 +276,7 @@ document.getElementByID("cap").innerHTML =
 </script>
 </body></html>`
 
-	writeFileSync(OUT_HTML, html)
+	await writeLocalFile(html, OUT_HTML)
 	report?.(`[written] ${OUT_HTML}`)
 	report?.(`λ=${LAMBDA}  prior=${PRIOR.toFixed(2)} bits`)
 

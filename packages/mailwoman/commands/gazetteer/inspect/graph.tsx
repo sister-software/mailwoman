@@ -15,7 +15,7 @@
 import { Spinner } from "@inkjs/ui"
 import type { PlacetypeRole } from "@mailwoman/core"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
-import * as fs from "@mailwoman/platform/fs/promises"
+import { writeFile } from "@mailwoman/platform/fs/promises"
 import { availableParallelism } from "@mailwoman/platform/os"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
@@ -71,7 +71,7 @@ const WOFGraph: ParsedCommandComponent<Options, [string, string]> = ({ args, opt
 		const serialized = options.compact ? JSON.stringify(graph) : JSON.stringify(graph, null, 2)
 
 		if (options.output) {
-			await fs.writeFile(options.output, serialized + "\n", "utf8")
+			await writeFile(options.output, serialized + "\n", "utf8")
 		} else {
 			// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
 			// lines (compact mode is one very long line; pretty mode is fine either way).

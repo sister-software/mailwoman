@@ -65,7 +65,7 @@ const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ optio
 		const perCountry = result.countries.map((cc) => `${cc} ${(result.byCountry[cc] ?? 0).toLocaleString()}`).join(" · ")
 
 		return [
-			`postcode geonames tail: ${result.out} (${artifactSizeMB(result.out)} MB)`,
+			`postcode geonames tail: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
 			`${result.inserted.toLocaleString()} distinct postcodes — ${perCountry}`,
 			`fts ${result.ftsRows.toLocaleString()} · bbox ${result.bboxRows.toLocaleString()} · ancestors ${result.ancestorRows.toLocaleString()}`,
 			result.missing.length ? `MISSING dumps (skipped): ${result.missing.join(",")}` : "all requested dumps present",

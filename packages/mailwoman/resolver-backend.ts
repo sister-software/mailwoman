@@ -213,20 +213,16 @@ export function loadCapitalIndex(opts: {
 	missing?: "throw" | "degrade"
 }): CapitalIndex | undefined {
 	if (opts.candidateDB && existsSync(opts.candidateDB)) {
-		const db = new DatabaseClient<WOFDatabase>(opts.candidateDB, { readOnly: true })
+		using db = new DatabaseClient<WOFDatabase>(opts.candidateDB, { readOnly: true })
 
-		try {
-			const points = readCapitalPoints(db)
+		const points = readCapitalPoints(db)
 
-			// `null` = the artifact predates the table (fall through to the repo file); an EMPTY table is a
-			// built fact and is served as such.
-			if (points) {
-				console.error(`[resolver] capital reference: ${points.length} rows from the candidate artifact`)
+		// `null` = the artifact predates the table (fall through to the repo file); an EMPTY table is a
+		// built fact and is served as such.
+		if (points) {
+			console.error(`[resolver] capital reference: ${points.length} rows from the candidate artifact`)
 
-				return new CapitalIndex(points)
-			}
-		} finally {
-			db.destroy()
+			return new CapitalIndex(points)
 		}
 	}
 

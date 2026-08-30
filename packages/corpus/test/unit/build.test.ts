@@ -13,33 +13,33 @@
  *   fixture shape.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/utils"
 import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof-admin-json/adapter"
 import { buildCorpus, type BuildStage } from "@mailwoman/corpus/build"
 import { ParquetReader } from "@mailwoman/corpus/parquet-wrapper"
 import type { ParquetRow } from "@mailwoman/corpus/utils/parquet"
-import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
+import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const fixtureRoot = workspacePath("corpus", "fixtures", "wof-admin-json")
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-build-"))
+	scratch = await temporaryDirectory("mailwoman-build-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	it("produces top-level MANIFEST.json + parquet shards + splits + quarantine pile", async () => {
-		const outDir = join(scratch, "build")
+		const outDir = scratch.resolve("build")
 		const stages: BuildStage[] = []
 
 		const manifest = await buildCorpus({
@@ -95,7 +95,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 	})
 
 	it("routes rows whose components.region is held out to val/test", async () => {
-		const outDir = join(scratch, "build")
+		const outDir = scratch.resolve("build")
 
 		await buildCorpus({
 			outputDir: outDir,
@@ -129,7 +129,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 	it("synthesis fan-out increases row count over the non-synth path", async () => {
 		const noSynth = await buildCorpus({
-			outputDir: join(scratch, "no-synth"),
+			outputDir: scratch.resolve("no-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -137,7 +137,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		})
 
 		const withSynth = await buildCorpus({
-			outputDir: join(scratch, "with-synth"),
+			outputDir: scratch.resolve("with-synth"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
@@ -149,7 +149,7 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 
 	it("notes skipped adapters when no inputs configured", async () => {
 		const manifest = await buildCorpus({
-			outputDir: join(scratch, "build"),
+			outputDir: scratch.resolve("build"),
 			corpusVersion: "0.1.0",
 			adapters: [wofAdminAdapter],
 			adapterInputs: {}, // no input for wof-admin

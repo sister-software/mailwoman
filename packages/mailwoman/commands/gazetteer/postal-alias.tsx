@@ -1,31 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer postal-alias` — build the POSTAL-CITY ALIAS table (#475) from the
- *   pinned-release Overture US Parquet: per-address ground truth for the
- *   postal-city/geographic-city split that the resolver's coordinate-first soft-scorer currently
- *   approximates geometrically.
- *
- *   The signal: 45.9M US rows carry BOTH `postal_city` (what the postal system calls the place — USPS
- *   "acceptable city names", vanity cities) AND a geographic locality (`address_levels[2]`); 16.0M
- *   of them (34.9%) DIVERGE. Aggregated per `(postcode, postal_city, geo_locality)` with observed
- *   counts, that divergence is the alias evidence: "postcode 10954's mail says Nanuet; the polygon
- *   says Clarkstown".
- *
- *   SIBLING table by design (`postal_city_alias`, its own sqlite) — never mixed into the PIP-derived
- *   `postcode_locality` rows: one table = one provenance class (feedback-no-irrelevant-trivia). A
- *   count floor drops typo noise; everything kept is observed-in-the-wild N times, with N
- *   recorded.
- *
- *   Writes the output DB DIRECTLY (deletes any prior file, then builds in place) — same behavior as
- *   the original `scripts/build-postal-city-alias.ts`. Progress streams to stderr; the final
- *   summary is on stdout. @duckdb/node-api is an OPTIONAL peer, imported dynamically inside the
- *   build.
- */
-
-import { mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
@@ -65,8 +38,8 @@ const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
 		const minCount = options.minCount
 
-		mkdirSync(dirname(out), { recursive: true })
-		rmSync(out, { force: true })
+		await makeDirectories(dirname(out))
+		await removePathIfPresent(out)
 
 		// @duckdb/node-api is an OPTIONAL peer dep — import it dynamically so merely loading this
 		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when

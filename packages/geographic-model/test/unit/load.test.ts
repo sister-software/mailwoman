@@ -14,6 +14,9 @@
  *   directory path produces that same answer twice.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/objects"
 import { compileGeographicModel, serializeCompiledModel, ValidationIssueCode } from "@mailwoman/geographic-model"
 import {
 	type GeographicModelSourceFile,
@@ -23,10 +26,12 @@ import {
 	mergeGeographicModelFiles,
 	MODEL_MANIFEST_FILENAME,
 } from "@mailwoman/geographic-model/load"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { resolve } from "@mailwoman/platform/path"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const manifest = { version: "0.1.0" }
 
@@ -95,7 +100,7 @@ const establishments = {
 }
 
 function file(path: string, value: unknown): GeographicModelSourceFile {
-	return { path, text: `${JSON.stringify(value, null, "\t")}\n` }
+	return { path, text: prettyJSON(value) }
 }
 
 const relationFile = file("relations/affords.json", relations)
@@ -121,28 +126,18 @@ function issuesOf(run: () => unknown): GeographicModelLoadError {
 	throw new Error("the load was expected to fail and did not")
 }
 
-const scratchDirectories: string[] = []
-
-function writeModelDirectory(files: readonly GeographicModelSourceFile[]): string {
-	const root = mkdtempSync(resolve(tmpdir(), "geographic-model-"))
-
-	scratchDirectories.push(root)
+async function writeModelDirectory(files: readonly GeographicModelSourceFile[]): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("geographic-model-")).path
 
 	for (const entry of files) {
 		const path = resolve(root, entry.path)
 
-		mkdirSync(resolve(path, ".."), { recursive: true })
-		writeFileSync(path, entry.text)
+		await makeDirectories(resolve(path, ".."))
+		await writeLocalFile(entry.text, path)
 	}
 
 	return root
 }
-
-afterEach(() => {
-	for (const root of scratchDirectories.splice(0)) {
-		rmSync(root, { force: true, recursive: true })
-	}
-})
 
 describe("the authoring layout carries no meaning", () => {
 	it("produces one table and one artifact whatever order the files arrive in", () => {
@@ -156,16 +151,16 @@ describe("the authoring layout carries no meaning", () => {
 		)
 	})
 
-	it("reads a directory the same way twice", () => {
+	it("reads a directory the same way twice", async () => {
 		const root = writeModelDirectory(slice())
-		const once = serializeCompiledModel(compileGeographicModel(loadGeographicModelDirectory(root)))
+		const once = serializeCompiledModel(compileGeographicModel(loadGeographicModelDirectory(await root)))
 
-		expect(serializeCompiledModel(compileGeographicModel(loadGeographicModelDirectory(root)))).toBe(once)
+		expect(serializeCompiledModel(compileGeographicModel(loadGeographicModelDirectory(await root)))).toBe(once)
 		expect(once).toContain(`"modelVersion": "0.1.0"`)
 	})
 
-	it("merges a table split across files, and one file holding several tables", () => {
-		const document = loadGeographicModelDirectory(writeModelDirectory(slice()))
+	it("merges a table split across files, and one file holding several tables", async () => {
+		const document = loadGeographicModelDirectory(await writeModelDirectory(slice()))
 
 		expect(document.concepts.map((concept) => concept.id)).toEqual(["obtain_medication", "pharmacy"])
 		expect(document.mappings).toHaveLength(1)

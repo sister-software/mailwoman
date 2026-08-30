@@ -12,7 +12,7 @@
  *   `Springfield`, get Missouri, and add `IL`. If adding the state can push the Illinois Springfield out of
  *   reach, the one repair a user knows how to make is the one that cannot be relied on. Every other law in
  *   this directory states that a rewrite of the SAME information changes nothing; this one is the only law
- *   about information being ADDED, and it is the axis those four cannot see.
+ *   about information being ADDED and the axis those four cannot see.
  *
  *   THE BASE IS DERIVED, NOT AUTHORED — AND THE DERIVATION RUNS BACKWARD. The other four laws take a
  *   committed board row as the `base` and derive the `variant` from it. Here the committed row is the FULLEST

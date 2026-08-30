@@ -38,27 +38,23 @@ function required(name: string, value: string | undefined): string {
 	return value
 }
 
-const database = new DatabaseClient<ZoningDatabase>(required("database", values.database))
+using database = new DatabaseClient<ZoningDatabase>(required("database", values.database))
 
-try {
-	database.exec("PRAGMA journal_mode = OFF")
-	database.exec("PRAGMA synchronous = OFF")
+database.exec("PRAGMA journal_mode = OFF")
+database.exec("PRAGMA synchronous = OFF")
 
-	const result = await ingestZoningChunk(database, {
-		source: await createExportFeatureSource({
-			exportPath: required("export", values.export),
-			...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
-			...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
-			// A RANGE's own count is not knowable up front — the source reports a layer's total and nothing narrower — so the
-			// chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
-			declaredFeatureCount: 0,
-		}),
-		indexResolution: Number(required("index-resolution", values["index-resolution"])),
-		coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
-		onProgress: (message) => console.error(`  [chunk] ${message}`),
-	})
+const result = await ingestZoningChunk(database, {
+	source: await createExportFeatureSource({
+		exportPath: required("export", values.export),
+		...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
+		...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
+		// A RANGE's own count is not knowable up front — the source reports a layer's total and nothing narrower — so the
+		// chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
+		declaredFeatureCount: 0,
+	}),
+	indexResolution: Number(required("index-resolution", values["index-resolution"])),
+	coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
+	onProgress: (message) => console.error(`  [chunk] ${message}`),
+})
 
-	console.log(JSON.stringify(result))
-} finally {
-	await database.destroy()
-}
+console.log(JSON.stringify(result))

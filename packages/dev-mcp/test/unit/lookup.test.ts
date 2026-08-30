@@ -110,16 +110,16 @@ describe("lookupNormalize", () => {
 })
 
 describe("loadFSTArtifact", () => {
-	it("reports an unresolved path as unavailable rather than as an empty source", () => {
+	it("reports an unresolved path as unavailable rather than as an empty source", async () => {
 		// A source whose artifact is missing answers "no" to everything, which reads as absence for every query. That is
 		// the one answer this must never give silently.
-		expect(loadFSTArtifact(undefined, () => stubFST({}))).toEqual({
+		expect(await loadFSTArtifact(undefined, () => stubFST({}))).toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})
 	})
 
-	it("reports a missing file by path", () => {
-		const result = loadFSTArtifact("/nonexistent/fst.bin", () => stubFST({}))
+	it("reports a missing file by path", async () => {
+		const result = await loadFSTArtifact("/nonexistent/fst.bin", () => stubFST({}))
 
 		expect("unavailable" in result && result.unavailable).toContain("/nonexistent/fst.bin")
 	})

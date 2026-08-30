@@ -438,14 +438,12 @@
 		"path-ts": "^2.1.0",
 		"react": "^19.2.8",
 		"spliterator": "^6.2.0",
-		"yauzl-promise": "^4.0.0",
 		"zod": "^4.4.3",
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {
 		"@mailwoman/osm": "workspace:*",
-		"@mailwoman/resolver-wof-wasm": "workspace:*",
-		"@types/yauzl-promise": "^4.0.1"
+		"@mailwoman/resolver-wof-wasm": "workspace:*"
 	},
 	"peerDependencies": {
 		"@duckdb/node-api": "1.5.3-r.3",

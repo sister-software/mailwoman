@@ -36,7 +36,7 @@ export const poBoxRecipe: ShardRecipe = {
 		let emitted = 0
 		let skipped = 0
 
-		for await (const tuple of readTuples(opts.input)) {
+		for await (const tuple of await readTuples(opts.input)) {
 			read++
 			// Region required EXCEPT region-less locales (NZ: "Private Bag 12, Auckland 1010", #517).
 			const regionOptional = ["NZ", "NZL", "NEW ZEALAND"].includes(String(tuple.country || "").toUpperCase())

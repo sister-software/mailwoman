@@ -75,7 +75,7 @@ const CorpusSubVenueLexicon: ParsedCommandComponent<Options> = ({ options }) => 
 			? await readOvertureSubVenues({ databasePath: options.overtureDB })
 			: undefined
 
-		return generateSubVenueLexicon({
+		return await generateSubVenueLexicon({
 			wikidataDir: options.wikidataDir,
 			extracts: parseExtracts(options.extracts),
 			overtureRows,

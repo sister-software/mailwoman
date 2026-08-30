@@ -16,9 +16,8 @@ import type { OAResolverEvalOptions } from "./options.ts"
  * The postcode shard reader the anchor extractor probes — the WOF postcode lookup's structural contract, named here so
  * the eval never has to import the SQLite class it only ever holds by reference.
  */
-export interface PostcodeCentroidLookup {
+export interface PostcodeCentroidLookup extends Disposable {
 	lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
-	close(): void
 }
 
 /**

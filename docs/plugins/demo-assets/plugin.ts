@@ -6,27 +6,35 @@
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
-import { mkdirSync } from "@mailwoman/platform/fs"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { resolve } from "@mailwoman/platform/path"
 
 import { stagePairIndexes, stageSQLJSHTTPVFS } from "./artifacts.ts"
-import { configureDemoWebpack } from "./webpack-policy.ts"
+import { bundleAliases, configureDemoWebpack } from "./webpack-policy.ts"
 
-export default function demoAssetsPlugin(context: LoadContext): Plugin {
+export default async function demoAssetsPlugin(context: LoadContext): Promise<Plugin> {
 	const docsDir = context.siteDir
 	const staticDir = resolve(docsDir, "static", "mailwoman")
+	const emptyShim = resolve(docsDir, "src", "empty-shim.js")
+
+	// Both arms are resolved here, where awaiting is legal, because `configureWebpack` below is called synchronously and
+	// only learns which one it needs at that moment.
+	const aliases = {
+		client: await bundleAliases(false, emptyShim),
+		server: await bundleAliases(true, emptyShim),
+	}
 
 	return {
 		name: "demo-assets",
 
 		async loadContent() {
-			mkdirSync(staticDir, { recursive: true })
+			await makeDirectories(staticDir)
 			const sqljsDir = resolve(staticDir, "sqljs")
-			mkdirSync(sqljsDir, { recursive: true })
-			stageSQLJSHTTPVFS(sqljsDir)
+			await makeDirectories(sqljsDir)
+			await stageSQLJSHTTPVFS(sqljsDir)
 			const pairIndexDir = resolve(staticDir, "pair-index")
-			mkdirSync(pairIndexDir, { recursive: true })
-			stagePairIndexes(pairIndexDir)
+			await makeDirectories(pairIndexDir)
+			await stagePairIndexes(pairIndexDir)
 
 			return {}
 		},
@@ -36,7 +44,7 @@ export default function demoAssetsPlugin(context: LoadContext): Plugin {
 		},
 
 		configureWebpack(config, isServer) {
-			return configureDemoWebpack(config, isServer, docsDir)
+			return configureDemoWebpack(config, docsDir, isServer ? aliases.server : aliases.client)
 		},
 	}
 }

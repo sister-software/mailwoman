@@ -12,10 +12,10 @@
  *   stale-artifact machine.
  */
 
-import { mkdir, mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { mkdir, rm, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
 	DERIVED_WEIGHTS_INPUTS,
@@ -26,6 +26,10 @@ import {
 	derivedWeightsKeyFrom,
 } from "./derived-weights-key.ts"
 
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
 /**
  * Name an absolute path by its basename — the shape production uses (repo-relative name, absolute read path).
  */
@@ -33,26 +37,24 @@ function at(path: string, name?: string): DerivedWeightsInput {
 	return { name: name ?? path.slice(path.lastIndexOf("/") + 1), path }
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "derived-weights-key-"))
+	scratch = await temporaryDirectory("derived-weights-key-")
 })
 
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("derivedWeightsKeyFrom", () => {
 	it("is stable for identical inputs", async () => {
-		const a = join(scratch, "a.json")
+		const a = scratch.resolve("a.json")
 		await writeFile(a, '{"x":1}')
 
 		expect(derivedWeightsKeyFrom([at(a)])).toBe(derivedWeightsKeyFrom([at(a)]))
 	})
 
 	it("changes when a hashed input's CONTENT changes", async () => {
-		const a = join(scratch, "a.json")
+		const a = scratch.resolve("a.json")
 		await writeFile(a, '{"x":1}')
 		const before = derivedWeightsKeyFrom([at(a)])
 
@@ -62,8 +64,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("changes when a GENERATING MODULE changes — the currency-filter regression", async () => {
-		const config = join(scratch, "release.config.json")
-		const generator = join(scratch, "pair-index.tsx")
+		const config = scratch.resolve("release.config.json")
+		const generator = scratch.resolve("pair-index.tsx")
 		await writeFile(config, '{"weights":{"model":"m.onnx"}}')
 		await writeFile(generator, "export const delta = 1")
 		const before = derivedWeightsKeyFrom([at(config), at(generator)])
@@ -75,8 +77,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("is order-independent across the input list", async () => {
-		const a = join(scratch, "a.json")
-		const b = join(scratch, "b.json")
+		const a = scratch.resolve("a.json")
+		const b = scratch.resolve("b.json")
 		await writeFile(a, "1")
 		await writeFile(b, "2")
 
@@ -84,14 +86,14 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("treats a MISSING input as a distinct state, not as empty", async () => {
-		const a = join(scratch, "a.json")
+		const a = scratch.resolve("a.json")
 		await writeFile(a, "1")
 		const present = derivedWeightsKeyFrom([at(a)])
 
 		await rm(a)
 		const absent = derivedWeightsKeyFrom([at(a)])
 
-		const empty = join(scratch, "empty.json")
+		const empty = scratch.resolve("empty.json")
 		await writeFile(empty, "")
 
 		// Absence is not zero: a file that is gone must not hash like a file that is empty.
@@ -100,8 +102,8 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("distinguishes inputs by NAME", async () => {
-		const a = join(scratch, "a.json")
-		const b = join(scratch, "b.json")
+		const a = scratch.resolve("a.json")
+		const b = scratch.resolve("b.json")
 		await writeFile(a, "same")
 		await writeFile(b, "same")
 
@@ -114,8 +116,8 @@ describe("derivedWeightsKeyFrom", () => {
 		// so lab-1, lab-2, lab-3 and a local worktree each computed a different key over byte-identical
 		// inputs and none ever saw another's work: four store directories holding the same eleven
 		// artifacts, and a 41s pair-index-nz.bin rebuild on a runner that already had the file.
-		const checkoutA = join(scratch, "runner-1", "_work", "mailwoman")
-		const checkoutB = join(scratch, "runner-2", "_work", "mailwoman")
+		const checkoutA = scratch.resolve("runner-1", "_work", "mailwoman")
+		const checkoutB = scratch.resolve("runner-2", "_work", "mailwoman")
 
 		for (const root of [checkoutA, checkoutB]) {
 			await mkdir(root, { recursive: true })
@@ -168,11 +170,7 @@ describe("derivedStoreServeViolation — the serve-time floor (#1528)", () => {
 	let dir: string
 
 	beforeEach(async () => {
-		dir = await mkdtemp(join(tmpdir(), "derived-serve-"))
-	})
-
-	afterEach(async () => {
-		await rm(dir, { recursive: true, force: true })
+		dir = fixtures.use(await temporaryDirectory("derived-serve-")).path
 	})
 
 	it("refuses the #1528 reproduction: an empty GB binary is never a valid entry", async () => {

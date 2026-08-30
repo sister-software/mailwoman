@@ -57,7 +57,7 @@ const GazetteerBuildPOIBrands: ParsedCommandComponent<Options> = ({ options }) =
 
 		console.error(`▸ writing ${out}`)
 
-		writeBrandTable(table, out)
+		await writeBrandTable(table, out)
 		execFileSync("yarn", ["oxfmt", out])
 
 		const top5 = table.brands

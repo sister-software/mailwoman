@@ -38,10 +38,11 @@
  *     CycloneDX:  cyclonedx-cli validate --input-file docs/static/sbom/mailwoman-<version>.cdx.json
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { readFileSync, renameSync } from "@mailwoman/platform/fs"
 import { dirname, join, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -107,63 +108,60 @@ function normalizeSPDX(doc: SPDXDocument): SPDXDocument {
 	return doc
 }
 
-const tmp = mkdtempSync(join(tmpdir(), "mw-sbom-"))
+await using tmp = await temporaryDirectory("mw-sbom-")
 
-try {
-	console.log(`[sbom] packing mailwoman@${version} from the registry…`)
+console.log(`[sbom] packing mailwoman@${version} from the registry…`)
 
-	run("npm", ["pack", `mailwoman@${version}`, "--silent"], tmp)
-	run("tar", ["xzf", `mailwoman-${version}.tgz`], tmp)
+run("npm", ["pack", `mailwoman@${version}`, "--silent"], tmp.path)
+run("tar", ["xzf", `mailwoman-${version}.tgz`], tmp.path)
 
-	// npm always extracts to `package/`; rename so CycloneDX's basename-derived root name reads `mailwoman`.
-	const pkgDir = join(tmp, "mailwoman")
-	renameSync(join(tmp, "package"), pkgDir)
+// npm always extracts to `package/`; rename so CycloneDX's basename-derived root name reads `mailwoman`.
+const pkgDir = tmp.resolve("mailwoman")
+renameSync(tmp.resolve("package"), pkgDir)
 
-	// Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`) — never part of the consumer closure.
-	const manifestPath = join(pkgDir, "package.json")
-	const manifest = parseJSONStrict<Record<string, unknown>>(readFileSync(manifestPath, "utf8"))
-	delete manifest.devDependencies
-	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
+// Strip devDependencies (the unpublished, dev-only `@mailwoman/osm`) — never part of the consumer closure.
+const manifestPath = join(pkgDir, "package.json")
+const manifest = parseJSONStrict<Record<string, unknown>>(readFileSync(manifestPath, "utf8"))
+delete manifest.devDependencies
 
-	console.log("[sbom] installing the production dependency closure…")
+await writeLocalJSONFile(manifest, manifestPath)
 
-	run("npm", ["install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], pkgDir)
+console.log("[sbom] installing the production dependency closure…")
 
-	execFileSync("mkdir", ["-p", outDir])
+run("npm", ["install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], pkgDir)
 
-	console.log("[sbom] generating SPDX 2.3…")
+execFileSync("mkdir", ["-p", outDir])
 
-	const spdx = normalizeSPDX(
-		parseJSONStrict<SPDXDocument>(
-			run("npm", ["sbom", "--sbom-format", "spdx", "--omit=dev", "--sbom-type", "application"], pkgDir)
-		)
+console.log("[sbom] generating SPDX 2.3…")
+
+const spdx = normalizeSPDX(
+	parseJSONStrict<SPDXDocument>(
+		run("npm", ["sbom", "--sbom-format", "spdx", "--omit=dev", "--sbom-type", "application"], pkgDir)
 	)
+)
 
-	const spdxPath = join(outDir, `mailwoman-${version}.spdx.json`)
-	writeFileSync(spdxPath, `${JSON.stringify(spdx, null, 2)}\n`)
+const spdxPath = join(outDir, `mailwoman-${version}.spdx.json`)
+await writeLocalJSONFile(spdx, spdxPath)
 
-	console.log("[sbom] generating CycloneDX 1.5…")
+console.log("[sbom] generating CycloneDX 1.5…")
 
-	const cdx = parseJSONStrict(
-		run("npm", ["sbom", "--sbom-format", "cyclonedx", "--omit=dev", "--sbom-type", "application"], pkgDir)
-	)
+const cdx = parseJSONStrict(
+	run("npm", ["sbom", "--sbom-format", "cyclonedx", "--omit=dev", "--sbom-type", "application"], pkgDir)
+)
 
-	const cdxPath = join(outDir, `mailwoman-${version}.cdx.json`)
-	writeFileSync(cdxPath, `${JSON.stringify(cdx, null, 2)}\n`)
+const cdxPath = join(outDir, `mailwoman-${version}.cdx.json`)
+await writeLocalJSONFile(cdx, cdxPath)
 
-	const spdxPkgs = (spdx.packages?.length ?? 0) - 1
+const spdxPkgs = (spdx.packages?.length ?? 0) - 1
 
-	// minus the root component
-	console.log(
-		`\n[sbom] ✅ wrote SBOMs for mailwoman@${version} (${spdxPkgs} dependencies)\n` +
-			`         ${spdxPath.replace(`${repoRoot}/`, "")}\n` +
-			`         ${cdxPath.replace(`${repoRoot}/`, "")}`
-	)
-	console.log(
-		"\n[sbom] validate:\n" +
-			`         uvx --from spdx-tools pyspdxtools -i ${dirname(spdxPath).replace(`${repoRoot}/`, "")}/mailwoman-${version}.spdx.json\n` +
-			`         cyclonedx-cli validate --input-file ${dirname(cdxPath).replace(`${repoRoot}/`, "")}/mailwoman-${version}.cdx.json`
-	)
-} finally {
-	rmSync(tmp, { recursive: true, force: true })
-}
+// minus the root component
+console.log(
+	`\n[sbom] ✅ wrote SBOMs for mailwoman@${version} (${spdxPkgs} dependencies)\n` +
+		`         ${spdxPath.replace(`${repoRoot}/`, "")}\n` +
+		`         ${cdxPath.replace(`${repoRoot}/`, "")}`
+)
+console.log(
+	"\n[sbom] validate:\n" +
+		`         uvx --from spdx-tools pyspdxtools -i ${dirname(spdxPath).replace(`${repoRoot}/`, "")}/mailwoman-${version}.spdx.json\n` +
+		`         cyclonedx-cli validate --input-file ${dirname(cdxPath).replace(`${repoRoot}/`, "")}/mailwoman-${version}.cdx.json`
+)

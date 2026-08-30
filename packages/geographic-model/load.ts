@@ -26,6 +26,7 @@
  *   keys it uses are tables.
  */
 
+import { isPlainObject } from "@mailwoman/core/objects"
 import { readdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
@@ -35,7 +36,6 @@ import { validateGeographicModelDocument } from "./validate.ts"
 import {
 	add,
 	checkFieldNames,
-	isPlainObject,
 	readArray,
 	readString,
 	type ValidationIssue,

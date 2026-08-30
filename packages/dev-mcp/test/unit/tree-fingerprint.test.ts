@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, setTimestamps, makeDirectories } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	computeTreeFingerprint,
@@ -11,73 +13,64 @@ import {
 	staleEngineMessage,
 } from "@mailwoman/dev-mcp/tree-fingerprint"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { mkdtempSync, mkdirSync, writeFileSync, utimesSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
-const scratchRoots: string[] = []
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 /**
  * A fake checkout carrying one source file in the first fingerprinted workspace — enough to exercise the walk without
  * touching the real tree.
  */
-function fakeCheckout(): string {
-	const root = mkdtempSync(join(tmpdir(), "mwdev-fingerprint-"))
-
-	scratchRoots.push(root)
+async function fakeCheckout(): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("mwdev-fingerprint-")).path
 
 	const workspace = join(root, FINGERPRINTED_WORKSPACES[0])
 
-	mkdirSync(workspace, { recursive: true })
-	writeFileSync(join(workspace, "thing.ts"), "export const x = 1\n")
+	await makeDirectories(workspace)
+	await writeLocalTextFile("export const x = 1\n", join(workspace, "thing.ts"))
 
 	return root
 }
 
-afterAll(() => {
-	for (const root of scratchRoots) {
-		rmSync(root, { recursive: true, force: true })
-	}
-})
-
 describe("computeTreeFingerprint", () => {
-	it("is stable when nothing changes", () => {
-		const root = fakeCheckout()
+	it("is stable when nothing changes", async () => {
+		const root = await fakeCheckout()
 
 		expect(computeTreeFingerprint(root).digest).toBe(computeTreeFingerprint(root).digest)
 	})
 
-	it("moves when a source file is touched", () => {
-		const root = fakeCheckout()
+	it("moves when a source file is touched", async () => {
+		const root = await fakeCheckout()
 		const before = computeTreeFingerprint(root)
 		const file = join(root, FINGERPRINTED_WORKSPACES[0], "thing.ts")
 		const future = new Date(Date.now() + 60_000)
 
-		utimesSync(file, future, future)
+		await setTimestamps(file, future, future)
 
 		expect(computeTreeFingerprint(root).digest).not.toBe(before.digest)
 	})
 
-	it("ignores out/, so a recompile does not read as a source edit", () => {
-		const root = fakeCheckout()
+	it("ignores out/, so a recompile does not read as a source edit", async () => {
+		const root = await fakeCheckout()
 		const before = computeTreeFingerprint(root)
 		const compiled = join(root, FINGERPRINTED_WORKSPACES[0], "out")
 
-		mkdirSync(compiled, { recursive: true })
-		writeFileSync(join(compiled, "thing.js"), "export const x = 1\n")
+		await makeDirectories(compiled)
+		await writeLocalTextFile("export const x = 1\n", join(compiled, "thing.js"))
 		// A .ts inside out/ must be ignored too — declaration output lands there.
-		writeFileSync(join(compiled, "thing.d.ts"), "export declare const x: number\n")
+		await writeLocalTextFile("export declare const x: number\n", join(compiled, "thing.d.ts"))
 
 		expect(computeTreeFingerprint(root).digest).toBe(before.digest)
 	})
 
-	it("throws rather than fingerprinting nothing", () => {
+	it("throws rather than fingerprinting nothing", async () => {
 		// A walk that finds no files produces a digest that matches every other empty walk, which would disable the
 		// staleness guard silently. `corpus-stamp.ts` names the same shape: an empty loader on BOTH sides agrees.
-		const empty = mkdtempSync(join(tmpdir(), "mwdev-empty-"))
-
-		scratchRoots.push(empty)
+		await using emptyDirectory = await temporaryDirectory("mwdev-empty-")
+		const empty = emptyDirectory.path
 
 		expect(() => computeTreeFingerprint(empty)).toThrow(/walked 0 source files/)
 	})
@@ -91,13 +84,13 @@ describe("computeTreeFingerprint", () => {
 })
 
 describe("staleEngineMessage", () => {
-	it("names both fingerprints and prescribes a restart, not a reload", () => {
-		const root = fakeCheckout()
+	it("names both fingerprints and prescribes a restart, not a reload", async () => {
+		const root = await fakeCheckout()
 		const before = computeTreeFingerprint(root)
 		const file = join(root, FINGERPRINTED_WORKSPACES[0], "thing.ts")
 		const future = new Date(Date.now() + 120_000)
 
-		utimesSync(file, future, future)
+		await setTimestamps(file, future, future)
 
 		const after = computeTreeFingerprint(root)
 		const message = staleEngineMessage(before, after)
@@ -116,11 +109,11 @@ describe("staleEngineMessage", () => {
 })
 
 describe("computeTreeFingerprint — dirty files", () => {
-	it("reports a modified path whole, including the first one", () => {
+	it("reports a modified path whole, including the first one", async () => {
 		// `git status --porcelain` writes an unstaged modification as " M path". Trimming the whole output before
 		// splitting eats column one of the FIRST line only, and a fixed-width slice then takes the leading character of
 		// the path with it — so the field reports a file that does not exist, and only ever the first one.
-		const root = fakeCheckout()
+		const root = await fakeCheckout()
 		const relative = join(FINGERPRINTED_WORKSPACES[0]!, "thing.ts")
 
 		execFileSync("git", ["init", "--quiet"], { cwd: root })
@@ -130,7 +123,7 @@ describe("computeTreeFingerprint — dirty files", () => {
 			cwd: root,
 		})
 
-		writeFileSync(join(root, relative), "export const x = 2\n")
+		await writeLocalTextFile("export const x = 2\n", join(root, relative))
 
 		expect(computeTreeFingerprint(root).dirtyFiles).toEqual([relative])
 	})

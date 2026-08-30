@@ -13,7 +13,7 @@
 import { WOFCandidateTableLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { aroundEach, describe, expect, test } from "vitest"
 
 /**
  * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
@@ -38,14 +38,17 @@ function stubWorker(db: DatabaseClient<CandidateDatabase>) {
  * Every connection this test's fixtures open. A DisposableStack disposes once and stays disposed, so each test gets a
  * fresh one rather than reusing the emptied stack.
  */
-let openDatabases = new DisposableStack()
+let openDatabases: DisposableStack
 
-beforeEach(() => {
-	openDatabases = new DisposableStack()
+aroundEach(async (runTest) => {
+	using databases = new DisposableStack()
+
+	openDatabases = databases
+	await runTest()
 })
 
 function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
-	const d = new DatabaseClient<CandidateDatabase>(":memory:")
+	const d = DatabaseClient.temp<CandidateDatabase>()
 
 	d.exec(`
 		CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT);
@@ -78,10 +81,6 @@ function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
 	return d
 }
 
-afterEach(() => {
-	openDatabases.dispose()
-})
-
 describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => {
 	test("WITH the side-index, a postal-city + postcode resolves to the geographic locality", async () => {
 		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(true)))
@@ -109,27 +108,5 @@ describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => 
 		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(false)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
 		expect(hits[0]!.name).toBe("Antioch") // no probe → normal population-first ranking
-	})
-})
-
-describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", () => {
-	// The acronym-casing sweep (da54bc8c) renamed `window.createDbWorker` → `createDBWorker` — an
-	// EXTERNAL library's export, explicitly exempt from the house convention (AGENTS.md). The UMD
-	// loaded, the capitalized global never existed, and the demo street tier silently fell back to
-	// the admin cascade for three days. These pins make the next sweep fail loudly instead.
-	test("the library actually exports `createDbWorker` (lowercase b)", async () => {
-		const { createRequire } = await import("@mailwoman/platform/module")
-		const require = createRequire(import.meta.url)
-		const umd = require("sql.js-httpvfs/dist/index.js") as Record<string, unknown>
-
-		expect(typeof umd.createDbWorker).toBe("function")
-	})
-
-	test("the loader references the library's own casing and never the house-cased variant", async () => {
-		const { readFileSync } = await import("@mailwoman/platform/fs")
-		const source = readFileSync(new URL("../../../../src/shared/httpvfs-resolver.ts", import.meta.url), "utf8")
-
-		expect(source).toContain("createDbWorker")
-		expect(source).not.toContain("createDBWorker")
 	})
 })

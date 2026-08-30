@@ -12,14 +12,17 @@
  *   is the trust question the endpoint exists to answer.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createNominatimApp, type NominatimStatus, nominatimStatus } from "@mailwoman/nominatim"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
-import { afterEach, expect, test } from "vitest"
+import { afterAll, expect, test } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 /**
  * The one-column table this fixture writes, so the freshness probe reads a file with a declared schema.
@@ -28,18 +31,8 @@ interface FreshnessFixtureDatabase {
 	rows: { id: number }
 }
 
-const roots: string[] = []
-
-afterEach(() => {
-	for (const root of roots.splice(0)) {
-		rmSync(root, { recursive: true, force: true })
-	}
-})
-
-function scratch(): string {
-	const root = mkdtempSync(join(tmpdir(), "mw-nominatim-status-"))
-
-	roots.push(root)
+async function scratch(): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("mw-nominatim-status-")).path
 
 	return root
 }
@@ -88,7 +81,7 @@ async function statusBody(paths: Array<{ name: string; path: string }>): Promise
 }
 
 test("/status carries data_updated + the mailwoman block when the artifact carries a manifest", async () => {
-	const path = await stamped(join(scratch(), "candidate.db"), "2026-08-17T19:21:17.000Z")
+	const path = await stamped(join(await scratch(), "candidate.db"), "2026-08-17T19:21:17.000Z")
 	const body = await statusBody([{ name: "gazetteer", path }])
 
 	expect(body.status).toBe(0)
@@ -107,8 +100,8 @@ test("/status omits data_updated when nothing is stamped, and still names the ar
 	const root = scratch()
 
 	const body = await statusBody([
-		{ name: "gazetteer", path: bare(join(root, "candidate.db")) },
-		{ name: "reverse-admin", path: join(root, "never-built.db") },
+		{ name: "gazetteer", path: bare(join(await root, "candidate.db")) },
+		{ name: "reverse-admin", path: join(await root, "never-built.db") },
 	])
 
 	// Absent, never fabricated: a client reading this one cannot tell a guessed epoch from a measured one.
@@ -122,13 +115,13 @@ test("/status omits data_updated when nothing is stamped, and still names the ar
 
 test("/status dates itself from the newest artifact and still reports the unstamped one", async () => {
 	const root = scratch()
-	const older = await stamped(join(root, "admin.db"), "2026-08-10T00:00:00.000Z")
-	const newer = await stamped(join(root, "candidate.db"), "2026-08-17T19:21:17.000Z")
+	const older = await stamped(join(await root, "admin.db"), "2026-08-10T00:00:00.000Z")
+	const newer = await stamped(join(await root, "candidate.db"), "2026-08-17T19:21:17.000Z")
 
 	const body = await statusBody([
 		{ name: "gazetteer", path: newer },
 		{ name: "reverse-admin", path: older },
-		{ name: "poi", path: bare(join(root, "poi.db")) },
+		{ name: "poi", path: bare(join(await root, "poi.db")) },
 	])
 
 	expect(body.data_updated).toBe("2026-08-17T19:21:17.000Z")

@@ -11,23 +11,20 @@
  *   count silently inflates by an order of magnitude and every review built on it is wrong.
  */
 
-import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeFile } from "@mailwoman/platform/fs/promises"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CoverageVerdict, CurrencyClass, triageWOFCurrency } from "mailwoman/gazetteer-pipeline/wof-triage"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "wof-triage-"))
+	scratch = await temporaryDirectory("wof-triage-")
 })
 
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 /**
  * A minimal admin gazetteer in the shape the triage reads.
@@ -96,7 +93,7 @@ function geonamesLine(id: number, name: string, lat: number, lon: number, fclass
 
 describe("triageWOFCurrency", () => {
 	it("classes the Medway cluster: deprecated-no-successor and not-current-unstated, all uncovered", async () => {
-		const adminDB = join(scratch, "admin.db")
+		const adminDB = scratch.resolve("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -118,7 +115,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("calls a same-name live record in ANOTHER BAND cross-band, not covered — the Swansea class", async () => {
-		const adminDB = join(scratch, "admin.db")
+		const adminDB = scratch.resolve("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -132,7 +129,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("calls the legal-form duplicate COVERED by containment — the verdict that keeps 11k US rows out of the hole count", async () => {
-		const adminDB = join(scratch, "admin.db")
+		const adminDB = scratch.resolve("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -145,7 +142,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("refuses both cover mirages the first live run exposed: a nameless neighbour and reverse containment", async () => {
-		const adminDB = join(scratch, "admin.db")
+		const adminDB = scratch.resolve("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -158,7 +155,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("never judges a SUPERSEDED record — its successor is the answer", async () => {
-		const adminDB = join(scratch, "admin.db")
+		const adminDB = scratch.resolve("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -168,7 +165,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("excludes placeholder 0,0 coordinates rather than measuring distances against the sentinel", async () => {
-		const adminDB = join(scratch, "admin.db")
+		const adminDB = scratch.resolve("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -178,11 +175,11 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("reports attestation as UNMEASURED when the country has no dump — absence is not a negative", async () => {
-		const adminDB = join(scratch, "admin.db")
+		const adminDB = scratch.resolve("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
-		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch })
+		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch.path })
 
 		expect(rows.every((r) => r.attestation.state === "unmeasured")).toBe(true)
 		// And the summary refuses to publish an attested count it could not measure.
@@ -190,12 +187,12 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("attests an uncovered record a second source independently carries, and separates it from one it does not", async () => {
-		const adminDB = join(scratch, "admin.db")
+		const adminDB = scratch.resolve("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
 		await writeFile(
-			join(scratch, "GB.txt"),
+			scratch.resolve("GB.txt"),
 			[
 				geonamesLine(1, "Rochester", 51.388, 0.505, "P", 28_671),
 				// An S-class row for Gillingham must not attest — feature class is the gate.
@@ -203,7 +200,7 @@ describe("triageWOFCurrency", () => {
 			].join("\n") + "\n"
 		)
 
-		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch })
+		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch.path })
 		const byName = new Map(rows.map((r) => [r.name, r]))
 
 		expect(byName.get("Rochester")?.attestation).toMatchObject({ state: "attested", population: 28_671 })

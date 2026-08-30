@@ -22,9 +22,7 @@
  *      canonical-parent cycle degrades to unlabeled places, never a hung or corrupt build.
  */
 
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import {
 	CANDIDATE_ANCESTOR_TABLE,
@@ -118,19 +116,19 @@ function buildFixtureAdmin(path: string): void {
 	`)
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let candidatePath: string
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-candidate-ancestors-"))
-	const input = join(scratch, "admin.db")
-	candidatePath = join(scratch, "candidate.db")
+	scratch = await temporaryDirectory("mailwoman-candidate-ancestors-")
+	const input = scratch.resolve("admin.db")
+	candidatePath = scratch.resolve("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output: candidatePath })
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 function intervalOf(db: DatabaseClient<WOFDatabase>, id: number): IntervalLabel | undefined {
@@ -289,9 +287,8 @@ describe("the candidate ancestors sidecar", () => {
 	test("an artifact without the sidecar reports the capability ABSENT — never [] dressed as an answer", () => {
 		// The tests may patch the built (unsealed) fixture directly — the same shape as an older
 		// candidate.db that predates the sidecar.
-		const db = new DatabaseClient<WOFDatabase>(candidatePath)
+		using db = new DatabaseClient<WOFDatabase>(candidatePath)
 		db.exec(`DROP TABLE ${CANDIDATE_ANCESTOR_TABLE}; DROP TABLE ${CANDIDATE_INTERVAL_TABLE};`)
-		db.destroy()
 
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
@@ -299,9 +296,9 @@ describe("the candidate ancestors sidecar", () => {
 	})
 
 	test("a canonical-parent cycle degrades to unlabeled places — closure rows kept, no hang, no labels", async () => {
-		const input = join(scratch, "cycle-admin.db")
-		const output = join(scratch, "cycle-candidate.db")
-		const db = new DatabaseClient<WOFDatabase>(input)
+		const input = scratch.resolve("cycle-admin.db")
+		const output = scratch.resolve("cycle-candidate.db")
+		using db = new DatabaseClient<WOFDatabase>(input)
 
 		// Two localities each naming the other as an ancestor (corrupt source ancestry), beside one
 		// healthy chain that must still label.
@@ -326,8 +323,6 @@ describe("the candidate ancestors sidecar", () => {
 			INSERT INTO ancestors VALUES (2, 1, 'locality');
 			INSERT INTO ancestors VALUES (10, 11, 'region');
 		`)
-
-		await db.destroy()
 
 		const result = await buildCandidateTable({ input, output })
 

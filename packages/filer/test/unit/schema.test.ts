@@ -25,7 +25,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>(":memory:")
+	return DatabaseClient.temp<FilerDatabase>()
 }
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {

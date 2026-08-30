@@ -22,10 +22,9 @@
  *      tier, which the builder refuses to raise while the licence is unresolved.
  */
 
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, LayerTier, supportsExclusion } from "@mailwoman/core/layers"
-import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ZoningContainmentPath, ZoningLookup, ZoningReadingKind } from "@mailwoman/zoning"
 import type { ZoningDatabase } from "@mailwoman/zoning/schema"
@@ -53,7 +52,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 const INDEX_RESOLUTION = 10
 const COVERAGE_RESOLUTION = 6
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 let result: BuildZoningResult
 let lookup: ZoningLookup
@@ -81,7 +80,7 @@ async function build(
 	features: ZoningSourceFeature[] = fixtureFeatures(),
 	out = "zoning-ireland.db"
 ): Promise<{ path: string; result: BuildZoningResult }> {
-	const path = join(scratch, out)
+	const path = scratch.resolve(out)
 
 	const built = await buildZoningDatabase({
 		source: fixtureSource(features),
@@ -98,7 +97,7 @@ async function build(
 }
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-zoning-"))
+	scratch = await temporaryDirectory("mw-zoning-")
 
 	const built = await build()
 
@@ -108,18 +107,18 @@ beforeAll(async () => {
 }, 120_000)
 
 afterAll(() => {
-	lookup?.close()
-	rmSync(scratch, { recursive: true, force: true })
+	lookup[Symbol.dispose]()
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("the sealed artifact", () => {
-	it("writes every fixture feature and seals the file read-only", () => {
+	it("writes every fixture feature and seals the file read-only", async () => {
 		expect(result.features).toBe(6)
 		expect(result.jurisdictions).toBe(1)
 		expect(result.plans).toBe(2)
 
 		// 0o444 — sealed, per the layer contract's build-then-swap discipline.
-		expect(statSync(databasePath).mode & 0o777).toBe(0o444)
+		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
 	})
 
 	it("declares the layer, its index resolution and its build-local posture in the manifest", () => {
@@ -133,58 +132,46 @@ describe("the sealed artifact", () => {
 	})
 
 	it("keys the truth table by the authority's own feature id", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const rows = database.prepare("SELECT area_id, jurisdiction_id, plan_id FROM zoning_area").all() as Array<{
-				area_id: string
-				jurisdiction_id: string
-				plan_id: string
-			}>
+		const rows = database.prepare("SELECT area_id, jurisdiction_id, plan_id FROM zoning_area").all() as Array<{
+			area_id: string
+			jurisdiction_id: string
+			plan_id: string
+		}>
 
-			expect(rows).toHaveLength(6)
-			expect(new Set(rows.map((row) => row.area_id)).size).toBe(6)
+		expect(rows).toHaveLength(6)
+		expect(new Set(rows.map((row) => row.area_id)).size).toBe(6)
 
-			expect(new Set(rows.map((row) => row.plan_id))).toEqual(
-				new Set([FIXTURE_PLANS.development.id, FIXTURE_PLANS.localArea.id])
-			)
-		} finally {
-			database.destroy()
-		}
+		expect(new Set(rows.map((row) => row.plan_id))).toEqual(
+			new Set([FIXTURE_PLANS.development.id, FIXTURE_PLANS.localArea.id])
+		)
 	})
 
 	it("indexes a polygon smaller than a cell rather than dropping it", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const sliver = database.prepare("SELECT count(*) AS n FROM zoning_cell WHERE area_id = ?").get("4") as {
-				n: number
-			}
-
-			// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to nothing reads
-			// downstream as an absence — the failure the per-part zero-cell guard exists to make impossible. At resolution 9,
-			// that would be 86.8% of the real product's polygons.
-			expect(sliver.n).toBeGreaterThan(0)
-		} finally {
-			database.destroy()
+		const sliver = database.prepare("SELECT count(*) AS n FROM zoning_cell WHERE area_id = ?").get("4") as {
+			n: number
 		}
+
+		// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to nothing reads
+		// downstream as an absence — the failure the per-part zero-cell guard exists to make impossible. At resolution 9,
+		// that would be 86.8% of the real product's polygons.
+		expect(sliver.n).toBeGreaterThan(0)
 	})
 
 	it("keeps the crosswalk edge table EMPTY, because the mapping is not a function of the pair", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const edges = database.prepare("SELECT count(*) AS n FROM zoning_crosswalk_edge").get() as { n: number }
-			const extents = database.prepare("SELECT count(*) AS n FROM zoning_mapped_extent").get() as { n: number }
+		const edges = database.prepare("SELECT count(*) AS n FROM zoning_crosswalk_edge").get() as { n: number }
+		const extents = database.prepare("SELECT count(*) AS n FROM zoning_mapped_extent").get() as { n: number }
 
-			expect(edges.n).toBe(0)
-			// And the footprint table too: the publisher states its coverage detail only inside a map viewer, so there is no
-			// footprint to record and its emptiness is what keeps the coverage basis at `source_present`.
-			expect(extents.n).toBe(0)
-			expect(lookup.identity.mappedExtents).toEqual([])
-		} finally {
-			database.destroy()
-		}
+		expect(edges.n).toBe(0)
+		// And the footprint table too: the publisher states its coverage detail only inside a map viewer, so there is no
+		// footprint to record and its emptiness is what keeps the coverage basis at `source_present`.
+		expect(extents.n).toBe(0)
+		expect(lookup.identity.mappedExtents).toEqual([])
 	})
 })
 
@@ -203,83 +190,67 @@ describe("the vocabulary decision", () => {
 	})
 
 	it("records a generic type the publisher uses without declaring, rather than coercing or dropping it", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			// Ireland declares 54 generic types and its data uses 55: `N/A` appears on a handful of rows and in no domain.
-			const row = database
-				.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
-				.get("IE-GZT", "N/A") as { declared: number; observed_rows: number } | undefined
+		// Ireland declares 54 generic types and its data uses 55: `N/A` appears on a handful of rows and in no domain.
+		const row = database
+			.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
+			.get("IE-GZT", "N/A") as { declared: number; observed_rows: number } | undefined
 
-			expect(row).toBeDefined()
-			expect(row!.declared).toBe(0)
-			expect(row!.observed_rows).toBe(1)
+		expect(row).toBeDefined()
+		expect(row!.declared).toBe(0)
+		expect(row!.observed_rows).toBe(1)
 
-			// And the reader reports it as undeclared on the reading itself, so a consumer sees the difference too.
-			const unzonedCentre = {
-				latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
-				longitude: FIXTURE_ORIGIN.lon + 4.5 * FIXTURE_SIDE,
-			}
-
-			const reading = lookup.lookup(unzonedCentre.latitude, unzonedCentre.longitude)
-
-			expect(reading.designations[0]!.crosswalk?.declared).toBe(false)
-			// Its label is the code itself, because the row carried no description — never a label this package wrote for a
-			// code the publisher never declared.
-			expect(reading.designations[0]!.crosswalk?.label).toBe("N/A")
-		} finally {
-			database.destroy()
+		// And the reader reports it as undeclared on the reading itself, so a consumer sees the difference too.
+		const unzonedCentre = {
+			latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
+			longitude: FIXTURE_ORIGIN.lon + 4.5 * FIXTURE_SIDE,
 		}
+
+		const reading = lookup.lookup(unzonedCentre.latitude, unzonedCentre.longitude)
+
+		expect(reading.designations[0]!.crosswalk?.declared).toBe(false)
+		// Its label is the code itself, because the row carried no description — never a label this package wrote for a
+		// code the publisher never declared.
+		expect(reading.designations[0]!.crosswalk?.label).toBe("N/A")
 	})
 
 	it("keeps a declared code the data never uses, at zero observed rows", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			// The domain is the publisher's statement of what a value MAY be, not a census of what it is. `SDZ` is the real
-			// product's example: declared as a plan level and used on no row.
-			const row = database
-				.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
-				.get("IE-PLAN-LEVEL", "SDZ") as { declared: number; observed_rows: number } | undefined
+		// The domain is the publisher's statement of what a value MAY be, not a census of what it is. `SDZ` is the real
+		// product's example: declared as a plan level and used on no row.
+		const row = database
+			.prepare("SELECT declared, observed_rows FROM zoning_vocabulary WHERE scheme = ? AND code = ?")
+			.get("IE-PLAN-LEVEL", "SDZ") as { declared: number; observed_rows: number } | undefined
 
-			expect(row).toBeDefined()
-			expect(row!.declared).toBe(1)
-			expect(row!.observed_rows).toBe(0)
-		} finally {
-			database.destroy()
-		}
+		expect(row).toBeDefined()
+		expect(row!.declared).toBe(1)
+		expect(row!.observed_rows).toBe(0)
 	})
 
 	it("scopes the local vocabulary to its own authority, because local codes collide across them", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const schemes = (
-				database.prepare("SELECT DISTINCT scheme FROM zoning_vocabulary ORDER BY scheme").all() as Array<{
-					scheme: string
-				}>
-			).map((row) => row.scheme)
+		const schemes = (
+			database.prepare("SELECT DISTINCT scheme FROM zoning_vocabulary ORDER BY scheme").all() as Array<{
+				scheme: string
+			}>
+		).map((row) => row.scheme)
 
-			expect(schemes).toContain("IE-LOCAL:Fx")
-			expect(schemes).toContain("IE-GZT")
-			expect(schemes).toContain("IE-SZO")
-		} finally {
-			database.destroy()
-		}
+		expect(schemes).toContain("IE-LOCAL:Fx")
+		expect(schemes).toContain("IE-GZT")
+		expect(schemes).toContain("IE-SZO")
 	})
 
 	it("populates no definition URL, because the publisher's own points at a host with no DNS record", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const withURL = database
-				.prepare("SELECT count(*) AS n FROM zoning_vocabulary WHERE definition_url IS NOT NULL")
-				.get() as { n: number }
+		const withURL = database
+			.prepare("SELECT count(*) AS n FROM zoning_vocabulary WHERE definition_url IS NOT NULL")
+			.get() as { n: number }
 
-			expect(withURL.n).toBe(0)
-		} finally {
-			database.destroy()
-		}
+		expect(withURL.n).toBe(0)
 	})
 
 	it("measures the crosswalk as NON-FUNCTIONAL over an (authority, code) pair", () => {
@@ -387,26 +358,22 @@ describe("the meaning-of-zero rule", () => {
 	})
 
 	it("writes every coverage row on source_present, so none of them supports an exclusion", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const rows = database
-				.prepare("SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage")
-				.all() as Array<{ h3_cell: number; completeness: number; basis: string | null; observed_rows: number }>
+		const rows = database
+			.prepare("SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage")
+			.all() as Array<{ h3_cell: number; completeness: number; basis: string | null; observed_rows: number }>
 
-			expect(rows.length).toBeGreaterThan(0)
-			expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
+		expect(rows.length).toBeGreaterThan(0)
+		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-			// THE FAILING TEST THE ISSUE ASKS FOR: not one assertion on one row, but the whole table read back and every row
-			// checked through the contract's own predicate. A code path that read `supportsExclusion` as true for this layer
-			// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
-			for (const row of rows) {
-				expect(row.basis).toBe(CoverageBasis.SourcePresent)
-				expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
-				expect(row.observed_rows).toBeGreaterThan(0)
-			}
-		} finally {
-			database.destroy()
+		// THE FAILING TEST THE ISSUE ASKS FOR: not one assertion on one row, but the whole table read back and every row
+		// checked through the contract's own predicate. A code path that read `supportsExclusion` as true for this layer
+		// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
+		for (const row of rows) {
+			expect(row.basis).toBe(CoverageBasis.SourcePresent)
+			expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
+			expect(row.observed_rows).toBeGreaterThan(0)
 		}
 	})
 
@@ -425,29 +392,21 @@ describe("the meaning-of-zero rule", () => {
 	})
 
 	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
-		const path = join(scratch, "tampered.db")
+		const path = scratch.resolve("tampered.db")
 
 		// The sealed artifact is copied and one coverage row is promoted to `designated`, which is exactly what a builder
 		// generalizing the flood layer's rule would have produced. The reader must refuse rather than answer confidently.
-		const source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			source.exec(`VACUUM INTO '${path}'`)
-		} finally {
-			source.destroy()
-		}
+		source.exec(`VACUUM INTO '${path}'`)
 
-		const tampered = new DatabaseClient<ZoningDatabase>(path)
+		using tampered = new DatabaseClient<ZoningDatabase>(path)
 
-		try {
-			// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `WITHOUT ROWID` and has none.
-			tampered.exec(
-				`UPDATE layer_coverage SET basis = '${CoverageBasis.Designated}' ` +
-					"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
-			)
-		} finally {
-			tampered.destroy()
-		}
+		// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `WITHOUT ROWID` and has none.
+		tampered.exec(
+			`UPDATE layer_coverage SET basis = '${CoverageBasis.Designated}' ` +
+				"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
+		)
 
 		expect(() => new ZoningLookup({ databasePath: path })).toThrow(/supports an EXCLUSION/u)
 	})
@@ -455,69 +414,49 @@ describe("the meaning-of-zero rule", () => {
 
 describe("the provenance grade", () => {
 	it("stamps every row authoritative and rejects a blank at the storage layer", () => {
-		const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const grades = (
-				database.prepare("SELECT DISTINCT provenance_grade FROM zoning_area").all() as Array<{
-					provenance_grade: string
-				}>
-			).map((row) => row.provenance_grade)
+		const grades = (
+			database.prepare("SELECT DISTINCT provenance_grade FROM zoning_area").all() as Array<{
+				provenance_grade: string
+			}>
+		).map((row) => row.provenance_grade)
 
-			expect(grades).toEqual(["authoritative"])
-		} finally {
-			database.destroy()
-		}
+		expect(grades).toEqual(["authoritative"])
 
 		// The CHECK is what makes the grade a constraint rather than a convention. `NOT NULL` alone accepts `''`, and a
 		// blank matches neither half of every read that splits on grade.
-		const path = join(scratch, "grade-check.db")
-		const source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		const path = scratch.resolve("grade-check.db")
+		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			source.exec(`VACUUM INTO '${path}'`)
-		} finally {
-			source.destroy()
-		}
+		source.exec(`VACUUM INTO '${path}'`)
 
-		const copy = new DatabaseClient<ZoningDatabase>(path)
+		using copy = new DatabaseClient<ZoningDatabase>(path)
 
-		try {
-			expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = '' WHERE area_id = '1'")).toThrow(
-				/CHECK constraint failed/u
-			)
+		expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = '' WHERE area_id = '1'")).toThrow(
+			/CHECK constraint failed/u
+		)
 
-			expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'observed' WHERE area_id = '1'")).toThrow(
-				/CHECK constraint failed/u
-			)
+		expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'observed' WHERE area_id = '1'")).toThrow(
+			/CHECK constraint failed/u
+		)
 
-			// And the one grade this artifact does not hold is still a legal VALUE — the constraint is about the vocabulary,
-			// and keeping the grades apart is the artifact's job rather than the column's.
-			expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'inferred' WHERE area_id = '1'")).not.toThrow()
-		} finally {
-			copy.destroy()
-		}
+		// And the one grade this artifact does not hold is still a legal VALUE — the constraint is about the vocabulary,
+		// and keeping the grades apart is the artifact's job rather than the column's.
+		expect(() => copy.exec("UPDATE zoning_area SET provenance_grade = 'inferred' WHERE area_id = '1'")).not.toThrow()
 	})
 
 	it("rejects a blank local code at the storage layer too, because the local code is the claim", () => {
-		const path = join(scratch, "code-check.db")
-		const source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+		const path = scratch.resolve("code-check.db")
+		using source = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-		try {
-			source.exec(`VACUUM INTO '${path}'`)
-		} finally {
-			source.destroy()
-		}
+		source.exec(`VACUUM INTO '${path}'`)
 
-		const copy = new DatabaseClient<ZoningDatabase>(path)
+		using copy = new DatabaseClient<ZoningDatabase>(path)
 
-		try {
-			expect(() => copy.exec("UPDATE zoning_area SET local_code = '  ' WHERE area_id = '1'")).toThrow(
-				/CHECK constraint failed/u
-			)
-		} finally {
-			copy.destroy()
-		}
+		expect(() => copy.exec("UPDATE zoning_area SET local_code = '  ' WHERE area_id = '1'")).toThrow(
+			/CHECK constraint failed/u
+		)
 	})
 })
 
@@ -547,7 +486,7 @@ describe("the area cross-check", () => {
 		await expect(
 			buildZoningDatabase({
 				source: fixtureSource([one]),
-				out: join(scratch, "bad-area.db"),
+				out: scratch.resolve("bad-area.db"),
 				sourceVintage: "2026-05-13",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -576,7 +515,7 @@ describe("the area cross-check", () => {
 
 		const built = await buildZoningDatabase({
 			source: fixtureSource([holed]),
-			out: join(scratch, "good-area.db"),
+			out: scratch.resolve("good-area.db"),
 			sourceVintage: "2026-05-13",
 			buildCmd: "vitest",
 			buildSHA: "fixture",
@@ -597,7 +536,7 @@ describe("the build-local posture", () => {
 		await expect(
 			buildZoningDatabase({
 				source: fixtureSource(fixtureFeatures()),
-				out: join(scratch, "shipped.db"),
+				out: scratch.resolve("shipped.db"),
 				sourceVintage: "2026-05-13",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -613,7 +552,7 @@ describe("the build-local posture", () => {
 		await expect(
 			buildZoningDatabase({
 				source: fixtureSource(fixtureFeatures()),
-				out: join(scratch, "bad-resolutions.db"),
+				out: scratch.resolve("bad-resolutions.db"),
 				sourceVintage: "2026-05-13",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -631,7 +570,7 @@ describe("the build-local posture", () => {
 		await expect(
 			buildZoningDatabase({
 				source: { ...source, declaredFeatureCount: features.length + 1 },
-				out: join(scratch, "short-read.db"),
+				out: scratch.resolve("short-read.db"),
 				sourceVintage: "2026-05-13",
 				buildCmd: "vitest",
 				buildSHA: "fixture",

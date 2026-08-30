@@ -11,11 +11,10 @@
  *   Run: `mailwoman placer eval quant-compare [--fp32 <dir>] [--int8 <dir>] [--abstain 0.5]`
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -75,18 +74,18 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 	const abstainBelow = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	function loadFp32(dir: string): CoarsePlacer {
-		const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(dir, "meta.json"), "utf8"))
-		const buf = readFileSync(path.join(dir, "weights.bin"))
+	async function loadFp32(dir: string): Promise<CoarsePlacer> {
+		const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(dir, "meta.json"))
+		const buf = await readLocalBuffer(path.join(dir, "weights.bin"))
 		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 		const weights = new Float32Array(ab)
 
 		return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
 	}
 
-	function loadInt8(dir: string): CoarsePlacer {
-		const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(dir, "meta.json"), "utf8"))
-		const buf = readFileSync(path.join(dir, "weights.bin"))
+	async function loadInt8(dir: string): Promise<CoarsePlacer> {
+		const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(dir, "meta.json"))
+		const buf = await readLocalBuffer(path.join(dir, "weights.bin"))
 		const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 		const int8 = new Int8Array(ab)
 		const C = meta.classes.length
@@ -106,12 +105,12 @@ export async function evalQuantCompare(options: EvalQuantCompareOptions = {}): P
 		return new CoarsePlacer({ ...meta, weights }, { abstainBelow })
 	}
 
-	const fp32 = loadFp32(fp32Dir)
-	const int8 = loadInt8(int8Dir)
+	const fp32 = await loadFp32(fp32Dir)
+	const int8 = await loadInt8(int8Dir)
 
 	const test = await Array.fromAsync(JSONSpliterator.fromAsync<TestRow>(path.join(dataDir, "test.jsonl")))
 
-	const classes = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(fp32Dir, "meta.json"), "utf8")).classes
+	const classes = (await readLocalJSONFile<CoarsePlacerMeta>(path.join(fp32Dir, "meta.json"))).classes
 	let okF = 0
 	let okI = 0
 	let agree = 0

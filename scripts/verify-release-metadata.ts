@@ -54,10 +54,9 @@
  *   as a step after the HF preflight and before release-it publishes.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
@@ -118,8 +117,8 @@ interface SurfaceResult {
  * check: NOT npm / package.json, so a code-only release (which bumps npm but leaves the card untouched) is judged
  * against the model it actually ships.
  */
-function readModelVersion(cardPath: string): string {
-	const card = parseJSONStrict<{ version?: string }>(readFileSync(cardPath, "utf8"))
+async function readModelVersion(cardPath: string): Promise<string> {
+	const card = await readLocalJSONFile<{ version?: string }>(cardPath)
 
 	if (!card.version) throw new Error(`model card ${cardPath} has no "version" field`)
 
@@ -129,10 +128,10 @@ function readModelVersion(cardPath: string): string {
 /**
  * Check 1 — the eval ledger carries a run for this model version.
  */
-function checkLedger(version: string, ledgerPath: string): SurfaceResult {
-	const ledger = parseJSONStrict<{
+async function checkLedger(version: string, ledgerPath: string): Promise<SurfaceResult> {
+	const ledger = await readLocalJSONFile<{
 		runs?: Array<{ model_version?: string }>
-	}>(readFileSync(ledgerPath, "utf8"))
+	}>(ledgerPath)
 
 	const runs = ledger.runs ?? []
 	const found = runs.some((run) => run.model_version === version)
@@ -195,9 +194,9 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
  * Check 2 — releases.mdx has a matrix row for V, and the `(current)` marker is on V's row (or on a newer row when every
  * release above V is a documented "model unchanged" code-only bump).
  */
-function checkReleases(version: string, releasesPath: string): SurfaceResult {
+async function checkReleases(version: string, releasesPath: string): Promise<SurfaceResult> {
 	const surface = "releases-matrix"
-	const markdown = readFileSync(releasesPath, "utf8")
+	const markdown = await readLocalTextFile(releasesPath)
 	const rows = parseMatrixRows(markdown)
 	const matcher = versionMatcher(version)
 
@@ -270,9 +269,9 @@ function checkReleases(version: string, releasesPath: string): SurfaceResult {
 /**
  * Check 3 — the status.mdx info box cites this model version.
  */
-function checkStatus(version: string, statusPath: string): SurfaceResult {
+async function checkStatus(version: string, statusPath: string): Promise<SurfaceResult> {
 	const surface = "status-infobox"
-	const markdown = readFileSync(statusPath, "utf8")
+	const markdown = await readLocalTextFile(statusPath)
 
 	const start = markdown.indexOf(":::info[")
 
@@ -319,14 +318,14 @@ async function main() {
 		statusPath: resolve(repoRoot, values.status ?? "docs/records/site-2026-08/status.mdx"),
 	}
 
-	const version = readModelVersion(options.cardPath)
+	const version = await readModelVersion(options.cardPath)
 
 	console.log(`verify-release-metadata: shipped MODEL version (from model card) = ${version}\n`)
 
 	const results: SurfaceResult[] = [
-		checkLedger(version, options.ledgerPath),
-		checkReleases(version, options.releasesPath),
-		checkStatus(version, options.statusPath),
+		await checkLedger(version, options.ledgerPath),
+		await checkReleases(version, options.releasesPath),
+		await checkStatus(version, options.statusPath),
 	]
 
 	for (const result of results) {

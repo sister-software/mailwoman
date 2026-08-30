@@ -50,6 +50,8 @@
  *      the house rule exists for.
  */
 
+import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
+import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -66,7 +68,6 @@ import type { FilerDatabase } from "@mailwoman/filer"
 //. Only the TYPES are imported here; `import type` is fully erased, so
 // this line has zero runtime cost for every `@mailwoman/bdc` consumer that never populates providers.
 import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "@mailwoman/platform/fs"
 import { open } from "@mailwoman/platform/fs/promises"
 import { basename, dirname, join } from "@mailwoman/platform/path"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -579,24 +580,24 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 	const buildingPath = `${options.out}.building`
 
-	if (existsSync(buildingPath)) {
-		rmSync(buildingPath)
+	if (await pathExists(buildingPath)) {
+		await removePath(buildingPath)
 	}
 
-	mkdirSync(dirname(options.out), { recursive: true })
+	await makeDirectories(dirname(options.out))
 
 	// A crash inside a PRIOR run's swap can leave the slot empty while the previous version sits
 	// parked aside — restore it before building, so a failure in THIS run still leaves an artifact
 	// serving. Both aside spellings: this builder's old `.prev` and swapDatabaseIntoPlace's `.old-<pid>`.
-	if (!existsSync(options.out)) {
+	if (!(await pathExists(options.out))) {
 		const base = basename(options.out)
 
-		const parked = readdirSync(dirname(options.out)).find(
+		const parked = (await readDirectory(dirname(options.out))).find(
 			(name) => name === `${base}.prev` || name.startsWith(`${base}.old-`)
 		)
 
 		if (parked) {
-			renameSync(join(dirname(options.out), parked), options.out)
+			await movePath(join(dirname(options.out), parked), options.out)
 			progress(`restored ${parked} into place (a prior run crashed mid-swap)`)
 		}
 	}
@@ -865,7 +866,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			// The handle may already be closed or mid-statement — nothing more to release.
 		}
 
-		rmSync(buildingPath, { force: true })
+		await removePathIfPresent(buildingPath)
 
 		throw error
 	}

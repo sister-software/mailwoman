@@ -198,8 +198,17 @@ async function compareMailwomanArms(
 	options: CompareOptions,
 	deps: CompareDeps
 ): Promise<unknown> {
-	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds, close } =
-		await prepareMailwomanArms(registry, set, configA, configB, options.declared, options.executionPath, deps)
+	using arms = await prepareMailwomanArms(
+		registry,
+		set,
+		configA,
+		configB,
+		options.declared,
+		options.executionPath,
+		deps
+	)
+
+	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds } = arms
 
 	const fingerprint = registry.fingerprint()
 
@@ -357,8 +366,6 @@ async function compareMailwomanArms(
 		rows_changed: differed,
 		warnings: confounds.warnings,
 	}
-
-	close()
 
 	return result
 }

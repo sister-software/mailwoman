@@ -42,16 +42,17 @@
  *   is `codepoint-shard.ts` with an Overpass-JSON reader in place of a CSV one.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { existsSync, unlinkSync } from "@mailwoman/platform/fs"
 import { readFile } from "@mailwoman/platform/fs/promises"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
-import { buildFTS } from "../fts.ts"
+import { buildFTS, type BuildFTSResult } from "../fts.ts"
 import type { ShardMetaDatabase } from "./geonames-tail.ts"
 import { createShardMetaTable } from "./geonames-tail.ts"
 import {
@@ -207,7 +208,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 		await acquireNIPostcodes({ destDir: sourceDir, now, onPhase: phase })
 	}
 
-	if (!existsSync(responsePath)) {
+	if (!(await pathExists(responsePath))) {
 		throw new Error(
 			`buildPostcodeNIOSM: no Overpass response at ${responsePath} — run without --offline to acquire it, ` +
 				`or copy an existing dated acquisition into place.`
@@ -257,117 +258,125 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const ingestPath = `${out}.ingest`
 
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (existsSync(stale)) {
-			unlinkSync(stale)
+		if (await pathExists(stale)) {
+			await removePath(stale)
 		}
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseClient<WOFDatabase>(ingestPath)
-
-	db.exec(`
-		PRAGMA page_size = 8192;
-		PRAGMA journal_mode = WAL;
-		PRAGMA synchronous = NORMAL;
-		PRAGMA busy_timeout = 30000;
-		PRAGMA temp_store = MEMORY;
-		PRAGMA cache_size = -200000;
-	`)
-
-	await createUnifiedSchema(db)
-
-	// Hot positional INSERTs — raw prepared statements, per the AGENTS.md bulk-load carve-out.
-	const sprInsert = db.prepare(
-		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', '${COUNTRY}', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
-	)
-
-	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', '${COUNTRY}', '', 0)`
-	)
-
-	phase("ingest", `${records.length.toLocaleString()} unit postcodes`)
-	db.exec("BEGIN")
 
 	let inserted = 0
 
-	for (const record of records) {
-		const id = NI_OSM_ID_BASE + inserted
+	let ancestorRows: number
 
-		// Degenerate bbox — a unit postcode is a point here, not a polygon.
-		sprInsert.run(
-			id,
-			record.name,
-			record.latitude,
-			record.longitude,
-			record.latitude,
-			record.longitude,
-			record.latitude,
-			record.longitude
+	{
+		using db = new DatabaseClient<WOFDatabase>(ingestPath)
+
+		db.exec(`
+			PRAGMA page_size = 8192;
+			PRAGMA journal_mode = WAL;
+			PRAGMA synchronous = NORMAL;
+			PRAGMA busy_timeout = 30000;
+			PRAGMA temp_store = MEMORY;
+			PRAGMA cache_size = -200000;
+		`)
+
+		await createUnifiedSchema(db)
+
+		// Hot positional INSERTs — raw prepared statements, per the AGENTS.md bulk-load carve-out.
+		const sprInsert = db.prepare(
+			`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', '${COUNTRY}', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
 		)
 
-		namesInsert.run(id, record.name)
+		const namesInsert = db.prepare(
+			`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', '${COUNTRY}', '', 0)`
+		)
 
-		// The #920 name law: the sanitized form is the NAME, the display form is an alt.
-		if (record.display !== record.name) {
-			namesInsert.run(id, record.display)
+		phase("ingest", `${records.length.toLocaleString()} unit postcodes`)
+		db.exec("BEGIN")
+
+		for (const record of records) {
+			const id = NI_OSM_ID_BASE + inserted
+
+			// Degenerate bbox — a unit postcode is a point here, not a polygon.
+			sprInsert.run(
+				id,
+				record.name,
+				record.latitude,
+				record.longitude,
+				record.latitude,
+				record.longitude,
+				record.latitude,
+				record.longitude
+			)
+
+			namesInsert.run(id, record.name)
+
+			// The #920 name law: the sanitized form is the NAME, the display form is an alt.
+			if (record.display !== record.name) {
+				namesInsert.run(id, record.display)
+			}
+
+			inserted++
 		}
 
-		inserted++
+		db.exec("COMMIT")
+
+		// Every row's parent_id is -1 (OSM address points carry no WOF hierarchy), so this writes the SELF row
+		// per place and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
+		// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`, and a place absent from `ancestors` can
+		// never satisfy it.
+		phase("ancestors")
+		ancestorRows = populateAncestors(db)
+
+		phase("indexes")
+		await createUnifiedIndexes(db)
+
+		phase("meta")
+
+		await writeShardMeta(db, {
+			now,
+			stats,
+			inserted,
+			districts: districts.size,
+			sectors: sectors.size,
+			responseMD5,
+			queryText,
+			queryMD5,
+			retrievedAt,
+			endpoint,
+			osmTimestamp,
+			reconstructedProvenance: sidecar?.reconstructed === true,
+		})
+
+		phase("freeze")
+		db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
+		db.exec("PRAGMA journal_mode = DELETE")
+		db.exec("ANALYZE")
+
+		phase("vacuum", out)
+
+		if (await pathExists(out)) {
+			await removePath(out)
+		}
+
+		db.prepare("VACUUM INTO ?").run(out)
 	}
-
-	db.exec("COMMIT")
-
-	// Every row's parent_id is -1 (OSM address points carry no WOF hierarchy), so this writes the SELF row
-	// per place and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
-	// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`, and a place absent from `ancestors` can
-	// never satisfy it.
-	phase("ancestors")
-	const ancestorRows = populateAncestors(db)
-
-	phase("indexes")
-	await createUnifiedIndexes(db)
-
-	phase("meta")
-
-	await writeShardMeta(db, {
-		now,
-		stats,
-		inserted,
-		districts: districts.size,
-		sectors: sectors.size,
-		responseMD5,
-		queryText,
-		queryMD5,
-		retrievedAt,
-		endpoint,
-		osmTimestamp,
-		reconstructedProvenance: sidecar?.reconstructed === true,
-	})
-
-	phase("freeze")
-	db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
-	db.exec("PRAGMA journal_mode = DELETE")
-	db.exec("ANALYZE")
-
-	phase("vacuum", out)
-
-	if (existsSync(out)) {
-		unlinkSync(out)
-	}
-
-	db.prepare("VACUUM INTO ?").run(out)
-	await db.destroy()
 
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (existsSync(stale)) {
-			unlinkSync(stale)
+		if (await pathExists(stale)) {
+			await removePath(stale)
 		}
 	}
 
 	phase("fts")
-	const outDB = new DatabaseClient<WOFDatabase>(out)
-	const fts = await buildFTS(outDB, { onProgress: phase })
-	await outDB.destroy()
+
+	let fts: BuildFTSResult
+
+	{
+		using outDB = new DatabaseClient<WOFDatabase>(out)
+		fts = await buildFTS(outDB, { onProgress: phase })
+	}
 
 	phase("seal")
 	sealDatabase(out)

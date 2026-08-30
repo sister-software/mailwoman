@@ -18,10 +18,11 @@
  *   Python.
  */
 
-import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
-import { pathExists, sha256File } from "@mailwoman/core/utils"
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { isFile, tryStat } from "@mailwoman/core/fs/readers"
+import { sha256File } from "@mailwoman/core/utils"
 import { gunzip } from "@mailwoman/platform/compression"
-import { mkdir, readFile, stat, unlink, writeFile } from "@mailwoman/platform/fs/promises"
+import { mkdir, readFile, unlink, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
 
@@ -176,7 +177,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		report?.(`=== dept ${code}`)
 
 		// If the CSV already exists, compare its sha256 against the manifest.
-		if (await pathExists(csvFile)) {
+		if (await isFile(csvFile)) {
 			const existingSha = await sha256File(csvFile)
 			const recordedSha = entries.get(code)?.sha256
 
@@ -211,7 +212,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		}
 
 		// Guard against truncated 404/error pages.
-		const gzSize = (await stat(gzFile)).size
+		const gzSize = (await tryStat(gzFile))?.size ?? 0
 
 		if (gzSize < BYTES_PER_KIB) {
 			report?.(`  ✗ response too small (${gzSize} bytes) — probable 404 / error page`)
@@ -238,7 +239,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 
 		await unlink(gzFile)
 
-		if (!(await pathExists(csvFile))) {
+		if (!(await isFile(csvFile))) {
 			report?.(`  ✗ decompressed file not found at ${csvFile}`)
 
 			failed++
@@ -247,7 +248,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			continue
 		}
 
-		const bytes = (await stat(csvFile)).size
+		const bytes = (await tryStat(csvFile))?.size ?? 0
 		const sha = await sha256File(csvFile)
 
 		entries.set(code, {

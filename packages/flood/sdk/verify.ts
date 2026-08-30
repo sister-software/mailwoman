@@ -245,7 +245,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}
 	} finally {
-		lookup.close()
+		lookup[Symbol.dispose]()
 	}
 }
 
@@ -314,69 +314,65 @@ export function sampleAgreementPoints(
 ): Array<{ label: string; latitude: number; longitude: number }> {
 	const insideCount = options.insideCount ?? 40
 	const absenceCount = options.absenceCount ?? 20
-	const database = new DatabaseClient<FloodDatabase>(databasePath, { readOnly: true })
+	using database = new DatabaseClient<FloodDatabase>(databasePath, { readOnly: true })
 
-	try {
-		const points: Array<{ label: string; latitude: number; longitude: number }> = []
+	const points: Array<{ label: string; latitude: number; longitude: number }> = []
 
-		const areaIDs = (
-			database.prepare("SELECT area_id FROM flood_zone_area ORDER BY area_id").all() as Array<{ area_id: string }>
-		).map((row) => row.area_id)
+	const areaIDs = (
+		database.prepare("SELECT area_id FROM flood_zone_area ORDER BY area_id").all() as Array<{ area_id: string }>
+	).map((row) => row.area_id)
 
-		const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, insideCount)))
+	const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, insideCount)))
 
-		const selectArea = database.prepare(
-			"SELECT area_id, zone_code, min_lat, min_lon, max_lat, max_lon, rings FROM flood_zone_area WHERE area_id = ?"
-		)
+	const selectArea = database.prepare(
+		"SELECT area_id, zone_code, min_lat, min_lon, max_lat, max_lon, rings FROM flood_zone_area WHERE area_id = ?"
+	)
 
-		for (let index = 0; index < areaIDs.length && points.length < insideCount; index += stride) {
-			const area = selectArea.get(areaIDs[index]!) as
-				| {
-						area_id: string
-						zone_code: string
-						min_lat: number
-						min_lon: number
-						max_lat: number
-						max_lon: number
-						rings: Uint8Array
-				  }
-				| undefined
+	for (let index = 0; index < areaIDs.length && points.length < insideCount; index += stride) {
+		const area = selectArea.get(areaIDs[index]!) as
+			| {
+					area_id: string
+					zone_code: string
+					min_lat: number
+					min_lon: number
+					max_lat: number
+					max_lon: number
+					rings: Uint8Array
+			  }
+			| undefined
 
-			if (!area) continue
+		if (!area) continue
 
-			const interior = interiorPointOfEncodedRings(area, 7)
+		const interior = interiorPointOfEncodedRings(area, 7)
 
-			if (!interior) continue
+		if (!interior) continue
 
-			points.push({ label: `${area.zone_code} polygon ${area.area_id}`, ...interior })
-		}
-
-		// A designated absence is a coverage cell the authority determined and no polygon reaches — exactly the cells whose
-		// `observed_rows` is zero, which is the storable form of a Zone 1 designation.
-		const emptyCount = (
-			database.prepare("SELECT count(*) AS n FROM layer_coverage WHERE observed_rows = 0").get() as { n: number }
-		).n
-
-		const emptyStride = Math.max(1, Math.floor(emptyCount / Math.max(1, absenceCount)))
-
-		const emptyCells = database
-			.prepare("SELECT h3_cell FROM layer_coverage WHERE observed_rows = 0 ORDER BY h3_cell")
-			.all() as Array<{ h3_cell: number }>
-
-		const coverageResolution = (
-			database.prepare("SELECT coverage_resolution AS r FROM flood_map_extent").get() as { r: number }
-		).r
-
-		for (let index = 0; index < emptyCells.length && points.length < insideCount + absenceCount; index += emptyStride) {
-			const short = emptyCells[index]!.h3_cell.toString(16).padStart(13, "0") as H3CellShort
-			const cell = expandH3Cell(short, coverageResolution)
-			const [latitude, longitude] = cellToLatLng(cell)
-
-			points.push({ label: `designated absence in ${cell}`, latitude, longitude })
-		}
-
-		return points
-	} finally {
-		database.destroy()
+		points.push({ label: `${area.zone_code} polygon ${area.area_id}`, ...interior })
 	}
+
+	// A designated absence is a coverage cell the authority determined and no polygon reaches — exactly the cells whose
+	// `observed_rows` is zero, which is the storable form of a Zone 1 designation.
+	const emptyCount = (
+		database.prepare("SELECT count(*) AS n FROM layer_coverage WHERE observed_rows = 0").get() as { n: number }
+	).n
+
+	const emptyStride = Math.max(1, Math.floor(emptyCount / Math.max(1, absenceCount)))
+
+	const emptyCells = database
+		.prepare("SELECT h3_cell FROM layer_coverage WHERE observed_rows = 0 ORDER BY h3_cell")
+		.all() as Array<{ h3_cell: number }>
+
+	const coverageResolution = (
+		database.prepare("SELECT coverage_resolution AS r FROM flood_map_extent").get() as { r: number }
+	).r
+
+	for (let index = 0; index < emptyCells.length && points.length < insideCount + absenceCount; index += emptyStride) {
+		const short = emptyCells[index]!.h3_cell.toString(16).padStart(13, "0") as H3CellShort
+		const cell = expandH3Cell(short, coverageResolution)
+		const [latitude, longitude] = cellToLatLng(cell)
+
+		points.push({ label: `designated absence in ${cell}`, latitude, longitude })
+	}
+
+	return points
 }

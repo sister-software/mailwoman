@@ -69,7 +69,7 @@ describe.skipIf(!present)("Node↔browser candidate parity over the real artifac
 
 	afterAll(() => {
 		raw?.destroy()
-		node?.close?.()
+		node?.[Symbol.dispose]()
 	})
 
 	test.each(PANEL)("'%s' — same top candidate through both readers", async (name) => {

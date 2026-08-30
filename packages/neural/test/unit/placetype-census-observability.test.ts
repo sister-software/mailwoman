@@ -19,6 +19,8 @@
  *   two artifacts (`foldVersion`) is part of what's under test.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
@@ -32,10 +34,12 @@ import {
 } from "@mailwoman/neural/placetype-census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "@mailwoman/neural/placetype-pair-prior"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { describe, expect, test } from "vitest"
+import { afterAll, describe, expect, test } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const LABELS = STAGE2_BIO_LABELS
 
@@ -227,11 +231,10 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 	test.skipIf(!havePackage)(
 		"a wired census fills the trace record and moves nothing else",
 		async () => {
-			const dir = mkdtempSync(join(tmpdir(), "mailwoman-census-"))
+			const dir = fixtures.use(await temporaryDirectory("mailwoman-census-")).path
 			const censusPath = join(dir, "placetype-census-us.bin")
 
-			writeFileSync(
-				censusPath,
+			await writeLocalFile(
 				serializePlacetypeCensus(
 					{
 						country: "us",
@@ -242,7 +245,8 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 						baseRates: { dependent_locality: 0.2 },
 					},
 					[{ parent: "new york", counts: { dependent_locality: 40 }, total: 40 }]
-				)
+				),
+				censusPath
 			)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({

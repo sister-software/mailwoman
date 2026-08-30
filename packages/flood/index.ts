@@ -183,7 +183,7 @@ export interface FloodZoneLookupOptions {
  * duplicated. Each of those would otherwise present as a reader that simply always answers `unknown`, which on a
  * receipt is indistinguishable from a region the authority genuinely has not mapped.
  */
-export class FloodZoneLookup {
+export class FloodZoneLookup implements Disposable {
 	readonly identity: FloodLayerIdentity
 
 	readonly #database: DatabaseClient<FloodDatabase>
@@ -271,7 +271,7 @@ export class FloodZoneLookup {
 		}
 	}
 
-	public close(): void {
+	public [Symbol.dispose](): void {
 		this.#database.destroy()
 	}
 

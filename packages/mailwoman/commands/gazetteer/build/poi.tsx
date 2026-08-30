@@ -145,7 +145,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			})
 
 			return [
-				`poi.db (osm/${country}): ${out} (${artifactSizeMB(out)} MB)`,
+				`poi.db (osm/${country}): ${out} (${await artifactSizeMB(out)} MB)`,
 				`${result.rows.toLocaleString()} rows · ${result.categories} categories` +
 					` · ${result.skipped.toLocaleString()} skipped (non-finite coords) · ${result.coverageCells.toLocaleString()} coverage cells`,
 				`manifest: name=poi tier=build-local source=osm sourceVintage=${release} buildSHA=${buildSHA}`,
@@ -193,7 +193,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			.map(([cc, count]) => `  ${cc} ${count.toLocaleString()}`)
 
 		return [
-			`poi.db: ${out} (${artifactSizeMB(out)} MB)`,
+			`poi.db: ${out} (${await artifactSizeMB(out)} MB)`,
 			`${result.rows.toLocaleString()} rows · ${result.categories} categories · ${result.countries.size} countries` +
 				` · ${result.skipped.toLocaleString()} skipped (non-finite coords) · ${result.coverageCells.toLocaleString()} coverage cells`,
 			...countryLines,

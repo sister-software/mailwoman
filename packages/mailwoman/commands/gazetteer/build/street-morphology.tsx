@@ -46,7 +46,7 @@ const GazetteerBuildStreetMorphology: ParsedCommandComponent<Options> = ({ optio
 	const state = useCommandTask(async () => {
 		const { buildStreetMorphologyArtifact } = await import("#gazetteer/street-morphology")
 
-		const built = buildStreetMorphologyArtifact({
+		const built = await buildStreetMorphologyArtifact({
 			dictionariesDir: options.dictionaries,
 			locales: options.locales?.split(",").map((s) => s.trim()),
 			output: options.output,

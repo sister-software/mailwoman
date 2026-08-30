@@ -4,14 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 // Re-export the internals for testing. The script's CLI entry is gated on
 // `runIfScript(import.meta, …)`, so importing the module is side-effect-free.
 import { audit } from "@mailwoman/corpus/tools/audit"
 // Lightweight integration smoke against the actual corpus on this host. Skipped when the data
 // isn't present (CI / fresh clones); only the file-format-parsing tests run unconditionally.
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -19,15 +20,15 @@ const CORPUS_PATH = dataRootPath("corpus", "versioned", "v0.3.0", "corpus-v0.3.0
 const hasCorpus = existsSync(CORPUS_PATH)
 
 describe.skipIf(!hasCorpus)("audit — integration", () => {
-	it("emits a report without throwing on the v0.3.0 corpus + v0.4.0 config", () => {
+	it("emits a report without throwing on the v0.3.0 corpus + v0.4.0 config", async () => {
 		// audit() prints to stdout/stderr — we test that it doesn't throw and produces a stat line.
 		// More substantive output assertions are bypass-able since the printed report is the artifact;
 		// a successful run is the contract.
-		const tmp = mkdtempSync(join(tmpdir(), "audit-test-"))
+		await using tmpDirectory = await temporaryDirectory("audit-test-")
+		const tmp = tmpDirectory.path
 		const configPath = join(tmp, "v0_4_0.yaml")
 
-		writeFileSync(
-			configPath,
+		await writeLocalTextFile(
 			[
 				"data:",
 				"  source_weights:",
@@ -39,7 +40,8 @@ describe.skipIf(!hasCorpus)("audit — integration", () => {
 				"  coarse_filter: true",
 				"model:",
 				"  use_crf: true",
-			].join("\n")
+			].join("\n"),
+			configPath
 		)
 
 		expect(() => audit({ corpusDir: CORPUS_PATH, configPath })).not.toThrow()
@@ -52,14 +54,14 @@ describe("audit — config parser", () => {
 		// printer formatting. Instead, write a small config + call audit() against an empty corpus
 		// dir; we verify the warning-output for "no shards" mentions the right sources (proving the
 		// parser found exactly the configured ones and not val_rows).
-		const tmp = mkdtempSync(join(tmpdir(), "audit-parser-test-"))
+		await using tmpDirectory = await temporaryDirectory("audit-parser-test-")
+		const tmp = tmpDirectory.path
 		// Empty train/ subdir so the printer enters the per-source report block + emits the
 		// "weighted in config but no shards" warning where we can inspect what the parser saw.
-		mkdirSync(join(tmp, "train"))
+		await makeDirectoryExclusive(join(tmp, "train"))
 		const configPath = join(tmp, "test.yaml")
 
-		writeFileSync(
-			configPath,
+		await writeLocalTextFile(
 			[
 				"data:",
 				"  source_weights:",
@@ -71,7 +73,8 @@ describe("audit — config parser", () => {
 				"model:",
 				"  use_crf: true",
 				"  crf_loss_weight: 0.05",
-			].join("\n")
+			].join("\n"),
+			configPath
 		)
 
 		const origError = console.error

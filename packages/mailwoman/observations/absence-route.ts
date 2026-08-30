@@ -34,7 +34,7 @@
  *   an activity afforded by two establishment classes puts two classes in one search. The layer surveys
  *   ONE, and its completeness says nothing about the other — so "no establishment affording this activity
  *   is here" would be a claim about premises the survey never looked for, which is the unsupported
- *   negative evidence this route exists to refuse. The refusal is `category_not_surveyed`, and it is the
+ *   negative evidence this route exists to refuse. The refusal is `category_not_surveyed` and the
  *   same reading as the single-class case: the searched set has to BE the surveyed class. Widening the
  *   layer to survey the second class is what would make such a cell decidable again.
  *
@@ -262,14 +262,13 @@ export interface AbsenceRouteIdentity {
 	exclusionGradeEmptyCells: number
 }
 
-export interface AbsenceObservationRoute {
+export interface AbsenceObservationRoute extends Disposable {
 	identity: AbsenceRouteIdentity
 	/**
 	 * Decide one answered query. Pure with respect to the pipeline: it reads the outcome and the coverage layer and
 	 * returns a record.
 	 */
 	observe: (outcome: POIIntentOutcome | undefined) => Promise<AbsenceDecision>
-	close: () => void
 }
 
 export interface AbsenceObservationRouteOptions {
@@ -429,7 +428,7 @@ export async function createAbsenceObservationRoute(
 		return {
 			identity,
 			observe: (outcome) => decide(outcome, { affording, model, db, identity }),
-			close: () => db.destroy(),
+			[Symbol.dispose]: () => db.destroy(),
 		}
 	} catch (error) {
 		await db.destroy()

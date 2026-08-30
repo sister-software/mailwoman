@@ -6,18 +6,21 @@
  *
  *   That is the behaviour worth a test. GeoNames covers ~80 countries, not all of them, so a caller planning a postcode
  *   shard needs "this country does not exist upstream" kept apart from "the transfer failed" — the first is an
- *   acquisition question and the second is a retry. Venezuela is the live instance: it 404s, and it is the country the
+ *   acquisition question and the second is a retry. Venezuela is the live instance: it 404s and the country the
  *   gauntlet evidence for the `«locality» «postcode»` defect comes from.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { fetchGeonamesPostal } from "@mailwoman/corpus/tools"
-import { mkdtempSync, readFileSync } from "@mailwoman/platform/fs"
 import { createServer, type Server } from "@mailwoman/platform/http"
 import type { AddressInfo } from "@mailwoman/platform/net"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 let server: Server
 let baseURL: string
@@ -27,8 +30,12 @@ let outRoot: string
  * The manifest as written. `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is a test failure,
  * not a fallback.
  */
-function readManifest(): { unavailable: string[]; files: Array<Record<string, unknown>>; [key: string]: unknown } {
-	return parseJSONStrict(readFileSync(join(outRoot, "geonames-postal", "MANIFEST.json"), "utf8"))
+async function readManifest(): Promise<{
+	unavailable: string[]
+	files: Array<Record<string, unknown>>
+	[key: string]: unknown
+}> {
+	return await readLocalJSONFile(join(outRoot, "geonames-postal", "MANIFEST.json"))
 }
 
 beforeAll(async () => {
@@ -57,23 +64,32 @@ beforeAll(async () => {
 	})
 
 	baseURL = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
-	outRoot = mkdtempSync(join(tmpdir(), "mw-geonames-postal-"))
+	outRoot = fixtures.use(await temporaryDirectory("mw-geonames-postal-")).path
 })
 
-afterAll(() => {
-	server.close()
-})
+afterAll(() => server[Symbol.asyncDispose]())
+
+/**
+ * The retry COUNT is what these cases pin; the pause between attempts is not, and paying the shipped 5 s twice per
+ * failing transfer cost this file 20.1 s of the fast leg.
+ */
+const RETRY_DELAY_MS = 1
 
 describe("fetchGeonamesPostal", () => {
 	it("records a 404 country as UNAVAILABLE and still fetches the rest", async () => {
-		const summary = await fetchGeonamesPostal({ outRoot, baseURL, countries: ["pt", "ve"] })
+		const summary = await fetchGeonamesPostal({
+			retryDelayMs: RETRY_DELAY_MS,
+			outRoot,
+			baseURL,
+			countries: ["pt", "ve"],
+		})
 
 		// One absent country must not cost the run — the whole point of naming several at once.
 		expect(summary.fetched).toBe(1)
 		expect(summary.failed).toBe(1)
 		expect(summary.failedCodes).toEqual(["VE"])
 
-		const manifest = readManifest()
+		const manifest = await readManifest()
 
 		// The durable half: a later reader learns VE is not published without spending the fetch to rediscover it.
 		expect(manifest.unavailable).toEqual(["VE"])
@@ -88,7 +104,7 @@ describe("fetchGeonamesPostal", () => {
 	})
 
 	it("lower-cases input codes to the upper-case the source uses", async () => {
-		const summary = await fetchGeonamesPostal({ outRoot, baseURL, countries: ["  pt  "] })
+		const summary = await fetchGeonamesPostal({ retryDelayMs: RETRY_DELAY_MS, outRoot, baseURL, countries: ["  pt  "] })
 
 		expect(summary.fetched).toBe(1)
 	})
@@ -96,18 +112,23 @@ describe("fetchGeonamesPostal", () => {
 	it("classifies by STATUS, not by message prose — a 500 from a URL containing '404' stays a transfer failure", async () => {
 		// ~1-2% of ephemeral ports contain the substring "404"; this pins the failure mode with the substring in
 		// the path instead, where it is deterministic.
-		const summary = await fetchGeonamesPostal({ outRoot, baseURL: `${baseURL}/v404`, countries: ["ZZ"] })
+		const summary = await fetchGeonamesPostal({
+			retryDelayMs: RETRY_DELAY_MS,
+			outRoot,
+			baseURL: `${baseURL}/v404`,
+			countries: ["ZZ"],
+		})
 
 		expect(summary.failedCodes).toEqual(["ZZ"])
-		expect(readManifest().unavailable).toEqual([])
+		expect((await readManifest()).unavailable).toEqual([])
 	})
 
 	it("keeps a transfer failure OUT of `unavailable` — it is a retry, not a coverage gap", async () => {
-		const summary = await fetchGeonamesPostal({ outRoot, baseURL, countries: ["ZZ"] })
+		const summary = await fetchGeonamesPostal({ retryDelayMs: RETRY_DELAY_MS, outRoot, baseURL, countries: ["ZZ"] })
 
 		expect(summary.failedCodes).toEqual(["ZZ"])
 
-		const manifest = readManifest()
+		const manifest = await readManifest()
 
 		expect(manifest.unavailable).toEqual([])
 	})

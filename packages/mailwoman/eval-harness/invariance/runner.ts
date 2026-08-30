@@ -37,10 +37,10 @@
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -72,14 +72,14 @@ export interface InvarianceRow {
 /**
  * Load `suite.jsonl`-shaped rows. Blank lines and `//`-prefixed comment lines (the fixture header) are skipped.
  */
-export function loadSuite(path: string = DEFAULT_SUITE_PATH): InvarianceRow[] {
-	if (!existsSync(path)) throw new Error(`invariance suite not found: ${path}`)
+export async function loadSuite(path: string = DEFAULT_SUITE_PATH): Promise<InvarianceRow[]> {
+	if (!(await pathExists(path))) throw new Error(`invariance suite not found: ${path}`)
 
 	const rows: InvarianceRow[] = []
 
 	// The suite is JSONL with a `//` comment header, so the rows are parsed here rather than by
 	// `JSONSpliterator`, which would throw on the first comment.
-	for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
+	for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
 		const trimmed = line.trim()
 
 		if (!trimmed || trimmed.startsWith("//")) continue

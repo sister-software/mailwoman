@@ -37,11 +37,10 @@
  */
 
 import { $private, $public } from "@mailwoman/core/env"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join, resolve } from "@mailwoman/platform/path"
+import { resolve } from "@mailwoman/platform/path"
 
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "./pack-workspace.ts"
 import { verifyTarball } from "./verify-tarball.ts"
@@ -77,77 +76,71 @@ const cwd = resolve(repoRoot, workspacePath)
 // can end up with symlinks from `scripts/link-dev-weights.ts`.
 dereferenceWorkspaceSymlinks(cwd)
 
-const tmpDir = mkdtempSync(join(tmpdir(), "mailwoman-publish-"))
-const tarballPath = join(tmpDir, "package.tgz")
+await using tmpDir = await temporaryDirectory("mailwoman-publish-")
+const tarballPath = tmpDir.resolve("package.tgz")
 
+// Step 1: pack with the derived publish map injected (shared helper — same path the CI
+// smoke test uses, so what we test is what we ship).
+console.error(`publish-workspace: packing ${workspacePath} with injected publish exports`)
+
+packWorkspaceForPublish(cwd, tarballPath)
+
+// Step 2: verify the tarball contains what the manifest promises — every concrete exports target,
+// every literal `files` entry (see verify-tarball.ts for the en-in incident that guard exists for),
+// and every `bin` target.
 try {
-	// Step 1: pack with the derived publish map injected (shared helper — same path the CI
-	// smoke test uses, so what we test is what we ship).
-	console.error(`publish-workspace: packing ${workspacePath} with injected publish exports`)
+	const audit = verifyTarball(tarballPath)
 
-	packWorkspaceForPublish(cwd, tarballPath)
+	console.error(
+		`publish-workspace: verified ${audit.name} (${audit.exportTargets} exports targets, ${audit.literalFiles} literal files, ${audit.binTargets} bin targets)`
+	)
+} catch (error) {
+	console.error(error instanceof Error ? error.message : error)
 
-	// Step 2: verify the tarball contains what the manifest promises — every concrete exports target,
-	// every literal `files` entry (see verify-tarball.ts for the en-in incident that guard exists for),
-	// and every `bin` target.
-	try {
-		const audit = verifyTarball(tarballPath)
-
-		console.error(
-			`publish-workspace: verified ${audit.name} (${audit.exportTargets} exports targets, ${audit.literalFiles} literal files, ${audit.binTargets} bin targets)`
-		)
-	} catch (error) {
-		console.error(error instanceof Error ? error.message : error)
-
-		process.exit(1)
-	}
-
-	// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment
-	// in GitHub Actions and uses it for Trusted Publishing.
-	const publishArgs = ["publish", tarballPath, "--tag", tag]
-
-	if (access) {
-		publishArgs.push("--access", access)
-	}
-
-	if (otp) {
-		publishArgs.push("--otp", otp)
-	}
-
-	// npm can only mint a provenance attestation from a CI provider it supports, so this is gated on GitHub Actions
-	// rather than on CI generally: a local `yarn release` passing --provenance fails outright, with no OIDC token to
-	// sign against. Trusted Publishing works either way — the attestation is the part that needs the CI identity.
-	//
-	// MAILWOMAN_NPM_PROVENANCE=0 turns it off, so a release blocked by a sigstore or registry outage can still ship.
-	if ($public.GITHUB_ACTIONS && $public.MAILWOMAN_NPM_PROVENANCE !== "0") {
-		publishArgs.push("--provenance")
-	}
-
-	console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
-
-	if (dryRun) {
-		process.exit(0)
-	}
-
-	const publishResult = spawnSync("npm", publishArgs, { stdio: ["inherit", "inherit", "pipe"] })
-	const stderr = publishResult.stderr?.toString() ?? ""
-
-	if (publishResult.status !== 0 && /cannot publish over the previously published version/i.test(stderr)) {
-		console.error(
-			`publish-workspace: ${workspacePath} already published at this version — skipping (tolerate-republish)`
-		)
-
-		process.exit(0)
-	}
-
-	if (stderr) {
-		process.stderr.write(stderr)
-	}
-
-	process.exit(publishResult.status ?? 1)
-} finally {
-	rmSync(tmpDir, { recursive: true, force: true })
+	process.exit(1)
 }
+
+// Step 3: npm publish <tarball> — npm CLI auto-detects OIDC environment
+// in GitHub Actions and uses it for Trusted Publishing.
+const publishArgs = ["publish", tarballPath, "--tag", tag]
+
+if (access) {
+	publishArgs.push("--access", access)
+}
+
+if (otp) {
+	publishArgs.push("--otp", otp)
+}
+
+// npm can only mint a provenance attestation from a CI provider it supports, so this is gated on GitHub Actions
+// rather than on CI generally: a local `yarn release` passing --provenance fails outright, with no OIDC token to
+// sign against. Trusted Publishing works either way — the attestation is the part that needs the CI identity.
+//
+// MAILWOMAN_NPM_PROVENANCE=0 turns it off, so a release blocked by a sigstore or registry outage can still ship.
+if ($public.GITHUB_ACTIONS && $public.MAILWOMAN_NPM_PROVENANCE !== "0") {
+	publishArgs.push("--provenance")
+}
+
+console.error(`publish-workspace: ${dryRun ? "[dry-run] " : ""}npm ${publishArgs.join(" ")}`)
+
+if (dryRun) {
+	process.exit(0)
+}
+
+const publishResult = spawnSync("npm", publishArgs, { stdio: ["inherit", "inherit", "pipe"] })
+const stderr = publishResult.stderr?.toString() ?? ""
+
+if (publishResult.status !== 0 && /cannot publish over the previously published version/i.test(stderr)) {
+	console.error(`publish-workspace: ${workspacePath} already published at this version — skipping (tolerate-republish)`)
+
+	process.exit(0)
+}
+
+if (stderr) {
+	process.stderr.write(stderr)
+}
+
+process.exit(publishResult.status ?? 1)
 
 // The tarball audit moved to verify-tarball.ts (2026-08-02) so BOTH publish paths inherit it —
 // `bless-package.ts` packs the first publish of a package and had no guard at all, which is how

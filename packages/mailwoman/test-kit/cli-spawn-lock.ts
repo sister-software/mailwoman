@@ -17,6 +17,7 @@
  *   in a `finally` — a leaked test lock turns one failure into a whole-suite timeout.
  */
 
+import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
@@ -127,8 +128,8 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt
 	while (Date.now() < deadline) {
 		try {
-			mkdirSync(LOCK_DIR)
-			writeFileSync(PID_FILE, String(process.pid))
+			await makeDirectoryExclusive(LOCK_DIR)
+			await writeLocalTextFile(String(process.pid), PID_FILE)
 			held = true
 
 			break

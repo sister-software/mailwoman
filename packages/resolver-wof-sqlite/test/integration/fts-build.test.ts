@@ -8,15 +8,13 @@
  *   directly.
  */
 
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildPlaceSearchFTS, placeSearchFTSExists } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 function buildFixtureDB(path: string): DatabaseClient<WOFDatabase> {
 	const db = new DatabaseClient<WOFDatabase>(path)
@@ -37,16 +35,16 @@ function buildFixtureDB(path: string): DatabaseClient<WOFDatabase> {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-wof-fts-build-"))
+	scratch = await temporaryDirectory("mailwoman-wof-fts-build-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("buildPlaceSearchFTS", () => {
 	test("builds the index against a fresh DB", () => {
-		const db = buildFixtureDB(join(scratch, "fixture.db"))
+		const db = buildFixtureDB(scratch.resolve("fixture.db"))
 
 		try {
 			const result = buildPlaceSearchFTS(db)
@@ -59,7 +57,7 @@ describe("buildPlaceSearchFTS", () => {
 	})
 
 	test("is a no-op when the index already exists", () => {
-		const db = buildFixtureDB(join(scratch, "fixture.db"))
+		const db = buildFixtureDB(scratch.resolve("fixture.db"))
 
 		try {
 			buildPlaceSearchFTS(db)
@@ -71,7 +69,7 @@ describe("buildPlaceSearchFTS", () => {
 	})
 
 	test("rebuilds when drop is set", () => {
-		const db = buildFixtureDB(join(scratch, "fixture.db"))
+		const db = buildFixtureDB(scratch.resolve("fixture.db"))
 
 		try {
 			buildPlaceSearchFTS(db)

@@ -497,7 +497,7 @@ export function renderCLIReference(surface: CLISurface): string {
 			]
 		),
 		"",
-		"Two behaviors are worth stating because they are not failures.",
+		"Two behaviors are exceptional because they are not failures.",
 		"",
 		"- `mailwoman doctor` exits `0` when the core checks pass, even when every optional data layer is",
 		"  missing. Parsing works without them.",

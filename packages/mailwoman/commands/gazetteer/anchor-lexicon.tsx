@@ -1,31 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer anchor-lexicon` — build the gazetteer-anchor LEXICON (knowledge-ladder rung
- *   3.2; #464). One generated artifact, codex as the single source of truth, consumed by BOTH the
- *   Python trainer (gazetteer_anchor.py) and the TS inference side — so the two matchers cannot
- *   drift (the PLACETYPE_ORDER lesson: dual implementations silently corrupt).
- *
- *   The lexicon maps normalized surface forms → a candidate-tag BITMASK: country=1, region=2,
- *   po_box=4, cedex=8, homograph=16 (set iff country∩region by construction). Two entry maps with
- *   different match rules (encoded as DATA so both consumers share them):
- *
- *   - `entries` — case-INSENSITIVE, keyed lowercase ("georgia", "costa rica", "timor-leste").
- *   - `code_entries` — exact-UPPERCASE only ("CA", "GA", "IN", "USA"), because "in"/"ca" as common
- *       lowercase words would fire everywhere. Country/region surfaces ≤3 alphabetic chars land
- *       here. po_box/cedex designators stay case-insensitive regardless of length ("Box 17" is
- *       titlecase).
- *
- *   The anchor is membership CLUES, not verdicts — the model decides every tag (model-first, see
- *   docs/engineering/reference/closed-vocab-fields-model-first.mdx). A "Box" hit inside "Box
- *   Canyon Rd" is fine: the homograph/contrast training teaches the model to read context.
- *
- *   Output: data/gazetteer/anchor-lexicon-v1.json (small, committed, provenance-tracked).
- */
-
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -174,8 +147,8 @@ const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) =>
 			code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 		}
 
-		mkdirSync(dirname(output), { recursive: true })
-		writeFileSync(output, JSON.stringify(lexicon, null, 1) + "\n")
+		await makeDirectories(dirname(output))
+		await writeLocalJSONFile(lexicon, output)
 
 		return [
 			`${output}`,

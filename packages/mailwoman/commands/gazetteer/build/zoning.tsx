@@ -84,25 +84,30 @@ interface Options {
 
 const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { execFileSync } = await import("@mailwoman/platform/child_process")
-
-		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
-
-		const {
-			assertAttributionUnchanged,
-			buildZoningDatabase,
-			createExportFeatureSource,
-			createGZTClient,
-			createServiceReader,
-			downloadZoningExport,
-			formatResolutionRows,
-			measureZoningCellResolutions,
-			sampleAgreementPoints,
-			verifyZoningDatabase,
-		} = await import("@mailwoman/zoning/sdk")
-
-		const { GZT_LICENSE_CONTRADICTION } = await import("@mailwoman/zoning/vocabulary")
+		const [
+			{ execFileSync },
+			{ artifactSizeMB },
+			{ dataRootPath },
+			{
+				assertAttributionUnchanged,
+				buildZoningDatabase,
+				createExportFeatureSource,
+				createGZTClient,
+				createServiceReader,
+				downloadZoningExport,
+				formatResolutionRows,
+				measureZoningCellResolutions,
+				sampleAgreementPoints,
+				verifyZoningDatabase,
+			},
+			{ GZT_LICENSE_CONTRADICTION },
+		] = await Promise.all([
+			import("@mailwoman/platform/child_process"),
+			import("#gazetteer-pipeline/admin/index"),
+			import("@mailwoman/core/utils"),
+			import("@mailwoman/zoning/sdk"),
+			import("@mailwoman/zoning/vocabulary"),
+		])
 
 		if (options.offline && !options.export) {
 			throw new Error(
@@ -248,7 +253,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		const lines = [
-			`zoning-ireland.db: ${out} (${artifactSizeMB(out)} MB)`,
+			`zoning-ireland.db: ${out} (${await artifactSizeMB(out)} MB)`,
 			`${result.features.toLocaleString()} zoning polygons across ${result.jurisdictions} local authorities and ${result.plans} plans`,
 			`rings: ${result.rings.total.toLocaleString()} total · ${result.rings.exteriors.toLocaleString()} exterior (clockwise) · ` +
 				`${result.rings.holes.toLocaleString()} hole (counter-clockwise) · ${result.rings.exteriorByMagnitude.toLocaleString()} exterior(s) chosen by magnitude · ` +

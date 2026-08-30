@@ -17,7 +17,7 @@
  *   longer than the phrase. Rather than restate its enumeration — two copies of a rule that must agree — the census
  *   DRIVES the shipped routine with a recording lookup that answers nothing, and keeps every string it was asked about.
  *
- *   THE CLASSIFICATION, and it is the point of the census rather than a detail of it. A colliding venue name is one of
+ *   THE CLASSIFICATION and the point of the census rather than a detail of it. A colliding venue name is one of
  *   two things, and a decision about ranking rests on which:
  *
  *   - QUERY-SHAPED — the name adds nothing to the query fragment it collides with. It is that fragment: an explicit

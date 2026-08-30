@@ -26,6 +26,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { existsSync } from "@mailwoman/platform/fs"
 import type { WOFReverseGeocoder as WOFReverseGeocoderType } from "@mailwoman/resolver-wof-sqlite"
 
@@ -51,7 +52,7 @@ export function loadDefaultReverseGeocoder(): Promise<WOFReverseGeocoderType | n
 
 				return new WOFReverseGeocoder({
 					adminDBPath,
-					...(polygonDBPath && existsSync(polygonDBPath) ? { polygonDBPath } : {}),
+					...(polygonDBPath && (await pathExists(polygonDBPath)) ? { polygonDBPath } : {}),
 				})
 			} catch {
 				return null

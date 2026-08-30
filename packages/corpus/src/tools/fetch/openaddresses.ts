@@ -56,18 +56,12 @@
 
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
 import { execFile, spawn } from "@mailwoman/platform/child_process"
-import {
-	createReadStream,
-	createWriteStream,
-	existsSync,
-	mkdirSync,
-	renameSync,
-	rmSync,
-	statSync,
-} from "@mailwoman/platform/fs"
+import { createReadStream, createWriteStream } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -222,7 +216,7 @@ export async function fetchOpenAddresses(
 	report?.(`=== fetch openaddresses: country=${country}`)
 	report?.(`    dest: ${destDir}`)
 
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	// MARK: Authentication check
 
@@ -322,7 +316,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	}
 
 	if (httpStatus !== HTTP_OK) {
-		rmSync(tmpGz, { force: true })
+		await removePathIfPresent(tmpGz)
 
 		report?.(`
 ERROR: Download returned HTTP ${httpStatus}.
@@ -351,27 +345,27 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 	if (/gzip|compressed/i.test(fileMagic)) {
 		report?.(`  Decompressing gzip archive...`)
 		await gunzipToFile(tmpGz, tmpRaw)
-		rmSync(tmpGz, { force: true })
-		renameSync(tmpRaw, outputFile)
+		await removePathIfPresent(tmpGz)
+		await movePath(tmpRaw, outputFile)
 	} else if (/JSON|ASCII|UTF-8/i.test(fileMagic)) {
 		// Already line-delimited GeoJSON.
-		renameSync(tmpGz, outputFile)
-		rmSync(tmpRaw, { force: true })
+		await movePath(tmpGz, outputFile)
+		await removePathIfPresent(tmpRaw)
 	} else {
 		// Unknown type — keep as-is and let the operator inspect.
-		renameSync(tmpGz, outputFile)
+		await movePath(tmpGz, outputFile)
 		report?.(`  WARNING: Downloaded file type is '${fileMagic.trim()}' — may need manual decompression.`)
 	}
 
 	// MARK: Verify + write MANIFEST
 
-	if (!existsSync(outputFile)) {
+	if (!(await pathExists(outputFile))) {
 		report?.(`ERROR: Output file not found at ${outputFile} after download.`)
 
 		return fail(country)
 	}
 
-	const size = statSync(outputFile).size
+	const size = (await statPath(outputFile)).size
 
 	if (size < MIN_PLAUSIBLE_SHARD_BYTES) {
 		report?.(`ERROR: File is suspiciously small (${size} bytes) — likely an error response.`)

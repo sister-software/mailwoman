@@ -35,19 +35,22 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { afterAll, describe, expect, it } from "vitest"
+import { aroundAll, describe, expect, it } from "vitest"
 
 /**
  * Every connection these fixtures open, ended together at the end of the file.
  */
-const openHandles = new DisposableStack()
+let openHandles: DisposableStack
 
-afterAll(() => {
-	openHandles.dispose()
+aroundAll(async (runSuite) => {
+	using handles = new DisposableStack()
+
+	openHandles = handles
+	await runSuite()
 })
 
 function memoryDatabase<DB>(): DatabaseClient<DB> {
-	const db = new DatabaseClient<DB>(":memory:")
+	const db = DatabaseClient.temp<DB>()
 
 	openHandles.use(db)
 
@@ -439,14 +442,14 @@ describe("lookupPostcodeAnchor", () => {
 })
 
 describe("openSealedArtifact", () => {
-	it("reports a missing file by path rather than as an empty source", () => {
-		const opened = openSealedArtifact("/nonexistent/candidate.db")
+	it("reports a missing file by path rather than as an empty source", async () => {
+		const opened = await openSealedArtifact("/nonexistent/candidate.db")
 
 		expect("unavailable" in opened && opened.unavailable).toContain("/nonexistent/candidate.db")
 	})
 
-	it("reports an unresolved path distinctly from a missing one", () => {
-		expect(openSealedArtifact(undefined)).toEqual({
+	it("reports an unresolved path distinctly from a missing one", async () => {
+		expect(await openSealedArtifact(undefined)).toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})
 	})
@@ -470,7 +473,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 
 	it("joins importance_split by spr_id when an importance DB is given, and reports a missing row as null", async () => {
 		const db = await candidateFixture()
-		await using importance = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		await using importance = DatabaseClient.temp<PlaceImportanceDatabase>()
 
 		importance.exec(
 			"CREATE TABLE place_importance (id INTEGER PRIMARY KEY, referential REAL NOT NULL, encyclopedic REAL, importance REAL NOT NULL)"

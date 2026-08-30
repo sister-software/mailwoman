@@ -52,7 +52,7 @@
  *        France is 0 hits, `ala` in Spain 0, `flügel` in Germany 0. Generating `Terminal Sud` would
  *        be inventing a vocabulary with no confound board behind it, which is the exact failure the
  *        promotion ledger exists to prevent. Non-English legs get designator+identifier only.
- *   2. **A ja-JP leg.** `ターミナル` is promoted (1,213 real of 1,215) and it is the one non-Latin
+ *   2. **A ja-JP leg.** `ターミナル` is promoted (1,213 real of 1,215). The one non-Latin
  *        surface the task named, but Japanese addresses train through `build_jp_shard.py` against the
  *        `stage3-jp` 47-label head, where the interior tags are `block`/`sub_block`/`building_number`
  *        — a different model, a different label set, and a different builder. A katakana `unit` row
@@ -824,13 +824,15 @@ export function allocate(total: number, shares: readonly number[]): number[] {
 /**
  * Build one leg's pools: the name pools from its extract and/or poi.db, plus its address context.
  */
-function buildLegPools(
+async function buildLegPools(
 	leg: SubVenueLeg,
 	query: PoolQuery,
 	contextByCountry: ReadonlyMap<string, LocaleBaseTuple[]>,
 	paths: { extractsDir: string; poiDB: string }
-): LegPools {
-	const extractPools = leg.extract ? readExtractPools(`${paths.extractsDir}/${leg.extract}`, query) : EMPTY_NAME_POOLS
+): Promise<LegPools> {
+	const extractPools = leg.extract
+		? await readExtractPools(`${paths.extractsDir}/${leg.extract}`, query)
+		: EMPTY_NAME_POOLS
 
 	// poi.db holds four countries; only these two legs are inside it.
 	const poiPools =
@@ -939,7 +941,7 @@ export const subVenueRecipe: ShardRecipe = {
 				english: leg.english,
 			}
 
-			const pools = buildLegPools(leg, query, contextByCountry, { extractsDir, poiDB })
+			const pools = await buildLegPools(leg, query, contextByCountry, { extractsDir, poiDB })
 
 			legPromoted.set(leg.locale, promoted)
 			legPools.set(leg.locale, pools)

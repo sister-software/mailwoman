@@ -1,29 +1,8 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   #822 PLACER-FRONTIER PROBE (night 2026-06-28, Phase A) — for the placer-recoverable countries (a
- *   country hint resolves them, so growing the placer captures the win), measure whether the DEPLOYED
- *   coarse placer can actually emit that country. Per query (`<City>, <Country>` from cities15000):
- *
- *   - `in_class_set`  — is the true country even in the placer's class set? (a class the model can't
- *                       represent can't be recovered by any threshold change — that's a DATA gap)
- *   - `top1_correct`  — did the placer's argmax land on the true country?
- *   - `prob_1`        — the calibrated top-class confidence (vs `HARD_PLACE_COUNTRY_MIN_CONF` = 0.9)
- *
- *   Branch (plan Phase 2): `in_class_set` false >5% → DATA GAP, defer to a class-set-widening retrain.
- *   in-set + top1>80% + median prob_1 < 0.9 → UNDER-CONFIDENT, M2 mass-rule fix. in-set + top1<80% →
- *   low-quality signal, defer. The probe is a LINEAR model (no ONNX), so it is heat-safe.
- *
- *   Run: `mailwoman placer probe-frontier [--model <dir>] [--n 2000] [--out <md>]`
- */
-
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalJSONFile } from "#fs/readers"
+import { writeLocalTextFile } from "#fs/writers"
 import { dataRootPath, corePackagePath, median } from "#utils"
 
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -129,7 +108,7 @@ export async function probeFrontier(
 	// `@mailwoman/codex` is a devDependency of core (operator tooling) — lazy-imported inside the fn.
 	const { ISO2_TO_NAME } = await import("@mailwoman/codex/country")
 
-	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(join(String(modelDir), "meta.json"), "utf8"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(String(modelDir), "meta.json"))
 	// The deployed bundle is int8-per-row quantized — fromArtifactDir dequantizes via meta.scales.
 	const placer = await CoarsePlacer.fromArtifactDir(modelDir, { abstainBelow: 0 })
 	const classSet = new Set(meta.classes)
@@ -241,7 +220,7 @@ export async function probeFrontier(
 	console.log("…")
 
 	if (options.out) {
-		writeFileSync(options.out, `${md}\n`)
+		await writeLocalTextFile(`${md}\n`, options.out)
 		report?.(`[probe] wrote ${options.out}`)
 	}
 

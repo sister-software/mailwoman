@@ -18,6 +18,7 @@
  *   because the footprint comes from the authority's statement rather than from the polygons.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -76,7 +77,6 @@ interface Options {
 const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { execFileSync } = await import("@mailwoman/platform/child_process")
-		const { readFileSync } = await import("@mailwoman/platform/fs")
 
 		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { parseJSONStrict } = await import("@mailwoman/core/objects")
@@ -160,7 +160,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		// The outline is a SECOND authority's artifact: the EA says its mapping covers all of England and does not publish
 		// where England is. Which outline was used rides in `flood_map_extent`.
 		const outline = options.boundary
-			? outlineFromGeoJSON(parseJSONStrict<unknown>(readFileSync(options.boundary, "utf8")), options.boundary)
+			? outlineFromGeoJSON(await readLocalJSONFile<unknown>(options.boundary), options.boundary)
 			: (await createONSBoundaryClient().readCountryGeometry(EA_COVERAGE_COUNTRY)).geometry
 
 		const coverageResolution = Number(options.coverageResolution)
@@ -220,7 +220,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		const lines = [
-			`flood.db: ${out} (${artifactSizeMB(out)} MB)`,
+			`flood.db: ${out} (${await artifactSizeMB(out)} MB)`,
 			`${result.features.toLocaleString()} polygons · ${Object.entries(result.zoneCounts)
 				.map(([zone, count]) => `${zone} ${count.toLocaleString()}`)
 				.join(" · ")}`,

@@ -168,7 +168,7 @@ async function readTuples(source: USSource): Promise<USTuple[]> {
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
+	for await (const row of await readZippedCSVRecords(source.zip, source.csv)) {
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
 		const house_number = row.number ?? ""
@@ -410,7 +410,7 @@ async function readBalanceTuples(source: BalanceSource, limit: number): Promise<
 	const tuples: BalanceTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
+	for await (const row of await readZippedCSVRecords(source.zip, source.csv)) {
 		if (tuples.length >= limit) break
 
 		const street = row.street ?? "",

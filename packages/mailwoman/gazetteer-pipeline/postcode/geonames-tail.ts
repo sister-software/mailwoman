@@ -32,15 +32,17 @@
  *   consumer reads them at open instead of trusting a runbook.
  */
 
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { existsSync, statSync, unlinkSync } from "@mailwoman/platform/fs"
+import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
 import type { ShardMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"
-import { buildFTS } from "../fts.ts"
+import { buildFTS, type BuildFTSResult } from "../fts.ts"
 
 export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "../defaults.ts"
 
@@ -149,7 +151,7 @@ export async function buildPostcodeGeonamesTail(
 	const postalDir = opts.postalDir ?? String(dataRootPath("geonames-postal"))
 	const out = opts.out ?? String(dataRootPath("wof", `postalcode-geonames-tail-${datestamp(now)}.db`))
 
-	if (!existsSync(postalDir)) {
+	if (!(await pathExists(postalDir))) {
 		throw new Error(
 			`buildPostcodeGeonamesTail: no GeoNames postal dir at ${postalDir} — fetch download.geonames.org/export/zip/<CC>.zip`
 		)
@@ -164,68 +166,80 @@ export async function buildPostcodeGeonamesTail(
 	const ingestPath = out + ".ingest"
 
 	for (const stale of [ingestPath, ingestPath + "-wal", ingestPath + "-shm"]) {
-		if (existsSync(stale)) {
-			unlinkSync(stale)
+		if (await pathExists(stale)) {
+			await removePath(stale)
 		}
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-	db.exec(`
-		PRAGMA page_size = 8192;
-		PRAGMA journal_mode = WAL;
-		PRAGMA synchronous = NORMAL;
-		PRAGMA busy_timeout = 30000;
-		PRAGMA temp_store = MEMORY;
-		PRAGMA cache_size = -200000;
-	`)
+	let ingest: GeonamesPostalIngestResult
 
-	await createUnifiedSchema(db)
+	let sources: GeonamesPostalSourceFact[]
 
-	phase("ingest", `${countries.join(",")} ← ${postalDir}`)
-	const ingest = await ingestGeonamesPostal(db, countries, postalDir)
-	phase("ingest", `${ingest.inserted.toLocaleString()} distinct postcodes`)
+	let ancestorRows: number
 
-	// Every row's parent_id is -1 (GeoNames postal carries no hierarchy), so this writes the SELF row per
-	// place and nothing else. It is not decorative: the resolver's parent-constraint scopes a lookup with
-	// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`, and a place absent from `ancestors`
-	// can never satisfy it. The frozen artifact carries exactly one ancestor row per place for this reason.
-	phase("ancestors")
-	const ancestorRows = populateAncestors(db)
-	phase("ancestors", `${ancestorRows.toLocaleString()} rows`)
+	{
+		using db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-	phase("indexes")
-	await createUnifiedIndexes(db)
+		db.exec(`
+			PRAGMA page_size = 8192;
+			PRAGMA journal_mode = WAL;
+			PRAGMA synchronous = NORMAL;
+			PRAGMA busy_timeout = 30000;
+			PRAGMA temp_store = MEMORY;
+			PRAGMA cache_size = -200000;
+		`)
 
-	phase("meta")
-	const sources = await collectSourceFacts(countries, postalDir, ingest.byCountry)
-	await writeShardMeta(db, { now, countries, sources, inserted: ingest.inserted })
+		await createUnifiedSchema(db)
 
-	phase("freeze")
-	db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
-	db.exec("PRAGMA journal_mode = DELETE")
-	db.exec("ANALYZE")
+		phase("ingest", `${countries.join(",")} ← ${postalDir}`)
+		ingest = await ingestGeonamesPostal(db, countries, postalDir)
+		phase("ingest", `${ingest.inserted.toLocaleString()} distinct postcodes`)
 
-	phase("vacuum", out)
+		// Every row's parent_id is -1 (GeoNames postal carries no hierarchy), so this writes the SELF row per
+		// place and nothing else. It is not decorative: the resolver's parent-constraint scopes a lookup with
+		// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`, and a place absent from `ancestors`
+		// can never satisfy it. The frozen artifact carries exactly one ancestor row per place for this reason.
+		phase("ancestors")
+		ancestorRows = populateAncestors(db)
+		phase("ancestors", `${ancestorRows.toLocaleString()} rows`)
 
-	if (existsSync(out)) {
-		unlinkSync(out)
+		phase("indexes")
+		await createUnifiedIndexes(db)
+
+		phase("meta")
+		sources = await collectSourceFacts(countries, postalDir, ingest.byCountry)
+		await writeShardMeta(db, { now, countries, sources, inserted: ingest.inserted })
+
+		phase("freeze")
+		db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
+		db.exec("PRAGMA journal_mode = DELETE")
+		db.exec("ANALYZE")
+
+		phase("vacuum", out)
+
+		if (await pathExists(out)) {
+			await removePath(out)
+		}
+
+		db.prepare("VACUUM INTO ?").run(out)
 	}
 
-	db.prepare("VACUUM INTO ?").run(out)
-	await db.destroy()
-
 	for (const sidecar of [ingestPath, ingestPath + "-wal", ingestPath + "-shm"]) {
-		if (existsSync(sidecar)) {
-			unlinkSync(sidecar)
+		if (await pathExists(sidecar)) {
+			await removePath(sidecar)
 		}
 	}
 
 	phase("fts")
-	const outDB = new DatabaseClient<ShardMetaDatabase>(out)
-	const fts = await buildFTS(outDB, { onProgress: phase })
-	await outDB.destroy()
+
+	let fts: BuildFTSResult
+
+	{
+		using outDB = new DatabaseClient<ShardMetaDatabase>(out)
+		fts = await buildFTS(outDB, { onProgress: phase })
+	}
 
 	phase("seal")
 	sealDatabase(out)
@@ -258,12 +272,12 @@ async function collectSourceFacts(
 	for (const country of countries) {
 		const file = join(postalDir, `${country}.txt`)
 
-		if (!existsSync(file)) continue
+		if (!(await pathExists(file))) continue
 
 		facts.push({
 			country,
 			file: `${country}.txt`,
-			bytes: statSync(file).size,
+			bytes: (await statPath(file)).size,
 			md5: await md5File(file),
 			rows: byCountry[country] ?? 0,
 		})

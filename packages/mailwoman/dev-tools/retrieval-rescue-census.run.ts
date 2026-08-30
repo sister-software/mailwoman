@@ -76,8 +76,8 @@ for (const c of cases) {
 	})
 }
 
-probe.handle?.close()
-deps.close()
+probe.handle?.[Symbol.dispose]()
+deps[Symbol.dispose]()
 
 const summary = summarizeRescue(reports)
 

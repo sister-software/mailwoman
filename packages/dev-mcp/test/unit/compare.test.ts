@@ -11,24 +11,20 @@
  */
 
 import { stubTransport } from "@mailwoman/core/api/test-transport"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { ExternalArm } from "@mailwoman/dev-mcp/arms"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
 import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import { ExternalGeocoderClient } from "@mailwoman/dev-mcp/external-arm"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**
  * Every comparison writes its answers to the run store. Redirected here so a test run never touches the operator's
  * store under `$MAILWOMAN_DATA_ROOT`, and so the retention sweep each write triggers has nothing real to prune.
  */
-const RUN_STORE = mkdtempSync(join(tmpdir(), "mwdev-compare-runs-"))
+const RUN_STORE = await temporaryDirectory("mwdev-compare-runs-")
 
-afterAll(() => {
-	rmSync(RUN_STORE, { recursive: true, force: true })
-})
+afterAll(() => RUN_STORE[Symbol.asyncDispose]())
 
 /**
  * Andorra la Vella and Les Escaldes, the two `AD` board rows, and their truth coordinates.
@@ -66,7 +62,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 				},
 				timing: { total: 1 },
 			}),
-			close: () => undefined,
+			[Symbol.dispose]: () => undefined,
 		},
 	}
 
@@ -85,7 +81,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		acquire: async () => engine,
 		summaries: () => [],
 		evict: () => true,
-		closeAll: () => 0,
+		evictAll: () => 0,
 	} as unknown as EngineRegistry
 }
 
@@ -132,7 +128,7 @@ function comparison(
 		{
 			createExternalClient: (arm: ExternalArm) =>
 				new ExternalGeocoderClient(arm.engine, arm.endpoint, { axios: transport.axios }),
-			runStoreDir: RUN_STORE,
+			runStoreDir: RUN_STORE.path,
 		}
 	) as Promise<Record<string, unknown>>
 }
@@ -280,7 +276,7 @@ describe("mwdev_compare — an external arm that stops answering", () => {
 				{
 					createExternalClient: (arm: ExternalArm) =>
 						new ExternalGeocoderClient(arm.engine, arm.endpoint, { axios: transport.axios, retry: false }),
-					runStoreDir: RUN_STORE,
+					runStoreDir: RUN_STORE.path,
 				}
 			)
 		).rejects.toThrow(/failed 5 queries in a row/)

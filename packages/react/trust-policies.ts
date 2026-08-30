@@ -11,6 +11,8 @@
  *   where no DOM exists: DOMPurify reports `isSupported: false` there and its `sanitize` degrades to
  *   a passthrough — an unsanitized string wearing a trusted wrapper. Creating at import time would
  *   ship exactly that. A getter refuses outside a DOM instead, so server code cannot mint trust.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY MOVE THIS TO `@mailwoman/core`
  */
 
 import type { Config as DOMPurifyConfig } from "dompurify"

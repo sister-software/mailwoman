@@ -33,9 +33,10 @@
  *     node scripts/scaffold-weights-overlay.ts --locale es-ES --artifact pair-index-es.bin
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { mkdirSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -58,11 +59,11 @@ if (!values.locale) {
 const localeTag = values.locale
 const slug = localeTag.toLowerCase()
 const country = slug.split("-")[1] ?? ""
-const pkgDir = String(workspacePath(`neural-weights-${slug}`))
+const pkgDir = workspacePath(`neural-weights-${slug}`)
 const packageName = `@mailwoman/neural-weights-${slug}`
 const artifact = values.artifact ?? `pair-index-${country}.bin`
 
-if (existsSync(pkgDir)) {
+if (await tryStat(pkgDir)) {
 	throw new Error(`scaffold-weights-overlay: ${pkgDir} already exists — refusing to overwrite`)
 }
 
@@ -71,64 +72,54 @@ if (existsSync(pkgDir)) {
  * version-synced, so a new workspace must be born at the root version — the v8.4.0 bdc/filer drift is what that guard
  * exists to catch.
  */
-const rootVersion = parseJSONStrict<{ version: string }>(
-	readFileSync(String(repoRootPath("package.json")), "utf8")
-).version
+const rootVersion = await readLocalJSONFile<{ version: string }>(repoRootPath("package.json")).then(
+	(res) => res.version
+)
 
 mkdirSync(resolve(pkgDir, "scripts"), { recursive: true })
 
-writeFileSync(
-	resolve(pkgDir, "package.json"),
-	`${JSON.stringify(
-		{
-			name: packageName,
-			version: rootVersion,
-			description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-en-us.`,
-			license: "AGPL-3.0",
-			type: "module",
-			// `directory` names THIS package. It is the field that has been wrong every time an overlay was
-			// created by copying a sibling.
-			repository: {
-				type: "git",
-				url: "https://github.com/sister-software/mailwoman.git",
-				directory: `neural-weights-${slug}`,
-			},
-			// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
-			// relative path, which does not resolve once unpacked — and a data-only overlay has no use
-			// for a dev script anyway.
-			files: [
-				"model-card.json",
-				artifact,
-				"README.md",
-				"*.ts",
-				"**/*.ts",
-				"!*.test.ts",
-				"!**/*.test.ts",
-				"!scripts/**",
-			],
-			dependencies: { "@mailwoman/neural-weights-en-us": "workspace:*" },
-			mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
+await writeLocalJSONFile(
+	{
+		name: packageName,
+		version: rootVersion,
+		description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with @mailwoman/neural-weights-en-us.`,
+		license: "AGPL-3.0",
+		type: "module",
+		// `directory` names THIS package. It is the field that has been wrong every time an overlay was
+		// created by copying a sibling.
+		repository: {
+			type: "git",
+			url: "https://github.com/sister-software/mailwoman.git",
+			directory: `neural-weights-${slug}`,
 		},
-		null,
-		"\t"
-	)}\n`
+		// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
+		// relative path, which does not resolve once unpacked — and a data-only overlay has no use
+		// for a dev script anyway.
+		files: ["model-card.json", artifact, "README.md", "*.ts", "**/*.ts", "!*.test.ts", "!**/*.test.ts", "!scripts/**"],
+		dependencies: { "@mailwoman/neural-weights-en-us": "workspace:*" },
+		mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
+	},
+	pkgDir,
+	"package.json"
 )
 
-writeFileSync(
-	resolve(pkgDir, ".gitignore"),
-	`# Derived artifacts — built by scripts/link-dev-weights.ts for local dev, fetched from the HF\n# bucket at publish time. Never committed.\n/${artifact.replace(/-[a-z]{2}\.bin$/, "-*.bin")}\n`
+await writeLocalTextFile(
+	`# Derived artifacts — built by scripts/link-dev-weights.ts for local dev, fetched from the HF\n# bucket at publish time. Never committed.\n/${artifact.replace(/-[a-z]{2}\.bin$/, "-*.bin")}\n`,
+	pkgDir,
+	".gitignore"
 )
 
-writeFileSync(
-	resolve(pkgDir, ".npmignore"),
-	readFileSync(String(repoRootPath("packages/neural-weights-en-nz", ".npmignore")), "utf8")
+await writeLocalTextFile(
+	readLocalTextFile(repoRootPath("packages/neural-weights-en-nz", ".npmignore")),
+	pkgDir,
+	".npmignore"
 )
 
 // The dev linker, emitted rather than copied. This step used to be a printed instruction reading
 // "copy the closest sibling's build block", and that is precisely how es-es and it-it came to ship
 // de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
 // leaves nothing to copy; the magnitudes below are placeholders the author is told to calibrate.
-writeFileSync(
+await writeLocalTextFile(
 	resolve(pkgDir, "scripts", "link-dev-weights.ts"),
 	`/**
  * @copyright Sister Software
@@ -162,42 +153,40 @@ buildPairIndexOverlay({
 `
 )
 
-writeFileSync(
-	resolve(pkgDir, "README.md"),
-	`# ${packageName}\n\n${localeTag} weights overlay for [mailwoman](https://mailwoman.ai).\n\n**Data-only.** Declares \`mailwoman.baseWeights\` and shares the base model and tokenizer with\n\`@mailwoman/neural-weights-en-us\`; what it adds is \`${artifact}\`.\n\n\`\`\`sh\nnpm install ${packageName}\n\`\`\`\n`
+await writeLocalTextFile(
+	`# ${packageName}\n\n${localeTag} weights overlay for [mailwoman](https://mailwoman.ai).\n\n**Data-only.** Declares \`mailwoman.baseWeights\` and shares the base model and tokenizer with\n\`@mailwoman/neural-weights-en-us\`; what it adds is \`${artifact}\`.\n\n\`\`\`sh\nnpm install ${packageName}\n\`\`\`\n`,
+	pkgDir,
+	"README.md"
 )
 
-writeFileSync(
-	resolve(pkgDir, "model-card.json"),
-	`${JSON.stringify(
-		{
-			name: packageName,
-			version: "7.0.0",
-			locale: localeTag,
-			license: "AGPL-3.0",
-			$comment:
-				"Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights. " +
-				"Deliberately carries NO `labels`: the vocabulary belongs to the shared MODEL, so it is inherited " +
-				"from the base card at resolve time. Copying it here creates a second copy to go stale on the next " +
-				"retrain, and an overlay whose labels disagree with its model throws on the first parse.",
-			files: { model_card: "model-card.json" },
-		},
-		null,
-		"\t"
-	)}\n`
+await writeLocalJSONFile(
+	{
+		name: packageName,
+		version: "7.0.0",
+		locale: localeTag,
+		license: "AGPL-3.0",
+		$comment:
+			"Data-only overlay. Shares model.onnx + tokenizer.model with en-us via mailwoman.baseWeights. " +
+			"Deliberately carries NO `labels`: the vocabulary belongs to the shared MODEL, so it is inherited " +
+			"from the base card at resolve time. Copying it here creates a second copy to go stale on the next " +
+			"retrain, and an overlay whose labels disagree with its model throws on the first parse.",
+		files: { model_card: "model-card.json" },
+	},
+	pkgDir,
+	"model-card.json"
 )
 
 /**
  * Insert `entry` into a JSON array-valued key, immediately after `after`, preserving tab indentation. Returns false
  * when the entry is already present so re-running the command is a no-op rather than a duplicate.
  */
-function registerInJSONArray(file: string, findAfter: string, entry: string): boolean {
-	const path = String(repoRootPath(file))
-	const text = readFileSync(path, "utf8")
+async function registerInJSONArray(file: string, findAfter: string, entry: string): Promise<boolean> {
+	const path = repoRootPath(file)
+	const text = await readLocalTextFile(path)
 
 	if (text.includes(`"${entry}"`)) return false
 
-	writeFileSync(path, text.replace(`"${findAfter}",`, `"${findAfter}",\n\t\t\t\t"${entry}",`))
+	await writeLocalTextFile(text.replace(`"${findAfter}",`, `"${findAfter}",\n\t\t\t\t"${entry}",`), path)
 
 	return true
 }
@@ -205,8 +194,8 @@ function registerInJSONArray(file: string, findAfter: string, entry: string): bo
 const registered: string[] = []
 
 // 1. Root workspaces.
-const rootPath = String(repoRootPath("package.json"))
-const rootPkg = parseJSONStrict<{ workspaces: string[] }>(readFileSync(rootPath, "utf8"))
+const rootPath = repoRootPath("package.json")
+const rootPkg = await readLocalJSONFile<{ workspaces: string[] }>(rootPath)
 
 if (!rootPkg.workspaces.includes(`packages/neural-weights-${slug}`)) {
 	rootPkg.workspaces.splice(
@@ -215,30 +204,38 @@ if (!rootPkg.workspaces.includes(`packages/neural-weights-${slug}`)) {
 		`packages/neural-weights-${slug}`
 	)
 
-	writeFileSync(rootPath, `${JSON.stringify(rootPkg, null, "\t")}\n`)
+	await writeLocalJSONFile(rootPkg, rootPath)
 	registered.push("root package.json workspaces")
 }
 
 // 2. Release list.
-if (registerInJSONArray(".release-it.json", "packages/neural-weights-en-nz", `packages/neural-weights-${slug}`)) {
+
+const updatedWeightsEntry = await registerInJSONArray(
+	".release-it.json",
+	"packages/neural-weights-en-nz",
+	`packages/neural-weights-${slug}`
+)
+
+if (updatedWeightsEntry) {
 	registered.push(".release-it.json")
 }
 
 // 3. release.config.json locales.
-const cfgPath = String(repoRootPath("release.config.json"))
-const cfgText = readFileSync(cfgPath, "utf8")
+const cfgPath = repoRootPath("release.config.json")
+const cfgText = await readLocalTextFile(cfgPath)
 
 if (!cfgText.includes(`"${slug}"`)) {
-	writeFileSync(cfgPath, cfgText.replace(`"en-nz"`, `"${slug}",\n\t\t"en-nz"`))
+	await writeLocalTextFile(cfgText.replace(`"en-nz"`, `"${slug}",\n\t\t"en-nz"`), cfgPath)
+
 	registered.push("release.config.json locales")
 }
 
 // 4. Smoke pack set.
-const smokePath = String(repoRootPath("scripts", "smoke-clean-install.ts"))
-const smokeText = readFileSync(smokePath, "utf8")
+const smokePath = repoRootPath("scripts", "smoke-clean-install.ts")
+const smokeText = await readLocalTextFile(smokePath)
 
 if (!smokeText.includes(packageName)) {
-	writeFileSync(
+	await writeLocalTextFile(
 		smokePath,
 		smokeText.replace(
 			`\t"@mailwoman/neural-weights-en-nz": "packages/neural-weights-en-nz",`,

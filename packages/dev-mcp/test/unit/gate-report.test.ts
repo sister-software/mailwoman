@@ -4,26 +4,26 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { missingWeightsCacheArtifacts, readGateReport, summarizeGateReport } from "@mailwoman/dev-mcp/gate-report"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
-const dirs: string[] = []
+const fixtures = new AsyncDisposableStack()
 
-function outDir(verdict?: unknown, provenance?: string): string {
-	const dir = mkdtempSync(join(tmpdir(), "mwdev-gate-report-"))
+afterAll(() => fixtures.disposeAsync())
 
-	dirs.push(dir)
+async function outDir(verdict?: unknown, provenance?: string): Promise<string> {
+	const dir = fixtures.use(await temporaryDirectory("mwdev-gate-report-")).path
 
 	if (verdict !== undefined) {
-		writeFileSync(join(dir, "verdict.json"), JSON.stringify(verdict))
+		await writeLocalJSONFile(verdict, join(dir, "verdict.json"))
 	}
 
 	if (provenance !== undefined) {
-		writeFileSync(join(dir, "provenance.txt"), provenance)
+		await writeLocalFile(provenance, join(dir, "provenance.txt"))
 	}
 
 	return dir
@@ -40,15 +40,9 @@ const PASSING = {
 	int8_vs_fp32_deltas: {},
 }
 
-afterAll(() => {
-	for (const dir of dirs) {
-		rmSync(dir, { recursive: true, force: true })
-	}
-})
-
 describe("readGateReport", () => {
-	it("reads floors with their margins", () => {
-		const report = readGateReport(outDir(PASSING), "", "")
+	it("reads floors with their margins", async () => {
+		const report = readGateReport(await outDir(PASSING), "", "")
 
 		expect(report.verdict).toBe("PASS")
 		expect(report.floors).toHaveLength(2)
@@ -56,11 +50,11 @@ describe("readGateReport", () => {
 		expect(report.floors[0]!.margin).toBeCloseTo(1.7, 5)
 	})
 
-	it("distinguishes an unmeasured floor from one that missed the bar", () => {
+	it("distinguishes an unmeasured floor from one that missed the bar", async () => {
 		// The gate marks an unmeasured floor failing so it cannot pass by default. Reading that as "missed the bar"
 		// sends someone tuning a metric that never ran.
 		const report = readGateReport(
-			outDir({
+			await outDir({
 				...PASSING,
 				verdict: "FAIL",
 				results: {
@@ -81,59 +75,61 @@ describe("readGateReport", () => {
 		expect(report.notes.join(" ")).toContain("never ran")
 	})
 
-	it("reports an absent verdict.json as not-graded, never as FAIL", () => {
-		const report = readGateReport(outDir(), "", "")
+	it("reports an absent verdict.json as not-graded, never as FAIL", async () => {
+		const report = readGateReport(await outDir(), "", "")
 
 		expect(report.verdict).toBeNull()
 		expect(report.notes.join(" ")).toContain("different outcomes")
 	})
 
-	it("surfaces the ledger command and refuses to imply it was run", () => {
+	it("surfaces the ledger command and refuses to imply it was run", async () => {
 		const log =
 			"ledger (#885): on promote, append this run —\n" +
 			"  node packages/mailwoman/out/cli.js eval ledger-append \\\n" +
 			"    --out-dir /tmp/x --model-version <npm-semver>\n"
 
-		const report = readGateReport(outDir(PASSING), log, "")
+		const report = readGateReport(await outDir(PASSING), log, "")
 
 		expect(report.ledger_command).toContain("eval ledger-append")
 		expect(report.ledger_command).toContain("--out-dir /tmp/x")
 		expect(report.ledger_note).toContain("REPORTED, never run")
 	})
 
-	it("passes the lore-guard refusal through verbatim rather than working around it", () => {
-		const report = readGateReport(outDir(), "", "✗ recompile packages/core/out before evaluating — it is stale\n")
+	it("passes the lore-guard refusal through verbatim rather than working around it", async () => {
+		const report = readGateReport(await outDir(), "", "✗ recompile packages/core/out before evaluating — it is stale\n")
 
 		expect(report.lore_guard_refusal).toContain("recompile")
 	})
 
-	it("carries provenance when the run wrote it, and says so when it did not", () => {
-		expect(readGateReport(outDir(PASSING, "md5 abc123\n"), "", "").provenance).toContain("md5 abc123")
-		expect(readGateReport(outDir(PASSING), "", "").notes.join(" ")).toContain("md5s are unrecorded")
+	it("carries provenance when the run wrote it, and says so when it did not", async () => {
+		expect(readGateReport(await outDir(PASSING, "md5 abc123\n"), "", "").provenance).toContain("md5 abc123")
+		expect(readGateReport(await outDir(PASSING), "", "").notes.join(" ")).toContain("md5s are unrecorded")
 	})
 })
 
 describe("summarizeGateReport", () => {
-	it("names the graded artifact before the verdict", () => {
+	it("names the graded artifact before the verdict", async () => {
 		// A verdict diffed without this field attributes a quantization delta to the model — it said "fp32" for a
 		// verifiably int8 cache on 2026-07-16.
-		const summary = summarizeGateReport(readGateReport(outDir(PASSING), "", ""))
+		const summary = summarizeGateReport(readGateReport(await outDir(PASSING), "", ""))
 
 		expect(summary).toContain("graded the weights-cache artifact")
 		expect(summary).toContain("PASS")
 		expect(summary).toContain("All 2 floors met")
 	})
 
-	it("says UNRECORDED rather than guessing when the artifact is unknown", () => {
-		const summary = summarizeGateReport(readGateReport(outDir({ ...PASSING, graded_artifact: undefined }), "", ""))
+	it("says UNRECORDED rather than guessing when the artifact is unknown", async () => {
+		const summary = summarizeGateReport(
+			readGateReport(await outDir({ ...PASSING, graded_artifact: undefined }), "", "")
+		)
 
 		expect(summary).toContain("UNRECORDED")
 	})
 
-	it("counts missed and unmeasured floors separately", () => {
+	it("counts missed and unmeasured floors separately", async () => {
 		const summary = summarizeGateReport(
 			readGateReport(
-				outDir({
+				await outDir({
 					...PASSING,
 					verdict: "FAIL",
 					results: {
@@ -151,10 +147,9 @@ describe("summarizeGateReport", () => {
 })
 
 describe("missingWeightsCacheArtifacts", () => {
-	it("names every artifact a package-shaped root is missing", () => {
-		const root = mkdtempSync(join(tmpdir(), "mwdev-wc-"))
-
-		dirs.push(root)
+	it("names every artifact a package-shaped root is missing", async () => {
+		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
+		const root = rootDirectory.path
 
 		const missing = missingWeightsCacheArtifacts(root)
 
@@ -164,23 +159,22 @@ describe("missingWeightsCacheArtifacts", () => {
 		expect(missing.paths.join(" ")).toContain("node_modules")
 	})
 
-	it("catches a cache missing what its OWN card declares", () => {
+	it("catches a cache missing what its OWN card declares", async () => {
 		// The #1516 failure has no signal of its own: the channel resolves off, the run scores lower, and the operator
 		// reads a model regression. Measured 2026-08-16 — a hand-staged three-file cache graded to completion and
 		// reported us.country_homograph_f1 at 0.0 against a 64.8 floor.
-		const root = mkdtempSync(join(tmpdir(), "mwdev-wc-"))
-
-		dirs.push(root)
+		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
+		const root = rootDirectory.path
 
 		const packageDir = weightsCachePackageDir(root, "en-us")
 
-		mkdirSync(packageDir, { recursive: true })
-		writeFileSync(join(packageDir, "model.onnx"), "x")
-		writeFileSync(join(packageDir, "tokenizer.model"), "x")
+		await makeDirectories(packageDir)
+		await writeLocalTextFile("x", join(packageDir, "model.onnx"))
+		await writeLocalTextFile("x", join(packageDir, "tokenizer.model"))
 
-		writeFileSync(
-			join(packageDir, "model-card.json"),
-			JSON.stringify({ files_md5: { $comment: "ignored", "model.onnx": "a", "street-type-lexicon-v3.json": "b" } })
+		await writeLocalJSONFile(
+			{ files_md5: { $comment: "ignored", "model.onnx": "a", "street-type-lexicon-v3.json": "b" } },
+			join(packageDir, "model-card.json")
 		)
 
 		const missing = missingWeightsCacheArtifacts(root)
@@ -190,40 +184,38 @@ describe("missingWeightsCacheArtifacts", () => {
 		expect(missing.paths[0]).toContain("street-type-lexicon-v3.json")
 	})
 
-	it("does not treat the card's $comment key as an artifact", () => {
-		const root = mkdtempSync(join(tmpdir(), "mwdev-wc-"))
-
-		dirs.push(root)
+	it("does not treat the card's $comment key as an artifact", async () => {
+		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
+		const root = rootDirectory.path
 
 		const packageDir = weightsCachePackageDir(root, "en-us")
 
-		mkdirSync(packageDir, { recursive: true })
+		await makeDirectories(packageDir)
 
 		for (const artifact of ["model.onnx", "tokenizer.model"]) {
-			writeFileSync(join(packageDir, artifact), "x")
+			await writeLocalTextFile("x", join(packageDir, artifact))
 		}
 
-		writeFileSync(join(packageDir, "model-card.json"), JSON.stringify({ files_md5: { $comment: "docs only" } }))
+		await writeLocalJSONFile({ files_md5: { $comment: "docs only" } }, join(packageDir, "model-card.json"))
 
 		expect(missingWeightsCacheArtifacts(root).kind).toBe("ok")
 	})
 
-	it("passes a well-formed cache", () => {
-		const root = mkdtempSync(join(tmpdir(), "mwdev-wc-"))
-
-		dirs.push(root)
+	it("passes a well-formed cache", async () => {
+		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
+		const root = rootDirectory.path
 
 		const packageDir = weightsCachePackageDir(root, "en-us")
 
-		mkdirSync(packageDir, { recursive: true })
+		await makeDirectories(packageDir)
 
 		for (const artifact of ["model.onnx", "tokenizer.model"]) {
-			writeFileSync(join(packageDir, artifact), "x")
+			await writeLocalTextFile("x", join(packageDir, artifact))
 		}
 
-		writeFileSync(
-			join(packageDir, "model-card.json"),
-			JSON.stringify({ files_md5: { "model.onnx": "a", "tokenizer.model": "b" } })
+		await writeLocalJSONFile(
+			{ files_md5: { "model.onnx": "a", "tokenizer.model": "b" } },
+			join(packageDir, "model-card.json")
 		)
 
 		expect(missingWeightsCacheArtifacts(root).kind).toBe("ok")

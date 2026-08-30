@@ -66,7 +66,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	const progress = opts.onProgress ?? (() => {})
 
 	progress("open", opts.dbPath)
-	const db = new DatabaseClient<WOFDatabase>(opts.dbPath, { open: true })
+	using db = new DatabaseClient<WOFDatabase>(opts.dbPath, { open: true })
 
 	// Phase 1: Load all matching SPR rows.
 	progress("spr", `Loading places for countries=[${countries}], placetypes=[${placetypes}]`)
@@ -324,8 +324,6 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 			}
 		}
 	}
-
-	db.destroy()
 
 	progress(
 		"done",

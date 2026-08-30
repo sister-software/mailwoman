@@ -4,28 +4,29 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, makeDirectoryExclusive, removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { renderTaskList, workerMain, type TodoItem } from "@mailwoman/dev-mcp/hooks/todo-issue-sync"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { afterEach, describe, expect, it } from "vitest"
 
-const fixtures: string[] = []
+/**
+ * Scratch directories for this file's fixtures, removed after each test — the lock and payload paths are per-test.
+ */
+let fixtures = new AsyncDisposableStack()
 
-function fixture(): { cwd: string; dir: string; lock: string; payload: string } {
-	const cwd = mkdtempSync(join(tmpdir(), "mw-todo-sync-"))
+async function fixture(): Promise<{ cwd: string; dir: string; lock: string; payload: string }> {
+	const cwd = fixtures.use(await temporaryDirectory("mw-todo-sync-")).path
 	const dir = join(cwd, ".claude", "state", "todo-sync")
 
-	mkdirSync(dir, { recursive: true })
-	fixtures.push(cwd)
+	await makeDirectories(dir)
 
 	return { cwd, dir, lock: join(dir, "lock"), payload: join(dir, "payload.json") }
 }
 
-afterEach(() => {
-	for (const path of fixtures.splice(0)) {
-		rmSync(path, { recursive: true, force: true })
-	}
+afterEach(async () => {
+	await fixtures.disposeAsync()
+	fixtures = new AsyncDisposableStack()
 })
 
 describe("todo issue sync", () => {
@@ -34,13 +35,13 @@ describe("todo issue sync", () => {
 	})
 
 	it("publishes a payload that arrives while another worker holds the lock", async () => {
-		const { cwd, lock, payload } = fixture()
+		const { cwd, lock, payload } = await fixture()
 		const stale: TodoItem[] = [{ content: "Old task", status: "pending" }]
 		const latest: TodoItem[] = [{ content: "Latest task", status: "in_progress" }]
 		const published: TodoItem[][] = []
 
-		writeFileSync(payload, JSON.stringify({ issue: 1849, todos: stale }))
-		mkdirSync(lock)
+		await writeLocalJSONFile({ issue: 1849, todos: stale }, payload)
+		await makeDirectoryExclusive(lock)
 
 		let waits = 0
 
@@ -52,8 +53,8 @@ describe("todo issue sync", () => {
 			},
 			async () => {
 				waits++
-				writeFileSync(payload, JSON.stringify({ issue: 1849, todos: latest }))
-				rmSync(lock, { recursive: true })
+				await writeLocalJSONFile({ issue: 1849, todos: latest }, payload)
+				await removePath(lock)
 			}
 		)
 

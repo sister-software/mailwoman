@@ -41,7 +41,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 	})
 
 	afterAll(() => {
-		lookup?.close()
+		lookup[Symbol.dispose]()
 	})
 
 	describe("lookup smoke tests", () => {

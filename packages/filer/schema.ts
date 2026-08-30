@@ -502,14 +502,14 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * things the filer really did report, a plurality to store — where two conflicting `relationship` values for one pair
  * are two incompatible claims about what that pair MEANS, a contradiction to reject.
  *
- * **`assertion` is excluded from the key for that same reason**, and it is the reason it is excluded from
- * `filer_edge`'s key too: one source, at one instant, grading the identical membership BOTH `authoritative` and
- * `inferred` is a contradiction, not a plurality — two sources disagreeing about the strength of the same fact already
- * produce two rows, because `source` is in the key. It gets the same blank-rejecting CHECK as `relationship`: `NOT
- * NULL` alone would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of
- * every gate-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any
- * surface that split on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an inferred row,
- * since an authoritative membership matched nothing and any number there would be a fabricated confidence.
+ * **`assertion` is excluded from the key for that same reason** and the reason it is excluded from `filer_edge`'s key
+ * too: one source, at one instant, grading the identical membership BOTH `authoritative` and `inferred` is a
+ * contradiction, not a plurality — two sources disagreeing about the strength of the same fact already produce two
+ * rows, because `source` is in the key. It gets the same blank-rejecting CHECK as `relationship`: `NOT NULL` alone
+ * would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of every gate-2
+ * read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any surface that split
+ * on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an inferred row, since an
+ * authoritative membership matched nothing and any number there would be a fabricated confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema

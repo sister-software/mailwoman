@@ -33,7 +33,7 @@ export const houseVenueRecipe: ShardRecipe = {
 		let emitted = 0
 		let skipped = 0
 
-		for await (const tuple of readTuples(opts.input)) {
+		for await (const tuple of await readTuples(opts.input)) {
 			read++
 
 			// FR renders without a region (postcode-before-locality tail — the run-2 contingency), so

@@ -27,8 +27,9 @@
  *   steps run later, consuming the JSONL shards this writes.
  */
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { createWriteStream, type WriteStream } from "@mailwoman/platform/fs"
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { mkdir } from "@mailwoman/platform/fs/promises"
 import { dirname, join } from "@mailwoman/platform/path"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
@@ -231,7 +232,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		elapsed_ms,
 	}
 
-	await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(manifest, manifestPath)
 
 	return manifest
 }

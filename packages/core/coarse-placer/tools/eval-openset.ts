@@ -1,43 +1,8 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   #244 M2 Phase 1 — POST-HOC open-set scoring on the EXISTING (shipped) coarse-placer, NO retrain.
- *   The OA-breadth verdict found the 12-way softmax's own max-prob detector tops out at ~88/88 on
- *   the leave-one-family-out probe (in-map accuracy vs off-map HELDOUT-family caught). This asks:
- *   does a DIFFERENT open-set score, read off the same frozen weights, clear the 90/90 the softmax
- *   can't?
- *
- *   The 11-way routing (argmax over the in-map classes) is FIXED — the model is unchanged. The only
- *   thing each score changes is the REJECT decision (keep the in-map route vs. abstain → OTHER). We
- *   sweep each score's threshold and trace its (in-map accuracy, heldout-caught) Pareto.
- *
- *   Scores compared (all functions of the frozen 12 logits / 11 in-map logits `z`):
- *
- *   - Maxprob : softmax max over the 11 in-map classes (the verdict's baseline detector)
- *   - P_inmap : 1 - P(OTHER) (trust the model's own OTHER head)
- *   - Energy : logsumexp(z) (free-energy; higher = more in-map)
- *   - Maxlogit : max(z)
- *   - Maha : -min_c (z-μ_c)ᵀ Σ⁻¹ (z-μ_c), class-conditional Gaussians (tied Σ) fit on in-map TRAIN
- *       logits (Lee et al. 2018, in the 11-dim in-map-logit space — the linear model's only dense
- *       representation). Higher = closer to the in-map manifold.
- *
- *   In-map accuracy = of the 11-country test rows, fraction NOT rejected AND argmax-in-map == truth.
- *   heldout caught = of the never-trained off-map families (baltic/oceania/middle-east), fraction
- *   rejected. Both move with the threshold; the Pareto is the whole story.
- *
- *   Run: `mailwoman placer eval openset [--model <dir>] [--out-md <path>]`
- */
-
-/* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
-
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
+import { writeLocalFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -194,8 +159,8 @@ export async function evalOpenSet(
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 	const fitPerClass = options.fitPerClass ?? 2000
 
-	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
-	const weightBytes = readFileSync(path.join(modelDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(modelDir, "meta.json"))
+	const weightBytes = await readLocalBuffer(path.join(modelDir, "weights.bin"))
 
 	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
 	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
@@ -586,7 +551,7 @@ export async function evalOpenSet(
 	console.log(md)
 
 	if (options.outMd) {
-		writeFileSync(options.outMd, md)
+		await writeLocalFile(md, options.outMd)
 		report?.(`\n[written] ${options.outMd}`)
 	}
 

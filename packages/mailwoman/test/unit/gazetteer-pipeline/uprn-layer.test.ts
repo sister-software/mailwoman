@@ -9,10 +9,10 @@
  *   artifact back through the production reader.
  */
 
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { statSync } from "@mailwoman/platform/fs"
-import { mkdtemp, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
+import { writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import { UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
@@ -26,7 +26,11 @@ import {
 	parseOpenUPRNVersions,
 	type ExtractOpenUPRNResult,
 } from "mailwoman/gazetteer-pipeline/uprn-layer"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 describe("parseOpenUPRNLine", () => {
 	it("parses a source line, taking the WGS84 columns", () => {
@@ -112,7 +116,7 @@ function fixtureCSV(headerLine: string = OPEN_UPRN_HEADER): string {
 async function writeFixtureSource(
 	headerLine?: string
 ): Promise<{ sourceDir: string; extracted: ExtractOpenUPRNResult }> {
-	const sourceDir = await mkdtemp(join(tmpdir(), "uprn-build-"))
+	const sourceDir = fixtures.use(await temporaryDirectory("uprn-build-")).path
 	const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
 	const csv = fixtureCSV(headerLine)
 
@@ -151,7 +155,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(result.sealed).toBe(true)
 
 		// Sealed 0444 — no write bits.
-		expect(statSync(out).mode & 0o222).toBe(0)
+		expect((await statPath(out)).mode & 0o222).toBe(0)
 
 		using lookup = new UPRNLookup({ databasePath: out })
 
@@ -189,7 +193,8 @@ describe("buildUPRNLayer (fixture)", () => {
 	})
 
 	it("reports a malformed row and an under-floor count as mismatches, not silence", async () => {
-		const sourceDir = await mkdtemp(join(tmpdir(), "uprn-build-"))
+		await using sourceDirDirectory = await temporaryDirectory("uprn-build-")
+		const sourceDir = sourceDirDirectory.path
 		const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
 
 		await writeFile(csvPath, `${BOM}${OPEN_UPRN_HEADER}\r\n1,0.0,0.0,51.5,\r\n26,0.0,0.0,51.5,-2.6\r\n`, "utf8")

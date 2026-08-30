@@ -8,12 +8,12 @@
  */
 
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
-import { type CapitalTable, createCapitalTable, readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
+import { createCapitalTable, readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 async function openWithTable(): Promise<DatabaseClient<CandidateDatabase>> {
-	const kdb = new DatabaseClient<CandidateDatabase>(":memory:")
+	const kdb = DatabaseClient.temp<CandidateDatabase>()
 
 	await createCapitalTable<CandidateDatabase>(kdb)
 
@@ -38,7 +38,7 @@ describe("capital table round-trip", () => {
 	})
 
 	it("answers NULL — not an empty list — on an artifact that predates the table", () => {
-		using db = new DatabaseClient<CandidateDatabase>(":memory:")
+		using db = DatabaseClient.temp<CandidateDatabase>()
 
 		expect(readCapitalPoints(db)).toBeNull()
 	})

@@ -1,3 +1,4 @@
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
@@ -44,10 +45,10 @@ function releaseWorkspaces(): string[] {
 describe("#757 release provenance: every published workspace declares its repository", () => {
 	const workspaces = releaseWorkspaces()
 
-	it.each(workspaces)("%s/package.json has the canonical repository block", (ws) => {
-		const pkg = parseJSONStrict<{
+	it.each(workspaces)("%s/package.json has the canonical repository block", async (ws) => {
+		const pkg = await readLocalJSONFile<{
 			repository?: { type?: string; url?: string; directory?: string }
-		}>(readFileSync(resolve(repoRoot, ws, "package.json"), "utf8"))
+		}>(resolve(repoRoot, ws, "package.json"))
 
 		const repo = pkg.repository
 		// A missing/empty repository.url is exactly what npm provenance rejects with E422.

@@ -18,8 +18,10 @@
  *   sibling version exactly as the publish path does.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "@mailwoman/platform/fs"
+import { mkdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
 
@@ -118,20 +120,20 @@ export function checkReleaseListIdentity(repoRoot: string): ReleaseListIdentity 
  * The caller owns `stagingRoot`'s lifecycle; an existing tree at that path is replaced.
  */
 export async function stageReleaseTree(repoRoot: string, stagingRoot: string): Promise<void> {
-	rmSync(stagingRoot, { recursive: true, force: true })
-	mkdirSync(stagingRoot, { recursive: true })
+	await removePathIfPresent(stagingRoot)
+	await makeDirectories(stagingRoot)
 
 	await $({ cwd: repoRoot })`git archive HEAD`.pipe($`tar -x -C ${stagingRoot}`)
 
 	for (const workspace of releaseWorkspaces(repoRoot)) {
 		const compiled = resolve(repoRoot, workspace, "out")
 
-		if (existsSync(compiled)) {
-			cpSync(compiled, join(stagingRoot, workspace, "out"), { recursive: true })
+		if (await pathExists(compiled)) {
+			await copyPath(compiled, join(stagingRoot, workspace, "out"))
 		}
 	}
 
-	symlinkSync(resolve(repoRoot, "node_modules"), join(stagingRoot, "node_modules"))
+	await createSymbolicLink(resolve(repoRoot, "node_modules"), join(stagingRoot, "node_modules"))
 }
 
 /**

@@ -25,17 +25,12 @@
  *   lands on stdout.
  */
 
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
 import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import {
-	createWriteStream,
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	writeFileSync,
-} from "@mailwoman/platform/fs"
+import { createWriteStream, readdirSync } from "@mailwoman/platform/fs"
 import * as https from "@mailwoman/platform/https"
 import * as path from "@mailwoman/platform/path"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -239,13 +234,13 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	const { parseJSONStrict } = await import("@mailwoman/core/objects")
 
-	if (existsSync(RANKED_FILE)) {
-		return parseJSONStrict<CountyRecord[]>(readFileSync(RANKED_FILE, "utf8"))
+	if (await pathExists(RANKED_FILE)) {
+		return await readLocalJSONFile<CountyRecord[]>(RANKED_FILE)
 	}
 
 	const records = await fetchAndBuildRanking()
-	mkdirSync(path.dirname(RANKED_FILE), { recursive: true })
-	writeFileSync(RANKED_FILE, JSON.stringify(records, null, 2))
+	await makeDirectories(path.dirname(RANKED_FILE))
+	await writeLocalJSONFile(records, RANKED_FILE)
 
 	console.error(`Saved county ranking → ${RANKED_FILE} (${records.length} counties)`)
 
@@ -393,14 +388,14 @@ async function downloadParallel(
 			const shpPath = path.join(edgesDir, shpBase)
 
 			// Idempotency: skip if the SHP is already present (the ZIP may be gone after extraction)
-			if (existsSync(shpPath)) {
+			if (await pathExists(shpPath)) {
 				skipped++
 
 				continue
 			}
 
 			// Also skip if the ZIP is already present (interrupted run: unpack it)
-			if (existsSync(task.zipPath)) {
+			if (await pathExists(task.zipPath)) {
 				try {
 					await extractEdgesZip(task.zipPath, edgesDir)
 
@@ -446,22 +441,22 @@ interface ShardBuildResult {
  * Build one state's interpolation shard DB. Returns wall-clock ms + segment count from the script's stdout, or `null`
  * when the shard already exists and `--force` was not passed.
  */
-function buildStateShard(
+async function buildStateShard(
 	stateAbbr: string,
 	edgesDir: string,
 	outDir: string,
 	release: string,
 	force: boolean
-): ShardBuildResult | null {
+): Promise<ShardBuildResult | null> {
 	const outDB = path.join(outDir, `interpolation-us-${stateAbbr.toLowerCase()}.db`)
 
-	if (existsSync(outDB) && !force) {
+	if ((await pathExists(outDB)) && !force) {
 		console.error(`  [skip] ${stateAbbr}: shard already exists at ${outDB} (--force to rebuild)`)
 
 		return null
 	}
 
-	mkdirSync(outDir, { recursive: true })
+	await makeDirectories(outDir)
 	const t0 = Date.now()
 
 	const result = spawnSync(
@@ -566,8 +561,8 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 
 		console.error("")
 
-		mkdirSync(EDGES_DIR, { recursive: true })
-		mkdirSync(OUT_DIR, { recursive: true })
+		await makeDirectories(EDGES_DIR)
+		await makeDirectories(OUT_DIR)
 
 		// ── Step 1: load county population ranking ─────────────────────────────
 		console.error("Step 1: county population ranking")
@@ -658,7 +653,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		for (const abbr of availableStates) {
 			console.error(`Building ${abbr}…`)
 
-			const result = buildStateShard(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
+			const result = await buildStateShard(abbr, EDGES_DIR, OUT_DIR, RELEASE, FORCE)
 
 			if (result === null) {
 				// skipped (already exists, no --force)

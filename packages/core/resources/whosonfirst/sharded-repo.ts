@@ -11,9 +11,10 @@
  *   parsed record has.
  */
 
-import { existsSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { resolvePath } from "path-ts"
 
+import { statPath } from "#fs/readers"
 import { tryParsingJSON } from "#objects"
 
 import type { WOFFeature } from "./placetypes/admin.ts"
@@ -43,10 +44,10 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
  *
  * Synchronous to match {@link readWOFFeature}: these readers run inside sync loops over database rows.
  */
-export function resolveWOFRepo(reposRoot: string, name: string, owner = WOF_DATA_OWNER): string | null {
+export async function resolveWOFRepo(reposRoot: string, name: string, owner = WOF_DATA_OWNER): Promise<string | null> {
 	for (const candidate of [resolvePath(reposRoot, owner, name), resolvePath(reposRoot, name)]) {
 		try {
-			if (statSync(candidate).isDirectory()) return candidate.toString()
+			if ((await statPath(candidate)).isDirectory()) return candidate.toString()
 		} catch {
 			// Absent, or unreadable — try the other layout, then answer null.
 		}
@@ -60,12 +61,12 @@ export function resolveWOFRepo(reposRoot: string, name: string, owner = WOF_DATA
  *
  * The pairing every reader needs: {@link readWOFFeature} takes roots that already point INTO `data`.
  */
-export function resolveWOFDataDir(
+export async function resolveWOFDataDir(
 	reposRoot: string,
 	theme: "admin" | "postalcode" | "venue",
 	country: string
-): string | null {
-	const repo = resolveWOFRepo(reposRoot, wofRepoName(theme, country))
+): Promise<string | null> {
+	const repo = await resolveWOFRepo(reposRoot, wofRepoName(theme, country))
 
 	return repo && resolvePath(repo, "data").toString()
 }

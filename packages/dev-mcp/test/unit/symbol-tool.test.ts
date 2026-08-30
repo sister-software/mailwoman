@@ -20,7 +20,7 @@ const noRegistry = new Proxy({} as EngineRegistry, {
 	},
 })
 
-const tool = buildToolTable({ registry: noRegistry, jobs: {} as JobRegistry, startedAt: 0 }).find(
+const tool = (await buildToolTable({ registry: noRegistry, jobs: {} as JobRegistry, startedAt: 0 })).find(
 	(each) => each.name === "mwdev_symbol"
 )!
 

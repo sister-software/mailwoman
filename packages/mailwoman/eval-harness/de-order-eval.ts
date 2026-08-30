@@ -28,8 +28,9 @@
  *   --out /tmp/v092-eval
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -91,7 +92,7 @@ export async function deOrderEval(
 		return { ok: false, out }
 	}
 
-	mkdirSync(out, { recursive: true })
+	await makeDirectories(out)
 	const deNative = "data/eval/external/openaddresses-de-sample-native-order.jsonl"
 	const deIntl = "data/eval/external/openaddresses-de-sample.jsonl"
 
@@ -127,16 +128,16 @@ export async function deOrderEval(
 			errLines.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 		}
 
-		writeFileSync(join(out, `${outName}.md`), outLines.map((line) => `${line}\n`).join(""))
-		writeFileSync(join(out, `${outName}.log`), errLines.map((line) => `${line}\n`).join(""))
+		await writeLocalTextFile(outLines.map((line) => `${line}\n`).join(""), join(out, `${outName}.md`))
+		await writeLocalTextFile(errLines.map((line) => `${line}\n`).join(""), join(out, `${outName}.log`))
 	}
 
 	// Pull the neural locality-match % out of a result .md (the "| **neural** | XX.X% |" row).
-	const loc = (name: string): string => {
+	const loc = async (name: string): Promise<string> => {
 		let md: string
 
 		try {
-			md = readFileSync(join(out, `${name}.md`), "utf8")
+			md = await readLocalTextFile(join(out, `${name}.md`))
 		} catch {
 			return ""
 		}
@@ -179,10 +180,10 @@ export async function deOrderEval(
 	report(`### Order-robustness 2x2 — DE locality-match (model: ${model})`)
 	report("|            | anchor OFF | anchor ON |")
 	report("| ---------- | ---------: | --------: |")
-	report(`| US order   | ${loc("de-intl-off")}   | ${loc("de-intl-on")} |`)
-	report(`| native DE  | ${loc("de-native-off")} | ${loc("de-native-on")} |`)
+	report(`| US order   | ${await loc("de-intl-off")}   | ${await loc("de-intl-on")} |`)
+	report(`| native DE  | ${await loc("de-native-off")} | ${await loc("de-native-on")} |`)
 	report("")
-	report(`no-regression: US ${loc("us-on")} · FR ${loc("fr-on")}`)
+	report(`no-regression: US ${await loc("us-on")} · FR ${await loc("fr-on")}`)
 
 	return { ok: true, out }
 }

@@ -137,6 +137,6 @@ export async function run(args: readonly string[]): Promise<number> {
 
 		return 0
 	} finally {
-		geocoder.close()
+		geocoder[Symbol.dispose]()
 	}
 }

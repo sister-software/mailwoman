@@ -11,7 +11,7 @@
  *       about the component named in the row;
  *   - a slot refilled by a different token looks identical to an empty slot unless something compares the values;
  *   - a (component, locale) pair nobody measured renders as `0` unless the renderer is told that zero support is
- *       ABSENCE. That last one is the house's meaning-of-zero rule, and it is the only rule here a reader of the
+ *       ABSENCE. That last one is the house's meaning-of-zero rule and the only rule here a reader of the
  *       finished table can be misled by.
  */
 

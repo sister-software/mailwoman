@@ -19,11 +19,9 @@
  *   version from the base package's model card unless `--version` names another.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
 import { copyWeights } from "./copy-weights.ts"
@@ -71,7 +69,22 @@ async function releasePreflight(): Promise<void> {
 
 	const startedAt = performance.now()
 	const repoRoot = String(repoRootPath())
-	const stagingRoot = values.staging ?? mkdtempSync(join(tmpdir(), "mailwoman-release-preflight-"))
+	await using resources = new AsyncDisposableStack()
+
+	// Two ownership rules, and they are separate. A `--staging` root is the CALLER'S directory: this script writes
+	// into it and never removes it. The one it makes itself is its own, and `--keep` withholds removal so the staged
+	// tree survives for inspection — registering it is what decides that, rather than a branch at the far end.
+	let stagingRoot = values.staging
+
+	if (!stagingRoot) {
+		const scratch = await temporaryDirectory("mailwoman-release-preflight-")
+
+		if (!values.keep) {
+			resources.use(scratch)
+		}
+
+		stagingRoot = scratch.path
+	}
 
 	// 1. The named-absence identity — every workspace outside the release list must be sanctioned by name.
 	const identity = checkReleaseListIdentity(repoRoot)
@@ -130,10 +143,6 @@ async function releasePreflight(): Promise<void> {
 				process.stderr.write(`${failure.replaceAll(/^/gm, "    ")}\n`)
 			}
 		}
-	}
-
-	if (!values.keep && !values.staging) {
-		rmSync(stagingRoot, { recursive: true, force: true })
 	}
 
 	const elapsed = ((performance.now() - startedAt) / 1000).toFixed(1)

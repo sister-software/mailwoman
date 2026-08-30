@@ -36,9 +36,11 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot, md5File } from "@mailwoman/core/utils"
-import { createWriteStream, existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { createWriteStream } from "@mailwoman/platform/fs"
 import { basename, dirname } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -119,17 +121,17 @@ interface Options {
  * The path a `us`-family artifact ALREADY occupies on disk (versioned or legacy, via `resolveShardPath`), or the
  * artifact's own resolved path for a non-family artifact — `null` when nothing is there yet.
  */
-function existingLocalPath(
+async function existingLocalPath(
 	dataRoot: string,
 	manifest: DataReleaseManifest | null,
 	artifact: BundleArtifact,
 	resolvedAbsPath: string
-): string | null {
+): Promise<string | null> {
 	if (artifact.family && artifact.stateSlug) {
-		return resolveShardPath(dataRoot, artifact.family, artifact.stateSlug, manifest)
+		return await resolveShardPath(dataRoot, artifact.family, artifact.stateSlug, manifest)
 	}
 
-	return existsSync(resolvedAbsPath) ? resolvedAbsPath : null
+	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null
 }
 
 /**
@@ -267,7 +269,7 @@ async function pullBundles(
 		for (const artifact of artifacts) {
 			const label = `${name}: ${artifact.remotePath}`
 			const localAbsPath = resolvePath(dataRoot, artifact.localPath)
-			const existing = existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
+			const existing = await existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
 
 			if (existing && !opts.force) {
 				checks.push({ ok: true, check: label, detail: `already present (${existing}) — skipped` })
@@ -299,7 +301,7 @@ async function pullBundles(
 				// overrides it), so `dataRootPath` (which always reads `$MAILWOMAN_DATA_ROOT`) would be wrong here.
 				const stageDir = resolvePath(dataRoot, "tmp")
 
-				mkdirSync(stageDir, { recursive: true })
+				await makeDirectories(stageDir)
 				const tmpPath = resolvePath(stageDir, `${Date.now()}-${basename(artifact.localPath)}`)
 
 				const bytesWritten = await downloadToDisk(artifactURL(artifact, opts.host), tmpPath)
@@ -310,14 +312,14 @@ async function pullBundles(
 					const gotMd5 = await md5File(tmpPath)
 
 					if (gotMd5 !== remote.md5) {
-						rmSync(tmpPath, { force: true })
+						await removePathIfPresent(tmpPath)
 						throw new Error(`${artifact.remotePath}: md5 mismatch (expected ${remote.md5}, got ${gotMd5})`)
 					}
 
 					verifyDetail = "md5 verified"
 				} else if (remote.contentLength !== undefined) {
 					if (bytesWritten !== remote.contentLength) {
-						rmSync(tmpPath, { force: true })
+						await removePathIfPresent(tmpPath)
 						throw new Error(
 							`${artifact.remotePath}: downloaded ${bytesWritten} bytes, expected ${remote.contentLength} (Content-Length) — aborting`
 						)
@@ -328,7 +330,7 @@ async function pullBundles(
 					verifyDetail = `WARNING: no md5 sidecar and no Content-Length available — could not verify (${ByteFormatter.formatSI(bytesWritten)} written, trusting the transfer)`
 				}
 
-				mkdirSync(dirname(localAbsPath), { recursive: true })
+				await makeDirectories(dirname(localAbsPath))
 				sealDatabase(tmpPath)
 				swapDatabaseIntoPlace(tmpPath, localAbsPath)
 

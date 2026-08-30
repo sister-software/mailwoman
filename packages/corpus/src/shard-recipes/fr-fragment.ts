@@ -211,7 +211,7 @@ export const frFragmentRecipe: ShardRecipe = {
 		let skipped = 0
 		let contaminated = 0
 
-		for await (const tuple of readTuples(opts.input!)) {
+		for await (const tuple of await readTuples(opts.input!)) {
 			read++
 			const fullStreet = String(tuple.street ?? "").trim()
 			const locality = String(tuple.locality ?? "").trim()

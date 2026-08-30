@@ -29,8 +29,9 @@ import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/
 // arrives via the post-reset dynamic import below; a `const` carries no type side, so the type position
 // needs its own static import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { readLocalTextFile, readDirectory } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { crc32 } from "@mailwoman/platform/zlib"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -101,22 +102,22 @@ function bdcTransport(outcomes: StubOutcome[], clock?: { now(): number }): StubT
 }
 
 let cacheDir: string
-let dataRoot: string
+let dataRoot: TemporaryDirectory
 
-beforeEach(() => {
-	dataRoot = mkdtempSync(join(tmpdir(), "bdc-client-test-"))
-	cacheDir = join(dataRoot, "http-cache")
+beforeEach(async () => {
+	dataRoot = await temporaryDirectory("bdc-client-test-")
+	cacheDir = dataRoot.resolve("http-cache")
 
 	// Created up front so "the cache is empty" is a readable directory rather than an ENOENT — the
 	// distinction the never-cached assertions below depend on.
-	mkdirSync(cacheDir)
-	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot)
+	await makeDirectoryExclusive(cacheDir)
+	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path)
 })
 
 afterEach(() => {
 	vi.unstubAllEnvs()
 	vi.useRealTimers()
-	rmSync(dataRoot, { recursive: true, force: true })
+	dataRoot[Symbol.asyncDispose]()
 })
 
 /**
@@ -464,7 +465,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const failing = bdcTransport([{ status: 500, statusText: "Internal Server Error" }])
 
 		await expect(clientFor(failing, { maxAttempts: 1 }).get("/map/error")).rejects.toBeInstanceOf(ResourceError)
-		expect(readdirSync(cacheDir)).toHaveLength(0)
+		expect(await readDirectory(cacheDir)).toHaveLength(0)
 	})
 
 	it("refuses to cache a 200 whose body is not a BDC `{ data: … }` envelope, and self-heals", async () => {
@@ -473,7 +474,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		const bad = bdcTransport([{ body: { error: "nope" } }])
 
 		expect(await clientFor(bad).get("/map/not-an-envelope")).toEqual({ error: "nope" })
-		expect(readdirSync(cacheDir)).toHaveLength(0)
+		expect(await readDirectory(cacheDir)).toHaveLength(0)
 
 		const fixed = bdcTransport([{ body: { data: [1] } }])
 
@@ -489,7 +490,7 @@ describe("createBDCClient: the on-disk response cache", () => {
 		expect(await client.get(path, undefined, { skipCache: true })).toEqual({ data: [2] })
 
 		expect(transport.calls).toHaveLength(2)
-		expect(readdirSync(cacheDir)).toHaveLength(0)
+		expect(await readDirectory(cacheDir)).toHaveLength(0)
 	})
 
 	it("de-dupes concurrent misses for the SAME url onto a single in-flight request", async () => {
@@ -533,7 +534,7 @@ describe("createBDCClient: the binary download path", () => {
 		expect(Buffer.from(await client.getArrayBuffer(path)).toString()).toBe("second")
 
 		expect(transport.calls).toHaveLength(2)
-		expect(readdirSync(cacheDir)).toHaveLength(0)
+		expect(await readDirectory(cacheDir)).toHaveLength(0)
 		expect(warn.mock.calls.flat().join(" ")).not.toMatch(/refusing to cache/i)
 
 		warn.mockRestore()
@@ -584,12 +585,12 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 		const client = clientFor(transport)
 
 		const file = { fileID: 42, fileName: "bdc_06_Cable_D24_31dec2024" } as BDCFile
-		const destination = join(dataRoot, "availability")
+		const destination = dataRoot.resolve("availability")
 
 		const written = await downloadBDCFile(client, file, destination)
 
 		expect(written).toBe(join(destination, "bdc_06_Cable_D24_31dec2024.csv"))
-		expect(readFileSync(written, "utf8")).toBe(csv)
+		expect(await readLocalTextFile(written)).toBe(csv)
 		expect(transport.calls).toEqual([`${BDC_API_BASE_URL}/map/downloads/downloadFile/availability/42`])
 	})
 
@@ -598,7 +599,7 @@ describe("downloadBDCFile: end to end over the migrated client", () => {
 		const client = clientFor(transport)
 
 		const file = { fileID: 7, fileName: "already-here" } as BDCFile
-		const destination = join(dataRoot, "availability")
+		const destination = dataRoot.resolve("availability")
 
 		await downloadBDCFile(client, file, destination)
 		expect(transport.calls).toHaveLength(1)

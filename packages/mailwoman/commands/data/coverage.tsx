@@ -20,6 +20,7 @@
  *   is looking at.
  */
 
+import { statPath, pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
@@ -55,7 +56,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { censusCoverage } = await import("../../coverage-census.ts")
 		const { dataRootPath, repoRootPath } = await import("@mailwoman/core/utils")
-		const { existsSync, readdirSync, statSync } = await import("@mailwoman/platform/fs")
+		const { statSync } = await import("@mailwoman/platform/fs")
 
 		const repoRoot = String(repoRootPath())
 		const configDir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
@@ -63,8 +64,8 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		// By MTIME, not filename: the version scheme sorts neither lexically nor numerically — `v8-leg2-sp.yaml` beats
 		// `v4.8.0-...` both ways, and picking it reports every country as DROPPED, which reads as a catastrophic
 		// finding rather than as the wrong file. The report always names the config it used.
-		const newest = existsSync(configDir)
-			? readdirSync(configDir)
+		const newest = (await pathExists(configDir))
+			? (await readDirectory(configDir))
 					.filter((n) => n.endsWith(".yaml") && !n.includes("smoke"))
 					.map((n) => ({ n, at: statSync(`${configDir}/${n}`).mtimeMs }))
 					.toSorted((a, b) => b.at - a.at)
@@ -77,13 +78,13 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		// By MTIME, not directory name. Corpus versions sort neither lexically (`v0.9.9` beats `v0.26.0`, because
 		// `9` > `2`) nor numerically (`v8-jp-full` beats both) — measured: the name sort picked `v0.9.9` and silently
 		// reported the coverage of a corpus nine versions old. The report always names the manifest it used.
-		if (existsSync(versioned)) {
-			for (const version of readdirSync(versioned)) {
-				for (const inner of readdirSync(`${versioned}/${version}`)) {
+		if (await pathExists(versioned)) {
+			for (const version of await readDirectory(versioned)) {
+				for (const inner of await readDirectory(`${versioned}/${version}`)) {
 					const candidate = `${versioned}/${version}/${inner}/MANIFEST.json`
 
-					if (existsSync(candidate)) {
-						manifests.push({ path: candidate, at: statSync(candidate).mtimeMs })
+					if (await pathExists(candidate)) {
+						manifests.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
 					}
 				}
 			}
@@ -99,7 +100,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		if (options.json) {
-			writeRawStdout(`${JSON.stringify(report, null, "\t")}\n`)
+			writeRawStdout(report)
 
 			return { ok: true }
 		}
@@ -109,7 +110,7 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 			.map((c) => c.trim().toUpperCase())
 			.filter((c) => c.length > 0)
 
-		writeRawStdout(`${render(report, wanted)}\n`)
+		writeRawStdout(render(report, wanted))
 
 		return { ok: true }
 	})

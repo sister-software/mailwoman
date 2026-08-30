@@ -57,7 +57,7 @@ const CODEX_SUBPATHS = [null, "country", "de", "es", "fr", "gb", "it", "nz", "us
  * Build the source-first webpack alias map. Exact root aliases use webpack's `$` suffix so package subpaths continue
  * through their own explicit aliases or exports maps.
  */
-export function buildWorkspaceAliases(): Record<string, string> {
+export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	const aliases: Record<string, string> = {}
 
 	const setAlias = (specifier: string, target: string | null): void => {
@@ -67,27 +67,27 @@ export function buildWorkspaceAliases(): Record<string, string> {
 	}
 
 	for (const packageName of ROOT_PACKAGES) {
-		setAlias(`${packageName}$`, resolvePackageEntry(packageName))
+		setAlias(`${packageName}$`, await resolvePackageEntry(packageName))
 	}
 
 	// File aliases precede directory aliases: webpack matches aliases in insertion order, and the narrow
 	// `core/resources/whosonfirst/specificity` leaf must win before the broader `core/resources` barrel.
 	setAlias(
 		"@mailwoman/core/resources/whosonfirst/specificity",
-		resolvePackageFile("@mailwoman/core", "resources/whosonfirst/placetypes/specificity")
+		await resolvePackageFile("@mailwoman/core", "resources/whosonfirst/placetypes/specificity")
 	)
 
 	for (const [packageName, subpath] of FILE_SUBPATHS) {
-		setAlias(`${packageName}/${subpath}`, resolvePackageFile(packageName, subpath))
+		setAlias(`${packageName}/${subpath}`, await resolvePackageFile(packageName, subpath))
 	}
 
 	for (const [packageName, subpath] of DIRECTORY_SUBPATHS) {
-		setAlias(`${packageName}/${subpath}`, resolvePackageDirectoryEntry(packageName, subpath))
+		setAlias(`${packageName}/${subpath}`, await resolvePackageDirectoryEntry(packageName, subpath))
 	}
 
 	// The resolver root deliberately bypasses its barrel: the browser graph only needs the core resolver contracts,
 	// while runtime resolution enters through the explicit `@mailwoman/resolver/resolve` alias above.
-	setAlias("@mailwoman/resolver$", resolvePackageFile("@mailwoman/core", "resolver/types"))
+	setAlias("@mailwoman/resolver$", await resolvePackageFile("@mailwoman/core", "resolver/types"))
 
 	for (const subpath of CODEX_SUBPATHS) {
 		const specifier = subpath ? `@mailwoman/codex/${subpath}` : "@mailwoman/codex"

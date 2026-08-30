@@ -40,11 +40,13 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { readLocalTextFile, statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
 import { createHash } from "@mailwoman/platform/crypto"
-import { existsSync, readFileSync, statSync, writeFileSync, mkdirSync } from "@mailwoman/platform/fs"
+import { existsSync, readFileSync, mkdirSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
@@ -371,14 +373,14 @@ const PAIR_INDEX_SOURCE_DB = dataRootPath("wof", "admin-global-priority.db")
  */
 async function md5FileWithSidecar(path: string): Promise<string> {
 	const sidecarPath = `${path}.md5`
-	const sourceStats = statSync(path)
+	const sourceStats = await statPath(path)
 
-	if (existsSync(sidecarPath)) {
+	if (await pathExists(sidecarPath)) {
 		try {
-			const sidecarStats = statSync(sidecarPath)
+			const sidecarStats = await statPath(sidecarPath)
 
 			if (sidecarStats.mtime >= sourceStats.mtime) {
-				const sidecarContent = readFileSync(sidecarPath, "utf8").trim()
+				const sidecarContent = (await readLocalTextFile(sidecarPath)).trim()
 				const [hash] = sidecarContent.split(/\s+/)
 
 				if (hash && hash.length === MD5_HEX_LENGTH) {
@@ -395,7 +397,7 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	const hash = await md5File(path)
 	const filename = path.split(/[/\\]/).pop() || path
 
-	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
+	await writeLocalTextFile(`${hash}  ${filename}\n`, sidecarPath)
 
 	console.log(`md5(${path}): computed and cached in sidecar`)
 

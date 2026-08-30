@@ -48,7 +48,7 @@ const GEONAMES_FIXTURE = [
 ].join("\n")
 
 function seedDB(): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`CREATE TABLE spr (
 		id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL DEFAULT -1, name TEXT NOT NULL DEFAULT '',

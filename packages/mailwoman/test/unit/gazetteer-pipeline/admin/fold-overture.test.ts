@@ -92,7 +92,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 	// not the other type-checks perfectly and then fails partway through a multi-hour build. Binding a
 	// row against the real schema is the only thing that catches that.
 	async function openUnified(): Promise<DatabaseClient<WOFDatabase>> {
-		const db = new DatabaseClient<WOFDatabase>(":memory:")
+		const db = DatabaseClient.temp<WOFDatabase>()
 
 		await createUnifiedSchema(db)
 

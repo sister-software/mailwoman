@@ -5,9 +5,9 @@
 
 /* oxlint-disable sister-software/multiline-statement-padding -- each row's evidence assembly reads as one operation */
 
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
-import { writeFile } from "@mailwoman/platform/fs/promises"
 import { parseArgs } from "@mailwoman/platform/util"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
@@ -86,7 +86,7 @@ try {
 		})
 	}
 } finally {
-	deps.close()
+	deps[Symbol.dispose]()
 }
 
 const boundaries = rows.flatMap((row) => row.boundaries)
@@ -129,5 +129,5 @@ for (const vector of featureVectors) {
 }
 
 if (values["out-json"]) {
-	await writeFile(values["out-json"], `${JSON.stringify({ summary, featureVectors, rows }, null, 2)}\n`)
+	await writeLocalJSONFile({ summary, featureVectors, rows }, values["out-json"])
 }

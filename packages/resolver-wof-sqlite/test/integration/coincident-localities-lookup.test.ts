@@ -18,7 +18,7 @@ let db: DatabaseClient<WOFDatabase>
 let lookup: WOFSQLitePlaceLookup
 
 beforeEach(() => {
-	db = new DatabaseClient<WOFDatabase>(":memory:")
+	db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -93,7 +93,7 @@ describe("WOFSQLitePlaceLookup.coincidentLocalitiesFor", () => {
 	})
 
 	test("returns [] gracefully when the relation table is absent", () => {
-		using bare = new DatabaseClient<WOFDatabase>(":memory:")
+		using bare = DatabaseClient.temp<WOFDatabase>()
 
 		bare.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT,
 			latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL,

@@ -56,7 +56,7 @@ const GazetteerBuildPostcodeCodePoint: ParsedCommandComponent<Options> = ({ opti
 		const { stats, metadata } = result
 
 		return [
-			`postcode codepoint: ${result.out} (${artifactSizeMB(result.out)} MB)`,
+			`postcode codepoint: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
 			`${result.inserted.toLocaleString()} unit postcodes — OS release ${result.osVersion} (dataset ${metadata.datasetVersion}, © ${metadata.copyrightDate})`,
 			`read ${stats.read.toLocaleString()} · dropped ${stats.skippedNoCoordinate.toLocaleString()} no-coordinate (PQI 90) · ${stats.skippedMalformed.toLocaleString()} malformed`,
 			`manifest claims ${metadata.totalRows.toLocaleString()} rows across ${Object.keys(metadata.rowsByArea).length} areas — ${

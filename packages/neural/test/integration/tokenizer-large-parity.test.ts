@@ -18,10 +18,10 @@
  *        non-Latin-script edge cases the v0.1.0 tokenizer hits byte-fallback on.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 const MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
@@ -37,7 +37,7 @@ interface FixtureEntry {
 
 describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (10k corpus rows)", () => {
 	test("byte-for-byte pieces+ids equality across every fixture entry", async () => {
-		const fixture = parseJSONStrict<FixtureEntry[]>(readFileSync(LARGE_FIXTURE_PATH, "utf8"))
+		const fixture = await readLocalJSONFile<FixtureEntry[]>(LARGE_FIXTURE_PATH)
 		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
 
 		let divergences = 0
@@ -71,7 +71,7 @@ describe.skipIf(!haveLargeFixture)("MailwomanTokenizer — large-scale parity (1
 	})
 
 	test("offset reconstruction is correct on the supported subset (no byte-fallback, no ZWJ)", async () => {
-		const fixture = parseJSONStrict<FixtureEntry[]>(readFileSync(LARGE_FIXTURE_PATH, "utf8"))
+		const fixture = await readLocalJSONFile<FixtureEntry[]>(LARGE_FIXTURE_PATH)
 		const tokenizer = await MailwomanTokenizer.loadFromFile(MODEL_PATH)
 
 		// Documented unsupported cases in tokenizer.ts: byte-fallback pieces (`<0xHH>`) and inputs

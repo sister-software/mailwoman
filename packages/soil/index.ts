@@ -204,7 +204,7 @@ export interface SoilCapabilityLookupOptions {
  * of those would otherwise present as a reader that simply always answers `unknown`, which on a receipt is
  * indistinguishable from a region the authority genuinely has not surveyed.
  */
-export class SoilCapabilityLookup {
+export class SoilCapabilityLookup implements Disposable {
 	readonly identity: SoilLayerIdentity
 
 	readonly #database: DatabaseClient<SoilDatabase>
@@ -311,7 +311,7 @@ export class SoilCapabilityLookup {
 		}
 	}
 
-	public close(): void {
+	public [Symbol.dispose](): void {
 		this.#database.destroy()
 	}
 

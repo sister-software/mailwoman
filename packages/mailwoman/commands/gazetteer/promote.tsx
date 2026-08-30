@@ -33,7 +33,7 @@ const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args 
 
 		const root = mailwomanDataRoot()
 		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
-		const linkPath = promoteCandidate(candidateDB, root)
+		const linkPath = await promoteCandidate(candidateDB, root)
 
 		return { from: linkPath, to: candidateDB }
 	})

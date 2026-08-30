@@ -20,9 +20,9 @@
  *      (city-states like Berlin). Every coordinate still comes from our own admin DB.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { readWOFFeature, resolveWOFDataDir } from "@mailwoman/core/resources/whosonfirst"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { PathBuilder } from "path-ts"
@@ -118,10 +118,10 @@ async function readGeonamesPostal(
 
 	const wanted = new Set(GEONAMES_COUNTRY_ALIASES[country] ?? [country])
 	const perCountry = PathBuilder.from(geonamesDir)(`${country}.txt`).toString()
-	const source = existsSync(perCountry) ? perCountry : combinedPath
+	const source = (await pathExists(perCountry)) ? perCountry : combinedPath
 	const acc = new Map<string, GeonamesPostcode>()
 
-	if (!existsSync(source)) return acc
+	if (!(await pathExists(source))) return acc
 
 	// Streamed: `source` is a per-country dump of ~1 MB OR the 140 MB combined file, and only the caller
 	// knows which. `header: false` is required — the spliterator consumes row 1 as a header even in
@@ -287,16 +287,16 @@ async function geonamesFill(
  * absent from the admin DB — common for city-states like Berlin), borrow the finest available ANCESTOR centroid from
  * the GeoJSON hierarchy. County is preferred over region for tighter placement.
  */
-function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: string): number {
+async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: string): Promise<number> {
 	// Resolved once per country rather than composed per row: the answer depends on which layout the repository was
 	// cloned in, and a row-rate stat over an unplaced set is wasted work.
 	const dataDirByCountry = new Map<string, string | null>()
 
-	const dataDirFor = (country: string): string | null => {
+	const dataDirFor = async (country: string): Promise<string | null> => {
 		let dataDir = dataDirByCountry.get(country)
 
 		if (dataDir === undefined) {
-			dataDir = resolveWOFDataDir(reposDir, "postalcode", country)
+			dataDir = await resolveWOFDataDir(reposDir, "postalcode", country)
 			dataDirByCountry.set(country, dataDir)
 		}
 
@@ -319,7 +319,7 @@ function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: string): nu
 	db.exec("BEGIN")
 
 	for (const row of unplaced) {
-		const dataDir = dataDirFor(row.country)
+		const dataDir = await dataDirFor(row.country)
 
 		if (!dataDir) continue
 
@@ -377,7 +377,7 @@ export async function fillPostcodeCentroids(
 	let ancestorFixed = 0
 
 	// Pass 2: GeoNames postal — runs FIRST so the postcode's own centroid wins over the coarser parent-borrow.
-	if (opts.geonamesDir && existsSync(opts.geonamesDir)) {
+	if (opts.geonamesDir && (await pathExists(opts.geonamesDir))) {
 		// Where the US lives. The per-country directory is populated for locales fetched one at a time and
 		// has no US.txt; the combined dump does. Resolved through the data-root builder rather than by
 		// walking up out of `geonamesDir`, which only lands correctly when that argument is the default.
@@ -391,7 +391,7 @@ export async function fillPostcodeCentroids(
 		geonamesNames = await geonamesNameFill(db, opts.geonamesDir, combinedPath)
 	}
 
-	if (opts.adminPath && existsSync(opts.adminPath)) {
+	if (opts.adminPath && (await pathExists(opts.adminPath))) {
 		db.exec(`ATTACH '${opts.adminPath.replaceAll("'", "''")}' AS adm`)
 
 		try {
@@ -422,9 +422,9 @@ export async function fillPostcodeCentroids(
 			void res
 
 			// Pass 4: hierarchy-ancestor fallback (needs both the admin attach and the source geojson).
-			if (opts.reposDir && existsSync(opts.reposDir)) {
+			if (opts.reposDir && (await pathExists(opts.reposDir))) {
 				phase("fill-ancestor-fallback")
-				ancestorFixed = ancestorFallback(db, opts.reposDir)
+				ancestorFixed = await ancestorFallback(db, opts.reposDir)
 			}
 		} finally {
 			db.exec("DETACH adm")

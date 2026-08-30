@@ -16,12 +16,11 @@
  *   server spends its resident memory, and it spends it on sessions.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
 import { readRequiredChannels, resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { basename } from "@mailwoman/platform/path"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -125,12 +124,12 @@ export async function runLookup<DB>(
 		}
 
 		case LookupSource.Candidate: {
-			return withArtifact(source, resolveCandidateDB(config, dataRoot), (db, path) => {
+			return await withArtifact(source, resolveCandidateDB(config, dataRoot), async (db, path) => {
 				// The score source's split channels ride along whenever the conventional importance DB exists beside the
 				// artifacts — the join every fame-contest diagnosis needs, attached rather than scripted.
 				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
 
-				const importanceDB = existsSync(importancePath)
+				const importanceDB = (await pathExists(importancePath))
 					? new DatabaseClient<PlaceImportanceDatabase>(importancePath, { readOnly: true })
 					: null
 
@@ -162,7 +161,7 @@ export async function runLookup<DB>(
 
 					if (args.compareCandidateDB) {
 						const comparePath = resolveCandidateDB({ ...config, candidate_db: args.compareCandidateDB }, dataRoot)
-						const openedB = openSealedArtifact<WOFDatabase>(comparePath)
+						const openedB = await openSealedArtifact<WOFDatabase>(comparePath)
 
 						if ("unavailable" in openedB || !comparePath) {
 							return {
@@ -220,7 +219,7 @@ export async function runLookup<DB>(
 		}
 
 		case LookupSource.POI: {
-			return withArtifact(source, resolvePath(dataRoot, "poi", "poi.db"), (db, path) => ({
+			return await withArtifact(source, resolvePath(dataRoot, "poi", "poi.db"), (db, path) => ({
 				source,
 				provenance: { artifact: path },
 				rows: lookupPOI(db, queries, {
@@ -235,16 +234,16 @@ export async function runLookup<DB>(
 		}
 
 		case LookupSource.WOF: {
-			return runWOFLookup(args, dataRoot)
+			return await runWOFLookup(args, dataRoot)
 		}
 
 		case LookupSource.Postcode: {
-			return runPostcodeLookup(args)
+			return await runPostcodeLookup(args)
 		}
 
 		case LookupSource.FST:
 		case LookupSource.StreetMorphology: {
-			return runFSTLookup(registry, args)
+			return await runFSTLookup(registry, args)
 		}
 
 		default: {
@@ -275,12 +274,12 @@ function resolveCandidateDB(config: EngineConfig, dataRoot: string): string | un
  * Open one sealed artifact, hand it to `build`, and close it whatever happens. An unopenable path short-circuits to the
  * unavailable envelope with no rows.
  */
-function withArtifact<T extends LookupResult>(
+async function withArtifact<T extends LookupResult>(
 	source: LookupSource,
 	path: string | undefined,
-	build: (db: DatabaseClient<WOFDatabase>, path: string) => T
-): T | LookupResult {
-	const opened = openSealedArtifact<WOFDatabase>(path)
+	build: (db: DatabaseClient<WOFDatabase>, path: string) => T | Promise<T>
+): Promise<T | LookupResult> {
+	const opened = await openSealedArtifact<WOFDatabase>(path)
 
 	if ("unavailable" in opened || !path) {
 		const unavailable = "unavailable" in opened ? opened.unavailable : "No artifact path was resolved for this source."
@@ -289,7 +288,7 @@ function withArtifact<T extends LookupResult>(
 	}
 
 	try {
-		return build(opened.db, path)
+		return await build(opened.db, path)
 	} finally {
 		opened.db.destroy()
 	}
@@ -307,13 +306,13 @@ const UNAVAILABLE_NOTE =
  * The WOF shards, opened as a set. Unavailable only when NO shard opens; a partial set is reported in the notes,
  * because "three of six shards" is a different reading of a miss than "all six".
  */
-function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
+async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {
 	const paths = resolveWOFShardPaths(args.config?.resolve_db, dataRoot)
 	const shards: WOFShard<WOFDatabase>[] = []
 	const skipped: string[] = []
 
 	for (const path of paths) {
-		const opened = openSealedArtifact<WOFDatabase>(path)
+		const opened = await openSealedArtifact<WOFDatabase>(path)
 
 		if ("unavailable" in opened) {
 			skipped.push(opened.unavailable)
@@ -370,7 +369,7 @@ function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
  * The span mode comes from the package's own model card. Defaulting it here instead would describe a configuration the
  * loader never runs — `alnum-run` is the loader's default only when the card declares nothing.
  */
-function runPostcodeLookup(args: LookupArgs): LookupResult {
+async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	const locale = args.locale ?? args.config?.locale ?? "en-us"
 	let resolved: ReturnType<typeof resolveWeights>
 
@@ -400,7 +399,7 @@ function runPostcodeLookup(args: LookupArgs): LookupResult {
 	let resolver: PostcodeAnchorResolver
 
 	try {
-		resolver = loadAnchorArtifact(resolved.anchorLookupPath)
+		resolver = await loadAnchorArtifact(resolved.anchorLookupPath)
 	} catch (error) {
 		return {
 			source: LookupSource.Postcode,
@@ -430,12 +429,12 @@ function runPostcodeLookup(args: LookupArgs): LookupResult {
  * `toAnchorLookup()` builds all of them into a Map in 2,035 ms (against 24 ms to construct the reader), which is the
  * wrong trade for a handful of queries. The JSON form has no search seam, so it is parsed and wrapped.
  */
-function loadAnchorArtifact(artifact: { path: string; binary: boolean }): PostcodeAnchorResolver {
+async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
 	if (artifact.binary) {
-		return new PostcodeBinaryResolver(new Uint8Array(readFileSync(artifact.path)))
+		return new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(artifact.path)))
 	}
 
-	const lookup = parseAnchorLookup(parseJSONStrict(readFileSync(artifact.path, "utf8")))
+	const lookup = parseAnchorLookup(await readLocalJSONFile(artifact.path))
 
 	return {
 		lookup: (postcode: string) => {
@@ -513,7 +512,7 @@ async function probeLocaleFST(
 	const path =
 		args.source === LookupSource.FST ? engine.session.artifacts.fstPath : engine.session.artifacts.streetMorphologyPath
 
-	const loaded = loadFSTArtifact(path, deserializeFST)
+	const loaded = await loadFSTArtifact(path, deserializeFST)
 
 	if ("unavailable" in loaded) return { rows: [], unavailable_reason: loaded.unavailable }
 

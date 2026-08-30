@@ -55,7 +55,7 @@ export const frBareStreetRecipe: ShardRecipe = {
 		let emitted = 0
 		let skipped = 0
 
-		for await (const t of readTuples(opts.input!)) {
+		for await (const t of await readTuples(opts.input!)) {
 			read++
 			const fullStreet = String(t.street ?? "").trim()
 			const number = String(t.number ?? "").trim()

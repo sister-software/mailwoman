@@ -14,8 +14,7 @@
  *   reaches `man mailwoman`.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { describe, expect, it } from "vitest"
 
 import { MAN_PAGE_PATH, renderManPage } from "./generate-man.ts"
@@ -25,16 +24,16 @@ describe("the man page", () => {
 	it(
 		"matches the CLI's live help tree — regenerate with `node scripts/generate-man.ts` on drift",
 		{ timeout: 60_000 },
-		() => {
-			const committed = readFileSync(MAN_PAGE_PATH, "utf8")
+		async () => {
+			const committed = await readLocalTextFile(MAN_PAGE_PATH)
 
 			expect(committed).toBe(renderManPage())
 		}
 	)
 
-	it("is wired into package.json (npm links `man` on install) and shipped in `files`", () => {
-		const pkg = parseJSONStrict<{ man?: string; files: string[] }>(
-			readFileSync(new URL("../packages/mailwoman/package.json", import.meta.url), "utf8")
+	it("is wired into package.json (npm links `man` on install) and shipped in `files`", async () => {
+		const pkg = await readLocalJSONFile<{ man?: string; files: string[] }>(
+			new URL("../packages/mailwoman/package.json", import.meta.url)
 		)
 
 		expect(pkg.man).toBe("./man/mailwoman.1")

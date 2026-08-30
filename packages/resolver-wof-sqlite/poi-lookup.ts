@@ -351,12 +351,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> implements Disposab
 		return allRows<POIRow>(stmt, ...nameKeys)
 	}
 
-	close(): void {
-		this.#resources.dispose()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#resources[Symbol.dispose]()
 	}
 }
 

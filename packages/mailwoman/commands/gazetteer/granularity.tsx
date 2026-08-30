@@ -1,21 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer granularity` — the per-country gazetteer depth scorecard.
- *
- *   Answers "where does the admin gazetteer bottom out?" for every country it knows, which nobody
- *   had measured: the shipped artifact stocks 9 of WOF's 34 placetypes and carries a
- *   `dependent_locality` tier in 11 of 244 countries. Read-only, no network, no model — three
- *   grouped queries over `spr`/`ancestors` and a markdown render.
- *
- *   The report is a COMMITTED artifact (the `fill-rates.md` precedent), so the source md5 and the
- *   parent-coverage floor are pinned in its header. Re-running against a rebuilt gazetteer and
- *   diffing the report is the intended workflow.
- */
-
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -67,8 +50,8 @@ const GazetteerGranularity: ParsedCommandComponent<Options> = ({ options }) => {
 			floor: options.floor,
 		})
 
-		mkdirSync(dirname(options.out), { recursive: true })
-		writeFileSync(options.out, markdown)
+		await makeDirectories(dirname(options.out))
+		await writeLocalFile(markdown, options.out)
 
 		const byBottom = new Map<string, number>()
 

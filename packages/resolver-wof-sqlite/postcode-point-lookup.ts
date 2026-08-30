@@ -62,7 +62,7 @@ export class WOFPostcodeLookup {
 		return out
 	}
 
-	close(): void {
+	[Symbol.dispose](): void {
 		for (const db of this.#dbs) {
 			db.destroy()
 		}

@@ -13,10 +13,11 @@
  *     (warning, never a throw)
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalBuffer } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { chmodSync, writeFileSync } from "@mailwoman/platform/fs"
 import { deserializeFSTWeb } from "@mailwoman/resolver-wof-sqlite/fst-deserialize-web"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { PlaceEntry } from "@mailwoman/resolver-wof-sqlite/fst-types"
@@ -36,17 +37,15 @@ const PROBES = ["rue", "avenue", "straße"] as const
  */
 const keyOf = (entries: PlaceEntry[]) => entries.map((e) => [e.wofID, e.placetype, e.name])
 
-const tempDir = mkdtempSync(join(tmpdir(), "morphology-fst-loader-"))
-const artifactPath = join(tempDir, "fst-street-morphology.bin")
+const tempDir = await temporaryDirectory("morphology-fst-loader-")
+const artifactPath = tempDir.resolve("fst-street-morphology.bin")
 const built = buildStreetMorphologyFST({ dictionariesDir: DICTIONARIES_DIR })
 
 writeFileSync(artifactPath, serializeFST(built.matcher, built.provenance))
 // The sealed posture `mailwoman gazetteer build street-morphology` leaves.
 chmodSync(artifactPath, 0o444)
 
-afterAll(() => {
-	rmSync(tempDir, { recursive: true, force: true })
-})
+afterAll(() => tempDir[Symbol.asyncDispose]())
 
 describe("loadStreetMorphologyFST", () => {
 	it("loads the sealed artifact and matches the in-process build on street-type probes", () => {
@@ -73,8 +72,8 @@ describe("loadStreetMorphologyFST", () => {
 		expect(loaded.provenance?.countries).toEqual(built.provenance.countries)
 	})
 
-	it("web-deserializer parity: deserializeFSTWeb over the artifact bytes matches the node matchers", () => {
-		const bytes = readFileSync(artifactPath)
+	it("web-deserializer parity: deserializeFSTWeb over the artifact bytes matches the node matchers", async () => {
+		const bytes = await readLocalBuffer(artifactPath)
 		const web = deserializeFSTWeb(new Uint8Array(bytes))
 
 		for (const probe of PROBES) {
@@ -84,7 +83,7 @@ describe("loadStreetMorphologyFST", () => {
 
 	it("falls back to the dictionary build when the explicit artifact is missing", () => {
 		const loaded = loadStreetMorphologyFST({
-			artifactPath: join(tempDir, "does-not-exist.bin"),
+			artifactPath: tempDir.resolve("does-not-exist.bin"),
 			dictionariesDir: DICTIONARIES_DIR,
 		})
 
@@ -93,10 +92,10 @@ describe("loadStreetMorphologyFST", () => {
 		expect(loaded.matcher.query("avenue").accepting.length).toBeGreaterThan(0)
 	})
 
-	it("falls back with a warning when the explicit artifact is unreadable — never a throw", () => {
-		const corruptPath = join(tempDir, "corrupt.bin")
+	it("falls back with a warning when the explicit artifact is unreadable — never a throw", async () => {
+		const corruptPath = tempDir.resolve("corrupt.bin")
 
-		writeFileSync(corruptPath, Buffer.from("not an FST artifact"))
+		await writeLocalBuffer(Buffer.from("not an FST artifact"), corruptPath)
 		const warnings: string[] = []
 
 		const loaded = loadStreetMorphologyFST({

@@ -57,7 +57,9 @@
 
 import { type ComponentTag, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
-import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	NeuralAddressClassifier,
@@ -67,7 +69,6 @@ import {
 } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { basename, resolve } from "@mailwoman/platform/path"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
@@ -228,13 +229,11 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
  * A version with no such block — every golden through v0.1.2 — reads as all-folded, so this is a no-op on the old
  * answer keys and nothing about replaying an old out-dir changes.
  */
-function readStreetConvention(goldenDir: string): Record<string, string> {
+async function readStreetConvention(goldenDir: string): Promise<Record<string, string>> {
 	for (const candidate of [resolve(goldenDir, "MANIFEST.json"), resolve(goldenDir, "..", "MANIFEST.json")]) {
-		if (!existsSync(candidate)) continue
+		if (!(await pathExists(candidate))) continue
 
-		const manifest = parseJSONStrict<{ convention?: { street_convention?: Record<string, string> } }>(
-			readFileSync(candidate, "utf8")
-		)
+		const manifest = await readLocalJSONFile<{ convention?: { street_convention?: Record<string, string> } }>(candidate)
 
 		const convention = manifest.convention?.street_convention
 
@@ -383,7 +382,7 @@ export async function perLocaleF1(
 	reportError(`Files: ${args.files.join(", ")}`)
 	reportError(`Model: ${args.modelPath ?? "(default weights)"}`)
 
-	const streetConvention = readStreetConvention(args.goldenDir)
+	const streetConvention = await readStreetConvention(args.goldenDir)
 
 	const splitCountries = Object.entries(streetConvention)
 		.filter(([, mode]) => mode === "split")
@@ -421,7 +420,7 @@ export async function perLocaleF1(
 			)
 		}
 
-		const card = parseJSONStrict<{ labels: string[] }>(readFileSync(args.modelCardPath, "utf8"))
+		const card = await readLocalJSONFile<{ labels: string[] }>(args.modelCardPath)
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizerPath),
@@ -436,15 +435,15 @@ export async function perLocaleF1(
 		const gazetteerLexiconPath = args.noAnchor ? undefined : (args.gazetteerLexiconPath ?? DEFAULT_GAZETTEER_LEXICON)
 
 		const postcodeAnchorLookup =
-			anchorLookupPath && existsSync(anchorLookupPath)
-				? parseAnchorLookup(parseJSONStrict(readFileSync(anchorLookupPath, "utf8")))
+			anchorLookupPath && (await pathExists(anchorLookupPath))
+				? parseAnchorLookup(await readLocalJSONFile(anchorLookupPath))
 				: undefined
 
 		// Gazetteer-anchor lexicon (#464): fed so a gazetteer-trained model gets its clues. Harmless for
 		// older models (the runner skips inputs the ONNX lacks).
 		const gazetteerLexicon =
-			gazetteerLexiconPath && existsSync(gazetteerLexiconPath)
-				? parseGazetteerLexicon(parseJSONStrict(readFileSync(gazetteerLexiconPath, "utf8")))
+			gazetteerLexiconPath && (await pathExists(gazetteerLexiconPath))
+				? parseGazetteerLexicon(await readLocalJSONFile(gazetteerLexiconPath))
 				: undefined
 
 		reportError(
@@ -477,7 +476,7 @@ export async function perLocaleF1(
 
 		// Checked before the read: the spliterator reports a missing path as "invalid async data
 		// resource", which is accurate about its argument and useless about the file.
-		if (!existsSync(path)) {
+		if (!(await pathExists(path))) {
 			reportError(`  skip ${file}: not found at ${path}`)
 
 			continue
@@ -586,7 +585,7 @@ export async function perLocaleF1(
 	const result: PerLocaleF1Result = { reports, spread }
 
 	if (args.outJSON) {
-		writeFileSync(args.outJSON, JSON.stringify(result, null, 2))
+		await writeLocalJSONFile(result, args.outJSON)
 
 		reportError(`Wrote ${args.outJSON}`)
 	}

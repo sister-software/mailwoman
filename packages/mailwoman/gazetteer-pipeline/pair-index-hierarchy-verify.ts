@@ -171,7 +171,7 @@ function main(): void {
 	const dbPath = values.db ?? dataRootPath("wof", "admin-global-priority.db")
 	const dir = values.dir ?? dataRootPath("wof", "pair-index-hierarchy-probe")
 
-	const db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 	let failures = 0
 
 	const fail = (msg: string): void => {
@@ -296,8 +296,6 @@ function main(): void {
 			}
 		}
 	}
-
-	db.destroy()
 
 	if (failures > 0) {
 		throw new Error(`pair-index-hierarchy-verify: ${failures} failure(s)`)

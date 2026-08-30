@@ -105,14 +105,7 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 		return this.#byName.get(norm) !== undefined
 	}
 
-	/**
-	 * Close the underlying handle.
-	 */
-	close(): void {
-		this.#db[Symbol.dispose]()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#db[Symbol.dispose]()
 	}
 }

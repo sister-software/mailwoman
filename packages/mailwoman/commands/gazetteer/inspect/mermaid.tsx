@@ -14,7 +14,7 @@
 import { Spinner } from "@inkjs/ui"
 import type { InterpolateColorCallback, PlacetypeRole } from "@mailwoman/core"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
-import * as fs from "@mailwoman/platform/fs/promises"
+import { writeFile } from "@mailwoman/platform/fs/promises"
 import { availableParallelism } from "@mailwoman/platform/os"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
@@ -113,7 +113,7 @@ const WOFMermaid: ParsedCommandComponent<Options, [string, string]> = ({ args, o
 		const chart = generateMermaidMarkup(placetype, { roles, edgeInterpolator: interpolator })
 
 		if (options.output) {
-			await fs.writeFile(options.output, chart + "\n", "utf8")
+			await writeFile(options.output, chart + "\n", "utf8")
 		} else {
 			// Write Mermaid directly to stdout so long classDef / linkStyle lines aren't
 			// word-wrapped by Ink's <Text> renderer — Mermaid won't parse a broken line.

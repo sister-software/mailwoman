@@ -480,7 +480,7 @@ export interface POIBoardOptions {
  */
 async function loadResolver(
 	options: POIBoardOptions
-): Promise<{ resolver: Resolver; close: () => void; backend: POIBoardResolverBackend } | undefined> {
+): Promise<({ resolver: Resolver; backend: POIBoardResolverBackend } & Disposable) | undefined> {
 	const wofPaths = options.candidateDB
 		? []
 		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
@@ -502,7 +502,7 @@ async function loadResolver(
 
 		return {
 			resolver: createWOFResolver(lookup),
-			close: () => lookup.close(),
+			[Symbol.dispose]: () => lookup[Symbol.dispose](),
 			backend: lookup instanceof mod.WOFCandidateTableLookup ? "candidate" : "wof-fts",
 		}
 	} catch {
@@ -724,7 +724,7 @@ function computeStats(values: number[]): QuantileStats | null {
 /**
  * One constructed board pipeline, with the database it queries and the handle that closes its resolver.
  */
-export interface POIBoardPipelineHandle {
+export interface POIBoardPipelineHandle extends Disposable {
 	pipeline: (raw: string, runOpts?: PipelineOpts) => Promise<PipelineResult>
 	/**
 	 * The sealed poi.db the executor queries — carried here so a caller reporting artifact identity reads the path the
@@ -735,7 +735,6 @@ export interface POIBoardPipelineHandle {
 	 * Which lookup answered anchor resolution, as built rather than as requested.
 	 */
 	backend: POIBoardResolverBackend
-	close: () => void
 }
 
 /**
@@ -767,7 +766,12 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 		...(semanticLookup ? { poiSemanticLookup: semanticLookup } : {}),
 	})
 
-	return { pipeline, db, backend: resolverHandle?.backend ?? "none", close: () => resolverHandle?.close() }
+	return {
+		pipeline,
+		db,
+		backend: resolverHandle?.backend ?? "none",
+		[Symbol.dispose]: () => resolverHandle?.[Symbol.dispose](),
+	}
 }
 
 /**
@@ -803,7 +807,8 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 		)
 	}
 
-	const { pipeline, db, close } = await createPOIBoardPipeline(options)
+	using pipelineHandle = await createPOIBoardPipeline(options)
+	const { pipeline, db } = pipelineHandle
 
 	const cases: CaseGrade[] = []
 	const nearestKms: number[] = []
@@ -811,34 +816,30 @@ export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoa
 	let gersIDPresent = 0
 	let ancestryPresent = 0
 
-	try {
-		for (const fixture of fixtures) {
-			const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
-			const result = await pipeline(fixture.query, runOpts)
-			const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent }
-			const grade = gradeCase(fixture, outcome)
-			cases.push(grade)
+	for (const fixture of fixtures) {
+		const runOpts: PipelineOpts = fixture.locale ? { locale: fixture.locale } : {}
+		const result = await pipeline(fixture.query, runOpts)
+		const outcome: POIBoardOutcome = { path: result.path, poiIntent: result.poiIntent }
+		const grade = gradeCase(fixture, outcome)
+		cases.push(grade)
 
-			if (grade.nearestKm !== undefined) {
-				nearestKms.push(grade.nearestKm)
-			}
+		if (grade.nearestKm !== undefined) {
+			nearestKms.push(grade.nearestKm)
+		}
 
-			if (result.poiIntent?.type === "intent" && result.poiIntent.results) {
-				for (const r of result.poiIntent.results) {
-					resultRowCount++
+		if (result.poiIntent?.type === "intent" && result.poiIntent.results) {
+			for (const r of result.poiIntent.results) {
+				resultRowCount++
 
-					if (r.gersID !== null) {
-						gersIDPresent++
-					}
+				if (r.gersID !== null) {
+					gersIDPresent++
+				}
 
-					if (r.ancestry && r.ancestry.length) {
-						ancestryPresent++
-					}
+				if (r.ancestry && r.ancestry.length) {
+					ancestryPresent++
 				}
 			}
 		}
-	} finally {
-		close()
 	}
 
 	const { counted, tracked } = partitionCases(fixtures, cases)

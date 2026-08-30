@@ -23,9 +23,11 @@
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { createWriteStream, existsSync, mkdirSync, rmSync, statSync } from "@mailwoman/platform/fs"
+import { createWriteStream } from "@mailwoman/platform/fs"
 import { basename, join } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -139,9 +141,9 @@ async function readCountyManifest(manifestPath: string): Promise<Map<string, Cou
  * Check whether a file already matches a recorded sha256 and byte count.
  */
 async function fileMatchesSha(path: string, expectedSha: string, expectedBytes: number): Promise<boolean> {
-	if (!existsSync(path)) return false
+	if (!(await pathExists(path))) return false
 
-	if (statSync(path).size !== expectedBytes) return false
+	if ((await statPath(path)).size !== expectedBytes) return false
 
 	return (await sha256File(path)) === expectedSha
 }
@@ -161,10 +163,10 @@ async function downloadCounty(url: string, dest: string): Promise<CountyResult> 
 		return { ok: false, filename, reason: `HTTP ${status}` }
 	}
 
-	const bytes = statSync(dest).size
+	const bytes = (await statPath(dest)).size
 
 	if (bytes < BYTES_PER_KIB) {
-		rmSync(dest, { force: true })
+		await removePathIfPresent(dest)
 
 		return { ok: false, filename, reason: `too small (${bytes} bytes)` }
 	}
@@ -184,7 +186,7 @@ export async function fetchTigerFull(
 	const dryRun = options.dryRun ?? false
 
 	const addrfeatDir = join(options.outRoot, "tiger", "addrfeat")
-	mkdirSync(addrfeatDir, { recursive: true })
+	await makeDirectories(addrfeatDir)
 
 	// MARK: Step 1 — discover the county file list
 
@@ -242,7 +244,7 @@ export async function fetchTigerFull(
 		}
 
 		const stateDir = join(addrfeatDir, `state-${stateFips}`)
-		mkdirSync(stateDir, { recursive: true })
+		await makeDirectories(stateDir)
 		const manifestPath = join(stateDir, "MANIFEST.json")
 
 		// Load existing manifest for O(1) verified-skip lookup.
@@ -283,7 +285,7 @@ export async function fetchTigerFull(
 		if (!pending.length) continue
 
 		// --- Download pending files with bounded parallelism + rate-limit spacing ---
-		const results: CountyResult[] = new Array(pending.length)
+		const results: CountyResult[] = Array.from({ length: pending.length })
 		let cursor = 0
 
 		const workers = Array.from({ length: Math.min(maxParallel, pending.length) }, async () => {

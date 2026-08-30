@@ -12,13 +12,12 @@
  *   fixtures below reproduce that shape at a size a test can hold.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readDeclaredDomains, readTable, readTabularDictionary, saverestToISODate } from "@mailwoman/soil/sdk/tabular"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 /**
  * `mstab.txt` is five columns: table, physical name, label, description, FILE BASE NAME. The file name is the last
@@ -48,30 +47,28 @@ const MSDOMDET = [
 	'"capability_subclass"|1|"e"|"erosion"|"No"',
 ].join("\r\n")
 
-beforeAll(() => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-soil-tabular-"))
+beforeAll(async () => {
+	scratch = await temporaryDirectory("mw-soil-tabular-")
 
-	writeFileSync(join(scratch, "mstab.txt"), `${MSTAB}\r\n`)
-	writeFileSync(join(scratch, "mstabcol.txt"), `${MSTABCOL}\r\n`)
-	writeFileSync(join(scratch, "widgetfile.txt"), `${WIDGETFILE}\r\n`)
-	writeFileSync(join(scratch, "msdomdet.txt"), `${MSDOMDET}\r\n`)
+	await writeLocalTextFile(`${MSTAB}\r\n`, scratch.resolve("mstab.txt"))
+	await writeLocalTextFile(`${MSTABCOL}\r\n`, scratch.resolve("mstabcol.txt"))
+	await writeLocalTextFile(`${WIDGETFILE}\r\n`, scratch.resolve("widgetfile.txt"))
+	await writeLocalTextFile(`${MSDOMDET}\r\n`, scratch.resolve("msdomdet.txt"))
 })
 
-afterAll(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("the tabular dictionary", () => {
 	it("maps a logical table to the file that actually holds it", () => {
-		const dictionary = readTabularDictionary(scratch)
+		const dictionary = readTabularDictionary(scratch.path)
 
 		expect(dictionary.files.get("widget")).toBe("widgetfile")
 		expect(dictionary.columns.get("widget")?.get("widget_name")).toBe(1)
 	})
 
 	it("reads a record whose column carries an embedded newline as ONE record", () => {
-		const dictionary = readTabularDictionary(scratch)
-		const table = readTable(scratch, dictionary, "widget", ["widget_key", "widget_name"])
+		const dictionary = readTabularDictionary(scratch.path)
+		const table = readTable(scratch.path, dictionary, "widget", ["widget_key", "widget_name"])
 
 		// The file holds three newline bytes and two records. A line-splitting reader would report three.
 		expect(table.recordCount).toBe(2)
@@ -80,23 +77,23 @@ describe("the tabular dictionary", () => {
 	})
 
 	it("throws on a requested column the shipped dictionary does not declare", () => {
-		const dictionary = readTabularDictionary(scratch)
+		const dictionary = readTabularDictionary(scratch.path)
 
 		// The failure this refuses is the repo's worst measurement shape: a silently dropped column reads downstream as an
 		// empty world rather than as an error.
-		expect(() => readTable(scratch, dictionary, "widget", ["widget_key", "renamed_column"])).toThrow(
+		expect(() => readTable(scratch.path, dictionary, "widget", ["widget_key", "renamed_column"])).toThrow(
 			/declares no column/u
 		)
 	})
 
 	it("throws on a table the archive's own file map does not name", () => {
-		const dictionary = readTabularDictionary(scratch)
+		const dictionary = readTabularDictionary(scratch.path)
 
-		expect(() => readTable(scratch, dictionary, "nosuchtable", ["x"])).toThrow(/declares no file for table/u)
+		expect(() => readTable(scratch.path, dictionary, "nosuchtable", ["x"])).toThrow(/declares no file for table/u)
 	})
 
 	it("reads the authority's declared domains, definitions included", () => {
-		const domains = readDeclaredDomains(scratch)
+		const domains = readDeclaredDomains(scratch.path)
 
 		expect(domains.filter((member) => member.domain === "capability_class")).toHaveLength(2)
 		expect(domains.find((member) => member.code === "e")?.definition).toBe("erosion")

@@ -14,7 +14,7 @@
  *   Gauntlet harness, so this leg runs wherever the repo does.
  */
 
-import { readdirSync } from "@mailwoman/platform/fs"
+import { readDirectory } from "@mailwoman/core/fs/readers"
 import { basename } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
@@ -26,8 +26,8 @@ import {
 import { describe, expect, it } from "vitest"
 
 describe("the conformance suite register", () => {
-	it("names every committed suite file in its own directory", () => {
-		const committed = readdirSync(CONFORMANCE_SUITE_DIR).filter((entry) => entry.endsWith(".jsonl"))
+	it("names every committed suite file in its own directory", async () => {
+		const committed = (await readDirectory(CONFORMANCE_SUITE_DIR)).filter((entry) => entry.endsWith(".jsonl"))
 		const registered = new Set(CONFORMANCE_SUITES.map((suite) => basename(suite.path)))
 
 		expect(committed.length).toBeGreaterThan(0)

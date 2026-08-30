@@ -11,9 +11,7 @@
  *   low capability class.
  */
 
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { SoilCapabilityLookup, SoilReadingKind } from "@mailwoman/soil"
 import type { SoilDatabase } from "@mailwoman/soil/schema"
 import { buildSoilDatabase, type BuildSoilResult } from "@mailwoman/soil/sdk/build-soil"
@@ -43,14 +41,14 @@ function squareCentre(index: number): { latitude: number; longitude: number } {
 	}
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 let result: BuildSoilResult
 let lookup: SoilCapabilityLookup
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-soil-build-"))
-	databasePath = join(scratch, "soil.db")
+	scratch = await temporaryDirectory("mw-soil-build-")
+	databasePath = scratch.resolve("soil.db")
 
 	const delineations = fixtureDelineations()
 
@@ -78,8 +76,8 @@ beforeAll(async () => {
 })
 
 afterAll(() => {
-	lookup?.close()
-	rmSync(scratch, { recursive: true, force: true })
+	lookup[Symbol.dispose]()
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("the fixture build", () => {
@@ -182,93 +180,75 @@ describe("what each reading says", () => {
 
 describe("the invariants that make the shares readable", () => {
 	it("sums every stored row's five shares to one", () => {
-		const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const rows = database
-				.prepare(
-					"SELECT class_shares, unrated_share, notrateable_share, nodata_share, other_share FROM soil_capability_cell"
-				)
-				.all()
+		const rows = database
+			.prepare(
+				"SELECT class_shares, unrated_share, notrateable_share, nodata_share, other_share FROM soil_capability_cell"
+			)
+			.all()
 
-			expect(rows.length).toBeGreaterThan(0)
+		expect(rows.length).toBeGreaterThan(0)
 
-			for (const row of rows) {
-				// Read column by column rather than cast whole: the five fields the invariant turns on are named here, so a
-				// column that stopped being written fails as a missing name rather than as a share that reads zero.
-				const total = shareTotal({
-					h3_cell: 0,
-					class_shares: String(row.class_shares),
-					unrated_share: Number(row.unrated_share),
-					notrateable_share: Number(row.notrateable_share),
-					nodata_share: Number(row.nodata_share),
-					other_share: Number(row.other_share),
-					mapped_share: 1,
-					top_class: null,
-					top_class_share: null,
-					weighting: "",
-					delineations: 0,
-				})
+		for (const row of rows) {
+			// Read column by column rather than cast whole: the five fields the invariant turns on are named here, so a
+			// column that stopped being written fails as a missing name rather than as a share that reads zero.
+			const total = shareTotal({
+				h3_cell: 0,
+				class_shares: String(row.class_shares),
+				unrated_share: Number(row.unrated_share),
+				notrateable_share: Number(row.notrateable_share),
+				nodata_share: Number(row.nodata_share),
+				other_share: Number(row.other_share),
+				mapped_share: 1,
+				top_class: null,
+				top_class_share: null,
+				weighting: "",
+				delineations: 0,
+			})
 
-				// `other_share` is what makes this hold: truncating a long tail is legitimate, doing it silently is not.
-				expect(total).toBeCloseTo(1, 4)
-			}
-		} finally {
-			database.destroy()
+			// `other_share` is what makes this hold: truncating a long tail is legitimate, doing it silently is not.
+			expect(total).toBeCloseTo(1, 4)
 		}
 	})
 
 	it("writes a coverage row only where mapped soil reaches, at designated and completeness 1", () => {
-		const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const rows = database.prepare("SELECT basis, completeness, observed_rows FROM layer_coverage").all() as Array<{
-				basis: string
-				completeness: number
-				observed_rows: number
-			}>
+		const rows = database.prepare("SELECT basis, completeness, observed_rows FROM layer_coverage").all() as Array<{
+			basis: string
+			completeness: number
+			observed_rows: number
+		}>
 
-			expect(rows.length).toBeGreaterThan(0)
+		expect(rows.length).toBeGreaterThan(0)
 
-			for (const row of rows) {
-				expect(row.basis).toBe("designated")
-				expect(row.completeness).toBe(1)
-				expect(row.observed_rows).toBeGreaterThan(0)
-			}
-		} finally {
-			database.destroy()
+		for (const row of rows) {
+			expect(row.basis).toBe("designated")
+			expect(row.completeness).toBe(1)
+			expect(row.observed_rows).toBeGreaterThan(0)
 		}
 	})
 
 	it("stores the rings unsimplified, so the covered-area weights can be re-derived", () => {
-		const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const row = database.prepare("SELECT rings FROM soil_map_unit_area WHERE area_id = ?").get("XX001:0") as {
-				rings: Uint8Array
-			}
-
-			// Five positions per fixture ring: the four corners and the repeat that closes it, ten ordinates flat. A
-			// simplifying writer would drop vertices and change the covered-area weights silently.
-			const { polygons } = decodeRings(row.rings)
-
-			expect(polygons[0]![0]!).toHaveLength(10)
-		} finally {
-			database.destroy()
+		const row = database.prepare("SELECT rings FROM soil_map_unit_area WHERE area_id = ?").get("XX001:0") as {
+			rings: Uint8Array
 		}
+
+		// Five positions per fixture ring: the four corners and the repeat that closes it, ten ordinates flat. A
+		// simplifying writer would drop vertices and change the covered-area weights silently.
+		const { polygons } = decodeRings(row.rings)
+
+		expect(polygons[0]![0]!).toHaveLength(10)
 	})
 
 	it("seals the artifact read-only", () => {
 		expect(result.sizeBytes).toBeGreaterThan(0)
 
-		const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
-		try {
-			expect((database.prepare("SELECT count(*) AS n FROM soil_vocabulary").get() as { n: number }).n).toBeGreaterThan(
-				0
-			)
-		} finally {
-			database.destroy()
-		}
+		expect((database.prepare("SELECT count(*) AS n FROM soil_vocabulary").get() as { n: number }).n).toBeGreaterThan(0)
 	})
 })

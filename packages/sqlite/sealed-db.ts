@@ -66,16 +66,18 @@ export function sealDatabase(path: string): void {
 		chmodSync(path, 0o644)
 	}
 
-	const db = new (sqlite().DatabaseSync)(path)
-	const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
+	let mode: { journal_mode: string }
 
-	if (checkpoint.busy !== 0) {
-		db.close()
-		throw new Error(`sealDatabase: WAL checkpoint busy on ${path} — close all writers first`)
+	{
+		using db = new (sqlite().DatabaseSync)(path)
+		const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
+
+		if (checkpoint.busy !== 0) {
+			throw new Error(`sealDatabase: WAL checkpoint busy on ${path} — close all writers first`)
+		}
+
+		mode = db.prepare("PRAGMA journal_mode = DELETE").get() as { journal_mode: string }
 	}
-
-	const mode = db.prepare("PRAGMA journal_mode = DELETE").get() as { journal_mode: string }
-	db.close()
 
 	if (mode.journal_mode !== "delete") {
 		throw new Error(`sealDatabase: journal_mode switch failed on ${path} (still ${mode.journal_mode})`)

@@ -70,10 +70,10 @@ import { CSVSpliterator } from "spliterator"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 // The same search the CLI runs: --candidate-db, then $MAILWOMAN_CANDIDATE_DB, then <data root>/wof/candidate.db.
-const lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
+using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 // Street shards, when any are on disk under $MAILWOMAN_DATA_ROOT. Absent ones degrade to admin.
-const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+using shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
 
 const out = createWriteStream("customers.geocoded.jsonl")
 const counts = { matched: 0, mismatched: 0, skipped: 0 }
@@ -116,8 +116,6 @@ for await (const row of CSVSpliterator.fromAsync("customers.csv", { mode: "objec
 }
 
 out.end()
-shards.close()
-lookup.close()
 
 console.log(
 	`matched ${counts.matched}, mismatched ${counts.mismatched}, skipped ${counts.skipped} → customers.geocoded.jsonl`

@@ -78,8 +78,11 @@ const FACTORIES = [
 	symbolTool,
 	vocabTool,
 	runsTool,
-] as const satisfies ReadonlyArray<(deps: DevToolDeps) => DevTool>
+] as const satisfies ReadonlyArray<(deps: DevToolDeps) => DevTool | Promise<DevTool>>
 
-export function buildToolTable(deps: DevToolDeps): DevTool[] {
-	return [...FACTORIES.map((factory) => factory(deps)), ...buildSpawnTools(deps.registry, deps.jobs)]
+export async function buildToolTable(deps: DevToolDeps): Promise<DevTool[]> {
+	return [
+		...(await Promise.all(FACTORIES.map((factory) => factory(deps)))),
+		...buildSpawnTools(deps.registry, deps.jobs),
+	]
 }

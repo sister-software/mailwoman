@@ -8,8 +8,7 @@
  *   where a source carries one verbatim, is never second-guessed).
  */
 
-import { mkdtempSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { join } from "@mailwoman/platform/path"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite/address-point"
 import {
@@ -19,14 +18,18 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { normalizeStreetForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 let lookup: AddressPointSqliteLookup
 
 beforeAll(async () => {
-	const dir = mkdtempSync(join(tmpdir(), "ap-lookup-"))
+	const dir = fixtures.use(await temporaryDirectory("ap-lookup-")).path
 	const path = join(dir, "fixture.db")
-	const kdb = new DatabaseClient<AddressPointDatabase>(path)
+	using kdb = new DatabaseClient<AddressPointDatabase>(path)
 
 	await createAddressPointTable(kdb)
 
@@ -68,8 +71,6 @@ beforeAll(async () => {
 	const egliseKey = normalizeStreetForKey("Rue de l'Église")
 
 	insert.run(egliseKey, egliseKey, "3 a", null, "67530", "boersch", "Rue de l'Église", 48.4771, 7.4433, "t", "r")
-
-	await kdb.destroy()
 	lookup = new AddressPointSqliteLookup(path)
 })
 

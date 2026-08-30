@@ -10,6 +10,7 @@
  *   successor, a filer whose USF flag is `No`, and a 53-jurisdiction national one.
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import {
 	assertWorkbookHeader,
@@ -18,7 +19,6 @@ import {
 	readOperatingStates,
 	toISOFilingDate,
 } from "@mailwoman/filer/sdk/form499-workbook"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -183,8 +183,8 @@ describe("readOperatingStates", () => {
 })
 
 describe("the fixture itself", () => {
-	it("is a real workbook, not a hand-authored one", () => {
+	it("is a real workbook, not a hand-authored one", async () => {
 		// XLSX is a ZIP; the magic bytes are the cheapest proof the file was not stubbed out.
-		expect(readFileSync(WORKBOOK_PATH).subarray(0, 2).toString("latin1")).toBe("PK")
+		expect((await readLocalBuffer(WORKBOOK_PATH)).subarray(0, 2).toString("latin1")).toBe("PK")
 	})
 })

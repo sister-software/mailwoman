@@ -50,11 +50,11 @@ function hashAliases(alias: Record<string, string>): string {
 	return createHash("md5").update(entries.join("\n")).digest("hex")
 }
 
-function bundleAliases(isServer: boolean, emptyShim: string): Record<string, string> {
-	const alias = buildWorkspaceAliases()
+export async function bundleAliases(isServer: boolean, emptyShim: string): Promise<Record<string, string>> {
+	const alias = await buildWorkspaceAliases()
 
 	if (isServer) {
-		const browserRunner = resolvePackageFile("@mailwoman/neural", "onnx-runner-browser")
+		const browserRunner = await resolvePackageFile("@mailwoman/neural", "onnx-runner-browser")
 
 		if (browserRunner) {
 			alias["@mailwoman/neural/onnx-runner"] = browserRunner
@@ -97,9 +97,17 @@ function fallbackMap(): NonNullable<NonNullable<Configuration["resolve"]>["fallb
 	return fallback
 }
 
-export function configureDemoWebpack(config: Configuration, isServer: boolean, docsDir: string): Configuration {
+/**
+ * Docusaurus calls `configureWebpack` SYNCHRONOUSLY, so the alias map is resolved by the caller — the plugin factory,
+ * which Docusaurus does await — and handed in here. Resolving it at this point would return a promise the lifecycle
+ * never unwraps.
+ */
+export function configureDemoWebpack(
+	config: Configuration,
+	docsDir: string,
+	alias: Record<string, string>
+): Configuration {
 	const emptyShim = resolve(docsDir, "src", "empty-shim.js")
-	const alias = bundleAliases(isServer, emptyShim)
 
 	return {
 		...filesystemCache(config, alias),

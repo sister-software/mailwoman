@@ -72,7 +72,7 @@ describe("point-in-polygon primitives", () => {
  * point geometry, degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
  */
 function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: DatabaseClient<WOFDatabase> } {
-	const admin = new DatabaseClient<WOFDatabase>(":memory:")
+	const admin = DatabaseClient.temp<WOFDatabase>()
 
 	admin.exec(`
 		CREATE TABLE spr (
@@ -110,7 +110,7 @@ function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: Databas
 		INSERT INTO place_bbox VALUES (6, 43.85, 44.25, -72.45, -71.85);
 	`)
 
-	const polygons = new DatabaseClient<WOFDatabase>(":memory:")
+	const polygons = DatabaseClient.temp<WOFDatabase>()
 	polygons.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL);`)
 	const insert = polygons.prepare(`INSERT INTO polygons (id, geom) VALUES (?, ?)`)
 	// Region polygon: the whole fixture area.
@@ -206,7 +206,7 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			rg = new WOFReverseGeocoder({ adminDBPath: ADMIN_DB!, polygonDBPath: POLYGONS_DB! })
 		})
 
-		afterAll(() => rg?.close())
+		afterAll(() => rg[Symbol.dispose]())
 
 		test("South Side Chicago → full chain down to the neighbourhood grain", async () => {
 			const result = await rg.reverseGeocode(41.8004427, -87.6031768)

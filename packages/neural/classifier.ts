@@ -236,7 +236,7 @@ export class NeuralAddressClassifier {
 		const labels =
 			readLabelsFromModelCard(resolved.modelCardPath) ?? readLabelsFromModelCard(resolved.baseModelCardPath)
 
-		const crf = readCRFTransitions(resolved.crfTransitionsPath)
+		const crf = await readCRFTransitions(resolved.crfTransitionsPath)
 		// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
 		// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays
 		// undefined).
@@ -436,7 +436,7 @@ export class NeuralAddressClassifier {
 		// PCN1 placetype census (observability rung, 2026-08-05): BUILD-LOCAL, not a weights-package sibling — the
 		// loader and the reasons live together in `loadPlacetypeCensus`. Absent artifact → `undefined` → the feature is
 		// entirely inert, silently, because not having built it is the normal state for every consumer.
-		const placetypeCensus = loadPlacetypeCensus(
+		const placetypeCensus = await loadPlacetypeCensus(
 			(opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? "",
 			opts.placetypeCensusPath
 		)

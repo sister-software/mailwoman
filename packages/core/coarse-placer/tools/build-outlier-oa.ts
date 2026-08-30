@@ -1,37 +1,6 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   OpenAddresses Latin-off-map outlier exposure for the #244 coarse-placer (milestone 3, breadth).
- *   The successor to build-outlier-latin.ts (Overture): Overture's ALPHA addresses theme only
- *   carries real rows for ~7 off-map countries, so a model trained on them MEMORIZED rather than
- *   learned an "off-map" boundary (night-15 finding). OpenAddresses covers far more countries —
- *   this assembles address strings from OA's per-country CSVs and appends them as `country:
- *   "OTHER"`.
- *
- *   Discipline (per the #244 scoping note + DeepSeek consult):
- *
- *   - LEAVE-ONE-LANGUAGE-FAMILY-OUT, not random: whole families are held out (Nordic, Baltic, …) so a
- *       trained sibling's shared n-grams can't rescue the generalization metric. TRAIN families
- *       feed train/val/test(indist); HELDOUT families go ONLY to the dedicated test file.
- *   - Schema variance: read via DuckDB read_csv_auto(..., union_by_name) so differing per-source OA
- *       schemas align; assemble to the SAME format the in-map rows use (build-outlier-latin's
- *       assemble).
- *   - Dedup (per country) + per-country CAP (downsample): PL/CZ dwarf others, so cap so OTHER isn't
- *       "mostly Polish".
- *   - Country filter: only OFF-MAP countries (never the 11 in-map); the in-map test.jsonl is untouched.
- *
- *   Run AFTER build-dataset + the exposure outliers (it APPENDS). Re-runnable: rewrites the
- *   dedicated test file and appends fresh OTHER rows — rebuild train/val before re-running.
- *
- *   Run: `mailwoman placer build-dataset --outliers oa --oa-dir <extracted-OA-root> [--per-country
- *   6000]`
- */
-
-import { appendFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 
+import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import { hashFNV1a } from "./fnv-hash.ts"
@@ -250,9 +219,14 @@ export async function buildOutlierOA(
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
 	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-	appendFileSync(path.join(dataDir, "train.jsonl"), wr(trainAppend))
-	appendFileSync(path.join(dataDir, "val.jsonl"), wr(valAppend))
-	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
+	await appendLocalTextFile(wr(trainAppend), path.join(dataDir, "train.jsonl"))
+	await appendLocalTextFile(wr(valAppend), path.join(dataDir, "val.jsonl"))
+
+	await writeLocalTextFile(
+		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
+		path.join(dataDir, "test-latin-offmap.jsonl")
+	)
+
 	report?.(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)
 	report?.(`appended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
 

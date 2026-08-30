@@ -1,34 +1,4 @@
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   `mailwoman gazetteer overture-ingest` — Overture Maps addresses-theme ingest + per-country
- *   fill-rate probe (#471, epic #470).
- *
- *   Pulls address rows for a pinned Overture release into per-country local Parquet via DuckDB with
- *   predicate pushdown (megabytes per country — never the planet), and emits the fill-rate report
- *   that gates every downstream Overture issue (#472-#477): per-country row counts, field fill
- *   percentages, observed source datasets, and OpenAddresses-lineage share.
- *
- *   Standing rules encoded here (see epic #470 "pre-registered decision rules"):
- *
- *   - The release is pinned in every artifact path. The addresses theme is ALPHA; rows churn between
- *       monthly releases. Two releases never mix in one artifact.
- *   - The per-row `sources` array is preserved verbatim — it is what makes leakage-free eval filtering
- *       possible (#472) and satisfies the provenance-per-row rule.
- *   - Overture's `id` (GERS) rides along as a nullable passthrough column. Nothing joins on it.
- *
- *   The probe (fill-rates.json + fill-rates.md) runs against the LOCAL Parquet after ingest, so it is
- *   exact for what we materialized and costs no second remote scan.
- *
- *   Progress streams to stderr; the final summary is on stdout. The per-country Parquet + the
- *   fill-rates report are written DIRECTLY under `<out>/<release>/` (Parquet/JSON artifacts, not a
- *   SQLite DB — no atomic temp-swap applies); this preserves the original
- *   `scripts/ingest-overture-addresses.ts` behavior verbatim.
- */
-
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import * as path from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -128,7 +98,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const outRoot = options.out ?? dataRootPath("overture")
 		const outDir = path.join(outRoot, release)
-		mkdirSync(outDir, { recursive: true })
+		await makeDirectories(outDir)
 
 		// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load
 		// it dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault
@@ -293,8 +263,8 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 			}
 		}
 
-		writeFileSync(path.join(outDir, "fill-rates.json"), JSON.stringify({ release, probes }, null, "\t"))
-		writeFileSync(path.join(outDir, "fill-rates.md"), renderMarkdown(release, probes))
+		await writeLocalJSONFile({ release, probes }, outDir, "fill-rates.json")
+		await writeLocalTextFile(renderMarkdown(release, probes), outDir, "fill-rates.md")
 
 		console.error(`[done] report -> ${path.join(outDir, "fill-rates.{json,md}")}`)
 

@@ -12,10 +12,12 @@
  *   exercised without a run.
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
-import { mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import {
 	ABSENCE_PROBE_FREEZE_PATH,
@@ -45,7 +47,11 @@ import {
 import { MARKER_PROBE_EXPECTED_CODE } from "mailwoman/eval-harness/phase-2-decision/run"
 import { PROBE_FREEZE_PATH, type ProbeFreezeRecord } from "mailwoman/eval-harness/semantic-utility/probe"
 import { SEMANTIC_AFFORDS_MECHANISM } from "mailwoman/observations"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const definition = loadPhase2Definition()
 const freeze = parseJSONStrict<Phase2FreezeRecord>(readFileSync(PHASE2_FREEZE_PATH, "utf8"))
@@ -71,24 +77,21 @@ interface CommittedReceipt {
  * Write a definition + freeze pair into a scratch directory, so a refusal can be provoked without touching the
  * committed ruler.
  */
-function scratchPair(
+async function scratchPair(
 	mutate: (definition: Phase2DecisionDefinition) => void,
 	freezeOverride?: Partial<Phase2FreezeRecord>
-): { definitionPath: string; freezePath: string } {
-	const dir = mkdtempSync(join(tmpdir(), "phase-2-decision-"))
-	const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+): Promise<{ definitionPath: string; freezePath: string }> {
+	const dir = fixtures.use(await temporaryDirectory("phase-2-decision-")).path
+	const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 	mutate(copy)
 
 	const definitionPath = join(dir, "decision-definition.json")
 	const freezePath = join(dir, "decision-freeze.json")
 
-	writeFileSync(definitionPath, JSON.stringify(copy, null, "\t"))
+	await writeLocalJSONFile(copy, definitionPath)
 
-	writeFileSync(
-		freezePath,
-		JSON.stringify({ ...freeze, sha256: phase2DefinitionHash(copy), ...freezeOverride }, null, "\t")
-	)
+	await writeLocalJSONFile({ ...freeze, sha256: phase2DefinitionHash(copy), ...freezeOverride }, freezePath)
 
 	return { definitionPath, freezePath }
 }
@@ -128,27 +131,27 @@ function outcomesAt(readings: Map<Phase2Measurement, Phase2Reading>): Phase2Chec
 }
 
 describe("the frozen phase-2 pre-registration (#1967)", () => {
-	it("loads, and its content hash matches the committed freeze record", () => {
+	it("loads, and its content hash matches the committed freeze record", async () => {
 		expect(phase2DefinitionHash(definition)).toBe(freeze.sha256)
 		expect(freeze.decisionID).toBe(definition.decisionID)
 		expect(freeze.version).toBe(definition.version)
 		expect(freeze.definition).toBe("packages/mailwoman/eval-harness/phase-2-decision/decision-definition.json")
 	})
 
-	it("audits clean", () => {
+	it("audits clean", async () => {
 		expect(auditPhase2Definition(definition)).toEqual([])
 	})
 
-	it("refuses a definition whose content hash has moved", () => {
-		const { definitionPath } = scratchPair((copy) => {
+	it("refuses a definition whose content hash has moved", async () => {
+		const { definitionPath } = await scratchPair((copy) => {
 			copy.thresholds.minimumResolutionChecks = 1
 		})
 
 		expect(() => loadPhase2Definition(definitionPath, PHASE2_FREEZE_PATH)).toThrow(/content hash .* !== frozen/)
 	})
 
-	it("refuses a freeze record pinning another version", () => {
-		const { definitionPath, freezePath } = scratchPair(
+	it("refuses a freeze record pinning another version", async () => {
+		const { definitionPath, freezePath } = await scratchPair(
 			(copy) => {
 				copy.version = "1.1.0"
 			},
@@ -160,16 +163,16 @@ describe("the frozen phase-2 pre-registration (#1967)", () => {
 		)
 	})
 
-	it("refuses a freeze record naming another decision", () => {
-		const { definitionPath, freezePath } = scratchPair(() => {}, { decisionID: "phase-3-decision" })
+	it("refuses a freeze record naming another decision", async () => {
+		const { definitionPath, freezePath } = await scratchPair(() => {}, { decisionID: "phase-3-decision" })
 
 		expect(() => loadPhase2Definition(definitionPath, freezePath)).toThrow(/freeze record names/)
 	})
 })
 
 describe("what the audit refuses", () => {
-	it("refuses a check that names a blocked lane", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a check that names a blocked lane", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 		const first = copy.checks[0]!
 
 		copy.checks = [...copy.checks, { ...first, id: "sneaked-in", lane: "semantic_breadth" }]
@@ -179,8 +182,8 @@ describe("what the audit refuses", () => {
 		)
 	})
 
-	it("refuses a blocked lane that registers no planned check", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a blocked lane that registers no planned check", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 		const blocked = copy.lanes.find((lane) => lane.status === "blocked")!
 
 		blocked.plannedChecks = []
@@ -190,8 +193,8 @@ describe("what the audit refuses", () => {
 		)
 	})
 
-	it("refuses a blocked lane that names nothing blocking it", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a blocked lane that names nothing blocking it", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 		const blocked = copy.lanes.find((lane) => lane.status === "blocked")!
 
 		delete blocked.blockedBy
@@ -199,8 +202,8 @@ describe("what the audit refuses", () => {
 		expect(auditPhase2Definition(copy)).toContainEqual(expect.stringContaining("names nothing that blocks it"))
 	})
 
-	it("refuses a measurable lane with no control check", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a measurable lane with no control check", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		copy.checks = copy.checks.filter((check) => !(check.lane === "absence" && check.role === "control"))
 
@@ -209,8 +212,8 @@ describe("what the audit refuses", () => {
 		)
 	})
 
-	it("refuses a target check that registers no tier", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a target check that registers no tier", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 		const target = copy.checks.find((check) => check.role === "target")!
 
 		delete target.tier
@@ -220,8 +223,8 @@ describe("what the audit refuses", () => {
 		)
 	})
 
-	it("refuses a control check that registers a tier", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a control check that registers a tier", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 		const control = copy.checks.find((check) => check.role === "control")!
 
 		control.tier = "evidence"
@@ -229,16 +232,16 @@ describe("what the audit refuses", () => {
 		expect(auditPhase2Definition(copy)).toContainEqual(expect.stringContaining("tiers are targets"))
 	})
 
-	it("refuses an unregistered measurement", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses an unregistered measurement", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		copy.checks[0]!.measurement = "poi_board.rows_that_felt_right" as Phase2Measurement
 
 		expect(auditPhase2Definition(copy)).toContainEqual(expect.stringContaining("is not registered"))
 	})
 
-	it("refuses a bar that cannot be reached", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a bar that cannot be reached", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 		const check = copy.checks.find((entry) => entry.bar.kind === "at_least")!
 
 		check.bar.value = check.denominator + 1
@@ -248,16 +251,16 @@ describe("what the audit refuses", () => {
 		)
 	})
 
-	it("refuses a control tolerance that would let every control miss", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a control tolerance that would let every control miss", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		copy.thresholds.controlRegressionTolerance = copy.checks.filter((check) => check.role === "control").length
 
 		expect(auditPhase2Definition(copy)).toContainEqual(expect.stringContaining("the control set would decide nothing"))
 	})
 
-	it("refuses a required-lane count that does not equal the measurable lanes", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a required-lane count that does not equal the measurable lanes", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		copy.thresholds.requiredMeasurableLanes = 2
 
@@ -266,8 +269,8 @@ describe("what the audit refuses", () => {
 		)
 	})
 
-	it("refuses a default-bar row that reads met and names no check", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a default-bar row that reads met and names no check", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 		const met = copy.defaultChangeBar.find((row) => row.state === "met")!
 
 		met.satisfiedBy = []
@@ -277,8 +280,8 @@ describe("what the audit refuses", () => {
 		)
 	})
 
-	it("refuses a default-bar row naming a check that does not exist", () => {
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+	it("refuses a default-bar row naming a check that does not exist", async () => {
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		copy.defaultChangeBar[0]!.satisfiedBy = ["srf-c-99"]
 
@@ -287,7 +290,7 @@ describe("what the audit refuses", () => {
 })
 
 describe("reading the registered checks", () => {
-	it("refuses a check whose measurement no instrument answered", () => {
+	it("refuses a check whose measurement no instrument answered", async () => {
 		const readings = baselineReadings()
 
 		readings.delete("poi_board.floors_unmet")
@@ -297,14 +300,14 @@ describe("reading the registered checks", () => {
 		)
 	})
 
-	it("grades every registered check when every measurement is answered", () => {
+	it("grades every registered check when every measurement is answered", async () => {
 		const outcomes = outcomesAt(baselineReadings())
 
 		expect(outcomes).toHaveLength(definition.checks.length)
 		expect(outcomes.every((outcome) => outcome.met)).toBe(true)
 	})
 
-	it("compares each bar kind the way its name reads", () => {
+	it("compares each bar kind the way its name reads", async () => {
 		expect(describeBar({ kind: "at_least", value: 3 })).toBe("≥ 3")
 		expect(describeBar({ kind: "at_most", value: 0 })).toBe("≤ 0")
 		expect(describeBar({ kind: "exactly", value: 51 })).toBe("= 51")
@@ -318,7 +321,7 @@ describe("reading the registered checks", () => {
 		expect(overPassing.find((outcome) => outcome.id === "srf-c-03")!.met).toBe(true)
 	})
 
-	it("counts the registered checks rather than the ones that answered", () => {
+	it("counts the registered checks rather than the ones that answered", async () => {
 		const counts = computePhase2Counts(definition, [])
 
 		expect(counts.resolutionChecks).toBe(3)
@@ -329,14 +332,14 @@ describe("reading the registered checks", () => {
 })
 
 describe("the decision the ruler maps to", () => {
-	it("reads PROCEED-AS-AUTHORIZED at the committed baselines", () => {
+	it("reads PROCEED-AS-AUTHORIZED at the committed baselines", async () => {
 		const verdict = decidePhase2(definition, outcomesAt(baselineReadings()))
 
 		expect(verdict.decision).toBe("PROCEED-AS-AUTHORIZED")
 		expect(verdict.misses).toEqual([])
 	})
 
-	it("records partial coverage and names the blocked lane on every run", () => {
+	it("records partial coverage and names the blocked lane on every run", async () => {
 		const verdict = decidePhase2(definition, outcomesAt(baselineReadings()))
 
 		expect(verdict.coverage).toBe("partial")
@@ -345,7 +348,7 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.reasons).toContainEqual(expect.stringContaining("issues/1980"))
 	})
 
-	it("checks control misses FIRST — a control regression stops a run whose targets all hold", () => {
+	it("checks control misses FIRST — a control regression stops a run whose targets all hold", async () => {
 		const readings = withReading(baselineReadings(), "semantic_utility.treatment.control_holds", 5)
 		const verdict = decidePhase2(definition, outcomesAt(readings))
 
@@ -355,7 +358,7 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.reasons).toContainEqual("control misses exceed tolerance")
 	})
 
-	it("reads EVIDENCE-ONLY when the observation surface holds and recognition does not", () => {
+	it("reads EVIDENCE-ONLY when the observation surface holds and recognition does not", async () => {
 		const readings = withReading(baselineReadings(), "semantic_utility.treatment.primary_passes", 1)
 		const verdict = decidePhase2(definition, outcomesAt(readings))
 
@@ -364,7 +367,7 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.counts.resolutionMet).toBe(2)
 	})
 
-	it("reads STOP-REDESIGN when the evidence bar is not reached, whatever recognition did", () => {
+	it("reads STOP-REDESIGN when the evidence bar is not reached, whatever recognition did", async () => {
 		const readings = withReading(baselineReadings(), "absence_probe.targets_fired", 0)
 		const verdict = decidePhase2(definition, outcomesAt(readings))
 
@@ -373,7 +376,7 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.reasons).toContainEqual("the evidence bar was not reached")
 	})
 
-	it("stops when a measurable lane did not report at all", () => {
+	it("stops when a measurable lane did not report at all", async () => {
 		const outcomes = outcomesAt(baselineReadings()).filter((outcome) => outcome.lane !== "absence")
 		const verdict = decidePhase2(definition, outcomes)
 
@@ -381,7 +384,7 @@ describe("the decision the ruler maps to", () => {
 		expect(verdict.reasons).toContainEqual(expect.stringContaining("an unreported lane is not a passing one"))
 	})
 
-	it("reports an artifact pin deviation without letting it change the decision", () => {
+	it("reports an artifact pin deviation without letting it change the decision", async () => {
 		const outcomes = outcomesAt(baselineReadings())
 		const pinned = decidePhase2(definition, outcomes)
 		const deviated = decidePhase2(definition, outcomes, { deviations: ['weightsVersion: observed "9.2.0"'] })
@@ -392,7 +395,7 @@ describe("the decision the ruler maps to", () => {
 		expect(deviated.pinDeviations).toHaveLength(1)
 	})
 
-	it("reports the unmet default-change rows without letting them change the decision", () => {
+	it("reports the unmet default-change rows without letting them change the decision", async () => {
 		const verdict = decidePhase2(definition, outcomesAt(baselineReadings()))
 
 		expect(verdict.decision).toBe("PROCEED-AS-AUTHORIZED")
@@ -401,7 +404,7 @@ describe("the decision the ruler maps to", () => {
 
 		// The same measurements against a definition whose default bar reads met on every row still decide the same
 		// thing — the register is recorded, never read.
-		const copy = parseJSONStrict<Phase2DecisionDefinition>(readFileSync(PHASE2_DEFINITION_PATH, "utf8"))
+		const copy = await readLocalJSONFile<Phase2DecisionDefinition>(PHASE2_DEFINITION_PATH)
 
 		for (const row of copy.defaultChangeBar) {
 			row.state = "met"
@@ -416,31 +419,31 @@ describe("the decision the ruler maps to", () => {
 })
 
 describe("the pre-registration agrees with the artifacts it names", () => {
-	it("pins the semantic-utility ruler's committed hash", () => {
-		const probeFreeze = parseJSONStrict<ProbeFreezeRecord>(readFileSync(PROBE_FREEZE_PATH, "utf8"))
+	it("pins the semantic-utility ruler's committed hash", async () => {
+		const probeFreeze = await readLocalJSONFile<ProbeFreezeRecord>(PROBE_FREEZE_PATH)
 
 		expect(definition.artifactPins.semanticUtilityDefinitionSHA256).toBe(probeFreeze.sha256)
 	})
 
-	it("pins the absence ruler's committed hash", () => {
-		const absenceFreeze = parseJSONStrict<AbsenceProbeFreezeRecord>(readFileSync(ABSENCE_PROBE_FREEZE_PATH, "utf8"))
+	it("pins the absence ruler's committed hash", async () => {
+		const absenceFreeze = await readLocalJSONFile<AbsenceProbeFreezeRecord>(ABSENCE_PROBE_FREEZE_PATH)
 
 		expect(definition.artifactPins.absenceDefinitionSHA256).toBe(absenceFreeze.sha256)
 	})
 
-	it("registers a marker code and mechanism the runtime vocabulary actually carries", () => {
+	it("registers a marker code and mechanism the runtime vocabulary actually carries", async () => {
 		expect(definition.markerProbe.expectedCode).toBe(QueryIntentCode.POICategory)
 		expect(definition.markerProbe.expectedCode).toBe(MARKER_PROBE_EXPECTED_CODE)
 		expect(definition.markerProbe.expectedMechanism).toBe(SEMANTIC_AFFORDS_MECHANISM)
 	})
 
-	it("routes every registered measurement to an instrument", () => {
+	it("routes every registered measurement to an instrument", async () => {
 		for (const check of definition.checks) {
 			expect(instrumentFor(check.measurement)).toBe(PHASE2_MEASUREMENTS[check.measurement])
 		}
 	})
 
-	it("registers the four phase-2 lanes, exactly one of them blocked", () => {
+	it("registers the four phase-2 lanes, exactly one of them blocked", async () => {
 		expect(definition.lanes.map((lane) => lane.id)).toEqual([
 			"recognition",
 			"semantic_breadth",
@@ -453,12 +456,12 @@ describe("the pre-registration agrees with the artifacts it names", () => {
 		])
 	})
 
-	it("records the integration record's nine default-change rows in order", () => {
+	it("records the integration record's nine default-change rows in order", async () => {
 		expect(definition.defaultChangeBar).toHaveLength(9)
 		expect(definition.defaultChangeBar.map((row) => row.row)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9])
 	})
 
-	it("names a merged receipt or a committed artifact for every baseline", () => {
+	it("names a merged receipt or a committed artifact for every baseline", async () => {
 		for (const check of definition.checks) {
 			expect(check.baseline.reference).not.toBe("")
 			expect(["merged-pr-receipt", "committed-receipt", "committed-artifact"]).toContain(check.baseline.source)
@@ -469,19 +472,19 @@ describe("the pre-registration agrees with the artifacts it names", () => {
 describe("the committed receipt", () => {
 	const receipt = parseJSONStrict<CommittedReceipt>(readFileSync(PHASE2_RECEIPT_PATH, "utf8"))
 
-	it("was measured against this exact ruler", () => {
+	it("was measured against this exact ruler", async () => {
 		expect(receipt.decisionID).toBe(definition.decisionID)
 		expect(receipt.definitionVersion).toBe(definition.version)
 		expect(receipt.definitionSHA256).toBe(freeze.sha256)
 	})
 
-	it("carries every registered check, and no other", () => {
+	it("carries every registered check, and no other", async () => {
 		expect(receipt.checks.map((check) => check.id).toSorted()).toEqual(
 			definition.checks.map((check) => check.id).toSorted()
 		)
 	})
 
-	it("carries the artifact identity the ruler pins, with every difference named", () => {
+	it("carries the artifact identity the ruler pins, with every difference named", async () => {
 		expect(receipt.artifact.poiLayerManifestVersion).toBe(definition.artifactPins.poiLayerManifestVersion)
 		expect(receipt.artifact.weightsVersion).toBe(definition.artifactPins.weightsVersion)
 		expect(receipt.artifact.geographicModelVersion).toBe(definition.artifactPins.geographicModelVersion)
@@ -489,14 +492,14 @@ describe("the committed receipt", () => {
 		expect(receipt.verdict.comparability).toBe("pinned")
 	})
 
-	it("records partial coverage and states that the recording is not its own", () => {
+	it("records partial coverage and states that the recording is not its own", async () => {
 		expect(receipt.verdict.coverage).toBe("partial")
 		expect(receipt.verdict.blockedLanes).toEqual(["semantic_breadth"])
 		expect(receipt.recorded).toBe(false)
 		expect(receipt.recordingNote).toBe(definition.recordingNote)
 	})
 
-	it("reaches the same decision when its own readings are replayed through the ruler", () => {
+	it("reaches the same decision when its own readings are replayed through the ruler", async () => {
 		const replayed = new Map<Phase2Measurement, Phase2Reading>(
 			receipt.readings.map((reading) => [reading.measurement, reading])
 		)

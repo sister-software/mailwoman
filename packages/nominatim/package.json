@@ -60,5 +60,8 @@
 		"mailwoman": "workspace:*",
 		"spliterator": "^6.2.0",
 		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
 	}
 }

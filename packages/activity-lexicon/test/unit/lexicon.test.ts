@@ -18,8 +18,8 @@ import {
 	readActivityLexicon,
 	resolveActivityPhraseLocale,
 } from "@mailwoman/activity-lexicon/lexicon"
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -221,14 +221,15 @@ describe("the audit", () => {
 })
 
 describe("the reader", () => {
-	it("throws rather than serving a lexicon the audit rejects", () => {
-		const directory = mkdtempSync(resolve(tmpdir(), "activity-lexicon-"))
+	it("throws rather than serving a lexicon the audit rejects", async () => {
+		await using directoryDirectory = await temporaryDirectory("activity-lexicon-")
+		const directory = directoryDirectory.path
 		const path = resolve(directory, "activity-lexicon.json")
 
-		writeFileSync(path, JSON.stringify(lexicon([entry({ phrase: "x" }), entry({ phrase: "X" })])))
+		await writeLocalJSONFile(lexicon([entry({ phrase: "x" }), entry({ phrase: "X" })]), path)
 
 		expect(() => readActivityLexicon(path)).toThrow(/is declared twice/)
 
-		rmSync(directory, { force: true, recursive: true })
+		await removePathIfPresent(directory)
 	})
 })

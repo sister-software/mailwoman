@@ -27,7 +27,7 @@
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
-import { metricsSnapshot, resetMetricsForTest, serveNode, type ServerHandle } from "@mailwoman/api-kit"
+import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
 import { $public } from "@mailwoman/core/env"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
@@ -233,39 +233,32 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 	})
 
 	test("RemoteResolver round-trips a parsed tree → street-level via /v1/resolve", async () => {
-		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-		const { RemoteResolver } = await import("@mailwoman/resolver")
+		const [{ NeuralAddressClassifier }, { RemoteResolver }] = await Promise.all([
+			import("@mailwoman/neural"),
+			import("@mailwoman/resolver"),
+		])
 
-		let handle!: ServerHandle
-
-		const port = await new Promise<number>((resolve) => {
-			handle = serveNode({
-				fetch: app.fetch,
-				port: 0,
-				hostname: "127.0.0.1",
-				onListen: (info) => resolve(info.port),
-			})
+		await using handle = await serveNode({
+			fetch: app.fetch,
+			port: 0,
+			hostname: "127.0.0.1",
 		})
 
-		try {
-			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-			const tree = await classifier.parse("3075 Hill Street, Round Rock, TX 78664", { postcodeRepair: true })
-			const remote = new RemoteResolver({ endpoint: `http://127.0.0.1:${port}/v1/resolve` })
-			const resolved = await remote.resolveTree(tree, { defaultCountry: "US" })
+		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+		const tree = await classifier.parse("3075 Hill Street, Round Rock, TX 78664", { postcodeRepair: true })
+		const remote = new RemoteResolver({ endpoint: `http://127.0.0.1:${handle.port}/v1/resolve` })
+		const resolved = await remote.resolveTree(tree, { defaultCountry: "US" })
 
-			const flat: Array<(typeof resolved.roots)[number]> = []
+		const flat: Array<(typeof resolved.roots)[number]> = []
 
-			const walk = (n: (typeof resolved.roots)[number]) => {
-				flat.push(n)
-				n.children.forEach(walk)
-			}
-
-			resolved.roots.forEach(walk)
-			const street = flat.find((n) => n.tag === "street")
-			// The resolver service wired its own shards → the street node carries a coordinate tier.
-			expect(street?.metadata?.["resolution_tier"]).toBeDefined()
-		} finally {
-			await handle.close()
+		const walk = (n: (typeof resolved.roots)[number]) => {
+			flat.push(n)
+			n.children.forEach(walk)
 		}
+
+		resolved.roots.forEach(walk)
+		const street = flat.find((n) => n.tag === "street")
+		// The resolver service wired its own shards → the street node carries a coordinate tier.
+		expect(street?.metadata?.["resolution_tier"]).toBeDefined()
 	}, 60_000)
 })

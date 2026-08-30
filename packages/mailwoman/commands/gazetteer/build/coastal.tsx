@@ -221,7 +221,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		})
 
 		const lines = [
-			`coastal-england.db: ${out} (${artifactSizeMB(out)} MB)`,
+			`coastal-england.db: ${out} (${await artifactSizeMB(out)} MB)`,
 			`${result.erosionFeatures.toLocaleString()} erosion polygons across ${Object.keys(result.scenarioCounts).length} scenario(s) · ` +
 				`${result.instabilityFeatures.toLocaleString()} ground-instability polygons (their own table, never an erosion answer)`,
 			`scenarios: ${Object.entries(result.scenarioCounts)

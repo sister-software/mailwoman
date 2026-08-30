@@ -5,11 +5,11 @@
  */
 
 import { execFile } from "@mailwoman/platform/child_process"
-import * as fs from "@mailwoman/platform/fs/promises"
+import { mkdir } from "@mailwoman/platform/fs/promises"
 import { promisify } from "@mailwoman/platform/util"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { tryStat } from "#fs"
+import { tryStat } from "#fs/readers"
 
 const execFileAsync = promisify(execFile)
 
@@ -29,7 +29,7 @@ export async function prepareRepositoryDirectories(
 	const ownerDirectory = PathBuilder.from(localRepoDirectory, owner)
 	const repoDirectory = ownerDirectory(name)
 
-	await fs.mkdir(ownerDirectory.toString(), { recursive: true })
+	await mkdir(ownerDirectory.toString(), { recursive: true })
 
 	const exists = await tryStat(repoDirectory)
 

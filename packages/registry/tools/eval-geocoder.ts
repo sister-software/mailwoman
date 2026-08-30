@@ -28,7 +28,7 @@ export interface EvalGeocodeResult {
 /**
  * A constructed geocoder: the matcher's ingest seam, the raw geocode, and the handle release.
  */
-export interface EvalGeocoder {
+export interface EvalGeocoder extends Disposable {
 	/**
 	 * The matcher's ingest seam (parse + geocode → `PostalAddress`), built via `geocodeAddressVia`.
 	 */
@@ -40,7 +40,6 @@ export interface EvalGeocoder {
 	/**
 	 * Release the DB handles (shards + WOF lookup).
 	 */
-	close: () => void
 }
 
 /**
@@ -54,7 +53,7 @@ export interface EvalGeocoderInit {
 }
 
 /**
- * Build a geocoder on demand — tools construct late and `close()` as soon as geocoding is done.
+ * Build a geocoder on demand — tools construct late and dispose it as soon as geocoding is done.
  */
 export type EvalGeocoderFactory = (init?: EvalGeocoderInit) => Promise<EvalGeocoder>
 

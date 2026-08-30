@@ -20,9 +20,8 @@
  *   WOF SQLite), so a row-major loop would evict and rebuild a multi-second engine on nearly every iteration.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { haversineKm } from "@mailwoman/spatial"
 import type { GeocodeSessionOptions } from "mailwoman/geocode-session"
 
@@ -74,12 +73,10 @@ let overlayLocaleCache: Map<string, string> | null = null
  * `en-gb` scopes GB because that is what the tag says. A country with two overlays would keep the first listed; none
  * exists today, and the manifest is the place that would have to decide.
  */
-function overlayLocaleByCountry(): Map<string, string> {
+async function overlayLocaleByCountry(): Promise<Map<string, string>> {
 	if (overlayLocaleCache) return overlayLocaleCache
 
-	const manifest = parseJSONStrict<ReleaseLocales>(
-		readFileSync(String(repoRootPath(RELEASE_CONFIG_RELATIVE_PATH)), "utf8")
-	)
+	const manifest = await readLocalJSONFile<ReleaseLocales>(String(repoRootPath(RELEASE_CONFIG_RELATIVE_PATH)))
 
 	const byCountry = new Map<string, string>()
 
@@ -127,14 +124,14 @@ export interface LeverSkip {
  * caller's `EngineConfig` means the production default, so reading the caller's object would report every unset lever
  * as absent and flip it in the wrong direction.
  */
-export function enumerateFlips(
+export async function enumerateFlips(
 	effective: GeocodeSessionOptions,
 	country: string | undefined
-): { flips: CounterfactualFlip[]; skipped: LeverSkip[] } {
+): Promise<{ flips: CounterfactualFlip[]; skipped: LeverSkip[] }> {
 	const flips: CounterfactualFlip[] = []
 	const skipped: LeverSkip[] = []
 
-	const localeFlip = localeCounterfactual(effective.locale, country)
+	const localeFlip = await localeCounterfactual(effective.locale, country)
 
 	if ("why" in localeFlip) {
 		skipped.push({ lever: "locale", why: localeFlip.why })
@@ -175,12 +172,15 @@ export function enumerateFlips(
  * running under its country's overlay flips BACK to the base. The second direction is what prices the overlay — "the
  * overlay is required here" is a claim only its removal can support.
  */
-function localeCounterfactual(current: string, country: string | undefined): CounterfactualFlip | { why: string } {
+async function localeCounterfactual(
+	current: string,
+	country: string | undefined
+): Promise<CounterfactualFlip | { why: string }> {
 	if (!country) {
 		return { why: "the input set carries no country for this row, so there is no row locale to flip to" }
 	}
 
-	const rowLocale = overlayLocaleByCountry().get(country.toUpperCase())
+	const rowLocale = (await overlayLocaleByCountry()).get(country.toUpperCase())
 
 	if (!rowLocale) {
 		return {
@@ -284,7 +284,7 @@ export async function runCounterfactuals(
 	const batches = new Map<string, { flip: CounterfactualFlip; targets: CounterfactualTarget[] }>()
 
 	for (const target of targets) {
-		const { flips, skipped } = enumerateFlips(effective, target.country)
+		const { flips, skipped } = await enumerateFlips(effective, target.country)
 
 		byRow.set(target.id, {
 			levers_tried: flips.map((flip) => flip.lever),

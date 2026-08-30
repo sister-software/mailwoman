@@ -23,9 +23,11 @@
  *   visible instead of leaving it as a filesystem detail.
  */
 
+import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
-import { type Dirent, existsSync, lstatSync, readdirSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
+import type { Dirent } from "@mailwoman/platform/fs"
+import { existsSync, lstatSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
 import { basename, join, relative } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -154,17 +156,17 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
  * unbounded walk would spend minutes in directories that contain no databases. Foreign roots are not descended into at
  * all — they are counted and named, which is cheaper and states the same fact.
  */
-function findDatabases(dataRoot: string, maxDepth: number): { paths: string[]; skippedForeign: number } {
+async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ paths: string[]; skippedForeign: number }> {
 	const paths: string[] = []
 	let skippedForeign = 0
 
-	const walk = (dir: string, depth: number): void => {
+	const walk = async (dir: string, depth: number): Promise<void> => {
 		if (depth > maxDepth) return
 
 		let entries: Dirent[]
 
 		try {
-			entries = readdirSync(dir, { withFileTypes: true })
+			entries = await readDirectoryEntries(dir)
 		} catch {
 			// An unreadable directory is not a finding about provenance; skip it rather than fail the report.
 			return
@@ -180,7 +182,7 @@ function findDatabases(dataRoot: string, maxDepth: number): { paths: string[]; s
 					continue
 				}
 
-				walk(full, depth + 1)
+				await walk(full, depth + 1)
 
 				continue
 			}
@@ -191,7 +193,7 @@ function findDatabases(dataRoot: string, maxDepth: number): { paths: string[]; s
 		}
 	}
 
-	walk(dataRoot, 0)
+	await walk(dataRoot, 0)
 
 	return { paths: paths.toSorted(), skippedForeign }
 }
@@ -229,9 +231,9 @@ function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
 /**
  * Walk the data root and classify every database in it.
  */
-export function takeInventory(options: { dataRoot: string; maxDepth?: number }): InventoryReport {
+export async function takeInventory(options: { dataRoot: string; maxDepth?: number }): Promise<InventoryReport> {
 	const maxDepth = options.maxDepth ?? 2
-	const { paths, skippedForeign } = findDatabases(options.dataRoot, maxDepth)
+	const { paths, skippedForeign } = await findDatabases(options.dataRoot, maxDepth)
 	const entries = paths.map((path) => inventoryEntry(options.dataRoot, path))
 
 	const counts: Record<Provenance, number> = {

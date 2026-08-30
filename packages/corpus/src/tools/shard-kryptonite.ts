@@ -16,8 +16,8 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
@@ -78,9 +78,9 @@ export async function buildKryptoniteShard(
 	const corpusVersion = options.corpusVersion ?? "0.4.0"
 	const source = options.source ?? "deepseek-kryptonite"
 
-	if (!existsSync(options.jsonl)) throw new Error(`jsonl not found: ${options.jsonl}`)
+	if (!(await pathExists(options.jsonl))) throw new Error(`jsonl not found: ${options.jsonl}`)
 
-	if (!existsSync(options.baseManifest)) throw new Error(`base-manifest not found: ${options.baseManifest}`)
+	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
 	await mkdir(options.outDir, { recursive: true })
 
@@ -98,7 +98,7 @@ export async function buildKryptoniteShard(
 
 	if (quarantine.length) {
 		const qPath = join(options.outDir, `corpus-v${corpusVersion}`, "quarantine-kryptonite.tsv")
-		writeFileSync(qPath, quarantine.join("\n") + "\n", "utf8")
+		await writeLocalTextFile(quarantine.join("\n") + "\n", qPath)
 		report?.(`quarantine log → ${qPath}`)
 	}
 
@@ -110,7 +110,7 @@ export async function buildKryptoniteShard(
 	}
 
 	// Compose the final corpus-v0.4.0 manifest: every shard from base + the new shard(s).
-	const base = parseJSONStrict<ShardManifest>(readFileSync(options.baseManifest, "utf8"))
+	const base = await readLocalJSONFile<ShardManifest>(options.baseManifest)
 
 	const combined: ShardManifest = {
 		corpus_version: corpusVersion,
@@ -130,7 +130,7 @@ export async function buildKryptoniteShard(
 	// authoritative one. v0.3.0 shards mix sources; we use the first_source_id-prefix
 	// inference for them (audit.ts will re-derive on its own when shard.source is absent).
 	const combinedPath = join(options.outDir, `corpus-v${corpusVersion}`, "MANIFEST.json")
-	writeFileSync(combinedPath, JSON.stringify(combined, null, 2) + "\n", "utf8")
+	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newManifest.total_rows})`)
 	report?.(`  shards=${combined.shards.length} (base=${base.shards.length}, added=${newManifest.shards.length})`)

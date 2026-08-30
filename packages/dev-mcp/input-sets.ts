@@ -6,7 +6,7 @@
  *   Which inputs a measurement runs over, and what that choice costs.
  *
  *   The design rule (spec §5.1) is that the well-powered thing must be the CHEAPEST thing to type. `{kind:"board"}` is
- *   the shortest legal value and it is the default everywhere; a hand-picked list requires an array AND a `why` string,
+ *   the shortest legal value and default everywhere. A hand-picked list requires an array AND a `why` string,
  *   so choosing a small sample is a deliberate act that leaves a record in the result. This inverts the incentive that
  *   produced nine one-off probe scripts in a day, each with a panel its author chose and nobody reviewed.
  *
@@ -14,10 +14,10 @@
  *   drawn from, because a denominator that travels with the number is the only kind that survives a relay.
  */
 
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, mulberry32, repoRootPath } from "@mailwoman/core/utils"
 import { sha256Hex } from "@mailwoman/core/utils/hash"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
@@ -277,7 +277,7 @@ async function resolveHoldout(ref: Extract<InputSetRef, { kind: "holdout" }>): P
 		)
 	}
 
-	if (!existsSync(definition.file)) {
+	if (!(await pathExists(definition.file))) {
 		throw new Error(
 			`input set: the ${definition.label} staging file is not at ${definition.file}. Refusing rather than resolving ` +
 				"to an empty set — a run over zero rows reports zero differences, which reads as no effect."
@@ -481,8 +481,8 @@ interface CorpusRow {
  * A corpus that cannot be read must NOT resolve to an empty set: a measurement over zero rows reports zero differences,
  * which reads as "no effect" rather than "nothing ran".
  */
-function readCorpus(path: string, what: string): CorpusRow[] {
-	if (!existsSync(path)) {
+async function readCorpus(path: string, what: string): Promise<CorpusRow[]> {
+	if (!(await pathExists(path))) {
 		throw new Error(
 			`${what} not found at ${path}. Refusing rather than resolving to an empty set — a run over zero rows reports ` +
 				"zero differences, which reads as no effect."
@@ -490,7 +490,7 @@ function readCorpus(path: string, what: string): CorpusRow[] {
 	}
 
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- a fixed operator artifact of a few hundred rows, read once
-	return readFileSync(path, "utf8")
+	return (await readLocalTextFile(path))
 		.split("\n")
 		.filter(isPresent)
 		.map((line) => parseJSONStrict<CorpusRow>(line))
@@ -537,7 +537,7 @@ function coordinateTruthCounts(rows: ResolvedInput[]): ResolvedInputSet["hasTrut
 async function resolvePanel(ref: Extract<InputSetRef, { kind: "panel" }>): Promise<ResolvedInputSet> {
 	const version = ref.version ?? "v2"
 	const path = String(dataRootPath("pelias-rig", "panel", `panel-${version}.jsonl`))
-	const all = readCorpus(path, `panel ${version}`)
+	const all = await readCorpus(path, `panel ${version}`)
 
 	const filtered = all.filter((row) => {
 		if (ref.country && (row.country ?? "").toUpperCase() !== ref.country.toUpperCase()) return false
@@ -602,9 +602,9 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
 	for (const locale of ["us", "fr", "adversarial"]) {
 		const path = `${dir}/${locale}.jsonl`
 
-		if (!existsSync(path)) continue
+		if (!(await pathExists(path))) continue
 
-		for (const [index, row] of readCorpus(path, `golden ${version}/${split}/${locale}`).entries()) {
+		for (const [index, row] of (await readCorpus(path, `golden ${version}/${split}/${locale}`)).entries()) {
 			inputs.push({
 				id: row.id ?? `${locale}-${index}`,
 				input: row.raw ?? row.input ?? "",
@@ -642,7 +642,7 @@ async function resolveGolden(ref: Extract<InputSetRef, { kind: "golden" }>): Pro
  */
 async function resolveParity(ref: Extract<InputSetRef, { kind: "parity" }>): Promise<ResolvedInputSet> {
 	const path = String(repoRootPath(PARITY_FIXTURES_RELATIVE_PATH))
-	const raw = readCorpus(path, "parity corpus")
+	const raw = await readCorpus(path, "parity corpus")
 
 	// The SAME live filter `parity-corpus.ts` applies: 22 rules-era no-solution assertions plus 33 gold-triage
 	// tombstones are fixtures a neural parser must not be graded against. Feeding them in would quietly inflate the

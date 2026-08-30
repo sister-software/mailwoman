@@ -33,8 +33,9 @@
  *   regardless.
  */
 
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawn } from "@mailwoman/platform/child_process"
-import { existsSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { existsSync } from "@mailwoman/platform/fs"
 import * as os from "@mailwoman/platform/os"
 import * as path from "@mailwoman/platform/path"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
@@ -157,7 +158,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			options.states ? options.states.split(",").map((s) => s.trim().toUpperCase()) : STATES_BY_COVERAGE
 		).filter((code) => code.length > 0)
 
-		mkdirSync(outDir, { recursive: true })
+		await makeDirectories(outDir)
 
 		const concurrency = Math.max(1, options.concurrency || 4)
 		const cores = os.availableParallelism?.() ?? os.cpus().length
@@ -305,7 +306,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			console.error(`[ok]   ${r.state} — ${pts.toLocaleString()} points (${r.seconds}s)`)
 
 			manifest.builtAt = new Date(t0).toISOString().slice(0, 10)
-			writeFileSync(attributionPath, JSON.stringify(manifest, null, 2))
+			await writeLocalJSONFile(manifest, attributionPath)
 		}
 
 		const mins = ((Date.now() - t0) / 60_000).toFixed(1)

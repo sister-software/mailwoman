@@ -16,13 +16,15 @@ import {
 	featurize,
 	inMapPosterior,
 } from "@mailwoman/core/coarse-placer"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, test } from "vitest"
 
-const tmpRoot = mkdtempSync(join(tmpdir(), "coarse-placer-test-"))
-afterAll(() => rmSync(tmpRoot, { recursive: true, force: true }))
+import { temporaryDirectory } from "#fs/temporary"
+import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
+
+const tmpRoot = await temporaryDirectory("coarse-placer-test-")
+afterAll(() => tmpRoot[Symbol.asyncDispose]())
 
 /**
  * Deterministic pseudo-random weights in [-0.05, 0.05], LCG-seeded so the test is reproducible.
@@ -69,8 +71,8 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
  * Write an fp32 and an int8 artifact dir for the same weights; return both paths.
  */
 function writeArtifacts(classes: string[], dim: number, weights: Float32Array, bias: number[], temperature = 1) {
-	const fp32Dir = join(tmpRoot, `fp32-${classes.join("")}-${dim}`)
-	const int8Dir = join(tmpRoot, `int8-${classes.join("")}-${dim}`)
+	const fp32Dir = tmpRoot.resolve(`fp32-${classes.join("")}-${dim}`)
+	const int8Dir = tmpRoot.resolve(`int8-${classes.join("")}-${dim}`)
 	mkdirSync(fp32Dir, { recursive: true })
 	mkdirSync(int8Dir, { recursive: true })
 
@@ -164,15 +166,15 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 	})
 
 	test("int8 artifact missing scales is rejected", async () => {
-		const badDir = join(tmpRoot, "int8-noscales")
-		mkdirSync(badDir, { recursive: true })
+		const badDir = tmpRoot.resolve("int8-noscales")
+		await makeDirectories(badDir)
 
-		writeFileSync(
-			join(badDir, "meta.json"),
-			JSON.stringify({ classes, featureDim: FEATURE_DIM, temperature: 1, bias, quantization: "int8-per-row" })
+		await writeLocalJSONFile(
+			{ classes, featureDim: FEATURE_DIM, temperature: 1, bias, quantization: "int8-per-row" },
+			join(badDir, "meta.json")
 		)
 
-		writeFileSync(join(badDir, "weights.bin"), Buffer.from(new Int8Array(classes.length * FEATURE_DIM).buffer))
+		await writeLocalBuffer(Buffer.from(new Int8Array(classes.length * FEATURE_DIM).buffer), join(badDir, "weights.bin"))
 		await expect(CoarsePlacer.fromArtifactDir(badDir)).rejects.toThrow(/scales/)
 	})
 })

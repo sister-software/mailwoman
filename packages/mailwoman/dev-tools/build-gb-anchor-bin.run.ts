@@ -64,13 +64,11 @@ const { values } = parseArgs({
 if (!values.out) throw new Error("--out <dir> is required")
 
 const shardPath = values.shard!.startsWith("/") ? values.shard! : String(dataRootPath("wof", values.shard!))
-const con = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
+using con = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 
 const rows = con
 	.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
 	.all() as Array<{ name: string; latitude: number; longitude: number }>
-
-await con.destroy()
 
 const entries: PostcodeBinaryEntry[] = []
 const outward = new Map<string, { lat: number; lon: number; n: number }>()

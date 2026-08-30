@@ -13,9 +13,7 @@
  *   reader's.
  */
 
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { POI_H3_RESOLUTION, POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -218,17 +216,17 @@ async function buildFixture(path: string): Promise<void> {
 	await createPOIBrandIndex(kdb)
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let dbPath: string
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-poi-lookup-"))
-	dbPath = join(scratch, "poi.db")
+	scratch = await temporaryDirectory("mailwoman-poi-lookup-")
+	dbPath = scratch.resolve("poi.db")
 	await buildFixture(dbPath)
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("POILookup", () => {

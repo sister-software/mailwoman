@@ -26,8 +26,8 @@
  *       is not there.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 
 import { type ForkProbe, type RepoOrigin, resolveWOFRepoOrigin } from "./wof-repo-origin.ts"
 
@@ -181,8 +181,8 @@ function git(cwd: string, args: string[]): string {
  * Read one checkout's state. Each probe is independently guarded: a repo with no tracked upstream still reports its
  * remote and vintage, rather than collapsing to "unknown" because one question had no answer.
  */
-export function inspectClone(directory: string): CloneState {
-	if (!existsSync(directory)) return { exists: false, isRepository: false }
+export async function inspectClone(directory: string): Promise<CloneState> {
+	if (!(await pathExists(directory))) return { exists: false, isRepository: false }
 
 	try {
 		git(directory, ["rev-parse", "--git-dir"])
@@ -247,7 +247,7 @@ export async function planReposSync(options: {
 		const origin = await resolveWOFRepoOrigin(repo, options.probe)
 		const directory = options.directoryFor(repo)
 
-		if (options.fetchFirst !== false && existsSync(directory)) {
+		if (options.fetchFirst !== false && (await pathExists(directory))) {
 			try {
 				// Depth-preserving: a shallow clone stays shallow, and an unshallow one is not truncated.
 				git(directory, ["fetch", "--quiet", "origin"])
@@ -257,7 +257,7 @@ export async function planReposSync(options: {
 			}
 		}
 
-		plans.push(planRepoSync(origin, directory, inspectClone(directory)))
+		plans.push(planRepoSync(origin, directory, await inspectClone(directory)))
 	}
 
 	return plans

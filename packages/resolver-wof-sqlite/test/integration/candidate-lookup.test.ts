@@ -16,9 +16,8 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { copyFile, mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { copyFile } from "@mailwoman/platform/fs/promises"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { rankByPrimaryPreference, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
@@ -29,7 +28,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 let candidatePath: string
 
 /**
@@ -221,17 +220,17 @@ function buildFixturePostcodes(path: string): void {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-candidate-lookup-"))
-	const input = join(scratch, "admin.db")
-	const pc = join(scratch, "postcodes.db")
-	candidatePath = join(scratch, "candidate.db")
+	scratch = await temporaryDirectory("mailwoman-candidate-lookup-")
+	const input = scratch.resolve("admin.db")
+	const pc = scratch.resolve("postcodes.db")
+	candidatePath = scratch.resolve("candidate.db")
 	buildFixtureAdmin(input)
 	buildFixturePostcodes(pc)
 	await buildCandidateTable({ input, output: candidatePath, postcodes: [pc] })
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("WOFCandidateTableLookup", () => {
@@ -323,8 +322,8 @@ describe("WOFCandidateTableLookup", () => {
 
 	test("excludeNameRoles degrades to a no-op on an artifact without the role column", async () => {
 		// A pre-#1730 candidate DB: same columns MINUS name_role. The option must be ignored, never error.
-		const legacyPath = join(scratch, "legacy-candidate.db")
-		const legacy = new DatabaseClient<WOFDatabase>(legacyPath)
+		const legacyPath = scratch.resolve("legacy-candidate.db")
+		using legacy = new DatabaseClient<WOFDatabase>(legacyPath)
 
 		legacy.exec(`
 			CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT UNIQUE);
@@ -340,8 +339,6 @@ describe("WOFCandidateTableLookup", () => {
 			) WITHOUT ROWID;
 			INSERT INTO candidate VALUES ('td', 0, 0, 0, -5.0, 970, 'Toledano', 39.8, -4.0, 39.0, -5.0, 40.5, -3.0, 700000, 0, NULL);
 		`)
-
-		await legacy.destroy()
 
 		using lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
 
@@ -783,7 +780,7 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 	test("B2-1: the #741 postal-city short-circuit is untouched — an exact (name, postcode) hit wins with the flag on or off", async () => {
 		// Patch the built candidate DB with the #741 side-index carrying the exact hit; the lookup
 		// existence-gates its probe on the table, so this is the real fast-path configuration.
-		const db = new DatabaseClient<WOFDatabase>(candidatePath)
+		using db = new DatabaseClient<WOFDatabase>(candidatePath)
 
 		db.exec(
 			"CREATE TABLE postal_city_candidate (name_key TEXT, postcode TEXT, spr_id INTEGER, name TEXT, latitude REAL, longitude REAL)"
@@ -797,8 +794,6 @@ describe("postcode-containment coherence (#31, Mechanism 2)", () => {
 			37.76,
 			-122.44
 		)
-
-		await db.destroy()
 
 		using lk = new WOFCandidateTableLookup({ databasePath: candidatePath })
 
@@ -942,9 +937,9 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 	}
 
 	beforeEach(async () => {
-		const input = join(scratch, "admin-scored.db")
-		const importance = join(scratch, "importance.db")
-		scoredPath = join(scratch, "candidate-scored.db")
+		const input = scratch.resolve("admin-scored.db")
+		const importance = scratch.resolve("importance.db")
+		scoredPath = scratch.resolve("candidate-scored.db")
 		buildFixtureAdmin(input)
 		buildFixtureImportance(importance)
 		await buildCandidateTable({ input, output: scoredPath, importance })
@@ -992,11 +987,10 @@ describe("WOFCandidateTableLookup — importance (#28)", () => {
 	test("an artifact PREDATING the column still resolves — the probe is existence-gated", async () => {
 		// Reproduce a pre-#28 gazetteer by removing the column from a real build, rather than hand-writing
 		// an old DDL that could drift from what the old builder actually emitted.
-		const legacyPath = join(scratch, "candidate-legacy.db")
+		const legacyPath = scratch.resolve("candidate-legacy.db")
 		await copyFile(scoredPath, legacyPath)
-		const rw = new DatabaseClient<WOFDatabase>(legacyPath)
+		using rw = new DatabaseClient<WOFDatabase>(legacyPath)
 		rw.exec("ALTER TABLE candidate DROP COLUMN importance")
-		await rw.destroy()
 
 		using lk = new WOFCandidateTableLookup({ databasePath: legacyPath })
 
@@ -1249,11 +1243,10 @@ describe("admin-containment re-rank through findPlace (#1717 stage 2)", () => {
 	test("CAPABILITY-GATED: a pre-sidecar artifact ignores the qualifier and stamps nothing", async () => {
 		// Reproduce a pre-sidecar candidate.db by dropping the tables from a real build — the same
 		// vintage discipline as the pre-#28 importance-column test above.
-		const preSidecarPath = join(scratch, "candidate-pre-sidecar.db")
+		const preSidecarPath = scratch.resolve("candidate-pre-sidecar.db")
 		await copyFile(candidatePath, preSidecarPath)
-		const rw = new DatabaseClient<WOFDatabase>(preSidecarPath)
+		using rw = new DatabaseClient<WOFDatabase>(preSidecarPath)
 		rw.exec("DROP TABLE candidate_ancestor; DROP TABLE candidate_interval;")
-		await rw.destroy()
 
 		using lk = new WOFCandidateTableLookup({ databasePath: preSidecarPath })
 

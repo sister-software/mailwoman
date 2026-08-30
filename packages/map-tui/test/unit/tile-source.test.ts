@@ -16,7 +16,7 @@ const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.met
 describe("TileSource", async () => {
 	const source = await TileSource.open(FIXTURE)
 
-	afterAll(() => source.close())
+	afterAll(() => source[Symbol.asyncDispose]())
 
 	it("reads header zoom bounds", () => {
 		expect(source.minZoom).toBe(0)
@@ -83,11 +83,8 @@ describe("TileSource over HTTP", async () => {
 	const source = await TileSource.open(`http://127.0.0.1:${port}/portland.pmtiles`)
 
 	afterAll(async () => {
-		await source.close()
-
-		await new Promise((resolve) => {
-			server.close(resolve)
-		})
+		await source[Symbol.asyncDispose]()
+		await server[Symbol.asyncDispose]()
 	})
 
 	it("reads the same header bounds as the local file", () => {

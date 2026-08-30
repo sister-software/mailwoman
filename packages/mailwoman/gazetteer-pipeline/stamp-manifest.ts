@@ -35,14 +35,10 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
  * @throws When the database is already sealed, which is the ordering mistake this function exists to make loud.
  */
 export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
-	const kdb = new DatabaseClient<LayerContractDatabase>(path)
+	using kdb = new DatabaseClient<LayerContractDatabase>(path)
 
-	try {
-		await createLayerManifestTable(kdb)
-		await writeLayerManifest(kdb, manifest)
-	} finally {
-		await kdb.destroy()
-	}
+	await createLayerManifestTable(kdb)
+	await writeLayerManifest(kdb, manifest)
 }
 
 /**

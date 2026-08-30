@@ -22,6 +22,7 @@
  */
 
 import { $private } from "@mailwoman/core/env"
+import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
@@ -78,7 +79,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 
 	const state = useCommandTask(async () => {
 		const { $ } = await import("zx")
-		const { existsSync, readdirSync } = await import("@mailwoman/platform/fs")
+
 		const { join } = await import("@mailwoman/platform/path")
 
 		const corpusRoot = options.corpusDir ?? String(dataRootPath("corpus", "versioned"))
@@ -89,7 +90,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 			.filter((version) => version.length > 0)
 
 		if (!versions.length && !options.tokenizer && !options.code) {
-			const available = existsSync(corpusRoot) ? readdirSync(corpusRoot).toSorted().slice(-6) : []
+			const available = (await pathExists(corpusRoot)) ? (await readDirectory(corpusRoot)).toSorted().slice(-6) : []
 
 			throw new Error(
 				"nothing selected. Pass --corpus-version <v> (and/or --tokenizer, --code).\n" +
@@ -129,7 +130,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 		for (const version of versions) {
 			// The on-disk layout nests the corpus under its own name: <root>/<version>/corpus-<version>/.
 			const nested = join(corpusRoot, version, `corpus-${version}`)
-			const source = existsSync(nested) ? nested : join(corpusRoot, version)
+			const source = (await pathExists(nested)) ? nested : join(corpusRoot, version)
 
 			jobs.push({
 				label: `corpus ${version}`,
@@ -166,7 +167,7 @@ const CorpusUpload: ParsedCommandComponent<Options> = ({ options }) => {
 			// CHECK THE SOURCE FIRST. rclone's own error for an absent directory arrives buried under the
 			// config NOTICE, which is exactly how "this version does not exist here" got read as "R2 is
 			// broken". Say which path was missing instead.
-			if (!existsSync(job.source)) {
+			if (!(await pathExists(job.source))) {
 				update(index, { status: "error", detail: `not found locally: ${job.source}` })
 
 				continue

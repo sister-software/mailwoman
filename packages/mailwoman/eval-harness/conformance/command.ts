@@ -207,7 +207,7 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 			measured: { findings, summary: summarizeConformanceRun(findings), perLaw, tracedObserver: wantsTrace },
 		}
 	} finally {
-		deps.close()
+		deps[Symbol.dispose]()
 	}
 }
 

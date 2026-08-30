@@ -41,7 +41,7 @@ const GazetteerBuildLocalitySurfaceLexicon: ParsedCommandComponent<Options> = ({
 	const state = useCommandTask(async () => {
 		const { buildLocalitySurfaceLexicon } = await import("#gazetteer/evidence-lexicons")
 
-		const built = buildLocalitySurfaceLexicon({
+		const built = await buildLocalitySurfaceLexicon({
 			countries: options.countries?.split(",").map((s) => s.trim()),
 			placetypes: options.placetypes?.split(",").map((s) => s.trim()),
 			dbPath: options.db,
