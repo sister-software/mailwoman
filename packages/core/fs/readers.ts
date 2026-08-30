@@ -207,6 +207,30 @@ export async function readFileHead(path: string, byteSize: number): Promise<stri
 }
 
 /**
+ * Read `length` bytes from `path`, starting at `offset`.
+ *
+ * The shape a header peek has: a magic number, a version, an offset to a trailer, then the trailer itself — three reads
+ * at three positions, where reading the whole file would mean loading a multi-gigabyte artifact to look at sixteen
+ * bytes.
+ *
+ * Answers what it actually read, which is shorter than `length` at end of file.
+ *
+ * @throws ENOENT when the file does not exist.
+ */
+export async function readFileRange(path: PathBuilderLike, offset: number, length: number): Promise<Buffer> {
+	const handle = await open(path.toString(), "r")
+
+	try {
+		const buffer = Buffer.alloc(length)
+		const { bytesRead } = await handle.read(buffer, 0, length, offset)
+
+		return buffer.subarray(0, bytesRead)
+	} finally {
+		await handle.close()
+	}
+}
+
+/**
  * The first segment may be a `file:` URL, which `node:fs` accepts as an object and rejects as the string it prints.
  * `resolvePath` would stringify it, so a URL is passed through whole and never joined.
  */

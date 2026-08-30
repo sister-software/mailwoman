@@ -19,13 +19,10 @@
 
 import {
 	accessSync,
-	closeSync,
 	constants,
 	globSync,
 	lstatSync,
-	openSync,
 	readFileSync,
-	readSync,
 	readdirSync,
 	readlinkSync,
 	realpathSync,
@@ -213,53 +210,6 @@ export function readLocalBufferSync<S extends Array<PathBuilderLike | URL>>(...p
 	}
 
 	return readFileSync(readTarget(pathSegments))
-}
-
-/**
- * Read `length` bytes from `path`, starting at `offset`.
- *
- * The shape a header peek has: a magic number, a version, an offset to a trailer, then the trailer itself — three reads
- * at three positions, where reading the whole file would mean loading a multi-gigabyte artifact to look at sixteen
- * bytes.
- *
- * Answers what it actually read, which is shorter than `length` at end of file.
- */
-export function readFileRangeSync(path: PathBuilderLike, offset: number, length: number): Buffer {
-	const descriptor = openSync(path.toString(), "r")
-
-	try {
-		const buffer = Buffer.alloc(length)
-		const read = readSync(descriptor, buffer, 0, length, offset)
-
-		return buffer.subarray(0, read)
-	} finally {
-		closeSync(descriptor)
-	}
-}
-
-/**
- * Read a file in fixed-size chunks, SYNCHRONOUS.
- *
- * For a consumer that folds over the bytes — a hash, a checksum — where reading the whole file would mean holding a
- * multi-gigabyte artifact in memory to produce sixteen. Each chunk is a view into ONE reused buffer, so a consumer that
- * keeps a chunk past the next iteration must copy it.
- */
-export function* readFileChunksSync(path: PathBuilderLike, size = 1024 * 1024): Generator<Buffer> {
-	const descriptor = openSync(path.toString(), "r")
-
-	try {
-		const buffer = Buffer.alloc(size)
-
-		for (;;) {
-			const read = readSync(descriptor, buffer, 0, size, null)
-
-			if (read <= 0) return
-
-			yield buffer.subarray(0, read)
-		}
-	} finally {
-		closeSync(descriptor)
-	}
 }
 
 /**

@@ -410,7 +410,7 @@ try {
 		// Pack via the SHARED publish path (injected publishConfig.exports) — a raw `yarn pack`
 		// ships the dev map (node → .ts), which consumers can never load (node_modules type-strip
 		// refusal) and which this smoke exists to catch.
-		await packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
+		packWorkspaceForPublish(resolve(repoRoot, dir), tgz)
 		deps[name] = `file:${tgz}`
 	}
 

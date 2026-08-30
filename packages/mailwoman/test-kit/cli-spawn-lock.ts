@@ -15,15 +15,13 @@
  *   The lock is a DIRECTORY, because `mkdir` is atomic on every platform we run on and needs no dependency. It carries
  *   the holder's pid so a crashed worker's lock can be reclaimed rather than wedging the suite, and it always releases
  *   in a `finally` — a leaked test lock turns one failure into a whole-suite timeout.
+ *
+ *   The lock is async because every caller now awaits its spawn: acquisition sleeps on `setTimeout` rather than
+ *   blocking a thread.
  */
 
-import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
-import { makeDirectoryExclusive, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import {
-	makeDirectoryExclusiveSync,
-	removePathIfPresentSync,
-	writeLocalTextFileSync,
-} from "@mailwoman/core/fs/writers-sync"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectoryExclusive, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 
@@ -39,33 +37,24 @@ const ACQUIRE_TIMEOUT_MS = 120_000
 const POLL_MS = 50
 
 /**
- * Block this thread for `ms`. Deliberately synchronous: every call site wraps `execFileSync`, which blocks the thread
- * anyway, so an async lock would force those suites to be restructured for no behavioural gain. `Atomics.wait` on a
- * throwaway buffer is the supported way to sleep without spinning a core.
- */
-function sleepSync(ms: number): void {
-	Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
-}
-
-/**
  * Remove the lock directory, tolerating every failure.
  *
  * Two workers can race here — one reclaiming a stale lock while its holder releases, or two reclaiming at once — and
- * `rmSync` throws ENOTEMPTY when the pid file is rewritten between its scan and the rmdir. A lock whose BOOKKEEPING can
- * throw is worse than no lock: it turns contention into a test failure in whichever suite happened to be holding it. A
- * failed removal degrades to the next acquirer reclaiming it as stale, which is already the recovery path.
+ * the removal throws ENOTEMPTY when the pid file is rewritten between its scan and the rmdir. A lock whose BOOKKEEPING
+ * can throw is worse than no lock: it turns contention into a test failure in whichever suite happened to be holding
+ * it. A failed removal degrades to the next acquirer reclaiming it as stale, which is already the recovery path.
  */
-function releaseQuietly(): void {
+async function releaseQuietly(): Promise<void> {
 	try {
-		removePathIfPresentSync(LOCK_DIR)
+		await removePathIfPresent(LOCK_DIR)
 	} catch {
 		// Another worker is mid-removal or mid-write; its stale check will reclaim.
 	}
 }
 
-function staleHolder(): boolean {
+async function staleHolder(): Promise<boolean> {
 	try {
-		const pid = Number.parseInt(readLocalTextFileSync(PID_FILE), 10)
+		const pid = Number.parseInt(await readLocalTextFile(PID_FILE), 10)
 
 		if (!Number.isInteger(pid) || pid <= 0) return true
 		// Signal 0 tests for existence without delivering anything.
@@ -80,47 +69,9 @@ function staleHolder(): boolean {
 
 /**
  * Run `fn` with the CLI-spawn lock held. Always releases, including when `fn` throws.
- */
-export function withCLISpawnLock<T>(fn: () => T): T {
-	const deadline = Date.now() + ACQUIRE_TIMEOUT_MS
-	let held = false
-
-	// The catch path sleeps and retries; only a successful mkdir breaks out. oxlint reads the try/break as
-	// the loop's sole exit and misses the fallthrough, the same false positive scripts/bless-package.ts
-	// suppressed for its OTP retry. The directive must sit immediately above the loop — on a multi-line
-	// note it lands on the next COMMENT line and silently does nothing.
-	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt
-	while (Date.now() < deadline) {
-		try {
-			makeDirectoryExclusiveSync(LOCK_DIR)
-			writeLocalTextFileSync(String(process.pid), PID_FILE)
-			held = true
-
-			break
-		} catch {
-			if (staleHolder()) {
-				releaseQuietly()
-
-				continue
-			}
-
-			sleepSync(POLL_MS)
-		}
-	}
-
-	try {
-		return fn()
-	} finally {
-		if (held) {
-			releaseQuietly()
-		}
-	}
-}
-
-/**
- * Async sibling of {@link withCLISpawnLock}, for call sites that `await` a spawn rather than blocking on it. Same lock,
- * so the two forms serialize against each other — a suite using `exec` and one using `execFileSync` still queue behind
- * one another, which is the point.
+ *
+ * Async because every caller now awaits its spawn: acquisition sleeps on `setTimeout` rather than blocking a thread,
+ * and the release is awaited in `finally`.
  */
 export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T> {
 	const deadline = Date.now() + ACQUIRE_TIMEOUT_MS
@@ -139,8 +90,8 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 
 			break
 		} catch {
-			if (staleHolder()) {
-				releaseQuietly()
+			if (await staleHolder()) {
+				await releaseQuietly()
 
 				continue
 			}
@@ -155,7 +106,7 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 		return await fn()
 	} finally {
 		if (held) {
-			releaseQuietly()
+			await releaseQuietly()
 		}
 	}
 }

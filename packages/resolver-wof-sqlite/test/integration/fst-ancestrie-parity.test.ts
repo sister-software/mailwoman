@@ -323,7 +323,7 @@ for (const locale of ["en-gb", "es-es", "it-it"]) {
 
 	describe.skipIf(!present)(`fst-autocomplete ↔ ancestrie parity — shipped ${locale}`, () => {
 		it("answers identically across the derived + curated battery", async () => {
-			const stamp = peekFSTStampFields(artifactPath)
+			const stamp = await peekFSTStampFields(artifactPath)
 
 			// v5 = the two-score split. A stale-format artifact would pin parity against bytes production
 			// no longer ships — fail loudly instead.

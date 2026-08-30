@@ -176,7 +176,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 				asOfDate,
 				buildSHA,
 				includeLocationIDs: options.includeLocationIDs,
-				blockCentroids: createTIGERBlockCentroidLookup(tigerDBPath),
+				blockCentroids: await createTIGERBlockCentroidLookup(tigerDBPath),
 				providers: options.providerListPath ? parseProviderList(options.providerListPath) : undefined,
 				filerDB,
 				onProgress: (message) => console.error(`  [bdc] ${message}`),

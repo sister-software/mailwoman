@@ -159,19 +159,17 @@ export async function auditStagedWorkspaces(
 
 	await makeDirectories(tarballDir)
 
-	const results: WorkspaceAuditResult[] = []
-
-	for (const workspace of workspaces) {
+	return workspaces.map((workspace) => {
 		const tarball = join(tarballDir, `${workspace.replaceAll("/", "__")}.tgz`)
 
 		try {
-			await packWorkspaceForPublish(join(stagingRoot, workspace), tarball)
+			packWorkspaceForPublish(join(stagingRoot, workspace), tarball)
 
 			// Throws with every violation listed when the tarball does not honor its manifest — the catch below
 			// is the collection point, so one sweep reports every broken package.
 			const audit = verifyTarball(tarball)
 
-			results.push({
+			return {
 				workspace,
 				ok: true,
 				failures: [],
@@ -180,11 +178,9 @@ export async function auditStagedWorkspaces(
 					exportTargets: audit.exportTargets,
 					binTargets: audit.binTargets,
 				},
-			})
+			}
 		} catch (error) {
-			results.push({ workspace, ok: false, failures: [(error as Error).message] })
+			return { workspace, ok: false, failures: [(error as Error).message] }
 		}
-	}
-
-	return results
+	})
 }

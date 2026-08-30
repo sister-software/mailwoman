@@ -214,7 +214,7 @@ async function main(): Promise<void> {
 		kdb.exec("ANALYZE")
 	}
 
-	swapDatabaseIntoPlace(tmp, args.output)
+	await swapDatabaseIntoPlace(tmp, args.output)
 	await sealDatabase(args.output)
 
 	const md5 = await md5File(args.output)

@@ -349,7 +349,7 @@ const SitusInterpolationShard: ParsedCommandComponent<Options> = ({ options }) =
 			createdAt: new Date().toISOString(),
 		})
 
-		swapDatabaseIntoPlace(tmpOut, finalOut)
+		await swapDatabaseIntoPlace(tmpOut, finalOut)
 
 		return [
 			`${sides} segment-sides → ${finalOut}`,

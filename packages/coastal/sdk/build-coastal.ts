@@ -342,7 +342,7 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 		await kdb.destroy()
 
 		await sealDatabase(tmpPath)
-		swapDatabaseIntoPlace(tmpPath, options.out)
+		await swapDatabaseIntoPlace(tmpPath, options.out)
 
 		const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
 

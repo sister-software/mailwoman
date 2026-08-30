@@ -125,7 +125,7 @@ export async function buildCZDistrictsShard(
 		db.exec("ANALYZE")
 	}
 
-	swapDatabaseIntoPlace(tmpPath, outPath)
+	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)
 
 	return { out: outPath, inserted, sourceMD5 }

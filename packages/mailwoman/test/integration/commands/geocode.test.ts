@@ -25,9 +25,13 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
+import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
+
+const execFileAsync = promisify(execFile)
+
 // MARK: Paths
 
 const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
@@ -59,9 +63,9 @@ const CLI_TEST_TIMEOUT_MS = 120_000
  * Vitest's per-test budget for this whole file.
  *
  * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLock}. A per-test annotation has to be remembered on each new
- * test, and the one that forgets inherits the global 15s — which kills the test before the thing being measured can
- * report, surfacing as a bare timeout with no attribution.
+ * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
+ * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
+ * measured can report, surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -73,7 +77,7 @@ const hasTxInterpolation = await pathExists(TX_INTERPOLATION_DB)
 // MARK: Argument-validation tests (unconditional — no DB required)
 
 describe("geocode argument validation", () => {
-	test("a bare `mailwoman geocode` prints the command's help and still exits 1", () => {
+	test("a bare `mailwoman geocode` prints the command's help and still exits 1", async () => {
 		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
@@ -85,8 +89,8 @@ describe("geocode argument validation", () => {
 		let status: number | undefined
 
 		try {
-			withCLISpawnLock(() =>
-				execFileSync(process.execPath, [CLI_PATH, "geocode"], {
+			await withCLISpawnLockAsync(() =>
+				execFileAsync(process.execPath, [CLI_PATH, "geocode"], {
 					encoding: "utf8",
 					// Set a bogus WOF path so the command fails on arg validation, not on missing DB.
 					env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
@@ -95,9 +99,10 @@ describe("geocode argument validation", () => {
 			)
 		} catch (error: unknown) {
 			threw = true
-			const execErr = error as { stdout?: string; stderr?: string; status?: number }
+			const execErr = error as { stdout?: string; stderr?: string; code?: number }
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
-			status = execErr.status
+			// The promisified spawn carries the exit code in `.code`; the sync error exposed it as `.status`.
+			status = execErr.code
 		}
 
 		// A missing required operand is a usage error, but the response still includes actionable command help.
@@ -108,7 +113,7 @@ describe("geocode argument validation", () => {
 		expect(output).not.toMatch(/missing required argument/)
 	})
 
-	test("two output shorthands at once is a usage error, not a silent pick", () => {
+	test("two output shorthands at once is a usage error, not a silent pick", async () => {
 		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
@@ -118,8 +123,8 @@ describe("geocode argument validation", () => {
 		let output = ""
 
 		try {
-			withCLISpawnLock(() =>
-				execFileSync(process.execPath, [CLI_PATH, "geocode", "350 5th Ave, New York, NY", "--json", "--jsonld"], {
+			await withCLISpawnLockAsync(() =>
+				execFileAsync(process.execPath, [CLI_PATH, "geocode", "350 5th Ave, New York, NY", "--json", "--jsonld"], {
 					encoding: "utf8",
 					env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -134,22 +139,22 @@ describe("geocode argument validation", () => {
 		expect(output).toMatch(/Pick one output format/)
 	})
 
-	test("empty address string exits 1", () => {
+	test("empty address string exits 1", async () => {
 		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
 			return
 		}
 
-		expect(() =>
-			withCLISpawnLock(() =>
-				execFileSync(process.execPath, [CLI_PATH, "geocode", "   "], {
+		await expect(
+			withCLISpawnLockAsync(() =>
+				execFileAsync(process.execPath, [CLI_PATH, "geocode", "   "], {
 					encoding: "utf8",
 					env: childEnv({ MAILWOMAN_WOF_DB: "/nonexistent/wof.db" }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
 			)
-		).toThrow(/Command failed/)
+		).rejects.toThrow(/Command failed/)
 	})
 
 	test("missing WOF DB exits 1 with a descriptive error (empty data root — the default shard set no longer exists)", async () => {
@@ -165,8 +170,8 @@ describe("geocode argument validation", () => {
 		const emptyDataRoot = emptyDataRootDirectory.path
 
 		try {
-			withCLISpawnLock(() =>
-				execFileSync(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
+			await withCLISpawnLockAsync(() =>
+				execFileAsync(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 					encoding: "utf8",
 					// Unset the env var AND point the data root at an empty dir: since the proximity-bias
 					// pass, geocode auto-attaches the wofShardPaths default set when the env is absent —
@@ -200,9 +205,9 @@ const hasTxShards = hasTxAddressPoints && hasTxInterpolation
 describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxShards)(`geocode integration — ${wofPath} + TX shards`, () => {
 	const TX_ADDRESS = "2929 Flower Hill Drive, Round Rock, TX 78664"
 
-	test("street-level geocode returns address_point or interpolated tier near Round Rock, TX", () => {
-		const stdout = withCLISpawnLock(() =>
-			execFileSync(
+	test("street-level geocode returns address_point or interpolated tier near Round Rock, TX", async () => {
+		const { stdout } = await withCLISpawnLockAsync(() =>
+			execFileAsync(
 				process.execPath,
 				[
 					CLI_PATH,
@@ -245,9 +250,9 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxShards)(`geocode integrati
 		expect(result.region).toBeTruthy()
 	}, 60_000)
 
-	test("--format=text produces readable output with coordinate line", () => {
-		const stdout = withCLISpawnLock(() =>
-			execFileSync(
+	test("--format=text produces readable output with coordinate line", async () => {
+		const { stdout } = await withCLISpawnLockAsync(() =>
+			execFileAsync(
 				process.execPath,
 				[
 					CLI_PATH,
@@ -266,13 +271,13 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxShards)(`geocode integrati
 		expect(stdout).toMatch(/coordinate/)
 	}, 60_000)
 
-	test("--format=json stdout is machine-parseable even with >80-col lines (Ink wrap regression)", () => {
+	test("--format=json stdout is machine-parseable even with >80-col lines (Ink wrap regression)", async () => {
 		// "Toledo Ohio" is a route_pair query: its intent_markers[].message is a ~140-char JSON
 		// string. Before writeRawStdout (2026-08-07), Ink's <Text> renderer word-wrapped piped
 		// output at 80 cols, inserting REAL newlines inside the JSON string and breaking
 		// JSON.parse. This test fails against the unfixed CLI.
-		const stdout = withCLISpawnLock(() =>
-			execFileSync(process.execPath, [CLI_PATH, "geocode", "Toledo Ohio", `--resolve-db=${wofPath}`], {
+		const { stdout } = await withCLISpawnLockAsync(() =>
+			execFileAsync(process.execPath, [CLI_PATH, "geocode", "Toledo Ohio", `--resolve-db=${wofPath}`], {
 				encoding: "utf8",
 				timeout: 60_000,
 			})
@@ -287,9 +292,9 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxShards)(`geocode integrati
 		expect(result.lat!).toBeLessThan(42)
 	}, 60_000)
 
-	test("--format=jsonld emits a valid schema.org Place JSON-LD object (#1052)", () => {
-		const stdout = withCLISpawnLock(() =>
-			execFileSync(
+	test("--format=jsonld emits a valid schema.org Place JSON-LD object (#1052)", async () => {
+		const { stdout } = await withCLISpawnLockAsync(() =>
+			execFileAsync(
 				process.execPath,
 				[
 					CLI_PATH,
@@ -324,17 +329,20 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxShards)(`geocode integrati
 		expect(stdout).not.toMatch(/resolution_tier|uncertainty_m|candidates/)
 	}, 60_000)
 
-	test("--jsonld and --text are byte-identical shorthands for the --format values (#1577)", () => {
-		const run = (...flags: string[]): string =>
-			withCLISpawnLock(() =>
-				execFileSync(process.execPath, [CLI_PATH, "geocode", TX_ADDRESS, `--resolve-db=${wofPath}`, ...flags], {
+	test("--jsonld and --text are byte-identical shorthands for the --format values (#1577)", async () => {
+		const run = async (...flags: string[]): Promise<string> => {
+			const { stdout } = await withCLISpawnLockAsync(() =>
+				execFileAsync(process.execPath, [CLI_PATH, "geocode", TX_ADDRESS, `--resolve-db=${wofPath}`, ...flags], {
 					encoding: "utf8",
 					timeout: 60_000,
 				})
 			)
 
-		expect(run("--jsonld")).toBe(run("--format=jsonld"))
-		expect(run("--text")).toBe(run("--format=text"))
+			return stdout
+		}
+
+		expect(await run("--jsonld")).toBe(await run("--format=jsonld"))
+		expect(await run("--text")).toBe(await run("--format=text"))
 	}, 240_000)
 })
 
@@ -342,9 +350,9 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxShards)(`geocode integrati
  * Admin-only degradation: when no shard is provided, geocode still returns a coordinate from the WOF admin centroid.
  */
 describe.skipIf(!hasCLICompiled || !hasWOFDB)(`geocode admin-only degradation — ${wofPath}`, () => {
-	test("geocodes to admin centroid when no shards provided", () => {
-		const stdout = withCLISpawnLock(() =>
-			execFileSync(process.execPath, [CLI_PATH, "geocode", "Round Rock, TX", `--resolve-db=${wofPath}`], {
+	test("geocodes to admin centroid when no shards provided", async () => {
+		const { stdout } = await withCLISpawnLockAsync(() =>
+			execFileAsync(process.execPath, [CLI_PATH, "geocode", "Round Rock, TX", `--resolve-db=${wofPath}`], {
 				encoding: "utf8",
 				timeout: 60_000,
 			})

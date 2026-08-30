@@ -29,7 +29,6 @@
  */
 
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
 import { join, resolve } from "@mailwoman/platform/path"
@@ -155,7 +154,9 @@ export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FST
 	const source = await readWOFSourceIdentity(dbPath)
 	const wofRoot = String(dataRootPath("wof"))
 
-	return ADMIN_DERIVED_FST_ARTIFACTS.map((relative): FSTFreshnessRow => {
+	const rows: FSTFreshnessRow[] = []
+
+	for (const relative of ADMIN_DERIVED_FST_ARTIFACTS) {
 		const path = join(wofRoot, relative)
 		const locale = /fst-per-locale\/fst-(?<locale>[a-z]{2}-[a-z]{2})\.bin$/.exec(relative)?.groups?.locale
 		const buildable = locale !== undefined && FST_LOCALES.has(locale)
@@ -164,23 +165,29 @@ export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FST
 			? `mailwoman gazetteer build fst --locales ${locale}`
 			: `NO BUILDER — ${locale ?? "this artifact"} has no FST_LOCALES entry (built by the pre-#1318 flow)`
 
-		if (!pathExistsSync(path)) return { artifact: relative, present: false, rebuildCommand }
+		if (!(await pathExists(path))) {
+			rows.push({ artifact: relative, present: false, rebuildCommand })
 
-		const fields = peekFSTStampFields(path)
+			continue
+		}
+
+		const fields = await peekFSTStampFields(path)
 
 		const staleReason = fstStaleReason(fields, {
 			source,
 			...(buildable ? { exclusionPolicy: EXCLUSION_POLICY_ID } : {}),
 		})
 
-		return {
+		rows.push({
 			artifact: relative,
 			present: true,
 			...(staleReason === undefined ? {} : { staleReason }),
 			...(fields?.provenance?.builtAt ? { builtAt: fields.provenance.builtAt } : {}),
 			rebuildCommand,
-		}
-	})
+		})
+	}
+
+	return rows
 }
 
 /**

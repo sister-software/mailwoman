@@ -810,7 +810,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	phase("seal", out)
 	await sealDatabase(ingestPath)
-	swapDatabaseIntoPlace(ingestPath, out)
+	await swapDatabaseIntoPlace(ingestPath, out)
 
 	return {
 		out,

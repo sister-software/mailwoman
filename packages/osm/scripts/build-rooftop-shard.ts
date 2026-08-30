@@ -249,7 +249,7 @@ async function main(): Promise<void> {
 	}
 
 	// Build-on-copy: only now swap the freshly-built shard into place.
-	swapDatabaseIntoPlace(tmp, args.output)
+	await swapDatabaseIntoPlace(tmp, args.output)
 	await sealDatabase(args.output)
 
 	const gap = total > 0 ? ((noStreet / total) * 100).toFixed(1) : "0.0"

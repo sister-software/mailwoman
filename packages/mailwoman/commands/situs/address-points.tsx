@@ -332,7 +332,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			createdAt: new Date().toISOString(),
 		})
 
-		swapDatabaseIntoPlace(tmpOut, finalOut)
+		await swapDatabaseIntoPlace(tmpOut, finalOut)
 
 		return lines
 	})

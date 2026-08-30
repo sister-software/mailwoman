@@ -261,7 +261,7 @@ export default {
 			// File-DESCRIPTOR work no helper covers: a `FileHandle` held across calls, and a log opened in append mode for
 			// a child's stdio. A handle is OWNED, and moving ownership is not a rename — so these keep the mirror, and
 			// each says so in place. The two shapes that DID have an idiom left this list: a positional header peek is
-			// `readFileRangeSync`, and a chunked hash is `readFileChunksSync` under `md5FileSync`.
+			// `readFileRange`, and a chunked hash is `md5File`.
 			files: [
 				"corpus-python/scripts/train_with_resume.ts",
 				"packages/bdc/sdk/build-bdc.ts",

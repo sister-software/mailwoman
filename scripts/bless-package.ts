@@ -187,7 +187,7 @@ async function packAndPublish(dir: string): Promise<void> {
 	// (the registry rejects tarballs containing symlinks outright), the dev `exports` map is
 	// transformed for consumers (a bare pack ships `node → .ts`, which no consumer can resolve), and
 	// the audit below has a tarball worth auditing.
-	packWorkspaceForPublish(dir, tgz)
+	await packWorkspaceForPublish(dir, tgz)
 
 	// A first publish is the one that most needs this: it is the path taken when CI could not create
 	// the package, on a workspace whose derived binaries may never have been materialized locally.

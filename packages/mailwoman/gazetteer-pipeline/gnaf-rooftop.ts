@@ -355,7 +355,7 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 		kdb.exec("ANALYZE")
 	}
 
-	swapDatabaseIntoPlace(tmp, out)
+	await swapDatabaseIntoPlace(tmp, out)
 	await sealDatabase(out)
 
 	return counts

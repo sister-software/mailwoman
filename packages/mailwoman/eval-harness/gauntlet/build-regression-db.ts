@@ -95,7 +95,7 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 		await writeCorpusStamp(kdb, cases)
 	}
 
-	swapDatabaseIntoPlace(tmp, output)
+	await swapDatabaseIntoPlace(tmp, output)
 
 	console.log(`[gauntlet] built ${output} — ${cases.length} cases (corpus ${regressionCorpusHash(cases).slice(0, 12)})`)
 

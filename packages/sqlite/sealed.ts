@@ -8,7 +8,8 @@
  *   This is the other half of the sealed-artifact invariant in `../utils/sealed-db.ts`: that module owns the
  *   filesystem side (seal, unseal-refusal, atomic swap) and stays free of a static `node:sqlite` import, because it
  *   rides the `@mailwoman/core/utils` barrel into consumers that cannot resolve one. The open lives here, where
- *   `DatabaseClient` is already imported and the cost is paid.
+ *   `DatabaseClient` is already imported and the cost is paid. The open is asynchronous: the write branch awaits the
+ *   seal check against the filesystem before the handle is constructed.
  */
 
 import { DatabaseClient } from "./client.ts"
@@ -23,9 +24,12 @@ import { assertUnsealedForWrite } from "./sealed-db.ts"
  * is constructed in exactly one place, inside `DatabaseClient`, so no caller holds a raw handle and no database ends up
  * described by two schemas.
  */
-export function openBuiltClient<DB = Database>(path: string, opts: { write?: boolean } = {}): DatabaseClient<DB> {
+export async function openBuiltClient<DB = Database>(
+	path: string,
+	opts: { write?: boolean } = {}
+): Promise<DatabaseClient<DB>> {
 	if (opts.write) {
-		assertUnsealedForWrite(path)
+		await assertUnsealedForWrite(path)
 
 		return new DatabaseClient<DB>(path)
 	}

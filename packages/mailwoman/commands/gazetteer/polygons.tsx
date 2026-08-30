@@ -288,7 +288,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 
 		await kdb.destroy() // closes the underlying `dbOut` handle
 
-		swapDatabaseIntoPlace(tmpOut, out)
+		await swapDatabaseIntoPlace(tmpOut, out)
 
 		const mb = Math.round((bytes.b || 0) / 1024 / 1024)
 
