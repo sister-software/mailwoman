@@ -43,9 +43,9 @@ import {
 	readCapabilityManifest,
 	readLabelsFromModelCard,
 	readRequiredChannels,
-	resolveWeights,
 	type RequiredChannels,
-} from "./weights.ts"
+} from "./weights-channels.ts"
+import { resolveWeights } from "./weights.ts"
 
 /**
  * Delta threshold for the capability-manifest gate (#718/#719): a conventions row may forbid a tag only if the mask

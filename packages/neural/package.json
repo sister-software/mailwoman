@@ -225,6 +225,21 @@
 			"node": "./word-consistency.ts",
 			"default": "./out/word-consistency.js",
 			"types": "./out/word-consistency.d.ts"
+		},
+		"./weights-channels": {
+			"node": "./weights-channels.ts",
+			"default": "./out/weights-channels.js",
+			"types": "./out/weights-channels.d.ts"
+		},
+		"./classifier-loader": {
+			"node": "./classifier-loader.ts",
+			"default": "./out/classifier-loader.js",
+			"types": "./out/classifier-loader.d.ts"
+		},
+		"./pair-prior-windows": {
+			"node": "./pair-prior-windows.ts",
+			"default": "./out/pair-prior-windows.js",
+			"types": "./out/pair-prior-windows.d.ts"
 		}
 	},
 	"publishConfig": {

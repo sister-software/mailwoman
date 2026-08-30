@@ -33,7 +33,7 @@ import { Text } from "ink"
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 import { resolverDefaultCountry } from "../../country-scope.ts"
-import type { ShardResolver } from "../../geocode-core.ts"
+import type { ShardResolver } from "../../geocode-shards.ts"
 
 /**
  * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
@@ -155,7 +155,12 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { geocodeAddressVia } = await import("@mailwoman/registry")
 	const { createWOFResolver } = await import("@mailwoman/resolver")
-	const { geocodeAddress, ShardProvider } = await import("../../geocode-core.ts")
+
+	const [{ geocodeAddress }, { ShardProvider }] = await Promise.all([
+		import("../../geocode-core.ts"),
+		import("../../geocode-shards.ts"),
+	])
+
 	const { INTERP_RADIUS_CALIBRATION } = await import("../../interp-calibration.ts")
 	const { createResolverBackend, resolveCandidateDBPath } = await import("../../resolver-backend.ts")
 
@@ -247,7 +252,11 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const { geocodeAddressVia } = await import("@mailwoman/registry")
 		const { createWOFResolver } = await import("@mailwoman/resolver")
-		const { geocodeAddress, ShardProvider } = await import("../../geocode-core.ts")
+
+		const [{ geocodeAddress }, { ShardProvider }] = await Promise.all([
+			import("../../geocode-core.ts"),
+			import("../../geocode-shards.ts"),
+		])
 
 		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))
 		const dataRoot = flags.dataRoot || mailwomanDataRoot()

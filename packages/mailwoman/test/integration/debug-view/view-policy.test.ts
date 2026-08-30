@@ -9,7 +9,7 @@
  */
 
 import { initialZoomForTier } from "mailwoman/debug-view/view-policy"
-import type { GeocodeResult } from "mailwoman/geocode-core"
+import type { GeocodeResult } from "mailwoman/geocode-result"
 import { describe, expect, it } from "vitest"
 
 /**

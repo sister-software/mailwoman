@@ -53,12 +53,10 @@ import {
 	geocodeAddress,
 	geocodeParseInputs,
 	parseForGeocode,
-	ShardProvider,
 	type GeocodeDeps,
-	type GeocodeResult,
-	type ShardResolver,
-	type StateShards,
 } from "./geocode-core.ts"
+import type { GeocodeResult } from "./geocode-result.ts"
+import { ShardProvider, type ShardResolver, type StateShards } from "./geocode-shards.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
 import type { CoastalErosionRoute } from "./observations/coastal-route.ts"
 import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"

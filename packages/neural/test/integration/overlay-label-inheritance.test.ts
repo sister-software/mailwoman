@@ -21,7 +21,8 @@
 
 import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
-import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
+import { resolveWeights } from "@mailwoman/neural/weights"
+import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
 import { describe, expect, test } from "vitest"
 
 /**

@@ -58,7 +58,8 @@ import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline, type PipelineResult } from "mailwoman"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode-core"
+import { ShardProvider } from "mailwoman/geocode-shards"
 import { emitOverpassQL } from "mailwoman/poi-overpass"
 import {
 	buildNoGazetteerMessage,

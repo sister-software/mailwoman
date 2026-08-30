@@ -46,7 +46,8 @@ import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
 
 import { readReleaseManifest } from "./data-release.ts"
-import { geocodeAddress, type GeocodeClassifier, regionSlugFromTree, ShardProvider } from "./geocode-core.ts"
+import { geocodeAddress, type GeocodeClassifier } from "./geocode-core.ts"
+import { regionSlugFromTree, ShardProvider } from "./geocode-shards.ts"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
 import {
 	buildNoGazetteerMessage,

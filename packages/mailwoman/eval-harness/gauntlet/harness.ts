@@ -17,19 +17,16 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
-import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { readDeclaredArtifactFile } from "@mailwoman/neural/weights-channels"
 import { createHash } from "@mailwoman/platform/crypto"
 import { resolve } from "@mailwoman/platform/path"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import type { AdminCoherenceReport } from "../../admin-coherence.ts"
-import {
-	type GeocodeResult,
-	geocodeAddress,
-	geocodeParseInputs,
-	ShardProvider,
-	type GeocodeDeps,
-} from "../../geocode-core.ts"
+import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "../../geocode-core.ts"
+import type { GeocodeResult } from "../../geocode-result.ts"
+import { ShardProvider } from "../../geocode-shards.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
 import {
 	createResolverBackend,

@@ -17,12 +17,12 @@ import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/r
 import {
 	geocodeAddress,
 	countryFromPostcodeFormat,
-	extractGeocodeResult,
-	recognizeBarePostcode,
 	type GeocodeClassifier,
 	type GeocodeDeps,
 	parseForGeocode,
 } from "mailwoman/geocode-core"
+import { extractGeocodeResult } from "mailwoman/geocode-result"
+import { recognizeBarePostcode } from "mailwoman/geocode-tree-reads"
 import { describe, expect, it } from "vitest"
 
 describe("countryFromPostcodeFormat (#928)", () => {

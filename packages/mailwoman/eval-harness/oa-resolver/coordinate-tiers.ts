@@ -9,7 +9,7 @@
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 
-import type { ShardProvider } from "../../geocode-core.ts"
+import type { ShardProvider } from "../../geocode-shards.ts"
 import type { OAResolverEvalOptions } from "./options.ts"
 
 /**
@@ -78,7 +78,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	let cascadeProvider: ShardProvider | null = null
 
 	if (cascadeOn) {
-		const { ShardProvider } = await import("#geocode-core")
+		const { ShardProvider } = await import("#geocode-shards")
 		const { AddressPointSqliteLookup, StreetInterpolator } = await import("@mailwoman/resolver-wof-sqlite")
 
 		cascadeProvider = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRoot)

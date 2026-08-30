@@ -14,7 +14,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
-import { readDeclaredArtifactFile, unfedAnchorDetail } from "@mailwoman/neural/weights"
+import { readDeclaredArtifactFile, unfedAnchorDetail } from "@mailwoman/neural/weights-channels"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 

@@ -33,7 +33,9 @@ import {
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
-import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode-core"
+import type { GeocodeResult } from "mailwoman/geocode-result"
+import { ShardProvider } from "mailwoman/geocode-shards"
 import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 import {

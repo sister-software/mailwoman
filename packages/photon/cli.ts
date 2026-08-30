@@ -27,7 +27,8 @@ import {
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode-core"
+import { ShardProvider } from "mailwoman/geocode-shards"
 import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 import {

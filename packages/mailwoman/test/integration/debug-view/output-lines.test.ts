@@ -9,7 +9,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { outputLines } from "mailwoman/debug-view/output-lines"
-import type { GeocodeResult } from "mailwoman/geocode-core"
+import type { GeocodeResult } from "mailwoman/geocode-result"
 import type { GeocodeTrace } from "mailwoman/geocode-session"
 import { describe, expect, it } from "vitest"
 

@@ -11,7 +11,7 @@
 
 import { assessAdminCoherence, type AdminCoherenceWinner } from "mailwoman/admin-coherence"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
-import type { GeocodeResult } from "mailwoman/geocode-core"
+import type { GeocodeResult } from "mailwoman/geocode-result"
 import { describe, expect, it } from "vitest"
 
 /**

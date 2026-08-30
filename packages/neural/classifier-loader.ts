@@ -59,18 +59,12 @@ export async function loadClassifierFromWeights(
 	/* oxlint-disable typescript/no-restricted-imports -- webpackIgnore keeps these out of the bundle */
 	const [
 		{ $public },
-		{
-			resolveWeights,
-			readLabelsFromModelCard,
-			readCRFTransitions,
-			readRequiredChannels,
-			unfedAnchorDetail,
-			unfedChannelWarner,
-			loadPlacetypeCensus,
-		},
+		{ resolveWeights, loadPlacetypeCensus },
+		{ readLabelsFromModelCard, readCRFTransitions, readRequiredChannels, unfedAnchorDetail, unfedChannelWarner },
 	] = await Promise.all([
 		import(/* webpackIgnore: true */ "@mailwoman/core/env"),
 		import(/* webpackIgnore: true */ "./weights.ts"),
+		import(/* webpackIgnore: true */ "./weights-channels.ts"),
 	])
 
 	/* oxlint-enable typescript/no-restricted-imports */

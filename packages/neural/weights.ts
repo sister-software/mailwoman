@@ -33,27 +33,6 @@ import { fileURLToPath } from "@mailwoman/platform/url"
 import { PlacetypeCensusResolver } from "./placetype-census.ts"
 import { readRequiredChannels } from "./weights-channels.ts"
 
-// Model-card channel declarations moved to `weights-channels.ts`; re-exported so every existing import path keeps
-// working — this module remains the package's weights surface.
-export {
-	ANCHOR_ARTIFACT_CARD_KEYS,
-	type CapabilityManifest,
-	type CRFTransitions,
-	type DeclaredArtifact,
-	inferRequiredChannelsFromInputs,
-	lookupTagCapability,
-	readCapabilityManifest,
-	readCRFTransitions,
-	readDeclaredArtifactFile,
-	readLabelsFromModelCard,
-	readRequiredChannels,
-	type RequiredChannels,
-	type TagCapability,
-	type UnfedChannel,
-	unfedAnchorDetail,
-	unfedChannelWarner,
-} from "./weights-channels.ts"
-
 /**
  * A weights package's own directory, located with Node's native ESM resolver.
  *

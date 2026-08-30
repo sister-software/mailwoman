@@ -9,7 +9,7 @@
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
 import type { GeocodeCommandOptions } from "../../geocode-command-options.ts"
-import type { GeocodeResult } from "../../geocode-core.ts"
+import type { GeocodeResult } from "../../geocode-result.ts"
 import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "../spec.ts"
 
 const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/u

@@ -19,7 +19,8 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
-import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
+import { resolveWeights } from "@mailwoman/neural/weights"
+import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")

@@ -77,22 +77,6 @@ export {
 	POSTCODE_FORMAT_COUNTRY,
 } from "@mailwoman/core/resolver"
 
-// The result contract and the per-state artifact routing live in their own modules; re-exported so every existing
-// `mailwoman/geocode-core` import keeps working.
-export { extractGeocodeResult, type GeocodeResult, type ResolutionTier } from "./geocode-result.ts"
-export { recognizeBarePostcode, treePostcodeValue } from "./geocode-tree-reads.ts"
-
-export {
-	regionSlugFromTree,
-	regionToStateSlug,
-	selectAddressPointsDB,
-	selectInterpolationDB,
-	ShardProvider,
-	type ShardLookupFactory,
-	type ShardResolver,
-	type StateShards,
-} from "./geocode-shards.ts"
-
 /**
  * The minimal classifier surface the cascade needs (a `NeuralAddressClassifier` satisfies it).
  */

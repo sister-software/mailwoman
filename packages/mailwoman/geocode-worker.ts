@@ -15,7 +15,8 @@ import { workerData } from "@mailwoman/platform/worker_threads"
 import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/registry"
 import { createWOFResolver } from "@mailwoman/resolver"
 
-import { geocodeAddress, parseForGeocode, ShardProvider } from "./geocode-core.ts"
+import { geocodeAddress, parseForGeocode } from "./geocode-core.ts"
+import { ShardProvider } from "./geocode-shards.ts"
 import type { GeocodeStreamConfig } from "./geocode-stream.ts"
 import { createResolverBackend } from "./resolver-backend.ts"
 

@@ -32,7 +32,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CommandError } from "#cli-kit"
 
 import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
-import type { GeocodeResult } from "../geocode-core.ts"
+import type { GeocodeResult } from "../geocode-result.ts"
 import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "../geocode-session.ts"
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
 import { outputLines } from "./output-lines.ts"

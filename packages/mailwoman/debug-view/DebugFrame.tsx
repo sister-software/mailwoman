@@ -45,7 +45,7 @@ import { frameToANSILines, type MapFrame } from "@mailwoman/map-tui"
 import { Box, Text } from "ink"
 import React, { memo, useMemo } from "react"
 
-import type { GeocodeResult } from "../geocode-core.ts"
+import type { GeocodeResult } from "../geocode-result.ts"
 import type { GeocodeTrace } from "../geocode-session.ts"
 import { outputLines, type OutputLine } from "./output-lines.ts"
 import { tagColor } from "./tag-colors.ts"

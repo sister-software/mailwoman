@@ -22,7 +22,8 @@ import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
-import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
+import { resolveWeights } from "@mailwoman/neural/weights"
+import { readLabelsFromModelCard } from "@mailwoman/neural/weights-channels"
 import { describe, expect, test } from "vitest"
 
 // CI doesn't ship the v0.2.0 model files — they're operator-supplied via

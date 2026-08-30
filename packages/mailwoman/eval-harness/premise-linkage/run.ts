@@ -31,7 +31,8 @@ import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
 import type { AuthoritativeAssertion } from "../../authoritative.ts"
-import { geocodeAddress, type GeocodeDeps, type GeocodeResult } from "../../geocode-core.ts"
+import { geocodeAddress, type GeocodeDeps } from "../../geocode-core.ts"
+import type { GeocodeResult } from "../../geocode-result.ts"
 import type { PremiseLinkageAdapter } from "./adapter.ts"
 import { assertUsableSalt, caseIDFor } from "./case-id.ts"
 import {

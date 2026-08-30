@@ -25,7 +25,7 @@ import type { decodeAsTuples } from "@mailwoman/core/decoder"
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify"
 import fp from "fastify-plugin"
 import type { AddressTree, PipelineOpts, PipelineResult, POIIntentOutcome } from "mailwoman"
-import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode-core"
+import type { extractGeocodeResult, GeocodeResult } from "mailwoman/geocode-result"
 
 import packageJson from "#package.json" with { type: "json" }
 
@@ -144,7 +144,7 @@ interface PipelineHelpers {
  * cycle (see AGENTS.md § the bare-import + subpath-import cycle).
  */
 async function loadHelpers(): Promise<PipelineHelpers> {
-	const [decoder, geo] = await Promise.all([import("@mailwoman/core/decoder"), import("mailwoman/geocode-core")])
+	const [decoder, geo] = await Promise.all([import("@mailwoman/core/decoder"), import("mailwoman/geocode-result")])
 
 	return { decodeAsTuples: decoder.decodeAsTuples, extractGeocodeResult: geo.extractGeocodeResult }
 }

@@ -12,7 +12,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { readReleaseManifest, resolveShardPath } from "mailwoman/data-release"
-import { ShardProvider } from "mailwoman/geocode-core"
+import { ShardProvider } from "mailwoman/geocode-shards"
 import { afterAll, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
