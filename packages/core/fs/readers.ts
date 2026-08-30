@@ -188,6 +188,19 @@ export function readDirectoryEntries(path: PathBuilderLike): Promise<Dirent[]> {
 }
 
 /**
+ * List every entry under a directory, at any depth, as paths relative to it.
+ *
+ * The recursive counterpart to {@linkcode readDirectory}. It walks the whole tree before answering, so it is the wrong
+ * reader for a directory whose size is unknown — reach for it where the tree is a build artifact you produced.
+ *
+ * @category Node
+ * @category Files
+ */
+export function readDirectoryRecursive(path: PathBuilderLike): Promise<string[]> {
+	return readdir(path.toString(), { recursive: true })
+}
+
+/**
  * List a directory's entry names, answering an empty list when the directory does not exist.
  *
  * The distinction is the caller's to make and this function makes ONE of the two available: an absent directory and an

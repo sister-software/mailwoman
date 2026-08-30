@@ -286,6 +286,10 @@ const MAPPINGS: Record<string, Mapping> = {
 			return { helper: "readDirectoryEntries", module: READERS, args: [args[0]!.text()] }
 		}
 
+		if (optionsAre(args[1], "recursive")) {
+			return { helper: "readDirectoryRecursive", module: READERS, args: [args[0]!.text()] }
+		}
+
 		return null
 	},
 
@@ -304,8 +308,12 @@ const MAPPINGS: Record<string, Mapping> = {
 	copyFileSync: (_call, args) =>
 		args.length === 2 ? { helper: "copyFileTo", module: WRITERS, args: [args[0]!.text(), args[1]!.text()] } : null,
 
+	// `fs.cp` defaults `force` to true, so `{ recursive, force }` asks for what `{ recursive }` already gives.
 	cpSync: (_call, args) =>
-		args.length === 3 && optionsAre(args[2], "recursive")
+		args.length === 3 &&
+		(optionsAre(args[2], "recursive") ||
+			optionsAre(args[2], "recursive", "force") ||
+			optionsAre(args[2], "force", "recursive"))
 			? { helper: "copyPath", module: WRITERS, args: [args[0]!.text(), args[1]!.text()] }
 			: null,
 
@@ -781,12 +789,26 @@ function importSource(node: SgNode<Lang>): string | undefined {
  * The local names a `named_imports` or `object_pattern` binds. An aliased specifier binds its alias.
  */
 function specifierNames(holder: SgNode<Lang>): string[] {
+	return specifiers(holder).map((entry) => entry.name)
+}
+
+/**
+ * Each specifier a holder binds, as the local NAME it introduces and the SOURCE TEXT that introduces it.
+ *
+ * The two differ wherever a specifier carries a modifier or an alias — `type TemporaryDirectory`, `x as y` — and
+ * rebuilding a clause from names alone drops that half. Rebuilt from names, `type TemporaryDirectory` came back as a
+ * value import, which `verbatimModuleSyntax` then emits into the bundle.
+ */
+function specifiers(holder: SgNode<Lang>): Array<{ name: string; text: string }> {
 	return holder
 		.children()
 		.filter((child) => child.kind() === "import_specifier" || child.kind() === "shorthand_property_identifier_pattern")
-		.map((child) => (child.kind() === "import_specifier" ? (child.field("alias") ?? child.field("name")) : child))
-		.map((child) => child?.text())
-		.filter((text): text is string => text !== undefined)
+		.map((child) => {
+			const bound = child.kind() === "import_specifier" ? (child.field("alias") ?? child.field("name")) : child
+
+			return bound ? { name: bound.text(), text: child.text() } : undefined
+		})
+		.filter((entry): entry is { name: string; text: string } => entry !== undefined)
 }
 
 /**
@@ -1067,26 +1089,50 @@ function emitAsyncMarkers(pass: Pass): void {
 }
 
 function reconcileImports(pass: Pass): void {
-	const { rootNode, edits, needed, replaced, rewritten, bindings } = pass
+	const { rootNode, edits, needed, replaced, bindings } = pass
 
 	// Every rewritten call has become `await helper(…)`, so the sync name may now be dead. Counted on identifiers rather
 	// than on the text, so an occurrence in a comment or a string does not keep a binding alive.
 	const excluded = [...bindings.map((binding) => binding.holder), ...replaced]
 
 	for (const binding of bindings) {
-		const survivors = binding.names.filter((name) => !rewritten.has(name) || isReferenced(rootNode, name, excluded))
+		const survivors = binding.names.filter((name) => isReferenced(rootNode, name, excluded))
 
 		if (survivors.length === binding.names.length) continue
 
 		if (survivors.length) {
-			edits.push(binding.holder.replace(`{ ${survivors.join(", ")} }`))
+			edits.push(
+				binding.holder.replace(
+					`{ ${specifiers(binding.holder)
+						.filter((entry) => survivors.includes(entry.name))
+						.map((entry) => entry.text)
+						.join(", ")} }`
+				)
+			)
 
 			continue
 		}
 
-		// Nothing survives. For a static import of named bindings only, the statement went with them — leaving
-		// `import {} from "…"` would assert a side effect this module does not have. Anything else keeps its statement:
-		// a default or namespace binding is still live, and `const {} = await import(…)` still evaluates the module.
+		// Nothing survives, so the statement's only purpose is gone. Both shapes go — a named-imports-only `import`, and
+		// a `const { … } = await import("…")` whose every binding is dead — because the modules this codemod reads from
+		// are the `node:fs` mirror and the JSON helpers, and evaluating one has no effect worth keeping. A default or
+		// namespace binding beside the names is still live, and keeps its statement.
+		if (binding.holder.kind() === "object_pattern") {
+			const declarator = binding.holder.parent()
+			const statement = declarator?.parent()
+
+			if (declarator?.kind() !== "variable_declarator") continue
+
+			if (statement?.kind() !== "lexical_declaration" && statement?.kind() !== "variable_declaration") continue
+
+			// One declarator only. `const { rm } = await import(…), other = 1` would lose `other` with the statement.
+			if (statement.children().filter((child) => child.kind() === "variable_declarator").length !== 1) continue
+
+			edits.push(statement.replace(""))
+
+			continue
+		}
+
 		const statement = binding.holder.parent()?.parent()
 
 		if (
@@ -1117,11 +1163,23 @@ function reconcileImports(pass: Pass): void {
 		// the wrapper disappears into `readLocalJSONFile`, and its import would sit unread in every file it touched.
 		if (!helpers && !/^(@mailwoman\/core\/|#)(fs\/|objects$)/.test(specifier)) continue
 
-		// Existing names are filtered before the new ones are folded in: the collapse orphans CORE helpers as well as
-		// synchronous ones — `parseJSONStrict(await readLocalTextFile(p))` becoming `readLocalJSONFile(p)` leaves
+		// Existing specifiers are filtered before the new names are folded in: the collapse orphans CORE helpers as well
+		// as synchronous ones — `parseJSONStrict(await readLocalTextFile(p))` becoming `readLocalJSONFile(p)` leaves
 		// `readLocalTextFile` imported and unread — and pruning in a second pass would fight this edit for the same node.
-		const existing = specifierNames(holder).filter((name) => isReferenced(rootNode, name, [holder, ...replaced]))
-		const merged = [...new Set([...existing, ...(helpers ?? [])])].toSorted()
+		const before = specifiers(holder)
+		const survivors = before.filter((entry) => isReferenced(rootNode, entry.name, [holder, ...replaced]))
+		const kept = new Set(survivors.map((entry) => entry.name))
+		const additions = [...(helpers ?? [])].filter((name) => !kept.has(name)).toSorted()
+
+		// Survivors keep their ORIGINAL order and their original text; only the new names are sorted, and appended. A
+		// rebuild that re-sorts everything rewrites 296 files that needed nothing.
+		const merged = [...survivors.map((entry) => entry.text), ...additions]
+
+		if (merged.length === before.length && !additions.length) {
+			needed.delete(specifier)
+
+			continue
+		}
 
 		// Nothing survives. A named-imports-only statement goes with its last name; anything carrying a default or a
 		// namespace binding keeps the statement, because that binding is still live.
@@ -1188,11 +1246,14 @@ const codemod: Codemod<Lang> = async (root, options) => {
 	collapseJSONSpellings(pass)
 	applyPromotionSet(pass)
 	rewriteFilesystemCalls(pass)
-
-	if (!edits.length && !promoted.size && !asyncified.size && !awaited.size) return null
-
 	emitAsyncMarkers(pass)
+
+	// Reconciliation runs unconditionally, and the guard below reads its edits too: a file whose only defect is an
+	// import an EARLIER pass left unread has nothing for the transform to match on, and would otherwise never be
+	// reached. Forty-eight such bindings survived the campaign that produced them.
 	reconcileImports(pass)
+
+	if (!edits.length) return null
 
 	// Sorted by MODULE, not by the rendered line: sorting the finished strings orders files by whichever helper happens
 	// to come first alphabetically, which is not an order a reader can predict.

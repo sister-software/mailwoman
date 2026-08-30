@@ -1,5 +1,5 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 
 
 
