@@ -11,7 +11,8 @@
  *   to do with this file.
  */
 
-import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { runMinimalPairs } from "@mailwoman/dev-mcp/minimal-pairs"
 import { describe, expect, it } from "vitest"
 
@@ -27,10 +28,11 @@ interface FakeResult {
  * A registry whose engine answers from a table keyed by input. An input the table does not name throws, which is how
  * the errored-rung path is exercised.
  */
-function fakeRegistry(answers: Record<string, FakeResult>): EngineRegistry {
-	return {
-		acquire: async () => ({
-			engineID: "fake",
+function fakeRegistry(answers: Record<string, FakeResult>): EngineRegistryLike {
+	return stubEngineRegistry({
+		acquire: async () =>
+			stubEngine({
+				engineID: "fake",
 			effective: { locale: "en-US" },
 			session: {
 				geocode: async (input: string) => {
@@ -42,7 +44,7 @@ function fakeRegistry(answers: Record<string, FakeResult>): EngineRegistry {
 				},
 			},
 		}),
-	} as unknown as EngineRegistry
+	})
 }
 
 const PORTOPETRO = "Portopetro, Illes Balears, Spain"

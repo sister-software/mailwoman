@@ -4,18 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import {
-	geometryContains,
-	isPolygonLiteral,
-	isResidentialElement,
-	isSolidPolygonPath,
-	pointInPolygonRings,
-	pointInRing,
-	polygonToOSMFilter,
-	type GeojsonPosition,
-	type OSMOverpassElement,
-	type PolygonLiteral,
-} from "@mailwoman/spatial/geometries/polygon"
+import { geometryContains, isPolygonLiteral, isResidentialElement, isSolidPolygonPath, pointInPolygonRings, pointInRing, polygonToOSMFilter, type GeojsonPosition, type PolygonPath, type OSMOverpassElement, type PolygonLiteral } from "@mailwoman/spatial/geometries/polygon"
 import { expect, test } from "vitest"
 
 const SOLID: PolygonLiteral = {
@@ -42,10 +31,10 @@ test("isPolygonLiteral: only a {type:'Polygon', coordinates: []} object qualifie
 test("isSolidPolygonPath: one ring = solid, more rings = has holes", () => {
 	expect(isSolidPolygonPath(SOLID)).toBe(true)
 
-	const withHole = {
+	const withHole: PolygonLiteral<PolygonPath> = {
 		type: "Polygon",
-		coordinates: [SOLID.coordinates[0], SOLID.coordinates[0]],
-	} as unknown as PolygonLiteral
+		coordinates: [SOLID.coordinates[0]!, SOLID.coordinates[0]!],
+	}
 
 	expect(isSolidPolygonPath(withHole)).toBe(false)
 })
@@ -53,12 +42,12 @@ test("isSolidPolygonPath: one ring = solid, more rings = has holes", () => {
 test("polygonToOSMFilter: emits the exterior ring as Overpass 'lat lon' pairs (NOT GeoJSON lon,lat)", () => {
 	// GeoJSON positions are [lon, lat]; Overpass wants "lat lon" — this swap is the foot-gun.
 	expect(polygonToOSMFilter(SOLID)).toBe("poly:'0 100 0 101 1 101 1 100 0 100'")
-	expect(polygonToOSMFilter({ type: "Point" } as unknown as PolygonLiteral)).toBe("") // non-polygon → empty
+	expect(polygonToOSMFilter({ type: "Point" })).toBe("") // non-polygon → empty
 })
 
 test("isResidentialElement: rejects commercial tags + restaurants, accepts a plain address node", () => {
 	const el = (tags: Record<string, string>): OSMOverpassElement =>
-		({ type: "node", id: 1, lat: 0, lon: 0, tags }) as unknown as OSMOverpassElement
+		({ type: "node", id: 1, lat: 0, lon: 0, tags }) as OSMOverpassElement
 
 	expect(isResidentialElement(el({ "addr:housenumber": "5", "addr:street": "Main" }))).toBe(true)
 	expect(isResidentialElement(el({ shop: "bakery" }))).toBe(false) // forbidden commercial tag

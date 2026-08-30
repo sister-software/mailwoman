@@ -41,7 +41,7 @@ export function wordNorm(s: string): string {
 	return s
 		.split(/\s+/)
 		.map((w) => w.replaceAll(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-		.filter(Boolean)
+		.filter((w) => w.length > 0)
 		.join(" ")
 }
 

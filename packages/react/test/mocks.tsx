@@ -21,7 +21,7 @@ import type {
 } from "#index"
 import type { ResolvedMapPlace } from "#map"
 
-const DRINKING_FOUNTAIN = { id: "drinking_water", label: "Drinking Fountain" } as unknown as CategoryRecord
+const DRINKING_FOUNTAIN = { id: "drinking_water", label: "Drinking Fountain" } as CategoryRecord
 
 /**
  * A fake taxonomy-runtime that classifies everything as a POI query and matches "drinking fountain".
@@ -32,7 +32,10 @@ export function makePOIRuntime(): POIRuntime {
 		requiresBuildLocalLayer: () => false,
 		resolveOvertureCategories: (id: string) => [id],
 		lookupPOICategory: () => [],
-	} as unknown as TaxonomyLookup
+		lookupPOICategoryLocaleNormalized: () => [],
+		lookupPOICategoryTypo: () => [],
+		getAllCategories: () => [],
+	} as TaxonomyLookup
 
 	return {
 		lookup,
@@ -54,7 +57,10 @@ export function makeBrandPOIRuntime(): POIRuntime {
 		requiresBuildLocalLayer: () => false,
 		resolveOvertureCategories: (id: string) => [id],
 		lookupPOICategory: () => [],
-	} as unknown as TaxonomyLookup
+		lookupPOICategoryLocaleNormalized: () => [],
+		lookupPOICategoryTypo: () => [],
+		getAllCategories: () => [],
+	} as TaxonomyLookup
 
 	return {
 		lookup,

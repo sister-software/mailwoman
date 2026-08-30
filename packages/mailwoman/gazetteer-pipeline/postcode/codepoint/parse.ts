@@ -34,12 +34,6 @@
  *
  *        '"AB1 1AA",10,1,2,"X, Y","b"'  →  ['"AB1 1AA"','10','1','2','"X',' Y"','"b"']   // 7 fields, want 6
  *
- *      So the first build attempt classified all 1,746,976 coordinate-bearing rows as malformed. Per
- *      `AGENTS.md`, a duplicate is a bug report about the shared tool: the defect is real and worth
- *      fixing upstream. Until it is, this module takes LINES from {@link TextSpliterator} — which does
- *      its job correctly, and is the part that carries the chunked-I/O performance — and splits fields
- *      with {@link splitCSVLine}, a correct RFC-4180 reader that is ~20 lines and is tested.
- *
  *      Writing a quote-BLIND splitter would also have worked today: all 1,747,841 lines split to
  *      exactly ten fields on a bare comma, so no field currently contains an embedded comma or
  *      newline. That is a claim about this release, not about the format, and it is precisely the
@@ -165,6 +159,10 @@ export function postcodeArea(postcode: string): string {
  * Exists because the repo's shared `CSVSpliterator` does neither the unquoting nor the quote-aware splitting — see the
  * module docstring for the reproducer. Kept deliberately small and total: it never throws, and a malformed line simply
  * yields whatever fields it can, which the caller then rejects on arity and on the postcode pattern.
+ *
+ * TODO: the rationalization above looks outdated. Duplicated too.
+ *
+ * @deprecated use spliterator
  */
 export function splitCSVLine(line: string): string[] {
 	const fields: string[] = []
@@ -206,7 +204,7 @@ export function splitCSVLine(line: string): string[] {
  * Stream every usable record from one extracted area CSV, mutating `stats` as it goes.
  *
  * Yields rather than collecting: the whole of GB is 1.75 M rows, and the shard builder inserts as it reads rather than
- * materializing an array it would only iterate once.
+ * materializing an array it would only iterate once. TODO: Needs a deeper look, and to utilities.
  */
 export async function* readCodePointCSV(csvPath: string, stats: CodePointParseStats): AsyncGenerator<CodePointRecord> {
 	// Lines, not fields — see the module docstring. These files have no header row (the column names ship

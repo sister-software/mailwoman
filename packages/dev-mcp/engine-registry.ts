@@ -20,7 +20,7 @@
  *   behind a Unix socket, with one forked worker per configuration, so warmth survives agent restarts and an engine can
  *   be evicted by killing a process. This holds the registry IN the MCP server process instead. An MCP stdio server
  *   already lives as long as the agent that spawned it, so warmth spans every tool call in a session — the dominant
- *   win — while the socket, the supervisor and the fork protocol are deferred. The costs are real and are paid
+ *   win — while the socket, the supervisor and the fork protocol are deferred. The costs are paid
  *   explicitly: eviction returns less RSS than killing a worker would, and there is no in-process module reload, which
  *   is why {@link EngineRegistry.acquire} REFUSES on a source edit rather than pretending to reload (see
  *   `tree-fingerprint.ts`). Building the supervisor is the right next step if warmth across agent restarts proves to
@@ -271,7 +271,29 @@ export interface EngineSummary {
  * ceiling, not core count. Two resident candidate gazetteers are already several GB before the ONNX sessions, so
  * holding more engines buys nothing and can cost the box.
  */
-export class EngineRegistry {
+/**
+ * What a tool needs from the engine registry.
+ *
+ * The tools take THIS, not {@linkcode EngineRegistry}, for one reason a test finds immediately: the class carries
+ * private fields, so no object literal can ever be assignable to it, and every stub in this package's tests had to
+ * assert through `unknown` — which then keeps compiling after a method is renamed or its signature changes, and the
+ * stub silently stops standing for the thing it doubles. `OracleGeocoderLike` in `oracle-arm.ts` is the same idea,
+ * arrived at earlier.
+ */
+export interface EngineRegistryLike {
+	readonly repoRoot: string
+	readonly bootFingerprint: TreeFingerprint
+	readonly sourceMoved: boolean
+	readonly size: number
+	readonly maxResident: number
+	fingerprint(): TreeFingerprint
+	acquire(config: EngineConfig): Promise<Engine>
+	evict(id: string): boolean
+	evictAll(): number
+	summaries(): EngineSummary[]
+}
+
+export class EngineRegistry implements EngineRegistryLike {
 	readonly #engines = new Map<string, Engine>()
 	readonly #maxResident: number
 	readonly #repoRoot: string
@@ -414,11 +436,11 @@ export class EngineRegistry {
 		}))
 	}
 
-	get size(): number {
-		return this.#engines.size
-	}
-
 	get maxResident(): number {
 		return this.#maxResident
+	}
+
+	get size(): number {
+		return this.#engines.size
 	}
 }

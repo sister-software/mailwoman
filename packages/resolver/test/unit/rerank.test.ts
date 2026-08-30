@@ -22,7 +22,7 @@ function resolvedTree(tag: string, raw = "x"): AddressTree {
 		placeID: "wof:1",
 		lat: 1,
 		lon: 2,
-	} as unknown as AddressNode
+	} as AddressNode
 
 	return { raw, roots: [node] }
 }

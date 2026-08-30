@@ -45,7 +45,7 @@ test("departementInfo: unknown / malformed / non-string → null", () => {
 	expect(departementInfo("")).toBeNull()
 	expect(departementInfo(null)).toBeNull()
 	expect(departementInfo(undefined)).toBeNull()
-	expect(departementInfo(13 as unknown as string)).toBeNull()
+	expect(departementInfo(13)).toBeNull()
 })
 
 test("FR_DEPARTEMENTS: each record's code field equals its own key (no transcription drift)", () => {

@@ -106,7 +106,7 @@ describe("parseCORESRegistration — abstention", () => {
 			},
 		}
 
-		await expect(fetchCORESRegistration(client, "nope" as unknown as FRN)).rejects.toThrow(/invalid FRN/)
+		await expect(fetchCORESRegistration(client, "nope" as FRN)).rejects.toThrow(/invalid FRN/)
 	})
 })
 

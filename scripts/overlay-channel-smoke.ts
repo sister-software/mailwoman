@@ -53,8 +53,7 @@ console.log(`streetType        ${resolved.streetTypeLexiconPath ?? "(none)"}`)
 console.log(`localitySurface   ${resolved.localitySurfaceLexiconPath ?? "(none)"}`)
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
-// The channel sources are private config; reach them the way `#decode` does.
-const cfg = (classifier as unknown as { cfg: NeuralAddressClassifierConfig }).cfg
+const cfg = classifier.config
 
 const normalizeCase = values["normalize-case"] !== "false"
 const text = normalizeCase ? normalizeInputCase(values.text!) : values.text!

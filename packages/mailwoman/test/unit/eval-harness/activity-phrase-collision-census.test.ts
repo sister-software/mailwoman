@@ -27,7 +27,7 @@ import { afterAll, describe, expect, it } from "vitest"
 
 const COMMITTED_CENSUS = "packages/mailwoman/eval-harness/activity-lexicon/collision-census.json"
 
-const lexicon = readActivityLexicon()
+const lexicon = await readActivityLexicon()
 
 const committedCensusPath = resolve(String(repoRootPath()), COMMITTED_CENSUS)
 const committed = await readLocalJSONFile<PhraseCollisionCensus>(committedCensusPath)
@@ -52,7 +52,7 @@ afterAll(async () => {
 	await removePathIfPresent(scratchRoot.path)
 })
 
-function census(venues: CensusVenue[]): PhraseCollisionCensus {
+function census(venues: CensusVenue[]): Promise<PhraseCollisionCensus> {
 	return runPhraseCollisionCensus({
 		databasePath: scratchRoot.resolve("absent.db"),
 		repositoryRoot: scratchRoot.path,
@@ -64,7 +64,7 @@ function census(venues: CensusVenue[]): PhraseCollisionCensus {
 }
 
 describe("the probe enumeration", () => {
-	it("mirrors what `matchPOISubject` probes, prefixes included", () => {
+	it("mirrors what `matchPOISubject` probes, prefixes included", async () => {
 		const subjects = candidateSubjects("somewhere to fill a prescription near Toulouse")
 
 		expect(subjects).toContain("somewhere to fill a prescription near Toulouse")
@@ -72,8 +72,8 @@ describe("the probe enumeration", () => {
 		expect(subjects).toContain("somewhere to fill a prescription")
 	})
 
-	it("reaches the carrier prefixes of a committed query the lexicon can claim", () => {
-		const report = census([])
+	it("reaches the carrier prefixes of a committed query the lexicon can claim", async () => {
+		const report = await census([])
 		const probes = report.probes.strings.map((row) => row.probe)
 
 		expect(probes).toContain("somewhere")
@@ -118,8 +118,8 @@ describe("the venue-name classification", () => {
 	})
 })
 
-describe("the census over a synthetic reader", () => {
-	const report = census([
+describe("the census over a synthetic reader", async () => {
+	const report = await census([
 		{ name: "Somewhere", categoryID: "clothing_store", country: "FR" },
 		{ name: "Somewhere Else Pub & Grill", categoryID: "bar", country: "GB" },
 		{ name: "Prescription Shoppe", categoryID: "pharmacy", country: "US" },

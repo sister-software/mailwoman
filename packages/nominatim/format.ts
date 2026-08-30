@@ -41,7 +41,10 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 	const features: NominatimFeatureCollection["features"] = []
 
 	for (const r of results) {
-		if (r.lat == null || r.lon == null) continue
+		// `toNominatimResult` writes "" for a missing coordinate, never null, so EMPTINESS is the condition that
+		// matters. A `== null` check alone lets a coordinate-less row through as Point [0, 0] — a real place in the
+		// Gulf of Guinea rather than an absence.
+		if (!r.lat || !r.lon) continue
 		const { lat, lon, boundingbox, geojson, ...properties } = r
 
 		const feature: NominatimFeatureCollection["features"][number] = {

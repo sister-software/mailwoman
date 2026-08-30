@@ -474,7 +474,7 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 //#region Core
 
 async function runRegistry(csvPath: string, options: Options): Promise<string> {
-	const { inferMapping, ingestRows, parseCSV, resolveEntities, toGeoJSON } = await import("@mailwoman/registry")
+	const { inferMapping, ingestRows, streamRows, resolveEntities, toGeoJSON } = await import("@mailwoman/registry")
 
 	if (options.reconcile) {
 		throw new CommandError(
@@ -483,7 +483,7 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 		)
 	}
 
-	const rows = parseCSV(await readLocalTextFile(csvPath))
+	const rows = await Array.fromAsync(streamRows(csvPath))
 	// --infer-mapping reads the header (the first row's keys) and guesses the mapping; an explicit --mapping
 	// still merges on top of it. Otherwise the base is the built-in default.
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING

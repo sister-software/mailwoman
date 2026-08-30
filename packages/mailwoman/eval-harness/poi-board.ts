@@ -783,7 +783,7 @@ export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Pro
 async function buildBoardSemanticLookup(semanticObservation?: boolean): Promise<POIPhraseLookup | undefined> {
 	if (!semanticObservation) return undefined
 
-	const { createSemanticObservationRoute } = await import("../observations/index.ts")
+	const { createSemanticObservationRoute } = await import("#observations/semantic-route")
 
 	return (await createSemanticObservationRoute()).lookup
 }

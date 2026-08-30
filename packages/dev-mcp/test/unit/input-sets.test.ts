@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { InputSetRef } from "@mailwoman/dev-mcp/input-sets"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveInputSet } from "@mailwoman/dev-mcp/input-sets"
@@ -216,6 +217,13 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 	})
 
 	it("refuses an unknown source rather than resolving to an empty set", async () => {
-		await expect(resolveInputSet({ kind: "holdout", source: "de" as never })).rejects.toThrow(/unknown holdout source/)
+		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is a RUNTIME check on a value the
+		// signature forbids. `Reflect.set` puts the value in the field the way the transport does, without asserting to
+		// the compiler that "de" is a HoldoutSource — which is the claim under test, and a false one.
+		const unknownSource: Extract<InputSetRef, { kind: "holdout" }> = { kind: "holdout" }
+
+		Reflect.set(unknownSource, "source", "de")
+
+		await expect(resolveInputSet(unknownSource)).rejects.toThrow(/unknown holdout source/)
 	})
 })

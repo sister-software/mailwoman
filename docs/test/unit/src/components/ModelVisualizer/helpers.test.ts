@@ -71,7 +71,7 @@ describe("ModelVisualizer helpers", () => {
 	})
 
 	it("the committed fixture satisfies ParseTraceLike's alignment invariants", () => {
-		const trace = fixture as unknown as ParseTraceLike
+		const trace = fixture as ParseTraceLike
 
 		expect(trace.labels.length).toBeGreaterThan(0)
 		expect(trace.logits).toHaveLength(trace.pieces.length)

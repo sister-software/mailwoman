@@ -43,6 +43,11 @@ const DOUBLE_QUOTE = 34
 // hook), `--no-header` auto-generates `col_0…col_N` names from the first data row's width, and the
 // separator is any single caller-supplied byte. If a future edit removes those knobs, revisit;
 // until then, don't "finish the job" by swapping in CSVSpliterator.
+/**
+ * TODO: the rationalization above looks outdated. Duplicated too.
+ *
+ * @deprecated use spliterator
+ */
 function splitCSVLine(line: string, separator: number = COMMA): string[] {
 	const fields: string[] = []
 	let start = 0
@@ -64,6 +69,9 @@ function splitCSVLine(line: string, separator: number = COMMA): string[] {
 	return fields
 }
 
+/**
+ * @deprecated belongs in core, if really needed.
+ */
 function stripQuotes(field: string): string {
 	const trimmed = field.trim()
 
@@ -78,6 +86,9 @@ function stripQuotes(field: string): string {
 
 //#region Column name normalization
 
+/**
+ * @deprecated belongs in core, if really needed. spliterator should handle this.
+ */
 function normalizeColumnName(raw: string): string {
 	return (
 		raw

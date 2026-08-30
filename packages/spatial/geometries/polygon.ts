@@ -118,7 +118,9 @@ export function isPolygonLiteral<P extends PolygonPath = PolygonPath>(input: unk
 /**
  * Predicate for checking if a polygon geometry is a solid, i.e. it has no holes.
  */
-export function isSolidPolygonPath(input: PolygonLiteral): boolean {
+// The parameter admits BOTH paths because distinguishing them is the function's job: defaulted to
+// `SolidPolygonPath`, it cannot be asked about a polygon with holes without the caller asserting past the signature.
+export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean {
 	return input.coordinates.length === 1
 }
 
@@ -211,7 +213,9 @@ export interface MultiPolygonLiteral<P extends PolygonPath = SolidPolygonPath> e
  *
  * This is useful when working with the Overpass API.
  */
-export function polygonToOSMFilter(input: PolygonLiteral): string {
+// `unknown`, matched by the guard on the next line: this reads geometry off an API response, and a parameter that
+// promises a polygon makes the guard look redundant while forcing every test of it to assert past the signature.
+export function polygonToOSMFilter(input: unknown): string {
 	if (!isPolygonLiteral(input)) return ""
 
 	const [exteriorRing] = input.coordinates

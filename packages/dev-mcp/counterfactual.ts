@@ -25,7 +25,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import type { GeocodeSessionOptions } from "mailwoman/geocode-session"
 
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { DISTANCE_THRESHOLDS_KM } from "./geo-grade.ts"
 
 /**
@@ -273,7 +273,7 @@ export interface CounterfactualError {
  * Re-run every applicable flip and report the ones that moved the answer.
  */
 export async function runCounterfactuals(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	baseConfig: EngineConfig,
 	effective: GeocodeSessionOptions,
 	targets: CounterfactualTarget[]

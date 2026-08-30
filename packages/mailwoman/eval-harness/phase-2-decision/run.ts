@@ -284,7 +284,7 @@ async function measure(
 	)
 
 	if (needed.has("activity_lexicon")) {
-		const lexicon = readActivityLexicon()
+		const lexicon = await readActivityLexicon()
 		const classes = new Set(lexicon.phrases.map((entry) => entry.attestation.kind))
 		const scoped = lexicon.phrases.filter((entry) => entry.locales?.length).length
 

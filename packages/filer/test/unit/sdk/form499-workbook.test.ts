@@ -178,7 +178,7 @@ describe("readOperatingStates", () => {
 	})
 
 	it("accepts a real boolean cell, since a transformer may have typed the column", () => {
-		expect(readOperatingStates({ alabama: true as unknown as string })).toEqual(["AL"])
+		expect(readOperatingStates({ alabama: true })).toEqual(["AL"])
 	})
 })
 

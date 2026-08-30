@@ -46,17 +46,28 @@ export type BaseBDCLayerSpecification<T> = T extends BDCLayerSpecificationInput
 	? Omit<T, "source-layer" | "source">
 	: never
 
-function createBDCBlockLayer<T extends BDCLayerSpecificationInput>(spec: BaseBDCLayerSpecification<T>): T {
+/**
+ * The three builders below take a spec WITHOUT the source fields and return one with them filled in.
+ *
+ * They are not generic, and the assertion each ends with is single rather than through `unknown`, both for the same
+ * reason: TypeScript cannot verify that `Omit<T, K>` plus the omitted keys reconstitutes `T`, so a builder declared
+ * `<T>(…): T` can only reach its return type by defeating the checker entirely — which then covers the `id`,
+ * `minzoom` and `maxzoom` values too. Nothing wanted the narrowing: the sole consumer,
+ * {@linkcode BroadbandDataCollectionLayers}, annotates the union.
+ */
+type BDCLayerBuilderInput = BaseBDCLayerSpecification<BDCLayerSpecificationInput>
+
+function createBDCBlockLayer(spec: BDCLayerBuilderInput): BDCLayerSpecificationInput {
 	return {
 		...spec,
 		id: `bdc_${TIGERLevel.Block}_${spec.id}`,
 		source: BDCTileSetID,
 		"source-layer": `bdc_${TIGERLevel.Block}`,
 		minzoom: 12,
-	} as unknown as T
+	} as BDCLayerSpecificationInput
 }
 
-function createBDCTractLayer<T extends BDCLayerSpecificationInput>(spec: BaseBDCLayerSpecification<T>): T {
+function createBDCTractLayer(spec: BDCLayerBuilderInput): BDCLayerSpecificationInput {
 	return {
 		...spec,
 		id: `bdc_${TIGERLevel.Tract}_${spec.id}`,
@@ -64,10 +75,10 @@ function createBDCTractLayer<T extends BDCLayerSpecificationInput>(spec: BaseBDC
 		"source-layer": `bdc_${TIGERLevel.Tract}`,
 		maxzoom: 12,
 		minzoom: 9,
-	} as unknown as T
+	} as BDCLayerSpecificationInput
 }
 
-function createBDCCountyLayer<T extends BDCLayerSpecificationInput>(spec: BaseBDCLayerSpecification<T>): T {
+function createBDCCountyLayer(spec: BDCLayerBuilderInput): BDCLayerSpecificationInput {
 	return {
 		...spec,
 		id: `bdc_${TIGERLevel.County}_${spec.id}`,
@@ -75,11 +86,11 @@ function createBDCCountyLayer<T extends BDCLayerSpecificationInput>(spec: BaseBD
 		"source-layer": `bdc_${TIGERLevel.County}`,
 		maxzoom: 9,
 		minzoom: 2,
-	} as unknown as T
+	} as BDCLayerSpecificationInput
 }
 
-export function createBDCLayer<T extends BDCLayerSpecificationInput>(spec: BaseBDCLayerSpecification<T>): T[] {
-	return [createBDCBlockLayer(spec), createBDCTractLayer(spec), createBDCCountyLayer(spec)] as T[]
+export function createBDCLayer(spec: BDCLayerBuilderInput): BDCLayerSpecificationInput[] {
+	return [createBDCBlockLayer(spec), createBDCTractLayer(spec), createBDCCountyLayer(spec)]
 }
 
 const GIGABIT_BROADBAND_SPEED = 1000

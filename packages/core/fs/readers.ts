@@ -14,6 +14,7 @@
 
 import type { Dirent, Stats } from "@mailwoman/platform/fs"
 import {
+	open,
 	access,
 	constants,
 	glob,
@@ -185,7 +186,25 @@ function asTarget(path: PathBuilderLike | URL): URL | string {
 
 // #endregion
 
-// #region Readers
+// #region File Readers
+
+/**
+ * Read the first `byteSize` bytes of a file, or the whole file if it is smaller.
+ *
+ * @param path The file to read.
+ * @param byteSize How many bytes to read. Defaults to 65,536, which is enough to sniff a file's format.
+ *
+ * @returns The bytes read, as a UTF-8 string.
+ * @throws ENOENT when the file does not exist.
+ */
+export async function readFileHead(path: string, byteSize: number): Promise<string> {
+	await using handle = await open(path, "r")
+
+	const buffer = Buffer.alloc(byteSize)
+	const { bytesRead } = await handle.read(buffer, 0, byteSize, 0)
+
+	return buffer.subarray(0, bytesRead).toString("utf8")
+}
 
 /**
  * The first segment may be a `file:` URL, which `node:fs` accepts as an object and rejects as the string it prints.

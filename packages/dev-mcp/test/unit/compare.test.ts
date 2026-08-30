@@ -10,11 +10,13 @@
  *   checked by hand against the two answers the stubs give.
  */
 
+import type { Engine } from "../../engine-registry.ts"
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { ExternalArm } from "@mailwoman/dev-mcp/arms"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
-import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { ExternalGeocoderClient } from "@mailwoman/dev-mcp/external-arm"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -37,8 +39,8 @@ const PELIAS_ARM: ExternalArm = { kind: "external", engine: "pelias", endpoint: 
 /**
  * A registry whose engine answers a fixed coordinate for every input.
  */
-function registryAt(point: { lat: number | null; lon: number | null }): EngineRegistry {
-	const engine = {
+function registryAt(point: { lat: number | null; lon: number | null }): EngineRegistryLike {
+	const engine = stubEngine({
 		engineID: "stub",
 		effective: { locale: "en-US" },
 		fingerprint: { digest: "tree0", gitHead: "head0", dirtyFiles: [] as string[] },
@@ -64,9 +66,9 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 			}),
 			[Symbol.dispose]: () => undefined,
 		},
-	}
+	})
 
-	return {
+	return stubEngineRegistry({
 		repoRoot: "/tmp/stub",
 		maxResident: 2,
 		size: 1,
@@ -82,7 +84,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		summaries: () => [],
 		evict: () => true,
 		evictAll: () => 0,
-	} as unknown as EngineRegistry
+	})
 }
 
 function peliasBody(point: { lat: number; lon: number } | null) {
@@ -105,7 +107,7 @@ function peliasBody(point: { lat: number; lon: number } | null) {
  * @param outcomes Scripted wire responses AFTER the identity probe's two requests, in row order.
  */
 async function comparison(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	outcomes: Parameters<typeof stubTransport>[0],
 	args: Record<string, unknown> = {}
 ) {

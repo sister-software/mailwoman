@@ -69,8 +69,12 @@ export interface ResolvedPlace {
 	placetype: string
 	/**
 	 * ISO 3166-1 alpha-2 country code, if known.
+	 *
+	 * Optional because "if known" is literal: a candidate can carry no country, and `rankByImportance` has a branch for
+	 * it. The type said `string` while that branch existed, so the test proving the branch had to assert past the
+	 * signature.
 	 */
-	country: string
+	country?: string
 	/**
 	 * Centroid latitude in WGS-84 decimal degrees.
 	 */
@@ -738,8 +742,8 @@ export interface ResolveOpts {
 	 * silent.
 	 *
 	 * Measured 2026-08-15 on the FTS backend, which DOES implement both: toggling this flag changed **0 of 837** board
-	 * inputs. The capability is real and its measured value on everything we currently test is zero, which is why
-	 * `candidate.db` was not grown to support it (#1667, closed not-planned). Reopen on a consumer that needs it.
+	 * inputs. The capability and its measured value on everything we currently test is zero, which is why `candidate.db`
+	 * was not grown to support it (#1667, closed not-planned). Reopen on a consumer that needs it.
 	 *
 	 * `false` opts out; byte-stable either way on any backend lacking the relation.
 	 */
@@ -814,7 +818,11 @@ export interface ResolveOpts {
 export interface ResolveCandidateTrace {
 	id: string | number
 	name: string
-	country: string
+	/**
+	 * Optional for the same reason as {@link ResolvedPlace.country}: the trace mirrors the candidate, and a candidate
+	 * can carry no country.
+	 */
+	country?: string
 	placetype: string
 	score: number
 	prominence?: number

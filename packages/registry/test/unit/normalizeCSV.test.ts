@@ -15,6 +15,7 @@ afterAll(() => dir[Symbol.asyncDispose]())
 
 async function fixture(name: string, text: string): Promise<string> {
 	const p = dir.resolve(name)
+
 	await writeLocalFile(text, p)
 
 	return p
@@ -42,14 +43,17 @@ describe("normalizeCSV", () => {
 		)
 
 		const recs = await collect(normalizeCSV(p, { mapping: MAPPING }))
-
 		expect(recs).toHaveLength(2)
-		expect(recs[0]!.id).toBe("c1")
-		expect(recs[0]!.name?.family).toBe("Smith")
-		expect(recs[0]!.organization).toBeTruthy()
-		expect(recs[0]!.address).toBeUndefined() // normalize never geocodes
-		expect(recs[0]!.raw).toMatchObject({ addr: "123 Main St", state: "OR" })
-		expect(recs[1]!.organization).toBeUndefined() // empty org column
+
+		const row0 = recs[0]!
+		const row1 = recs[1]!
+
+		expect(row0.id).toBe("c1")
+		expect(row0.name?.family).toBe("Smith")
+		expect(row0.organization).toBeTruthy()
+		expect(row0.address).toBeUndefined() // normalize never geocodes
+		expect(row0.raw).toMatchObject({ addr: "123 Main St", state: "OR" })
+		expect(row1.organization).toBeUndefined() // empty org column
 	})
 
 	it("falls back to the row index for a missing id", async () => {

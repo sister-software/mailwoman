@@ -43,7 +43,7 @@ import {
 	withheldVerdict,
 } from "./compare-helpers.ts"
 import { crossEngineReading, worktreePairReading, worktreeTreeDelta } from "./confound.ts"
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
 import {
 	DISTANCE_THRESHOLDS_KM,
@@ -161,7 +161,7 @@ function now(deps: CompareDeps): Date {
  * Read `mwdev_compare`'s arguments and run whichever comparison they describe.
  */
 export async function runCompare(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	args: Record<string, unknown>,
 	deps: CompareDeps = {}
 ): Promise<unknown> {
@@ -191,7 +191,7 @@ export async function runCompare(
  * Two mailwoman configurations, graded by the board's own `checkCase`.
  */
 async function compareMailwomanArms(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	set: ResolvedInputSet,
 	configA: EngineConfig,
 	configB: EngineConfig,
@@ -376,7 +376,7 @@ async function compareMailwomanArms(
  * carrying it into a cross-engine row would invite a comparison that has no other side.
  */
 async function mailwomanRunner(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	config: EngineConfig,
 	set: ResolvedInputSet
 ): Promise<ArmRunner> {
@@ -561,7 +561,7 @@ async function externalRunner(
  * raw query to both arms, top-1, haversine, 1/5/25 km, and a no-result — empty OR failed — a miss at every threshold.
  */
 async function compareAcrossEngines(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	set: ResolvedInputSet,
 	armA: ArmSpec,
 	armB: ArmSpec,
@@ -617,7 +617,7 @@ async function compareAcrossEngines(
  * count a transposed pair of same-typed arguments (`runnerA`, `runnerB`) compiles and silently swaps the arms.
  */
 interface GeoScoringContext {
-	registry: EngineRegistry
+	registry: EngineRegistryLike
 	set: ResolvedInputSet
 	armA: ArmSpec
 	armB: ArmSpec

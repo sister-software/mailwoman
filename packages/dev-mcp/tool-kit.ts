@@ -12,7 +12,7 @@ import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mai
 import type { GeocodeRun } from "mailwoman/geocode-session"
 import { z } from "zod"
 
-import type { EngineRegistry } from "./engine-registry.ts"
+import type { EngineRegistryLike } from "./engine-registry.ts"
 import type { GateReport } from "./gate-report.ts"
 import { summarizeGateReport } from "./gate-report.ts"
 import { summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
@@ -224,7 +224,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 	.describe("Every lever, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
 
 export interface DevToolDeps {
-	registry: EngineRegistry
+	registry: EngineRegistryLike
 	jobs: JobRegistry
 	startedAt: number
 }

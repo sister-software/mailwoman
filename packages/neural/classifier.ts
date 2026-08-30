@@ -117,6 +117,17 @@ export class NeuralAddressClassifier {
 	private readonly endTransitions: number[]
 	private readonly cfg: NeuralAddressClassifierConfig
 
+	/**
+	 * The config this classifier was built from, for diagnostics.
+	 *
+	 * Read-only and deliberately narrow in intent: a channel-coverage report needs to see which lexicons and indexes
+	 * were actually wired, and the alternative it replaces is a script asserting its way into `#cfg` — which then keeps
+	 * working after the field is renamed, and reports every channel as absent.
+	 */
+	get config(): Readonly<NeuralAddressClassifierConfig> {
+		return this.cfg
+	}
+
 	constructor(cfg: NeuralAddressClassifierConfig) {
 		this.cfg = cfg
 		this.labels = cfg.labels ?? STAGE2_BIO_LABELS

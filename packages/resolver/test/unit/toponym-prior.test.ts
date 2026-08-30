@@ -212,7 +212,7 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 
 	it("never bands a candidate that carries no country", () => {
 		const anonymous = [
-			place({ id: 1, name: "X", country: undefined as unknown as string, prominence: 6, importance: 0.6 }),
+			place({ id: 1, name: "X", country: undefined, prominence: 6, importance: 0.6 }),
 			place({ id: 2, name: "X", country: "US", prominence: 3, importance: 0.61 }),
 		]
 

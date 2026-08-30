@@ -6,7 +6,7 @@
  *   The compare handler's contract, driven through a stub registry so no weights load and no gazetteer opens.
  */
 
-import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
+import { stubEngine as buildEngine, stubEngineRegistry } from "../stub-registry.ts"
 import { JobRegistry } from "@mailwoman/dev-mcp/jobs"
 import { buildToolTable, type DevTool } from "@mailwoman/dev-mcp/tools"
 import { describe, expect, it } from "vitest"
@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest"
  * A session whose answer is a pure function of the input, so a test can make two arms agree or disagree at will.
  */
 function stubEngine(id: string, effective: Record<string, unknown>, answer: (input: string) => unknown) {
-	return {
+	return buildEngine({
 		engineID: id,
 		effective,
 		fingerprint: { digest: "tree0", gitHead: "head0", dirtyFiles: [] as string[] },
@@ -43,29 +43,16 @@ function stubEngine(id: string, effective: Record<string, unknown>, answer: (inp
 			}),
 			[Symbol.dispose]: () => undefined,
 		},
-	}
+	})
 }
 
 async function tableWith(engines: Array<ReturnType<typeof stubEngine>>): Promise<Map<string, DevTool>> {
 	let call = 0
 
-	const registry = {
-		repoRoot: "/tmp/stub",
-		maxResident: 2,
+	const registry = stubEngineRegistry({
 		size: engines.length,
-		fingerprint: () => ({
-			digest: "tree0",
-			gitHead: "head0",
-			dirtyFiles: [],
-			newestMtimeMs: 0,
-			newestPath: null,
-			filesWalked: 1,
-		}),
 		acquire: async () => engines[Math.min(call++, engines.length - 1)]!,
-		summaries: () => [],
-		evict: () => true,
-		evictAll: () => 0,
-	} as unknown as EngineRegistry
+	})
 
 	return new Map(
 		(await buildToolTable({ registry, jobs: new JobRegistry(), startedAt: Date.now() })).map((tool) => [
@@ -92,17 +79,7 @@ describe("mwdev_job", () => {
 	async function runToCompletion(script: string, exitCode: number): Promise<Record<string, unknown>> {
 		const jobs = new JobRegistry()
 
-		const registry = {
-			repoRoot: process.cwd(),
-			fingerprint: () => ({
-				digest: "t",
-				gitHead: "h",
-				dirtyFiles: [],
-				newestMtimeMs: 0,
-				newestPath: null,
-				filesWalked: 1,
-			}),
-		} as unknown as EngineRegistry
+		const registry = stubEngineRegistry({ repoRoot: process.cwd() })
 
 		const tools = new Map(
 			(await buildToolTable({ registry, jobs, startedAt: Date.now() })).map((tool) => [tool.name, tool])
@@ -144,7 +121,7 @@ describe("mwdev_job", () => {
 
 	it("lists jobs and reports a partial result while one is still running", async () => {
 		const jobs = new JobRegistry()
-		const registry = { repoRoot: process.cwd() } as unknown as EngineRegistry
+		const registry = stubEngineRegistry({ repoRoot: process.cwd() })
 
 		const tools = new Map(
 			(await buildToolTable({ registry, jobs, startedAt: Date.now() })).map((tool) => [tool.name, tool])
@@ -258,7 +235,7 @@ describe("mwdev_compare", () => {
 		const a = stubEngine("a", { x: 1 }, (input) => input)
 		const b = stubEngine("b", { x: 2 }, (input) => input)
 
-		b.fingerprint = { digest: "tree1", gitHead: "head1", dirtyFiles: [] }
+		b.fingerprint = { ...b.fingerprint, digest: "tree1", gitHead: "head1" }
 
 		const tools = await tableWith([a, b])
 

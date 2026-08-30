@@ -55,7 +55,7 @@ const MULTIPOLYGON = {
 			],
 		],
 	],
-} as unknown as GeometryLiteral
+} as GeometryLiteral
 
 test("wellKnownGeometryToGeoJSON: parses a WKT POINT into exact GeoJSON coordinates", () => {
 	const geo = wellKnownGeometryToGeoJSON<GeometryLiteral>("POINT(30 10)")

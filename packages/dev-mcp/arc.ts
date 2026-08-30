@@ -27,7 +27,7 @@
  */
 
 import { runCompare } from "./compare.ts"
-import type { EngineRegistry } from "./engine-registry.ts"
+import type { EngineRegistryLike } from "./engine-registry.ts"
 import type { ComparedRow } from "./tool-kit.ts"
 
 /**
@@ -236,7 +236,7 @@ export function decideArc(
  * Run the arc. Legs run SEQUENTIALLY — three concurrent board runs saturate the lab host, and the arc is not on
  * anyone's critical path.
  */
-export async function runArc(registry: EngineRegistry, options: ArcOptions): Promise<ArcResult> {
+export async function runArc(registry: EngineRegistryLike, options: ArcOptions): Promise<ArcResult> {
 	const inputs = options.inputs ?? { kind: "board" }
 	const locale = options.locale
 	const base = locale ? { locale } : {}

@@ -317,7 +317,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				.then((outcome) => {
 					recordTimed(performance.now() - t0, String(outcome.resolution_tier ?? "admin"))
 
-					return c.json(outcome as unknown as GeocodeOutcome, 200)
+					return c.json(outcome as GeocodeOutcome, 200)
 				})
 				.catch((error) => {
 					recordTimed(performance.now() - t0, "error")
@@ -361,7 +361,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 				// Same wire-vs-domain cast as `/v1/geocode` above — `BatchRow`'s `GeocodeOutcome` half is a
 				// `Record<string, unknown>` passthrough; `BatchResponseSchema` now types its `GeocodeOutcome` union
 				// member as the real shape.
-				return c.json(outcome as unknown as z.infer<typeof BatchResponseSchema>, 200)
+				return c.json(outcome as z.infer<typeof BatchResponseSchema>, 200)
 			} catch (error) {
 				recordTimed(performance.now() - t0, "error")
 				throw error
@@ -388,7 +388,7 @@ export function registerMailwomanAPIRoutes<T extends Partial<GeocodeOutcome> = G
 
 			const { tree, opts } = c.req.valid("json")
 
-			const outcome = await engine.resolveTree(tree as unknown as AddressTree, opts ?? {})
+			const outcome = await engine.resolveTree(tree as AddressTree, opts ?? {})
 
 			return c.json(outcome, 200)
 		},

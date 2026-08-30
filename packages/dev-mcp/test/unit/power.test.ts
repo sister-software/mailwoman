@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The case these numbers exist for is real and dated: a 10-input probe saw no differences and published "zero
- *   effect"; the board said 24 of 837. These tests pin the arithmetic AND the sentence, because the sentence is the
- *   part that travels.
+ *   A 10-input probe saw no differences and published "zero effect".
+ * These tests pin the arithmetic AND the sentence because the sentence is the part that travels.
  */
 
 import { describeObservedRate, wilsonInterval, zeroEventUpperBound } from "@mailwoman/dev-mcp/power"

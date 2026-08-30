@@ -14,7 +14,7 @@
  */
 
 import type { ArmRunner, WorktreeArm } from "./arms.ts"
-import { type EffectiveConfig, type EngineRegistry, resolveConfig } from "./engine-registry.ts"
+import { type EffectiveConfig, type EngineRegistryLike, resolveConfig } from "./engine-registry.ts"
 import type { ResolvedInputSet } from "./input-sets.ts"
 import { runWorktreeArm } from "./worktree-arm.ts"
 
@@ -31,7 +31,7 @@ import { runWorktreeArm } from "./worktree-arm.ts"
  * than to commit.
  */
 export async function worktreeArmRunner(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	arm: WorktreeArm,
 	set: ResolvedInputSet
 ): Promise<ArmRunner> {

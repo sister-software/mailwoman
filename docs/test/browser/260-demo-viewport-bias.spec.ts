@@ -15,7 +15,7 @@ test.describe("Demo — viewport bias (#938)", () => {
 
 		// Park the map on Ohio, zoomed in past the global-view threshold.
 		await page.evaluate(() => {
-			const w = globalThis as unknown as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
+			const w = globalThis as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
 			w.__mailwomanDemoMap?.jumpTo({ center: [-83.11, 40.1], zoom: 8 })
 		})
 
@@ -23,7 +23,7 @@ test.describe("Demo — viewport bias (#938)", () => {
 		// past the global-view gate) so the viewport bias is live before we submit.
 		await page.waitForFunction(
 			() => {
-				const m = (globalThis as unknown as { __mailwomanDemoMap?: { getZoom: () => number } }).__mailwomanDemoMap
+				const m = (globalThis as { __mailwomanDemoMap?: { getZoom: () => number } }).__mailwomanDemoMap
 
 				return !!m && m.getZoom() >= 7
 			},
@@ -47,7 +47,7 @@ test.describe("Demo — viewport bias (#938)", () => {
 		await demo.goto()
 
 		await page.evaluate(() => {
-			const w = globalThis as unknown as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
+			const w = globalThis as { __mailwomanDemoMap?: { jumpTo: (o: unknown) => void } }
 			w.__mailwomanDemoMap?.jumpTo({ center: [-83, 42.3], zoom: 8 }) // Michigan
 		})
 

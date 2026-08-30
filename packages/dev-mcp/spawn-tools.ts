@@ -20,7 +20,7 @@ import { z } from "zod"
 
 import { checkCLIAllowlist } from "./cli-allowlist.ts"
 import { assertCompiledFresh } from "./compiled-tree.ts"
-import type { EngineRegistry } from "./engine-registry.ts"
+import type { EngineRegistryLike } from "./engine-registry.ts"
 import { missingWeightsCacheArtifacts, readGateReport } from "./gate-report.ts"
 import { parseGauntletReport } from "./gauntlet-report.ts"
 import type { JobRegistry } from "./jobs.ts"
@@ -35,7 +35,7 @@ import { summarizeJob, type DevTool } from "./tool-kit.ts"
  */
 const gateOutDirs = new Map<string, string>()
 
-export async function buildSpawnTools(registry: EngineRegistry, jobs: JobRegistry): Promise<DevTool[]> {
+export async function buildSpawnTools(registry: EngineRegistryLike, jobs: JobRegistry): Promise<DevTool[]> {
 	return [
 		{
 			name: "mwdev_gauntlet",

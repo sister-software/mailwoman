@@ -509,10 +509,10 @@ export const GeoIDInputMatchers = {
  * @see {@linkcode GeoIDInputMatchers} for the input-level matchers.
  */
 const GeoIDComponentMatchers = Object.fromEntries(
-	Object.values(GeoIDPart).map((value) => {
+	Object.values(GeoIDPart).map((value): [GeoIDPart, GeoIDInputMatcher] => {
 		return [value, new GeoIDInputMatcher(value)]
 	})
-) as unknown as Record<GeoIDPart, GeoIDInputMatcher>
+) as Record<GeoIDPart, GeoIDInputMatcher>
 
 /**
  * Type-predicate for checking if a value appears to be a valid GeoID component.

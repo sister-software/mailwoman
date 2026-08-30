@@ -16,6 +16,7 @@
  *   and error alike, from this one file.
  */
 
+import type { AddressNode } from "@mailwoman/core/decoder"
 import { z } from "@hono/zod-openapi"
 
 export { APIErrorSchema } from "@mailwoman/api-kit"
@@ -70,7 +71,7 @@ export const ParseOutcomeSchema = z
 	.object({
 		input: z.string(),
 		components: z.array(ParseComponentSchema),
-		tree: z.looseObject({ roots: z.array(z.unknown()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
 		debug: z.string().optional(),
 	})
 	.openapi("ParseOutcome")
@@ -376,7 +377,7 @@ export const BatchResponseSchema = z
  */
 export const ResolveRequestSchema = z
 	.object({
-		tree: z.looseObject({ roots: z.array(z.unknown()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
 		opts: z.looseObject({}).optional(),
 	})
 	.openapi("ResolveRequest")
@@ -386,7 +387,7 @@ export const ResolveRequestSchema = z
  */
 export const ResolveResponseSchema = z
 	.object({
-		tree: z.looseObject({ roots: z.array(z.unknown()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
 	})
 	.openapi("ResolveResponse")
 

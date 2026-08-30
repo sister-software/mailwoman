@@ -9,9 +9,12 @@
  *   thing — a comparison that must NOT produce a verdict, for two different reasons.
  */
 
+import type { Engine } from "../../engine-registry.ts"
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
+import { createPostalAddressID } from "@mailwoman/address-id"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
-import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "@mailwoman/dev-mcp/oracle-arm"
 import { listRuns } from "@mailwoman/dev-mcp/run-store"
 import { afterAll, describe, expect, it } from "vitest"
@@ -26,8 +29,8 @@ const ANDORRA_LA_VELLA = { lat: 42.5063174, lon: 1.5218355 }
  * A registry whose engine answers one fixed coordinate. `hierarchy` is present because the mailwoman arm reads its
  * answer through the gauntlet projection, which walks it.
  */
-function registryAt(point: { lat: number | null; lon: number | null }): EngineRegistry {
-	const engine = {
+function registryAt(point: { lat: number | null; lon: number | null }): EngineRegistryLike {
+	const engine = stubEngine({
 		engineID: "stub",
 		effective: { locale: "en-US" },
 		fingerprint: { digest: "tree0", gitHead: "head0", dirtyFiles: [] as string[] },
@@ -48,9 +51,9 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 			}),
 			[Symbol.dispose]: () => undefined,
 		},
-	}
+	})
 
-	return {
+	return stubEngineRegistry({
 		repoRoot: "/tmp/stub",
 		maxResident: 2,
 		size: 1,
@@ -66,7 +69,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		summaries: () => [],
 		evict: () => true,
 		evictAll: () => 0,
-	} as unknown as EngineRegistry
+	})
 }
 
 /**
@@ -82,14 +85,26 @@ function oracleAt(point: { lat: number; lon: number }): OracleGeocoderLike & { c
 
 			return [
 				{
-					provider: "census",
+					provider: OracleProviderName.Census,
 					address: {
 						components: {},
 						canonicalKey: "stub",
 						formatted: "Stub, AD",
-						geocode: { coordinate: { latitude: point.lat, longitude: point.lon }, tier: "admin" },
+						geocode: {
+							coordinate: { latitude: point.lat, longitude: point.lon },
+							tier: "admin",
+							uncertaintyMeters: null,
+						},
 					},
-				} as never,
+					addressID: createPostalAddressID({
+						coordinate: { latitude: point.lat, longitude: point.lon },
+						address: "Stub, AD",
+					}),
+					partialMatch: false,
+					placeID: null,
+					plusCode: null,
+					raw: undefined,
+				},
 			]
 		},
 		[Symbol.asyncDispose]: async () => undefined,

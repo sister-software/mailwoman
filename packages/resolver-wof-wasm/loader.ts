@@ -55,7 +55,7 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 	// sqlite3InitModule's TS signature lies about its options bag — the runtime DOES accept the
 	// Emscripten-style {print, printErr, locateFile} options shown in the upstream docs. Cast to
 	// `any` for the call site rather than shadowing the typed wrapper for the entire file.
-	const sqlite3 = await (sqlite3InitModule as unknown as (opts: Record<string, unknown>) => Promise<Sqlite3Static>)({
+	const sqlite3 = await (sqlite3InitModule as (opts: Record<string, unknown>) => Promise<Sqlite3Static>)({
 		print: () => {}, // suppress stdout from the WASM runtime
 		printErr: (msg: string) => console.error("[sqlite-wasm]", msg),
 		...(opts.wasmURL ? { locateFile: (name: string) => (name.endsWith(".wasm") ? opts.wasmURL! : name) } : {}),

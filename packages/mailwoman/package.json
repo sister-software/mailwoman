@@ -104,6 +104,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"#observations/*": {
+			"node": "./observations/*.ts",
+			"default": "./out/observations/*.js",
+			"types": "./out/observations/*.d.ts"
+		},
 		"#cli-kit/weights-guard": {
 			"node": "./out/cli-kit/weights-guard.js",
 			"default": "./out/cli-kit/weights-guard.js",

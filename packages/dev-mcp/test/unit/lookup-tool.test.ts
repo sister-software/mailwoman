@@ -9,14 +9,14 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { runLookup } from "@mailwoman/dev-mcp/lookup-tool"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**
  * The five artifact-backed sources never touch the registry; passing one that would throw proves it.
  */
-const noRegistry = new Proxy({} as EngineRegistry, {
+const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {
 		throw new Error("this source must not build an engine")
 	},

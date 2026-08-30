@@ -115,7 +115,7 @@ function rowsFromExec<Row = Record<string, unknown>>(
 	return values.map((row) => Object.fromEntries(columns.map((c, i) => [c, row[i]])) as Row)
 }
 
-interface HTTPVFSWorker {
+export interface HTTPVFSWorker {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 	/**
 	 * Total bytes range-fetched from the DB so far (Comlink property read on the worker). Drives the live transfer

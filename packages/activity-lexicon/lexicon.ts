@@ -20,7 +20,7 @@
  *   ZERO DEPENDENCIES, deliberately: a vocabulary any package may read must not drag a graph behind it.
  */
 
-import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolve } from "@mailwoman/platform/path"
 
 import type {
@@ -44,13 +44,21 @@ const DERIVATIONS: ReadonlyArray<ActivityPhraseDerivation> = ["plural", "nominal
  * source — or under `out/` when compiled, so there are exactly two places to look. Probing for the FILE rather than
  * attempting a parse keeps a corrupt lexicon from reading as an absent one.
  */
-export const ACTIVITY_LEXICON_PATH: string = (() => {
+export const ACTIVITY_LEXICON_PATH: string = await (async () => {
 	const candidates = [
 		resolve(moduleDir, "data", "activity-lexicon.json"),
 		resolve(moduleDir, "..", "data", "activity-lexicon.json"),
 	]
 
-	const found = candidates.find((candidate) => pathExistsSync(candidate))
+	let found: string | null = null
+
+	for (const candidate of candidates) {
+		if (await pathExists(candidate)) {
+			found = candidate
+
+			break
+		}
+	}
 
 	if (!found) {
 		throw new Error(`activity-lexicon: could not find data/activity-lexicon.json — looked in ${candidates.join(", ")}`)
@@ -230,13 +238,10 @@ let committed: ActivityPhraseLexicon | undefined
  *
  * The committed read is memoized; an explicit path is read fresh, which is what a test asserting a refusal needs.
  */
-export function readActivityLexicon(path: string = ACTIVITY_LEXICON_PATH): ActivityPhraseLexicon {
+export async function readActivityLexicon(path: string = ACTIVITY_LEXICON_PATH): Promise<ActivityPhraseLexicon> {
 	if (path === ACTIVITY_LEXICON_PATH && committed) return committed
 
-	// A corrupt shipped vocabulary is a broken build, and the SyntaxError names the offset. Zero dependencies here, so
-	// `@mailwoman/core`'s parse wrappers are deliberately out of reach.
-	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
-	const lexicon = readLocalJSONFileSync(path) as ActivityPhraseLexicon
+	const lexicon = await readLocalJSONFile<ActivityPhraseLexicon>(path)
 	const problems = auditActivityLexicon(lexicon)
 
 	if (problems.length) {

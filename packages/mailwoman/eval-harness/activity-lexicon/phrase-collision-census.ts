@@ -391,8 +391,8 @@ function committedInputs(repositoryRoot: string): { inputs: Set<string>; files: 
 /**
  * Run the census.
  */
-export function runPhraseCollisionCensus(options: PhraseCollisionCensusOptions): PhraseCollisionCensus {
-	const lexicon = options.lexicon ?? readActivityLexicon()
+export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOptions): Promise<PhraseCollisionCensus> {
+	const lexicon = options.lexicon ?? (await readActivityLexicon())
 	const repositoryRoot = options.repositoryRoot ?? String(repoRootPath())
 	const declared = lexicon.phrases.map((entry) => normalizeActivityPhrase(entry.phrase))
 

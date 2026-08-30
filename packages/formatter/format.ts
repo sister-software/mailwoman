@@ -246,7 +246,7 @@ export function formatFromClassificationMap(
 	const unitParts: string[] = []
 
 	for (const [classification, values] of map) {
-		const value = values.filter(Boolean).join(" ").replaceAll(/\s+/g, " ").trim()
+		const value = values.filter((entry) => entry.length > 0).join(" ").replaceAll(/\s+/g, " ").trim()
 
 		if (!value) continue
 

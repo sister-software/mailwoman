@@ -52,7 +52,7 @@ export const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag
  * identically to `Elephant and Castle Road`, which is a genuine defect (one street read as a junction), so the rule
  * had no power to separate a right answer from a wrong one. A check that fires on both is not evidence about either.
  *
- * The `Elephant and Castle Road` defect is real and stays tracked — by the board's own expectation for that row
+ * The `Elephant and Castle Road` defect stays tracked — by the board's own expectation for that row
  * (#1750), which is where a claim needing TRUTH belongs. This file only makes claims a tree can settle about itself.
  */
 

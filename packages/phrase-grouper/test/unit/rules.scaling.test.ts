@@ -47,11 +47,11 @@ function timeAt(chars: number): number {
 	const shape = computeQueryShape(normalized)
 
 	// Warm once so a cold JIT on the smaller sample does not inflate the ratio.
-	groupPhrasesSync(normalized as never, shape as never, { tag: "en-US" } as never)
+	groupPhrasesSync(normalized, shape)
 
 	const start = performance.now()
 
-	groupPhrasesSync(normalized as never, shape as never, { tag: "en-US" } as never)
+	groupPhrasesSync(normalized, shape)
 
 	return performance.now() - start
 }

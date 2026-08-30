@@ -190,7 +190,7 @@ const DEICTIC_ADVERB_TAIL =
  * Split on whitespace + commas, the way the other rules in this package do.
  */
 function wordsOf(text: string): string[] {
-	return text.split(/[\s,]+/).filter(Boolean)
+	return text.split(/[\s,]+/).filter((word) => word.length > 0)
 }
 
 /**

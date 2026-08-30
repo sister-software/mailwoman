@@ -10,7 +10,8 @@
  *   real gazetteer would take minutes and fail for reasons this file has no opinion about.
  */
 
-import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { describe, expect, it } from "vitest"
 
 interface FakeLookup {
@@ -45,10 +46,11 @@ const dependencies = {
 	}),
 }
 
-function fakeRegistry(byInput: Record<string, FakeLookup[]>): EngineRegistry {
-	return {
-		acquire: async () => ({
-			engineID: "fake",
+function fakeRegistry(byInput: Record<string, FakeLookup[]>): EngineRegistryLike {
+	return stubEngineRegistry({
+		acquire: async () =>
+			stubEngine({
+				engineID: "fake",
 			effective: { dataRoot: "/fake" },
 			fingerprint: { digest: "d", gitHead: "g", dirtyFiles: [] },
 			buildMs: 1,
@@ -71,7 +73,7 @@ function fakeRegistry(byInput: Record<string, FakeLookup[]>): EngineRegistry {
 				}),
 			},
 		}),
-	} as unknown as EngineRegistry
+	})
 }
 
 const LITERAL = (inputs: string[]) => ({ kind: "literal" as const, inputs, why: "census unit test" })

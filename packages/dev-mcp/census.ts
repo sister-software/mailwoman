@@ -29,7 +29,7 @@
 
 import { TRACE_PRIOR_KINDS, type NeuralParseTrace, type TracePriorKind } from "@mailwoman/neural"
 
-import type { EngineRegistry } from "./engine-registry.ts"
+import type { EngineRegistryLike } from "./engine-registry.ts"
 import { evidenceCensus, priorSignals, type ChannelReading } from "./evidence.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import { describeObservedRate } from "./power.ts"
@@ -222,7 +222,7 @@ export function aggregateCensus(rows: Array<{ id: string; input: string; parse: 
 /**
  * Run the census: one traced parse per input, aggregated.
  */
-export async function runCensus(registry: EngineRegistry, args: Record<string, unknown>): Promise<unknown> {
+export async function runCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
 	const config = (args["config"] as Record<string, unknown> | undefined) ?? {}
 	// Tracing is the census's entire input, so it is forced on regardless of what the caller passed.

@@ -379,8 +379,8 @@ export interface SchemaOrgInput {
  */
 export function composeStreetAddress(parts: { houseNumber?: string; street?: string; unit?: string }): string {
 	return [parts.houseNumber, parts.street, parts.unit]
-		.map((p) => p?.trim())
-		.filter(Boolean)
+		.map((part) => part?.trim())
+		.filter((part) => part !== undefined && part.length > 0)
 		.join(" ")
 }
 

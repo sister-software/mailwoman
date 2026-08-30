@@ -41,7 +41,7 @@ describe("TileSource", async () => {
 		const tile = await source.getTile(14, 2612, 5861)
 		expect(tile).not.toBeNull()
 		const roads = tile!.layers.find((layer) => layer.name === "roads")
-		const named = roads!.features.map((f) => f.properties["name"]).filter(Boolean)
+		const named = roads!.features.map((f) => f.properties["name"]).filter((name) => name !== undefined)
 		expect(named).toContain("SE Clinton St")
 	})
 
@@ -95,7 +95,7 @@ describe("TileSource over HTTP", async () => {
 	it("fetches SE Clinton St through range requests", async () => {
 		const tile = await source.getTile(14, 2612, 5861)
 		const roads = tile!.layers.find((layer) => layer.name === "roads")
-		const named = roads!.features.map((f) => f.properties["name"]).filter(Boolean)
+		const named = roads!.features.map((f) => f.properties["name"]).filter((name) => name !== undefined)
 
 		expect(named).toContain("SE Clinton St")
 	})

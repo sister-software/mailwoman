@@ -14,7 +14,7 @@
 
 import { resolvePath } from "path-ts"
 
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import { describeObservedRate, type Selection } from "./power.ts"
 import {
@@ -75,7 +75,7 @@ interface SurfaceRun {
 	eventLabel: string
 }
 
-export async function runReliability(registry: EngineRegistry, args: Record<string, unknown>): Promise<unknown> {
+export async function runReliability(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const surface = (args["surface"] as ReliabilitySurface | undefined) ?? ReliabilitySurface.Decode
 	const binCount = (args["bins"] as number | undefined) ?? DEFAULT_BIN_COUNT
 	const thresholds = (args["thresholds"] as number[] | undefined) ?? [...DEFAULT_THRESHOLDS]
@@ -121,7 +121,7 @@ export async function runReliability(registry: EngineRegistry, args: Record<stri
 	}
 }
 
-async function decodeRun(registry: EngineRegistry, args: Record<string, unknown>): Promise<SurfaceRun> {
+async function decodeRun(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<SurfaceRun> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | undefined) ?? {}
 	// The per-token softmax IS the measurement, so tracing is forced on regardless of what the caller passed.
@@ -147,7 +147,7 @@ async function decodeRun(registry: EngineRegistry, args: Record<string, unknown>
 	}
 }
 
-async function placerRun(registry: EngineRegistry, args: Record<string, unknown>): Promise<SurfaceRun> {
+async function placerRun(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<SurfaceRun> {
 	const corpus = (args["corpus"] as string | undefined) ?? resolvePath(registry.repoRoot, ...PLACER_TEST_SPLIT)
 	const sample = await coarsePlacerReliabilitySample(corpus)
 

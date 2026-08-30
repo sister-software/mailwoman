@@ -163,7 +163,9 @@ const STATE_CODE_BY_KEY: Record<string, string> = {
 	wyoming: "WY",
 }
 
-type WorkbookRow = Record<string, XLSXCellValue>
+// A cell can also arrive as a real boolean: a transformer that types the column hands one through, and `cell()`
+// normalizes it like every other scalar. The union says so rather than a test asserting past it.
+type WorkbookRow = Record<string, XLSXCellValue | boolean>
 
 /**
  * One cell as a trimmed string. `null` (an empty XLSX cell), numbers and dates all normalize here, so no caller has to

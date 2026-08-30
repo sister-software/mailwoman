@@ -194,7 +194,7 @@ describe("§7-3a gates", () => {
 				valid_to: null,
 				match_score: null,
 				evidence: null,
-			} as unknown as FilerEdgeInsert
+			} as FilerEdgeInsert
 
 			await expect(db.insertInto("filer_edge").values(partialEdge).execute()).rejects.toThrow(
 				/NOT NULL constraint failed/
@@ -223,7 +223,7 @@ describe("§7-3a gates", () => {
 				valid_to: null,
 				match_score: null,
 				evidence: null,
-			} as unknown as FilerEdgeInsert
+			} as FilerEdgeInsert
 
 			await expect(db.insertInto("filer_edge").values(partialEdge).execute()).rejects.toThrow(
 				/NOT NULL constraint failed/
@@ -1561,7 +1561,7 @@ describe("§7-3b gates", () => {
 				source_vintage: "2026-01-01",
 				valid_from: "2026-01-01",
 				valid_to: null,
-			} as unknown as FilerFamilyInsert
+			} as FilerFamilyInsert
 
 			await expect(db.insertInto("filer_family").values(partialFamily).execute()).rejects.toThrow(
 				/NOT NULL constraint failed/
@@ -1587,7 +1587,7 @@ describe("§7-3b gates", () => {
 				source_vintage: "2026-01-01",
 				valid_from: "2026-01-01",
 				valid_to: null,
-			} as unknown as FilerFamilyInsert
+			} as FilerFamilyInsert
 
 			await expect(db.insertInto("filer_family").values(partialFamily).execute()).rejects.toThrow(
 				/NOT NULL constraint failed/

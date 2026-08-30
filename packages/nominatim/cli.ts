@@ -23,7 +23,7 @@ import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
-import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
+import { makeUNLocodeAnnotator, UNLocodeLookup } from "@mailwoman/un-locode-lookup"
 import {
 	corsBannerLine,
 	gazetteerBannerLines,
@@ -154,7 +154,7 @@ async function serve(): Promise<void> {
 	const ulDBPath = dataRootPath("un-locode", "un-locode.db")
 
 	if (await pathExists(ulDBPath)) {
-		annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
+		annotators.push(makeUNLocodeAnnotator(new UNLocodeLookup({ databasePath: ulDBPath })))
 	}
 
 	const nutsDBPath = dataRootPath("nuts", "nuts.db")

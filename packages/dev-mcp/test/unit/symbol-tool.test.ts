@@ -6,7 +6,7 @@
  *   The contract half of `mwdev_symbol`: a search that answers with denominators and states what it did not read.
  */
 
-import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
+import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import type { JobRegistry } from "@mailwoman/dev-mcp/jobs"
 import { buildToolTable } from "@mailwoman/dev-mcp/tools"
 import { describe, expect, it } from "vitest"
@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest"
 /**
  * The search reads the working tree and nothing else; a registry that throws on touch proves it.
  */
-const noRegistry = new Proxy({} as EngineRegistry, {
+const noRegistry = new Proxy({} as EngineRegistryLike, {
 	get() {
 		throw new Error("mwdev_symbol must not build an engine")
 	},

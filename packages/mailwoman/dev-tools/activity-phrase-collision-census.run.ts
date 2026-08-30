@@ -64,7 +64,7 @@ const census = runPhraseCollisionCensus({
 	reader: { candidates, claimedByShippedRung: (probe) => shippedRung(probe).length > 0 },
 })
 
-printPhraseCollisionCensus(census)
+printPhraseCollisionCensus(await census)
 
 if (values.out) {
 	await writeLocalJSONFile(census, values.out)

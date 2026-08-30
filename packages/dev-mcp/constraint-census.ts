@@ -27,7 +27,7 @@
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import { openSealedArtifact } from "./lookup.ts"
 import { provenanceFor, type Provenance } from "./tool-kit.ts"
@@ -171,7 +171,7 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
  * Walk an input set through one traced engine and aggregate every lookup that resolved nothing.
  */
 export async function runConstraintCensus(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	args: { inputs?: InputSetRef; config?: EngineConfig },
 	dependencies: { openArtifact?: OpenCensusArtifact } = {}
 ): Promise<ConstraintCensusResult> {

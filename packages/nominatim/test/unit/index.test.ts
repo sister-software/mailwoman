@@ -34,7 +34,7 @@ const dc: ResolvedAddress = {
 
 test("toFeatureCollection: wraps results as a GeoJSON FeatureCollection (geometry + bbox + properties)", () => {
 	const r = toNominatimResult({ ...dc, boundingbox: ["38.89", "38.90", "-77.04", "-77.03"] })
-	const fc = toFeatureCollection([r, { ...r, lat: null as never, lon: null as never }])
+	const fc = toFeatureCollection([r, { ...r, lat: "", lon: "" }])
 
 	expect(fc.type).toBe("FeatureCollection")
 	// the row without a coordinate is dropped — a Feature needs a geometry.

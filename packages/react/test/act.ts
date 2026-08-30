@@ -73,6 +73,8 @@ function nextTick(): Promise<void> {
  * still and is caught by the act-wrapped `vi.waitFor` the test awaits next.
  */
 function wrapUserEvent(): void {
+	// `UserEvent` is @testing-library's own interface of named methods, so it is not assignable to an index signature
+	// in either direction. Iterating it by key is the whole point of this wrapper.
 	const target = userEvent as unknown as Record<string, TaggableFn>
 
 	for (const key of Object.keys(target)) {
@@ -166,9 +168,9 @@ function wrapWaitFor(): void {
 
 	if (original[WRAPPED]) return
 
-	const wrapped = actWaitFor as unknown as TaggableFn
+	const wrapped = actWaitFor as TaggableFn
 	wrapped[WRAPPED] = true
-	vi.waitFor = wrapped as unknown as typeof vi.waitFor
+	vi.waitFor = wrapped as typeof vi.waitFor
 }
 
 /**

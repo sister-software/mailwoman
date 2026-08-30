@@ -467,7 +467,7 @@ describe("multi-token name interiors (#1678 thread 3)", () => {
 
 				return []
 			},
-		} as unknown as ResolverBackend
+		} as ResolverBackend
 
 		await findRescoreCandidate(raw, roots, backend, {})
 
@@ -492,7 +492,7 @@ describe("multi-token name interiors (#1678 thread 3)", () => {
 
 				return []
 			},
-		} as unknown as ResolverBackend
+		} as ResolverBackend
 
 		await findRescoreCandidate(raw, roots, backend, {})
 

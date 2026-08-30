@@ -25,7 +25,7 @@ function stubFetch(response: unknown, status = 200) {
 		status,
 		statusText: "",
 		json: async () => response,
-	})) as unknown as typeof fetch
+	})) as typeof fetch
 }
 
 describe("serializableResolveOpts", () => {
@@ -51,14 +51,14 @@ describe("serializableResolveOpts", () => {
 
 describe("RemoteResolver", () => {
 	test("POSTs { tree, opts(stripped) } and returns the response tree", async () => {
-		const resolved: AddressTree = { raw: tree.raw, roots: [{ ...tree.roots[0]!, placeID: "wof:1" } as never] }
+		const resolved: AddressTree = { raw: tree.raw, roots: [{ ...tree.roots[0]!, placeID: "wof:1" }] }
 		const fetchSpy = stubFetch({ tree: resolved })
 		const r = new RemoteResolver({ endpoint: "http://resolver/v1/resolve", fetch: fetchSpy })
 
 		const got = await r.resolveTree(tree, { defaultCountry: "US", addressPoints: {} as AddressPointLookup })
 
 		expect(got).toEqual(resolved)
-		const [, init] = (fetchSpy as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls[0]!
+		const [, init] = (fetchSpy as { mock: { calls: [string, RequestInit][] } }).mock.calls[0]!
 		const body = parseJSONStrict<{ tree: AddressTree; opts: unknown }>(init.body as string)
 		expect(body.tree.raw).toBe(tree.raw)
 		expect(body.opts).toEqual({ defaultCountry: "US" }) // addressPoints stripped

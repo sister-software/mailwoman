@@ -127,7 +127,7 @@ export async function loadDemoAssets(
 			// Fetched tolerantly — a 404 is skipped, so this is byte-stable if the bucket path regresses.
 			pairIndexURLs: pairIndexURLs(pairIndexBase),
 		}
-	)) as unknown as {
+	)) as {
 		classifier: MailwomanClassifierLike
 		diagnostics?: { backend: string; modelBytes: number } | null
 		postcodeAnchorLookup?: Map<string, { lat: number; lon: number }> | null

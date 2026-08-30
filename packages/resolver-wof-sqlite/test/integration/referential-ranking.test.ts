@@ -17,9 +17,10 @@
  *   Encyclopedic importance ranks the 418-person Aude hamlet **4.8x above** the Paris suburb of 96,128.
  *   A geocoder that ranked on it would answer a bare "Saint-Denis" with a hamlet nobody means. The
  *   fixture below carries BOTH scores in the gazetteer — the suburb's disadvantage on the encyclopedic
- *   column is real and present, not withheld — and asserts the suburb still wins. There is no
- *   hand-written rule, pin, or safelist anywhere in the path: the suburb wins because referential
- *   likelihood is what the ranking reads.
+ *   column isn't withheld and asserts the suburb still wins.
+ *
+ *   The suburb wins because referential likelihood is what the ranking reads.
+ * 	 There is no hand-written rule, pin, or safelist anywhere in the path.
  *
  *   The second half of the file is the D-rule measurement for the split (§2 R1's "expected resolver
  *   delta is ZERO"): every ranking assertion is run against a gazetteer WITHOUT the encyclopedic

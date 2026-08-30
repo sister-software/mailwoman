@@ -313,12 +313,12 @@ export const NATIONAL_CAPITAL_MARGIN_LOG10 = 2
  *
  * The rule: within the exact tier, take the first NATIONAL-capital row and walk it upward past each row it is within
  * {@link NATIONAL_CAPITAL_MARGIN_LOG10} of, stopping at the first row over the margin or at another national capital.
- * Same three house rules as the other keys — tier-safe (never crosses the exact/partial boundary; the cost is real and
- * accepted: a capital that only PARTIALLY matched the query — Saint George's, Grenada for the abbreviated "St.
- * George's" — stays behind every exact match, because crossing that line is how iteration 1 answered bare "Djibouti"
- * with the capital city instead of the country), positive evidence only (no capital in the list → identity, and the
- * margin reads the same `prominence ?? score` size every other key does), and stable (non-promoted rows keep their
- * order).
+ * Same three house rules as the other keys — tier-safe (never crosses the exact/partial boundary.
+ *
+ * A capital that only PARTIALLY matched the query — Saint George's, Grenada for the abbreviated "St. George's" — stays
+ * behind every exact match, because crossing that line is how iteration 1 answered bare "Djibouti" with the capital
+ * city instead of the country), positive evidence only (no capital in the list → identity, and the margin reads the
+ * same `prominence ?? score` size every other key does), and stable (non-promoted rows keep their order).
  *
  * The margin deliberately re-uses log10-population units rather than the importance scale: the ratified importance flip
  * decisions (Whitby/Windsor/Springfield) sit on gaps of 0.004–0.02, while the capital contests this key exists for sit

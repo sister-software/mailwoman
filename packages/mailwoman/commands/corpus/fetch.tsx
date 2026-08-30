@@ -131,7 +131,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					countries: options.countries
 						?.split(",")
 						.map((code) => code.trim())
-						.filter(Boolean),
+						.filter((code) => code.length > 0),
 				},
 				report
 			)

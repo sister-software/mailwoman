@@ -257,7 +257,7 @@ export async function runCascade(
 	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
 		...(bias && bias.length ? { bias } : {}),
-	})) as unknown as {
+	})) as {
 		roots: ResolvedTreeNode[]
 	}
 

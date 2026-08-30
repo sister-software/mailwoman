@@ -13,6 +13,7 @@
  *   staging receipt records the run against the exact artifact md5 it graded.
  */
 
+import type { HTTPVFSWorker } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
@@ -28,7 +29,7 @@ const present = await pathExists(CANDIDATE_DB)
  * The minimal httpvfs worker handle over node:sqlite (async exec, sql.js result shape) — the same stub
  * `httpvfs-resolver.test.ts` uses, pointed at the real artifact.
  */
-function stubWorker(db: DatabaseClient<CandidateDatabase>) {
+function stubWorker(db: DatabaseClient<CandidateDatabase>): HTTPVFSWorker {
 	return {
 		db: {
 			async exec(sql: string) {
@@ -65,7 +66,7 @@ const PANEL = [
 describe.skipIf(!present)("Node↔browser candidate parity over the real artifact", () => {
 	const raw = present ? new DatabaseClient<CandidateDatabase>(CANDIDATE_DB, { readOnly: true }) : undefined
 	const node = present ? new NodeCandidateLookup({ databasePath: CANDIDATE_DB }) : undefined
-	const browser = raw ? new BrowserCandidateLookup(stubWorker(raw) as never) : undefined
+	const browser = raw ? new BrowserCandidateLookup(stubWorker(raw)) : undefined
 
 	afterAll(() => {
 		raw?.destroy()

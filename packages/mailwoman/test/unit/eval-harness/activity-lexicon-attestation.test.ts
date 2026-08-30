@@ -22,7 +22,7 @@ import { POI_BOARD_FIXTURES, type POIBoardFixture } from "mailwoman/eval-harness
 import { JSONSpliterator } from "spliterator"
 import { describe, expect, it } from "vitest"
 
-const lexicon = readActivityLexicon()
+const lexicon = await readActivityLexicon()
 
 const board = new Map(
 	(await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))).map((row) => [row.id, row])

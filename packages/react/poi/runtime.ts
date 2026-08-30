@@ -31,8 +31,8 @@ export async function loadPOIRuntime(): Promise<POIRuntime> {
 		import("@mailwoman/poi-taxonomy/data/brands.json").then((m) => m.default),
 	])
 
-	const lookup = createPOITaxonomyLookup(table as unknown as Parameters<typeof createPOITaxonomyLookup>[0])
-	const brands = createPOIBrandLookup(brandTable as unknown as Parameters<typeof createPOIBrandLookup>[0])
+	const lookup = createPOITaxonomyLookup(table as Parameters<typeof createPOITaxonomyLookup>[0])
+	const brands = createPOIBrandLookup(brandTable as Parameters<typeof createPOIBrandLookup>[0])
 
 	// Adapt the taxonomy + brand lookups to the `POIPhraseLookup` shape the classifier expects: categories first, brands
 	// on a category miss.

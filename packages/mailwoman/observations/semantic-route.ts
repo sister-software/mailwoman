@@ -390,7 +390,7 @@ export async function createSemanticObservationRoute(
 	options: SemanticObservationRouteOptions = {}
 ): Promise<SemanticObservationRoute> {
 	const model = options.model ?? (await readCommittedModel())
-	const lexicon = options.lexicon ?? readActivityLexicon()
+	const lexicon = options.lexicon ?? (await readActivityLexicon())
 
 	const resolved: ResolvedPhrase[] = lexicon.phrases.map((entry) => ({
 		entry,

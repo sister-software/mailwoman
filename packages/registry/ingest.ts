@@ -47,18 +47,7 @@ export function delimiterFor(path: string): Delimiter {
 }
 
 /**
- * Stream a delimited file's rows lazily as header-keyed objects — the same shape {@link parseCSV} returns, but
- * **without loading the file into memory**. A multi-GB source (the NPPES registry is ~4.8 GB / 9.6M rows — too big for
- * `readFileSync`, which throws `ERR_STRING_TOO_LONG`) streams line by line. Keys are the original header names
- * (`normalizeKeys: false`) so a {@link ColumnMapping} written against the source's headers matches. Filter/sample the
- * stream before {@link ingestRows} to keep only the rows you geocode.
- *
- * `CSVSpliterator` (spliterator ≥ 3.2.0) handles the whole job: empty fields are preserved (a 330-column NPPES row
- * stays 330 columns), CRLF row terminators are normalized (RFC 4180 default), and `enableQuoteHandling` makes quoted
- * fields — embedded delimiters, embedded newlines, doubled-quote escapes — parse correctly while leaving unquoted files
- * untouched. (This replaced a manual `TextSpliterator` + `split` workaround written against the 3.1.0 column tokenizer,
- * which dropped empty fields and mis-parsed quotes.) Missing trailing fields land as `""`, matching the header
- * contract. For small in-memory parses {@link parseCSV} remains.
+ * Stream a delimited file's rows lazily as header-keyed objects.
  */
 export async function* streamRows(
 	source: string,
@@ -185,19 +174,6 @@ export interface IngestOptions {
 }
 
 /**
- * Parse a CSV string (with a header row) into row objects keyed by column name.
- *
- * Keys and values are trimmed, and keys keep the source's own header spelling so a {@link ColumnMapping} written against
- * those headers matches — the same contract {@link streamRows} holds for the streaming path.
- */
-export function parseCSV(text: string): Record<string, string>[] {
-	return Array.from(
-		CSVSpliterator.from(text, { mode: "object", normalizeKeys: false, enableQuoteHandling: true }),
-		(row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [key.trim(), String(value ?? "").trim()]))
-	)
-}
-
-/**
  * Join the named column(s) of a row into a single trimmed string, or undefined if empty.
  */
 export function pick(row: Record<string, string>, columns?: string | string[], separator = " "): string | undefined {
@@ -256,8 +232,9 @@ export async function ingestRow(
 }
 
 /**
- * Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}. Accepts a sync OR async iterable, so
- * {@link parseCSV} (in-memory) and {@link streamRows} (lazy, for huge files) both thread straight through.
+ * Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}.
+ *
+ * @see {@link streamRows} for the streaming path, which is the preferred way to handle multi-GB files.
  */
 export async function ingestRows(
 	rows: Iterable<Record<string, string>> | AsyncIterable<Record<string, string>>,
@@ -312,6 +289,15 @@ export interface RawGeocode {
  */
 type GeocodeComponents = Parameters<typeof toPostalAddress>[0]
 
+// TODO: Make this sane.
+export type GeocodeAddressViaDeps = { country?: string } & (
+	| {
+			parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
+			geocode: (raw: string) => Promise<RawGeocode | null> | RawGeocode | null
+	  }
+	| { parseAndGeocode: (raw: string) => Promise<{ components: GeocodeComponents; geo: RawGeocode | null }> }
+)
+
 /**
  * Build a {@link GeocodeAddress} from mailwoman's real parse + geocode primitives (injected — the CLI constructs the
  * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills
@@ -326,15 +312,7 @@ type GeocodeComponents = Parameters<typeof toPostalAddress>[0]
  *   parse is the expensive step you'd rather not pay for twice (e.g. share `parseForGeocode`'s tree between the
  *   PostalAddress and `geocodeAddress`'s `parsedTree`). ~1.3× over the two-call shape on a real geocode pipeline.
  */
-export function geocodeAddressVia(
-	deps: { country?: string } & (
-		| {
-				parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
-				geocode: (raw: string) => Promise<RawGeocode | null> | RawGeocode | null
-		  }
-		| { parseAndGeocode: (raw: string) => Promise<{ components: GeocodeComponents; geo: RawGeocode | null }> }
-	)
-): GeocodeAddress {
+export function geocodeAddressVia(deps: GeocodeAddressViaDeps): GeocodeAddress {
 	return async (raw: string): Promise<PostalAddress | null> => {
 		let components: GeocodeComponents
 		let resolved: RawGeocode | null

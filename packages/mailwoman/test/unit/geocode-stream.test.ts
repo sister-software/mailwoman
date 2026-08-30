@@ -20,7 +20,7 @@ interface WiringEcho {
 	cols: number
 }
 
-const echoOf = (record: SourceRecord): WiringEcho => record.address as unknown as WiringEcho
+const echoOf = (record: SourceRecord): WiringEcho => record.address as WiringEcho
 
 async function* records(n: number): AsyncIterableIterator<SourceRecord> {
 	for (let i = 0; i < n; i++) {

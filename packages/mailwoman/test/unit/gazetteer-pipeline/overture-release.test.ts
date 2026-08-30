@@ -8,6 +8,7 @@
  *   the problem it solves. It must proceed, and must not claim the release was verified.
  */
 
+import type { OvertureListingClient } from "mailwoman/gazetteer-pipeline/overture-release"
 import { checkOvertureRelease, listOvertureReleases } from "mailwoman/gazetteer-pipeline/overture-release"
 import { describe, expect, it } from "vitest"
 
@@ -15,14 +16,14 @@ import { describe, expect, it } from "vitest"
  * Minimal stand-in for the bucket listing — only `fetch` is reached.
  */
 const clientReturning = (body: string) =>
-	({ fetch: async () => ({ data: body, status: 200 }) }) as unknown as Parameters<typeof listOvertureReleases>[0]
+	({ fetch: async () => ({ data: body }) }) satisfies OvertureListingClient
 
 const clientThrowing = (message: string) =>
 	({
 		fetch: async () => {
 			throw new Error(message)
 		},
-	}) as unknown as Parameters<typeof listOvertureReleases>[0]
+	}) satisfies OvertureListingClient
 
 const LISTING = `<?xml version="1.0" encoding="UTF-8"?>
 <ListBucketResult>

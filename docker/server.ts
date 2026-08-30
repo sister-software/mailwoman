@@ -62,7 +62,7 @@ function wofPaths() {
 		return env
 			.split(",")
 			.map((p) => p.trim())
-			.filter(Boolean)
+			.filter((p) => p.length > 0)
 	}
 
 	return wofShardPaths().filter((p) => pathExistsSync(p))

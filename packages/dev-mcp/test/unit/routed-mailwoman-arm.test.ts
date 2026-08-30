@@ -3,11 +3,14 @@ import type { ResolvedWeights } from "@mailwoman/neural/weights"
 import type { GauntletDeps, GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { describe, expect, it, vi } from "vitest"
 
+// `tier` carries a real value because `toGauntletResult` passes `resolution_tier` straight through and that field is
+// non-nullable — a null here modelled a row production cannot produce, which is what the assertion through `unknown`
+// was hiding. Everything else stays absent: this stands for an arm that answered without resolving anything.
 const EMPTY_RESULT = {
 	components: {},
 	lat: null,
 	lon: null,
-	tier: null,
+	tier: "admin",
 	locality: null,
 	region: null,
 	country: null,
@@ -19,7 +22,7 @@ const EMPTY_RESULT = {
 	unit: null,
 	postcode_country_scope: null,
 	hierarchy: [],
-} as unknown as GauntletResult
+} as GauntletResult
 
 function resolved(
 	locale: string,

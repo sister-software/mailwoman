@@ -12,12 +12,12 @@
  */
 
 import { censusTrees, type ContractRow } from "./contract-census.ts"
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import { describeObservedRate } from "./power.ts"
 import { provenanceFor } from "./tool-kit.ts"
 
-export async function runContractCensus(registry: EngineRegistry, args: Record<string, unknown>): Promise<unknown> {
+export async function runContractCensus(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const set = await resolveInputSet((args["inputs"] as InputSetRef | undefined) ?? { kind: "board" })
 	const config = (args["config"] as EngineConfig | undefined) ?? {}
 	const engine = await registry.acquire(config)

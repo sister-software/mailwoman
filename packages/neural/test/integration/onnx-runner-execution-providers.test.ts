@@ -13,6 +13,8 @@ import ort from "onnxruntime-node"
 import { afterEach, describe, expect, test, vi } from "vitest"
 
 const fakeSession = () =>
+	// `ort.InferenceSession` is onnxruntime's own class and this repo does not own its shape, so no double can be
+	// assignable in either direction. The runner reads `inputNames` and `run`; those are what the fake supplies.
 	({ inputNames: [], outputNames: [], run: async () => ({}) }) as unknown as ort.InferenceSession
 
 const epsOf = (call: unknown[]) => (call[1] as { executionProviders: string[] }).executionProviders

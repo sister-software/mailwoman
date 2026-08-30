@@ -1,1 +1,1 @@
-export { Readable } from "node:stream"
+export { Duplex, Readable, Writable } from "node:stream"

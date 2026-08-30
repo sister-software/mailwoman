@@ -906,10 +906,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			tree: parsedTree,
 			timing: {
 				parse: parsedAt - startedAt,
-				// Present whenever tracing was ATTEMPTED, including the attempt that threw — its milliseconds are
-				// real and were spent, and hiding them inside `total` would leave the phases not summing to it
-				// (`meaning of zero`: a trace entry of 12 ms next to an absent trace says the attempt failed and
-				// what it cost, which is a different fact from "tracing was off").
+				// Present whenever tracing was ATTEMPTED, including the attempt that threw.
+				// Hiding them inside `total` would leave the phases not summing to it (`meaning of zero`: a trace entry of 12 ms next to an absent trace says the attempt failed and what it cost, which is a different fact from "tracing was off").
 				...(options.trace ? { trace: tracedAt - parsedAt } : {}),
 				resolve: finishedAt - tracedAt,
 				total: finishedAt - startedAt,

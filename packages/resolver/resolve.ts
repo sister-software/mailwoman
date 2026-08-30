@@ -1326,8 +1326,10 @@ class WOFResolver implements Resolver {
 				const tier = Number(b.exactMatch ?? false) - Number(a.exactMatch ?? false)
 
 				if (tier !== 0) return tier
-				const aKey = (a.prominence ?? a.score) + w * (post[a.country] ?? 0)
-				const bKey = (b.prominence ?? b.score) + w * (post[b.country] ?? 0)
+				// A candidate with no country gets no posterior mass rather than an index by `undefined`, which reads
+				// every unknown-country row as the same key.
+				const aKey = (a.prominence ?? a.score) + w * (a.country === undefined ? 0 : (post[a.country] ?? 0))
+				const bKey = (b.prominence ?? b.score) + w * (b.country === undefined ? 0 : (post[b.country] ?? 0))
 
 				return bKey - aKey || b.score - a.score
 			})

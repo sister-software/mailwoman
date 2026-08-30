@@ -17,11 +17,10 @@
  *   the basename) is reported as `wrong_format_present`, never counted as coverage.
  */
 
-import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readFileHead, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
-import { open } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -98,6 +97,8 @@ const GAZETTEER_DUMP_COLUMNS = 19
 /**
  * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns. Accepts a partial head read
  * — the first line is the whole question, so callers need not hand it a resident 350 MB dump.
+ *
+ * TODO: Use a TextSpliterator
  */
 export function looksLikeGazetteerDump(text: string): boolean {
 	let start = 0
@@ -153,14 +154,6 @@ export function parseCountryInfo(text: string): Array<{ country: string; capital
  */
 const FORMAT_SNIFF_BYTES = 65_536
 
-async function readFileHead(path: string): Promise<string> {
-	await using handle = await open(path, "r")
-	const buffer = Buffer.alloc(FORMAT_SNIFF_BYTES)
-	const { bytesRead } = await handle.read(buffer, 0, FORMAT_SNIFF_BYTES, 0)
-
-	return buffer.subarray(0, bytesRead).toString("utf8")
-}
-
 /**
  * Download `countryInfo.txt` plus every missing `<CC>.zip`, extracting each to `<outRoot>/<CC>.txt` beside the
  * hand-fetched dumps, with a `MANIFEST.json` naming fetched, skipped-present, and source-unavailable countries.
@@ -196,7 +189,7 @@ export async function fetchGeonamesDumps(
 		const txtDest = join(options.outRoot, `${country}.txt`)
 
 		if (!options.force && (await pathExists(txtDest))) {
-			if (looksLikeGazetteerDump(await readFileHead(txtDest))) {
+			if (looksLikeGazetteerDump(await readFileHead(txtDest, FORMAT_SNIFF_BYTES))) {
 				skippedPresent.push(country)
 			} else {
 				report?.(`✗ ${country}.txt is present but is not a 19-column gazetteer dump — move it aside and rerun`)

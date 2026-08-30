@@ -13,7 +13,7 @@
  *   mailwoman against mailwoman and produces a beautifully high agreement rate.
  */
 
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import {
 	diffSpans,
@@ -26,7 +26,7 @@ import {
 import { describeObservedRate } from "./power.ts"
 import { inputSetProvenance } from "./tool-kit.ts"
 
-export async function runParseCompare(registry: EngineRegistry, args: Record<string, unknown>): Promise<unknown> {
+export async function runParseCompare(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const endpoint = args["endpoint"] as string | undefined
 
 	if (!endpoint) {

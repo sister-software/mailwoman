@@ -7,6 +7,8 @@
  *   `build-*-shard.mjs` scripts each re-implemented: the seeded LCG PRNG, the tuple reader, and the
  *   canonical → `alignRow` → `LabeledRow` JSONL emit step. A recipe ({@link ShardRecipe}) supplies
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
+ *
+ *   TODO: So much of this file looks like a misunderstanding of spliterator's API.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

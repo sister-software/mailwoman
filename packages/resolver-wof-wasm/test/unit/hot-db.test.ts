@@ -44,7 +44,7 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 	// `MailwomanLookupLike.placetype` is `string | string[]` by design — widened for the shared-resolver
 	// convergence, see its own doc — while this lookup accepts only the branded WOFPlacetype. Every
 	// placetype the cascade passes is valid; the mismatch is parameter variance, not a runtime one.
-	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as unknown as MailwomanLookupLike
+	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as MailwomanLookupLike
 
 	aroundAll(async (runSuite) => {
 		const bytes = await readLocalBuffer(HOT_DB_PATH!)

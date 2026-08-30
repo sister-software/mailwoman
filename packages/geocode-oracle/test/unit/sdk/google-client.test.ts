@@ -266,7 +266,7 @@ describe("the response cache", () => {
 		expect((await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))).toHaveLength(0)
 	})
 
-	it("does persist ZERO_RESULTS, which is a real and stable answer", async () => {
+	it("does persist ZERO_RESULTS as a stable answer", async () => {
 		const transport = stubTransport([{ body: { status: "ZERO_RESULTS", results: [] } }])
 
 		await using client = createGoogleGeocoderClient({ apiKey: API_KEY, cacheDir, axios: transport.axios })

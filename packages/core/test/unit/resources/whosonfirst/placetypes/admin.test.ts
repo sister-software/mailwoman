@@ -75,7 +75,7 @@ test("pluckPlacetypeSpec: builds the localized name map from name:<lang>_x_<kind
 	)
 
 	expect(spec.localizedPropMap.get("eng")?.get("preferred")).toBe("London")
-	expect(spec.localizedPropMap.get("fra" as never)?.get("preferred")).toBe("Londres")
+	expect(spec.localizedPropMap.get("fra")?.get("preferred")).toBe("Londres")
 })
 
 test("pluckFileNameLanguageCode: normalizes a WOF name file to an alpha-2 code; null when unrecognized", () => {

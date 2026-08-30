@@ -68,7 +68,7 @@ import {
 	type CounterfactualTarget,
 	type RowCounterfactuals,
 } from "./counterfactual.ts"
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { evidenceCensus, priorSignals, type ChannelReading, type EvidenceCensus } from "./evidence.ts"
 import { caseCarriesTruth, seedToCaseTable } from "./grade.ts"
 import { resolveInputSet, type InputSetRef, type ResolvedInput } from "./input-sets.ts"
@@ -846,7 +846,7 @@ export function assembleAccount(
 /**
  * Run the diagnosis: one traced geocode per row, an account per row, the counterfactual sweep, aggregated by shape.
  */
-export async function runDiagnose(registry: EngineRegistry, args: Record<string, unknown>): Promise<unknown> {
+export async function runDiagnose(registry: EngineRegistryLike, args: Record<string, unknown>): Promise<unknown> {
 	const ref = (args["inputs"] as InputSetRef | undefined) ?? { kind: "board" }
 	const config = (args["config"] as EngineConfig | undefined) ?? {}
 	const limit = args["limit"] as number | undefined

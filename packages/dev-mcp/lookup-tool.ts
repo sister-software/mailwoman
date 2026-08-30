@@ -30,7 +30,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolveCandidateDBPath, resolveWOFShardPaths } from "mailwoman/resolver-backend"
 import { resolvePath } from "path-ts"
 
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import {
 	type CandidateDelta,
 	diffCandidateRows,
@@ -93,7 +93,7 @@ export interface LookupArgs {
  * when what it lacks is a file.
  */
 export async function runLookup<DB>(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	args: LookupArgs
 ): Promise<LookupResult | CandidateCompareResult> {
 	const { source, queries } = args
@@ -455,7 +455,7 @@ async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): 
  * would consult, so it asks for an engine that loads one — resolving the path any other way would answer about an FST
  * no runtime configuration reads.
  */
-async function runFSTLookup(registry: EngineRegistry, args: LookupArgs): Promise<LookupResult> {
+async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Promise<LookupResult> {
 	const notes =
 		args.source === LookupSource.FST
 			? [
@@ -499,7 +499,7 @@ async function runFSTLookup(registry: EngineRegistry, args: LookupArgs): Promise
  * knew nothing about the queries.
  */
 async function probeLocaleFST(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	args: LookupArgs,
 	locale: string | undefined
 ): Promise<{ artifact?: string; engine_id?: string; rows: LookupRow[]; unavailable_reason?: string }> {

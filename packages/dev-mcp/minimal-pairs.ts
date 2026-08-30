@@ -28,7 +28,7 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 
 /**
  * How far the resolved point must move before the rung is called a divergence, in kilometres.
@@ -88,7 +88,7 @@ interface LadderReading {
 	rungs: RungReading[]
 	/**
 	 * The first rung whose components or coordinate differ from the rung below it. `null` means the whole ladder answered
-	 * identically — a real and reportable result, not a failure to measure.
+	 * identically with reportable result.
 	 */
 	first_divergence: { step: number; input: string; tags: string[]; moved_km: number | null } | null
 	rendered: string
@@ -213,7 +213,7 @@ export interface MinimalPairsResult {
  * input, which is the only thing this measures.
  */
 export async function runMinimalPairs(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	args: { ladders: Ladder[]; config?: EngineConfig }
 ): Promise<MinimalPairsResult> {
 	const ladders = args.ladders ?? []

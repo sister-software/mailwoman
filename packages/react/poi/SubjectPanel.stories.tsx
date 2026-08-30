@@ -18,7 +18,7 @@ export default meta
 
 type Story = StoryObj<typeof SubjectPanel>
 
-const category = (label: string): CategoryRecord => ({ id: label.toLowerCase(), label }) as unknown as CategoryRecord
+const category = (label: string): CategoryRecord => ({ id: label.toLowerCase(), label }) as CategoryRecord
 
 export const WithAnchor: Story = {
 	args: {

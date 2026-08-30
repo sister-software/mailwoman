@@ -23,7 +23,7 @@ import { removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writ
 import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
-const committed = readActivityLexicon()
+const committed = await readActivityLexicon()
 
 function entry(overrides: Partial<ActivityPhraseEntry> & Pick<ActivityPhraseEntry, "phrase">): ActivityPhraseEntry {
 	const activity = overrides.activity ?? "obtain_medication"
@@ -228,7 +228,7 @@ describe("the reader", () => {
 
 		await writeLocalJSONFile(lexicon([entry({ phrase: "x" }), entry({ phrase: "X" })]), path)
 
-		expect(() => readActivityLexicon(path)).toThrow(/is declared twice/)
+		await expect(readActivityLexicon(path)).rejects.toThrow(/is declared twice/)
 
 		await removePathIfPresent(directory)
 	})

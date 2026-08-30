@@ -33,7 +33,7 @@ import { matchPOISubject } from "@mailwoman/kind-classifier"
 import { createSemanticObservationRoute } from "mailwoman/observations"
 import { describe, expect, it } from "vitest"
 
-const committedLexicon = readActivityLexicon()
+const committedLexicon = await readActivityLexicon()
 const committedRoute = await createSemanticObservationRoute()
 const committedModel = await readCommittedModel()
 

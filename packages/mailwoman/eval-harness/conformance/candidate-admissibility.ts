@@ -235,7 +235,7 @@ export function foldLookups(records: readonly ResolveNodeTrace[]): Map<string, L
 				fold.pool.set(candidateKey, {
 					key: candidateKey,
 					name: candidate.name,
-					country: candidate.country,
+					country: candidate.country ?? "",
 					rank: index + 1,
 				})
 			}
