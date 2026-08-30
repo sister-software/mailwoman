@@ -40,6 +40,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { wofShardPaths } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
@@ -124,11 +125,11 @@ function rootsFor(pair: Pair): AddressNode[] {
 	]
 }
 
-function makeBackend(): ResolverBackend {
+async function makeBackend(): Promise<ResolverBackend> {
 	if (backendName === "candidate") {
 		const path = conventionCandidateDBPath()
 
-		if (!existsSync(path)) throw new Error(`candidate gazetteer not found at ${path}`)
+		if (!(await pathExists(path))) throw new Error(`candidate gazetteer not found at ${path}`)
 
 		console.error(`[probe] candidate-table backend: ${path}`)
 
@@ -144,7 +145,7 @@ function makeBackend(): ResolverBackend {
 	return new WOFSQLitePlaceLookup({ databasePath: paths })
 }
 
-const backend = makeBackend()
+const backend = await makeBackend()
 const pairs: Pair[] = []
 
 for await (const row of JSONSpliterator.fromAsync<never>(panel.path)) {

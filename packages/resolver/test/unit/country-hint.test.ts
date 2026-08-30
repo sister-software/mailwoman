@@ -87,7 +87,7 @@ const CURRAMBINE_AU: ResolvedPlace = {
 /**
  * Backend filtered by name + placetype + country + parentID. Regions match any 2-letter token (abbrev).
  */
-function makeBackend(places: ResolvedPlace[]): ResolverBackend {
+async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 	return {
 		async findPlace(query) {
 			const text = query.text.toLowerCase()
@@ -139,7 +139,7 @@ function localityOf(tree: AddressTree): AddressNode | undefined {
 
 describe("resolveTree + country_hint (#833 forward linkage)", () => {
 	it("pins a hinted region to its country → the US locality wins the two-pairs tie", async () => {
-		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, AUGUSTA_ME, AUGUSTA_IT]))
+		const resolver = createWOFResolver(await makeBackend([MESSINA, MAINE, AUGUSTA_ME, AUGUSTA_IT]))
 		const out = await resolver.resolveTree(augustaMeTree(true), {})
 		const loc = localityOf(out)
 
@@ -149,7 +149,7 @@ describe("resolveTree + country_hint (#833 forward linkage)", () => {
 	})
 
 	it("without the hint, the greedy region (more-populous Messina) wins and Augusta lands in Sicily", async () => {
-		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, AUGUSTA_ME, AUGUSTA_IT]))
+		const resolver = createWOFResolver(await makeBackend([MESSINA, MAINE, AUGUSTA_ME, AUGUSTA_IT]))
 		const out = await resolver.resolveTree(augustaMeTree(false), {})
 		const loc = localityOf(out)
 
@@ -158,7 +158,7 @@ describe("resolveTree + country_hint (#833 forward linkage)", () => {
 	})
 
 	it("lets an explicit AU locale scope outrank the ambiguous US hint on WA", async () => {
-		const resolver = createWOFResolver(makeBackend([MAINE, WESTERN_AUSTRALIA, CURRAMBINE_AU]))
+		const resolver = createWOFResolver(await makeBackend([MAINE, WESTERN_AUSTRALIA, CURRAMBINE_AU]))
 
 		const input: AddressTree = {
 			raw: "Currambine WA",

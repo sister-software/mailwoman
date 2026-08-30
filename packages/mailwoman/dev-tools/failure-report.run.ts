@@ -23,9 +23,9 @@
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { readDirectory } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { basename, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
@@ -415,13 +415,13 @@ A ✓ under one model and a failure under another = a fix or a regression **betw
 ${diffTable}
 `
 
-writeFileSync(outPath, mdx)
+await writeLocalFile(mdx, outPath)
 
 // The machine-readable twin of the MDX above. It goes under `$MAILWOMAN_TEMP_ROOT` rather than a repo-relative
 // path, which git ignores — a file written there exists only on the machine that wrote it.
 const jsonPath = tempRootPath("failure-report.json")
 
-writeFileSync(jsonPath, JSON.stringify({ summary, records: all }, null, 2))
+await writeLocalJSONFile({ summary, records: all }, jsonPath)
 
 process.stderr.write(
 	`\nfailure-report: ${fixtures.length} fixtures, ${beyondReach.length} beyond-reach, ${diffs.length} model-specific.\n` +

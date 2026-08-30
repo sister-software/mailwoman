@@ -323,7 +323,7 @@ const SARNEN_CH: ResolvedPlace = {
  * foreign row — `spr.country = ?`), and within the exact tier population is the primary key (#905), so Paris TX beats
  * Paris TN. Name match is exact + case-insensitive.
  */
-function makeBackend(places: readonly ResolvedPlace[]): ResolverBackend & { calls: number } {
+async function makeBackend(places: readonly ResolvedPlace[]): Promise<ResolverBackend & { calls: number }> {
 	const backend = {
 		calls: 0,
 		async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]) {
@@ -386,7 +386,7 @@ const RIVOLI_POOL = [PC_75001_FR, PC_75001_US, PC_75001_DE, PARIS_FR, PARIS_TX, 
 
 describe("findPostcodeCountryScope", () => {
 	it("returns FR for (75001, Paris) under a US default — the case under investigation", async () => {
-		const backend = makeBackend(RIVOLI_POOL)
+		const backend = await makeBackend(RIVOLI_POOL)
 
 		const scope = await findPostcodeCountryScope(addressTree("75001", "Paris").roots, backend, {
 			postcode: "75001",
@@ -401,7 +401,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("returns null for (75001, Addison) — the literal collision, where the US default IS coherent", async () => {
-		const backend = makeBackend(RIVOLI_POOL)
+		const backend = await makeBackend(RIVOLI_POOL)
 
 		const scope = await findPostcodeCountryScope(addressTree("75001", "Addison").roots, backend, {
 			postcode: "75001",
@@ -412,7 +412,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("spends at most two lookups when the default country is coherent (the byte-stable path)", async () => {
-		const backend = makeBackend([PC_62701_US, SPRINGFIELD_IL])
+		const backend = await makeBackend([PC_62701_US, SPRINGFIELD_IL])
 
 		const scope = await findPostcodeCountryScope(addressTree("62701", "Springfield").roots, backend, {
 			postcode: "62701",
@@ -424,7 +424,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("abstains when the postcode is wrong for the city in EVERY candidate country", async () => {
-		const backend = makeBackend([...RIVOLI_POOL, SPRINGFIELD_IL])
+		const backend = await makeBackend([...RIVOLI_POOL, SPRINGFIELD_IL])
 
 		const scope = await findPostcodeCountryScope(addressTree("75001", "Springfield").roots, backend, {
 			postcode: "75001",
@@ -448,7 +448,7 @@ describe("findPostcodeCountryScope", () => {
 			lon: PC_75001_DE.lon,
 		}
 
-		const backend = makeBackend([twinFR, twinDE, cityFR, cityDE])
+		const backend = await makeBackend([twinFR, twinDE, cityFR, cityDE])
 
 		const scope = await findPostcodeCountryScope(addressTree("99999", "Twinsville").roots, backend, {
 			postcode: "99999",
@@ -459,7 +459,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("respects the gate — a same-named locality outside gateKm is not evidence", async () => {
-		const backend = makeBackend(RIVOLI_POOL)
+		const backend = await makeBackend(RIVOLI_POOL)
 		const roots = addressTree("75001", "Paris").roots
 
 		expect(
@@ -478,7 +478,7 @@ describe("findPostcodeCountryScope", () => {
 
 	it("ignores non-exact locality matches (a generous FTS hit is not geographic evidence)", async () => {
 		const fuzzy: ResolvedPlace = { ...PARIS_FR, exactMatch: false }
-		const backend = makeBackend([PC_75001_FR, PC_75001_US, fuzzy, PARIS_TX])
+		const backend = await makeBackend([PC_75001_FR, PC_75001_US, fuzzy, PARIS_TX])
 
 		const scope = await findPostcodeCountryScope(addressTree("75001", "Paris").roots, backend, {
 			postcode: "75001",
@@ -489,7 +489,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("abstains when the tree carries no locality (nothing to be coherent with)", async () => {
-		const backend = makeBackend(RIVOLI_POOL)
+		const backend = await makeBackend(RIVOLI_POOL)
 
 		const scope = await findPostcodeCountryScope(addressTree("75001", null).roots, backend, {
 			postcode: "75001",
@@ -501,7 +501,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("abstains when the shape names no address system (a bare '27')", async () => {
-		const backend = makeBackend(RIVOLI_POOL)
+		const backend = await makeBackend(RIVOLI_POOL)
 
 		const scope = await findPostcodeCountryScope(addressTree("27", "Paris").roots, backend, {
 			postcode: "27",
@@ -540,7 +540,7 @@ describe("findPostcodeCountryScope", () => {
 			exactMatch: true,
 		}
 
-		const backend = makeBackend([plPostcode, koszalin, PC_75001_US])
+		const backend = await makeBackend([plPostcode, koszalin, PC_75001_US])
 
 		const scope = await findPostcodeCountryScope(addressTree("75001", "Koszalin").roots, backend, {
 			postcode: "75001",
@@ -554,7 +554,7 @@ describe("findPostcodeCountryScope", () => {
 	// The CZ block of the 2026-08-09 panel: `Valy 117, 37901 Třeboň` under the en-US locale. `37901` shapes
 	// as [US, DE, FR] and the gazetteer holds it in US and CZ; only CZ has a Třeboň next to it.
 	it("recovers CZ for a 5-digit code the shape list calls US/DE/FR", async () => {
-		const backend = makeBackend([PC_37901_CZ, PC_37901_US, TREBON_CZ])
+		const backend = await makeBackend([PC_37901_CZ, PC_37901_US, TREBON_CZ])
 
 		const scope = await findPostcodeCountryScope(addressTree("37901", "Třeboň").roots, backend, {
 			postcode: "37901",
@@ -566,7 +566,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("recovers DE for (10115, Berlin) under a US default — generality beyond FR", async () => {
-		const backend = makeBackend([PC_10115_DE, PC_10115_US, BERLIN_DE, BERLIN_NH])
+		const backend = await makeBackend([PC_10115_DE, PC_10115_US, BERLIN_DE, BERLIN_NH])
 
 		const scope = await findPostcodeCountryScope(addressTree("10115", "Berlin").roots, backend, {
 			postcode: "10115",
@@ -578,7 +578,7 @@ describe("findPostcodeCountryScope", () => {
 	})
 
 	it("recovers GB for a letter-bearing shape the default country cannot place", async () => {
-		const backend = makeBackend([PC_SW1A_GB, LONDON_GB, LONDON_OH])
+		const backend = await makeBackend([PC_SW1A_GB, LONDON_GB, LONDON_OH])
 
 		const scope = await findPostcodeCountryScope(addressTree("SW1A 1AA", "London").roots, backend, {
 			postcode: "SW1A 1AA",
@@ -599,7 +599,7 @@ describe("findPostcodeCountryScope", () => {
  */
 describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 	it("scopes on the LOCALITY alone when it names exactly one country (Sarnen → CH)", async () => {
-		const backend = makeBackend([PC_6060_NL, PC_6060_AT, SARNEN_CH])
+		const backend = await makeBackend([PC_6060_NL, PC_6060_AT, SARNEN_CH])
 
 		const scope = await findPostcodeCountryScope(addressTree("6060", "Sarnen").roots, backend, {
 			postcode: "6060",
@@ -614,7 +614,7 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 	})
 
 	it("scopes on the POSTCODE alone when the locality is in no gazetteer (13000 / Praha 3 → CZ)", async () => {
-		const backend = makeBackend([PC_13000_CZ])
+		const backend = await makeBackend([PC_13000_CZ])
 
 		const scope = await findPostcodeCountryScope(addressTree("13000", "Praha 3").roots, backend, {
 			postcode: "13000",
@@ -651,7 +651,7 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 			exactMatch: true,
 		}
 
-		const backend = makeBackend([charleroiBE, charleroiUS])
+		const backend = await makeBackend([charleroiBE, charleroiUS])
 
 		const scope = await findPostcodeCountryScope(addressTree("6000", "Charleroi").roots, backend, {
 			postcode: "6000",
@@ -689,7 +689,7 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 			exactMatch: true,
 		}
 
-		const backend = makeBackend([viennaUS, viennaAT])
+		const backend = await makeBackend([viennaUS, viennaAT])
 
 		const scope = await findPostcodeCountryScope(addressTree("22180", "Vienna").roots, backend, {
 			postcode: "22180",
@@ -711,7 +711,7 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 			exactMatch: true,
 		}
 
-		const backend = makeBackend([zipUS, SARNEN_CH])
+		const backend = await makeBackend([zipUS, SARNEN_CH])
 
 		const scope = await findPostcodeCountryScope(addressTree("62701", "Sarnen").roots, backend, {
 			postcode: "62701",
@@ -735,7 +735,7 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 			exactMatch: true,
 		}
 
-		const backend = makeBackend([pc6060CH, SARNEN_CH])
+		const backend = await makeBackend([pc6060CH, SARNEN_CH])
 
 		const scope = await findPostcodeCountryScope(addressTree("6060", "Sarnen").roots, backend, {
 			postcode: "6060",
@@ -746,7 +746,7 @@ describe("findPostcodeCountryScope — single-sided rungs (#24)", () => {
 	})
 
 	it("prefers the PAIR rung over either single-sided one", async () => {
-		const backend = makeBackend([PC_37901_CZ, PC_37901_US, TREBON_CZ])
+		const backend = await makeBackend([PC_37901_CZ, PC_37901_US, TREBON_CZ])
 
 		const scope = await findPostcodeCountryScope(addressTree("37901", "Třeboň").roots, backend, {
 			postcode: "37901",
@@ -821,7 +821,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 	})
 
 	it("falls through to the SECOND locality value when the first is invisible to the band (Aravaca → Madrid → ES)", async () => {
-		const backend = makeBackend([PC_28023_ES, PC_28023_US, MADRID_ES, MADRID_IA])
+		const backend = await makeBackend([PC_28023_ES, PC_28023_US, MADRID_ES, MADRID_IA])
 
 		const scope = await findPostcodeCountryScope(aravacaTree().roots, backend, {
 			postcode: "28023",
@@ -886,7 +886,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 			exactMatch: true,
 		}
 
-		const backend = makeBackend([greenPointPA, greenPointAU, capeTownZA, pc8001AU])
+		const backend = await makeBackend([greenPointPA, greenPointAU, capeTownZA, pc8001AU])
 
 		const tree: AddressTree = {
 			raw: "14 Long St, Green Point, Cape Town, 8001",
@@ -969,7 +969,7 @@ describe("findPostcodeCountryScope — multi-value locality fallthrough", () => 
 			exactMatch: true,
 		}
 
-		const backend = makeBackend([zzvNO, pc20000HR, pc20000RS, mirakolHR, mirakolRS])
+		const backend = await makeBackend([zzvNO, pc20000HR, pc20000RS, mirakolHR, mirakolRS])
 
 		const tree: AddressTree = {
 			raw: "Zzv, 20000 Mirakol",
@@ -1031,7 +1031,7 @@ describe("firstLocalityValue", () => {
 
 describe("resolveTree + postcode-country coherence", () => {
 	it("resolves '12 Rue de Rivoli, 75001 Paris' to Paris TEXAS with the flag OFF (the reported bug)", async () => {
-		const resolver = createWOFResolver(makeBackend(RIVOLI_POOL))
+		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		// The explicit `false` is the whole point of this row now: since the 2026-08-05 promotion an UNSET flag
 		// means ON, so an options object that just omits it no longer reproduces the bug.
@@ -1051,7 +1051,7 @@ describe("resolveTree + postcode-country coherence", () => {
 	})
 
 	it("resolves it to Paris, FRANCE with the flag on", async () => {
-		const resolver = createWOFResolver(makeBackend(RIVOLI_POOL))
+		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
 			defaultCountry: "US",
@@ -1071,7 +1071,7 @@ describe("resolveTree + postcode-country coherence", () => {
 	})
 
 	it("runs by default when the flag is UNSET (operator-promoted to default-ON 2026-08-05)", async () => {
-		const resolver = createWOFResolver(makeBackend(RIVOLI_POOL))
+		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), { defaultCountry: "US" })
 		const locality = nodeByTag(out, "locality")
 
@@ -1088,7 +1088,7 @@ describe("resolveTree + postcode-country coherence", () => {
 	})
 
 	it("stamps the override receipt on the postcode and locality nodes", async () => {
-		const resolver = createWOFResolver(makeBackend(RIVOLI_POOL))
+		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
 			defaultCountry: "US",
@@ -1105,7 +1105,7 @@ describe("resolveTree + postcode-country coherence", () => {
 	})
 
 	it("leaves '75001 Addison' in the US — the coherent default is never overridden", async () => {
-		const resolver = createWOFResolver(makeBackend(RIVOLI_POOL))
+		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Addison"), {
 			defaultCountry: "US",
@@ -1121,12 +1121,12 @@ describe("resolveTree + postcode-country coherence", () => {
 	it("is byte-identical on the domestic control '62701 Springfield' (flag on vs off)", async () => {
 		const pool = [PC_62701_US, SPRINGFIELD_IL]
 
-		const off = await createWOFResolver(makeBackend(pool)).resolveTree(addressTree("62701", "Springfield"), {
+		const off = await createWOFResolver(await makeBackend(pool)).resolveTree(addressTree("62701", "Springfield"), {
 			defaultCountry: "US",
 			postcodeCountryCoherence: false,
 		})
 
-		const on = await createWOFResolver(makeBackend(pool)).resolveTree(addressTree("62701", "Springfield"), {
+		const on = await createWOFResolver(await makeBackend(pool)).resolveTree(addressTree("62701", "Springfield"), {
 			defaultCountry: "US",
 			postcodeCountryCoherence: true,
 		})
@@ -1140,7 +1140,7 @@ describe("resolveTree + postcode-country coherence", () => {
 		// alone (Paris TX sits ~150 km from the Addison ZIP), so the walk scopes to FR instead of
 		// resolving population-first. Only the pair rung runs on this arm; the single-sided rungs
 		// keep needing the default as their domestic-plausibility guard.
-		const backend = makeBackend(RIVOLI_POOL)
+		const backend = await makeBackend(RIVOLI_POOL)
 
 		const out = await createWOFResolver(backend).resolveTree(addressTree("75001", "Paris"), {
 			postcodeCountryCoherence: true,
@@ -1150,7 +1150,7 @@ describe("resolveTree + postcode-country coherence", () => {
 	})
 
 	it("does not fire when the tree carries no postcode", async () => {
-		const backend = makeBackend(RIVOLI_POOL)
+		const backend = await makeBackend(RIVOLI_POOL)
 
 		const out = await createWOFResolver(backend).resolveTree(addressTree(null, "Paris"), {
 			defaultCountry: "US",
@@ -1162,7 +1162,7 @@ describe("resolveTree + postcode-country coherence", () => {
 	})
 
 	it("honours a custom gate radius", async () => {
-		const resolver = createWOFResolver(makeBackend(RIVOLI_POOL))
+		const resolver = createWOFResolver(await makeBackend(RIVOLI_POOL))
 
 		const out = await resolver.resolveTree(addressTree("75001", "Paris"), {
 			defaultCountry: "US",

@@ -6,12 +6,12 @@
  * placetype-pair index build.
  */
 
-import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile, statPath, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { existsSync, lstatSync, readFileSync, renameSync, symlinkSync, unlinkSync } from "@mailwoman/platform/fs"
+import { existsSync, lstatSync, renameSync, symlinkSync, unlinkSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import { fstFreshnessWarning } from "./fst-freshness.ts"
@@ -117,8 +117,8 @@ export interface PairIndexHeaderFields {
  * before 2026-08-04 — the ×5 clone the taste audit named, and the reason three of them were schema-blind while this one
  * was not.
  */
-export function peekPairIndexHeaderFields(path: string): PairIndexHeaderFields {
-	const bytes = readFileSync(path)
+export async function peekPairIndexHeaderFields(path: string): Promise<PairIndexHeaderFields> {
+	const bytes = await readLocalBuffer(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	// "PIX1" little-endian.
 	const MAGIC = 0x31_58_49_50
@@ -250,8 +250,8 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
  * `pairIndexStaleReason` splits: only the caller knows which database it built against. All three FST-linking base
  * packages build against the same one, so they share this rather than each pinning it.
  */
-export function warnIfFSTStale(fstPath: string, locale: string): void {
-	const warning = fstFreshnessWarning({
+export async function warnIfFSTStale(fstPath: string, locale: string): Promise<void> {
+	const warning = await fstFreshnessWarning({
 		fstPath,
 		sourceDBPath: String(dataRootPath("wof", "admin-global-priority.db")),
 		rebuildCommand: `node packages/mailwoman/out/cli.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-gated)`,
@@ -316,7 +316,7 @@ export async function buildPairIndexOverlay({
 			// parent bias — unmeasured there, and the D-rule's answer to an unmeasured locale is a per-locale
 			// gate, not an inherited magnitude. `PairIndexOverlay` therefore has no `parentDelta` field to pass;
 			// adding one is a deliberate act that should arrive with a board.
-			const header = peekPairIndexHeaderFields(DEST)
+			const header = await peekPairIndexHeaderFields(DEST)
 			const reason = pairIndexStaleReason(header, { delta, transitionBeta })
 
 			if (reason) {

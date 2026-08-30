@@ -54,10 +54,10 @@ interface StampSpec {
  * the capable-backend contract. Region lookups miss (the fixture region resolves nothing, like Thüringen under a US
  * scope).
  */
-function makeBackend(
+async function makeBackend(
 	specs: StampSpec[],
 	seen: Array<{ placetype?: string | string[]; regionQualifier?: string; country?: string }> = []
-): ResolverBackend {
+): Promise<ResolverBackend> {
 	return {
 		async findPlace(query) {
 			seen.push({ placetype: query.placetype, regionQualifier: query.regionQualifier, country: query.country })
@@ -138,7 +138,7 @@ describe("the walk's deciding site (#1729 reach contract)", () => {
 		opts: ResolveOpts,
 		seen: Array<{ placetype?: string | string[]; regionQualifier?: string; country?: string }> = []
 	) => {
-		const out = await createWOFResolver(makeBackend(specs, seen)).resolveTree(qualifiedTree(), opts)
+		const out = await createWOFResolver(await makeBackend(specs, seen)).resolveTree(qualifiedTree(), opts)
 		const region = out.roots[0]!
 		const locality = region.children[0]!
 

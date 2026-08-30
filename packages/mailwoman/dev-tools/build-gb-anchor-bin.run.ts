@@ -35,9 +35,9 @@
  *   Usage: node packages/mailwoman/dev-tools/build-gb-anchor-bin.run.ts --out <dir>
  */
 
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -110,7 +110,7 @@ for (const [district, { lat, lon, n }] of outward) {
 
 const bytes = serializePostcodeBinary(entries)
 const outPath = join(values.out, "postcode-gb.bin")
-writeFileSync(outPath, bytes)
+await writeLocalFile(bytes, outPath)
 
 console.log(
 	`GB: ${entries.length.toLocaleString()} keys ` +

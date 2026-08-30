@@ -66,7 +66,7 @@ const PORTLAND_ME: ResolvedPlace = {
 /**
  * Backend filtered by name-substring + placetype + country + `parentID` (descendant scope via parent_id).
  */
-function makeBackend(places: ResolvedPlace[]): ResolverBackend {
+async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 	return {
 		async findPlace(query) {
 			const text = query.text.toLowerCase()
@@ -130,7 +130,7 @@ function regionOf(tree: AddressTree): AddressNode | undefined {
 
 describe("resolveTree + adminCoherence (#263)", () => {
 	it("re-picks (region, locality) so the locality descends from the region", async () => {
-		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
+		const resolver = createWOFResolver(await makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: true })
 		const loc = localityOf(out)
 
@@ -140,7 +140,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("runs by default when adminCoherence is unset (#895 settled drift D1 — default-ON)", async () => {
-		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
+		const resolver = createWOFResolver(await makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
 		const out = await resolver.resolveTree(portlandMeTree(), {})
 		const loc = localityOf(out)
 
@@ -149,7 +149,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 	})
 
 	it("restores the greedy result when adminCoherence is explicitly false (the opt-out)", async () => {
-		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
+		const resolver = createWOFResolver(await makeBackend([MESSINA, MAINE, MISSOURI, PORTLAND_ME]))
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: false })
 		const loc = localityOf(out)
 
@@ -160,7 +160,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 
 	it("does not re-pick when no same-named locality descends from any region candidate", async () => {
 		// No Portland anywhere → the pass finds no consistent pair and leaves the tree alone.
-		const resolver = createWOFResolver(makeBackend([MESSINA, MAINE, MISSOURI]))
+		const resolver = createWOFResolver(await makeBackend([MESSINA, MAINE, MISSOURI]))
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: true })
 		const loc = localityOf(out)
 
@@ -171,7 +171,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 		// Place a Portland under Missouri (the fuzzy runner-up). Since MISSOURI.exactMatch is false, the
 		// pass must not consider it, so no re-pick to Missouri.
 		const PORTLAND_MO: ResolvedPlace = { ...PORTLAND_ME, id: 31, parent_id: 30, lat: 37, lon: -93 }
-		const resolver = createWOFResolver(makeBackend([MESSINA, MISSOURI, PORTLAND_MO]))
+		const resolver = createWOFResolver(await makeBackend([MESSINA, MISSOURI, PORTLAND_MO]))
 		const out = await resolver.resolveTree(portlandMeTree(), { adminCoherence: true })
 		const loc = localityOf(out)
 
@@ -239,7 +239,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			],
 		})
 
-		const resolver = createWOFResolver(makeBackend([usGeorgia, georgiaCountry, tbilisi, atlanta]))
+		const resolver = createWOFResolver(await makeBackend([usGeorgia, georgiaCountry, tbilisi, atlanta]))
 
 		// Tbilisi has no descendant under the US state → fall through to Georgia the country.
 		const tb = localityOf(await resolver.resolveTree(tree("Tbilisi"), { adminCoherence: true }))
@@ -292,7 +292,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			],
 		})
 
-		const resolver = createWOFResolver(makeBackend([usGeorgia, tbilisiOrphan]))
+		const resolver = createWOFResolver(await makeBackend([usGeorgia, tbilisiOrphan]))
 		const out = await resolver.resolveTree(tree(), { adminCoherence: true })
 
 		const loc = localityOf(out)
@@ -350,7 +350,7 @@ describe("resolveTree + adminCoherence (#263)", () => {
 			],
 		}
 
-		const resolver = createWOFResolver(makeBackend([usGeorgia, atlanta]))
+		const resolver = createWOFResolver(await makeBackend([usGeorgia, atlanta]))
 		const out = await resolver.resolveTree(tree, { adminCoherence: true })
 
 		const loc = localityOf(out)

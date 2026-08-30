@@ -178,7 +178,7 @@ const PLACES: FixturePlace[] = [
 	},
 ]
 
-function makeBackend(): ResolverBackend {
+async function makeBackend(): Promise<ResolverBackend> {
 	return {
 		async findPlace(query) {
 			const key = norm(query.text)
@@ -209,7 +209,7 @@ describe("findRescoreCandidate", () => {
 			node({ tag: "locality", value: "dz", start: 14, end: 16, confidence: 0.9 }),
 		]
 
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "PL", postcode: "86-300" })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "PL", postcode: "86-300" })
 		expect(hit?.text).toBe("Grudziądz")
 		expect(hit?.place.id).toBe(1)
 		// 86-300 isn't in the fixture → no anchor → ungated (flagged lower-precision).
@@ -218,7 +218,7 @@ describe("findRescoreCandidate", () => {
 
 	it("prefers the LONGEST exact match (specific name beats its own prefix)", async () => {
 		const raw = "Tomaszów Mazowiecki" // gold is the longer name; shortest-wins would grab "Tomaszów"
-		const hit = await findRescoreCandidate(raw, [], makeBackend(), { country: "PL", gateKm: 0 })
+		const hit = await findRescoreCandidate(raw, [], await makeBackend(), { country: "PL", gateKm: 0 })
 		expect(hit?.text).toBe("Tomaszów Mazowiecki")
 		expect(hit?.place.id).toBe(3)
 		expect(hit?.gated).toBe(false) // gate disabled (gateKm 0)
@@ -226,7 +226,7 @@ describe("findRescoreCandidate", () => {
 
 	it("flags a recovery GATED when the postcode resolves and the match is within range", async () => {
 		// 97-200 resolves (fixture) near Tomaszów Mazowiecki; the longest match lands within 50km → gated.
-		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], makeBackend(), {
+		const hit = await findRescoreCandidate("Tomaszów Mazowiecki", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
 			gateKm: 50,
@@ -239,7 +239,7 @@ describe("findRescoreCandidate", () => {
 	it("postcode gate rejects a match far from where the postcode resolves", async () => {
 		// "Tomaszów" alone exact-matches the FAR Tomaszów (id 2); the 97-200 postcode anchors near the
 		// Mazowiecki one (~240 km away), so the gate rejects it → no recovery.
-		const hit = await findRescoreCandidate("Tomaszów", [], makeBackend(), {
+		const hit = await findRescoreCandidate("Tomaszów", [], await makeBackend(), {
 			country: "PL",
 			postcode: "97-200",
 			gateKm: 50,
@@ -249,7 +249,7 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1537: carries the same-span namesake runner-ups, in rank order, without moving the winner", async () => {
-		const hit = await findRescoreCandidate("Springfield", [], makeBackend(), { country: "US", gateKm: 0 })
+		const hit = await findRescoreCandidate("Springfield", [], await makeBackend(), { country: "US", gateKm: 0 })
 
 		// The winner is what it always was — the first exact match in the backend's rank order.
 		expect(hit?.place.id).toBe(10)
@@ -260,7 +260,7 @@ describe("findRescoreCandidate", () => {
 		// 62701 anchors next to id 11 (IL). MO (id 10) and MA (id 12) are >50 km out, so the gate drops them
 		// from BOTH roles: id 11 wins, and only the ~5 km id 13 survives as an alternative. A candidate the
 		// postcode already excluded is not a namesake worth offering.
-		const hit = await findRescoreCandidate("Springfield", [], makeBackend(), {
+		const hit = await findRescoreCandidate("Springfield", [], await makeBackend(), {
 			country: "US",
 			postcode: "62701",
 			gateKm: 50,
@@ -272,7 +272,7 @@ describe("findRescoreCandidate", () => {
 	})
 
 	it("#1537: a lone namesake yields an empty runner-up list", async () => {
-		const hit = await findRescoreCandidate("Grudziądzek", [], makeBackend(), { country: "PL", gateKm: 0 })
+		const hit = await findRescoreCandidate("Grudziądzek", [], await makeBackend(), { country: "PL", gateKm: 0 })
 		expect(hit?.place.id).toBe(20)
 		expect(hit?.alternatives).toEqual([])
 	})
@@ -283,7 +283,7 @@ describe("findRescoreCandidate", () => {
 		// is "" and could never equal "moscow", so Moscow, Idaho won by default among the Latin-named
 		// bearers. Population-first ranking was starved, not violated; recall fixes it with no ranking
 		// change.
-		const hit = await findRescoreCandidate("Moscow", [], makeBackend(), { gateKm: 0 })
+		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), { gateKm: 0 })
 		expect(hit?.place.id).toBe(30)
 		expect(hit?.place.name).toBe("Москва")
 		expect(hit?.alternatives.map((a) => a.id)).toEqual([31, 32])
@@ -293,7 +293,7 @@ describe("findRescoreCandidate", () => {
 		// "Moscow, ID 83843": the postcode anchors next to the Idaho bearer (id 31); Moscow RU is
 		// thousands of km away, so the gate excludes it and the Idaho winner is unchanged. Admission is
 		// recall; the gate still decides.
-		const hit = await findRescoreCandidate("Moscow", [], makeBackend(), {
+		const hit = await findRescoreCandidate("Moscow", [], await makeBackend(), {
 			country: "US",
 			postcode: "83843",
 			gateKm: 50,
@@ -307,7 +307,7 @@ describe("findRescoreCandidate", () => {
 		// "New York City" matches New York only through its alias row. The old primary-name re-check
 		// (norm("New York") !== norm("New York City")) dropped the exact match the backend had already
 		// flagged — the same recall defect, without any non-Latin script.
-		const hit = await findRescoreCandidate("New York City", [], makeBackend(), { gateKm: 0 })
+		const hit = await findRescoreCandidate("New York City", [], await makeBackend(), { gateKm: 0 })
 		expect(hit?.place.id).toBe(40)
 		expect(hit?.alternatives).toEqual([])
 	})
@@ -316,7 +316,7 @@ describe("findRescoreCandidate", () => {
 		// "Grudziądz" sits where a confident postcode node is declared → not eligible as a locality span.
 		const raw = "Grudziądz 4"
 		const roots: AddressNode[] = [node({ tag: "postcode", value: "Grudziądz", start: 0, end: 9, confidence: 0.95 })]
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "PL", gateKm: 0 })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "PL", gateKm: 0 })
 		expect(hit).toBeNull()
 	})
 })
@@ -334,7 +334,7 @@ describe("resolveTree + spanRescore", () => {
 	const tree = (raw: string, roots: AddressNode[]): AddressTree => ({ raw, roots })
 
 	it("injects a resolved locality when the tree resolved nothing (opt-in)", async () => {
-		const resolver = createWOFResolver(makeBackend())
+		const resolver = createWOFResolver(await makeBackend())
 
 		const input = tree("86-300 Grudziądz, Daliowa 4", [
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
@@ -353,7 +353,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("injects by default when spanRescore is unset (#370 promoted to default-on 2026-06-25)", async () => {
-		const resolver = createWOFResolver(makeBackend())
+		const resolver = createWOFResolver(await makeBackend())
 
 		const input = tree("86-300 Grudziądz, Daliowa 4", [
 			node({ tag: "locality", value: "Grudzi", start: 7, end: 13 }),
@@ -366,7 +366,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("is byte-stable when spanRescore is false (explicit opt-out — the #685/byte-stable contract)", async () => {
-		const resolver = createWOFResolver(makeBackend())
+		const resolver = createWOFResolver(await makeBackend())
 		const roots = [node({ tag: "locality", value: "Grudzi", start: 7, end: 13 })]
 
 		const out = await resolver.resolveTree(tree("86-300 Grudziądz", roots), {
@@ -379,7 +379,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("#1537: the injected node carries the namesake runner-ups on `alternatives`", async () => {
-		const resolver = createWOFResolver(makeBackend())
+		const resolver = createWOFResolver(await makeBackend())
 
 		// The live shape: the model tags a bare famous namesake as a `street`, so the admin walk resolves
 		// nothing and span-rescore is what recovers it. Before #1537 this node was decorated with an empty
@@ -400,7 +400,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("#1537: `alternatives` stays ABSENT (not empty) for a lone namesake — the walk path's contract", async () => {
-		const resolver = createWOFResolver(makeBackend())
+		const resolver = createWOFResolver(await makeBackend())
 
 		const out = await resolver.resolveTree(
 			tree("Grudziądzek", [node({ tag: "street", value: "Grudziądzek", start: 0, end: 11, confidence: 0.4 })]),
@@ -413,7 +413,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("#1546: the injected node for a bare Moscow is Москва RU — the winner flips only for the starved class", async () => {
-		const resolver = createWOFResolver(makeBackend())
+		const resolver = createWOFResolver(await makeBackend())
 
 		// The live shape: a bare famous namesake reads as a `street` (no country prior — the #912 lever
 		// abstains on a bare-locality tree), the walk resolves nothing, span-rescore recovers it. Before
@@ -430,7 +430,7 @@ describe("resolveTree + spanRescore", () => {
 	})
 
 	it("does not fire when the tree already resolved (the #685 brake)", async () => {
-		const resolver = createWOFResolver(makeBackend())
+		const resolver = createWOFResolver(await makeBackend())
 
 		// "Grudziądz" as a single locality node resolves in the walk → already has a coordinate.
 		const out = await resolver.resolveTree(

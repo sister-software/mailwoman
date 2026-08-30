@@ -32,6 +32,7 @@
  *   Usage: node packages/mailwoman/dev-tools/probe-referential-delta.run.ts [--board <path>]
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
 import { existsSync } from "@mailwoman/platform/fs"
@@ -52,7 +53,7 @@ console.log(`## Referential/population ordering — D-rule measurement\n`)
 console.log(`Saturation population: ${REFERENTIAL_SATURATION_POPULATION.toLocaleString()}\n`)
 console.log(`### 1. Live gazetteer census (\`${adminPath}\`)\n`)
 
-if (!existsSync(adminPath)) {
+if (!(await pathExists(adminPath))) {
 	console.log(`- admin DB absent — census skipped\n`)
 } else {
 	using db = new DatabaseClient<WOFDatabase>(adminPath, { open: true })

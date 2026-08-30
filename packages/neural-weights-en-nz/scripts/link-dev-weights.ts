@@ -171,7 +171,7 @@ let pairIndexIsFresh = false
 
 if (await pathExists(PAIR_INDEX_BIN_DEST)) {
 	try {
-		const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+		const header = await peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
 		const existingSourceMD5s = header.sourceMD5s
 
 		// Format + every calibrated magnitude, through the shared check — see `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`.

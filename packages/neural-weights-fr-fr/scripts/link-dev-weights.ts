@@ -135,7 +135,7 @@ if (await pathExists(FST_SRC)) {
 
 	console.log(`linked fst-fr-fr.bin ← ${FST_SRC}`)
 
-	warnIfFSTStale(FST_SRC, "fr-fr")
+	await warnIfFSTStale(FST_SRC, "fr-fr")
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
@@ -204,7 +204,7 @@ if (!(await pathExists(CLI))) {
 	if (await pathExists(PAIR_INDEX_BIN_DEST)) {
 		try {
 			// Format + every calibrated magnitude, through the shared check (`@mailwoman/resolver-wof-sqlite/weights-overlay-linker`).
-			const staleReason = pairIndexStaleReason(peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST), {
+			const staleReason = pairIndexStaleReason(await peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST), {
 				delta: PAIR_INDEX_DELTA,
 				transitionBeta: PAIR_INDEX_TRANSITION_BETA,
 				parentDelta: PAIR_INDEX_PARENT_DELTA,

@@ -29,6 +29,7 @@
  *   and continue.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { createHash } from "@mailwoman/platform/crypto"
 import {
@@ -300,7 +301,7 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
  * Returns `undefined` when the artifact is current OR when it is absent — an absent artifact is a different problem
  * with a different message, and every existing caller already reports it in place.
  */
-export function fstFreshnessWarning({
+export async function fstFreshnessWarning({
 	fstPath,
 	sourceDBPath,
 	formatVersion,
@@ -312,8 +313,8 @@ export function fstFreshnessWarning({
 	formatVersion?: number
 	exclusionPolicy?: string
 	rebuildCommand: string
-}): string | undefined {
-	if (!existsSync(fstPath) || !existsSync(sourceDBPath)) return undefined
+}): Promise<string | undefined> {
+	if (!(await pathExists(fstPath)) || !(await pathExists(sourceDBPath))) return undefined
 
 	const reason = fstStaleReason(peekFSTStampFields(fstPath), {
 		source: readWOFSourceIdentity(sourceDBPath),

@@ -431,7 +431,7 @@ let pairIndexIsFresh = false
 
 if (await pathExists(PAIR_INDEX_BIN_DEST)) {
 	try {
-		const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+		const header = await peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
 		const existingSourceMD5s = header.sourceMD5s
 
 		// Format + every calibrated magnitude, through the shared check (`@mailwoman/resolver-wof-sqlite/weights-overlay-linker`) so a
@@ -556,7 +556,7 @@ if (await pathExists(FST_SRC)) {
 
 	console.log(`linked fst-en-gb.bin ← ${FST_SRC}`)
 
-	warnIfFSTStale(FST_SRC, "en-gb")
+	await warnIfFSTStale(FST_SRC, "en-gb")
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }

@@ -256,7 +256,7 @@ describe("fstFreshnessWarning", () => {
 	it("names the artifact, the reason, and the rebuild command", async () => {
 		const path = await writeFST("warn.bin", provenanceOf({ sourceDBMD5: "0".repeat(32) }))
 
-		const warning = fstFreshnessWarning({
+		const warning = await fstFreshnessWarning({
 			fstPath: path,
 			sourceDBPath: SOURCE,
 			rebuildCommand: "mailwoman gazetteer build fst --locales en-us",
@@ -273,16 +273,16 @@ describe("fstFreshnessWarning", () => {
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })
 		)
 
-		expect(fstFreshnessWarning({ fstPath: path, sourceDBPath: SOURCE, rebuildCommand: "x" })).toBeUndefined()
+		expect(await fstFreshnessWarning({ fstPath: path, sourceDBPath: SOURCE, rebuildCommand: "x" })).toBeUndefined()
 	})
 
 	it("is silent when either side is absent — a missing file is a different report", async () => {
 		expect(
-			fstFreshnessWarning({ fstPath: TMP.resolve("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
+			await fstFreshnessWarning({ fstPath: TMP.resolve("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
 		).toBeUndefined()
 
 		expect(
-			fstFreshnessWarning({
+			await fstFreshnessWarning({
 				fstPath: await writeFST("orphan.bin", provenanceOf()),
 				sourceDBPath: TMP.resolve("gone.db"),
 				rebuildCommand: "x",

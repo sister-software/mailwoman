@@ -40,12 +40,11 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { readLocalTextFile, statPath, pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFile, statPath, pathExists, readLocalJSONFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
 import { createHash } from "@mailwoman/platform/crypto"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
@@ -162,8 +161,10 @@ console.log(`  ${MODEL_DEST} → ${SRC_MODEL}`)
 console.log(`  ${TOKENIZER_DEST} → ${SRC_TOKENIZER}`)
 
 // --- #397 drift guard: assert default bytes match what the demo serves ------
-function assertMd5(label: string, path: string, expected: string): void {
-	const actual = createHash("md5").update(readFileSync(path)).digest("hex")
+async function assertMd5(label: string, path: string, expected: string): Promise<void> {
+	const actual = createHash("md5")
+		.update(await readLocalBuffer(path))
+		.digest("hex")
 
 	if (actual !== expected) {
 		console.error("")
@@ -180,13 +181,13 @@ function assertMd5(label: string, path: string, expected: string): void {
 }
 
 if (!MODEL_OVERRIDDEN) {
-	assertMd5("model", MODEL_DEST, DEFAULT_MODEL_MD5)
+	await assertMd5("model", MODEL_DEST, DEFAULT_MODEL_MD5)
 } else {
 	console.error("  (model override active — skipping #397 default-hash check)")
 }
 
 if (!TOKENIZER_OVERRIDDEN) {
-	assertMd5("tokenizer", TOKENIZER_DEST, DEFAULT_TOKENIZER_MD5)
+	await assertMd5("tokenizer", TOKENIZER_DEST, DEFAULT_TOKENIZER_MD5)
 } else {
 	console.error("  (tokenizer override active — skipping #397 default-hash check)")
 }
@@ -305,7 +306,7 @@ if (await pathExists(FST_SRC)) {
 
 	console.log(`linked fst-en-us.bin ← ${FST_SRC}`)
 
-	warnIfFSTStale(FST_SRC, "en-us")
+	await warnIfFSTStale(FST_SRC, "en-us")
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
@@ -416,7 +417,7 @@ if (!(await pathExists(CLI))) {
 
 	if (await pathExists(PAIR_INDEX_BIN_DEST)) {
 		try {
-			const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+			const header = await peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
 			// EVERY md5 the header records has to match. A comparison that covers only some of them leaves the
 			// guard blind to the rest, and a stale artifact then keeps reporting itself fresh while the data it was
 			// built from has moved. The US build passes exactly one source (`--borough-db`; there is no register CSV

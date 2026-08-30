@@ -8,7 +8,7 @@
  *   `node packages/mailwoman/dev-tools/extract-parity-corpus.run.ts`
  */
 
-import { readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { join } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
@@ -20,11 +20,11 @@ const OUT_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.j
 const cases: ParityCase[] = []
 let parityFileCount = 0
 
-for (const entry of readdirSync(TEST_DIR).toSorted()) {
+for (const entry of (await readDirectory(TEST_DIR)).toSorted()) {
 	if (!entry.endsWith(".test.ts")) continue
 
 	const path = join(TEST_DIR, entry)
-	const text = readFileSync(path, "utf8")
+	const text = await readLocalTextFile(path)
 
 	// Only the parity suite imports the shared rules-parser test-kit.
 	if (!text.includes(`from "mailwoman/test-kit"`)) continue
