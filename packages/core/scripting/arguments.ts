@@ -15,9 +15,9 @@ export type UnsafeCLIArguments = ReadonlyArray<UnsafeCLIArgument>
  * The one blessed accessor for user CLI arguments.
  */
 export function cliArguments(): UnsafeCLIArguments {
-	// oxlint-disable-next-line sister-software/no-process-globals -- this function is the blessed argv accessor
 	// Element-wise: `string[] as ReadonlyArray<Branded>` is not a legal assertion, while `string as Branded` is —
 	// which is the whole reason this accessor exists rather than the brand being minted at each call site.
+	// oxlint-disable-next-line sister-software/no-process-globals -- this function is the blessed argv accessor
 	return process.argv.slice(2).map((value) => value as UnsafeCLIArgument)
 }
 

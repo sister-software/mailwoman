@@ -15,8 +15,7 @@ import { describe, expect, it } from "vitest"
 /**
  * Minimal stand-in for the bucket listing — only `fetch` is reached.
  */
-const clientReturning = (body: string) =>
-	({ fetch: async () => ({ data: body }) }) satisfies OvertureListingClient
+const clientReturning = (body: string) => ({ fetch: async () => ({ data: body }) }) satisfies OvertureListingClient
 
 const clientThrowing = (message: string) =>
 	({

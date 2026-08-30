@@ -4,7 +4,19 @@
  * @author Teffen Ellis, et al.
  */
 
-import { geometryContains, isPolygonLiteral, isResidentialElement, isSolidPolygonPath, pointInPolygonRings, pointInRing, polygonToOSMFilter, type GeojsonPosition, type PolygonPath, type OSMOverpassElement, type PolygonLiteral } from "@mailwoman/spatial/geometries/polygon"
+import {
+	geometryContains,
+	isPolygonLiteral,
+	isResidentialElement,
+	isSolidPolygonPath,
+	pointInPolygonRings,
+	pointInRing,
+	polygonToOSMFilter,
+	type GeojsonPosition,
+	type PolygonPath,
+	type OSMOverpassElement,
+	type PolygonLiteral,
+} from "@mailwoman/spatial/geometries/polygon"
 import { expect, test } from "vitest"
 
 const SOLID: PolygonLiteral = {

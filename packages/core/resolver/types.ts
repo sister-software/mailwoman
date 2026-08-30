@@ -819,8 +819,8 @@ export interface ResolveCandidateTrace {
 	id: string | number
 	name: string
 	/**
-	 * Optional for the same reason as {@link ResolvedPlace.country}: the trace mirrors the candidate, and a candidate
-	 * can carry no country.
+	 * Optional for the same reason as {@link ResolvedPlace.country}: the trace mirrors the candidate, and a candidate can
+	 * carry no country.
 	 */
 	country?: string
 	placetype: string

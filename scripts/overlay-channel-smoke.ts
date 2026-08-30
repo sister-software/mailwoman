@@ -22,7 +22,7 @@
  *   Usage: node scripts/overlay-channel-smoke.ts --locale en-gb [--cache-root <dir>]
  */
 
-import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "@mailwoman/neural"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
 // `@mailwoman/neural` exports no `./case-normalize` subpath, and what the anchor channel sees is the
 // CASE-NORMALIZED text (#690/#829, default-ON in `parse`) — re-implementing that here is the one thing
 // that must not drift, so this repo-local diagnostic imports the module directly (same posture as

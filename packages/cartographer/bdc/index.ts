@@ -51,9 +51,9 @@ export type BaseBDCLayerSpecification<T> = T extends BDCLayerSpecificationInput
  *
  * They are not generic, and the assertion each ends with is single rather than through `unknown`, both for the same
  * reason: TypeScript cannot verify that `Omit<T, K>` plus the omitted keys reconstitutes `T`, so a builder declared
- * `<T>(…): T` can only reach its return type by defeating the checker entirely — which then covers the `id`,
- * `minzoom` and `maxzoom` values too. Nothing wanted the narrowing: the sole consumer,
- * {@linkcode BroadbandDataCollectionLayers}, annotates the union.
+ * `<T>(…): T` can only reach its return type by defeating the checker entirely — which then covers the `id`, `minzoom`
+ * and `maxzoom` values too. Nothing wanted the narrowing: the sole consumer, {@linkcode BroadbandDataCollectionLayers},
+ * annotates the union.
  */
 type BDCLayerBuilderInput = BaseBDCLayerSpecification<BDCLayerSpecificationInput>
 

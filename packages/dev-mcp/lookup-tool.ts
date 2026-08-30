@@ -92,7 +92,7 @@ export interface LookupArgs {
  * — is the same shape a genuine absence has, and a caller reading it would conclude the gazetteer lacks fifty places
  * when what it lacks is a file.
  */
-export async function runLookup<DB>(
+export async function runLookup(
 	registry: EngineRegistryLike,
 	args: LookupArgs
 ): Promise<LookupResult | CandidateCompareResult> {

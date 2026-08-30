@@ -9,8 +9,6 @@
  *   thing — a comparison that must NOT produce a verdict, for two different reasons.
  */
 
-import type { Engine } from "../../engine-registry.ts"
-import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 import { createPostalAddressID } from "@mailwoman/address-id"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
@@ -18,6 +16,8 @@ import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "@mailwoman/dev-mcp/oracle-arm"
 import { listRuns } from "@mailwoman/dev-mcp/run-store"
 import { afterAll, describe, expect, it } from "vitest"
+
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 const RUN_STORE = await temporaryDirectory("mwdev-arms-runs-")
 

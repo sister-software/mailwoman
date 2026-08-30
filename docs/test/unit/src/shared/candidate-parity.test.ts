@@ -13,9 +13,9 @@
  *   staging receipt records the run against the exact artifact md5 it graded.
  */
 
-import type { HTTPVFSWorker } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { HTTPVFSWorker } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { WOFCandidateTableLookup as BrowserCandidateLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
 import { WOFCandidateTableLookup as NodeCandidateLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"

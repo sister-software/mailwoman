@@ -60,7 +60,7 @@ afterAll(() => vi.resetModules())
 // Dynamic imports AFTER the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
 // oxlint-disable-next-line no-restricted-imports -- this probe RECORDS the construction, so it must name the builtin
-const { DatabaseSync } = await import("@mailwoman/platform/sqlite")
+await import("@mailwoman/platform/sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**
@@ -120,7 +120,7 @@ describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 
 	test("buildFTS: true opens the main shard READ-WRITE (the FTS5 index build must write)", () => {
 		spy.opens.length = 0
-		using lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true })
+		using _lookup = new WOFSQLitePlaceLookup({ databasePath: dbPath, buildFTS: true })
 
 		expect(readOnlyForOpenOf(dbPath)).toBe(false)
 	})

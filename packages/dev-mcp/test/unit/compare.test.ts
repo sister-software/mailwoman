@@ -10,8 +10,6 @@
  *   checked by hand against the two answers the stubs give.
  */
 
-import type { Engine } from "../../engine-registry.ts"
-import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { ExternalArm } from "@mailwoman/dev-mcp/arms"
@@ -19,6 +17,8 @@ import { runCompare } from "@mailwoman/dev-mcp/compare"
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { ExternalGeocoderClient } from "@mailwoman/dev-mcp/external-arm"
 import { afterAll, describe, expect, it } from "vitest"
+
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 /**
  * Every comparison writes its answers to the run store. Redirected here so a test run never touches the operator's

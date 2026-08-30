@@ -11,10 +11,11 @@
  *   to do with this file.
  */
 
-import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { runMinimalPairs } from "@mailwoman/dev-mcp/minimal-pairs"
 import { describe, expect, it } from "vitest"
+
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 interface FakeResult {
 	components: Record<string, string>
@@ -33,17 +34,17 @@ function fakeRegistry(answers: Record<string, FakeResult>): EngineRegistryLike {
 		acquire: async () =>
 			stubEngine({
 				engineID: "fake",
-			effective: { locale: "en-US" },
-			session: {
-				geocode: async (input: string) => {
-					const result = answers[input]
+				effective: { locale: "en-US" },
+				session: {
+					geocode: async (input: string) => {
+						const result = answers[input]
 
-					if (!result) throw new Error(`no fake answer for ${input}`)
+						if (!result) throw new Error(`no fake answer for ${input}`)
 
-					return { result }
+						return { result }
+					},
 				},
-			},
-		}),
+			}),
 	})
 }
 

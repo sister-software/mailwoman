@@ -62,8 +62,8 @@ export function stubEngineRegistry(overrides: Partial<EngineRegistryLike> = {}):
 export function stubEngine(overrides: StubEngineOverrides): Engine {
 	return {
 		engineID: overrides.engineID ?? "stub",
-		effective: { ...(overrides.effective ?? {}) } as EffectiveConfig,
-		fingerprint: { ...STUB_FINGERPRINT, ...(overrides.fingerprint ?? {}) },
+		effective: { ...overrides.effective } as EffectiveConfig,
+		fingerprint: { ...STUB_FINGERPRINT, ...overrides.fingerprint },
 		buildMs: overrides.buildMs ?? 1,
 		lastUsed: overrides.lastUsed ?? 0,
 		uses: overrides.uses ?? 1,
@@ -72,8 +72,8 @@ export function stubEngine(overrides: StubEngineOverrides): Engine {
 }
 
 /**
- * What a case may set on {@link stubEngine}. `session` is required because a tool that acquires an engine always
- * reaches it, and a default one would answer every query with the same silence.
+ * What a case may set on {@link stubEngine}. `session` is required because a tool that acquires an engine always reaches
+ * it, and a default one would answer every query with the same silence.
  */
 export interface StubEngineOverrides {
 	/**
@@ -81,8 +81,8 @@ export interface StubEngineOverrides {
 	 *
 	 * `unknown` rather than `Partial<GeocodeSession>`: a partial checks each member it DOES carry against the real
 	 * signature, and every case here returns a trimmed geocode result on purpose, so the partial rejects them all. One
-	 * documented assertion in one place is what this file buys — the eight it replaces each asserted the whole
-	 * registry, so a renamed registry method went unnoticed in all of them.
+	 * documented assertion in one place is what this file buys — the eight it replaces each asserted the whole registry,
+	 * so a renamed registry method went unnoticed in all of them.
 	 */
 	session: unknown
 	engineID?: string

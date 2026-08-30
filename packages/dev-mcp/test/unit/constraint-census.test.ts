@@ -10,9 +10,10 @@
  *   real gazetteer would take minutes and fail for reasons this file has no opinion about.
  */
 
-import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 import type { EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import { describe, expect, it } from "vitest"
+
+import { stubEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 interface FakeLookup {
 	tag: string
@@ -51,28 +52,28 @@ function fakeRegistry(byInput: Record<string, FakeLookup[]>): EngineRegistryLike
 		acquire: async () =>
 			stubEngine({
 				engineID: "fake",
-			effective: { dataRoot: "/fake" },
-			fingerprint: { digest: "d", gitHead: "g", dirtyFiles: [] },
-			buildMs: 1,
-			uses: 1,
-			session: {
-				geocode: async (input: string) => ({
-					result: {},
-					trace: {
-						resolver: (byInput[input] ?? []).map((l) => ({
-							tag: l.tag,
-							value: l.value,
-							placetype: l.placetype,
-							query: { limit: 5 },
-							gates: l.gates,
-							candidates: Array.from({ length: l.candidates ?? 0 }, () => ({})),
-							candidatesTruncated: 0,
-							picked: l.picked ? { id: 1, name: l.value, source: "ranked" } : null,
-						})),
-					},
-				}),
-			},
-		}),
+				effective: { dataRoot: "/fake" },
+				fingerprint: { digest: "d", gitHead: "g", dirtyFiles: [] },
+				buildMs: 1,
+				uses: 1,
+				session: {
+					geocode: async (input: string) => ({
+						result: {},
+						trace: {
+							resolver: (byInput[input] ?? []).map((l) => ({
+								tag: l.tag,
+								value: l.value,
+								placetype: l.placetype,
+								query: { limit: 5 },
+								gates: l.gates,
+								candidates: Array.from({ length: l.candidates ?? 0 }, () => ({})),
+								candidatesTruncated: 0,
+								picked: l.picked ? { id: 1, name: l.value, source: "ranked" } : null,
+							})),
+						},
+					}),
+				},
+			}),
 	})
 }
 

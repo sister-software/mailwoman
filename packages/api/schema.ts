@@ -16,8 +16,8 @@
  *   and error alike, from this one file.
  */
 
-import type { AddressNode } from "@mailwoman/core/decoder"
 import { z } from "@hono/zod-openapi"
+import type { AddressNode } from "@mailwoman/core/decoder"
 
 export { APIErrorSchema } from "@mailwoman/api-kit"
 

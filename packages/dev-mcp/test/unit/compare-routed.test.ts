@@ -1,10 +1,11 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { stubEngineRegistry } from "../stub-registry.ts"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
 import type { EngineConfig, EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import type { ResolvedInput } from "@mailwoman/dev-mcp/input-sets"
 import type { RoutedMailwomanArm } from "@mailwoman/dev-mcp/routed-mailwoman-arm"
 import { afterAll, describe, expect, it } from "vitest"
+
+import { stubEngineRegistry } from "../stub-registry.ts"
 
 const RUN_STORE = await temporaryDirectory("mwdev-routed-compare-")
 
