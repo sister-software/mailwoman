@@ -125,10 +125,17 @@ export interface PlaceCandidate {
 	 * Admin-containment stamp (#1717 stage 2) — TRI-STATE, mirroring `ResolvedPlace.containedByQualifier` in
 	 * `@mailwoman/core`: `true` = the ancestors sidecar vouches this candidate sits under the query's
 	 * {@link FindPlaceQuery.regionQualifier}; `false` = evaluated and not vouched for; absent = never evaluated (no
-	 * qualifier on the query, or an artifact without the sidecar). Absence is load-bearing — the resolver walk reads it
-	 * as `unavailable`, never as "not contained".
+	 * qualifier on the query, or an artifact without the sidecar). Absence is required — the resolver walk reads it as
+	 * `unavailable`, never as "not contained".
 	 */
 	containedByQualifier?: boolean
+	/**
+	 * The #1882 exemption's firing mark (#1893), mirroring `ResolvedPlace.variantAliasExempted` in `@mailwoman/core`:
+	 * present only when this candidate's row would have taken the cross-country alias penalty and the exemption prevented
+	 * it. Emitted by the candidate-table backend alone — the WASM FTS lookup never runs the ranker, and its candidates
+	 * omit the field (not evaluated, never "did not fire").
+	 */
+	variantAliasExempted?: true
 }
 
 /**
@@ -242,7 +249,6 @@ export interface FindPlaceQuery {
  * interface is async even though `node:sqlite` is sync — leaves room for `Worker`-backed implementations later without
  * a public API break.
  */
-export interface PlaceLookup {
+export interface PlaceLookup extends Disposable {
 	findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]>
-	close(): void
 }

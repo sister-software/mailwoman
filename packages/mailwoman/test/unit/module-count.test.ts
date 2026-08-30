@@ -12,12 +12,11 @@
  *   the bin points at; the suite skips when the tree has not been built.
  */
 
-import { execFile } from "node:child_process"
-import { existsSync } from "node:fs"
-import { promisify } from "node:util"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
@@ -42,7 +41,7 @@ const COUNTING_HOOK =
 	"data:text/javascript," +
 	encodeURIComponent(
 		[
-			'import { registerHooks } from "node:module"',
+			'const { registerHooks } = process.getBuiltinModule("node:module")',
 			"let loaded = 0",
 			"registerHooks({",
 			"	load(url, context, nextLoad) {",
@@ -54,7 +53,7 @@ const COUNTING_HOOK =
 		].join("\n")
 	)
 
-describe.skipIf(!existsSync(cliBin))("mailwoman --version module graph", () => {
+describe.skipIf(!(await pathExists(cliBin)))("mailwoman --version module graph", () => {
 	test(`loads fewer than ${MODULE_COUNT_CEILING} modules`, async () => {
 		const { stdout, stderr } = await exec(process.execPath, ["--import", COUNTING_HOOK, cliBin, "--version"], {
 			cwd: repoRootPath(),

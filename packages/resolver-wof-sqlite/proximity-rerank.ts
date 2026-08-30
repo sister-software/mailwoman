@@ -7,12 +7,12 @@
  *   filter. Byte-identical to plain population order when no bias is passed.
  *
  *   This lives in its own platform-free module because it has to run identically in two places: the Node candidate
- *   reader and the browser byte-range twin. That is the #861 server↔demo parity contract, and it is the second thing
+ *   reader and the browser byte-range twin. That is the #861 server↔demo parity contract and the second thing
  *   here held by construction rather than by comment (`primary-preference.ts` was the first). Constants alone were not
  *   enough — the two copies agreed on every literal and still diverged on which field the population term reads and on
  *   whether the combined value is written back, which is the half that actually decides the answer.
  *
- *   Two properties are load-bearing and easy to lose when transcribing:
+ *   Two properties are required and easy to lose when transcribing:
  *
  *   1. The population base is `prominence ?? score`, NOT `score`. `prominence` carries the bounded cross-country
  *      primary preference, so reading raw score lets a coincidental foreign alias ride population back over a primary

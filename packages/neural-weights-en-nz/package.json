@@ -35,7 +35,8 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/neural-weights-en-us": "workspace:*"
+		"@mailwoman/neural-weights-en-us": "workspace:*",
+		"@mailwoman/platform": "workspace:*"
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*",

@@ -18,13 +18,10 @@
  *   (or `--candidate-db none`) pins the FTS backend.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { mailwomanDataRoot, repoRootPathBuilder, wofShardPaths } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -33,6 +30,8 @@ import type {
 } from "@mailwoman/resolver-wof-sqlite"
 import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema"
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
 /**
@@ -56,11 +55,11 @@ export function resolveCandidateDBPath(explicit?: string, dataRoot: string = mai
 
 	if (pinned === "none") return undefined
 
-	if (pinned) return existsSync(pinned) ? pinned : undefined
+	if (pinned) return pathExistsSync(pinned) ? pinned : undefined
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return existsSync(convention) ? convention : undefined
+	return pathExistsSync(convention) ? convention : undefined
 }
 
 /**
@@ -94,7 +93,7 @@ export function resolveWOFShardPaths(explicit?: string, dataRoot: string = mailw
 export function resolvePostalCityAliasDBPath(explicit?: string): string | undefined {
 	const p = explicit ?? $public.MAILWOMAN_POSTAL_CITY_ALIAS_DB
 
-	return p && existsSync(p) ? p : undefined
+	return p && pathExistsSync(p) ? p : undefined
 }
 
 export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/utils"
@@ -102,7 +101,7 @@ export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/
 /**
  * The #1009 "no gazetteer data found" preflight message, shared by every caller that gates on a candidate/WOF resolver
  * being present before it will boot (`photon/cli.ts`, `nominatim/cli.ts`, `mailwoman/api-engine.ts`'s `mailwoman
- * serve`). Originally a bare `curl -fSL https://public.sister.software/...` line; measured 2026-08-03
+ * serve`). Originally a bare `curl -fSL https://public.mailwoman.ai/...` line; measured 2026-08-03
  * (`mailwoman/data-bundles.ts`'s `downloadToDisk` docstring) that an UNRANGED GET against that bucket 403s — the hint
  * was broken for every stranger who copy-pasted it. `mailwoman data pull candidate` (Task 6) is the fix: it carries the
  * `Range: bytes=0-` header the WAF requires, verifies the download, and atomically seals it into place.
@@ -211,27 +210,23 @@ export function loadCapitalIndex(opts: {
 	path?: string
 	missing?: "throw" | "degrade"
 }): CapitalIndex | undefined {
-	if (opts.candidateDB && existsSync(opts.candidateDB)) {
-		const db = new DatabaseSync(opts.candidateDB, { readOnly: true })
+	if (opts.candidateDB && pathExistsSync(opts.candidateDB)) {
+		using db = new DatabaseClient<WOFDatabase>(opts.candidateDB, { readOnly: true })
 
-		try {
-			const points = readCapitalPoints(db)
+		const points = readCapitalPoints(db)
 
-			// `null` = the artifact predates the table (fall through to the repo file); an EMPTY table is a
-			// built fact and is served as such.
-			if (points) {
-				console.error(`[resolver] capital reference: ${points.length} rows from the candidate artifact`)
+		// `null` = the artifact predates the table (fall through to the repo file); an EMPTY table is a
+		// built fact and is served as such.
+		if (points) {
+			console.error(`[resolver] capital reference: ${points.length} rows from the candidate artifact`)
 
-				return new CapitalIndex(points)
-			}
-		} finally {
-			db.close()
+			return new CapitalIndex(points)
 		}
 	}
 
 	const path = opts.path ?? conventionCapitalsPath()
 
-	if (!existsSync(path)) {
+	if (!pathExistsSync(path)) {
 		if (opts.missing === "degrade") {
 			console.error(
 				`[resolver] capital reference: none in the candidate artifact or at ${path} — capital promotion degrades to a no-op`
@@ -246,7 +241,7 @@ export function loadCapitalIndex(opts: {
 		)
 	}
 
-	const parsed = parseJSONStrict<{ version?: number; entries?: CapitalPoint[] }>(readFileSync(path, "utf8"))
+	const parsed = readLocalJSONFileSync<{ version?: number; entries?: CapitalPoint[] }>(path)
 
 	if (parsed.version !== 1 || !Array.isArray(parsed.entries)) {
 		throw new Error(`${path} is not a v1 capitals reference — rebuild with \`mailwoman gazetteer capitals\``)

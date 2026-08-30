@@ -1,6 +1,6 @@
 # `overture` adapter
 
-Overture Maps **Addresses** theme → canonical corpus rows. The gated corpus adapter epic #470
+Overture Maps **Addresses** theme → canonical corpus rows. The fill-rate-checked corpus adapter epic #470
 (#471–477) always intended, realized 2026-06-20.
 
 ## Why
@@ -51,10 +51,10 @@ mailwoman corpus run overture \
 | `postcode` | `postcode`                                                                                     |
 | `locality` | `locality` — Overture `address_levels` municipality, or `postal_city`                          |
 
-Overture's admin levels stop at the municipality, which is all this street/locality shard needs. The
+Overture's admin levels stop at the municipality, which is all this street/locality corpus subset needs. The
 few in-text-region locales (DE Bundesland, FR département) are covered by the `geonames-postal` adapter
 (it already emits `{ postcode, locality, region }`) — don't duplicate that here.
 
-License: **CDLA-Permissive-2.0** (attribution; not share-alike). Per the #471 fill-rate gate, check
+License: **CDLA-Permissive-2.0** (attribution; not share-alike). Per the #471 fill-rate requirement, check
 `fill-rates.md` before committing a locale: ES/NL/FR fill cleanly; IT postcode is ~0% (street+locality
 only); DE postcode is sparse in Overture (use GeoNames for DE postcodes).

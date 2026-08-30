@@ -11,9 +11,7 @@
  *   scripts/build-anchor-absorption-shard.mjs.
  */
 
-import { readFileSync } from "node:fs"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
@@ -30,8 +28,8 @@ const ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 /**
  * The real US ZIPs in the anchor lookup (entries whose value is a `[{ US: … }]` candidate list).
  */
-function loadRealUsZips(path: string): string[] {
-	const d = parseJSONStrict<Record<string, unknown>>(readFileSync(path, "utf8"))
+async function loadRealUsZips(path: string): Promise<string[]> {
+	const d = await readLocalJSONFile<Record<string, unknown>>(path)
 	const zips: string[] = []
 
 	for (const [pc, v] of Object.entries(d)) {
@@ -56,7 +54,7 @@ export const anchorAbsorptionRecipe: ShardRecipe = {
 		const random = makeLcg(opts.seed)
 		const source = opts.sourceName ?? "synth-anchor-absorption"
 		const count = opts.count ?? 50_000
-		const realZips = loadRealUsZips(ANCHOR_LOOKUP)
+		const realZips = await loadRealUsZips(ANCHOR_LOOKUP)
 
 		console.error(`Loaded ${realZips.length} real US ZIPs from the anchor lookup (the leading-5-digit source).`)
 

@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { tryParsingJSON } from "@mailwoman/core/objects"
+import { repoRootPath } from "@mailwoman/core/utils"
 /**
  *   Clean-install smoke test — the guard that would have caught the v4.8.0 broken publish.
  *
@@ -20,13 +25,8 @@
  *
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
-import { execFileSync, spawn } from "node:child_process"
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join, resolve } from "node:path"
-
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { execFileSync, spawn } from "@mailwoman/platform/child_process"
+import { join, resolve } from "@mailwoman/platform/path"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
 
@@ -41,8 +41,12 @@ const repoRoot = repoRootPath()
  * source-coherent (new-vs-new).
  */
 const WORKSPACES: Record<string, string> = {
+	// Runtime capability boundary shared by the publish graph. Pack it first so every consumer resolves
+	// the source-coherent tarball instead of a stale (or not-yet-published) registry version.
+	"@mailwoman/platform": "packages/platform",
 	"@mailwoman/core": "packages/core",
 	"@mailwoman/spatial": "packages/spatial",
+	"@mailwoman/sqlite": "packages/sqlite",
 	"@mailwoman/resolver": "packages/resolver",
 	// mailwoman's peerDependency (optional) — packed too so `mailwoman`'s gazetteer-pipeline poi builder
 	// (a static `resolver-wof-sqlite/poi-lookup` import, reached eagerly via `--help`'s command-module
@@ -56,6 +60,11 @@ const WORKSPACES: Record<string, string> = {
 	"@mailwoman/ban": "packages/ban",
 	"@mailwoman/codex": "packages/codex",
 	"@mailwoman/poi-taxonomy": "packages/poi-taxonomy",
+	// `mailwoman`'s activity-phrase vocabulary — a hard dependency, so the closure guard requires it here.
+	"@mailwoman/activity-lexicon": "packages/activity-lexicon",
+	// The compiled world model `mailwoman/observations` reads — a hard dependency, and one whose version must
+	// track `mailwoman`'s exactly, which is the skew a registry resolution here would hide.
+	"@mailwoman/geographic-model": "packages/geographic-model",
 	"@mailwoman/kind-classifier": "packages/kind-classifier",
 	// @mailwoman/react — bare root import must be node-safe (no CSS/DOM eagerly imported); its deps
 	// (kind-classifier, poi-taxonomy, query-shape) are all in this closure, and the React peer is
@@ -122,6 +131,25 @@ const WORKSPACES: Record<string, string> = {
 	// flagged both missing on the first PR after their merge (pre-existing gap, not that PR's).
 	"@mailwoman/bdc": "packages/bdc",
 	"@mailwoman/filer": "packages/filer",
+	// The flood layer reader is a hard dependency of `mailwoman`: `geocode-session` imports the
+	// authority-designation route on the presence of a `flood.db`, and `--help`'s command-module load reaches
+	// `gazetteer build flood`. Unpacked, npm would resolve a name that is not yet published at all.
+	"@mailwoman/flood": "packages/flood",
+	// The soil layer reader is a declared dependency of `mailwoman`, so npm resolves it at INSTALL time whether or not any
+	// code path reaches it — and unpacked that is a name which is not yet published at all. Its runtime reach is narrower
+	// than flood's above: `gazetteer build soil` imports the SDK inside its task rather than at module scope, so only
+	// `geocode-session`'s dynamic route load reaches the package, and only where a `soil.db` is on disk.
+	"@mailwoman/soil": "packages/soil",
+	// The coastal layer reader is a declared dependency of `mailwoman` on the same terms as soil above: npm resolves it at
+	// INSTALL time whether or not any code path reaches it, and unpacked that is a name which is not yet published at all.
+	// `gazetteer build coastal` imports the SDK inside its task rather than at module scope, so only `geocode-session`'s
+	// dynamic route load reaches the package, and only where a `coastal-england.db` is on disk.
+	"@mailwoman/coastal": "packages/coastal",
+	// The zoning layer reader is a declared dependency of `mailwoman` on the same terms as soil and coastal above: npm
+	// resolves it at INSTALL time whether or not any code path reaches it, and unpacked that is a name which is not yet
+	// published at all. `gazetteer build zoning` imports the SDK inside its task rather than at module scope, so only
+	// `geocode-session`'s dynamic route load reaches the package, and only where a `zoning-ireland.db` is on disk.
+	"@mailwoman/zoning": "packages/zoning",
 }
 
 /**
@@ -143,12 +171,16 @@ const IMPORT_CHECK = [
 ]
 
 /**
- * Leaves whose tarball must import when installed ALONE (no umbrella, no hoisting) — the undeclared-dep guard the
- * closure phase can't provide. ONLY add a package whose runtime deps are all third-party (or also packed by this
- * script), else its `@mailwoman/*` dep resolves from the registry and skews the test. `@mailwoman/core` qualifies: zero
- * `@mailwoman/*` runtime deps.
+ * Leaves whose tarball must import without the umbrella (no unrelated hoisting) — the undeclared-dep guard the closure
+ * phase can't provide. Each entry names the first-party tarballs that form the leaf's declared runtime closure, keeping
+ * the check source-coherent without making unrelated packages available.
  */
-const STANDALONE_LEAVES = ["@mailwoman/core"]
+const STANDALONE_LEAVES: Record<string, string[]> = {
+	// Core otherwise qualifies as a dependency-clean leaf. Its first-party runtime dependencies are supplied as local
+	// tarballs rather than resolved from npm: `@mailwoman/sqlite` is a NEW name with no publish yet, so a registry
+	// install answers E404 and the probe reports a packaging failure that is really an unblessed name.
+	"@mailwoman/core": ["@mailwoman/platform", "@mailwoman/sqlite"],
+}
 
 /**
  * The tools `@mailwoman/mcp` registers (`mcp/tools.ts` + the bdc/filer additions, 2026-07-31). The bin-exec leg asserts
@@ -325,9 +357,9 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 	}
 }
 
-const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
-const tarDir = join(tmp, "tarballs")
-const proj = join(tmp, "proj")
+await using tmp = await temporaryDirectory("mw-smoke-")
+const tarDir = tmp.resolve("tarballs")
+const proj = tmp.resolve("proj")
 execFileSync("mkdir", ["-p", tarDir, proj])
 
 const run = (cmd: string, args: string[], cwd: string) =>
@@ -343,8 +375,8 @@ function assertClosureComplete() {
 	const missing = new Map<string, string[]>()
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
-		const manifest = parseJSONStrict<Record<string, Record<string, string>>>(
-			readFileSync(resolve(repoRoot, dir, "package.json"), "utf8")
+		const manifest = readLocalJSONFileSync<Record<string, Record<string, string>>>(
+			resolve(repoRoot, dir, "package.json")
 		)
 
 		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
@@ -381,10 +413,7 @@ try {
 		deps[name] = `file:${tgz}`
 	}
 
-	writeFileSync(
-		join(proj, "package.json"),
-		JSON.stringify({ name: "mw-smoke", private: true, dependencies: deps }, null, 2)
-	)
+	await writeLocalJSONFile({ name: "mw-smoke", private: true, dependencies: deps }, join(proj, "package.json"))
 
 	console.log("[smoke] npm install (tarballs only — no hoisting)…")
 
@@ -422,32 +451,32 @@ try {
 	// Standalone-leaf guard (#core-zx, 2026-07-18). The phase above installs the WHOLE `mailwoman`
 	// closure into ONE project, so a hoisted-but-undeclared dep is always present in node_modules — it
 	// cannot catch a leaf package whose OWN manifest is missing a runtime dep. Install each
-	// dependency-clean leaf ALONE (only its tarball; npm pulls that package's declared deps from the
-	// registry) and import it. `@mailwoman/core` has no `@mailwoman/*` runtime deps, so it installs
-	// standalone; an undeclared import (the v7.0.0 `zx` bug, which the closure phase hid because
-	// `mailwoman` declares `zx`) crashes here and nowhere else. Add a leaf only if its runtime deps are
-	// all third-party or also listed here — otherwise its `@mailwoman/*` dep 404s / pulls a stale
-	// registry version (the source-skew this file's header warns about).
-	for (const leaf of STANDALONE_LEAVES) {
+	// dependency-clean leaf with only its declared first-party closure and import it. An undeclared import
+	// (the v7.0.0 `zx` bug, which the closure phase hid because `mailwoman` declares `zx`) crashes here and
+	// nowhere else. Keep each entry's first-party closure complete so npm never pulls a stale registry
+	// version (the source-skew this file's header warns about).
+	for (const [leaf, firstPartyDependencies] of Object.entries(STANDALONE_LEAVES)) {
 		const leafDir = WORKSPACES[leaf]!
 
 		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
 
-		const solo = join(tmp, `solo-${leafDir}`)
+		const solo = tmp.resolve(`solo-${leafDir}`)
 		execFileSync("mkdir", ["-p", solo])
 
-		writeFileSync(
-			join(solo, "package.json"),
-			JSON.stringify(
-				{
-					name: `mw-solo-${leafDir}`,
-					private: true,
-					type: "module",
-					dependencies: { [leaf]: `file:${join(tarDir, `${leafDir}.tgz`)}` },
-				},
-				null,
-				2
-			)
+		await writeLocalJSONFile(
+			{
+				name: `mw-solo-${leafDir}`,
+				private: true,
+				type: "module",
+				dependencies: Object.fromEntries(
+					[leaf, ...firstPartyDependencies].map((name) => {
+						const workspaceDir = WORKSPACES[name]!
+
+						return [name, `file:${join(tarDir, `${workspaceDir}.tgz`)}`]
+					})
+				),
+			},
+			join(solo, "package.json")
 		)
 
 		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], solo)
@@ -464,6 +493,4 @@ try {
 	)
 
 	process.exitCode = 1
-} finally {
-	rmSync(tmp, { recursive: true, force: true })
 }

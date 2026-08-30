@@ -6,10 +6,10 @@
  *   rules and render one verdict. The platform adapters — `vale-response-check.ts` (Claude Code)
  *   and `vale-response-check-codex.ts` (Codex) — own payload parsing, the loop guard, and the
  *   output JSON; the POLICY (which config, which severities block, how findings read) lives here
- *   so the two gates cannot drift apart the way parallel copies do.
+ *   so the two hooks cannot drift apart the way parallel copies do.
  *
  *   The rule set is `docs/.vale-chat.ini`: the shared Mailwoman style plus the MailwomanChat
- *   additions, fixture-tested by `docs/scripts/check-vale-rules.sh`. The config path resolves
+ *   additions, fixture-tested by `docs/scripts/check-vale-rules.ts`. The config path resolves
  *   relative to THIS module, so a worktree checkout lints with its own rules.
  *
  *   Severity picks the mechanism. Error-severity findings render a `block` verdict — that tier is
@@ -19,11 +19,10 @@
  *   not have, so the agent weighs them.
  */
 
-import { spawnSync } from "node:child_process"
-import { createRequire } from "node:module"
-import { fileURLToPath } from "node:url"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { createRequire } from "@mailwoman/platform/module"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 const MAX_MATCHES_PER_RULE = 8
 
@@ -127,7 +126,7 @@ function formatAlerts(alerts: ValeAlert[], opening: string): string {
 	// reply stands, where the per-group lines alone are the useful part.
 	const guidance = hasErrors
 		? [
-				`Replace each flagged phrase with the concrete claim it hides — do not merely delete it. Structure: define project terms at first use; give every count its comparison arm and denominator; state the arithmetic behind derived figures; write addresses in full. A hit inside a verbatim address, place name, or quoted string can stand.`,
+				`Return only replacement text for the flagged sentences. Do not repeat, summarize, reorder, expand, or otherwise restate any unflagged part of the reply. Replace each flagged phrase with the concrete claim it hides — do not merely delete it. Structure: define project terms at first use; give every count its comparison arm and denominator; state the arithmetic behind derived figures; write addresses in full. A hit inside a verbatim address, place name, or quoted string can stand.`,
 			]
 		: []
 
@@ -147,7 +146,7 @@ export function renderVerdict(alerts: ValeAlert[]): ProseVerdict | null {
 			kind: "block",
 			text: formatAlerts(
 				alerts,
-				`Prose check: ${alerts.length} finding${alerts.length === 1 ? "" : "s"} (${errorCount} error). Rewrite the flagged sentences in plain words per the output style, then give the corrected reply.`
+				`Prose check: ${alerts.length} finding${alerts.length === 1 ? "" : "s"} (${errorCount} error). Rewrite only the flagged sentences in plain words per the output style.`
 			),
 		}
 	}

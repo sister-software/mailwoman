@@ -9,7 +9,7 @@
  *   naming a company + contact address, plus `Accept-Encoding: gzip, deflate`.
  *
  *   The pacer, retry loop, on-disk cache, and error type all live in `@mailwoman/core/api`, not here —
- *   every one of them is general HTTP-client machinery a second client would otherwise re-derive
+ *   every one of them is general HTTP-client implementation a second client would otherwise re-derive
  *   (`bdc/sdk/client.ts` is that second client). What remains here is genuinely SEC-specific:
  *
  *     1. UA fail-fast off `$private.SEC_EDGAR_USER_AGENT` — a silently-UA-less client just 403s on

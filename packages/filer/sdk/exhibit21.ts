@@ -74,6 +74,9 @@ const TAG_PATTERN = /<[^>]*>/g
  * Exported (alongside {@linkcode decodeEntities}/{@linkcode normalizeWhitespace}) so `exhibit21.test.ts`'s
  * substring-invariant test can compute the same "normalized input" this module reasons about — see the module
  * docstring's invariant paragraph.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY PORT THIS TO A DOMPURIFY SANITIZER SUCH AS packages/react/trust-policies.ts
+ * ALSO, MOVE THE `trusted-policies` MODULE TO `@mailwoman/core/trust-policies.ts`
  */
 export function stripTags(html: string): string {
 	return html.replaceAll(TAG_PATTERN, (match: string, offset: number, whole: string) => {
@@ -440,7 +443,7 @@ interface ColumnMapping {
  * not already read the same way, so requiring three costs no fixture a single subsidiary — and it keeps a two-cell
  * header from claiming to describe a WIDER data row it never mentions, which is `exhibit21-mangled.html`'s shape
  * exactly: a `Name of Subsidiary`/`State` header over a row whose third cell is `"Note: pending name change"`. That row
- * is unreadable and must stay unreadable (gate 3's load-bearing fixture asserts zero subsidiaries from it).
+ * is unreadable and must stay unreadable (gate 3's required fixture asserts zero subsidiaries from it).
  */
 const MINIMUM_HEADER_ROW_CELLS = 3
 
@@ -493,8 +496,8 @@ function headerColumnMapping(
  * column as a jurisdiction would emit one company as another company's place of incorporation. The whole table
  * abstains.
  *
- * All three conditions are load-bearing over the table's two-value data rows: at least 4 of them, more than half of
- * their SECOND values carrying a legal designation, and more than 70% of those second values DISTINCT. `idt-2025.htm`'s
+ * All three conditions are required over the table's two-value data rows: at least 4 of them, more than half of their
+ * SECOND values carrying a legal designation, and more than 70% of those second values DISTINCT. `idt-2025.htm`'s
  * "Domestic Subsidiaries" table is 5 rows, 5/5 designated, 5 distinct.
  *
  * The distinctness condition is not belt-and-braces. Charter Communications writes its jurisdiction column as

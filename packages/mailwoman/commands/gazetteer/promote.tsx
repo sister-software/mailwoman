@@ -8,8 +8,7 @@
  *   the canonical `candidate-global.db`.
  */
 
-import { join } from "node:path"
-
+import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -33,7 +32,7 @@ const GazetteerPromote: ParsedCommandComponent<Record<string, never>> = ({ args 
 
 		const root = mailwomanDataRoot()
 		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
-		const linkPath = promoteCandidate(candidateDB, root)
+		const linkPath = await promoteCandidate(candidateDB, root)
 
 		return { from: linkPath, to: candidateDB }
 	})

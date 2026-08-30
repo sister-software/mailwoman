@@ -23,22 +23,22 @@
  *     throw) with `openFilerDatabaseIfPresent` (the actual open) the same way `bdcFilingLandscape`'s handler does.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
 import type { BDCDatabase, PlausibilityDeps } from "@mailwoman/bdc"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import type { LayerContractDatabase } from "@mailwoman/core/layers"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { FilerDatabase } from "@mailwoman/filer"
+import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Open a bdc.db, or return `undefined` when `databasePath` is unset or the file is missing — NEVER a raw sqlite throw.
  * See the module header.
  */
-export function openBDCDatabaseIfPresent(databasePath: string | undefined): DatabaseClient<BDCDatabase> | undefined {
-	if (!databasePath || !existsSync(databasePath)) return undefined
+export async function openBDCDatabaseIfPresent(
+	databasePath: string | undefined
+): Promise<DatabaseClient<BDCDatabase> | undefined> {
+	if (!databasePath || !(await pathExists(databasePath))) return undefined
 
-	return new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(databasePath, { readOnly: true }) })
+	return new DatabaseClient<BDCDatabase>(databasePath, { readOnly: true })
 }
 
 /**
@@ -52,14 +52,14 @@ export function openBDCDatabaseIfPresent(databasePath: string | undefined): Data
  * (constructed with `{database}`, not `{databasePath}` — see `poi-lookup.ts`), so it never double-closes.
  */
 export async function openPlausibilityPOIDeps(databasePath: string | undefined): Promise<PlausibilityDeps["poi"]> {
-	if (!databasePath || !existsSync(databasePath)) return undefined
+	if (!databasePath || !(await pathExists(databasePath))) return undefined
 
 	const { POILookup } = await import("@mailwoman/resolver-wof-sqlite/poi-lookup")
-	const database = new DatabaseSync(databasePath, { readOnly: true })
+	const database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true })
 
 	return {
 		lookup: new POILookup({ database }),
-		contractDB: new DatabaseClient<LayerContractDatabase>({ database }),
+		contractDB: database,
 	}
 }
 
@@ -68,8 +68,8 @@ export async function openPlausibilityPOIDeps(databasePath: string | undefined):
  * (decision 6b). `toolName` is threaded through so the message matches whichever tool calls this (today: only
  * `mailwoman_bdc_filing_landscape`).
  */
-export function assertBDCDatabaseExists(toolName: string, databasePath: string): void {
-	if (!existsSync(databasePath)) {
+export async function assertBDCDatabaseExists(toolName: string, databasePath: string): Promise<void> {
+	if (!(await pathExists(databasePath))) {
 		throw new Error(`${toolName}: bdc.db not found at "${databasePath}"`)
 	}
 }
@@ -79,12 +79,12 @@ export function assertBDCDatabaseExists(toolName: string, databasePath: string):
  * (mirroring {@link openBDCDatabaseIfPresent}). Used by `cli.ts`'s `mailwoman_filer_lookup` handler after
  * {@link assertFilerDatabaseExists} has already confirmed the file is present.
  */
-export function openFilerDatabaseIfPresent(
+export async function openFilerDatabaseIfPresent(
 	databasePath: string | undefined
-): DatabaseClient<FilerDatabase> | undefined {
-	if (!databasePath || !existsSync(databasePath)) return undefined
+): Promise<DatabaseClient<FilerDatabase> | undefined> {
+	if (!databasePath || !(await pathExists(databasePath))) return undefined
 
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(databasePath, { readOnly: true }) })
+	return new DatabaseClient<FilerDatabase>(databasePath, { readOnly: true })
 }
 
 /**
@@ -93,8 +93,8 @@ export function openFilerDatabaseIfPresent(
  * throw rather than answer unstamped), so filer.db is required unconditionally, same as bdc.db is for
  * `mailwoman_bdc_filing_landscape`.
  */
-export function assertFilerDatabaseExists(toolName: string, databasePath: string): void {
-	if (!existsSync(databasePath)) {
+export async function assertFilerDatabaseExists(toolName: string, databasePath: string): Promise<void> {
+	if (!(await pathExists(databasePath))) {
 		throw new Error(`${toolName}: filer.db not found at "${databasePath}"`)
 	}
 }

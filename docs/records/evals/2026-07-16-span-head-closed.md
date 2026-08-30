@@ -54,7 +54,7 @@ a feature; it is drag.
 
 ## What the arc bought
 
-Four phases, and no shippable artifact. Worth saying plainly rather than dressing up.
+Four phases, and no shippable artifact. Worth saying rather than dressing up.
 
 What it produced instead is the reason the fix exists. `oracle@k` and the k-best decode made the
 headroom **visible** — oracle@10 0.775 against a 0.577 rank-1, a gap invisible to every gate that

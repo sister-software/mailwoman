@@ -138,7 +138,7 @@ The CRF with frozen structural transition mask. Forbids orphan-`I-*` sequences (
 BIO validity is universal; addressing grammar is not. French street types are leading
 particles ("Rue de Rivoli"), so `street_suffix` is not a tag that can occur in a French
 parse — and RUE being a genuine USPS Pub-28 suffix variant means a model trained on
-consistent US splits will happily emit it on French soil (measured: the v4.3.0 gate's
+consistent US splits will emit it on French soil (measured: the v4.3.0 gate's
 FAIL→corrective→PASS story). The conventions mask is the rung that makes the model's own
 address-system detection essential: detected system → the codex conventions row →
 forbidden tags removed from the Viterbi vocabulary outright, and the system's postcode

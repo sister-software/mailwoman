@@ -5,10 +5,9 @@
  * @file Strict Knip export verification with a narrow compatibility-alias allowlist.
  */
 
-import { execFileSync } from "node:child_process"
-
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
 
 interface KnipSymbol {
 	name: string

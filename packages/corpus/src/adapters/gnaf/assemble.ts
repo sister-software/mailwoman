@@ -25,11 +25,10 @@
  *   excluded by (street, locality, postcode) so the training shard never overlaps the benchmark.
  */
 
-import { createWriteStream } from "node:fs"
-import { readdir } from "node:fs/promises"
-import { join } from "node:path"
-
+import { readDirectory } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { join } from "@mailwoman/platform/path"
 import { PSVSpliterator, TextSpliterator } from "spliterator"
 
 export interface GNAFAssembleOptions {
@@ -125,7 +124,7 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 
 export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssembleResult> {
 	const progress = opts.onProgress ?? (() => {})
-	const files = await readdir(opts.standardDir)
+	const files = await readDirectory(opts.standardDir)
 
 	const pick = (re: RegExp, exclude?: RegExp) =>
 		files.filter((f) => re.test(f) && !(exclude && exclude.test(f))).map((f) => join(opts.standardDir, f))
@@ -207,7 +206,7 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 		progress(`${state}: ${seen.toLocaleString()} valid joinable seen`)
 	}
 
-	const out = createWriteStream(opts.out)
+	const out = openWriteStream(opts.out)
 	const byState: Record<string, number> = {}
 
 	for (const t of reservoir) {

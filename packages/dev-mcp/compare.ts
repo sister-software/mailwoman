@@ -16,9 +16,8 @@
  *   the strata, the provenance block. A number that differs between the paths differs because the measurement does.
  */
 
-import { randomUUID } from "node:crypto"
-
 import { formatPercent } from "@mailwoman/core/utils"
+import { randomUUID } from "@mailwoman/platform/crypto"
 import { checkCase } from "mailwoman/eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
@@ -42,8 +41,8 @@ import {
 	resolveGradeMode,
 	withheldVerdict,
 } from "./compare-helpers.ts"
-import { crossEngineReading } from "./confound.ts"
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import { crossEngineReading, worktreePairReading, worktreeTreeDelta } from "./confound.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { type ExternalAnswer, ExternalGeocoderClient, type ExternalArmIdentity } from "./external-arm.ts"
 import {
 	DISTANCE_THRESHOLDS_KM,
@@ -161,7 +160,7 @@ function now(deps: CompareDeps): Date {
  * Read `mwdev_compare`'s arguments and run whichever comparison they describe.
  */
 export async function runCompare(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	args: Record<string, unknown>,
 	deps: CompareDeps = {}
 ): Promise<unknown> {
@@ -181,25 +180,34 @@ export async function runCompare(
 	const set = await resolveInputSet(options.inputs ?? { kind: "board" })
 
 	if (armA.kind === "mailwoman" && armB.kind === "mailwoman") {
-		return compareMailwomanArms(registry, set, armA.config, armB.config, options, deps)
+		return await compareMailwomanArms(registry, set, armA.config, armB.config, options, deps)
 	}
 
-	return compareAcrossEngines(registry, set, armA, armB, options, deps)
+	return await compareAcrossEngines(registry, set, armA, armB, options, deps)
 }
 
 /**
  * Two mailwoman configurations, graded by the board's own `checkCase`.
  */
 async function compareMailwomanArms(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	set: ResolvedInputSet,
 	configA: EngineConfig,
 	configB: EngineConfig,
 	options: CompareOptions,
 	deps: CompareDeps
 ): Promise<unknown> {
-	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds, close } =
-		await prepareMailwomanArms(registry, set, configA, configB, options.declared, options.executionPath, deps)
+	using arms = await prepareMailwomanArms(
+		registry,
+		set,
+		configA,
+		configB,
+		options.declared,
+		options.executionPath,
+		deps
+	)
+
+	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds } = arms
 
 	const fingerprint = registry.fingerprint()
 
@@ -315,7 +323,7 @@ async function compareMailwomanArms(
 		payload: null,
 	}
 
-	const storeWarning = tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
+	const storeWarning = await tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
 
 	if (storeWarning) {
 		confounds.warnings.push(storeWarning)
@@ -358,8 +366,6 @@ async function compareMailwomanArms(
 		warnings: confounds.warnings,
 	}
 
-	close()
-
 	return result
 }
 
@@ -369,7 +375,7 @@ async function compareMailwomanArms(
  * carrying it into a cross-engine row would invite a comparison that has no other side.
  */
 async function mailwomanRunner(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	config: EngineConfig,
 	set: ResolvedInputSet
 ): Promise<ArmRunner> {
@@ -462,8 +468,8 @@ function oracleRunner(
  * rows is still readable on the rest. How many were missing is counted BEFORE the run and warned about, not discovered
  * from the miss rate afterwards.
  */
-function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: string): ArmRunner {
-	const run = getRun(spec.runID, dir)
+async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: string): Promise<ArmRunner> {
+	const run = await getRun(spec.runID, dir)
 
 	if (!run) {
 		throw new Error(
@@ -554,7 +560,7 @@ async function externalRunner(
  * raw query to both arms, top-1, haversine, 1/5/25 km, and a no-result — empty OR failed — a miss at every threshold.
  */
 async function compareAcrossEngines(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	set: ResolvedInputSet,
 	armA: ArmSpec,
 	armB: ArmSpec,
@@ -568,7 +574,7 @@ async function compareAcrossEngines(
 	const build = async (arm: ArmSpec, side: "a" | "b"): Promise<ArmRunner> => {
 		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
 
-		if (arm.kind === "recorded") return recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
+		if (arm.kind === "recorded") return await recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
 
 		if (arm.kind === "worktree") return worktreeArmRunner(registry, arm, set)
 
@@ -610,7 +616,7 @@ async function compareAcrossEngines(
  * count a transposed pair of same-typed arguments (`runnerA`, `runnerB`) compiles and silently swaps the arms.
  */
 interface GeoScoringContext {
-	registry: EngineRegistry
+	registry: EngineRegistryLike
 	set: ResolvedInputSet
 	armA: ArmSpec
 	armB: ArmSpec
@@ -722,7 +728,15 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		...(set.populationN === undefined ? {} : { populationN: set.populationN }),
 	})
 
-	const confounds = crossEngineReading(armLabel(armA), armLabel(armB), options.declared)
+	const confounds =
+		armA.kind === "worktree" && armB.kind === "worktree"
+			? worktreePairReading(
+					armLabel(armA),
+					armLabel(armB),
+					options.declared,
+					worktreeTreeDelta(registry.repoRoot, runnerA.provenance, runnerB.provenance)
+				)
+			: crossEngineReading(armLabel(armA), armLabel(armB), options.declared)
 
 	const noResult = {
 		a: rows.filter((row) => row.a.lat === null).length,
@@ -779,7 +793,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		payload: null,
 	}
 
-	const storeWarning = tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
+	const storeWarning = await tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
 
 	if (storeWarning) {
 		warnings.push(storeWarning)

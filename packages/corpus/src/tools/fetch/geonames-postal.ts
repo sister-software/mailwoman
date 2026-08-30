@@ -47,10 +47,9 @@
  *   Invoke via `mailwoman corpus fetch geonames-postal --countries pt,au,nz`.
  */
 
-import { mkdirSync } from "node:fs"
-import { join } from "node:path"
-
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, HTTPStatusError, writeManifest } from "./download.ts"
@@ -120,10 +119,11 @@ export async function fetchGeonamesPostal(
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
 	const destDir = join(options.outRoot, SLUG)
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	const countries = (options.countries ?? GEONAMES_POSTAL_DEFAULT_COUNTRIES).map((code) => code.trim().toUpperCase())
 	const baseURL = options.baseURL ?? BASE_URL
+	const retryDelayMs = options.retryDelayMs
 	const entries: GeonamesPostalFileEntry[] = []
 	const failedCodes: string[] = []
 	const unavailable: string[] = []
@@ -138,7 +138,7 @@ export async function fetchGeonamesPostal(
 		report?.(`=== ${SLUG} / ${country}`)
 
 		try {
-			const { bytes } = await downloadToFile({ url, dest, timeoutMs: 300_000, retries: 2, report })
+			const { bytes } = await downloadToFile({ url, dest, timeoutMs: 300_000, retries: 2, retryDelayMs, report })
 
 			entries.push({ country, filename, source_url: url, sha256: await sha256File(dest), bytes })
 

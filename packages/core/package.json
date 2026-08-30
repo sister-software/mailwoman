@@ -52,15 +52,10 @@
 			"default": "./out/logging/index.js",
 			"types": "./out/logging/index.d.ts"
 		},
-		"#fs": {
-			"node": "./fs/node.ts",
-			"default": "./out/fs/node.js",
-			"types": "./out/fs/node.d.ts"
-		},
-		"#fs/utils": {
-			"node": "./fs/utils/index.ts",
-			"default": "./out/fs/utils/index.js",
-			"types": "./out/fs/utils/index.d.ts"
+		"#fs/*": {
+			"node": "./fs/*.ts",
+			"default": "./out/fs/*.js",
+			"types": "./out/fs/*.d.ts"
 		},
 		"#resources": {
 			"node": "./resources/index.ts",
@@ -175,20 +170,10 @@
 			"default": "./out/utils/index.js",
 			"types": "./out/utils/index.d.ts"
 		},
-		"./fs": {
-			"node": "./fs/node.ts",
-			"default": "./out/fs/node.js",
-			"types": "./out/fs/node.d.ts"
-		},
-		"./fs/zip": {
-			"node": "./fs/zip.ts",
-			"default": "./out/fs/zip.js",
-			"types": "./out/fs/zip.d.ts"
-		},
-		"./fs/utils": {
-			"node": "./fs/utils/index.ts",
-			"default": "./out/fs/utils/index.js",
-			"types": "./out/fs/utils/index.d.ts"
+		"./fs/*": {
+			"node": "./fs/*.ts",
+			"default": "./out/fs/*.js",
+			"types": "./out/fs/*.d.ts"
 		},
 		"./scripting": {
 			"node": "./scripting/index.ts",
@@ -259,21 +244,6 @@
 			"node": "./resolver/index.ts",
 			"default": "./out/resolver/index.js",
 			"types": "./out/resolver/index.d.ts"
-		},
-		"./kysley/client": {
-			"node": "./kysley/client.ts",
-			"default": "./out/kysley/client.js",
-			"types": "./out/kysley/client.d.ts"
-		},
-		"./kysley/dialect": {
-			"node": "./kysley/dialect.ts",
-			"default": "./out/kysley/dialect.js",
-			"types": "./out/kysley/dialect.d.ts"
-		},
-		"./kysley/dialect-config": {
-			"node": "./kysley/dialect-config.ts",
-			"default": "./out/kysley/dialect-config.js",
-			"types": "./out/kysley/dialect-config.d.ts"
 		},
 		"./errors": {
 			"node": "./errors/index.ts",
@@ -480,11 +450,6 @@
 			"default": "./out/utils/jsonl.js",
 			"types": "./out/utils/jsonl.d.ts"
 		},
-		"./utils/sealed-db": {
-			"node": "./utils/sealed-db.ts",
-			"default": "./out/utils/sealed-db.js",
-			"types": "./out/utils/sealed-db.d.ts"
-		},
 		"./utils/stats": {
 			"node": "./utils/stats.ts",
 			"default": "./out/utils/stats.js",
@@ -495,6 +460,8 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/platform": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"adm-zip": "^0.6.0",
 		"async-init": "^1.0.0",
 		"axios": "^1.19.0",
@@ -504,13 +471,13 @@
 		"d3-scale-chromatic": "^3.1.0",
 		"env-paths": "^2.2.1",
 		"fast-glob": "^3.3.3",
+		"htmlparser2": "^10",
 		"http-status-codes": "^2.3.0",
 		"kysely": "^0.29.4",
 		"path-ts": "^2.1.0",
 		"pino": "^10.3.1",
-		"pluralize": "^8.0.0",
 		"regenerate": "^1.4.2",
-		"spliterator": "^6.2.0",
+		"spliterator": "^6.3.1",
 		"type-fest": "^5.8.0",
 		"yauzl-promise": "^4.0.0",
 		"zod": "^4.4.3"

@@ -44,7 +44,7 @@ a suite, a letter.
 
 **Boundaries under the building.** A structure can sit across a municipal line, so its legal
 municipality and its postal town disagree by design. It can be in an annexed area whose postal town
-still names the town that annexed it. Brooklyn is a postal city that the Postal Service accepts, and
+still carries the annexing town's name. Brooklyn is a postal city that the Postal Service accepts, and
 the legal municipality is New York; both appear in real records, and a system that treats one as a
 misspelling of the other loses information.
 
@@ -82,7 +82,7 @@ place identifier rather than a string.
 There is a data-side limit worth stating too. A postal town resolves only if the gazetteer carries it
 as a place under that name, at a rank the resolver treats as a locality; a name filed under a
 different rank, or under a canonical form that differs from the postal one, can miss even when the
-place plainly exists. Read `hierarchy` on the result to see which place answered, instead of assuming
+place exists. Read `hierarchy` on the result to see which place answered, instead of assuming
 the name in your input is the name that matched.
 
 ## Related

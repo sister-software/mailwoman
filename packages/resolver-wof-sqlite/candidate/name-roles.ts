@@ -5,10 +5,11 @@
  * @file Pass 3c of the candidate build — the `name_role` detectors and the cuts they are judged by.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { CandidateDatabase } from "../candidate-schema.ts"
+import type { WOFDatabase } from "../schema.ts"
 import { normalizeLocalityForKey } from "../street-normalize.ts"
 import { isOwnNameVariant } from "./own-name.ts"
 import type { PlaceAttrs } from "./place-attrs.ts"
@@ -40,8 +41,8 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 /**
  * Pass 3c — the #1730 name-role prototype: two independent detectors over the staged rows, WRITE-ONLY in this
  * generation (no ranking consumer; the rank penalty is its own D-rule-gated step with the `gloss_key` board as
- * tripwire). Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr` region abbreviations
- * are never a gloss or a variant.
+ * regression check). Both stamp `is_primary = 0` rows only — a place's canonical name and the `place_abbr` region
+ * abbreviations are never a gloss or a variant.
  *
  * - `gloss` is ANOMALY-based, and stamps only the certain core: key volume at/over the threshold + a non-admin placetype
  *
@@ -55,8 +56,8 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
  * any role.
  */
 export function stampNameRoles(ctx: {
-	src: DatabaseSync
-	out: DatabaseSync
+	src: DatabaseClient<WOFDatabase>
+	out: DatabaseClient<CandidateDatabase>
 	attrs: Map<number, PlaceAttrs>
 	keyCounts: Map<number, number>
 	glossThreshold: number

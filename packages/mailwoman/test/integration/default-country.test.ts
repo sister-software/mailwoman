@@ -1,6 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { childEnv } from "@mailwoman/core/scripting/utils"
+import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 /**
  *   Regression guard for `parse --default-country` (the resolver country scope). Without a country
  *   hint the WOF resolver resolves globally; the demo passes `country: "US"`, and this gives the
@@ -17,13 +21,8 @@
  *   The unit tests (the locale→country inference + the override precedence) are CI-safe. The
  *   end-to-end resolution check needs the GLOBAL admin DB, so it skips when that DB is absent.
  */
-import { execFile } from "node:child_process"
-import { existsSync } from "node:fs"
-import { promisify } from "node:util"
-
-import { $public } from "@mailwoman/core/env"
-import { childEnv } from "@mailwoman/core/scripting/utils"
-import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { localeToCountry, resolverDefaultCountry, spec as parseSpec } from "mailwoman/commands/parse"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
@@ -128,7 +127,7 @@ describe("--default-country schema validation", () => {
 
 // End-to-end: needs the GLOBAL admin DB (the US-only DB can't reproduce the foreign homonym).
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
-const describeIfGlobal = describe.skipIf(!existsSync(GLOBAL_WOF))
+const describeIfGlobal = describe.skipIf(!(await pathExists(GLOBAL_WOF)))
 
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {
 	const run = (address: string, extra: string[] = []) =>

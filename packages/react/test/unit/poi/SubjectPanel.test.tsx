@@ -10,7 +10,7 @@ import { renderComponent } from "#test/render"
 function subject(overrides: Partial<POICategorySubject> = {}): POICategorySubject {
 	return {
 		kind: "category",
-		category: { id: "hospital", label: "Hospital" } as unknown as CategoryRecord,
+		category: { id: "hospital", label: "Hospital" } as CategoryRecord,
 		matchedPhrase: "hospital",
 		confidence: 0.84,
 		remainder: "New York",

@@ -27,12 +27,11 @@
  *   Usage: node packages/mailwoman/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
  */
 
-import { createHash } from "node:crypto"
-import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createHash } from "@mailwoman/platform/crypto"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { deriveGeocodeRegister } from "#geocode-core"
@@ -171,7 +170,7 @@ for (const shape of SHAPES) {
 console.log(`span serialization sha256: ${createHash("sha256").update(spans.join("\n")).digest("hex")}`)
 
 if (values["dump-spans"]) {
-	writeFileSync(values["dump-spans"], spans.join("\n") + "\n")
+	await writeLocalTextFile(spans.join("\n") + "\n", values["dump-spans"])
 
 	console.log(`spans → ${values["dump-spans"]} (${spans.length} parses)`)
 }

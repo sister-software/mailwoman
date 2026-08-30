@@ -3,20 +3,30 @@
 
 /**
  *   The ONE way to produce a consumer-grade tarball from a workspace: inject the derived
- *   `publishConfig.exports` (strip `node → .ts` — Node refuses type-stripping under
- *   node_modules, so that condition must never reach a consumer), `yarn pack`, restore the
- *   manifest. Used by BOTH the release path (`publish-workspace.ts`) and the CI smoke test
+ *   `publishConfig.exports` (rewrite every `.ts` target to emitted JavaScript — Node refuses
+ *   type-stripping under node_modules, so a source target must never reach a consumer), refuse the pack outright if
+ *   one survives, `yarn pack`, restore the manifest. Used by BOTH the release path (`publish-workspace.ts`) and the CI smoke test
  *   (`smoke-clean-install.ts`) — the smoke previously packed raw and shipped dev maps, which
  *   let the v7.2.0 ship-break class through untested.
  */
 
-import { spawnSync } from "node:child_process"
-import { copyFileSync, lstatSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } from "node:fs"
-import { dirname, resolve } from "node:path"
-
+import {
+	readLinkSync,
+	readLocalJSONFileSync,
+	readLocalTextFileSync,
+	tryStatLinkSync,
+} from "@mailwoman/core/fs/readers-sync"
+import {
+	copyFileToSync,
+	removePathSync,
+	writeLocalFileSync,
+	writeLocalJSONFileSync,
+} from "@mailwoman/core/fs/writers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { spawnSync } from "@mailwoman/platform/child_process"
+import { dirname, resolve } from "@mailwoman/platform/path"
 
-import { transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
+import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "./publish-exports.ts"
 
 /**
  * Replace any symlinked `files` entries with real copies of their targets. `yarn pack` stores symlinks AS symlinks in
@@ -27,18 +37,18 @@ import { transformExportsForPublish, transformImportsForPublish } from "./publis
  * `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */
 export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
-	const pkg = parseJSONStrict<{ files?: unknown[] }>(readFileSync(resolve(workspaceDir, "package.json"), "utf8"))
+	const pkg = readLocalJSONFileSync<{ files?: unknown[] }>(resolve(workspaceDir, "package.json"))
 
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
 		const target = resolve(workspaceDir, entry)
-		const st = lstatSync(target, { throwIfNoEntry: false })
+		const st = tryStatLinkSync(target)
 
 		if (!st?.isSymbolicLink()) continue
-		const linkDest = readlinkSync(target)
+		const linkDest = readLinkSync(target)
 		const resolved = resolve(dirname(target), linkDest)
-		unlinkSync(target)
-		copyFileSync(resolved, target)
+		removePathSync(target)
+		copyFileToSync(resolved, target)
 
 		console.error(`pack-workspace: dereferenced ${entry} ← ${resolved}`)
 	}
@@ -51,7 +61,7 @@ export function dereferenceWorkspaceSymlinks(workspaceDir: string): void {
  */
 export function packWorkspaceForPublish(workspaceDir: string, outFile: string): void {
 	const manifestPath = resolve(workspaceDir, "package.json")
-	const originalManifest = readFileSync(manifestPath, "utf8")
+	const originalManifest = readLocalTextFileSync(manifestPath)
 
 	dereferenceWorkspaceSymlinks(workspaceDir)
 
@@ -63,13 +73,19 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 		}>(originalManifest)
 
 		if (manifest.exports || manifest.imports) {
+			const exports = manifest.exports ? transformExportsForPublish(manifest.exports) : undefined
+			const imports = manifest.imports ? transformImportsForPublish(manifest.imports) : undefined
+
+			assertNoSourceTargets(`${workspaceDir} exports`, exports)
+			assertNoSourceTargets(`${workspaceDir} imports`, imports)
+
 			manifest.publishConfig = {
 				...manifest.publishConfig,
-				...(manifest.exports ? { exports: transformExportsForPublish(manifest.exports) } : {}),
-				...(manifest.imports ? { imports: transformImportsForPublish(manifest.imports) } : {}),
+				...(exports ? { exports } : {}),
+				...(imports ? { imports } : {}),
 			}
 
-			writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n")
+			writeLocalJSONFileSync(manifest, manifestPath)
 		}
 
 		const result = spawnSync("yarn", ["pack", "-o", outFile], { cwd: workspaceDir, stdio: ["ignore", "pipe", "pipe"] })
@@ -78,6 +94,6 @@ export function packWorkspaceForPublish(workspaceDir: string, outFile: string): 
 			throw new Error(`pack-workspace: yarn pack failed for ${workspaceDir} (exit ${result.status}): ${result.stderr}`)
 		}
 	} finally {
-		writeFileSync(manifestPath, originalManifest)
+		writeLocalFileSync(originalManifest, manifestPath)
 	}
 }

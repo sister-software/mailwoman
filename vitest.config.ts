@@ -13,10 +13,9 @@
 
 /// <reference types="vitest/config" />
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import type { Alias } from "vite"
 import { defineConfig } from "vite"
 
@@ -46,7 +45,7 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  */
 function readManifest<T>(path: string): T {
 	// oxlint-disable-next-line no-restricted-properties -- see above.
-	return JSON.parse(readFileSync(path, "utf8")) as T
+	return readLocalJSONFileSync<T>(path)
 }
 
 function workspaceAliases(): Alias[] {
@@ -126,6 +125,12 @@ export default defineConfig({
 		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural/web-loader.tolerance.test.ts).
 		isolate: false,
 		testTimeout: 15_000,
+		coverage: {
+			// `reportOnFailure` defaults to false, which means ONE failing test suppresses the entire report — and the
+			// symptom is an empty coverage directory, which reads as "coverage is broken" rather than "a test failed".
+			// A run that measured 64.45% statements on the unit leg is worth keeping when a suite goes red.
+			reportOnFailure: true,
+		},
 		exclude: [
 			"**/node_modules/**",
 			"**/dist/**",
@@ -136,7 +141,7 @@ export default defineConfig({
 			"**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*",
 			// Playwright e2e specs live under docs/test/browser/ + docs/test/build/. They use
 			// @playwright/test as the runner, not vitest, but vitest's default `*.spec.ts` glob would
-			// happily pick them up and crash on the unfamiliar `test.describe` API. (The build/ entry
+			// pick them up and crash on the unfamiliar `test.describe` API. (The build/ entry
 			// — the `docusaurus build` health gate — was missing here, so it surfaced the moment CI
 			// could reach the test phase again.)
 			"**/docs/test/browser/**",

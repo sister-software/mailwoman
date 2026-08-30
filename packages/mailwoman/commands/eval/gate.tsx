@@ -53,7 +53,7 @@ const EvalGate: ParsedCommandComponent<Options> = ({ options }) => {
 		async () => {
 			const { runPromotionGate } = await import("../../eval-harness/promotion-gate.ts")
 
-			return runPromotionGate(options)
+			return await runPromotionGate(options)
 		},
 		(exitCode) => exitCode
 	)

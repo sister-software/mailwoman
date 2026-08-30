@@ -57,11 +57,10 @@
  *   is a property of the invocation, not of a feature. Rows carry `country: ""` and the caller stamps it.
  */
 
-import { spawn } from "node:child_process"
-import { once } from "node:events"
-import { createWriteStream } from "node:fs"
-
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawn } from "@mailwoman/platform/child_process"
+import { once } from "@mailwoman/platform/events"
 import { TextSpliterator } from "spliterator"
 
 import { representativePoint } from "./representative-point.ts"
@@ -104,7 +103,7 @@ export interface SubVenueTagRule {
 /**
  * The tag rules, ordered — the FIRST rule a feature satisfies wins.
  *
- * Order is load-bearing in exactly one place: a station platform commonly carries BOTH `public_transport=platform` and
+ * Order is required in exactly one place: a station platform commonly carries BOTH `public_transport=platform` and
  * `railway=platform`, and an aerodrome terminal building sometimes carries both `aeroway=terminal` and
  * `building=terminal`. In every such case the colliding rules share a `designatorID`, so the first-wins resolution is
  * harmless — it picks the same answer either way. There is no pair of rules with DIFFERENT designators that a single
@@ -570,7 +569,7 @@ export interface WriteSubVenueJSONLOptions {
  * Returns the row count.
  */
 export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Promise<number> {
-	const stream = createWriteStream(options.outPath)
+	const stream = openWriteStream(options.outPath)
 	let rows = 0
 
 	for await (const row of extractOSMSubVenues(options.pbfPath, options.rules)) {

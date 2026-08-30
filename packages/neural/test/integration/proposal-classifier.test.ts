@@ -9,10 +9,9 @@
  *   weights when `MAILWOMAN_TEST_ONNX_MODEL` (or the default host path) is present.
  */
 
-import { existsSync } from "node:fs"
-
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
@@ -26,7 +25,7 @@ import { describe, expect, test } from "vitest"
  * Minimal duck-typed Section — see proposal-classifier.ts for why we don't construct real Spans.
  */
 function makeSection(body: string, start = 0): Section {
-	return { body, start, end: start + body.length } as unknown as Section
+	return { body, start, end: start + body.length } as Section
 }
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
@@ -35,7 +34,7 @@ const MODEL_PATH =
 	$public.MAILWOMAN_TEST_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
 
-const haveModel = existsSync(MODEL_PATH)
+const haveModel = await pathExists(MODEL_PATH)
 
 /**
  * The coarse tags the v0.2.0 model is expected to reach at least one of. Typed so a tag that leaves the union stops

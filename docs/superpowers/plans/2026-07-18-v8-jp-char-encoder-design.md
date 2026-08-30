@@ -1,6 +1,6 @@
 # v8 JP char-path — input-contract design + Leg-1 probe (Fable, 2026-07-18)
 
-Refines `scratchpad/v8-cjk-architecture-plan.md`. Grounded in model.py (CharCNNEmbedding 133–192, forward fusion 563–660), char_tokenizer.py, data_loader.py, tokenizer.py (char-label machinery 113–257), labels.py, SCHEMA.mdx JP block, Phase-0 derisk.
+Refines `scratchpad/v8-cjk-architecture-plan.md`. Grounded in model.py (CharCNNEmbedding 133–192, forward fusion 563–660), char_tokenizer.py, data_loader.py, tokenizer.py (char-label implementation 113–257), labels.py, SCHEMA.mdx JP block, Phase-0 derisk.
 
 ## Decision register (4 irreversible)
 
@@ -31,7 +31,7 @@ data_loader wiring: `DataConfig.char_mode: "off"|"word"|"char"` (default off) + 
 
 ## (c) JP number (D4): whole-span house_number
 
-Compact `2-3-16` → single house_number; split into block/sub_block/building_number ONLY for kanji-designator long form (2丁目3番16号) when it enters corpus (Phase 2+). Reasoning: compact form carries NO per-part surface evidence (part→role depends on count + preceding 丁目 = deterministic arithmetic, not per-token ambiguity — "no load-bearing trivia"; sub-part split is resolve-time arithmetic, 100% recoverable from span text + part count). Long form carries designators in surface (kanji IS evidence, per-char-taggable) → the declared fine tags. Two-surface rule. Probe: Overture-JP number field IS compact, Phase-0 aligner emits it as one span → runs on existing STAGE3 head, zero schema work, comparable to bare-Latin floor. Formatter match-key normalizes both to same chōme/banchi/go at resolve.
+Compact `2-3-16` → single house_number; split into block/sub_block/building_number ONLY for kanji-designator long form (2丁目3番16号) when it enters corpus (Phase 2+). Reasoning: compact form carries NO per-part surface evidence (part→role depends on count + preceding 丁目 = deterministic arithmetic, not per-token ambiguity — "no required trivia"; sub-part split is resolve-time arithmetic, 100% recoverable from span text + part count). Long form carries designators in surface (kanji IS evidence, per-char-taggable) → the declared fine tags. Two-surface rule. Probe: Overture-JP number field IS compact, Phase-0 aligner emits it as one span → runs on existing STAGE3 head, zero schema work, comparable to bare-Latin floor. Formatter match-key normalizes both to same chōme/banchi/go at resolve.
 
 ## (d) Leg-1 probe
 

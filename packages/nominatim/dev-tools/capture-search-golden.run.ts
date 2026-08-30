@@ -9,9 +9,8 @@
  *   `node nominatim/dev-tools/capture-search-golden.run.ts`
  */
 
-import { spawn } from "node:child_process"
-import { writeFileSync } from "node:fs"
-
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { spawn } from "@mailwoman/platform/child_process"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 const PORT = 8199
@@ -72,7 +71,7 @@ try {
 		rows.push(JSON.stringify({ query, status: res.status, body: await res.json() }))
 	}
 
-	writeFileSync(OUT_PATH, rows.join("\n") + "\n")
+	await writeLocalTextFile(rows.join("\n") + "\n", OUT_PATH)
 
 	console.error(
 		`captured ${rows.length} /search responses (${withHouseNumber.length} house-number parity cases available)`

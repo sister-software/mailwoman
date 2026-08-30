@@ -1,6 +1,6 @@
 ---
 title: The acceptance battery
-description: The packaged promotion harness — what a model must survive to ship, and how a fine-tune engagement instantiates the same battery as its delivery gate.
+description: The packaged promotion harness — what a model must survive to ship, and how a fine-tune engagement instantiates the same battery as the check it must pass at delivery.
 ---
 
 # The acceptance battery
@@ -15,9 +15,9 @@ procedure with two consumers:
    EWC λ, not a promise.
 
 This page composes instruments that live elsewhere — it adds the procedure and the engagement
-instantiation, not new mechanics. The contributor-facing gate mechanics stay in
+instantiation, not new mechanics. The contributor-facing promotion mechanics stay in
 [Contributing model work](../CONTRIBUTING_MODEL_WORK.mdx) (the iron rules, the lever taxonomy,
-floor policy, the standard gate set); read that first if you are promoting a model yourself.
+floor policy, the standard eval set); read that first if you are promoting a model yourself.
 
 ## The instrument inventory
 
@@ -25,7 +25,7 @@ floor policy, the standard gate set); read that first if you are promoting a mod
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | Golden floors (per-locale, noise-honest margins)                   | the shipped baseline everywhere                                               | `mailwoman eval gate` + `mailwoman/eval-harness/gates/*.json` |
 | P0 fragment boards **with lowercase legs**                         | the user register (lowercase is doctrine)                                     | eval-harness fragment boards                                  |
-| Invariance suite vs the shipped reference                          | no silent behavior drift                                                      | `--baseline` legs of the gate runner                          |
+| Invariance suite vs the shipped reference                          | no silent behavior drift                                                      | `--baseline` legs of `mailwoman eval gate`                    |
 | Gauntlet ×3 layers (incl. metamorphic INV/DIR)                     | input robustness; label-preserving perturbations must not move the coordinate | `mailwoman eval gauntlet`                                     |
 | Evidence ablation (channels-zeroed ≥ baseline on unaffected spans) | the model must not launder capability through a retrieval channel             | standing since the v3.16 curriculum work                      |
 | Ablated-vs-fed columns (per channel)                               | what each evidence channel actually contributes                               | the capability manifest + the Modal per-channel contrast      |
@@ -35,12 +35,12 @@ floor policy, the standard gate set); read that first if you are promoting a mod
 | Pre-ship gauntlet on the dev-linked flip                           | the exact bytes about to ship, through the exact runtime                      | the release choreography                                      |
 
 Margins are **noise-honest**: `max(1.0pp, 2 × the metric's 95% binomial half-width)` at each
-metric's support, cut from the reference model's own readings. Floors ratchet at re-scores and
+metric's support, taken from the reference model's own readings. Floors ratchet at re-scores and
 never drift on promotes (see the floor policy in the contributor runbook).
 
 ## The procedure
 
-1. **Pre-register.** The gate sheet — every bar, every baseline identity (model md5, tokenizer,
+1. **Pre-register.** The acceptance sheet — every bar, every baseline identity (model md5, tokenizer,
    lexicon versions, register) — is written into the run's config header or plan doc **before**
    any GPU spend. Bars are bars: a below-bar number is a miss to confront (re-baseline with a
    stated reason, or iterate), never a quiet pass; a deviation from the sheet is recorded, never
@@ -63,8 +63,8 @@ A customer engagement adds three things to the standing battery and changes noth
 2. **The base-capability legs run unchanged.** The customer's fine-tune must hold every standing
    floor — the golden floors, the fragment boards, the gauntlet — within the noise-honest margins.
    Rare-class forgetting is structural to fine-tuning (the fr.cedex receipt), which is exactly why
-   the battery, not good intentions, is the gate.
-3. **The Fisher guarantee gate.** The fine-tune trains with the base model's Fisher artifact
+   the battery, not good intentions, decides.
+3. **The Fisher guarantee check.** The fine-tune trains with the base model's Fisher artifact
    (`fisher-diag-v1.npz`, shipped beside the base checkpoint) as an EWC brake at the calibrated λ
    (`train.ewc_lambda` / `ewc_fisher_path` / `ewc_reference`). The parameter-space brake and this
    behavior-space battery are the guarantee **together**; neither alone is. A battery

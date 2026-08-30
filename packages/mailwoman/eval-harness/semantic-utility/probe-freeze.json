@@ -1,0 +1,8 @@
+{
+	"definition": "packages/mailwoman/eval-harness/semantic-utility/probe-definition.json",
+	"probeID": "semantic-utility-probe-1928",
+	"version": "1.0.0",
+	"sha256": "df32f00dc3665f6b9aa79330668d5f5791153e82ef5b036271a41660796bf84c",
+	"frozenAt": "2026-08-26",
+	"note": "Content hash of the pre-registration over canonical JSON (keys sorted at every depth, array order preserved, no insignificant whitespace). `loadProbeDefinition` refuses a definition whose hash does not match this record, so the ruler cannot move between the two arms without a visible change to BOTH the version and this hash. Recompute by hashing `canonicalJSON(definition)` with `probeDefinitionHash` from mailwoman/eval-harness/semantic-utility/probe."
+}

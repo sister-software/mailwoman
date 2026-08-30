@@ -23,14 +23,13 @@
  *   pool).
  */
 
-import { readdirSync } from "node:fs"
-import { join } from "node:path"
-
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { readDirectory } from "@mailwoman/core/fs/readers"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 
 import { stableSourceID } from "#adapters/utils"
 import type { CanonicalRow } from "#types"
@@ -63,10 +62,10 @@ interface LieuDitTuple {
  * `ban/scripts/build-address-point-shard.ts`'s `departementFiles`, which hit and fixed this exact double-count trap
  * first.
  */
-function departementFiles(banDir: string): string[] {
+async function departementFiles(banDir: string): Promise<string[]> {
 	const byDept = new Map<string, string>()
 
-	for (const name of readdirSync(banDir).toSorted()) {
+	for (const name of (await readDirectory(banDir)).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue
@@ -89,7 +88,7 @@ function departementFiles(banDir: string): string[] {
  * Stream every département file, keeping only rows with a clean `lieuDit` (junk/dup filtering lives in `ban/sdk`).
  */
 async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
-	const files = departementFiles(banDir)
+	const files = await departementFiles(banDir)
 
 	if (!files.length) {
 		throw new Error(

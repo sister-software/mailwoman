@@ -5,8 +5,8 @@
  *   The LOCAL comparison rigs — start them, stop them, ask them a question.
  *
  *   `mwdev_compare`'s external arm grades an already-running engine but deliberately never starts one, so bringing a rig
- *   up was a shell exercise in `scratchpad/*-rig/*.sh` that a fresh context has no way to know about (and that a fresh
- *   checkout does not even carry — the scratchpad is gitignored). This module owns the small durable half: container
+ *   up was a shell exercise in `$MAILWOMAN_TEMP_ROOT/*-rig/*.sh` that a fresh context has no way to know about, and
+ *   that no checkout carries. This module owns the small durable half: container
  *   lifecycle and a one-off query. The heavyweight half stays in those scripts, and stays manual on purpose — dump
  *   downloads, checksum verification, index extraction and atomic promotion are one-time operations with real disk and
  *   licence consequences, and nothing here will perform them.
@@ -20,10 +20,10 @@
  *   engines into a number.
  */
 
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-
 import { APIClient } from "@mailwoman/core/api"
+import { tempRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 
 import { assertScorableEndpoint } from "./external-arm.ts"
@@ -95,6 +95,15 @@ const HTTP_OK_MIN = 200
 const HTTP_OK_MAX = 300
 
 /**
+ * Where a rig's lifecycle script lives: under `$MAILWOMAN_TEMP_ROOT`, because these are maintainer-authored scripts
+ * that no checkout carries. The value is quoted back to a maintainer who has to run one, so it has to name a path that
+ * exists on their machine rather than one relative to a repository that never held it.
+ */
+function rigScriptPath(...segments: string[]): string {
+	return String(tempRootPath(...segments))
+}
+
+/**
  * The rigs this tool can drive. `containers` is in START order; stop reverses it, because Elasticsearch must outlive
  * the API that queries it.
  */
@@ -105,7 +114,7 @@ export const ENGINE_RIGS = {
 		endpoint: "http://127.0.0.1:4000",
 		healthPath: "/v1/search?text=Berlin&size=1",
 		searchPath: (query: string) => `/v1/search?text=${encodeURIComponent(query)}&size=3`,
-		rigScript: "scratchpad/benchmark-rig/pelias-lifecycle.sh",
+		rigScript: rigScriptPath("benchmark-rig", "pelias-lifecycle.sh"),
 	},
 	photon: {
 		engine: "photon",
@@ -113,7 +122,7 @@ export const ENGINE_RIGS = {
 		endpoint: "http://127.0.0.1:2323",
 		healthPath: "/api?q=Berlin&limit=1",
 		searchPath: (query: string) => `/api?q=${encodeURIComponent(query)}&limit=3`,
-		rigScript: "scratchpad/photon-rig/photon-lifecycle.sh",
+		rigScript: rigScriptPath("photon-rig", "photon-lifecycle.sh"),
 	},
 } as const
 

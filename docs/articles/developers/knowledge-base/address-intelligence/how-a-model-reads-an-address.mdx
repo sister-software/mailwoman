@@ -19,7 +19,7 @@ one letter. Six fields come back, and all six are right. What happened in betwee
 
 This page walks that one line through the parser end to end. Every stage gets its rule-world name
 before its statistical one, because every stage is doing a job you have written by hand at some
-point — a lookup table, a regular expression, a tie-break. The machinery is those same jobs, done
+point — a lookup table, a regular expression, a tie-break. The implementation is those same jobs, done
 with scores instead of verdicts.
 
 ## The analog
@@ -32,10 +32,10 @@ then moves on. And when they finish, they will glance back over the marking to c
 "this continues the town" stroke with no "the town starts here" stroke before it is a slip of the
 pen, not a reading of the line.
 
-That is the whole design. Four moves: cut the line into pieces, score every possible mark on every
+That is the whole design. Four moves: split the line into pieces, score every possible mark on every
 piece, add what a place list already knows, and pick the marking that reads.
 
-## One: cut the line into pieces
+## One: split the line into pieces
 
 **The rule-world version:** split on spaces and punctuation, and you have words.
 

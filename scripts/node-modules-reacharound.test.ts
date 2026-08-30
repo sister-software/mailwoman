@@ -28,12 +28,11 @@
  *   substring first, so the AST cost is paid on ~30 files, not ~2,700.
  */
 
-import { execFile } from "node:child_process"
-import { access, readFile } from "node:fs/promises"
-import { join, relative } from "node:path"
-import { promisify } from "node:util"
-
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { join, relative } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 
@@ -80,6 +79,10 @@ const ALLOWED: Record<string, string> = {
 	// makes the cache rung's test independent of the helper it is exercising.
 	"packages/neural/test/integration/weights-overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
+	// LINKS the checkout's node_modules into the staging tree rather than reading a package's layout — `yarn pack`
+	// needs the project context there, and the link target is the checkout root's own directory, not another
+	// package's install dir. Same principle as worktree-arm: nothing package-owned is being addressed by hand.
+	"scripts/release-stage.ts": "symlinks the checkout's node_modules into the staging tree; not a package lookup",
 }
 
 /**
@@ -106,15 +109,9 @@ async function listCandidateSources(): Promise<string[]> {
 
 	const found = await Promise.all(
 		tracked.map(async (path) => {
-			if (
-				!(await access(path).then(
-					() => true,
-					() => false
-				))
-			)
-				return null
+			if (!(await pathExists(path))) return null
 
-			return (await readFile(path, "utf8")).includes("node_modules") ? path : null
+			return (await readLocalTextFile(path)).includes("node_modules") ? path : null
 		})
 	)
 
@@ -194,7 +191,7 @@ describe("the node_modules reach-around guard", () => {
 
 				if (key in ALLOWED) return
 
-				const hits = findReachArounds(await readFile(path, "utf8"), path)
+				const hits = findReachArounds(await readLocalTextFile(path), path)
 
 				if (hits.length) {
 					offenders[key] = hits
@@ -207,7 +204,7 @@ describe("the node_modules reach-around guard", () => {
 
 	test("every allowlist entry still exists and still needs the exemption", async () => {
 		for (const [key, reason] of Object.entries(ALLOWED)) {
-			const source = await readFile(join(REPO_ROOT, key), "utf8")
+			const source = await readLocalTextFile(join(REPO_ROOT, key))
 
 			expect(reason.length, `${key}: allowlist entries carry a reason`).toBeGreaterThan(20)
 

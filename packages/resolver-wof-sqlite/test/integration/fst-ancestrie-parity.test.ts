@@ -12,7 +12,7 @@
  *   code path is the ancestrie-backed one. If a deliberate behavior change ever lands in ancestrie's
  *   `autocomplete`, this suite fails and the change must be RE-RATIFIED by updating the frozen copy
  *   in the same commit, which is what makes drift between the two homes visible (the #861 rule: the
- *   function is shared; this is the tripwire proving it stays shared).
+ *   function is shared; this is the regression check proving it stays shared).
  *
  *   Two legs:
  *
@@ -27,8 +27,7 @@
  *       stale-format file.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type {
 	AutocompleteOpts,
@@ -319,17 +318,17 @@ const CURATED_QUERIES: Record<string, readonly string[]> = {
 
 for (const locale of ["en-gb", "es-es", "it-it"]) {
 	const artifactPath = String(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
-	const present = existsSync(artifactPath)
+	const present = await pathExists(artifactPath)
 
 	describe.skipIf(!present)(`fst-autocomplete ↔ ancestrie parity — shipped ${locale}`, () => {
-		it("answers identically across the derived + curated battery", () => {
+		it("answers identically across the derived + curated battery", async () => {
 			const stamp = peekFSTStampFields(artifactPath)
 
 			// v5 = the two-score split. A stale-format artifact would pin parity against bytes production
 			// no longer ships — fail loudly instead.
 			expect(stamp?.formatVersion).toBe(5)
 
-			const matcher = deserializeFST(readFileSync(artifactPath))
+			const matcher = deserializeFST(await readLocalBuffer(artifactPath))
 
 			// Deterministic derived battery: the artifact's first dozen root tokens (sorted), each as a
 			// bare query, a two-token walk through its own first continuation, and a partial prefix.

@@ -5,16 +5,17 @@
  *   The compare handler's contract, driven through a stub registry so no weights load and no gazetteer opens.
  */
 
-import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import { JobRegistry } from "@mailwoman/dev-mcp/jobs"
 import { buildToolTable, type DevTool } from "@mailwoman/dev-mcp/tools"
 import { describe, expect, it } from "vitest"
+
+import { stubEngine as buildEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 /**
  * A session whose answer is a pure function of the input, so a test can make two arms agree or disagree at will.
  */
 function stubEngine(id: string, effective: Record<string, unknown>, answer: (input: string) => unknown) {
-	return {
+	return buildEngine({
 		engineID: id,
 		effective,
 		fingerprint: { digest: "tree0", gitHead: "head0", dirtyFiles: [] as string[] },
@@ -40,34 +41,24 @@ function stubEngine(id: string, effective: Record<string, unknown>, answer: (inp
 				},
 				timing: { total: 1 },
 			}),
-			close: () => undefined,
+			[Symbol.dispose]: () => undefined,
 		},
-	}
+	})
 }
 
-function tableWith(engines: Array<ReturnType<typeof stubEngine>>): Map<string, DevTool> {
+async function tableWith(engines: Array<ReturnType<typeof stubEngine>>): Promise<Map<string, DevTool>> {
 	let call = 0
 
-	const registry = {
-		repoRoot: "/tmp/stub",
-		maxResident: 2,
+	const registry = stubEngineRegistry({
 		size: engines.length,
-		fingerprint: () => ({
-			digest: "tree0",
-			gitHead: "head0",
-			dirtyFiles: [],
-			newestMtimeMs: 0,
-			newestPath: null,
-			filesWalked: 1,
-		}),
 		acquire: async () => engines[Math.min(call++, engines.length - 1)]!,
-		summaries: () => [],
-		evict: () => true,
-		closeAll: () => 0,
-	} as unknown as EngineRegistry
+	})
 
 	return new Map(
-		buildToolTable({ registry, jobs: new JobRegistry(), startedAt: Date.now() }).map((tool) => [tool.name, tool])
+		(await buildToolTable({ registry, jobs: new JobRegistry(), startedAt: Date.now() })).map((tool) => [
+			tool.name,
+			tool,
+		])
 	)
 }
 
@@ -88,19 +79,12 @@ describe("mwdev_job", () => {
 	async function runToCompletion(script: string, exitCode: number): Promise<Record<string, unknown>> {
 		const jobs = new JobRegistry()
 
-		const registry = {
-			repoRoot: process.cwd(),
-			fingerprint: () => ({
-				digest: "t",
-				gitHead: "h",
-				dirtyFiles: [],
-				newestMtimeMs: 0,
-				newestPath: null,
-				filesWalked: 1,
-			}),
-		} as unknown as EngineRegistry
+		const registry = stubEngineRegistry({ repoRoot: process.cwd() })
 
-		const tools = new Map(buildToolTable({ registry, jobs, startedAt: Date.now() }).map((tool) => [tool.name, tool]))
+		const tools = new Map(
+			(await buildToolTable({ registry, jobs, startedAt: Date.now() })).map((tool) => [tool.name, tool])
+		)
+
 		const job = jobs.start("probe", process.execPath, ["-e", script], process.cwd())
 
 		await new Promise<void>((resolve) => {
@@ -137,8 +121,12 @@ describe("mwdev_job", () => {
 
 	it("lists jobs and reports a partial result while one is still running", async () => {
 		const jobs = new JobRegistry()
-		const registry = { repoRoot: process.cwd() } as unknown as EngineRegistry
-		const tools = new Map(buildToolTable({ registry, jobs, startedAt: Date.now() }).map((tool) => [tool.name, tool]))
+		const registry = stubEngineRegistry({ repoRoot: process.cwd() })
+
+		const tools = new Map(
+			(await buildToolTable({ registry, jobs, startedAt: Date.now() })).map((tool) => [tool.name, tool])
+		)
+
 		const job = jobs.start("slow", process.execPath, ["-e", "setTimeout(() => {}, 30000)"], process.cwd())
 
 		const listed = (await tools.get("mwdev_job")!.handler({ action: "list" })) as { jobs: unknown[] }
@@ -161,7 +149,7 @@ describe("mwdev_compare", () => {
 	it("refuses identical engine ids when the declared variable is an EngineConfig key", async () => {
 		const same = (input: string) => input
 
-		const tools = tableWith([
+		const tools = await tableWith([
 			stubEngine("same", { locale: "en-US" }, same),
 			stubEngine("same", { locale: "en-US" }, same),
 		])
@@ -180,7 +168,7 @@ describe("mwdev_compare", () => {
 		// real absence" for a lever that never reached a decode. The number could not tell the two apart, so the
 		// result must not be relayed as though it could.
 		const same = (input: string) => input
-		const tools = tableWith([stubEngine("a", { x: 1 }, same), stubEngine("b", { x: 2 }, same)])
+		const tools = await tableWith([stubEngine("a", { x: 1 }, same), stubEngine("b", { x: 2 }, same)])
 
 		const result = (await tools.get("mwdev_compare")!.handler({
 			inputs: LITERAL,
@@ -194,7 +182,7 @@ describe("mwdev_compare", () => {
 	})
 
 	it("does not caveat a result that did move", async () => {
-		const tools = tableWith([
+		const tools = await tableWith([
 			stubEngine("a", { x: 1 }, (input) => input),
 			stubEngine("b", { x: 2 }, (input) => `${input}-changed`),
 		])
@@ -210,7 +198,7 @@ describe("mwdev_compare", () => {
 	})
 
 	it("withholds a verdict when the set carries no truth", async () => {
-		const tools = tableWith([
+		const tools = await tableWith([
 			stubEngine("a", { x: 1 }, (input) => input),
 			stubEngine("b", { x: 2 }, (input) => `${input}!`),
 		])
@@ -227,7 +215,7 @@ describe("mwdev_compare", () => {
 	})
 
 	it("marks isolation ambiguous when more moved than was declared", async () => {
-		const tools = tableWith([
+		const tools = await tableWith([
 			stubEngine("a", { x: 1, y: 1 }, (input) => input),
 			stubEngine("b", { x: 2, y: 2 }, (input) => input),
 		])
@@ -247,9 +235,9 @@ describe("mwdev_compare", () => {
 		const a = stubEngine("a", { x: 1 }, (input) => input)
 		const b = stubEngine("b", { x: 2 }, (input) => input)
 
-		b.fingerprint = { digest: "tree1", gitHead: "head1", dirtyFiles: [] }
+		b.fingerprint = { ...b.fingerprint, digest: "tree1", gitHead: "head1" }
 
-		const tools = tableWith([a, b])
+		const tools = await tableWith([a, b])
 
 		await expect(
 			tools.get("mwdev_compare")!.handler({ inputs: LITERAL, arm_b: { locale: "en-GB" }, variable: ["x"] })
@@ -257,7 +245,7 @@ describe("mwdev_compare", () => {
 	})
 
 	it("returns every changed row rather than a capped sample", async () => {
-		const tools = tableWith([
+		const tools = await tableWith([
 			stubEngine("a", { x: 1 }, (input) => input),
 			stubEngine("b", { x: 2 }, (input) => `${input}!`),
 		])

@@ -30,9 +30,11 @@
  *   native dependency on end users who only ever run parse/geocode.
  */
 
-import { createWriteStream, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs"
-import * as path from "node:path"
-
+import { readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import * as path from "@mailwoman/platform/path"
 import { $ } from "zx"
 
 /**
@@ -157,9 +159,9 @@ const RES_ONSET_ZOOM: Record<number, number> = { 4: 0, 5: 0, 6: 5, 7: 7, 8: 9, 9
 /**
  * Resolve the shard set + matching interpolation shards.
  */
-function resolveStates(opts: CoverageBuildOptions): StateShard[] {
+async function resolveStates(opts: CoverageBuildOptions): Promise<StateShard[]> {
 	const exclude = new Set(opts.excludeStates.map((s) => s.toUpperCase()))
-	const files = readdirSync(opts.dataRoot).filter((f) => /^address-points-us-[a-z]+\.db$/.test(f))
+	const files = (await readDirectory(opts.dataRoot)).filter((f) => /^address-points-us-[a-z]+\.db$/.test(f))
 	const bySlug = new Map(files.map((f) => [f.replaceAll(/^address-points-us-|\.db$/g, ""), f]))
 
 	const slugs =
@@ -176,7 +178,7 @@ function resolveStates(opts: CoverageBuildOptions): StateShard[] {
 			return {
 				slug,
 				file: path.join(opts.dataRoot, file),
-				interp: opts.interpRoot && existsSync(interpFile) ? interpFile : null,
+				interp: opts.interpRoot && pathExistsSync(interpFile) ? interpFile : null,
 			}
 		})
 }
@@ -241,7 +243,7 @@ export async function buildCoverageTiles(
 
 	const ALL_RES = [opts.fineRes, ...opts.rollup]
 	const bands = buildBands(ALL_RES, opts.tileMaxZoom)
-	const states = resolveStates(opts)
+	const states = await resolveStates(opts)
 	const interpCount = states.filter((s) => s.interp).length
 
 	onProgress(
@@ -342,9 +344,9 @@ export async function buildCoverageTiles(
 	)
 
 	// --- Stream features to NDJSON ---
-	mkdirSync(path.dirname(opts.out), { recursive: true })
+	await makeDirectories(path.dirname(opts.out))
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
-	const sink = createWriteStream(ndjsonPath)
+	const sink = openWriteStream(ndjsonPath)
 	let featureCount = 0
 
 	const emitResolution = async (res: number, sql: string, bandOverride?: [number, number]): Promise<void> => {
@@ -512,11 +514,10 @@ export async function buildCoverageTiles(
 		throw new Error(`tippecanoe exited ${tip.exitCode}: ${tip.stderr.slice(-400)}`)
 	}
 
-	const { statSync } = await import("node:fs")
-	const pmtilesBytes = statSync(opts.out).size
+	const pmtilesBytes = (await statPath(opts.out)).size
 
 	if (!opts.keepNdjson) {
-		rmSync(ndjsonPath, { force: true })
+		await removePathIfPresent(ndjsonPath)
 	}
 
 	return {

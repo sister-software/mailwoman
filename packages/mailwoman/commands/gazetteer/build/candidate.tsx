@@ -8,8 +8,7 @@
  *   streams to stderr; the final summary is on stdout. See RELEASING.md Step 5.
  */
 
-import { join } from "node:path"
-
+import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -94,8 +93,11 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			adminDB = foldOut
 		}
 
-		const shards = resolvePostcodeShards(undefined, root)
-		const importanceDB = options.skipImportance ? false : (options.importance ?? resolveImportanceDB(undefined, root))
+		const shards = await resolvePostcodeShards(undefined, root)
+
+		const importanceDB = options.skipImportance
+			? false
+			: (options.importance ?? (await resolveImportanceDB(undefined, root)))
 
 		console.error(`▸ candidate build ← ${adminDB} (${shards.length} postcode shards; FTS baked in)`)
 

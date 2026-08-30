@@ -16,7 +16,7 @@ _Planning artifact. Grounded in: `what-mailwoman-is.mdx`, `SCHEMA.mdx`, `model.p
 
 ---
 
-## 1. The decision: A vs B vs C, and the probe that settles it
+## 1. The decision: A vs B vs C, and the probe that determines the result
 
 ### Why B is rejected before the probe (it fights known scar tissue)
 
@@ -117,7 +117,7 @@ Gate discipline: each phase has a falsifiable read; a FAIL diagnoses before the 
 
 **What ships first: JP-only (Phase 5).** It is the operator's stated headline, the data is on disk (19.6M), and it validates the whole char+router+schema stack end-to-end before KR/CN pile on.
 
-**Reframe worth surfacing: KR before JP may be the cheaper first ship.** Korean addresses are **whitespace-separated** between components — which is exactly the segmentation the existing whitespace-word pipeline assumes. JP is space-free and needs the Phase-0 alignment machinery. If the operator wants the _fastest_ non-Latin ship rather than specifically-JP-first, KR clears Phase 0 nearly for free. JP-first is the right call for headline value; KR-first is the right call for de-risking the char path with the least alignment work. Flagging the trade; JP-first as written unless the operator reprioritises.
+**Reframe worth surfacing: KR before JP may be the cheaper first ship.** Korean addresses are **whitespace-separated** between components — which is exactly the segmentation the existing whitespace-word pipeline assumes. JP is space-free and needs the Phase-0 alignment implementation. If the operator wants the _fastest_ non-Latin ship rather than specifically-JP-first, KR clears Phase 0 nearly for free. JP-first is the right call for headline value; KR-first is the right call for de-risking the char path with the least alignment work. Flagging the trade; JP-first as written unless the operator reprioritises.
 
 ---
 

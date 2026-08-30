@@ -16,6 +16,7 @@
  */
 
 import { z } from "@hono/zod-openapi"
+import type { AddressNode } from "@mailwoman/core/decoder"
 
 export { APIErrorSchema } from "@mailwoman/api-kit"
 
@@ -69,7 +70,7 @@ export const ParseOutcomeSchema = z
 	.object({
 		input: z.string(),
 		components: z.array(ParseComponentSchema),
-		tree: z.looseObject({ roots: z.array(z.unknown()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
 		debug: z.string().optional(),
 	})
 	.openapi("ParseOutcome")
@@ -185,12 +186,34 @@ const QueryIntentMarkerSchema = z
 			"near_me",
 			"poi_category",
 		]),
-		code: z.enum(["declared_ambiguity", "declared_fork", "focus_point_required", "poi_category"]),
+		code: z.enum([
+			"declared_ambiguity",
+			"declared_fork",
+			"focus_point_required",
+			"poi_category",
+			"coverage_qualified_absence",
+			"authority_designation",
+		]),
 		mechanism: z.string(),
 		message: z.string(),
 		evidence: z.record(z.string(), z.unknown()).optional(),
 	})
 	.openapi("QueryIntentMarker")
+
+/**
+ * One authoritative-provider match on the wire (#1901) — hoisted so the outcome schema below stays inside the
+ * call-nesting bound. Field-for-field mirror of `mailwoman/authoritative.ts`'s `AuthoritativeAssertionMatch`.
+ */
+const AuthoritativeMatchSchema = z.object({
+	provider_place_id: z.string(),
+	object_ids: z.record(z.string(), z.string()).optional(),
+	canonical_fields: z.record(z.string(), z.string()).optional(),
+	lat: z.number().optional(),
+	lon: z.number().optional(),
+	precision: z.string().optional(),
+	match_status: z.enum(["exact", "approximate"]),
+	provider_score: z.number().optional(),
+})
 
 /**
  * `POST /v1/geocode` response — a hand-modeled mirror of `GeocodeResult`'s wire shape (`mailwoman/geocode-core.ts`),
@@ -199,8 +222,8 @@ const QueryIntentMarkerSchema = z
  * (`GeocodeOutcome = Record<string, unknown>`, `api/engine.ts`) — nothing here validates a real response, so a
  * schema/engine mismatch can never reject or mutate a result at runtime. Deliberately carries NO import from
  * `mailwoman` (the engine-agnosticism boundary — `mailwoman` is the one workspace allowed to depend on
- * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time tripwire that
- * catches this shape drifting from the real `GeocodeResult` interface.
+ * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time regression check
+ * that catches this shape drifting from the real `GeocodeResult` interface.
  */
 export const GeocodeOutcomeLikeSchema = z.object({
 	input: z.string(),
@@ -245,6 +268,12 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	// OVERRODE the request's country prior — so a caller who asked for US and got an FR answer can see which
 	// evidence bought the change instead of reading it as a bug.
 	postcode_country_scope: z.string().nullable(),
+	// #1880: the capital promotion's firing receipt — the promoted candidate's country, present only when the
+	// promotion changed some node's leading candidate. Advisory, same posture as postcode_country_scope.
+	capital_promotion: z.string().optional(),
+	// #1893: the variant-alias exemption's firing receipt — present (true) only when the winning candidate reached
+	// the top because the exemption spared it the cross-country alias penalty. Advisory, same posture again.
+	variant_alias_exemption: z.literal(true).optional(),
 	// ROAD_TO_V9 §4: query-intent advisories. Always present; empty means the vocabulary looked and had nothing to
 	// say. Advisory ONLY — no marker changed which answer won, and a client is free to ignore the array entirely.
 	intent_markers: z.array(QueryIntentMarkerSchema),
@@ -256,6 +285,23 @@ export const GeocodeOutcomeLikeSchema = z.object({
 		.object({
 			region: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
 			country: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
+		})
+		.optional(),
+	// #1901: a configured authoritative provider's answer, carried BESIDE the open result — every value inside is
+	// the PROVIDER'S assertion, hand-modeled here to match `mailwoman/authoritative.ts`'s wire shape (the
+	// engine-agnosticism boundary forbids importing it). Absent when no provider is configured; `refused` is the
+	// provider declining (distinct from a parse failure or a gazetteer miss); `transport_error` is the provider
+	// being unreachable, reported rather than silently dropped. An `ambiguous` status carries EVERY candidate.
+	authoritative: z
+		.object({
+			provider: z.string(),
+			status: z.enum(["matched", "ambiguous", "refused", "transport_error"]),
+			matches: z.array(AuthoritativeMatchSchema).optional(),
+			attribution: z.string().optional(),
+			license: z.string().optional(),
+			retrieved_at: z.string().optional(),
+			dataset_version: z.string().optional(),
+			error: z.string().optional(),
 		})
 		.optional(),
 	// #1755: spans the flat `components` map could not represent. `components` holds one value per tag, so a second
@@ -283,8 +329,8 @@ export type GeocodeOutcomeLike = z.infer<typeof GeocodeOutcomeLikeSchema>
  * (`GeocodeOutcome = Record<string, unknown>`, `api/engine.ts`) — nothing here validates a real response, so a
  * schema/engine mismatch can never reject or mutate a result at runtime. Deliberately carries NO import from
  * `mailwoman` (the engine-agnosticism boundary — `mailwoman` is the one workspace allowed to depend on
- * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time tripwire that
- * catches this shape drifting from the real `GeocodeResult` interface.
+ * `@mailwoman/api`, never the reverse). `mailwoman/test/api-schema-drift.test.ts` is the compile-time regression check
+ * that catches this shape drifting from the real `GeocodeResult` interface.
  */
 export const GeocodeOutcomeSchema = GeocodeOutcomeLikeSchema.loose().openapi("GeocodeOutcome")
 
@@ -330,7 +376,7 @@ export const BatchResponseSchema = z
  */
 export const ResolveRequestSchema = z
 	.object({
-		tree: z.looseObject({ roots: z.array(z.unknown()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
 		opts: z.looseObject({}).optional(),
 	})
 	.openapi("ResolveRequest")
@@ -340,7 +386,7 @@ export const ResolveRequestSchema = z
  */
 export const ResolveResponseSchema = z
 	.object({
-		tree: z.looseObject({ roots: z.array(z.unknown()) }),
+		tree: z.looseObject({ raw: z.string(), roots: z.array(z.custom<AddressNode>()) }),
 	})
 	.openapi("ResolveResponse")
 

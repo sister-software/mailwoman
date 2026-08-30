@@ -8,5 +8,11 @@
 	},
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../ancestrie" }, { "path": "../core" }, { "path": "../resolver" }, { "path": "../spatial" }]
+	"references": [
+		{ "path": "../sqlite" },
+		{ "path": "../ancestrie" },
+		{ "path": "../core" },
+		{ "path": "../resolver" },
+		{ "path": "../spatial" }
+	]
 }

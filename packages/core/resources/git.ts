@@ -1,13 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { execFile } from "node:child_process"
-import * as fs from "node:fs/promises"
-import { promisify } from "node:util"
-
+import { execFile } from "@mailwoman/platform/child_process"
+import { promisify } from "@mailwoman/platform/util"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { tryStat } from "#fs"
+import { tryStat } from "#fs/readers"
+import { makeDirectories } from "#fs/writers"
 
 const execFileAsync = promisify(execFile)
 
@@ -27,7 +26,7 @@ export async function prepareRepositoryDirectories(
 	const ownerDirectory = PathBuilder.from(localRepoDirectory, owner)
 	const repoDirectory = ownerDirectory(name)
 
-	await fs.mkdir(ownerDirectory.toString(), { recursive: true })
+	await makeDirectories(ownerDirectory.toString())
 
 	const exists = await tryStat(repoDirectory)
 

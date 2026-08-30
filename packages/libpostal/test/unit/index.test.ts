@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import type { AddressTree } from "@mailwoman/core/decoder"
 import {
 	COMPONENT_TO_LIBPOSTAL,
 	createLibpostalApp,
@@ -326,7 +327,7 @@ test("duplicate query params use the first value (never-contract: old code crash
 })
 
 test("treeToParseMatches: assembles the street-name family into one street match, reading order", () => {
-	const tree = {
+	const tree: AddressTree = {
 		raw: "1600 East Sheldon Rd, Springfield",
 		roots: [
 			{
@@ -343,7 +344,7 @@ test("treeToParseMatches: assembles the street-name family into one street match
 			},
 			{ tag: "locality", value: "Springfield", start: 22, end: 33, confidence: 0.9, children: [] },
 		],
-	} as never
+	}
 
 	expect(treeToParseMatches(tree)).toEqual([
 		{ classification: "house_number", value: "1600" },

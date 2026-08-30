@@ -62,11 +62,11 @@ const RETRY_AFTER_DELAY_SECONDS_PATTERN = /^\d+$/
 
 /**
  * A necessary (not sufficient) pre-check before trusting `Date.parse` on the HTTP-date branch: `Date.parse` is FAR more
- * lenient than RFC 9110's HTTP-date grammar and will happily parse plausible-looking garbage — `Date.parse("1.5")`
- * returns a valid timestamp (~Jan 2001, some locale-ish `M.D` reading), which very nearly slipped a bare
- * fractional-seconds typo through as an accepted HTTP-date instead of falling back to the long ceiling. Every valid RFC
- * 9110 HTTP-date form (the preferred IMF-fixdate AND the obsolete RFC 850 form) ends in the literal `GMT`; requiring
- * that suffix rejects `Date.parse`'s stray non-date parses without needing a full HTTP-date grammar implementation.
+ * lenient than RFC 9110's HTTP-date grammar and will parse plausible-looking garbage — `Date.parse("1.5")` returns a
+ * valid timestamp (~Jan 2001, some locale-ish `M.D` reading), which very nearly slipped a bare fractional-seconds typo
+ * through as an accepted HTTP-date instead of falling back to the long ceiling. Every valid RFC 9110 HTTP-date form
+ * (the preferred IMF-fixdate AND the obsolete RFC 850 form) ends in the literal `GMT`; requiring that suffix rejects
+ * `Date.parse`'s stray non-date parses without needing a full HTTP-date grammar implementation.
  */
 const HTTP_DATE_SUFFIX_PATTERN = /GMT$/
 
@@ -123,13 +123,13 @@ export function parseRetryAfterMs(header: string | null | undefined): number | n
  * Whether an HTTP status is worth another attempt: 408 and 429 by name, plus the whole 5xx range. Everything else —
  * every other 4xx, every 2xx/3xx that still produced an error — is terminal.
  *
- * The 4xx exclusion is the load-bearing part, and 403 is why. A 403 from a rate-limited public API means the request
- * failed to identify itself (for SEC EDGAR, a missing or non-descriptive `User-Agent`); it does NOT mean the resource
- * is gone or that this client is banned. Retrying it cannot succeed and burns rate budget on a request that was never
- * going to be served. An earlier revision spelled this out as a redundant `if (status === 403) return false` ahead of
- * the range check — no mutation could kill it, because the range check already excluded 403, so it was removed rather
- * than left as unfalsifiable decoration. The property is proved by mutating this range instead: broadening it to `>=
- * 400` makes the 403 and 404 tests fail.
+ * The 4xx exclusion prevents retries that cannot succeed. A 403 from a rate-limited public API means the request failed
+ * to identify itself (for SEC EDGAR, a missing or non-descriptive `User-Agent`); it does NOT mean the resource is gone
+ * or that this client is banned. Retrying it cannot succeed and burns rate budget on a request that was never going to
+ * be served. An earlier revision spelled this out as a redundant `if (status === 403) return false` ahead of the range
+ * check — no mutation could kill it, because the range check already excluded 403, so it was removed rather than left
+ * as unfalsifiable decoration. The property is proved by mutating this range instead: broadening it to `>= 400` makes
+ * the 403 and 404 tests fail.
  */
 export function isRetryableStatus(status: number): boolean {
 	if (status === HTTP_TOO_MANY_REQUESTS || status === HTTP_REQUEST_TIMEOUT) return true

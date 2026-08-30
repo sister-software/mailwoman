@@ -22,7 +22,7 @@ The process discipline that got the project here — pre-registered gates, falsi
 
 The repo dates to 2019 (Pelias-parser lineage) and was near-dormant through early 2025: a few commits a month, none in most months. Then 534 commits in May 2026 and 993 in June — 1,547 commits in two months, effectively one operator plus autonomous night shifts. In that window the project went from a rules parser to a 35-workspace monorepo: neural parser, WOF resolver, formatter, record matcher, three drop-in API surfaces (Nominatim/Photon/libpostal), a browser runtime, and a coverage-tile pipeline.
 
-Against the original plan, three drifts are worth naming plainly:
+Against the original plan, three drifts are must be explicit:
 
 **The phase plan was abandoned, not completed.** `plan/README.mdx` says Phases 0–4 "shipped and superseded by the release train," and the live roadmap moved to a project board (epic #488). Meanwhile the phase directory accreted post-hoc phases (7, 8E, 8-fresh-slate — the v0.5.0 rebuild), and new architecture specs are still being written six weeks after "shipped" (`2026-06-29-joint-consistency-resolution.mdx`, edited today). The plan directory now describes a project that no longer exists in the shape it describes.
 

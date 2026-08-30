@@ -15,12 +15,10 @@
  *   <postal-cases.jsonl>
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { pyFixed } from "@mailwoman/core/utils"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 const { positionals } = parseArgs({ allowPositionals: true, strict: false })
@@ -50,7 +48,7 @@ async function main(): Promise<void> {
 		try {
 			// Strict: the catch below re-throws anything that is not a missing file, so a corrupt
 			// sidecar must surface rather than read as an empty arena.
-			res = parseJSONStrict<Result[]>(readFileSync(`${outDir}/${a}.results.json`, "utf8"))
+			res = await readLocalJSONFile<Result[]>(`${outDir}/${a}.results.json`)
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
 				console.log(`| ${a} | (no results) |`)

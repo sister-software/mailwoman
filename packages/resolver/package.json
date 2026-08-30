@@ -103,6 +103,11 @@
 			"node": "./toponym-prior.ts",
 			"default": "./out/toponym-prior.js",
 			"types": "./out/toponym-prior.d.ts"
+		},
+		"./resolve-passes": {
+			"node": "./resolve-passes.ts",
+			"default": "./out/resolve-passes.js",
+			"types": "./out/resolve-passes.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -111,6 +116,7 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/spatial": "workspace:*"
 	}
 }

@@ -50,7 +50,7 @@ Create `neural/test/trace-parse.test.ts`. It follows the house pattern from `neu
  *   Tests for `NeuralAddressClassifier.traceParse` (spec:
  *   docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md).
  *
- *   The load-bearing assertion is PARITY: the trace's tokens must build the same AddressTree
+ *   The required assertion is PARITY: the trace's tokens must build the same AddressTree
  *   `parse()` returns under identical opts — proving trace retention never forked the decode
  *   path (#481). Uses a fake `NeuralRunner` so the suite runs in milliseconds.
  */

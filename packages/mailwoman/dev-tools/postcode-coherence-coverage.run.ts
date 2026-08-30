@@ -21,15 +21,15 @@
  *   Run from the repo root: `node packages/mailwoman/dev-tools/postcode-coherence-coverage.run.ts <fts|candidate>`
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
+import { parseArgs } from "@mailwoman/platform/util"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { conventionCandidateDBPath } from "../resolver-backend.ts"
 
@@ -65,14 +65,14 @@ const candidatePath = conventionCandidateDBPath()
 const backend: ResolverBackend =
 	backendName === "candidate"
 		? new WOFCandidateTableLookup({ databasePath: candidatePath })
-		: new WOFSQLitePlaceLookup({ databasePath: wofShardPaths().filter(existsSync) })
+		: new WOFSQLitePlaceLookup({ databasePath: wofShardPaths().filter(pathExistsSync) })
 
 //#region 1. Row counts
 
 const rows = new Map<string, number>()
 
 if (backendName === "candidate") {
-	const db = new DatabaseSync(candidatePath, { readOnly: true })
+	using db = new DatabaseClient<CandidateDatabase>(candidatePath, { readOnly: true })
 
 	for (const r of db
 		.prepare(
@@ -86,11 +86,9 @@ if (backendName === "candidate") {
 		.all() as { country: string; n: number }[]) {
 		rows.set((r.country ?? "").toUpperCase(), r.n)
 	}
-
-	db.close()
 } else {
-	for (const path of wofShardPaths().filter(existsSync)) {
-		const db = new DatabaseSync(path, { readOnly: true })
+	for (const path of wofShardPaths().filter(pathExistsSync)) {
+		using db = new DatabaseClient<CandidateDatabase>(path, { readOnly: true })
 
 		for (const r of db
 			.prepare("SELECT country, COUNT(*) AS n FROM spr WHERE placetype = 'postalcode' GROUP BY country")
@@ -98,8 +96,6 @@ if (backendName === "candidate") {
 			const c = (r.country ?? "").toUpperCase()
 			rows.set(c, (rows.get(c) ?? 0) + r.n)
 		}
-
-		db.close()
 	}
 }
 
@@ -108,7 +104,7 @@ if (backendName === "candidate") {
 //#region 2. Live reachability, through the pass's own lookups
 
 console.log(
-	`\n### ${backendName} backend · ${backendName === "fts" ? wofShardPaths().filter(existsSync).length : 1} source(s)`
+	`\n### ${backendName} backend · ${backendName === "fts" ? wofShardPaths().filter(pathExistsSync).length : 1} source(s)`
 )
 console.log(`\n| system | country | postcode rows | postcode resolves | exact locality | pair coherent |`)
 console.log(`| --- | --- | ---: | --- | --- | --- |`)

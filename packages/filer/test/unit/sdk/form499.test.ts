@@ -7,8 +7,6 @@
  *   `universal-service.ts`:164-176).
  */
 
-import { join } from "node:path"
-
 import {
 	classifyFiler,
 	FilerClassification,
@@ -16,6 +14,7 @@ import {
 	parseForm499,
 	type Form499Row,
 } from "@mailwoman/filer/sdk/form499"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const FIXTURES_DIR = join(import.meta.dirname, "../../../test-fixtures")

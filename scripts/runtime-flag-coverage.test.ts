@@ -15,7 +15,7 @@
  *   - `arbitrate` did not exist in any source file. It gated a union with the LEGACY RULE PARSER, deleted
  *       in v7.0.0, so it had gated nothing for two majors. Removal.
  *   - `jointReconcile` is live in `runtime-pipeline.ts` and reaches ~1,850 lines of well-tested reconcile
- *       machinery. The MECHANISM has a 648-line kryptonite suite; the FLAG that reaches it has nothing.
+ *       implementation. The MECHANISM has a 648-line kryptonite suite; the FLAG that reaches it has nothing.
  *       Missing testing — of the switch, not the switched.
  *
  *   MATCHING IS DELIBERATELY LOOSE. A flag name appearing anywhere in a test file counts, including in
@@ -24,10 +24,10 @@
  *   `arbitrate` shape — not to grade the quality of the coverage it finds.
  */
 
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
-import { join } from "node:path"
-
+import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const REGISTER = String(repoRootPath("docs", "engineering", "reference", "runtime-flags.mdx"))
@@ -59,16 +59,16 @@ function registerFlags(markdown: string): string[] {
  */
 const UNCOVERED_ALLOWLIST: Record<string, string> = {}
 
-function testFilesUnder(directory: string, found: string[] = []): string[] {
-	if (!existsSync(directory)) return found
+async function testFilesUnder(directory: string, found: string[] = []): Promise<string[]> {
+	if (!(await pathExists(directory))) return found
 
-	for (const entry of readdirSync(directory)) {
+	for (const entry of await readDirectory(directory)) {
 		if (entry === "node_modules" || entry === "out" || entry.startsWith(".")) continue
 
 		const full = join(directory, entry)
 
-		if (statSync(full).isDirectory()) {
-			testFilesUnder(full, found)
+		if ((await statPath(full)).isDirectory()) {
+			await testFilesUnder(full, found)
 		} else if (/\.test\.tsx?$/.test(entry)) {
 			found.push(full)
 		}
@@ -78,7 +78,7 @@ function testFilesUnder(directory: string, found: string[] = []): string[] {
 }
 
 describe("runtime-flag register", () => {
-	const markdown = readFileSync(REGISTER, "utf8")
+	const markdown = readLocalTextFileSync(REGISTER)
 	const flags = registerFlags(markdown)
 
 	it("parses a plausible number of flags out of the register", () => {
@@ -86,8 +86,8 @@ describe("runtime-flag register", () => {
 		expect(flags.length).toBeGreaterThan(20)
 	})
 
-	it("every registered flag is touched by at least one test — removal or missing coverage, never neither", () => {
-		const corpus = testFilesUnder(String(repoRootPath("packages"))).map((path) => readFileSync(path, "utf8"))
+	it("every registered flag is touched by at least one test — removal or missing coverage, never neither", async () => {
+		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readLocalTextFileSync(path))
 
 		const uncovered = flags.filter((flag) => {
 			const pattern = new RegExp(`\\b${flag}\\b`)
@@ -105,8 +105,8 @@ describe("runtime-flag register", () => {
 		).toEqual([])
 	})
 
-	it("the allowlist carries no flag that has since gained coverage, or left the register", () => {
-		const corpus = testFilesUnder(String(repoRootPath("packages"))).map((path) => readFileSync(path, "utf8"))
+	it("the allowlist carries no flag that has since gained coverage, or left the register", async () => {
+		const corpus = (await testFilesUnder(String(repoRootPath("packages")))).map((path) => readLocalTextFileSync(path))
 
 		for (const flag of Object.keys(UNCOVERED_ALLOWLIST)) {
 			const covered = corpus.some((source) => new RegExp(`\\b${flag}\\b`).test(source))

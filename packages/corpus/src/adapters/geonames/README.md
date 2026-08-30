@@ -5,7 +5,7 @@ coarser admin gazetteer lacks) — the cheapest way to broaden the corpus's **lo
 
 - **Source:** [GeoNames](https://www.geonames.org/) geographical database.
 - **License:** **CC-BY-4.0** (attribution required on redistribution). Stamped `"CC-BY-4.0"` per row;
-  attribute "GeoNames" in any redistributed corpus. See `feedback-no-load-bearing-trivia` — the
+  attribute "GeoNames" in any redistributed corpus. See `feedback-no-irrelevant-trivia` — the
   per-row `license` + `source`/`source_id` are the provenance record.
 - **Coverage:** every country GeoNames publishes; this adapter ingests `feature_class = "P"`
   (populated places), excluding historical/abandoned/destroyed codes (`PPLH`/`PPLQ`/`PPLW`/`PPLCH`).

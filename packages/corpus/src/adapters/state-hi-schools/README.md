@@ -4,7 +4,7 @@ Hawaii State Department of Education K-12 school directory adapter.
 
 ## Input
 
-The operator pre-builds a CSV via `corpus/scripts/fetch-sources/fetch-state-hi-schools.ts`. The script downloads the official `SchoolList.xlsx` workbook and concatenates both sheets (`HIDOE` — district-operated schools, `PCS` — public charter schools) into a single flat CSV that shares the workbook's lowercased header (`code,name,address,city,zip,...`).
+Run `mailwoman corpus fetch state-hi-schools` to retain the official `SchoolList.xlsx` workbook with its two sheets: `HIDOE` (district-operated schools) and `PCS` (public charter schools). The adapter reads both sheets directly. Existing flat CSV artifacts from the former conversion pipeline remain accepted.
 
 ## Output
 

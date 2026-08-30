@@ -132,7 +132,7 @@ describe("diffParse", () => {
 		expect(renderParseDiff(diff)).toContain("locale country GB (0.97) → US (0.51)")
 	})
 
-	it("says so plainly when the arms agree", () => {
+	it("states when the arms agree", () => {
 		const same = tree(["locality", "London", 29, 35, 0.95])
 
 		expect(diffParse(INPUT, same, same).identical).toBe(true)

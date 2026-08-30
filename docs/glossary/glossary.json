@@ -452,7 +452,7 @@
 		},
 		{
 			"term": "cross-pollution",
-			"definition": "An eval tripwire for unwanted tag bleed across locales — predicting a German city as a postcode because multi-locale training let one locale's patterns hurt another.",
+			"definition": "An eval regression check for unwanted tag bleed across locales — predicting a German city as a postcode because multi-locale training let one locale's patterns hurt another.",
 			"tags": ["evals", "multilingual"],
 			"relatedTerms": ["per-locale F1", "multi-order training", "cumulative dilution"]
 		},

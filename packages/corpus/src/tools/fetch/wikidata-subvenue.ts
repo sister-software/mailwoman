@@ -11,7 +11,7 @@
  *   ## The pull is CLASS labels, not instance names — and that inversion is the whole design
  *
  *   The obvious read of "Wikidata for localized designators" is: fetch every airport terminal entity
- *   and read its name in each language. That was tried first and it is the WRONG query. Wikidata
+ *   and read its name in each language. That turned out to be the wrong query. Wikidata
  *   knows 246 items that are `instance of / subclass of*` airport terminal, carrying 775 labels
  *   between them (measured 2026-08-04), and most of those labels are proper names that translate
  *   verbatim — `TWA Flight Center` is spelled `TWA Flight Center` in fifteen languages. The
@@ -53,13 +53,11 @@
  *   Invoke via `mailwoman corpus fetch wikidata-subvenue --out-root <path>`.
  */
 
-import { mkdirSync } from "node:fs"
-import { writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import { APIClient, type ClockLike } from "@mailwoman/core/api"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { writeManifest } from "./download.ts"
@@ -313,7 +311,7 @@ async function writePayload(
 ): Promise<WikidataFileEntry> {
 	const path = join(destDir, filename)
 	const body = JSON.stringify(results, null, 2) + "\n"
-	await writeFile(path, body)
+	await writeLocalFile(body, path)
 
 	return {
 		filename,
@@ -337,7 +335,7 @@ export async function fetchWikidataSubVenue(
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
 	const destDir = join(options.outRoot, SLUG)
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	await using client = createWikidataClient({ cacheDir: join(destDir, "http-cache") })
 

@@ -116,7 +116,7 @@ posture; decide at 2a exit.
 **snapshot** of one vintage: `freshness_policy = versioned-refresh` (re-issued under the same
 name per vintage), each issue itself sealed. `source_vintage` carries the `as_of_date`;
 `build_sha` + `build_cmd` pin the exact filing files. A filing landscape is only ever "as of
-vintage X" — the vintage is load-bearing on every answer, not metadata.
+vintage X" — the vintage is required on every answer, not metadata.
 
 **Meaning-of-zero.** `layer_coverage` at res 6 records which blocks the ingested vintage actually
 covered. A block with no filing row is **UNKNOWN** — no provider filed availability there in this
@@ -395,7 +395,7 @@ Gates:
 
 - **Positive-evidence-only invariant test** — a fixture with a claim in a block that has NO
   filing and NO nearby plant returns "unknown / insufficient evidence," and asserts the scorer
-  can NEVER emit "implausible" from an absence (§4). This is the load-bearing gate.
+  can NEVER emit "implausible" from an absence (§4). This is the required gate.
 - Co-presence path — a claim with a matching filing + nearby well-surveyed plant returns high
   `evidence_found` + high `coverage_confidence`.
 - Layer-absent path — with the OSM infra layer absent, the bundle says "requires the

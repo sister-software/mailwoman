@@ -57,7 +57,7 @@ substantially eaten.
   available, and wrong.
 - **The arena harness graded the wrong model silently** (env vars, not flags; the
   identical-to-baseline numbers were the tell). Caught before publication; the env-var
-  interface is a footgun worth a flags PR.
+  interface is a misuse hazard worth a flags PR.
 - **The release pipeline had an undocumented mandatory leg** (R2). Cost ~20 minutes of
   cache-vs-origin diagnosis mid-release; now documented with verification commands.
 - **My benchmark hygiene:** the byte-stability stash-check for #500 compared the same

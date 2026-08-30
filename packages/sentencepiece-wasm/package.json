@@ -22,5 +22,8 @@
 			"types": "./index.d.ts",
 			"default": "./sentencepiece.mjs"
 		}
+	},
+	"dependencies": {
+		"@mailwoman/platform": "workspace:*"
 	}
 }

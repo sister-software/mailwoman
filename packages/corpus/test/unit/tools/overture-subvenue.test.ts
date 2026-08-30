@@ -13,17 +13,13 @@
  *   3.9 GB database no CI runner has.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	OVERTURE_SUBVENUE_CATEGORIES,
 	readOvertureLayerVintage,
 	readOvertureSubVenues,
 } from "@mailwoman/corpus/tools/overture-subvenue"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
@@ -89,12 +85,11 @@ const ROWS: FixtureRow[] = [
 	{ category: "airport_terminal", name: null, country: "US" },
 ]
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 async function buildFixture(path: string): Promise<void> {
-	const raw = new DatabaseSync(path)
-	using kdb = new DatabaseClient<FixtureDatabase>({ database: raw })
+	using kdb = new DatabaseClient<FixtureDatabase>(path)
 
 	await kdb.schema
 		.createTable("poi_category_codes")
@@ -156,15 +151,13 @@ async function buildFixture(path: string): Promise<void> {
 }
 
 beforeAll(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "overture-subvenue-"))
-	databasePath = join(scratch, "poi.db")
+	scratch = await temporaryDirectory("overture-subvenue-")
+	databasePath = scratch.resolve("poi.db")
 
 	await buildFixture(databasePath)
 })
 
-afterAll(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 test("readOvertureSubVenues reads only the sub-venue categories, and only named rows", async () => {
 	const rows = await readOvertureSubVenues({ databasePath })

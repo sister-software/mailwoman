@@ -20,17 +20,16 @@
  *   Usage: node scripts/probe-gb-anchor-fire.ts --bin <postcode-gb.bin>
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 // `@mailwoman/neural` exports neither `./postcode-repair` nor `./case-normalize` as a subpath, and both
-// are load-bearing here: `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode
+// are required here: `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode
 // reads, and `normalizeInputCase` is what the text has been through by the time the anchor sees it
 // (#690, default-ON in `parse`). Re-implementing either is the one thing that must not drift, so this
 // repo-local diagnostic imports the modules directly.
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
 import { collectMatches } from "@mailwoman/neural/postcode-repair"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -48,7 +47,7 @@ const { values } = parseArgs({
 
 if (!values.bin) throw new Error("--bin <postcode-gb.bin> is required")
 
-const lookup = new PostcodeBinaryResolver(new Uint8Array(readFileSync(values.bin))).toAnchorLookup()
+const lookup = new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(values.bin))).toAnchorLookup()
 
 console.log(`anchorLookupPath ${values.bin}`)
 console.log(`anchor lookup keys: ${lookup.size.toLocaleString()}`)

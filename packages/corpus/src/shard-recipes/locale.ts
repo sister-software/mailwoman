@@ -24,9 +24,8 @@
  *   country, so DE/FR emit streams are unchanged for a given seed.
  */
 
-import { createReadStream } from "node:fs"
-
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -235,7 +234,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 	// No `encoding` on the file path — CSVSpliterator delimits raw bytes and decodes utf-8 itself; a string stream
 	// (from `{ encoding: "utf8" }`) would defeat its byte-range scanner.
 	const input: NodeJS.ReadableStream | AsyncIterable<Uint8Array> = part.path
-		? createReadStream(part.path)
+		? openReadStream(part.path)
 		: readZipEntry(part.zip!, part.csv!)
 
 	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
@@ -482,7 +481,7 @@ export const localeRecipe: ShardRecipe = {
 		// Tri-state: `undefined` (flag absent) touches nothing below — `parts` stays the default list and each
 		// part keeps its own `districtAsLocality`, so every existing locale build is byte-identical to before this
 		// option existed. `true` additionally selects `pedaniaParts` when the country registers one (ES); `false`
-		// forces the mapping off on every part read this run (a debugging escape hatch for GB/NZ).
+		// forces the mapping off on every part read this run (a debugging override for GB/NZ).
 		const districtAsLocalityOverride = opts.districtAsLocality
 		const parts = resolveLocaleParts(countrySource, districtAsLocalityOverride)
 

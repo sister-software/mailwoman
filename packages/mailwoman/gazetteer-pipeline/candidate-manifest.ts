@@ -20,11 +20,11 @@
  *   like provenance and carry none.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/core/layers"
+import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * The ancestor's identity as this manifest records it.
@@ -32,13 +32,13 @@ import { getRow } from "@mailwoman/core/utils"
  * `unknown` is a measured state — the admin build had no manifest — and is deliberately distinguishable from an admin
  * build whose manifest says its version is literally unknown.
  */
-export function ancestorIdentity(adminDBPath: string): string {
-	if (!existsSync(adminDBPath)) return "unknown (admin gazetteer not found)"
+export async function ancestorIdentity(adminDBPath: string): Promise<string> {
+	if (!(await pathExists(adminDBPath))) return "unknown (admin gazetteer not found)"
 
-	let db: DatabaseSync | undefined
+	let db: DatabaseClient<LayerContractDatabase> | undefined
 
 	try {
-		db = new DatabaseSync(adminDBPath, { readOnly: true })
+		db = new DatabaseClient<LayerContractDatabase>(adminDBPath, { readOnly: true })
 
 		const present = db
 			.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'layer_manifest' LIMIT 1")
@@ -54,7 +54,7 @@ export function ancestorIdentity(adminDBPath: string): string {
 	} catch (error) {
 		return `unknown (${(error as Error).message})`
 	} finally {
-		db?.close()
+		db?.destroy()
 	}
 }
 
@@ -81,8 +81,8 @@ export interface CandidateManifestInput {
 /**
  * Compose the candidate gazetteer's manifest.
  */
-export function candidateLayerManifest(input: CandidateManifestInput): LayerManifest {
-	const ancestor = ancestorIdentity(input.adminDBPath)
+export async function candidateLayerManifest(input: CandidateManifestInput): Promise<LayerManifest> {
+	const ancestor = await ancestorIdentity(input.adminDBPath)
 
 	return {
 		name: "candidate",

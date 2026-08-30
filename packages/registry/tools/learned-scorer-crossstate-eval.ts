@@ -20,8 +20,7 @@
  *   [--npis 2000] [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 
@@ -246,7 +245,7 @@ export async function scorerCrossStateEval(
 
 	const trainRecords = await geocodeRows(samples[TRAIN_STATE]!.rows)
 	const evalRecords = await geocodeRows(samples[EVAL_STATE]!.rows)
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 
 	// Feature basis: the SHARED production featurizer (train ≡ eval ≡ inference, one definition) over the
 	// collapsed-spatial + address-frequency comparison set (the baseline).
@@ -450,7 +449,7 @@ export async function scorerCrossStateEval(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`[written] ${OUT_MD}`)
 	}
 

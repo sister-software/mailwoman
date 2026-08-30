@@ -74,7 +74,7 @@ no re-run: that is the treadmill the arc's own guard forbids.
 
 ## 6. What the arc bought anyway
 
-Four phases, and — as of this page — no shippable artifact. That is worth saying plainly rather than
+Four phases, and — as of this page — no shippable artifact. That is worth saying rather than
 dressing up.
 
 What it produced instead is the reason the fix exists at all. `oracle@k` and the k-best decode were

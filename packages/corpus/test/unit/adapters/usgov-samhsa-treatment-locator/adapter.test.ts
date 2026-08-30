@@ -1,15 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { rm } from "node:fs/promises"
-import { join } from "node:path"
-
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import {
 	USGOV_SAMHSA_ADAPTER_ID,
 	USGOV_SAMHSA_DEFAULT_LICENSE,
 	createUsgovSamhsaTreatmentLocatorAdapter,
 } from "@mailwoman/corpus/adapters/usgov-samhsa-treatment-locator/adapter"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"
@@ -189,7 +188,7 @@ describe("usgov-samhsa-treatment-locator adapter against fixture sample.csv", ()
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch.path, USGOV_SAMHSA_ADAPTER_ID), { recursive: true, force: true })
+		await removePathIfPresent(join(scratch.path, USGOV_SAMHSA_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createUsgovSamhsaTreatmentLocatorAdapter(),

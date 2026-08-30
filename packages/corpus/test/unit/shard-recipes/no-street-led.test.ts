@@ -15,11 +15,11 @@
  *   downstream — the board just reads high. So it gets a test with a diacritic surface specifically.
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { noStreetLedRecipe } from "@mailwoman/corpus/shard-recipes/no-street-led"
-import { scratch, shardRunner } from "@mailwoman/corpus/test-kit/shard-recipe"
 import { describe, expect, it } from "vitest"
+
+import { scratch, shardRunner } from "#test-kit/shard-recipe"
 
 const run = shardRunner("no-street-led", noStreetLedRecipe, 901)
 
@@ -31,19 +31,22 @@ const TUPLES = [
 
 describe("no-street-led board split", () => {
 	it("REFUSES to run without an exclusion list", async () => {
-		const { input } = scratch("no-street-led", TUPLES, [])
+		await using inputs = await scratch("no-street-led", TUPLES, [])
 
-		await expect(noStreetLedRecipe.run({ output: "", seed: 901, variants: 1, input }, () => {})).rejects.toThrow(
-			/--exclude-surfaces is REQUIRED/
-		)
+		await expect(
+			noStreetLedRecipe.run({ output: "", seed: 901, variants: 1, input: inputs.input }, () => {})
+		).rejects.toThrow(/--exclude-surfaces is REQUIRED/)
 	})
 
 	it("REFUSES an exclusion list that resolves to zero surfaces", async () => {
-		const { input, exclude } = scratch("no-street-led", TUPLES, [])
-		writeFileSync(exclude, "# only a comment\n")
+		await using inputs = await scratch("no-street-led", TUPLES, [])
+		await writeLocalTextFile("# only a comment\n", inputs.exclude)
 
 		await expect(
-			noStreetLedRecipe.run({ output: "", seed: 901, variants: 1, input, excludeSurfaces: exclude }, () => {})
+			noStreetLedRecipe.run(
+				{ output: "", seed: 901, variants: 1, input: inputs.input, excludeSurfaces: inputs.exclude },
+				() => {}
+			)
 		).rejects.toThrow(/listed no surfaces/)
 	})
 

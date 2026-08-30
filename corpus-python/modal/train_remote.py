@@ -363,7 +363,7 @@ def sync_v050():
         if result.stdout:
             print(result.stdout[-300:])
 
-    # Clear stale pyc so the freshly-synced loader is what imports (the night-3 pyc gotcha).
+    # Clear stale pyc so the freshly-synced loader is what imports (the night-3 pyc failure mode).
     pyc = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/__pycache__"
     if os.path.isdir(pyc):
         shutil.rmtree(pyc)
@@ -391,7 +391,7 @@ def sync_deploc_head():
     """P-B probe: sync ONLY the training code + configs from R2 (container-side). The corpus
     v0.15.0-deploc AND the init_from v385 checkpoint already persist on the volume from the v3.13 run,
     so this pulls no ~30 GB corpus — just the model.py deploc_head + train.py carveout + config.py flag
-    + the v3.14.0-deploc-head.yaml. Clears stale pyc so the fresh loader imports (the night-3 gotcha)."""
+    + the v3.14.0-deploc-head.yaml. Clears stale pyc so the fresh loader imports (the night-3 failure mode)."""
     import shutil
     import subprocess
 
@@ -578,7 +578,7 @@ def sync_v061():
 )
 def sync_src_727():
     """SOURCE-ONLY sync (#727 span-boundary probe): pull `corpus-python/src/` from R2 → volume and clear the
-    stale `__pycache__` (the night-3 pyc gotcha — a container-side `.py` overwrite leaves a shadowing `.pyc`).
+    stale `__pycache__` (the night-3 pyc failure mode — a container-side `.py` overwrite leaves a shadowing `.pyc`).
     No corpus pull — the v257 corpus + tokenizer already persist on the volume. Verifies the span-boundary head
     actually landed in model.py before returning, so a stale sync can't silently train the OLD architecture."""
     import shutil
@@ -673,7 +673,7 @@ def sync_src_727_stage2():
     `__pycache__`, and verify the SEMI-MARKOV SPAN SCORER landed.
 
     Deliberately separate from `sync_src_727` (stage 1): that one's verify block checks for the stage-1
-    span-BOUNDARY head and the v2.6.0 config, so it would happily pass while stage 2's files are stale and
+    span-BOUNDARY head and the v2.6.0 config, so it would pass while stage 2's files are stale and
     the run would silently train the OLD architecture. Each arc's verify block must assert ITS OWN change —
     that is the whole point of the block.
 
@@ -1798,7 +1798,7 @@ def sync_v193a1():
     print("  v1.9.3a1 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
     print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
-    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root gotcha — fail loud here, not at train).
+    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
     base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
     print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
@@ -1862,7 +1862,7 @@ def sync_v193a2():
     print("  v1.9.3a2 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
     print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
-    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root gotcha — fail loud here, not at train).
+    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
     base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
     print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
@@ -1926,7 +1926,7 @@ def sync_v193a3():
     print("  v1.9.3a3 config present:", os.path.isfile(cfg))
     print("  overlay MANIFEST present:", os.path.isfile(f"{cdir}/MANIFEST.json"))
     print("  counter-aug shard present:", os.path.isfile(f"{cdir}/train/part-anchor-absorption-train.parquet"))
-    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root gotcha — fail loud here, not at train).
+    # A re-rooted BASE shard must resolve on the volume (the v1.6.0 re-root failure mode — fail loud here, not at train).
     base05 = f"{VOL_MOUNT}/corpus/versioned/v0.5.0/corpus-v0.5.0/train/part-0001.parquet"
     gnaf = f"{VOL_MOUNT}/corpus/versioned/v0.9.2-multilocale-au/corpus-v0.9.2-multilocale-au/train/part-gnaf-au-train.parquet"
     print("  base v0.5.0 shard on volume (manifest-referenced):", os.path.isfile(base05))
@@ -3317,7 +3317,8 @@ def country_census_raw(
 
     So this counts countries in the RAW parquet, BEFORE any filter — scanning the country column
     directly rather than going through `iter_rows`, because `iter_rows` is the thing under
-    suspicion. If NO rows exist here, the bug is load-bearing and one character fixes it.
+    suspicion. If Norwegian rows exist here, the quoting bug drops them and the one-character quoting fix changes
+    training input. If no Norwegian rows exist, the quoting bug does not affect this run.
     """
     import sys
     from collections import Counter

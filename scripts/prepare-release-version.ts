@@ -27,12 +27,15 @@
  *   - `--check-only` — resolve + validate + print, but write nothing (the dry-run path).
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { parseArgs } from "node:util"
-
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import semver from "semver"
+
+import { bumpReleaseConfigVersion } from "./release-config-version.ts"
 
 const { values } = parseArgs({
 	options: {
@@ -54,7 +57,7 @@ if (!values.version) {
 }
 
 const rootManifestPath = resolve(repoRoot, "package.json")
-const rootManifest = parseJSONStrict<{ version?: string }>(readFileSync(rootManifestPath, "utf8"))
+const rootManifest = await readLocalJSONFile<{ version?: string }>(rootManifestPath)
 
 if (typeof rootManifest.version !== "string" || !semver.valid(rootManifest.version)) {
 	fail(`root package.json version is not a valid semver: ${String(rootManifest.version)}`)
@@ -80,9 +83,9 @@ if (values.version === "major" || values.version === "minor" || values.version =
 }
 
 // The SAME workspace list the publish loop uses (#756) — root + these is the full bump surface.
-const releaseItConfig = parseJSONStrict<{
+const releaseItConfig = await readLocalJSONFile<{
 	plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+}>(resolve(repoRoot, ".release-it.json"))
 
 const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
 
@@ -94,7 +97,7 @@ const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolve(repoR
 
 // Validate the whole set BEFORE writing anything — a half-bumped tree is worse than a failed run.
 const parsed = manifestPaths.map((path) => {
-	const manifest = parseJSONStrict<Record<string, unknown>>(readFileSync(path, "utf8"))
+	const manifest = readLocalJSONFileSync<Record<string, unknown>>(path)
 
 	if (typeof manifest.version !== "string") {
 		fail(`${path} has no version field`)
@@ -112,13 +115,36 @@ for (const { path, manifest } of parsed) {
 	}
 }
 
+// `release.config.json#version` carries the SAME unified release number (RELEASING.md, its own $comment) and
+// lagged two releases running (#1024, then v9.2.0 shipping while it read 9.1.0) because nothing bumped it. It is
+// validated with the sync set but written by a one-line textual replacement — the file is oxfmt-formatted, and
+// the stringify write path used for the manifests would reformat it wholesale, moving the `weights` block a
+// code-only release must never touch (release-config-bump.test.ts pins the exact-one-line contract).
+const releaseConfigPath = resolve(repoRoot, "release.config.json")
+const releaseConfigText = await readLocalTextFile(releaseConfigPath)
+const releaseConfig = parseJSONStrict<{ version?: string }>(releaseConfigText)
+
+if (releaseConfig.version !== rootManifest.version) {
+	fail(
+		`release.config.json is at ${String(releaseConfig.version)} but the root is at ${rootManifest.version} — ` +
+			`the tree is not version-synced; refusing to bump on top of drift`
+	)
+}
+
 if (!values["check-only"]) {
 	for (const { path, manifest } of parsed) {
 		manifest.version = targetVersion
-		writeFileSync(path, `${JSON.stringify(manifest, null, "\t")}\n`)
+		await writeLocalJSONFile(manifest, path)
 	}
 
-	console.log(`bumped ${parsed.length} manifests (root + ${workspaces.length} workspaces) to ${targetVersion}`)
+	await writeLocalTextFile(
+		bumpReleaseConfigVersion(releaseConfigText, rootManifest.version, targetVersion),
+		releaseConfigPath
+	)
+
+	console.log(
+		`bumped ${parsed.length + 1} version-bearing files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`
+	)
 }
 
 console.log(`RESOLVED_VERSION=${targetVersion}`)

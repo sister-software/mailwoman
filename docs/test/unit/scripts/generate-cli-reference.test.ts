@@ -21,9 +21,7 @@
  *   with that instruction rather than skipping — a silently-skipped drift gate is not a gate.
  */
 
-import { existsSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import {
 	collectCLISurface,
 	COMMANDS_DIRECTORY,
@@ -54,7 +52,7 @@ describe("generate-cli-reference", () => {
 	let page: string
 
 	beforeAll(async () => {
-		if (!existsSync(COMMANDS_DIRECTORY)) {
+		if (!(await pathExists(COMMANDS_DIRECTORY))) {
 			throw new Error(`${COMMANDS_DIRECTORY} is missing — run \`yarn compile\` before the test suite`)
 		}
 
@@ -75,7 +73,7 @@ describe("generate-cli-reference", () => {
 			| Flag        | Type    | Default | Description                                                                                                                                                                                                                                                                                                                                         |
 			| ----------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 			| \`--json\`    | boolean | \`false\` | Emit the report as JSON instead of a checklist: &#123; checks: [&#123; id, label, status, detail, consequence?, fix?, core &#125;], exitCode &#125; — a superset of &#123; id, status, detail, fix? &#125; (label + core + consequence aid machine consumers). With --verbose, an \`environment\` array of &#123; key, value, source &#125; is added. |
-			| \`--verbose\` | boolean | \`false\` | Also print every path and environment variable the checks resolved (data root, candidate.db, WOF shards, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.                                                                                                    |"
+			| \`--verbose\` | boolean | \`false\` | Also print every path and environment variable the checks resolved (data root, candidate.db, WOF databases, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.                                                                                                 |"
 		`)
 	})
 
@@ -102,7 +100,7 @@ describe("generate-cli-reference", () => {
 	})
 
 	it("matches the committed page", async () => {
-		const committed = await readFile(OUTPUT_PATH, "utf8")
+		const committed = await readLocalTextFile(OUTPUT_PATH)
 
 		expect(
 			committed,

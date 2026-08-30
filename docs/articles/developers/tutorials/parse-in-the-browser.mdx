@@ -32,7 +32,7 @@ The third item decides how this page is structured, so read it before you copy a
 - **About 125 MB of static assets** to host: 50.4 MB of model files plus `onnxruntime-web`'s four
   `.wasm` builds. A visitor fetches the model files and exactly one of those builds, which is between
   12.5 MB and 25.4 MB depending on the execution provider the browser lands on.
-- **The demo's asset host is not a public CDN.** `public.sister.software` answers a cross-origin
+- **The demo's asset host is not a public CDN.** `public.mailwoman.ai` answers a cross-origin
   request only for `https://mailwoman.ai`, so a browser on your own domain gets no
   `Access-Control-Allow-Origin` header back and the fetch fails. Host your own copies. Step 1 is
   where they come from, and they arrive in an npm package you already have if you have installed the
@@ -84,7 +84,7 @@ cp node_modules/onnxruntime-web/dist/*.wasm public/ort/
 ```
 
 Skipping this produces the failure that reads as a model problem and is not one. When the resolved
-`.wasm` path is not fetchable the session is never created, and the error names the backend rather
+`.wasm` path is not fetchable the session is never created, and the error reports the backend rather
 than the file:
 
 ```
@@ -216,7 +216,7 @@ the local number is reading 39.4 MB into an inference session and running the wa
 
 Two consequences worth designing around. You serve these files, so an immutable `Cache-Control` on
 them turns every visit after the first into a cache read. And sixty-odd megabytes is a real download
-on a phone — gate the load behind the interaction that needs it rather than starting it on first
+on a phone — start the load on the interaction that needs it rather than on first
 paint.
 
 ## Where it runs
@@ -239,7 +239,7 @@ Two constraints ride on that:
 
 Components are not coordinates. The [demo](/demo) resolves them by range-loading a 1.65 GB gazetteer
 over HTTP: `sql.js-httpvfs` fetches only the SQLite pages a lookup touches, which the gazetteer's own
-build notes put at about a dozen range requests per session. That machinery is docs-site code rather
+build notes put at about a dozen range requests per session. That implementation is docs-site code rather
 than a published package, and two things stand between it and your page.
 
 The worker is one. `sql.js-httpvfs` runs SQLite in a `Worker`, and a `Worker` cannot be constructed

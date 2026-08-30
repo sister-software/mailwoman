@@ -33,9 +33,9 @@
  *   re-stamp accordingly.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { formatAddress, reconcileComponents } from "@mailwoman/formatter"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { splitStreetLine } from "#adapters/utils"
 import { lookupStateAbbreviation } from "#codex/us-fips-state"
@@ -104,7 +104,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 				throw new Error(`fcc-bdc adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
+			const db = new DatabaseClient<BDCDatabase>(opts.inputPath, { readOnly: true })
 			let emitted = 0
 
 			try {
@@ -161,7 +161,7 @@ export function createFccBdcAdapter(): CorpusAdapter {
 					emitted++
 				}
 			} finally {
-				db.close()
+				await db.destroy()
 			}
 		},
 	}

@@ -21,9 +21,6 @@
  *   never alter an authoritative cluster assignment.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -43,10 +40,11 @@ import {
 	CLUSTER_FILERS_SOURCE,
 	hasSharedIdentifier,
 } from "@mailwoman/filer/sdk/cluster-filers"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>({ database: new DatabaseSync(":memory:") })
+	return DatabaseClient.temp<FilerDatabase>()
 }
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {

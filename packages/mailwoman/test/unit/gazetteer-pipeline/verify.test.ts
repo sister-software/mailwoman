@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { DatabaseSync } from "node:sqlite"
-
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { enrichAdmin } from "mailwoman/gazetteer-pipeline/admin/enrich"
 import { buildFTS } from "mailwoman/gazetteer-pipeline/fts"
 import { REVERSE_PANEL_CASES, type VerifyBaseline, verifyAdmin } from "mailwoman/gazetteer-pipeline/verify"
@@ -14,9 +14,9 @@ const TINY_BASELINE: VerifyBaseline = {
 	minCountries: 1,
 }
 
-async function fixtureDB(): Promise<DatabaseSync> {
+async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const db = new DatabaseSync(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 	await createUnifiedSchema(db)
 
 	// Non-zero coords + real extents — the place_bbox R*Tree insert skips all-zero placeholder rows.
@@ -29,14 +29,14 @@ async function fixtureDB(): Promise<DatabaseSync> {
 	ins.run(3, 2, "Testtown", "locality", "TL", 1.5, 1.5, 1.4, 1.4, 1.6, 1.6)
 	// The US spot-check target (VT→Vermont) — every real admin DB carries US.
 	ins.run(85_688_763, -1, "Vermont", "region", "US", 44, -72.7, 42.7, -73.4, 45, -71.5)
-	enrichAdmin(db)
+	await enrichAdmin(db)
 	await buildFTS(db)
 
 	return db
 }
 
 test("verifyAdmin passes a complete fixture", async () => {
-	const db = await fixtureDB()
+	await using db = await fixtureDB()
 	const r = verifyAdmin(db, TINY_BASELINE)
 
 	expect(r.checks.map((c) => `${c.check}:${c.ok}`)).toEqual([
@@ -49,27 +49,24 @@ test("verifyAdmin passes a complete fixture", async () => {
 	])
 
 	expect(r.ok).toBe(true)
-	db.close()
 })
 
 test("verifyAdmin fails node-census when a required country node is missing (#1026)", async () => {
-	const db = await fixtureDB()
+	await using db = await fixtureDB()
 	db.exec("DELETE FROM spr WHERE id = 1") // drop Testland's country node
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)
 	const census = r.checks.find((c) => c.check === "node-census")!
 	expect(census.ok).toBe(false)
 	expect(census.detail).toContain("TL/country")
-	db.close()
 })
 
 test("verifyAdmin fails place-abbr when the join table is missing (the #1015 missed-step class)", async () => {
-	const db = await fixtureDB()
+	await using db = await fixtureDB()
 	db.exec("DROP TABLE place_abbr")
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)
 	expect(r.checks.find((c) => c.check === "place-abbr")!.ok).toBe(false)
-	db.close()
 })
 
 test("the reverse panel covers the #1015 failure cases", () => {

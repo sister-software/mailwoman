@@ -26,11 +26,11 @@
  *       --card /path/to/model-card-eval-en-gb.json
  */
 
-import { existsSync, mkdirSync, rmSync, statSync, symlinkSync, readdirSync } from "node:fs"
-import { basename, isAbsolute, join, resolve } from "node:path"
-import { parseArgs } from "node:util"
-
+import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { createSymbolicLink, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { basename, isAbsolute, join, resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const { values } = parseArgs({
 	options: {
@@ -59,11 +59,11 @@ if (!values.out) throw new Error("--out <dir> is required")
 // cache rung finds", so the two must not be able to drift.
 const packageDir = weightsCachePackageDir(resolve(values.out), values.locale)
 
-if (values.clean && existsSync(resolve(values.out))) {
-	rmSync(resolve(values.out), { recursive: true, force: true })
+if (values.clean && (await pathExists(resolve(values.out)))) {
+	await removePathIfPresent(resolve(values.out))
 }
 
-mkdirSync(packageDir, { recursive: true })
+await makeDirectories(packageDir)
 
 const omit = new Set(values.omit)
 /**
@@ -75,12 +75,12 @@ const staged = new Map<string, string>()
 if (values.from) {
 	const fromDir = resolve(values.from)
 
-	for (const entry of readdirSync(fromDir)) {
+	for (const entry of await readDirectory(fromDir)) {
 		const source = join(fromDir, entry)
 
 		// Files only: `scripts/` and any other directory in a workspace package is not part of the
 		// artifact set a loader reads, and symlinking a directory into the layout invites a stale walk.
-		if (statSync(source).isFile()) {
+		if ((await statPath(source)).isFile()) {
 			staged.set(entry, source)
 		}
 	}
@@ -98,13 +98,13 @@ let linked = 0
 for (const [name, source] of [...staged].toSorted()) {
 	if (omit.has(name)) continue
 
-	if (!existsSync(source)) {
+	if (!(await pathExists(source))) {
 		console.error(`WARNING: ${name} → ${source} does not exist, skipping`)
 
 		continue
 	}
 
-	symlinkSync(source, join(packageDir, name))
+	await createSymbolicLink(source, join(packageDir, name))
 
 	linked++
 }

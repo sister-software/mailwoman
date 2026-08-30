@@ -94,7 +94,7 @@ Two things survive from it:
 **The precision confound, caught in the act.** The first read graded an **fp32** export against
 **int8** baselines — the shipped weights package ships int8 (39.4 MB), a fresh `export_onnx` is fp32
 (157 MB). The gate specs cap int8-vs-fp32 at 1.5pp, larger than several cells above. The read script's
-md5 check passed it happily, because "differs from the baseline model" is trivially true of a precision
+md5 check passed it because "differs from the baseline model" is true of a precision
 change: **an md5 difference proves the file changed, not that it is comparable.** Fixed (`5e5f9c2a`) —
 the pipeline is export → quantize → grade, and the script now asserts the precision class matches.
 Every number on this page is int8-vs-int8.
@@ -117,8 +117,7 @@ ship config, int8 both sides):
 
 **Every tag is inside the 2pp bar. Two improve. The pre-publish gate PASSES.**
 
-So the val split's −1.0pp region was a **false positive**, not a preview. Worth stating plainly
-because it inverts the arc's usual failure: the other instruments here missed problems that were
+So the val split's −1.0pp region was a **false positive**, not a preview. Worth stating because it inverts the arc's usual failure: the other instruments here missed problems that were
 real; this one reported a problem that was not. Same root — a metric on a distribution nobody asked
 about — and the same rule: read the instrument the gate names.
 

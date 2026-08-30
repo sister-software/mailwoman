@@ -19,14 +19,13 @@
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
  */
 
-import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { dataRootPath, percentile, tempRootPath } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
+import { parseArgs } from "@mailwoman/platform/util"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
 
@@ -393,7 +392,7 @@ async function main() {
 	const outPath = stringArgs["out"] || ""
 
 	if (outPath) {
-		writeFileSync(outPath, JSON.stringify(summary, null, 2))
+		await writeLocalJSONFile(summary, outPath)
 
 		console.error(`wrote ${outPath}`)
 	}
@@ -402,7 +401,7 @@ async function main() {
 	const dumpPath = stringArgs["dump-rows"] || ""
 
 	if (dumpPath) {
-		writeFileSync(dumpPath, rowRecords.map((r) => JSON.stringify(r)).join("\n") + "\n")
+		await writeLocalTextFile(rowRecords.map((r) => JSON.stringify(r)).join("\n") + "\n", dumpPath)
 
 		console.error(`wrote per-row dump: ${dumpPath} (${rowRecords.length} rows)`)
 	}

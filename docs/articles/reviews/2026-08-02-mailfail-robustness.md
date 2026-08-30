@@ -3,7 +3,7 @@
 **Date:** 2026-08-02 · **Scope:** what the shipped stack does with input that is not an address.
 Read-only investigation; no production code changed. 111 probe inputs across seven classes, run on
 four paths, with the fixture committed at
-`mailwoman/eval-harness/fixtures/mailfail.jsonl` so these cases can become a gate.
+`mailwoman/eval-harness/fixtures/mailfail.jsonl` so these cases can become a regression test.
 
 ---
 
@@ -14,8 +14,7 @@ Three findings need action, and one of them is not a garbage-input problem at al
 The stack is well-behaved on the input classes you would expect to break it. Empty
 strings, whitespace, punctuation runs, emoji, ZWJ sequences, box drawing, unpaired surrogates,
 embedded NUL, BOM, zalgo, RTL overrides, CJK and Devanagari all pass through without a throw and
-mostly without emitting anything. That is a real clean bill of health and it is stated plainly
-below rather than buried.
+mostly without emitting anything. That is a real clean bill of health and it is stated below rather than buried.
 
 What breaks is length. Two independent quadratics live in the preprocessing stages, and a
 sequence-length cap in the ONNX runner desynchronises two arrays that the decoder then indexes in
@@ -339,7 +338,7 @@ ships it.
 
 ## What held up
 
-Stated plainly, because these are real results and not padding. Across all four paths, none of the
+stated directly, because these are real results and not padding. Across all four paths, none of the
 following threw, hung, or emitted anything:
 
 - **Degenerate input is clean.** Empty string, single/multiple spaces, tab, newline, CRLF, only
@@ -398,7 +397,7 @@ the time is flat at 0.1–0.6 ms with no growth. Ruled out; recording it so nobo
   behaviour. Neither reached a query engine in a way this investigation examined, and no claim is
   made about injection safety.
 - **The `size` class in the committed fixture is truncated.** Rows above ~10 KB are generated, not
-  committed — a 1 MB JSONL line is a hostile artifact for a test gate. The generator lives in
+  committed — a 1 MB JSONL line is a hostile artifact for a test suite. The generator lives in
   `scripts/diagnostic/mailfail-probes.ts` (gitignored).
 
 ---

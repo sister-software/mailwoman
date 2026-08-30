@@ -49,14 +49,19 @@
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/nuts-lookup": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/timezone-lookup": "workspace:*",
 		"@mailwoman/un-locode-lookup": "workspace:*",
 		"hono": "^4.13.0",
 		"mailwoman": "workspace:*",
-		"spliterator": "^6.2.0",
+		"spliterator": "^6.3.1",
 		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
 	}
 }

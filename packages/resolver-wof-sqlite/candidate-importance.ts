@@ -40,10 +40,10 @@
  *   (`resolver/toponym-prior.ts`) leaves an unmeasured candidate exactly where population put it.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import type { CandidateDatabase } from "./candidate-schema.ts"
 import { normalizeLocalityForKey } from "./street-normalize.ts"
 
 /**
@@ -54,12 +54,12 @@ import { normalizeLocalityForKey } from "./street-normalize.ts"
  * country, placetype)`). The nearest-centroid distance is **exactly 0.00 km for 577,080 of them (56.6%)** — the two
  * snapshots agree to the bit — and 656,755 (64.4%) are inside 500 m.
  *
- * What sets the gate is where that mode ENDS, and the per-kilometre density says so plainly. It falls from 1,076
- * places/km over 3–5 km to a trough of **441 places/km over 7–10 km**, then climbs back and flattens onto a plateau of
- * 760–780 places/km from 30 km out to 100 km and beyond. That plateau is the background rate of two DIFFERENT towns
- * wearing one name in one country, and it does not decay with distance because there is no reason it should. 10 km is
- * the floor between the two populations. Admitting it scores 679,163 places (66.6% of the matched set); pushing the
- * gate to 25 km buys 8,722 more, and by then better than half of each additional kilometre is the wrong town.
+ * What sets the gate is where that mode ENDS, and the per-kilometre density states. It falls from 1,076 places/km over
+ * 3–5 km to a trough of **441 places/km over 7–10 km**, then climbs back and flattens onto a plateau of 760–780
+ * places/km from 30 km out to 100 km and beyond. That plateau is the background rate of two DIFFERENT towns wearing one
+ * name in one country, and it does not decay with distance because there is no reason it should. 10 km is the floor
+ * between the two populations. Admitting it scores 679,163 places (66.6% of the matched set); pushing the gate to 25 km
+ * buys 8,722 more, and by then better than half of each additional kilometre is the wrong town.
  *
  * The four-row bare-GB board is insensitive across this whole range — 5 km and 25 km were both measured and select
  * identical rows — so the value is chosen by what the join MEANS, not by what it scores. The gate is the definition of
@@ -181,47 +181,43 @@ export class ImportanceIndex {
  * 25 s.
  */
 export function loadImportanceIndex(databasePath: string): ImportanceIndex {
-	const db = new DatabaseSync(databasePath, { readOnly: true })
+	using db = new DatabaseClient<CandidateDatabase>(databasePath, { readOnly: true })
 
-	try {
-		const groups = new Map<string, ScoredPlace[]>()
-		let places = 0
-		let unkeyable = 0
+	const groups = new Map<string, ScoredPlace[]>()
+	let places = 0
+	let unkeyable = 0
 
-		for (const row of db
-			.prepare(
-				`SELECT s.name AS name, s.country AS country, s.placetype AS placetype,
-					s.latitude AS latitude, s.longitude AS longitude, i.importance AS importance
-				 FROM place_importance i JOIN spr s ON s.id = i.id
-				 WHERE s.is_current != 0 AND s.is_deprecated = 0`
-			)
-			.iterate()) {
-			const importance = Number(row.importance)
+	for (const row of db
+		.prepare(
+			`SELECT s.name AS name, s.country AS country, s.placetype AS placetype,
+				s.latitude AS latitude, s.longitude AS longitude, i.importance AS importance
+			 FROM place_importance i JOIN spr s ON s.id = i.id
+			 WHERE s.is_current != 0 AND s.is_deprecated = 0`
+		)
+		.iterate()) {
+		const importance = Number(row.importance)
 
-			if (!Number.isFinite(importance)) continue
-			const nameKey = normalizeLocalityForKey(String(row.name ?? ""))
+		if (!Number.isFinite(importance)) continue
+		const nameKey = normalizeLocalityForKey(String(row.name ?? ""))
 
-			if (!nameKey) {
-				unkeyable++
+		if (!nameKey) {
+			unkeyable++
 
-				continue
-			}
-
-			const key = groupKey(nameKey, row.country as string | null, row.placetype as string | null)
-			let group = groups.get(key)
-
-			if (!group) {
-				group = []
-				groups.set(key, group)
-			}
-
-			group.push({ lat: Number(row.latitude), lon: Number(row.longitude), importance })
-
-			places++
+			continue
 		}
 
-		return new ImportanceIndex(groups, { places, keys: groups.size, unkeyable })
-	} finally {
-		db.close()
+		const key = groupKey(nameKey, row.country as string | null, row.placetype as string | null)
+		let group = groups.get(key)
+
+		if (!group) {
+			group = []
+			groups.set(key, group)
+		}
+
+		group.push({ lat: Number(row.latitude), lon: Number(row.longitude), importance })
+
+		places++
 	}
+
+	return new ImportanceIndex(groups, { places, keys: groups.size, unkeyable })
 }

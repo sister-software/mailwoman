@@ -121,7 +121,7 @@ Pre-registered reading, in the config header:
 > persist, the admission hypothesis is FALSIFIED and the corpus change is the remaining suspect — do
 > not re-run this with a different dose.
 
-The falsification clause is the load-bearing half. The 2026-08-23 trailing-region arc spent four runs
+The falsification clause is the required half. The 2026-08-23 trailing-region arc spent four runs
 re-dosing a lever that could not work; a dose is not a fix when the mechanism is wrong.
 
 ## Defects found by running the controls first

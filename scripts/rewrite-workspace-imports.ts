@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { execSync } from "node:child_process"
-import { readFileSync, writeFileSync } from "node:fs"
-import { dirname, relative, resolve } from "node:path"
-
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { execSync } from "@mailwoman/platform/child_process"
+import { dirname, relative, resolve } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 const repoRoot = repoRootPath()
@@ -78,7 +78,7 @@ const importRe = /(from\s+|require\(\s*)(["'])([^"'\n]+)\2/g
 let changed = 0
 
 for (const file of listFiles()) {
-	const src = readFileSync(file, "utf8")
+	const src = await readLocalTextFile(file)
 	let touched = false
 
 	const out = src.replace(importRe, (match, head, q, spec) => {
@@ -91,7 +91,7 @@ for (const file of listFiles()) {
 	})
 
 	if (touched) {
-		writeFileSync(file, out)
+		await writeLocalFile(out, file)
 
 		changed++
 	}

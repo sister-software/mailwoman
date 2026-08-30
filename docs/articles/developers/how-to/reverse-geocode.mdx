@@ -12,8 +12,8 @@ from the result whether that chain was confirmed against a real boundary or infe
 centroid.
 
 Reverse geocoding here resolves to administrative places — `neighbourhood`, `locality`, `county`,
-`region`, `country`, the placetype names the transcripts below print. It does not resolve to a street
-address. There is no rooftop reverse at head, and the sections below say what that rules out.
+`region`, and `country`, which are the placetypes printed in the transcripts below. It does not resolve
+to a street address. There is no rooftop reverse at head, and the sections below say what that rules out.
 
 ## Prerequisites
 
@@ -98,23 +98,19 @@ polygon-confirmed, the nearest centroid among the polygon-less candidates wins, 
 ```js
 import { WOFReverseGeocoder } from "@mailwoman/resolver-wof-sqlite"
 
-const geocoder = new WOFReverseGeocoder({
+using geocoder = new WOFReverseGeocoder({
 	adminDBPath: process.env.MAILWOMAN_WOF_ADMIN_DB,
 	polygonDBPath: process.env.MAILWOMAN_WOF_POLYGONS_DB,
 })
 
-try {
-	for (const [lat, lon] of [
-		[44.5588, -72.5778],
-		[40.7128, -74.006],
-		[36.0, -45.0],
-	]) {
-		const { hierarchy, containment } = await geocoder.reverseGeocode(lat, lon)
-		const chain = hierarchy.map((p) => `${p.placetype}:${p.name}`).join(" ← ")
-		console.log(`${lat}, ${lon}  ${containment.padEnd(11)} ${chain || "(nothing — outside gazetteer coverage)"}`)
-	}
-} finally {
-	geocoder.close()
+for (const [lat, lon] of [
+	[44.5588, -72.5778],
+	[40.7128, -74.006],
+	[36.0, -45.0],
+]) {
+	const { hierarchy, containment } = await geocoder.reverseGeocode(lat, lon)
+	const chain = hierarchy.map((p) => `${p.placetype}:${p.name}`).join(" ← ")
+	console.log(`${lat}, ${lon}  ${containment.padEnd(11)} ${chain || "(nothing — outside gazetteer coverage)"}`)
 }
 ```
 
@@ -159,7 +155,7 @@ every boundary you hold polygons for gets an answer regardless.
 
 - **There is no address-level reverse.** `WOFReverseGeocoder` reads the full WOF distribution's bounding
   boxes, polygons and ancestor chains. It never consults an address-point database, so having the US
-  rooftop shards on disk does not add a house number to the result. Forward geocoding is where the
+  rooftop registers on disk does not add a house number to the result. Forward geocoding is where the
   address-point tier lives — see
   [Improve geocode precision](../tutorials/improve-geocode-precision.mdx).
 - **Reverse quality follows polygon coverage, and coverage is per-country.** Without a sidecar every

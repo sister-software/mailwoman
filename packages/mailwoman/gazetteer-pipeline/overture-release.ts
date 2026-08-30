@@ -15,7 +15,7 @@
  *   one request.
  *
  *   Anonymous HTTP against the public bucket, not the S3 SDK or DuckDB: this must be answerable before any heavy
- *   optional dependency loads, and it is the same listing a human would check.
+ *   optional dependency loads and the same listing a human would check.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -25,7 +25,20 @@ const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
 /**
  * Releases currently in the bucket, oldest first.
  */
-export async function listOvertureReleases(client?: APIClient): Promise<string[]> {
+/**
+ * What this function needs from an HTTP client: one `fetch`. Narrower than {@link APIClient} on purpose — a parameter
+ * shaped like the whole client makes a test double an assertion rather than an object, and the assertion then survives
+ * a signature change that the double does not.
+ */
+export interface OvertureListingClient {
+	fetch(request: {
+		url: string
+		params?: Record<string, string | number>
+		responseType?: string
+	}): Promise<{ data: unknown }>
+}
+
+export async function listOvertureReleases(client?: OvertureListingClient): Promise<string[]> {
 	const api =
 		client ??
 		new APIClient({
@@ -64,7 +77,7 @@ export interface ReleaseCheck {
  * only job is to turn a 30-minute failure into an immediate one; letting it BLOCK a build on its own network trouble
  * would trade a slow failure for a spurious one.
  */
-export async function checkOvertureRelease(release: string, client?: APIClient): Promise<ReleaseCheck> {
+export async function checkOvertureRelease(release: string, client?: OvertureListingClient): Promise<ReleaseCheck> {
 	let available: string[]
 
 	try {

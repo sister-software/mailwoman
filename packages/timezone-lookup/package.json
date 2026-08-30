@@ -37,12 +37,19 @@
 			"node": "./build.ts",
 			"default": "./out/build.js",
 			"types": "./out/build.d.ts"
+		},
+		"./schema": {
+			"node": "./schema.ts",
+			"default": "./out/schema.js",
+			"types": "./out/schema.d.ts"
 		}
 	},
 	"publishConfig": {
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/annotations": "workspace:*"
+		"@mailwoman/annotations": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*"
 	}
 }

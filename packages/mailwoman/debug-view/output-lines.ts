@@ -18,7 +18,7 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 
-import type { GeocodeResult } from "../geocode-core.ts"
+import type { GeocodeResult } from "../geocode-result.ts"
 import type { GeocodeTrace } from "../geocode-session.ts"
 import { ABSENT } from "./trace-rows.ts"
 
@@ -119,7 +119,10 @@ function componentLines(tree: AddressTree): OutputLine[] {
 export interface OutputLinesInput {
 	result: GeocodeResult
 	tree: AddressTree
-	trace?: GeocodeTrace
+	/**
+	 * Only `kind` is read; `Pick` says so, and lets a test hand in exactly that.
+	 */
+	trace?: Pick<GeocodeTrace, "kind">
 	/**
 	 * Per-phase wall clock from the session ({@link GeocodeRun.timing}). Absent on a caller that didn't measure — the
 	 * timing section is then omitted rather than showing zeros.

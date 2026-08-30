@@ -83,6 +83,11 @@
 			"default": "./out/tools/index.js",
 			"types": "./out/tools/index.d.ts"
 		},
+		"./normalize": {
+			"node": "./normalize.ts",
+			"default": "./out/normalize.js",
+			"types": "./out/normalize.d.ts"
+		},
 		"./es": {
 			"node": "./es/index.ts",
 			"default": "./out/es/index.js",
@@ -298,6 +303,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/platform": "workspace:*",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {

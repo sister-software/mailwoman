@@ -28,9 +28,9 @@
  *   6000]`
  */
 
-import { appendFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
+import * as path from "@mailwoman/platform/path"
 
+import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import { hashFNV1a } from "./fnv-hash.ts"
@@ -126,7 +126,7 @@ function assemble(r: Record<string, unknown>): string | null {
 	if (!street && !locality) return null
 
 	// nothing distinctive
-	// Drop raw-coord-only / PO-box-ish noise (DeepSeek gotcha): need a real street or locality token.
+	// Drop raw-coord-only / PO-box-ish noise (DeepSeek failure mode): need a real street or locality token.
 	if (!street && !/[a-z]/i.test(locality)) return null
 	const head = [num, street].filter(nonEmpty).join(" ")
 	const h = hashFNV1a(`${num}|${street}|${pc}|${locality}`)
@@ -249,9 +249,14 @@ export async function buildOutlierOA(
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
 	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-	appendFileSync(path.join(dataDir, "train.jsonl"), wr(trainAppend))
-	appendFileSync(path.join(dataDir, "val.jsonl"), wr(valAppend))
-	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
+	await appendLocalTextFile(wr(trainAppend), path.join(dataDir, "train.jsonl"))
+	await appendLocalTextFile(wr(valAppend), path.join(dataDir, "val.jsonl"))
+
+	await writeLocalTextFile(
+		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
+		path.join(dataDir, "test-latin-offmap.jsonl")
+	)
+
 	report?.(`\nTRAIN countries: ${trainCC} · HELDOUT countries: ${heldCC}`)
 	report?.(`appended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
 

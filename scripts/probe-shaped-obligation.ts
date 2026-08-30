@@ -17,13 +17,12 @@
  *   Usage: node scripts/probe-shaped-obligation.ts --cache-root <dir> [--locale en-gb]
  */
 
-import { existsSync } from "node:fs"
-import { join } from "node:path"
-import { parseArgs } from "node:util"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const { values } = parseArgs({
 	options: {
@@ -53,7 +52,7 @@ try {
 		// on a machine where `$MAILWOMAN_DATA_ROOT/anchor/pilot-anchor-lookup.json` exists, an unpinned
 		// non-shaped card grades against 67,708 letter-free keys instead of the package's own binary.
 		...(resolved.anchorLookupPath ? { anchorLookupPath: resolved.anchorLookupPath.path } : {}),
-		...(existsSync(join(packageDir, "anchor-lexicon-v1.json"))
+		...((await pathExists(join(packageDir, "anchor-lexicon-v1.json")))
 			? { gazetteerLexiconPath: join(packageDir, "anchor-lexicon-v1.json") }
 			: {}),
 		...(resolved.streetTypeLexiconPath ? { streetTypeLexiconPath: resolved.streetTypeLexiconPath } : {}),

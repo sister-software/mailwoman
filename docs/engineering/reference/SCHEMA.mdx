@@ -69,7 +69,7 @@ Two conventions fall out of it, both established by measurement rather than tast
 
 This convention is one contract with three readers, and they are only useful in agreement:
 
-1. **The corpus** splits — TIGER's adapter and the `street-affix` shard recipe both do.
+1. **The corpus** splits — TIGER's adapter and the `street-affix` corpus recipe both do.
 2. **The golden answer key** splits, from **v0.1.3** onward (`data/eval/golden/v0.1.3`, relabelled
    from v0.1.2 by `mailwoman corpus golden-relabel`). The version's `MANIFEST.json` DECLARES it in
    `convention.street_convention`.
@@ -79,7 +79,7 @@ This convention is one contract with three readers, and they are only useful in 
 
 Golden v0.1.2 and earlier FOLDED, and per-locale-f1 glued the model's spans together to match. That
 gap cost a real verdict: the v9.0.0 candidate read `us.street` 87.4 against a 87.8 floor and failed
-the gate on a convention disagreement, not a model regression. On v0.1.3 the same two models read
+the eval floor on a convention disagreement, not a model regression. On v0.1.3 the same two models read
 71.7 (shipped 7.0.0) and 75.2 (candidate) — the sign of the delta flips.
 
 ### Venue-level (Phase 3)

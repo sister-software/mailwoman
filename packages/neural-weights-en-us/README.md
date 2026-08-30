@@ -175,7 +175,7 @@ From-scratch (no pretrained base), 40000 steps on an NVIDIA A100 (Modal cloud),
 CE loss only (the dual CRF loss diverged and was retired; CRF is inference-only
 Viterbi). Corpus v0.5.0 (char-offset span labels: from-source base plus
 re-emitted parity overlays) augmented with a reversed-order (postcode-first) FR
-shard so the model stops mistaking a leading FR postcode for a house number. The
+training subset so the model stops mistaking a leading FR postcode for a house number. The
 gazetteer anchor channel is fed during training, which is why it is required at
 inference.
 

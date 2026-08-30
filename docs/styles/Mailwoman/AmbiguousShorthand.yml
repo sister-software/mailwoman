@@ -1,0 +1,38 @@
+## Mailwoman house style: banned ambiguous shorthand.
+##
+## Vale existence rule, shared by published prose (.vale.ini) and agent
+## replies (.vale-chat.ini). Each token is a word this project uses for four
+## or five different things at once, so a reader cannot tell which one is
+## meant without asking. Name the concrete thing instead:
+##
+##   gate  -> the named check: the promotion eval, the verify step (21
+##            checks), the D-rule, the required `test` CI context — or a
+##            plain verb: blocks, requires, refuses, admits.
+##   shard -> the named artifact: the corpus recipe output, the per-country
+##            postcode database, the WOF extract, the actual filename.
+##   seam  -> the named boundary: the package boundary, the `PlaceLookup`
+##            interface, the call site, the module that owns it.
+##   cut   -> publish (a release), branch (from origin/main), reduce, remove.
+##
+## `shard(s)?` moved here from MailwomanChat/ProjectShorthand.yml so one list
+## covers both surfaces; chat coverage is unchanged, because .vale-chat.ini
+## loads the Mailwoman style too.
+##
+## Contracts survive by being written as contracts. Vale's markdown parser
+## skips inline code and fenced blocks natively, so `mailwoman eval gate`,
+## `packages/corpus/src/shard-recipes/`, `@mailwoman/locale-gate` and
+## `promotion-gate.ts` all pass when they are backticked — which is how an
+## identifier, a path, or a command the reader types should be written
+## anyway. A BARE `promotion-gate` in running prose does trip this rule:
+## tokens carry word boundaries, and a hyphen is a word boundary, so the
+## remedy is the backticks, not a rename. Renaming a contract-bearing
+## identifier is a separate, operator-approved change.
+extends: existence
+message: "'%s' is ambiguous shorthand — name the concrete thing (the check by its name, the artifact by its filename, the boundary by its interface) or use a plain verb; backtick it if it is an identifier, path, or command."
+level: error
+ignorecase: true
+tokens:
+  - seam(?:s)?
+  - shard(?:s|ed|ing)?
+  - cut(?:s|ting)?
+  - gat(?:e|es|ed|ing)

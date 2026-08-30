@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { repoRootPath } from "@mailwoman/core/utils"
 /**
  *   #757 — fail-fast guard for the npm-provenance `repository` requirement.
  *
@@ -14,11 +17,7 @@
  *   This asserts EVERY workspace in the `.release-it.json` publish set carries the canonical
  *   `repository` block, so a drift fails at PR/CI time instead of mid-release.
  */
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath } from "@mailwoman/core/utils"
+import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const repoRoot = repoRootPath()
@@ -28,9 +27,9 @@ const CANONICAL_URL = "https://github.com/sister-software/mailwoman.git"
  * The published workspace set — the single source of truth release-it iterates.
  */
 function releaseWorkspaces(): string[] {
-	const releaseIt = parseJSONStrict<{
+	const releaseIt = readLocalJSONFileSync<{
 		plugins?: { "@release-it-plugins/workspaces"?: { workspaces?: unknown } }
-	}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+	}>(resolve(repoRoot, ".release-it.json"))
 
 	const ws = releaseIt?.plugins?.["@release-it-plugins/workspaces"]?.workspaces
 
@@ -44,10 +43,10 @@ function releaseWorkspaces(): string[] {
 describe("#757 release provenance: every published workspace declares its repository", () => {
 	const workspaces = releaseWorkspaces()
 
-	it.each(workspaces)("%s/package.json has the canonical repository block", (ws) => {
-		const pkg = parseJSONStrict<{
+	it.each(workspaces)("%s/package.json has the canonical repository block", async (ws) => {
+		const pkg = await readLocalJSONFile<{
 			repository?: { type?: string; url?: string; directory?: string }
-		}>(readFileSync(resolve(repoRoot, ws, "package.json"), "utf8"))
+		}>(resolve(repoRoot, ws, "package.json"))
 
 		const repo = pkg.repository
 		// A missing/empty repository.url is exactly what npm provenance rejects with E422.

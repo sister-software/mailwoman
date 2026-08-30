@@ -87,7 +87,7 @@ export { normalizeCase, type CaseNormalizeResult } from "./case-normalize.js"
 
 The coordinate is optional and its absence is meaningful. A node that cannot be placed carries ancestry and no `lat`/`lon`, never `0,0`.
 
-`radiusP95Km` is **mandatory beside a coordinate**, and that is the format's most load-bearing rule. A GB outward district and a US sectional centre are both "a prefix with a centroid" and they differ by more than an order of magnitude — GB outward has a 3.24 km median p95 radius, the US SCF tier 53.56 km. A consumer reading a coordinate without its radius cannot tell them apart, and one of the two is nearly worthless for the use it would be put to.
+`radiusP95Km` is **mandatory beside a coordinate**, and that is the format's most required rule. A GB outward district and a US sectional centre are both "a prefix with a centroid" and they differ by more than an order of magnitude — GB outward has a 3.24 km median p95 radius, the US SCF tier 53.56 km. A consumer reading a coordinate without its radius cannot tell them apart, and one of the two is nearly worthless for the use it would be put to.
 
 Two indexes ship today:
 

@@ -5,7 +5,7 @@
 /**
  *   The CLI's bin entry. It runs the process-wide preamble before selecting and importing one command.
  *
- *   The split is load-bearing. ESM evaluates every static import before a module's own body runs, so a preamble
+ *   The split is required. ESM evaluates every static import before a module's own body runs, so a preamble
  *   written in a statically imported command graph would execute after that graph had already initialized. Only
  *   `node:module` is imported statically here; command code arrives through dynamic imports after this body.
  *
@@ -13,8 +13,8 @@
  *   if it reaches React, pins the development build.
  */
 
-import { enableCompileCache, findPackageJSON } from "node:module"
-import { parseArgs } from "node:util"
+import { enableCompileCache, findPackageJSON } from "@mailwoman/platform/module"
+import { parseArgs } from "@mailwoman/platform/util"
 
 // The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of a `--help` run. V8's
 // on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s, `parse` 2.95 s → 2.63 s. The cache is
@@ -49,7 +49,7 @@ const { values, positionals } = parseArgs({
 	allowPositionals: true,
 })
 
-// A ROOT version request, which is why the positional count is load-bearing: `--version` reached from anywhere in the
+// A ROOT version request, which is why the positional count is required: `--version` reached from anywhere in the
 // vector would make the launcher answer `mw geocode --version` itself, swallowing a flag that belongs to the command.
 const rootVersionRequest = values.version === true && !positionals.length
 
@@ -66,12 +66,9 @@ async function printVersion(): Promise<number> {
 
 	if (!packageJSONPath) throw new Error("Could not find package.json for mailwoman/cli")
 
-	const [{ readFile }, { parseJSONStrict }] = await Promise.all([
-		import("node:fs/promises"),
-		import("@mailwoman/core/objects"),
-	])
+	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 
-	const packageJSON: unknown = parseJSONStrict(await readFile(packageJSONPath, "utf8"))
+	const packageJSON: unknown = await readLocalJSONFile(packageJSONPath)
 
 	if (
 		typeof packageJSON !== "object" ||

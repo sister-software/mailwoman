@@ -50,10 +50,8 @@
  *   scripts/verify-shard-acks.ts --manifest /tmp/MANIFEST.json
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs as parseNodeArgs } from "node:util"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 
 interface ShardEntry {
 	path: string
@@ -102,7 +100,7 @@ function parseArgs(): Args {
 
 function main(): void {
 	const args = parseArgs()
-	const m = parseJSONStrict<Manifest>(readFileSync(args.manifestPath, "utf8"))
+	const m = readLocalJSONFileSync<Manifest>(args.manifestPath)
 	const shards = m.shards ?? []
 
 	const unacknowledged: ShardEntry[] = []

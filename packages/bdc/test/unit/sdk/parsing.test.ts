@@ -9,15 +9,14 @@
  *   coverage — this test only asserts the raw parse yields it unfiltered).
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
 import type { ProviderID } from "@mailwoman/bdc/sdk/common"
 import { readAvailabilityRows, readAvailabilityRowsSync, type BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { join } from "@mailwoman/platform/path"
 import { expect, test } from "vitest"
 
 const fixturePath = join(import.meta.dirname, "../../../test-fixtures/availability-micro.csv")
-const fixtureBuffer = readFileSync(fixturePath)
+const fixtureBuffer = await readLocalBuffer(fixturePath)
 
 function parseFixture(providerID = 999 as ProviderID): BDCAvailabilityRow[] {
 	return Array.from(readAvailabilityRowsSync(fixtureBuffer, providerID))

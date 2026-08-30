@@ -9,7 +9,7 @@
  *   street_norm. The bare-vs-anchored match-rate delta IS the gap, and isolates whether the model only
  *   learned FR structure in the postcode-anchored context.
  *
- *   GATE-LOAD-BEARING (#949). This is a promotion-gate battery leg — the `fr.bare_street_intact`
+ *   GATE-required (#949). This is a promotion-gate battery leg — the `fr.bare_street_intact`
  *   floor — not a one-off probe, which is why it lives here and not in `scripts/diagnostic/`. It sat
  *   in that drawer until the de-shell migration; the drawer is `.gitignore`d wholesale
  *   (`scripts/diagnostic/`), so the file survived only because it had been force-added to the index,
@@ -19,15 +19,17 @@
  *   Run: node scripts/eval/fr-parse-recall.ts
  */
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { allRows, dataRootPath, mailwomanDataRoot, workspacePath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import type { OSMAddressPointDatabase } from "@mailwoman/osm/sdk/address-point-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
 
 const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
@@ -53,14 +55,14 @@ const MAX_REPORTED_FAILURES = 12
  * Throws with every path it tried rather than returning a default. A missing anchor lexicon changes the parse, so a
  * silent fallback here would produce a well-formed wrong floor reading.
  */
-function resolveWeightsSibling(fileName: string, weightsCache?: string): string {
+async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<string> {
 	const candidates = [
 		...(weightsCache ? [`${weightsCache}/node_modules/@mailwoman/neural-weights-en-us/${fileName}`] : []),
 		String(dataRootPath("weights", "en-us", fileName)),
 		`${String(workspacePath("neural-weights-en-us"))}/${fileName}`,
 	]
 
-	const found = candidates.find((path) => existsSync(path))
+	const found = candidates.find((path) => pathExistsSync(path))
 
 	if (!found) {
 		throw new Error(
@@ -188,7 +190,9 @@ export async function frParseRecall(
 
 	const rows: FRRow[] = args.fromDB
 		? (() => {
-				const db = new DatabaseSync(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, { readOnly: true })
+				const db = new DatabaseClient<OSMAddressPointDatabase>(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, {
+					readOnly: true,
+				})
 
 				// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
 				// DETERMINISTIC (GROUP BY + ORDER BY, no RANDOM) — the same shard yields the same 40 rows.
@@ -200,21 +204,21 @@ export async function frParseRecall(
 					)
 				)
 			})()
-		: [...TextSpliterator.from(readFileSync(args.fixture, "utf8"))]
+		: [...TextSpliterator.from(await readLocalTextFile(args.fixture))]
 				.filter((l) => l.trim())
 				.map((l) => parseJSONStrict<FRRow>(l))
 
 	const classifier = await (async (): Promise<NeuralAddressClassifier> => {
 		if (!args.model || !args.tokenizer) return NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
-		const card = parseJSONStrict<{ labels: string[] }>(readFileSync(args.modelCard, "utf8"))
+		const card = await readLocalJSONFile<{ labels: string[] }>(args.modelCard)
 
 		const anchor = new PostcodeBinaryResolver(
-			readFileSync(resolveWeightsSibling("postcode-us.bin", options.weightsCache))
+			await readLocalBuffer(await resolveWeightsSibling("postcode-us.bin", options.weightsCache))
 		).toAnchorLookup()
 
-		const lexiconPath = resolveWeightsSibling("anchor-lexicon-v1.json", options.weightsCache)
-		const lexicon = parseGazetteerLexicon(parseJSONStrict(readFileSync(lexiconPath, "utf8")))
+		const lexiconPath = await resolveWeightsSibling("anchor-lexicon-v1.json", options.weightsCache)
+		const lexicon = parseGazetteerLexicon(await readLocalJSONFile(lexiconPath))
 
 		const [tokenizer, runner] = await Promise.all([
 			MailwomanTokenizer.loadFromFile(args.tokenizer),
@@ -284,8 +288,7 @@ export async function frParseRecall(
 	if (args.json) {
 		// snake_case wire keys, 2-space indent, trailing newline — the sidecar shape is a contract with
 		// whatever reads it next; the migration keeps it byte-for-byte.
-		writeFileSync(
-			args.json,
+		await writeLocalTextFile(
 			`${JSON.stringify(
 				{
 					bare_intact: bareOk,
@@ -297,7 +300,8 @@ export async function frParseRecall(
 				},
 				null,
 				2
-			)}\n`
+			)}\n`,
+			args.json
 		)
 	}
 

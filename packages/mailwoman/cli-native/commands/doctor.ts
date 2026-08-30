@@ -21,7 +21,7 @@ export const spec = {
 			type: "boolean",
 			default: false,
 			description:
-				"Also print every path and environment variable the checks resolved (data root, candidate.db, WOF shards, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.",
+				"Also print every path and environment variable the checks resolved (data root, candidate.db, WOF databases, weights) so a surprising verdict can be traced to the setting that caused it. No -v short form: the root program owns -v for --version.",
 		},
 	},
 } as const satisfies CommandSpec
@@ -41,7 +41,7 @@ export async function run(args: readonly string[]): Promise<number> {
 	const { runDoctor, describeEnvironment, renderDoctorReport } = await import("#doctor")
 
 	const report = await runDoctor()
-	const environment = parsed.values.verbose ? describeEnvironment() : undefined
+	const environment = parsed.values.verbose ? await describeEnvironment() : undefined
 
 	process.stdout.write(
 		parsed.values.json

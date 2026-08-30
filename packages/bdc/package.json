@@ -129,11 +129,14 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/filer": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.4",
-		"spliterator": "^6.2.0",
+		"path-ts": "^2.1.0",
+		"spliterator": "^6.3.1",
 		"type-fest": "^5.8.0"
 	},
 	"engines": {

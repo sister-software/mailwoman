@@ -24,8 +24,8 @@
  *   state: it is the operator-intent signal.
  */
 
-import { type ChildProcess, fork } from "node:child_process"
-import { once } from "node:events"
+import { type ChildProcess, fork } from "@mailwoman/platform/child_process"
+import { once } from "@mailwoman/platform/events"
 
 export interface WorkerToolMeta {
 	name: string
@@ -52,7 +52,7 @@ type WorkerMessage = ReadyMessage | ResultMessage
 
 export interface WorkerHostOptions {
 	/**
-	 * Absolute path to the worker entry module. A parameter rather than a constant so the crash/restart machinery is
+	 * Absolute path to the worker entry module. A parameter rather than a constant so the crash/restart implementation is
 	 * testable against a stub child that can be told to hang, crash, or answer garbage.
 	 */
 	workerPath: string
@@ -78,7 +78,7 @@ const CRASH_LIMIT = 3
 const CRASH_WINDOW_MS = 60_000
 
 /**
- * How long a SIGTERM'd child gets to run its cleanup handler before SIGKILL. Generous because the worker's shutdown
+ * How long a SIGTERM'd child gets to run its cleanup handler before SIGKILL. Generous because the worker's teardown
  * closes SQLite handles and cancels spawned jobs.
  */
 const TERM_GRACE_MS = 5000
@@ -92,7 +92,7 @@ export interface RestartReport {
 	aborted_calls: number
 }
 
-export class WorkerHost {
+export class WorkerHost implements AsyncDisposable {
 	readonly #options: Required<Pick<WorkerHostOptions, "workerPath" | "workerArgs" | "handshakeTimeoutMs">> & {
 		log: NodeJS.WritableStream
 	}
@@ -104,8 +104,8 @@ export class WorkerHost {
 	#degraded: string | null = null
 	#stderrTail = ""
 	/**
-	 * True while {@link restart} or {@link shutdown} intentionally kills the child, so the exit handler can tell an ordered
-	 * death from a crash.
+	 * True while {@link restart} or disposal intentionally kills the child, so the exit handler can tell an ordered death
+	 * from a crash.
 	 */
 	#expectingExit = false
 
@@ -232,7 +232,10 @@ export class WorkerHost {
 		}
 	}
 
-	async shutdown(): Promise<void> {
+	/**
+	 * End the worker at scope exit: reject every in-flight call, then stop the child.
+	 */
+	async [Symbol.asyncDispose](): Promise<void> {
 		this.#rejectPending(new Error("The server is shutting down."))
 		await this.#stopChild()
 	}

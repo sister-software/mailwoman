@@ -11,10 +11,11 @@
  *   asserted here directly rather than through a whole build.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
 import { explodeAliasBags } from "#candidate/alias-bags"
@@ -59,8 +60,8 @@ interface Staged {
  * writing rows — the pass owns the loop, not the storage.
  */
 function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number, PlaceAttrs>) {
-	const src = new DatabaseSync(":memory:")
-	const out = new DatabaseSync(":memory:")
+	using src = DatabaseClient.temp<WOFDatabase>()
+	using out = DatabaseClient.temp<CandidateDatabase>()
 
 	src.exec("CREATE TABLE place_search (wof_id INTEGER PRIMARY KEY, alt_names TEXT)")
 
@@ -75,9 +76,6 @@ function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number,
 	const result = explodeAliasBags(src, out, attrs, (k, _a, sid, isPrimary) => {
 		staged.push({ k, sid, isPrimary })
 	})
-
-	src.close()
-	out.close()
 
 	return { ...result, staged }
 }

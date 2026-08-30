@@ -10,7 +10,7 @@
  *
  *   - MapLibre needs a real WebGL context → ANGLE's SwiftShader software rasterizer (the same flags the
  *       3D Plotly render uses).
- *   - The basemap tiles come from `tiles.sister.software`, which CORS-restricts to localhost + the docs
+ *   - The basemap tiles come from `tiles.mailwoman.ai`, which CORS-restricts to localhost + the docs
  *       domains — so the page MUST be SERVED OVER LOCALHOST, not opened as a file (a file:// page
  *       renders accurate markers on a blank basemap). Serve the output dir first, e.g. `python3 -m
  *       http.server 8899 -d <dir>`, then point this at `http://localhost:8899/<page>.html`.
@@ -60,7 +60,7 @@ export async function renderServedMapToPNG(
 	// MapLibre composites tiles + the marker layer async after the network settles; give it a beat.
 	await page.waitForTimeout(4000)
 	await page.screenshot({ path: options.outPNG })
-	await browser.close()
+	await browser[Symbol.asyncDispose]()
 
 	report?.(`[map-render] ${options.outPNG}; console errors=${errors.length}`)
 

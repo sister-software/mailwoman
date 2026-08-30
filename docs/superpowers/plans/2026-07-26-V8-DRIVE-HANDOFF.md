@@ -16,7 +16,7 @@ the operator-only decisions, and the non-negotiable discipline.
   distribution (default-on). #1319 wrap (release-staging fix + roadmap + retirement tracking).
 - **Track F (correctness): SATISFIED.** #1143 CLOSED (waived to training #1102, not a decode bug),
   #1058/#1041/#1056 closed. This is one of the three cut gates — already done.
-- **Release machinery is outage-safe.** `scripts/copy-weights.ts` now materializes `fst-<locale>.bin`
+- **Release implementation is outage-safe.** `scripts/copy-weights.ts` now materializes `fst-<locale>.bin`
   into the weights packages (VERIFIED end-to-end: packs a real 3.8M file, zero symlinks in the
   tarball, files-guard passes). Before this, the next release would have shipped broken packages.
 - **Comma-free is settled as a decode dead end** — the real fix is training (#1102). Do NOT reopen a
@@ -97,7 +97,7 @@ they arrive). Surface them, don't let them hold the cut.
 
 ## Discipline (non-negotiable — carry all of it into v8)
 
-1. **Verify before verdict.** Re-run any load-bearing number on the live CLI before acting; a report
+1. **Verify before verdict.** Re-run any required number on the live CLI before acting; a report
    (including this one) is not truth.
 2. **Measure in the SHIPPED configuration.** Candidate-cache numbers ≠ shipped numbers; when an
    identical-artifact rerun disagrees, suspect the cache.

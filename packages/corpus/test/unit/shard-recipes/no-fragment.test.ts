@@ -4,7 +4,7 @@
 /**
  *   Tests for the `no-fragment` shard (Track B — the NO house-number-licence lever).
  *
- *   Two invariants, both load-bearing (the fr-fragment lesson, transplanted):
+ *   Two invariants, both required (the fr-fragment lesson, transplanted):
  *
  *   1. THE SPLIT with a DIACRITIC surface. The board keeps diacritics; a diacritic-stripping norm
  *      would leak `Tømmerlien` silently. Pinned in both directions.
@@ -14,8 +14,9 @@
  */
 
 import { noFragmentRecipe } from "@mailwoman/corpus/shard-recipes/no-fragment"
-import { scratch, shardRunner } from "@mailwoman/corpus/test-kit/shard-recipe"
 import { describe, expect, it } from "vitest"
+
+import { scratch, shardRunner } from "#test-kit/shard-recipe"
 
 const run = shardRunner("no-fragment", noFragmentRecipe, 901)
 
@@ -29,11 +30,11 @@ const TUPLES = [
 
 describe("no-fragment", () => {
 	it("REFUSES to run without an exclusion list", async () => {
-		const { input } = scratch("no-fragment", TUPLES, [])
+		await using inputs = await scratch("no-fragment", TUPLES, [])
 
-		await expect(noFragmentRecipe.run({ output: "", seed: 901, variants: 1, input }, () => {})).rejects.toThrow(
-			/--exclude-surfaces is REQUIRED/
-		)
+		await expect(
+			noFragmentRecipe.run({ output: "", seed: 901, variants: 1, input: inputs.input }, () => {})
+		).rejects.toThrow(/--exclude-surfaces is REQUIRED/)
 	})
 
 	it("skips a reserved surface KEEPING diacritics", async () => {

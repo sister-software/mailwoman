@@ -6,8 +6,7 @@
  *   formatted for human review.
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 
 import type { ResolvedEntity, SourceRecord } from "#index"
@@ -43,7 +42,7 @@ export interface OvermergePacketInput {
  * truth says belong to different entities. Per-pair human adjudication is the only instrument that separates model
  * error from yardstick error once the residual is near the measured irreducible ceiling.
  */
-export function writeOvermergePacket(path: string, input: OvermergePacketInput): number {
+export async function writeOvermergePacket(path: string, input: OvermergePacketInput): Promise<number> {
 	const { entities, rows, recordCount, maxNpis, state, orgNameLabel } = input
 	const rowByID = new Map(rows.map((r) => [r.npi, r]))
 
@@ -90,7 +89,7 @@ export function writeOvermergePacket(path: string, input: OvermergePacketInput):
 		out.push("")
 	})
 
-	writeFileSync(path, out.join("\n"))
+	await writeLocalTextFile(out.join("\n"), path)
 
 	return n
 }

@@ -81,7 +81,7 @@ const BASES: Base[] = [
 
 /**
  * Expanded→abbreviated inverse of the shared `normalize/abbreviations.ts` table (imported, never duplicated — "no
- * load-bearing trivia"). Single-letter abbreviations (N/S/E/W/R) are dropped: they're ambiguous with initials, and the
+ * required trivia"). Single-letter abbreviations (N/S/E/W/R) are dropped: they're ambiguous with initials, and the
  * invariant tests only unambiguous multi-char suffix swaps. First-wins on ambiguous long forms (FR `Boulevard` maps
  * from both `Bd` and `Bvd` → `Bd`).
  */
@@ -466,7 +466,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	deps.close()
+	deps[Symbol.dispose]()
 
 	// Anti-rot: a tracked xfail that did NOT fire has been fixed — surface it so the list can't accrete stale entries.
 	const newlyPassing = [

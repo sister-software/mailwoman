@@ -6,12 +6,12 @@
  *   The output requires an HTTP origin because the tile server does not serve `file:` origins.
  */
 
-import { writeFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { type MapFeatureData, toMapHTML } from "#index"
 
@@ -69,10 +69,10 @@ type Row = { lat: number; lon: number; source: string; number: string | null; st
 /**
  * Render the per-state address-point provenance map — see the module doc.
  */
-export function sourceProvenanceMap(
+export async function sourceProvenanceMap(
 	options: SourceProvenanceMapOptions = {},
 	report?: (line: string) => void
-): { outHTML: string; points: number } {
+): Promise<{ outHTML: string; points: number }> {
 	const STATE = (options.state || "ny").toLowerCase()
 	const DB = options.db || String(dataRootPath("address-points", `address-points-us-${STATE}.db`))
 	const OUT = options.outHTML || tempRootPath("source-provenance.html")
@@ -80,7 +80,7 @@ export function sourceProvenanceMap(
 	const OA_MOD = options.oaMod ?? 120 // keep ~1/120 of OpenAddresses points
 	const CAP = options.cap ?? 7000 // per-source marker cap
 
-	const db = new DatabaseSync(DB, { readOnly: true })
+	using db = new DatabaseClient<AddressPointDatabase>(DB, { readOnly: true })
 
 	// Two stratified samples so the smaller source (OpenAddresses, ~1/6 of NY) stays visible next to NAD.
 	// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction; LIMIT caps the marker count.
@@ -97,8 +97,6 @@ export function sourceProvenanceMap(
 		...sample("source = 'overture:NAD'", NAD_MOD),
 		...sample("source LIKE 'overture:OpenAddresses%'", OA_MOD),
 	]
-
-	db.close()
 
 	const counts = new Map<string, number>()
 
@@ -129,7 +127,7 @@ export function sourceProvenanceMap(
 		colorBy: "bucket",
 	})
 
-	writeFileSync(OUT, html)
+	await writeLocalFile(html, OUT)
 	report?.(`[written] ${OUT}  (${features.length} points)`)
 
 	for (const [bucket, n] of [...counts.entries()].toSorted((a, b) => b[1] - a[1])) {

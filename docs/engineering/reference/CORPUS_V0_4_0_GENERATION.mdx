@@ -8,9 +8,9 @@ for the conceptual framing and with [`OPERATIONS.md`](./OPERATIONS.mdx) for the 
 
 ## Scope
 
-corpus-v0.4.0 = corpus-v0.3.0 + DeepSeek-generated rows. The v0.3.0 shards are not
+corpus-v0.4.0 = corpus-v0.3.0 + DeepSeek-generated rows. The v0.3.0 parquet files are not
 re-emitted; the v0.4.0 MANIFEST points at the same on-disk parquet files plus the new
-kryptonite shard(s).
+kryptonite parquet file(s).
 
 Two row classes are in scope for the v0.5.0 plan. Both are now shipped — kryptonite in
 Thread B's commit (`d8a6bae`), transliteration in this commit (Thread B2).
@@ -134,14 +134,14 @@ to the canonical JSONL. Failure rate observed on production run: ~0.02%.
 ## Builder (`corpus/scripts/build-kryptonite-shard.ts`)
 
 Streams the canonical JSONL through `alignRow` (corpus/src/align.ts) to produce
-`tokens` + `labels`, writes a single parquet shard under `train/`, and emits the
-combined MANIFEST.json. v0.3.0 shard descriptors are copied verbatim into the new
-manifest — no v0.3.0 bytes are touched. New shard descriptors are stamped with
+`tokens` + `labels`, writes a single parquet file under `train/`, and emits the
+combined MANIFEST.json. v0.3.0 parquet descriptors are copied verbatim into the new
+manifest — no v0.3.0 bytes are touched. New parquet descriptors are stamped with
 `source: "deepseek-kryptonite"` so `corpus-audit` can attribute them without the
 filename-prefix inference fallback.
 
 Quarantined rows (alignment failures) are logged to `quarantine-kryptonite.tsv`
-alongside the new shard. Surface-form validation already happens in the Python
+alongside the new parquet file. Surface-form validation already happens in the Python
 generator, so the alignment step should reject `<1%` — anything above 5% indicates a
 prompt or substring-match regression and should be investigated before commit.
 
@@ -164,10 +164,10 @@ npx tsx corpus/scripts/audit.ts \
   --config corpus-python/src/mailwoman_train/configs/v0_5_0.yaml
 ```
 
-The audit reports per-source shard counts and (with `--config`) effective sample
+The audit reports per-source parquet-file counts and (with `--config`) effective sample
 weights. `deepseek-kryptonite` is now in `KNOWN_SOURCE_PREFIXES`. Expected:
-1 train shard with `source: "deepseek-kryptonite"`, sub-1% of total shards (the
-v0.3.0 baseline has 674 train shards; one more is noise at the audit level).
+1 train parquet file with `source: "deepseek-kryptonite"`, sub-1% of the total (the
+v0.3.0 baseline has 674 train parquet files; one more is noise at the audit level).
 
 ## Transliteration generation (Thread B2)
 
@@ -250,10 +250,10 @@ rows fit comfortably.
 1. Runs the transliteration generator end-to-end against the full seed pool.
 2. New `build-transliteration-shard.ts` (now `corpus/src/tools/shard-translit.ts`)
    mirroring `build-kryptonite-shard.ts` — buckets canonical rows by `source` and emits
-   one parquet shard per script (`train/part-translit-<slug>.parquet`).
+   one parquet file per script (`train/part-translit-<slug>.parquet`).
 3. Composes the new MANIFEST as `(v0.3.0 base shards) + (Thread B kryptonite shard) +
 (Thread B2 translit-<slug> shards)`.
-4. Migrates v0.3.0 shard descriptors in MANIFEST from `$MAILWOMAN_DATA_ROOT/...`
+4. Migrates v0.3.0 parquet descriptors in MANIFEST from `$MAILWOMAN_DATA_ROOT/...`
    to `/data/...`, the form that container loaders resolve at training time. The on-disk
    bytes are unchanged; only the path strings in MANIFEST move. (Thread B's MANIFEST mixed
    the two forms; this PR canonicalizes.)
@@ -276,7 +276,7 @@ rows fit comfortably.
 
 ## Changelog
 
-| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                            |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-23 | Initial doc + kryptonite slice generation (5K rows, deepseek-v4-flash).                                                                                                                                                                                                                                                                                                                           |
-| 2026-05-24 | Transliteration slice generation shipped under Thread B2: 73,319 rows from 5 scripts × 14,978 seeds (en-US + fr-FR), `max_tokens=60000`, 5.2 rps sustained, ~234 min wall-clock at conc=15. 73,316 rows aligned (3 quarantined). 5 shards added: `part-translit-{armn,cyrl,hang,hans,jpan}.parquet`. v0.3.0 shard paths in MANIFEST canonicalized from `$MAILWOMAN_DATA_ROOT/...` to `/data/...`. |
+| Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-23 | Initial doc + kryptonite slice generation (5K rows, deepseek-v4-flash).                                                                                                                                                                                                                                                                                                                                    |
+| 2026-05-24 | Transliteration slice generation shipped under Thread B2: 73,319 rows from 5 scripts × 14,978 seeds (en-US + fr-FR), `max_tokens=60000`, 5.2 rps sustained, ~234 min wall-clock at conc=15. 73,316 rows aligned (3 quarantined). 5 parquet files added: `part-translit-{armn,cyrl,hang,hans,jpan}.parquet`. v0.3.0 parquet paths in MANIFEST canonicalized from `$MAILWOMAN_DATA_ROOT/...` to `/data/...`. |

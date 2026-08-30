@@ -18,12 +18,11 @@
  *   the pinned cldr-core release from jsdelivr.
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { fileURLToPath } from "node:url"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { join } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 /**
  * The committed output path, resolved relative to this module (codex/tools/ → codex/country/). The codegen is
@@ -71,7 +70,7 @@ interface LanguagePopulation {
 
 async function loadCLDR(file: string, cldrDir: string | undefined, cldrVersion: string): Promise<unknown> {
 	if (cldrDir) {
-		return parseJSONStrict(readFileSync(join(cldrDir, `cldr-${file}.json`), "utf8"))
+		return await readLocalJSONFile(join(cldrDir, `cldr-${file}.json`))
 	}
 
 	const url = `https://cdn.jsdelivr.net/npm/cldr-core@${cldrVersion}/supplemental/${file}.json`
@@ -204,7 +203,7 @@ export function isOfficialLanguage(country: string, language: string, includeReg
 }
 `
 
-	writeFileSync(outPath, header)
+	await writeLocalFile(header, outPath)
 	report?.(`Wrote ${outPath}: ${Object.keys(table).length} territories (CLDR ${cldrVersion})`)
 
 	return { territories: Object.keys(table).length, cldrVersion, outPath }

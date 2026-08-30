@@ -34,8 +34,7 @@
  *   [--data-root <dir>] [--seed 1] [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { agreementPattern, block, estimateParameters, gbtScore, scorePair, trainGBT } from "@mailwoman/match"
 
@@ -253,7 +252,7 @@ export async function scorerPairwiseEval(
 		geocodeAddress: geocoder.seam,
 	})
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 
 	// --- Block + feature extraction. The model (collapsed spatial + address-frequency) defines the
 	// comparisons; EM-fit it for the FS baseline. ---
@@ -653,7 +652,7 @@ export async function scorerPairwiseEval(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`[written] ${OUT_MD}`)
 	}
 

@@ -32,7 +32,8 @@ function tier(confidence?: number): "high" | "mid" | "low" {
  * Render the raw input as a displaCy-style ribbon: each character span the parser tagged is tinted by its confidence
  * (red→amber→green, the same tiering as the table's ConfidenceCell) and labelled with its tag underneath. Delimiters
  * and any unparsed characters fall through as plain text, so a dropped span reads as a literal gap in the colour.
- * Returns null when no node carries offsets (older models, or an all-O parse) — the table alone still tells the story.
+ * Returns null when no node carries offsets (older models, or an all-O parse) — the table alone still shows the
+ * result.
  */
 export const SpanHighlight: React.FC<SpanHighlightProps> = ({ input, nodes }) => {
 	if (!input) return null

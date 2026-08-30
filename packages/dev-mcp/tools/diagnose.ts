@@ -4,7 +4,7 @@
 /**
  *   The `mwdev_diagnose` tool definition — the description an agent reads, the input schema, and the handler wiring.
  *   The measurement itself lives in the package root; this file is the CONTRACT, and the description is the
- *   load-bearing half of it.
+ *   required half of it.
  */
 
 import { z } from "zod"
@@ -13,7 +13,7 @@ import { COUNTERFACTUAL_FULL_RUN_MAX_ROWS, DIAGNOSE_SHAPES, runDiagnose } from "
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
-export const diagnoseTool = ({ registry }: DevToolDeps): DevTool => ({
+export const diagnoseTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_diagnose",
 	description:
 		"Per-row MECHANISM ACCOUNT (#1722), measured on the ONE-config out-of-the-box path (the #1669 caveat on " +
@@ -53,5 +53,5 @@ export const diagnoseTool = ({ registry }: DevToolDeps): DevTool => ({
 					"says what it left out. Use for large sets where the census is the point and the row dump is not."
 			),
 	}),
-	handler: async (args) => runDiagnose(registry, args),
+	handler: async (args) => await runDiagnose(registry, args),
 })

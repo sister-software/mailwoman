@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { createHash } from "node:crypto"
+import { createHash } from "@mailwoman/platform/crypto"
 
 import { isPresent } from "../objects.ts"
 

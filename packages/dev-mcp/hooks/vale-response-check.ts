@@ -10,7 +10,7 @@
  *   and the output JSON.
  *
  *   Error-severity findings return `decision: "block"`, which sends the reason back for one
- *   corrective turn; warning-only findings return `additionalContext` for the agent to weigh. The
+ *   corrective turn; warning-only findings return the non-blocking `systemMessage` for the agent to weigh. The
  *   `stop_hook_active` guard caps the loop at one revision pass per stop: the revised reply is not
  *   re-linted, so a false positive costs one turn at most. Every failure path is silence, same
  *   contract as `symbol-precheck.ts` — a hook that throws on an unanticipated payload is a broken
@@ -19,21 +19,18 @@
  *   Register it in `.claude/settings.json` under `hooks.Stop`.
  */
 
-import { readFileSync } from "node:fs"
-
+import { readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { TextSpliterator } from "spliterator"
 
 import { lintReply, renderVerdict } from "./vale-check-core.ts"
-
-const STDIN = 0
 
 /**
  * The reply text, preferring the payload's `last_assistant_message` and falling back to the transcript. The fallback
  * exists because a silently absent field would read as "the reply was clean" — a false negative indistinguishable from
  * a real absence.
  */
-function readReply(payload: Record<string, unknown> | null): string {
+async function readReply(payload: Record<string, unknown> | null): Promise<string> {
 	const direct = payload?.last_assistant_message
 
 	if (typeof direct === "string" && direct.trim()) return direct
@@ -44,7 +41,7 @@ function readReply(payload: Record<string, unknown> | null): string {
 
 	// The wanted entry is the LAST assistant line; the substring pre-filter keeps only candidate
 	// lines resident while the transcript streams forward.
-	const candidates = TextSpliterator.from(readFileSync(transcriptPath, "utf8"))
+	const candidates = TextSpliterator.from(await readLocalTextFile(transcriptPath))
 		.filter((line) => line.includes('"assistant"'))
 		.toArray()
 
@@ -66,14 +63,14 @@ function readReply(payload: Record<string, unknown> | null): string {
 	return ""
 }
 
-function main(): void {
-	const payload = tryParsingJSON<Record<string, unknown>>(readFileSync(STDIN, "utf8"))
+async function main(): Promise<void> {
+	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 
 	// One revision pass per stop: when the turn is already continuing because of a Stop hook, the
 	// revised reply passes unchecked rather than looping.
 	if (payload?.stop_hook_active === true) return
 
-	const reply = readReply(payload)
+	const reply = await readReply(payload)
 
 	if (!reply) return
 
@@ -87,13 +84,11 @@ function main(): void {
 		return
 	}
 
-	process.stdout.write(
-		JSON.stringify({ hookSpecificOutput: { hookEventName: "Stop", additionalContext: verdict.text } })
-	)
+	process.stdout.write(JSON.stringify({ systemMessage: verdict.text }))
 }
 
 try {
-	main()
+	await main()
 } catch {
 	// Silence is the contract. See the header.
 }

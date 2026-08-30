@@ -64,14 +64,14 @@ export class RequestPacer {
 	 * `intervalMs` after the previous grant otherwise.
 	 *
 	 * The grant time is reserved SYNCHRONOUSLY, before any `await` — `#nextGrantAt` is read AND bumped in the same
-	 * synchronous step that computes this call's own wait. This is load-bearing, not cosmetic: moving the `#nextGrantAt`
-	 * update to after the `await` (i.e. "compute the wait, sleep, then update state") reopens the concurrency bug this
-	 * pacer exists to close — N callers invoked in the same synchronous turn would all read the SAME stale `#nextGrantAt`
-	 * before any of them updates it, compute the SAME wait, and all be released together instead of one interval apart.
+	 * synchronous step that computes this call's own wait. Moving the `#nextGrantAt` update to after the `await` (i.e.
+	 * "compute the wait, sleep, then update state") reopens the concurrency bug this pacer exists to close — N callers
+	 * invoked in the same synchronous turn would all read the SAME stale `#nextGrantAt` before any of them updates it,
+	 * compute the SAME wait, and all be released together instead of one interval apart.
 	 *
-	 * `Math.max(#nextGrantAt, now)` is equally load-bearing: without it, a long idle gap leaves `#nextGrantAt` stuck in
-	 * the past, and every call after the idle would compute a negative/zero wait forever (the increment-by-one-interval
-	 * never catches up to a `now` that's run far ahead) — pacing would silently stop working after any idle period.
+	 * `Math.max(#nextGrantAt, now)` is also required. Without it, a long idle gap leaves `#nextGrantAt` stuck in the
+	 * past, and every call after the idle would compute a negative/zero wait forever (the increment-by-one-interval never
+	 * catches up to a `now` that's run far ahead) — pacing would silently stop working after any idle period.
 	 *
 	 * Both are mutation-proved in `pacer.test.ts`.
 	 *

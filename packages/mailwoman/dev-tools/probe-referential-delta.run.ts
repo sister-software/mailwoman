@@ -23,7 +23,7 @@
  *
  *   1. **Gazetteer census** — every place at or above saturation, and every NAME-COLLIDING pair where
  *      both bearers clear it. The second number is the population of cases where the tiebreak is
- *      load-bearing; if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
+ *      required; if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
  *   2. **Live query replay** — every board query plus the namesake families, run through the real
  *      `findPlace`, with the returned candidate list re-sorted under BOTH the pre-split key and
  *      `compareReferential`. Any row whose id sequence differs is a real resolver delta and is printed.
@@ -31,13 +31,14 @@
  *   Usage: node packages/mailwoman/dev-tools/probe-referential-delta.run.ts [--board <path>]
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
+import { parseArgs } from "@mailwoman/platform/util"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
 
@@ -51,10 +52,10 @@ console.log(`## Referential/population ordering — D-rule measurement\n`)
 console.log(`Saturation population: ${REFERENTIAL_SATURATION_POPULATION.toLocaleString()}\n`)
 console.log(`### 1. Live gazetteer census (\`${adminPath}\`)\n`)
 
-if (!existsSync(adminPath)) {
+if (!(await pathExists(adminPath))) {
 	console.log(`- admin DB absent — census skipped\n`)
 } else {
-	const db = new DatabaseSync(adminPath, { open: true })
+	using db = new DatabaseClient<WOFDatabase>(adminPath, { open: true })
 
 	// `!` because the OUTER count(*) carries no GROUP BY, so SQLite always returns exactly one row.
 	const saturated = getRow<{ c: number }>(
@@ -62,7 +63,7 @@ if (!existsSync(adminPath)) {
 		REFERENTIAL_SATURATION_POPULATION
 	)!.c
 
-	// The configuration where the tiebreak is load-bearing: two CURRENT places sharing a name, both
+	// The configuration where the tiebreak is required: two CURRENT places sharing a name, both
 	// clamped to referential 1.0. Anything less than this cannot produce a differing order.
 	// Same one-row guarantee: the GROUP BY is inside the subquery, the outer count(*) has none.
 	const collidingPairs = getRow<{ c: number }>(
@@ -93,8 +94,6 @@ if (!existsSync(adminPath)) {
 	}
 
 	console.log("")
-
-	db.close()
 }
 
 //#endregion
@@ -113,7 +112,7 @@ const preSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number =>
  */
 const postSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number => compareReferential(a, b) || b.score - a.score
 
-const wofPaths = wofShardPaths().filter(existsSync)
+const wofPaths = wofShardPaths().filter(pathExistsSync)
 
 console.log(`### 2. Live query replay\n`)
 
@@ -121,7 +120,7 @@ if (!wofPaths.length) {
 	console.log(`- no WOF shards found — replay skipped\n`)
 } else {
 	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
+	using lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
 	const board = await loadHardSliceBoard(values.board)
 
 	// Board inputs AND their probe surfaces: the input is what a user types, the surface is the token
@@ -162,8 +161,6 @@ if (!wofPaths.length) {
 	console.log(`- queries compared (≥2 candidates): **${compared}** of ${queries.length}`)
 	console.log(`- candidates at or above saturation across all result sets: **${saturatedCandidates}**`)
 	console.log(`- result sets whose ORDER differs pre-split vs post-split: **${differing}**\n`)
-
-	lookup.close()
 }
 
 //#endregion

@@ -3,7 +3,7 @@
 The #723 root cause: training painted the postcode anchor ONLY on gold ``postcode`` spans, but
 inference paints on postcode-SHAPED spans — so the model never trained on the anchor firing on a
 house-number-that-looks-like-a-ZIP and faceplanted on "12345 Main St". The shaped path closes that
-train/inference gap. The load-bearing assertion here is the CONTRAST: gold paints nothing on such a
+train/inference gap. The required assertion here is the CONTRAST: gold paints nothing on such a
 house number; shaped paints the anchor on it (the training signal the model needs to learn to override).
 """
 

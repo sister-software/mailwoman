@@ -20,11 +20,12 @@
  *   Run: `mailwoman tiger race-dots --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson`
  */
 
-import { createWriteStream } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { TIGERDatabase } from "../sdk/schema.ts"
 
 /**
  * Attempts to place a dot inside its polygon by rejection sampling before giving up on it.
@@ -149,7 +150,7 @@ export async function raceDots(
 		return null
 	}
 
-	const db = new DatabaseSync(DB, { readOnly: true })
+	using db = new DatabaseClient<TIGERDatabase>(DB, { readOnly: true })
 
 	const rows = db
 		.prepare(
@@ -159,9 +160,7 @@ export async function raceDots(
 		)
 		.all() as Array<{ geometry: string } & Record<(typeof CATEGORIES)[number], number>>
 
-	db.close()
-
-	const out = createWriteStream(OUT)
+	const out = openWriteStream(OUT)
 	const totals = new Map<string, number>()
 
 	let dots = 0,

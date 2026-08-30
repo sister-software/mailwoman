@@ -9,9 +9,7 @@
  *   directly, and the fetch tests pass a one-method stub satisfying {@link CORESDocumentClient}.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	coresDetailURL,
 	fetchCORESRegistration,
@@ -20,10 +18,11 @@ import {
 	type CORESDocumentClient,
 } from "@mailwoman/filer/sdk/cores-client"
 import { toFRN, type FRN } from "@mailwoman/filer/sdk/frn"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 function fixture(name: string): string {
-	return readFileSync(join(import.meta.dirname, "../../../test-fixtures/cores", name), "utf8")
+	return readLocalTextFileSync(join(import.meta.dirname, "../../../test-fixtures/cores", name))
 }
 
 const KNOLOGY_FRN = toFRN("0001753557")!
@@ -107,7 +106,7 @@ describe("parseCORESRegistration — abstention", () => {
 			},
 		}
 
-		await expect(fetchCORESRegistration(client, "nope" as unknown as FRN)).rejects.toThrow(/invalid FRN/)
+		await expect(fetchCORESRegistration(client, "nope" as FRN)).rejects.toThrow(/invalid FRN/)
 	})
 })
 

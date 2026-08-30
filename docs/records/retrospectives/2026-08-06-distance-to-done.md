@@ -61,7 +61,7 @@ Invariant 1's re-score cadence is **currently unmet** (§2.4). The others hold.
 ### 1.3 The identity claim
 
 `what-mailwoman-is.mdx`: a **calibrated, retrieval-augmented sequence labeler over a microlanguage**,
-coupled to a gazetteer. Four words, each load-bearing. Three are demonstrably true today. The fourth
+coupled to a gazetteer. Four words, each required. Three are demonstrably true today. The fourth
 carries a footnote: the isotonic calibrators ship in the weights bundle, but `calibrate` is
 **default-OFF** in `ParseOpts` (runtime-flag register, "opt-in at parse, the demo exposes a toggle").
 The confidences a default consumer reads are therefore uncalibrated softmax, not the calibrated
@@ -257,7 +257,7 @@ Named gaps, verified in the code:
 
 `@mailwoman/api` (native, 40 tests plus a live-engine suite) and `@mailwoman/mcp` (9 tools, 50 tests)
 are in better shape; mcp's `server.ts` and `cli.ts` — the stdio transport, arg parsing and lazy weight
-load, which is the whole operational claim — have **zero coverage**, stated plainly in the test
+load, which is the whole operational claim — have **zero coverage**, stated in the test
 header.
 
 The AGENTS.md table is wrong in three places: `fastify` is at 9.0.0 with a complete plugin, four
@@ -516,7 +516,7 @@ described by its own module as _"an artifact no command can rebuild."_
 
 ## 6. What is genuinely strong
 
-Stated plainly, without inflation.
+Direct statement without extrapolation.
 
 **The method.** Pre-registered bars, falsified levers reverted rather than shipped, verdicts written
 down with the numbers that produced them. Twelve preregistration documents in `docs/superpowers/plans/`

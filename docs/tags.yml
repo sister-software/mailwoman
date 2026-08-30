@@ -45,7 +45,7 @@ evals:
 
 infrastructure:
   label: Infrastructure
-  description: The machinery around the model — compute, storage formats, runtimes, and tooling.
+  description: The implementation around the model — compute, storage formats, runtimes, and tooling.
 
 night-shift:
   label: Night shift

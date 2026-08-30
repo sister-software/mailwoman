@@ -9,13 +9,13 @@ code changes in this pass.
 ## The question
 
 The repo has 1,573 tracked TS/TSX files and ~286k LOC across 41 workspaces. `AGENTS.md` declares an
-owning module for most of the shared machinery: `APIClient` for HTTP, `dataRootPath` for data-root
+owning module for most of the shared implementation: `APIClient` for HTTP, `dataRootPath` for data-root
 paths, `core/env` for environment access, `cli-kit` for CLI components, Kysely's `DatabaseClient` for
 DDL, `@mailwoman/spatial` for geo math, `@mailwoman/annotations` for the annotation contract,
 `api-kit` for HTTP plumbing.
 
 An agent implementing a feature sees the file it was pointed at and its immediate neighbours. It does
-not see the workspace three directories over that already solved the same problem. So the machinery
+not see the workspace three directories over that already solved the same problem. So the implementation
 gets rebuilt locally — a second haversine, a second env reader, a second retry loop — and each copy
 drifts on its own schedule.
 

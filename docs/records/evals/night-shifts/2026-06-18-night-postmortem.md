@@ -88,7 +88,7 @@ by its end). A noisy 0.623 reading near step 20k was a transient. The gate is th
   worked exactly as designed. Strong argument for stretch-goal #4 (generalize the lint).
 - **The DeepSeek consult was decisive and self-correcting** — it caught the street-recall blind spot I
   missed, and corrected my own walk-back (1:1 → 7:3) on the FR number ratio.
-- **The runbook held** — every Modal gotcha (volume-put blindness, R2 501s, the zero-padded step) was
+- **The runbook held** — every Modal failure mode (volume-put blindness, R2 501s, the zero-padded step) was
   already documented from the v1.6.0 run; Phase 5 went clean on the first try.
 - **Pace** — Phases 1–5 in ~35 min of work; the prep was turnkey.
 

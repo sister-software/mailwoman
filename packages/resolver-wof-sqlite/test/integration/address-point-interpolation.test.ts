@@ -9,12 +9,11 @@
  *   its cap, route-key folding, and the no-bracket fall-through to the TIGER segment fallback.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { AddressPointInterpolator } from "@mailwoman/resolver-wof-sqlite/address-point-interpolation"
 import { type AddressPointDatabase, createAddressPointTable } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { StreetInterpolator } from "@mailwoman/resolver-wof-sqlite/interpolation"
+import type { StreetSegmentDatabase } from "@mailwoman/resolver-wof-sqlite/street-segment-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 interface SeedPoint {
@@ -25,11 +24,11 @@ interface SeedPoint {
 	lon: number
 }
 
-async function seedPoints(db: DatabaseSync, points: SeedPoint[]): Promise<void> {
+async function seedPoints(db: DatabaseClient<AddressPointDatabase>, points: SeedPoint[]): Promise<void> {
 	// Shared table builder (the same `scripts/build-address-point-shard.ts` uses) so this fixture can't
 	// drift from the production shape. `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle
 	// (closed in afterAll), so we don't destroy `kdb`.
-	const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+	const kdb = db
 	await createAddressPointTable(kdb)
 
 	const ins = db.prepare(
@@ -44,11 +43,11 @@ async function seedPoints(db: DatabaseSync, points: SeedPoint[]): Promise<void> 
 
 // All fixtures live on straight east-west streets near the equator so longitude is a direct
 // proxy for position (0.001 deg ≈ 111 m).
-let db: DatabaseSync
+let db: DatabaseClient<AddressPointDatabase>
 let interpolator: AddressPointInterpolator
 
 beforeAll(async () => {
-	db = new DatabaseSync(":memory:")
+	db = DatabaseClient.temp<AddressPointDatabase>()
 
 	await seedPoints(db, [
 		// Both-sided bracket fixture: known points at 100 and 200.
@@ -77,8 +76,8 @@ beforeAll(async () => {
 })
 
 afterAll(() => {
-	interpolator.close()
-	db.close()
+	interpolator[Symbol.dispose]()
+	db.destroy()
 })
 
 describe("AddressPointInterpolator", () => {
@@ -149,7 +148,7 @@ describe("AddressPointInterpolator", () => {
 	})
 
 	it("falls through to the TIGER segment fallback when bracketing cannot answer", () => {
-		const segDB = new DatabaseSync(":memory:")
+		using segDB = DatabaseClient.temp<StreetSegmentDatabase>()
 
 		segDB.exec(`
 			CREATE TABLE street_segment (
@@ -194,8 +193,7 @@ describe("AddressPointInterpolator", () => {
 		const noScope = ladder.find({ street: "Lone Ln", number: "51" })
 		expect(noScope!.method).toBe("tiger_range")
 
-		ladder.close()
-		tiger.close()
-		segDB.close()
+		ladder[Symbol.dispose]()
+		tiger[Symbol.dispose]()
 	})
 })

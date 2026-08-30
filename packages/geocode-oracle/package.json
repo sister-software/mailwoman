@@ -83,6 +83,7 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/tiger": "workspace:*"

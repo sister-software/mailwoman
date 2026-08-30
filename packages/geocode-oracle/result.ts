@@ -97,7 +97,7 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	plusCode: string | null
 	/**
 	 * The provider's untouched match. Read this whenever the component mapping's judgement calls matter — it is the
-	 * escape hatch that keeps those calls from being lossy.
+	 * override that keeps those calls from being lossy.
 	 */
 	raw: Raw
 }

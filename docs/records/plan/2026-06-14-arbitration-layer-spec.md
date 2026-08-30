@@ -95,7 +95,7 @@ original re-gate (#427) omitted.
 
 ## Scope guard (unchanged)
 
-No retrain. No new classifiers. Wiring + tests + config over machinery that exists. The coarse-placer
+No retrain. No new classifiers. Wiring + tests + config over implementation that exists. The coarse-placer
 (#244) is the one new model and it is already built (M1+M2); here it is consumed as a routing
 signal, not trained.
 

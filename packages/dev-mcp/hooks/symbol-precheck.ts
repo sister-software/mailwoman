@@ -18,10 +18,8 @@
  *   Register it in `.claude/settings.json` under `hooks.PreToolUse` with a `Write|Edit` matcher.
  */
 
-import { readFileSync } from "node:fs"
-import { relative } from "node:path"
-
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { relative } from "@mailwoman/platform/path"
 
 import {
 	extractDeclaredSymbols,
@@ -31,10 +29,8 @@ import {
 	selectReportable,
 } from "../symbol-index.ts"
 
-const STDIN = 0
-
-function main(): void {
-	const payload = tryParsingJSON<Record<string, unknown>>(readFileSync(STDIN, "utf8"))
+async function main(): Promise<void> {
+	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 	const intent = readWriteIntent(payload)
 
 	if (!intent) return
@@ -57,7 +53,7 @@ function main(): void {
 }
 
 try {
-	main()
+	await main()
 } catch {
 	// Silence is the contract. See the header.
 }

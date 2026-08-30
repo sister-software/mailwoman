@@ -15,10 +15,10 @@
  *   imports, plus `HEAD` and the dirty set, and a change makes the engine UNREACHABLE rather than wrong.
  */
 
-import { execFileSync } from "node:child_process"
-import { createHash } from "node:crypto"
-import { readdirSync, statSync } from "node:fs"
-import { join } from "node:path"
+import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { createHash } from "@mailwoman/platform/crypto"
+import { join } from "@mailwoman/platform/path"
 
 /**
  * Workspaces whose source an engine's module graph reaches. Editing anything here can change a parse or a resolve, so
@@ -85,7 +85,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 		let entries
 
 		try {
-			entries = readdirSync(dir, { withFileTypes: true })
+			entries = readDirectoryEntriesSync(dir)
 		} catch {
 			// A workspace that does not exist in this checkout contributes nothing rather than throwing — the caller's
 			// emptiness check is what catches a list that is wrong in total.
@@ -106,7 +106,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 			count++
 
 			const full = join(dir, entry.name)
-			const { mtimeMs } = statSync(full)
+			const { mtimeMs } = statPathSync(full)
 
 			if (mtimeMs > newest) {
 				newest = mtimeMs
@@ -121,7 +121,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 /**
  * Run git and return its stdout with only the TRAILING newline removed.
  *
- * Leading whitespace is load-bearing for `--porcelain`, whose first two columns are the index and worktree status: an
+ * Leading whitespace is required for `--porcelain`, whose first two columns are the index and worktree status: an
  * unstaged modification is `" M path"`, and a full trim eats column one of the FIRST line only — after which a
  * fixed-width `slice(3)` takes the first character of the path with it. Callers that want a bare token trim their own
  * result.

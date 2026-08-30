@@ -33,9 +33,9 @@
  *   - `$MAILWOMAN_DATA_ROOT/oa-cache/us__il__cook.zip` (ZIP→city tails)
  */
 
-import { existsSync, writeFileSync } from "node:fs"
-
 import type { DuckDBConnection } from "@duckdb/node-api"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { JSONSpliterator } from "spliterator"
@@ -182,7 +182,7 @@ async function readEvalExclusions(): Promise<{ nodes: Set<number>; pairs: Set<st
 	const nodes = new Set<number>()
 	const pairs = new Set<string>()
 
-	if (!existsSync(EVAL_GOLD_PATH)) {
+	if (!(await pathExists(EVAL_GOLD_PATH))) {
 		console.error(`  WARN: eval gold not found at ${EVAL_GOLD_PATH} — no eval-leakage exclusion applied`)
 
 		return { nodes, pairs }
@@ -610,7 +610,7 @@ export const intersectionRecipe: ShardRecipe = {
 			samples,
 		}
 
-		writeFileSync(opts.output.replace(/\.jsonl$/, ".report.json"), JSON.stringify(report, null, "\t"))
+		await writeLocalJSONFile(report, opts.output.replace(/\.jsonl$/, ".report.json"))
 
 		console.error(
 			`Done: emitted ${emitted} rows (skipped ${skipped}) from ${usedCrossings.size}/${pool.length} real crossings. → ${opts.output}\n` +

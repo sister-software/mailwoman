@@ -8,13 +8,13 @@
  *   that's syntactically valid but logically wrong.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-function buildFixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildFixtureDB(): DatabaseClient<WOFDatabase> {
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -45,7 +45,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-	lookup.close()
+	lookup[Symbol.dispose]()
 })
 
 describe("sanitizeFTSQuery — trailing-* prefix support", () => {

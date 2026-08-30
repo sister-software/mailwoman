@@ -23,14 +23,14 @@
  *   (TSV).
  */
 
-import { existsSync } from "node:fs"
-import type { DatabaseSync } from "node:sqlite"
-
 import { isOfficialLanguage } from "@mailwoman/codex/country"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 import { GEONAMES_POSTAL_ID_BASE } from "./geonames-postal.ts"
+import type { WOFDatabase } from "./schema.ts"
 
 /**
  * Synthetic id base for GeoNames-sourced rows (#743/#193) — above Overture's 8e12 so the three sources (WOF real ids,
@@ -65,7 +65,7 @@ const FOLD_OWNED_TABLES = ["spr", "names", "place_population", "ancestors"] as c
  * 9.5e12, NL-PC6 @ 9.6e12, Code-Point @ 9.7e12, NI @ 9.8e12 — and a purge that ran past {@link GEONAMES_POSTAL_ID_BASE}
  * would delete them.
  */
-export function purgeGeonamesAliasRange(db: DatabaseSync): Record<string, number> {
+export function purgeGeonamesAliasRange<DB>(db: DatabaseClient<DB>): Record<string, number> {
 	const removed: Record<string, number> = {}
 
 	for (const table of FOLD_OWNED_TABLES) {
@@ -189,7 +189,7 @@ async function parseAlternateNamesV2(
  * the candidate build's alias pass.
  */
 export async function ingestGeonamesAliases(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	countries: string[],
 	geonamesDir: string,
 	onProgress?: (event: GeonamesIngestProgress) => void,
@@ -264,7 +264,7 @@ export async function ingestGeonamesAliases(
 	for (const cc of countries) {
 		const file = join(geonamesDir, `${cc}.txt`)
 
-		if (!existsSync(file)) {
+		if (!(await pathExists(file))) {
 			report({ country: cc, places: 0, skipped: true }, file)
 
 			continue
@@ -274,7 +274,7 @@ export async function ingestGeonamesAliases(
 		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
 		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
-		const readV2 = Boolean(v2File && existsSync(v2File))
+		const readV2 = Boolean(v2File && (await pathExists(v2File)))
 
 		// Survey pass. The dump is STREAMED — NO's is 71 MB and only the caller knows which country
 		// comes next — so what a later pass needs has to be collected here rather than re-scanned off a

@@ -29,11 +29,10 @@
  *   [--out registry/models/crosssource-gbt-en-us.ts]`
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-
+import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
+import { dirname } from "@mailwoman/platform/path"
 
 import {
 	addressFrequencyKey,
@@ -222,7 +221,7 @@ export async function trainCrossSourceGBT(
 		})),
 	]
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 	report?.(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
 
 	// --- Phase D: block over the UNION; keep only CROSS-source pairs; featurize; label by NPI. ---
@@ -350,8 +349,8 @@ export async function trainCrossSourceGBT(
 		`// prettier-ignore\n` +
 		`export const CROSS_SOURCE_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
 
-	mkdirSync(dirname(OUT), { recursive: true })
-	writeFileSync(OUT, moduleSource)
+	await makeDirectories(dirname(OUT))
+	await writeLocalFile(moduleSource, OUT)
 	report?.(`    ${model.trees.length} trees, ${meta.features} features -> ${OUT}`)
 
 	return { out: OUT, pairs: pairs.length, recommendedThreshold }

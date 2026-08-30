@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -12,12 +11,12 @@ import { dataRootPath } from "@mailwoman/core/utils"
  * Flag and environment values pass through verbatim — an `https://` archive URL is as valid as a path, and
  * `TileSource.open` reads either. Only the data-root fallback is existence-probed; a URL is never probed here.
  */
-export function resolveTilesPath(flagValue?: string): string | null {
+export async function resolveTilesPath(flagValue?: string): Promise<string | null> {
 	if (flagValue) return flagValue
 
 	if ($public.MAILWOMAN_TILES) return $public.MAILWOMAN_TILES
 
 	const fallback = dataRootPath("tiles", "planet.pmtiles")
 
-	return existsSync(fallback) ? fallback : null
+	return (await pathExists(fallback)) ? fallback : null
 }

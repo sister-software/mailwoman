@@ -11,7 +11,7 @@ import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "mai
 import type { GeocodeRun } from "mailwoman/geocode-session"
 import { z } from "zod"
 
-import type { EngineRegistry } from "./engine-registry.ts"
+import type { EngineRegistryLike } from "./engine-registry.ts"
 import type { GateReport } from "./gate-report.ts"
 import { summarizeGateReport } from "./gate-report.ts"
 import { summarizeGauntletReport, type GauntletReport } from "./gauntlet-report.ts"
@@ -223,7 +223,7 @@ export const ENGINE_CONFIG_SCHEMA = z
 	.describe("Every lever, in the CLI's vocabulary. Unset means the PRODUCTION DEFAULT, never off.")
 
 export interface DevToolDeps {
-	registry: EngineRegistry
+	registry: EngineRegistryLike
 	jobs: JobRegistry
 	startedAt: number
 }
@@ -411,10 +411,24 @@ export function firingSignals(rows: ComparedRow[]): Record<string, { a: number; 
 	const scoped = (row: ComparedRow, arm: "a" | "b"): boolean =>
 		Boolean((row[arm] as { postcode_country_scope?: string | null }).postcode_country_scope)
 
+	const promoted = (row: ComparedRow, arm: "a" | "b"): boolean =>
+		Boolean((row[arm] as { capital_promotion?: string }).capital_promotion)
+
+	const exempted = (row: ComparedRow, arm: "a" | "b"): boolean =>
+		(row[arm] as { variant_alias_exemption?: true }).variant_alias_exemption === true
+
 	return {
 		postcode_country_scope: {
 			a: rows.filter((row) => scoped(row, "a")).length,
 			b: rows.filter((row) => scoped(row, "b")).length,
+		},
+		capital_promotion: {
+			a: rows.filter((row) => promoted(row, "a")).length,
+			b: rows.filter((row) => promoted(row, "b")).length,
+		},
+		variant_alias_exemption: {
+			a: rows.filter((row) => exempted(row, "a")).length,
+			b: rows.filter((row) => exempted(row, "b")).length,
 		},
 	}
 }

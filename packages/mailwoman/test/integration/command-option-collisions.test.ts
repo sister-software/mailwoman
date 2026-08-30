@@ -2,10 +2,9 @@
  * Guard command-owned flags against root-owned --help/--version and -h/-v.
  */
 
-import { readFile, readdir } from "node:fs/promises"
-import { join, relative, sep } from "node:path"
-
+import { readDirectoryEntriesRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/utils"
+import { join, relative, sep } from "@mailwoman/platform/path"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 
@@ -17,7 +16,7 @@ async function listCommandModules(): Promise<string[]> {
 	const files: string[] = []
 
 	for (const root of COMMAND_ROOTS) {
-		for (const entry of await readdir(root, { recursive: true, withFileTypes: true })) {
+		for (const entry of await readDirectoryEntriesRecursive(root)) {
 			if (entry.isFile() && /\.(?:ts|tsx)$/u.test(entry.name) && !entry.name.endsWith(".test.ts")) {
 				files.push(join(entry.parentPath, entry.name))
 			}
@@ -65,7 +64,7 @@ describe("command option names never collide with root flags", () => {
 		const missing: string[] = []
 
 		for (const file of await listCommandModules()) {
-			const text = await readFile(file, "utf8")
+			const text = await readLocalTextFile(file)
 
 			if (!/export default |export async function run/u.test(text)) continue
 

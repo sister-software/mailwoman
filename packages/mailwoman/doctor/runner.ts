@@ -12,16 +12,14 @@
  *   geocode` uses, and the POI path from `gazetteer build poi`'s own default.
  */
 
-import { accessSync, constants, existsSync, readFileSync, statSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-import { fileURLToPath } from "node:url"
-
-import { $public, defaultMailwomanPaths } from "@mailwoman/core/env"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { isWritableSync, pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
+import { fileURLToPath } from "@mailwoman/platform/url"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
 import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFShardPaths } from "../resolver-backend.ts"
@@ -127,10 +125,10 @@ export interface DoctorDeps {
  * `mailwoman doctor` exists to report a broken environment, so an unresolvable manifest must degrade to `">=0"`, not
  * throw at module load.
  */
-function readEnginesFloor(): string {
+async function readEnginesFloor(): Promise<string> {
 	try {
-		const pkg = parseJSONStrict<{ engines?: { node?: string } }>(
-			readFileSync(fileURLToPath(import.meta.resolve("mailwoman/package.json")), "utf8")
+		const pkg = await readLocalJSONFile<{ engines?: { node?: string } }>(
+			fileURLToPath(import.meta.resolve("mailwoman/package.json"))
 		)
 
 		return pkg.engines?.node ?? ">=0"
@@ -147,52 +145,39 @@ function defaultConventionCandidatePath(dataRoot: string): string | undefined {
 
 	const convention = conventionCandidateDBPath(dataRoot)
 
-	return existsSync(convention) ? convention : undefined
+	return pathExistsSync(convention) ? convention : undefined
 }
 
 /**
  * Open a POI db READ-ONLY, read its layer manifest, and narrow it to the identity fields doctor prints.
  */
 async function readPOIManifest(path: string): Promise<{ name: string; version: string; sourceVintage: string }> {
-	const raw = new DatabaseSync(path, { readOnly: true })
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: raw })
+	using kdb = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
 
-	try {
-		const manifest = await readLayerManifest(kdb)
+	const manifest = await readLayerManifest(kdb)
 
-		return { name: manifest.name, version: manifest.version, sourceVintage: manifest.sourceVintage }
-	} finally {
-		await kdb.destroy()
-	}
+	return { name: manifest.name, version: manifest.version, sourceVintage: manifest.sourceVintage }
 }
 
 /**
  * The production seams — the real filesystem, env, weights resolver, and dynamic imports.
  */
-export function defaultDoctorDeps(): DoctorDeps {
+export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 	const dataRoot = mailwomanDataRoot()
 
 	return {
-		existsSync,
+		existsSync: pathExistsSync,
 		fileSize: (path) => {
 			try {
-				return statSync(path).size
+				return statPathSync(path).size
 			} catch {
 				return undefined
 			}
 		},
-		isWritable: (path) => {
-			try {
-				accessSync(path, constants.W_OK)
-
-				return true
-			} catch {
-				return false
-			}
-		},
+		isWritable: isWritableSync,
 		resolveWeights: (locale) => resolveWeights({ locale }),
 		weightsPackageName,
-		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== defaultMailwomanPaths.data }),
+		dataRoot: () => ({ path: dataRoot, fromEnv: dataRoot !== DefaultMailwomanPaths.data }),
 		envCandidatePath: () => ($public.MAILWOMAN_CANDIDATE_DB ? resolveCandidateDBPath(undefined, dataRoot) : undefined),
 		conventionCandidatePath: () => defaultConventionCandidatePath(dataRoot),
 		wofShardPaths: () => resolveWOFShardPaths(undefined, dataRoot),
@@ -202,7 +187,7 @@ export function defaultDoctorDeps(): DoctorDeps {
 			await import("onnxruntime-node")
 		},
 		nodeVersion: process.versions.node,
-		enginesFloor: readEnginesFloor(),
+		enginesFloor: await readEnginesFloor(),
 		overlayLocales: ["fr-fr"],
 	}
 }
@@ -223,7 +208,7 @@ function gatherWeights(deps: DoctorDeps): WeightsObservation {
 	}
 }
 
-function gatherGazetteer(deps: DoctorDeps): GazetteerObservation {
+async function gatherGazetteer(deps: DoctorDeps): Promise<GazetteerObservation> {
 	// Same precedence the tools apply: explicit/env candidate.db → convention-path candidate.db → WOF FTS shards.
 	// The convention probe must come BEFORE the shards, or a machine holding both reports the FTS shard while every
 	// tool on it uses the candidate table — doctor's one job is to name the backend actually in use.
@@ -284,7 +269,7 @@ function gatherOverlay(deps: DoctorDeps, locale: string): DoctorCheck {
  * gathers the facts through the injected {@link DoctorDeps}.
  */
 export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<DoctorReport> {
-	const deps: DoctorDeps = { ...defaultDoctorDeps(), ...overrides }
+	const deps: DoctorDeps = { ...(await defaultDoctorDeps()), ...overrides }
 
 	// Core: weights + runtime.
 	const weights = weightsCheck(gatherWeights(deps))
@@ -312,7 +297,7 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 		fromEnv: root.fromEnv,
 	})
 
-	const gazetteer = gazetteerCheck(gatherGazetteer(deps))
+	const gazetteer = gazetteerCheck(await gatherGazetteer(deps))
 	const poi = checkPOI(await gatherPOI(deps))
 
 	// Informational: locale overlays.
@@ -347,8 +332,8 @@ export interface EnvironmentEntry {
  * above it — that disagreement is exactly the bug a verbose mode exists to catch (a reader who exported
  * `$MAILWOMAN_DATA_ROOT` in one shell and ran the CLI in another).
  */
-export function describeEnvironment(overrides?: Partial<DoctorDeps>): EnvironmentEntry[] {
-	const deps: DoctorDeps = { ...defaultDoctorDeps(), ...overrides }
+export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Promise<EnvironmentEntry[]> {
+	const deps: DoctorDeps = { ...(await defaultDoctorDeps()), ...overrides }
 	const root = deps.dataRoot()
 
 	const entries: EnvironmentEntry[] = [

@@ -81,7 +81,7 @@ close.
 - **Leg 2 (precondition + coordinate): FAILS decisively.** locality −26pp, coord p50 3.3 → 1069 km,
   precondition 100% → 48%.
 
-**Both legs must clear to promote; leg 2 fails, so arbitration stays default-OFF.** The machinery and
+**Both legs must clear to promote; leg 2 fails, so arbitration stays default-OFF.** The implementation and
 both gate instruments are merged; no default changes. The methodology did its job — it caught a
 catastrophic coordinate regression that the label-match arena scored as a +122 win.
 
@@ -159,6 +159,6 @@ latency. **Arbitration ships SAFE and default-OFF; it is not promoted.**
 The durable findings: (1) the `v0-only` arena column conflates "neural is wrong" with "neural is
 _differently right_" — arbitrating toward v0 captures both, and the second kind is harmful; (2) for a
 model this strong on the addresses we serve, rule-vs-neural arbitration toward v0 is not a quality
-lever. The machinery + the safe fix-v1 are banked behind the flag, with the gate instruments, should a
+lever. The implementation + the safe fix-v1 are banked behind the flag, with the gate instruments, should a
 weaker model, a new locale, or a per-tag config (where the data shows arbitration nets positive on a
 specific tag) make it worth revisiting.

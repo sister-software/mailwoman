@@ -8,7 +8,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { outputLines } from "mailwoman/debug-view/output-lines"
-import type { GeocodeResult } from "mailwoman/geocode-core"
+import type { GeocodeResult } from "mailwoman/geocode-result"
 import type { GeocodeTrace } from "mailwoman/geocode-session"
 import { describe, expect, it } from "vitest"
 
@@ -59,7 +59,7 @@ const TRACE = {
 		confidence: 0.9,
 		alternatives: [{ kind: "vague", confidence: 0.3 }],
 	},
-} as unknown as GeocodeTrace
+} satisfies Pick<GeocodeTrace, "kind">
 
 function labels(lines: ReturnType<typeof outputLines>): string[] {
 	return lines.filter((line) => line.kind === "heading").map((line) => line.label)

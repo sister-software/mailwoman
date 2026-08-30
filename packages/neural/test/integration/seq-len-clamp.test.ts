@@ -15,25 +15,24 @@
  *   the difference invites diagnosing this as a word-consistency bug.
  */
 
-import { existsSync } from "node:fs"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { describe, expect, test } from "vitest"
 
-function modelIsMaterialized(): boolean {
+async function modelIsMaterialized(): Promise<boolean> {
 	try {
 		const weights = resolveWeights({ locale: "en-US" })
 
-		return !!weights.modelPath && existsSync(weights.modelPath)
+		return !!weights.modelPath && (await pathExists(weights.modelPath))
 	} catch {
 		// Lean checkout with no materialized weights — skip, like the other model-gated suites here.
 		return false
 	}
 }
 
-const haveModel = modelIsMaterialized()
+const haveModel = await modelIsMaterialized()
 
 const TAIL = "1600 Amphitheatre Parkway, Mountain View, California, 94043, United States"
 /**

@@ -32,7 +32,7 @@ output coordinate.
    `["us","de","fr"]` — and the gazetteer holds the string in four countries. No pattern-only
    mechanism can settle this. It needs geometry.
 
-4. **A geometric mechanism does settle it, cleanly.** A prototype "postcode-country coherence" pass
+4. **A geometric check resolves the ambiguity.** A prototype "postcode-country coherence" pass
    returns FR for `(75001, Paris)` at 0.8 km and US for `(75001, Addison)` at 0.3 km. Over 800 real
    pairs (400 US ZIP+city, 400 FR CP+commune) it crossed a border **zero** times.
 
@@ -132,7 +132,7 @@ $ mailwoman geocode "12 Rue de Rivoli, 75001 Paris" --default-country none
   "lat": 48.855602, "lon": 2.35995, "resolution_tier": "address_point", "uncertainty_m": 1
 ```
 
-The second is the BAN rooftop for 12 Rue de Rivoli, to the metre. All the machinery needed to get
+The second is the BAN rooftop for 12 Rue de Rivoli, to the metre. All the implementation needed to get
 this right is already wired; one locale-derived default is standing on it.
 
 ### The worse-than-wrong case
@@ -165,10 +165,10 @@ the one thing that went right here.
 
 ## 3. The premise: `75001` is not unambiguously French
 
-This is the load-bearing correction, and it kills the obvious fix.
+This is the required correction, and it kills the obvious fix.
 
 **codex already says so.** `candidateSystemsForPostcode("75001")` → `["us","de","fr"]`. The module's
-own docstring (`codex/postcode-systems.ts:17-21`) states the case plainly: a bare `68161` matches
+own docstring (`codex/postcode-systems.ts:17-21`) states the case: a bare `68161` matches
 the US, German and French 5-digit shapes, and "the shape alone cannot split the numeric-postcode
 systems."
 

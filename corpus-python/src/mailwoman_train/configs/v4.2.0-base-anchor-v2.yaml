@@ -159,7 +159,7 @@ data:
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
-  # Already `shaped` in v4.0.1 — restated because it is load-bearing here. The shaped painter is what
+  # Already `shaped` in v4.0.1 — restated because it is required here. The shaped painter is what
   # makes the widened lookup reachable: it detects postcode SHAPES over the raw text (so a GB unit
   # arrives as one span with its space) where the gold path only ever painted labeled postcode spans.
   anchor_paint_mode: shaped

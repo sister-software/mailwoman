@@ -6,10 +6,9 @@
  * each case's country. This wrapper makes that routing and its artifact provenance inspectable before a board run.
  */
 
-import { realpathSync } from "node:fs"
-import { relative, resolve, sep } from "node:path"
-
+import { realPathSync } from "@mailwoman/core/fs/readers-sync"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
+import { relative, resolve, sep } from "@mailwoman/platform/path"
 import {
 	buildGauntletDeps,
 	runOne,
@@ -50,10 +49,9 @@ export interface RoutedMailwomanProvenance {
 	artifacts_by_locale: RoutedArtifactProvenance[]
 }
 
-export interface RoutedMailwomanArm {
+export interface RoutedMailwomanArm extends Disposable {
 	provenance: RoutedMailwomanProvenance
 	geocode(input: ResolvedInput): Promise<GauntletResult>
-	close(): void
 }
 
 export interface RoutedMailwomanArmDeps {
@@ -70,7 +68,7 @@ export interface RoutedMailwomanArmDeps {
 const DEFAULT_DEPS: RoutedMailwomanArmDeps = {
 	buildDeps: buildGauntletDeps,
 	resolveWeights,
-	realpath: realpathSync,
+	realpath: realPathSync,
 	runOne,
 }
 
@@ -148,6 +146,7 @@ export async function buildRoutedMailwomanArm(
 	inputs: readonly ResolvedInput[],
 	deps: RoutedMailwomanArmDeps = DEFAULT_DEPS
 ): Promise<RoutedMailwomanArm> {
+	using resources = new DisposableStack()
 	assertSupportedConfig(config)
 
 	const cacheRoot = config.weights_cache
@@ -172,33 +171,35 @@ export async function buildRoutedMailwomanArm(
 		)
 	}
 
-	const gauntletDeps = await deps.buildDeps({
-		...(cacheRoot ? { weightsCacheRoot: cacheRoot } : {}),
-		...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
-		levers: {
-			...(config.postcode_country_coherence === undefined
-				? {}
-				: { postcodeCountryCoherence: config.postcode_country_coherence }),
-			...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
-			...(config.admin_containment_rerank === undefined
-				? {}
-				: { adminContainmentRerank: config.admin_containment_rerank }),
-			...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
-			...(config.variant_alias_exemption === undefined
-				? {}
-				: { variantAliasExemption: config.variant_alias_exemption }),
-		},
-	})
+	const gauntletDeps = resources.use(
+		await deps.buildDeps({
+			...(cacheRoot ? { weightsCacheRoot: cacheRoot } : {}),
+			...(config.candidate_db ? { candidateDB: config.candidate_db } : {}),
+			levers: {
+				...(config.postcode_country_coherence === undefined
+					? {}
+					: { postcodeCountryCoherence: config.postcode_country_coherence }),
+				...(config.gazetteer_prior === undefined ? {} : { gazetteerPrior: config.gazetteer_prior }),
+				...(config.admin_containment_rerank === undefined
+					? {}
+					: { adminContainmentRerank: config.admin_containment_rerank }),
+				...(config.capital_tier === undefined ? {} : { capitalTier: config.capital_tier }),
+				...(config.variant_alias_exemption === undefined
+					? {}
+					: { variantAliasExemption: config.variant_alias_exemption }),
+			},
+		})
+	)
 
-	return {
+	return Object.assign(resources.move(), {
 		provenance: {
-			engine: "mailwoman:gauntlet-routed",
+			engine: "mailwoman:gauntlet-routed" as const,
 			weights_cache: cacheRoot ? deps.realpath(cacheRoot) : null,
 			base_model_path: baseModelPath,
 			routes,
 			artifacts_by_locale: artifacts,
 		},
-		geocode: (input) =>
+		geocode: (input: ResolvedInput) =>
 			deps.runOne(input.input, gauntletDeps, {
 				...((input.defaultCountry ?? config.default_country)
 					? { defaultCountry: input.defaultCountry ?? config.default_country }
@@ -208,6 +209,5 @@ export async function buildRoutedMailwomanArm(
 					: {}),
 				...(input.fuzzyCountryScope ? { fuzzyCountryScope: input.fuzzyCountryScope } : {}),
 			}),
-		close: () => gauntletDeps.close(),
-	}
+	})
 }

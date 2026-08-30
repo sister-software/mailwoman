@@ -290,7 +290,7 @@ throughout and carries a comment so the trap isn't re-walked. The count check is
 1. **Reader mode: DEFER the binary-search/offset-table work.** The training consumer reads once per
    run; the decode consumer may never exist — the bundle arc absorbed the locality-evidence role
    input-side, and the productionization plan's Phase 4 is about RETIRING decode priors, not adding
-   one. No speculative machinery: if a decode use materializes, the offset table is one
+   one. No speculative implementation: if a decode use materializes, the offset table is one
    absence-tolerant header key away (the slot the design already reserves).
 2. **namePolicy v2 (eng-preferred): NO for the pair artifacts.** +30k mostly-duplicate rows, and
    English exonyms would paint training evidence the feed never exhibits (BAN is French) —

@@ -8,7 +8,8 @@
  *   module.
  */
 
-import { readFileSync } from "node:fs"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 
 import { parseCIKLookupData, type CompanyTickerEntry } from "../sdk/edgar-filings.ts"
 import { collectEdgarSubsidiaryRows, type EdgarIngestReport } from "../sdk/edgar-ingest.ts"
@@ -56,7 +57,7 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 	const client = createSECClient()
 
 	const tickers: CompanyTickerEntry[] = options.cikLookupPath
-		? parseCIKLookupData(readFileSync(options.cikLookupPath, "utf8"))
+		? parseCIKLookupData(await readLocalTextFile(options.cikLookupPath))
 		: []
 
 	const pinnedSet = options.pinnedCIKs?.length ? new Set(options.pinnedCIKs) : undefined
@@ -76,15 +77,14 @@ export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promis
 			: undefined,
 	})
 
-	const { writeFileSync, mkdirSync } = await import("node:fs")
-	const { join } = await import("node:path")
+	const { join } = await import("@mailwoman/platform/path")
 
-	mkdirSync(options.outDir, { recursive: true })
+	await makeDirectories(options.outDir)
 
 	const jsonlPath = join(options.outDir, "edgar-subsidiaries.jsonl")
 	const lines = rows.map((row) => JSON.stringify(row))
 
-	writeFileSync(jsonlPath, lines.join("\n") + "\n")
+	await writeLocalTextFile(lines.join("\n") + "\n", jsonlPath)
 
 	return { report, jsonlPath, lookupEntries: tickers.length }
 }

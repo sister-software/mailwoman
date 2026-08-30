@@ -36,7 +36,7 @@ US and FR are already in the corpus (`country_weights {US: 1.0, FR: 1.0}` in the
 
 ## The new metric we have to build
 
-The pre-registered tripwire is "per-locale, the rate of city-start tokens mis-tagged as `postcode` falls below 1% by 20k steps." That cross-pollution metric does not exist yet: the current evals (`scripts/eval/per-locale-f1.ts`, `corpus-python` `eval.py`) measure component F1 and calibration, not this specific confusion. It needs writing: over a held-out per-locale set, count how often a token whose gold label starts a `locality`/`region` span gets predicted `postcode`. This is the direct readout of the Saint-Albans collapse, and it is the gate that tells us self-conditioning is doing its job before we spend a full run.
+The pre-registered regression check is "per-locale, the rate of city-start tokens mis-tagged as `postcode` falls below 1% by 20k steps." That cross-pollution metric does not exist yet: the current evals (`scripts/eval/per-locale-f1.ts`, `corpus-python` `eval.py`) measure component F1 and calibration, not this specific confusion. It needs writing: over a held-out per-locale set, count how often a token whose gold label starts a `locality`/`region` span gets predicted `postcode`. This is the direct readout of the Saint-Albans collapse, and it is the gate that tells us self-conditioning is doing its job before we spend a full run.
 
 ## The gates (pre-registered, resolver is the judge)
 

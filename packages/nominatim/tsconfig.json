@@ -15,6 +15,7 @@
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
 	"references": [
+		{ "path": "../sqlite" },
 		{ "path": "../api-kit" },
 		{ "path": "../ban" },
 		{ "path": "../annotations" },

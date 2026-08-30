@@ -801,7 +801,7 @@ Two model-adjacent items are named here so they are not mistaken for part of thi
    S-2 is one column of it and the script generalizes by parameterizing the deleted tag.
 8. **B3-\*** — the entity snap, last, and only if the format tier cleared its bars.
 
-The coupling to the postcode arc is one-directional and worth stating plainly: **this layer consumes
+The coupling to the postcode arc is one-directional and must be explicit: **this layer consumes
 the arc's mechanisms and blocks none of them.** The arc's B2 (containment coherence) is the engine
 behind "your postcode and your street disagree"; the arc's PFX1 is what lets a partial code
 contribute; the arc's Mechanism 1 is what stops a house number from occupying the postcode slot. If

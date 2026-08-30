@@ -49,12 +49,8 @@
  *      the house rule exists for.
  */
 
-import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from "node:fs"
-import { open } from "node:fs/promises"
-import { basename, dirname, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
+import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -65,14 +61,18 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { openBuiltDatabase, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
 import type { FilerDatabase } from "@mailwoman/filer"
 // `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a LAZY `await import("@mailwoman/filer/sdk")`
 // inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
 //. Only the TYPES are imported here; `import type` is fully erased, so
 // this line has zero runtime cost for every `@mailwoman/bdc` consumer that never populates providers.
 import type { FRN, ProviderListRow } from "@mailwoman/filer/sdk"
+import { open } from "@mailwoman/platform/fs/promises"
+import { basename, dirname, join } from "@mailwoman/platform/path"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { openBuiltClient } from "@mailwoman/sqlite/sealed"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
 
@@ -137,8 +137,8 @@ export interface BuildBDCOptions {
 	 * Resolve a 15-char census block GEOID to its centroid. Injected so tests supply a small fixture `Map` lookup instead
 	 * of touching a real TIGER database; the real (CLI-wired) implementation is
 	 * {@linkcode createTIGERBlockCentroidLookup}, which reads `tabblock20.GEOID` (uppercase — `TIGERBlockTable`) block
-	 * geometry. Returning `undefined` for an unknown geoid is load-bearing: the materialize pass counts it in
-	 * `unknownGeoids` and skips the row — it must NEVER guess a cell.
+	 * geometry. Returning `undefined` for an unknown geoid is required: the materialize pass counts it in `unknownGeoids`
+	 * and skips the row — it must NEVER guess a cell.
 	 */
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
@@ -256,7 +256,7 @@ interface BDCStageRow {
  *
  * `csvPath` is optional and used ONLY to name the offending file in a thrown error (the direct-buffer unit tests call
  * this without one; {@linkcode readAvailabilityRowsFromCSVPaths} always supplies it). The `Number.isSafeInteger` guard
- * below is load-bearing, not defensive dressing: `bdc_stage.provider_id` is `INTEGER NOT NULL`, and a bare
+ * below is required, not defensive dressing: `bdc_stage.provider_id` is `INTEGER NOT NULL`, and a bare
  * `Number.parseInt` on a non-numeric field (a malformed/re-headered/truncated CSV) silently produces `NaN`. `NaN` binds
  * to that NOT NULL column as SQLite `NULL`, `INSERT OR IGNORE` then drops the row without a constraint error, and every
  * dropped row gets counted as `deduped` — the ENTIRE file's rows vanish silently, misreported as ordinary dedup. A
@@ -440,7 +440,7 @@ export function geometryCentroid(geometryJSON: string | null): { lat: number; lo
 export function createTIGERBlockCentroidLookup(
 	tigerDBPath: string
 ): (geoid: string) => { lat: number; lon: number } | undefined {
-	const db = openBuiltDatabase(tigerDBPath)
+	const db = openBuiltClient(tigerDBPath)
 	const stmt = db.prepare("SELECT geometry FROM tabblock20 WHERE GEOID = ?")
 
 	return (geoid: string) => {
@@ -511,7 +511,7 @@ async function groupProviderListRows(
  * build (or one whose providers are all single-FRN) pays nothing.
  */
 async function populateBDCProviderTable(
-	kdb: DatabaseClient<BDCDatabase>,
+	db: DatabaseClient<BDCDatabase>,
 	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>,
 	filerDB: DatabaseClient<FilerDatabase> | undefined,
 	asOf: string
@@ -554,7 +554,7 @@ async function populateBDCProviderTable(
 	}
 
 	for (let index = 0; index < insertRows.length; index += PROVIDER_INSERT_BATCH_SIZE) {
-		await kdb
+		await db
 			.insertInto("bdc_provider")
 			.values(insertRows.slice(index, index + PROVIDER_INSERT_BATCH_SIZE))
 			.execute()
@@ -579,24 +579,24 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 	const buildingPath = `${options.out}.building`
 
-	if (existsSync(buildingPath)) {
-		rmSync(buildingPath)
+	if (await pathExists(buildingPath)) {
+		await removePath(buildingPath)
 	}
 
-	mkdirSync(dirname(options.out), { recursive: true })
+	await makeDirectories(dirname(options.out))
 
 	// A crash inside a PRIOR run's swap can leave the slot empty while the previous version sits
 	// parked aside — restore it before building, so a failure in THIS run still leaves an artifact
 	// serving. Both aside spellings: this builder's old `.prev` and swapDatabaseIntoPlace's `.old-<pid>`.
-	if (!existsSync(options.out)) {
+	if (!(await pathExists(options.out))) {
 		const base = basename(options.out)
 
-		const parked = readdirSync(dirname(options.out)).find(
+		const parked = (await readDirectory(dirname(options.out))).find(
 			(name) => name === `${base}.prev` || name.startsWith(`${base}.old-`)
 		)
 
 		if (parked) {
-			renameSync(join(dirname(options.out), parked), options.out)
+			await movePath(join(dirname(options.out), parked), options.out)
 			progress(`restored ${parked} into place (a prior run crashed mid-swap)`)
 		}
 	}
@@ -604,21 +604,20 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	const rowSource: AsyncIterable<BDCAvailabilityRow> | Iterable<BDCAvailabilityRow> =
 		options.rows ?? readAvailabilityRowsFromCSVPaths(options.csvPaths!)
 
-	const db = new DatabaseSync(buildingPath)
+	const db = new DatabaseClient<BDCDatabase>(buildingPath)
 	// Build-tuning pragmas — identical to build-poi.ts's discipline.
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	const kdb = new DatabaseClient<BDCDatabase>({ database: db })
 
 	// Assigned at the end of the try — the tallies live inside its scope; the seal + swap do not.
 	let result: BuildBDCResult
 
 	try {
 		progress("creating manifest/coverage/availability/provider/stage tables")
-		await createLayerManifestTable(kdb)
-		await createLayerCoverageTable(kdb)
-		await createBDCAvailabilityTable(kdb)
-		await createBDCProviderTable(kdb)
-		await createBDCStageTable(kdb)
+		await createLayerManifestTable(db)
+		await createLayerCoverageTable(db)
+		await createBDCAvailabilityTable(db)
+		await createBDCProviderTable(db)
+		await createBDCStageTable(db)
 
 		const insStage = db.prepare(
 			`INSERT OR IGNORE INTO bdc_stage (
@@ -786,10 +785,10 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 				`(${unknownGeoids.toLocaleString()} unknown geoid(s) skipped)`
 		)
 
-		await kdb.schema.dropTable("bdc_stage").execute()
+		await db.schema.dropTable("bdc_stage").execute()
 
 		progress("geoid index (index-after-load — see schema.ts)")
-		await createBDCGeoidIndex(kdb)
+		await createBDCGeoidIndex(db)
 
 		// Coverage is SOURCE-LEVEL, not survey completeness — same convention build-poi.ts documents: a res-6 cell we
 		// have availability rows in is recorded at completeness 1.0. A cell absent from `layer_coverage` means no rows
@@ -801,11 +800,11 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			observedRows,
 		}))
 
-		await writeLayerCoverage(kdb, coverageCells)
+		await writeLayerCoverage(db, coverageCells)
 
 		progress("writing layer manifest")
 
-		await writeLayerManifest(kdb, {
+		await writeLayerManifest(db, {
 			name: "bdc",
 			version: options.asOfDate,
 			schemaVersion: 1,
@@ -830,7 +829,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			progress("populating bdc_provider from the provider list (decision 6 — lossy denormalization, see schema.ts)")
 
 			providersPopulated = await populateBDCProviderTable(
-				kdb,
+				db,
 				options.providers,
 				options.filerDB,
 				options.primaryFRNAsOf ?? options.asOfDate
@@ -846,7 +845,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		// same discipline).
 		db.exec("PRAGMA page_size=8192")
 		db.exec("VACUUM")
-		await kdb.destroy()
+		await db.destroy()
 
 		result = {
 			out: options.out,
@@ -861,18 +860,18 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		// A mid-build throw must not leak the handle or orphan the staging file. The original error
 		// always wins over anything the cleanup itself throws.
 		try {
-			await kdb.destroy()
+			await db.destroy()
 		} catch {
 			// The handle may already be closed or mid-statement — nothing more to release.
 		}
 
-		rmSync(buildingPath, { force: true })
+		await removePathIfPresent(buildingPath)
 
 		throw error
 	}
 
 	progress("seal")
-	sealDatabase(buildingPath)
+	await sealDatabase(buildingPath)
 
 	// Atomic move-into-place via the shared helper (the AGENTS.md database house rule): prior
 	// version aside first, forward rename restored on failure so the slot is never left empty.

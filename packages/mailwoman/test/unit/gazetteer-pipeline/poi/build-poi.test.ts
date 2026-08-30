@@ -14,17 +14,13 @@
  *   coordinates the loader must skip (and count) rather than insert.
  */
 
-import { statSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 import {
 	bboxCoverageCells,
@@ -88,17 +84,15 @@ function* fixtureRows(): Iterable<POISourceRow> {
 	}
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let out: string
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "poi-build-"))
-	out = join(scratch, "poi.db")
+	scratch = await temporaryDirectory("poi-build-")
+	out = scratch.resolve("poi.db")
 })
 
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("buildPOIDatabase", () => {
 	it("loads, clusters, dictionary-encodes, seals, and is end-to-end queryable via POILookup", async () => {
@@ -118,12 +112,11 @@ describe("buildPOIDatabase", () => {
 		expect(Object.fromEntries(result.countries)).toEqual({ US: 15, FR: 15 })
 
 		// --- sealed: no write bits ---
-		expect(statSync(out).mode & 0o222).toBe(0)
+		expect((await statPath(out)).mode & 0o222).toBe(0)
 
 		// `kdb`'s dispose closes the underlying connection — don't ALSO `using` `raw`, or both dispose
 		// paths race to close() the same DatabaseSync and one throws "database is not open".
-		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
 		// --- dictionary round-trip: insert-on-first-sight, 0 reserved for uncategorized ---
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
@@ -199,7 +192,7 @@ describe("buildPOIDatabase", () => {
 	})
 
 	it("bootstraps missing intermediate output directories", async () => {
-		const nestedOut = join(scratch, "nested", "deeper", "poi.db")
+		const nestedOut = scratch.resolve("nested", "deeper", "poi.db")
 
 		const result = await buildPOIDatabase({
 			rows: fixtureRows(),
@@ -210,7 +203,7 @@ describe("buildPOIDatabase", () => {
 		})
 
 		expect(result.rows).toBe(30)
-		expect(statSync(nestedOut).isFile()).toBe(true)
+		expect((await statPath(nestedOut)).isFile()).toBe(true)
 	})
 })
 
@@ -313,8 +306,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		expect(result.rows).toBe(2)
 		expect(result.coverageCells).toBe(coverageCellsOverride.length)
 
-		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -362,8 +354,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		// the Overture path's "rows-present only" behavior when no override is supplied.
 		expect(result.coverageCells).toBe(1)
 
-		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 
 		expect(coverageRows).toHaveLength(1)
@@ -443,8 +434,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		expect(result.rows).toBe(1)
 		expect(result.coverageCells).toBe(1)
 
-		const raw = new DatabaseSync(out, { readOnly: true })
-		using kdb = new DatabaseClient<POIDatabase>({ database: raw })
+		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 		const contractDB = kdb
 
 		const builderWrittenCoverage = await readLayerCoverage(contractDB, overrideCell.h3Cell)

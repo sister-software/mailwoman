@@ -1,10 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	parseGoldenLine,
@@ -16,14 +14,14 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 const goldenDir = repoRootPath("data", "eval", "golden", "v0.1.0")
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-golden-"))
+	scratch = await temporaryDirectory("mailwoman-golden-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("parseGoldenLine", () => {
@@ -81,17 +79,16 @@ describe("unreachableComponents", () => {
 
 describe("validateGoldenFile", () => {
 	it("flags both schema + reachability issues in one pass", async () => {
-		const path = join(scratch, "test.jsonl")
+		const path = scratch.resolve("test.jsonl")
 
-		await writeFile(
-			path,
+		await writeLocalTextFile(
 			[
 				'{"raw":"OK","components":{"locality":"OK"},"country":"FR","source":"golden"}',
 				'{"raw":"missing-region","components":{"locality":"missing-region","region":"Île-de-France"},"country":"FR","source":"golden"}',
 				'{"raw":"bad","components":{},"country":"fr","source":"golden"}',
 				"",
 			].join("\n"),
-			"utf8"
+			path
 		)
 
 		const issues = await validateGoldenFile(path)

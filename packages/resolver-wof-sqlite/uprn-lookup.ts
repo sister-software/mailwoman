@@ -24,12 +24,12 @@
  *   `@mailwoman/spatial`'s `shortCellToInt` via `uprnFullCell` — never reimplemented here.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk } from "h3-js"
 
 import { allRows } from "./sqlite-utils.ts"
+import type { UPRNDatabase } from "./uprn-schema.ts"
 import { uprnFullCell } from "./uprn-schema.ts"
 
 /**
@@ -81,7 +81,7 @@ export interface UPRNLookupOpts {
 	/**
 	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
 	 */
-	database?: DatabaseSync
+	database?: DatabaseClient<UPRNDatabase>
 }
 
 interface UPRNRow {
@@ -95,21 +95,23 @@ interface UPRNRow {
  * precedent as {@link POILookup}.
  */
 export class UPRNLookup implements Disposable {
-	#db: DatabaseSync
-	#ownsDB: boolean
+	#db: DatabaseClient<UPRNDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 
 	/**
 	 * `uprn` → its point (rowid-alias PK hit).
 	 */
-	readonly #coordinateProbe: ReturnType<DatabaseSync["prepare"]>
+	readonly #coordinateProbe: ReturnType<DatabaseClient["prepare"]>
 
 	constructor(opts: UPRNLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.databasePath) {
-			this.#db = new DatabaseSync(opts.databasePath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<UPRNDatabase>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("UPRNLookup needs `databasePath` or `database`")
 		}
@@ -197,13 +199,7 @@ export class UPRNLookup implements Disposable {
 		return best
 	}
 
-	close(): void {
-		if (this.#ownsDB) {
-			this.#db.close()
-		}
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#resources[Symbol.dispose]()
 	}
 }

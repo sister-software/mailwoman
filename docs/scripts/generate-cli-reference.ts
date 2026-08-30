@@ -28,9 +28,10 @@
  *   Table cells are padded the way `oxfmt` pads them, so the emitted file is already formatted.
  */
 
-import { readFile, writeFile } from "node:fs/promises"
-import { dirname, join } from "node:path"
-import { fileURLToPath } from "node:url"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { dirname, join } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { readCommands, type CommandNode, type OptionSpec } from "./cli-schema.ts"
 
@@ -52,13 +53,13 @@ export const GROUP_NOTES: Readonly<Record<string, string>> = {
 	corpus: "Builds and audits the BIO-labeled training corpus.",
 	coverage: "Builds the demo map's address-coverage overlay tiles.",
 	dev: "Repository maintenance: source generation, fixture capture, lint passes.",
-	eval: "Runs the evaluation gates that decide whether a model ships.",
+	eval: "Runs the evaluations that decide whether a model ships.",
 	filer: "Record-linkage evaluation over regulatory filings.",
 	gazetteer: "Builds every gazetteer artifact, including the candidate and admin databases.",
 	gnaf: "Assembles the Australian G-NAF address register.",
 	placer: "Trains and evaluates the coarse country placer.",
 	release: "Stages model weights for a release.",
-	situs: "Builds the US rooftop address-point and interpolation shards.",
+	situs: "Builds the US rooftop address-point and interpolation databases.",
 	tiger: "Processes US Census TIGER/Line road and boundary data.",
 	tiles: "Publishes vector tiles to the demo map's bucket.",
 	wof: "Prepares and inspects the Who's On First gazetteer source tree.",
@@ -255,7 +256,9 @@ function collectCommands(node: CommandNode, prefix: readonly string[], into: CLI
 
 		into.push({
 			path: path.join(" "),
-			synopsis: ["mailwoman", ...path, flags.length ? "[options]" : "", ...placeholders].filter(Boolean).join(" "),
+			synopsis: ["mailwoman", ...path, flags.length ? "[options]" : "", ...placeholders]
+				.filter((word) => word.length > 0)
+				.join(" "),
 			description: node.spec.description,
 			args: args.map((argument, index) => ({
 				name: placeholders[index]!,
@@ -496,7 +499,7 @@ export function renderCLIReference(surface: CLISurface): string {
 			]
 		),
 		"",
-		"Two behaviors are worth stating because they are not failures.",
+		"Two behaviors are exceptional because they are not failures.",
 		"",
 		"- `mailwoman doctor` exits `0` when the core checks pass, even when every optional data layer is",
 		"  missing. Parsing works without them.",
@@ -562,10 +565,10 @@ export async function generateCLIReference(): Promise<string> {
 
 if (import.meta.main) {
 	const rendered = await generateCLIReference()
-	const existing = await readFile(OUTPUT_PATH, "utf8").catch(() => null)
+	const existing = await readLocalTextFile(OUTPUT_PATH).catch(() => null)
 
 	if (existing !== rendered) {
-		await writeFile(OUTPUT_PATH, rendered)
+		await writeLocalFile(rendered, OUTPUT_PATH)
 	}
 
 	console.log(

@@ -35,12 +35,11 @@
  *   behavior.
  */
 
-import { readFileSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
-import { assertDatabaseIntegrity, pyFloat, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pyFloat, pyRound } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { TSVSpliterator, TextSpliterator } from "spliterator"
 
 import {
@@ -91,9 +90,9 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 /**
  * JP KEN_ALL_ROME (CP932): col0=postcode(7-digit), col5=municipality romaji → {NNN-NNNN: muni}.
  */
-function loadKenall(path: string): Map<string, string> {
+async function loadKenall(path: string): Promise<Map<string, string>> {
 	const out = new Map<string, string>()
-	const text = new TextDecoder("shift_jis").decode(readFileSync(path))
+	const text = new TextDecoder("shift_jis").decode(await readLocalBuffer(path))
 
 	// KEN_ALL is Shift-JIS and the spliterator's text path decodes UTF-8, so streaming it means dropping
 	// to raw byte ranges and decoding per row — for an 11 MB file whose size Japan Post fixes.
@@ -116,7 +115,7 @@ async function loadGeonamesPoints(path: string): Promise<Map<string, [number, nu
 	const out = new Map<string, [number, number]>()
 
 	// Streamed — `path` is a caller-supplied national dump (JP's is 12 MB). `header: false` is
-	// load-bearing: the GeoNames postal dump is headerless, so row 1 would be read as column names.
+	// required: the GeoNames postal dump is headerless, so row 1 would be read as column names.
 	for await (const f of TSVSpliterator.fromAsync(path, { header: false })) {
 		if (f.length > 10 && f[1]) {
 			const lat = pyFloat(f[9])
@@ -146,7 +145,7 @@ export interface PostcodeLocalityJPOptions {
 }
 
 export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): Promise<void> {
-	const postal = args.country === "JP" ? loadKenall(args.postalNames) : new Map<string, string>()
+	const postal = args.country === "JP" ? await loadKenall(args.postalNames) : new Map<string, string>()
 
 	if (!postal.size) {
 		console.error(`no postal names loaded for ${args.country} (only KEN_ALL/JP wired so far)`)
@@ -156,7 +155,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 
 	const points = await loadGeonamesPoints(args.geonames)
 
-	const admin = new DatabaseSync(args.adminDB)
+	using admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
 	const ph = PLACETYPES.map(() => "?").join(",")
 
 	const places = admin
@@ -165,8 +164,6 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 				`AND latitude IS NOT NULL AND NOT (latitude=0 AND longitude=0)`
 		)
 		.all(args.country, ...PLACETYPES) as Array<{ id: number; name: string; latitude: number; longitude: number }>
-
-	admin.close()
 
 	const grid = new Map<string, Array<{ pid: number; nm: string; la: number; lo: number }>>()
 
@@ -204,81 +201,82 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		return out
 	}
 
-	const db = new DatabaseSync(args.output)
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
-	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
-
-	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
-
-	const rows: PostcodeLocalityInsertValues[] = []
-	let matched = 0
 	const keys = [...postal.keys()].filter((k) => points.has(k))
-
-	for (const pc of keys) {
-		const muni = postal.get(pc)!
-		const [lat, lon] = points.get(pc)!
-		const cands = nearby(lat, lon)
-
-		if (!cands.length) continue
-		const hit = cands.find((c) => nameMatches(c.nm, muni))
-
-		if (hit) {
-			matched++
-			rows.push([pc, args.country, hit.pid, hit.nm, muni, pyRound(hit.d, 3), 1])
-
-			for (const c2 of cands.slice(0, NEARBY_KEEP)) {
-				if (c2.pid !== hit.pid) {
-					rows.push([pc, args.country, c2.pid, c2.nm, muni, pyRound(c2.d, 3), 0])
-				}
-			}
-		} else {
-			// no authoritative name match nearby → nearest place as a weak candidate
-			const c0 = cands[0]!
-			rows.push([pc, args.country, c0.pid, c0.nm, muni, pyRound(c0.d, 3), 0])
-		}
-	}
-
-	const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
-	db.exec("BEGIN")
-
-	for (const r of rows) {
-		insert.run(...r)
-	}
-
-	db.exec("COMMIT")
-
-	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
-
-	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
-
+	let matched = 0
 	const matchRate = `${((100 * matched) / keys.length).toFixed(1)}%`
+	const rows: PostcodeLocalityInsertValues[] = []
 
-	const meta: Array<[string, string]> = [
-		["name", "mailwoman-postcode-locality-cjk"],
-		["description", "CJK postcode -> WOF locality via authoritative-name + proximity match (no polygons)"],
-		["method", "national-postal-authority municipality NAME + GeoNames point -> cross-placetype WOF match"],
-		["source", `${args.country}: KEN_ALL_ROME (Japan Post, romanized) + GeoNames postal points; built from source`],
-		["country", args.country],
-		["postcodes_total", String(keys.length)],
-		["postcodes_matched", String(matched)],
-		["match_rate", matchRate],
-		["built_at", isoSeconds()],
-	]
+	{
+		using kdb = new DatabaseClient<PostcodeLocalityDatabase>(args.output)
 
-	const insMeta = db.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+		await kdb.schema.dropTable("postcode_locality").ifExists().execute()
 
-	for (const [k, v] of meta) {
-		insMeta.run(k, v)
+		await createPostcodeLocalityTable(kdb, { ifNotExists: false })
+
+		for (const pc of keys) {
+			const muni = postal.get(pc)!
+			const [lat, lon] = points.get(pc)!
+			const cands = nearby(lat, lon)
+
+			if (!cands.length) continue
+			const hit = cands.find((c) => nameMatches(c.nm, muni))
+
+			if (hit) {
+				matched++
+				rows.push([pc, args.country, hit.pid, hit.nm, muni, pyRound(hit.d, 3), 1])
+
+				for (const c2 of cands.slice(0, NEARBY_KEEP)) {
+					if (c2.pid !== hit.pid) {
+						rows.push([pc, args.country, c2.pid, c2.nm, muni, pyRound(c2.d, 3), 0])
+					}
+				}
+			} else {
+				// no authoritative name match nearby → nearest place as a weak candidate
+				const c0 = cands[0]!
+				rows.push([pc, args.country, c0.pid, c0.nm, muni, pyRound(c0.d, 3), 0])
+			}
+		}
+
+		const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
+		kdb.exec("BEGIN")
+
+		for (const r of rows) {
+			insert.run(...r)
+		}
+
+		kdb.exec("COMMIT")
+
+		await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
+
+		await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
+
+		const meta: Array<[string, string]> = [
+			["name", "mailwoman-postcode-locality-cjk"],
+			["description", "CJK postcode -> WOF locality via authoritative-name + proximity match (no polygons)"],
+			["method", "national-postal-authority municipality NAME + GeoNames point -> cross-placetype WOF match"],
+			["source", `${args.country}: KEN_ALL_ROME (Japan Post, romanized) + GeoNames postal points; built from source`],
+			["country", args.country],
+			["postcodes_total", String(keys.length)],
+			["postcodes_matched", String(matched)],
+			["match_rate", matchRate],
+			["built_at", isoSeconds()],
+		]
+
+		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+
+		for (const [k, v] of meta) {
+			insMeta.run(k, v)
+		}
+
+		kdb.exec("PRAGMA journal_mode=DELETE")
+		kdb.exec("ANALYZE")
+		assertDatabaseIntegrity(kdb, args.output)
+
+		kdb.exec("VACUUM")
 	}
 
-	db.exec("PRAGMA journal_mode=DELETE")
-	db.exec("ANALYZE")
-	assertDatabaseIntegrity(db, args.output)
-
-	db.exec("VACUUM")
-	db.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(args.output)
+	await sealDatabase(args.output)
 
 	console.log(
 		`${args.country}: ${keys.length.toLocaleString("en-US")} postcodes (KEN_ALL∩GeoNames), ` +

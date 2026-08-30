@@ -66,7 +66,7 @@ const EvalInvariance: ParsedCommandComponent<Options> = ({ options }) => {
 		async () => {
 			const { runInvarianceCommand } = await import("../../eval-harness/invariance/command.ts")
 
-			return runInvarianceCommand(options)
+			return await runInvarianceCommand(options)
 		},
 		(exitCode) => exitCode
 	)

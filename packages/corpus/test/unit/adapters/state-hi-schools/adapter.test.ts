@@ -1,20 +1,24 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	createStateHiSchoolsAdapter,
 	STATE_HI_SCHOOLS_ADAPTER_ID,
 	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/state-hi-schools/adapter"
-import { beforeEach, describe, expect, it } from "vitest"
+import { join } from "@mailwoman/platform/path"
+import { afterAll, beforeEach, describe, expect, it } from "vitest"
+import writeXlsxFile, { type SheetData } from "write-excel-file/node"
 
 import { InMemoryAdapterRegistry } from "#adapters/utils"
+import { writeDelimitedFixture } from "#test-kit"
 
-const CSV_HEADER = [
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
+const SCHOOL_HEADER = [
 	"code",
 	"name",
 	"address",
@@ -32,20 +36,36 @@ const CSV_HEADER = [
 	"district",
 	"island",
 	"charter",
-].join(",")
+]
+
+const CSV_HEADER = SCHOOL_HEADER.join(",")
 
 let scratch: string
 
-beforeEach(() => {
-	scratch = mkdtempSync(join(tmpdir(), "mailwoman-hi-schools-"))
+beforeEach(async () => {
+	scratch = fixtures.use(await temporaryDirectory("mailwoman-hi-schools-")).path
 })
 
-function writeCSV(...lines: string[]): string {
-	const p = join(scratch, "test.csv")
-	const header = CSV_HEADER + "\n"
-	writeFileSync(p, header + lines.join("\n"), "utf8")
+function writeCSV(...lines: string[]): Promise<string> {
+	return writeDelimitedFixture(join(scratch, "test.csv"), CSV_HEADER, lines)
+}
 
-	return p
+async function writeWorkbook(): Promise<string> {
+	const path = join(scratch, "test.xlsx")
+	const sheet = (rows: Array<Array<string | number | boolean | null>>): SheetData => rows as SheetData
+
+	await writeXlsxFile([
+		{
+			sheet: "HIDOE",
+			data: sheet([SCHOOL_HEADER, [335, "Ahuimanu Elem School", "47-470 Hui Aeko Place", "Kaneohe", 96_744]]),
+		},
+		{
+			sheet: "PCS",
+			data: sheet([SCHOOL_HEADER, [901, "Voyager Public Charter School", "2428 Wilder Avenue", "Honolulu", 96_822]]),
+		},
+	]).toFile(path)
+
+	return path
 }
 
 describe("state-hi-schools adapter", () => {
@@ -56,7 +76,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("emits a row for a HIDOE school with a hyphenated Oahu address", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			"335,Ahuimanu Elem School,47-470 Hui Aeko Place,Kaneohe,96744,808.305.4800,808.239.3127,Kimi Ikeda,K,6,Elementary,http://example,Castle,Castle-Kahuku,Windward,Oahu,False"
 		)
 
@@ -82,8 +102,26 @@ describe("state-hi-schools adapter", () => {
 		expect(r.components.postcode).toBe("96744")
 	})
 
+	it("reads HIDOE and PCS directly from the typed XLSX workbook", async () => {
+		const p = await writeWorkbook()
+		const rows = []
+
+		for await (const row of createStateHiSchoolsAdapter().rows({ inputPath: p })) {
+			rows.push(row)
+		}
+
+		expect(rows).toHaveLength(2)
+
+		expect(rows.map((row) => row.source_id)).toEqual([
+			`${STATE_HI_SCHOOLS_ADAPTER_ID}-335`,
+			`${STATE_HI_SCHOOLS_ADAPTER_ID}-901`,
+		])
+
+		expect(rows.map((row) => row.components.venue)).toEqual(["Ahuimanu Elem School", "Voyager Public Charter School"])
+	})
+
 	it("emits a row for a charter (PCS) school with a non-hyphenated address", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			"540,Halau Ku Mana - PCS,2101 Makiki Heights Drive,Honolulu,96822,808.945.1600,808.945.1604,Lori Pereia,4,12,K - 12,http://example,Roosevelt,Kaimuki-McKinley-Roosevelt,Honolulu,Oahu,True"
 		)
 
@@ -106,7 +144,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("skips rows with missing required fields", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			// missing name
 			",,200 Some Way,Honolulu,96813,,,,,,,,,,,,",
 			// missing address
@@ -147,7 +185,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("honors limit", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			"100,A School,100 A St,Honolulu,96813,,,,,,,,,,,,",
 			"101,B School,200 B St,Honolulu,96813,,,,,,,,,,,,",
 			"102,C School,300 C St,Honolulu,96813,,,,,,,,,,,,"

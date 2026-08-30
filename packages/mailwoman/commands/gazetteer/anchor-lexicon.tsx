@@ -24,9 +24,8 @@
  *   Output: data/gazetteer/anchor-lexicon-v1.json (small, committed, provenance-tracked).
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -174,8 +173,8 @@ const GazetteerAnchorLexicon: ParsedCommandComponent<Options> = ({ options }) =>
 			code_entries: Object.fromEntries([...codeEntries].toSorted(([a], [b]) => a.localeCompare(b))),
 		}
 
-		mkdirSync(dirname(output), { recursive: true })
-		writeFileSync(output, JSON.stringify(lexicon, null, 1) + "\n")
+		await makeDirectories(dirname(output))
+		await writeLocalJSONFile(lexicon, output)
 
 		return [
 			`${output}`,

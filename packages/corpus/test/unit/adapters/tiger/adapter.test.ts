@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readFile, rm } from "node:fs/promises"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { TIGER_ADAPTER_ID, TIGER_DEFAULT_LICENSE, createTigerAdapter } from "@mailwoman/corpus/adapters/tiger/adapter"
+import { join } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 import { beforeEach, describe, expect, it } from "vitest"
 
 import { runAdapter } from "#runner"
@@ -21,11 +22,10 @@ const fixtureSQLPath = workspacePath("corpus", "fixtures", "tiger", "fixture.sql
 let dbPath: string
 
 async function buildFixtureDB(): Promise<string> {
-	const sql = await readFile(fixtureSQLPath, "utf8")
+	const sql = await readLocalTextFile(fixtureSQLPath)
 	const path = join(scratch.path, "tiger-fixture.db")
-	const db = new DatabaseSync(path)
+	await using db = new DatabaseClient<TIGERDatabase>(path)
 	db.exec(sql)
-	db.close()
 
 	return path
 }
@@ -127,15 +127,13 @@ describe("tiger adapter against fixture.sql", () => {
 	it("zipl !== zipr produces two street variants (one per side)", async () => {
 		// Build a mini DB with one segment whose left and right ZIPs differ.
 		const inline = join(scratch.path, "split-zip.db")
-		const db = new DatabaseSync(inline)
+		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
 			INSERT INTO tiger_streets VALUES ('110099999', 'Border Rd', '10001', '10002', '36');
 		`)
-
-		db.close()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),
@@ -158,15 +156,13 @@ describe("tiger adapter against fixture.sql", () => {
 
 	it("street with no ZIPs emits a single zipless variant", async () => {
 		const inline = join(scratch.path, "no-zip.db")
-		const db = new DatabaseSync(inline)
+		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
 			CREATE TABLE tiger_places (geoid TEXT PRIMARY KEY, name TEXT NOT NULL, statefp TEXT NOT NULL, lsad TEXT);
 			INSERT INTO tiger_streets VALUES ('110099998', 'Unnamed Rd', NULL, NULL, '41');
 		`)
-
-		db.close()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),
@@ -184,7 +180,7 @@ describe("tiger adapter against fixture.sql", () => {
 
 	it("rows with an unrecognized state FIPS code are dropped", async () => {
 		const inline = join(scratch.path, "bad-fips.db")
-		const db = new DatabaseSync(inline)
+		using db = new DatabaseClient<TIGERDatabase>(inline)
 
 		db.exec(`
 			CREATE TABLE tiger_streets (linearid TEXT PRIMARY KEY, fullname TEXT NOT NULL, zipl TEXT, zipr TEXT, statefp TEXT NOT NULL);
@@ -192,8 +188,6 @@ describe("tiger adapter against fixture.sql", () => {
 			INSERT INTO tiger_streets VALUES ('110099997', 'Phantom St', '00000', '00000', '99');
 			INSERT INTO tiger_places  VALUES ('9999000', 'Phantomville', '99', '25');
 		`)
-
-		db.close()
 
 		await runAdapter({
 			adapter: createTigerAdapter(),
@@ -237,7 +231,7 @@ describe("tiger adapter against fixture.sql", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await rm(join(scratch.path, TIGER_ADAPTER_ID), { recursive: true, force: true })
+		await removePathIfPresent(join(scratch.path, TIGER_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createTigerAdapter(),

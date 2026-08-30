@@ -16,8 +16,7 @@
  *   bonus the fused street path survives (the measured emission-only miss). One assertion, both wires.
  */
 
-import { readFileSync } from "node:fs"
-
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
 import { serializePairIndex, type PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
@@ -111,7 +110,7 @@ function makeFetch(): typeof fetch {
 	return async (input) => {
 		const url = String(input)
 
-		if (url === TOKENIZER_URL) return new Response(new Uint8Array(readFileSync(TOKENIZER_FIXTURE)))
+		if (url === TOKENIZER_URL) return new Response(new Uint8Array(await readLocalBuffer(TOKENIZER_FIXTURE)))
 
 		if (url === GB_INDEX) return new Response(gbIndexBytes().slice().buffer)
 

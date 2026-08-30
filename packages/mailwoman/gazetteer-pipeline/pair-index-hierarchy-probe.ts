@@ -50,11 +50,8 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts [--countries us,fr] [--db <path>] [--out <dir>] [--skip-source-md5]`
  */
 
-import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs"
-import { basename, join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { allRows, dataRootPath, md5File } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
@@ -64,6 +61,10 @@ import {
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
 } from "@mailwoman/neural/pair-index-resolver"
+import { basename, join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * The (locality, region) edge spec per country — ComponentTag space on the artifact side, WOF placetype space on the
@@ -132,7 +133,11 @@ interface SurfaceRow {
 /**
  * Collect `id → Set<surface>` from spr names + official names for the given country/placetype set.
  */
-function collectSurfaces(db: DatabaseSync, country: string, placetypes: string[]): Map<number, Set<string>> {
+function collectSurfaces(
+	db: DatabaseClient<WOFDatabase>,
+	country: string,
+	placetypes: string[]
+): Map<number, Set<string>> {
 	const placeholder = placetypes.map(() => "?").join(",")
 	const surfaces = new Map<number, Set<string>>()
 
@@ -181,14 +186,14 @@ async function main(): Promise<void> {
 	const dbPath = values.db ?? dataRootPath("wof", "admin-global-priority.db")
 	const outDir = values.out ?? dataRootPath("wof", "pair-index-hierarchy-probe")
 
-	if (!existsSync(dbPath)) {
+	if (!(await pathExists(dbPath))) {
 		throw new Error(`pair-index-hierarchy-probe: WOF admin DB not found: ${dbPath}`)
 	}
 
-	mkdirSync(outDir, { recursive: true })
+	await makeDirectories(outDir)
 
 	// READ-ONLY on the admin DB — this module must never write to it.
-	const db = new DatabaseSync(dbPath, { readOnly: true })
+	await using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 
 	const sourceMD5 = values["skip-source-md5"] ? "(skipped)" : await md5File(dbPath)
 
@@ -294,8 +299,8 @@ async function main(): Promise<void> {
 
 		// Temp-write + rename: the artifact is never observable half-written (AGENTS.md sealed-artifact
 		// discipline, applied to a flat binary).
-		writeFileSync(tmpPath, bytes)
-		renameSync(tmpPath, outPath)
+		await writeLocalFile(bytes, tmpPath)
+		await movePath(tmpPath, outPath)
 
 		// Self-verifying readback over the written bytes (not the in-memory entries).
 		const resolver = new PairIndexResolver(bytes)
@@ -324,8 +329,6 @@ async function main(): Promise<void> {
 			)
 		}
 	}
-
-	db.close()
 }
 
 await runIfScript(import.meta, main)

@@ -9,18 +9,14 @@
  *   extent-derived uncertainty, and the exact-match miss.
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite/street-centroid"
 import {
 	type StreetCentroidDatabase,
 	createStreetCentroidTable,
 } from "@mailwoman/resolver-wof-sqlite/street-centroid-schema"
 import { normalizeLocalityForKey, stripArrondissement } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 interface Seed {
@@ -37,15 +33,21 @@ interface Seed {
 }
 
 /**
- * Seed a temp-file `street_centroid` shard and return its path (the reader opens by path, read-only).
+ * A seeded `street_centroid` shard, owned by the CALLER: the reader opens it by path, so the directory has to outlive
+ * this function.
  */
-async function seedShard(rows: Seed[]): Promise<string> {
-	const path = join(mkdtempSync(join(tmpdir(), "sc-test-")), "street-centroids.db")
-	const db = new DatabaseSync(path)
-	const kdb = new DatabaseClient<StreetCentroidDatabase>({ database: db })
+type StreetCentroidFixture = TemporaryDirectory & { shardPath: string }
+
+/**
+ * Seed a temp-file `street_centroid` shard and hand its directory to the caller.
+ */
+async function seedShard(rows: Seed[]): Promise<StreetCentroidFixture> {
+	const scratch = await temporaryDirectory("sc-test-")
+	const shardPath = scratch.resolve("street-centroids.db")
+	await using kdb = new DatabaseClient<StreetCentroidDatabase>(shardPath)
 	await createStreetCentroidTable(kdb)
 
-	const ins = db.prepare(
+	const ins = kdb.prepare(
 		`INSERT INTO street_centroid
 		 (street_norm, postcode, locality_base, lat, lon, min_lat, max_lat, min_lon, max_lon, point_count, street_raw, source, release, name_key)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ban:fr', '2026-05-18', ?)`
@@ -68,9 +70,7 @@ async function seedShard(rows: Seed[]): Promise<string> {
 		)
 	}
 
-	db.close()
-
-	return path
+	return scratch.moveWith({ shardPath })
 }
 
 describe("stripArrondissement", () => {
@@ -91,9 +91,12 @@ describe("stripArrondissement", () => {
 
 describe("StreetCentroidSqliteLookup", () => {
 	let lookup: StreetCentroidSqliteLookup
+	let fixture: StreetCentroidFixture
+
+	afterAll(() => fixture[Symbol.asyncDispose]())
 
 	beforeAll(async () => {
-		const path = await seedShard([
+		fixture = await seedShard([
 			// "Place Bellecour" split across two arrondissement/postcode rows, both base-commune "lyon". The
 			// weighted centroid over the two rows weights by point_count (10 @ lon 4.83, 30 @ lon 4.85).
 			{
@@ -135,11 +138,11 @@ describe("StreetCentroidSqliteLookup", () => {
 			},
 		])
 
-		lookup = new StreetCentroidSqliteLookup(path, { streetLocale: "fr" })
+		lookup = new StreetCentroidSqliteLookup(fixture.shardPath, { streetLocale: "fr" })
 	})
 
 	afterAll(() => {
-		lookup.close()
+		lookup[Symbol.dispose]()
 	})
 
 	it("probes by postcode and returns the single-row centroid", () => {

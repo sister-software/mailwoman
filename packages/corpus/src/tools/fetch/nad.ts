@@ -35,12 +35,11 @@
  *   ```
  */
 
-import { existsSync, mkdirSync, statSync } from "node:fs"
-import { writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
@@ -200,7 +199,7 @@ async function fetchChunk(
 		}
 	}
 
-	await writeFile(chunkPath, !lines.length ? "" : lines.join("\n") + "\n")
+	await writeLocalTextFile(!lines.length ? "" : lines.join("\n") + "\n", chunkPath)
 
 	return { recordCount: lines.length, errors }
 }
@@ -212,7 +211,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 	const startOID = options.startOID ?? 1
 
 	const chunkDir = join(options.outRoot, SLUG, "featureserver")
-	mkdirSync(chunkDir, { recursive: true })
+	await makeDirectories(chunkDir)
 
 	report?.(`=== ${SLUG} / featureserver`)
 	report?.(`  Discovering record count ...`)
@@ -236,7 +235,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 
 		// Idempotency: skip a chunk only if it's marked complete (the bash version's bug was
 		// marking complete on partial-failure runs; we now only set complete after a clean fetch).
-		if (existsSync(chunkPath)) {
+		if (await pathExists(chunkPath)) {
 			const recorded = await readManifest<ChunkManifest>(manifestPath)
 
 			if (recorded?.complete) {
@@ -250,7 +249,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 		const t0 = Date.now()
 		const { recordCount, errors } = await fetchChunk(chunkPath, cursor, chunkEnd, pageSize, concurrency, report)
 		const elapsed = ((Date.now() - t0) / 1000).toFixed(1)
-		const bytes = statSync(chunkPath).size
+		const bytes = (await statPath(chunkPath)).size
 		const sha = await sha256File(chunkPath)
 
 		const manifest: ChunkManifest = {
@@ -302,7 +301,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 	}
 
 	const destDir = join(options.outRoot, SLUG)
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 	const filename = new URL(options.nadURL).pathname.split("/").pop() ?? "NAD.zip"
 	const destPath = join(destDir, filename)
 

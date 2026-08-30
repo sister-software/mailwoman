@@ -13,7 +13,7 @@ import type { TileJSON } from "./schema.ts"
 export const TileAPI = new APIClient({
 	displayName: "TileAPI",
 	axios: {
-		baseURL: "https://tiles.sister.software",
+		baseURL: "https://tiles.mailwoman.ai",
 	},
 })
 

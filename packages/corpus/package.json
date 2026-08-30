@@ -43,6 +43,7 @@
 			"types": "./out/src/synthesizers/utils.d.ts"
 		},
 		"#test-kit": "./test-kit/index.ts",
+		"#test-kit/shard-recipe": "./test-kit/shard-recipe.ts",
 		"#types": {
 			"node": "./src/types.ts",
 			"default": "./out/src/types.js",
@@ -157,11 +158,6 @@
 			"default": "./out/src/utils/parquet.js",
 			"types": "./out/src/utils/parquet.d.ts"
 		},
-		"./test-kit/shard-recipe": {
-			"node": "./test-kit/shard-recipe.ts",
-			"default": "./out/test-kit/shard-recipe.js",
-			"types": "./out/test-kit/shard-recipe.d.ts"
-		},
 		"./tools/postcode-triples": {
 			"node": "./src/tools/postcode-triples.ts",
 			"default": "./out/src/tools/postcode-triples.js",
@@ -239,18 +235,25 @@
 	"dependencies": {
 		"@dsnp/parquetjs": "1.8.9",
 		"@mailwoman/ban": "workspace:*",
+		"@mailwoman/bdc": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
+		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
+		"@mailwoman/tiger": "workspace:*",
 		"fast-glob": "^3.3.3",
 		"fastest-levenshtein": "^1.0.16",
 		"lru-cache": "^11.5.2",
 		"path-ts": "^2.1.0",
-		"spliterator": "^6.2.0"
+		"read-excel-file": "^9.3.5",
+		"spliterator": "^6.3.1"
 	},
 	"devDependencies": {
 		"@types/node": ">=26.1.2",
 		"adm-zip": "^0.6.0",
-		"kysely": "^0.29.4"
+		"kysely": "^0.29.4",
+		"write-excel-file": "^4.1.1"
 	}
 }

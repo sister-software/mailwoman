@@ -46,13 +46,11 @@
  *   DO NOT change the resolver or parser — this script only READS stamped metadata.
  */
 
-import { readFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, median, tempRootPath } from "@mailwoman/core/utils"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversine } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -219,7 +217,7 @@ async function buildCascade(paths: {
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
-	const modelCard = parseJSONStrict<{ labels: string[] }>(readFileSync(paths.modelCardPath, "utf8"))
+	const modelCard = await readLocalJSONFile<{ labels: string[] }>(paths.modelCardPath)
 
 	const [tokenizer, runner] = await Promise.all([
 		MailwomanTokenizer.loadFromFile(paths.tokenizerPath),

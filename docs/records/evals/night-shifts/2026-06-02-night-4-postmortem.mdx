@@ -4,7 +4,7 @@
 in. The verdict is REVERT, do not promote.** The order hypothesis came out _validated_: a 5,000-row
 order shard roughly doubled German street (19.1→41.2) and house_number (14.6→30.9). But the
 continue-train recipe destabilized span boundaries. German locality and postcode collapsed, the resolver
-fell with them, and US/FR slipped just past the 1pp tripwire. The recipe is rejected; the mechanism it
+fell with them, and US/FR slipped just past the 1pp regression check. The recipe is rejected; the mechanism it
 exposed is the prize. Details below.
 
 ## RESULTS — German train completed + evaluated (REVERT)
@@ -73,7 +73,7 @@ this shift stops at the diagnosis rather than spending more GPU on a rejected re
 4. **DE-4/5 — eval harness + held-out golden.** `scripts/eval-de-coverage.sh` runs the whole
    before/after; `openaddresses-de-golden.jsonl` is the held-out German set. (commit `e43400a`)
 5. **Earlier this session (the day's work, also on this branch):** the `--default-country` flag, the
-   per-source bbox + German OA ingest, the per-locale-f1 tripwire, the full-stack capability probe.
+   per-source bbox + German OA ingest, the per-locale-f1 regression check, the full-stack capability probe.
 6. **Docs:** the multi-locale write-up (`2026-06-02-multi-locale-german-coverage.md`) and the German
    section of the external-eval README. (commits `2e96b35`, `233e652`)
 
@@ -105,7 +105,7 @@ The parquet sha256 is `962a277c7c54d7f96d2c652e488b7af849c740865e47fa8e0958d03dd
 ## The pre-registered test (set before the numbers came in)
 
 v0.7.2 baseline on the held-out German golden: **street 19.1%, house_number 14.6%**, locality 72.5%,
-postcode 89.0%. US/FR baseline (the interference tripwire): US 76.2% / FR 62.8% micro-F1. German
+postcode 89.0%. US/FR baseline (the interference regression check): US 76.2% / FR 62.8% micro-F1. German
 resolver: neural locality 77.4%, coord p50 10.0 km.
 
 - **Keep** if street + house_number climb materially AND US/FR stay within ~1pp AND German resolver
@@ -117,7 +117,7 @@ resolver: neural locality 77.4%, coord p50 10.0 km.
 
 - Gate-first paid off. DE-0 is an afternoon's script, and it could have saved a wasted GPU run if the
   tokenizer had been the wall. It wasn't, so we proceeded with evidence instead of hope.
-- Reading the data loader before launching caught the `country_weights` gotcha: the loader rejects any
+- Reading the data loader before launching caught the `country_weights` failure mode: the loader rejects any
   row whose country isn't weighted, so without `DE: 1.0` every German row would have been silently
   filtered out and the run would have taught the model nothing. That's a ~$3 + 12-minute mistake that
   never happened.

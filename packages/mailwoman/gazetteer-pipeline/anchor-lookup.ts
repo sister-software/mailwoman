@@ -59,10 +59,13 @@
  *   also `$MAILWOMAN_DATA_ROOT` overridable.
  */
 
-import { closeSync, openSync, readFileSync, writeSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { dataRootPath, pyFloat, pyRound } from "@mailwoman/core/utils"
+import { once } from "@mailwoman/platform/events"
+import { finished } from "@mailwoman/platform/stream/promises"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TSVSpliterator } from "spliterator"
 
 /**
@@ -99,7 +102,7 @@ function placed(lat: number, lon: number): boolean {
  */
 function loadIntl(country: string): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	const con = new DatabaseSync(dataRootPath("wof", "postalcode-intl.db"))
+	using con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-intl.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND country=?")
@@ -115,8 +118,6 @@ function loadIntl(country: string): Map<string, Centroid> {
 		}
 	}
 
-	con.close()
-
 	return out
 }
 
@@ -126,7 +127,7 @@ function loadIntl(country: string): Map<string, Centroid> {
  */
 function loadUs(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	const con = new DatabaseSync(dataRootPath("wof", "postalcode-us.db"))
+	using con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-us.db"))
 	const hasSources = con.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='centroid_source'").get()
 	const srcJoin = hasSources ? "LEFT JOIN centroid_source cs ON cs.id=spr.id" : ""
 	const srcCol = hasSources ? "cs.source" : "NULL"
@@ -147,8 +148,6 @@ function loadUs(): Map<string, Centroid> {
 			out.set(pc, [lat, lon, placed(lat, lon) ? row.src || "wof" : null])
 		}
 	}
-
-	con.close()
 
 	return out
 }
@@ -196,7 +195,7 @@ const NL_SOURCE = "cbs-pc6"
  */
 function loadGBCodePoint(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	const con = new DatabaseSync(dataRootPath("wof", "postalcode-gb-codepoint.db"))
+	using con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-gb-codepoint.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
@@ -211,8 +210,6 @@ function loadGBCodePoint(): Map<string, Centroid> {
 
 		out.set(pc, [lat, lon, placed(lat, lon) ? GB_SOURCE : null])
 	}
-
-	con.close()
 
 	return out
 }
@@ -262,7 +259,7 @@ function addGBOutwardKeys(units: Map<string, Centroid>): number {
  */
 function loadNLPC6(): Map<string, Centroid> {
 	const out = new Map<string, Centroid>()
-	const con = new DatabaseSync(dataRootPath("wof", "postalcode-nl-pc6.db"))
+	using con = new DatabaseClient<WOFDatabase>(dataRootPath("wof", "postalcode-nl-pc6.db"))
 
 	const rows = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
@@ -278,8 +275,6 @@ function loadNLPC6(): Map<string, Centroid> {
 		out.set(pc, [lat, lon, placed(lat, lon) ? NL_SOURCE : null])
 	}
 
-	con.close()
-
 	return out
 }
 
@@ -287,10 +282,10 @@ function loadNLPC6(): Map<string, Centroid> {
  * Census ZCTA Gazetteer file → 5-digit code → internal-point centroid (mirror of
  * scripts/zcta-centroids.ts::parseZCTACentroids).
  */
-function loadZCTA(path: string): Map<string, [number, number]> {
+async function loadZCTA(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()
 
-	for (const row of TSVSpliterator.from(readFileSync(path, "utf8"), { header: false })) {
+	for (const row of TSVSpliterator.from(await readLocalTextFile(path), { header: false })) {
 		const fields = row.map((f) => f.trim())
 		const pc = fields.length ? fiveDigit(fields[0]) : null
 
@@ -460,7 +455,7 @@ export interface AnchorLookupStats {
 	zctaFilled: number
 }
 
-export function buildAnchorLookup(args: AnchorLookupOptions): AnchorLookupStats {
+export async function buildAnchorLookup(args: AnchorLookupOptions): Promise<AnchorLookupStats> {
 	const countries = (args.include?.length ? args.include : ANCHOR_PILOT_COUNTRIES).map((c) => c.toUpperCase())
 
 	for (const country of countries) {
@@ -477,7 +472,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): AnchorLookupStats 
 		gbOutwardKeys = addGBOutwardKeys(sources.find(([c]) => c === "GB")![1])
 	}
 
-	const zcta = args.zcta ? loadZCTA(args.zcta) : new Map<string, [number, number]>()
+	const zcta = args.zcta ? await loadZCTA(args.zcta) : new Map<string, [number, number]>()
 	const allCodes = new Set<string>()
 
 	for (const [, d] of sources) {
@@ -496,7 +491,7 @@ export function buildAnchorLookup(args: AnchorLookupOptions): AnchorLookupStats 
 	// Serialize from the SORTED key array, streaming: JS hoists integer-like string keys (e.g. "10000")
 	// ahead of insertion order, so an object's own iteration order would unsort the output — and at the
 	// v2 set's ~2.2M keys, materializing every row before writing costs more memory than the build.
-	const fd = openSync(args.output, "w")
+	const output = openWriteStream(args.output)
 	let buffer = "{"
 	let written = 0
 
@@ -551,13 +546,18 @@ export function buildAnchorLookup(args: AnchorLookupOptions): AnchorLookupStats 
 		written++
 
 		if (written % WRITE_FLUSH_ENTRIES === 0) {
-			writeSync(fd, buffer)
+			// Backpressure honoured explicitly. `writeSync` blocked, which bounded memory for free; a stream buffers
+			// whatever it is handed, and at ~2.2M keys that is the cost this loop exists to avoid.
+			if (!output.write(buffer)) {
+				await once(output, "drain")
+			}
+
 			buffer = ""
 		}
 	}
 
-	writeSync(fd, buffer + "}")
-	closeSync(fd)
+	output.end(buffer + "}")
+	await finished(output)
 
 	const placeholders = bySource.get(null) ?? 0
 

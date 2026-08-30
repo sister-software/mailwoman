@@ -151,7 +151,7 @@ most.
 
 ## Long input is truncated in silence
 
-The model reads a fixed window of 128 pieces. Beyond that, the input is cut, and nothing in the
+The model reads a fixed window of 128 pieces. Beyond that, the input is truncated, and nothing in the
 result records that it happened. A 408-character input with a mail-stop preamble in front of the
 address produced 128 pieces covering the first 328 characters, and the parse contained nothing from
 the address at the end:
@@ -192,7 +192,7 @@ can be measured at never having emitted it on the data anyone tried, which is a 
 statement.
 
 **Auditability.** A rule is readable, and the fix for a wrong rule is a diff a reviewer can evaluate.
-A wrong label is a property of a weight matrix, and the fix is training data, a run, and a gate. The
+A wrong label is a property of a weight matrix, and the fix is training data, a run, and an evaluation. The
 first loop is minutes and the second is a release cycle, and that difference is a real engineering
 cost the accuracy comparison does not show.
 

@@ -19,12 +19,11 @@
  *   downgrades mismatches to warnings (useful mid-release, before the repoint lands).
  */
 
-import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
-import { parseArgs } from "node:util"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -40,7 +39,7 @@ const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
  * The demo's own fetch path (docs/src/contexts/DemoEmbed.tsx) — check what the demo actually reads, not what the
  * publisher believes it wrote.
  */
-const DEMO_MANIFEST_URL = "https://public.sister.software/mailwoman/en-us/releases.json"
+const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.json"
 
 /**
  * Zero-dependency path resolution (this file's contract: "no yarn install, just Node built-ins" — the version-parity
@@ -108,7 +107,7 @@ async function readDemoDefaultVersion(): Promise<string> {
 }
 
 function readDocsCurrentVersion(): string {
-	const mdx = readFileSync(RELEASES_MDX_PATH, "utf8")
+	const mdx = readLocalTextFileSync(RELEASES_MDX_PATH)
 	const version = mdx.match(/^\|\s*\*\*([\d.]+)\*\*\s*\(current\)/m)?.[1]
 
 	if (!version) throw new Error(`${RELEASES_MDX_PATH} has no "| **X.Y.Z** (current)" row`)
@@ -128,10 +127,10 @@ const checks: ParityCheck[] = []
 // compares against the SHIPPED model identity: `packages/neural-weights-en-us/model-card.json#version`
 // (the same source verify-release-metadata keys off). The docs matrix row stays vs npm latest —
 // that surface documents package releases.
-const localCard = parseJSONStrict<{
+const localCard = await readLocalJSONFile<{
 	version: string
 	files_md5?: Record<string, string>
-}>(readFileSync(MODEL_CARD_PATH, "utf8"))
+}>(MODEL_CARD_PATH)
 
 const cardModelVersion = normalizeVersion(localCard.version)
 

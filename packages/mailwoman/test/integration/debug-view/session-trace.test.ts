@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `trace: true` session, against the real classifier: what it records, and — the load-bearing half — that
+ *   The `trace: true` session, against the real classifier: what it records, and — the required half — that
  *   recording it changes no answer. The debug view is an INSPECTION surface; the moment its extra decode could move a
  *   coordinate, every reading taken through it would be about a different pipeline than the one that ships.
  *
@@ -10,9 +10,8 @@
  *   same reasons, so the two suites run and skip together.
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
@@ -21,7 +20,7 @@ import { describe, expect, test } from "vitest"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
-const hasWOFDB = existsSync(wofPath)
+const hasWOFDB = await pathExists(wofPath)
 
 const hasWeights = (() => {
 	try {
@@ -82,8 +81,8 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(withTrace.timing.trace).toBeGreaterThan(0)
 				expect(without.timing.trace).toBeUndefined()
 			} finally {
-				traced.close()
-				plain.close()
+				traced[Symbol.dispose]()
+				plain[Symbol.dispose]()
 			}
 		},
 		TEST_TIMEOUT_MS

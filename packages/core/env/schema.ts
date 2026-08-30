@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { defaultMailwomanPaths } from "./paths.ts"
+import { DefaultMailwomanPaths } from "./paths.ts"
 
 /**
  * Wrap a coerced schema so a BLANK value means the same as an absent one.
@@ -59,11 +59,13 @@ export const PublicEnvSchema = z.object({
 	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)),
 
 	// Platform-native application directories. Environment values override these defaults.
-	MAILWOMAN_DATA_ROOT: z.string().default(defaultMailwomanPaths.data),
-	MAILWOMAN_CONFIG_ROOT: z.string().default(defaultMailwomanPaths.config),
-	MAILWOMAN_CACHE_ROOT: z.string().default(defaultMailwomanPaths.cache),
-	MAILWOMAN_LOG_ROOT: z.string().default(defaultMailwomanPaths.log),
-	MAILWOMAN_TEMP_ROOT: z.string().default(defaultMailwomanPaths.temp),
+	//
+	// A bare `.default()` fires only on `undefined`, so a present-but-empty variable passes validation intact.
+	MAILWOMAN_DATA_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.data)),
+	MAILWOMAN_CONFIG_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.config)),
+	MAILWOMAN_CACHE_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.cache)),
+	MAILWOMAN_LOG_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.log)),
+	MAILWOMAN_TEMP_ROOT: blankAsAbsent(z.string().default(DefaultMailwomanPaths.temp)),
 
 	// Corpus source-fetch tools (`corpus/src/tools/fetch/*` — env knobs are now command flags; these remain for compat). Callers do their own numeric/boolean parsing on these,
 	// so they stay raw strings — the schema only gates which keys surface, not how they're coerced.
@@ -124,7 +126,7 @@ export const PublicEnvSchema = z.object({
 	 */
 	MAILWOMAN_WOF_GLOBAL_DB: z.string().optional(),
 	/**
-	 * Deployed demo URL for the docs e2e suite (skips the local build+serve machinery).
+	 * Deployed demo URL for the docs e2e suite (skips the local build+serve implementation).
 	 */
 	MAILWOMAN_DEMO_URL: z.string().optional(),
 	/**
@@ -182,6 +184,13 @@ export const PrivateEnvSchema = z.object({
 
 	// UK EPC bulk-download API token (en-GB acquisition — EPC certificates, UPRN-joinable).
 	UK_EPC_TOKEN: z.string().optional(),
+
+	/**
+	 * Per-run secret salting the published case identifiers of a controlled premise-linkage evaluation (`mailwoman eval
+	 * premise-linkage`). A secret rather than config: two reports salted alike can be joined row for row into a longer
+	 * record of the same premises, which is the linkage the identifier exists to prevent.
+	 */
+	MAILWOMAN_PREMISE_LINKAGE_SALT: z.string().optional(),
 
 	// LLM API keys for the corpus golden-expansion tooling.
 	DEEPSEEK_API_KEY: z.string().optional(),

@@ -10,7 +10,7 @@
  *   {@linkcode BOARD_ID}; the commit that deleted the array kept the pins and dropped the array leg, so the
  *   content claim outlives the source it was checked against. The deep-equal is in the history, not in prose.
  *
- *   The board id is the load-bearing one. `ablationBoardID` fingerprints a SORTED `id`+`input` list, so it is
+ *   The board id is the required one. `ablationBoardID` fingerprints a SORTED `id`+`input` list, so it is
  *   content-addressed and NOT order-addressed: reorganizing 192 rows into 29 files is invisible to it, and
  *   every ablation artifact measured before the migration stays comparable to every one measured after.
  *   `gauntlet-regression@192:d753b86005a7` is the same string on both sides. The id is NOT versioned by this
@@ -20,14 +20,17 @@
  *   if a bad row says WHICH file and WHICH line; a bare `SyntaxError` over 306 rows is a scavenger hunt.
  */
 
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { join } from "@mailwoman/platform/path"
 import { ablationBoardID } from "mailwoman/eval-harness/gauntlet/ablation"
 import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { canonicalizeSeedCase, SeedCaseSchema } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 /**
  * The corpus today — 651 curated regressions.
@@ -88,7 +91,7 @@ const CORPUS_SIZE = 651
  *
  * Moved 2026-08-11 (seventh) — → this — by the 2-row `fork_entity` board (the declared_fork → entity-probe wire's
  * freeze): the COMER primary (poi.db holds the worldwide-unique entity 6 m from truth; the fork abstains with no
- * consumer) and the Savile Row hijack tripwire, pinned to the true London street with its three wrong behaviors
+ * consumer) and the Savile Row hijack regression check, pinned to the true London street with its three wrong behaviors
  * receipted (the qualifier-strip Rhu scrape among them). 530 → 532, so the board id moves too.
  *
  * Moved 2026-08-11 (eighth) — → this — by the fork→entity WIRE landing: the COMER row flips improvement_target → pass
@@ -101,8 +104,9 @@ const CORPUS_SIZE = 651
  * Moved 2026-08-12 (second) — → this — by the street-miss FALLBACK landing: both bare-capital rows flip
  * improvement_target → pass with measured receipts. Row count and every `id`+`input` untouched, so the board id stays.
  *
- * Moved 2026-08-12 (third) — → this — by the #1626 strip guard landing: the Savile Row tripwire's note re-ledgers its
- * residual (strip scrape closed; the fuzzy-tier namesake remains, #1614's territory). Note-only; the board id stays.
+ * Moved 2026-08-12 (third) — → this — by the #1626 strip guard landing: the Savile Row regression check's note
+ * re-ledgers its residual (strip scrape closed; the fuzzy-tier namesake remains, #1614's territory). Note-only; the
+ * board id stays.
  *
  * Moved 2026-08-12 (seventh) — → this — by the ANTI-ROT PROMOTION SWEEP: 218 improvement_target rows whose now-PASSES
  * flags were byte-identical across three same-corpus production boards (the sweep baseline, the register-scope-tags
@@ -123,8 +127,9 @@ const CORPUS_SIZE = 651
  * `situs_wrong_village` board (#1631 Teichstraße, the wrong-village rooftop match panel-v2 surfaced): the aucklnad
  * measure-misalignment witness flips improvement_target → pass with its measured receipt (Auckland NZ, word-level 0.975
  * vs auckley 0.868), the board-flagged newly-passing `gb-street-name-savile-row` promotes to pass, and the Savile Row
- * tripwire's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while opening #1632
- * for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves too.
+ * regression check's ledger closes its fuzzy residual (namesake corrections die under WORD_FUZZY_MIN 0.85) while
+ * opening #1632 for the span-rescore alias door its board print actually traces to. 534 → 535, so the board id moves
+ * too.
  *
  * Moved again by the bare-street-name retry guard: `us-street-name-ocean-parkway-south` and
  * `fr-street-name-rue-du-faubourg-saint-honore` flip improvement_target → pass once a parse that read its whole input
@@ -210,7 +215,7 @@ const CORPUS_SIZE = 651
  * merged with CI skipped, so nothing caught the stale pin until the next branch ran the suite. Then `gb-cs-whitby` (650
  * → 651), the row that brackets `ENCYCLOPEDIC_BOOST_CAP` from below.
  */
-const CORPUS_HASH = "f25de393caadc303d36f006e0446a92daa7df7bbba2002574470da9abb4f0b9c"
+const CORPUS_HASH = "9151f474c67bc435c4edeb6255f20276a6270b753b436fe5270427eea45be6f8"
 
 /**
  * `ablationBoardID` of the corpus.
@@ -249,14 +254,14 @@ const SAMPLE = {
 /**
  * Write a throwaway corpus tree and return its root.
  */
-function scratchCorpus(files: Record<string, string>): string {
-	const root = mkdtempSync(join(tmpdir(), "gauntlet-cases-"))
+async function scratchCorpus(files: Record<string, string>): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("gauntlet-cases-")).path
 
 	for (const [relative, body] of Object.entries(files)) {
 		const path = join(root, relative)
 
-		mkdirSync(join(path, ".."), { recursive: true })
-		writeFileSync(path, body, "utf8")
+		await makeDirectories(join(path, ".."))
+		await writeLocalFile(body, path)
 	}
 
 	return root
@@ -340,7 +345,7 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify(SAMPLE)}\n{ not json\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:2 — not valid JSON/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:2 — not valid JSON/)
 	})
 
 	it("on a schema violation, naming the field", async () => {
@@ -348,7 +353,7 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, expectLat: "48.8" })}\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:1 — .*expectLat/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:1 — .*expectLat/)
 	})
 
 	it("on a malformed rendering contract, naming the field", async () => {
@@ -356,7 +361,7 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, expectComponentRenderings: { venue: "хийд" } })}\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:1 — .*expectComponentRenderings/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:1 — .*expectComponentRenderings/)
 	})
 
 	it("counts blank lines, so the number matches the editor's", async () => {
@@ -364,8 +369,8 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify(SAMPLE)}\n\n\n{ not json\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(CorpusRowError)
-		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:4/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(CorpusRowError)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:4/)
 	})
 
 	it("on a country that disagrees with its directory", async () => {
@@ -373,7 +378,7 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, country: "FR" })}\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/does not match its directory "xx"/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/does not match its directory "xx"/)
 	})
 
 	it("on a duplicate id across two files in the same dir", async () => {
@@ -382,6 +387,6 @@ describe("a malformed row names its file and line", () => {
 			"xx/extra.jsonl": `${JSON.stringify(SAMPLE)}\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/duplicate case id "xx-sample"/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/duplicate case id "xx-sample"/)
 	})
 })

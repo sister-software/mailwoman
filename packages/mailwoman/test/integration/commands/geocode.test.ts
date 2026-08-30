@@ -18,18 +18,15 @@
  *   shard overrides, expecting a street-level coordinate near 30.5, -97.6.
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync, mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
 import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
-
 // MARK: Paths
 
 const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
@@ -67,10 +64,10 @@ const CLI_TEST_TIMEOUT_MS = 120_000
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
-const hasWOFDB = existsSync(wofPath)
-const hasCLICompiled = existsSync(CLI_PATH)
-const hasTxAddressPoints = existsSync(TX_ADDRESS_POINTS_DB)
-const hasTxInterpolation = existsSync(TX_INTERPOLATION_DB)
+const hasWOFDB = await pathExists(wofPath)
+const hasCLICompiled = await pathExists(CLI_PATH)
+const hasTxAddressPoints = await pathExists(TX_ADDRESS_POINTS_DB)
+const hasTxInterpolation = await pathExists(TX_INTERPOLATION_DB)
 
 // MARK: Argument-validation tests (unconditional — no DB required)
 
@@ -154,7 +151,7 @@ describe("geocode argument validation", () => {
 		).toThrow(/Command failed/)
 	})
 
-	test("missing WOF DB exits 1 with a descriptive error (empty data root — the default shard set no longer exists)", () => {
+	test("missing WOF DB exits 1 with a descriptive error (empty data root — the default shard set no longer exists)", async () => {
 		if (!hasCLICompiled) {
 			console.warn("Skipping: CLI not compiled at", CLI_PATH)
 
@@ -163,7 +160,8 @@ describe("geocode argument validation", () => {
 
 		let threw = false
 		let output = ""
-		const emptyDataRoot = mkdtempSync(join(tmpdir(), "mw-empty-"))
+		await using emptyDataRootDirectory = await temporaryDirectory("mw-empty-")
+		const emptyDataRoot = emptyDataRootDirectory.path
 
 		try {
 			withCLISpawnLock(() =>

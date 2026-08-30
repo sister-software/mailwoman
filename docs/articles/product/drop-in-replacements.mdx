@@ -43,7 +43,7 @@ npx @mailwoman/libpostal serve
 
 ## What each one honors
 
-Compatibility is not the same as equivalence, and the difference is worth reading before you cut
+Compatibility is not the same as equivalence, and the difference is worth reading before you switch
 over. Every request parameter on all three surfaces carries one of three verdicts — **honored**,
 **accepted with no effect**, or **not read** — and the tables that assign them are on the swap
 tutorial, one per surface. They are read off the route handlers and then checked against a running
@@ -57,7 +57,7 @@ never set.
 
 [What each drop-in honors](../developers/tutorials/swap-in-for-nominatim.mdx#7-what-each-drop-in-honors)
 
-## Two things to settle before you cut over
+## Two things to settle before you switch over
 
 **Forward geocoding works from the gazetteer download; reverse geocoding does not.** `/reverse` on
 the Nominatim and Photon shapes runs point-in-polygon over a full WOF distribution that

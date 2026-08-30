@@ -13,32 +13,35 @@
  *   timezone, UN/LOCODE, NUTS — composed from the `@mailwoman/*` annotators.
  */
 
-import { existsSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
 import { makeTimezoneAnnotator, TimezoneLookup } from "@mailwoman/timezone-lookup"
-import { makeUnLocodeAnnotator, UnLocodeLookup } from "@mailwoman/un-locode-lookup"
+import { makeUNLocodeAnnotator, UNLocodeLookup } from "@mailwoman/un-locode-lookup"
 import {
 	corsBannerLine,
 	gazetteerBannerLines,
+	gazetteerFreshness,
 	loadClassifierOrExit,
 	parseOpenAPIFlags,
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
-import { geocodeAddress, type GeocodeResult, ShardProvider } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode-core"
+import type { GeocodeResult } from "mailwoman/geocode-result"
+import { ShardProvider } from "mailwoman/geocode-shards"
 import { createResolverBackend, dataRootPath, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 import {
 	createNominatimApp,
 	type NominatimAddressDetails,
 	type NominatimEngine,
+	nominatimStatus,
 	NOMINATIM_DOC_INFO,
 	type ResolvedAddress,
 	toNominatimResult,
@@ -122,7 +125,7 @@ async function serve(): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = resolveGazetteerOrExit(values["candidate-db"])
+	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"])
 	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
@@ -145,23 +148,28 @@ async function serve(): Promise<void> {
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDBPath = dataRootPath("timezone", "timezone.db")
 
-	if (existsSync(tzDBPath)) {
+	if (await pathExists(tzDBPath)) {
 		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
 	}
 
 	const ulDBPath = dataRootPath("un-locode", "un-locode.db")
 
-	if (existsSync(ulDBPath)) {
-		annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
+	if (await pathExists(ulDBPath)) {
+		annotators.push(makeUNLocodeAnnotator(new UNLocodeLookup({ databasePath: ulDBPath })))
 	}
 
 	const nutsDBPath = dataRootPath("nuts", "nuts.db")
 
-	if (existsSync(nutsDBPath)) {
+	if (await pathExists(nutsDBPath)) {
 		annotators.push(makeNUTSAnnotator(new NUTSLookup({ databasePath: nutsDBPath })))
 	}
 
 	const annotate = composeAnnotators(annotators)
+
+	// Read once, at boot, from the artifacts THEMSELVES (#997). The handles above are held for the life of
+	// the process, so this describes what the endpoint is serving from for as long as it serves — and every
+	// artifact appears, including one carrying no manifest, which says so rather than being left out.
+	const status = nominatimStatus(gazetteerFreshness(gazetteer))
 
 	const engine: NominatimEngine = {
 		async search(params) {
@@ -296,7 +304,7 @@ async function serve(): Promise<void> {
 		},
 
 		async status() {
-			return { status: 0, message: "OK" }
+			return status
 		},
 	}
 

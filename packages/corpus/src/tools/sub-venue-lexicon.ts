@@ -5,7 +5,7 @@
  *   @file Build the sub-venue designator lexicon (#35) — the vocabulary a corpus shard and, eventually,
  *   the span proposer read to recognize `Terminal 5`, `North Terminal`, `Concourse B`, `ターミナル1` as
  *   venue-INTERIOR structure. This is the assembly: the record schema lives in `sub-venue/table.ts`, the
- *   per-stage machinery in its siblings, and the curation decisions in `sub-venue-promotions.ts`.
+ *   implementation in its siblings, and the curation decisions in `sub-venue-promotions.ts`.
  *
  *   Reads the fetch outputs (`mailwoman corpus fetch wikidata-subvenue`, a JSONL of
  *   `@mailwoman/osm/sdk`'s `SubVenueSourceRow`s per region, and the Overture slice of `poi.db` via
@@ -19,7 +19,7 @@
  *
  *   ── Where the stages live ────────────────────────────────────────────────────────────────────────
  *   Each stage carries the measurements that shaped it; the order they run in is
- *   {@link buildSubVenueLexicon}'s own docstring, and it is load-bearing.
+ *   {@link buildSubVenueLexicon}'s own docstring, and it is required.
  *
  *   - `sub-venue/table.ts` — the emitted record schema plus the shipped seed vocabulary.
  *   - `sub-venue/surfaces.ts` — phrase normalization, the phrase → record index, and the name-match
@@ -37,10 +37,9 @@
  *   British bus stops.
  */
 
-import { readFileSync, statSync, writeFileSync } from "node:fs"
-import { basename, join } from "node:path"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { basename, join } from "@mailwoman/platform/path"
 
 import { SUBVENUE_PROMOTIONS, type SubVenuePromotion } from "./sub-venue-promotions.ts"
 import { extractAttestedPhrases, readSubVenueJSONL, type SubVenueHarvestRow } from "./sub-venue/harvest.ts"
@@ -157,7 +156,7 @@ export interface BuildSubVenueLexiconInput {
 /**
  * Build the lexicon table. PURE and deterministic — same inputs, byte-identical output.
  *
- * Order of operations is load-bearing in three places:
+ * Order of operations is required in three places:
  *
  * 1. Seed surfaces are inserted before anything else, so `terminal` indexes to the `terminal` designator rather than to
  *    whichever Wikidata alias sorts first.
@@ -352,17 +351,15 @@ export interface GenerateSubVenueLexiconOptions {
  * The IO half only — every decision lives in {@link buildSubVenueLexicon}, which is pure. Run `oxfmt` over `outPath`
  * afterwards; repo law is that committed JSON is oxfmt-clean.
  */
-export function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions): SubVenueLexiconTable {
+export async function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions): Promise<SubVenueLexiconTable> {
 	const sources: SubVenueLexiconSource[] = []
 	const harvests: SubVenueHarvest[] = []
 	let wikidata: unknown = null
 
 	if (options.wikidataDir) {
-		wikidata = parseJSONStrict<unknown>(readFileSync(join(options.wikidataDir, "designator-labels.json"), "utf8"))
+		wikidata = await readLocalJSONFile<unknown>(join(options.wikidataDir, "designator-labels.json"))
 
-		const manifest = parseJSONStrict<WikidataFetchManifest>(
-			readFileSync(join(options.wikidataDir, "MANIFEST.json"), "utf8")
-		)
+		const manifest = await readLocalJSONFile<WikidataFetchManifest>(join(options.wikidataDir, "MANIFEST.json"))
 
 		const labelFile = manifest.files?.find((f) => f.filename === "designator-labels.json")
 
@@ -378,7 +375,7 @@ export function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions)
 	}
 
 	for (const extract of options.extracts ?? []) {
-		const rows = readSubVenueJSONL(extract.path)
+		const rows = await readSubVenueJSONL(extract.path)
 
 		harvests.push({ rows, source: "osm", region: extract.region })
 
@@ -393,7 +390,7 @@ export function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions)
 			// The extract's mtime — when the rows were produced. `corpus/AGENTS.md`'s standing warning that
 			// a file's mtime is not its DATA's vintage applies to a downloaded archive; this file is a build
 			// output of ours, so its mtime is exactly the right number.
-			retrieved: statSync(extract.path).mtime.toISOString().slice(0, 10),
+			retrieved: (await statPath(extract.path)).mtime.toISOString().slice(0, 10),
 			rows: rows.length,
 		})
 	}
@@ -424,7 +421,7 @@ export function generateSubVenueLexicon(options: GenerateSubVenueLexiconOptions)
 	}
 
 	const table = buildSubVenueLexicon({ wikidata, harvests, sources })
-	writeFileSync(options.outPath, serializeSubVenueLexicon(table))
+	await writeLocalFile(serializeSubVenueLexicon(table), options.outPath)
 
 	return table
 }

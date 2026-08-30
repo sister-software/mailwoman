@@ -8,11 +8,9 @@
  *   name (the FTS index cannot show one, so a second route has to).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { openSealedArtifact, type LookupRow } from "@mailwoman/dev-mcp/lookup"
 import {
+	diffCandidateRows,
 	lookupCandidate,
 	lookupCodex,
 	lookupPOI,
@@ -25,28 +23,35 @@ import {
 	type CandidateTable,
 } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
+import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import {
 	createPOINameKeyIndex,
 	createPOISearchFTS,
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey as nameKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
-import { afterAll, describe, expect, it } from "vitest"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { aroundAll, describe, expect, it } from "vitest"
 
-const openHandles: DatabaseSync[] = []
+/**
+ * Every connection these fixtures open, ended together at the end of the file.
+ */
+let openHandles: DisposableStack
 
-afterAll(() => {
-	for (const db of openHandles) {
-		db.close()
-	}
+aroundAll(async (runSuite) => {
+	using handles = new DisposableStack()
+
+	openHandles = handles
+	await runSuite()
 })
 
-function memoryDatabase(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function memoryDatabase<DB>(): DatabaseClient<DB> {
+	const db = DatabaseClient.temp<DB>()
 
-	openHandles.push(db)
+	openHandles.use(db)
 
 	return db
 }
@@ -98,9 +103,9 @@ const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name
 	},
 ]
 
-async function candidateFixture(): Promise<DatabaseSync> {
-	const db = memoryDatabase()
-	const kdb = new DatabaseClient<CandidateDatabase>({ database: db })
+async function candidateFixture(): Promise<DatabaseClient<CandidateDatabase>> {
+	const db = memoryDatabase<CandidateDatabase>()
+	const kdb = db
 
 	await kdb.schema
 		.createTable("country_codes")
@@ -245,8 +250,8 @@ describe("lookupCandidate", () => {
  * Rows measured against the shipped `admin-global-priority.db`: one live place, and the GB name whose thirteen records
  * are every one deprecated.
  */
-async function wofFixture(): Promise<DatabaseSync> {
-	const db = memoryDatabase()
+async function wofFixture(): Promise<DatabaseClient<WOFDatabase>> {
+	const db = memoryDatabase<WOFDatabase>()
 
 	await createUnifiedSchema(db)
 
@@ -298,7 +303,7 @@ describe("lookupWOF", () => {
 	})
 
 	it("names a shard it could not query instead of counting it as a miss", async () => {
-		const broken = memoryDatabase()
+		const broken = memoryDatabase<POIDatabase>()
 		const [row] = lookupWOF([{ name: "broken.db", db: broken }], ["Vaduz"])
 
 		expect(row!.note).toContain("probe(s) failed")
@@ -306,9 +311,9 @@ describe("lookupWOF", () => {
 	})
 })
 
-async function poiFixture(): Promise<DatabaseSync> {
-	const db = memoryDatabase()
-	const kdb = new DatabaseClient<POIDatabase>({ database: db })
+async function poiFixture(): Promise<DatabaseClient<POIDatabase>> {
+	const db = memoryDatabase<POIDatabase>()
+	const kdb = db
 
 	await kdb.schema
 		.createTable("poi_category_codes")
@@ -436,15 +441,93 @@ describe("lookupPostcodeAnchor", () => {
 })
 
 describe("openSealedArtifact", () => {
-	it("reports a missing file by path rather than as an empty source", () => {
-		const opened = openSealedArtifact("/nonexistent/candidate.db")
+	it("reports a missing file by path rather than as an empty source", async () => {
+		const opened = await openSealedArtifact("/nonexistent/candidate.db")
 
 		expect("unavailable" in opened && opened.unavailable).toContain("/nonexistent/candidate.db")
 	})
 
-	it("reports an unresolved path distinctly from a missing one", () => {
-		expect(openSealedArtifact(undefined)).toEqual({
+	it("reports an unresolved path distinctly from a missing one", async () => {
+		expect(await openSealedArtifact(undefined)).toEqual({
 			unavailable: "No artifact path was resolved for this source.",
 		})
+	})
+})
+
+describe("lookupCandidate fame-diagnosis extras", () => {
+	it("carries name_role on artifacts that stamp it, null on unstamped rows", async () => {
+		const db = await candidateFixture()
+
+		db.prepare("UPDATE candidate SET name_role = 'variant' WHERE spr_id = ?").run(1)
+
+		const [row] = lookupCandidate(db, ["Porto Petro"])
+		const entries = (row!.entries ?? []) as Array<{ spr_id: number; name_role?: string | null }>
+
+		expect(entries.length).toBeGreaterThan(0)
+
+		for (const entry of entries) {
+			expect(entry.name_role).toBe(entry.spr_id === 1 ? "variant" : null)
+		}
+	})
+
+	it("joins importance_split by spr_id when an importance DB is given, and reports a missing row as null", async () => {
+		const db = await candidateFixture()
+		await using importance = DatabaseClient.temp<PlaceImportanceDatabase>()
+
+		importance.exec(
+			"CREATE TABLE place_importance (id INTEGER PRIMARY KEY, referential REAL NOT NULL, encyclopedic REAL, importance REAL NOT NULL)"
+		)
+
+		importance
+			.prepare("INSERT INTO place_importance (id, referential, encyclopedic, importance) VALUES (?, ?, ?, ?)")
+			.run(1, 0.2921, 0.3375, 0.3375)
+
+		const [row] = lookupCandidate(db, ["Porto Petro"], { importance: { db: importance, artifact: "importance.db" } })
+
+		const entries = (row!.entries ?? []) as Array<{
+			spr_id: number
+			importance_split?: { referential: number; encyclopedic: number | null } | null
+		}>
+
+		for (const entry of entries) {
+			if (entry.spr_id === 1) {
+				expect(entry.importance_split).toEqual({ referential: 0.2921, encyclopedic: 0.3375 })
+			} else {
+				// The source holds no row for this place: null, never a fabricated zero.
+				expect(entry.importance_split).toBeNull()
+			}
+		}
+
+		// Without the option the property is ABSENT — unread, not measured-empty.
+		const [bare] = lookupCandidate(db, ["Porto Petro"])
+		const bareEntries = (bare!.entries ?? []) as Array<{ importance_split?: unknown }>
+
+		expect(bareEntries.every((entry) => !("importance_split" in entry))).toBe(true)
+	})
+
+	it("diffs two artifacts' returned rows: presence both ways plus moved ranking fields", async () => {
+		const dbA = await candidateFixture()
+		const dbB = await candidateFixture()
+
+		// B re-scores one shared row and holds one extra bearer under the same key.
+		dbB.prepare("UPDATE candidate SET importance = 0.5 WHERE spr_id = ?").run(1)
+
+		dbB
+			.prepare(
+				"INSERT INTO candidate (name_key, country_id, region_id, placetype_id, neg_rank, spr_id, name, latitude, " +
+					"longitude, population, is_primary, importance) VALUES (?, 2, 0, 1, 99, 999, ?, 0, 0, 5, 1, NULL)"
+			)
+			.run(nameKey("Porto Petro"), "Porto Petro")
+
+		const rowsA = lookupCandidate(dbA, ["Porto Petro"])
+		const rowsB = lookupCandidate(dbB, ["Porto Petro"])
+		const [delta] = diffCandidateRows(rowsA, rowsB)
+
+		expect(delta!.only_in_a).toEqual([])
+		expect(delta!.only_in_b.map((entry) => entry.spr_id)).toEqual([999])
+
+		const moved = delta!.changed.find((entry) => entry.spr_id === 1)
+
+		expect(moved!.fields["importance"]).toEqual([null, 0.5])
 	})
 })

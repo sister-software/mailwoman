@@ -29,12 +29,11 @@
  *   [--out-md docs/articles/evals/matcher-dedup/<date>-nppes-dedup-benchmark.md]`
  */
 
-import { writeFileSync } from "node:fs"
-import { resolve as resolvePath } from "node:path"
-import { pathToFileURL } from "node:url"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import type { GBT } from "@mailwoman/match"
+import { resolve as resolvePath } from "@mailwoman/platform/path"
+import { pathToFileURL } from "@mailwoman/platform/url"
 
 import {
 	ingestRows,
@@ -212,7 +211,7 @@ export async function nppesDedupBenchmark(
 			addressSeparator: LEGACY ? " " : ", ",
 		})
 
-		geocoder.close()
+		geocoder[Symbol.dispose]()
 	}
 
 	report?.(`    geocoded ${geo}/${rows.length} (${((100 * geo) / rows.length).toFixed(1)}%)`)
@@ -314,7 +313,7 @@ export async function nppesDedupBenchmark(
 	const DUMP_OVERMERGES = options.dumpOvermerges || ""
 
 	if (DUMP_OVERMERGES) {
-		const clusters = writeOvermergePacket(DUMP_OVERMERGES, {
+		const clusters = await writeOvermergePacket(DUMP_OVERMERGES, {
 			state: STATE,
 			entities: gbtRes.entities,
 			rows,
@@ -395,7 +394,7 @@ export async function nppesDedupBenchmark(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`\n[written] ${OUT_MD}`)
 	}
 

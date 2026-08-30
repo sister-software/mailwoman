@@ -144,7 +144,7 @@ a subword) and wants a separate decode/tokenizer look, not more shard data.
 
 ## What could've gone better
 
-- **The zero-padded `step-040000` gotcha bit once** — `export_onnx --step=40000` looked for
+- **The zero-padded `step-040000` failure mode bit once** — `export_onnx --step=40000` looked for
   `step-40000` (the dir is `step-040000`); cost one failed export. The runbook flags it; I should
   have padded from the start.
 - **A `grep + 2>/dev/null` pipe on the first US eval discarded the whole table** (and I ran the 10k

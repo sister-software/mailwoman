@@ -19,7 +19,7 @@ const { db } = await loadSlimWofDatabase({
 	wasmUrl: new URL("../node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm", import.meta.url).href,
 })
 
-const lookup = new WofWasmPlaceLookup({ db })
+using lookup = new WofWasmPlaceLookup({ db })
 
 const matches = await lookup.findPlace({
 	text: "Springfield",
@@ -31,8 +31,6 @@ const matches = await lookup.findPlace({
 for (const m of matches) {
 	console.log(m.id, m.name, m.lat, m.lon, "score:", m.score)
 }
-
-lookup.close()
 ```
 
 ## Loading strategies

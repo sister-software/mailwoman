@@ -8,13 +8,12 @@
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
  */
 
-import { existsSync } from "node:fs"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
-import { AsyncSequence, CSVSpliterator } from "spliterator"
+import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"
 
 import { stableSourceIDFromParts } from "#adapters/utils"
 import { alignRow } from "#utils"
@@ -30,11 +29,10 @@ export function shardSourceID(adapterID: string, parts: Record<string, string | 
 /**
  * Where a country's convention writes the postcode inside the `«locality», «region»[, «country»]` admin tail.
  *
- * Load-bearing rather than cosmetic: the same digits change TAG with position. Measured on the shipped model,
- * `Heladería Frappé Manía, Avenida Country Club, Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number`
- * and loses the locality into the street, while the identical row written `… 6001 Barcelona, Anzoátegui, Venezuela`
- * tags it `postcode` and recovers `locality: Barcelona`. So a shard emitting one placement teaches one family of
- * countries.
+ * Position changes the tag assigned to the same digits. On the shipped model, `Heladería Frappé Manía, Avenida Country
+ * Club, Barcelona 6001, Anzoátegui, Venezuela` tags `6001` as `house_number` and loses the locality into the street,
+ * while the identical row written `… 6001 Barcelona, Anzoátegui, Venezuela` tags it `postcode` and recovers `locality:
+ * Barcelona`. So a shard emitting one placement teaches one family of countries.
  *
  * Each is attested by a gauntlet board row, which is the bar for adding another:
  *
@@ -163,34 +161,30 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  * still throws; that is the case where the cache, not the recipe, is the problem.
  */
 export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
-	if (!existsSync(String(archivePath))) {
-		console.error(`  WARN: ${archivePath} is not cached — skipping ${entryName}`)
+	return AsyncSequence.from<CSVRecord>(async () => {
+		if (!(await pathExists(String(archivePath)))) {
+			console.error(`  WARN: ${archivePath} is not cached — skipping ${entryName}`)
 
-		return AsyncSequence.from<CSVRecord>([])
-	}
+			return []
+		}
 
-	return readCSVRecords(readZipEntry(archivePath, entryName))
+		return readCSVRecords(readZipEntry(archivePath, entryName))
+	})
 }
 
 /**
  * Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped).
  */
-export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
-	// TextSpliterator (not JSONSpliterator) so a malformed line is SKIPPED, not thrown — the
-	// per-line tryParsingJSON below is the tolerance this reader has always had.
-	const { TextSpliterator } = await import("spliterator")
-
-	for await (const line of TextSpliterator.fromAsync(input)) {
-		const trimmed = line.trim()
-
-		if (!trimmed) continue
-
-		const tuple = tryParsingJSON<ShardTuple>(trimmed)
-
-		if (tuple !== null) {
-			yield tuple
-		}
-	}
+export function readTuples(input: string): AsyncSequence<ShardTuple> {
+	// TextSpliterator (not JSONSpliterator) keeps the reader's established tolerance: malformed lines are skipped rather
+	// than rejecting the sequence. These operators fuse into the source's pull loop instead of adding an async-generator
+	// frame per tuple.
+	return TextSpliterator.fromAsync(input)
+		.map((line) => line.trim())
+		.filter((line) => Boolean(line))
+		.map((line) => tryParsingJSON<ShardTuple>(line))
+		.filter((tuple) => tuple !== null)
+		.map((tuple) => tuple!)
 }
 
 /**

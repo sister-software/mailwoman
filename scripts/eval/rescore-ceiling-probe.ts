@@ -1,9 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { existsSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 /**
  *   #370 RESCORE-CEILING probe — sizes how much of the unresolved tail a parse<->resolve rescoring
  *   loop could recover, vs a true gazetteer coverage gap. For each coord-golden row: parse (the shipped
@@ -21,7 +18,9 @@ import { parseArgs } from "node:util"
  *   Run: node scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -62,7 +61,7 @@ const hasWOF = (n: N9): boolean => !!n.placeID?.startsWith("wof:") || ((n.childr
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = new WOFSQLitePlaceLookup({ databasePath: WOF })
+	using lookup = new WOFSQLitePlaceLookup({ databasePath: WOF })
 	const resolver = createWOFResolver(lookup)
 
 	const model = await createScorer({
@@ -84,7 +83,7 @@ async function main() {
 	const swapBest5: number[] = []
 
 	for (const [cc, file] of LOCALES) {
-		if (!existsSync(file)) {
+		if (!(await pathExists(file))) {
 			console.log(`${cc}: golden missing — skipped`)
 
 			continue

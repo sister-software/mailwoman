@@ -87,10 +87,6 @@ export class ParquetReader<T extends ParquetRecordLike> extends BaseParquetReade
 	}
 
 	public async [Symbol.asyncDispose]() {
-		return this.close()
-	}
-
-	public async dispose() {
-		return this[Symbol.asyncDispose]()
+		return super.close()
 	}
 }

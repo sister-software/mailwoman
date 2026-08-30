@@ -1,17 +1,30 @@
+import { join } from "@mailwoman/platform/path"
 import type { z } from "zod"
 
 import { loadEnvFile } from "./load.ts"
-import { cwdPathBuilder } from "./paths.ts"
 import { PrivateEnvSchema, PublicEnvSchema } from "./schema.ts"
 
-export { defaultMailwomanPaths } from "./paths.ts"
+export { DefaultMailwomanPaths } from "./paths.ts"
 
-// The optional `.env` is read once (it can't change mid-process); the real environment is layered on top
-// LIVE. `process.env` can change during a process — a test stubbing a var, a late setter — and `$public` /
-// `$private` must reflect it, exactly like `process.env` itself. So each key is a getter that re-parses the
-// current `{ ...dotEnv, ...process.env }` on access. The schemas enumerate the keys we know about; `z.object`
-// strips the rest of `process.env`, so only declared keys ever surface, typed.
-const dotEnv = loadEnvFile(cwdPathBuilder(".env"))
+/**
+ * The `.env` layer, resolved the first time a property is read rather than when this module is evaluated.
+ *
+ * Reading `process.cwd()` at module scope froze the layer to whichever directory the process started in, so the two
+ * halves of the view below disagreed about when they were sampled: the `process.env` half re-parses on every get, the
+ * `.env` half never did. A CLI invoked from a subdirectory therefore read no `.env` at all while still reporting itself
+ * as a live view. Resolving per directory keeps both halves answering about the same moment; the memo means a property
+ * get costs a map lookup rather than a file read.
+ */
+const dotEnvByDirectory = new Map<string, object>()
+
+function dotEnv(): object {
+	const directory = process.cwd()
+	const loaded = dotEnvByDirectory.get(directory) ?? loadEnvFile(join(directory, ".env"))
+
+	dotEnvByDirectory.set(directory, loaded)
+
+	return loaded
+}
 
 function liveEnv<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.infer<z.ZodObject<Shape>> {
 	const view = {} as z.infer<z.ZodObject<Shape>>
@@ -20,7 +33,7 @@ function liveEnv<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.inf
 		Object.defineProperty(view, key, {
 			enumerable: true,
 			// oxlint-disable-next-line sister-software/no-process-globals -- this module is the typed process.env boundary
-			get: () => schema.parse({ ...dotEnv, ...process.env })[key as keyof z.infer<z.ZodObject<Shape>>],
+			get: () => schema.parse({ ...dotEnv(), ...process.env })[key as keyof z.infer<z.ZodObject<Shape>>],
 		})
 	}
 

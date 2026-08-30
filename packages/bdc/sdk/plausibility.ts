@@ -23,7 +23,7 @@
  *   - **Physical evidence's search center**: independent of the above — `claim.point` (or the geocoded
  *     `claim.address`) directly, whenever available. A GEOID-ONLY claim (no point, no address) has NO
  *     coordinate to search from: bdc.db stores no public geoid→centroid resolver (deriving one would
- *     need the same Fabric-adjacent block-centroid machinery the vertical explicitly keeps out of reach
+ *     need the same Fabric-adjacent block-centroid implementation the vertical explicitly keeps out of reach
  *     — §2.2's boundary), so physical evidence is skipped entirely for that shape of claim. This is a
  *     genuine, documented capability gap, not a missing-layer abstain: `coverage_confidence` still
  *     degrades honestly (see below), but no `PlausibilityEvidence` abstain variant fits "no coordinate
@@ -111,15 +111,10 @@
  *   — that gap needs the schema addition, not a runtime assertion.
  */
 
-import type { DatabaseClient } from "@mailwoman/core/kysley/client"
-import {
-	readLayerCoverage,
-	readLayerManifest,
-	type LayerContractDatabase,
-	type LayerContractHandle,
-} from "@mailwoman/core/layers"
+import { readLayerCoverage, readLayerManifest, type LayerContractHandle } from "@mailwoman/core/layers"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
 import { BDC_H3_RESOLUTION, type BDCDatabase } from "../schema.ts"
@@ -257,7 +252,7 @@ export interface GeocodeLike {
  */
 export interface PlausibilityPOIDeps {
 	lookup: POILookup
-	contractDB: DatabaseClient<LayerContractDatabase>
+	contractDB: LayerContractHandle & Pick<DatabaseClient, "destroy">
 }
 
 export interface PlausibilityDeps {
@@ -367,7 +362,7 @@ function combineCoverage(
  */
 async function assertLayerSpineResolution(
 	layer: "bdc" | "poi",
-	contractDB: LayerContractHandle,
+	contractDB: LayerContractHandle & Pick<DatabaseClient, "destroy">,
 	expectedResolution: number
 ): Promise<void> {
 	const manifest = await readLayerManifest(contractDB)

@@ -3,14 +3,13 @@
 
 /**
  * @file Tests for {@linkcode parseProviderList} — the BDC provider-list streaming CSV parser that
- *   preserves multi-FRN / multi-holding-company cardinality (decision 6). The load-bearing
+ *   preserves multi-FRN / multi-holding-company cardinality (decision 6). The required
  *   assertions here are the two "yields EVERY row" tests: nothing in this file may collapse two rows
  *   sharing a `provider_id` into one, no matter how tempting a `Map` keyed by `provider_id` looks.
  */
 
-import { join } from "node:path"
-
 import { parseProviderList, type ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const FIXTURES_DIR = join(import.meta.dirname, "../../../test-fixtures")

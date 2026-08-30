@@ -91,7 +91,7 @@ anchor lookup keys: 42317
 anchor fired on 20/100 rows
 ```
 
-Removing it moves the hash (`8505fdee…` over the same 300 parses), so the channel is load-bearing for
+Removing it moves the hash (`8505fdee…` over the same 300 parses), so the channel is required for
 `en-us` and this change did not touch it.
 
 **FR, byte-stable too.** Same instrument, the 46 FR rows × 3 registers, graded with `postcode-gb.bin`

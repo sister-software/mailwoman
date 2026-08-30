@@ -104,7 +104,7 @@ because batching is coming.
 
 Don't try to reproduce the specialization with a small model. A minimal reshape repro exports fine at
 batch=1 on torch 2.13 — it comes out of the transformers attention internals, so only the real
-checkpoint settles it.
+checkpoint determines the result.
 
 ## What works
 

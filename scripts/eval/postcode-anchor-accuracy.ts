@@ -17,9 +17,8 @@
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 
-import { parseArgs as parseNodeArgs } from "node:util"
-
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
+import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
 import { JSONSpliterator } from "spliterator"
@@ -115,7 +114,7 @@ async function main(): Promise<void> {
 		distances.push(haversineKm(lat, lon, placedHit.lat, placedHit.lon))
 	}
 
-	lookup.close()
+	lookup[Symbol.dispose]()
 	distances.sort((a, b) => a - b)
 
 	console.log(`# Postcode-anchor centroid accuracy — ${country}`)

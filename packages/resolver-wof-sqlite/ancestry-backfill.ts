@@ -44,11 +44,9 @@
  *   nothing.
  */
 
-import { readdirSync } from "node:fs"
-import type { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 
 import type { WOFDatabase } from "./schema.ts"
@@ -80,18 +78,16 @@ export interface AncestryBackfillResult {
  * the nested lab layout (a `whosonfirst-data` group dir holding the admin repos) and a flat layout (admin repos
  * directly under the root); searches at most two directory levels deep.
  */
-export function discoverAdminDataRoots(reposRoot: string): string[] {
+export async function discoverAdminDataRoots(reposRoot: string): Promise<string[]> {
 	const roots: string[] = []
 
-	const visit = (dir: string, depth: number): void => {
+	const visit = async (dir: string, depth: number): Promise<void> => {
 		if (depth > 2) return
 
 		let names: string[]
 
 		try {
-			names = readdirSync(dir, { withFileTypes: true })
-				.filter((e) => e.isDirectory())
-				.map((e) => e.name)
+			names = (await readDirectoryEntries(dir)).filter((e) => e.isDirectory()).map((e) => e.name)
 		} catch {
 			return
 		}
@@ -102,12 +98,12 @@ export function discoverAdminDataRoots(reposRoot: string): string[] {
 			if (name === "data") {
 				roots.push(child)
 			} else if (name.startsWith("whosonfirst-data")) {
-				visit(child, depth + 1)
+				await visit(child, depth + 1)
 			}
 		}
 	}
 
-	visit(reposRoot, 0)
+	await visit(reposRoot, 0)
 
 	return roots
 }
@@ -135,18 +131,17 @@ function placetypeFromKey(key: string): string | null {
  * skipped rows would have `noGeojson`-skipped anyway. Omit `maxID` (default) for the legacy WOF-only DBs.
  */
 export async function backfillAncestorsFromHierarchy(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	geojsonRoots: readonly string[],
 	opts: { maxID?: number } = {}
 ): Promise<AncestryBackfillResult> {
 	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER
-	const kdb = new DatabaseClient<WOFDatabase>({ database: db })
 
 	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring. The
 	// earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children that
 	// inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
 	// The id bound is stated first so SQLite prunes by the PK index before the NOT EXISTS runs at all.
-	const candidateBase = kdb
+	const candidateBase = db
 		.selectFrom("spr")
 		.where("id", "<", maxID)
 		.where((eb) =>
@@ -171,7 +166,7 @@ export async function backfillAncestorsFromHierarchy(
 	// (measured 2026-08-04).
 	const alreadyPresent = new Map<number, Set<number>>()
 
-	for (const row of await kdb
+	for (const row of await db
 		.selectFrom("ancestors")
 		.select(["id", "ancestor_id"])
 		.where("id", "in", candidateBase.select("spr.id"))

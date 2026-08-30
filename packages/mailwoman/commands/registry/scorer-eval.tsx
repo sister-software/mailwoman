@@ -44,7 +44,7 @@ export const spec = {
 		// shared data wiring
 		sources: stringOption("Record-matcher sources directory"),
 		wof: stringOption("WOF admin SQLite path"),
-		"data-root": stringOption("Per-state shard root"),
+		"data-root": stringOption("Per-state database root"),
 		"out-md": stringOption("Markdown report path"),
 		// sampling
 		state: stringOption("State filter"),
@@ -259,7 +259,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 }
 
 const RegistryScorerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
-	const state = useCommandTask(() => runKind(args[0], options))
+	const state = useCommandTask(async () => await runKind(args[0], options))
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
 

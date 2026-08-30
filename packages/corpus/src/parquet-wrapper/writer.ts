@@ -12,13 +12,12 @@
  *   dispose calls don't race.
  */
 
-import * as fs from "node:fs/promises"
-import * as path from "node:path"
-
 import { ParquetWriter as BaseParquetWriter } from "@dsnp/parquetjs"
 import type { WriterOptions } from "@dsnp/parquetjs/dist/lib/declare.js"
 import { osopen, type WriteStreamMinimal } from "@dsnp/parquetjs/dist/lib/util.js"
 import { ParquetEnvelopeWriter } from "@dsnp/parquetjs/dist/lib/writer.js"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
+import * as path from "@mailwoman/platform/path"
 
 import {
 	type ParquetRecordLike,
@@ -59,7 +58,7 @@ export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWrite
 		opts?: WriterOptions
 	): Promise<ParquetWriter<T>> {
 		if (typeof sourcePath === "string") {
-			await fs.mkdir(path.dirname(sourcePath), { recursive: true })
+			await makeDirectories(path.dirname(sourcePath))
 		}
 
 		const outputStream = await osopen(sourcePath, opts)
@@ -82,10 +81,7 @@ export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWrite
 		return super.appendRow(row)
 	}
 
-	/**
-	 * Flush all buffered data to disk, close the file, and release resources.
-	 */
-	public override async close(): Promise<void> {
+	public async [Symbol.asyncDispose](): Promise<void> {
 		await this.#flushing
 
 		if (this.closed) return
@@ -97,13 +93,5 @@ export class ParquetWriter<T extends ParquetRecordLike> extends BaseParquetWrite
 		this.#flushing = promise
 
 		return this.#flushing
-	}
-
-	public async [Symbol.asyncDispose]() {
-		return this.close()
-	}
-
-	public async dispose() {
-		return this[Symbol.asyncDispose]()
 	}
 }

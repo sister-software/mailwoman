@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Lift the load-bearing lines out of a gauntlet log.
+ *   Lift the required lines out of a gauntlet log.
  *
  *   The gauntlet is the release authority and this module adds nothing to its grading — a second implementation of it
  *   would be a second answer key. What it does is surface three things the spec says must not stay buried in a log a
@@ -195,7 +195,7 @@ export function parseGauntletReport(stdout: string, stderr: string): GauntletRep
  * A one-line reading of the report, for the `summary` an agent relays.
  *
  * Leads with the gated fraction rather than the verdict word: the fraction is the thing a reader can compare against a
- * baseline, and it is the line that got skipped the day this rule was written.
+ * baseline, and the line that got skipped the day this rule was written.
  */
 export function summarizeGauntletReport(report: GauntletReport): string {
 	if (!report.layers.length) {

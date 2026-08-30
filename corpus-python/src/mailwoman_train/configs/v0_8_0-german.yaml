@@ -15,7 +15,7 @@
 # constant LR. v0.7.2's step-100000 is immutable and preserved; the German model is step-140000.
 #
 # Baseline German per-locale F1 (v0.7.2, OOD): street 19.1%, house_number 14.6%, locality 72.5%,
-# postcode 89.0%. Hypothesis: street + house_number jump; US/FR within ~1pp (interference tripwire);
+# postcode 89.0%. Hypothesis: street + house_number jump; US/FR within ~1pp (interference regression check);
 # German resolver coord holds. Revert if any existing locale drops > 1pp.
 #
 # Launch:

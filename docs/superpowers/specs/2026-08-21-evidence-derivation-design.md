@@ -140,7 +140,7 @@ coverage.ts     requireExclusionBasis(cell, fold) — the gate
 derivation.ts   DerivationGraph + project()
 ```
 
-Zero deps is load-bearing rather than tidy. `@mailwoman/bdc`, `@mailwoman/resolver`,
+Zero deps is required rather than tidy. `@mailwoman/bdc`, `@mailwoman/resolver`,
 `@mailwoman/filer` and later `@mailwoman/match` all need this. Routing it through `@mailwoman/core`
 would drag core's ~11 MB of shipped data behind every leaf consumer — the same cost that makes
 `nuts-lookup` and `timezone-lookup` keep local ray-casts today rather than depend on

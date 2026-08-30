@@ -23,13 +23,12 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import { existsSync, mkdirSync, statSync } from "node:fs"
-import { rm } from "node:fs/promises"
-import { basename, join } from "node:path"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
+import { basename, join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
@@ -83,7 +82,7 @@ async function findNpidataCSV(zipPath: string): Promise<string | undefined> {
 
 export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const destDir = join(options.outRoot, SLUG)
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 	const manifestPath = join(destDir, "MANIFEST.json")
 
 	report?.(`=== ${SLUG}`)
@@ -108,7 +107,7 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	if (recorded?.sha256 && recorded.filename) {
 		const recordedPath = join(destDir, recorded.filename)
 
-		if (existsSync(recordedPath) && (await sha256File(recordedPath)) === recorded.sha256) {
+		if ((await pathExists(recordedPath)) && (await sha256File(recordedPath)) === recorded.sha256) {
 			report?.("  ✓ Already current (sha256 matches MANIFEST) — skipping download.")
 
 			return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
@@ -145,13 +144,13 @@ export async function fetchNPPES(options: FetchNPPESOptions, report?: (line: str
 	const csvDest = join(destDir, basename(csvName))
 
 	await extractZipEntry(zipDest, csvName, csvDest)
-	const csvSize = statSync(csvDest).size
+	const csvSize = (await statPath(csvDest)).size
 	const csvSha = await sha256File(csvDest)
 	report?.(`  CSV size: ${(csvSize / 1024 / 1024).toFixed(1)} MB`)
 
 	// MARK: Remove the ZIP to reclaim ~1 GB
 
-	await rm(zipDest, { force: true })
+	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")
 
 	// MARK: Write MANIFEST (records the extracted CSV, not the ZIP)

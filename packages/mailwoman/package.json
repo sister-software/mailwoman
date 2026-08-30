@@ -45,6 +45,11 @@
 		"eval-harness/gates/*.json",
 		"eval-harness/baselines.json",
 		"eval-harness/gauntlet/cases/*/*.jsonl",
+		"eval-harness/conformance/*.jsonl",
+		"eval-harness/semantic-utility/*.json",
+		"eval-harness/absence-observation/*.json",
+		"eval-harness/phase-2-decision/*.json",
+		"eval-harness/invariance/*.jsonl",
 		"skills",
 		"*.ts",
 		"*.tsx",
@@ -99,6 +104,11 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
+		"#observations/*": {
+			"node": "./observations/*.ts",
+			"default": "./out/observations/*.js",
+			"types": "./out/observations/*.d.ts"
+		},
 		"#cli-kit/weights-guard": {
 			"node": "./out/cli-kit/weights-guard.js",
 			"default": "./out/cli-kit/weights-guard.js",
@@ -108,6 +118,11 @@
 			"node": "./geocode-core.ts",
 			"default": "./out/geocode-core.js",
 			"types": "./out/geocode-core.d.ts"
+		},
+		"#geocode-shards": {
+			"node": "./geocode-shards.ts",
+			"default": "./out/geocode-shards.js",
+			"types": "./out/geocode-shards.d.ts"
 		},
 		"#geocode-session": {
 			"node": "./geocode-session.ts",
@@ -267,6 +282,11 @@
 			"default": "./out/data-release.js",
 			"types": "./out/data-release.d.ts"
 		},
+		"./observations": {
+			"node": "./observations/index.ts",
+			"default": "./out/observations/index.js",
+			"types": "./out/observations/index.d.ts"
+		},
 		"./poi-intent": {
 			"node": "./poi-intent.ts",
 			"default": "./out/poi-intent.js",
@@ -291,6 +311,11 @@
 			"node": "./data-inventory.ts",
 			"default": "./out/data-inventory.js",
 			"types": "./out/data-inventory.d.ts"
+		},
+		"./freshness": {
+			"node": "./freshness.ts",
+			"default": "./out/freshness.js",
+			"types": "./out/freshness.d.ts"
 		},
 		"./fork-entity": {
 			"node": "./fork-entity.ts",
@@ -371,6 +396,21 @@
 			"node": "./tools/generate-clients.ts",
 			"default": "./out/tools/generate-clients.js",
 			"types": "./out/tools/generate-clients.d.ts"
+		},
+		"./geocode-result": {
+			"node": "./geocode-result.ts",
+			"default": "./out/geocode-result.js",
+			"types": "./out/geocode-result.d.ts"
+		},
+		"./geocode-shards": {
+			"node": "./geocode-shards.ts",
+			"default": "./out/geocode-shards.js",
+			"types": "./out/geocode-shards.d.ts"
+		},
+		"./geocode-tree-reads": {
+			"node": "./geocode-tree-reads.ts",
+			"default": "./out/geocode-tree-reads.js",
+			"types": "./out/geocode-tree-reads.d.ts"
 		}
 	},
 	"publishConfig": {
@@ -379,30 +419,39 @@
 	"dependencies": {
 		"@inkjs/ui": "^2.0.0",
 		"@isaacs/cliui": "^9.0.0",
+		"@mailwoman/activity-lexicon": "workspace:*",
 		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/api": "workspace:*",
 		"@mailwoman/api-kit": "workspace:*",
 		"@mailwoman/ban": "workspace:*",
 		"@mailwoman/bdc": "workspace:*",
+		"@mailwoman/coastal": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/corpus": "workspace:*",
 		"@mailwoman/filer": "workspace:*",
+		"@mailwoman/flood": "workspace:*",
 		"@mailwoman/formatter": "workspace:*",
+		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/locale-gate": "workspace:*",
 		"@mailwoman/map-tui": "workspace:*",
+		"@mailwoman/match": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
 		"@mailwoman/phrase-grouper": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
+		"@mailwoman/soil": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/variant-aliases": "workspace:*",
+		"@mailwoman/zoning": "workspace:*",
 		"chalk": "^6.0.0",
 		"change-case": "^5.4.4",
 		"d3-scale-chromatic": "^3.1.0",
@@ -413,15 +462,13 @@
 		"onnxruntime-node": "^1.26.0",
 		"path-ts": "^2.1.0",
 		"react": "^19.2.8",
-		"spliterator": "^6.2.0",
-		"yauzl-promise": "^4.0.0",
+		"spliterator": "^6.3.1",
 		"zod": "^4.4.3",
 		"zx": "^8.8.5"
 	},
 	"devDependencies": {
 		"@mailwoman/osm": "workspace:*",
-		"@mailwoman/resolver-wof-wasm": "workspace:*",
-		"@types/yauzl-promise": "^4.0.1"
+		"@mailwoman/resolver-wof-wasm": "workspace:*"
 	},
 	"peerDependencies": {
 		"@duckdb/node-api": "1.5.3-r.3",

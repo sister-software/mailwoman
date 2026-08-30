@@ -15,10 +15,10 @@
  *   Run: `mailwoman placer quantize [--in <fp32 dir>] [--out <int8 dir>]`
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
+import * as path from "@mailwoman/platform/path"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
+import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
 import { dataRootPath } from "#utils"
 
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -63,8 +63,8 @@ export async function quantizeCoarsePlacer(
 	const inDir = options.in || dataRootPath("coarse-placer", "model")
 	const outDir = options.out || dataRootPath("coarse-placer", "model-int8")
 
-	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(inDir, "meta.json"), "utf8"))
-	const buf = readFileSync(path.join(inDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(inDir, "meta.json"))
+	const buf = await readLocalBuffer(path.join(inDir, "weights.bin"))
 	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 	const w = new Float32Array(ab)
 	const C = meta.classes.length
@@ -113,13 +113,10 @@ export async function quantizeCoarsePlacer(
 		}
 	}
 
-	mkdirSync(outDir, { recursive: true })
-	writeFileSync(path.join(outDir, "weights.bin"), Buffer.from(int8.buffer))
+	await makeDirectories(outDir)
+	await writeLocalBuffer(Buffer.from(int8.buffer), path.join(outDir, "weights.bin"))
 
-	writeFileSync(
-		path.join(outDir, "meta.json"),
-		JSON.stringify({ ...meta, quantization: "int8-per-row", scales }, null, 2)
-	)
+	await writeLocalJSONFile({ ...meta, quantization: "int8-per-row", scales }, path.join(outDir, "meta.json"))
 
 	const fp32Bytes = w.length * 4
 	const int8Bytes = int8.length

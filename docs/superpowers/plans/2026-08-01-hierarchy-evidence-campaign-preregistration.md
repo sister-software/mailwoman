@@ -95,7 +95,7 @@ lever nobody measured.
 - **D-C4 (required disclosure, not a pass/fail bar).** Report the census's dep-loc mass on the
   56-row law-1 confound board. The expected result is ~100% coverage, because every row shares the
   London parent: **the census cannot discriminate at span level by construction.** That is the
-  finding to state plainly, not to bury — it is precisely why the census is a parent-scoped prior
+  finding to state directly, not to bury — it is precisely why the census is a parent-scoped prior
   that must compose with span-level evidence, and why this rung ships un-wired.
 
 ### R4c Addendum 1 — B-C2 is mis-specified; the amended bar, pre-registered before reading it

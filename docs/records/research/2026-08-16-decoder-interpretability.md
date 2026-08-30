@@ -1,9 +1,9 @@
-# Faithful per-decision attribution for a small BIO tagger, and confidence machinery for error-shape diagnosis
+# Faithful per-decision attribution for a small BIO tagger, and confidence implementation for error-shape diagnosis
 
 Research memo, 2026-08-16. Question: can mailwoman's ~tens-of-millions-param, 4–6-layer encoder BIO
 tagger be made to explain its per-decision reasoning _faithfully_ — in particular to flag "decision
 made with evidence channels silent" and to say _where_ a labeling decision formed — and what
-confidence machinery fits classifying failures into a discrete, human-triaged, slowly-evolving
+confidence implementation fits classifying failures into a discrete, human-triaged, slowly-evolving
 diagnosis vocabulary?
 
 Grounding read: `docs/records/site-2026-08/concepts/what-mailwoman-is.mdx` (calibrated,
@@ -12,7 +12,7 @@ retrieval-augmented sequence labeler; channels are soft features, never override
 street-type channels, each `features[][]` + `confidence[]`, fed alongside `input_ids`; the
 ProductionScorer already asserts _which_ channels were fed). The Weimar case in this memo's terms:
 every channel row was zero, the token-embedding pathway alone produced the (correct) labels, and
-the resolver then chose Weimar, Texas — a _cross-boundary contradiction_ the current machinery has
+the resolver then chose Weimar, Texas — a _cross-boundary contradiction_ the current implementation has
 no way to notice.
 
 Verification key: **[S]** = verified via web search this session; **[M]** = from memory (high
@@ -90,7 +90,7 @@ channels fired but may have been ignored.
 
 **Pitfalls.** IG's baseline choice matters (zero-embedding baselines are out-of-manifold [M]);
 gradient attributions can fail sanity checks (Adebayo et al. 2018, _Sanity Checks for Saliency
-Maps_ [M]); none of these are causal guarantees — for load-bearing claims, confirm with patching.
+Maps_ [M]); none of these are causal guarantees — for required claims, confirm with patching.
 
 **Weimar verdict.** IG would have put essentially all attribution mass on the raw token embeddings
 and none on the (zero) channels — the exact "confident parse, silent evidence" signature — but the
@@ -198,7 +198,7 @@ one that leaks."
 
 **Concept bottleneck models.** Koh et al. 2020, _Concept Bottleneck Models_ (ICML) [S/M]: predict
 interpretable concepts, then predict the label _only_ from concepts; supports test-time concept
-intervention. The leakage literature is the load-bearing part for us: Mahinpei et al. 2021,
+intervention. The leakage literature is the required part for us: Mahinpei et al. 2021,
 _Promises and Pitfalls of Black-Box Concept Learning Models_ [M]; Margeloiu et al. 2021, _Do
 Concept Bottleneck Models Learn as Intended?_ [M]; Havasi et al. 2022, _Addressing Leakage in
 Concept Bottleneck Models_ (NeurIPS) [S]; Shin et al. 2023, _A Closer Look at the Intervention
@@ -210,7 +210,7 @@ validity and pay in accuracy exactly on inputs the concept vocabulary doesn't co
 is every place the gazetteer doesn't know. **Weimar is the proof we want the leak**: a hard
 bottleneck (parse only from channels) would have had literally zero input and been forced to
 abstain or emit garbage; the bypass produced the correct parse. The failure was downstream — so
-the right machinery _flags_ bypass decisions rather than preventing them.
+the right implementation _flags_ bypass decisions rather than preventing them.
 
 **Right for the right reasons.** Ross, Hughes & Doshi-Velez 2017, _Right for the Right Reasons:
 Training Differentiable Models by Constraining their Explanations_ (IJCAI) [S]: penalize input
@@ -259,7 +259,7 @@ contradiction.
 
 ---
 
-## 4. Confidence machinery for error-shape classification
+## 4. Confidence implementation for error-shape classification
 
 Setting: a classifier (or human-in-the-loop triage assistant) that maps a failure case to a
 discrete _diagnosis_ — an error shape like "evidence-silent parse", "resolver country flip",
@@ -321,7 +321,7 @@ from adjacent literatures:
    is not exchangeable; use weighted/rolling-window conformal (_Conformal Prediction Beyond
    Exchangeability_, Barber et al. 2023 [M]; label-shift variant Podkopaev & Ramdas 2021 [M]) and
    version the vocabulary the way the eval ledger already versions scores.
-4. Alternative posterior machinery — evidential deep learning (Sensoy et al. 2018, _Evidential
+4. Alternative posterior implementation — evidential deep learning (Sensoy et al. 2018, _Evidential
    Deep Learning to Quantify Classification Uncertainty_, NeurIPS [S]; survey Ulmer et al.,
    _Prior and Posterior Networks_ [S]) gives a Dirichlet over classes whose total evidence is an
    abstention signal in one head. Tempting, but its epistemic-uncertainty claims have known

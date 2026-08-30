@@ -139,7 +139,7 @@ DeepSeek read is that conditioning _functionally_ specializes up to ~20-30 local
 hidden (we have 384), so our 15-20 target sits inside the safe regime, and the German collapse was a
 training-schedule artifact rather than a shared-weights limit. **Treat the capacity numbers as directional
 estimates, not gospel** (the same source over-called the tokenizer wall, which our own
-`diag-tokenizer-multiscript.ts` walked back). The part we trust is the falsifiable tripwire below.
+`diag-tokenizer-multiscript.ts` walked back). The part we trust is the falsifiable regression check below.
 
 ## Decision rules (pre-registered)
 
@@ -148,7 +148,7 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
   retrain for German _alone_ is not justified. Keep v0.7.2 and **batch** the locale expansion.
 - **Retrain trigger (resolver terms):** a locale's resolver utility falls below ~80% city match, or
   adding a locale drops an existing one's resolver utility by more than 2pp (the 77→43 collapse).
-- **Cross-pollution / capacity tripwire:** per-locale, the rate of city-start tokens mis-tagged as
+- **Cross-pollution / capacity regression check:** per-locale, the rate of city-start tokens mis-tagged as
   postcode must fall below 1% by 20k steps with balanced data and conditioning present. If it will not
   clear 1%, that shard has hit its interference ceiling, and we split it **by address-system** (not by
   more script).
@@ -180,7 +180,7 @@ estimates, not gospel** (the same source over-called the tokenizer wall, which o
 4. **Real run.** One from-scratch, balanced, self-conditioned run once the pilot passes and 4-5 locales
    are staged.
 5. **Global.** Script-shard collection + the coarse-placer tier; the generalized place-anchor gazetteer
-   for distinctive streets / landmarks; subdivide a shard by address-system only if its 20k tripwire
+   for distinctive streets / landmarks; subdivide a shard by address-system only if its 20k regression check
    refuses to clear.
 
 ## Related

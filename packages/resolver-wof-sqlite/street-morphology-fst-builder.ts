@@ -22,9 +22,8 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { readdirSync, readFileSync, statSync } from "node:fs"
-import { join } from "node:path"
-
+import { readDirectorySync, readLocalTextFileSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
 import type { FSTNode } from "./fst-matcher.ts"
@@ -106,13 +105,13 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 	if (opts.locales && opts.locales.length) {
 		locales = opts.locales
 	} else {
-		locales = readdirSync(opts.dictionariesDir).filter((entry) => {
+		locales = readDirectorySync(opts.dictionariesDir).filter((entry) => {
 			const localePath = join(opts.dictionariesDir, entry)
 
-			if (!statSync(localePath).isDirectory()) return false
+			if (!statPathSync(localePath).isDirectory()) return false
 
 			try {
-				statSync(join(localePath, STREET_TYPES_FILENAME))
+				statPathSync(join(localePath, STREET_TYPES_FILENAME))
 
 				return true
 			} catch {
@@ -129,7 +128,7 @@ export function buildStreetMorphologyFST(opts: BuildStreetMorphologyFSTOpts): Bu
 
 	for (const locale of locales) {
 		const filePath = join(opts.dictionariesDir, locale, STREET_TYPES_FILENAME)
-		const content = readFileSync(filePath, "utf8")
+		const content = readLocalTextFileSync(filePath)
 
 		for (const line of TextSpliterator.from(content)) {
 			const parsed = parseLine(line)

@@ -19,10 +19,9 @@
  *   Usage: mailwoman dev generate country-population
  */
 
-import { writeFileSync } from "node:fs"
-import { fileURLToPath } from "node:url"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { fileURLToPath } from "@mailwoman/platform/url"
 
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
 
@@ -135,7 +134,7 @@ export async function generateCountryPopulation(
  */
 export const COUNTRY_POPULATION: Readonly<Record<string, number>> = {`
 
-	writeFileSync(outPath, `${header}\n${body}\n}\n`)
+	await writeLocalTextFile(`${header}\n${body}\n}\n`, outPath)
 	report?.(`wrote ${outPath} (${Object.keys(rows).length} countries)`)
 
 	return { countries: Object.keys(rows).length, outPath }

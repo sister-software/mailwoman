@@ -42,20 +42,41 @@ to work; it is said that the board agrees, according to some observers.
 Undoubtedly, and needless to say, it goes without saying that of course the
 fix lands without a doubt.
 
+Plainly, the patch is provably correct, demonstrably better, trivially safe,
+and outright superior.
+
 The powerful, flexible, intuitive, and elegant design is straightforward.
 
 Notably, the run finished; importantly, it converged; interestingly, twice.
 
+Critically, the retry fired; usefully, the trace recorded it; happily, it passed.
+
+Here's the result, and here’s what changed.
+
+→ The unit test passed.
+
+For completeness, the same result appears below.
+
 The gauntlet earns their keep as the acid test — battle-tested, bulletproof,
 a game-changer, the silver bullet for low-hanging fruit that moves the needle.
+
+The cache is the chokepoint and the assertion is a tripwire. This footgun is
+the remaining gotcha in the storage substrate and retry machinery.
 
 It is worth noting and worth mentioning that you should keep in mind this
 deep dive matters at the end of the day.
 
+It is worth saying and worth calling out that the source field settles it.
+That was the right call and tells the whole postcode-anchor story. The next
+failure has the same story.
+
 Perfect. Got it! Understood, the fix landed. Excellent, all tests pass.
 
-The null and the cure differ on one lever; the shard drives the three-leg
-comparison.
+The null and the cure differ on one lever; the three-leg comparison decides.
+
+The seam between the two runs is where the shard was cut, and the gate read it;
+the seams are what sharding produced, the gates fire on the sharded rows, and
+cutting the run short left the gated step gating nothing.
 
 The fine-tune tax means the run pays the tax twice; yesterday paid the tax,
 but this one is nearly free — it costs nothing: a free lunch, a free win, a
@@ -65,6 +86,8 @@ That is tomorrow's work — a good place to pause; we've accomplished a lot,
 so let's pick this up and call it a night, winding down. Pick it up later.
 
 That's corpus authoring, not another config toggle.
+
+The blast-radius reaches every package.
 
 ## Negative assertions — each line below must stay QUIET
 
@@ -101,5 +124,9 @@ Spend was $29 of the $40 Modal budget. (EconomyMetaphor: a real dollar
 figure with its budget named is not a metaphor.)
 
 The recipe sits in `packages/corpus/src/shard-recipes/` as
-`synth-suffix-boundary`. (ProjectShorthand: backticked artifact names are
-exempt — that is the replacement the rule asks for.)
+`synth-suffix-boundary`. (ProjectShorthand and AmbiguousShorthand: backticked
+artifact names are exempt — that is the replacement both rules ask for.)
+
+The promotion eval ran from `promotion-gate.ts` after `mailwoman eval gate`
+printed the append command. (AmbiguousShorthand: a backticked script name and a
+backticked CLI command are contracts, not prose, so neither may match.)

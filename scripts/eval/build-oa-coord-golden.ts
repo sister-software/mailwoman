@@ -27,13 +27,14 @@
 
 // oxlint-disable max-depth -- the streaming source-format state machine is intentionally kept in one pass
 
-import { createReadStream, globSync, mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-import { parseArgs } from "node:util"
-
 import { titlecaseIfUpper } from "@mailwoman/core"
+import { globPaths } from "@mailwoman/core/fs/readers"
+import { openReadStream } from "@mailwoman/core/fs/streams"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { pyFloat, pyJSONDumps, SeededRandom } from "@mailwoman/core/utils"
+import { dirname } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 
 //#region CSV source
@@ -85,7 +86,7 @@ async function* csvRecordsFromZip(zipPath: string, entry: string): AsyncGenerato
 }
 
 async function* csvRecordsFromFile(path: string): AsyncGenerator<CSVRecord> {
-	yield* CSVSpliterator.fromAsync<CSVRecord>(withoutBOM(createReadStream(path)), CSV_OPTIONS)
+	yield* CSVSpliterator.fromAsync<CSVRecord>(withoutBOM(openReadStream(path)), CSV_OPTIONS)
 }
 
 //#endregion
@@ -279,7 +280,7 @@ async function* sourceRows(): AsyncGenerator<CSVRecord> {
 		return
 	}
 
-	for (const path of globSync(values["csv-glob"]!).toSorted()) {
+	for (const path of await globPaths(values["csv-glob"]!)) {
 		yield* csvRecordsFromFile(path)
 	}
 }
@@ -298,7 +299,7 @@ rng.shuffle(rows)
 
 const trimmed = rows.slice(0, n)
 
-mkdirSync(dirname(out), { recursive: true })
-writeFileSync(out, trimmed.map((row) => pyJSONDumps(row, { ensureASCII: false }) + "\n").join(""))
+await makeDirectories(dirname(out))
+await writeLocalTextFile(trimmed.map((row) => pyJSONDumps(row, { ensureASCII: false }) + "\n").join(""), out)
 
 process.stderr.write(`wrote ${trimmed.length} ${country.toUpperCase()} rows across ${buckets.size} buckets -> ${out}\n`)

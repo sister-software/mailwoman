@@ -26,8 +26,7 @@
  *   [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 
 import {
@@ -148,7 +147,7 @@ interface ArmMetrics {
 	phoneCheckable: number
 }
 
-function measure(label: string, threshold: number | null, entities: ResolvedEntity[]): ArmMetrics {
+async function measure(label: string, threshold: number | null, entities: ResolvedEntity[]): Promise<ArmMetrics> {
 	let crossSource = 0
 	let tripleSource = 0
 	let phoneCorrob = 0
@@ -240,7 +239,7 @@ export async function crossSourceThresholdSweep(
 		records.push(...recs)
 	}
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	report?.(`    ${records.length} records; geocoded ${geocoded}`)
 
@@ -267,7 +266,7 @@ export async function crossSourceThresholdSweep(
 	// --- Arm 1: the FS baseline (the recall-correct baseline cross-source flows currently pin). ---
 	report?.("[D] resolving — FS baseline baseline…")
 
-	const fs = measure(
+	const fs = await measure(
 		"FS baseline",
 		0,
 		resolveEntities(records, { trainEM: true, collapseSpatial: true, addressFrequency, learnedScorer: false }).entities
@@ -288,7 +287,7 @@ export async function crossSourceThresholdSweep(
 			threshold: t,
 		})
 
-		gbtArms.push(measure(`GBT @ ${t.toFixed(2)}`, t, entities))
+		gbtArms.push(await measure(`GBT @ ${t.toFixed(2)}`, t, entities))
 	}
 
 	// --- Verdict. The threshold fix WORKS only if some GBT arm dominates FS — more (or equal)
@@ -300,8 +299,8 @@ export async function crossSourceThresholdSweep(
 	const candidateArms: ArmMetrics[] = []
 
 	if (CANDIDATE) {
-		const { pathToFileURL } = await import("node:url")
-		const { resolve: resolvePath } = await import("node:path")
+		const { pathToFileURL } = await import("@mailwoman/platform/url")
+		const { resolve: resolvePath } = await import("@mailwoman/platform/path")
 
 		const mod = (await import(pathToFileURL(resolvePath(CANDIDATE)).href)) as {
 			CROSS_SOURCE_GBT_MODEL?: typeof DEDUP_GBT_MODEL
@@ -321,7 +320,7 @@ export async function crossSourceThresholdSweep(
 
 		for (const t of [t0 - 1, t0, t0 + 1]) {
 			candidateArms.push(
-				measure(
+				await measure(
 					`cross-GBT @ ${t.toFixed(2)}`,
 					t,
 					resolveEntities(records, {
@@ -435,7 +434,7 @@ export async function crossSourceThresholdSweep(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`[written] ${OUT_MD}`)
 	}
 

@@ -13,9 +13,8 @@
  *   See `docs/engineering/reference/STAGES.md` for the full contract.
  */
 
-import { readFileSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import {
 	runPipeline,
 	type MachinePreferences,
@@ -200,6 +199,25 @@ export interface CreateRuntimePipelineOpts {
 	 * - `false` — disabled: the pipeline is byte-identical to pre-flag builds.
 	 */
 	poiQueryKind?: boolean | { poiDatabasePath?: string }
+	/**
+	 * An ADDITIONAL positive-evidence phrase rung, consulted only after the committed category lexicon and the POI name
+	 * lookup have both returned nothing. Absent — the default everywhere — leaves the subject lookup exactly the two
+	 * rungs it has always been, and every query resolves as before.
+	 *
+	 * It is how a caller reaches a subject the shipped lexicon cannot name: `mailwoman/observations` builds one, where an
+	 * activity phrase reaches a category through the compiled geographic model. PRESENCE IS THE SWITCH, and deliberately
+	 * so — a boolean would make this factory construct the artifact reader itself, putting world semantics on the default
+	 * construction path and giving the pipeline knowledge of where the evidence came from. What arrives here is a plain
+	 * {@link POIPhraseLookup}, the same contract the committed lexicon satisfies, so a match is served by the existing
+	 * executor exactly as if the category had been typed. It supplies POSITIVE EVIDENCE ONLY — a miss returns `[]` and
+	 * changes nothing — and it can never displace a committed hit, because it is asked last.
+	 *
+	 * A change that ever made this rung auto-construct must widen the option to `… | false` in the SAME commit, with a
+	 * test that sets it `false` and asserts byte-stability against the composition before the change — the pattern
+	 * {@link fst} and {@link streetMorphology} already carry. A rollback that arrives after the change is not a
+	 * rollback.
+	 */
+	poiSemanticLookup?: POIPhraseLookup
 }
 
 /**
@@ -247,7 +265,9 @@ function wrapWithStreetEvidence(
  * lives here because `neural` deliberately carries no resolver-wof-sqlite dependency. Any failure (missing/corrupt
  * binary, a non-neural classifier) degrades to `undefined` — the byte-stable no-FST default.
  */
-function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"]): FSTMatcher | undefined {
+async function autoLoadWeightsFST(
+	classifier: CreateRuntimePipelineOpts["classifier"]
+): Promise<FSTMatcher | undefined> {
 	const fstPath =
 		classifier && typeof classifier === "object" && "fstPath" in classifier
 			? (classifier as { fstPath?: string }).fstPath
@@ -256,7 +276,7 @@ function autoLoadWeightsFST(classifier: CreateRuntimePipelineOpts["classifier"])
 	if (!fstPath) return undefined
 
 	try {
-		return deserializeFST(readFileSync(fstPath))
+		return deserializeFST(await readLocalBuffer(fstPath))
 	} catch (error) {
 		console.warn(
 			`[mailwoman] failed to load weights FST at ${fstPath}: ${(error as Error).message} — parsing without it`
@@ -322,10 +342,19 @@ export function createRuntimePipeline(
 
 	let poiNameLookup: POIPhraseLookup | undefined
 
+	// Rung order is the whole of the containment: the committed lexicon answers first, the POI name lookup second, and an
+	// injected semantic rung — absent by default — only where both returned nothing. Asked last, it can add a subject
+	// where there was none and can never take one away.
 	const poiSubjectLookup: POIPhraseLookup = (phrase, locale) => {
 		const lexical = poiTaxonomyLookup(phrase, locale)
 
-		return lexical.length ? lexical : (poiNameLookup?.(phrase, locale) ?? [])
+		if (lexical.length) return lexical
+
+		const named = poiNameLookup?.(phrase, locale) ?? []
+
+		if (named.length) return named
+
+		return opts.poiSemanticLookup?.(phrase, locale) ?? []
 	}
 
 	const stages: RuntimePipelineStages = {
@@ -480,7 +509,7 @@ export function createRuntimePipeline(
 
 		if (!fstResolved) {
 			fstResolved = true
-			const matcher = autoLoadWeightsFST(opts.classifier)
+			const matcher = await autoLoadWeightsFST(opts.classifier)
 
 			if (matcher) {
 				stages.fst = matcher

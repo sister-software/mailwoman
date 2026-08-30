@@ -9,14 +9,13 @@
  * failure disappear.
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync } from "node:fs"
-import { readFile, writeFile } from "node:fs/promises"
-import { relative, resolve } from "node:path"
-import { parseArgs } from "node:util"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { relative, resolve } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 import ts from "typescript"
 
 interface DebtCounters {
@@ -26,6 +25,7 @@ interface DebtCounters {
 	filterBoolean: number
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
+	synchronousFilesystemCalls: number
 }
 
 const root = String(repoRootPath())
@@ -39,6 +39,7 @@ function emptyCounters(): DebtCounters {
 		filterBoolean: 0,
 		productionFilesOver1000Lines: 0,
 		selfPackageImports: 0,
+		synchronousFilesystemCalls: 0,
 	}
 }
 
@@ -75,6 +76,70 @@ function isSelfPackageSpecifier(value: string, packageName: string | undefined):
 	return packageName !== undefined && (value === packageName || value.startsWith(`${packageName}/`))
 }
 
+/**
+ * The synchronous `node:fs` surface, by name.
+ *
+ * A `*Sync` suffix over-matches: `execSync`, `spawnSync`, `deflateSync` and `flushSync` are not filesystem calls, and
+ * `@mailwoman/core/fs/readers-sync` deliberately exports its own `*Sync` helpers, which ARE the sanctioned idiom and
+ * must not count against it. Only the builtin names belong here.
+ */
+const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
+	"accessSync",
+	"appendFileSync",
+	"chmodSync",
+	"closeSync",
+	"copyFileSync",
+	"cpSync",
+	"existsSync",
+	"globSync",
+	"lstatSync",
+	"mkdirSync",
+	"mkdtempSync",
+	"openSync",
+	"readFileSync",
+	"readSync",
+	"readdirSync",
+	"readlinkSync",
+	"realpathSync",
+	"renameSync",
+	"rmSync",
+	"rmdirSync",
+	"statSync",
+	"symlinkSync",
+	"unlinkSync",
+	"utimesSync",
+	"writeFileSync",
+	"writeSync",
+])
+
+/**
+ * Whether a call reaches the synchronous filesystem directly, bypassing `@mailwoman/core/fs`.
+ *
+ * The baseline is EIGHT, and each is named. Seven sit in workspaces that do not depend on `@mailwoman/core` — `api-kit`
+ * (2), `nuts-lookup`, `timezone-lookup`, `un-locode-lookup`, `variant-aliases` (2) — where reaching the idiom would
+ * install core's ~9 MB of data to replace a `mkdir` or a `readFileSync`. The eighth is
+ * `corpus-python/scripts/train_with_resume.ts`'s `openSync(LOG, "a")`: a log DESCRIPTOR opened in append mode for a
+ * child's stdio, which no path helper accepts. `oxlint.config.ts` exempts all eight files by name. They collapse the
+ * day the fs helpers can be reached without core's tarball; until then a NINTH call anywhere fails this check.
+ *
+ * A bare identifier is counted; a property access is counted only when the receiver is spelled `fs`. That receiver rule
+ * is what separates this population from two unrelated ones that share a method name: `node:sqlite`'s
+ * `DatabaseSync.closeSync()`, and an INJECTED dependency (`deps.existsSync`), which is a parameter a test substitutes
+ * rather than a filesystem call the module makes.
+ */
+function isSynchronousFilesystemCall(node: ts.Node): boolean {
+	if (!ts.isCallExpression(node)) return false
+
+	if (ts.isIdentifier(node.expression)) return SYNCHRONOUS_FILESYSTEM_CALLS.has(node.expression.text)
+
+	return (
+		ts.isPropertyAccessExpression(node.expression) &&
+		ts.isIdentifier(node.expression.expression) &&
+		node.expression.expression.text === "fs" &&
+		SYNCHRONOUS_FILESYSTEM_CALLS.has(node.expression.name.text)
+	)
+}
+
 function visit(
 	source: ts.SourceFile,
 	counters: DebtCounters,
@@ -82,6 +147,10 @@ function visit(
 	countSelfPackageImports: boolean
 ): void {
 	function walk(node: ts.Node): void {
+		if (isSynchronousFilesystemCall(node)) {
+			counters.synchronousFilesystemCalls++
+		}
+
 		if (isNeverCast(node)) {
 			counters.asNever++
 		}
@@ -148,9 +217,24 @@ function visit(
 }
 
 /**
- * Directories whose sources count toward repository debt.
+ * Paths whose sources DO NOT count toward repository debt, and why each is excluded.
+ *
+ * The counters used to enumerate three roots — `packages/`, `scripts/`, `docs/src/` — which quietly excluded
+ * `codemods/`, `corpus-python/`, `docker/`, everything in `docs/` outside `src/`, and the root-level configs. That is a
+ * denominator, and a count reported without one says less than it appears to: `synchronousFilesystemCalls` read 7 while
+ * `corpus-python/scripts/train_with_resume.ts` held an eighth call the walk never opened. The set is now every tracked
+ * `.ts`/`.tsx`, minus what is listed here.
  */
-const TRACKED_ROOTS = ["packages/", "scripts/", "docs/src/"]
+const UNCOUNTED = [
+	// The runtime mirror and the idiom over it call the builtins on purpose; counting them would measure the
+	// implementation rather than its callers.
+	"packages/platform/",
+	"packages/core/fs/",
+	// A codemod fixture is an INPUT. `tests/*/input.ts` holds the synchronous shapes the transform consumes and
+	// `expected.ts` holds the ones it deliberately refuses to touch, so both must keep calls this check dislikes.
+	// The codemod's own `scripts/` are NOT excluded.
+	"codemods/sync-fs-to-async/tests/",
+]
 
 /**
  * The TRACKED `.ts`/`.tsx` sources, which is what "repository debt" has to mean.
@@ -170,7 +254,7 @@ function trackedSourcePaths(): string[] {
 	return listed
 		.split("\0")
 		.filter((relativePath) => relativePath.length > 0)
-		.filter((relativePath) => TRACKED_ROOTS.some((prefix) => relativePath.startsWith(prefix)))
+		.filter((relativePath) => !UNCOUNTED.some((prefix) => relativePath.startsWith(prefix)))
 		.filter((relativePath) => !/(?:^|\/)(?:out|node_modules)\//.test(relativePath))
 		.filter((relativePath) => !relativePath.endsWith(".d.ts"))
 		.map((relativePath) => resolve(root, relativePath))
@@ -178,20 +262,20 @@ function trackedSourcePaths(): string[] {
 
 // A tracked path can be absent from the working tree (a deletion staged but not committed); skip it
 // rather than failing the whole gate on a file the next commit removes anyway.
-const paths = trackedSourcePaths().filter((path) => existsSync(path))
+const paths = trackedSourcePaths().filter((path) => pathExistsSync(path))
 
 const counters = emptyCounters()
-const rootManifest = parseJSONStrict<{ workspaces: string[] }>(await readFile(resolve(root, "package.json"), "utf8"))
+const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolve(root, "package.json"))
 
 const workspacePackages = await Promise.all(
 	rootManifest.workspaces.map(async (workspace) => ({
 		directory: resolve(root, workspace),
-		name: parseJSONStrict<{ name: string }>(await readFile(resolve(root, workspace, "package.json"), "utf8")).name,
+		name: (await readLocalJSONFile<{ name: string }>(resolve(root, workspace, "package.json"))).name,
 	}))
 )
 
 for (const path of paths) {
-	const text = await readFile(path, "utf8")
+	const text = await readLocalTextFile(path)
 
 	const source = ts.createSourceFile(
 		path,
@@ -226,10 +310,11 @@ const { values } = parseArgs({
 })
 
 if (values["write-baseline"]) {
-	await writeFile(baselinePath, `${JSON.stringify(counters, null, "\t")}\n`)
+	await writeLocalJSONFile(counters, baselinePath)
+
 	process.stdout.write(`Updated ${relative(root, baselinePath)}\n`)
 } else {
-	const baseline = parseJSONStrict<DebtCounters>(await readFile(baselinePath, "utf8"))
+	const baseline = await readLocalJSONFile<DebtCounters>(baselinePath)
 	const regressions = Object.entries(counters).filter(([name, count]) => count > baseline[name as keyof DebtCounters])
 
 	for (const [name, count] of Object.entries(counters)) {

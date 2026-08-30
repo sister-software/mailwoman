@@ -9,9 +9,9 @@
  *   tests only). Absorbs the retired `mailwoman-wof-build-coincident-roles` bin.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Text } from "ink"
 
 import { type Check, CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -38,13 +38,13 @@ const GazetteerBuildCoincidentRoles: ParsedCommandComponent<Options> = ({ option
 			const checks: Check[] = []
 
 			for (const path of args) {
-				if (!existsSync(path)) {
+				if (!(await pathExists(path))) {
 					checks.push({ ok: false, check: path, detail: "file not found" })
 
 					continue
 				}
 
-				const db = new DatabaseSync(path)
+				using db = new DatabaseClient<WOFDatabase>(path)
 
 				try {
 					const result = buildCoincidentRoles(db, {
@@ -65,8 +65,6 @@ const GazetteerBuildCoincidentRoles: ParsedCommandComponent<Options> = ({ option
 					})
 				} catch (error) {
 					checks.push({ ok: false, check: path, detail: error instanceof Error ? error.message : String(error) })
-				} finally {
-					db.close()
 				}
 			}
 

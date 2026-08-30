@@ -17,7 +17,7 @@
 #      step 0 (the v0.9.13 receipt: an always-on clue over-relies; the shipped base lineage trained
 #      WITH it — from-scratch re-runs that decision, it does not inherit it).
 #   6. classifier_learning_rate: none — everything is fresh; the hot-LR carveouts are fine-tune
-#      machinery for fresh-heads-on-frozen-bases.
+#      implementation for fresh-heads-on-frozen-bases.
 #   Everything else VERBATIM v3.24: feed weights (deploc passengers stay out), augmentations incl.
 #   ordinal 0.3 + punct_drop 0.3, both bundle channels + digit-guard street v3, evidence curriculum
 #   + 0.15 false-evidence noise, country softener 0.5, class weights, phrase priors.

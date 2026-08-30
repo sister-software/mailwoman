@@ -125,10 +125,10 @@ md5s, and the shared helpers (`linkForce` ×5, `peekPairIndexHeaderFields` ×5, 
 ×2, `removeIfPresent` ×2) are duplicated regardless of which package needs which artifact.
 `AGENTS.md` documents this script as one of four cooperating pieces (`copy-weights.ts`,
 `weights.test.ts`, the publish tarball symlink guard); the per-package artifact LIST is legitimately
-per-package, but the machinery that does the linking is not.
+per-package, but the implementation that does the linking is not.
 
 **Cost of fixing it: high**, and the shape is now clearer. The refactor is: one shared linker
-holding the machinery, plus a per-package manifest declaring which artifacts that package links —
+holding the implementation, plus a per-package manifest declaring which artifacts that package links —
 base or overlay. The manifest content is exactly the question above, which is why the split has to
 be decided before the module is written, not during.
 
@@ -548,7 +548,7 @@ Four of the five conventions checked are **holding**, with zero violations:
 `NZ_DELIVERY_SERVICE_TYPES` at line 73 and `NzDeliveryServiceTypeName` at line 97 — the same acronym,
 two casings, twenty-four lines apart.
 
-**Root cause, and why a sweep alone will not hold.** `AGENTS.md` says it plainly: "There's no lint
+**Root cause, and why a sweep alone will not hold.** `AGENTS.md` states: "There's no lint
 rule for this (oxlint can't express it); it's reviewer discipline." A convention enforced only by
 review, swept only against a fixed acronym list, will keep regrowing at every acronym not on the
 list. The durable fix is a check — a small script over exported identifiers with a project acronym

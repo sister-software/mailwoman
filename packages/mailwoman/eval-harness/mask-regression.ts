@@ -23,7 +23,7 @@
  *   BEFORE publishing — NOT a weightless CI step (weight-dependent tests don't run in CI; #582).
  *   Hook it into the release path (`mailwoman eval gate` / the publish flow), NOT into Test CI.
  *
- *   Mechanics: reuses the `capability-manifest.ts` scoring machinery verbatim — `createScorer` (so
+ *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim — `createScorer` (so
  *   the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
  *   toggling mask off vs auto, and the UNFOLDED exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't
@@ -44,10 +44,10 @@
  *   `<out-dir>/mask-regression.md`.
  */
 
-import { existsSync, writeFileSync } from "node:fs"
-
 import type { SystemCode } from "@mailwoman/codex"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
 
@@ -153,7 +153,7 @@ export async function maskRegressionGate(
 	const THRESHOLD = options.threshold ?? 0.02
 
 	for (const p of [MODEL, TOKENIZER, MODEL_CARD]) {
-		if (!existsSync(p)) throw new Error(`required artifact not found: ${p}`)
+		if (!(await pathExists(p))) throw new Error(`required artifact not found: ${p}`)
 	}
 
 	report(`mask-regression-gate (#718): threshold ${(THRESHOLD * 100).toFixed(1)}pp`)
@@ -227,23 +227,19 @@ export async function maskRegressionGate(
 	const violations = deltas.filter((d) => d.inScope && d.delta > thresholdPp)
 
 	if (JSON_OUT) {
-		writeFileSync(
-			JSON_OUT,
-			JSON.stringify(
-				{
-					gate: "mask-regression-gate",
-					issue: 718,
-					thresholdPp,
-					model: MODEL,
-					tokenizer: TOKENIZER,
-					modelCard: MODEL_CARD,
-					pass: violations.length === 0,
-					deltas: deltas.filter((d) => d.inScope),
-					violations,
-				},
-				null,
-				"\t"
-			)
+		await writeLocalJSONFile(
+			{
+				gate: "mask-regression-gate",
+				issue: 718,
+				thresholdPp,
+				model: MODEL,
+				tokenizer: TOKENIZER,
+				modelCard: MODEL_CARD,
+				pass: violations.length === 0,
+				deltas: deltas.filter((d) => d.inScope),
+				violations,
+			},
+			JSON_OUT
 		)
 
 		report(`\nWrote per-tag delta table → ${JSON_OUT}`)

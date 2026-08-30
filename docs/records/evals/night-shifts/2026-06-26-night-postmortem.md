@@ -118,7 +118,7 @@ query trim + 512-char cap. Verified all cases return 200/4xx; the parity harness
 - **`recipes/` structure (#818).** The untracked stubs link to a missing `commercial.md` and the
   licensing pages seem misplaced under `recipes/`. The recipe articles are blocked on that decision.
 - **Trusted Publishing.** The 7 new packages need Trusted Publishing configured on npm before their
-  first OIDC publish (same gotcha as the resolver packages in v4.14.0).
+  first OIDC publish (same failure mode as the resolver packages in v4.14.0).
 - **#822 / #781.** The placer next-tranche and the EU recall lever are GPU model work — promote
   decisions are yours.
 - **Candidate DB for the drop-in (#824).** Pin the canonical `candidate-global*.db` build; it gates any

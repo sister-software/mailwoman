@@ -4,7 +4,7 @@
 /**
  *   The `mwdev_compare` tool definition — the description an agent reads, the input schema, and the handler wiring.
  *   The measurement itself lives in the package root; this file is the CONTRACT, and the description is the
- *   load-bearing half of it.
+ *   required half of it.
  */
 
 import { z } from "zod"
@@ -14,7 +14,7 @@ import { runCompare } from "../compare.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
-export const compareTool = ({ registry }: DevToolDeps): DevTool => ({
+export const compareTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_compare",
 	description:
 		"Run one input set through two arms and diff them. Board model grading should use execution_path " +
@@ -59,5 +59,5 @@ export const compareTool = ({ registry }: DevToolDeps): DevTool => ({
 			),
 		stratify_by: z.enum(["country", "address_kind", "status", "truth_tolerance_m", "truth_type"]).optional(),
 	}),
-	handler: async (args) => runCompare(registry, args),
+	handler: async (args) => await runCompare(registry, args),
 })

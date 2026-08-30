@@ -91,7 +91,7 @@ node mailwoman/out/cli.js poi "coffee near <city-in-coverage>" --db <built.db>
 ```
 
 The CLI needs a resolver to turn anchor text into coordinates (`--resolve-db` /
-`--candidate-db`, defaulting to the standard shard paths) — without one, every anchored
+`--candidate-db`, defaulting to the standard data-root paths) — without one, every anchored
 query abstains `anchor_required`, which looks like a data bug and isn't. An empty results
 list with a resolved anchor means the sample lacks coverage there (see the LIMIT note);
 an `anchor_required` abstain means the resolver isn't wired.
@@ -99,7 +99,7 @@ an `anchor_required` abstain means the resolver isn't wired.
 Fixture-level tests cannot catch source-schema drift or scale behavior — the first live
 builds caught three bugs (the country column, the CLI resolver gap, and a full-scale OOM)
 that 800+ green tests missed. End every poi.db-touching change with a live smoke build,
-and treat the first FULL-scale build as its own gate: the 2026-07-19 four-country run died
+and treat the first FULL-scale build as its own verification step: the 2026-07-19 four-country run died
 at Node's default ~4 GB heap inside DuckDB's buffer-copy path because the parquet reader
 materialized instead of streamed. Row readers over DuckDB must use the chunked/streaming
 API; memory must stay flat with row count.
@@ -142,7 +142,7 @@ the poi path; using it would land the file at the wrong key. The docs tester
 ## Flag state
 
 `poiQueryKind` is **default-ON since 2026-07-20** (`boolean | { poiDatabasePath }`) — the
-promotion gate passed: 0/4,507 golden misroutes, 6/6 demo presets byte-identical, POI board
+promotion eval passed: 0/4,507 golden misroutes, 6/6 demo presets byte-identical, POI board
 v1.1 92.2% (see
 [`2026-07-20-poi-promotion-battery.md`](../../evals/2026-07-20-poi-promotion-battery.md) and
 the [runtime-flag register](./runtime-flags.mdx)). After #1206/#1208/#1209 (leaf fan-out,

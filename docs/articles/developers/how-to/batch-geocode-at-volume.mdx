@@ -26,7 +26,7 @@ a constant.
 
 The comparison tables below come from one sweep, run back to back on one machine: an AMD Ryzen 9 8945HS,
 16 logical cores, 29 GB RAM, Node.js 26.2.0, `mailwoman` 8.7.0 with model 7.0.0, resolving against
-`candidate.db` with the DC address-point and interpolation shards present. Each configuration ran three
+`candidate.db` with the DC address-point and interpolation databases present. Each configuration ran three
 times over the same 5,000 rows and the fastest run is reported, because the machine was shared and a
 slow run measures the neighbour rather than the pool. Your numbers will differ. The shape should not.
 
@@ -54,9 +54,9 @@ for (let i = 0; i < repeats; i++) queries.push(...rows)
 
 const t0 = performance.now()
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
+using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
-const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+using shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
 const startupMs = performance.now() - t0
 
 // Warm the session: the first few inferences pay one-time allocation the steady-state rate should not carry.
@@ -68,9 +68,6 @@ for (const q of queries) {
 	await geocodeAddress(q, { classifier, resolver, shards: shards.for, defaultCountry: "US" })
 }
 const runMs = performance.now() - t1
-
-shards.close()
-lookup.close()
 
 console.log(`startup ${(startupMs / 1000).toFixed(2)} s`)
 console.log(
@@ -144,9 +141,9 @@ import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 
 // Per-worker init, paid once: its own model session, its own read-only DB handle, its own shards.
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: workerData.locale })
-const lookup = new WOFCandidateTableLookup({ databasePath: workerData.candidateDB })
+using lookup = new WOFCandidateTableLookup({ databasePath: workerData.candidateDB })
 const resolver = createWOFResolver(lookup)
-const shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
+using shards = new ShardProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
 const deps = { classifier, resolver, shards: shards.for, defaultCountry: workerData.country }
 
 parentPort.on("message", async (batch) => {

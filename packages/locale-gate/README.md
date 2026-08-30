@@ -1,4 +1,4 @@
-# @mailwoman/locale-gate
+# `@mailwoman/locale-gate`
 
 **Stage 2 of the Mailwoman runtime pipeline** — rule-based locale detection.
 
@@ -39,13 +39,13 @@ Stage 2 in the [Staged Pipeline Contract](https://github.com/sister-software/mai
 
 ## Design
 
-- **Rule-based v1.** The locale gate scores candidate locales by composing
+- **Rule-based v1.** `@mailwoman/locale-gate` scores candidate locales by composing
   deterministic rules over the `QueryShape`. A trained character-level model
   is deferred to a future release.
 - **Bitter-lesson-safe:** script class, postcode regex patterns, known-format
   hits. No place-name memorization.
 - **Surfaces disagreement.** When the caller passes an explicit `--locale`
-  hint and the gate disagrees, the hint carries `detectorDisagreement: true`
+  hint and the detector disagrees, the hint carries `detectorDisagreement: true`
   so the coordinator can decide.
 
 ## Related

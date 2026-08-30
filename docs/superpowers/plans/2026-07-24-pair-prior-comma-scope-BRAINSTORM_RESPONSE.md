@@ -127,7 +127,7 @@ estimator:
   knob, and the artifact header already carries `delta` — per-pair δ is a PIX1 schemaVersion-2
   record extension (u8 tier per pair, reader maps tier→multiplier), fully backward-compatible.
 - Sequencing: build the anchored mode FIRST. Add tiers only if measured residual FP exceeds bar —
-  pre-register that decision rule, don't pre-build the machinery.
+  pre-register that decision rule, don't pre-build the implementation.
 
 PMI vs the count ratio: the ratio IS the plug-in PMI estimator up to the shared context-marginal
 constant; with two contexts and add-one smoothing they're operationally identical at this
@@ -162,7 +162,7 @@ its own rationale line, per the module's own widening discipline.
 
 ## Q6 — ASR contextual biasing: the transplantable piece is the trie, not the subtraction
 
-The subtractive-cost trick has no clean analogue here for a load-bearing reason: it exists to
+The subtractive-cost trick has no clean analogue here for a required reason: it exists to
 charge back boosts granted to PREFIXES of a hypothesis that later leaves the trie. Our flat
 per-position bias never grants partial-credit — a window probes exact folded keys or gets zero —
 so the "hallucination off the trie" failure mode is absent by construction; there is nothing to

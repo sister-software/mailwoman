@@ -100,7 +100,7 @@ honest caveats on the FR numbers:
   diversified golden that mixes both orders, house_number drops well below the
   canonical-order figure — the published frontier for reordered house numbers is
   ~90–91% (neural parsers collapse much further on reorder). The en-us release's
-  later checkpoint adds a reversed-order shard that recovers this; this fr-fr
+  later checkpoint adds a reversed-order training subset that recovers this; this fr-fr
   bundle predates that lever.
 
 Because the older anchor-off / pre-diversified-golden figures in this bundle's

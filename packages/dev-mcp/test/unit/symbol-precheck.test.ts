@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { execFileSync } from "node:child_process"
-import { fileURLToPath } from "node:url"
-
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, it } from "vitest"
 
 const HOOK = fileURLToPath(import.meta.resolve("../../hooks/symbol-precheck.ts"))

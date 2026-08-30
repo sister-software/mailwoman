@@ -10,14 +10,13 @@
  *   present ONLY in `matchedAddress`, and the address range on `fromAddress`/`toAddress`.
  */
 
-import { mkdirSync, mkdtempSync, readdirSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
 import { isTransientResourceError } from "@mailwoman/core/api"
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import { ResourceError, type ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
+import { readDirectory } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
 import { createCensusGeocoderClient, isCacheableCensusBody } from "@mailwoman/geocode-oracle/sdk/census-client"
 import {
 	CENSUS_RESOLUTION_TIER,
@@ -74,19 +73,19 @@ async function captureError(promise: Promise<unknown>): Promise<ResourceErrorSha
 }
 
 let cacheDir: string
-let dataRoot: string
+let dataRoot: TemporaryDirectory
 
-beforeEach(() => {
-	dataRoot = mkdtempSync(join(tmpdir(), "geocode-oracle-census-"))
-	cacheDir = join(dataRoot, "http-cache")
+beforeEach(async () => {
+	dataRoot = await temporaryDirectory("geocode-oracle-census-")
+	cacheDir = dataRoot.resolve("http-cache")
 
-	mkdirSync(cacheDir)
-	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot)
+	await makeDirectoryExclusive(cacheDir)
+	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path)
 })
 
 afterEach(() => {
 	vi.unstubAllEnvs()
-	rmSync(dataRoot, { recursive: true, force: true })
+	dataRoot[Symbol.asyncDispose]()
 })
 
 describe("buildStreetComponents", () => {
@@ -269,7 +268,7 @@ describe("createCensusGeocoderClient", () => {
 
 		await client.lookupAddress("anywhere").catch(() => undefined)
 
-		expect(readdirSync(cacheDir).filter((name) => name.endsWith(".json"))).toHaveLength(0)
+		expect((await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))).toHaveLength(0)
 	})
 
 	it("retries a 500 on the injected clock", async () => {

@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
+import { join } from "@mailwoman/platform/path"
 import {
 	type GeocodeAddress,
 	type RawGeocode,
@@ -12,22 +12,17 @@ import {
 	geocodeAddressVia,
 	inferMapping,
 	ingestRows,
-	parseCSV,
 	streamRows,
 } from "@mailwoman/registry/ingest"
 import { afterAll, describe, expect, it } from "vitest"
 
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
 const CSV = `id,name,org,street,city,state,zip,phone,email
 c1,Dr. Robert Smith,Acme Health LLC,123 Main St,Portland,OR,97201,503-555-0100,Bob@Acme.org
 c2,Maria Garcia,,50 Elm Ave,Seattle,WA,98101,,maria@example.com`
-
-describe("parseCSV", () => {
-	it("parses a header row into keyed objects", () => {
-		const rows = parseCSV(CSV)
-		expect(rows).toHaveLength(2)
-		expect(rows[0]).toMatchObject({ id: "c1", name: "Dr. Robert Smith", state: "OR" })
-	})
-})
 
 describe("inferMapping", () => {
 	it("maps a tidy header to the obvious fields", () => {
@@ -94,7 +89,7 @@ describe("ingestRows", () => {
 	}
 
 	it("normalizes each row: parsed name, canonical org, geocoded address, phone/email", async () => {
-		const [a, b] = await ingestRows(parseCSV(CSV), mapping, { geocodeAddress: stubGeocode })
+		const [a, b] = await ingestRows(streamRows(CSV), mapping, { geocodeAddress: stubGeocode })
 
 		expect(a!.id).toBe("c1")
 		expect(a!.name).toEqual({ prefix: "Dr.", given: "Robert", family: "Smith" })
@@ -112,19 +107,19 @@ describe("ingestRows", () => {
 	})
 
 	it("comma-joins a multi-column address by default, space when overridden (#694 flip)", async () => {
-		const [dflt] = await ingestRows(parseCSV(CSV), mapping, { geocodeAddress: stubGeocode })
+		const [dflt] = await ingestRows(streamRows(CSV), mapping, { geocodeAddress: stubGeocode })
 		expect(dflt!.address?.formatted).toBe("123 Main St, Portland, OR, 97201") // default: comma-join (#694, validated)
-		const [space] = await ingestRows(parseCSV(CSV), mapping, { geocodeAddress: stubGeocode, addressSeparator: " " })
+		const [space] = await ingestRows(streamRows(CSV), mapping, { geocodeAddress: stubGeocode, addressSeparator: " " })
 		expect(space!.address?.formatted).toBe("123 Main St Portland OR 97201") // override → legacy space-join (byte-stable A/B)
 	})
 
 	it("falls back to the row index when no id column maps", async () => {
-		const [first] = await ingestRows(parseCSV(CSV), { name: "name" })
+		const [first] = await ingestRows(streamRows(CSV), { name: "name" })
 		expect(first!.id).toBe("0")
 	})
 
 	it("leaves the address unresolved when no geocoder is injected", async () => {
-		const [first] = await ingestRows(parseCSV(CSV), mapping)
+		const [first] = await ingestRows(streamRows(CSV), mapping)
 		expect(first!.address).toBeUndefined()
 	})
 })
@@ -132,14 +127,14 @@ describe("ingestRows", () => {
 describe("streamRows (lazy delimited ingest)", () => {
 	const dirs: string[] = []
 
-	const tmp = (): string => {
-		const d = mkdtempSync(join(tmpdir(), "mw-stream-"))
+	const tmp = async (): Promise<string> => {
+		const d = fixtures.use(await temporaryDirectory("mw-stream-")).path
 		dirs.push(d)
 
 		return d
 	}
 
-	afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })))
+	afterAll(() => dirs.forEach((d) => removePathIfPresentSync(d)))
 
 	it("infers the delimiter from the extension", () => {
 		expect(delimiterFor("/x/data.tsv")).toBe("tab")
@@ -149,11 +144,11 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("streams a TSV as header-keyed rows, preserving the original header names", async () => {
-		const file = join(tmp(), "f.tsv")
+		const file = join(await tmp(), "f.tsv")
 
-		writeFileSync(
-			file,
-			"Facility Name\tPhysical Address\tCITY\nAVIR\t214 Jones Rd\tElkhart\nFoo Clinic\t1 Main St\tPalestine\n"
+		await writeLocalTextFile(
+			"Facility Name\tPhysical Address\tCITY\nAVIR\t214 Jones Rd\tElkhart\nFoo Clinic\t1 Main St\tPalestine\n",
+			file
 		)
 
 		const rows: Record<string, string>[] = []
@@ -172,8 +167,8 @@ describe("streamRows (lazy delimited ingest)", () => {
 		// The regression spliterator 3.1.0's column tokenizer failed: a row with consecutive empties must
 		// keep every column, or every value after the empty run shifts left (a 330-col NPPES row collapses
 		// to ~40 + misaligns). Fixed upstream in 3.2.0; pinned here because it's fatal if it regresses.
-		const file = join(tmp(), "f.tsv")
-		writeFileSync(file, "npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n")
+		const file = join(await tmp(), "f.tsv")
+		await writeLocalTextFile("npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n", file)
 		const rows: Record<string, string>[] = []
 
 		for await (const r of streamRows(file)) {
@@ -187,8 +182,8 @@ describe("streamRows (lazy delimited ingest)", () => {
 	it("parses quoted fields — embedded delimiters, embedded newlines, doubled quotes (NPPES-style quoting)", async () => {
 		// New with spliterator 3.2.0's end-to-end quote handling; the previous manual-split
 		// implementation assumed unquoted files.
-		const file = join(tmp(), "f.csv")
-		writeFileSync(file, 'npi,org,city\n123,"Acme, LLC",Portland\n456,"Multi\nLine ""Quoted"" Org",Seattle\n')
+		const file = join(await tmp(), "f.csv")
+		await writeLocalTextFile('npi,org,city\n123,"Acme, LLC",Portland\n456,"Multi\nLine ""Quoted"" Org",Seattle\n', file)
 		const rows: Record<string, string>[] = []
 
 		for await (const r of streamRows(file)) {
@@ -201,8 +196,8 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("normalizes CRLF row terminators — no stray \\r on the last column or header keys", async () => {
-		const file = join(tmp(), "f.csv")
-		writeFileSync(file, "npi,state\r\n123,NE\r\n")
+		const file = join(await tmp(), "f.csv")
+		await writeLocalTextFile("npi,state\r\n123,NE\r\n", file)
 		const rows: Record<string, string>[] = []
 
 		for await (const r of streamRows(file)) {
@@ -213,8 +208,8 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("closes the file handle on an early break (no leaked fd)", async () => {
-		const file = join(tmp(), "f.tsv")
-		writeFileSync(file, "a\tb\n1\t2\n3\t4\n5\t6\n")
+		const file = join(await tmp(), "f.tsv")
+		await writeLocalTextFile("a\tb\n1\t2\n3\t4\n5\t6\n", file)
 		let count = 0
 
 		for await (const _ of streamRows(file)) {
@@ -235,8 +230,8 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("threads straight into ingestRows (async-iterable source)", async () => {
-		const file = join(tmp(), "f.tsv")
-		writeFileSync(file, "name\taddress\nJohn Smith\t123 Main St\nMaria Garcia\t50 Elm Ave\n")
+		const file = join(await tmp(), "f.tsv")
+		await writeLocalTextFile("name\taddress\nJohn Smith\t123 Main St\nMaria Garcia\t50 Elm Ave\n", file)
 		const records = await ingestRows(streamRows(file), { name: "name", address: "address" })
 		expect(records).toHaveLength(2)
 		expect(records[0]!.name).toEqual({ given: "John", family: "Smith" })

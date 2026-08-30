@@ -28,6 +28,16 @@ This design is obviously, basically, and clearly a robust and comprehensive rewr
 
 This module is load-bearing and it's not just a convenience wrapper; it is the north star.
 
+The controls are real and worth preserving.
+
+The failure is real and worth tracing.
+
+The trace names the stage that diverged.
+
+The problem is in the name.
+
+The difference is worth spelling out.
+
 The resolver decides to drop low-confidence spans before the pipeline gives up.
 
 The false-positive rate is fairly high, and it happens often near the tile boundary.
@@ -56,6 +66,15 @@ We normalise the licence text, then normalising it again after normalisation is
 normalised, and the batch job normalises everything else; the licences were licenced
 and the rows were labelled during labelling, which is a capitalisation problem we
 capitalise, capitalised and capitalises around.
+
+The seam between the two modules is where a shard of the corpus is cut, and the eval
+gate reads it; the seams are what sharding produced, and the gates fire on the shards
+that were sharded, cutting the run short before the gated step ever gating cuts.
+
+Three negative assertions for AmbiguousShorthand live below, and each must stay quiet:
+`promotion-gate.ts`, `packages/corpus/src/shard-recipes/` and `mailwoman eval gate` are
+backticked, so the markdown parser hands none of them to the rule — that is how a
+contract-bearing name survives the ban without being renamed.
 
 Two negative assertions for Spelling.yml live on the next line, and both must stay
 quiet: the placetype identifier `neighbourhood` and the Nominatim field `licence` are

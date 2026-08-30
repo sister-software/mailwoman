@@ -10,7 +10,7 @@
  *   (FI 300/1k … PL 75/1k offender rows), and the controlled experiment showed postcode-shard
  *   coverage alone collapses it (FI 300→1, CZ 131→4): a resolvable postcode node feeds the
  *   resolver's coordinate-first sibling-postcode candidate injection, which binds the locality
- *   pick to its postcode neighborhood. The machinery already ships; it was coverage-starved.
+ *   pick to its postcode neighborhood. The implementation already ships; it was coverage-starved.
  *
  *   Two hard-won laws from the experiment are enforced HERE, in code, not in a runbook:
  *
@@ -33,11 +33,12 @@
  *   the model card like the existing GeoNames alias fold.
  */
 
-import { existsSync } from "node:fs"
-import type { DatabaseSync } from "node:sqlite"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
+
+import type { WOFDatabase } from "./schema.ts"
 
 /**
  * Column count of a GeoNames postal-code TSV row. Short rows are truncated or blank and are skipped. See the
@@ -137,7 +138,7 @@ export interface GeonamesPostalIngestResult {
  * freeze phase).
  */
 export async function ingestGeonamesPostal(
-	db: DatabaseSync,
+	db: DatabaseClient<WOFDatabase>,
 	countries: readonly string[],
 	postalDir: string
 ): Promise<GeonamesPostalIngestResult> {
@@ -158,7 +159,7 @@ export async function ingestGeonamesPostal(
 		const cc = country.toUpperCase()
 		const file = join(postalDir, `${cc}.txt`)
 
-		if (!existsSync(file)) {
+		if (!(await pathExists(file))) {
 			missing.push(cc)
 
 			console.error(
@@ -172,7 +173,7 @@ export async function ingestGeonamesPostal(
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
 		// Streamed: a national dump is a caller-supplied size — GB's is 177 MB, and only the caller
-		// knows which country is next. `header: false` is load-bearing; the GeoNames postal dump is
+		// knows which country is next. `header: false` is required; the GeoNames postal dump is
 		// headerless, so row 1 would be consumed as column names and its postcode lost.
 		for await (const cols of TSVSpliterator.fromAsync(file, { header: false })) {
 			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue

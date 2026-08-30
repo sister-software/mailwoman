@@ -9,15 +9,16 @@
  *   candidate.db WITHOUT the side-index (today's production demo), are byte-stable.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { WOFCandidateTableLookup } from "@mailwoman/docs/shared/httpvfs-resolver"
-import { afterEach, describe, expect, test } from "vitest"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { aroundEach, describe, expect, test } from "vitest"
 
 /**
  * Wrap a node:sqlite DB as the minimal httpvfs worker handle (async exec, sql.js result shape).
  */
-function stubWorker(db: DatabaseSync) {
+function stubWorker(db: DatabaseClient<CandidateDatabase>) {
 	return {
 		db: {
 			async exec(sql: string) {
@@ -33,10 +34,21 @@ function stubWorker(db: DatabaseSync) {
 	}
 }
 
-const openDatabases: DatabaseSync[] = []
+/**
+ * Every connection this test's fixtures open. A DisposableStack disposes once and stays disposed, so each test gets a
+ * fresh one rather than reusing the emptied stack.
+ */
+let openDatabases: DisposableStack
 
-function makeDB(withSideIndex: boolean): DatabaseSync {
-	const d = new DatabaseSync(":memory:")
+aroundEach(async (runTest) => {
+	using databases = new DisposableStack()
+
+	openDatabases = databases
+	await runTest()
+})
+
+function makeDB(withSideIndex: boolean): DatabaseClient<CandidateDatabase> {
+	const d = DatabaseClient.temp<CandidateDatabase>()
 
 	d.exec(`
 		CREATE TABLE country_codes (id INTEGER PRIMARY KEY, code TEXT);
@@ -64,16 +76,10 @@ function makeDB(withSideIndex: boolean): DatabaseSync {
 		`)
 	}
 
-	openDatabases.push(d)
+	openDatabases.use(d)
 
 	return d
 }
-
-afterEach(() => {
-	while (openDatabases.length) {
-		openDatabases.pop()!.close()
-	}
-})
 
 describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => {
 	test("WITH the side-index, a postal-city + postcode resolves to the geographic locality", async () => {
@@ -111,7 +117,7 @@ describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", 
 	// loaded, the capitalized global never existed, and the demo street tier silently fell back to
 	// the admin cascade for three days. These pins make the next sweep fail loudly instead.
 	test("the library actually exports `createDbWorker` (lowercase b)", async () => {
-		const { createRequire } = await import("node:module")
+		const { createRequire } = await import("@mailwoman/platform/module")
 		const require = createRequire(import.meta.url)
 		const umd = require("sql.js-httpvfs/dist/index.js") as Record<string, unknown>
 
@@ -119,8 +125,7 @@ describe("sql.js-httpvfs external-name contract (the batch-B casing incident)", 
 	})
 
 	test("the loader references the library's own casing and never the house-cased variant", async () => {
-		const { readFileSync } = await import("node:fs")
-		const source = readFileSync(new URL("../../../../src/shared/httpvfs-resolver.ts", import.meta.url), "utf8")
+		const source = await readLocalTextFile(new URL("../../../../src/shared/httpvfs-resolver.ts", import.meta.url))
 
 		expect(source).toContain("createDbWorker")
 		expect(source).not.toContain("createDBWorker")

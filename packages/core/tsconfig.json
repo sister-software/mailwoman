@@ -6,7 +6,7 @@
 		"rewriteRelativeImportExtensions": true,
 		"erasableSyntaxOnly": true
 	},
-	"references": [{ "path": "../codex" }],
+	"references": [{ "path": "../sqlite" }, { "path": "../codex" }],
 	"include": ["./**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"]
 }

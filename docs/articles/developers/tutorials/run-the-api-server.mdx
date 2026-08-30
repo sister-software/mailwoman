@@ -106,7 +106,7 @@ is the field to compare across two hosts when their answers diverge.
 
 The `data` block counts what it found under the data root. `wof_dbs` is empty because this deployment
 resolves against the candidate gazetteer rather than a full WOF distribution. `situs_states: 1` and
-`interpolation_states: 1` are the District of Columbia shards
+`interpolation_states: 1` are the District of Columbia databases
 [Geocode a CSV](./geocode-a-csv.mdx#6-make-the-same-script-more-precise) pulled — one jurisdiction out
 of the 52 the US bundle ships, which is why the geocodes below still answer `admin`. Those two counters
 are the fastest way to tell a deployment that lost a mount from one that never had the data.
@@ -275,7 +275,7 @@ server, three answers. Run `--cpus 1` when you want a single coherent set, or su
 accept that the percentiles are per worker.
 
 The `tiers` histogram is the operational read that matters over time: a deployment that starts answering
-`admin` where it used to answer `address_point` has lost a shard, not accuracy.
+`admin` where it used to answer `address_point` has lost a database, not accuracy.
 
 ## 6. Find the contract
 
@@ -300,8 +300,8 @@ from the deployment that served it. Point a client generator at that URL rather 
 Three routes this page did not curl: `/v1/resolve` takes an already-decoded address tree and resolves it
 against the gazetteer, for callers that parse in-process and want only that pass; `/v1/format` is the
 inverse of the parser, rendering components back to an address string plus a canonical match key; and
-`/v1/reload` reloads versioned data shards. That last one is a deploy-time route on a server with no
-authentication of its own — gate it at your ingress, or it is a restart anyone on the network can
+`/v1/reload` reloads versioned data files. That last one is a deploy-time route on a server with no
+authentication of its own — block it at your ingress, or it is a restart anyone on the network can
 trigger.
 
 ## 7. Stop it

@@ -18,7 +18,7 @@ A model-config scalar scales the `country_ambiguous` feature dim (index 1) of `c
 forward pass, it **exports as a constant into the ONNX graph** — inference feeds the raw `[country_surface,
 country_ambiguous]` clue and the graph does the scaling. No country-surface-lexicon change, no
 `country-inference.ts`/`country_lexicon.py` change, no browser change. `1.0` = v263 (bit-identical);
-v264 = `0.5`. (Serialize footgun fixed en route: the scale must be written into the checkpoint
+v264 = `0.5`. (Serialize misuse hazard fixed en route: the scale must be written into the checkpoint
 `config.json`, else export silently rebuilds at 1.0 — the first v264 export was byte-identical to v263 on
 the homograph probe until that was caught.)
 

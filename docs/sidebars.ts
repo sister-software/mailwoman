@@ -159,7 +159,7 @@ const sidebars: SidebarsConfig = {
 			label: "Knowledge base",
 			// Background rather than instruction: nothing here changes a reader's filesystem, and every
 			// page hands off to the tutorial, how-to or reference that does. Shelves are separate
-			// categories so a reader can tell domain knowledge (postal systems) apart from the machinery.
+			// categories so a reader can tell domain knowledge (postal systems) apart from the implementation.
 			items: [
 				{
 					type: "category",
@@ -193,11 +193,11 @@ const sidebars: SidebarsConfig = {
 					// defines the job (forward and reverse, place against coordinate, precision tiers);
 					// the second is the shelf's argument — the two ways the job is built, and what each
 					// costs to run; the third is the place database both designs sit on. Those three are
-					// the machinery. The last three are the judgment calls that follow from it: how to
+					// the implementation. The last three are the judgment calls that follow from it: how to
 					// decide whether a coordinate is good enough, how to choose among the shapes on the
 					// market, and why the parsing half resists rules in the first place.
 					// `why-addresses-are-hard` sits last for the same reason `falsehoods` does next door —
-					// it is the distillation, and it reads better once the machinery is familiar.
+					// it is the distillation, and it reads better once the implementation is familiar.
 					items: [
 						"developers/knowledge-base/geocoding/what-geocoding-is",
 						"developers/knowledge-base/geocoding/the-two-architectures",
@@ -217,7 +217,7 @@ const sidebars: SidebarsConfig = {
 					// first four produce, and training sixth because it explains where all of it was
 					// learned. `what-the-model-cannot-do` sits last for the same reason `falsehoods` and
 					// `why-addresses-are-hard` do on the shelves above — it is the distillation, and its
-					// limits read as limits rather than as a list once the machinery is familiar.
+					// limits read as limits rather than as a list once the implementation is familiar.
 					items: [
 						"developers/knowledge-base/address-intelligence/how-a-model-reads-an-address",
 						"developers/knowledge-base/address-intelligence/tokens-and-labels",

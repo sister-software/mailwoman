@@ -22,16 +22,15 @@
  *   the live demo drives through its httpvfs lookup — same SQL + ranking as the WASM lookup).
  */
 
-import { readFile } from "node:fs/promises"
-
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder/types"
 import { $public } from "@mailwoman/core/env"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { runCascade } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 import { loadSlimWOFDatabase } from "@mailwoman/resolver-wof-wasm/loader"
 import { WOFWasmPlaceLookup } from "@mailwoman/resolver-wof-wasm/lookup"
-import { afterAll, beforeAll, describe, expect, test } from "vitest"
+import { aroundAll, describe, expect, test } from "vitest"
 
 const HOT_DB_PATH = $public.MAILWOMAN_WOF_HOT_DB
 
@@ -44,16 +43,15 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 	// `MailwomanLookupLike.placetype` is `string | string[]` by design — widened for the shared-resolver
 	// convergence, see its own doc — while this lookup accepts only the branded WOFPlacetype. Every
 	// placetype the cascade passes is valid; the mismatch is parameter variance, not a runtime one.
-	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as unknown as MailwomanLookupLike
+	const asCascadeLookup = (l: WOFWasmPlaceLookup): MailwomanLookupLike => l as MailwomanLookupLike
 
-	beforeAll(async () => {
-		const bytes = await readFile(HOT_DB_PATH!)
+	aroundAll(async (runSuite) => {
+		const bytes = await readLocalBuffer(HOT_DB_PATH!)
 		const { db } = await loadSlimWOFDatabase({ source: bytes })
-		wasmLookup = new WOFWasmPlaceLookup({ db })
-	})
+		using lookup = new WOFWasmPlaceLookup({ db })
 
-	afterAll(() => {
-		wasmLookup?.close()
+		wasmLookup = lookup
+		await runSuite()
 	})
 
 	describe("WASM lookup", () => {
@@ -128,27 +126,19 @@ describe.skipIf(!HOT_DB_PATH)("against the production wof-hot.db (MAILWOMAN_WOF_
 
 	describe("Node lookup (resolver-wof-sqlite) — parity on the same DB", () => {
 		test('"Brooklyn" locality query → the borough (placetype expansion + alias-bag exact tier)', async () => {
-			const lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
+			using lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
 
-			try {
-				const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
-				expect(matches[0]).toMatchObject({ id: BROOKLYN_BOROUGH, name: "Brooklyn", placetype: "borough" })
-				expect(matches[0]?.exactMatch).toBe(true)
-			} finally {
-				lookup.close()
-			}
+			const matches = await lookup.findPlace({ text: "Brooklyn", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: BROOKLYN_BOROUGH, name: "Brooklyn", placetype: "borough" })
+			expect(matches[0]?.exactMatch).toBe(true)
 		})
 
 		test('"New York City" → the New York locality via the alias bag (no names table on the slim DB)', async () => {
-			const lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
+			using lookup = new WOFSQLitePlaceLookup({ databasePath: HOT_DB_PATH! })
 
-			try {
-				const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
-				expect(matches[0]).toMatchObject({ id: NEW_YORK_LOCALITY, name: "New York" })
-				expect(matches[0]?.exactMatch).toBe(true)
-			} finally {
-				lookup.close()
-			}
+			const matches = await lookup.findPlace({ text: "New York City", placetype: "locality", limit: 5 })
+			expect(matches[0]).toMatchObject({ id: NEW_YORK_LOCALITY, name: "New York" })
+			expect(matches[0]?.exactMatch).toBe(true)
 		})
 	})
 })

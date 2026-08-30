@@ -17,7 +17,7 @@
  *   vintage. (`SPIN` is a reserved identifier namespace — see {@link FilerIdentifierType}'s own docstring
  *   for why it carries no populated node in 3a.)
  *
- *   Decision 7 / gate 1 (load-bearing): `valid_from` is MANDATORY on every edge (`valid_to` is the
+ *   Decision 7 / gate 1 (required): `valid_from` is MANDATORY on every edge (`valid_to` is the
  *   nullable half of the pair), and the primary key is the 4-tuple `(from_node_id, to_node_id, source,
  *   valid_from)`, NOT just `(from_node_id, to_node_id)`. Two sources asserting the same relationship, or
  *   one source revising its assertion at a later vintage, produce two rows rather than a silent
@@ -64,7 +64,7 @@
  *   reviewer reproduced the consequence — a `family_id` minted before `"inc"` joined `BASE_DESIGNATIONS`
  *   stops matching anything the current canonicalizer produces, and every display name silently
  *   disappears with no error and no warning. Persisting the provenance rather than re-deriving it is also
- *   the plainly correct shape under this project's binding rule (provenance on every edge): a
+ *   the correct shape under this project's binding rule (provenance on every edge): a
  *   family-membership row would otherwise record the FACT without recording what produced it.
  *
  *   **`filer_family` carries `assertion` + `match_score` too** — the two columns {@link FilerEdgeTable}
@@ -400,16 +400,16 @@ export async function createFilerNodeTable(db: Kysely<FilerDatabase>): Promise<v
  * ROWID`. Call {@link createFilerEdgeToNodeIndex} separately, after bulk load, for the reverse (in-edges) traversal
  * path.
  *
- * `relationship` (decisions 1, 2) is deliberately NOT part of the primary key, even though it's every bit as
- * load-bearing as `assertion`: the PK's job is telling apart DIFFERENT provenance (a different source, or the same
- * source at a later vintage) — two rows are a legitimate plurality there. Two rows from the SAME source at the SAME
- * `valid_from` for the SAME pair is a different situation: if `relationship` were in the key, one source could assert
- * BOTH `"same_entity"` and `"holding_company"` for the identical `(from, to)` pair at the identical instant, and both
- * would silently persist side by side. That's a contradiction (one source, one moment, two incompatible claims about
- * what the pair means), not a provenance plurality — the composite `UNIQUE` index leaving `relationship` out is what
- * makes SQLite reject the second insert instead of quietly storing it. A CHECK constraint additionally rejects a
- * blank/whitespace-only `relationship` — `NOT NULL` alone doesn't (SQLite happily stores `""`), the same gap
- * `assertLastFiledAt`/`assertISODate` exist to close for the temporal columns.
+ * `relationship` (decisions 1, 2) is deliberately NOT part of the primary key, even though it's every bit as required
+ * as `assertion`: the PK's job is telling apart DIFFERENT provenance (a different source, or the same source at a later
+ * vintage) — two rows are a legitimate plurality there. Two rows from the SAME source at the SAME `valid_from` for the
+ * SAME pair is a different situation: if `relationship` were in the key, one source could assert BOTH `"same_entity"`
+ * and `"holding_company"` for the identical `(from, to)` pair at the identical instant, and both would silently persist
+ * side by side. That's a contradiction (one source, one moment, two incompatible claims about what the pair means), not
+ * a provenance plurality — the composite `UNIQUE` index leaving `relationship` out is what makes SQLite reject the
+ * second insert instead of quietly storing it. A CHECK constraint additionally rejects a blank/whitespace-only
+ * `relationship` — `NOT NULL` alone doesn't (SQLite stores `""`), the same gap `assertLastFiledAt`/`assertISODate`
+ * exist to close for the temporal columns.
  */
 export async function createFilerEdgeTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema
@@ -489,8 +489,8 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * blank/whitespace-rejecting CHECK constraint applies to `relationship` here too. Call {@link createFilerFamilyIndex}
  * separately, after bulk load, for the "all members of this family" lookup path.
  *
- * **`naming_node_id` IS in the key, and that placement is load-bearing.** Two DIFFERENT raw spellings can canonicalize
- * to the SAME `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to `"acme"`
+ * **`naming_node_id` IS in the key, and that placement is required.** Two DIFFERENT raw spellings can canonicalize to
+ * the SAME `family_id` — `"Acme Corp"` and `"Acme Corporation, LLC"` both reduce to `"acme"`
  * (`record/organization.test.ts` pins that collapse) — which is the documented decision-6 shape when one FRN files two
  * 499 rows the same day, or one `bdcProviderID` appears twice in the provider list. Those two rows differ ONLY in
  * `naming_node_id`. Left out of the key they would share an identical PK tuple, the builder's `INSERT OR IGNORE` would
@@ -501,14 +501,14 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
  * things the filer really did report, a plurality to store — where two conflicting `relationship` values for one pair
  * are two incompatible claims about what that pair MEANS, a contradiction to reject.
  *
- * **`assertion` is excluded from the key for that same reason**, and it is the reason it is excluded from
- * `filer_edge`'s key too: one source, at one instant, grading the identical membership BOTH `authoritative` and
- * `inferred` is a contradiction, not a plurality — two sources disagreeing about the strength of the same fact already
- * produce two rows, because `source` is in the key. It gets the same blank-rejecting CHECK as `relationship`: `NOT
- * NULL` alone would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of
- * every gate-2 read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any
- * surface that split on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an inferred row,
- * since an authoritative membership matched nothing and any number there would be a fabricated confidence.
+ * **`assertion` is excluded from the key for that same reason** and the reason it is excluded from `filer_edge`'s key
+ * too: one source, at one instant, grading the identical membership BOTH `authoritative` and `inferred` is a
+ * contradiction, not a plurality — two sources disagreeing about the strength of the same fact already produce two
+ * rows, because `source` is in the key. It gets the same blank-rejecting CHECK as `relationship`: `NOT NULL` alone
+ * would accept `''`, and a blank assertion is worse than a wrong one, since it matches neither half of every gate-2
+ * read (`= 'authoritative'` and `= 'inferred'` would both miss it) and the row would vanish from any surface that split
+ * on strength. `match_score` gets a CHECK of its own — a score may appear ONLY on an inferred row, since an
+ * authoritative membership matched nothing and any number there would be a fabricated confidence.
  */
 export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise<void> {
 	await db.schema

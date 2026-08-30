@@ -176,7 +176,7 @@ truth is unknowable; measuring on known points is the only honest proxy.
   65 m / fallback n=173 p50 116 m). Median claimed uncertainty (half segment length)
   137 m — the p50 error sits inside the claimed radius.
 - **Gate: MISS.** The pre-registered #483 gate (p50 ≤ 50 m, p90 ≤ 150 m) is NOT met —
-  stated plainly, not re-baselined. The shortfall tracks rural Vermont's long sparse
+  stated directly, not re-baselined. The shortfall tracks rural Vermont's long sparse
   segments (median claimed uncertainty 137 m: the geometry itself caps precision) and
   TIGER's uniform-spacing assumption. Next levers, in measured-first order: re-run on a
   denser county (the gate may simply be a rural-geometry artifact — measure before
@@ -233,7 +233,7 @@ Method 2 clear the gate on its bracketed stratum?
 - **Coverage: VT 82.0% → 97.7%, Cook 87.8% → 99.6%** — bracketing answers most of TIGER's
   name-absent/range-gap miss classes because the neighbor points ARE the E911/Overture names.
 - **Gate on the bracketed stratum: Cook PASS (42/61). VT MISS — p50 50.5 m (over by 0.5 m),
-  p90 182 m.** Stated plainly: Method 2 moved VT's bracketed p90 249 → 182 m and its p50
+  p90 182 m.** stated directly: Method 2 moved VT's bracketed p90 249 → 182 m and its p50
   66 → 50.5 m, and that is still a miss. Not re-baselined.
 - The VT residual is wide-bracket concentrated, and the claimed `uncertaintyM` (half bracket
   span) predicts it: bracketed rows claiming ≤ 100 m (71.4% of the stratum) measure p50 42 m /

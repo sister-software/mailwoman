@@ -50,7 +50,7 @@ not have crossed an ocean. The constraint that was already in hand went unused.
 
 ## Provenance is what makes this safe
 
-The hazard is stated plainly: this inverts our failure mode. Today we fail at 10,000 km and the
+The hazard is stated directly: this inverts our failure mode. Today we fail at 10,000 km and the
 user notices. An inference engine fails at 2 km and the user does not — which is the Pelias failure
 mode we just called worse.
 
@@ -178,7 +178,7 @@ The geocoding case is the same shape with the claim swapped:
 | BDC     | "we serve this location with fiber"  | fiber hut / pole route / terminal reach     | implausible if no plant         |
 | Geocode | "this address is at this coordinate" | development, road class, terrain, utilities | implausible if no built context |
 
-One mechanism, two applications. Which means the machinery is not speculative in the way the rest
+One mechanism, two applications. Which means the implementation is not speculative in the way the rest
 of this record is — a version of it is already ingested, provenanced and `asOf`-scoped.
 
 **Constraint sources this opens**, beyond the four above:

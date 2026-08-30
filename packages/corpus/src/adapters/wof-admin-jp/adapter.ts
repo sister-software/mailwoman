@@ -28,10 +28,10 @@
  *   from MLIT/JapanPost).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { isPresent } from "@mailwoman/core/objects"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
@@ -57,7 +57,7 @@ interface PlaceRow {
 /**
  * Walk parent chain up to 6 levels, over a place table already resident in memory.
  *
- * `resolve` is the escape hatch for a parent outside the preloaded set (a chain that leaves the country); it is a point
+ * `resolve` is the override for a parent outside the preloaded set (a chain that leaves the country); it is a point
  * query, so keeping the common case out of it is the whole point.
  */
 function chainOf(
@@ -141,69 +141,65 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 				throw new Error(`wof-admin-jp adapter: only JP supported, got country=${opts.country}`)
 			}
 
-			const db = new DatabaseSync(opts.inputPath, { readOnly: true })
+			using db = new DatabaseClient<WOFDatabase>(opts.inputPath, { readOnly: true })
 
-			try {
-				const jpnNamesStmt = db.prepare(`SELECT id, name FROM names WHERE language = 'jpn'`)
-				const jpnNames = new Map<number, string>()
+			const jpnNamesStmt = db.prepare(`SELECT id, name FROM names WHERE language = 'jpn'`)
+			const jpnNames = new Map<number, string>()
 
-				for (const row of jpnNamesStmt.all() as { id: number; name: string }[]) {
-					if (!jpnNames.has(row.id)) {
-						jpnNames.set(row.id, row.name)
-					}
+			for (const row of jpnNamesStmt.all() as { id: number; name: string }[]) {
+				if (!jpnNames.has(row.id)) {
+					jpnNames.set(row.id, row.name)
+				}
+			}
+
+			// One read of the JP place table instead of a fresh `prepare` + up to six point queries per
+			// seed; there are tens of thousands of neighbourhood seeds.
+			const byID = new Map<number, PlaceRow>()
+
+			for (const row of allRows<PlaceRow>(
+				db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE country='JP'`)
+			)) {
+				byID.set(row.id, row)
+			}
+
+			const outsideStmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
+
+			const resolveOutside = (id: number): PlaceRow | undefined => {
+				const row = getRow<PlaceRow>(outsideStmt, id)
+
+				if (row) {
+					byID.set(id, row)
 				}
 
-				// One read of the JP place table instead of a fresh `prepare` + up to six point queries per
-				// seed; there are tens of thousands of neighbourhood seeds.
-				const byID = new Map<number, PlaceRow>()
+				return row
+			}
 
-				for (const row of allRows<PlaceRow>(
-					db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE country='JP'`)
-				)) {
-					byID.set(row.id, row)
+			const seeds = [...byID.values()].filter((row) => row.placetype === "neighbourhood")
+
+			let emitted = 0
+
+			for (const seed of seeds) {
+				if (opts.signal?.aborted) break
+
+				if (opts.limit !== undefined && emitted >= opts.limit) break
+
+				const chain = chainOf(byID, resolveOutside, seed.id)
+				const synth = synthesizeJpAddress(chain, jpnNames)
+
+				if (!synth) continue
+
+				yield {
+					raw: synth.raw,
+					components: synth.components,
+					country: "JP",
+					locale: "ja-JP",
+					source: WOF_ADMIN_JP_ADAPTER_ID,
+					source_id: `${WOF_ADMIN_JP_ADAPTER_ID}-${seed.id}`,
+					corpus_version: "",
+					license: "CC-BY-4.0",
 				}
 
-				const outsideStmt = db.prepare(`SELECT id, name, placetype, parent_id, country FROM spr WHERE id = ?`)
-
-				const resolveOutside = (id: number): PlaceRow | undefined => {
-					const row = getRow<PlaceRow>(outsideStmt, id)
-
-					if (row) {
-						byID.set(id, row)
-					}
-
-					return row
-				}
-
-				const seeds = [...byID.values()].filter((row) => row.placetype === "neighbourhood")
-
-				let emitted = 0
-
-				for (const seed of seeds) {
-					if (opts.signal?.aborted) break
-
-					if (opts.limit !== undefined && emitted >= opts.limit) break
-
-					const chain = chainOf(byID, resolveOutside, seed.id)
-					const synth = synthesizeJpAddress(chain, jpnNames)
-
-					if (!synth) continue
-
-					yield {
-						raw: synth.raw,
-						components: synth.components,
-						country: "JP",
-						locale: "ja-JP",
-						source: WOF_ADMIN_JP_ADAPTER_ID,
-						source_id: `${WOF_ADMIN_JP_ADAPTER_ID}-${seed.id}`,
-						corpus_version: "",
-						license: "CC-BY-4.0",
-					}
-
-					emitted++
-				}
-			} finally {
-				db.close()
+				emitted++
 			}
 		},
 	}

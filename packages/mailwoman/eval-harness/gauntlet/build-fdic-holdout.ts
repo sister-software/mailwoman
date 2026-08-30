@@ -14,9 +14,10 @@
  *   Run: mailwoman eval gauntlet-build fdic-holdout
  */
 
-import { createWriteStream, existsSync, renameSync, rmSync } from "node:fs"
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { removePath, movePath } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -91,11 +92,11 @@ export async function buildFDICHoldout(): Promise<void> {
 	const OUT = String(dataRootPath("corpus", "staging", "fdic-us.csv"))
 	const tmp = `${OUT}.tmp-${process.pid}`
 
-	if (existsSync(tmp)) {
-		rmSync(tmp)
+	if (await pathExists(tmp)) {
+		await removePath(tmp)
 	}
 
-	const sink = createWriteStream(tmp, { encoding: "utf8" })
+	const sink = openWriteStream(tmp, { encoding: "utf8" })
 	sink.write("address;city;state;zip;lat;lon\n")
 
 	let total = 0
@@ -137,14 +138,14 @@ export async function buildFDICHoldout(): Promise<void> {
 		sink.end(resolvePromise)
 	})
 
-	if (existsSync(OUT)) {
-		renameSync(OUT, `${OUT}.prev`)
+	if (await pathExists(OUT)) {
+		await movePath(OUT, `${OUT}.prev`)
 	}
 
-	renameSync(tmp, OUT)
+	await movePath(tmp, OUT)
 
-	if (existsSync(`${OUT}.prev`)) {
-		rmSync(`${OUT}.prev`)
+	if (await pathExists(`${OUT}.prev`)) {
+		await removePath(`${OUT}.prev`)
 	}
 
 	console.error(

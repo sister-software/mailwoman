@@ -5,11 +5,10 @@
  * @file Enforce tests as external consumers of workspace package contracts.
  */
 
-import { readFileSync } from "node:fs"
-import { relative, resolve, sep } from "node:path"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { repoRootPath } from "@mailwoman/core/utils"
+import { relative, resolve, sep } from "@mailwoman/platform/path"
 import ts from "typescript"
 
 interface RootManifest {
@@ -17,14 +16,14 @@ interface RootManifest {
 }
 
 const root = String(repoRootPath())
-const manifest = parseJSONStrict<RootManifest>(readFileSync(resolve(root, "package.json"), "utf8"))
+const manifest = await readLocalJSONFile<RootManifest>(resolve(root, "package.json"))
 const failures: string[] = []
 const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const packageSuites = new Set(["full", "integration", "unit"])
 const docsSuites = new Set([...packageSuites, "browser", "build", "e2e"])
 
 function moduleSpecifiers(filePath: string): string[] {
-	const sourceText = readFileSync(filePath, "utf8")
+	const sourceText = readLocalTextFileSync(filePath)
 	const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 	const specifiers: string[] = []
 

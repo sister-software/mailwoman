@@ -18,11 +18,11 @@
  *   exact-after-normalization only (no fuzzy street matching in this tier).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/resolver"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { hasTable, prepareGet, type PreparedGet } from "./sqlite-utils.ts"
+import type { StreetCentroidDatabase } from "./street-centroid-schema.ts"
 import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
@@ -72,7 +72,7 @@ function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: n
 }
 
 export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
-	readonly #db: DatabaseSync
+	readonly #db: DatabaseClient<StreetCentroidDatabase>
 	readonly #locale: StreetLocale
 	readonly #byPostcode: PreparedGet<[postcode: string, street: StreetKey], AggRow> | undefined
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey], AggRow> | undefined
@@ -83,7 +83,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	 *   misses. Defaults to `"fr"` (BAN is the French national register; the tier is FR-only today).
 	 */
 	constructor(dbPath: string, opts: { streetLocale?: StreetLocale } = {}) {
-		this.#db = new DatabaseSync(dbPath, { readOnly: true })
+		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })
 		this.#locale = opts.streetLocale ?? "fr"
 
 		// Degrade gracefully on an empty/tableless shard (interrupted build, stray 0-byte file): with no
@@ -129,7 +129,7 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 		}
 	}
 
-	close(): void {
-		this.#db.close()
+	[Symbol.dispose](): void {
+		this.#db[Symbol.dispose]()
 	}
 }

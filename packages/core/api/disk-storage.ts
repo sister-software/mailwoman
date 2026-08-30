@@ -10,7 +10,7 @@
  *   and webpack refuses to resolve `node:fs/promises` for the web target. Import this through its own
  *   `@mailwoman/core/api/disk-storage` subpath.
  *
- *   Two rules here are load-bearing, both carried over from the bespoke cache this replaces
+ *   Two rules here are required, both carried over from the bespoke cache this replaces
  *   (`98c4dda1:filer/sdk/sec-client.ts`), both learned the hard way:
  *
  *     1. VALIDATE BEFORE WRITING. A response that can't be read back — an unparseable body, a
@@ -23,11 +23,12 @@
  *        bytes interleaved into a corrupt-but-parseable entry.
  */
 
-import { randomUUID } from "node:crypto"
-import { mkdir, readFile, rename, rm, unlink, writeFile } from "node:fs/promises"
-import { join } from "node:path"
-
+import { randomUUID } from "@mailwoman/platform/crypto"
+import { join } from "@mailwoman/platform/path"
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
+
+import { readLocalTextFile } from "#fs/readers"
+import { makeDirectories, movePath, removePath, removePathIfPresent, writeLocalFile } from "#fs/writers"
 
 import { ConsoleLogger, type IRuntimeLogger } from "../logging/index.ts"
 import { tryParsingJSON } from "../objects.ts"
@@ -84,7 +85,7 @@ function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
  * Create an on-disk {@linkcode AxiosStorage}, keyed by the SHA-256 of the interceptor's cache key (which already folds
  * in method, URL, params and body), so a filename is always a fixed-length, filesystem-safe hex digest.
  *
- * An in-process overlay Map sits in front of the files, and it is load-bearing for two reasons:
+ * An in-process overlay Map sits in front of the files, and it is required for two reasons:
  *
  * 1. `loading` markers live there INSTEAD of on disk. That keeps the interceptor's stampede guard working (a concurrent
  *    second request for the same key sees `loading` and waits on the first) without a file write per request, and
@@ -112,7 +113,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 		overlay.delete(key)
 
 		try {
-			await unlink(entryPath(key))
+			await removePath(entryPath(key))
 		} catch {
 			// A miss is the expected case for a key that was never persisted (or was already evicted).
 		}
@@ -153,7 +154,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			let raw: string
 
 			try {
-				raw = await readFile(entryPath(key), "utf8")
+				raw = await readLocalTextFile(entryPath(key))
 			} catch {
 				return undefined
 			}
@@ -200,9 +201,9 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			const buildingPath = `${finalPath}.${process.pid}.${randomUUID()}.building`
 
 			try {
-				await mkdir(directory, { recursive: true })
-				await writeFile(buildingPath, serialized)
-				await rename(buildingPath, finalPath)
+				await makeDirectories(directory)
+				await writeLocalFile(serialized, buildingPath)
+				await movePath(buildingPath, finalPath)
 			} catch (error) {
 				// A CACHE WRITE IS A SIDE EFFECT OF A SUCCESSFUL REQUEST, AND A FAILED SIDE EFFECT MUST NOT
 				// FAIL THE REQUEST.
@@ -222,7 +223,7 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 				)
 
 				// Best-effort cleanup of the temp file, if the failure came after it was created.
-				await unlink(buildingPath).catch(() => undefined)
+				await removePath(buildingPath).catch(() => undefined)
 			} finally {
 				overlay.delete(key)
 			}
@@ -235,8 +236,8 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 
 			// Recreated rather than left absent: "the cache is empty" and "the cache directory vanished"
 			// are different states to anything inspecting the data root, and only the first is intended.
-			await rm(directory, { recursive: true, force: true })
-			await mkdir(directory, { recursive: true })
+			await removePathIfPresent(directory)
+			await makeDirectories(directory)
 		},
 	})
 }

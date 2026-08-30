@@ -4,11 +4,9 @@
 /* oxlint-disable unicorn/text-encoding-identifier-case -- these assertions mirror ParquetType enum
    members (`"UTF8"`), not text-encoding identifiers; see the note in parquet.ts. */
 
-import { mkdtemp, readFile, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import {
 	LABELED_ROW_SCHEMA,
 	PARQUET_COLUMNS,
@@ -49,7 +47,7 @@ async function* asyncFrom<T>(items: readonly T[]): AsyncIterable<T> {
  * Read every row from a `.parquet` file in on-disk order.
  */
 async function readParquet(path: string): Promise<ParquetRow[]> {
-	const reader = await ParquetReader.openFile<ParquetRow>(path)
+	await using reader = await ParquetReader.openFile<ParquetRow>(path)
 	const cursor = reader.getCursor()
 	const out: ParquetRow[] = []
 	let row: ParquetRow | null
@@ -59,19 +57,17 @@ async function readParquet(path: string): Promise<ParquetRow[]> {
 		out.push(row)
 	}
 
-	await reader.close()
-
 	return out
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-parquet-"))
+	scratch = await temporaryDirectory("mailwoman-parquet-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("rowToParquet", () => {
@@ -168,7 +164,7 @@ describe("writeShards", () => {
 	it("refuses a projection that requests a column absent from the file schema", async () => {
 		const m = await writeShards(
 			{ train: asyncFrom([labeled({ source_id: "t-projection" })]) },
-			{ outputDir: scratch, corpusVersion: "0.1.0" }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
 		)
 
 		await using reader = await ParquetReader.openFile<ParquetRow & { missing_measurement_column: string }>(
@@ -217,7 +213,7 @@ describe("writeShards", () => {
 
 		const m = await writeShards(
 			{ train: asyncFrom(trainRows), val: asyncFrom(valRows), test: asyncFrom(testRows) },
-			{ outputDir: scratch, corpusVersion: "0.1.0", rowsPerShard: 10 }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerShard: 10 }
 		)
 
 		expect(m.total_rows).toBe(4)
@@ -249,8 +245,8 @@ describe("writeShards", () => {
 		const valBack = await readParquet(valShard.path)
 		expect(valBack[0]!.locale).toBe("fr-FR")
 
-		const manifestOnDisk = parseJSONStrict<{ total_rows: number; schema: string[]; row_group_size: number }>(
-			await readFile(join(scratch, "corpus-v0.1.0", "MANIFEST.json"), "utf8")
+		const manifestOnDisk = await readLocalJSONFile<{ total_rows: number; schema: string[]; row_group_size: number }>(
+			scratch.resolve("corpus-v0.1.0", "MANIFEST.json")
 		)
 
 		expect(manifestOnDisk.total_rows).toBe(4)
@@ -292,7 +288,7 @@ describe("writeShards", () => {
 			}),
 		]
 
-		const m = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.5.0" })
+		const m = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
 		const back = await readParquet(m.shards[0]!.path)
 		expect(back).toHaveLength(3)
 
@@ -318,7 +314,7 @@ describe("writeShards", () => {
 		const rows = [labeled({ source_id: "t-1", span_starts: undefined, span_ends: undefined, span_tags: undefined })]
 
 		await expect(
-			writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.5.0" })
+			writeShards({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.5.0" })
 		).rejects.toThrow(/missing the char-offset span triple/)
 	})
 
@@ -327,7 +323,7 @@ describe("writeShards", () => {
 
 		const m = await writeShards(
 			{ train: asyncFrom(rows) },
-			{ outputDir: scratch, corpusVersion: "0.1.0", rowsPerShard: 10 }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0", rowsPerShard: 10 }
 		)
 
 		const trainShards = m.shards.filter((s) => s.split === "train")
@@ -346,9 +342,9 @@ describe("writeShards", () => {
 
 	it("two runs over the same rows produce a byte-identical parquet file (deterministic sha256)", async () => {
 		const rows = [labeled({ source_id: "t-1", raw: "A" }), labeled({ source_id: "t-2", raw: "B" })]
-		const a = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.1.0" })
-		await rm(join(scratch, "corpus-v0.1.0"), { recursive: true, force: true })
-		const b = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.1.0" })
+		const a = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
+		await removePathIfPresent(scratch.resolve("corpus-v0.1.0"))
+		const b = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 		expect(a.shards[0]!.sha256).toBe(b.shards[0]!.sha256)
 	})
 
@@ -359,7 +355,7 @@ describe("writeShards", () => {
 			labeled({ source_id: "t-without", raw: "no locale" }),
 		]
 
-		const m = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch, corpusVersion: "0.1.0" })
+		const m = await writeShards({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 		const back = await readParquet(m.shards[0]!.path)
 		expect(back).toHaveLength(2)
 		const withLocale = back.find((r) => r.source_id === "t-with")!
@@ -372,7 +368,7 @@ describe("writeShards", () => {
 		// Only train provided; val + test omitted entirely.
 		const m = await writeShards(
 			{ train: asyncFrom([labeled({ source_id: "t-1" })]) },
-			{ outputDir: scratch, corpusVersion: "0.1.0" }
+			{ outputDir: scratch.path, corpusVersion: "0.1.0" }
 		)
 
 		expect(m.counts).toEqual({ train: 1, val: 0, test: 0 })

@@ -13,9 +13,8 @@
  *   weights or a database.
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { runStaticDebug } from "mailwoman/debug-view/command"
@@ -28,7 +27,7 @@ import { describe, expect, test } from "vitest"
 // Same predicate as commands/geocode.test.ts's `hasWOFDB`.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
-const hasWOFDB = existsSync(wofPath)
+const hasWOFDB = await pathExists(wofPath)
 
 const hasWeights = (() => {
 	try {
@@ -41,7 +40,7 @@ const hasWeights = (() => {
 })()
 
 const TILES_PATH = String(workspacePath("map-tui", "test", "fixtures", "portland.pmtiles"))
-const hasTiles = existsSync(TILES_PATH)
+const hasTiles = await pathExists(TILES_PATH)
 
 const canRun = hasWOFDB && hasWeights && hasTiles
 

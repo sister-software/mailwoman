@@ -18,7 +18,7 @@
  *   land in the right country — border towns are the hard class by construction.
  */
 
-import type { DatabaseSync } from "node:sqlite"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { DEFAULT_VERIFY_BASELINE } from "./verify-baseline.ts"
 
@@ -57,7 +57,7 @@ const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
 /**
  * Run the structural checks against an (open) admin DB. Pure SQL — no network, no model.
  */
-export function verifyAdmin(db: DatabaseSync, baseline: VerifyBaseline): VerifyResult {
+export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline): VerifyResult {
 	const checks: VerifyCheckResult[] = []
 
 	const tableExists = (name: string): boolean =>
@@ -208,23 +208,19 @@ export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [string, number, number
  */
 export async function verifyReversePanel(adminDBPath: string): Promise<VerifyResult> {
 	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
-	const rg = new WOFReverseGeocoder({ adminDBPath })
+	using rg = new WOFReverseGeocoder({ adminDBPath })
 	const checks: VerifyCheckResult[] = []
 
-	try {
-		for (const [label, lat, lon, expected] of REVERSE_PANEL_CASES) {
-			const r = await rg.reverseGeocode(lat, lon)
-			const deepest = r.hierarchy[0]
-			const got = (r.hierarchy.find((h) => h.placetype === "country")?.country ?? deepest?.country ?? "").toUpperCase()
+	for (const [label, lat, lon, expected] of REVERSE_PANEL_CASES) {
+		const r = await rg.reverseGeocode(lat, lon)
+		const deepest = r.hierarchy[0]
+		const got = (r.hierarchy.find((h) => h.placetype === "country")?.country ?? deepest?.country ?? "").toUpperCase()
 
-			checks.push({
-				check: `reverse:${label}`,
-				ok: got === expected,
-				detail: `${deepest?.name ?? "(empty)"} → ${got || "(none)"} (want ${expected})`,
-			})
-		}
-	} finally {
-		rg.close()
+		checks.push({
+			check: `reverse:${label}`,
+			ok: got === expected,
+			detail: `${deepest?.name ?? "(empty)"} → ${got || "(none)"} (want ${expected})`,
+		})
 	}
 
 	return { ok: checks.every((c) => c.ok), checks }
@@ -234,7 +230,7 @@ export async function verifyReversePanel(adminDBPath: string): Promise<VerifyRes
  * Generate a baseline from an existing DB — the DELIBERATE-update path (review the diff of `verify-baseline.ts` like
  * code). Requires `country` for every country that has one; adds `region` where regions exist.
  */
-export function generateBaseline(db: DatabaseSync): VerifyBaseline {
+export function generateBaseline<DB>(db: DatabaseClient<DB>): VerifyBaseline {
 	const requiredNodes: Record<string, Array<"country" | "region">> = {}
 
 	for (const r of db

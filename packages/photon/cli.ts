@@ -13,11 +13,10 @@
  *   autocomplete tier is the eventual front for `/api`; geocode resolution is the MVP path.
  */
 
-import { parseArgs } from "node:util"
-
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
 import { pyTitle } from "@mailwoman/core"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	corsBannerLine,
@@ -27,7 +26,8 @@ import {
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
-import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode-core"
+import { ShardProvider } from "mailwoman/geocode-shards"
 import { createResolverBackend, mailwomanDataRoot } from "mailwoman/resolver-backend"
 
 import {
@@ -80,14 +80,14 @@ async function serve(): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = resolveGazetteerOrExit(values["candidate-db"])
+	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"])
 	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
-	const postcodeOfLocality = createLocalityPostcodeLookup()
+	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
 	// when the shard isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
 	const { BANShardProvider } = await import("@mailwoman/ban/sdk")

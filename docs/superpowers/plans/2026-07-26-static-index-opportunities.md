@@ -53,12 +53,12 @@ Two hand-maintained tables in source re-derive what the gazetteer build already 
 - **`HARD_PLACE_COUNTRY_SAFELIST`** (`core/pipeline/runtime-pipeline.ts:81-93`): the hard-country
   coverage guard, grown **by hand at promotes** (#928 added GB/CA; AU added with the placer class).
   The measured evidence ("US 100, FR 100, DE 100, ES 99.8 … FI 69.5, PL 77.8 (out)") lives in a
-  **code comment** (`:76`) — measurement as trivia, exactly the "no load-bearing trivia" smell.
+  **code comment** (`:76`) — measurement as trivia, exactly the "no required trivia" smell.
 - **`COUNTRY_BBOX`** (`resolver/plausibility.ts:95-118`): per-country bounding boxes, hand-typed,
   used for coordinate plausibility. WOF carries country geometries; this is WOF data re-derived by
   eyeball.
 - **Artifact home already exists:** `layer_manifest` / `layer_coverage`
-  (`core/layers/manifest.ts:69,135`) — the layer contract's coverage machinery, plus the candidate
+  (`core/layers/manifest.ts:69,135`) — the layer contract's coverage implementation, plus the candidate
   gazetteer's own manifest. Bake at gazetteer build/eval time: per-country `hard_resolve_rate` (the
   ≥95% bar becomes a manifest query, honoring meaning-of-zero: absence = unmeasured, not
   ineligible) and per-country bbox rows.

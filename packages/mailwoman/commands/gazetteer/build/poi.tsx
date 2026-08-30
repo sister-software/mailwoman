@@ -20,8 +20,7 @@
  *   below is UNTOUCHED and stays byte-identical when `--source` is omitted.
  */
 
-import { execFileSync } from "node:child_process"
-
+import { execFileSync } from "@mailwoman/platform/child_process"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -115,7 +114,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` seam.
 			const rows: POISourceRow[] = []
 
-			// DYNAMIC import, load-bearing: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off
+			// DYNAMIC import, required: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off
 			// pending — see osm/README.md), and this dependency belongs only on the selected build path,
 			// so a top-level import breaks the whole published CLI on a clean install — the smoke
 			// test's clean-install leg is what catches it. The osm source branch is build-local by
@@ -145,7 +144,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			})
 
 			return [
-				`poi.db (osm/${country}): ${out} (${artifactSizeMB(out)} MB)`,
+				`poi.db (osm/${country}): ${out} (${await artifactSizeMB(out)} MB)`,
 				`${result.rows.toLocaleString()} rows · ${result.categories} categories` +
 					` · ${result.skipped.toLocaleString()} skipped (non-finite coords) · ${result.coverageCells.toLocaleString()} coverage cells`,
 				`manifest: name=poi tier=build-local source=osm sourceVintage=${release} buildSHA=${buildSHA}`,
@@ -193,7 +192,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 			.map(([cc, count]) => `  ${cc} ${count.toLocaleString()}`)
 
 		return [
-			`poi.db: ${out} (${artifactSizeMB(out)} MB)`,
+			`poi.db: ${out} (${await artifactSizeMB(out)} MB)`,
 			`${result.rows.toLocaleString()} rows · ${result.categories} categories · ${result.countries.size} countries` +
 				` · ${result.skipped.toLocaleString()} skipped (non-finite coords) · ${result.coverageCells.toLocaleString()} coverage cells`,
 			...countryLines,

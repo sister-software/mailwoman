@@ -7,12 +7,12 @@
  *   `parentID` scoping and adminCoherence reach the gap countries ("Tbilisi, GE" can resolve).
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { join } from "@mailwoman/platform/path"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 /**
@@ -20,8 +20,8 @@ import { afterAll, beforeAll, expect, test } from "vitest"
  */
 type Row = Record<string, string | number | null>
 
-let dir: string
-let db: DatabaseSync
+let dir: TemporaryDirectory
+let db: DatabaseClient<WOFDatabase>
 
 // One GeoNames row: 19 tab-separated columns (id, name, ascii, alt, lat, lon, fclass, fcode, country, cc2,
 // admin1, admin2, admin3, admin4, pop, elev, dem, tz, mod).
@@ -36,7 +36,7 @@ function row(over: Record<number, string>): string {
 }
 
 beforeAll(async () => {
-	dir = mkdtempSync(join(tmpdir(), "geonames-admin-"))
+	dir = await temporaryDirectory("geonames-admin-")
 
 	const lines = [
 		// PCLI country: Georgia
@@ -58,9 +58,9 @@ beforeAll(async () => {
 		}),
 	].join("\n")
 
-	writeFileSync(join(dir, "GE.txt"), lines)
+	await writeLocalFile(lines, dir.resolve("GE.txt"))
 
-	db = new DatabaseSync(":memory:")
+	db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -75,12 +75,12 @@ beforeAll(async () => {
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	db.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 
-	await ingestGeonamesAliases(db, ["GE"], dir, () => {}, { adminForCountries: new Set(["GE"]) })
+	await ingestGeonamesAliases(db, ["GE"], dir.path, () => {}, { adminForCountries: new Set(["GE"]) })
 })
 
 afterAll(() => {
-	db.close()
-	rmSync(dir, { recursive: true, force: true })
+	db.destroy()
+	dir[Symbol.asyncDispose]()
 })
 
 test("folds the country (PCLI) and region (ADM1) as admin spr rows", () => {
@@ -120,7 +120,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 })
 
 test("default (no includeAdmin) stays localities-only with no admin rows — byte-stable", async () => {
-	const db2 = new DatabaseSync(":memory:")
+	await using db2 = DatabaseClient.temp<WOFDatabase>()
 
 	db2.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
@@ -132,7 +132,7 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	db2.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)`)
 	db2.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
-	await ingestGeonamesAliases(db2, ["GE"], dir, () => {})
+	await ingestGeonamesAliases(db2, ["GE"], dir.path, () => {})
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as Row).n).toBe(0)
 
@@ -145,14 +145,13 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM ancestors WHERE id = ancestor_id").get() as Row).n).toBe(1)
 	expect((db2.prepare("SELECT parent_id FROM spr WHERE placetype='locality'").get() as Row).parent_id).toBe(-1)
-	db2.close()
 })
 
 test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)", async () => {
-	const d = mkdtempSync(join(tmpdir(), "geonames-pcls-"))
+	await using dDirectory = await temporaryDirectory("geonames-pcls-")
+	const d = dDirectory.path
 
-	writeFileSync(
-		join(d, "HK.txt"),
+	await writeLocalTextFile(
 		[
 			row({ 0: "1819730", 1: "Hong Kong", 2: "Hong Kong", 4: "22.3", 5: "114.2", 6: "A", 7: "PCLS", 8: "HK" }),
 			row({
@@ -166,10 +165,11 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 				8: "HK",
 				14: "7012738",
 			}),
-		].join("\n")
+		].join("\n"),
+		join(d, "HK.txt")
 	)
 
-	const hk = new DatabaseSync(":memory:")
+	using hk = DatabaseClient.temp<WOFDatabase>()
 
 	hk.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
@@ -187,7 +187,4 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(
 		"Hong Kong"
 	)
-
-	hk.close()
-	rmSync(d, { recursive: true, force: true })
 })

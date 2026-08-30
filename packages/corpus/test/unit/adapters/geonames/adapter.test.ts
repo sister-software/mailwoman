@@ -1,23 +1,26 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	createGeonamesAdapter,
 	GEONAMES_ADAPTER_ID,
 	GEONAMES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/geonames/adapter"
-import { beforeEach, describe, expect, it } from "vitest"
+import { join } from "@mailwoman/platform/path"
+import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "#types"
 
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
 let scratch: string
 
-beforeEach(() => {
-	scratch = mkdtempSync(join(tmpdir(), "mailwoman-geonames-"))
+beforeEach(async () => {
+	scratch = fixtures.use(await temporaryDirectory("mailwoman-geonames-")).path
 })
 
 // Build a 19-column GeoNames main-table row (tab-separated). Only the columns the adapter reads
@@ -46,23 +49,21 @@ function gnRow(o: {
 	return cols.join("\t")
 }
 
-function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boolean }): string {
+async function writeFixture(rows: string[], opts?: { admin1?: boolean; countries?: boolean }): Promise<string> {
 	const country = join(scratch, "US.txt")
-	writeFileSync(country, rows.join("\n") + "\n", "utf8")
+	await writeLocalTextFile(rows.join("\n") + "\n", country)
 
 	if (opts?.admin1 !== false) {
-		writeFileSync(
-			join(scratch, "admin1CodesASCII.txt"),
+		await writeLocalTextFile(
 			["US.VT\tVermont\tVermont\t5242283", "US.CA\tCalifornia\tCalifornia\t5332921"].join("\n") + "\n",
-			"utf8"
+			join(scratch, "admin1CodesASCII.txt")
 		)
 	}
 
 	if (opts?.countries !== false) {
-		writeFileSync(
-			join(scratch, "countryInfo.txt"),
+		await writeLocalTextFile(
 			["# ISO\tISO3\tnum\tfips\tCountry\trest", "US\tUSA\t840\tUS\tUnited States\t"].join("\n") + "\n",
-			"utf8"
+			join(scratch, "countryInfo.txt")
 		)
 	}
 
@@ -87,7 +88,7 @@ describe("geonames adapter", () => {
 	})
 
 	it("emits both hierarchy variants for a populated place, with mapped region + country names", async () => {
-		const p = writeFixture([
+		const p = await writeFixture([
 			gnRow({ id: "5234567", name: "Montpelier", featureClass: "P", featureCode: "PPLA", country: "US", admin1: "VT" }),
 		])
 
@@ -111,7 +112,7 @@ describe("geonames adapter", () => {
 	})
 
 	it("skips non-populated-place features and historical/abandoned places", async () => {
-		const p = writeFixture([
+		const p = await writeFixture([
 			gnRow({ id: "1", name: "Mount Mansfield", featureClass: "T", featureCode: "MT", country: "US", admin1: "VT" }), // mountain
 			gnRow({ id: "2", name: "Ghost Town", featureClass: "P", featureCode: "PPLQ", country: "US", admin1: "VT" }), // abandoned
 			gnRow({ id: "3", name: "Burlington", featureClass: "P", featureCode: "PPL", country: "US", admin1: "VT" }), // real
@@ -123,7 +124,7 @@ describe("geonames adapter", () => {
 	})
 
 	it("honors the country filter and the row limit", async () => {
-		const p = writeFixture([
+		const p = await writeFixture([
 			gnRow({ id: "10", name: "Burlington", featureClass: "P", featureCode: "PPL", country: "US", admin1: "VT" }),
 			gnRow({ id: "11", name: "Toronto", featureClass: "P", featureCode: "PPL", country: "CA", admin1: "08" }),
 		])
@@ -133,7 +134,7 @@ describe("geonames adapter", () => {
 	})
 
 	it("degrades gracefully when the region/country name files are absent (locality only)", async () => {
-		const p = writeFixture(
+		const p = await writeFixture(
 			[gnRow({ id: "20", name: "Burlington", featureClass: "P", featureCode: "PPL", country: "US", admin1: "VT" })],
 			{ admin1: false, countries: false }
 		)

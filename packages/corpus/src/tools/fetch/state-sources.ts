@@ -16,11 +16,10 @@
  *   (gzip/brotli) and streaming sha256 instead of curl + sha256sum.
  */
 
-import { mkdirSync } from "node:fs"
-import { join } from "node:path"
-
-import { BYTES_PER_KIB } from "@mailwoman/core/fs/utils"
+import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, writeManifest } from "./download.ts"
@@ -88,7 +87,7 @@ export async function fetchStateSources(
 	options: FetchStateSourcesOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	mkdirSync(options.outRoot, { recursive: true })
+	await makeDirectories(options.outRoot)
 
 	let fetched = 0
 	let failed = 0
@@ -96,7 +95,7 @@ export async function fetchStateSources(
 
 	for (const { slug, filename, url } of SOURCES) {
 		const destDir = join(options.outRoot, slug)
-		mkdirSync(destDir, { recursive: true })
+		await makeDirectories(destDir)
 		const dest = join(destDir, filename)
 
 		report?.(`=== ${slug} / ${filename}`)

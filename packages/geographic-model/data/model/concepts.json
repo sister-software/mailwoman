@@ -1,0 +1,147 @@
+{
+	"concepts": [
+		{
+			"id": "place",
+			"label": "place",
+			"description": "A geographic place — an area or a point that other things are sited in or near.",
+			"kind": "place",
+			"isA": [],
+			"assertions": [],
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927",
+				"authoredAt": "2026-08-26",
+				"notes": "The class an establishment is sited in. Authored because the frozen slice's entity kind needs one, and no wider upper ontology is authored around it."
+			},
+			"status": "active"
+		},
+		{
+			"id": "establishment",
+			"label": "establishment",
+			"description": "A class of premises a person can go to.",
+			"kind": "establishment",
+			"isA": ["place"],
+			"assertions": [],
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927",
+				"authoredAt": "2026-08-26",
+				"notes": "The kind the `affords` relation accepts on the asserting side. Its own `isA` is what puts `place` in every establishment's compiled ancestry."
+			},
+			"status": "active"
+		},
+		{
+			"id": "healthcare_facility",
+			"label": "healthcare facility",
+			"description": "An establishment class whose premises exist to provide healthcare.",
+			"kind": "establishment",
+			"isA": ["establishment"],
+			"assertions": [],
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927",
+				"authoredAt": "2026-08-26",
+				"notes": "The one intermediate class the frozen slice names between `pharmacy` and `establishment`. It carries no assertion of its own: a claim authored here would be inherited by every later healthcare class, which is breadth the program has not decided on."
+			},
+			"status": "active"
+		},
+		{
+			"id": "pharmacy",
+			"label": "pharmacy",
+			"description": "A healthcare facility that dispenses medication to the public.",
+			"kind": "establishment",
+			"isA": ["healthcare_facility"],
+			"assertions": [
+				{
+					"id": "pharmacy-affords-obtain-medication",
+					"relation": "affords",
+					"target": "obtain_medication",
+					"modality": "necessary",
+					"provenance": {
+						"source": "mailwoman-curated",
+						"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
+						"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927",
+						"authoredAt": "2026-08-26",
+						"notes": "The proposition the first slice exists to state. `necessary` because dispensing medication to the public is what makes premises a pharmacy rather than a neighbouring retail class — a counter-example falsifies this record instead of qualifying it. The relation is `defeasible`, which says whether `affords` assertions admit exceptions at all and is what lets a `strongly_expected` record sit beside this one coherently; it does not weaken this claim. No `countries` scope: the country-conditional part of the question is which OTHER establishment classes afford the activity, and each of those carries its own scope."
+					}
+				}
+			],
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927",
+				"authoredAt": "2026-08-26",
+				"notes": "The frozen slice's entity kind. Mapped into `@mailwoman/poi-taxonomy`'s `pharmacy` category by `mappings.json`; the mapping carries the external identifier, and this record carries what the class affords."
+			},
+			"status": "active"
+		},
+		{
+			"id": "drugstore",
+			"label": "drugstore",
+			"description": "A retail establishment class whose premises characteristically include a counter that dispenses medication to the public.",
+			"kind": "establishment",
+			"isA": ["establishment"],
+			"assertions": [
+				{
+					"id": "drugstore-affords-obtain-medication",
+					"relation": "affords",
+					"target": "obtain_medication",
+					"modality": "strongly_expected",
+					"countries": ["US"],
+					"provenance": {
+						"source": "mailwoman-curated",
+						"sourceVersion": "poi-taxonomy table 0.4.0",
+						"sourceRecord": "packages/poi-taxonomy/data/curated-overlay.json synonyms[drugstore → pharmacy, locales en-US]",
+						"sourceURL": "https://github.com/sister-software/mailwoman/issues/1963",
+						"authoredAt": "2026-08-27",
+						"notes": "The committed curator statement `{ \"phrase\": \"drugstore\", \"categoryID\": \"pharmacy\", \"locales\": [\"en-US\"] }` says that in en-US this class names the pharmacy category. `strongly_expected` rather than `necessary`: the statement says a US drugstore characteristically dispenses, and neither a locale-scoped synonym nor a row count is a census of dispensing, so a counter-example qualifies this record rather than falsifying it. Scoped to `US` because that is the only country a committed record scopes the class to — CA (369 rows), GB (117) and MX (3) bound a population and assert nothing about what those premises afford, and FR is a measured zero on the shipped layer, so there would be nothing there for the claim to range over."
+					}
+				}
+			],
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceVersion": "poi.db layer_manifest 2026-07-22.0",
+				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4.1 W1-1",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1963",
+				"authoredAt": "2026-08-27",
+				"notes": "Admitted by the wave-1 amendment against a measured recall gap, re-taken on the shipped layer before this record was frozen: one `group by category_id, country` pass over `poi.db` at manifest 2026-07-22.0 counts 7,168 rows under `retail > drugstore` against 82,168 under `health_and_medical > pharmacy` — 8.0% of the two leaves overall and 12.9% within the US (6,679 of 51,624), all of them out of reach of a `pharmacy` query because the branches are disjoint. A kind of `establishment` directly and not of `healthcare_facility`: the external hierarchy puts it under `retail`, and `healthcare_facility` is premises that exist to provide healthcare, which retail premises with a dispensing counter do not. The `poi-taxonomy` mapping the amendment admits as W1-3 is authored beside this record in `mappings.json`, so `obtain_medication` reaches two mapped kinds and the POI branch searches both."
+			},
+			"status": "active"
+		},
+		{
+			"id": "activity",
+			"label": "activity",
+			"description": "Something a person does.",
+			"kind": "activity",
+			"isA": [],
+			"assertions": [],
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927",
+				"authoredAt": "2026-08-26",
+				"notes": "The class the `affords` relation accepts on the target side."
+			},
+			"status": "active"
+		},
+		{
+			"id": "obtain_medication",
+			"label": "obtaining medication",
+			"description": "The activity of obtaining medication a person is entitled to, whether dispensed against a prescription or bought over the counter.",
+			"kind": "activity",
+			"isA": ["activity"],
+			"assertions": [],
+			"provenance": {
+				"source": "mailwoman-curated",
+				"sourceRecord": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md §4",
+				"sourceURL": "https://github.com/sister-software/mailwoman/issues/1927",
+				"authoredAt": "2026-08-26",
+				"notes": "The frozen slice's activity, and a stable identifier this package owns. Issue #1683 may later fit empirical statistics against it; nothing numeric about it is authored here."
+			},
+			"status": "active"
+		}
+	]
+}

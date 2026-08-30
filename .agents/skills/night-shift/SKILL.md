@@ -85,7 +85,7 @@ pre-flight, not an optional optimization.
 
 **Heat rule:** in summer (May–September) or when the lab `sensors` reports any core ≥85°C, treat ALL "either-place" work as Modal-first.
 
-**Modal pyc cache gotcha:** `export_onnx` can fail with stale label dict imports after a `labels.py` change, even after `modal volume put --force`. Workaround: clear cache before invoking:
+**Modal pyc cache failure mode:** `export_onnx` can fail with stale label dict imports after a `labels.py` change, even after `modal volume put --force`. Workaround: clear cache before invoking:
 
 ```bash
 modal volume rm mailwoman-training corpus-python/src/mailwoman_train/__pycache__ -r 2>&1 | tail -1

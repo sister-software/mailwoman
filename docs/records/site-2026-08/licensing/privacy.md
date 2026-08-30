@@ -10,7 +10,7 @@ hide_footer: true
 Last updated: 2026-07-11. Contact for anything on this page: teffen@sister.software.
 
 Mailwoman's privacy story is architectural rather than procedural: the software is designed so
-that personal data never reaches us in the first place. This page states that plainly, covers
+that personal data never reaches us in the first place. This page states that directly, covers
 the few surfaces we do operate, and lists the legal frameworks the design addresses.
 
 ## The software collects nothing
@@ -32,7 +32,7 @@ deployer's existing legal basis. We never become a processor of it.
 - **The browser demo** downloads model and data artifacts from our content delivery
   infrastructure, then runs locally. Demo queries are processed in your browser and are not
   sent to us.
-- **The public trial endpoint** (photon.sister.software) is provided for evaluation. Like any
+- **The public trial endpoint** (photon.mailwoman.ai) is provided for evaluation. Like any
   web server, it keeps short-lived operational access logs (IP address, request path,
   timestamp) for rate limiting and abuse prevention. These logs are not used for analytics,
   profiling, or any other purpose, are not shared, and are routinely discarded. No accounts

@@ -11,7 +11,7 @@ is **v4.2.0** (`v1.0.2-consolidation-runB`); substitute per the eval-ledger row
 | ------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Training code | `corpus-python/src/mailwoman_train/` @ the release tag                     | this repo                                                                                                                                                                                     |
 | Config        | `corpus-python/src/mailwoman_train/configs/v1.0.2-consolidation-runB.yaml` | this repo                                                                                                                                                                                     |
-| Corpus        | `corpus-v0.4.12-consolidation` (Parquet shards + MANIFEST)                 | R2 `mailwoman-assets` bucket → Modal volume `mailwoman-training` at `/data/corpus/versioned/`                                                                                                 |
+| Corpus        | `corpus-v0.4.12-consolidation` (Parquet files + MANIFEST)                  | R2 `mailwoman-assets` bucket → Modal volume `mailwoman-training` at `/data/corpus/versioned/`                                                                                                 |
 | Tokenizer     | `v0.6.0-a0/tokenizer.model` (md5 `b6137e8c…`)                              | same volume, `/data/models/tokenizer/`                                                                                                                                                        |
 | Aux lookups   | `pilot-anchor-lookup.json` + `anchor-lexicon-v1.json`                      | volume `/data/anchor/`, `/data/gazetteer/` — rebuildable from source: `scripts/build-pilot-anchor-lookup.ts`, `scripts/build-gazetteer-anchor-lexicon.mjs` (needs the custom WOF DBs + codex) |
 
@@ -38,8 +38,8 @@ corpus-python/.venv/bin/python -m mailwoman_train.cli quantize --input ./model-f
 node mailwoman/out/cli.js eval gate --model ./model-fp32.onnx --int8 ./model-int8.onnx --gate mailwoman/eval-harness/gates/v4.2.0-ship.json
 ```
 
-Expected: int8 md5 `9eb4a99f6db06cccff57939f657c09f9` (v4.2.0's shipped bytes), gate PASS
-12/12. A different md5 with a passing gate = toolchain drift — see the verifier below
+Expected: int8 md5 `9eb4a99f6db06cccff57939f657c09f9` (v4.2.0's shipped bytes), `eval gate` PASS
+12/12. A different md5 with a passing `eval gate` = toolchain drift — see the verifier below
 before trusting anything.
 
 ## The pinned export/quant toolchain

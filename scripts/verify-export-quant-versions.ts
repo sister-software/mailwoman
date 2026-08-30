@@ -14,15 +14,15 @@
  *   Plain-node tool-script (no env banner, no zx). Run: node scripts/verify-export-quant-versions.ts
  */
 
-import { execFileSync } from "node:child_process"
-import { existsSync, readFileSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { execFileSync } from "@mailwoman/platform/child_process"
 
 const PYTHON = $public.PYTHON ?? "corpus-python/.venv/bin/python"
 const TRAIN_REMOTE = "corpus-python/modal/train_remote.py"
 
-if (!existsSync(PYTHON)) {
+if (!(await pathExists(PYTHON))) {
 	console.error(`✗ ${PYTHON} not found — create the corpus-python venv first`)
 
 	process.exit(2)
@@ -39,7 +39,7 @@ const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
  * Read the pinned `"pkg==1.2.3"` literals straight out of the Modal training-image source of truth.
  */
 function pinnedVersions(): Array<[string, string]> {
-	const src = readFileSync(TRAIN_REMOTE, "utf8")
+	const src = readLocalTextFileSync(TRAIN_REMOTE)
 	const matches = src.matchAll(/"(torch|transformers|onnx|onnxruntime|onnxscript)==([0-9.]+)"/g)
 
 	return [...matches].map((m) => [m[1], m[2]] as [string, string])

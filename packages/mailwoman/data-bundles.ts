@@ -69,7 +69,7 @@ import type { DataReleaseManifest } from "./data-release.ts"
  * No credentials: this is the read side of the R2 bucket `commands/tiles/publish.tsx`/`commands/gazetteer/publish.tsx`
  * write to.
  */
-export const PUBLIC_BUCKET_BASE_URL = "https://public.sister.software/mailwoman/"
+export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 
 /**
  * One downloadable file within a {@link DataBundle}.
@@ -220,13 +220,13 @@ export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
 		name: "candidate",
 		description:
-			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries (~1.65 GB).",
+			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries (~2.88 GB).",
 		artifacts: [
 			{
-				remotePath: "gazetteer/2026-07-07a/candidate.db",
+				remotePath: "gazetteer/2026-08-25b/candidate.db",
 				localPath: "wof/candidate.db",
 				md5Sidecar: false,
-				approxBytes: 1_652_916_224,
+				approxBytes: 2_880_921_600,
 			},
 		],
 	},

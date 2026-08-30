@@ -46,14 +46,10 @@
  *   not in any OS OpenData product.
  */
 
-import { createWriteStream, existsSync, unlinkSync } from "node:fs"
-import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises"
-import { dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { tryStat, pathExists, readDirectory, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -64,7 +60,10 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, md5File, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/core/utils"
+import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { dirname } from "@mailwoman/platform/path"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import {
 	LATITUDE_MAX,
@@ -74,10 +73,11 @@ import {
 	shortCellToInt,
 	type H3Cell,
 } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent } from "h3-js"
 import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
-import { open as openZip } from "yauzl-promise"
 
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "./postcode/codepoint/fetch.ts"
 
@@ -294,16 +294,15 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 		)
 	}
 
-	await mkdir(destDir, { recursive: true })
+	await makeDirectories(destDir)
 	const archivePath = String(join(destDir, download.fileName))
 
 	const writeSidecars = async (md5: string, bytes: number): Promise<void> => {
-		await writeFile(`${archivePath}.md5`, `${md5}  ${download.fileName}\n`, "utf8")
+		await writeLocalTextFile(`${md5}  ${download.fileName}\n`, `${archivePath}.md5`)
 
-		await writeFile(
-			String(join(destDir, "acquisition.json")),
+		await writeLocalTextFile(
 			`${JSON.stringify({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }, null, 2)}\n`,
-			"utf8"
+			String(join(destDir, "acquisition.json"))
 		)
 	}
 
@@ -336,7 +335,7 @@ export async function downloadOpenUPRN(options: DownloadOpenUPRNOptions): Promis
 		},
 	})
 
-	await pipeline(Readable.fromWeb(response.body.pipeThrough(counter)), createWriteStream(archivePath))
+	await pipeline(Readable.fromWeb(response.body.pipeThrough(counter)), openWriteStream(archivePath))
 
 	phase("verify", `md5 vs OS-published ${download.md5}`)
 	const md5 = await md5File(archivePath)
@@ -392,64 +391,49 @@ export async function extractOpenUPRN(options: {
 	const phase = options.onPhase ?? (() => {})
 	const extractedDir = String(join(options.destDir, "extracted"))
 
-	await mkdir(extractedDir, { recursive: true })
-
-	const zip = await openZip(options.archivePath)
+	await makeDirectories(extractedDir)
 
 	let csvPath: string | null = null
 	let csvBytes = 0
-	let licenseText = ""
-	let versionsText = ""
+	const entries = await listZipEntries(options.archivePath)
+	const csvEntry = entries.find((entry) => /^osopenuprn_.*\.csv$/i.test(entry.name))
 
-	try {
-		for await (const entry of zip) {
-			const name = entry.filename
+	if (csvEntry) {
+		csvPath = String(join(extractedDir, csvEntry.name.slice(csvEntry.name.lastIndexOf("/") + 1)))
+		csvBytes = csvEntry.uncompressedSize
+		const existing = await tryStat(csvPath)
 
-			if (name.endsWith("/")) continue
+		phase(
+			"extract",
+			existing?.size === csvBytes
+				? `${csvEntry.name} already extracted (${existing.size.toLocaleString()} bytes)`
+				: `${csvEntry.name} (${csvBytes.toLocaleString()} bytes)`
+		)
+	}
 
-			const dest = String(join(extractedDir, name.slice(name.lastIndexOf("/") + 1)))
-			const isCSV = /^osopenuprn_.*\.csv$/i.test(name)
+	await extractZipEntries(options.archivePath, extractedDir, {
+		selector: /^(?:osopenuprn_.*\.csv|licence\.txt|versions\.txt)$/i,
+		flatten: true,
+		skipExisting: true,
+	})
 
-			if (isCSV) {
-				csvPath = dest
-				csvBytes = entry.uncompressedSize
+	const licensePath = String(join(extractedDir, "licence.txt"))
+	const versionsPath = String(join(extractedDir, "versions.txt"))
 
-				const existing = await stat(dest).catch(() => null)
+	const licenseText = await readLocalBuffer(licensePath)
+		.then(decodeProvenanceText)
+		.catch(() => "")
 
-				if (existing && existing.size === entry.uncompressedSize) {
-					phase("extract", `${name} already extracted (${existing.size.toLocaleString()} bytes)`)
+	const versionsText = await readLocalBuffer(versionsPath)
+		.then(decodeProvenanceText)
+		.catch(() => "")
 
-					continue
-				}
+	if (licenseText) {
+		await writeLocalFile(licenseText, licensePath)
+	}
 
-				phase("extract", `${name} (${entry.uncompressedSize.toLocaleString()} bytes)`)
-				const readStream = await entry.openReadStream()
-
-				await pipeline(readStream, createWriteStream(dest))
-			} else if (/^licence\.txt$/i.test(name)) {
-				const readStream = await entry.openReadStream()
-				const chunks: Buffer[] = []
-
-				for await (const chunk of readStream) {
-					chunks.push(chunk as Buffer)
-				}
-
-				licenseText = decodeProvenanceText(Buffer.concat(chunks))
-				await writeFile(dest, licenseText, "utf8")
-			} else if (/^versions\.txt$/i.test(name)) {
-				const readStream = await entry.openReadStream()
-				const chunks: Buffer[] = []
-
-				for await (const chunk of readStream) {
-					chunks.push(chunk as Buffer)
-				}
-
-				versionsText = decodeProvenanceText(Buffer.concat(chunks))
-				await writeFile(dest, versionsText, "utf8")
-			}
-		}
-	} finally {
-		await zip.close()
+	if (versionsText) {
+		await writeLocalFile(versionsText, versionsPath)
 	}
 
 	if (!csvPath) {
@@ -554,7 +538,7 @@ interface UPRNAcquisitionSidecar {
  * Locate the acquired archive in an offline `sourceDir`.
  */
 async function resolveOfflineArchive(sourceDir: string): Promise<string> {
-	const entries = await readdir(sourceDir).catch(() => [] as string[])
+	const entries = await readDirectory(sourceDir).catch(() => [] as string[])
 	const archive = entries.find((name) => /^osopenuprn_.*\.zip$/i.test(name))
 
 	if (!archive) {
@@ -582,7 +566,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	let osVersion: string
 
 	const readSidecarProvenance = async (): Promise<UPRNAcquisitionSidecar | null> => {
-		const raw = await readFile(String(join(sourceDir, "acquisition.json")), "utf8").catch(() => null)
+		const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
 
 		return raw ? tryParsingJSON<UPRNAcquisitionSidecar>(raw) : null
 	}
@@ -624,18 +608,18 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 
 	const ingestPath = `${out}.ingest`
 
-	await mkdir(dirname(out), { recursive: true })
+	await makeDirectories(dirname(out))
 
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (existsSync(stale)) {
-			unlinkSync(stale)
+		if (await pathExists(stale)) {
+			await removePath(stale)
 		}
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseSync(ingestPath)
+	const kdb = new DatabaseClient<UPRNDatabase>(ingestPath)
 
-	db.exec(`
+	kdb.exec(`
 		PRAGMA page_size = 8192;
 		PRAGMA journal_mode = WAL;
 		PRAGMA synchronous = NORMAL;
@@ -643,8 +627,6 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		PRAGMA temp_store = MEMORY;
 		PRAGMA cache_size = -400000;
 	`)
-
-	const kdb = new DatabaseClient<UPRNDatabase>({ database: db })
 
 	await createUPRNTable(kdb)
 	await createUPRNMetaTable(kdb)
@@ -654,7 +636,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	// Hot positional INSERT — raw prepared statement, per the AGENTS.md bulk-load carve-out. OR IGNORE so a
 	// source-side duplicate UPRN is COUNTED (via `changes === 0`) rather than aborting a 41M-row load; the
 	// accounting gate then reports any as a defect.
-	const insert = db.prepare("INSERT OR IGNORE INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
+	const insert = kdb.prepare("INSERT OR IGNORE INTO uprn (uprn, lat, lon, h3_cell) VALUES (?, ?, ?, ?)")
 
 	const coverage = new Map<number, number>()
 	let read = 0
@@ -664,7 +646,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	let headerSeen = false
 
 	phase("ingest", extracted.csvPath)
-	db.exec("BEGIN")
+	kdb.exec("BEGIN")
 
 	for await (const rawLine of TextSpliterator.fromAsync(extracted.csvPath)) {
 		if (!headerSeen) {
@@ -674,8 +656,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 			const header = withoutBOM.endsWith("\r") ? withoutBOM.slice(0, -1) : withoutBOM
 
 			if (header !== OPEN_UPRN_HEADER) {
-				db.exec("ROLLBACK")
-				db.close()
+				kdb.exec("ROLLBACK")
+				await kdb.destroy()
 				throw new Error(
 					`buildUPRNLayer: header drift — expected ${JSON.stringify(OPEN_UPRN_HEADER)}, found ${JSON.stringify(header)}`
 				)
@@ -714,8 +696,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		coverage.set(parent, (coverage.get(parent) ?? 0) + 1)
 
 		if (inserted % 1_000_000 === 0) {
-			db.exec("COMMIT")
-			db.exec("BEGIN")
+			kdb.exec("COMMIT")
+			kdb.exec("BEGIN")
 
 			if (inserted % 5_000_000 === 0) {
 				phase("ingest", `${inserted.toLocaleString()} rows…`)
@@ -723,7 +705,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		}
 	}
 
-	db.exec("COMMIT")
+	kdb.exec("COMMIT")
 	phase("ingest", `${inserted.toLocaleString()} UPRNs (${read.toLocaleString()} lines read)`)
 
 	// --- Gates. No upstream row-count manifest exists for this product (see the module docstring), so the
@@ -822,11 +804,11 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	}
 
 	phase("freeze")
-	db.exec("ANALYZE")
+	kdb.exec("ANALYZE")
 	await kdb.destroy()
 
 	phase("seal", out)
-	sealDatabase(ingestPath)
+	await sealDatabase(ingestPath)
 	swapDatabaseIntoPlace(ingestPath, out)
 
 	return {

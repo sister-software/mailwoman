@@ -26,10 +26,8 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
-import { mkdirSync, rmSync } from "node:fs"
-import { basename, dirname } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { basename, dirname } from "@mailwoman/platform/path"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
 
@@ -66,8 +64,9 @@ interface Options {
 
 const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { DatabaseClient } = await import("@mailwoman/core/kysley/client")
-		const { dataRootPath, swapDatabaseIntoPlace } = await import("@mailwoman/core/utils")
+		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
+		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { swapDatabaseIntoPlace } = await import("@mailwoman/sqlite/sealed-db")
 
 		// OA mode: build from OpenAddresses CSV(s) rather than the Overture parquet.
 		const OA_MODE = Boolean(options.oaCSV)
@@ -129,12 +128,12 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 				: []
 		)
 
-		mkdirSync(dirname(finalOut), { recursive: true })
+		await makeDirectories(dirname(finalOut))
 		// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
-			rmSync(tmpOut + sfx, { force: true })
+			await removePathIfPresent(tmpOut + sfx)
 		}
 
 		const instance = await DuckDBInstance.create()
@@ -163,15 +162,15 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			? `AND lower(sources[1].dataset) IN (${[...allowedDatasets].map((d) => `'${d}'`).join(", ")})`
 			: ""
 
-		const db = new DatabaseSync(tmpOut)
+		const kdb = new DatabaseClient<AddressPointDatabase>(tmpOut)
 		// DDL + column order come from the SHARED schema (address-point-schema) so the writer can't drift
 		// from AddressPointSqliteLookup (the reader). The INSERT stays a POSITIONAL prepared statement —
 		// tens of millions of rows per state — but its column list is derived from ADDRESS_POINT_COLUMNS.
-		db.exec("PRAGMA journal_mode = WAL;")
-		const kdb = new DatabaseClient<AddressPointDatabase>({ database: db })
+		kdb.exec("PRAGMA journal_mode = WAL;")
+
 		await createAddressPointTable(kdb)
 
-		const insert = db.prepare(
+		const insert = kdb.prepare(
 			`INSERT INTO address_point (${ADDRESS_POINT_COLUMNS.join(", ")})
 					 VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 		)
@@ -218,7 +217,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		const stream = await duck.stream(streamSQL)
 		// A streamed DataChunk carries no column names of its own, so pull them off the result once.
 		const colNames = stream.columnNames()
-		db.exec("BEGIN")
+		kdb.exec("BEGIN")
 
 		for (let chunk = await stream.fetchChunk(); chunk && chunk.rowCount > 0; chunk = await stream.fetchChunk()) {
 			const rows = chunk.getRowObjects(colNames) as Record<string, unknown>[]
@@ -256,14 +255,14 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 			}
 		}
 
-		db.exec("COMMIT")
+		kdb.exec("COMMIT")
 
 		console.error(`${totalReturned} ${STATE} rows from ${OA_MODE ? "OpenAddresses" : basename(PARQUET)}`)
 
 		await createAddressPointIndexes(kdb)
-		db.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
+		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 
-		const stats = db
+		const stats = kdb
 			.prepare(
 				"SELECT count(*) AS n, count(DISTINCT street_norm) AS streets, count(DISTINCT postcode) AS postcodes FROM address_point"
 			)

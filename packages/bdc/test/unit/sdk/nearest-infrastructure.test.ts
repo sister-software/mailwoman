@@ -31,17 +31,12 @@
  *   {@link nearestInfrastructure} itself uses, cross-checked against a direct `readLayerCoverage` call).
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { res9ShortCellToRes6Parent } from "@mailwoman/bdc/sdk/filing-landscape"
 import {
 	nearestInfrastructure,
 	NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS,
 } from "@mailwoman/bdc/sdk/nearest-infrastructure"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -62,6 +57,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -143,8 +139,7 @@ function cellFor(latitude: number, longitude: number): number {
  * `buildPOIDatabase`, see this file's header docstring for why.
  */
 async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promise<void> {
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// `createPOIStagingTables` also creates `poi_stage` (unused here) — the category-codes dictionary
@@ -152,7 +147,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 	await createPOIStagingTables(kdb)
 	// POILookup's constructor unconditionally prepares a statement against `poi_search` — the FTS5 table
 	// must exist even though these tests never search by name.
-	createPOISearchFTS(raw)
+	createPOISearchFTS(kdb)
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {
 		await kdb.insertInto("poi_category_codes").values({ id, category }).execute()
@@ -186,8 +181,6 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 	// Index-after-load, matching the builder's own discipline (poi-schema.ts / poi-lookup.test.ts).
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
-
-	await kdb.destroy()
 }
 
 /**
@@ -195,7 +188,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
  * against whatever database the caller passes, independent of poi.db's own coverage.
  */
 async function openEmptyContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+	const kdb = DatabaseClient.temp<LayerContractDatabase>()
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
@@ -218,19 +211,17 @@ async function openEmptyContractDB(): Promise<DatabaseClient<LayerContractDataba
 	return kdb
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let poiDBPath: string
 
 beforeAll(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "bdc-nearest-infrastructure-"))
-	poiDBPath = join(scratch, "poi.db")
+	scratch = await temporaryDirectory("bdc-nearest-infrastructure-")
+	poiDBPath = scratch.resolve("poi.db")
 
 	await buildPOIFixture(poiDBPath, ALL_ROWS)
 })
 
-afterAll(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("nearestInfrastructure", () => {
 	it("returns telecom infrastructure nearest-first, excluding non-telecom categories", async () => {

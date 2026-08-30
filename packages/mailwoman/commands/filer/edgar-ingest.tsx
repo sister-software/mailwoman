@@ -7,6 +7,7 @@
  *   (`cik-lookup-data.txt`); requires `SEC_EDGAR_USER_AGENT` set in the environment. Paced at 9 req/s.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -40,10 +41,8 @@ const FilerEdgarIngest: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerEdgarIngest } = await import("@mailwoman/filer/tools")
 
-		const { readFileSync } = await import("node:fs")
-
 		// oxlint-disable mailwoman/prefer-spliterator -- command input is materialized for the batch lookup below
-		const names = readFileSync(options.names, "utf8")
+		const names = (await readLocalTextFile(options.names))
 			.split("\n")
 			.map((line) => line.trim())
 			.filter((line) => line.length > 0)

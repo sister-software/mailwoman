@@ -12,7 +12,7 @@ import { describe, expect, test } from "vitest"
 
 function makeProposal(component: ComponentTag, body: string, start: number, confidence = 0.9): ClassificationProposal {
 	return {
-		span: { start, end: start + body.length, body } as unknown as ClassificationProposal["span"],
+		span: { start, end: start + body.length, body } as ClassificationProposal["span"],
 		component,
 		confidence,
 		source: "neural",

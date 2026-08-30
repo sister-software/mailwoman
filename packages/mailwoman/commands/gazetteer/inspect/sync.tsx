@@ -10,7 +10,7 @@
  *   default). Which repositories to sync is decided in `sync-plan.ts` before any network work, so a mistake is a
  *   message rather than a directory full of clones.
  *
- *   The progress display reports REPOSITORIES, and the per-repository `▸` lines are the load-bearing part: a first
+ *   The progress display reports REPOSITORIES, and the per-repository `▸` lines are the required part: a first
  *   clone of a large country runs for minutes, and a counter that moves only on completion is indistinguishable from a
  *   hang while it does. Those lines go to stderr, so they survive the non-interactive Ink render that writes one frame
  *   at unmount.
@@ -18,7 +18,7 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
@@ -141,8 +141,8 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
 			const { resolveWOFRepoOrigin, UPSTREAM_ORG } = await import("#gazetteer/wof-repo-origin")
-			const { execFile } = await import("node:child_process")
-			const { promisify } = await import("node:util")
+			const { execFile } = await import("@mailwoman/platform/child_process")
+			const { promisify } = await import("@mailwoman/platform/util")
 
 			const run = promisify(execFile)
 

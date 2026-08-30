@@ -61,7 +61,7 @@ This is the placebo — pass it to `mwdev_arc` as `null=`. Measured on `v440-ste
 regress with no new data**. The loss appears in the first 1,000 steps and is flat to 4,000: touching the
 base costs those rows before the new data is read.
 
-Consequences, both load-bearing:
+Consequences, both required:
 
 - **A candidate's regressions are `candidate − placebo`, not `candidate − shipped`.** Eighteen regressions
   where the placebo has ten is eight attributable, not eighteen.

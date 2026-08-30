@@ -15,7 +15,7 @@ longest-first n-gram algorithm, two vocabularies. Only the vocabulary
 JSON is the single source both consumers load (TS + Python), so the two implementations cannot drift
 (the PLACETYPE_ORDER lesson); ``test_country_lexicon.py`` pins them to the TS fixture.
 
-CRITICALLY, like the gazetteer and unlike the postcode anchor: features are computed from the RAW
+like the gazetteer and unlike the postcode anchor: features are computed from the RAW
 SURFACE ONLY — never from gold labels — so the exact same computation runs at train and inference
 (no leak, no skew). The emitted per-piece feature is ``[country_surface, country_ambiguous]``:
 

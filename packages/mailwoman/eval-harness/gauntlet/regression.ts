@@ -14,10 +14,8 @@
  *   Run: mailwoman eval gauntlet --layer regression [--candidate <candidate.onnx>]
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { checkCase } from "./check-case.ts"
 import { assertCorpusStampFresh } from "./corpus-stamp.ts"
@@ -86,13 +84,11 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
  * Run the curated regression layer. Returns `pass` (every `status=pass` case still passes).
  */
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
-	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	const kdb = new DatabaseClient<GauntletDatabase>({ database: raw })
+	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	// Before a single address is graded: does this DB hold the corpus that is committed RIGHT NOW? A gate
 	// reading a stale artifact reports a verdict about a corpus nobody has — see corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()
-	await kdb.destroy()
 
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
 
@@ -143,7 +139,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		}
 	}
 
-	deps.close()
+	deps[Symbol.dispose]()
 
 	console.log(
 		`\n=== Gauntlet · regression (${gated - fails.length}/${gated} gated cases pass, ${tracked.length} tracked) ===`
@@ -163,7 +159,7 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 
 	// Printed whenever the pass could have fired — i.e. unless it is explicitly pinned OFF. Keying this on the ON
 	// PIN was right while the library default was OFF and wrong the moment it flipped (2026-08-05): the standard
-	// unpinned run is now the ON configuration, and it is the run whose firing count a reader needs.
+	// unpinned run is now the ON configuration and the run whose firing count a reader needs.
 	if (options.levers?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 

@@ -170,7 +170,7 @@ number.
 |                                    7 |               98.9% |       2.062% |
 
 FP grows **monotonically** with δ for both checkpoints (roughly 6–10× from δ=3 to δ=7) — δ is a
-genuine recall/FP dial, not a free lunch; the smallest δ clearing the recall bar is load-bearing.
+genuine recall/FP dial, not a free lunch; the smallest δ clearing the recall bar is required.
 
 ### 6 demo presets
 
@@ -331,7 +331,7 @@ number preserved as `staged_candidate_version`.
 
 **Root-cause hypothesis for the redesign:** the four dependent_locality feed shards (GB/NZ/ES/
 FR-lieudit) are ~100% comma-structured — every training row delimits its fields with commas. This
-plausibly pushed the model toward treating a comma as load-bearing boundary evidence, at the cost
+plausibly pushed the model toward treating a comma as required boundary evidence, at the cost
 of robustness on comma-free US input (the White House / Pennsylvania Ave case) — the same coin as
 this arc's own documented GB comma-stripped-input inertness trade (segment-mode's v1 boundary,
 `gb_golden_comma_stripped` above).
@@ -343,7 +343,7 @@ model of its own by design, so shipping the code introduces no behavior change u
 explicitly wires a candidate). Model promotion itself waits for a clean checkpoint under a NEW,
 separately pre-registered recipe: **v3.12**, sketched at
 `docs/superpowers/plans/2026-07-23-v312-comma-robust-recipe.md` — a comma-drop augmentation share
-extended to the new locale shards (the augmentation machinery already exists from v381), gated on
+extended to the new locale shards (the augmentation implementation already exists from v381), gated on
 its own why-3 verification step before any GPU spend. See that document for the full pre-
 registration. `neural-weights-en-us/model-card.json`'s `phase` field carries this same verdict for
 lockstep — read it, not just this scorecard, for the authoritative current status.

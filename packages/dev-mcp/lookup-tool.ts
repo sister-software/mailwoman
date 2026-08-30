@@ -15,22 +15,25 @@
  *   server spends its resident memory, and it spends it on sessions.
  */
 
-import { readFileSync } from "node:fs"
-import { basename } from "node:path"
-import type { DatabaseSync } from "node:sqlite"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
-import { readRequiredChannels, resolveWeights } from "@mailwoman/neural/weights"
+import { resolveWeights } from "@mailwoman/neural/weights"
+import { readRequiredChannels } from "@mailwoman/neural/weights-channels"
+import { basename } from "@mailwoman/platform/path"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolveCandidateDBPath, resolveWOFShardPaths } from "mailwoman/resolver-backend"
 import { resolvePath } from "path-ts"
 
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import {
+	type CandidateDelta,
+	diffCandidateRows,
 	lookupCandidate,
 	lookupCodex,
 	lookupPOI,
@@ -52,6 +55,15 @@ import {
 import { syntheticIDNote } from "./place-id-provenance.ts"
 
 /**
+ * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare artifact's rows for the SAME
+ * queries, and the per-query delta between the returned sets.
+ */
+export interface CandidateCompareResult extends LookupResult {
+	rows_compare: LookupRow[]
+	deltas: CandidateDelta[]
+}
+
+/**
  * Everything a caller can pass, beyond the source and the queries.
  */
 export interface LookupArgs {
@@ -65,6 +77,12 @@ export interface LookupArgs {
 	country?: string
 	limit?: number
 	config?: EngineConfig
+	/**
+	 * `candidate` only — a SECOND candidate.db to run the same queries against, answering both row sets plus a per-query
+	 * delta (rows only one artifact holds; shared rows whose ranking fields moved). The two-artifact probe every staged
+	 * gazetteer diagnosis previously scripted by hand.
+	 */
+	compareCandidateDB?: string
 }
 
 /**
@@ -74,7 +92,10 @@ export interface LookupArgs {
  * — is the same shape a genuine absence has, and a caller reading it would conclude the gazetteer lacks fifty places
  * when what it lacks is a file.
  */
-export async function runLookup(registry: EngineRegistry, args: LookupArgs): Promise<LookupResult> {
+export async function runLookup(
+	registry: EngineRegistryLike,
+	args: LookupArgs
+): Promise<LookupResult | CandidateCompareResult> {
 	const { source, queries } = args
 	const config = args.config ?? {}
 	const dataRoot = config.data_root ?? String(mailwomanDataRoot())
@@ -103,33 +124,102 @@ export async function runLookup(registry: EngineRegistry, args: LookupArgs): Pro
 		}
 
 		case LookupSource.Candidate: {
-			return withArtifact(source, resolveCandidateDB(config, dataRoot), (db, path) => {
-				const rows = lookupCandidate(db, queries, {
-					...(args.country ? { country: args.country } : {}),
-					...(args.limit ? { limit: args.limit } : {}),
-				})
+			return await withArtifact(source, resolveCandidateDB(config, dataRoot), async (db, path) => {
+				// The score source's split channels ride along whenever the conventional importance DB exists beside the
+				// artifacts — the join every fame-contest diagnosis needs, attached rather than scripted.
+				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
 
-				const idNote = syntheticIDNote(
-					rows.flatMap((row) => (row.entries ?? []).map((e) => Number((e as { spr_id: number }).spr_id)))
-				)
+				const importanceDB = (await pathExists(importancePath))
+					? new DatabaseClient<PlaceImportanceDatabase>(importancePath, { readOnly: true })
+					: null
 
-				return {
-					source,
-					provenance: { artifact: path },
-					rows,
-					notes: [
-						"Keyed on `name_key` — the shared fold applied at build AND at query time. Every row reports the key " +
-							"that reached it beside the stored `name`, because those differ far more often than they agree.",
-						"`importance: null` is UNMEASURED (the score source had no row for that place), never an importance of " +
-							"zero. A (0, 0) centroid is the build's unlocated sentinel.",
-						...(idNote ? [idNote] : []),
-					],
+				try {
+					const candidateOptions = {
+						...(args.country ? { country: args.country } : {}),
+						...(args.limit ? { limit: args.limit } : {}),
+						...(importanceDB ? { importance: { db: importanceDB, artifact: importancePath } } : {}),
+					}
+
+					const rows = lookupCandidate(db, queries, candidateOptions)
+
+					const idNote = syntheticIDNote(
+						rows.flatMap((row) => (row.entries ?? []).map((e) => Number((e as { spr_id: number }).spr_id)))
+					)
+
+					const entries = rows.flatMap((row) => (row.entries ?? []) as Array<{ importance_split?: unknown }>)
+
+					const joined = entries.filter(
+						(entry) => entry.importance_split !== undefined && entry.importance_split !== null
+					).length
+
+					const splitNote = importanceDB
+						? `importance_split joined for ${joined} of ${entries.length} returned row(s) by spr_id from ` +
+							`${basename(importancePath)}. A LOW rate against rows whose blended importance IS measured means ` +
+							"the id spaces diverged (a cross-era pair re-keys Overture-minted ids) — not missing scores."
+						: "No admin-global-priority-importance.db under the data root, so entries carry no importance_split — " +
+							"the split channels are UNREAD here, not absent from the world."
+
+					if (args.compareCandidateDB) {
+						const comparePath = resolveCandidateDB({ ...config, candidate_db: args.compareCandidateDB }, dataRoot)
+						const openedB = await openSealedArtifact<WOFDatabase>(comparePath)
+
+						if ("unavailable" in openedB || !comparePath) {
+							return {
+								source,
+								provenance: { artifact: path },
+								rows,
+								notes: [
+									`compare_candidate_db did not open (${"unavailable" in openedB ? openedB.unavailable : "no path resolved"}) — ` +
+										"single-artifact rows only, and this line is the reason there are no deltas.",
+									splitNote,
+									...(idNote ? [idNote] : []),
+								],
+							}
+						}
+
+						try {
+							const rowsCompare = lookupCandidate(openedB.db, queries, candidateOptions)
+
+							return {
+								source,
+								provenance: { artifact: path, compare_artifact: comparePath },
+								rows,
+								rows_compare: rowsCompare,
+								deltas: diffCandidateRows(rows, rowsCompare),
+								notes: [
+									"Two artifacts, same queries: `rows` is the primary, `rows_compare` the compare_candidate_db, " +
+										"and `deltas` the per-query difference — computed over the RETURNED rows only, so raise " +
+										"`limit` before reading a delta over a deep key population.",
+									splitNote,
+									...(idNote ? [idNote] : []),
+								],
+							}
+						} finally {
+							openedB.db.destroy()
+						}
+					}
+
+					return {
+						source,
+						provenance: { artifact: path },
+						rows,
+						notes: [
+							"Keyed on `name_key` — the shared fold applied at build AND at query time. Every row reports the key " +
+								"that reached it beside the stored `name`, because those differ far more often than they agree.",
+							"`importance: null` is UNMEASURED (the score source had no row for that place), never an importance of " +
+								"zero. A (0, 0) centroid is the build's unlocated sentinel.",
+							splitNote,
+							...(idNote ? [idNote] : []),
+						],
+					}
+				} finally {
+					importanceDB?.destroy()
 				}
 			})
 		}
 
 		case LookupSource.POI: {
-			return withArtifact(source, resolvePath(dataRoot, "poi", "poi.db"), (db, path) => ({
+			return await withArtifact(source, resolvePath(dataRoot, "poi", "poi.db"), (db, path) => ({
 				source,
 				provenance: { artifact: path },
 				rows: lookupPOI(db, queries, {
@@ -144,16 +234,16 @@ export async function runLookup(registry: EngineRegistry, args: LookupArgs): Pro
 		}
 
 		case LookupSource.WOF: {
-			return runWOFLookup(args, dataRoot)
+			return await runWOFLookup(args, dataRoot)
 		}
 
 		case LookupSource.Postcode: {
-			return runPostcodeLookup(args)
+			return await runPostcodeLookup(args)
 		}
 
 		case LookupSource.FST:
 		case LookupSource.StreetMorphology: {
-			return runFSTLookup(registry, args)
+			return await runFSTLookup(registry, args)
 		}
 
 		default: {
@@ -184,12 +274,12 @@ function resolveCandidateDB(config: EngineConfig, dataRoot: string): string | un
  * Open one sealed artifact, hand it to `build`, and close it whatever happens. An unopenable path short-circuits to the
  * unavailable envelope with no rows.
  */
-function withArtifact(
+async function withArtifact<T extends LookupResult>(
 	source: LookupSource,
 	path: string | undefined,
-	build: (db: DatabaseSync, path: string) => LookupResult
-): LookupResult {
-	const opened = openSealedArtifact(path)
+	build: (db: DatabaseClient<WOFDatabase>, path: string) => T | Promise<T>
+): Promise<T | LookupResult> {
+	const opened = await openSealedArtifact<WOFDatabase>(path)
 
 	if ("unavailable" in opened || !path) {
 		const unavailable = "unavailable" in opened ? opened.unavailable : "No artifact path was resolved for this source."
@@ -198,9 +288,9 @@ function withArtifact(
 	}
 
 	try {
-		return build(opened.db, path)
+		return await build(opened.db, path)
 	} finally {
-		opened.db.close()
+		opened.db.destroy()
 	}
 }
 
@@ -216,13 +306,13 @@ const UNAVAILABLE_NOTE =
  * The WOF shards, opened as a set. Unavailable only when NO shard opens; a partial set is reported in the notes,
  * because "three of six shards" is a different reading of a miss than "all six".
  */
-function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
+async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {
 	const paths = resolveWOFShardPaths(args.config?.resolve_db, dataRoot)
-	const shards: WOFShard[] = []
+	const shards: WOFShard<WOFDatabase>[] = []
 	const skipped: string[] = []
 
 	for (const path of paths) {
-		const opened = openSealedArtifact(path)
+		const opened = await openSealedArtifact<WOFDatabase>(path)
 
 		if ("unavailable" in opened) {
 			skipped.push(opened.unavailable)
@@ -268,7 +358,7 @@ function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
 		}
 	} finally {
 		for (const shard of shards) {
-			shard.db.close()
+			shard.db.destroy()
 		}
 	}
 }
@@ -279,7 +369,7 @@ function runWOFLookup(args: LookupArgs, dataRoot: string): LookupResult {
  * The span mode comes from the package's own model card. Defaulting it here instead would describe a configuration the
  * loader never runs — `alnum-run` is the loader's default only when the card declares nothing.
  */
-function runPostcodeLookup(args: LookupArgs): LookupResult {
+async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	const locale = args.locale ?? args.config?.locale ?? "en-us"
 	let resolved: ReturnType<typeof resolveWeights>
 
@@ -309,7 +399,7 @@ function runPostcodeLookup(args: LookupArgs): LookupResult {
 	let resolver: PostcodeAnchorResolver
 
 	try {
-		resolver = loadAnchorArtifact(resolved.anchorLookupPath)
+		resolver = await loadAnchorArtifact(resolved.anchorLookupPath)
 	} catch (error) {
 		return {
 			source: LookupSource.Postcode,
@@ -339,12 +429,12 @@ function runPostcodeLookup(args: LookupArgs): LookupResult {
  * `toAnchorLookup()` builds all of them into a Map in 2,035 ms (against 24 ms to construct the reader), which is the
  * wrong trade for a handful of queries. The JSON form has no search seam, so it is parsed and wrapped.
  */
-function loadAnchorArtifact(artifact: { path: string; binary: boolean }): PostcodeAnchorResolver {
+async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
 	if (artifact.binary) {
-		return new PostcodeBinaryResolver(new Uint8Array(readFileSync(artifact.path)))
+		return new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(artifact.path)))
 	}
 
-	const lookup = parseAnchorLookup(parseJSONStrict(readFileSync(artifact.path, "utf8")))
+	const lookup = parseAnchorLookup(await readLocalJSONFile(artifact.path))
 
 	return {
 		lookup: (postcode: string) => {
@@ -365,7 +455,7 @@ function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Postco
  * would consult, so it asks for an engine that loads one — resolving the path any other way would answer about an FST
  * no runtime configuration reads.
  */
-async function runFSTLookup(registry: EngineRegistry, args: LookupArgs): Promise<LookupResult> {
+async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Promise<LookupResult> {
 	const notes =
 		args.source === LookupSource.FST
 			? [
@@ -409,7 +499,7 @@ async function runFSTLookup(registry: EngineRegistry, args: LookupArgs): Promise
  * knew nothing about the queries.
  */
 async function probeLocaleFST(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	args: LookupArgs,
 	locale: string | undefined
 ): Promise<{ artifact?: string; engine_id?: string; rows: LookupRow[]; unavailable_reason?: string }> {
@@ -422,7 +512,7 @@ async function probeLocaleFST(
 	const path =
 		args.source === LookupSource.FST ? engine.session.artifacts.fstPath : engine.session.artifacts.streetMorphologyPath
 
-	const loaded = loadFSTArtifact(path, deserializeFST)
+	const loaded = await loadFSTArtifact(path, deserializeFST)
 
 	if ("unavailable" in loaded) return { rows: [], unavailable_reason: loaded.unavailable }
 

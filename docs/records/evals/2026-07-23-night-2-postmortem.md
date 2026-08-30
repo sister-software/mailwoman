@@ -77,7 +77,7 @@ any re-dispatch safe.
 
 - I discovered the ruleset by hitting it. A pre-flight `gh api …/rulesets` check before any
   release dispatch would have converted a failed real run into a morning question. → Added to the
-  release-skill gotcha candidates below.
+  release-skill failure mode candidates below.
 - My version knowledge was stale (assumed 7.2.x era; npm was at 7.5.0). Step 0 caught it — but
   it's a reminder that ledger memory ≠ registry state; `npm view` is the only source.
 
@@ -100,7 +100,7 @@ any re-dispatch safe.
    ready) / D (locality-mapped v1 = current shipped state, zero risk for October). C
    (accept-and-gate 7k's single violation) is on the table only as an explicit gate revision.
 3. Merge the night's PRs (all CI-green): #1253 (run record + dossier + v3.13 option-B recipe
-   proposal), #1254 (this postmortem), #1255 (release-skill gotcha), #1256 (CJK byte-fallback
+   proposal), #1254 (this postmortem), #1255 (release-skill failure mode), #1256 (CJK byte-fallback
    fix), #1257 (pair-index country-gate warn-branch test), #1258 (fileMD5 dedup).
 
 ## Lab-health findings (07:47 UTC sweep)
@@ -141,7 +141,7 @@ any re-dispatch safe.
   temp cacheRoot layout; the gate's warn branch had zero coverage). **fileMD5 dedup — PR #1258**
   (local helper → the blessed `md5File` in core/utils). **v3.13 option-B recipe pre-drafted**
   (operator-gated proposal on #1253 — the morning green-light is one word).
-- **Release-skill ruleset gotcha — PR #1255** (preflight `gh api …/rulesets` before any real
+- **Release-skill ruleset failure mode — PR #1255** (preflight `gh api …/rulesets` before any real
   dispatch; do-not-loosen rule; verified rollback behavior).
 
 ## Numbers

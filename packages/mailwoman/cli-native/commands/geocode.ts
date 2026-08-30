@@ -8,7 +8,7 @@
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
 import type { GeocodeCommandOptions } from "../../geocode-command-options.ts"
-import type { GeocodeResult } from "../../geocode-core.ts"
+import type { GeocodeResult } from "../../geocode-result.ts"
 import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "../spec.ts"
 
 const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/u
@@ -20,7 +20,7 @@ const debugSizePattern = /^\d+x\d+$/u
 export const spec = {
 	name: "geocode",
 	description:
-		"Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and rooftop/interpolation shards.",
+		"Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and the rooftop/interpolation databases.",
 	positionals: [
 		{ name: "address", description: "A formatted postal address to geocode. Omit when using --stdin.", multiple: true },
 	],
@@ -54,17 +54,17 @@ export const spec = {
 		"data-root": {
 			type: "string",
 			hint: "path",
-			description: "Root containing address-point, interpolation, WOF, POI, and other data shards.",
+			description: "Root containing the address-point, interpolation, WOF, POI, and other data databases.",
 		},
 		"address-points-db": {
 			type: "string",
 			hint: "path",
-			description: "Explicit address-point SQLite shard, bypassing region selection.",
+			description: "Explicit address-point SQLite database, bypassing region selection.",
 		},
 		"interpolation-db": {
 			type: "string",
 			hint: "path",
-			description: "Explicit interpolation SQLite shard, bypassing region selection.",
+			description: "Explicit interpolation SQLite database, bypassing region selection.",
 		},
 		"interp-calibration": {
 			type: "number",
@@ -362,7 +362,7 @@ async function runOne(input: string, options: GeocodeOptions): Promise<void> {
 
 		process.stdout.write(`${await formatResult(geocoded.result, format, false)}\n`)
 	} finally {
-		session.close()
+		session[Symbol.dispose]()
 	}
 }
 
@@ -373,7 +373,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 		throw new CLIUsageError("--stdin emits one record per line; use --json or --jsonld, not --text.")
 	}
 
-	const { createInterface } = await import("node:readline")
+	const { createInterface } = await import("@mailwoman/platform/readline")
 	const session = await openSession(options)
 	let index = 0
 
@@ -396,7 +396,7 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 			process.stdout.write(`${await formatResult(geocoded.result, format, true)}\n`)
 		}
 	} finally {
-		session.close()
+		session[Symbol.dispose]()
 	}
 }
 

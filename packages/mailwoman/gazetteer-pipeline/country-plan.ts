@@ -14,10 +14,10 @@
  *   reconciled — and reading the declaration to decide what to change is how #1015 happened.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync } from "node:sqlite"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { getRow } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { AdminSource } from "./country-sources.ts"
 
@@ -45,32 +45,28 @@ export interface SourceCensus {
  * evidence — which is also how the #1015 recipe had to be reconstructed after the manifest lagged.
  */
 export function censusForCountry(adminDBPath: string, country: string): SourceCensus {
-	const db = new DatabaseSync(adminDBPath, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
-	try {
-		const row = getRow<{ wof: number | null; overture: number | null; geonames: number | null }>(
-			db.prepare(
-				`SELECT
-					SUM(CASE WHEN id < ? THEN 1 ELSE 0 END) AS wof,
-					SUM(CASE WHEN id >= ? AND id < ? THEN 1 ELSE 0 END) AS overture,
-					SUM(CASE WHEN id >= ? THEN 1 ELSE 0 END) AS geonames
-				FROM spr WHERE country = ?`
-			),
-			OVERTURE_BAND_START,
-			OVERTURE_BAND_START,
-			GEONAMES_BAND_START,
-			GEONAMES_BAND_START,
-			country.toUpperCase()
-		)
+	const row = getRow<{ wof: number | null; overture: number | null; geonames: number | null }>(
+		db.prepare(
+			`SELECT
+				SUM(CASE WHEN id < ? THEN 1 ELSE 0 END) AS wof,
+				SUM(CASE WHEN id >= ? AND id < ? THEN 1 ELSE 0 END) AS overture,
+				SUM(CASE WHEN id >= ? THEN 1 ELSE 0 END) AS geonames
+			FROM spr WHERE country = ?`
+		),
+		OVERTURE_BAND_START,
+		OVERTURE_BAND_START,
+		GEONAMES_BAND_START,
+		GEONAMES_BAND_START,
+		country.toUpperCase()
+	)
 
-		return {
-			country: country.toUpperCase(),
-			wof: Number(row?.wof ?? 0),
-			overture: Number(row?.overture ?? 0),
-			geonames: Number(row?.geonames ?? 0),
-		}
-	} finally {
-		db.close()
+	return {
+		country: country.toUpperCase(),
+		wof: Number(row?.wof ?? 0),
+		overture: Number(row?.overture ?? 0),
+		geonames: Number(row?.geonames ?? 0),
 	}
 }
 
@@ -223,6 +219,6 @@ export function planCountryMove(options: {
 /**
  * Whether an admin gazetteer is readable at `path`, so a caller can degrade rather than throw.
  */
-export function adminDBAvailable(path: string): boolean {
-	return existsSync(path)
+export async function adminDBAvailable(path: string): Promise<boolean> {
+	return await pathExists(path)
 }

@@ -1,0 +1,201 @@
+{
+	"name": "@mailwoman/platform",
+	"version": "9.2.0",
+	"description": "Runtime-specific platform capabilities for Mailwoman.",
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/platform"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"*.ts",
+		"node/**/*.ts",
+		"unsupported/**/*.ts"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./internal": {
+			"node": "./internal.ts",
+			"default": "./out/internal.js",
+			"types": "./out/internal.d.ts"
+		},
+		"./compression": {
+			"node": "./compression.ts",
+			"worker": "./compression.ts",
+			"browser": "./compression.ts",
+			"default": "./out/compression.js",
+			"types": "./out/compression.d.ts"
+		},
+		"./child_process": {
+			"node": "./node/child_process.ts",
+			"worker": "./unsupported/child_process.ts",
+			"browser": "./unsupported/child_process.ts",
+			"default": "./out/unsupported/child_process.js",
+			"types": "./out/unsupported/child_process.d.ts"
+		},
+		"./cluster": {
+			"node": "./node/cluster.ts",
+			"worker": "./unsupported/cluster.ts",
+			"browser": "./unsupported/cluster.ts",
+			"default": "./out/unsupported/cluster.js",
+			"types": "./out/unsupported/cluster.d.ts"
+		},
+		"./crypto": {
+			"node": "./node/crypto.ts",
+			"worker": "./unsupported/crypto.ts",
+			"browser": "./unsupported/crypto.ts",
+			"default": "./out/unsupported/crypto.js",
+			"types": "./out/unsupported/crypto.d.ts"
+		},
+		"./events": {
+			"node": "./node/events.ts",
+			"worker": "./unsupported/events.ts",
+			"browser": "./unsupported/events.ts",
+			"default": "./out/unsupported/events.js",
+			"types": "./out/unsupported/events.d.ts"
+		},
+		"./fs": {
+			"node": "./node/fs.ts",
+			"worker": "./unsupported/fs.ts",
+			"browser": "./unsupported/fs.ts",
+			"default": "./out/unsupported/fs.js",
+			"types": "./out/unsupported/fs.d.ts"
+		},
+		"./fs/promises": {
+			"node": "./node/fs/promises.ts",
+			"worker": "./unsupported/fs/promises.ts",
+			"browser": "./unsupported/fs/promises.ts",
+			"default": "./out/unsupported/fs/promises.js",
+			"types": "./out/unsupported/fs/promises.d.ts"
+		},
+		"./http": {
+			"node": "./node/http.ts",
+			"worker": "./unsupported/http.ts",
+			"browser": "./unsupported/http.ts",
+			"default": "./out/unsupported/http.js",
+			"types": "./out/unsupported/http.d.ts"
+		},
+		"./https": {
+			"node": "./node/https.ts",
+			"worker": "./unsupported/https.ts",
+			"browser": "./unsupported/https.ts",
+			"default": "./out/unsupported/https.js",
+			"types": "./out/unsupported/https.d.ts"
+		},
+		"./module": {
+			"node": "./node/module.ts",
+			"worker": "./unsupported/module.ts",
+			"browser": "./unsupported/module.ts",
+			"default": "./out/unsupported/module.js",
+			"types": "./out/unsupported/module.d.ts"
+		},
+		"./net": {
+			"node": "./node/net.ts",
+			"worker": "./unsupported/net.ts",
+			"browser": "./unsupported/net.ts",
+			"default": "./out/unsupported/net.js",
+			"types": "./out/unsupported/net.d.ts"
+		},
+		"./os": {
+			"node": "./node/os.ts",
+			"worker": "./unsupported/os.ts",
+			"browser": "./unsupported/os.ts",
+			"default": "./out/unsupported/os.js",
+			"types": "./out/unsupported/os.d.ts"
+		},
+		"./path": {
+			"node": "./node/path.ts",
+			"worker": "./unsupported/path.ts",
+			"browser": "./unsupported/path.ts",
+			"default": "./out/unsupported/path.js",
+			"types": "./out/unsupported/path.d.ts"
+		},
+		"./process": {
+			"node": "./node/process.ts",
+			"worker": "./unsupported/process.ts",
+			"browser": "./unsupported/process.ts",
+			"default": "./out/unsupported/process.js",
+			"types": "./out/unsupported/process.d.ts"
+		},
+		"./readline": {
+			"node": "./node/readline.ts",
+			"worker": "./unsupported/readline.ts",
+			"browser": "./unsupported/readline.ts",
+			"default": "./out/unsupported/readline.js",
+			"types": "./out/unsupported/readline.d.ts"
+		},
+		"./sqlite": {
+			"node": "./node/sqlite.ts",
+			"worker": "./unsupported/sqlite.ts",
+			"browser": "./unsupported/sqlite.ts",
+			"default": "./out/unsupported/sqlite.js",
+			"types": "./out/unsupported/sqlite.d.ts"
+		},
+		"./stream": {
+			"node": "./node/stream.ts",
+			"worker": "./unsupported/stream.ts",
+			"browser": "./unsupported/stream.ts",
+			"default": "./out/unsupported/stream.js",
+			"types": "./out/unsupported/stream.d.ts"
+		},
+		"./stream/promises": {
+			"node": "./node/stream/promises.ts",
+			"worker": "./unsupported/stream/promises.ts",
+			"browser": "./unsupported/stream/promises.ts",
+			"default": "./out/unsupported/stream/promises.js",
+			"types": "./out/unsupported/stream/promises.d.ts"
+		},
+		"./timers/promises": {
+			"node": "./node/timers/promises.ts",
+			"worker": "./unsupported/timers/promises.ts",
+			"browser": "./unsupported/timers/promises.ts",
+			"default": "./out/unsupported/timers/promises.js",
+			"types": "./out/unsupported/timers/promises.d.ts"
+		},
+		"./url": {
+			"node": "./node/url.ts",
+			"worker": "./unsupported/url.ts",
+			"browser": "./unsupported/url.ts",
+			"default": "./out/unsupported/url.js",
+			"types": "./out/unsupported/url.d.ts"
+		},
+		"./util": {
+			"node": "./node/util.ts",
+			"worker": "./unsupported/util.ts",
+			"browser": "./unsupported/util.ts",
+			"default": "./out/unsupported/util.js",
+			"types": "./out/unsupported/util.d.ts"
+		},
+		"./worker_threads": {
+			"node": "./node/worker_threads.ts",
+			"worker": "./unsupported/worker_threads.ts",
+			"browser": "./unsupported/worker_threads.ts",
+			"default": "./out/unsupported/worker_threads.js",
+			"types": "./out/unsupported/worker_threads.d.ts"
+		},
+		"./zlib": {
+			"node": "./node/zlib.ts",
+			"worker": "./unsupported/zlib.ts",
+			"browser": "./unsupported/zlib.ts",
+			"default": "./out/unsupported/zlib.js",
+			"types": "./out/unsupported/zlib.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

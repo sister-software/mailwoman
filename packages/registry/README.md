@@ -95,7 +95,7 @@ mailwoman registry --sources tx-nppes.json --reconcile tx-fcc.json --resolve-db 
 `$MAILWOMAN_CANDIDATE_DB` is set. `resolveWOFPath` throws before anything opens; `createResolverBackend`
 then prefers the candidate backend and never touches the WOF path (`run.tsx`'s own inline comment states
 this correctly: "`$MAILWOMAN_CANDIDATE_DB` → the demo-parity candidate backend; else FTS over wofPath").
-A nonexistent path passes the gate.
+A nonexistent path satisfies that requirement.
 
 So: set `$MAILWOMAN_CANDIDATE_DB` and pass anything to `--resolve-db`. Do NOT pass `candidate.db` to
 `--resolve-db` with the environment variable unset — the flag is believed on that path, and the admin

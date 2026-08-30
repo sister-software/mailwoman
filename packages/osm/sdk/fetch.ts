@@ -18,9 +18,9 @@
  *   never holds it: a web stream piped to a write stream.
  */
 
-import { createWriteStream } from "node:fs"
-import { Readable } from "node:stream"
-import { pipeline } from "node:stream/promises"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { Readable } from "@mailwoman/platform/stream"
+import { pipeline } from "@mailwoman/platform/stream/promises"
 
 const GEOFABRIK_BASE = "https://download.geofabrik.de"
 
@@ -52,7 +52,7 @@ export async function downloadExtract(regionPath: string, destPath: string): Pro
 		},
 	})
 
-	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), createWriteStream(destPath))
+	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(destPath))
 
 	return bytes
 }

@@ -4,7 +4,7 @@
 /**
  *   The `mwdev_runs` tool definition — the description an agent reads, the input schema, and the handler wiring.
  *   The measurement itself lives in the package root; this file is the CONTRACT, and the description is the
- *   load-bearing half of it.
+ *   required half of it.
  */
 
 import { z } from "zod"
@@ -12,7 +12,7 @@ import { z } from "zod"
 import { RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR, getRun, listRuns } from "../run-store.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 
-export const runsTool = ({ registry }: DevToolDeps): DevTool => ({
+export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_runs",
 	description:
 		'What is in the run store — the past comparisons a {kind:"recorded"} arm can replay. Newest first. A run ' +
@@ -33,7 +33,7 @@ export const runsTool = ({ registry }: DevToolDeps): DevTool => ({
 
 			if (!runID) throw new Error('mwdev_runs: action "get" needs a run_id. Call it with "list" first.')
 
-			const run = getRun(runID)
+			const run = await getRun(runID)
 
 			if (!run) {
 				throw new Error(
@@ -49,7 +49,7 @@ export const runsTool = ({ registry }: DevToolDeps): DevTool => ({
 			}
 		}
 
-		const all = listRuns(RUN_STORE_DIR, fingerprint)
+		const all = await listRuns(RUN_STORE_DIR, fingerprint)
 		const limit = (args["limit"] as number | undefined) ?? 25
 		const sameTree = all.filter((run) => run.fingerprint_matches_now).length
 

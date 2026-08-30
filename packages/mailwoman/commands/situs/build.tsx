@@ -32,12 +32,13 @@
  *   regardless.
  */
 
-import { spawn } from "node:child_process"
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
-import * as os from "node:os"
-import * as path from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { spawn } from "@mailwoman/platform/child_process"
+import * as os from "@mailwoman/platform/os"
+import * as path from "@mailwoman/platform/path"
+import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -156,7 +157,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			options.states ? options.states.split(",").map((s) => s.trim().toUpperCase()) : STATES_BY_COVERAGE
 		).filter((code) => code.length > 0)
 
-		mkdirSync(outDir, { recursive: true })
+		await makeDirectories(outDir)
 
 		const concurrency = Math.max(1, options.concurrency || 4)
 		const cores = os.availableParallelism?.() ?? os.cpus().length
@@ -179,10 +180,10 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		// A shard is COMPLETE iff its address_point table has rows AND the streetkey index exists — the
 		// index is the last build step, so its presence means insert + index + VACUUM all finished.
 		const isComplete = (dbPath: string): boolean => {
-			if (!existsSync(dbPath)) return false
+			if (!pathExistsSync(dbPath)) return false
 
 			try {
-				const db = new DatabaseSync(dbPath, { readOnly: true })
+				using db = new DatabaseClient<AddressPointDatabase>(dbPath, { readOnly: true })
 				const n = (db.prepare("SELECT count(*) AS n FROM address_point").get() as { n: number }).n
 
 				const idx = (
@@ -190,8 +191,6 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 						.prepare("SELECT count(*) AS n FROM sqlite_master WHERE type='index' AND name='idx_ap_streetkey'")
 						.get() as { n: number }
 				).n
-
-				db.close()
 
 				return n > 0 && idx > 0
 			} catch {
@@ -306,7 +305,7 @@ const SitusBuild: ParsedCommandComponent<Options> = ({ options }) => {
 			console.error(`[ok]   ${r.state} — ${pts.toLocaleString()} points (${r.seconds}s)`)
 
 			manifest.builtAt = new Date(t0).toISOString().slice(0, 10)
-			writeFileSync(attributionPath, JSON.stringify(manifest, null, 2))
+			await writeLocalJSONFile(manifest, attributionPath)
 		}
 
 		const mins = ((Date.now() - t0) / 60_000).toFixed(1)

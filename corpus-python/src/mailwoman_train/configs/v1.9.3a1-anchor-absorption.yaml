@@ -13,7 +13,7 @@
 #
 # THE CHANGE (ONE variable for attribution = "auxiliary-channel hardening", gated as a unit):
 #  1. anchor_paint_mode: shaped   -> paint the anchor on postcode-SHAPED spans (port POSTCODE_PATTERNS
-#     from neural/postcode-repair.ts), MIRRORING inference, not gold spans. THE load-bearing fix.
+#     from neural/postcode-repair.ts), MIRRORING inference, not gold spans. THE required fix.
 #  2. anchor_value_mode: region_agnostic_mindist -> demote the rich posterior+latlon vector to a weak
 #     scalar log(1 + min_km from the token's postcode centroid to the NEAREST gazetteer region centroid);
 #     non-postcode-shaped -> log(1+10000). Train/inference-congruent (gazetteer-only, no detected region

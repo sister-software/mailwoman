@@ -9,12 +9,7 @@
  *   path set but the file missing, path set and the file present.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	assertBDCDatabaseExists,
 	assertFilerDatabaseExists,
@@ -28,15 +23,14 @@ import {
 	createPOITable,
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, describe, expect, it } from "vitest"
 
-let scratch: string | undefined
+let scratch: TemporaryDirectory | undefined
 
-afterEach(async () => {
-	if (scratch) {
-		await rm(scratch, { recursive: true, force: true })
-		scratch = undefined
-	}
+afterEach(() => {
+	scratch?.[Symbol.asyncDispose]()
+	scratch = undefined
 })
 
 /**
@@ -45,10 +39,10 @@ afterEach(async () => {
  * db is a faithful "file present" fixture for both.
  */
 async function emptySqliteFile(name: string): Promise<string> {
-	scratch = await mkdtemp(join(tmpdir(), "mcp-layer-guards-"))
-	const path = join(scratch, name)
+	scratch = await temporaryDirectory("mcp-layer-guards-")
+	const path = scratch.resolve(name)
 
-	new DatabaseSync(path).close()
+	new DatabaseClient<POIDatabase>(path).destroy()
 
 	return path
 }
@@ -60,37 +54,32 @@ async function emptySqliteFile(name: string): Promise<string> {
  * these tables to actually exist.
  */
 async function poiFixtureFile(name: string): Promise<string> {
-	scratch = await mkdtemp(join(tmpdir(), "mcp-layer-guards-"))
-	const path = join(scratch, name)
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+	scratch = await temporaryDirectory("mcp-layer-guards-")
+	const path = scratch.resolve(name)
+	await using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// Also creates `poi_category_codes`, per `poi-schema.ts`'s naming.
 	await createPOIStagingTables(kdb)
-	createPOISearchFTS(raw)
-
-	await kdb.destroy()
+	createPOISearchFTS(kdb)
 
 	return path
 }
 
 describe("openBDCDatabaseIfPresent", () => {
-	it("returns undefined when databasePath is undefined", () => {
-		expect(openBDCDatabaseIfPresent(undefined)).toBeUndefined()
+	it("returns undefined when databasePath is undefined", async () => {
+		expect(await openBDCDatabaseIfPresent(undefined)).toBeUndefined()
 	})
 
-	it("returns undefined when the file is missing", () => {
-		expect(openBDCDatabaseIfPresent("/nonexistent/path/bdc.db")).toBeUndefined()
+	it("returns undefined when the file is missing", async () => {
+		expect(await openBDCDatabaseIfPresent("/nonexistent/path/bdc.db")).toBeUndefined()
 	})
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("bdc.db")
-		const db = openBDCDatabaseIfPresent(path)
+		await using db = await openBDCDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
-
-		await db?.destroy()
 	})
 })
 
@@ -116,8 +105,8 @@ describe("openPlausibilityPOIDeps", () => {
 })
 
 describe("assertBDCDatabaseExists", () => {
-	it("throws a friendly error naming the layer when the file is missing", () => {
-		expect(() => assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", "/nonexistent/path/bdc.db")).toThrow(
+	it("throws a friendly error naming the layer when the file is missing", async () => {
+		await expect(assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", "/nonexistent/path/bdc.db")).rejects.toThrow(
 			/mailwoman_bdc_filing_landscape: bdc\.db not found at "\/nonexistent\/path\/bdc\.db"/
 		)
 	})
@@ -125,32 +114,30 @@ describe("assertBDCDatabaseExists", () => {
 	it("does not throw when the file is present", async () => {
 		const path = await emptySqliteFile("bdc.db")
 
-		expect(() => assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", path)).not.toThrow()
+		await expect(assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", path)).resolves.not.toThrow()
 	})
 })
 
 describe("openFilerDatabaseIfPresent", () => {
-	it("returns undefined when databasePath is undefined", () => {
-		expect(openFilerDatabaseIfPresent(undefined)).toBeUndefined()
+	it("returns undefined when databasePath is undefined", async () => {
+		expect(await openFilerDatabaseIfPresent(undefined)).toBeUndefined()
 	})
 
-	it("returns undefined when the file is missing", () => {
-		expect(openFilerDatabaseIfPresent("/nonexistent/path/filer.db")).toBeUndefined()
+	it("returns undefined when the file is missing", async () => {
+		expect(await openFilerDatabaseIfPresent("/nonexistent/path/filer.db")).toBeUndefined()
 	})
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("filer.db")
-		const db = openFilerDatabaseIfPresent(path)
+		await using db = await openFilerDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
-
-		await db?.destroy()
 	})
 })
 
 describe("assertFilerDatabaseExists", () => {
-	it("throws a friendly error naming the layer when the file is missing", () => {
-		expect(() => assertFilerDatabaseExists("mailwoman_filer_lookup", "/nonexistent/path/filer.db")).toThrow(
+	it("throws a friendly error naming the layer when the file is missing", async () => {
+		await expect(assertFilerDatabaseExists("mailwoman_filer_lookup", "/nonexistent/path/filer.db")).rejects.toThrow(
 			/mailwoman_filer_lookup: filer\.db not found at "\/nonexistent\/path\/filer\.db"/
 		)
 	})
@@ -158,6 +145,6 @@ describe("assertFilerDatabaseExists", () => {
 	it("does not throw when the file is present", async () => {
 		const path = await emptySqliteFile("filer.db")
 
-		expect(() => assertFilerDatabaseExists("mailwoman_filer_lookup", path)).not.toThrow()
+		await expect(assertFilerDatabaseExists("mailwoman_filer_lookup", path)).resolves.not.toThrow()
 	})
 })

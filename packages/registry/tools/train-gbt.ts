@@ -17,11 +17,10 @@
  *   [--data-root <dir>] [--out registry/models/dedup-gbt-en-us.ts]`
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-
+import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
+import { dirname } from "@mailwoman/platform/path"
 
 import {
 	addressFrequencyKey,
@@ -246,7 +245,7 @@ export async function trainDedupGBT(
 		geocodeAddress: geocoder.seam,
 	})
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	report?.(`    ${records.length} records, ${geocoded} geocoded`)
 
@@ -357,8 +356,8 @@ export async function trainDedupGBT(
 		`// prettier-ignore\n` +
 		`export const DEDUP_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
 
-	mkdirSync(dirname(OUT), { recursive: true })
-	writeFileSync(OUT, moduleSource)
+	await makeDirectories(dirname(OUT))
+	await writeLocalFile(moduleSource, OUT)
 	report?.(`[written] ${OUT} (${(moduleSource.length / 1024).toFixed(0)} KB)`)
 
 	return { out: OUT, pairs: pairs.length, recommendedThreshold, heldOutF1: bestF1 }

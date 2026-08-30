@@ -19,8 +19,7 @@
  *   [--data-root <dir>] [--out-md docs/articles/evals/resolver-geo/<date>-...md]`
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
@@ -147,7 +146,7 @@ export async function geocoderVsProvidedCoords(
 		results.push({ deltaM, tier: g.resolution_tier ?? "unknown" })
 	}
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 
 	// Overall + per-tier percentiles.
 	const all = results.map((r) => r.deltaM).toSorted((a, b) => a - b)
@@ -215,7 +214,7 @@ export async function geocoderVsProvidedCoords(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`\n[written] ${OUT_MD}`)
 	}
 

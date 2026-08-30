@@ -12,9 +12,8 @@
  *   - Model.onnx is read from $MAILWOMAN_TEST_ONNX_MODEL or the default path below
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
@@ -27,7 +26,7 @@ const MODEL_PATH =
 	$public.MAILWOMAN_TEST_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
 
-const haveModel = existsSync(MODEL_PATH)
+const haveModel = await pathExists(MODEL_PATH)
 
 describe.skipIf(!haveModel)("NeuralAddressClassifier — smoke (v0.2.0 int8)", () => {
 	test("parses the white-house address into a non-empty tree", async () => {

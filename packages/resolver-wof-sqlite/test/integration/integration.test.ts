@@ -18,16 +18,15 @@
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.
  */
 
-import { existsSync } from "node:fs"
-
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
-const hasWOFDB = existsSync(wofPath)
+const hasWOFDB = await pathExists(wofPath)
 
 // vitest's describe.skipIf prints a helpful message at suite runtime.
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
@@ -41,7 +40,7 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 	})
 
 	afterAll(() => {
-		lookup?.close()
+		lookup[Symbol.dispose]()
 	})
 
 	describe("lookup smoke tests", () => {

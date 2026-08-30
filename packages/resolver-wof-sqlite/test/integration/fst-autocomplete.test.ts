@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { existsSync } from "node:fs"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
@@ -11,13 +10,13 @@ import type { PlaceEntry, PlacetypeID } from "@mailwoman/resolver-wof-sqlite/fst
 import { beforeAll, describe, expect, it } from "vitest"
 
 const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
-const HAS_WOF = existsSync(WOF_DB)
+const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 	let matcher: FSTMatcher
 
-	beforeAll(() => {
-		const built = buildFSTFromWOF({
+	beforeAll(async () => {
+		const built = await buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],

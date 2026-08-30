@@ -3,7 +3,7 @@
 Four parallel Opus research threads (operator-commissioned): Latin tokenizer alternatives, CJK
 segmentation alternatives, the CJK address-parser prior-art landscape, and the JP character
 inventory + dictionary licensing. Full reports lived in the session; this doc carries every
-load-bearing finding. Verdicts first, receipts after.
+required finding. Verdicts first, receipts after.
 
 ## Verdicts
 
@@ -17,7 +17,7 @@ load-bearing finding. Verdicts first, receipts after.
 2. **CJK: character-level with a composition window confirmed** — the only browser-feasible class
    (our sealed vocab ~24KB vs 40–380MB for every dictionary-based segmenter; TinySegmenter at
    20.6KB is the lone peer and is also a dictionary-free char model).
-3. **The evidence channels are LOAD-BEARING for char-level NER, not supplementary.** Two
+3. **The evidence channels are required for char-level NER, not supplementary.** Two
    literatures converge independently: CANINE loses NER by −13.8 F1 vs mBERT (its own authors:
    "NER rewards memorization"), repaired to −1.1 by n-gram/lexicon features; Zhang & Yang (ACL 2018) show char beats word for Chinese NER only WITH lexicon channels. Mailwoman externalized
    memorization into gazetteer/FST/lexicon channels years ago — that architecture is precisely
@@ -136,7 +136,7 @@ lands at admin/locality-centroid tier, the same shape several EU locales shipped
 their coverage arcs (the coverage-not-retrain precedent).
 
 **OPERATOR DISPOSITION (2026-07-30): the KR framework is decided.** Parse = the no-juso recipe
-above (+ OSM-KR through the neutered-but-kept osm/ machinery, ODbL-quarantined per standing
+above (+ OSM-KR through the neutered-but-kept osm/ implementation, ODbL-quarantined per standing
 practice). Juso = a **plug-and-play build-local layer** on the layer contract: we ship
 `gazetteer build juso` (written against the DOCUMENTED format + synthetic fixtures — we never
 touch real juso data ourselves pre-counsel), the customer acquires juso under their own grant and

@@ -31,10 +31,9 @@
  *   native sessions are actually released on restart.
  */
 
-import { dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
-import { parseArgs } from "node:util"
-
+import { dirname, resolve } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
+import { parseArgs } from "@mailwoman/platform/util"
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolResult } from "@modelcontextprotocol/sdk/types.js"
@@ -129,7 +128,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToo
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.on(signal, () => {
-		void host.shutdown().finally(() => process.exit(0))
+		void host[Symbol.asyncDispose]().finally(() => process.exit(0))
 	})
 }
 

@@ -18,9 +18,7 @@
  * ```
  */
 
-import { readFileSync } from "node:fs"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { MailwomanTokenizer, SPACE_SENTINEL } from "@mailwoman/neural/tokenizer"
 import { describe, expect, test } from "vitest"
@@ -34,7 +32,7 @@ interface FixtureEntry {
 	ids: number[]
 }
 
-const fixture = parseJSONStrict<FixtureEntry[]>(readFileSync(FIXTURE_PATH, "utf8"))
+const fixture = await readLocalJSONFile<FixtureEntry[]>(FIXTURE_PATH)
 
 describe("MailwomanTokenizer — Python parity", () => {
 	test.each(fixture)("pieces+ids match Python for $raw", async ({ raw, pieces: expectedPieces, ids: expectedIDs }) => {

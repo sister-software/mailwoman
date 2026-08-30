@@ -10,8 +10,7 @@
  *   corpus/src/shard-recipes.
  */
 
-import { createWriteStream } from "node:fs"
-
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import type { ShardRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 
@@ -157,7 +156,7 @@ const CorpusShard: ParsedCommandComponent<Options> = ({ options, args }) => {
 
 		console.error(`▸ shard recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.output}`)
 
-		const stream = createWriteStream(options.output, { encoding: "utf8" })
+		const stream = openWriteStream(options.output, { encoding: "utf8" })
 
 		const write = (line: string): void => {
 			stream.write(line)

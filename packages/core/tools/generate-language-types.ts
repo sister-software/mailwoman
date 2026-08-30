@@ -23,8 +23,7 @@
  *   Usage: mailwoman dev generate language-types
  */
 
-import * as fs from "node:fs/promises"
-
+import { open } from "@mailwoman/platform/fs/promises"
 import { pascalCase } from "change-case"
 import { CSVSpliterator } from "spliterator"
 
@@ -66,7 +65,7 @@ export async function generateLanguageTypes(
 
 	report?.(`Reading ${dataSourcePath}`)
 
-	// Quote handling is on and load-bearing: six labels wrap an embedded comma
+	// Quote handling is on and required: six labels wrap an embedded comma
 	// (`gre,el,"Greek, Modern (1453-)"`), and the spliterator leaves quoting off by default.
 	// `header` defaults true, which is what skips the `alpha3-b,alpha2,English` line.
 	for await (const columns of CSVSpliterator.fromAsync(dataSourcePath, { enableQuoteHandling: true })) {
@@ -97,7 +96,7 @@ export async function generateLanguageTypes(
 		}
 	}
 
-	const handle = await fs.open(outfile, "w")
+	await using handle = await open(outfile, "w")
 	const writeLine = (line: string) => handle.writeFile(`${line}\n`)
 
 	// Header.
@@ -217,8 +216,6 @@ export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCod
 	await writeLine(`])`)
 
 	// Cleanup.
-
-	await handle.close()
 
 	report?.(`Wrote ${outfile}`)
 

@@ -163,7 +163,7 @@ Ground truth restated: `.github/workflows/publish.yml:129-131` — `# fr-fr shar
 
 **Where:** `docs/articles/understanding/the-problem/what-is-an-address.mdx:102`
 
-**Ground truth:** The weights are not separate — identical binary, copied at publish time. This is the most directly falsifiable instance because the (false) claim is used as load-bearing evidence for an architecture argument a reader might repeat.
+**Ground truth:** The weights are not separate — identical binary, copied at publish time. This is the most directly falsifiable instance because the (false) claim is used as required evidence for an architecture argument a reader might repeat.
 
 **Evidence:** `.github/workflows/publish.yml:129-131`.
 

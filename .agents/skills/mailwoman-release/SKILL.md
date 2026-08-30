@@ -140,7 +140,7 @@ returns HTTP 200 before dispatching.
 
 The "Production Integrity" ruleset requires the release commit to land via a PR with a green
 `test` check, so the ship is TWO dispatches around an auto-merging release PR (the direct
-release-it push is retired — the GH013 gotcha below states why):
+release-it push is retired — the GH013 failure mode below states why):
 
 ```bash
 # Optional preview — shows the bump diff without pushing anything:
@@ -190,11 +190,11 @@ Then fast-forward local main: `git merge --ff-only origin/main`.
 The npm publish leaves the browser demo (mailwoman.ai/demo) on the OLD model.
 `mailwoman release hf` without `--set-default` leaves HF `releases.json` `defaultVersion`
 unchanged. To repoint the demo: set HF default (`--set-default` or patch `releases.json`), upload the
-model to R2 (`public.sister.software/mailwoman/en-us/v<target>/`), and bump the demo version constant
+model to R2 (`public.mailwoman.ai/mailwoman/en-us/v<target>/`), and bump the demo version constant
 in `docs/src/`. Heed the `hasPolygons=false` warning (demo degrades to rectangles/anchor-off if the
 R2 side is incomplete). This is its own task — surface it, don't assume it.
 
-## Gotcha index (each cost real time on a prior cut)
+## failure mode index (each cost real time on a prior cut)
 
 - **Code-only release burns the next number** without bumping the card → `npm view` + `git tag` FIRST.
 - **`--minor` → patch** through the yarn wrapper → pass the explicit semver to `-f version=`.

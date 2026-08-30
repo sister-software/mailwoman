@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { DatabaseSync } from "node:sqlite"
-
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	makeTimezoneAnnotator,
 	offsetSecForTimezone,
 	pointInMultiPolygon,
 	TimezoneLookup,
 } from "@mailwoman/timezone-lookup"
+import type { TimezoneDatabase } from "@mailwoman/timezone-lookup/schema"
 import { expect, test } from "vitest"
 
 const SQUARE: number[][][][] = [
@@ -38,8 +38,8 @@ test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
 })
 
-function fixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+async function fixtureDB(): Promise<DatabaseClient<TimezoneDatabase>> {
+	const db = DatabaseClient.temp<TimezoneDatabase>()
 	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
 
 	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run(
@@ -54,14 +54,17 @@ function fixtureDB(): DatabaseSync {
 	return db
 }
 
-test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", () => {
-	const lookup = new TimezoneLookup({ database: fixtureDB() })
-	expect(lookup.find(5, 5)).toBe("Test/Zone")
-	expect(lookup.find(50, 50)).toBeNull()
+test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", async () => {
+	using db = await fixtureDB()
+	using lookup = new TimezoneLookup({ database: db })
+	expect(lookup.explore(5, 5)).toBe("Test/Zone")
+	expect(lookup.explore(50, 50)).toBeNull()
 })
 
-test("makeTimezoneAnnotator: fills AnnotationSet.timezone", () => {
-	const annotate = makeTimezoneAnnotator(new TimezoneLookup({ database: fixtureDB() }))
+test("makeTimezoneAnnotator: fills AnnotationSet.timezone", async () => {
+	using db = await fixtureDB()
+	using lookup = new TimezoneLookup({ database: db })
+	const annotate = makeTimezoneAnnotator(lookup)
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone" } })
 	expect(annotate({ lat: 50, lon: 50 })).toEqual({})
 })

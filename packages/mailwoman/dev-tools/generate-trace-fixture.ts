@@ -14,11 +14,10 @@
  *   fully-fed fixture when that state matters.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { dirname } from "node:path"
-
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { dirname } from "@mailwoman/platform/path"
 
 const DEFAULT_OUT = String(
 	repoRootPathBuilder("docs", "src", "components", "ModelVisualizer", "fixtures", "white-house.trace.json")
@@ -61,8 +60,10 @@ export async function generateTraceFixture(
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })
 	const trace = await classifier.traceParse(text, { addressSystemConventions: "auto" })
 
-	mkdirSync(dirname(outPath), { recursive: true })
-	writeFileSync(outPath, `${JSON.stringify(trace, null, "\t")}\n`)
+	await makeDirectories(dirname(outPath))
+
+	await writeLocalJSONFile(trace, outPath)
+
 	report?.(`wrote ${outPath} (${trace.pieces.length} pieces, ${trace.labels.length} labels)`)
 
 	return { outPath, pieces: trace.pieces.length, labels: trace.labels.length }

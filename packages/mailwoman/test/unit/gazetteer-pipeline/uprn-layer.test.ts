@@ -8,17 +8,15 @@
  *   artifact back through the production reader.
  */
 
-import { statSync } from "node:fs"
-import { mkdtemp, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { CoverageBasis, readLayerCoverage, readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { join } from "@mailwoman/platform/path"
 import { UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import { UPRN_COVERAGE_H3_RESOLUTION, uprnFullCell } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent } from "h3-js"
 import {
 	buildUPRNLayer,
@@ -27,7 +25,11 @@ import {
 	parseOpenUPRNVersions,
 	type ExtractOpenUPRNResult,
 } from "mailwoman/gazetteer-pipeline/uprn-layer"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 describe("parseOpenUPRNLine", () => {
 	it("parses a source line, taking the WGS84 columns", () => {
@@ -113,11 +115,11 @@ function fixtureCSV(headerLine: string = OPEN_UPRN_HEADER): string {
 async function writeFixtureSource(
 	headerLine?: string
 ): Promise<{ sourceDir: string; extracted: ExtractOpenUPRNResult }> {
-	const sourceDir = await mkdtemp(join(tmpdir(), "uprn-build-"))
+	const sourceDir = fixtures.use(await temporaryDirectory("uprn-build-")).path
 	const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
 	const csv = fixtureCSV(headerLine)
 
-	await writeFile(csvPath, csv, "utf8")
+	await writeLocalFile(csv, csvPath)
 
 	return {
 		sourceDir,
@@ -152,16 +154,14 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(result.sealed).toBe(true)
 
 		// Sealed 0444 — no write bits.
-		expect(statSync(out).mode & 0o222).toBe(0)
+		expect((await statPath(out)).mode & 0o222).toBe(0)
 
 		using lookup = new UPRNLookup({ databasePath: out })
 
 		expect(lookup.coordinateOf(906_700_601_612)).toEqual({ latitude: 55.8823426, longitude: -4.2786558 })
 		expect(lookup.nearestUPRN(51.4526, -2.602, 100)?.uprn).toBe(1)
 
-		const kdb = new DatabaseClient<LayerContractDatabase>({
-			database: new DatabaseSync(out, { readOnly: true }),
-		})
+		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
 
 		const manifest = await readLayerManifest(kdb)
 
@@ -180,8 +180,6 @@ describe("buildUPRNLayer (fixture)", () => {
 		expect(surveyed?.basis).toBe(CoverageBasis.Designated)
 		expect(surveyed?.completeness).toBe(1)
 		expect(await readLayerCoverage(kdb, 2)).toBeUndefined()
-
-		await kdb.destroy()
 	})
 
 	it("fails loudly on header drift", async () => {
@@ -194,10 +192,11 @@ describe("buildUPRNLayer (fixture)", () => {
 	})
 
 	it("reports a malformed row and an under-floor count as mismatches, not silence", async () => {
-		const sourceDir = await mkdtemp(join(tmpdir(), "uprn-build-"))
+		await using sourceDirDirectory = await temporaryDirectory("uprn-build-")
+		const sourceDir = sourceDirDirectory.path
 		const csvPath = join(sourceDir, "osopenuprn_fixture.csv")
 
-		await writeFile(csvPath, `${BOM}${OPEN_UPRN_HEADER}\r\n1,0.0,0.0,51.5,\r\n26,0.0,0.0,51.5,-2.6\r\n`, "utf8")
+		await writeLocalTextFile(`${BOM}${OPEN_UPRN_HEADER}\r\n1,0.0,0.0,51.5,\r\n26,0.0,0.0,51.5,-2.6\r\n`, csvPath)
 
 		const result = await buildUPRNLayer({
 			sourceDir,

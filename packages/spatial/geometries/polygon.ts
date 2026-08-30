@@ -115,7 +115,9 @@ export function isPolygonLiteral<P extends PolygonPath = PolygonPath>(input: unk
 /**
  * Predicate for checking if a polygon geometry is a solid, i.e. it has no holes.
  */
-export function isSolidPolygonPath(input: PolygonLiteral): boolean {
+// The parameter admits BOTH paths because distinguishing them is the function's job: defaulted to
+// `SolidPolygonPath`, it cannot be asked about a polygon with holes without the caller asserting past the signature.
+export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean {
 	return input.coordinates.length === 1
 }
 
@@ -208,7 +210,9 @@ export interface MultiPolygonLiteral<P extends PolygonPath = SolidPolygonPath> e
  *
  * This is useful when working with the Overpass API.
  */
-export function polygonToOSMFilter(input: PolygonLiteral): string {
+// `unknown`, matched by the guard on the next line: this reads geometry off an API response, and a parameter that
+// promises a polygon makes the guard look redundant while forcing every test of it to assert past the signature.
+export function polygonToOSMFilter(input: unknown): string {
 	if (!isPolygonLiteral(input)) return ""
 
 	const [exteriorRing] = input.coordinates
@@ -321,11 +325,10 @@ export type GeojsonPosition = [number, number, ...number[]]
 /**
  * A GeoJSON `Polygon` as a RING LIST — `[outerRing, hole1, hole2, …]`.
  *
- * This coexists with {@linkcode PolygonLiteral} on purpose, and the difference is load-bearing. `PolygonLiteral`
- * defaults to {@linkcode SolidPolygonPath}, a one-element tuple that cannot express a hole; a real administrative
- * boundary routinely has them (a country with a lake, a locality with an enclave). Use this type for geometry read off
- * a gazetteer, and `PolygonLiteral` where the solid/nested distinction is one you are asserting rather than
- * discovering.
+ * This coexists with {@linkcode PolygonLiteral} on purpose, and the difference is required. `PolygonLiteral` defaults to
+ * {@linkcode SolidPolygonPath}, a one-element tuple that cannot express a hole; a real administrative boundary routinely
+ * has them (a country with a lake, a locality with an enclave). Use this type for geometry read off a gazetteer, and
+ * `PolygonLiteral` where the solid/nested distinction is one you are asserting rather than discovering.
  */
 export interface GeojsonPolygon {
 	type: "Polygon"
@@ -382,6 +385,38 @@ export function geometryContains(
 	}
 
 	return null
+}
+
+/**
+ * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order and counter-clockwise — the exterior
+ * winding.
+ *
+ * SHARED BECAUSE THE WINDING IS A CONVENTION AND A SECOND COPY IS A SECOND PLACE FOR IT TO DRIFT. Three layer builders
+ * hand-build rectangles for their fixture rungs, and each pairs this with {@link reversedRing} to make a hole. A copy
+ * whose hole is wound the same way as its exterior produces a fixture that passes every structural check and tests
+ * nothing about hole handling — which is the exact failure the area cross-check exists to catch in production data.
+ */
+export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
+	return [
+		[minLon, minLat],
+		[maxLon, minLat],
+		[maxLon, maxLat],
+		[minLon, maxLat],
+		[minLon, minLat],
+	]
+}
+
+/**
+ * The same rectangle wound the other way — a hole, under the GeoJSON convention.
+ */
+export function reversedRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
+	return [
+		[minLon, minLat],
+		[minLon, maxLat],
+		[maxLon, maxLat],
+		[maxLon, minLat],
+		[minLon, minLat],
+	]
 }
 
 //#endregion

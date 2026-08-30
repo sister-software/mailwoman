@@ -10,6 +10,7 @@
 	},
 	"exclude": ["./out/**/*"],
 	"references": [
+		{ "path": "../sqlite" },
 		// ---
 		{ "path": "../core" },
 		{ "path": "../spatial" }

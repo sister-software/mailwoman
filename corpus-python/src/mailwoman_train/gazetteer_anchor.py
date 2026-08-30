@@ -7,7 +7,7 @@ plus a confidence channel (1.0 where any bit fires). The model conditions on the
 decides every tag — model-first, never an override (see
 docs/articles/plan/reference/closed-vocab-fields-model-first.mdx).
 
-CRITICALLY, and unlike the postcode anchor: features are computed from the RAW SURFACE ONLY —
+and unlike the postcode anchor: features are computed from the RAW SURFACE ONLY —
 never from gold labels — so the exact same computation runs at train and inference time (no leak,
 no skew). The matching rules live in the lexicon JSON (``rules``) and are mirrored verbatim here
 and in the TS inference matcher; the JSON is the single source both consumers load, so the two

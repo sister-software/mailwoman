@@ -38,7 +38,7 @@ state, 50/50 cal/test split, α = 0.90.
 | MI    | mid            |        **1.93** |        89.7% |              77.1% |     51.1 m |            113 m |
 | MT    | extreme rural  |        **2.85** |        90.2% |              62.7% |     61.3 m |             83 m |
 
-Every state's own Q̂ lands coverage within 3pp of 90% — the conformal machinery is sound. What varies
+Every state's own Q̂ lands coverage within 3pp of 90% — the conformal implementation is sound. What varies
 is the **factor itself**, monotonically with rurality: dense NY needs 1.53×, extreme-rural MT needs
 2.85×. The uncalibrated column shows why MT is the extreme — its raw radius covers only 62.7% as-is
 (rural addresses are spaced far less uniformly along their long TIGER segments than the interpolation's

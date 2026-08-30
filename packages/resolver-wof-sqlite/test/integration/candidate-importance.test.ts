@@ -17,15 +17,13 @@
  *        somewhere else.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "@mailwoman/resolver-wof-sqlite/candidate-importance"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 let sourcePath: string
 
 /**
@@ -34,7 +32,7 @@ let sourcePath: string
  * Ids here are deliberately NOTHING like the ids a candidate build would carry — the join must not depend on them.
  */
 function buildFixtureSource(path: string): void {
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -74,18 +72,16 @@ function buildFixtureSource(path: string): void {
 		INSERT INTO place_importance VALUES (9000000000008, 0.4000);
 		INSERT INTO place_importance VALUES (9000000000009, 0.4000);
 	`)
-
-	db.close()
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-candidate-importance-"))
-	sourcePath = join(scratch, "importance.db")
+	scratch = await temporaryDirectory("mailwoman-candidate-importance-")
+	sourcePath = scratch.resolve("importance.db")
 	buildFixtureSource(sourcePath)
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("loadImportanceIndex", () => {

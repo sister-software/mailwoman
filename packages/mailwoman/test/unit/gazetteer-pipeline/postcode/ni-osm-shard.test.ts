@@ -15,12 +15,13 @@
  *   passes every test written against the other.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	buildPostcodeNIOSM,
 	NI_LIVE_POSTCODES,
@@ -28,7 +29,7 @@ import {
 } from "mailwoman/gazetteer-pipeline/postcode/ni-osm-shard"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-let root: string
+let root: TemporaryDirectory
 let sourceDir: string
 
 /**
@@ -46,10 +47,10 @@ function way(id: number, postcode: string, lat: number, lon: number): Record<str
 	return { type: "way", id, center: { lat, lon }, tags: { "addr:postcode": postcode, building: "yes" } }
 }
 
-beforeAll(() => {
-	root = mkdtempSync(join(tmpdir(), "ni-osm-"))
-	sourceDir = join(root, "acquisition")
-	mkdirSync(sourceDir, { recursive: true })
+beforeAll(async () => {
+	root = await temporaryDirectory("ni-osm-")
+	sourceDir = root.resolve("acquisition")
+	await makeDirectories(sourceDir)
 
 	const response = {
 		version: 0.6,
@@ -77,15 +78,13 @@ beforeAll(() => {
 		],
 	}
 
-	writeFileSync(join(sourceDir, "response.json"), `${JSON.stringify(response)}\n`, "utf8")
+	await writeLocalTextFile(`${JSON.stringify(response)}\n`, join(sourceDir, "response.json"))
 })
 
-afterAll(() => {
-	rmSync(root, { recursive: true, force: true })
-})
+afterAll(() => root[Symbol.asyncDispose]())
 
 test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of-zero provenance", async () => {
-	const out = join(root, "ni.db")
+	const out = root.resolve("ni.db")
 
 	const result = await buildPostcodeNIOSM({
 		sourceDir,
@@ -112,11 +111,11 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.reconciliationFailures).toEqual([])
 	// The data cut, not the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
-	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync: root
+	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync: root.path
 	// ignores the permission and would pass a W_OK probe on a sealed file).
-	expect(statSync(out).mode & 0o222).toBe(0)
+	expect((await statPath(out)).mode & 0o222).toBe(0)
 
-	const db = new DatabaseSync(out, { readOnly: true })
+	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
 	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
@@ -188,28 +187,24 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 
 	const drops = parseJSONStrict<{ malformedValues: Record<string, number> }>(meta.get("quality_drops")!)
 	expect(drops.malformedValues).toEqual({ "BT36 4RU,": 1 })
-
-	db.close()
 })
 
 test("buildPostcodeNIOSM: a response modified since acquisition is refused, not built from", async () => {
-	const dir = join(root, "tampered")
-	mkdirSync(dir, { recursive: true })
+	const dir = root.resolve("tampered")
+	await makeDirectories(dir)
 
-	writeFileSync(
-		join(dir, "response.json"),
+	await writeLocalTextFile(
 		`${JSON.stringify({ elements: [node(1, "BT1 5GS", 54.6, -5.93)] })}\n`,
-		"utf8"
+		join(dir, "response.json")
 	)
 
 	// A sidecar recording a DIFFERENT md5 — the shape a half-edited acquisition dir takes.
-	writeFileSync(
-		join(dir, "acquisition.json"),
-		JSON.stringify({ endpoint: "x", query: "y", queryMD5: "z", retrievedAt: "t", bytes: 1, md5: "0".repeat(32) }),
-		"utf8"
+	await writeLocalJSONFile(
+		{ endpoint: "x", query: "y", queryMD5: "z", retrievedAt: "t", bytes: 1, md5: "0".repeat(32) },
+		join(dir, "acquisition.json")
 	)
 
-	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: join(root, "tampered.db"), offline: true })).rejects.toThrow(
+	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: root.resolve("tampered.db"), offline: true })).rejects.toThrow(
 		/has been modified since acquisition/
 	)
 })

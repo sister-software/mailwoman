@@ -8,9 +8,11 @@
  *   its parents. An `@mailwoman/annotations` `Annotator`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AnnotationSet, Annotator, NUTS } from "@mailwoman/annotations"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { NUTSDatabase } from "./schema.ts"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
@@ -98,12 +100,20 @@ export function nutsFromID(id: string): NUTS {
 /**
  * A NUTS lookup over a built `node:sqlite` polygon table.
  */
-export class NUTSLookup {
-	#db: DatabaseSync
-	#byLevelBox: ReturnType<DatabaseSync["prepare"]>
+export class NUTSLookup implements Disposable {
+	#db: DatabaseClient<NUTSDatabase>
+	/**
+	 * The connection this instance opened. A connection handed in by a caller is not retained here, so disposal cannot
+	 * reach it.
+	 */
+	readonly #ownedDatabase?: DatabaseClient<NUTSDatabase>
+	#byLevelBox: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
-		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+	constructor(opts: { databasePath: string } | { database: DatabaseClient<NUTSDatabase> }) {
+		this.#ownedDatabase =
+			"database" in opts ? undefined : new DatabaseClient<NUTSDatabase>(opts.databasePath, { readOnly: true })
+
+		this.#db = "database" in opts ? opts.database : this.#ownedDatabase!
 
 		this.#byLevelBox = this.#db.prepare(
 			// The explicit alias pins the JS key: for a bare column ref, sqlite3_column_name returns the
@@ -117,21 +127,25 @@ export class NUTSLookup {
 	/**
 	 * The nested NUTS codes containing `(lat, lon)`, or null when the point is outside the EU NUTS area.
 	 */
-	find(lat: number, lon: number): NUTS | null {
+	explore(lat: number, lon: number): NUTS | null {
 		for (const level of [3, 2, 1]) {
 			const rows = this.#byLevelBox.all(level, lat, lat, lon, lon) as Array<{ nutsID: string; geom: string }>
 
 			for (const row of rows) {
-				// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/nuts-lookup` does not depend on @mailwoman/core.
-				if (pointInMultiPolygon(lon, lat, JSON.parse(row.geom) as MultiPolygonCoords)) return nutsFromID(row.nutsID)
+				// TODO: Consider caching this.
+				const multiPolygonCoords = parseJSONStrict<MultiPolygonCoords>(row.geom)
+
+				if (pointInMultiPolygon(lon, lat, multiPolygonCoords)) {
+					return nutsFromID(row.nutsID)
+				}
 			}
 		}
 
 		return null
 	}
 
-	close(): void {
-		this.#db.close()
+	[Symbol.dispose](): void {
+		this.#ownedDatabase?.[Symbol.dispose]()
 	}
 }
 
@@ -140,8 +154,7 @@ export class NUTSLookup {
  */
 export function makeNUTSAnnotator(lookup: NUTSLookup): Annotator {
 	return ({ lat, lon }): Partial<AnnotationSet> => {
-		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
-		const nuts = lookup.find(lat, lon)
+		const nuts = lookup.explore(lat, lon)
 
 		return nuts ? { nuts } : {}
 	}

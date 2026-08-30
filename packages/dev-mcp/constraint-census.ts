@@ -26,7 +26,7 @@
 
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
-import type { EngineConfig, EngineRegistry } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
 import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
 import { openSealedArtifact } from "./lookup.ts"
 import { provenanceFor, type Provenance } from "./tool-kit.ts"
@@ -58,9 +58,16 @@ interface ConstraintMiss {
 	had_candidates: boolean
 }
 
+/**
+ * What the census reader needs of a connection it is handed: one prepared read, and a way to end it.
+ *
+ * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is injectable — the tests supply a fake
+ * that answers fixed rows without opening a file. `destroy` rather than `close` is what a `DatabaseClient` offers, so
+ * the real opener satisfies this without an adapter.
+ */
 interface CensusDatabase {
 	prepare(sql: string): { all(nameKey: string): Array<Record<string, unknown>> }
-	close(): void
+	destroy(): void | Promise<void>
 }
 
 type OpenCensusArtifact = (path: string | undefined) => { db: CensusDatabase } | { unavailable: string }
@@ -163,7 +170,7 @@ function render(result: Omit<ConstraintCensusResult, "rendered">): string {
  * Walk an input set through one traced engine and aggregate every lookup that resolved nothing.
  */
 export async function runConstraintCensus(
-	registry: EngineRegistry,
+	registry: EngineRegistryLike,
 	args: { inputs?: InputSetRef; config?: EngineConfig },
 	dependencies: { openArtifact?: OpenCensusArtifact } = {}
 ): Promise<ConstraintCensusResult> {
@@ -172,7 +179,7 @@ export async function runConstraintCensus(
 	// forced on regardless of what the caller passed — neither can change an answer, so neither is a lever.
 	const engine = await registry.acquire({ ...args.config, trace: true, diagnose_unreachable: true })
 	const dataRoot = String(engine.effective.dataRoot ?? "")
-	const opened = (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)
+	const opened = await (dependencies.openArtifact ?? openSealedArtifact)(`${dataRoot}/wof/candidate.db`)
 
 	if (!("db" in opened)) {
 		throw new Error(
@@ -233,7 +240,7 @@ export async function runConstraintCensus(
 			}
 		}
 	} finally {
-		db.close()
+		await db.destroy()
 	}
 
 	const reachability = misses.filter((m) => m.elsewhere.length)

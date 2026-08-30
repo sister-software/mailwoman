@@ -1,0 +1,16 @@
+{
+	"name": "sync-fs-to-async",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Rewrite a synchronous node:fs call that stands inside an async function to the @mailwoman/core/fs async helper",
+	"type": "module",
+	"scripts": {
+		"test": "yarn dlx codemod@latest jssg test -l typescript ./scripts/codemod.ts",
+		"check-types": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@codemod.com/jssg-types": "^1.6.3",
+		"typescript": "^5.9.3"
+	},
+	"packageManager": "yarn@4.10.3"
+}

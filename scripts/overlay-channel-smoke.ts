@@ -21,9 +21,7 @@
  *   Usage: node scripts/overlay-channel-smoke.ts --locale en-gb [--cache-root <dir>]
  */
 
-import { parseArgs } from "node:util"
-
-import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "@mailwoman/neural"
+import { NeuralAddressClassifier } from "@mailwoman/neural"
 // `@mailwoman/neural` exports no `./case-normalize` subpath, and what the anchor channel sees is the
 // CASE-NORMALIZED text (#690/#829, default-ON in `parse`) — re-implementing that here is the one thing
 // that must not drift, so this repo-local diagnostic imports the module directly (same posture as
@@ -31,6 +29,7 @@ import { NeuralAddressClassifier, type NeuralAddressClassifierConfig } from "@ma
 import { normalizeInputCase } from "@mailwoman/neural/case-normalize"
 import { buildSoftFeatures } from "@mailwoman/neural/soft-features"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { parseArgs } from "@mailwoman/platform/util"
 
 const { values } = parseArgs({
 	options: {
@@ -53,8 +52,7 @@ console.log(`streetType        ${resolved.streetTypeLexiconPath ?? "(none)"}`)
 console.log(`localitySurface   ${resolved.localitySurfaceLexiconPath ?? "(none)"}`)
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
-// The channel sources are private config; reach them the way `#decode` does.
-const cfg = (classifier as unknown as { cfg: NeuralAddressClassifierConfig }).cfg
+const cfg = classifier.config
 
 const normalizeCase = values["normalize-case"] !== "false"
 const text = normalizeCase ? normalizeInputCase(values.text!) : values.text!

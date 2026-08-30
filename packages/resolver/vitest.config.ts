@@ -11,8 +11,7 @@
  *   more-specific alias FIRST.
  */
 
-import { resolve } from "node:path"
-
+import { resolve } from "@mailwoman/platform/path"
 import { defineConfig } from "vitest/config"
 
 const here = import.meta.dirname

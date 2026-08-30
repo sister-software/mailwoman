@@ -1,15 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readFileSync } from "node:fs"
-
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import { createCalibrator, type CalibrationTable } from "@mailwoman/core/decoder/calibration"
 import type { AddressNode, DecoderToken } from "@mailwoman/core/decoder/types"
-import { parseJSONStrict } from "@mailwoman/core/objects"
 import type { BIOLabel } from "@mailwoman/core/types/component"
 import { describe, expect, test } from "vitest"
 
+import { readLocalJSONFile } from "#fs/readers"
 import { repoRootPath } from "#utils"
 
 function tok(piece: string, start: number, end: number, label: BIOLabel, confidence = 1): DecoderToken {
@@ -99,12 +97,12 @@ describe("buildAddressTree calibrate hook", () => {
 })
 
 describe("shipped isotonic table sanity", () => {
-	test("isotonic-en-us-v4.0.0.json is monotone and orders low<high confidence", () => {
+	test("isotonic-en-us-v4.0.0.json is monotone and orders low<high confidence", async () => {
 		const path = repoRootPath("data", "eval", "calibration", "isotonic-en-us-v4.0.0.json")
 		let table: CalibrationTable
 
 		try {
-			table = parseJSONStrict<CalibrationTable>(readFileSync(path, "utf8"))
+			table = await readLocalJSONFile<CalibrationTable>(path)
 		} catch {
 			return // table not present in this checkout (e.g. shallow) — skip rather than fail
 		}

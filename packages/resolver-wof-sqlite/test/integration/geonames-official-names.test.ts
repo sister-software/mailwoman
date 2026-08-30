@@ -9,18 +9,17 @@
  *   file the fold is byte-identical to the pre-#936 untagged behavior.
  */
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames-aliases"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 type Row = Record<string, string | number | null>
 
-let dir: string
-let altDir: string
+let dir: TemporaryDirectory
+let altDir: TemporaryDirectory
 
 /**
  * One GeoNames main-dump row (19 tab-separated columns).
@@ -49,8 +48,8 @@ function altRow(gid: string, lang: string, name: string, flags: Partial<Record<4
 	return f.join("\t")
 }
 
-function freshDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function freshDB(): DatabaseClient<WOFDatabase> {
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(
 		`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -69,12 +68,11 @@ function freshDB(): DatabaseSync {
 }
 
 beforeAll(async () => {
-	dir = mkdtempSync(join(tmpdir(), "geonames-official-"))
-	altDir = mkdtempSync(join(tmpdir(), "geonames-official-alt-"))
+	dir = await temporaryDirectory("geonames-official-")
+	altDir = await temporaryDirectory("geonames-official-alt-")
 
 	// Turku: alternates carry the Swedish official name, a Greek transliteration, and a historic form.
-	writeFileSync(
-		join(dir, "FI.txt"),
+	await writeLocalFile(
 		mainRow({
 			0: "633679",
 			1: "Turku",
@@ -86,7 +84,8 @@ beforeAll(async () => {
 			7: "PPLA",
 			8: "FI",
 			14: "175945",
-		})
+		}),
+		dir.resolve("FI.txt")
 	)
 
 	// "Santa Isabel" reproduces the Malabo shape: one language-tagged UNFLAGGED row + a separate
@@ -94,27 +93,27 @@ beforeAll(async () => {
 	// fact about the NAME — the unflagged row must not classify official.
 	const santaIsabelHistoric = ["1", "633679", "", "Santa Isabel", "", "", "", "1", "", "1973"].join("\t")
 
-	writeFileSync(
-		join(altDir, "FI.txt"),
+	await writeLocalTextFile(
 		[
 			altRow("633679", "sv", "Åbo"), // official Swedish — deliberately NOT preferred-flagged (the real FI row isn't)
 			altRow("633679", "el", "Tourkou"), // Greek transliteration — not official in FI
 			altRow("633679", "la", "Aboa", { 7: "1" }), // historic — never official
 			altRow("633679", "sv", "Santa Isabel"), // official language, unflagged row…
 			santaIsabelHistoric, // …but a sibling row marks the NAME historic
-		].join("\n")
+		].join("\n"),
+		altDir.resolve("FI.txt")
 	)
 })
 
 afterAll(() => {
-	rmSync(dir, { recursive: true, force: true })
-	rmSync(altDir, { recursive: true, force: true })
+	dir[Symbol.asyncDispose]()
+	altDir[Symbol.asyncDispose]()
 })
 
 test("V2 tags mark the official-language preferred name; transliterations and historic forms stay 0", async () => {
-	const db = freshDB()
+	await using db = freshDB()
 
-	await ingestGeonamesAliases(db, ["FI"], dir, () => {}, { alternateDir: altDir })
+	await ingestGeonamesAliases(db, ["FI"], dir.path, () => {}, { alternateDir: altDir.path })
 
 	const byName = (name: string): Row =>
 		db.prepare(`SELECT language, privateuse, official FROM names WHERE name = ?`).get(name) as Row
@@ -128,13 +127,12 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	expect(byName("Santa Isabel")).toEqual({ language: "sv", privateuse: "", official: 0 })
 	// The primary-name mirror row stays untagged — spr.name already IS the name-exact tier.
 	expect(byName("Turku")).toEqual({ language: "", privateuse: "", official: 0 })
-	db.close()
 })
 
 test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", async () => {
-	const db = freshDB()
+	await using db = freshDB()
 
-	await ingestGeonamesAliases(db, ["FI"], dir, () => {}, { alternateDir: join(altDir, "nope") })
+	await ingestGeonamesAliases(db, ["FI"], dir.path, () => {}, { alternateDir: altDir.resolve("nope") })
 
 	const rows = db.prepare(`SELECT name, language, privateuse, official FROM names ORDER BY name`).all() as Row[]
 
@@ -145,6 +143,4 @@ test("without the V2 file the fold is untagged, exactly the pre-#936 behavior", 
 		expect(r.privateuse).toBe("")
 		expect(r.official).toBe(0)
 	}
-
-	db.close()
 })

@@ -11,8 +11,7 @@
  *   wire keys outside it.
  */
 
-import { readFileSync } from "node:fs"
-
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { normalizeReleasesManifest } from "@mailwoman/docs/shared/demo-helpers"
 import { describe, expect, test } from "vitest"
 
@@ -73,8 +72,8 @@ describe("no consumer reads raw legacy wire keys outside the boundary", () => {
 		"../../../../src/contexts/DemoEmbed.tsx",
 		"../../../../../packages/mailwoman/release-tools/publish-hf.ts",
 	]) {
-		test(`${rel} is house-cased only`, () => {
-			const src = readFileSync(new URL(rel, import.meta.url), "utf8")
+		test(`${rel} is house-cased only`, async () => {
+			const src = await readLocalTextFile(new URL(rel, import.meta.url))
 
 			expect(src).not.toContain("hasFst")
 			expect(src).not.toContain("hasWofDb")

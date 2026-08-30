@@ -21,6 +21,8 @@
  *   survives the relay; a refusal only helps if the agent stays inside the tool.
  */
 
+import { execFileSync } from "@mailwoman/platform/child_process"
+
 import { effectiveKeyFor } from "./engine-registry.ts"
 
 /**
@@ -169,6 +171,52 @@ export function crossEngineReading(armA: string, armB: string, declared: string[
 }
 
 /**
+ * The measured source difference between two worktree arms: what `git rev-list --count` and `git diff --name-only` say
+ * separates the two commits. `range` is the exact ref pair the numbers came from, so the warning is re-runnable.
+ */
+export interface WorktreeTreeDelta {
+	commits: number
+	files: number
+	range: string
+}
+
+/**
+ * The reading for a comparison whose two arms are BOTH worktree arms with clean commits.
+ *
+ * {@link crossEngineReading}'s "different geocoders over different indexes" is written for Pelias-vs-mailwoman, where
+ * nothing in either arm's provenance can bound the difference. A worktree pair is the opposite case: both arms name a
+ * commit, so the tool can MEASURE what separates them and say it, instead of disclaiming an attribution the caller set
+ * the comparison up to make. The isolation verdict stays {@link VariableIsolation.CrossEngine} — the config-key checker
+ * still has nothing to check across two processes — but the warning carries the bounded surface: every difference lives
+ * inside the named commits, and a reader can `git diff` the printed range.
+ *
+ * `delta: null` means a commit was dirty (`+dirty` suffix) or the git probe failed — the unbounded wording applies and
+ * the runner's own not-reproducible caveat stands beside it.
+ */
+export function worktreePairReading(
+	armA: string,
+	armB: string,
+	declared: string[],
+	delta: WorktreeTreeDelta | null
+): ConfoundReading {
+	if (!delta) return crossEngineReading(armA, armB, declared)
+
+	return {
+		variable_isolation: VariableIsolation.CrossEngine,
+		variable_effective: ["engine"],
+		declared: [...declared].toSorted(),
+		declared_but_unmoved: [],
+		moved_but_undeclared: declared.includes("engine") ? [] : ["engine"],
+		warnings: [
+			`${armA} and ${armB} ran different source trees in separate processes. Measured delta: ${delta.commits} ` +
+				`commit${delta.commits === 1 ? "" : "s"} touching ${delta.files} file${delta.files === 1 ? "" : "s"} ` +
+				`(git diff ${delta.range}). Everything in those commits is inside this comparison — the attribution is ` +
+				"exactly as narrow as that diff, no narrower.",
+		],
+	}
+}
+
+/**
  * Fields that must never be compared across backends, with the reason.
  *
  * `resolver_score` is bm25-derived on FTS (≈19–41) and population-derived on the candidate table (≈5–7), so a
@@ -185,5 +233,42 @@ export function assertComparableField(field: string): void {
 				`(bm25 ≈19–41 on FTS, population ≈5–7 on candidate), and within either backend the wrong answers' range ` +
 				`sits inside the correct answers' range with a higher mean. There is no threshold on it that means anything.`
 		)
+	}
+}
+
+/**
+ * Measure what separates two worktree arms' trees, from the commits their provenance names. Answers `null` — the
+ * unbounded cross-engine wording — when either commit is dirty (`+dirty`: the tree is not reproducible from the sha, so
+ * a diff against the sha under-counts it) or when git refuses the range (a sha from a since-pruned worktree).
+ */
+export function worktreeTreeDelta(
+	repoRoot: string,
+	provenanceA: Record<string, unknown>,
+	provenanceB: Record<string, unknown>
+): WorktreeTreeDelta | null {
+	const commitA = typeof provenanceA["commit"] === "string" ? provenanceA["commit"] : null
+	const commitB = typeof provenanceB["commit"] === "string" ? provenanceB["commit"] : null
+
+	if (!commitA || !commitB || commitA.endsWith("+dirty") || commitB.endsWith("+dirty")) return null
+
+	try {
+		const commits = Number(
+			execFileSync("git", ["rev-list", "--count", `${commitA}...${commitB}`], {
+				cwd: repoRoot,
+				encoding: "utf8",
+			}).trim()
+		)
+
+		const diff = execFileSync("git", ["diff", "--name-only", commitA, commitB], {
+			cwd: repoRoot,
+			encoding: "utf8",
+		}).trim()
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- One `git diff --name-only` between two commits: bounded, and only the count is read.
+		const files = diff ? diff.split("\n").length : 0
+
+		return { commits, files, range: `${commitA.slice(0, 12)} ${commitB.slice(0, 12)}` }
+	} catch {
+		return null
 	}
 }

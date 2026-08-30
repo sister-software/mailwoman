@@ -31,8 +31,8 @@
  *   malformed input and throws (decision 8), not silently coerced to `null`.
  */
 
-import { createReadStream } from "node:fs"
-import { createInterface } from "node:readline"
+import { openReadStream } from "@mailwoman/core/fs/streams"
+import { createInterface } from "@mailwoman/platform/readline"
 
 import { toFRN, type FRN } from "./frn.ts"
 
@@ -191,7 +191,7 @@ function toProviderListRow(
  */
 export async function* parseProviderList(csvPath: string): AsyncIterable<ProviderListRow> {
 	const lines = createInterface({
-		input: createReadStream(csvPath, { encoding: "utf8" }),
+		input: openReadStream(csvPath, { encoding: "utf8" }),
 		crlfDelay: Infinity,
 	})
 

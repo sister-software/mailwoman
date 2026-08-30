@@ -1,0 +1,8 @@
+{
+	"definition": "packages/mailwoman/eval-harness/absence-observation/probe-definition.json",
+	"probeID": "absence-observation-pharmacy-idf-v1",
+	"version": "1.0.0",
+	"sha256": "3b265bc7fef0b1c19b0dd690b63f8f68c35ae7877501dcc11391a923b1057af1",
+	"frozenAt": "2026-08-27",
+	"note": "Content hash over the definition, keys sorted at every depth. The loader refuses a definition whose hash has moved: a row set that can be edited after a result is visible asserts nothing, because the row that failed can be rewritten into the row that passes. Changing the definition bumps BOTH the version and this hash, and the change is a reviewed one."
+}

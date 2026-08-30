@@ -8,7 +8,7 @@ each gets its own design doc when picked up.
 
 **Shape:** lat/lon → containing hierarchy. The pieces exist: `wof-polygons.db` (22,104
 DP-simplified admin polygons), the R\*Tree bbox index (`place_bbox` in the hot DB), the
-`coincident_roles` relation, and the PIP machinery the honest-eval harness already runs
+`coincident_roles` relation, and the PIP implementation the honest-eval harness already runs
 (`pip-containment.py` proves the polygon→point test works at eval scale).
 
 **Plan shape:** (1) bbox candidate fetch via R\*Tree → (2) PIP against the polygon DB
@@ -40,7 +40,7 @@ lifecycle, the slim/fat split the demo taught).
 
 ## Sequencing recommendation
 
-#484 first (one agent-night of assembly against existing machinery, immediate demo value:
+#484 first (one agent-night of assembly against existing implementation, immediate demo value:
 click-the-map), then #483 (data pipeline + new tier, 2–3 agent-nights). Both behind the v0.5.0
 rebuild ONLY for the ZCTA prior — neither needs the char-offset format, so they can run in
 parallel with it on the calendar.

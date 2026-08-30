@@ -77,6 +77,34 @@ export function supportsExclusion(cell: Pick<CoverageCell, "basis">): boolean {
 	return cell.basis === CoverageBasis.Designated || cell.basis === CoverageBasis.Surveyed
 }
 
+const BASES = new Set<string>(Object.values(CoverageBasis))
+
+/**
+ * Reject a malformed coverage cell at BOTH ends, the way {@link assertManifestInvariants} does for the manifest.
+ *
+ * The magnitudes here are read as epistemics, so a well-formed wrong one is worse than a throw: a `completeness` above
+ * 1 or an unknown `basis` reaching {@link supportsExclusion} turns into confident negative evidence, and a negative
+ * `observedRows` reads as a survey that found less than nothing. None of that is distinguishable downstream from a real
+ * measurement.
+ */
+function assertCoverageCellInvariants(cell: CoverageCell): void {
+	if (!Number.isFinite(cell.completeness) || cell.completeness < 0 || cell.completeness > 1) {
+		throw new Error(`layer coverage: completeness must be a finite value in [0, 1], got ${cell.completeness}`)
+	}
+
+	if (cell.basis !== undefined && !BASES.has(cell.basis)) {
+		throw new Error(`layer coverage: unknown basis ${JSON.stringify(cell.basis)}`)
+	}
+
+	if (!Number.isSafeInteger(cell.observedRows) || cell.observedRows < 0) {
+		throw new Error(`layer coverage: observedRows must be a non-negative integer, got ${cell.observedRows}`)
+	}
+
+	if (!Number.isSafeInteger(cell.h3Cell) || cell.h3Cell < 0) {
+		throw new Error(`layer coverage: h3Cell must be a non-negative 48-bit short cell, got ${cell.h3Cell}`)
+	}
+}
+
 const TIERS = new Set<string>(Object.values(LayerTier))
 const POLICIES = new Set<string>(Object.values(LayerFreshnessPolicy))
 
@@ -96,6 +124,155 @@ function assertManifestInvariants(manifest: Pick<LayerManifest, "tier" | "freshn
 		!manifest.spineKeys.street
 	) {
 		throw new Error("layer manifest: at least one spine key (h3, wofID, addressID, street) is required")
+	}
+}
+
+/**
+ * One `layer_coverage` row as a synchronous reader gets it back from `node:sqlite`.
+ */
+export interface CoverageRow {
+	h3_cell: number
+	completeness: number
+	basis: string | null
+	observed_rows: number
+}
+
+/**
+ * A stored coverage row as the parsed {@link CoverageCell}, with the cell's own index and resolution beside it.
+ *
+ * SHARED BY EVERY POLYGON LAYER'S READER, and the reason is the second line of it. A NULL `basis` is an artifact built
+ * before the column existed; it was recording source presence, so that is what it must read back as — never a stronger
+ * basis than the builder actually had. Four readers writing that rule separately is four places for one of them to
+ * write `?? CoverageBasis.Designated` and license an exclusion nobody measured.
+ *
+ * `undefined` in, `undefined` out: a cell with no coverage row is UNKNOWN, never `{completeness: 0}`.
+ */
+export function toCoverageCell(
+	row: CoverageRow | undefined,
+	h3CellIndex: string,
+	resolution: number
+): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
+	if (!row) return undefined
+
+	return {
+		h3Cell: row.h3_cell,
+		h3CellIndex,
+		resolution,
+		completeness: row.completeness,
+		basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
+		observedRows: row.observed_rows,
+	}
+}
+
+/**
+ * The single `layer_manifest` row of `rows`, refused if there is not exactly one.
+ *
+ * A layer with no identity, or with two, must fail loudly rather than answer from whichever row came first.
+ *
+ * @param context Names the caller in the refusal.
+ * @throws {Error} When the table does not hold exactly one row.
+ */
+export function singleManifestRow(
+	rows: ReadonlyArray<Record<string, string | number | null>>,
+	context: string
+): Record<string, string | number | null> {
+	if (rows.length !== 1) {
+		throw new Error(`${context} carries ${rows.length} manifest rows, expected 1`)
+	}
+
+	return rows[0]!
+}
+
+/**
+ * One `layer_manifest` row as a synchronous reader gets it back, mapped onto {@link LayerManifest}.
+ *
+ * SHARED BY EVERY LAYER READER, AND SEPARATE FROM THE IDENTITY CHECK ON PURPOSE. `readLayerManifest` above is the
+ * Kysely path; a reader that opens the artifact with `node:sqlite` for its own synchronous probes reads the same single
+ * row and needs the same mapping. What such readers do NOT share is how they recognize their own layer — most match a
+ * fixed name, and a layer whose name carries a build's region suffix matches a prefix instead — so the mapping lives
+ * here and the assertion stays with the caller. {@link parseManifestRows} is the fixed-name case, wired for the callers
+ * that have one.
+ *
+ * @throws {Error} When the manifest's invariants do not hold.
+ */
+export function toLayerManifest(row: Record<string, string | number | null>): LayerManifest {
+	const manifest: LayerManifest = {
+		name: String(row.name),
+		version: String(row.version),
+		schemaVersion: Number(row.schema_version),
+		tier: String(row.tier) as LayerTier,
+		license: String(row.license),
+		...(row.attribution === null || row.attribution === undefined ? {} : { attribution: String(row.attribution) }),
+		source: String(row.source),
+		sourceVintage: String(row.source_vintage),
+		buildCmd: String(row.build_cmd),
+		buildSHA: String(row.build_sha),
+		freshnessPolicy: String(row.freshness_policy) as LayerFreshnessPolicy,
+		spineKeys: parseJSONStrict<SpineKeys>(String(row.spine_keys)),
+		createdAt: String(row.created_at),
+	}
+
+	assertManifestInvariants(manifest)
+
+	return manifest
+}
+
+/**
+ * The manifest of a layer whose name is FIXED, checked against `expectedName`.
+ *
+ * @param rows Every row of `layer_manifest`.
+ * @param context Names the caller in every refusal.
+ * @throws {Error} When the table does not hold exactly one row, when the layer is not `expectedName`, or when the
+ *   manifest's invariants do not hold.
+ */
+export function parseManifestRows(
+	rows: ReadonlyArray<Record<string, string | number | null>>,
+	expectedName: string,
+	context: string
+): LayerManifest {
+	const row = singleManifestRow(rows, context)
+
+	if (String(row.name) !== expectedName) {
+		throw new Error(
+			`${context} is layer ${JSON.stringify(row.name)}, not ${JSON.stringify(expectedName)} — one publisher, one product, one vocabulary per artifact`
+		)
+	}
+
+	return toLayerManifest(row)
+}
+
+/**
+ * Refuse an artifact whose coverage would license a claim that the thing asked for is NOT there.
+ *
+ * A CONDITION RATHER THAN A CONVENTION, and shared because the rule is the contract's rather than any product's: a
+ * layer whose source publishes no footprint may record presence and nothing else, and the day someone writes a stronger
+ * basis without settling the footprint question the layer must refuse to open rather than answer confidently. Checked
+ * over the DISTINCT bases, so the cost is one query however large the table.
+ *
+ * @param bases Every distinct `basis` in `layer_coverage`, NULL included.
+ * @param reason The layer's own sentence saying why its coverage licenses no negative claim.
+ * @throws {Error} When the table is empty, or when any basis supports an exclusion.
+ */
+export function assertCoverageLicensesNoExclusion(
+	bases: ReadonlyArray<string | null>,
+	context: string,
+	reason: string
+): void {
+	if (!bases.length) {
+		throw new Error(
+			`${context} holds no coverage rows — every location would read as unknown, which is indistinguishable from ground the publisher has not mapped`
+		)
+	}
+
+	for (const value of bases) {
+		const basis = (value as CoverageBasis | null) ?? CoverageBasis.SourcePresent
+
+		if (supportsExclusion({ basis })) {
+			throw new Error(
+				`${context} carries a coverage row on basis ${JSON.stringify(basis)}, which supports an EXCLUSION. ` +
+					`${reason} Until a mapped-footprint source is settled, every row must read ${CoverageBasis.SourcePresent}`
+			)
+		}
 	}
 }
 
@@ -172,6 +349,10 @@ export const COVERAGE_INSERT_BATCH = 5000
 export async function writeLayerCoverage(db: LayerContractHandle, cells: CoverageCell[]): Promise<void> {
 	if (!cells.length) return
 
+	for (const cell of cells) {
+		assertCoverageCellInvariants(cell)
+	}
+
 	for (let i = 0; i < cells.length; i += COVERAGE_INSERT_BATCH) {
 		const batch = cells.slice(i, i + COVERAGE_INSERT_BATCH)
 
@@ -198,7 +379,7 @@ export async function readLayerCoverage(db: LayerContractHandle, h3Cell: number)
 
 	if (!row) return undefined
 
-	return {
+	const cell: CoverageCell = {
 		h3Cell: row.h3_cell,
 		completeness: row.completeness,
 		// A NULL basis is an artifact built before the column existed. It was recording source presence,
@@ -206,4 +387,8 @@ export async function readLayerCoverage(db: LayerContractHandle, h3Cell: number)
 		basis: (row.basis as CoverageBasis | null) ?? CoverageBasis.SourcePresent,
 		observedRows: row.observed_rows,
 	}
+
+	assertCoverageCellInvariants(cell)
+
+	return cell
 }

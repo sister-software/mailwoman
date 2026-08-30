@@ -8,7 +8,7 @@ Calibration drift guard (#368 S6). A shipped calibration table (isotonic-<locale
 the held-out ECE it achieved. If the model is swapped or the confidences regenerated and the table is NOT
 re-fit, the `conf=` it produces silently drifts out of calibration. This guard re-applies the committed
 table to the committed confidences and fails (exit 1) if the held-out calibrated ECE drifts more than
---tolerance from the value recorded in the table — a cheap, CI-friendly tripwire (not a unit test; it
+--tolerance from the value recorded in the table — a cheap, CI-friendly regression check (not a unit test; it
 needs the confidences dump, which is regenerated, not committed in full).
 
 Usage:

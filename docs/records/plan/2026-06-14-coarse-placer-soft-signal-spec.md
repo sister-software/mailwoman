@@ -17,7 +17,7 @@ PR-and-flag. The verdict that motivates the soft-signal-at-0.9 choice:
 
 ## The mechanism already exists — reuse the #369 anchor re-rank
 
-The postcode-anchor re-rank (#369, `core/resolver/resolve.ts`) is exactly the soft-prior machinery:
+The postcode-anchor re-rank (#369, `core/resolver/resolve.ts`) is exactly the soft-prior implementation:
 
 ```
 anchorPosterior: Record<country, prob>     // a country→probability map

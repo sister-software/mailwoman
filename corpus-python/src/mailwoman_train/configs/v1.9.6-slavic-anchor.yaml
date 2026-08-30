@@ -1,6 +1,6 @@
 # === v1.9.6-slavic-anchor (#825 — the Slavic-diacritic content-gap fix, on the v4.15.0 base) ===
 # THE #825 SHIP CANDIDATE. This is v1.9.3a3-anchor-absorption (shipped v4.15.0) VERBATIM + exactly ONE new
-# variable: the oa-slavic street-level diacritic shard at source-weight 6.0. Critically it forks off the
+# variable: the oa-slavic street-level diacritic shard at source-weight 6.0. it forks off the
 # v4.15.0 corpus (v0.9.3a3-anchor-absorption), so it KEEPS the #723 fix — anchor_paint_mode=shaped AND the
 # synth-anchor-absorption counter-shard — which the earlier v1.9.3-slavic-diacritic PROBE (off v4.14.0)
 # lacked. Grading "v4.15.0 + oa-slavic vs v4.15.0" isolates the shard cleanly. Gate: US coord non-
@@ -22,7 +22,7 @@
 #
 # THE CHANGE (ONE variable for attribution = "auxiliary-channel hardening", gated as a unit):
 #  1. anchor_paint_mode: shaped   -> paint the anchor on postcode-SHAPED spans (port POSTCODE_PATTERNS
-#     from neural/postcode-repair.ts), MIRRORING inference, not gold spans. THE load-bearing fix.
+#     from neural/postcode-repair.ts), MIRRORING inference, not gold spans. THE required fix.
 #  2. anchor_value_mode: region_agnostic_mindist -> demote the rich posterior+latlon vector to a weak
 #     scalar log(1 + min_km from the token's postcode centroid to the NEAREST gazetteer region centroid);
 #     non-postcode-shaped -> log(1+10000). Train/inference-congruent (gazetteer-only, no detected region

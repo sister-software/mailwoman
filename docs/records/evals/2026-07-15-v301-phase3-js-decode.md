@@ -57,7 +57,7 @@ night-3 partition (66% of street failures are bare fragments) showing up in the 
 **But it also means `seg@1` alone does not justify shipping the decode.** A +0.75pp aggregate margin
 is not a reason to change production. The case is the **list**: oracle@5 0.723 / oracle@10 0.775
 against a shipped 0.573 is ~15–20 points of headroom that only a **reranker** can collect — which is
-Phase 4, and which is now the load-bearing phase rather than a nice-to-have.
+Phase 4, and which is now the required phase rather than a nice-to-have.
 
 ## What shipped
 

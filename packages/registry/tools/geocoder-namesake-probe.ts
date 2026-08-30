@@ -88,7 +88,7 @@ export async function geocoderNamesakeProbe(
 		}
 	}
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 
 	console.log(`\n  ${wrongRegion}/${total} variants resolved OUTSIDE Texas (wrong-region).`)
 

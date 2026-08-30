@@ -11,9 +11,8 @@
  *   Run from the repo root: `node packages/mailwoman/dev-tools/convert-parity-fixtures.run.ts`
  */
 
-import { mkdirSync } from "node:fs"
-
 import type { Classification } from "@mailwoman/core"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { legacyClassificationToComponentTag } from "@mailwoman/core/types"
 import { dirname } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
@@ -156,7 +155,7 @@ for (const parityCase of cases) {
 	fixtures.push(out)
 }
 
-mkdirSync(dirname(OUT_PATH), { recursive: true })
+await makeDirectories(dirname(OUT_PATH))
 
 {
 	await using out = createNewlineWriter(OUT_PATH)

@@ -31,12 +31,11 @@
  *   Usage: node packages/mailwoman/dev-tools/score-anchor-v2-boards.run.ts --board gb --locale en-gb --cache-root <dir>
  */
 
-import { createHash } from "node:crypto"
-import { writeFileSync } from "node:fs"
-import { parseArgs } from "node:util"
-
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { createHash } from "@mailwoman/platform/crypto"
+import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
@@ -77,10 +76,6 @@ const fold = (value: string): string => value.toUpperCase().replaceAll(/\s+/gu, 
 
 function register(text: string, reg: Register): string {
 	return reg === "lower" ? text.toLowerCase() : reg === "upper" ? text.toUpperCase() : text
-}
-
-function readJSONL<T>(path: string): Promise<T[]> {
-	return Array.fromAsync(JSONSpliterator.fromAsync<T>(path))
 }
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({
@@ -151,8 +146,10 @@ function reportBoard(name: string, b: Board): void {
 }
 
 if (board === "gb") {
-	const rows = await readJSONL<{ raw: string; components: Record<string, string> }>(
-		"packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl"
+	const rows = await Array.fromAsync(
+		JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
+			"packages/mailwoman/eval-harness/fixtures/gb-golden.jsonl"
+		)
 	)
 
 	const postcode = emptyBoard()
@@ -212,8 +209,10 @@ if (board === "gb") {
 	const country = board.toUpperCase()
 
 	const rows = (
-		await readJSONL<{ id: string; input: string; country: string; expect?: Record<string, string[]> }>(
-			"packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
+		await Array.fromAsync(
+			JSONSpliterator.fromAsync<{ id: string; input: string; country: string; expect?: Record<string, string[]> }>(
+				"packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
+			)
 		)
 	).filter((row) => row.country === country)
 
@@ -277,7 +276,7 @@ if (board === "gb") {
 }
 
 if (values["dump-spans"]) {
-	writeFileSync(values["dump-spans"], spans.join("\n") + "\n")
+	await writeLocalTextFile(spans.join("\n") + "\n", values["dump-spans"])
 
 	console.log(
 		`spans → ${values["dump-spans"]} (${spans.length} parses, sha256 ` +
@@ -286,7 +285,7 @@ if (values["dump-spans"]) {
 }
 
 if (values["dump-misses"]) {
-	writeFileSync(values["dump-misses"], misses.map((m) => JSON.stringify(m)).join("\n") + "\n")
+	await writeLocalTextFile(misses.map((m) => JSON.stringify(m)).join("\n") + "\n", values["dump-misses"])
 
 	console.log(`misses → ${values["dump-misses"]} (${misses.length})`)
 }

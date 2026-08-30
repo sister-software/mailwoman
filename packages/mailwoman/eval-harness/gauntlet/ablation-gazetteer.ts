@@ -21,12 +21,13 @@
  *   a read-only artifact, called once per rung and once per component per variant.
  */
 
-import { existsSync } from "node:fs"
-import { DatabaseSync, type StatementSync } from "node:sqlite"
-
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { StatementSync } from "@mailwoman/sqlite/client"
 
 import {
 	type AblationGazetteerProbe,
@@ -120,7 +121,7 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 const NAME_PROBE_LIMIT = 2000
 
 /**
- * The two-database probe. Construct once per run; `close()` releases both handles.
+ * The two-database probe. Construct once per run; disposal releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -129,8 +130,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 */
 	readonly unavailableReason: string | null
 
-	#ancestry: DatabaseSync | null = null
-	#candidates: DatabaseSync | null = null
+	#ancestry: DatabaseClient<WOFDatabase> | null = null
+	#candidates: DatabaseClient<WOFDatabase> | null = null
 	#placeStatement: StatementSync | null = null
 	#lineageStatement: StatementSync | null = null
 	#namedStatement: StatementSync | null = null
@@ -146,8 +147,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 *
 	 * The dynamic import keeps this optional dependency off ordinary evaluation paths, and
 	 * `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for. The reverse geocoder
-	 * SHARES this object's already-open admin handle (`adminDatabase`), so it opens nothing and `close()` stays the
-	 * single owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
+	 * SHARES this object's already-open admin handle (`adminDatabase`), so it opens nothing and disposal stays the single
+	 * owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
 	 * (nearest-centroid descent) mode — good enough to name a chain, and the chain is all this model wants from it.
 	 */
 	static async create(opts: { ancestryPath?: string; candidatePath?: string } = {}): Promise<AblationGazetteer> {
@@ -165,7 +166,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	constructor(opts: { ancestryPath?: string; candidatePath?: string } = {}) {
 		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
 		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
-		const missing = [ancestryPath, candidatePath].filter((p) => !existsSync(p))
+		const missing = [ancestryPath, candidatePath].filter((p) => !pathExistsSync(p))
 
 		if (missing.length) {
 			this.available = false
@@ -174,8 +175,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 			return
 		}
 
-		this.#ancestry = new DatabaseSync(ancestryPath, { readOnly: true })
-		this.#candidates = new DatabaseSync(candidatePath, { readOnly: true })
+		this.#ancestry = new DatabaseClient<WOFDatabase>(ancestryPath, { readOnly: true })
+		this.#candidates = new DatabaseClient<WOFDatabase>(candidatePath, { readOnly: true })
 
 		this.#placeStatement = this.#ancestry.prepare(
 			`SELECT id, name, placetype, country, latitude, longitude,
@@ -341,9 +342,9 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 		return collapsed
 	}
 
-	close(): void {
-		this.#ancestry?.close()
-		this.#candidates?.close()
+	[Symbol.dispose](): void {
+		this.#ancestry?.destroy()
+		this.#candidates?.destroy()
 		this.#ancestry = null
 		this.#candidates = null
 	}

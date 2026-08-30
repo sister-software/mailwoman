@@ -4,7 +4,7 @@
 a five-pin override list, and `cik-lookup-data.txt` — the full 1,054,085-entry registrant index
 that `company_tickers.json` omits for private carriers.
 
-**Explore the data:** [Datasette Lite](https://lite.datasette.io/?url=https://public.sister.software/filer/filer-explore.db&metadata=https://public.sister.software/filer/filer-explore-metadata.json) — no install, runs in your browser. Canned queries: who-owns, holding-companies, acquisitions-by-year, supersession chains, bankruptcy citations, and more.
+**Explore the data:** [Datasette Lite](https://lite.datasette.io/?url=https://public.mailwoman.ai/filer/filer-explore.db&metadata=https://public.mailwoman.ai/filer/filer-explore-metadata.json) — no install, runs in your browser. Canned queries: who-owns, holding-companies, acquisitions-by-year, supersession chains, bankruptcy citations, and more.
 
 ## Result
 

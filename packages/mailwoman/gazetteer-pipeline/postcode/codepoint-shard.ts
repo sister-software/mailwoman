@@ -9,7 +9,7 @@
  *   ## Why a separate builder rather than a source mode on `geonames-tail.ts`
  *
  *   Folding this in was considered and rejected on the code, not on taste. `geonames-tail.ts` is a
- *   REPRODUCER: its docstring pins it to a frozen 946 MB artifact, its country order is load-bearing
+ *   REPRODUCER: its docstring pins it to a frozen 946 MB artifact, its country order is required
  *   because `ingestGeonamesPostal` allocates ids from one counter so a rebuild stays id-comparable,
  *   and it is gated on per-country row-count parity against that artifact. Code-Point Open shares none
  *   of its inputs — different coordinate system (OSGB36 eastings/northings, not degrees), different row
@@ -39,15 +39,16 @@
  *   Baked into `meta` verbatim, alongside the source md5 and OS's own `Doc/licence.txt`.
  */
 
-import { existsSync, unlinkSync } from "node:fs"
-import { readFile } from "node:fs/promises"
-import { DatabaseSync } from "node:sqlite"
-
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, sealDatabase } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
-import { buildFTS } from "../fts.ts"
+import { buildFTS, type BuildFTSResult } from "../fts.ts"
 import {
 	CODEPOINT_COVERAGE_NOTE,
 	CODEPOINT_LICENSE,
@@ -153,7 +154,7 @@ interface AcquisitionSidecar {
  * {@link UNKNOWN_PROVENANCE} and says so in the shard.
  */
 async function readAcquisitionSidecar(sourceDir: string): Promise<AcquisitionSidecar | null> {
-	const raw = await readFile(String(join(sourceDir, "acquisition.json")), "utf8").catch(() => null)
+	const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
 
 	return raw ? tryParsingJSON<AcquisitionSidecar>(raw) : null
 }
@@ -214,114 +215,122 @@ export async function buildPostcodeCodePoint(
 	const ingestPath = `${out}.ingest`
 
 	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (existsSync(stale)) {
-			unlinkSync(stale)
+		if (await pathExists(stale)) {
+			await removePath(stale)
 		}
 	}
 
 	phase("staging", ingestPath)
-	const db = new DatabaseSync(ingestPath)
 
-	db.exec(`
-		PRAGMA page_size = 8192;
-		PRAGMA journal_mode = WAL;
-		PRAGMA synchronous = NORMAL;
-		PRAGMA busy_timeout = 30000;
-		PRAGMA temp_store = MEMORY;
-		PRAGMA cache_size = -200000;
-	`)
-
-	await createUnifiedSchema(db)
-
-	// Hot positional INSERTs — raw prepared statements, per the AGENTS.md bulk-load carve-out.
-	const sprInsert = db.prepare(
-		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', '${COUNTRY}', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
-	)
-
-	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', '${COUNTRY}', '', 0)`
-	)
-
-	const stats = createCodePointParseStats()
 	let inserted = 0
-
-	phase("ingest", `${extracted.csvPaths.length} area CSVs`)
-	db.exec("BEGIN")
-
-	for (const csvPath of extracted.csvPaths) {
-		for await (const record of readCodePointCSV(csvPath, stats)) {
-			// The #920 name law: sanitized form is the NAME, display form is an alt.
-			const name = normalizePostcodeName(record.postcode)
-			const id = CODEPOINT_ID_BASE + inserted
-
-			// Degenerate bbox — a unit postcode is a point in this product, not a polygon.
-			sprInsert.run(
-				id,
-				name,
-				record.latitude,
-				record.longitude,
-				record.latitude,
-				record.longitude,
-				record.latitude,
-				record.longitude
-			)
-
-			namesInsert.run(id, name)
-
-			if (record.postcode !== name) {
-				namesInsert.run(id, record.postcode)
-			}
-
-			inserted++
-		}
-	}
-
-	db.exec("COMMIT")
-	phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
-
-	// --- Gate on the archive's own manifest. See `codepoint/extract.ts` for why this oracle exists.
+	const stats = createCodePointParseStats()
 	const manifestMismatches = compareAgainstManifest(extracted.metadata, stats)
 
-	// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the SELF row per place
-	// and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
-	// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`, and a place absent from `ancestors`
-	// can never satisfy it.
-	phase("ancestors")
-	const ancestorRows = populateAncestors(db)
+	let ancestorRows: number
 
-	phase("indexes")
-	await createUnifiedIndexes(db)
+	{
+		using db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-	phase("meta")
-	await writeShardMeta(db, { now, stats, metadata: extracted.metadata, inserted, archiveMD5, osVersion, extracted })
+		db.exec(`
+			PRAGMA page_size = 8192;
+			PRAGMA journal_mode = WAL;
+			PRAGMA synchronous = NORMAL;
+			PRAGMA busy_timeout = 30000;
+			PRAGMA temp_store = MEMORY;
+			PRAGMA cache_size = -200000;
+		`)
 
-	phase("freeze")
-	db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
-	db.exec("PRAGMA journal_mode = DELETE")
-	db.exec("ANALYZE")
+		await createUnifiedSchema(db)
 
-	phase("vacuum", out)
+		// Hot positional INSERTs — raw prepared statements, per the AGENTS.md bulk-load carve-out.
+		const sprInsert = db.prepare(
+			`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', '${COUNTRY}', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
+		)
 
-	if (existsSync(out)) {
-		unlinkSync(out)
+		const namesInsert = db.prepare(
+			`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'postalcode', '${COUNTRY}', '', 0)`
+		)
+
+		phase("ingest", `${extracted.csvPaths.length} area CSVs`)
+		db.exec("BEGIN")
+
+		for (const csvPath of extracted.csvPaths) {
+			for await (const record of readCodePointCSV(csvPath, stats)) {
+				// The #920 name law: sanitized form is the NAME, display form is an alt.
+				const name = normalizePostcodeName(record.postcode)
+				const id = CODEPOINT_ID_BASE + inserted
+
+				// Degenerate bbox — a unit postcode is a point in this product, not a polygon.
+				sprInsert.run(
+					id,
+					name,
+					record.latitude,
+					record.longitude,
+					record.latitude,
+					record.longitude,
+					record.latitude,
+					record.longitude
+				)
+
+				namesInsert.run(id, name)
+
+				if (record.postcode !== name) {
+					namesInsert.run(id, record.postcode)
+				}
+
+				inserted++
+			}
+		}
+
+		db.exec("COMMIT")
+		phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
+
+		// --- Gate on the archive's own manifest. See `codepoint/extract.ts` for why this oracle exists.
+
+		// Every row's parent_id is -1 (Code-Point carries no hierarchy), so this writes the SELF row per place
+		// and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
+		// `spr.id IN (SELECT id FROM ancestors WHERE ancestor_id = ?)`, and a place absent from `ancestors`
+		// can never satisfy it.
+		phase("ancestors")
+		ancestorRows = populateAncestors(db)
+
+		phase("indexes")
+		await createUnifiedIndexes(db)
+
+		phase("meta")
+		await writeShardMeta(db, { now, stats, metadata: extracted.metadata, inserted, archiveMD5, osVersion, extracted })
+
+		phase("freeze")
+		db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
+		db.exec("PRAGMA journal_mode = DELETE")
+		db.exec("ANALYZE")
+
+		phase("vacuum", out)
+
+		if (await pathExists(out)) {
+			await removePath(out)
+		}
+
+		db.prepare("VACUUM INTO ?").run(out)
 	}
 
-	db.prepare("VACUUM INTO ?").run(out)
-	db.close()
-
 	for (const sidecar of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (existsSync(sidecar)) {
-			unlinkSync(sidecar)
+		if (await pathExists(sidecar)) {
+			await removePath(sidecar)
 		}
 	}
 
 	phase("fts")
-	const outDB = new DatabaseSync(out)
-	const fts = await buildFTS(outDB, { onProgress: phase })
-	outDB.close()
+
+	let fts: BuildFTSResult
+
+	{
+		using outDB = new DatabaseClient<WOFDatabase>(out)
+		fts = await buildFTS(outDB, { onProgress: phase })
+	}
 
 	phase("seal")
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	return {
 		out,
@@ -403,7 +412,7 @@ interface ShardMetaInput {
  * The attribution year comes from OS's own `COPYRIGHT DATE`, not from the build clock: republishing a 2026 cut in 2027
  * still attributes the 2026 data. Both dates are stored so the distinction stays visible.
  */
-async function writeShardMeta(db: DatabaseSync, input: ShardMetaInput): Promise<void> {
+async function writeShardMeta(db: DatabaseClient<WOFDatabase>, input: ShardMetaInput): Promise<void> {
 	await createShardMetaTable(db)
 
 	const copyrightYear = Number(input.metadata.copyrightDate.slice(0, 4)) || input.now.getUTCFullYear()

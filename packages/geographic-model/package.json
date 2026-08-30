@@ -1,0 +1,94 @@
+{
+	"name": "@mailwoman/geographic-model",
+	"version": "0.0.0",
+	"description": "Stable geographic concepts, relations, mappings, source observations, derived facts, and their provenance — authored records compiled deterministically into runtime artifacts.",
+	"keywords": [
+		"affordance",
+		"geographic",
+		"ontology",
+		"provenance"
+	],
+	"license": "AGPL-3.0-only OR LicenseRef-Commercial",
+	"contributors": [
+		{
+			"name": "Teffen Ellis",
+			"email": "teffen@sister.software"
+		}
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/sister-software/mailwoman.git",
+		"directory": "packages/geographic-model"
+	},
+	"files": [
+		"out/**/*.js",
+		"out/**/*.js.map",
+		"out/**/*.d.ts",
+		"out/**/*.d.ts.map",
+		"data/**/*.json",
+		"*.ts",
+		"**/*.ts",
+		"!*.test.ts",
+		"!**/*.test.ts",
+		"!scripts/**",
+		"!test/**"
+	],
+	"type": "module",
+	"exports": {
+		"./package.json": "./package.json",
+		".": {
+			"node": "./index.ts",
+			"default": "./out/index.js",
+			"types": "./out/index.d.ts"
+		},
+		"./artifact": {
+			"node": "./artifact.ts",
+			"default": "./out/artifact.js",
+			"types": "./out/artifact.d.ts"
+		},
+		"./compile": {
+			"node": "./compile.ts",
+			"default": "./out/compile.js",
+			"types": "./out/compile.d.ts"
+		},
+		"./load": {
+			"node": "./load.ts",
+			"default": "./out/load.js",
+			"types": "./out/load.d.ts"
+		},
+		"./lookup": {
+			"node": "./lookup.ts",
+			"default": "./out/lookup.js",
+			"types": "./out/lookup.d.ts"
+		},
+		"./scripts/build-artifact": {
+			"node": "./scripts/build-artifact.ts",
+			"default": "./out/scripts/build-artifact.js",
+			"types": "./out/scripts/build-artifact.d.ts"
+		},
+		"./schema": {
+			"node": "./schema.ts",
+			"default": "./out/schema.js",
+			"types": "./out/schema.d.ts"
+		},
+		"./validate": {
+			"node": "./validate.ts",
+			"default": "./out/validate.js",
+			"types": "./out/validate.d.ts"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"dependencies": {
+		"@mailwoman/platform": "workspace:*",
+		"@mailwoman/poi-taxonomy": "workspace:*",
+		"type-fest": "^5.8.0"
+	},
+	"devDependencies": {
+		"@mailwoman/core": "workspace:*"
+	},
+	"engines": {
+		"node": ">=24.18.0"
+	}
+}

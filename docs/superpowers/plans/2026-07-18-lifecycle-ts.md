@@ -2082,7 +2082,7 @@ expectTypeOf(service.resolve()).resolves.toEqualTypeOf<Logger>()
 - [ ] **Step 2: Run the typecheck suite**
 
 Run: `yarn test:types`
-Expected: PASS. Also confirm the `@ts-expect-error` is load-bearing: temporarily fix `Mismatched`'s constructor to `constructor(_logger: Logger)`, re-run, and the suite must FAIL with "unused @ts-expect-error"; revert.
+Expected: PASS. Also confirm the `@ts-expect-error` is required: temporarily fix `Mismatched`'s constructor to `constructor(_logger: Logger)`, re-run, and the suite must FAIL with "unused @ts-expect-error"; revert.
 
 - [ ] **Step 3: Commit**
 

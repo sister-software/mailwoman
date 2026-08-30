@@ -27,8 +27,7 @@
  *   [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 
@@ -257,7 +256,7 @@ export async function scorerClusteringEval(
 		geocodeAddress: geocoder.seam,
 	})
 
-	geocoder.close()
+	geocoder[Symbol.dispose]()
 
 	// --- The feature basis: address-frequency + collapsed-spatial model (the baseline). The agreement
 	// pattern is EM-independent, so the same featurize() is consistent at train and inference time. ---
@@ -525,7 +524,7 @@ export async function scorerClusteringEval(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`[written] ${OUT_MD}`)
 	}
 

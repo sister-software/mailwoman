@@ -8,9 +8,11 @@
  *   database dependency. Build the DB with `mailwoman-timezone build` (see `./build.ts`).
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
+import { parseJSONStrict } from "@mailwoman/core/objects"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { TimezoneDatabase } from "./schema.ts"
 
 /**
  * Normalized geometry: an array of polygons, each `[outerRing, ...holes]`, each ring `[[lon,lat],…]`.
@@ -85,12 +87,20 @@ export function offsetSecForTimezone(tzid: string, date: Date = new Date()): num
 /**
  * A timezone lookup over a built `node:sqlite` polygon DB.
  */
-export class TimezoneLookup {
-	#db: DatabaseSync
-	#stmt: ReturnType<DatabaseSync["prepare"]>
+export class TimezoneLookup implements Disposable {
+	#db: DatabaseClient<TimezoneDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
+	#stmt: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
-		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+	constructor(opts: { databasePath: string } | { database: DatabaseClient<TimezoneDatabase> }) {
+		this.#db =
+			"database" in opts
+				? opts.database
+				: this.#resources.use(new DatabaseClient<TimezoneDatabase>(opts.databasePath, { readOnly: true }))
 
 		// Candidate features whose bbox contains the point; PIP picks the exact one.
 		this.#stmt = this.#db.prepare(
@@ -102,19 +112,22 @@ export class TimezoneLookup {
 	/**
 	 * The IANA timezone id containing `(lat, lon)`, or `null` if none (shouldn't happen with oceans).
 	 */
-	find(lat: number, lon: number): string | null {
+	explore(lat: number, lon: number): string | null {
 		const rows = this.#stmt.all(lat, lat, lon, lon) as Array<{ tzid: string; geom: string }>
 
 		for (const row of rows) {
-			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/timezone-lookup` does not depend on @mailwoman/core.
-			if (pointInMultiPolygon(lon, lat, JSON.parse(row.geom) as MultiPolygonCoords)) return row.tzid
+			const multiPolygonCoords = parseJSONStrict<MultiPolygonCoords>(row.geom)
+
+			if (pointInMultiPolygon(lon, lat, multiPolygonCoords)) {
+				return row.tzid
+			}
 		}
 
 		return null
 	}
 
-	close(): void {
-		this.#db.close()
+	[Symbol.dispose](): void {
+		this.#resources[Symbol.dispose]()
 	}
 }
 
@@ -124,7 +137,7 @@ export class TimezoneLookup {
 export function makeTimezoneAnnotator(lookup: TimezoneLookup): Annotator {
 	return ({ lat, lon, date }): Partial<AnnotationSet> => {
 		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
-		const name = lookup.find(lat, lon)
+		const name = lookup.explore(lat, lon)
 
 		if (!name) return {}
 		const offsetSec = offsetSecForTimezone(name, date)

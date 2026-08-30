@@ -20,11 +20,6 @@
  *   every fixture below, so a single set of derived cells serves both the bdc.db and poi fixtures.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase } from "@mailwoman/bdc/sdk/build-bdc"
 import { res9ShortCellToRes6Parent } from "@mailwoman/bdc/sdk/filing-landscape"
@@ -41,7 +36,7 @@ import {
 	type PlausibilityEvidence,
 } from "@mailwoman/bdc/sdk/plausibility"
 import { BroadbandTechnologyCode } from "@mailwoman/bdc/sdk/technologies"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -60,8 +55,9 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToChildren, cellToLatLng, cellToParent, latLngToCell } from "h3-js"
-import { afterEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 const ASOF_DATE = "2026-07-30"
 
@@ -127,9 +123,14 @@ function fixtureRows(): BDCAvailabilityRow[] {
 	]
 }
 
-async function buildBDCFixture(): Promise<{ scratch: string; db: DatabaseClient<BDCDatabase> }> {
-	const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-bdc-"))
-	const out = join(scratch, "bdc.db")
+/**
+ * A built `bdc.db`, its open reader, and the scratch directory holding it — all released when the binding leaves scope.
+ */
+type BDCFixture = TemporaryDirectory & { db: DatabaseClient<BDCDatabase> }
+
+async function buildBDCFixture(): Promise<BDCFixture> {
+	await using fixture = await temporaryDirectory("bdc-plausibility-bdc-")
+	const out = fixture.resolve("bdc.db")
 
 	await buildBDCDatabase({
 		rows: fixtureRows(),
@@ -139,7 +140,7 @@ async function buildBDCFixture(): Promise<{ scratch: string; db: DatabaseClient<
 		blockCentroids,
 	})
 
-	return { scratch, db: new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) }) }
+	return fixture.moveWith({ db: fixture.use(new DatabaseClient<BDCDatabase>(out, { readOnly: true })) })
 }
 
 interface POIFixtureRow {
@@ -164,16 +165,20 @@ function cellFor(latitude: number, longitude: number): number {
 	return shortCellToInt(latLngToCell(latitude, longitude, 9) as H3Cell)
 }
 
-async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ scratch: string; path: string }> {
-	const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-poi-"))
-	const path = join(scratch, "poi.db")
+/**
+ * A built `poi.db` and the scratch directory holding it, both removed when the binding leaves scope.
+ */
+type POIFixture = TemporaryDirectory & { path: string }
 
-	const raw = new DatabaseSync(path)
-	const kdb = new DatabaseClient<POIDatabase>({ database: raw })
+async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<POIFixture> {
+	await using scratch = await temporaryDirectory("bdc-plausibility-poi-")
+	const path = scratch.resolve("poi.db")
+
+	await using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	await createPOIStagingTables(kdb)
-	createPOISearchFTS(raw)
+	createPOISearchFTS(kdb)
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {
 		await kdb.insertInto("poi_category_codes").values({ id, category }).execute()
@@ -205,9 +210,8 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ 
 
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
-	await kdb.destroy()
 
-	return { scratch, path }
+	return scratch.moveWith({ path })
 }
 
 /**
@@ -217,7 +221,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<{ 
  * happy-path tests. `resolutionOverride` lets the mismatch test set something else.
  */
 async function openPOIContractDB(resolutionOverride = 9): Promise<DatabaseClient<LayerContractDatabase>> {
-	const kdb = new DatabaseClient<LayerContractDatabase>({ database: new DatabaseSync(":memory:") })
+	const kdb = DatabaseClient.temp<LayerContractDatabase>()
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
@@ -245,37 +249,20 @@ async function openPOIContractDB(resolutionOverride = 9): Promise<DatabaseClient
  * Hoisted to module scope — shared by the "full composition" suite below AND the `§7-2b gates` block (Gate 2's
  * co-presence claim reuses this exact fixture rather than re-deriving it).
  */
-async function openBoth(): Promise<{
-	deps: PlausibilityDeps
-	cleanup: () => Promise<void>
-}> {
-	const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
-	const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-	const poiContractDB = await openPOIContractDB()
-	const poiLookup = new POILookup({ databasePath: poiPath })
+async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDeps }> {
+	const stack = new AsyncDisposableStack()
+	const bdc = stack.use(await buildBDCFixture())
+	const poi = stack.use(await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR]))
+	const poiContractDB = stack.use(await openPOIContractDB())
+	const poiLookup = stack.use(new POILookup({ databasePath: poi.path }))
 
 	// Coverage for exactly Springfield's own res-6 parent — the query point's cell.
 	await writeLayerCoverage(poiContractDB, [{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 1 }])
 
-	return {
-		deps: { bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } },
-		cleanup: async () => {
-			bdcDB[Symbol.dispose]()
-			poiLookup[Symbol.dispose]()
-			poiContractDB[Symbol.dispose]()
-			await rm(bdcScratch, { recursive: true, force: true })
-			await rm(poiScratch, { recursive: true, force: true })
-		},
-	}
+	return Object.assign(stack, {
+		deps: { bdcDB: bdc.db, poi: { lookup: poiLookup, contractDB: poiContractDB } },
+	})
 }
-
-const cleanups: Array<() => Promise<void>> = []
-
-afterEach(async () => {
-	while (cleanups.length) {
-		await cleanups.pop()!()
-	}
-})
 
 describe("physicalCategoriesForTechnology / PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES", () => {
 	it("maps fiber to the three infra categories", () => {
@@ -406,19 +393,14 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 	})
 
 	it("abstains insufficient_survey_data (not requires_bdc_layer) when bdc.db is open but this exact cell was never surveyed, and vintage IS populated", async () => {
-		const { scratch, db } = await buildBDCFixture()
-
-		cleanups.push(async () => {
-			db[Symbol.dispose]()
-			await rm(scratch, { recursive: true, force: true })
-		})
+		await using bdc = await buildBDCFixture()
 
 		// Far from Springfield — genuinely never surveyed by this fixture.
 		const remote: PointLiteral = { type: "Point", coordinates: [-87.6298, 41.8781] }
 
 		const bundle = await plausibilityCheck(
 			{ point: remote, technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber, claimedDownloadMbps: 100 },
-			{ bdcDB: db }
+			{ bdcDB: bdc.db }
 		)
 
 		expect(bundle.vintage).toBe(ASOF_DATE)
@@ -437,12 +419,7 @@ describe("plausibilityCheck — bdc layer absent/insufficient (decision 6)", () 
 
 describe("plausibilityCheck — filing evidence + corroboration", () => {
 	it("emits one filing entry per provider row, corroborates true for a matching tech/speed and false for a different tech", async () => {
-		const { scratch, db } = await buildBDCFixture()
-
-		cleanups.push(async () => {
-			db[Symbol.dispose]()
-			await rm(scratch, { recursive: true, force: true })
-		})
+		await using bdc = await buildBDCFixture()
 
 		const bundle = await plausibilityCheck(
 			{
@@ -450,7 +427,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 				technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
 				claimedDownloadMbps: 1000,
 			},
-			{ bdcDB: db }
+			{ bdcDB: bdc.db }
 		)
 
 		const filingEntries = bundle.evidence_found.filter((e) => e.type === "filing")
@@ -468,8 +445,8 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 	})
 
 	it("corroborates false for a same-tech but LESSER speed filing", async () => {
-		const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-lesser-"))
-		const out = join(scratch, "bdc.db")
+		await using scratch = await temporaryDirectory("bdc-plausibility-lesser-")
+		const out = scratch.resolve("bdc.db")
 
 		await buildBDCDatabase({
 			rows: [
@@ -490,12 +467,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 			blockCentroids,
 		})
 
-		const db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
-
-		cleanups.push(async () => {
-			db[Symbol.dispose]()
-			await rm(scratch, { recursive: true, force: true })
-		})
+		const inlineDB = scratch.use(new DatabaseClient<BDCDatabase>(out, { readOnly: true }))
 
 		const bundle = await plausibilityCheck(
 			{
@@ -503,7 +475,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 				technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
 				claimedDownloadMbps: 1000,
 			},
-			{ bdcDB: db }
+			{ bdcDB: inlineDB }
 		)
 
 		const filingEntries = bundle.evidence_found.filter((e) => e.type === "filing")
@@ -512,12 +484,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 	})
 
 	it("positive absence: a covered res-6 parent with zero filings in the queried res-9 cell emits no filing evidence, and still counts as covered", async () => {
-		const { scratch, db } = await buildBDCFixture()
-
-		cleanups.push(async () => {
-			db[Symbol.dispose]()
-			await rm(scratch, { recursive: true, force: true })
-		})
+		await using bdc = await buildBDCFixture()
 
 		// Sanity: the sibling cell really does share Springfield's res-6 parent, and really is a DIFFERENT res-9 cell.
 		expect(SPRINGFIELD_SIBLING_RES9_FULL).not.toBe(SPRINGFIELD_RES9_FULL)
@@ -525,7 +492,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 
 		const bundle = await plausibilityCheck(
 			{ point: SIBLING_POINT, technologyCode: BroadbandTechnologyCode.AsymmetricXDSL, claimedDownloadMbps: 10 },
-			{ bdcDB: db }
+			{ bdcDB: bdc.db }
 		)
 
 		expect(bundle.evidence_found.some((e) => e.type === "filing")).toBe(false)
@@ -577,15 +544,9 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 	})
 
 	it("a geoid-only claim (no point/address) skips physical evidence entirely — no abstain, no entry — even with deps.poi present", async () => {
-		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		const poiContractDB = await openPOIContractDB()
-		const poiLookup = new POILookup({ databasePath: poiPath })
-
-		cleanups.push(async () => {
-			poiLookup[Symbol.dispose]()
-			poiContractDB[Symbol.dispose]()
-			await rm(poiScratch, { recursive: true, force: true })
-		})
+		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
+		using poiContractDB = await openPOIContractDB()
+		using poiLookup = new POILookup({ databasePath: poi.path })
 
 		const bundle = await plausibilityCheck(
 			{
@@ -609,8 +570,8 @@ describe("plausibilityCheck — physical evidence + poi layer absence (decision 
 
 describe("plausibilityCheck — full composition (both layers present)", () => {
 	it("co-presence: matching filing + nearby plant, both covered -> high confidence, both evidence kinds present", async () => {
-		const { deps, cleanup } = await openBoth()
-		cleanups.push(cleanup)
+		await using both = await openBoth()
+		const { deps } = both
 
 		const bundle = await plausibilityCheck(
 			{
@@ -629,8 +590,8 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 	})
 
 	it("both axes unknown (remote, unsurveyed-by-either point) -> insufficient_survey_data", async () => {
-		const { deps, cleanup } = await openBoth()
-		cleanups.push(cleanup)
+		await using both = await openBoth()
+		const { deps } = both
 
 		// A remote point: bdc.db never surveyed it, and openBoth()'s poi coverage table only covers Springfield's
 		// own res-6 parent, so both axes genuinely come back unknown here — the both-unknown branch, distinct from
@@ -652,12 +613,7 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 	// table, so both axes land on unknown together and the both-unknown branch runs instead. The two tests below
 	// drive the mixed branch in BOTH directions by separating the two axes on purpose.
 	it("MIXED: filing covered, physical layer entirely missing (no poi dep) -> low", async () => {
-		const { scratch, db } = await buildBDCFixture()
-
-		cleanups.push(async () => {
-			db[Symbol.dispose]()
-			await rm(scratch, { recursive: true, force: true })
-		})
+		await using bdc = await buildBDCFixture()
 
 		const bundle = await plausibilityCheck(
 			{
@@ -665,7 +621,7 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 				technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
 				claimedDownloadMbps: 1000,
 			},
-			{ bdcDB: db } // no poi — physical axis is layer_missing, NOT not_applicable (fiber DOES have a falsifier)
+			{ bdcDB: bdc.db } // no poi — physical axis is layer_missing, NOT not_applicable (fiber DOES have a falsifier)
 		)
 
 		expect(bundle.coverage_confidence).toBe("low")
@@ -680,10 +636,10 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 	})
 
 	it("MIXED: physical covered, filing layer unsurveyed (bdc.db never surveyed this point) -> low", async () => {
-		const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
-		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([])
-		const poiContractDB = await openPOIContractDB()
-		const poiLookup = new POILookup({ databasePath: poiPath })
+		await using bdc = await buildBDCFixture()
+		await using poi = await buildPOILookupFixture([])
+		using poiContractDB = await openPOIContractDB()
+		using poiLookup = new POILookup({ databasePath: poi.path })
 
 		// Deliberately covering the REMOTE point's own res-6 parent (not Springfield's) — decoupled from any real poi
 		// row, same idiom `nearest-infrastructure.test.ts`'s `openEmptyContractDB` establishes — so the physical axis
@@ -696,17 +652,9 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 			{ h3Cell: res9ShortCellToRes6Parent(remoteCell), completeness: 1, observedRows: 0 },
 		])
 
-		cleanups.push(async () => {
-			bdcDB[Symbol.dispose]()
-			poiLookup[Symbol.dispose]()
-			poiContractDB[Symbol.dispose]()
-			await rm(bdcScratch, { recursive: true, force: true })
-			await rm(poiScratch, { recursive: true, force: true })
-		})
-
 		const bundle = await plausibilityCheck(
 			{ point: remote, technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber, claimedDownloadMbps: 1000 },
-			{ bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } }
+			{ bdcDB: bdc.db, poi: { lookup: poiLookup, contractDB: poiContractDB } }
 		)
 
 		expect(bundle.coverage_confidence).toBe("low")
@@ -718,19 +666,11 @@ describe("plausibilityCheck — full composition (both layers present)", () => {
 
 describe("plausibilityCheck — per-layer coverage-spine resolution assertion", () => {
 	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with both layers wired", async () => {
-		const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
-		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
+		await using bdc = await buildBDCFixture()
+		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
 		// Deliberately mismatched: bdc.db records resolution 9 (BDC_H3_RESOLUTION); this poi contractDB records 6.
-		const poiContractDB = await openPOIContractDB(6)
-		const poiLookup = new POILookup({ databasePath: poiPath })
-
-		cleanups.push(async () => {
-			bdcDB[Symbol.dispose]()
-			poiLookup[Symbol.dispose]()
-			poiContractDB[Symbol.dispose]()
-			await rm(bdcScratch, { recursive: true, force: true })
-			await rm(poiScratch, { recursive: true, force: true })
-		})
+		using poiContractDB = await openPOIContractDB(6)
+		using poiLookup = new POILookup({ databasePath: poi.path })
 
 		await expect(
 			plausibilityCheck(
@@ -739,24 +679,18 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
 					claimedDownloadMbps: 1000,
 				},
-				{ bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } }
+				{ bdcDB: bdc.db, poi: { lookup: poiLookup, contractDB: poiContractDB } }
 			)
 		).rejects.toThrow(/poi\.db's recorded h3 spine resolution \(6\) does not match BDC_H3_RESOLUTION \(9\)/)
 	})
 
 	it("throws when poi.db's recorded resolution disagrees with BDC_H3_RESOLUTION, with poi wired ALONE (no bdcDB)", async () => {
-		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		// Same mismatch as above, but with bdcDB never wired at all — the case an assertion gated on BOTH layers
+		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
+		// Same mismatch as above, but with bdcDB never wired at all — the case an assertion checking BOTH layers
 		// being present would skip entirely. `pointCell` (below) is still derived from BDC_H3_RESOLUTION regardless,
 		// so poi's own resolution must be checked here too.
-		const poiContractDB = await openPOIContractDB(6)
-		const poiLookup = new POILookup({ databasePath: poiPath })
-
-		cleanups.push(async () => {
-			poiLookup[Symbol.dispose]()
-			poiContractDB[Symbol.dispose]()
-			await rm(poiScratch, { recursive: true, force: true })
-		})
+		using poiContractDB = await openPOIContractDB(6)
+		using poiLookup = new POILookup({ databasePath: poi.path })
 
 		await expect(
 			plausibilityCheck(
@@ -771,12 +705,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 	})
 
 	it("does not throw when only bdcDB is wired and its own recorded resolution matches BDC_H3_RESOLUTION", async () => {
-		const { scratch, db } = await buildBDCFixture()
-
-		cleanups.push(async () => {
-			db[Symbol.dispose]()
-			await rm(scratch, { recursive: true, force: true })
-		})
+		await using bdc = await buildBDCFixture()
 
 		await expect(
 			plausibilityCheck(
@@ -785,21 +714,15 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
 					claimedDownloadMbps: 1000,
 				},
-				{ bdcDB: db }
+				{ bdcDB: bdc.db }
 			)
 		).resolves.not.toThrow()
 	})
 
 	it("does not throw when only poi is wired and its own recorded resolution matches BDC_H3_RESOLUTION", async () => {
-		const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
-		const poiContractDB = await openPOIContractDB() // default resolution 9, matches BDC_H3_RESOLUTION
-		const poiLookup = new POILookup({ databasePath: poiPath })
-
-		cleanups.push(async () => {
-			poiLookup[Symbol.dispose]()
-			poiContractDB[Symbol.dispose]()
-			await rm(poiScratch, { recursive: true, force: true })
-		})
+		await using poi = await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR])
+		using poiContractDB = await openPOIContractDB() // default resolution 9, matches BDC_H3_RESOLUTION
+		using poiLookup = new POILookup({ databasePath: poi.path })
 
 		await expect(
 			plausibilityCheck(
@@ -823,12 +746,12 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
  * fuller proof by comment, rather than re-deriving the whole scenario.
  */
 describe("§7-2b gates", () => {
-	describe("Gate 1 — positive-evidence-only invariant (load-bearing)", () => {
+	describe("Gate 1 — positive-evidence-only invariant (required)", () => {
 		it("well-covered area, no filing, no nearby plant -> zero evidence entries, and confidence that reflects the REAL coverage (never insufficient_survey_data)", async () => {
-			const { scratch: bdcScratch, db: bdcDB } = await buildBDCFixture()
-			const { scratch: poiScratch, path: poiPath } = await buildPOILookupFixture([]) // no plant anywhere
-			const poiContractDB = await openPOIContractDB()
-			const poiLookup = new POILookup({ databasePath: poiPath })
+			await using bdc = await buildBDCFixture()
+			await using poi = await buildPOILookupFixture([]) // no plant anywhere
+			using poiContractDB = await openPOIContractDB()
+			using poiLookup = new POILookup({ databasePath: poi.path })
 
 			// SIBLING_POINT: same res-6 parent as Springfield (real bdc.db coverage), zero bdc_availability rows of
 			// its own — filing-landscape.ts's meaning-of-zero POSITIVE case (see the "positive absence" test in the
@@ -839,21 +762,13 @@ describe("§7-2b gates", () => {
 				{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 0 },
 			])
 
-			cleanups.push(async () => {
-				bdcDB[Symbol.dispose]()
-				poiLookup[Symbol.dispose]()
-				poiContractDB[Symbol.dispose]()
-				await rm(bdcScratch, { recursive: true, force: true })
-				await rm(poiScratch, { recursive: true, force: true })
-			})
-
 			const bundle = await plausibilityCheck(
 				{
 					point: SIBLING_POINT,
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
 					claimedDownloadMbps: 100,
 				},
-				{ bdcDB, poi: { lookup: poiLookup, contractDB: poiContractDB } }
+				{ bdcDB: bdc.db, poi: { lookup: poiLookup, contractDB: poiContractDB } }
 			)
 
 			// The core claim: absence never manufactures a negative entry. It just isn't there.
@@ -866,8 +781,8 @@ describe("§7-2b gates", () => {
 		})
 
 		it("contrast: absence in a SPARSE, never-surveyed cell yields insufficient_survey_data — never the informative-absence form proved above (fuller proof: 'both axes unknown' test in the 'full composition' suite above)", async () => {
-			const { deps, cleanup } = await openBoth()
-			cleanups.push(cleanup)
+			await using both = await openBoth()
+			const { deps } = both
 
 			// Remote from Springfield: neither bdc.db's fixture rows nor openBoth()'s poi coverage table (scoped to
 			// Springfield's own res-6 parent) has ever surveyed this point.
@@ -986,8 +901,8 @@ describe("§7-2b gates", () => {
 
 	describe("Gate 2 — co-presence (fuller proof: 'full composition' suite above)", () => {
 		it("matching filing + nearby plant, both covered -> corroborating filing evidence + a physical hit + coverage_confidence: high, coverage_detail fully covered, and no abstain", async () => {
-			const { deps, cleanup } = await openBoth()
-			cleanups.push(cleanup)
+			await using both = await openBoth()
+			const { deps } = both
 
 			const bundle = await plausibilityCheck(
 				{

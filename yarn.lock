@@ -1948,6 +1948,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bcoe/v8-coverage@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@bcoe/v8-coverage@npm:1.0.2"
+  checksum: 10/46600b2dde460269b07a8e4f12b72e418eae1337b85c979f43af3336c9a1c65b04e42508ab6b245f1e0e3c64328e1c38d8cd733e4a7cebc4fbf9cf65c6e59937
+  languageName: node
+  linkType: hard
+
 "@blazediff/core@npm:1.9.1":
   version: 1.9.1
   resolution: "@blazediff/core@npm:1.9.1"
@@ -4234,7 +4241,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jridgewell/trace-mapping@npm:^0.3.18, @jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.25, @jridgewell/trace-mapping@npm:^0.3.28":
+"@jridgewell/trace-mapping@npm:^0.3.18, @jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.25, @jridgewell/trace-mapping@npm:^0.3.28, @jridgewell/trace-mapping@npm:^0.3.31":
   version: 0.3.31
   resolution: "@jridgewell/trace-mapping@npm:0.3.31"
   dependencies:
@@ -4491,6 +4498,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mailwoman/activity-lexicon@workspace:*, @mailwoman/activity-lexicon@workspace:packages/activity-lexicon":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/activity-lexicon@workspace:packages/activity-lexicon"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/address-id@workspace:*, @mailwoman/address-id@workspace:packages/address-id":
   version: 0.0.0-use.local
   resolution: "@mailwoman/address-id@workspace:packages/address-id"
@@ -4521,6 +4537,7 @@ __metadata:
   dependencies:
     "@hono/node-server": "npm:^2.0.12"
     "@hono/zod-openapi": "npm:^1.5.1"
+    "@mailwoman/platform": "workspace:*"
     hono: "npm:^4.13.0"
     zod: "npm:^4.4.3"
   languageName: unknown
@@ -4544,10 +4561,12 @@ __metadata:
   resolution: "@mailwoman/ban@workspace:packages/ban"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
   languageName: unknown
   linkType: soft
 
@@ -4557,11 +4576,14 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/filer": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
-    spliterator: "npm:^6.2.0"
+    path-ts: "npm:^2.1.0"
+    spliterator: "npm:^6.3.1"
     type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
@@ -4576,8 +4598,22 @@ __metadata:
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     d3-scale-chromatic: "npm:^3.1.0"
-    maplibre-gl: "npm:^5.24.0"
+    maplibre-gl: "npm:^6.5.0"
     type-fest: "npm:^5.8.0"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/coastal@workspace:*, @mailwoman/coastal@workspace:packages/coastal":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/coastal@workspace:packages/coastal"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    h3-js: "npm:^4.5.0"
+    kysely: "npm:^0.29.4"
+    spliterator: "npm:^6.3.1"
   languageName: unknown
   linkType: soft
 
@@ -4587,6 +4623,7 @@ __metadata:
   dependencies:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
@@ -4597,7 +4634,9 @@ __metadata:
   dependencies:
     "@duckdb/node-api": "npm:1.5.3-r.3"
     "@mailwoman/codex": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@types/d3-color": "npm:^3.1.3"
     "@types/d3-scale-chromatic": "npm:^3.1.0"
     "@types/yauzl-promise": "npm:^4.0.1"
@@ -4610,13 +4649,13 @@ __metadata:
     d3-scale-chromatic: "npm:^3.1.0"
     env-paths: "npm:^2.2.1"
     fast-glob: "npm:^3.3.3"
+    htmlparser2: "npm:^10"
     http-status-codes: "npm:^2.3.0"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.1.0"
     pino: "npm:^10.3.1"
-    pluralize: "npm:^8.0.0"
     regenerate: "npm:^1.4.2"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
     type-fest: "npm:^5.8.0"
     yauzl-promise: "npm:^4.0.0"
     zod: "npm:^4.4.3"
@@ -4629,9 +4668,14 @@ __metadata:
   dependencies:
     "@dsnp/parquetjs": "npm:1.8.9"
     "@mailwoman/ban": "workspace:*"
+    "@mailwoman/bdc": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    "@mailwoman/tiger": "workspace:*"
     "@types/node": "npm:>=26.1.2"
     adm-zip: "npm:^0.6.0"
     fast-glob: "npm:^3.3.3"
@@ -4639,7 +4683,9 @@ __metadata:
     kysely: "npm:^0.29.4"
     lru-cache: "npm:^11.5.2"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.2.0"
+    read-excel-file: "npm:^9.3.5"
+    spliterator: "npm:^6.3.1"
+    write-excel-file: "npm:^4.1.1"
   languageName: unknown
   linkType: soft
 
@@ -4652,13 +4698,15 @@ __metadata:
     "@mailwoman/geocode-oracle": "workspace:*"
     "@mailwoman/libpostal": "workspace:*"
     "@mailwoman/neural": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
     "@vvago/vale": "npm:^3.17.0"
     mailwoman: "workspace:*"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
     zod: "npm:^4.4.3"
   bin:
     mwdev-mcp: ./cli.ts
@@ -4683,6 +4731,7 @@ __metadata:
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/react": "workspace:^"
     "@mailwoman/resolver": "workspace:*"
@@ -4705,14 +4754,14 @@ __metadata:
     docusaurus-plugin-glossary: "npm:^3.3.4"
     h3-js: "npm:^4.5.0"
     js-yaml: "npm:^4.3.1"
-    maplibre-gl: "npm:^5.24.0"
+    maplibre-gl: "npm:^6.5.0"
     onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
     path-ts: "npm:^2.1.0"
     prism-react-renderer: "npm:^2.4.1"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     react-map-gl: "npm:^8.1.2"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
     sql.js-httpvfs: "npm:^0.8.12"
     storybook: "npm:^10.5.5"
     typescript: "npm:^6.0.3"
@@ -4720,6 +4769,7 @@ __metadata:
     unist-util-visit: "npm:^5.1.0"
     vite: "npm:^8.2.0"
     webpack: "npm:^5.102.1"
+    zx: "npm:^8.8.5"
   languageName: unknown
   linkType: soft
 
@@ -4746,13 +4796,29 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/match": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/record": "workspace:*"
     "@mailwoman/registry": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     kysely: "npm:^0.29.4"
     read-excel-file: "npm:^9.3.5"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
     type-fest: "npm:^5.8.0"
     write-excel-file: "npm:^4.1.1"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/flood@workspace:*, @mailwoman/flood@workspace:packages/flood":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/flood@workspace:packages/flood"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    h3-js: "npm:^4.5.0"
+    kysely: "npm:^0.29.4"
+    spliterator: "npm:^6.3.1"
   languageName: unknown
   linkType: soft
 
@@ -4763,7 +4829,7 @@ __metadata:
     "@fragaria/address-formatter": "npm:^7.0.0"
     "@mailwoman/core": "workspace:*"
     "@types/node": "npm:>=26.1.2"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
   languageName: unknown
   linkType: soft
 
@@ -4775,10 +4841,22 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/record": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@types/node": "npm:>=26.1.2"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/geographic-model@workspace:*, @mailwoman/geographic-model@workspace:packages/geographic-model":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/geographic-model@workspace:packages/geographic-model"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+    "@mailwoman/poi-taxonomy": "workspace:*"
+    type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
 
@@ -4801,6 +4879,7 @@ __metadata:
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     hono: "npm:^4.13.0"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
@@ -4821,8 +4900,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/map-tui@workspace:packages/map-tui"
   dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mapbox/vector-tile": "npm:^2.0.3"
     "@sister.software/asciify": "npm:^4.1.0"
+    htmlparser2: "npm:^10"
     pbf: "npm:^4.0.1"
     pmtiles: "npm:^4.5.0"
   bin:
@@ -4849,9 +4931,11 @@ __metadata:
     "@mailwoman/filer": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@modelcontextprotocol/sdk": "npm:^1.30.0"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
@@ -4878,6 +4962,7 @@ __metadata:
   resolution: "@mailwoman/neural-weights-base-latn@workspace:packages/neural-weights-base-latn"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4897,6 +4982,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4907,6 +4993,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4926,6 +5013,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4935,6 +5023,7 @@ __metadata:
   resolution: "@mailwoman/neural-weights-en-us@workspace:packages/neural-weights-en-us"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4954,6 +5043,7 @@ __metadata:
   dependencies:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4974,11 +5064,14 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/locale-gate": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/sentencepiece-wasm": "workspace:*"
+    esbuild: "npm:0.28.1"
     onnxruntime-node: "npm:^1.26.0"
     onnxruntime-web: "npm:1.25.0-dev.20260327-722743c0e2"
-    spliterator: "npm:^6.2.0"
+    playwright: "npm:^1.62.1"
+    spliterator: "npm:^6.3.1"
   peerDependencies:
     onnxruntime-node: ^1.26.0
     onnxruntime-web: "*"
@@ -4999,17 +5092,20 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/nuts-lookup": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@mailwoman/timezone-lookup": "workspace:*"
     "@mailwoman/un-locode-lookup": "workspace:*"
     hono: "npm:^4.13.0"
     mailwoman: "workspace:*"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
     zod: "npm:^4.4.3"
   bin:
     nominatim: ./out/cli.js
@@ -5027,7 +5123,10 @@ __metadata:
   resolution: "@mailwoman/nuts-lookup@workspace:packages/nuts-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
   bin:
     nuts-lookup: ./out/cli.js
   languageName: unknown
@@ -5038,12 +5137,14 @@ __metadata:
   resolution: "@mailwoman/osm@workspace:packages/osm"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
   languageName: unknown
   linkType: soft
 
@@ -5059,8 +5160,10 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     hono: "npm:^4.13.0"
     mailwoman: "workspace:*"
     zod: "npm:^4.4.3"
@@ -5079,11 +5182,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/platform@workspace:*, @mailwoman/platform@workspace:packages/platform":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/platform@workspace:packages/platform"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/poi-taxonomy@workspace:*, @mailwoman/poi-taxonomy@workspace:packages/poi-taxonomy":
   version: 0.0.0-use.local
   resolution: "@mailwoman/poi-taxonomy@workspace:packages/poi-taxonomy"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -5104,14 +5214,17 @@ __metadata:
     "@storybook/react-vite": "npm:^10.5.5"
     "@types/react": "npm:^19.2.17"
     "@types/react-dom": "npm:^19.2.3"
+    "@types/trusted-types": "npm:^2"
     "@vitejs/plugin-react": "npm:^6.0.5"
     "@vitest/browser-playwright": "npm:4.1.10"
-    maplibre-gl: "npm:^5.24.0"
+    dompurify: "npm:^3.3.3"
+    maplibre-gl: "npm:^6.5.0"
     playwright: "npm:^1.62.1"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     react-map-gl: "npm:^8.1.2"
     storybook: "npm:^10.5.5"
+    trusted-types: "npm:^2"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.2.0"
     vitest: "npm:4.1.10"
@@ -5144,13 +5257,16 @@ __metadata:
     "@mailwoman/address-id": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/match": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/record": "workspace:*"
+    "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@protomaps/basemaps": "npm:^5.7.2"
     "@types/node": "npm:>=26.1.2"
     h3-js: "npm:^4.5.0"
     playwright: "npm:^1.62.1"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
   languageName: unknown
   linkType: soft
 
@@ -5162,12 +5278,14 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/match": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
     path-ts: "npm:^2.1.0"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
     type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
@@ -5180,6 +5298,7 @@ __metadata:
     "@mailwoman/core": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@sqlite.org/sqlite-wasm": "npm:^3.53.0-build1"
   languageName: unknown
   linkType: soft
@@ -5190,6 +5309,7 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -5197,6 +5317,22 @@ __metadata:
 "@mailwoman/sentencepiece-wasm@workspace:*, @mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm":
   version: 0.0.0-use.local
   resolution: "@mailwoman/sentencepiece-wasm@workspace:packages/sentencepiece-wasm"
+  dependencies:
+    "@mailwoman/platform": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
+"@mailwoman/soil@workspace:*, @mailwoman/soil@workspace:packages/soil":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/soil@workspace:packages/soil"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    h3-js: "npm:^4.5.0"
+    kysely: "npm:^0.29.4"
+    spliterator: "npm:^6.3.1"
   languageName: unknown
   linkType: soft
 
@@ -5207,6 +5343,7 @@ __metadata:
     "@googlemaps/google-maps-services-js": "npm:^3.4.2"
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@types/google.maps": "npm:^3.65.3"
     geo-coordinates-parser: "npm:^1.7.4"
     h3-js: "npm:^4.5.0"
@@ -5220,16 +5357,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mailwoman/sqlite@workspace:*, @mailwoman/sqlite@workspace:packages/sqlite":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/sqlite@workspace:packages/sqlite"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+    kysely: "npm:^0.29.4"
+  languageName: unknown
+  linkType: soft
+
 "@mailwoman/tiger@workspace:*, @mailwoman/tiger@workspace:packages/tiger":
   version: 0.0.0-use.local
   resolution: "@mailwoman/tiger@workspace:packages/tiger"
   dependencies:
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@protomaps/basemaps": "npm:^5.7.2"
     "@turf/boolean-contains": "npm:^7.3.5"
     kysely: "npm:^0.29.4"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
     type-fest: "npm:^5.8.0"
   languageName: unknown
   linkType: soft
@@ -5251,6 +5400,8 @@ __metadata:
   resolution: "@mailwoman/timezone-lookup@workspace:packages/timezone-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
   bin:
     timezone-lookup: ./out/cli.js
   languageName: unknown
@@ -5261,8 +5412,10 @@ __metadata:
   resolution: "@mailwoman/un-locode-lookup@workspace:packages/un-locode-lookup"
   dependencies:
     "@mailwoman/annotations": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
-    spliterator: "npm:^6.2.0"
+    "@mailwoman/sqlite": "workspace:*"
+    spliterator: "npm:^6.3.1"
   bin:
     un-locode-lookup: ./out/cli.js
   languageName: unknown
@@ -5273,15 +5426,16 @@ __metadata:
   resolution: "@mailwoman/universe@workspace:."
   dependencies:
     "@duckdb/node-api": "npm:^1.5.3-r.3"
+    "@mailwoman/platform": "workspace:*"
     "@release-it-plugins/workspaces": "npm:^6.0.0"
     "@sister.software/oxfmt-config": "npm:^13.0.0"
     "@sister.software/oxlint-config": "npm:^13.0.0"
     "@sister.software/tsconfig": "npm:^12.1.3"
     "@types/node": "npm:^26.1.2"
-    "@types/pluralize": "npm:^0.0.33"
     "@types/react": "npm:^19.2.17"
     "@types/regenerate": "npm:^1.4.3"
     "@types/semver": "npm:^7.7.1"
+    "@vitest/coverage-v8": "npm:4.1.10"
     dependency-cruiser: "npm:^18.2.0"
     husky: "npm:^9.1.7"
     jscpd: "npm:^5.0.16"
@@ -5293,7 +5447,8 @@ __metadata:
     release-it: "npm:^19.2.4"
     semver: "npm:^7.8.5"
     sherif: "npm:^1.13.0"
-    spliterator: "npm:^6.2.0"
+    spliterator: "npm:^6.3.1"
+    ts-morph: "npm:^28.0.0"
     typescript: "npm:^6.0.3"
     vitest: "npm:4.1.10"
     zx: "npm:^8.8.5"
@@ -5303,20 +5458,37 @@ __metadata:
 "@mailwoman/variant-aliases@workspace:*, @mailwoman/variant-aliases@workspace:packages/variant-aliases":
   version: 0.0.0-use.local
   resolution: "@mailwoman/variant-aliases@workspace:packages/variant-aliases"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
   languageName: unknown
   linkType: soft
 
-"@mapbox/jsonlint-lines-primitives@npm:^2.0.2, @mapbox/jsonlint-lines-primitives@npm:~2.0.2":
-  version: 2.0.2
-  resolution: "@mapbox/jsonlint-lines-primitives@npm:2.0.2"
-  checksum: 10/6d8e64d34d912ebf29fead0d1917c8d8ad86e96f69b6100a9764af8cba391609474cdce7f7e4a2d579ccea58a142d1454257b795403179e9133a09af13101068
-  languageName: node
-  linkType: hard
+"@mailwoman/zoning@workspace:*, @mailwoman/zoning@workspace:packages/zoning":
+  version: 0.0.0-use.local
+  resolution: "@mailwoman/zoning@workspace:packages/zoning"
+  dependencies:
+    "@mailwoman/core": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
+    h3-js: "npm:^4.5.0"
+    kysely: "npm:^0.29.4"
+    spliterator: "npm:^6.3.1"
+  languageName: unknown
+  linkType: soft
 
 "@mapbox/jsonlint-lines-primitives@npm:^2.0.3":
   version: 2.0.3
   resolution: "@mapbox/jsonlint-lines-primitives@npm:2.0.3"
   checksum: 10/99404df11b1840153c910154c238f62ba0ea7cfab6aa7ed3bad1e522d31b746bfad78b23e6ee4887196acec76759f1863b5cb4f5e2d95d0dc2a8ea73091c78f6
+  languageName: node
+  linkType: hard
+
+"@mapbox/jsonlint-lines-primitives@npm:~2.0.2":
+  version: 2.0.2
+  resolution: "@mapbox/jsonlint-lines-primitives@npm:2.0.2"
+  checksum: 10/6d8e64d34d912ebf29fead0d1917c8d8ad86e96f69b6100a9764af8cba391609474cdce7f7e4a2d579ccea58a142d1454257b795403179e9133a09af13101068
   languageName: node
   linkType: hard
 
@@ -5327,7 +5499,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mapbox/tiny-sdf@npm:^2.1.0":
+"@mapbox/tiny-sdf@npm:^2.2.0":
   version: 2.2.0
   resolution: "@mapbox/tiny-sdf@npm:2.2.0"
   checksum: 10/8a6c2664cc6d054155e6812bce41cbb7f2b86d2564adce0aebaadd141a827b78209bc026cd9d4d605095df5556274fb541f520222d19eb2b68d65156db9819d9
@@ -5359,37 +5531,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mapbox/vector-tile@npm:^2.0.4":
-  version: 2.0.4
-  resolution: "@mapbox/vector-tile@npm:2.0.4"
+"@mapbox/vector-tile@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@mapbox/vector-tile@npm:3.0.0"
   dependencies:
     "@mapbox/point-geometry": "npm:~1.1.0"
     "@types/geojson": "npm:^7946.0.16"
-    pbf: "npm:^4.0.1"
-  checksum: 10/d7b223901c91ad62d0c2703f078ec1771d76b92041e50970bdd6ffa2a52275f5d026b244a803ff6be500a6c21faeb2cfefc209a39fb77a6ac8cf5d210e163548
+    pbf: "npm:^5.0.0"
+  checksum: 10/1c1b4ad46ea9d5bdfce36b5890ba26f3ecc5d0f4e58129b319e65c0cda5d50168b34a85685b33408053dd6776309c744cd5ba16908bb0534c11ac3d068820730
   languageName: node
   linkType: hard
 
-"@mapbox/whoots-js@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "@mapbox/whoots-js@npm:3.1.0"
-  checksum: 10/c1837c04effd205b207f441356d952eae7e8aad6c58f7c4900de50318c2147cf175936fc9434f20dfa409f9e6a78ec604d61e70c1c20572db0cc7655fbb65f50
-  languageName: node
-  linkType: hard
-
-"@maplibre/geojson-vt@npm:^5.0.4":
-  version: 5.0.4
-  resolution: "@maplibre/geojson-vt@npm:5.0.4"
-  checksum: 10/ba3915f3d1409aaa2a0c969779a48cce5350687b256d966ba551df12e0ac79599ee59ba6a2f9529df09df46f2379c9fbeb543cab942a46561ecc4a5a0aab2dc4
-  languageName: node
-  linkType: hard
-
-"@maplibre/geojson-vt@npm:^6.1.0":
-  version: 6.1.0
-  resolution: "@maplibre/geojson-vt@npm:6.1.0"
+"@maplibre/geojson-vt@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "@maplibre/geojson-vt@npm:6.1.1"
   dependencies:
-    kdbush: "npm:^4.0.2"
-  checksum: 10/542e64b01026441bc4f24ed7fc61717ccae7036530cad8bb6b777b54995c0623580b1950c9cd6a0664b4a992fbc29a6fb9782fa8d113a49c20dca6d127d12c72
+    kdbush: "npm:^4.1.0"
+  checksum: 10/61c6ca6dc49d799f22dd98b450d48cf172cacf886edbe73e195b0526fe0bad9c42521792f1c7f4361da0069f604517941b71def7f4745fa945c9635a1eb3e250
   languageName: node
   linkType: hard
 
@@ -5411,24 +5569,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@maplibre/maplibre-gl-style-spec@npm:^24.8.1":
-  version: 24.10.0
-  resolution: "@maplibre/maplibre-gl-style-spec@npm:24.10.0"
-  dependencies:
-    "@mapbox/jsonlint-lines-primitives": "npm:~2.0.2"
-    "@mapbox/unitbezier": "npm:^1.0.0"
-    json-stringify-pretty-compact: "npm:^4.0.0"
-    minimist: "npm:^1.2.8"
-    quickselect: "npm:^3.0.0"
-    tinyqueue: "npm:^3.0.0"
-  bin:
-    gl-style-format: dist/gl-style-format.mjs
-    gl-style-migrate: dist/gl-style-migrate.mjs
-    gl-style-validate: dist/gl-style-validate.mjs
-  checksum: 10/7d580c71a7978ffd6c93a95a9178eb55fa0777eb63f1954afec58934e940a7d1432ecd51e98b725e01ae97298b7a60d6a2a19a863952fad45f97ae609ad0d886
-  languageName: node
-  linkType: hard
-
 "@maplibre/maplibre-gl-style-spec@npm:^26.2.1":
   version: 26.2.1
   resolution: "@maplibre/maplibre-gl-style-spec@npm:26.2.1"
@@ -5447,27 +5587,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@maplibre/mlt@npm:^1.1.8":
-  version: 1.1.9
-  resolution: "@maplibre/mlt@npm:1.1.9"
+"@maplibre/mlt@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@maplibre/mlt@npm:1.2.0"
   dependencies:
     "@mapbox/point-geometry": "npm:^1.1.0"
-  checksum: 10/2e912d6da3cd0a10e31d87ad87776ab9cb77c99bb8fe7763af4cbeb5e474a9d5c30128472e482294e3ed7b4c8ced16e371a177aeea13373256a17fc9e4fdb746
+  checksum: 10/9bc3d30f78dc2090ac80634e08848bf454daed888fcbcace7e1c1c9b8d1db6c5421376f681dffe90bb4274488753775f36e76a1568ba724e64a0ca59207c04c4
   languageName: node
   linkType: hard
 
-"@maplibre/vt-pbf@npm:^4.3.0":
-  version: 4.3.0
-  resolution: "@maplibre/vt-pbf@npm:4.3.0"
+"@maplibre/vt-pbf@npm:^4.3.2":
+  version: 4.3.2
+  resolution: "@maplibre/vt-pbf@npm:4.3.2"
   dependencies:
     "@mapbox/point-geometry": "npm:^1.1.0"
-    "@mapbox/vector-tile": "npm:^2.0.4"
-    "@maplibre/geojson-vt": "npm:^5.0.4"
     "@types/geojson": "npm:^7946.0.16"
-    "@types/supercluster": "npm:^7.1.3"
-    pbf: "npm:^4.0.1"
-    supercluster: "npm:^8.0.1"
-  checksum: 10/2839a0ee0a2a0421f8bbc86a53b563b00b95182bef48ce32cf0bc201a3f2c616df2753e64379d703b63568b647b7ea5b46e09a3f378d11a0ee41d6e26d7f8d88
+    pbf: "npm:^5.1.0"
+  checksum: 10/731a6a094964bc004b51451096cdb5ff65ca60f1c443e638f0e316bb1b24431e67988531bb2f9cb854d3ec31597f32fbbf7de550245efac3bfb1a0cc1d33b567
   languageName: node
   linkType: hard
 
@@ -8318,6 +8454,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ts-morph/common@npm:~0.29.0":
+  version: 0.29.0
+  resolution: "@ts-morph/common@npm:0.29.0"
+  dependencies:
+    minimatch: "npm:^10.0.1"
+    path-browserify: "npm:^1.0.1"
+    tinyglobby: "npm:^0.2.14"
+  checksum: 10/d23cfb6c81110235a79cf5fbeb7efed04f4c8d560391a45184470b2363661f8da42f76572808be213f1e30d148117cb6dd57cac84a1c2a236839de986d2c27b8
+  languageName: node
+  linkType: hard
+
 "@turf/bbox@npm:7.3.5":
   version: 7.3.5
   resolution: "@turf/bbox@npm:7.3.5"
@@ -9185,13 +9332,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/pluralize@npm:^0.0.33":
-  version: 0.0.33
-  resolution: "@types/pluralize@npm:0.0.33"
-  checksum: 10/282d42dc0187e5e0912f9f36ee0f5615bfd273a08d40afe5bf5881cb28daf1977abe10564543032aa0f42352ebba739ff3d86bf5562ac4691c6d1761fcc7cf39
-  languageName: node
-  linkType: hard
-
 "@types/prismjs@npm:^1.26.0":
   version: 1.26.6
   resolution: "@types/prismjs@npm:1.26.6"
@@ -9378,15 +9518,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/supercluster@npm:^7.1.3":
-  version: 7.1.3
-  resolution: "@types/supercluster@npm:7.1.3"
-  dependencies:
-    "@types/geojson": "npm:*"
-  checksum: 10/e4c4e6174780ea68f4182b6d17f99d2651f9fb23f254c9ee6cfbb74025f75550057027f2c292662775377a53dd12af4b1908d0cecbe5b0f8490d1ce9fc6e726a
-  languageName: node
-  linkType: hard
-
 "@types/thrift@npm:0.10.17":
   version: 0.10.17
   resolution: "@types/thrift@npm:0.10.17"
@@ -9398,7 +9529,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/trusted-types@npm:^2.0.7":
+"@types/trusted-types@npm:^2, @types/trusted-types@npm:^2.0.7":
   version: 2.0.7
   resolution: "@types/trusted-types@npm:2.0.7"
   checksum: 10/8e4202766a65877efcf5d5a41b7dd458480b36195e580a3b1085ad21e948bc417d55d6f8af1fd2a7ad008015d4117d5fdfe432731157da3c68678487174e4ba3
@@ -9564,6 +9695,30 @@ __metadata:
   peerDependencies:
     vitest: 4.1.10
   checksum: 10/52c3f94de6b755bbe5165874a6f0e4ea66331b81b355423fa43b73d963d1f2eaedb1d9ab24e124430e12f39cdf496f360715415e76756f42ccf09d6079a8bafb
+  languageName: node
+  linkType: hard
+
+"@vitest/coverage-v8@npm:4.1.10":
+  version: 4.1.10
+  resolution: "@vitest/coverage-v8@npm:4.1.10"
+  dependencies:
+    "@bcoe/v8-coverage": "npm:^1.0.2"
+    "@vitest/utils": "npm:4.1.10"
+    ast-v8-to-istanbul: "npm:^1.0.0"
+    istanbul-lib-coverage: "npm:^3.2.2"
+    istanbul-lib-report: "npm:^3.0.1"
+    istanbul-reports: "npm:^3.2.0"
+    magicast: "npm:^0.5.2"
+    obug: "npm:^2.1.1"
+    std-env: "npm:^4.0.0-rc.1"
+    tinyrainbow: "npm:^3.1.0"
+  peerDependencies:
+    "@vitest/browser": 4.1.10
+    vitest: 4.1.10
+  peerDependenciesMeta:
+    "@vitest/browser":
+      optional: true
+  checksum: 10/e593f5205a65d10f200e68a99e720d7a9f5e9be65d8160e4f0b6b5f1a7a87f0453c03e79fd1c022dbd7fb26a22657ca4d9410ae27b36da90d41d7ca04f681ab1
   languageName: node
   linkType: hard
 
@@ -10382,6 +10537,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ast-v8-to-istanbul@npm:^1.0.0":
+  version: 1.0.5
+  resolution: "ast-v8-to-istanbul@npm:1.0.5"
+  dependencies:
+    "@jridgewell/trace-mapping": "npm:^0.3.31"
+    estree-walker: "npm:^3.0.3"
+    js-tokens: "npm:^10.0.0"
+  checksum: 10/da404c933beb1d3db94158e07c8d87aa86103775e0fb6f9a85f930d5c8327320b5a2099db4cc9d4448c421285a614fe9f73ef7d76dbae589ce815e636a0f1542
+  languageName: node
+  linkType: hard
+
 "astring@npm:^1.8.0":
   version: 1.9.0
   resolution: "astring@npm:1.9.0"
@@ -10775,6 +10941,15 @@ __metadata:
   dependencies:
     balanced-match: "npm:^4.0.2"
   checksum: 10/a7acf120fefa79e9d7c9c92898114f57c07596a3920197f3c5917e6a628b04220a5f7f9618c30bdd973a6576a32113b99f9c3f1c8245ccc399dd2a9a718d81d8
+  languageName: node
+  linkType: hard
+
+"brace-expansion@npm:^5.0.8":
+  version: 5.0.9
+  resolution: "brace-expansion@npm:5.0.9"
+  dependencies:
+    balanced-match: "npm:^4.0.2"
+  checksum: 10/d8683d612919212c7cf298861acd1c15101e7e2ad186e7ae9747390e5b3fc9e9b55ce71107570d32985784d9d88fbbe438d725863aed7b0f3d08d5f080535eec
   languageName: node
   linkType: hard
 
@@ -11371,6 +11546,13 @@ __metadata:
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
   checksum: 10/cdfb57fa6c7649bbff98d9028c2f0de2f91c86f551179541cf784b1cfdc1562dcb951955f46d54d930a3879931a980e32a46b598acaea274728dbe068deca919
+  languageName: node
+  linkType: hard
+
+"code-block-writer@npm:^13.0.3":
+  version: 13.0.3
+  resolution: "code-block-writer@npm:13.0.3"
+  checksum: 10/771546224f38610eecee0598e83c9e0f86dcd600ea316dbf27c2cfebaab4fed51b042325aa460b8e0f131fac5c1de208f6610a1ddbffe4b22e76f9b5256707cb
   languageName: node
   linkType: hard
 
@@ -12936,7 +13118,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"domutils@npm:^3.0.1":
+"domutils@npm:^3.0.1, domutils@npm:^3.2.2":
   version: 3.2.2
   resolution: "domutils@npm:3.2.2"
   dependencies:
@@ -13000,10 +13182,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"earcut@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "earcut@npm:3.0.2"
-  checksum: 10/08374619e9510f3d669438c292153ec5c31a0ebac058bd03dab04c5b341e0fd2d91794681a1128321a49651ee55822ebb7bda5f8a35de636c4e3b0b27fa39a84
+"earcut@npm:^3.2.3":
+  version: 3.2.3
+  resolution: "earcut@npm:3.2.3"
+  checksum: 10/3c3c6bfc214060e6df83da1da413709cf15c77139b0e094a71e6e960ffce033c88586c1e880496ea0a39d891df74a065ccfe24c18f426898ea07a51e0fc0a446
   languageName: node
   linkType: hard
 
@@ -13112,6 +13294,13 @@ __metadata:
   version: 6.0.1
   resolution: "entities@npm:6.0.1"
   checksum: 10/62af1307202884349d2867f0aac5c60d8b57102ea0b0e768b16246099512c28e239254ad772d6834e7e14cb1b6f153fc3d0c031934e3183b086c86d3838d874a
+  languageName: node
+  linkType: hard
+
+"entities@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "entities@npm:7.0.1"
+  checksum: 10/3c0c58d869c45148463e96d21dee2d1b801bd3fe4cf47aa470cd26dfe81d59e9e0a9be92ae083fa02fa441283c883a471486e94538dcfb8544428aa80a55271b
   languageName: node
   linkType: hard
 
@@ -13317,7 +13506,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0":
+"esbuild@npm:0.28.1, esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0 || ^0.24.0 || ^0.25.0 || ^0.26.0 || ^0.27.0 || ^0.28.0":
   version: 0.28.1
   resolution: "esbuild@npm:0.28.1"
   dependencies:
@@ -14996,7 +15185,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-escaper@npm:^2.0.2":
+"html-escaper@npm:^2.0.0, html-escaper@npm:^2.0.2":
   version: 2.0.2
   resolution: "html-escaper@npm:2.0.2"
   checksum: 10/034d74029dcca544a34fb6135e98d427acd73019796ffc17383eaa3ec2fe1c0471dcbbc8f8ed39e46e86d43ccd753a160631615e4048285e313569609b66d5b7
@@ -15069,6 +15258,18 @@ __metadata:
     webpack:
       optional: true
   checksum: 10/fc81e1c2d3ef5d709b700b53bb31feef200a08d9b31a819d4623c80dcf412245939a9d6014e574dc5bed7388b3119e29d047d9e712c4889b8d7270dc25990a8d
+  languageName: node
+  linkType: hard
+
+"htmlparser2@npm:^10":
+  version: 10.1.0
+  resolution: "htmlparser2@npm:10.1.0"
+  dependencies:
+    domelementtype: "npm:^2.3.0"
+    domhandler: "npm:^5.0.3"
+    domutils: "npm:^3.2.2"
+    entities: "npm:^7.0.1"
+  checksum: 10/660fb094a53fb77a3c771db969778b58af0e8a572a1bdc8e5952a4241e4b04e0a6063b16f6422e22c821441081c8de339e3f06ddda362ac2a42c8767d5e5ad53
   languageName: node
   linkType: hard
 
@@ -16093,6 +16294,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"istanbul-lib-coverage@npm:^3.0.0, istanbul-lib-coverage@npm:^3.2.2":
+  version: 3.2.2
+  resolution: "istanbul-lib-coverage@npm:3.2.2"
+  checksum: 10/40bbdd1e937dfd8c830fa286d0f665e81b7a78bdabcd4565f6d5667c99828bda3db7fb7ac6b96a3e2e8a2461ddbc5452d9f8bc7d00cb00075fa6a3e99f5b6a81
+  languageName: node
+  linkType: hard
+
+"istanbul-lib-report@npm:^3.0.0, istanbul-lib-report@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "istanbul-lib-report@npm:3.0.1"
+  dependencies:
+    istanbul-lib-coverage: "npm:^3.0.0"
+    make-dir: "npm:^4.0.0"
+    supports-color: "npm:^7.1.0"
+  checksum: 10/86a83421ca1cf2109a9f6d193c06c31ef04a45e72a74579b11060b1e7bb9b6337a4e6f04abfb8857e2d569c271273c65e855ee429376a0d7c91ad91db42accd1
+  languageName: node
+  linkType: hard
+
+"istanbul-reports@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "istanbul-reports@npm:3.2.0"
+  dependencies:
+    html-escaper: "npm:^2.0.0"
+    istanbul-lib-report: "npm:^3.0.0"
+  checksum: 10/6773a1d5c7d47eeec75b317144fe2a3b1da84a44b6282bebdc856e09667865e58c9b025b75b3d87f5bc62939126cbba4c871ee84254537d934ba5da5d4c4ec4e
+  languageName: node
+  linkType: hard
+
 "jest-util@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest-util@npm:29.7.0"
@@ -16165,6 +16394,13 @@ __metadata:
   version: 6.2.3
   resolution: "jose@npm:6.2.3"
   checksum: 10/876974613c5ee988d43b65a34c96ce440dbf7706a2f07f465b8874af16ee532102e224459a7068d2c6ef044affe49690667d23ca12770c279804baec95a09608
+  languageName: node
+  linkType: hard
+
+"js-tokens@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "js-tokens@npm:10.0.0"
+  checksum: 10/88f536ec89f076fc230d29df255b3c55531237669d746d1868fca716b1e3f5f2e4abf8e5b8701903216e3f00d2dc3918d078b35da87772d433ab6a513c3bf76d
   languageName: node
   linkType: hard
 
@@ -16389,7 +16625,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"kdbush@npm:^4.0.2":
+"kdbush@npm:^4.1.0":
   version: 4.1.0
   resolution: "kdbush@npm:4.1.0"
   checksum: 10/40d0a1a8e9928fabc3b5f7026b280573e718020c74438a4b5702400f8a6e4c38fb6110c456d6e592f56352da7011cc794ed47195c9c501647bcb16287c1d7dd2
@@ -17000,40 +17236,59 @@ __metadata:
   languageName: node
   linkType: hard
 
+"magicast@npm:^0.5.2":
+  version: 0.5.4
+  resolution: "magicast@npm:0.5.4"
+  dependencies:
+    "@babel/parser": "npm:^7.29.7"
+    "@babel/types": "npm:^7.29.7"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10/174a26b566ff6b92b0f3522711c139ad03b3ffd6eae045fe230672a674066937eb8232bf6ad755459324eda03f6e6258226566fe2b505c5983670439859c6c39
+  languageName: node
+  linkType: hard
+
 "mailwoman@workspace:*, mailwoman@workspace:^, mailwoman@workspace:packages/mailwoman":
   version: 0.0.0-use.local
   resolution: "mailwoman@workspace:packages/mailwoman"
   dependencies:
     "@inkjs/ui": "npm:^2.0.0"
     "@isaacs/cliui": "npm:^9.0.0"
+    "@mailwoman/activity-lexicon": "workspace:*"
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/api": "workspace:*"
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/bdc": "workspace:*"
+    "@mailwoman/coastal": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/corpus": "workspace:*"
     "@mailwoman/filer": "workspace:*"
+    "@mailwoman/flood": "workspace:*"
     "@mailwoman/formatter": "workspace:*"
+    "@mailwoman/geographic-model": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/locale-gate": "workspace:*"
     "@mailwoman/map-tui": "workspace:*"
+    "@mailwoman/match": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
     "@mailwoman/osm": "workspace:*"
     "@mailwoman/phrase-grouper": "workspace:*"
+    "@mailwoman/platform": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/registry": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/resolver-wof-wasm": "workspace:*"
+    "@mailwoman/soil": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
+    "@mailwoman/sqlite": "workspace:*"
     "@mailwoman/tiger": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"
-    "@types/yauzl-promise": "npm:^4.0.1"
+    "@mailwoman/zoning": "workspace:*"
     chalk: "npm:^6.0.0"
     change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"
@@ -17044,8 +17299,7 @@ __metadata:
     onnxruntime-node: "npm:^1.26.0"
     path-ts: "npm:^2.1.0"
     react: "npm:^19.2.8"
-    spliterator: "npm:^6.2.0"
-    yauzl-promise: "npm:^4.0.0"
+    spliterator: "npm:^6.3.1"
     zod: "npm:^4.4.3"
     zx: "npm:^8.8.5"
   peerDependencies:
@@ -17071,30 +17325,37 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"maplibre-gl@npm:^5.24.0":
-  version: 5.24.0
-  resolution: "maplibre-gl@npm:5.24.0"
+"make-dir@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "make-dir@npm:4.0.0"
   dependencies:
-    "@mapbox/jsonlint-lines-primitives": "npm:^2.0.2"
+    semver: "npm:^7.5.3"
+  checksum: 10/bf0731a2dd3aab4db6f3de1585cea0b746bb73eb5a02e3d8d72757e376e64e6ada190b1eddcde5b2f24a81b688a9897efd5018737d05e02e2a671dda9cff8a8a
+  languageName: node
+  linkType: hard
+
+"maplibre-gl@npm:^6.5.0":
+  version: 6.5.0
+  resolution: "maplibre-gl@npm:6.5.0"
+  dependencies:
     "@mapbox/point-geometry": "npm:^1.1.0"
-    "@mapbox/tiny-sdf": "npm:^2.1.0"
-    "@mapbox/unitbezier": "npm:^0.0.1"
-    "@mapbox/vector-tile": "npm:^2.0.4"
-    "@mapbox/whoots-js": "npm:^3.1.0"
-    "@maplibre/geojson-vt": "npm:^6.1.0"
-    "@maplibre/maplibre-gl-style-spec": "npm:^24.8.1"
-    "@maplibre/mlt": "npm:^1.1.8"
-    "@maplibre/vt-pbf": "npm:^4.3.0"
+    "@mapbox/tiny-sdf": "npm:^2.2.0"
+    "@mapbox/unitbezier": "npm:^1.0.0"
+    "@mapbox/vector-tile": "npm:^3.0.0"
+    "@maplibre/geojson-vt": "npm:^6.1.1"
+    "@maplibre/maplibre-gl-style-spec": "npm:^26.2.1"
+    "@maplibre/mlt": "npm:^1.2.0"
+    "@maplibre/vt-pbf": "npm:^4.3.2"
     "@types/geojson": "npm:^7946.0.16"
-    earcut: "npm:^3.0.2"
+    earcut: "npm:^3.2.3"
     gl-matrix: "npm:^3.4.4"
-    kdbush: "npm:^4.0.2"
+    kdbush: "npm:^4.1.0"
     murmurhash-js: "npm:^1.0.0"
-    pbf: "npm:^4.0.1"
+    pbf: "npm:^5.1.2"
     potpack: "npm:^2.1.0"
     quickselect: "npm:^3.0.0"
     tinyqueue: "npm:^3.0.0"
-  checksum: 10/0bf5bd004e1ae545456407bd42f201913e9e67fb302b7d18804c81dffd0feefad55dfb249514c7ad62e8cea57621777f1061f8187e254a108230e4f7eb4dd8e9
+  checksum: 10/0ef1cc493b95573828bb4ca2caf51a6b514a39e56761d1ce486cf4b62c737c87f1becf80d29161f36ebd2873fb2549f52c5de12a133491ac861ad275142b45e1
   languageName: node
   linkType: hard
 
@@ -18166,6 +18427,15 @@ __metadata:
   dependencies:
     brace-expansion: "npm:^1.1.7"
   checksum: 10/b11a7ee5773cd34c1a0c8436cdbe910901018fb4b6cb47aa508a18d567f6efd2148507959e35fba798389b161b8604a2d704ccef751ea36bd4582f9852b7d63f
+  languageName: node
+  linkType: hard
+
+"minimatch@npm:^10.0.1":
+  version: 10.2.6
+  resolution: "minimatch@npm:10.2.6"
+  dependencies:
+    brace-expansion: "npm:^5.0.8"
+  checksum: 10/a5e43f7c57d6061a77da320b42aa35ffff826030cf67c83c0eee47a26ede4d66486935881492b968c609bf27a7d48cc4b9f54b2806643cd8fb792fcf9240cc1b
   languageName: node
   linkType: hard
 
@@ -19462,6 +19732,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"path-browserify@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "path-browserify@npm:1.0.1"
+  checksum: 10/7e7368a5207e7c6b9051ef045711d0dc3c2b6203e96057e408e6e74d09f383061010d2be95cb8593fe6258a767c3e9fc6b2bfc7ce8d48ae8c3d9f6994cca9ad8
+  languageName: node
+  linkType: hard
+
 "path-data-parser@npm:0.1.0, path-data-parser@npm:^0.1.0":
   version: 0.1.0
   resolution: "path-data-parser@npm:0.1.0"
@@ -19626,6 +19903,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pbf@npm:^5.0.0, pbf@npm:^5.1.0, pbf@npm:^5.1.2":
+  version: 5.1.2
+  resolution: "pbf@npm:5.1.2"
+  dependencies:
+    resolve-protobuf-schema: "npm:^2.1.0"
+  bin:
+    pbf: bin/pbf
+  checksum: 10/add0663777f352c9432503e5fa18eb5be112a8ee4d32b233b8c7128bebddb013b874748f63d9db1a6f3050d077c70acdafda75fd8d4b66a75af627ec2db4b7a8
+  languageName: node
+  linkType: hard
+
 "perfect-debounce@npm:^2.0.0":
   version: 2.1.0
   resolution: "perfect-debounce@npm:2.1.0"
@@ -19783,13 +20071,6 @@ __metadata:
   bin:
     playwright: cli.js
   checksum: 10/f99546873ab2545160ad5a0145fef8e2c1d805efd1ba77356f5b0ee3d8688192b3a2af08cd948bece36ca386fdfad889ef7e53b7aaad309940744c0bbccc0a19
-  languageName: node
-  linkType: hard
-
-"pluralize@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "pluralize@npm:8.0.0"
-  checksum: 10/17877fdfdb7ddb3639ce257ad73a7c51a30a966091e40f56ea9f2f545b5727ce548d4928f8cb3ce38e7dc0c5150407d318af6a4ed0ea5265d378473b4c2c61ec
   languageName: node
   linkType: hard
 
@@ -22288,7 +22569,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.8.5, semver@npm:^7.6.0, semver@npm:^7.8.5":
+"semver@npm:7.8.5, semver@npm:^7.5.3, semver@npm:^7.6.0, semver@npm:^7.8.5":
   version: 7.8.5
   resolution: "semver@npm:7.8.5"
   bin:
@@ -23047,9 +23328,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"spliterator@npm:^6.2.0":
-  version: 6.2.0
-  resolution: "spliterator@npm:6.2.0"
+"spliterator@npm:^6.3.1":
+  version: 6.3.1
+  resolution: "spliterator@npm:6.3.1"
   peerDependencies:
     change-case: ^5.4.4
     read-excel-file: ^9.3.5
@@ -23066,7 +23347,7 @@ __metadata:
       optional: true
   bin:
     spliterator: out/node/cli/index.js
-  checksum: 10/362ea2f63b0326fe8884292cad2d45542f9858ae20ba2a79a5364ea382251f74d51b763fb7b84f004c850ab9b68dd20d2363121662a9ba5ceeca87c8086e57d5
+  checksum: 10/f05fec1e9f8d3a77a2d00d3efbdc356bd1a2653048be50f52c6fb711b03d8e5bf09ea5fefc3bc912d977e33cd32640a67b5a8b97eae81e46b2c8db6841300929
   languageName: node
   linkType: hard
 
@@ -23428,15 +23709,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"supercluster@npm:^8.0.1":
-  version: 8.0.1
-  resolution: "supercluster@npm:8.0.1"
-  dependencies:
-    kdbush: "npm:^4.0.2"
-  checksum: 10/3e517e54087fe24efa274013a5c116b0083d140d3cd855c5004fef61b64dde83510d2a65cd6565349b693751936aede2305f76d84778e6107ae1b3ffa18a5bae
-  languageName: node
-  linkType: hard
-
 "supports-color@npm:^5.3.0":
   version: 5.5.0
   resolution: "supports-color@npm:5.5.0"
@@ -23686,7 +23958,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.17":
+"tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.14, tinyglobby@npm:^0.2.17":
   version: 0.2.17
   resolution: "tinyglobby@npm:0.2.17"
   dependencies:
@@ -23808,6 +24080,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"trusted-types@npm:^2":
+  version: 2.0.0
+  resolution: "trusted-types@npm:2.0.0"
+  checksum: 10/b980ae6ad15f70e8f4c4b38063c7e8fd284f4189f9abb47a55e0148ba349a1a97c3439cad2e63f3778e40136e9f8e64dcddff010d68a55fdb50278b7e03ae031
+  languageName: node
+  linkType: hard
+
 "try@npm:^1.0.3":
   version: 1.0.3
   resolution: "try@npm:1.0.3"
@@ -23826,6 +24105,16 @@ __metadata:
   version: 2.2.0
   resolution: "ts-dedent@npm:2.2.0"
   checksum: 10/93ed8f7878b6d5ed3c08d99b740010eede6bccfe64bce61c5a4da06a2c17d6ddbb80a8c49c2d15251de7594a4f93ffa21dd10e7be75ef66a4dc9951b4a94e2af
+  languageName: node
+  linkType: hard
+
+"ts-morph@npm:^28.0.0":
+  version: 28.0.0
+  resolution: "ts-morph@npm:28.0.0"
+  dependencies:
+    "@ts-morph/common": "npm:~0.29.0"
+    code-block-writer: "npm:^13.0.3"
+  checksum: 10/fb5541c2c5b25386ae85346203046cc136d4afa2821a9b7b5ea9ffdbcff6d8867eccf98a3d7d50dd86f64428f80cf4ae9e609bd8f02f99cef902ba2760ecd5d9
   languageName: node
   linkType: hard
 

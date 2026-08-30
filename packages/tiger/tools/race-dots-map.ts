@@ -16,8 +16,7 @@
  *   http://localhost:8899/race-dots-oc.pmtiles --out /tmp/race-dots-oc.html`
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { tempRootPath } from "@mailwoman/core/utils"
 
 /**
@@ -68,7 +67,7 @@ const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HP
 const PMTILES_VERSION = "4.4.1"
 
 const BASEMAP_SOURCE_ID = "basemap-v4"
-const BASEMAP_TILEJSON_URL = "https://tiles.sister.software/basemap-v4.json"
+const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
 const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
 const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light"
 
@@ -193,7 +192,7 @@ export async function raceDotsMap(
 </html>
 `
 
-	writeFileSync(OUT, html)
+	await writeLocalFile(html, OUT)
 	report?.(`[written] ${OUT}  (pmtiles: ${PMTILES_URL})`)
 
 	return { outPath: OUT, pmtilesURL: PMTILES_URL }

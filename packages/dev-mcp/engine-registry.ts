@@ -19,15 +19,14 @@
  *   behind a Unix socket, with one forked worker per configuration, so warmth survives agent restarts and an engine can
  *   be evicted by killing a process. This holds the registry IN the MCP server process instead. An MCP stdio server
  *   already lives as long as the agent that spawned it, so warmth spans every tool call in a session — the dominant
- *   win — while the socket, the supervisor and the fork protocol are deferred. The costs are real and are paid
+ *   win — while the socket, the supervisor and the fork protocol are deferred. The costs are paid
  *   explicitly: eviction returns less RSS than killing a worker would, and there is no in-process module reload, which
  *   is why {@link EngineRegistry.acquire} REFUSES on a source edit rather than pretending to reload (see
  *   `tree-fingerprint.ts`). Building the supervisor is the right next step if warmth across agent restarts proves to
  *   matter; it is not needed to test whether a warm engine changes which panel gets measured.
  */
 
-import { createHash } from "node:crypto"
-
+import { createHash } from "@mailwoman/platform/crypto"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession, type GeocodeSession, type GeocodeSessionOptions } from "mailwoman/geocode-session"
 
@@ -158,8 +157,8 @@ export function effectiveKeyFor(declared: string): string {
  *
  * Structurally the same type, field for field. It exists because TypeScript withholds an implicit index signature from
  * an INTERFACE — declaration merging could add a member later — so an interface value is not assignable to
- * `Record<string, unknown>` however plainly it is one. The mapping is checked property by property and keeps each
- * field's own type, which a cast through `unknown` would discard.
+ * `Record<string, unknown>` however it is one. The mapping is checked property by property and keeps each field's own
+ * type, which a cast through `unknown` would discard.
  */
 export type EffectiveConfig = { [Key in keyof GeocodeSessionOptions]: GeocodeSessionOptions[Key] }
 
@@ -271,7 +270,29 @@ export interface EngineSummary {
  * ceiling, not core count. Two resident candidate gazetteers are already several GB before the ONNX sessions, so
  * holding more engines buys nothing and can cost the box.
  */
-export class EngineRegistry {
+/**
+ * What a tool needs from the engine registry.
+ *
+ * The tools take THIS, not {@linkcode EngineRegistry}, for one reason a test finds immediately: the class carries
+ * private fields, so no object literal can ever be assignable to it, and every stub in this package's tests had to
+ * assert through `unknown` — which then keeps compiling after a method is renamed or its signature changes, and the
+ * stub silently stops standing for the thing it doubles. `OracleGeocoderLike` in `oracle-arm.ts` is the same idea,
+ * arrived at earlier.
+ */
+export interface EngineRegistryLike {
+	readonly repoRoot: string
+	readonly bootFingerprint: TreeFingerprint
+	readonly sourceMoved: boolean
+	readonly size: number
+	readonly maxResident: number
+	fingerprint(): TreeFingerprint
+	acquire(config: EngineConfig): Promise<Engine>
+	evict(id: string): boolean
+	evictAll(): number
+	summaries(): EngineSummary[]
+}
+
+export class EngineRegistry implements EngineRegistryLike {
 	readonly #engines = new Map<string, Engine>()
 	readonly #maxResident: number
 	readonly #repoRoot: string
@@ -281,9 +302,9 @@ export class EngineRegistry {
 		this.#repoRoot = repoRoot
 		this.#maxResident = maxResident
 		// Captured once, at construction, because this is the tree the PROCESS imported — not the tree any
-		// individual engine was built from. Those differ after a reload, and the difference is load-bearing: a
+		// individual engine was built from. Those differ after a reload, and the difference is required: a
 		// registry with no resident engine has nothing stale to compare against, so without this the first call
-		// after a reload builds happily and stamps the NEW fingerprint onto answers produced by the OLD modules.
+		// after a reload builds and stamps the NEW fingerprint onto answers produced by the OLD modules.
 		this.#bootFingerprint = computeTreeFingerprint(repoRoot)
 	}
 
@@ -380,30 +401,20 @@ export class EngineRegistry {
 
 		if (!engine) return false
 
-		engine.session.close()
+		engine.session[Symbol.dispose]()
 		this.#engines.delete(id)
 
 		return true
 	}
 
-	/**
-	 * Close every engine so the next call rebuilds them.
-	 *
-	 * This frees MEMORY and re-reads ARTIFACTS. It cannot re-import source, so the tool surface refuses to call it a
-	 * reload once the tree has moved — see {@link sourceMoved} and the class docstring.
-	 */
-	closeAll(): number {
-		const count = this.#engines.size
+	evictAll(): number {
+		const ids = [...this.#engines.keys()]
 
-		// Close then clear, rather than evicting key by key: deleting from a Map mid-iteration is well defined but
-		// subtle, and a shutdown path is the wrong place to make a reader verify that.
-		for (const engine of this.#engines.values()) {
-			engine.session.close()
+		for (const id of ids) {
+			this.evict(id)
 		}
 
-		this.#engines.clear()
-
-		return count
+		return ids.length
 	}
 
 	summaries(): EngineSummary[] {
@@ -424,11 +435,11 @@ export class EngineRegistry {
 		}))
 	}
 
-	get size(): number {
-		return this.#engines.size
-	}
-
 	get maxResident(): number {
 		return this.#maxResident
+	}
+
+	get size(): number {
+		return this.#engines.size
 	}
 }

@@ -24,10 +24,11 @@
  *   CREATE TABLE, but don't import
  */
 
-import { existsSync, mkdirSync, writeFileSync } from "node:fs"
-import { basename, dirname, extname, join } from "node:path"
-import type { SQLInputValue } from "node:sqlite"
-
+import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { basename, dirname, extname, join } from "@mailwoman/platform/path"
+import type { SQLInputValue } from "@mailwoman/sqlite/client"
+import type { Database } from "@mailwoman/sqlite/database-schema"
 import { TextSpliterator } from "spliterator"
 
 //#region Core: quote-aware CSV field splitting
@@ -41,6 +42,11 @@ const DOUBLE_QUOTE = 34
 // hook), `--no-header` auto-generates `col_0…col_N` names from the first data row's width, and the
 // separator is any single caller-supplied byte. If a future edit removes those knobs, revisit;
 // until then, don't "finish the job" by swapping in CSVSpliterator.
+/**
+ * TODO: the rationalization above looks outdated. Duplicated too.
+ *
+ * @deprecated use spliterator
+ */
 function splitCSVLine(line: string, separator: number = COMMA): string[] {
 	const fields: string[] = []
 	let start = 0
@@ -62,6 +68,9 @@ function splitCSVLine(line: string, separator: number = COMMA): string[] {
 	return fields
 }
 
+/**
+ * @deprecated belongs in core, if really needed.
+ */
 function stripQuotes(field: string): string {
 	const trimmed = field.trim()
 
@@ -76,6 +85,9 @@ function stripQuotes(field: string): string {
 
 //#region Column name normalization
 
+/**
+ * @deprecated belongs in core, if really needed. spliterator should handle this.
+ */
 function normalizeColumnName(raw: string): string {
 	return (
 		raw
@@ -251,10 +263,13 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	}
 
 	// --- Create database + import ---
-	const { DatabaseSync } = await import("node:sqlite")
-	mkdirSync(dirname(opts.outputPath), { recursive: true })
+	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
+	await makeDirectories(dirname(opts.outputPath))
 
-	const db = new DatabaseSync(opts.outputPath)
+	// `Database` — the EMPTY schema — deliberately, not by default: `createTableSQL` is built from the columns and
+	// types inferred from the CSV at runtime, so there is no table this file could name at compile time. Every write
+	// below goes through `exec`/`prepare` for the same reason.
+	using db = new DatabaseClient<Database>(opts.outputPath)
 	db.exec("PRAGMA journal_mode = OFF") // faster for bulk import
 	db.exec("PRAGMA synchronous = OFF")
 
@@ -357,10 +372,7 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		)
 	}
 
-	db.close()
-
-	// Write MANIFEST
-	const stat = await (await import("node:fs/promises")).stat(opts.outputPath)
+	const stat = await tryStat(opts.outputPath)
 
 	const manifest = {
 		ingested_at: new Date().toISOString(),
@@ -368,14 +380,15 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 		table_name: opts.tableName,
 		columns: columns.map((c) => ({ name: c.name, type: c.type, nullable: c.nullable })),
 		row_count: imported,
-		db_bytes: stat.size,
+		db_bytes: stat!.size,
 	}
 
 	const manifestPath = opts.outputPath.replace(/\.db$/, ".manifest.json")
-	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n")
+	await writeLocalJSONFile(manifest, manifestPath)
 
+	// TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
 	process.stderr.write(
-		`Done. ${imported.toLocaleString()} rows → ${opts.outputPath} (${(stat.size / 1024 / 1024).toFixed(0)} MB)\n`
+		`Done. ${imported.toLocaleString()} rows → ${opts.outputPath} (${(stat!.size / 1024 / 1024).toFixed(0)} MB)\n`
 	)
 }
 
@@ -400,7 +413,7 @@ export interface IngestCSVOptions {
  * it.
  */
 export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
-	if (!existsSync(options.input)) {
+	if (!(await pathExists(options.input))) {
 		throw new Error(`File not found: ${options.input}`)
 	}
 

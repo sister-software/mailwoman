@@ -46,7 +46,7 @@ export interface LoadSlimOpts {
  * Loads + opens the slim WOF DB. Returns `{ db, sqlite3 }` — `db` is the open Database; `sqlite3` is the runtime handle
  * (in case the caller wants to call other OO1 APIs on it).
  *
- * Caller is responsible for `db.close()` when done.
+ * Caller is responsible for disposing the returned database with {@link disposeSlimWOFDatabase} when done.
  */
 export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Database; sqlite3: Sqlite3Static }> {
 	const bytes = typeof opts.source === "string" ? await fetchBytes(opts.source, opts.fetchImpl) : opts.source
@@ -54,7 +54,7 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 	// sqlite3InitModule's TS signature lies about its options bag — the runtime DOES accept the
 	// Emscripten-style {print, printErr, locateFile} options shown in the upstream docs. Cast to
 	// `any` for the call site rather than shadowing the typed wrapper for the entire file.
-	const sqlite3 = await (sqlite3InitModule as unknown as (opts: Record<string, unknown>) => Promise<Sqlite3Static>)({
+	const sqlite3 = await (sqlite3InitModule as (opts: Record<string, unknown>) => Promise<Sqlite3Static>)({
 		print: () => {}, // suppress stdout from the WASM runtime
 		printErr: (msg: string) => console.error("[sqlite-wasm]", msg),
 		...(opts.wasmURL ? { locateFile: (name: string) => (name.endsWith(".wasm") ? opts.wasmURL! : name) } : {}),
@@ -84,11 +84,18 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 
 	if (rc !== sqlite3.capi.SQLITE_OK) {
 		sqlite3.wasm.dealloc(p)
-		db.close()
+		disposeSlimWOFDatabase(db)
 		throw new Error(`sqlite3_deserialize failed: rc=${rc}`)
 	}
 
 	return { db, sqlite3 }
+}
+
+/**
+ * The lifecycle boundary for sqlite-wasm, whose database exposes `close()` rather than explicit resource management.
+ */
+export function disposeSlimWOFDatabase(db: Database): void {
+	db.close()
 }
 
 async function fetchBytes(url: string, fetchImpl?: typeof fetch): Promise<Uint8Array> {

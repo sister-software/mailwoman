@@ -8,7 +8,7 @@
  *   at a sealed `poi.db` layer (`mailwoman gazetteer build poi`). `--overpass` additionally renders
  *   the OverpassQL export block (`@mailwoman/poi-overpass`) — export-only, mailwoman never queries
  *   Overpass itself. A non-POI query (kind classifier never emits `poi_query`, or the intent stage
- *   fell through) reports that plainly and exits 0 — this command is a debug probe, not a strict
+ *   fell through) reports that and exits 0 — this command is a debug probe, not a strict
  *   POI-only parser.
  *
  *   Exit-code contract:
@@ -24,9 +24,8 @@
  *   (no resolver — anchors stay coordinate-less) with a stderr note, never a hard failure.
  */
 
-import { existsSync } from "node:fs"
-
 import { Spinner } from "@inkjs/ui"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { Resolver } from "@mailwoman/resolver"
@@ -85,14 +84,14 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
  * rather than failing the probe — a stderr note explains what's missing. Caller owns closing the returned handle's
  * backend lookup.
  */
-async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; close: () => void } | undefined> {
+async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
 	const { resolveCandidateDBPath, wofShardPaths } = await import("../resolver-backend.ts")
 	const candidateDB = resolveCandidateDBPath(options.candidateDB)
 
 	const wofPaths = candidateDB
 		? []
 		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
-				existsSync(p)
+				pathExistsSync(p)
 			)
 
 	if (!candidateDB && !wofPaths.length) {
@@ -112,7 +111,7 @@ async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; 
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 		const lookup = createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
-		return { resolver: createWOFResolver(lookup), close: () => lookup.close() }
+		return { resolver: createWOFResolver(lookup), [Symbol.dispose]: () => lookup[Symbol.dispose]() }
 	} catch {
 		console.error(
 			"note: `@mailwoman/resolver-wof-sqlite` is not installed — anchor localities will not resolve to " +
@@ -126,7 +125,7 @@ async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; 
 function formatSubject(subject: POIIntent["subject"]): string {
 	switch (subject.kind) {
 		case "category":
-			return `category ${subject.categoryID} (matched "${subject.matched}")`
+			return `category ${subject.categoryIDs.join(" + ")} (matched "${subject.matched}")`
 		case "brand":
 			return `brand ${subject.name}${subject.wikidata ? ` [${subject.wikidata}]` : ""} (matched "${subject.matched}")`
 		case "name":
@@ -142,13 +141,16 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
-		const category = getPOICategory(intent.subject.categoryID)
+		const { categoryIDs } = intent.subject
+		// EVERY member needs a tag, not just one: a union emitted from the subset that happens to carry `osmTag` is a
+		// narrower query than the one the POI branch ran, and the difference would be invisible in the printed result.
+		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)
 
-		if (!category?.osmTag) {
-			return `(no OverpassQL export — category '${intent.subject.categoryID}' has no osmTag mapping in @mailwoman/poi-taxonomy)`
+		if (untagged.length) {
+			return `(no OverpassQL export — ${untagged.length === 1 ? "category" : "categories"} '${untagged.join("', '")}' ${untagged.length === 1 ? "has" : "have"} no osmTag mapping in @mailwoman/poi-taxonomy)`
 		}
 
-		return emitOverpassQL(intent, { osmTag: category.osmTag })
+		return emitOverpassQL(intent, { osmTags: categoryIDs.map((id) => getPOICategory(id)!.osmTag!) })
 	}
 
 	return emitOverpassQL(intent)
@@ -248,7 +250,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 
 		return formatOutcome(result.poiIntent, options)
 	} finally {
-		resolverHandle?.close()
+		resolverHandle?.[Symbol.dispose]()
 	}
 }
 
@@ -262,7 +264,7 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 			)
 		}
 
-		return runPOI(input.trim(), options)
+		return await runPOI(input.trim(), options)
 	})
 
 	if (state.status === "error") {

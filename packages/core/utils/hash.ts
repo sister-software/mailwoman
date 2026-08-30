@@ -5,8 +5,10 @@
  *   File and content hashing utilities.
  */
 
-import { createHash } from "node:crypto"
-import { createReadStream } from "node:fs"
+import { createHash } from "@mailwoman/platform/crypto"
+
+import { readFileChunksSync } from "#fs/readers-sync"
+import { openReadStream } from "#fs/streams"
 
 /**
  * Streaming SHA-256 of a file, hex-encoded.
@@ -14,7 +16,7 @@ import { createReadStream } from "node:fs"
 export async function sha256File(path: string): Promise<string> {
 	const hash = createHash("sha256")
 
-	for await (const chunk of createReadStream(path)) {
+	for await (const chunk of openReadStream(path)) {
 		hash.update(chunk as Buffer)
 	}
 
@@ -40,7 +42,7 @@ export function sha256Hex(data: string | NodeJS.ArrayBufferView | string[]): str
 export async function md5File(path: string): Promise<string> {
 	const hash = createHash("md5")
 
-	for await (const chunk of createReadStream(path)) {
+	for await (const chunk of openReadStream(path)) {
 		hash.update(chunk as Buffer)
 	}
 
@@ -52,6 +54,24 @@ export async function md5File(path: string): Promise<string> {
  * provenance-only rationale, and the same non-security caveat: it exists so a query text, a manifest line or a config
  * blob can be fingerprinted with the SAME algorithm as the files recorded beside it in one `meta` table.
  */
+/**
+ * The MD5 of a file, read in chunks, SYNCHRONOUS.
+ *
+ * {@linkcode md5File} is the one to reach for anywhere else. This exists because the FST builder and its whole call
+ * chain are synchronous by design (`buildFSTFromWOF` → `buildLocaleFSTs`), and making them async to stamp a checksum
+ * would cascade through command callers and tests for one hash. Chunked rather than `readLocalBufferSync`, because the
+ * source is a multi-gigabyte database.
+ */
+export function md5FileSync(path: string): string {
+	const hash = createHash("md5")
+
+	for (const chunk of readFileChunksSync(path)) {
+		hash.update(chunk)
+	}
+
+	return hash.digest("hex")
+}
+
 export function md5Hex(data: string | NodeJS.ArrayBufferView): string {
 	return createHash("md5").update(data).digest("hex")
 }

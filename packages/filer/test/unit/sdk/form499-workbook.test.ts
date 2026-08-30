@@ -10,9 +10,7 @@
  *   successor, a filer whose USF flag is `No`, and a 53-jurisdiction national one.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import {
 	assertWorkbookHeader,
@@ -21,6 +19,7 @@ import {
 	readOperatingStates,
 	toISOFilingDate,
 } from "@mailwoman/filer/sdk/form499-workbook"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 const WORKBOOK_PATH = join(import.meta.dirname, "../../../test-fixtures/form499/filer-db-sample.xlsx")
@@ -179,13 +178,13 @@ describe("readOperatingStates", () => {
 	})
 
 	it("accepts a real boolean cell, since a transformer may have typed the column", () => {
-		expect(readOperatingStates({ alabama: true as unknown as string })).toEqual(["AL"])
+		expect(readOperatingStates({ alabama: true })).toEqual(["AL"])
 	})
 })
 
 describe("the fixture itself", () => {
-	it("is a real workbook, not a hand-authored one", () => {
+	it("is a real workbook, not a hand-authored one", async () => {
 		// XLSX is a ZIP; the magic bytes are the cheapest proof the file was not stubbed out.
-		expect(readFileSync(WORKBOOK_PATH).subarray(0, 2).toString("latin1")).toBe("PK")
+		expect((await readLocalBuffer(WORKBOOK_PATH)).subarray(0, 2).toString("latin1")).toBe("PK")
 	})
 })

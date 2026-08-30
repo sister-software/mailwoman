@@ -35,11 +35,10 @@
  *   Invoke via `mailwoman corpus fetch ourairports --out-root <path>`.
  */
 
-import { mkdirSync } from "node:fs"
-import { join } from "node:path"
-
 import { APIClient } from "@mailwoman/core/api"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, writeManifest } from "./download.ts"
@@ -113,7 +112,7 @@ export async function fetchOurAirports(
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
 	const destDir = join(options.outRoot, SLUG)
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	const entries: OurAirportsFileEntry[] = []
 	const failedCodes: string[] = []

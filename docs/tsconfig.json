@@ -1,6 +1,11 @@
-// This file is not used by "docusaurus start/build" commands.
-// It is here to improve your IDE experience (type-checking, autocompletion...),
-// and can also run the package.json "typecheck" script manually.
+// Not used by "docusaurus start/build" — Docusaurus compiles through its own pipeline and ignores this file, and
+// ignores `out/` with it. This is the project `tsc -b` builds, so `yarn compile` covers the docs site, its plugins,
+// its scripts, and the benchmark assets under `static/`. `composite` requires declaration output, and
+// `emitDeclarationOnly` satisfies that without emitting JavaScript; the `.d.ts` files land in the already-ignored
+// `docs/out` as build state.
+//
+// Before this it was reachable only through `yarn typecheck:docs`, so a type error in a docs asset could survive
+// every `yarn compile`.
 {
 	// NOT `"extends": "@docusaurus/tsconfig"`. Playwright loads playwright.config.ts (this folder) with
 	// its own loader, which resolves `extends` only against the config's own directory — so a hoisted
@@ -15,7 +20,12 @@
 		"jsx": "preserve",
 		"moduleResolution": "bundler",
 		"module": "esnext",
-		"noEmit": true,
+		"composite": true,
+		"emitDeclarationOnly": true,
+		"declaration": true,
+		"declarationMap": true,
+		"outDir": "./out",
+		"rootDir": ".",
 		"baseUrl": ".",
 		"paths": { "@site/*": ["./*"] },
 		"skipLibCheck": true,
@@ -28,5 +38,8 @@
 		"types": ["node"],
 		"lib": ["ESNext", "DOM", "DOM.Iterable"]
 	},
-	"exclude": [".docusaurus", "build"]
+	// A composite project must list every file it pulls in. Without an `include`, the default covers .ts/.tsx only, and
+	// the trace fixture a story imports through `resolveJsonModule` is left out.
+	"include": ["./**/*.ts", "./**/*.tsx", "./**/*.json"],
+	"exclude": [".docusaurus", "build", "out", "node_modules"]
 }

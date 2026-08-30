@@ -15,9 +15,7 @@
  *   uses), keeping one normalizer in one place.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.ts"
 
@@ -29,7 +27,7 @@ export interface WOFPostalCityAliasLookupOpts {
 	/**
 	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
 	 */
-	database?: DatabaseSync
+	database?: DatabaseClient<PostalCityAliasDatabase>
 }
 
 /**
@@ -55,24 +53,22 @@ export interface PostalCityAlias {
  * differs from the geographic name — the rows that carry alias signal), issued via the typed Kysely query builder
  * against {@link PostalCityAliasDatabase}.
  */
-export class WOFPostalCityAliasLookup {
-	#db: DatabaseSync
-	#kdb: DatabaseClient<PostalCityAliasDatabase>
-	#ownsDB: boolean
+export class WOFPostalCityAliasLookup implements Disposable {
+	#db: DatabaseClient<PostalCityAliasDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
 
 	constructor(opts: WOFPostalCityAliasLookupOpts) {
 		if (opts.database) {
 			this.#db = opts.database
-			this.#ownsDB = false
 		} else if (opts.databasePath) {
-			this.#db = new DatabaseSync(opts.databasePath, { readOnly: true })
-			this.#ownsDB = true
+			this.#db = this.#resources.use(new DatabaseClient<PostalCityAliasDatabase>(opts.databasePath, { readOnly: true }))
 		} else {
 			throw new Error("WOFPostalCityAliasLookup needs `databasePath` or `database`")
 		}
-
-		// `#kdb` wraps `#db` for the typed query; close() owns the raw handle directly (sync).
-		this.#kdb = new DatabaseClient<PostalCityAliasDatabase>({ database: this.#db })
 	}
 
 	/**
@@ -84,7 +80,7 @@ export class WOFPostalCityAliasLookup {
 
 		if (!pc) return []
 
-		const rows = await this.#kdb
+		const rows = await this.#db
 			.selectFrom("postal_city_alias")
 			.select(["postal_city", "geo_locality", "n"])
 			.where("postcode", "=", pc)
@@ -94,9 +90,7 @@ export class WOFPostalCityAliasLookup {
 		return rows.map((r) => ({ postalCity: String(r.postal_city), geoLocality: String(r.geo_locality), n: Number(r.n) }))
 	}
 
-	close(): void {
-		if (this.#ownsDB) {
-			this.#db.close()
-		}
+	[Symbol.dispose](): void {
+		this.#resources[Symbol.dispose]()
 	}
 }

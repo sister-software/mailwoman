@@ -27,7 +27,7 @@
 
 ## Acceptance gates (§7-3b, pre-registered — Task 3 and Task 8 discharge them)
 
-1. **Family and entity cluster are never conflated (load-bearing).** Structural: a family membership cannot be returned as an entity-cluster member, and the reader surfaces them as distinct fields with distinct types. Mutation-test it: make the rollup fold families into clusters, confirm the gate dies.
+1. **Family and entity cluster are never conflated (required).** Structural: a family membership cannot be returned as an entity-cluster member, and the reader surfaces them as distinct fields with distinct types. Mutation-test it: make the rollup fold families into clusters, confirm the gate dies.
 2. **Relationship kind + provenance mandatory on every family edge.** No family edge without `relationship`, `source`, `source_vintage`, `valid_from`. Pin structurally with `satisfies Record<keyof FilerFamilyInsert, true>`; reject empty and whitespace-only at runtime (SQLite `NOT NULL` accepts `""` — the 3a lesson).
 3. **Exhibit 21 abstention.** A fixture with a mangled/unparseable exhibit yields zero subsidiary edges, a non-zero `unparseable` count, and no thrown error; a clean fixture yields exactly the expected subsidiaries. No guessed names.
 4. **Eval integrity.** The held-out truth field is absent from the matcher's input records (asserted); the scorecard reports precision, recall, F1, the input record shape, and the SHA of its inputs; re-running with the same inputs reproduces the same numbers.

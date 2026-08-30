@@ -10,7 +10,7 @@
  *   parameter instead (the FCC partitions availability files per provider, so the caller already knows it),
  *   and FRN/brand/state/H3 join concerns are a 2c registry-join seam.
  *
- *   Two projection decisions are load-bearing and pre-registered. `location_id` (column 3) stays a STRING —
+ *   Two projection decisions are required and pre-registered. `location_id` (column 3) stays a STRING —
  *   the FCC's values are zero-padded 10-digit strings and `parseInt` would lose the leading zeros (decision
  *   1). `geoid` (column 10) is a string joining `TIGERBlockTable.GEOID` (decision 3).
  *

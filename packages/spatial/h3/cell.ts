@@ -127,3 +127,64 @@ export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOL
 export function shortCellToInt(cell: H3Cell): number {
 	return Number(BigInt(`0x${shortenH3Cell(cell)}`))
 }
+
+/**
+ * The one resolution a set of stored short cells was captured at.
+ *
+ * A short cell drops the resolution nibble, so a table of them does not say what resolution it is keyed at — and every
+ * `layer_coverage` reader needs that number to derive a probe's coverage cell. It is recoverable because
+ * {@link expandH3Cell} validates: a short cell expands to a valid index at EXACTLY ONE resolution, so trying all
+ * sixteen and keeping the one that survives is an exact answer rather than an inference.
+ *
+ * SHARED RATHER THAN COPIED, because both failure modes it names are silent in a second copy. A table that mixes
+ * resolutions read at one of them reports every cell at the other as unsurveyed, and an empty table read as "resolution
+ * 0" puts every probe in the same cell. `packages/mailwoman/observations/absence-route.ts` re-exports this under its
+ * own name; `@mailwoman/coastal` calls it directly.
+ *
+ * @param context Names the caller in both messages, so a failure says which reader refused.
+ * @throws {Error} When `cells` is empty, when a value is not a short cell, or when the set mixes resolutions.
+ */
+export function recoverShortCellResolution(cells: readonly number[], context = "layer coverage"): number {
+	if (!cells.length) {
+		throw new Error(`${context}: the coverage layer holds no cells — there is no resolution to recover`)
+	}
+
+	let recovered: number | undefined
+
+	for (const cell of cells) {
+		const short = BigInt(cell).toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort
+		const valid: number[] = []
+
+		for (let resolution = 0; resolution <= H3_MAX_RESOLUTION; resolution++) {
+			try {
+				expandH3Cell(short, resolution)
+				valid.push(resolution)
+			} catch {
+				// A resolution the short cell does not expand at. Every cell expands at exactly one, so this is the
+				// ordinary case for fifteen of the sixteen probes.
+			}
+		}
+
+		if (valid.length !== 1) {
+			throw new Error(
+				`${context}: coverage cell ${cell} expands at ${valid.length} resolutions (${valid.join(", ") || "none"}) — it is not a short H3 cell this layer can be probed by`
+			)
+		}
+
+		const resolution = valid[0]!
+
+		if (recovered === undefined) {
+			recovered = resolution
+
+			continue
+		}
+
+		if (recovered !== resolution) {
+			throw new Error(
+				`${context}: the coverage table mixes resolutions (${recovered} and ${resolution}) — a single-resolution probe would read every cell at the other resolution as unsurveyed`
+			)
+		}
+	}
+
+	return recovered!
+}

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `state-hi-schools`: Hawaii DOE public + charter schools CSV consumer.
+ *   `state-hi-schools`: Hawaii DOE public + charter school workbook consumer.
  *
  *   The Hawaii State Department of Education publishes a directory of all HIDOE schools and public
  *   charter schools (PCS) as an XLSX workbook (`SchoolList.xlsx`) with two sheets: `HIDOE` (~258
@@ -10,9 +10,8 @@
  *   single-line street address, city, ZIP, a numeric `code`, and HI-specific administrative columns
  *   (complex, complex_area, district, island, charter).
  *
- *   The adapter consumes a flat CSV the operator pre-builds via `fetch-state-hi-schools.ts`, which
- *   concatenates both sheets under one shared header. Column names match the workbook header
- *   verbatim (lower-snake-case: `code`, `name`, `address`, `city`, `zip`, ...).
+ *   The adapter consumes the original XLSX retained by the fetcher and reads both worksheets directly.
+ *   Legacy flat CSV artifacts remain accepted so existing source caches do not need conversion.
  *
  *   Address parsing notes: Hawaii's residential numbering is hyphenated on Oahu (`47-470 Hui Aeko
  *   Place`), Kauai (`2-4035 Kaumualii Hwy`), and elsewhere. The shared HOUSE_NUMBER_PREFIX regex
@@ -30,8 +29,9 @@
 
 import { isPresent } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
-import { CSVSpliterator } from "spliterator"
+import { CSVSpliterator, XLSXSpliterator } from "spliterator"
 
+import { type HiSchoolRow, schoolCellText, STATE_HI_SCHOOL_SHEETS } from "#adapters/state-hi-schools/workbook"
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
 import { lookupStateAbbreviation } from "#codex/us-fips-state"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -49,16 +49,8 @@ export const STATE_HI_SCHOOLS_DEFAULT_LICENSE = "Public Domain"
 
 const HI_STATE_ABBR = "HI"
 
-interface HiSchoolRow {
-	code: string
-	name: string
-	address: string
-	city: string
-	zip: string
-}
-
-function normalizeZip(raw: string): string {
-	const trimmed = raw.trim()
+function normalizeZip(raw: HiSchoolRow["zip"]): string {
+	const trimmed = schoolCellText(raw)
 
 	if (!trimmed) return ""
 
@@ -68,6 +60,26 @@ function normalizeZip(raw: string): string {
 	if (/^\d{4}$/.test(trimmed)) return `0${trimmed}`
 
 	return trimmed
+}
+
+async function* readSchoolRows(inputPath: string): AsyncGenerator<HiSchoolRow> {
+	if (inputPath.toLowerCase().endsWith(".xlsx")) {
+		for (const sheet of STATE_HI_SCHOOL_SHEETS) {
+			yield* XLSXSpliterator.fromAsync<HiSchoolRow>(inputPath, {
+				sheet,
+				mode: "object",
+				normalizeKeys: false,
+			})
+		}
+
+		return
+	}
+
+	yield* CSVSpliterator.fromAsync<HiSchoolRow>(inputPath, {
+		mode: "object",
+		normalizeKeys: false,
+		enableQuoteHandling: true,
+	})
 }
 
 export function createStateHiSchoolsAdapter(): CorpusAdapter {
@@ -81,12 +93,6 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 				throw new Error(`state-hi-schools adapter: only US supported, got country=${opts.country}`)
 			}
 
-			const rows = CSVSpliterator.fromAsync(opts.inputPath, {
-				mode: "object",
-				normalizeKeys: false,
-				enableQuoteHandling: true,
-			})
-
 			const state = lookupStateAbbreviation(HI_STATE_ABBR)
 
 			if (!state) {
@@ -95,15 +101,15 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 
 			let emitted = 0
 
-			for await (const record of rows as AsyncIterable<HiSchoolRow>) {
+			for await (const record of readSchoolRows(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const name = (record.name ?? "").trim()
-				const address = (record.address ?? "").trim()
-				const city = (record.city ?? "").trim()
-				const zip = normalizeZip(record.zip ?? "")
+				const name = schoolCellText(record.name)
+				const address = schoolCellText(record.address)
+				const city = schoolCellText(record.city)
+				const zip = normalizeZip(record.zip)
 
 				if (!name || !address || !city || !zip) continue
 
@@ -134,7 +140,7 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 
 				if (Object.keys(aligned).length <= 2) continue
 
-				const code = (record.code ?? "").toString().trim()
+				const code = schoolCellText(record.code)
 
 				const sourceID = code
 					? `${STATE_HI_SCHOOLS_ADAPTER_ID}-${code}`

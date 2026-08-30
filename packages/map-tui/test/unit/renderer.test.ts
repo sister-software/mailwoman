@@ -1,12 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { fileURLToPath } from "node:url"
-
 import { frameToANSILines } from "@mailwoman/map-tui/frame"
 import { TILE_SIZE, worldPxToLonLat } from "@mailwoman/map-tui/mercator"
 import { MapRenderer } from "@mailwoman/map-tui/renderer"
 import { type DecodedTile, type TileProvider, TileSource } from "@mailwoman/map-tui/tile-source"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { afterAll, describe, expect, it } from "vitest"
 
 const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.meta.url))
@@ -72,7 +71,7 @@ describe("MapRenderer", async () => {
 	const source = await TileSource.open(FIXTURE)
 	const renderer = new MapRenderer(source)
 
-	afterAll(() => source.close())
+	afterAll(() => source[Symbol.asyncDispose]())
 
 	it("renders the Clinton St viewport at z14 (golden frame)", async () => {
 		const frame = await renderer.renderFrame({

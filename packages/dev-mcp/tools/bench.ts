@@ -4,7 +4,7 @@
 /**
  *   The `mwdev_bench` tool definition — the description an agent reads, the input schema, and the handler wiring.
  *   The measurement itself lives in the package root; this file is the CONTRACT, and the description is the
- *   load-bearing half of it.
+ *   required half of it.
  */
 
 import { z } from "zod"
@@ -41,7 +41,7 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 
 		if (args["include_cold"]) {
 			// Evicting is what makes this a COLD measurement rather than a second warm one.
-			registry.closeAll()
+			registry.evictAll()
 
 			const startedAt = Date.now()
 			const coldEngine = await registry.acquire(config)

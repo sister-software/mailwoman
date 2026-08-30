@@ -2,7 +2,7 @@
 
 The "is the new architecture wired correctly?" check that PR3 ships BEFORE any GPU run. Builds a
 tiny encoder with ``use_locale_conditioning=True``, runs forward, and asserts the locale head +
-FiLM modulation + auxiliary loss are wired and finite. Also covers the cross-pollution tripwire
+FiLM modulation + auxiliary loss are wired and finite. Also covers the cross-pollution regression check
 metric, save/load round-trip, back-compat with the conditioning OFF, and that the pilot config
 loads with the expected scope.
 
@@ -191,7 +191,7 @@ def test_load_pre_pr3_card_back_compat(tmp_path):
     assert loaded.locale_head is None
 
 
-# --- the cross-pollution tripwire metric ----------------------------------------------
+# --- the cross-pollution regression check metric ----------------------------------------------
 
 
 def test_cross_pollution_counts_city_start_as_postcode():

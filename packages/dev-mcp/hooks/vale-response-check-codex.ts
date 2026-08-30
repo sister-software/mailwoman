@@ -8,8 +8,8 @@
  *   payload shape, the loop guard, and the output JSON. Codex's hook contract
  *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses:
  *   `Stop` fires when a turn completes, the payload carries `last_assistant_message`, and the
- *   output is `decision: "block"` + `reason` or `hookSpecificOutput.additionalContext` (no
- *   `hookEventName` field in Codex's schema).
+ *   output is `decision: "block"` + `reason` or the non-blocking `systemMessage`. Codex's
+ *   Stop-output schema rejects `hookSpecificOutput` because Stop cannot inject additional context.
  *
  *   Two deliberate differences from the Claude adapter:
  *
@@ -26,29 +26,26 @@
  *   matching how `.codex/config.toml` addresses `packages/dev-mcp/cli.ts`.
  */
 
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { pathExists, readStandardInputJSON } from "@mailwoman/core/fs/readers"
+import { removePath, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 
 import { lintReply, renderVerdict } from "./vale-check-core.ts"
-
-const STDIN = 0
 
 function markerPath(sessionID: string): string {
 	return join(tmpdir(), `mailwoman-vale-codex-${sessionID.replaceAll(/[^\w-]/g, "")}`)
 }
 
-function main(): void {
-	const payload = tryParsingJSON<Record<string, unknown>>(readFileSync(STDIN, "utf8"))
+async function main(): Promise<void> {
+	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 	const sessionID = typeof payload?.session_id === "string" ? payload.session_id : ""
 	const marker = sessionID ? markerPath(sessionID) : ""
 
 	// One revision pass per block: the marker written by the previous block is consumed here, so
 	// the corrective reply passes unchecked rather than looping.
-	if (marker && existsSync(marker)) {
-		unlinkSync(marker)
+	if (marker && (await pathExists(marker))) {
+		await removePath(marker)
 
 		return
 	}
@@ -63,7 +60,7 @@ function main(): void {
 
 	if (verdict.kind === "block") {
 		if (marker) {
-			writeFileSync(marker, "")
+			await writeLocalTextFile("", marker)
 		}
 
 		process.stdout.write(JSON.stringify({ decision: "block", reason: verdict.text }))
@@ -71,11 +68,11 @@ function main(): void {
 		return
 	}
 
-	process.stdout.write(JSON.stringify({ hookSpecificOutput: { additionalContext: verdict.text } }))
+	process.stdout.write(JSON.stringify({ systemMessage: verdict.text }))
 }
 
 try {
-	main()
+	await main()
 } catch {
 	// Silence is the contract. See the header of vale-response-check.ts.
 }

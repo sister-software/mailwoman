@@ -1,6 +1,15 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import {
+	type Convention,
+	mergeConventions,
+	resolveConvention,
+	SeedConventionSource,
+	WORLD_DEFAULT,
+} from "@mailwoman/resolver-wof-sqlite/convention"
+import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 /**
  *   Geographic Rule Engine convention model (Direction E, #289). Two layers of tests:
  *
@@ -11,16 +20,7 @@
  *   2. Live dispatch — a `WOFSQLitePlaceLookup` with an INJECTED convention, keyed by the country's WOF
  *        id, proving the merged convention actually reroutes `findPlace`'s strategy dispatch.
  */
-import { DatabaseSync } from "node:sqlite"
-
-import {
-	type Convention,
-	mergeConventions,
-	resolveConvention,
-	SeedConventionSource,
-	WORLD_DEFAULT,
-} from "@mailwoman/resolver-wof-sqlite/convention"
-import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 describe("convention engine — merge + resolve", () => {
@@ -77,8 +77,8 @@ describe("convention engine — merge + resolve", () => {
 
 // --- Live dispatch: an injected convention reroutes findPlace -------------------------------------
 
-function buildDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+function buildDB(): DatabaseClient<WOFDatabase> {
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -104,29 +104,28 @@ function buildDB(): DatabaseSync {
 }
 
 describe("convention engine — live dispatch", () => {
-	let db: DatabaseSync
+	let db: DatabaseClient<WOFDatabase>
 
 	beforeEach(() => {
 		db = buildDB()
 	})
 
 	afterEach(() => {
-		// lookup.close() in each test closes db; nothing else to do.
+		// lookup[Symbol.dispose]() in each test closes db; nothing else to do.
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {
-		const lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
+		using lookup = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
 		// "Plaun" won't FTS-match; postcode_area_resolution injects Plauen from the postcode.
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).toBe("Plauen")
-		lookup.close()
 	})
 
 	it("an injected country convention that drops postcode_area_resolution reroutes dispatch", async () => {
 		// Key the convention by the DE country WOF id (90). Removing postcode_area_resolution from the
 		// strategy list means the typo no longer recovers Plauen — proof the merged convention controls
 		// findPlace dispatch through the live country → WOF-id → convention path.
-		const lookup = new WOFSQLitePlaceLookup({
+		using lookup = new WOFSQLitePlaceLookup({
 			database: db,
 			buildFTS: true,
 			conventions: { 90: { candidateStrategies: ["fallback_fuzzy_name_match"] } },
@@ -134,6 +133,5 @@ describe("convention engine — live dispatch", () => {
 
 		const r = await lookup.findPlace({ text: "Plaun", placetype: "locality", postcode: "08523", country: "DE" })
 		expect(r[0]?.name).not.toBe("Plauen")
-		lookup.close()
 	})
 })

@@ -11,10 +11,8 @@
  *   is an in-repo operator command (it needs the upload script + the demo's resources file).
  */
 
-import { mkdtempSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -60,18 +58,18 @@ const GazetteerPublish: ParsedCommandComponent<Options> = ({ options, args }) =>
 			? String(repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts"))
 			: undefined
 
-		const stageDir = mkdtempSync(join(tmpdir(), "mailwoman-gazetteer-"))
+		await using stage = await temporaryDirectory("mailwoman-gazetteer-")
 
 		console.error(
 			`▸ publish ${candidateDB} → R2 gazetteer/${version}/candidate.db${options.dryRun ? " (dry-run)" : ""}`
 		)
 
-		const r = publishGazetteer({
+		const r = await publishGazetteer({
 			candidateDB,
 			version,
 			uploadScript,
 			resourcesFile,
-			stageDir,
+			stageDir: stage.path,
 			bucket: options.bucket,
 			prefix: options.prefix,
 			dryRun: options.dryRun,

@@ -8,10 +8,11 @@
  *   list. An `@mailwoman/annotations` `Annotator`.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+
+import type { UNLocodeDatabase } from "./schema.ts"
 
 /**
  * Fold a place name to its match key: strip diacritics, lowercase, collapse whitespace.
@@ -28,7 +29,7 @@ export function foldName(name: string): string {
 /**
  * Parse a UN/LOCODE coordinate (`"4923N 01522E"`) to decimal degrees, or null if absent/malformed.
  */
-export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } | null {
+export function parseUNLocodeCoords(raw: string): { lat: number; lon: number } | null {
 	const m = raw.trim().match(/^(\d{2})(\d{2})([NS])\s+(\d{3})(\d{2})([EW])$/)
 
 	if (!m) return null
@@ -41,13 +42,21 @@ export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } |
 /**
  * A UN/LOCODE lookup over a built `node:sqlite` table.
  */
-export class UnLocodeLookup {
-	#db: DatabaseSync
-	#byName: ReturnType<DatabaseSync["prepare"]>
-	#byBox: ReturnType<DatabaseSync["prepare"]>
+export class UNLocodeLookup implements Disposable {
+	#db: DatabaseClient<UNLocodeDatabase>
+	/**
+	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
+	 * ownership is membership rather than a flag a later branch has to check.
+	 */
+	readonly #resources = new DisposableStack()
+	#byName: ReturnType<DatabaseClient["prepare"]>
+	#byBox: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseSync }) {
-		this.#db = "database" in opts ? opts.database : new DatabaseSync(opts.databasePath, { readOnly: true })
+	constructor(opts: { databasePath: string } | { db: DatabaseClient<UNLocodeDatabase> }) {
+		this.#db =
+			"db" in opts
+				? opts.db
+				: this.#resources.use(new DatabaseClient<UNLocodeDatabase>(opts.databasePath, { readOnly: true }))
 
 		this.#byName = this.#db.prepare(
 			"SELECT country, location FROM un_locode WHERE country = ? AND nameNorm = ? LIMIT 1"
@@ -96,8 +105,8 @@ export class UnLocodeLookup {
 		return best?.code ?? null
 	}
 
-	close(): void {
-		this.#db.close()
+	[Symbol.dispose](): void {
+		this.#resources[Symbol.dispose]()
 	}
 }
 
@@ -105,7 +114,7 @@ export class UnLocodeLookup {
  * Build an `Annotator` filling `AnnotationSet.unLocode`. Prefers a country + place-name match (when the resolver
  * supplies them via `countryCode` / `placeName`), and falls back to the nearest coordinate.
  */
-export function makeUnLocodeAnnotator(lookup: UnLocodeLookup, opts: { maxKm?: number } = {}): Annotator {
+export function makeUNLocodeAnnotator(lookup: UNLocodeLookup, opts: { maxKm?: number } = {}): Annotator {
 	return ({ lat, lon, countryCode, placeName }): Partial<AnnotationSet> => {
 		const byName = countryCode && placeName ? lookup.byName(countryCode, placeName) : null
 		const code = byName ?? lookup.nearest(lat, lon, opts.maxKm)

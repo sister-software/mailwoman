@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { parseArgs } from "node:util"
-
 /**
  *   #148 diagnostic — dump-and-read why v1.9.0 (multi-locale retrain) REGRESSED EU resolve. For each
  *   golden row, parse with TWO models (baseline + candidate), extract the emitted `locality` span, and
@@ -16,6 +14,7 @@ import { parseArgs } from "node:util"
  */
 import { type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { JSONSpliterator } from "spliterator"
 

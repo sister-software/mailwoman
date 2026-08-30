@@ -1,20 +1,17 @@
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
-import type { EngineConfig, EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
+import type { EngineConfig, EngineRegistryLike } from "@mailwoman/dev-mcp/engine-registry"
 import type { ResolvedInput } from "@mailwoman/dev-mcp/input-sets"
 import type { RoutedMailwomanArm } from "@mailwoman/dev-mcp/routed-mailwoman-arm"
 import { afterAll, describe, expect, it } from "vitest"
 
-const RUN_STORE = mkdtempSync(join(tmpdir(), "mwdev-routed-compare-"))
+import { stubEngineRegistry } from "../stub-registry.ts"
 
-afterAll(() => {
-	rmSync(RUN_STORE, { recursive: true, force: true })
-})
+const RUN_STORE = await temporaryDirectory("mwdev-routed-compare-")
 
-function registry(): EngineRegistry {
+afterAll(() => RUN_STORE[Symbol.asyncDispose]())
+
+function registry(): EngineRegistryLike {
 	const fingerprint = {
 		digest: "tree0",
 		gitHead: "head0",
@@ -24,14 +21,13 @@ function registry(): EngineRegistry {
 		filesWalked: 1,
 	}
 
-	return {
+	return stubEngineRegistry({
 		bootFingerprint: fingerprint,
-		sourceMoved: false,
 		fingerprint: () => fingerprint,
-		acquire: async () => {
+		acquire: () => {
 			throw new Error("board-routed comparisons must not acquire a single-config engine")
 		},
-	} as unknown as EngineRegistry
+	})
 }
 
 describe("mwdev_compare — production board routing", () => {
@@ -50,7 +46,7 @@ describe("mwdev_compare — production board routing", () => {
 				execution_path: "board-routed",
 			},
 			{
-				runStoreDir: RUN_STORE,
+				runStoreDir: RUN_STORE.path,
 				buildRoutedMailwomanArm: async (config, inputs): Promise<RoutedMailwomanArm> => {
 					builds.push({ config, inputs })
 
@@ -79,7 +75,7 @@ describe("mwdev_compare — production board routing", () => {
 							postcode_country_scope: null,
 							hierarchy: [],
 						}),
-						close: () => {
+						[Symbol.dispose]: () => {
 							closes += 1
 						},
 					}
@@ -109,7 +105,7 @@ describe("mwdev_compare — production board routing", () => {
 					execution_path: "board-routed",
 				},
 				{
-					runStoreDir: RUN_STORE,
+					runStoreDir: RUN_STORE.path,
 					buildRoutedMailwomanArm: async () => {
 						builds += 1
 						throw new Error("unreachable")

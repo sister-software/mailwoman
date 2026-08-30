@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { join } from "node:path"
-
+import { join } from "@mailwoman/platform/path"
 import { resolveWOFHotDB } from "mailwoman/eval-harness/wof-hot-db"
 import { afterEach, describe, expect, it, vi } from "vitest"
 

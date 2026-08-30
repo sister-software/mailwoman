@@ -123,7 +123,7 @@ def test_lenient_config_skips_unknown_nested_receipt_keys(tmp_path):
 
 
 def test_lenient_mode_preserves_the_silent_skip(tmp_path):
-    # strict=False is the escape hatch for tooling that intentionally consumes a
+    # strict=False is the override for tooling that intentionally consumes a
     # partial view of a config: unknown keys are skipped, known keys still merge.
     path = _write(tmp_path, "train:\n  not_a_lever: 1\n  max_steps: 7\n")
     cfg = load_config(path, strict=False)

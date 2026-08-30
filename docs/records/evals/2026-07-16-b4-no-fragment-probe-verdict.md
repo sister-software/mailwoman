@@ -93,7 +93,7 @@ pre-registered and probed, not tuned in the dark.
   reusable. The probe _worked_ — it gave a clean, cheap read that stopped an unjustified 8k run.
 - `bare-pc` holding at 1.000 confirms the counter-distribution does its job: the model did not learn
   to stop emitting postcode to chase the digit. The shard's shape is sound; its ratio is the lever.
-- The Norway YAML fix (#1145) is the load-bearing result of the night regardless of this probe —
+- The Norway YAML fix (#1145) is the required result of the night regardless of this probe —
   Norway now trains at all, and this probe is the first read that could ever have measured it.
 
 ## Reproduce

@@ -93,8 +93,8 @@ Options:
 .nf
 Usage: mw geocode [address...] [options]
 
-Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and
-rooftop/interpolation shards.
+Turn an address into a coordinate: parse it, then resolve the parts against the gazetteer and the
+rooftop/interpolation databases.
 
 Arguments:
   address                   A formatted postal address to geocode. Omit when using \-\-stdin.
@@ -110,12 +110,12 @@ Options:
                                               automatically, always, or never. (default: auto)
   \-\-resolve\-db <path>                         WOF admin SQLite distribution.
   \-\-candidate\-db <path>                       Demo\-parity byte\-range candidate database.
-  \-\-data\-root <path>                          Root containing address\-point, interpolation, WOF,
-                                              POI, and other data shards.
-  \-\-address\-points\-db <path>                  Explicit address\-point SQLite shard, bypassing region
-                                              selection.
-  \-\-interpolation\-db <path>                   Explicit interpolation SQLite shard, bypassing region
-                                              selection.
+  \-\-data\-root <path>                          Root containing the address\-point, interpolation, WOF,
+                                              POI, and other data databases.
+  \-\-address\-points\-db <path>                  Explicit address\-point SQLite database, bypassing
+                                              region selection.
+  \-\-interpolation\-db <path>                   Explicit interpolation SQLite database, bypassing
+                                              region selection.
   \-\-interp\-calibration <multiplier>           Force one interpolation uncertainty calibration
                                               multiplier.
   \-\-locale\-country\-prior                      Use a withheld locale country as a soft resolver
@@ -190,10 +190,11 @@ Options:
                                               array of { key, value, source } is added. (default:
                                               false)
   \-\-verbose                                   Also print every path and environment variable the
-                                              checks resolved (data root, candidate.db, WOF shards,
-                                              weights) so a surprising verdict can be traced to the
-                                              setting that caused it. No \-v short form: the root
-                                              program owns \-v for \-\-version. (default: false)
+                                              checks resolved (data root, candidate.db, WOF
+                                              databases, weights) so a surprising verdict can be
+                                              traced to the setting that caused it. No \-v short
+                                              form: the root program owns \-v for \-\-version.
+                                              (default: false)
 .fi
 .SH DATA
 .nf

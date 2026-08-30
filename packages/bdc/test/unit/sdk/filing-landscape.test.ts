@@ -36,12 +36,6 @@
  *     agreement test; the "100-1000" bucket is otherwise never exercised by the gates.
  */
 
-import { chmodSync, existsSync } from "node:fs"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
 import { BDC_H3_RESOLUTION, type BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase } from "@mailwoman/bdc/sdk/build-bdc"
 import {
@@ -54,12 +48,19 @@ import {
 	speedBucketForDownloadSpeed,
 } from "@mailwoman/bdc/sdk/filing-landscape"
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { changeMode } from "@mailwoman/core/fs/writers"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
-import { openBuiltDatabase } from "@mailwoman/core/utils"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { latLngToCell } from "h3-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const ASOF_DATE = "2026-07-15"
 
@@ -158,12 +159,12 @@ function fixtureRows(): BDCAvailabilityRow[] {
 	]
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let out: string
 
 beforeAll(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "bdc-filing-landscape-"))
-	out = join(scratch, "bdc.db")
+	scratch = await temporaryDirectory("bdc-filing-landscape-")
+	out = scratch.resolve("bdc.db")
 
 	await buildBDCDatabase({
 		rows: fixtureRows(),
@@ -174,12 +175,10 @@ beforeAll(async () => {
 	})
 })
 
-afterAll(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 function openFixture(): DatabaseClient<BDCDatabase> {
-	return new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(out, { readOnly: true }) })
+	return new DatabaseClient<BDCDatabase>(out, { readOnly: true })
 }
 
 describe("filingLandscape — Gate 1: contract conformance", () => {
@@ -234,24 +233,15 @@ describe("filingLandscape — Gate 2: meaning-of-zero", () => {
 	})
 })
 
-describe("filingLandscape — Gate 2 (extended): coverage-check is load-bearing, not a rows-shortcut proxy", () => {
+describe("filingLandscape — Gate 2 (extended): coverage-check is required, not a rows-shortcut proxy", () => {
 	// Gate 2 above never reaches `readLayerCoverage` — GEOID_UNKNOWN has zero rows, so it's classified unknown by
 	// the "no candidate cell" shortcut alone, and the coverage-check branch can be deleted outright without turning
 	// it red. These two tests target that branch directly: (a) a geoid WITH rows whose coverage row is deliberately
 	// deleted, and (b) an `h3Cells` query — which has NO rows-based shortcut available at all — against a cell that
 	// was never surveyed.
-	let corruptScratch: string
-	let corruptOut: string
-
-	afterAll(async () => {
-		if (corruptScratch) {
-			await rm(corruptScratch, { recursive: true, force: true })
-		}
-	})
-
 	it("(a) a geoid with real rows but a deleted coverage row is unknown, and its rows do not leak into filings", async () => {
-		corruptScratch = await mkdtemp(join(tmpdir(), "bdc-filing-landscape-coverage-corrupt-"))
-		corruptOut = join(corruptScratch, "bdc.db")
+		await using coverageScratch = await temporaryDirectory("bdc-filing-landscape-coverage-corrupt-")
+		const corruptOut = coverageScratch.resolve("bdc.db")
 
 		await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -261,9 +251,9 @@ describe("filingLandscape — Gate 2 (extended): coverage-check is load-bearing,
 			blockCentroids,
 		})
 
-		chmodSync(corruptOut, 0o644)
+		await changeMode(corruptOut, 0o644)
 
-		using writable = new DatabaseClient<BDCDatabase>({ database: openBuiltDatabase(corruptOut, { write: true }) })
+		using writable = openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 
 		const sfRow = await writable
 			.selectFrom("bdc_availability")
@@ -400,18 +390,9 @@ describe("filingLandscape — Gate 3: hand-verified census", () => {
 })
 
 describe("filingLandscape — Gate 4: vintage-or-throw", () => {
-	let corruptScratch: string
-	let corruptOut: string
-
-	afterAll(async () => {
-		if (corruptScratch) {
-			await rm(corruptScratch, { recursive: true, force: true })
-		}
-	})
-
 	it("throws when the manifest row is missing, rather than answering unstamped", async () => {
-		corruptScratch = await mkdtemp(join(tmpdir(), "bdc-filing-landscape-corrupt-"))
-		corruptOut = join(corruptScratch, "bdc.db")
+		await using corruptScratch = await temporaryDirectory("bdc-filing-landscape-corrupt-")
+		const corruptOut = corruptScratch.resolve("bdc.db")
 
 		await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -422,11 +403,11 @@ describe("filingLandscape — Gate 4: vintage-or-throw", () => {
 		})
 
 		// `buildBDCDatabase` seals (chmod 0444). Unseal so the manifest row can be deleted, per
-		// `openBuiltDatabase`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
-		chmodSync(corruptOut, 0o644)
-		expect(existsSync(corruptOut)).toBe(true)
+		// `openBuiltClient`'s `write: true` mode (throws `SealedArtifactError` while still sealed).
+		await changeMode(corruptOut, 0o644)
+		expect(await pathExists(corruptOut)).toBe(true)
 
-		using writable = new DatabaseClient<BDCDatabase>({ database: openBuiltDatabase(corruptOut, { write: true }) })
+		using writable = openBuiltClient<BDCDatabase>(corruptOut, { write: true })
 		await writable.deleteFrom("layer_manifest").execute()
 
 		await expect(filingLandscape(writable, { geoids: [GEOID_SF] })).rejects.toThrow(/manifest/)
@@ -455,12 +436,10 @@ describe("speed bucket boundaries", () => {
 		const BOUNDARY_SPEEDS = [0, 24, 25, 99, 100, 999, 1000] as const
 		const boundaryGeoid = (speed: number) => `boundary-${speed}`
 
-		let boundaryScratch: string
 		let boundaryOut: string
 
 		beforeAll(async () => {
-			boundaryScratch = await mkdtemp(join(tmpdir(), "bdc-filing-landscape-buckets-"))
-			boundaryOut = join(boundaryScratch, "bdc.db")
+			boundaryOut = fixtures.use(await temporaryDirectory("bdc-filing-landscape-buckets-")).resolve("bdc.db")
 
 			const rows: BDCAvailabilityRow[] = BOUNDARY_SPEEDS.map((speed) => ({
 				geoid: boundaryGeoid(speed),
@@ -482,12 +461,8 @@ describe("speed bucket boundaries", () => {
 			})
 		})
 
-		afterAll(async () => {
-			await rm(boundaryScratch, { recursive: true, force: true })
-		})
-
 		it("groups the 7 boundary speeds into exactly the 4 buckets the JS mirror predicts", async () => {
-			using db = new DatabaseClient<BDCDatabase>({ database: new DatabaseSync(boundaryOut, { readOnly: true }) })
+			using db = new DatabaseClient<BDCDatabase>(boundaryOut, { readOnly: true })
 
 			const result = await filingLandscape(db, { geoids: BOUNDARY_SPEEDS.map(boundaryGeoid) })
 

@@ -68,8 +68,12 @@ export interface ResolvedPlace {
 	placetype: string
 	/**
 	 * ISO 3166-1 alpha-2 country code, if known.
+	 *
+	 * Optional because "if known" is literal: a candidate can carry no country, and `rankByImportance` has a branch for
+	 * it. The type said `string` while that branch existed, so the test proving the branch had to assert past the
+	 * signature.
 	 */
-	country: string
+	country?: string
 	/**
 	 * Centroid latitude in WGS-84 decimal degrees.
 	 */
@@ -163,7 +167,7 @@ export interface ResolvedPlace {
 	 */
 	resolutionQuality?: "fallback"
 	/**
-	 * The admin-containment verdict for this candidate (#1717 stage 2) — TRI-STATE, and the absence is load-bearing
+	 * The admin-containment verdict for this candidate (#1717 stage 2) — TRI-STATE, and the absence is required
 	 * (meaning-of-zero): `true` = the backend's ancestors sidecar vouches that this candidate sits UNDER the query's
 	 * parsed region qualifier; `false` = the backend evaluated containment and could not vouch for it; `undefined` = the
 	 * question was never asked — the lever is off, the query carried no qualifier, or the backend/artifact cannot answer
@@ -179,6 +183,13 @@ export interface ResolvedPlace {
 	 * resolver-interior trace (#1721) surfaces it as a gate.
 	 */
 	regionScopeMiss?: boolean
+	/**
+	 * The #1882 variant-alias exemption's firing mark (#1893): this candidate's row would have taken the cross-country
+	 * alias penalty and the exemption prevented it. PRESENT only when the exemption changed the row's treatment; absent
+	 * everywhere else — including on backends that never run the primary-preference ranker (the WASM FTS lookup), where
+	 * absence means the mechanism was not evaluated, never that it declined to fire.
+	 */
+	variantAliasExempted?: true
 }
 
 /**
@@ -730,8 +741,8 @@ export interface ResolveOpts {
 	 * silent.
 	 *
 	 * Measured 2026-08-15 on the FTS backend, which DOES implement both: toggling this flag changed **0 of 837** board
-	 * inputs. The capability is real and its measured value on everything we currently test is zero, which is why
-	 * `candidate.db` was not grown to support it (#1667, closed not-planned). Reopen on a consumer that needs it.
+	 * inputs. The capability and its measured value on everything we currently test is zero, which is why `candidate.db`
+	 * was not grown to support it (#1667, closed not-planned). Reopen on a consumer that needs it.
 	 *
 	 * `false` opts out; byte-stable either way on any backend lacking the relation.
 	 */
@@ -806,7 +817,11 @@ export interface ResolveOpts {
 export interface ResolveCandidateTrace {
 	id: string | number
 	name: string
-	country: string
+	/**
+	 * Optional for the same reason as {@link ResolvedPlace.country}: the trace mirrors the candidate, and a candidate can
+	 * carry no country.
+	 */
+	country?: string
 	placetype: string
 	score: number
 	prominence?: number

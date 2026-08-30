@@ -35,15 +35,15 @@ of its own; it is loaded at inference time by `@mailwoman/neural`.
 
 The NZ-facing half of Mailwoman's retrieval side: real (child, parent)
 suburb/town pairs (e.g. "Plimmerton" is a real suburb of "Porirua") fed to the
-decoder as a soft `dependent_locality` bias, hard-gated to NZ input only. NZ's
+decoder as a soft `dependent_locality` bias, restricted to NZ input only. NZ's
 register genuinely repeats names across tiers — 21.6% of its pairs are
 identity pairs (suburb == town, e.g. "Mangawhai, Mangawhai") — which is why
 `@mailwoman/neural` ≥7.8.0's identical-adjacent-segment rule exists; this
 bundle's index is that rule's data source.
 
 Unlike the en-gb sibling, **no postcode-anchor binary ships** — no WOF NZ
-postcode shard exists yet, so the postcode-anchor channel resolves OFF for
-en-nz (a loud one-time warning, not a crash). Building that shard is the
+postcode database exists yet, so the postcode-anchor channel resolves OFF for
+en-nz (a loud one-time warning, not a crash). Building that database is the
 tracked follow-up in `model-card.json`.
 
 ## Intended use
@@ -75,10 +75,10 @@ repeated-name-convention story: `model-card.json`'s `eval` and `notes` blocks.
 
 - **Expects its channels** — see _Ship-config requirement_.
 - **No NZ postcode anchor yet** — the anchor channel is OFF for en-nz until a
-  WOF NZ postcode shard is built (model-card follow-up).
+  WOF NZ postcode database is built (model-card follow-up).
 - **Venue-confound specificity is interim** — measured 0 FP on a synthetic
   board only; real NZ venue-name data is an open acquisition (issue #1279).
-- **Placetype-pair prior is hard-gated to NZ** — it structurally cannot fire
+- **Placetype-pair prior is restricted to NZ** — it structurally cannot fire
   on non-NZ input.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.

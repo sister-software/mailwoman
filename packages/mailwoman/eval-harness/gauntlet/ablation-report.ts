@@ -21,7 +21,7 @@ export { ABLATION_ABSENT } from "./ablation-expectation.ts"
 /**
  * Render one cell for the matrix: `broken/support` plus the p90 displacement. A missing cell or a zero-support one
  * renders as {@linkcode ABLATION_ABSENT} — never `0`, never `0.0%`. This is the meaning-of-zero rule at the only place
- * a human reads the map, and it is the reason the renderer takes `AblationCell | undefined` rather than a number.
+ * a human reads the map and the reason the renderer takes `AblationCell | undefined` rather than a number.
  */
 export function formatAblationCell(cell: AblationCell | undefined): string {
 	if (!cell || cell.support === 0) return ABLATION_ABSENT
@@ -82,7 +82,7 @@ export function renderAblationMarkdown(
 	const tail = locales.filter(([, n]) => n < minLocaleRows).map(([l]) => l)
 
 	const lines: string[] = [
-		`# Gauntlet ablation map — the load-bearing components`,
+		`# Gauntlet ablation map — the required components`,
 		"",
 		`- board: \`${meta.boardID}\``,
 		`- measured: ${meta.measuredAt}`,

@@ -22,13 +22,12 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import { existsSync, mkdirSync, statSync } from "node:fs"
-import { rm } from "node:fs/promises"
-import { basename, join } from "node:path"
-
-import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry, listZipEntries } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
+import { basename, join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
@@ -59,7 +58,7 @@ export async function fetchIMLSPLS(
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
 	const destDir = join(options.outRoot, SLUG)
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	const zipDest = join(destDir, basename(ZIP_URL))
 	const manifestPath = join(destDir, "MANIFEST.json")
@@ -73,7 +72,7 @@ export async function fetchIMLSPLS(
 	if (recorded?.sha256 && recorded.filename) {
 		const recordedPath = join(destDir, recorded.filename)
 
-		if (existsSync(recordedPath) && (await sha256File(recordedPath)) === recorded.sha256) {
+		if ((await pathExists(recordedPath)) && (await sha256File(recordedPath)) === recorded.sha256) {
 			report?.("  ✓ Already current (sha256 matches MANIFEST) — skipping download.")
 
 			return { fetched: 0, skipped: 1, failed: 0, failedCodes: [] }
@@ -130,12 +129,12 @@ export async function fetchIMLSPLS(
 	const csvDest = join(destDir, basename(csvName))
 
 	await extractZipEntry(zipDest, csvName, csvDest)
-	const csvSize = statSync(csvDest).size
+	const csvSize = (await statPath(csvDest)).size
 	const csvSha = await sha256File(csvDest)
 
 	// MARK: Remove ZIP (small, but keep destDir clean)
 
-	await rm(zipDest, { force: true })
+	await removePathIfPresent(zipDest)
 	report?.("  Removed ZIP (CSV kept)")
 
 	// MARK: Write MANIFEST

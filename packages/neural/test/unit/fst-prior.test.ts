@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { existsSync } from "node:fs"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import {
 	buildFSTEmissionPriors,
+	collapseFSTBias,
 	groupPiecesIntoWords,
+	isStreetShapedSurface,
 	normalizeFSTToken,
 	type FSTMatcherLike,
 	type FSTMatchLike,
@@ -22,7 +23,7 @@ const TOKENIZER_MODEL_PATH = workspacePath("neural", "test", "fixtures", "tokeni
 // only occur in ITS vocab, not the small fixture's. Not present in stripped-down CI, so this whole block skips
 // there; it runs on the lab host where $MAILWOMAN_DATA_ROOT is populated.
 const PRODUCTION_TOKENIZER_PATH = dataRootPath("models", "tokenizer", "v0.9.0-multisplice", "tokenizer.model")
-const haveProductionTokenizer = existsSync(PRODUCTION_TOKENIZER_PATH)
+const haveProductionTokenizer = await pathExists(PRODUCTION_TOKENIZER_PATH)
 
 function labelCol(label: string): number {
 	return STAGE2_BIO_LABELS.indexOf(label as (typeof STAGE2_BIO_LABELS)[number])
@@ -513,3 +514,80 @@ describe.skipIf(!haveProductionTokenizer)(
 		})
 	}
 )
+
+describe("street-shaped surface gate on the C4 mapped tiers (#1903)", () => {
+	test.each([
+		[["king", "street", "east"], true],
+		[["king", "street", "west"], true],
+		[["madison", "square"], true],
+		[["8th", "avenue", "south"], true],
+		[["valencia", "road"], true],
+		// The covering-surface classes the C4 mapping exists for stay un-gated.
+		[["biggin", "hill"], false],
+		[["soho"], false],
+		[["camden", "town"], false],
+		// A generic alone is not a street NAME, with or without a directional.
+		[["square"], false],
+		[["street"], false],
+		[["square", "west"], false],
+		[["east"], false],
+		[[], false],
+	])("isStreetShapedSurface(%j) = %s", (tokens, expected) => {
+		expect(isStreetShapedSurface(tokens as string[])).toBe(expected)
+	})
+
+	it("a neighbourhood entry on a street-shaped surface draws no locality bias", () => {
+		const fst = mockFST(
+			new Map([
+				["king", []],
+				["king street", []],
+				["king street east", [{ wofID: 9, placetype: "neighbourhood", referential: 0.8 }]],
+			])
+		)
+
+		const pieces = makePieces("King Street East")
+		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
+
+		for (const row of matrix) {
+			expect(row[labelCol("B-locality")]).toBe(0)
+			expect(row[labelCol("I-locality")]).toBe(0)
+		}
+	})
+
+	it("a DIRECT locality entry on the same street-shaped surface still biases", () => {
+		const fst = mockFST(
+			new Map([
+				["king", []],
+				["king street", []],
+				["king street east", [{ wofID: 10, placetype: "locality", referential: 0.8 }]],
+			])
+		)
+
+		const pieces = makePieces("King Street East")
+		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
+
+		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(0)
+	})
+
+	it("the Biggin Hill class keeps its mapped-tier bias", () => {
+		const fst = mockFST(
+			new Map([
+				["biggin", []],
+				["biggin hill", [{ wofID: 11, placetype: "neighbourhood", referential: 0.7 }]],
+			])
+		)
+
+		const pieces = makePieces("Biggin Hill")
+		const matrix = buildFSTEmissionPriors(fst, pieces, STAGE2_BIO_LABELS)
+
+		expect(matrix[0]![labelCol("B-locality")]).toBeGreaterThan(0)
+		expect(matrix[1]![labelCol("I-locality")]).toBeGreaterThan(0)
+	})
+
+	it("collapseFSTBias applies the same gate through its surface parameter", () => {
+		const entries = [{ placetype: "neighbourhood", importance: 0.8 }]
+
+		expect(collapseFSTBias(entries, ["king", "street", "east"]).size).toBe(0)
+		expect(collapseFSTBias(entries, ["biggin", "hill"]).get("locality")).toBeCloseTo(0.8, 5)
+	})
+})

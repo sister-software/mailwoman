@@ -27,9 +27,8 @@
  *   `scripts/ingest-overture-addresses.ts` behavior verbatim.
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import * as path from "node:path"
-
+import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import * as path from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -128,7 +127,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const outRoot = options.out ?? dataRootPath("overture")
 		const outDir = path.join(outRoot, release)
-		mkdirSync(outDir, { recursive: true })
+		await makeDirectories(outDir)
 
 		// @duckdb/node-api is an optional peer dep (this is a maintainer-only data command) — load
 		// it dynamically so merely importing this command (e.g. `mailwoman --help`) doesn't fault
@@ -293,8 +292,8 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 			}
 		}
 
-		writeFileSync(path.join(outDir, "fill-rates.json"), JSON.stringify({ release, probes }, null, "\t"))
-		writeFileSync(path.join(outDir, "fill-rates.md"), renderMarkdown(release, probes))
+		await writeLocalJSONFile({ release, probes }, outDir, "fill-rates.json")
+		await writeLocalTextFile(renderMarkdown(release, probes), outDir, "fill-rates.md")
 
 		console.error(`[done] report -> ${path.join(outDir, "fill-rates.{json,md}")}`)
 

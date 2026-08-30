@@ -9,11 +9,10 @@
  *   symmetry contract from issue #190.
  */
 
-import { writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { writeLocalBuffer, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { tmpdir } from "@mailwoman/platform/os"
+import { join } from "@mailwoman/platform/path"
 import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
 import { FSTMatcher, normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -110,14 +109,14 @@ const FIXTURE_PLACES: FixturePlace[] = [
 let fixtureMatcher: FSTMatcher
 let fixtureBinPath: string
 
-beforeAll(() => {
+beforeAll(async () => {
 	fixtureMatcher = buildFixtureMatcher(FIXTURE_PLACES)
 
 	// Write the serialized fixture to a temp file so runAutocomplete (which reads from disk) can be
 	// tested end-to-end.
 	const buf = serializeFST(fixtureMatcher)
 	fixtureBinPath = join(tmpdir(), `mailwoman-fst-fixture-${Date.now()}.bin`)
-	writeFileSync(fixtureBinPath, buf)
+	await writeLocalFile(buf, fixtureBinPath)
 })
 
 // MARK: normalizeTokens symmetry smoke-test
@@ -221,7 +220,7 @@ describe("runAutocomplete — disk round-trip", () => {
 
 	it("throws a human-readable error for a malformed FST buffer", async () => {
 		const badPath = join(tmpdir(), `mailwoman-fst-bad-${Date.now()}.bin`)
-		writeFileSync(badPath, Buffer.from("not-an-fst-binary"))
+		await writeLocalBuffer(Buffer.from("not-an-fst-binary"), badPath)
 		await expect(runAutocomplete("New", { fstPath: badPath })).rejects.toThrow(/Malformed FST binary/)
 	})
 

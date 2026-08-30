@@ -7,8 +7,8 @@
  *   are asserted on data small enough to read.
  */
 
-import { DatabaseSync } from "node:sqlite"
-
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	PLACETYPE_PROJECTION,
 	WOF_PLACETYPES,
@@ -22,9 +22,9 @@ import { describe, expect, it } from "vitest"
  * builder via a temp file — `node:sqlite` cannot share an `:memory:` DB across connections, and the builder opens its
  * own read-only handle by design.
  */
-function fixtureDB(): string {
+async function fixtureDB(): Promise<string> {
 	const path = `/tmp/census-fixture-${process.pid}-${Math.random().toString(36).slice(2)}.db`
-	const db = new DatabaseSync(path)
+	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT)`)
 	db.exec(`CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER)`)
@@ -56,8 +56,6 @@ function fixtureDB(): string {
 	for (const [id, ancestorID] of links) {
 		db.prepare(`INSERT INTO ancestors VALUES (?, ?)`).run(id, ancestorID)
 	}
-
-	db.close()
 
 	return path
 }
@@ -106,8 +104,8 @@ describe("PLACETYPE_PROJECTION", () => {
 })
 
 describe("buildPlacetypeCensus", () => {
-	it("counts children through the projection and applies the inclusion rule", () => {
-		const result = buildPlacetypeCensus(fixtureDB(), "GB")
+	it("counts children through the projection and applies the inclusion rule", async () => {
+		const result = buildPlacetypeCensus(await fixtureDB(), "GB")
 		const parents = result.nodes.map((node) => node.parent).toSorted()
 
 		// "Quiet Town" has only a locality child — no discriminative mass, so it stays out.
@@ -120,8 +118,8 @@ describe("buildPlacetypeCensus", () => {
 		expect(london?.total).toBe(2)
 	})
 
-	it("counts the locality backbone into the country totals even where the inclusion rule drops the node", () => {
-		const result = buildPlacetypeCensus(fixtureDB(), "GB")
+	it("counts the locality backbone into the country totals even where the inclusion rule drops the node", async () => {
+		const result = buildPlacetypeCensus(await fixtureDB(), "GB")
 
 		// Hamlet-under-Quiet-Town is a locality link: excluded from the node table, present in the denominator.
 		expect(result.countryTotals.locality).toBe(1)
@@ -129,8 +127,8 @@ describe("buildPlacetypeCensus", () => {
 		expect(result.links).toBe(3)
 	})
 
-	it("reports no unmapped placetypes on a source the projection table covers", () => {
-		expect(buildPlacetypeCensus(fixtureDB(), "GB").unmappedPlacetypes).toEqual([])
+	it("reports no unmapped placetypes on a source the projection table covers", async () => {
+		expect(buildPlacetypeCensus(await fixtureDB(), "GB").unmappedPlacetypes).toEqual([])
 	})
 })
 

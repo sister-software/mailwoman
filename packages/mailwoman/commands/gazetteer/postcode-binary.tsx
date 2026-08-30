@@ -33,11 +33,12 @@
  *   lands on stdout.
  */
 
-import { existsSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { allRows } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -120,13 +121,13 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 		let written = 0
 
 		for (const { country, db } of locales) {
-			if (!existsSync(db)) {
+			if (!(await pathExists(db))) {
 				console.error(`skip ${country}: missing ${db}`)
 
 				continue
 			}
 
-			const conn = new DatabaseSync(db, { readOnly: true })
+			using conn = new DatabaseClient<WOFDatabase>(db, { readOnly: true })
 
 			const rows = allRows<PostcodeShardRow>(
 				conn.prepare(
@@ -135,8 +136,6 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 				),
 				country
 			)
-
-			conn.close()
 
 			const { entries, skipped, outwardKeys } = buildPostcodeBinaryEntries(country, rows, {
 				gbGranularity: granularity,
@@ -155,7 +154,7 @@ const GazetteerPostcodeBinary: ParsedCommandComponent<Options> = ({ options }) =
 
 			const bytes = serializePostcodeBinary(entries)
 			const outPath = join(outDir, `postcode-${country.toLowerCase()}.bin`)
-			writeFileSync(outPath, bytes)
+			await writeLocalFile(bytes, outPath)
 
 			written++
 			const placed = entries.filter((e) => e.lat !== 0 || e.lon !== 0).length

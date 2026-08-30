@@ -18,10 +18,8 @@
  *   two artifacts (`foldVersion`) is part of what's under test.
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
 import { STAGE2_BIO_LABELS } from "@mailwoman/neural/labels"
@@ -35,7 +33,12 @@ import {
 } from "@mailwoman/neural/placetype-census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "@mailwoman/neural/placetype-pair-prior"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { describe, expect, test } from "vitest"
+import { join } from "@mailwoman/platform/path"
+import { afterAll, describe, expect, test } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const LABELS = STAGE2_BIO_LABELS
 
@@ -205,7 +208,7 @@ describe("census observability — what lands on the trace", () => {
 // output is unchanged, but only a full decode proves nothing downstream (the transition conversion,
 // the repair passes, the tree build) reads the census. Gated on the dev weights being linked —
 // `link-dev-weights.ts` puts both the model and `pair-index-us.bin` in place, and the pair index is
-// load-bearing here: without it the prior never runs and there is no parent candidate to probe
+// required here: without it the prior never runs and there is no parent candidate to probe
 // alongside. The census artifact is BUILT into a temp dir rather than resolved from the data root,
 // which is read-only on the lab host; a fixture census is enough to prove the wiring.
 // Resolved rather than probed in the workspace: the binaries are not in git, so where they live is the
@@ -227,11 +230,10 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 	test.skipIf(!havePackage)(
 		"a wired census fills the trace record and moves nothing else",
 		async () => {
-			const dir = mkdtempSync(join(tmpdir(), "mailwoman-census-"))
+			const dir = fixtures.use(await temporaryDirectory("mailwoman-census-")).path
 			const censusPath = join(dir, "placetype-census-us.bin")
 
-			writeFileSync(
-				censusPath,
+			await writeLocalFile(
 				serializePlacetypeCensus(
 					{
 						country: "us",
@@ -242,7 +244,8 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 						baseRates: { dependent_locality: 0.2 },
 					},
 					[{ parent: "new york", counts: { dependent_locality: 40 }, total: 40 }]
-				)
+				),
+				censusPath
 			)
 
 			const cls = await NeuralAddressClassifier.loadFromWeights({

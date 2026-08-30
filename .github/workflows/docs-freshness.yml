@@ -9,7 +9,7 @@
 # Quarterly = the 14th of Jan/Apr/Jul/Oct, matching the review-by cadence seeded on the
 # policy pages (first subjects come due 2026-10-14). No install, no build: the lister
 # runs on node built-ins straight off the checkout. workflow_dispatch is the manual
-# escape hatch to re-run a sweep after fixing pages.
+# override to re-run a sweep after fixing pages.
 name: Docs freshness sweep
 
 on:

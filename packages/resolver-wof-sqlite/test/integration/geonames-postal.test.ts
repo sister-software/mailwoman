@@ -8,16 +8,16 @@
  *   the p50-tax law).
  */
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { join } from "@mailwoman/platform/path"
 import {
 	GEONAMES_POSTAL_ID_BASE,
 	ingestGeonamesPostal,
 	normalizePostcodeName,
 } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
 
 describe("normalizePostcodeName (the #920 name law)", () => {
@@ -35,8 +35,8 @@ describe("normalizePostcodeName (the #920 name law)", () => {
 	})
 })
 
-function fixtureDB(): DatabaseSync {
-	const db = new DatabaseSync(":memory:")
+async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -57,23 +57,23 @@ function fixtureDB(): DatabaseSync {
 
 describe("ingestGeonamesPostal", () => {
 	it("folds one medoid row per normalized code, with the display form as an alt name", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "gn-postal-"))
+		await using dirDirectory = await temporaryDirectory("gn-postal-")
+		const dir = dirDirectory.path
 
 		// Three members of "110 00": two clustered at ~50.08, one outlier pulling the mean north.
 		// The medoid must be one of the REAL points (the cluster member nearest the mean), never
 		// the mean itself.
-		writeFileSync(
-			join(dir, "CZ.txt"),
+		await writeLocalTextFile(
 			[
 				"CZ\t110 00\tPraha 1\tPraha\t10\t\t\t\t\t50.08\t14.42\t4",
 				"CZ\t110 00\tPraha 1-x\tPraha\t10\t\t\t\t\t50.09\t14.43\t4",
 				"CZ\t110 00\tOutlier\tPraha\t10\t\t\t\t\t50.30\t14.60\t4",
 				"CZ\t500 02\tHradec\tKralovehradecky\t\t\t\t\t\t50.21\t15.83\t4",
 			].join("\n"),
-			"utf8"
+			join(dir, "CZ.txt")
 		)
 
-		const db = fixtureDB()
+		const db = await fixtureDB()
 		const result = await ingestGeonamesPostal(db, ["CZ"], dir)
 
 		expect(result.inserted).toBe(2)
@@ -102,8 +102,9 @@ describe("ingestGeonamesPostal", () => {
 	})
 
 	it("reports missing country files instead of throwing", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "gn-postal-empty-"))
-		const db = fixtureDB()
+		await using dirDirectory = await temporaryDirectory("gn-postal-empty-")
+		const dir = dirDirectory.path
+		const db = await fixtureDB()
 		const result = await ingestGeonamesPostal(db, ["FI"], dir)
 
 		expect(result.inserted).toBe(0)

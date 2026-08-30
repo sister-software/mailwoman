@@ -21,7 +21,7 @@ harness becomes the per-customer acceptance battery.
    right instrument reads it. If fine-tuning is the product, the base model's own debts (the cedex
    watch, the re-anchored floor, the Fifth-Ave fixture) should be zero at the starting line.
 
-2. **Consolidation machinery is only cheap at base-train time.** EWC-style protection needs the
+2. **Consolidation implementation is only cheap at base-train time.** EWC-style protection needs the
    base model's Fisher information over the base distribution. Computed during the from-scratch
    run, it is a side artifact (one extra pass, stored beside the checkpoint); retrofitted later, it
    is a separate expensive job against a distribution we no longer sample. If B11 ships, the

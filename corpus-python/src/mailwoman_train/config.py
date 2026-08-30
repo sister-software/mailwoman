@@ -505,7 +505,7 @@ def _merge(
     config that predated those fields and the levers went inert with zero signal
     (#1248). Config guards raise, same discipline as the YAML-Norway guard below.
 
-    ``strict=False`` is the escape hatch: unknown keys are silently skipped (the
+    ``strict=False`` is the override: unknown keys are silently skipped (the
     historical hasattr-gate behavior). Reserved for tooling that intentionally
     consumes a partial view of a config; never for training entrypoints.
     """
@@ -537,7 +537,7 @@ def _coerce(
     source: str = "<mapping>",
 ) -> Any:
     """Coerce ``value`` to the dataclass field's declared type when an obvious conversion
-    is safe. Targets one specific footgun: PyYAML's default loader parses ``5e-4`` as a
+    is safe. Targets one specific misuse hazard: PyYAML's default loader parses ``5e-4`` as a
     string (YAML 1.1 spec requires a dot for floats), so a YAML config that writes
     ``learning_rate: 5e-4`` silently makes its way into ``AdamW(lr="5e-4")`` and crashes
     with a confusing ``TypeError: '<=' not supported between instances of 'float' and 'str'``.

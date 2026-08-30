@@ -13,14 +13,13 @@
  *   so siblings resolve through their built `.d.ts`. This runs them all and reports per workspace.
  */
 
-import { execFile } from "node:child_process"
-import { existsSync } from "node:fs"
-import { readdir } from "node:fs/promises"
-import { cpus } from "node:os"
-import { join, relative } from "node:path"
-import { promisify } from "node:util"
-
+import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { repoRootPath, workspacePath } from "@mailwoman/core/utils"
+import { execFile } from "@mailwoman/platform/child_process"
+import { cpus } from "@mailwoman/platform/os"
+import { join, relative } from "@mailwoman/platform/path"
+import { promisify } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 
 const run = promisify(execFile)
@@ -62,10 +61,10 @@ const workspaceDirectories = [repoRoot, workspacePath()]
 const workspaces = (
 	await Promise.all(
 		workspaceDirectories.map(async (directory) => {
-			const entries = await readdir(directory, { withFileTypes: true })
+			const entries = await readDirectoryEntries(directory)
 
 			return entries
-				.filter((entry) => entry.isDirectory() && existsSync(join(directory, entry.name, "tsconfig.test.json")))
+				.filter((entry) => entry.isDirectory() && pathExistsSync(join(directory, entry.name, "tsconfig.test.json")))
 				.map((entry) => relative(repoRoot, join(directory, entry.name)))
 		})
 	)

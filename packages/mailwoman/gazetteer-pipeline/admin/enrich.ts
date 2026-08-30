@@ -15,12 +15,10 @@
  *      MUST run after them — and both MUST precede the FTS build (`place_search` concatenates `names`).
  */
 
-import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import type { DatabaseSync } from "node:sqlite"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { corePackagePath } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 export interface EnrichAdminOptions {
 	/**
@@ -38,7 +36,10 @@ export interface EnrichAdminResult {
 /**
  * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent.
  */
-export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): EnrichAdminResult {
+export async function enrichAdmin<DB>(
+	db: DatabaseClient<DB>,
+	opts: EnrichAdminOptions = {}
+): Promise<EnrichAdminResult> {
 	const specsDir = opts.specsDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
 
 	db.exec("DELETE FROM names WHERE language = 'abbr'")
@@ -73,8 +74,8 @@ export function enrichAdmin(db: DatabaseSync, opts: EnrichAdminOptions = {}): En
 	for (const [cc, regions] of regionsByCountry) {
 		const specPath = join(specsDir, `${cc}.json`)
 
-		if (!existsSync(specPath)) continue
-		const spec = parseJSONStrict<{ sub_keys?: string; sub_names?: string }>(readFileSync(specPath, "utf8"))
+		if (!(await pathExists(specPath))) continue
+		const spec = await readLocalJSONFile<{ sub_keys?: string; sub_names?: string }>(specPath)
 
 		if (!spec.sub_keys || !spec.sub_names) continue
 		const keys = spec.sub_keys.split("~")

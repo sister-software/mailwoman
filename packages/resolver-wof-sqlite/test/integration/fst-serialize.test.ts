@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { existsSync } from "node:fs"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { FSTMatcher, type FSTNode } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
@@ -125,15 +124,15 @@ describe("FST binary serialization — unit (synthetic)", () => {
 // --- Integration tests with real WOF data ---
 
 const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
-const HAS_WOF = existsSync(WOF_DB)
+const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () => {
 	let original: FSTMatcher
 	let buf: Buffer
 	let restored: FSTMatcher
 
-	beforeAll(() => {
-		const { matcher } = buildFSTFromWOF({
+	beforeAll(async () => {
+		const { matcher } = await buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],

@@ -15,19 +15,18 @@
  *   chronological array order; the ablation board id hashes a SORTED fingerprint (`ablation.ts`), and the
  *   regression runner grades per row.
  *
- *   What the prose migration cost, stated plainly: JSONL carries no comments, so the 16 batch headers and 18
+ *   What the prose migration cost, stated directly: JSONL carries no comments, so the 16 batch headers and 18
  *   per-case margin notes that lived between the array literals moved VERBATIM to `batch-notes.md`, keyed by
  *   the `source` value their rows carry. They are not lost, but they are no longer adjacent to their rows.
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
 
-import { existsSync, readdirSync } from "node:fs"
-import { readdir } from "node:fs/promises"
-import { basename, join } from "node:path"
-import { fileURLToPath } from "node:url"
-
+import { readDirectory, readDirectoryEntries } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readDirectorySync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
+import { basename, join } from "@mailwoman/platform/path"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { TextSpliterator } from "spliterator"
 
 import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "./seed-case.ts"
@@ -54,7 +53,7 @@ const MALFORMED_EXCERPT_CHARS = 60
 export const CASES_DIR = ((): string => {
 	const sibling = fileURLToPath(new URL(".", import.meta.url))
 
-	if (existsSync(sibling) && readdirSync(sibling).some((name) => COUNTRY_DIR.test(name))) return sibling
+	if (pathExistsSync(sibling) && readDirectorySync(sibling).some((name) => COUNTRY_DIR.test(name))) return sibling
 
 	return fileURLToPath(new URL("../../../../eval-harness/gauntlet/cases/", import.meta.url))
 })()
@@ -130,7 +129,7 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
  * @throws {CorpusRowError} On a malformed or off-schema row, naming the file and line.
  */
 export async function loadRegressionCases(dir: string = CASES_DIR): Promise<SeedCase[]> {
-	const entries = await readdir(dir, { withFileTypes: true })
+	const entries = await readDirectoryEntries(dir)
 
 	const ccDirs = entries
 		.filter((e) => e.isDirectory() && COUNTRY_DIR.test(e.name))
@@ -142,7 +141,7 @@ export async function loadRegressionCases(dir: string = CASES_DIR): Promise<Seed
 
 	for (const cc of ccDirs) {
 		const ccPath = join(dir, cc)
-		const files = (await readdir(ccPath)).filter((f) => f.endsWith(".jsonl")).toSorted()
+		const files = (await readDirectory(ccPath)).filter((f) => f.endsWith(".jsonl")).toSorted()
 		const ccCases: SeedCase[] = []
 
 		for (const file of files) {

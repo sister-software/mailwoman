@@ -19,12 +19,12 @@
  * it through harness-neural (formerly harness-v0-neural with --symmetric-match).
  */
 
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
-import { parseArgs } from "node:util"
-
+import { readDirectorySync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { makeDirectoriesSync, writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { tempRootPath } from "@mailwoman/core/utils"
+import { dirname, join } from "@mailwoman/platform/path"
+import { parseArgs } from "@mailwoman/platform/util"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 const { values: rawValues } = parseArgs({
@@ -60,15 +60,15 @@ const PERTURBATIONS: Array<{ name: string; apply: (raw: string) => string }> = [
 ]
 
 function main(): void {
-	mkdirSync(dirname(OUT), { recursive: true })
+	makeDirectoriesSync(dirname(OUT))
 	const out: string[] = []
 	let base = 0
 
-	for (const file of readdirSync(GOLDEN).filter((f) => f.endsWith(".jsonl"))) {
+	for (const file of readDirectorySync(GOLDEN).filter((f) => f.endsWith(".jsonl"))) {
 		// The stride below needs the row COUNT before it can pick a row, then indexes them, so the whole
 		// set has to be resident either way — streaming would only move the materialization.
 		// oxlint-disable-next-line mailwoman/prefer-spliterator -- see above
-		const lines = readFileSync(join(GOLDEN, file), "utf8")
+		const lines = readLocalTextFileSync(join(GOLDEN, file))
 			.split("\n")
 			.filter((l) => l.trim())
 
@@ -110,7 +110,7 @@ function main(): void {
 		base += PER_FILE
 	}
 
-	writeFileSync(OUT, out.join("\n") + "\n")
+	writeLocalTextFileSync(out.join("\n") + "\n", OUT)
 
 	console.log(`wrote ${out.length} perturbed cases (${PERTURBATIONS.map((p) => p.name).join(", ")}) → ${OUT}`)
 }

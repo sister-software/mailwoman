@@ -16,12 +16,11 @@
  *   the basename) is reported as `wrong_format_present`, never counted as coverage.
  */
 
-import { existsSync, mkdirSync } from "node:fs"
-import { open, readFile, rm } from "node:fs/promises"
-import { join } from "node:path"
-
+import { pathExists, readFileHead, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, HTTPStatusError, writeManifest } from "./download.ts"
@@ -97,6 +96,10 @@ const GAZETTEER_DUMP_COLUMNS = 19
 /**
  * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns. Accepts a partial head read
  * — the first line is the whole question, so callers need not hand it a resident 350 MB dump.
+ *
+ * Walk the string directly rather than constructing a spliterator: the capitals builder already holds whole country
+ * dumps as strings, and a byte-oriented spliterator would UTF-8 encode that input — allocating up to another 350 MB —
+ * merely to inspect its first non-empty line.
  */
 export function looksLikeGazetteerDump(text: string): boolean {
 	let start = 0
@@ -152,19 +155,6 @@ export function parseCountryInfo(text: string): Array<{ country: string; capital
  */
 const FORMAT_SNIFF_BYTES = 65_536
 
-async function readFileHead(path: string): Promise<string> {
-	const handle = await open(path, "r")
-
-	try {
-		const buffer = Buffer.alloc(FORMAT_SNIFF_BYTES)
-		const { bytesRead } = await handle.read(buffer, 0, FORMAT_SNIFF_BYTES, 0)
-
-		return buffer.subarray(0, bytesRead).toString("utf8")
-	} finally {
-		await handle.close()
-	}
-}
-
 /**
  * Download `countryInfo.txt` plus every missing `<CC>.zip`, extracting each to `<outRoot>/<CC>.txt` beside the
  * hand-fetched dumps, with a `MANIFEST.json` naming fetched, skipped-present, and source-unavailable countries.
@@ -173,7 +163,7 @@ export async function fetchGeonamesDumps(
 	options: FetchGeonamesDumpOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary & { skippedPresent: string[] }> {
-	mkdirSync(options.outRoot, { recursive: true })
+	await makeDirectories(options.outRoot)
 
 	const baseURL = options.baseURL ?? BASE_URL
 	const countryInfoDest = join(options.outRoot, "countryInfo.txt")
@@ -186,7 +176,7 @@ export async function fetchGeonamesDumps(
 		report,
 	})
 
-	const catalog = parseCountryInfo(await readFile(countryInfoDest, "utf8"))
+	const catalog = parseCountryInfo(await readLocalTextFile(countryInfoDest))
 	const countries = options.countries?.map((code) => code.trim().toUpperCase()) ?? catalog.map((row) => row.country)
 
 	const entries: GeonamesDumpFileEntry[] = []
@@ -199,8 +189,8 @@ export async function fetchGeonamesDumps(
 	for (const country of countries) {
 		const txtDest = join(options.outRoot, `${country}.txt`)
 
-		if (!options.force && existsSync(txtDest)) {
-			if (looksLikeGazetteerDump(await readFileHead(txtDest))) {
+		if (!options.force && (await pathExists(txtDest))) {
+			if (looksLikeGazetteerDump(await readFileHead(txtDest, FORMAT_SNIFF_BYTES))) {
 				skippedPresent.push(country)
 			} else {
 				report?.(`✗ ${country}.txt is present but is not a 19-column gazetteer dump — move it aside and rerun`)
@@ -219,19 +209,19 @@ export async function fetchGeonamesDumps(
 		try {
 			await downloadToFile({ url, dest: zipDest, timeoutMs: 300_000, retries: 2, report })
 			await extractZipEntry(zipDest, `${country}.txt`, txtDest)
-			await rm(zipDest, { force: true })
+			await removePathIfPresent(zipDest)
 
 			entries.push({
 				country,
 				filename: `${country}.txt`,
 				source_url: url,
 				sha256: await sha256File(txtDest),
-				bytes: (await readFile(txtDest)).byteLength,
+				bytes: (await readLocalBuffer(txtDest)).byteLength,
 			})
 
 			fetched++
 		} catch (error) {
-			await rm(zipDest, { force: true })
+			await removePathIfPresent(zipDest)
 
 			const message = error instanceof Error ? error.message : String(error)
 

@@ -6,8 +6,14 @@
 #
 # STRUCTURE — six legs (static, unit-fast, unit-slow, lexicon-full, react, smoke), then the `test`
 # aggregator gates on all six. unit-fast and unit-slow run the root Vitest sweep concurrently — fast
-# leg is the pure unit/lexicon surface (~317 files, ~10s); slow leg is the DB-gated integration
-# suites (CLI harness, WOF resolver, model-load tests, ~86 files, ~95s).
+# leg is the pure unit/lexicon surface; slow leg is the DB-gated integration suites (CLI harness,
+# WOF resolver, model-load tests).
+#
+# SIZES, measured 2026-08-29 on the lab workstation: fast 593 files / ~46-156s, slow 126 files /
+# ~517s. The earlier figures here (317 files / 10s and 86 files / 95s, from 2026-08-02) were off by
+# 1.9x and 5.4x, which is enough to send someone triaging CI cost at the wrong leg. Wall times move
+# with contention and with the machine; the FILE COUNTS are the durable half, so re-read them from
+# `vitest list --filesOnly` rather than trusting a number in a comment.
 #
 # lexicon-full is the sixth leg and the newest (2026-08-02). It exists because ONE test file was
 # unit-slow's entire wall-clock: the full-scale locality-surface build was 236.9s of a 253s leg, and
@@ -27,6 +33,14 @@
 # `mailwoman-data`, which the lab runners advertise and which MEANS "$MAILWOMAN_DATA_ROOT is present
 # and populated": unit-slow reads ~10 GB of WOF/address-point databases, and smoke needs the weights
 # materialized from that same root.
+#
+# The label supplies the variable as well as the data. Each runner exports MAILWOMAN_DATA_ROOT from
+# the runner application's own `.env`, which the listener loads into every job it runs, so no job
+# here declares it. Do NOT reintroduce a job-level `env: MAILWOMAN_DATA_ROOT: ${{ secrets.… }}`: an
+# `env:` block always wins over the inherited value, and a `secrets` expression expands to the EMPTY
+# STRING on any event whose secrets come from a store that lacks the name. An empty root is not an
+# absent root — it resolves relative to the checkout, so the failure arrives as a missing model file
+# inside `_work/` rather than as a missing secret.
 #
 # The split matters beyond placement: `runs-on` states what a job NEEDS, so a data-dependent test
 # added to unit-fast fails on a hosted runner immediately instead of silently skipIf-ing to green.
@@ -75,7 +89,7 @@ env:
 concurrency:
   group: test-${{ github.workflow }}-${{ github.ref }}
   # Cancel superseded runs on PRs AND pushes to main: only the latest head's `test` check is
-  # load-bearing (the ruleset + release auto-merge match on the branch HEAD sha), so an older
+  # required (the ruleset + release auto-merge match on the branch HEAD sha), so an older
   # in-flight run is pure fleet burn — each leg occupies one of the 4 lab runner slots, and a
   # stale push's 4 legs queue AHEAD of the current push's. workflow_dispatch is EXEMPT: that's
   # publish.yml mode=prepare dispatching against the release branch — cancelling it when a
@@ -142,7 +156,7 @@ jobs:
             exit 0
           fi
 
-          # The `.runners | type == "array"` test is load-bearing, not defensive noise. Every API
+          # The `.runners | type == "array"` test is required, not defensive noise. Every API
           # failure — bad credentials, 403, 404 — returns a JSON OBJECT with a `message` and no
           # `runners` key, so a tolerant expression like `.runners // []` counts it as ZERO ONLINE
           # RUNNERS and reports the fleet down. A count of zero cannot tell "nothing is online" from
@@ -379,10 +393,8 @@ jobs:
   # A job that reports `skipped` is legible in the UI; one that reports `success` having tested
   # nothing is not.
   unit-slow:
-    needs: data-fleet
+    needs: [data-fleet, conformance-scope]
     if: needs.data-fleet.outputs.up == 'true'
-    env:
-      MAILWOMAN_DATA_ROOT: ${{ secrets.MAILWOMAN_DATA_ROOT }}
     runs-on:
       - self-hosted
       - mailwoman-data
@@ -456,7 +468,84 @@ jobs:
           done
 
       - name: Test (slow)
-        run: yarn ci:test:slow
+        env:
+          CONFORMANCE: ${{ needs.conformance-scope.outputs.needed }}
+        run: |
+          if [ "$CONFORMANCE" = "true" ]; then
+            yarn ci:test:slow
+          else
+            yarn ci:test:slow --exclude '**/test/integration/conformance-*.test.ts'
+          fi
+
+  # Do the five LIVE-PIPELINE conformance suites need to run? HOSTED, for the same reason
+  # `lexicon-gate` is: deciding on a hosted runner costs nothing and keeps the four-runner
+  # `mailwoman-data` fleet for work that needs the databases.
+  #
+  # WHAT THIS DECIDES. `conformance-{nfc-nfd,whitespace,punctuation,case-folding,refinement-monotonicity}.test.ts`
+  # drive the real pipeline over the gating rows: measured 2026-08-29 at 93.4s of unit-slow's 517s,
+  # or 18% of the leg. Unlike `lexicon-full` this is NOT its own job — a fourth data-hungry leg would
+  # queue against the same scarce slots the `lexicon-gate` header complains about — so the decision
+  # is threaded into unit-slow as a vitest exclude instead.
+  #
+  # WHAT STILL RUNS EVERY PR when this holds them back: the `*-suite.test.ts` files in unit-fast,
+  # which assert the same laws against the committed fixture rows without loading a model. Each
+  # integration file's own header states the difference, and it is real: the fast leg proves the
+  # Stage 1 claim about normalization, this leg proves the claim about the whole pipeline, because
+  # the tokenizer, the lexicons, the pair indices and the resolver all read text downstream of
+  # Stage 1 and any of them could hold one form and not the other.
+  #
+  # THE FILTER IS THE PARSE PATH, deliberately broad. A narrow filter here would be the failure it
+  # exists to prevent: a suite that stops running while reporting the same green tick.
+  conformance-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      needed: ${{ steps.decide.outputs.needed }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Detect parse-path changes
+        id: changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
+        with:
+          filters: |
+            conformance:
+              - 'packages/mailwoman/eval-harness/conformance/**'
+              - 'packages/mailwoman/eval-harness/gauntlet/**'
+              - 'packages/mailwoman/runtime-pipeline.ts'
+              - 'packages/normalize/**'
+              - 'packages/query-shape/**'
+              - 'packages/locale-gate/**'
+              - 'packages/kind-classifier/**'
+              - 'packages/phrase-grouper/**'
+              - 'packages/core/**'
+              - 'packages/neural/**'
+              - 'packages/resolver/**'
+              - 'packages/resolver-wof-sqlite/**'
+
+      - name: Decide
+        id: decide
+        env:
+          EVENT: ${{ github.event_name }}
+          CHANGED: ${{ steps.changes.outputs.conformance }}
+        run: |
+          if [ "$EVENT" != "pull_request" ] || [ "$CHANGED" = "true" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "needed=false" >> "$GITHUB_OUTPUT"
+          echo "::notice title=conformance integration SKIPPED::No parse-path change, so the five LIVE-PIPELINE conformance suites did not run. The same laws WERE asserted against the committed fixture rows by the *-suite.test.ts files in unit-fast. What was NOT exercised is the pipeline claim: that the tokenizer, lexicons, pair indices and resolver agree with Stage 1 on these rows."
+          {
+            echo "## conformance integration: skipped (parse path unchanged)"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| laws asserted | **yes**, committed fixture rows in \`unit-fast\` |"
+            echo "| live pipeline | **no**, nothing on the parse path changed |"
+            echo "| saved | ~93s of unit-slow (18% of the leg, measured 2026-08-29) |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # Does the full-scale lexicon build need to run? HOSTED, and deliberately separate from the job it
   # gates.
@@ -680,13 +769,11 @@ jobs:
   # NOT PORTABLE — job-skipped when the fleet is down, for the same reason as unit-slow but a
   # sharper one: smoke packs the weights workspaces, `copy-weights.ts` materializes them from the
   # data root, and `yarn pack` quietly packs whatever subset of the `files` globs exists. Without
-  # the host it would pack payload-free tarballs and install them happily — the exact failure that
+  # the host it would pack payload-free tarballs and install them — the exact failure that
   # published neural-weights-en-in@8.6.0 empty.
   smoke:
     needs: data-fleet
     if: needs.data-fleet.outputs.up == 'true'
-    env:
-      MAILWOMAN_DATA_ROOT: ${{ secrets.MAILWOMAN_DATA_ROOT }}
     runs-on:
       - self-hosted
       - mailwoman-data
@@ -743,6 +830,10 @@ jobs:
               - 'packages/mcp/**'
               - 'packages/bdc/**'
               - 'packages/filer/**'
+              - 'packages/flood/**'
+              - 'packages/soil/**'
+              - 'packages/coastal/**'
+              - 'packages/zoning/**'
               # --- Smoke script + packaging pipeline ---
               - 'scripts/smoke-clean-install.ts'
               - 'scripts/pack-workspace.ts'
@@ -847,7 +938,7 @@ jobs:
   # `if: always()` so it reports on leg failure instead of being skipped (a skipped required
   # check reads as "waiting forever" and blocks merges silently).
   test:
-    needs: [data-fleet, static, unit-fast, unit-slow, lexicon-gate, lexicon-full, react, smoke]
+    needs: [data-fleet, static, unit-fast, unit-slow, conformance-scope, lexicon-gate, lexicon-full, react, smoke]
     if: always()
     # Hosted, always: this job only reads its `needs`, and pinning the aggregator to the fleet would
     # make it unrunnable in exactly the situation the skip path exists for.
@@ -857,14 +948,14 @@ jobs:
       # A `skipped` leg normally means something went wrong upstream, so it stays fatal — EXCEPT when
       # the data fleet is down, where unit-slow and smoke skip by design because the host they need
       # is gone. That exemption is the price of being able to merge at all with the fleet off, and it
-      # is narrow: failure and cancellation are still fatal, and the run says plainly what it did not
+      # is narrow: failure and cancellation are still fatal, and the run says what it did not
       # cover.
       - name: Fail if any leg failed
         # `lexicon-full` is EXCLUDED from the skipped-is-fatal check on purpose: skipping it is its
         # designed behaviour when lexicon-gate says no lexicon path changed, and the gate itself
         # still has to pass. Every other leg is enumerated rather than wildcarded so that a leg
         # skipping for an unexpected reason stays fatal.
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && (needs.static.result == 'skipped' || needs.unit-fast.result == 'skipped' || needs.unit-slow.result == 'skipped' || needs.lexicon-gate.result == 'skipped' || needs.react.result == 'skipped' || needs.smoke.result == 'skipped')) }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || (needs.data-fleet.outputs.up == 'true' && (needs.static.result == 'skipped' || needs.unit-fast.result == 'skipped' || needs.unit-slow.result == 'skipped' || needs.conformance-scope.result == 'skipped' || needs.lexicon-gate.result == 'skipped' || needs.react.result == 'skipped' || needs.smoke.result == 'skipped')) }}
         run: |
           echo "::error::a test leg did not succeed: ${{ toJSON(needs.*.result) }}"
           exit 1

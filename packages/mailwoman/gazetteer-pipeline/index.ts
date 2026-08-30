@@ -16,23 +16,20 @@
  *   passed in.
  */
 
-import { execFileSync } from "node:child_process"
+import { pathExists, readLocalJSONFile, readLocalTextFile, statLink } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
-	chmodSync,
-	copyFileSync,
-	existsSync,
-	lstatSync,
-	mkdirSync,
-	readFileSync,
-	rmSync,
-	symlinkSync,
-	writeFileSync,
-} from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { repoRootPath, repoRootPathBuilder, sealDatabase } from "@mailwoman/core/utils"
+	changeMode,
+	copyFileTo,
+	createSymbolicLink,
+	makeDirectories,
+	removePath,
+	removePathIfPresent,
+	writeLocalFile,
+} from "@mailwoman/core/fs/writers"
+import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { execFileSync } from "@mailwoman/platform/child_process"
+import { join } from "@mailwoman/platform/path"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -40,6 +37,9 @@ import { repoRootPath, repoRootPathBuilder, sealDatabase } from "@mailwoman/core
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { resolvePath } from "path-ts"
 
 import { mailwomanDataRoot } from "../resolver-backend.ts"
@@ -145,11 +145,11 @@ export function geonamesAlternateDir(dataRoot: string = mailwomanDataRoot()): st
 /**
  * Resolve the canonical postcode-shard filenames to absolute paths, keeping only those present.
  */
-export function resolvePostcodeShards(
+export async function resolvePostcodeShards(
 	shards: readonly string[] = DEFAULT_POSTCODE_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
-): string[] {
-	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => existsSync(p))
+): Promise<string[]> {
+	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => pathExistsSync(p))
 }
 
 /**
@@ -168,11 +168,11 @@ export const DEFAULT_LOCALITY_SHARDS: readonly string[] = [
 /**
  * Resolve the conventional locality shards present on this machine.
  */
-export function resolveLocalityShards(
+export async function resolveLocalityShards(
 	shards: readonly string[] = DEFAULT_LOCALITY_SHARDS,
 	dataRoot: string = mailwomanDataRoot()
-): string[] {
-	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => existsSync(p))
+): Promise<string[]> {
+	return shards.map((s) => resolvePath(wofDir(dataRoot), s)).filter((p) => pathExistsSync(p))
 }
 
 /**
@@ -182,13 +182,13 @@ export function resolveLocalityShards(
  * artifact on the machine that derived them, and a deployment without the file must build a candidate DB with an empty
  * `importance` column rather than fail. Absent is UNMEASURED, which is what the consumer already handles.
  */
-export function resolveImportanceDB(
+export async function resolveImportanceDB(
 	filename: string = DEFAULT_IMPORTANCE_DB,
 	dataRoot: string = mailwomanDataRoot()
-): string | undefined {
+): Promise<string | undefined> {
 	const path = resolvePath(wofDir(dataRoot), filename)
 
-	return existsSync(path) ? path : undefined
+	return (await pathExists(path)) ? path : undefined
 }
 
 export interface FoldOptions {
@@ -221,8 +221,8 @@ export interface FoldOptions {
 	 */
 	alternateDir?: string
 	/**
-	 * #1514 escape hatch: proceed even when `adminIn` already carries alias rows for countries this run does NOT list.
-	 * The fold owns its whole id range and rewrites it wholesale, so those countries are DROPPED. Only pass this when
+	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does NOT list. The
+	 * fold owns its whole id range and rewrites it wholesale, so those countries are DROPPED. Only pass this when
 	 * shrinking the fold is the point.
 	 */
 	allowCoverageLoss?: boolean
@@ -263,7 +263,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 		throw new Error("fold must write a distinct adminOut (build-on-copy, never in place)")
 	}
 
-	if (!existsSync(opts.adminIn)) throw new Error(`admin DB not found: ${opts.adminIn}`)
+	if (!(await pathExists(opts.adminIn))) throw new Error(`admin DB not found: ${opts.adminIn}`)
 
 	const { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE, ingestGeonamesAliases, buildPlaceSearchFTS } =
 		await import("@mailwoman/resolver-wof-sqlite")
@@ -272,7 +272,7 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	// Pre-flight on the SOURCE, before the copy: what does it already carry in the fold's range?
 	opts.onPhase?.("preflight", "reading the source's existing alias-fold coverage")
-	const source = new DatabaseSync(opts.adminIn, { readOnly: true })
+	using source = new DatabaseClient<WOFDatabase>(opts.adminIn, { readOnly: true })
 
 	const refoldedCountries = (
 		source
@@ -281,8 +281,6 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	)
 
 		.map((r) => r.country)
-
-	source.close()
 
 	const requested = new Set(countries)
 	const dropped = refoldedCountries.filter((cc) => !requested.has(cc))
@@ -304,11 +302,11 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	// stamps the source mode onto a fresh copy — or writes THROUGH an existing destination keeping
 	// ITS mode. Remove any stale copy, then restore the write bit: the copy is fold staging, not the
 	// sealed artifact (2026-08-04: first candidate build against a sealed admin died on this).
-	rmSync(opts.adminOut, { force: true })
-	copyFileSync(opts.adminIn, opts.adminOut)
-	chmodSync(opts.adminOut, 0o644)
+	await removePathIfPresent(opts.adminOut)
+	await copyFileTo(opts.adminIn, opts.adminOut)
+	await changeMode(opts.adminOut, 0o644)
 
-	const db = new DatabaseSync(opts.adminOut)
+	await using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
 
 	// #1026 + #1514: the purge clears the A-class country/region nodes and the locality ancestry too, so a fold that
 	// does not pass adminForCountries un-parents the 95 zero-coverage locales' localities. Default it to the same
@@ -324,7 +322,6 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	opts.onPhase?.("place_search", "rebuilding place_search + place_bbox from the updated names")
 	const res = buildPlaceSearchFTS(db, { drop: true, onProgress: (phase, detail) => opts.onPhase?.(phase, detail) })
 	db.exec("ANALYZE")
-	db.close()
 
 	return { ingested, placeSearchRows: res.indexedRows, bboxRows: res.bboxIndexedRows, refoldedCountries }
 }
@@ -373,7 +370,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// `undefined` means "use the convention"; `false` means "the caller chose an empty column". Only the
 	// second may skip the resolve — collapsing them would make a missing artifact indistinguishable from a
 	// deliberate opt-out in the build log.
-	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? resolveImportanceDB())
+	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? (await resolveImportanceDB()))
 
 	const backfillCountries =
 		opts.currencyBackfillCountries === false
@@ -386,15 +383,15 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	// says which source it used.
 	const capitalsPath = repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
 
-	const capitals = existsSync(String(capitalsPath))
-		? parseJSONStrict<{ entries?: CapitalPoint[] }>(readFileSync(String(capitalsPath), "utf8")).entries
+	const capitals = (await pathExists(String(capitalsPath)))
+		? (await readLocalJSONFile<{ entries?: CapitalPoint[] }>(String(capitalsPath))).entries
 		: undefined
 
 	const result = await buildCandidateTable({
 		input: opts.adminDB,
 		output: opts.out,
-		postcodes: [...(opts.postcodeShards ?? resolvePostcodeShards())],
-		localities: [...(opts.localityShards ?? resolveLocalityShards())],
+		postcodes: [...(opts.postcodeShards ?? (await resolvePostcodeShards()))],
+		localities: [...(opts.localityShards ?? (await resolveLocalityShards()))],
 		...(importance ? { importance } : {}),
 		...(backfillCountries ? { currencyBackfill: { geonamesDir: geonamesDir(), countries: backfillCountries } } : {}),
 		...(capitals?.length ? { capitals } : {}),
@@ -415,11 +412,11 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 
 	await stampLayerManifest(
 		opts.out,
-		candidateLayerManifest({
+		await candidateLayerManifest({
 			adminDBPath: opts.adminDB,
 			shardCounts: {
-				postcodes: (opts.postcodeShards ?? resolvePostcodeShards()).length,
-				localities: (opts.localityShards ?? resolveLocalityShards()).length,
+				postcodes: (opts.postcodeShards ?? (await resolvePostcodeShards())).length,
+				localities: (opts.localityShards ?? (await resolveLocalityShards())).length,
 			},
 			importance: Boolean(importance),
 			buildSHA: sha,
@@ -429,7 +426,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	)
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(opts.out)
+	await sealDatabase(opts.out)
 
 	return result
 }
@@ -438,20 +435,20 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
  * Point the drop-in convention path `<data-root>/wof/candidate.db` at `candidateDB` (a symlink — a POINTER swap, never
  * a DB mutation). The nominatim/photon CLIs auto-use this path. Returns the link.
  */
-export function promoteCandidate(candidateDB: string, dataRoot: string = mailwomanDataRoot()): string {
-	if (!existsSync(candidateDB)) throw new Error(`candidate DB not found: ${candidateDB}`)
+export async function promoteCandidate(candidateDB: string, dataRoot: string = mailwomanDataRoot()): Promise<string> {
+	if (!(await pathExists(candidateDB))) throw new Error(`candidate DB not found: ${candidateDB}`)
 	const linkPath = join(wofDir(dataRoot), "candidate.db")
 
 	// Replace any existing pointer (symlink or stray file) — never the build it points at.
 	try {
-		if (lstatSync(linkPath)) {
-			rmSync(linkPath)
+		if (await statLink(linkPath)) {
+			await removePath(linkPath)
 		}
 	} catch {
 		// nothing there yet
 	}
 
-	symlinkSync(candidateDB, linkPath)
+	await createSymbolicLink(candidateDB, linkPath)
 
 	return linkPath
 }
@@ -499,23 +496,23 @@ export interface PublishResult {
  * Shells out to the proven `publish-demo-assets-to-r2.py` (boto3 + R2 cache-control); RCLONE_S3_PUBLIC_* creds must be
  * in the process env (source `.env` first).
  */
-export function publishGazetteer(opts: PublishOptions): PublishResult {
-	if (!existsSync(opts.candidateDB)) throw new Error(`candidate DB not found: ${opts.candidateDB}`)
+export async function publishGazetteer(opts: PublishOptions): Promise<PublishResult> {
+	if (!(await pathExists(opts.candidateDB))) throw new Error(`candidate DB not found: ${opts.candidateDB}`)
 
-	if (!existsSync(opts.uploadScript)) throw new Error(`upload script not found: ${opts.uploadScript}`)
+	if (!(await pathExists(opts.uploadScript))) throw new Error(`upload script not found: ${opts.uploadScript}`)
 
 	const prefix = opts.prefix ?? "mailwoman"
 	const versionDir = join(opts.stageDir, "gazetteer", opts.version)
-	mkdirSync(versionDir, { recursive: true })
+	await makeDirectories(versionDir)
 	const staged = join(versionDir, "candidate.db")
 
 	try {
-		rmSync(staged)
+		await removePath(staged)
 	} catch {
 		// fresh
 	}
 
-	symlinkSync(opts.candidateDB, staged)
+	await createSymbolicLink(opts.candidateDB, staged)
 
 	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
@@ -533,13 +530,13 @@ export function publishGazetteer(opts: PublishOptions): PublishResult {
 
 	let bumped = false
 
-	if (opts.resourcesFile && !opts.dryRun && existsSync(opts.resourcesFile)) {
+	if (opts.resourcesFile && !opts.dryRun && (await pathExists(opts.resourcesFile))) {
 		opts.onPhase?.("demo", `ADMIN_GAZETTEER_VERSION → ${opts.version}`)
-		const src = readFileSync(opts.resourcesFile, "utf8")
+		const src = await readLocalTextFile(opts.resourcesFile)
 		const next = src.replace(/(ADMIN_GAZETTEER_VERSION = ")[^"]+(")/, `$1${opts.version}$2`)
 
 		if (next !== src) {
-			writeFileSync(opts.resourcesFile, next)
+			await writeLocalFile(next, opts.resourcesFile)
 			bumped = true
 		}
 	}

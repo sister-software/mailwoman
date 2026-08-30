@@ -10,9 +10,9 @@
  *   artifact afterwards.
  */
 
-import type { DatabaseSync } from "node:sqlite"
-
-import { assertDatabaseIntegrity } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { assertDatabaseIntegrity } from "@mailwoman/sqlite/sealed-db"
 
 import { OVERTURE_ID_BASE } from "./fold-overture.ts"
 
@@ -34,7 +34,10 @@ export interface FreezeAdminResult {
 /**
  * Freeze an ingested admin staging DB (see the module docstring for the exact order and why it matters).
  */
-export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {}): Promise<FreezeAdminResult> {
+export async function freezeAdmin(
+	db: DatabaseClient<WOFDatabase>,
+	opts: FreezeAdminOptions = {}
+): Promise<FreezeAdminResult> {
 	// resolver-wof-sqlite is an OPTIONAL peer of mailwoman — import it lazily (the gazetteer-pipeline
 	// convention) so importing this module never faults without it.
 	const { backfillAncestorsFromHierarchy, discoverAdminDataRoots } =
@@ -76,7 +79,7 @@ export async function freezeAdmin(db: DatabaseSync, opts: FreezeAdminOptions = {
 
 	if (opts.dataDir) {
 		phase("hierarchy-backfill", "places whose ancestry chain never reaches a country")
-		const geojsonRoots = discoverAdminDataRoots(opts.dataDir)
+		const geojsonRoots = await discoverAdminDataRoots(opts.dataDir)
 
 		if (!geojsonRoots.length) {
 			phase(

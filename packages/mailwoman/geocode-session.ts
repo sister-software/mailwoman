@@ -25,10 +25,10 @@
  *   imports React, Ink, or the parse command.
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -52,13 +52,15 @@ import {
 	geocodeAddress,
 	geocodeParseInputs,
 	parseForGeocode,
-	ShardProvider,
 	type GeocodeDeps,
-	type GeocodeResult,
-	type ShardResolver,
-	type StateShards,
 } from "./geocode-core.ts"
+import type { GeocodeResult } from "./geocode-result.ts"
+import { ShardProvider, type ShardResolver, type StateShards } from "./geocode-shards.ts"
 import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
+import type { CoastalErosionRoute } from "./observations/coastal-route.ts"
+import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"
+import type { SoilCapabilityRoute } from "./observations/soil-route.ts"
+import type { ZoningDesignationRoute } from "./observations/zoning-route.ts"
 import { poiTaxonomyLookup } from "./poi-intent.ts"
 import {
 	createResolverBackend,
@@ -238,10 +240,10 @@ export interface GeocodeRun {
 }
 
 /**
- * A warm geocoder over one set of options. Call {@link GeocodeSession.close} when done — the gazetteer, shard, OSM and
- * poi.db handles stay open for the session's whole life, and `close` releases every one of them.
+ * A warm geocoder over one set of options. Dispose it when done — the gazetteer, shard, OSM and poi.db handles stay
+ * open for the session's whole life, and disposal releases every one of them.
  */
-export interface GeocodeSession {
+export interface GeocodeSession extends Disposable {
 	/**
 	 * One-time session construction phases, in wall-clock milliseconds.
 	 */
@@ -266,19 +268,18 @@ export interface GeocodeSession {
 		weights?: { modelPath: string; source: string }
 	}
 	geocode(input: string): Promise<GeocodeRun>
-	close(): void
 }
 
 //#endregion
 
 //#region Path + flag helpers
 
-function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): string[] {
+async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): Promise<string[]> {
 	// The shared shard SELECTION (explicit list, then $MAILWOMAN_WOF_DB, then the default set) with this
 	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
 	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
 	// when nothing survives, which is part of the CLI's construction-order contract.
-	const paths = resolveWOFShardPaths(options.resolveDB, options.dataRoot).filter((p: string) => existsSync(p))
+	const paths = resolveWOFShardPaths(options.resolveDB, options.dataRoot).filter((p: string) => pathExistsSync(p))
 
 	if (!paths.length) {
 		throw new CommandError(
@@ -312,9 +313,128 @@ export interface ForkEntityProbe {
 	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 	/**
 	 * The poi.db handle behind {@link deps}' `poiLookup`, so the session can release it. Carried separately because
-	 * `POIExecutorLookup` is a read interface and declares no `close`.
+	 * `POIExecutorLookup` is a read interface and declares no disposal contract.
 	 */
-	handle?: { close(): void }
+	handle?: Disposable
+}
+
+/**
+ * The authority-designation route, opened when the sealed flood layer is on disk (#1989).
+ *
+ * PRESENCE OF THE LAYER FILE IS THE SWITCH — there is no boolean, because a boolean would have to construct the reader
+ * itself and would put a sealed database open on the default construction path. No `flood.db` in the data root, no
+ * route, and the geocode result is byte-identical to a build without the field.
+ *
+ * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * manifest naming a different product — must not take the geocoder down over an advisory it was never asked for.
+ */
+export async function loadAuthorityDesignationRoute(
+	options: Pick<GeocodeSessionOptions, "dataRoot">
+): Promise<AuthorityDesignationRoute | undefined> {
+	const floodDBPath = resolvePath(options.dataRoot, "flood", "flood.db")
+
+	if (!(await pathExists(floodDBPath))) return undefined
+
+	try {
+		const { createAuthorityDesignationRoute } = await import("./observations/flood-route.ts")
+
+		return createAuthorityDesignationRoute({ databasePath: String(floodDBPath) })
+	} catch {
+		return undefined
+	}
+}
+
+/**
+ * The soil-capability route, opened when the sealed SSURGO layer is on disk (#1991).
+ *
+ * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the flood route above, and for the same reason: a
+ * boolean would have to construct the reader itself and would put a sealed database open on the default construction
+ * path. No `soil.db` in the data root, no route, and the geocode result is byte-identical to a build without the
+ * field.
+ *
+ * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * manifest naming a different product — must not take the geocoder down over an advisory it was never asked for.
+ */
+export async function loadSoilCapabilityRoute(
+	options: Pick<GeocodeSessionOptions, "dataRoot">
+): Promise<SoilCapabilityRoute | undefined> {
+	const soilDBPath = resolvePath(options.dataRoot, "soil", "soil.db")
+
+	if (!(await pathExists(soilDBPath))) return undefined
+
+	try {
+		const { createSoilCapabilityRoute } = await import("./observations/soil-route.ts")
+
+		return createSoilCapabilityRoute({ databasePath: String(soilDBPath) })
+	} catch {
+		return undefined
+	}
+}
+
+/**
+ * The coastal-erosion route, opened when the sealed EA NCERM layer is on disk (#1993).
+ *
+ * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the two routes above, and for the same reason: a
+ * boolean would have to construct the reader itself and would put a sealed database open on the default construction
+ * path. No `coastal-england.db` in the data root, no route, and the geocode result is byte-identical to a build without
+ * the field.
+ *
+ * THE ARTIFACT IS NAMED FOR ITS EXTENT rather than for its subject, because the surveyed alternatives are not
+ * interchangeable with it: Wales publishes NCERM on the previous generation's vocabulary, Scotland's Dynamic Coast
+ * carries a property-level prohibition of its own, and Northern Ireland publishes 122 line segments carrying one
+ * attribute. A file called `coastal.db` would invite one of them to overwrite the other.
+ *
+ * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * manifest naming a different product, a coverage row that would license a negative claim — must not take the geocoder
+ * down over an advisory it was never asked for.
+ */
+export async function loadCoastalErosionRoute(
+	options: Pick<GeocodeSessionOptions, "dataRoot">
+): Promise<CoastalErosionRoute | undefined> {
+	const coastalDBPath = resolvePath(options.dataRoot, "coastal", "coastal-england.db")
+
+	if (!(await pathExists(coastalDBPath))) return undefined
+
+	try {
+		const { createCoastalErosionRoute } = await import("./observations/coastal-route.ts")
+
+		return createCoastalErosionRoute({ databasePath: String(coastalDBPath) })
+	} catch {
+		return undefined
+	}
+}
+
+/**
+ * The zoning route, opened when the sealed Irish Generalised Zoning Types layer is on disk (#1995).
+ *
+ * PRESENCE OF THE LAYER FILE IS THE SWITCH — the same posture as the three routes above, and for the same reason: a
+ * boolean would have to construct the reader itself and would put a sealed database open on the default construction
+ * path. No `zoning-ireland.db` in the data root, no route, and the geocode result is byte-identical to a build without
+ * the field.
+ *
+ * THE ARTIFACT IS NAMED FOR ITS JURISDICTION rather than for its subject, and here that matters more than anywhere
+ * else. Zoning is decentralised by construction: 30 Irish local authorities publish 581 distinct zone codes between
+ * them, and a California or a Washington layer would carry its own vocabulary under the same word. A file called
+ * `zoning.db` would invite one jurisdiction's codes to answer for another's.
+ *
+ * Tolerate-and-degrade past the `existsSync`: a layer that is present but refuses to open — a truncated file, a
+ * manifest naming a different product, a coverage row that would license a negative claim — must not take the geocoder
+ * down over an advisory it was never asked for.
+ */
+export async function loadZoningDesignationRoute(
+	options: Pick<GeocodeSessionOptions, "dataRoot">
+): Promise<ZoningDesignationRoute | undefined> {
+	const zoningDBPath = resolvePath(options.dataRoot, "zoning", "zoning-ireland.db")
+
+	if (!(await pathExists(zoningDBPath))) return undefined
+
+	try {
+		const { createZoningDesignationRoute } = await import("./observations/zoning-route.ts")
+
+		return createZoningDesignationRoute({ databasePath: String(zoningDBPath) })
+	} catch {
+		return undefined
+	}
 }
 
 /**
@@ -326,7 +446,7 @@ export async function loadForkEntityDeps(
 ): Promise<ForkEntityProbe> {
 	const poiDBPath = resolvePath(options.dataRoot, "poi", "poi.db")
 
-	if (options.forkEntity === false || !existsSync(poiDBPath)) return { deps: {} }
+	if (options.forkEntity === false || !(await pathExists(poiDBPath))) return { deps: {} }
 
 	const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
@@ -360,7 +480,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
 	const candidateDB = resolveCandidateDBPath(options.candidateDB, options.dataRoot)
-	const wofPath = candidateDB ? [] : resolveWOFPath(options)
+	const wofPath = candidateDB ? [] : await resolveWOFPath(options)
 	const pathsResolvedAt = performance.now()
 
 	// Load the neural classifier (required for street-level; weights must be present).
@@ -403,7 +523,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		if (fstPath) {
 			try {
-				fst = deserializeFST(readFileSync(fstPath))
+				fst = deserializeFST(await readLocalBuffer(fstPath))
 			} catch (error) {
 				console.warn(`[mailwoman] failed to load the gazetteer FST at ${fstPath}: ${(error as Error).message}`)
 			}
@@ -513,7 +633,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// Build-local OSM rooftop tier (#247), behind the package + on-disk-shard boundary. The provider
 	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
 	// an absent unpublished @mailwoman/osm package or absent shard remains an admin-only no-op.
-	let osmProvider: { for: (country: string) => StateShards; close(): void } | undefined
+	let osmProvider: ({ for: (country: string) => StateShards } & Disposable) | undefined
 
 	try {
 		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
@@ -524,23 +644,31 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const optionalProvidersLoadedAt = performance.now()
 
-	let poiHandle: { close(): void } | undefined
+	let poiHandle: Disposable | undefined
+	let designationRoute: AuthorityDesignationRoute | undefined
+	let soilRoute: SoilCapabilityRoute | undefined
+	let coastalRoute: CoastalErosionRoute | undefined
+	let zoningRoute: ZoningDesignationRoute | undefined
 
-	const closeQuietly = (handle: { close(): void } | undefined): void => {
+	const disposeQuietly = (handle: Disposable | undefined): void => {
 		try {
-			handle?.close()
+			handle?.[Symbol.dispose]()
 		} catch {
-			// A handle that refuses to close must not strand the others open.
+			// A handle that refuses disposal must not strand the others open.
 		}
 	}
 
-	const close = (): void => {
-		closeQuietly(explicitAp)
-		closeQuietly(explicitIp)
-		closeQuietly(shardProvider)
-		closeQuietly(osmProvider)
-		closeQuietly(lookup)
-		closeQuietly(poiHandle)
+	const dispose = (): void => {
+		disposeQuietly(explicitAp)
+		disposeQuietly(explicitIp)
+		disposeQuietly(shardProvider)
+		disposeQuietly(osmProvider)
+		disposeQuietly(lookup)
+		disposeQuietly(poiHandle)
+		disposeQuietly(designationRoute)
+		disposeQuietly(soilRoute)
+		disposeQuietly(coastalRoute)
+		disposeQuietly(zoningRoute)
 	}
 
 	// Everything past this point can THROW while the handles above are already open, so it runs behind the
@@ -587,8 +715,12 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		forkEntityDeps = probe.deps
 		poiHandle = probe.handle
+		designationRoute = await loadAuthorityDesignationRoute(options)
+		soilRoute = await loadSoilCapabilityRoute(options)
+		coastalRoute = await loadCoastalErosionRoute(options)
+		zoningRoute = await loadZoningDesignationRoute(options)
 	} catch (error) {
-		close()
+		dispose()
 
 		throw error
 	}
@@ -748,6 +880,18 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...forkEntityDeps,
 			// The opt-in venue tier reuses the fork-entity wiring's poiLookup; the flag alone opts in.
 			...(options.poiVenueTier === true ? { poiVenueTier: true } : {}),
+			// #1989: present only when the sealed flood layer is on disk, so a data root without one produces the identical
+			// marker list.
+			...(designationRoute ? { authorityDesignationRoute: designationRoute } : {}),
+			// #1991: present only when the sealed soil layer is on disk, so a data root without one produces the identical
+			// marker list.
+			...(soilRoute ? { soilCapabilityRoute: soilRoute } : {}),
+			// #1993: present only when the sealed coastal layer is on disk, so a data root without one produces the identical
+			// marker list.
+			...(coastalRoute ? { coastalErosionRoute: coastalRoute } : {}),
+			// #1995: present only when the sealed zoning layer is on disk, so a data root without one produces the identical
+			// marker list.
+			...(zoningRoute ? { zoningDesignationRoute: zoningRoute } : {}),
 			...(trace ? { resolveTraceSink: (record) => resolverTrace.push(record) } : {}),
 			...(trace && options.diagnoseUnreachable ? { diagnoseUnreachable: true } : {}),
 		})
@@ -759,10 +903,8 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			tree: parsedTree,
 			timing: {
 				parse: parsedAt - startedAt,
-				// Present whenever tracing was ATTEMPTED, including the attempt that threw — its milliseconds are
-				// real and were spent, and hiding them inside `total` would leave the phases not summing to it
-				// (`meaning of zero`: a trace entry of 12 ms next to an absent trace says the attempt failed and
-				// what it cost, which is a different fact from "tracing was off").
+				// Present whenever tracing was ATTEMPTED, including the attempt that threw.
+				// Hiding them inside `total` would leave the phases not summing to it (`meaning of zero`: a trace entry of 12 ms next to an absent trace says the attempt failed and what it cost, which is a different fact from "tracing was off").
 				...(options.trace ? { trace: tracedAt - parsedAt } : {}),
 				resolve: finishedAt - tracedAt,
 				total: finishedAt - startedAt,
@@ -782,7 +924,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(classifier.resolvedWeights ? { weights: classifier.resolvedWeights } : {}),
 		},
 		geocode,
-		close,
+		[Symbol.dispose]: dispose,
 	}
 }
 

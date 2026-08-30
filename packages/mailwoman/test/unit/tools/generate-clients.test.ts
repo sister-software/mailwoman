@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	CLIENT_SURFACES,
 	pythonInitPy,
@@ -66,4 +67,26 @@ test("rustLibRs declares a generate_api! module + a *_local() constructor for ev
 	// mailwoman has no hosted trial (self-host only, unlike photon) — local() only, no hosted().
 	expect(source).toContain("pub fn mailwoman_local() -> mailwoman::Client {")
 	expect(source).not.toContain("mailwoman_hosted")
+})
+
+test("emitterCLIPath resolves every surface inside its real workspace, from repository root", async () => {
+	const { sep } = await import("@mailwoman/platform/path")
+	const { dirname, join } = await import("@mailwoman/platform/path")
+	const { emitterCLIPath } = await import("mailwoman/tools/generate-clients")
+
+	for (const surface of CLIENT_SURFACES) {
+		const cli = emitterCLIPath(surface)
+		const expectedTail = join("packages", surface, "out", "cli.js")
+		const manifest = join(dirname(dirname(cli)), "package.json")
+
+		// The compiled entry lives under packages/<workspace>/out/ — the shape the 2026-08-14 regroup
+		// established. The pre-regroup resolution treated the workspace name as a repo-root segment,
+		// so a clean successful compile still read every emitter as missing.
+		expect(cli.split(sep)).toContain("packages")
+		expect(cli.endsWith(expectedTail)).toBe(true)
+
+		// Tie the resolution to the real tree: the workspace directory the path claims must exist,
+		// so the NEXT layout move fails here loudly instead of inside a red release job.
+		expect(await pathExists(manifest)).toBe(true)
+	}
 })

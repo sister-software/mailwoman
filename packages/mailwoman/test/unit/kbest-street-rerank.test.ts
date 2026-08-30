@@ -41,8 +41,9 @@ const trace = (spanScores?: number[][][]): NeuralParseTrace =>
 		...(spanScores ? { spanScores } : {}),
 	}) as NeuralParseTrace
 
-const mockClassifier = (t: NeuralParseTrace): NeuralAddressClassifier =>
-	({ traceParse: async () => t }) as unknown as NeuralAddressClassifier
+const mockClassifier = (t: NeuralParseTrace): Pick<NeuralAddressClassifier, "traceParse"> => ({
+	traceParse: async () => t,
+})
 
 const mockEvidence = (existing: string[]): StreetLocalityEvidence => {
 	const set = new Set(existing.map(foldStreetSurface))

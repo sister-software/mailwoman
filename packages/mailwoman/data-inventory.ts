@@ -22,11 +22,12 @@
  *   visible instead of leaving it as a filesystem detail.
  */
 
-import { type Dirent, existsSync, lstatSync, readdirSync, readlinkSync, statSync } from "node:fs"
-import { basename, join, relative } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { readDirectoryEntries, type Dirent } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLinkSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
+import { basename, join, relative } from "@mailwoman/platform/path"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Whether an artifact can say how it was made.
@@ -125,10 +126,10 @@ export interface InventoryReport {
  * one read-write would fail on exactly the artifacts it most needs to describe.
  */
 export function probeManifest(path: string): { manifest?: LayerManifest; error?: string } {
-	let db: DatabaseSync | undefined
+	let db: DatabaseClient<LayerContractDatabase> | undefined
 
 	try {
-		db = new DatabaseSync(path, { readOnly: true })
+		db = new DatabaseClient<LayerContractDatabase>(path, { readOnly: true })
 
 		const present = db
 			.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'layer_manifest' LIMIT 1")
@@ -142,7 +143,7 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
 	} catch (error) {
 		return { error: (error as Error).message }
 	} finally {
-		db?.close()
+		db?.destroy()
 	}
 }
 
@@ -153,17 +154,17 @@ export function probeManifest(path: string): { manifest?: LayerManifest; error?:
  * unbounded walk would spend minutes in directories that contain no databases. Foreign roots are not descended into at
  * all — they are counted and named, which is cheaper and states the same fact.
  */
-function findDatabases(dataRoot: string, maxDepth: number): { paths: string[]; skippedForeign: number } {
+async function findDatabases(dataRoot: string, maxDepth: number): Promise<{ paths: string[]; skippedForeign: number }> {
 	const paths: string[] = []
 	let skippedForeign = 0
 
-	const walk = (dir: string, depth: number): void => {
+	const walk = async (dir: string, depth: number): Promise<void> => {
 		if (depth > maxDepth) return
 
 		let entries: Dirent[]
 
 		try {
-			entries = readdirSync(dir, { withFileTypes: true })
+			entries = await readDirectoryEntries(dir)
 		} catch {
 			// An unreadable directory is not a finding about provenance; skip it rather than fail the report.
 			return
@@ -179,7 +180,7 @@ function findDatabases(dataRoot: string, maxDepth: number): { paths: string[]; s
 					continue
 				}
 
-				walk(full, depth + 1)
+				await walk(full, depth + 1)
 
 				continue
 			}
@@ -190,7 +191,7 @@ function findDatabases(dataRoot: string, maxDepth: number): { paths: string[]; s
 		}
 	}
 
-	walk(dataRoot, 0)
+	await walk(dataRoot, 0)
 
 	return { paths: paths.toSorted(), skippedForeign }
 }
@@ -204,8 +205,8 @@ function findDatabases(dataRoot: string, maxDepth: number): { paths: string[]; s
 function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
 	const rel = relative(dataRoot, path)
 	const segment = rel.split("/")[0] ?? ""
-	const link = lstatSync(path).isSymbolicLink() ? readlinkSync(path) : undefined
-	const bytes = existsSync(path) ? statSync(path).size : 0
+	const link = statLinkSync(path).isSymbolicLink() ? readLinkSync(path) : undefined
+	const bytes = pathExistsSync(path) ? statPathSync(path).size : 0
 
 	const base: InventoryEntry = {
 		path: rel,
@@ -228,9 +229,9 @@ function inventoryEntry(dataRoot: string, path: string): InventoryEntry {
 /**
  * Walk the data root and classify every database in it.
  */
-export function takeInventory(options: { dataRoot: string; maxDepth?: number }): InventoryReport {
+export async function takeInventory(options: { dataRoot: string; maxDepth?: number }): Promise<InventoryReport> {
 	const maxDepth = options.maxDepth ?? 2
-	const { paths, skippedForeign } = findDatabases(options.dataRoot, maxDepth)
+	const { paths, skippedForeign } = await findDatabases(options.dataRoot, maxDepth)
 	const entries = paths.map((path) => inventoryEntry(options.dataRoot, path))
 
 	const counts: Record<Provenance, number> = {
@@ -286,7 +287,7 @@ export function buildCommandGaps(buildCmd: string, repoRoot: string): string[] {
 	return buildCmd
 		.split(/\s+/)
 		.filter((token) => token.includes("/") && !/[$`|><*]/.test(token))
-		.filter((token) => !existsSync(join(repoRoot, token)))
+		.filter((token) => !pathExistsSync(join(repoRoot, token)))
 }
 
 /**

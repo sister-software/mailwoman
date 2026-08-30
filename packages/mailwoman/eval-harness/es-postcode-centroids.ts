@@ -16,9 +16,9 @@
  *   Run: mailwoman eval es-postcode-centroids [--parquet <path>] [--out <db>] [--country ES]
  */
 
-import { DatabaseSync } from "node:sqlite"
-
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
  * Options for {@linkcode buildESPostcodeCentroids}.
@@ -40,7 +40,7 @@ export interface ESPostcodeCentroidsOptions {
 	/**
 	 * Output SQLite DB. Default `$MAILWOMAN_DATA_ROOT/wof/postalcode-<cc>-overture.db`.
 	 *
-	 * The `postalcode-` prefix is load-bearing, not cosmetic: `deriveSchemaName` turns the filename into the attached SQL
+	 * The `postalcode-` prefix is required, not cosmetic: `deriveSchemaName` turns the filename into the attached SQL
 	 * schema name and `pickShardsForPlacetype` routes by testing it against the placetype, which is `postalcode`. A shard
 	 * spelled `postcode-` matches no branch and is silently never queried. The sibling `postcode-locality-*.db` family
 	 * keeps the shorter prefix on purpose — those carry a `postcode_locality` relation table and no `spr`, so they are
@@ -114,7 +114,7 @@ GROUP BY b.pc
 
 	// Emit the spr table the WOFPostcodeLookup query consumes:
 	//   SELECT country, latitude, longitude FROM spr WHERE name=? AND placetype='postalcode' AND is_current!=0
-	const out = new DatabaseSync(OUT_DB)
+	using out = new DatabaseClient<WOFDatabase>(OUT_DB)
 	// Throwaway build artifact — no durability needed; OFF journal + a single transaction around the
 	// inserts makes large locales (CA = 843k rows) finish in seconds instead of one implicit
 	// transaction (with its own journal write) per row, which is slow enough to be killed by a timeout.
@@ -149,7 +149,6 @@ CREATE TABLE spr (
 
 	out.exec("COMMIT")
 	out.exec(`CREATE INDEX spr_by_name ON spr(name); CREATE INDEX spr_by_country ON spr(country);`)
-	out.close()
 
 	console.error(`wrote ${rows.length} rows → ${OUT_DB}`)
 }

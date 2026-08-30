@@ -30,10 +30,10 @@
  *   ```
  */
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-
+import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
+import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -157,17 +157,6 @@ function isSuspicious(entry: GoldenEntry): boolean {
 	return false
 }
 
-// ── IO ─────────────────────────────────────────────────────────────────────
-
-/**
- * Read a JSONL, tolerating a missing file (returns `[]`) — prior golden dirs may lack a bucket.
- */
-async function readJSONLIfPresent<T>(path: string): Promise<T[]> {
-	if (!existsSync(path)) return []
-
-	return Array.fromAsync(JSONSpliterator.fromAsync<T>(path))
-}
-
 // ── Main ───────────────────────────────────────────────────────────────────
 
 export async function promoteGolden(
@@ -180,7 +169,15 @@ export async function promoteGolden(
 	const dryRun = options.dryRun ?? false
 
 	report?.(`reading candidates: ${options.input}`)
-	const candidates = await readJSONLIfPresent<GoldenEntry>(options.input)
+
+	// The candidates file is the REQUIRED input, so its absence must not read as "zero candidates" —
+	// that promotes the prior version unchanged and reports success. `JSONSpliterator.fromAsync`
+	// reports a missing path as a bare `TypeError` naming its own internals, so name the path here.
+	if (!(await pathExists(options.input))) {
+		throw new Error(`Candidates file not found: ${options.input}`)
+	}
+
+	const candidates = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenEntry>(options.input))
 	report?.(`  ${candidates.length} candidates loaded`)
 
 	// Forward-copy base: existing entries from the prior golden version go forward verbatim,
@@ -189,10 +186,10 @@ export async function promoteGolden(
 	const priorEntries: { country: string; entries: GoldenEntry[] }[] = []
 	const seenNormalized = new Set<string>()
 
-	if (existsSync(priorDir)) {
-		for (const f of readdirSync(priorDir).filter((n) => n.endsWith(".jsonl"))) {
+	if (await pathExists(priorDir)) {
+		for (const f of (await readDirectory(priorDir)).filter((n) => n.endsWith(".jsonl"))) {
 			const country = f.replace(".jsonl", "").toUpperCase()
-			const entries = await readJSONLIfPresent<GoldenEntry>(join(priorDir, f))
+			const entries = await Array.fromAsync(JSONSpliterator.fromAsync<GoldenEntry>(join(priorDir, f)))
 			priorEntries.push({ country, entries })
 
 			for (const e of entries) {
@@ -308,7 +305,7 @@ export async function promoteGolden(
 		return stats
 	}
 
-	mkdirSync(outDir, { recursive: true })
+	await makeDirectories(outDir)
 
 	const manifest: {
 		promoted_at: string
@@ -338,14 +335,14 @@ export async function promoteGolden(
 	}
 
 	// Forward-copy non-.jsonl files (README.md, etc.) from prior
-	if (existsSync(priorDir)) {
-		for (const f of readdirSync(priorDir).filter((n) => !n.endsWith(".jsonl"))) {
-			copyFileSync(join(priorDir, f), join(outDir, f))
+	if (await pathExists(priorDir)) {
+		for (const f of (await readDirectory(priorDir)).filter((n) => !n.endsWith(".jsonl"))) {
+			await copyFileTo(join(priorDir, f), join(outDir, f))
 			report?.(`  forward-copied: ${f}`)
 		}
 	}
 
-	writeFileSync(join(outDir, "MANIFEST.json"), JSON.stringify(manifest, null, 2) + "\n")
+	await writeLocalJSONFile(manifest, join(outDir, "MANIFEST.json"))
 	report?.(`✓ promoted to ${outDir}`)
 
 	return stats

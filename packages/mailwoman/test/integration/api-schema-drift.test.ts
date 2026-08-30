@@ -61,7 +61,7 @@
  */
 
 import { GeocodeOutcomeSchema } from "@mailwoman/api"
-import type { GeocodeResult } from "mailwoman/geocode-core"
+import type { GeocodeResult } from "mailwoman/geocode-result"
 import { expect, test } from "vitest"
 import { z } from "zod"
 
@@ -129,8 +129,11 @@ const GEOCODE_RESULT_FIELD_NAMES = {
 	candidates: true,
 	rooftop: true,
 	postcode_country_scope: true,
+	capital_promotion: true,
+	variant_alias_exemption: true,
 	intent_markers: true,
 	admin_coherence: true,
+	authoritative: true,
 	dropped_components: true,
 } satisfies Record<keyof GeocodeResult, true>
 

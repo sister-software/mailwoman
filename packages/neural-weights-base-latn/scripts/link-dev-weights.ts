@@ -1,14 +1,14 @@
 #!/usr/bin/env node
+import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 /**
  * Link dev artifacts into the base-latn workspace (FST-distribution arc precedent — same pattern as the locale weights
  * packages, but ships only the shared model + tokenizer + calibration + lexicons; locale-specific data stays in each
  * overlay).
  */
-import { existsSync, mkdirSync } from "node:fs"
-import { resolve } from "node:path"
-
-import { $public } from "@mailwoman/core/env"
-import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
+import { resolve } from "@mailwoman/platform/path"
 import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
@@ -19,7 +19,7 @@ import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker
  */
 const DEST_DIR = String(weightsOverlayPath("base-latn"))
 
-mkdirSync(DEST_DIR, { recursive: true })
+await makeDirectories(DEST_DIR)
 
 /**
  * Model + tokenizer: same source as the en-us workspace uses ($MAILWOMAN_DEV_MODEL env override supported).
@@ -79,7 +79,7 @@ for (const [src, name] of [
 	[SRC_CALIBRATION, "calibration.json"],
 	[SRC_CALIBRATION_PER_LOCALE, "calibration-per-locale.json"],
 ] as const) {
-	if (!existsSync(src)) {
+	if (!(await pathExists(src))) {
 		console.error(`MISSING ${src}`)
 
 		continue

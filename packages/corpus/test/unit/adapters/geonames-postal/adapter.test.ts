@@ -1,28 +1,31 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mkdtempSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	createGeonamesPostalAdapter,
 	GEONAMES_POSTAL_ADAPTER_ID,
 	GEONAMES_POSTAL_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/geonames-postal/adapter"
-import { beforeEach, describe, expect, it } from "vitest"
+import { join } from "@mailwoman/platform/path"
+import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 import type { CanonicalRow } from "#types"
 
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
 let scratch: string
 
-beforeEach(() => {
-	scratch = mkdtempSync(join(tmpdir(), "mailwoman-gnpostal-"))
+beforeEach(async () => {
+	scratch = fixtures.use(await temporaryDirectory("mailwoman-gnpostal-")).path
 })
 
 // 12-column GeoNames postal row: country, postcode, place, admin1_name, admin1_code, admin2_*, admin3_*, lat, lon, accuracy.
 function row(country: string, postcode: string, place: string, admin1: string): string {
-	const cols = new Array(12).fill("")
+	const cols = Array.from({ length: 12 }).fill("")
 	cols[0] = country
 	cols[1] = postcode
 	cols[2] = place
@@ -34,9 +37,9 @@ function row(country: string, postcode: string, place: string, admin1: string): 
 	return cols.join("\t")
 }
 
-function writeFixture(...rows: string[]): string {
+async function writeFixture(...rows: string[]): Promise<string> {
 	const p = join(scratch, "XX.txt")
-	writeFileSync(p, rows.join("\n") + "\n", "utf8")
+	await writeLocalTextFile(rows.join("\n") + "\n", p)
 
 	return p
 }
@@ -60,7 +63,7 @@ describe("geonames-postal adapter", () => {
 
 	it("emits postcode-first variants with region when admin1 differs from the place", async () => {
 		const rows = await collect(
-			writeFixture(row("DE", "10115", "Berlin", "Berlin"), row("FR", "75001", "Paris", "Île-de-France"))
+			await writeFixture(row("DE", "10115", "Berlin", "Berlin"), row("FR", "75001", "Paris", "Île-de-France"))
 		)
 
 		const fr = rows.filter((r) => r.country === "FR")
@@ -81,7 +84,7 @@ describe("geonames-postal adapter", () => {
 
 	it("drops the region variant when admin1 just repeats the place (no 'X X' noise)", async () => {
 		// Berlin (postcode 10115, admin1 'Berlin') — region == place, so only the {postcode,locality} row.
-		const rows = await collect(writeFixture(row("DE", "10115", "Berlin", "Berlin")))
+		const rows = await collect(await writeFixture(row("DE", "10115", "Berlin", "Berlin")))
 		expect(rows).toHaveLength(1)
 		expect(rows[0]?.components).toEqual({ postcode: "10115", locality: "Berlin" })
 		expect(rows[0]?.raw).toBe("10115 Berlin")
@@ -89,7 +92,7 @@ describe("geonames-postal adapter", () => {
 
 	it("skips rows missing postcode or place", async () => {
 		const rows = await collect(
-			writeFixture(
+			await writeFixture(
 				row("DE", "", "Nowhere", "Bayern"),
 				row("DE", "80331", "", "Bayern"),
 				row("DE", "80331", "München", "Bayern")
@@ -100,7 +103,7 @@ describe("geonames-postal adapter", () => {
 	})
 
 	it("honors the country filter and the row limit", async () => {
-		const p = writeFixture(row("DE", "80331", "München", "Bayern"), row("FR", "75001", "Paris", "Île-de-France"))
+		const p = await writeFixture(row("DE", "80331", "München", "Bayern"), row("FR", "75001", "Paris", "Île-de-France"))
 		expect((await collect(p, { country: "DE" })).every((r) => r.country === "DE")).toBe(true)
 		expect(await collect(p, { limit: 1 })).toHaveLength(1)
 	})

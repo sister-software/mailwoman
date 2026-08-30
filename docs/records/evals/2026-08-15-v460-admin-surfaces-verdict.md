@@ -163,7 +163,7 @@ outvoting a much larger base, and the visible win arriving with an invisible bil
 
 ## What the corpus additions bought
 
-Per-locale tripwire, matched fp32 batteries:
+Per-locale regression check, matched fp32 batteries:
 
 | tag         | us                          | fr                 |
 | ----------- | --------------------------- | ------------------ |

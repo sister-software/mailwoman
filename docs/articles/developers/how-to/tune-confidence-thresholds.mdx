@@ -12,7 +12,7 @@ for what happens to the rows that fall below it.
 
 Two facts decide the whole shape of this page. The parser scores each component, not each address —
 there is no whole-parse confidence field. And the raw scores are compressed: on twenty clean addresses
-they spanned 0.828 to 0.938, so a threshold at 0.9 on raw output cuts through the middle of the
+they spanned 0.828 to 0.938, so a threshold at 0.9 on raw output lands in the middle of the
 good rows. Calibration is what makes a threshold mean something.
 
 ## Prerequisites
@@ -114,7 +114,7 @@ Suite 400
 
 The clean row moves from a 0.906–0.929 band to a 0.969–0.991 one. The bogus region moves from 0.462 to
 0.778 — still the outlier, now with room between it and its neighbours. That gap is what a threshold
-cuts.
+separates on.
 
 ## 3. Take the threshold from the shipped abstention curve
 
@@ -184,8 +184,8 @@ thr   rows-accepted  clean-reviewed  broken-reviewed  spans-below
 
 At 0.90 the rule catches all three broken rows and sends no clean row to review. At 0.97 it catches the
 same three and sends fifteen of twenty clean rows with them — because 22% of spans fall below 0.97, and
-a six-component row only has to lose one of them. Weakest-link gating multiplies the span-level review
-rate by roughly the component count, so a threshold that looks cheap per span can be expensive per row.
+a six-component row only has to lose one of them. Routing on the weakest span multiplies the span-level
+review rate by roughly the component count, so a threshold that looks cheap per span can be expensive per row.
 
 The routing itself:
 

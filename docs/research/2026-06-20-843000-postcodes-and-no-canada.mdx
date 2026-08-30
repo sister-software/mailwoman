@@ -20,7 +20,7 @@ That's the part worth sitting with, because it's the trap. I had checked everyth
 
 ## The check that grades the pin
 
-There's one test in the stack that doesn't care what I built. It loads the actual demo in a real browser, types an address into the box, and reads the coordinate off the map — the pin the user would see. The whole point of it is to grade the _assembled_ answer, not any single piece of the machinery. Before promoting the new gazetteer I added a Canadian case to it: `100 Queen Street West, Toronto, ON M5H 2N2`, and assert the pin lands somewhere in Toronto.
+There's one test in the stack that doesn't care what I built. It loads the actual demo in a real browser, types an address into the box, and reads the coordinate off the map — the pin the user would see. The whole point of it is to grade the _assembled_ answer, not any single piece of the implementation. Before promoting the new gazetteer I added a Canadian case to it: `100 Queen Street West, Toronto, ON M5H 2N2`, and assert the pin lands somewhere in Toronto.
 
 Four cases passed — Chicago, a Berlin postcode, the White House, all green. The fifth came back 40.458, −80.6. I had to look it up. That's Toronto, Ohio: population five thousand, on the bank of the Ohio River, about as far from the address I typed as Madrid is from London.
 

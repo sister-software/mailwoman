@@ -24,11 +24,12 @@
  *   subpath, deliberately NOT re-exported through the barrel.
  */
 
-import { existsSync } from "node:fs"
-import { parseArgs } from "node:util"
-
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { parseArgs } from "@mailwoman/platform/util"
 
+import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "../freshness.ts"
 import {
 	buildNoGazetteerMessage,
 	mailwomanDataRoot,
@@ -117,12 +118,12 @@ export interface GazetteerPaths {
  * - No candidate DB AND no shards prints the named-artifact message with the one command that fixes it, instead of
  *   letting the resolver throw its internal "resolveShards: at least one shard is required".
  */
-export function resolveGazetteerOrExit(candidateDBFlag: string | undefined): GazetteerPaths {
-	if (candidateDBFlag && !existsSync(candidateDBFlag)) {
+export async function resolveGazetteerOrExit(candidateDBFlag: string | undefined): Promise<GazetteerPaths> {
+	if (candidateDBFlag && !(await pathExists(candidateDBFlag))) {
 		fail(`✗ --candidate-db not found: ${candidateDBFlag}`)
 	}
 
-	const wofPaths = wofShardPaths().filter(existsSync)
+	const wofPaths = wofShardPaths().filter(pathExistsSync)
 	// Candidate gazetteer = worldwide resolution (population-first ranking + global coverage + the FTS5-trigram typo
 	// fallback). --candidate-db, else $MAILWOMAN_CANDIDATE_DB, else the `<data-root>/wof/candidate.db` convention
 	// path. Absent → the admin FTS shards.
@@ -153,6 +154,36 @@ export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPath
 			? `  resolver: candidate gazetteer (worldwide) — ${candidateDB}`
 			: `  resolver: admin-only (US-optimized) — point --candidate-db / $MAILWOMAN_CANDIDATE_DB at a candidate gazetteer for worldwide`,
 	]
+}
+
+/**
+ * The provenance of the gazetteer artifacts a drop-in actually OPENED, for its `/status` surface (#997).
+ *
+ * The set is derived from the same {@link GazetteerPaths} the banner prints, and it follows the backend selection rather
+ * than the search order: `createResolverBackend` opens the candidate gazetteer ALONE when one is resolved, so listing
+ * the admin shards beside it would name databases this process never read. The reverse geocoder is the exception — it
+ * opens the first admin shard whatever the forward path chose, which can be a different build, so it is reported
+ * separately unless it is already in the list.
+ *
+ * Call once at boot: a server holds its handles for its whole life, so the artifact it serves from is the one it opened
+ * at start, whatever a later symlink swap points at.
+ */
+export function gazetteerFreshness({ adminDBPath, candidateDB, wofPaths }: GazetteerPaths): FreshnessReport {
+	const artifacts: FreshnessArtifact[] = []
+
+	if (candidateDB) {
+		artifacts.push({ name: "gazetteer", path: candidateDB })
+	} else {
+		for (const [index, path] of wofPaths.entries()) {
+			artifacts.push({ name: `gazetteer-shard-${index}`, path })
+		}
+	}
+
+	if (adminDBPath && !artifacts.some((artifact) => artifact.path === adminDBPath)) {
+		artifacts.push({ name: "reverse-admin", path: adminDBPath })
+	}
+
+	return readFreshness(artifacts)
 }
 
 /**

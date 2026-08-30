@@ -18,7 +18,7 @@
  *   illegal inside an XML comment and breaks the image).
  */
 
-import { writeFileSync } from "node:fs"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 
 /**
  * Deterministic stand-in for Math.random (mulberry32) — reruns must be byte-identical.
@@ -100,6 +100,6 @@ emit(3, "")
 const header = { version: 2, width: WIDTH, height: HEIGHT, title: "mailwoman parse" }
 const lines = [JSON.stringify(header), ...events.map((event) => JSON.stringify(event))]
 
-writeFileSync("cast.json", `${lines.join("\n")}\n`)
+await writeLocalTextFile(`${lines.join("\n")}\n`, "cast.json")
 
 console.log(`wrote cast.json: ${events.length} events, ${events.at(-1)?.[0]}s`)

@@ -11,7 +11,7 @@ Characterization surfaced **two real mechanical defects**, both in the "silent m
 brief says must be fixed, not documented — both fixed with RED-test-first evidence:
 
 1. **Tokenizer offset corruption on byte-fallback pieces** (`neural/tokenizer.ts`). SentencePiece's
-   `<0xHH>` byte-fallback escape hatch fires on curly quotes “”‘’, guillemets «», and even ASCII
+   `<0xHH>` byte-fallback override fires on curly quotes “”‘’, guillemets «», and even ASCII
    braces `{}` on this vocab — not just non-Latin scripts, the tokenizer's own doc comment's prior
    assumption. The offset walker treated the placeholder TEXT's length (6 chars, `"<0x7B>"`) as real
    input chars consumed, instead of the 1 actual byte it represents — desyncing every downstream
@@ -24,7 +24,7 @@ brief says must be fixed, not documented — both fixed with RED-test-first evid
    priors. Fixed: byte-fallback pieces are now treated as non-alnum (punctuation-equivalent), same as
    any other punctuation-only piece.
 
-Everything else characterized as **PASS** (the existing boundary-trim/word-grouping machinery,
+Everything else characterized as **PASS** (the existing boundary-trim/word-grouping implementation,
 built for the v0.4.0 comma-slip class and the arc's own hyphen/bare-▁ fixes, generalizes to paired
 punctuation with no dedicated code) or **ACCEPTED-WITH-RATIONALE** (interior paired-punct chars
 surviving inside a span VALUE — by design, same as hyphens/apostrophes already are; and one
@@ -274,7 +274,7 @@ crash, no double-escaping, no mangling.
 - Zero crashes: every new test includes at least one `expect(() => …).not.toThrow()` case for the
   unbalanced-pair shapes; the full CLI runs (both models, 156 pairs each) completed without an
   uncaught exception.
-- Zero silent word drops: `groupPiecesIntoWords`'s existing bare-▁/interior-punct machinery already
+- Zero silent word drops: `groupPiecesIntoWords`'s existing bare-▁/interior-punct implementation already
   generalizes (characterized, not re-fixed); the two NEW defects were mangle-class (wrong offsets /
   garbage fold text), not drops, and are now fixed.
 - Span-edge leakage: characterized as clean at the edges (real-inference verified); the one interior

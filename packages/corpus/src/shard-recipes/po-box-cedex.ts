@@ -29,13 +29,12 @@
  *   reproduces the legacy run byte-for-byte.
  */
 
-import { existsSync } from "node:fs"
-
 import { isAuDeliveryService, isAuPostcode, isAuStateAbbreviation } from "@mailwoman/codex/au"
 import { FSA_LETTER_TO_PROVINCE, normalizeCaPostalCode } from "@mailwoman/codex/ca"
 import { isCedex } from "@mailwoman/codex/fr"
 import { isNZDeliveryService, isNZPostcode } from "@mailwoman/codex/nz"
 import { isPOBox } from "@mailwoman/codex/us"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { TextSpliterator, TSVSpliterator } from "spliterator"
@@ -288,7 +287,7 @@ const CA_LOCALITY_MIN_POPULATION = 1000
  * when this was `awk NR`, and the rows the stride selects are the rows every existing FR shard was built from.
  */
 async function readFrTuples(limit: number): Promise<FRTuple[]> {
-	if (!existsSync(FR_SOURCE.zip)) {
+	if (!(await pathExists(FR_SOURCE.zip))) {
 		console.error(`  WARN: ${FR_SOURCE.zip} is not cached — skipping ${FR_SOURCE.csv}`)
 
 		return []
@@ -327,7 +326,7 @@ async function readFrTuples(limit: number): Promise<FRTuple[]> {
  * population > 1000. GeoNames is the provenance-tracked source — no hand list.
  */
 async function readCaLocalities(admin1: string): Promise<string[]> {
-	if (!existsSync(GEONAMES_CA)) {
+	if (!(await pathExists(GEONAMES_CA))) {
 		console.error(`  WARN: ${GEONAMES_CA} is not cached — skipping CA localities (admin1=${admin1})`)
 
 		return []
@@ -362,7 +361,7 @@ async function readPostalTuples(
 	source: { zip: string; txt: string },
 	opts: { withState: boolean }
 ): Promise<Array<AUTuple | NZTuple>> {
-	if (!existsSync(source.zip)) {
+	if (!(await pathExists(source.zip))) {
 		console.error(`  WARN: ${source.zip} is not cached — skipping ${source.txt}`)
 
 		return []

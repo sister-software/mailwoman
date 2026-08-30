@@ -7,7 +7,7 @@ campaign opened: two releases, one model promotion, three falsifications with me
 ## Headline
 
 `55 Rue du Faubourg Saint-Honoré, 75008 Paris` → BAN rooftop `[2.316931, 48.87063]`,
-`type:house`, accent intact — live on photon.sister.software. Twelve hours earlier that query
+`type:house`, accent intact — live on photon.mailwoman.ai. Twelve hours earlier that query
 lost its `é` at the parser, missed a rooftop the data held, and rendered as a lowercase city echo.
 
 ## Shipped

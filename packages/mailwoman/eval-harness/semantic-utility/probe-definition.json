@@ -1,0 +1,201 @@
+{
+	"probeID": "semantic-utility-probe-1928",
+	"version": "1.0.0",
+	"issue": "https://github.com/sister-software/mailwoman/issues/1928",
+	"route": "a — commit the target rows first, graded on outcomes only",
+	"routeReason": "Section 5.5 of docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md offers two routes, because no committed corpus contains an activity-shaped query. Route (b) pre-registers on the section 5.3 recall gap, and it cannot be executed against the frozen slice: reaching the 7,168 `drugstore` rows the shipped `pharmacy` query cannot see requires a SECOND establishment class asserting the affordance, which section 4 forbids ('no sibling class is minted') and stop condition 5 makes an explicit amendment rather than a probe. It also needs a recall metric the committed grader does not have. Route (a) needs neither: the comparator already exists and is committed, the anchors and expectations are copied byte-for-byte from committed rows, and the semantic arm is reachable from the frozen slice alone — activity phrase to `obtain_medication`, `obtain_medication` to the concepts that afford it, that concept to POI category `pharmacy` through the committed mapping.",
+	"failureClass": "Activity-named POI query. The query names what the user wants to do; nothing routes an activity to the set of entity kinds that afford it, so the phrase matches no committed synonym, `createScorePOIQuery` returns 0, and the input leaves the POI branch entirely.",
+	"semanticObservation": "pharmacy affords obtain_medication — assertion `pharmacy-affords-obtain-medication`, modality `necessary`, in packages/geographic-model/data/geographic-model.json, reachable from the POI vocabulary through conceptsForExternalID(\"poi-taxonomy\", \"pharmacy\").",
+	"missingDistinction": "Which entity kinds afford `obtain_medication`, in which country, with what modality, and on whose authority.",
+	"baselineFailureShape": "no_poi_branch",
+	"baselineFailureShapeNote": "A POI outcome shape derived from `PipelineResult`'s own `path` and `POIIntentOutcome`'s own `type`, per section 2.6: `DIAGNOSE_SHAPES` is a vocabulary of address-path mechanism states and carries no state for the POI branch, so no value in it names what these rows do. The class shape is `no_poi_branch` and 3 of the 4 target rows measure it. The fourth, sem-act-fr-01, measures `poi_intent_results` — see its own `baselineShape` and `missingDistinction`, and read the mixture rather than the single value.",
+	"outcomeComparator": "poi_board_assembled_answer",
+	"outcomeComparatorNote": "`gradeCase` from packages/mailwoman/eval-harness/poi-board.ts, unchanged: the top result's `categoryID` and the nearest returned coordinate against the row's committed anchor. Outcomes only — the comparator cannot read how an answer was produced, so a semantic arm cannot pass by reporting that it consulted an affordance.",
+	"targetRows": [
+		{
+			"id": "sem-act-us-01",
+			"query": "where can i pick up a prescription near Denver CO",
+			"expect": {
+				"kind": "results",
+				"categoryID": "pharmacy",
+				"anchorGold": { "latitude": 39.7392, "longitude": -104.9903 },
+				"maxNearestKm": 25.0
+			},
+			"attestedIn": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md section 5.1, target form 1",
+			"anchorFrom": "cat-us-05",
+			"activityPhrase": "pick up a prescription",
+			"baselineShape": "no_poi_branch",
+			"missingDistinction": "\"pick up a prescription\" names the activity `obtain_medication`. All 55 committed synonyms are venue nouns and the lexicon is exact-phrase, so no committed input carries a route from this phrase to any entity kind; the measured subject match is NO SUBJECT MATCH."
+		},
+		{
+			"id": "sem-act-us-02",
+			"query": "prescription near Denver CO",
+			"expect": {
+				"kind": "results",
+				"categoryID": "pharmacy",
+				"anchorGold": { "latitude": 39.7392, "longitude": -104.9903 },
+				"maxNearestKm": 25.0
+			},
+			"attestedIn": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md section 5.1, target form 4",
+			"anchorFrom": "cat-us-05",
+			"activityPhrase": "prescription",
+			"baselineShape": "no_poi_branch",
+			"missingDistinction": "The bare activity noun sits in the same token position a venue noun occupies in `cat-us-05`, so anchor parsing is unchanged and the subject is the only difference. The one-edit typo path cannot bridge it either: it requires a length difference of at most 1 against an existing phrase, and `prescription` is 12 characters from `pharmacy`."
+		},
+		{
+			"id": "sem-act-fr-01",
+			"query": "somewhere to fill a prescription near Toulouse",
+			"expect": {
+				"kind": "results",
+				"categoryID": "pharmacy",
+				"anchorGold": { "latitude": 43.6047, "longitude": 1.4442 },
+				"maxNearestKm": 25.0
+			},
+			"attestedIn": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md section 5.1, target form 2",
+			"anchorFrom": "cat-fr-03",
+			"activityPhrase": "fill a prescription",
+			"baselineShape": "poi_intent_results",
+			"missingDistinction": "A second English phrasing of the same activity at a French anchor. `matchPOISubject` returns null for it, exactly as section 5.2 measured, so nothing routes the activity to an entity kind here either. Its baseline shape still differs from the other three rows, and the difference was measured rather than reasoned: `Somewhere` is a POI NAME in the shipped poi.db (a `clothing_store` in Bordeaux and two `womens_clothing_store` rows in Lyon and Paris), so the name lexicon claims the query and the branch answers a clothing store 211.75 km from Toulouse. The baseline for this row is therefore a confident wrong answer rather than a miss, which is a worse starting point than the other three, not a better one. The row is kept because its form is attested in section 5.1 and swapping it after measuring would be the row selection this pre-registration exists to prevent."
+		},
+		{
+			"id": "sem-act-mx-01",
+			"query": "i need my prescription refilled near Tijuana",
+			"expect": {
+				"kind": "results",
+				"categoryID": "pharmacy",
+				"anchorGold": { "latitude": 32.5149, "longitude": -117.0382 },
+				"maxNearestKm": 25.0
+			},
+			"attestedIn": "docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md section 5.1, target form 3",
+			"anchorFrom": "cat-mx-02",
+			"activityPhrase": "prescription refilled",
+			"baselineShape": "no_poi_branch",
+			"missingDistinction": "A first-person sentence form of the same activity at a Mexican anchor. The activity word is inflected, which the exact-phrase lexicon cannot reach even if the base noun were a committed synonym."
+		}
+	],
+	"targetRowsNote": "Four rows, all copied from the attested query forms in section 5.1, each pairing an activity phrase with an anchor taken byte-for-byte from the committed control row named in `anchorFrom`. No row carries a `locale`, matching its control exactly, so the anchor, the country prior and the weights package are held constant and the subject phrase is the only thing that varies. The rows live here rather than in poi-board.jsonl for two reasons: the board's floors were pre-registered against a 51-row composition, and moving that denominator would move a second ruler while this one is being set; and issue 1930 reserves promotion into the permanent board family for a GO decision.",
+	"controlRows": [
+		{
+			"id": "cat-us-05",
+			"group": "same_category",
+			"source": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl",
+			"query": "pharmacy near Denver CO",
+			"expect": {
+				"kind": "results",
+				"categoryID": "pharmacy",
+				"anchorGold": { "latitude": 39.7392, "longitude": -104.9903 },
+				"maxNearestKm": 25.0
+			},
+			"expectedGrade": "pass",
+			"guards": "The venue-noun form of the same intent at the same anchor as sem-act-us-01 and sem-act-us-02. Catches a semantic arm that answers the activity form by breaking the form that already works."
+		},
+		{
+			"id": "cat-mx-02",
+			"group": "same_category",
+			"source": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl",
+			"query": "pharmacy near Tijuana",
+			"expect": {
+				"kind": "results",
+				"categoryID": "pharmacy",
+				"anchorGold": { "latitude": 32.5149, "longitude": -117.0382 },
+				"maxNearestKm": 25.0
+			},
+			"expectedGrade": "pass",
+			"guards": "The venue-noun form at sem-act-mx-01's anchor."
+		},
+		{
+			"id": "cat-fr-03",
+			"group": "same_category",
+			"source": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl",
+			"query": "pharmacy near Toulouse",
+			"expect": {
+				"kind": "results",
+				"categoryID": "pharmacy",
+				"anchorGold": { "latitude": 43.6047, "longitude": 1.4442 },
+				"maxNearestKm": 25.0
+			},
+			"expectedGrade": "pass",
+			"guards": "The venue-noun form at sem-act-fr-01's anchor."
+		},
+		{
+			"id": "syn-01",
+			"group": "adjacent",
+			"source": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl",
+			"query": "er near Denver CO",
+			"locale": "en-US",
+			"expect": {
+				"kind": "results",
+				"categoryID": "hospital",
+				"anchorGold": { "latitude": 39.7392, "longitude": -104.9903 },
+				"maxNearestKm": 25.0
+			},
+			"expectedGrade": "pass",
+			"guards": "A different healthcare category at the SAME anchor as two target rows, reached through a locale-gated synonym. The sharpest over-firing guard on the board: an arm that answers `pharmacy` whenever a query smells medical would leave every same_category control green and break this one."
+		},
+		{
+			"id": "cat-us-04",
+			"group": "adjacent",
+			"source": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl",
+			"query": "bank near Seattle WA",
+			"expect": {
+				"kind": "results",
+				"categoryID": "bank",
+				"anchorGold": { "latitude": 47.6062, "longitude": -122.3321 },
+				"maxNearestKm": 25.0
+			},
+			"expectedGrade": "pass",
+			"guards": "An unrelated category at an unrelated anchor. Catches an arm whose observation displaces the ordinary subject match everywhere, not only near medical language."
+		},
+		{
+			"id": "abstain-05",
+			"group": "adjacent",
+			"source": "packages/mailwoman/eval-harness/fixtures/poi-board.jsonl",
+			"query": "hospital",
+			"expect": { "kind": "abstain", "reason": "anchor_required" },
+			"expectedGrade": "pass",
+			"guards": "A bare category with no anchor. Catches an arm that invents an anchor or converts an abstain into a claim — the false positive the board's 100% abstain floor exists for."
+		}
+	],
+	"primaryMetric": {
+		"id": "target_answer_rate",
+		"numerator": "Target rows whose graded outcome passes `poi_board_assembled_answer`: the top returned result's `categoryID` equals the row's expected category AND the nearest returned result is within the row's `maxNearestKm` of its committed anchor.",
+		"denominator": 4,
+		"aggregation": "Count of passing rows over the 4 registered target rows. A row that errors, returns nothing, or never reaches the POI branch counts as not answered and stays in the denominator — the denominator is the registered row count, never the rows that happened to answer."
+	},
+	"diagnosticMetric": {
+		"id": "target_poi_routing_rate",
+		"numerator": "Target rows whose outcome shape is not `no_poi_branch` — the coordinator took the POI branch and produced an intent or an abstain, whether or not the assembled answer is right.",
+		"denominator": 4,
+		"aggregation": "Count over the same 4 registered target rows, same denominator rule. This is the structured mechanism metric the DIAGNOSTIC-ONLY decision requires: it is read from the closed POI outcome-shape vocabulary, not from free-form prose about better diagnosis."
+	},
+	"controlMetric": {
+		"id": "control_hold_rate",
+		"numerator": "Control rows whose graded outcome still passes `poi_board_assembled_answer` — for a `results` row, the same category within the same distance; for the abstain row, the same abstain reason.",
+		"denominator": 6,
+		"aggregation": "Count over the 6 registered control rows, all of which hold at baseline. Both groups decide: three rows are the venue-noun form of the same intent, three are adjacent categories and a bare-category abstain, and an arm that over-fires toward `pharmacy` would keep the first group green."
+	},
+	"thresholds": {
+		"minimumPrimaryNumerator": 3,
+		"minimumPrimaryDelta": 3,
+		"minimumDiagnosticNumerator": 3,
+		"minimumDiagnosticDelta": 2,
+		"controlRegressionTolerance": 0
+	},
+	"thresholdsNote": "Every bar is a whole row count over a stated denominator, and every comparison is `>=`. Both metrics are asked for the same thing: three of the four registered target rows. 3 of 4 rather than 4 of 4 because the four rows are four surface forms of one activity, and a first observation that reaches three of them has answered the class; 3 rather than 2 because 2 of 4 is the count a single surface form plus one near-duplicate can reach — sem-act-us-01 and sem-act-us-02 share an anchor and an activity noun. Each delta bar is set to `3 minus that metric's measured baseline`, so the absolute bar is the binding one and the delta bar forbids reaching it by baseline drift: the primary baseline is 0, so its delta bar is 3; the diagnostic baseline is 1 (sem-act-fr-01 already reaches the POI branch through a name collision), so its delta bar is 2 and the pair still requires 3 of 4.",
+	"baseline": {
+		"measuredAt": "2026-08-26",
+		"gitCommit": "2b5fa6193",
+		"primaryNumerator": 0,
+		"diagnosticNumerator": 1,
+		"controlHoldNumerator": 6,
+		"receipt": "packages/mailwoman/eval-harness/semantic-utility/baseline-receipt.json",
+		"note": "Measured with `mailwoman eval semantic-utility-probe --arm baseline` on a working tree at 2b5fa6193 carrying this pull request's harness, which adds no pipeline behavior — it constructs the pipeline through the POI board's own factory and grades with the board's own `gradeCase`. Artifact identity is in the receipt: poi.db layer_manifest `poi 2026-07-22.0`, weights en-US 9.1.0, candidate-table resolver backend. The receipt's `definitionSHA256` is what ties these numbers to this version of the pre-registration."
+	},
+	"decisionRule": [
+		"A control regression is checked FIRST and stops under both decisions: if (baseline control_hold_rate numerator - measured control_hold_rate numerator) > controlRegressionTolerance, record STOP-REDESIGN. A target delta bought by breaking the venue-noun form of the same query is not a result the program can act on.",
+		"Otherwise record GO when measured target_answer_rate numerator >= minimumPrimaryNumerator AND (measured - baseline) >= minimumPrimaryDelta.",
+		"Otherwise record DIAGNOSTIC-ONLY when measured target_poi_routing_rate numerator >= minimumDiagnosticNumerator AND (measured - baseline) >= minimumDiagnosticDelta.",
+		"Otherwise record STOP-REDESIGN.",
+		"GO is checked before DIAGNOSTIC-ONLY because a row that passes the comparator necessarily reached the POI branch, so the diagnostic condition holds whenever the primary one does."
+	]
+}

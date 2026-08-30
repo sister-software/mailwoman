@@ -7,18 +7,16 @@
  *   directly.
  */
 
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildPlaceSearchFTS, placeSearchFTSExists } from "@mailwoman/resolver-wof-sqlite/fts"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
-function buildFixtureDB(path: string): DatabaseSync {
-	const db = new DatabaseSync(path)
+function buildFixtureDB(path: string): DatabaseClient<WOFDatabase> {
+	const db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -36,16 +34,16 @@ function buildFixtureDB(path: string): DatabaseSync {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-wof-fts-build-"))
+	scratch = await temporaryDirectory("mailwoman-wof-fts-build-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("buildPlaceSearchFTS", () => {
 	test("builds the index against a fresh DB", () => {
-		const db = buildFixtureDB(join(scratch, "fixture.db"))
+		const db = buildFixtureDB(scratch.resolve("fixture.db"))
 
 		try {
 			const result = buildPlaceSearchFTS(db)
@@ -53,24 +51,24 @@ describe("buildPlaceSearchFTS", () => {
 			expect(result.indexedRows).toBe(2)
 			expect(placeSearchFTSExists(db)).toBe(true)
 		} finally {
-			db.close()
+			db.destroy()
 		}
 	})
 
 	test("is a no-op when the index already exists", () => {
-		const db = buildFixtureDB(join(scratch, "fixture.db"))
+		const db = buildFixtureDB(scratch.resolve("fixture.db"))
 
 		try {
 			buildPlaceSearchFTS(db)
 			const second = buildPlaceSearchFTS(db)
 			expect(second.created).toBe(false)
 		} finally {
-			db.close()
+			db.destroy()
 		}
 	})
 
 	test("rebuilds when drop is set", () => {
-		const db = buildFixtureDB(join(scratch, "fixture.db"))
+		const db = buildFixtureDB(scratch.resolve("fixture.db"))
 
 		try {
 			buildPlaceSearchFTS(db)
@@ -78,7 +76,7 @@ describe("buildPlaceSearchFTS", () => {
 			expect(rebuilt.created).toBe(true)
 			expect(rebuilt.indexedRows).toBe(2)
 		} finally {
-			db.close()
+			db.destroy()
 		}
 	})
 })

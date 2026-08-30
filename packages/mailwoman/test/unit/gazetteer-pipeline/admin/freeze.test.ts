@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { DatabaseSync } from "node:sqlite"
-
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { freezeAdmin } from "mailwoman/gazetteer-pipeline/admin/freeze"
 import { expect, test } from "vitest"
 
 test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and passes integrity", async () => {
-	const db = new DatabaseSync(":memory:")
+	await using db = DatabaseClient.temp<WOFDatabase>()
 	await createUnifiedSchema(db)
 
 	const ins = db.prepare(
@@ -30,6 +30,4 @@ test("freezeAdmin builds the ancestors closure, the ancestors_by_id index, and p
 	expect(
 		db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'ancestors_by_id'").get()
 	).toBeTruthy()
-
-	db.close()
 })

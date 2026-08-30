@@ -90,7 +90,7 @@ The model was shown the right answer 200K times and still learned to drop it. Th
 
 Two blind spots let training look healthy to the dashboard while German was breaking:
 
-1. **`cross_pollution` measured the wrong failure.** It counts gold city/region-start tokens predicted as _postcode_ (B/I-postcode). The actual collapse is city → **O** (dropped), not city → postcode. So the metric read 0.00% the whole run while locality recall cratered. A live DE-locality-recall (or city→O) tripwire would have fired.
+1. **`cross_pollution` measured the wrong failure.** It counts gold city/region-start tokens predicted as _postcode_ (B/I-postcode). The actual collapse is city → **O** (dropped), not city → postcode. So the metric read 0.00% the whole run while locality recall cratered. A live DE-locality-recall (or city→O) regression check would have fired.
 2. **Aggregate val F1 hid it.** The headline val locality F1 was 0.829 — but that's US-dominated (US is ~82% of the mix). The German-specific locality was never in the headline. Per-locale val F1, streamed live, is the fix.
 
 ## Shipped from this run regardless

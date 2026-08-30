@@ -20,8 +20,7 @@
  *   `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
-import { existsSync, readFileSync } from "node:fs"
-
+import { pathExistsSync, readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
 
 import type { FSTMatcher } from "./fst-matcher.ts"
@@ -80,9 +79,9 @@ export function loadStreetMorphologyFST(opts: LoadStreetMorphologyFSTOpts = {}):
 	const warn = opts.onWarn ?? (() => {})
 	const artifactPath = opts.artifactPath ?? defaultStreetMorphologyArtifactPath()
 
-	if (existsSync(artifactPath)) {
+	if (pathExistsSync(artifactPath)) {
 		try {
-			const buf = readFileSync(artifactPath)
+			const buf = readLocalBufferSync(artifactPath)
 			const matcher = deserializeFST(buf)
 			const provenance = readFSTProvenance(buf)
 

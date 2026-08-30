@@ -32,8 +32,8 @@ export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
 /**
  * The admin fallback order everywhere else: the locality tiers lead and the postcode sits between them and `region`.
  *
- * This is the #945 epoch convention, and it is the DEFAULT rather than the universal answer — which address systems
- * leave it is `AREA_POSTCODE_FINER_THAN_LOCALITY`'s question, and that table carries the per-country measurement.
+ * This is the #945 epoch convention and the DEFAULT rather than the universal answer — which address systems leave it
+ * is `AREA_POSTCODE_FINER_THAN_LOCALITY`'s question, and that table carries the per-country measurement.
  */
 export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 	"locality",

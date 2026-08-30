@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Gauntlet ABLATION layer — the load-bearing map. For every corpus row that ASSERTS a component, delete
+ *   Gauntlet ABLATION layer — the required map. For every corpus row that ASSERTS a component, delete
  *   that component from the input and re-run the full pipeline: the displacement from the row's own
  *   undeleted anchor says what the component was worth. Aggregated per (component, locale) it answers the
  *   operator's question directly — "where does the pipeline falter when a part of the address is missing?"
@@ -56,14 +56,12 @@
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, percentile, sha256Hex } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import {
 	ABLATION_ABSENT,
@@ -451,7 +449,7 @@ interface CaseRow {
  * every pin until someone rebuilt a database this layer has no business rebuilding. The seed is the authoring surface
  * either way (`cases/<cc>/*.jsonl`), so the two agree by construction once the rebuild happens.
  */
-export async function ablationOverrides(db: DatabaseSync): Promise<{
+export async function ablationOverrides(db: DatabaseClient<GauntletDatabase>): Promise<{
 	byCaseID: Map<string, Record<string, string>>
 	source: "column" | "seed"
 }> {
@@ -513,8 +511,7 @@ function timestampDir(now: Date): string {
 export async function runAblationLayer(
 	options: AblationLayerOptions = {}
 ): Promise<{ pass: boolean; outDir: string; cells: AblationCell[] }> {
-	const raw = new DatabaseSync(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	const kdb = new DatabaseClient<GauntletDatabase>({ database: raw })
+	const kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	// Same refusal as the regression layer: this artifact's board id claims to identify a corpus, so a stale DB
 	// would publish an ablation board under a fingerprint the corpus no longer has (corpus-stamp.ts).
 	await assertCorpusStampFresh(kdb)
@@ -536,7 +533,7 @@ export async function runAblationLayer(
 		.execute()) as CaseRow[]
 
 	// Read the pins off the SAME handle before it closes — see `ablationOverrides` for why the column may not be there.
-	const overrides = await ablationOverrides(raw)
+	const overrides = await ablationOverrides(kdb)
 
 	await kdb.destroy()
 
@@ -709,14 +706,14 @@ export async function runAblationLayer(
 			}
 		}
 	} finally {
-		deps.close()
-		gazetteer.close()
+		deps[Symbol.dispose]()
+		gazetteer[Symbol.dispose]()
 	}
 
 	const cells = aggregateCells(rows, { boardID, measuredAt })
 	const leverLine = describeLevers(options)
 
-	mkdirSync(outDir, { recursive: true })
+	await makeDirectories(outDir)
 
 	const artifact = {
 		boardID,
@@ -739,10 +736,9 @@ export async function runAblationLayer(
 		skips,
 	}
 
-	writeFileSync(join(outDir, "ablation-map.json"), JSON.stringify(artifact, null, "\t"))
+	await writeLocalJSONFile(artifact, join(outDir, "ablation-map.json"))
 
-	writeFileSync(
-		join(outDir, "ablation-map.md"),
+	await writeLocalFile(
 		renderAblationMarkdown(cells, rows, {
 			boardID,
 			measuredAt,
@@ -750,7 +746,8 @@ export async function runAblationLayer(
 			variantCount: rows.length,
 			skips,
 			levers: leverLine,
-		})
+		}),
+		join(outDir, "ablation-map.md")
 	)
 
 	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, leverLine, skips })

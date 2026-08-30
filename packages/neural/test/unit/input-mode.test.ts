@@ -8,13 +8,11 @@
  *   runner boundary via a stub — the same seam the ONNX session sees.
  */
 
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
 import { parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 interface Fixture {
@@ -22,9 +20,7 @@ interface Fixture {
 	locality_lexicon: Parameters<typeof parseGazetteerLexicon>[0]
 }
 
-const fixture = parseJSONStrict<Fixture>(
-	readFileSync(join(import.meta.dirname, "../fixtures/evidence-parity-v2.json"), "utf8")
-)
+const fixture = await readLocalJSONFile<Fixture>(join(import.meta.dirname, "../fixtures/evidence-parity-v2.json"))
 
 const LABELS = ["O", "B-street", "I-street", "B-locality", "I-locality"]
 

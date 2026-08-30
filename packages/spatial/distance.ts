@@ -82,3 +82,40 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
 	return greatCircle(aLat, aLon, bLat, bLon, "km")
 }
+
+/**
+ * Metres per degree of latitude — the scale {@link segmentDistanceMetres} reports in.
+ */
+const METRES_PER_DEGREE = 111_320
+
+/**
+ * Metres from a point to a line SEGMENT, with longitude scaled for the latitude so the two axes are comparable.
+ *
+ * MEASURE TO THE EDGE, NOT TO THE NEAREST VERTEX. A point a centimetre from a long edge can be metres from every vertex
+ * of it, so a vertex distance overstates the gap without bound — measured on the flood layer's verification, one
+ * near-miss read 1.58 m to vertices and 0.009 m to edges, a 9 mm difference overstated 175-fold. That is the difference
+ * between "two channels rendered the same edge slightly differently" and "the conversion is wrong".
+ *
+ * The longitude scaling matters at the same scale: comparing raw degrees treats a degree of longitude as a degree of
+ * latitude, which at 54°N overstates east-west distance by 70%.
+ *
+ * @category Position
+ */
+export function segmentDistanceMetres(
+	lon: number,
+	lat: number,
+	from: readonly number[],
+	to: readonly number[]
+): number {
+	const scale = Math.cos((lat * Math.PI) / 180)
+	const px = (lon - from[0]!) * scale
+	const py = lat - from[1]!
+	const vx = (to[0]! - from[0]!) * scale
+	const vy = to[1]! - from[1]!
+	const lengthSquared = vx * vx + vy * vy
+
+	// A zero-length segment is a repeated vertex; the distance to it is the distance to the point.
+	const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, (px * vx + py * vy) / lengthSquared))
+
+	return Math.hypot(px - t * vx, py - t * vy) * METRES_PER_DEGREE
+}

@@ -31,7 +31,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CommandError } from "#cli-kit"
 
 import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
-import type { GeocodeResult } from "../geocode-core.ts"
+import type { GeocodeResult } from "../geocode-result.ts"
 import { createGeocodeSession, type GeocodeRun, type GeocodeSession } from "../geocode-session.ts"
 import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type DebugPane } from "./DebugFrame.tsx"
 import { outputLines } from "./output-lines.ts"
@@ -176,7 +176,7 @@ async function openResources(options: GeocodeCommandOptions): Promise<Resources>
 	// `trace: true` is the debug view's own opt-in — it buys the evidence rows one extra decode per input, which
 	// no other caller of the session should pay for.
 	const session = await createGeocodeSession({ ...options, trace: true })
-	const tilesPath = resolveTilesPath(options.tiles)
+	const tilesPath = await resolveTilesPath(options.tiles)
 
 	if (!tilesPath) return { session, source: null, renderer: null, mapNote: NO_TILES_NOTE }
 
@@ -194,9 +194,9 @@ async function openResources(options: GeocodeCommandOptions): Promise<Resources>
 function closeResources(resources: Resources | null): void {
 	if (!resources) return
 
-	resources.session.close()
+	resources.session[Symbol.dispose]()
 
-	void resources.source?.close().catch(() => {
+	void resources.source?.[Symbol.asyncDispose]().catch(() => {
 		// Teardown is best-effort. This runs after the terminal has already been restored and while the process is
 		// on its way out, so a rejected close has nobody left to tell — and an unhandled rejection would take the
 		// exit code with it.

@@ -8,7 +8,7 @@
  *   it, and each already imports the other — putting it in either one closes an import cycle.
  */
 
-import { setTimeout } from "node:timers/promises"
+import { setTimeout } from "@mailwoman/platform/timers/promises"
 
 /**
  * Given a callback, attempt to run it up to `attempts` times.

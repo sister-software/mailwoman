@@ -127,7 +127,7 @@ contract, from a SQLite file instead of a cluster. A hosted Photon-compatible en
 live for evaluation:
 
 ```bash
-curl "https://photon.sister.software/api?q=berlin&limit=3"   # hosted — nothing to install
+curl "https://photon.mailwoman.ai/api?q=berlin&limit=3"   # hosted — nothing to install
 npx @mailwoman/photon    serve   # Photon-compatible    /api, /reverse
 npx @mailwoman/nominatim serve   # Nominatim-compatible /search, /reverse, /status
 npx @mailwoman/libpostal serve   # libpostal-compatible /parse, /expand
@@ -160,7 +160,7 @@ A locale appears here only when a coordinate-graded eval backs it.
 
 | Tier                                 | Locales                                                | What backs the claim                                                                                         |
 | ------------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| **1 — first-class, floor-gated**     | US, FR                                                 | Per-tag eval floors gate every release. FR coordinate panel (n=3000): 100% resolve, resolved-p90 6.6 km      |
+| **1 — first-class, floor-enforced**  | US, FR                                                 | Per-tag eval floors block every release. FR coordinate panel (n=3000): 100% resolve, resolved-p90 6.6 km     |
 | **2 — trained + coordinate-paneled** | IT, PT, PL, AT, CZ, DE, AU, BE, ES, NL, CH, HR, DK, FI | Per-locale coordinate panels (n=1000 each), resolved-p90 ≤ 10 km across the set; NL resolved-p50 0.05 km     |
 | **3 — trained, thinly measured**     | NO, SE                                                 | Coordinate panels exist, but residual misses are not yet fully characterized. Claims beyond this: unverified |
 
@@ -214,7 +214,7 @@ Mailwoman is dual-licensed:
   obligation. Contact `teffen@sister.software`.
 
 Release notes live on the [GitHub releases page](https://github.com/sister-software/mailwoman/releases);
-what we do and don't collect is stated plainly in the
+what we do and don't collect is stated in the
 [privacy policy](https://github.com/sister-software/mailwoman/blob/main/docs/records/site-2026-08/licensing/privacy.md); funders and sponsors
 can read our machine-readable [funding.json](https://mailwoman.ai/funding.json).
 Report security vulnerabilities privately per [`SECURITY.md`](./SECURITY.md).
@@ -252,13 +252,13 @@ rule-based engine: a tokenizer, a set of dictionary/pattern classifiers, and an
 `ExclusiveCartesianSolver` that enumerated consistent solutions. As the neural sequence
 labeler matured into the primary parse path, that rule engine was retired and — in v7.0.0 —
 deleted from the tree (`@mailwoman/classifiers` and the `@mailwoman/core/{solver,classification}`
-machinery). The last standalone release is `@mailwoman/classifiers@6.x`, frozen; consumers of
+implementation). The last standalone release is `@mailwoman/classifiers@6.x`, frozen; consumers of
 the published package interact with the neural pipeline exclusively.
 
 ### Contributing
 
 Fork and open a pull request against `main` on a feature branch. Please include unit tests.
-The model-work runbook (which evals gate a change, how to add a shard) is
+The model-work runbook (which evals a change must pass, how to add a training-data subset) is
 [`docs/engineering/CONTRIBUTING_MODEL_WORK.mdx`](./docs/engineering/CONTRIBUTING_MODEL_WORK.mdx).
 
 ## Acknowledgements

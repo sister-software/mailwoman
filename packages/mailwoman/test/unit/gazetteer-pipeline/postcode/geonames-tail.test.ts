@@ -9,17 +9,18 @@
  *   artifact carrying source md5s.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { join } from "@mailwoman/platform/path"
+import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "mailwoman/gazetteer-pipeline/defaults"
 import { buildPostcodeGeonamesTail } from "mailwoman/gazetteer-pipeline/postcode/geonames-tail"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
-let root: string
+let root: TemporaryDirectory
 let postalDir: string
 
 /**
@@ -29,33 +30,31 @@ function row(cc: string, postcode: string, place: string, lat: number, lon: numb
 	return [cc, postcode, place, "R", "R1", "", "", "", "", String(lat), String(lon), "6"].join("\t")
 }
 
-beforeAll(() => {
-	root = mkdtempSync(join(tmpdir(), "geonames-tail-"))
-	postalDir = join(root, "geonames-postal")
-	mkdirSync(postalDir, { recursive: true })
+beforeAll(async () => {
+	root = await temporaryDirectory("geonames-tail-")
+	postalDir = root.resolve("geonames-postal")
+	await makeDirectories(postalDir)
 
 	// CZ: one code written in the SPACED display form, across three settlements — exercises both #920
 	// laws at once (normalization to `11000`, and a medoid that must land ON one of the three points).
-	writeFileSync(
-		join(postalDir, "CZ.txt"),
+	await writeLocalTextFile(
 		[
 			row("CZ", "110 00", "Praha 1", 50.1, 14.1),
 			row("CZ", "110 00", "Stare Mesto", 50.2, 14.2),
 			row("CZ", "110 00", "Josefov", 50.4, 14.4),
 			row("CZ", "120 00", "Vinohrady", 50.07, 14.44),
-		].join("\n") + "\n"
+		].join("\n") + "\n",
+		join(postalDir, "CZ.txt")
 	)
 
 	// PL: the dashed display form.
-	writeFileSync(join(postalDir, "PL.txt"), row("PL", "11-041", "Olsztyn", 53.8, 20.4) + "\n")
+	await writeLocalFile(row("PL", "11-041", "Olsztyn", 53.8, 20.4) + "\n", join(postalDir, "PL.txt"))
 })
 
-afterAll(() => {
-	rmSync(root, { recursive: true, force: true })
-})
+afterAll(() => root[Symbol.asyncDispose]())
 
 test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump is reported", async () => {
-	const out = join(root, "tail.db")
+	const out = root.resolve("tail.db")
 
 	const result = await buildPostcodeGeonamesTail({
 		countries: ["CZ", "PL", "ZZ"],
@@ -71,10 +70,10 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(result.sources.map((s) => s.country)).toEqual(["CZ", "PL"])
 	expect(result.sources.every((s) => /^[0-9a-f]{32}$/.test(s.md5))).toBe(true)
 	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits, not accessSync:
-	// root ignores the permission and would pass a W_OK probe on a sealed file).
-	expect(statSync(out).mode & 0o222).toBe(0)
+	// root.path ignores the permission and would pass a W_OK probe on a sealed file).
+	expect((await statPath(out)).mode & 0o222).toBe(0)
 
-	const db = new DatabaseSync(out, { readOnly: true })
+	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
 	// Name law: `spr.name` is the sanitized-query token shape; the display form is an alt `names` row.
 	const names = db.prepare("SELECT name FROM spr WHERE country='CZ' ORDER BY name").all() as Array<{ name: string }>
@@ -119,8 +118,6 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(meta.get("license")).toContain("CC-BY 4.0")
 	expect(meta.get("license_gb")).toContain("Open Government Licence v3")
 	expect(parseJSONStrict<unknown[]>(meta.get("source_files")!)).toHaveLength(2)
-
-	db.close()
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten, in its ingest order", () => {

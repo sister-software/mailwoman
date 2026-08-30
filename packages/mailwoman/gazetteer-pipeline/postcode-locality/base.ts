@@ -34,14 +34,13 @@
  *   `--country` runs (a temp-build would wipe prior countries' rows).
  */
 
-import { existsSync, readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import { DatabaseSync } from "node:sqlite"
-
-import { DatabaseClient } from "@mailwoman/core/kysley/client"
+import { pathExists, readDirectoryRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { assertDatabaseIntegrity, pyRound, sealDatabase } from "@mailwoman/core/utils"
+import { pyRound } from "@mailwoman/core/utils"
+import { join } from "@mailwoman/platform/path"
 import { geometryContains, haversineKm, type GeojsonGeometry } from "@mailwoman/spatial"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
 
 import {
 	createPostcodeLocalityIndex,
@@ -126,7 +125,7 @@ export interface PostcodeLocalityBaseOptions {
  * journal mode so there's no sidecar, and a VACUUM to compact.
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
-	const db = new DatabaseSync(output)
+	using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
 
 	const counts = db
 		.prepare(
@@ -155,9 +154,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 			.join(", ") +
 		"}"
 
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: db })
-
-	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
+	await createPostcodeLocalityMetaTable(db, { ifNotExists: true })
 
 	const meta: Array<[string, string]> = [
 		["name", "mailwoman-postcode-locality"],
@@ -188,7 +185,6 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 	assertDatabaseIntegrity(db, output)
 
 	db.exec("VACUUM")
-	db.close()
 
 	// Python prints the dict repr (insertion order rows→containing, single quotes).
 	const summaryRepr =
@@ -202,10 +198,10 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 /**
  * Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`).
  */
-function geojsonFiles(dir: string): string[] {
-	if (!existsSync(dir)) return []
+async function geojsonFiles(dir: string): Promise<string[]> {
+	if (!(await pathExists(dir))) return []
 
-	return (readdirSync(dir, { recursive: true }) as string[])
+	return ((await readDirectoryRecursive(dir)) as string[])
 		.filter((p) => p.endsWith(".geojson"))
 		.map((p) => join(dir, p))
 }
@@ -217,10 +213,10 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	const locs: Locality[] = []
 
-	for (const fp of geojsonFiles(join(adminRepo!, "data"))) {
+	for (const fp of await geojsonFiles(join(adminRepo!, "data"))) {
 		try {
 			const g = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: GeojsonGeometry }>(
-				readFileSync(fp, "utf8")
+				await readLocalTextFile(fp)
 			)
 
 			if (!g) continue
@@ -288,109 +284,108 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 		}
 	}
 
-	const con = new DatabaseSync(postcodeDB!)
+	using con = new DatabaseClient<PostcodeLocalityDatabase>(postcodeDB!)
 
 	const postcodes = con
 		.prepare("SELECT name, latitude, longitude FROM spr WHERE country=? AND placetype='postalcode' AND is_current!=0")
 		.all(country!) as Array<{ name: string; latitude: number | null; longitude: number | null }>
 
-	con.close()
-
 	console.log(`  ${postcodes.length} ${country} postcode centroids`)
 
-	const out = new DatabaseSync(output)
-	// Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality shard
-	// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
-	// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>({ database: out })
-
-	await createPostcodeLocalityTable(kdb, { ifNotExists: true })
-
-	out.prepare("DELETE FROM postcode_locality WHERE country = ?").run(country!)
-
-	const insert = out.prepare(POSTCODE_LOCALITY_INSERT_SQL)
-	let rows = 0
 	let nContained = 0
-	out.exec("BEGIN")
+	let rows = 0
 
-	for (const pcRow of postcodes) {
-		const pc = pcRow.name
-		const plat = pcRow.latitude
-		const plon = pcRow.longitude
+	{
+		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
+		// Accumulate per country into one shared DB (the resolver attaches a SINGLE postcode_locality shard
+		// and country-filters at query time). CREATE-IF-NOT-EXISTS + DELETE-this-country makes each --country
+		// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
 
-		if (plat == null || plon == null) continue
+		await createPostcodeLocalityTable(db, { ifNotExists: true })
 
-		// containing locality via bbox-grid-prefiltered PIP (only localities whose bbox spans this cell)
-		let containingIdx: number | null = null
+		db.prepare("DELETE FROM postcode_locality WHERE country = ?").run(country!)
 
-		for (const idx of bgrid.get(`${Math.floor(plon * 10)}|${Math.floor(plat * 10)}`) ?? []) {
-			const l = locs[idx]!
-			const [minx, miny, maxx, maxy] = l.bbox
+		const insert = db.prepare(POSTCODE_LOCALITY_INSERT_SQL)
+		db.exec("BEGIN")
 
-			if (
-				minx <= plon &&
-				plon <= maxx &&
-				miny <= plat &&
-				plat <= maxy &&
-				geometryContains(l.geom, plon, plat) === true
-			) {
-				containingIdx = idx
+		for (const pcRow of postcodes) {
+			const pc = pcRow.name
+			const plat = pcRow.latitude
+			const plon = pcRow.longitude
 
-				break
+			if (plat == null || plon == null) continue
+
+			// containing locality via bbox-grid-prefiltered PIP (only localities whose bbox spans this cell)
+			let containingIdx: number | null = null
+
+			for (const idx of bgrid.get(`${Math.floor(plon * 10)}|${Math.floor(plat * 10)}`) ?? []) {
+				const l = locs[idx]!
+				const [minx, miny, maxx, maxy] = l.bbox
+
+				if (
+					minx <= plon &&
+					plon <= maxx &&
+					miny <= plat &&
+					plat <= maxy &&
+					geometryContains(l.geom, plon, plat) === true
+				) {
+					containingIdx = idx
+
+					break
+				}
 			}
-		}
 
-		// nearby candidates within radius (grid-limited) for the soft-scoring candidate set + abutting case
-		const cand: Array<{ d: number; idx: number }> = []
-		const gx = pyRound(plon * 10)
-		const gy = pyRound(plat * 10)
+			// nearby candidates within radius (grid-limited) for the soft-scoring candidate set + abutting case
+			const cand: Array<{ d: number; idx: number }> = []
+			const gx = pyRound(plon * 10)
+			const gy = pyRound(plat * 10)
 
-		for (const dx of [-1, 0, 1]) {
-			for (const dy of [-1, 0, 1]) {
-				for (const idx of grid.get(`${gx + dx}|${gy + dy}`) ?? []) {
-					const d = haversineKm(plat, plon, locs[idx]!.clat, locs[idx]!.clon)
+			for (const dx of [-1, 0, 1]) {
+				for (const dy of [-1, 0, 1]) {
+					for (const idx of grid.get(`${gx + dx}|${gy + dy}`) ?? []) {
+						const d = haversineKm(plat, plon, locs[idx]!.clat, locs[idx]!.clon)
 
-					if (d <= radiusKM) {
-						cand.push({ d, idx })
+						if (d <= radiusKM) {
+							cand.push({ d, idx })
+						}
 					}
 				}
 			}
+
+			cand.sort((a, b) => a.d - b.d || a.idx - b.idx)
+
+			const chosen: Array<{ d: number; idx: number; isc: number }> = []
+
+			if (containingIdx !== null) {
+				chosen.push({ d: 0, idx: containingIdx, isc: 1 })
+
+				nContained++
+			}
+
+			for (const { d, idx } of cand) {
+				if (idx === containingIdx) continue
+
+				if (chosen.filter((c) => c.isc === 0).length >= maxCandidates) break
+				chosen.push({ d, idx, isc: 0 })
+			}
+
+			for (const { d, idx, isc } of chosen) {
+				const l = locs[idx]!
+				insert.run(pc, country!, l.id, l.name, l.aliases.join("|"), pyRound(d, 3), isc)
+
+				rows++
+			}
 		}
 
-		cand.sort((a, b) => a.d - b.d || a.idx - b.idx)
+		db.exec("COMMIT")
 
-		const chosen: Array<{ d: number; idx: number; isc: number }> = []
-
-		if (containingIdx !== null) {
-			chosen.push({ d: 0, idx: containingIdx, isc: 1 })
-
-			nContained++
-		}
-
-		for (const { d, idx } of cand) {
-			if (idx === containingIdx) continue
-
-			if (chosen.filter((c) => c.isc === 0).length >= maxCandidates) break
-			chosen.push({ d, idx, isc: 0 })
-		}
-
-		for (const { d, idx, isc } of chosen) {
-			const l = locs[idx]!
-			insert.run(pc, country!, l.id, l.name, l.aliases.join("|"), pyRound(d, 3), isc)
-
-			rows++
-		}
+		await createPostcodeLocalityIndex(db, { ifNotExists: true })
 	}
-
-	out.exec("COMMIT")
-
-	await createPostcodeLocalityIndex(kdb, { ifNotExists: true })
 
 	console.log(
 		`  wrote ${rows} rows (${nContained}/${postcodes.length} postcodes have a containing locality) → ${output}`
 	)
 
-	out.close()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(output)
+	await sealDatabase(output)
 }

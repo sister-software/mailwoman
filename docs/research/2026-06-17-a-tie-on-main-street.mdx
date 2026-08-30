@@ -83,7 +83,7 @@ On our label-match arena, arbitration looked like a triumph: it captured 122 par
 
 The diagnosis is the interesting part. The arena's "neural missed it" column conflates two very different things: addresses the neural net gets _wrong_, and addresses it gets _differently right_. When v0 writes `street="Seminary Dr"` and neural writes `street="Seminary"` + `street_suffix="Dr"`, arbitrating toward v0 "wins" on label-match and **loses** on the actual parse — and flattening the two parsers' outputs together destroyed the tree structure the resolver needs to tell one "Mill Valley" from another. We rebuilt the layer to preserve that structure; the regression vanished, and so did the apparent win. The safe version is a net wash.
 
-The lesson we're keeping: for a model this strong on the addresses we serve, **there is no free lunch in blending it with the rules parser** — neural isn't wrong where it differs, it's differently right, and "differently right" is not something to overwrite. We grade the coordinate now, never the label, and we let the arbitration machinery sit behind a default-off flag for the day a weaker model or a new locale makes it pay.
+The lesson we're keeping: for a model this strong on the addresses we serve, **there is no free lunch in blending it with the rules parser** — neural isn't wrong where it differs, it's differently right, and "differently right" is not something to overwrite. We grade the coordinate now, never the label, and we let the arbitration implementation sit behind a default-off flag for the day a weaker model or a new locale makes it pay.
 
 ## What's on deck
 

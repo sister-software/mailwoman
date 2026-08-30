@@ -57,7 +57,7 @@ arrives at inference as a retrieval, not a weight.
   is the soft anchor feature, not postcode support.
 - **Placetype-pair index:** a retrieval-augmented `dependent_locality` prior
   built from real (child, parent) place-name pairs (e.g. "Fishburn" is a real
-  child of "Stockton-on-Tees") — a soft decode-time bias, hard-gated to GB
+  child of "Stockton-on-Tees") — a soft decode-time bias, restricted to GB
   input only, that never fires for any other locale. See _Evaluation_.
 
 ## Intended use
@@ -92,7 +92,7 @@ run the other way here, and why the fix is a retrain rather than more data.
 scaffolding only — the runtime resolution path was exercised and tested, but
 no GB-specific numbers existed. That has changed: the base encoder was
 fine-tuned on a `dependent_locality`-feed corpus that includes a real GB
-shard, and this package's own `pair-index-gb.bin` supplies a calibrated
+subset, and this package's own `pair-index-gb.bin` supplies a calibrated
 retrieval prior on top. Full-pipeline `dependent_locality` recall, GB golden
 board (69 rows carrying the tag), prior ON at the calibrated δ=5.0: **69/69
 emission, 67/69 tag-correct (97.1%)**. The two misses are pre-existing,
@@ -129,7 +129,7 @@ output is byte-stable when calibration is omitted.
   comma-delimited input segments only (the "segment" probe mode, default
   since d2a1242f), so comma-stripped GB input gets no boost from this channel
   (fully inert, not degraded — a documented v1 trade, not a bug). It is also
-  hard-gated to GB: it structurally cannot fire on non-GB input.
+  restricted to GB: it structurally cannot fire on non-GB input.
 - **All-caps / shouting input degrades** the admin tags (mixed-case training);
   `@mailwoman/neural`'s `normalizeCase` opt recovers detected all-caps ASCII.
 - **Non-Latin scripts** (CJK, Cyrillic) fall through to byte-fallback tokens;

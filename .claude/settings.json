@@ -36,6 +36,16 @@
 					}
 				]
 			}
+		],
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "/home/lab/Projects/mailwoman/.claude/codemod/periodic-update/check-updates.sh"
+					}
+				]
+			}
 		]
 	}
 }

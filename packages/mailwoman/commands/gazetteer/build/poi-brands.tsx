@@ -13,8 +13,7 @@
  *   `oxfmt` on the output here so the emitted file is commit-ready without a manual format pass.
  */
 
-import { execFileSync } from "node:child_process"
-
+import { execFileSync } from "@mailwoman/platform/child_process"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -57,7 +56,7 @@ const GazetteerBuildPOIBrands: ParsedCommandComponent<Options> = ({ options }) =
 
 		console.error(`▸ writing ${out}`)
 
-		writeBrandTable(table, out)
+		await writeBrandTable(table, out)
 		execFileSync("yarn", ["oxfmt", out])
 
 		const top5 = table.brands

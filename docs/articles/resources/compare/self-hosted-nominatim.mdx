@@ -112,10 +112,10 @@ send them through both, and look at how each one fails rather than at how each o
 published panels and their scripts:
 
 ```bash
-curl -fsSLO https://mailwoman.ai/benchmarks/fr-ban-panel.mjs
+curl -fsSLO https://mailwoman.ai/benchmarks/fr-ban-panel.ts
 curl -fsSLO https://mailwoman.ai/benchmarks/fr-ban-sample.json
 mailwoman data pull candidate fr
-node fr-ban-panel.mjs --data-root <DATA_ROOT>
+node fr-ban-panel.ts --data-root <DATA_ROOT>
 ```
 
 [Benchmarks](../benchmarks/index.mdx) carries the method and the results, including the rows that

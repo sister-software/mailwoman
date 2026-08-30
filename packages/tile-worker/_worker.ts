@@ -7,6 +7,7 @@
 
 import type { ExportedHandler } from "@cloudflare/workers-types"
 import { ResourceError } from "@mailwoman/core/errors"
+import { prettyJSON } from "@mailwoman/core/objects"
 
 import { applyAccessControlAllowOrigin } from "./cors.ts"
 import { DatabaseRetrieveRoute } from "./routes/db.ts"
@@ -36,7 +37,7 @@ const handler: ExportedHandler<TileWorkerEnv> = {
 			HealthCheckRoute,
 		]).catch((error) => {
 			if (error instanceof ResourceError) {
-				const response = new Response(JSON.stringify(error.toJSON(), null, "\t"), {
+				const response = new Response(prettyJSON(error), {
 					status: error.status,
 					headers: {
 						"Content-Type": "application/json",

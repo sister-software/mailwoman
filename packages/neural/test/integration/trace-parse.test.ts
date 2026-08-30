@@ -5,12 +5,13 @@
  *   Tests for `NeuralAddressClassifier.traceParse` (spec:
  *   docs/superpowers/specs/2026-07-03-parse-trace-model-visualizer-design.md).
  *
- *   The load-bearing assertion is PARITY: the trace's tokens must build the same AddressTree
+ *   The required assertion is PARITY: the trace's tokens must build the same AddressTree
  *   `parse()` returns under identical opts — proving trace retention never forked the decode
  *   path (#481). Uses a fake `NeuralRunner` so the suite runs in milliseconds.
  */
 
 import { buildAddressTree } from "@mailwoman/core/decoder"
+import { prettyJSON } from "@mailwoman/core/objects"
 import { workspacePath } from "@mailwoman/core/utils"
 import type { AnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/classifier"
@@ -51,7 +52,7 @@ function logitsWithBoost(numTokens: number, boostIdx: number, boostLabel: string
 	const matrix: number[][] = []
 
 	for (let t = 0; t < numTokens; t++) {
-		const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
+		const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 
 		if (t === boostIdx && labelIdx !== -1) {
 			row[labelIdx] = magnitude
@@ -234,7 +235,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		// Everything decodes O; the postcode-repair pass should add the "SW1A 1AA" postcode span.
 		const logits = pieces.map(() => {
-			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
+			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 			row[STAGE2_BIO_LABELS.indexOf("O")] = 2
 
 			return row
@@ -272,7 +273,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// The diagnosed mislabel shape: locality run, then B-region on the outward code's first piece,
 		// then the postcode labels on the remainder (the clip).
 		const logits = pieces.map((_, i) => {
-			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
+			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 
 			const label =
 				i < firstPostcodePiece
@@ -378,7 +379,7 @@ describe("NeuralAddressClassifier.traceParse", () => {
 		// Each fragment STARTS with B- (O → I- is an illegal BIO transition the viterbi mask forbids);
 		// only a contiguous continuation piece gets I-. The dots decode O — the gaps the bridge crosses.
 		const logits = pieces.map((p, idx) => {
-			const row = new Array<number>(STAGE2_BIO_LABELS.length).fill(0)
+			const row = Array.from<number>({ length: STAGE2_BIO_LABELS.length }).fill(0)
 			const alnum = /[\p{L}\p{N}]/u.test(p.piece)
 			const prev = pieces[idx - 1]
 			const continues = alnum && prev !== undefined && /[\p{L}\p{N}]/u.test(prev.piece) && prev.end === p.start
@@ -440,6 +441,6 @@ describe("NeuralAddressClassifier.traceParse", () => {
 
 		const trace = await classifier.traceParse(text, { addressSystemConventions: "auto", spanProposer: false })
 
-		await expect(JSON.stringify(trace, null, "\t")).toMatchFileSnapshot("../fixtures/trace-schema.snap.json")
+		await expect(prettyJSON(trace, false)).toMatchFileSnapshot("../fixtures/trace-schema.snap.json")
 	})
 })

@@ -8,26 +8,24 @@
  *   paid for once (#566 / reconcile-retirement).
  */
 
-import { createHash } from "node:crypto"
-import { existsSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
-
+import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
-import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { readDeclaredArtifactFile } from "@mailwoman/neural/weights-channels"
+import { createHash } from "@mailwoman/platform/crypto"
+import { resolve } from "@mailwoman/platform/path"
 import { createWOFResolver } from "@mailwoman/resolver"
 
 import type { AdminCoherenceReport } from "../../admin-coherence.ts"
-import {
-	type GeocodeResult,
-	geocodeAddress,
-	geocodeParseInputs,
-	ShardProvider,
-	type GeocodeDeps,
-} from "../../geocode-core.ts"
+import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "../../geocode-core.ts"
+import type { GeocodeResult } from "../../geocode-result.ts"
+import { ShardProvider } from "../../geocode-shards.ts"
 import { poiTaxonomyLookup } from "../../poi-intent.ts"
 import {
 	createResolverBackend,
@@ -38,14 +36,29 @@ import {
 } from "../../resolver-backend.ts"
 import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
 
-export interface GauntletDeps {
+export interface GauntletDeps extends Disposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
+	/**
+	 * The same geocode, with the resolver's interior recorded (#1721): one {@linkcode ResolveNodeTrace} per backend lookup
+	 * the walk performed, carrying the query as sent, the candidate table with its per-stage rank vector, the gates that
+	 * fired and the pick's provenance.
+	 *
+	 * A SEPARATE METHOD rather than a field on {@linkcode GauntletGeocodeOpts}, because a trace sink is not a per-query
+	 * PRIOR: the opts object is what a conformance-law row is allowed to pin, and a law that could pin an observer would
+	 * be varying the instrument along with the query. The walk does zero trace bookkeeping when nobody asks, so the plain
+	 * {@linkcode GauntletDeps.geocode} stays exactly as costly as it was.
+	 *
+	 * `resolver` is `[]` when the walk performed no lookup — a measured absence, not a missing record.
+	 */
+	geocodeTraced(
+		input: string,
+		opts?: GauntletGeocodeOpts
+	): Promise<{ result: GeocodeResult; resolver: ResolveNodeTrace[] }>
 	/**
 	 * Report-only access to the exact classifier, overlay, parse options, and FST selected by the Gauntlet path. It
 	 * performs no resolution and does not alter the gate's geocode path.
 	 */
 	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
-	close(): void
 }
 
 /**
@@ -213,13 +226,16 @@ export interface GauntletGeocodeOpts {
  * The md5 it receives is of the model `resolveWeights` returned, NOT of a path spelled out here: the guard must check
  * the artifact the run will actually grade, or it checks nothing the run depends on.
  */
-function assertShippedModelMatchesCard(materializedMd5: string): void {
+async function assertShippedModelMatchesCard(materializedMd5: string): Promise<void> {
 	const cardPath = resolve("packages/neural-weights-en-us/model-card.json")
 
-	if (!existsSync(cardPath)) return
+	if (!(await pathExists(cardPath))) return
+
 	// Soft-return on an UNPARSEABLE card too — the docstring's contract is that a card-format problem is
 	// not this guard's job (the model file itself is always existsSync-gated by the caller).
-	const card = tryParsingJSON<{ version?: string; files_md5?: Record<string, string> }>(readFileSync(cardPath, "utf8"))
+	const card = tryParsingJSON<{ version?: string; files_md5?: Record<string, string> }>(
+		await readLocalTextFile(cardPath)
+	)
 
 	if (!card) {
 		console.error(`[gauntlet] model-card ${cardPath} is not valid JSON — skipping the #1024 md5 guard`)
@@ -329,8 +345,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const resolvedModel = opts.modelPath ? undefined : resolveWeights({ locale: "en-us" }).modelPath
 	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolvedModel!)
 
-	if (existsSync(effModel)) {
-		const md5 = createHash("md5").update(readFileSync(effModel)).digest("hex")
+	if (await pathExists(effModel)) {
+		const md5 = createHash("md5")
+			.update(await readLocalBuffer(effModel))
+			.digest("hex")
 
 		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5.slice(0, 8)})`)
 
@@ -341,7 +359,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		// run intentionally grades a different artifact, so it is exempt. This gate is wired as the release
 		// before:release step (RELEASING.md), so failing here guards BOTH the gate and the ship.
 		if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot) {
-			assertShippedModelMatchesCard(md5)
+			await assertShippedModelMatchesCard(md5)
 		}
 	}
 
@@ -426,7 +444,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, {
-			wofPaths: wofShardPaths().filter(existsSync),
+			wofPaths: wofShardPaths().filter(pathExistsSync),
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
 			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
 		})
@@ -514,7 +532,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		let deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
 
 		try {
-			deps = { fst: deserializeFST(readFileSync(fstPath)), streetMorphology: loadMorph().matcher }
+			deps = { fst: deserializeFST(await readLocalBuffer(fstPath)), streetMorphology: loadMorph().matcher }
 		} catch (error) {
 			// A missing or unreadable artifact degrades to no prior, which is the incumbent behaviour — but it is named,
 			// because a silently absent prior scores lower and reads as a model difference.
@@ -537,7 +555,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
 	const poiDBPath = String(dataRootPath("poi", "poi.db"))
 
-	if (existsSync(poiDBPath)) {
+	if (await pathExists(poiDBPath)) {
 		const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
 			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
@@ -549,6 +567,36 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 			poiLookup: new POILookup({ databasePath: poiDBPath }),
 			isStreetGeneric: (token: string) => morphology.matcher.walk([token]) !== null,
 		}
+	}
+
+	/**
+	 * The one geocode call both public entry points make. `extra` is spread LAST so a trace sink cannot be shadowed by a
+	 * lever pin, and so the two entry points cannot drift into two different dependency assemblies — the reason the
+	 * Gauntlet builds its deps once at all.
+	 */
+	const runGeocode = async (
+		input: string,
+		geoOpts: GauntletGeocodeOpts | undefined,
+		extra: Pick<GeocodeDeps, "resolveTraceSink">
+	): Promise<GeocodeResult> => {
+		const { caseCountry, ...forwarded } = geoOpts ?? {}
+		const caseClassifier = await classifierFor(caseCountry)
+
+		return geocodeAddress(input, {
+			classifier: caseClassifier,
+			// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
+			classifyKind: poiKindClassifier,
+			resolver,
+			shards: shardProvider.for,
+			nationalShards: banProvider.for,
+			osmShards: osmProvider.for,
+			...leverDeps,
+			...(capitalLevel ? { capitalLevel } : {}),
+			...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
+			...forkEntityDeps,
+			...forwarded,
+			...extra,
+		})
 	}
 
 	return {
@@ -563,29 +611,20 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 				...(priorDeps.fst ? { fst: priorDeps.fst } : {}),
 			}
 		},
-		geocode: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
-			const { caseCountry, ...forwarded } = geoOpts ?? {}
-			const caseClassifier = await classifierFor(caseCountry)
+		geocode: (input: string, geoOpts?: GauntletGeocodeOpts) => runGeocode(input, geoOpts, {}),
+		geocodeTraced: async (input: string, geoOpts?: GauntletGeocodeOpts) => {
+			const resolverTrace: ResolveNodeTrace[] = []
 
-			return geocodeAddress(input, {
-				classifier: caseClassifier,
-				// #1649: same lexicon-aware kind classifier the CLI session wires — the harness grades the user's path.
-				classifyKind: poiKindClassifier,
-				resolver,
-				shards: shardProvider.for,
-				nationalShards: banProvider.for,
-				osmShards: osmProvider.for,
-				...leverDeps,
-				...(capitalLevel ? { capitalLevel } : {}),
-				...(await priorDepsFor(caseClassifier, OVERLAY_LOCALE_BY_COUNTRY[caseCountry ?? ""] ?? "base")),
-				...forkEntityDeps,
-				...forwarded,
+			const result = await runGeocode(input, geoOpts, {
+				resolveTraceSink: (record) => resolverTrace.push(record),
 			})
+
+			return { result, resolver: resolverTrace }
 		},
-		close: () => {
-			shardProvider.close()
-			banProvider.close()
-			osmProvider.close()
+		[Symbol.dispose]: () => {
+			shardProvider[Symbol.dispose]()
+			banProvider[Symbol.dispose]()
+			osmProvider[Symbol.dispose]()
 		},
 	}
 }
@@ -623,6 +662,18 @@ export interface GauntletResult {
 	 * leaving an unchanged verdict to mean either "harmless" or "never ran".
 	 */
 	postcode_country_scope: string | null
+	/**
+	 * The #1880 capital promotion's firing receipt, projected verbatim: the promoted candidate's country, present only
+	 * when the promotion changed some node's leading candidate. The same firing-count posture as
+	 * {@linkcode postcode_country_scope} — carried so a lever-pinned comparison counts activity instead of inferring it
+	 * from moved rows.
+	 */
+	capital_promotion?: string
+	/**
+	 * The #1882 exemption's firing receipt (#1893), projected verbatim — present (`true`) only when the winning candidate
+	 * reached the top because the exemption spared it the cross-country alias penalty.
+	 */
+	variant_alias_exemption?: true
 	/**
 	 * The RESOLVED admin chain, locality → country, verbatim from {@linkcode GeocodeResult.hierarchy}. Not asserted by any
 	 * case: it carries the gazetteer `placeID`s, which is what the ablation layer's graceful-degradation ladder is
@@ -666,6 +717,8 @@ export function toGauntletResult(g: GeocodeResult): GauntletResult {
 		dependent_locality: g.dependent_locality,
 		unit: g.unit,
 		postcode_country_scope: g.postcode_country_scope,
+		...(g.capital_promotion === undefined ? {} : { capital_promotion: g.capital_promotion }),
+		...(g.variant_alias_exemption === true ? { variant_alias_exemption: true as const } : {}),
 		...(g.admin_coherence ? { admin_coherence: g.admin_coherence } : {}),
 		hierarchy: g.hierarchy.map((h) => ({
 			tag: h.tag,

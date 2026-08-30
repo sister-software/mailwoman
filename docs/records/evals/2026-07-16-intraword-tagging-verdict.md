@@ -104,7 +104,7 @@ counter-distribution, without touching the architecture at all.
 - The incoherence is a **tail** (25/376), not the general behaviour of digit runs. "Every multi-piece
   digit run gets dragged to postcode by its continuations" is refuted at 0.0270.
 
-**Villainizing, and worth saying plainly:**
+**Villainizing, and must be explicit:**
 
 - Their failure mode is bounded; ours is not. A word-unit tagger's worst case is a wrong tag. Ours is
   a _self-contradictory_ one, and Viterbi resolves it by discarding a first piece that was correct

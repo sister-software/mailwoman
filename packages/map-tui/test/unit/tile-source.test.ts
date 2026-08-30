@@ -1,12 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readFile } from "node:fs/promises"
-import { createServer } from "node:http"
-import type { AddressInfo } from "node:net"
-import { fileURLToPath } from "node:url"
-
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { readAttribution, TileSource } from "@mailwoman/map-tui/tile-source"
+import { createServer } from "@mailwoman/platform/http"
+import type { AddressInfo } from "@mailwoman/platform/net"
+import { fileURLToPath } from "@mailwoman/platform/url"
 import { afterAll, describe, expect, it } from "vitest"
 
 const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.meta.url))
@@ -14,7 +13,7 @@ const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.met
 describe("TileSource", async () => {
 	const source = await TileSource.open(FIXTURE)
 
-	afterAll(() => source.close())
+	afterAll(() => source[Symbol.asyncDispose]())
 
 	it("reads header zoom bounds", () => {
 		expect(source.minZoom).toBe(0)
@@ -39,7 +38,7 @@ describe("TileSource", async () => {
 		const tile = await source.getTile(14, 2612, 5861)
 		expect(tile).not.toBeNull()
 		const roads = tile!.layers.find((layer) => layer.name === "roads")
-		const named = roads!.features.map((f) => f.properties["name"]).filter(Boolean)
+		const named = roads!.features.map((f) => f.properties["name"]).filter((name) => name !== undefined)
 		expect(named).toContain("SE Clinton St")
 	})
 
@@ -50,7 +49,7 @@ describe("TileSource", async () => {
 
 describe("TileSource over HTTP", async () => {
 	// A minimal static server honoring single Range requests — all a remote PMTiles archive requires of its host.
-	const fixture = await readFile(FIXTURE)
+	const fixture = await readLocalBuffer(FIXTURE)
 
 	const server = createServer((request, response) => {
 		const range = /^bytes=(\d+)-(\d+)$/u.exec(request.headers.range ?? "")
@@ -81,11 +80,8 @@ describe("TileSource over HTTP", async () => {
 	const source = await TileSource.open(`http://127.0.0.1:${port}/portland.pmtiles`)
 
 	afterAll(async () => {
-		await source.close()
-
-		await new Promise((resolve) => {
-			server.close(resolve)
-		})
+		await source[Symbol.asyncDispose]()
+		await server[Symbol.asyncDispose]()
 	})
 
 	it("reads the same header bounds as the local file", () => {
@@ -96,7 +92,7 @@ describe("TileSource over HTTP", async () => {
 	it("fetches SE Clinton St through range requests", async () => {
 		const tile = await source.getTile(14, 2612, 5861)
 		const roads = tile!.layers.find((layer) => layer.name === "roads")
-		const named = roads!.features.map((f) => f.properties["name"]).filter(Boolean)
+		const named = roads!.features.map((f) => f.properties["name"]).filter((name) => name !== undefined)
 
 		expect(named).toContain("SE Clinton St")
 	})
@@ -109,8 +105,11 @@ describe("readAttribution", () => {
 		).toBe("© OpenStreetMap")
 	})
 
-	it("keeps an unknown entity raw rather than guessing", () => {
-		expect(readAttribution({ attribution: "&copy; Foo &odot; Bar" })).toBe("© Foo &odot; Bar")
+	it("decodes the full named-entity set, HTML5 legacy rules included", () => {
+		expect(readAttribution({ attribution: "&copy; Foo &odot; Bar" })).toBe("© Foo ⊙ Bar")
+		// The HTML5 legacy set decodes WITHOUT a semicolon, so a prefix-matching token is not "unknown":
+		expect(readAttribution({ attribution: "&notarealentity;" })).toBe("¬arealentity;")
+		expect(readAttribution({ attribution: "&zzznotanentity; stays raw" })).toBe("&zzznotanentity; stays raw")
 	})
 
 	it("reads absent or malformed metadata as empty", () => {

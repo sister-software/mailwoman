@@ -25,12 +25,12 @@
 #   - RETAIN the unit win: `unit` >= 88% on data/eval/external/unit-real-designators.jsonl (was 92.3%).
 #   - NO-REGRESSION (within ~1pp vs v4.1.0 / v0.9.7, fp32-to-fp32): US house_number / postcode /
 #     locality / region; FR per-class floors; DE native-order locality (de-order-eval.ts).
-#   DECISION: affixes clear + street holds + unit retained + no tripwire → promote candidate.
+#   DECISION: affixes clear + street holds + unit retained + no regression check → promote candidate.
 #     If street/house_number slips or affixes over-fire: lower synth-affix 2.0 -> 1.5 + rerun
 #     (the unit-v3 remedy). If affixes move but `street` drops: negative space refuted here — keep
 #     the affix lift, note it.
 # Measure: per-locale-f1.ts (US/FR golden) + the street-affix-real + unit-real-designators evals
-#   (fp32) + de-order-eval.ts (DE 2x2 tripwire).
+#   (fp32) + de-order-eval.ts (DE 2x2 regression check).
 #
 # CORPUS: v0.4.6-affix (no rebuild of base). Reproduce:
 #   node scripts/build-street-affix-shard.mjs --output /tmp/affix-train.jsonl --count 50000 --seed 42
@@ -70,7 +70,7 @@ data:
     # retained from v4.1.0 (v0.9.7-unit-v3) — keep the secondary-unit win.
     synth-unit: 1.5
     # NEW: the street-affix shard. 2.0 ≈ ~6% of the epoch — two starved tags to lift, but capped to
-    # avoid over-firing affixes / starving `street`. Lower to 1.5 if a street/house_number tripwire trips.
+    # avoid over-firing affixes / starving `street`. Lower to 1.5 if a street/house_number regression check trips.
     synth-affix: 2.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

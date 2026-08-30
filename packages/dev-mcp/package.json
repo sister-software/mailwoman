@@ -25,6 +25,11 @@
 			"default": "./out/hooks/todo-issue-sync.js",
 			"types": "./out/hooks/todo-issue-sync.d.ts"
 		},
+		"./hooks/vale-check-core": {
+			"node": "./hooks/vale-check-core.ts",
+			"default": "./out/hooks/vale-check-core.js",
+			"types": "./out/hooks/vale-check-core.d.ts"
+		},
 		".": {
 			"node": "./index.ts",
 			"default": "./out/index.js",
@@ -272,12 +277,14 @@
 		"@mailwoman/geocode-oracle": "workspace:*",
 		"@mailwoman/libpostal": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
+		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
+		"@mailwoman/sqlite": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.30.0",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.1.0",
-		"spliterator": "^6.2.0",
+		"spliterator": "^6.3.1",
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {

@@ -33,7 +33,7 @@ env:
 concurrency:
   group: lexicon-nightly
   # A queued second run would race the first for the same databases; the newest is the one that
-  # matters, and neither is load-bearing for a merge.
+  # matters, and neither is required for a merge.
   cancel-in-progress: true
 
 jobs:

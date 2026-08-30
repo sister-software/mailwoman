@@ -30,7 +30,7 @@ if [ -n "$STAGED" ]; then
 	# commit staging only .yml/.sh), so scope it to the types it formats.
 	FMT=$(printf '%s\n' "$STAGED" | grep -E '\.(ts|tsx|mts|cts|js|mjs|cjs|jsx|json|jsonc|md|mdx|toml|css|html)$' || true)
 	if [ -n "$FMT" ]; then
-		printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --write 2>&1 || {
+		FMT_OUT=$(printf '%s\n' "$FMT" | tr '\n' '\0' | xargs -0 yarn oxfmt --write 2>&1) || {
 			if printf '%s' "$FMT_OUT" | grep -q "may have been excluded by ignore rules"; then
 				echo "pre-commit: all staged format targets are oxfmt-excluded — skipping format"
 			else

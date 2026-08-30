@@ -29,8 +29,7 @@
  *   [--out-md <md>]`
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
@@ -39,7 +38,7 @@ import { addressFrequencyKey, streamRows } from "#index"
 import { norm } from "./shared.ts"
 
 /**
- * Similarity at or above which a pair is a near-miss worth inspecting rather than plainly unrelated.
+ * Similarity at or above which a pair is a near-miss worth inspecting rather than unrelated.
  */
 const WEAK_SIMILARITY_MIN = 0.3
 
@@ -338,7 +337,7 @@ export async function dedupCeiling(
 	console.log(md)
 
 	if (OUT_MD) {
-		writeFileSync(OUT_MD, md)
+		await writeLocalFile(md, OUT_MD)
 		report?.(`[written] ${OUT_MD}`)
 	}
 

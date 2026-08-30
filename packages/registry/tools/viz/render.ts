@@ -16,8 +16,8 @@
  *   pays for it.
  */
 
-import { resolve } from "node:path"
-import { pathToFileURL } from "node:url"
+import { resolve } from "@mailwoman/platform/path"
+import { pathToFileURL } from "@mailwoman/platform/url"
 
 /**
  * Options for {@linkcode renderPlotlyHTMLToPNG}.
@@ -96,7 +96,7 @@ export async function renderPlotlyHTMLToPNG(
 	await page.waitForTimeout(800)
 
 	await page.screenshot({ path: resolve(options.outPNG), fullPage: true })
-	await browser.close()
+	await browser[Symbol.asyncDispose]()
 
 	if (errors.length) {
 		report?.(`[render] ${errors.length} console error(s):`)

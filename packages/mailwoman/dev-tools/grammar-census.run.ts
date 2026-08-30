@@ -2,13 +2,13 @@
  * Report-only C6 census over the committed Gauntlet corpus. This command is not a release gate.
  */
 
-import { writeFile } from "node:fs/promises"
-import { DatabaseSync } from "node:sqlite"
-import { parseArgs } from "node:util"
-
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
+import { parseArgs } from "@mailwoman/platform/util"
+import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
+import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
 import { buildGauntletDeps } from "../eval-harness/gauntlet/harness.ts"
@@ -35,7 +35,10 @@ const cases = await loadRegressionCases()
 const deps = await buildGauntletDeps()
 const reports: C6RowReport[] = []
 const candidateDBPath = resolveCandidateDBPath()
-const candidateDB = candidateDBPath ? new DatabaseSync(candidateDBPath, { readOnly: true }) : undefined
+
+const candidateDB = candidateDBPath
+	? new DatabaseClient<CandidateDatabase>(candidateDBPath, { readOnly: true })
+	: undefined
 
 interface CandidateLocalityRow {
 	spr_id: number
@@ -122,8 +125,8 @@ try {
 		})
 	}
 } finally {
-	deps.close()
-	candidateDB?.close()
+	deps[Symbol.dispose]()
+	candidateDB?.destroy()
 }
 
 const summary = summarizeC6(reports)
@@ -168,8 +171,8 @@ for (const id of TARGET_IDS) {
 }
 
 if (values["out-json"]) {
-	await writeFile(
-		values["out-json"],
-		`${JSON.stringify({ summary, requiredIDs: TARGET_IDS, rows: reports }, null, 2)}\n`
+	await writeLocalTextFile(
+		`${JSON.stringify({ summary, requiredIDs: TARGET_IDS, rows: reports }, null, 2)}\n`,
+		values["out-json"]
 	)
 }

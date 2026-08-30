@@ -9,7 +9,7 @@
  *   where NPI-truth and any programmatic rule disagree — exactly the pairs a frozen adjudicated
  *   gold set must cover.
  *
- *   This finds them (over the full TX registry, geocode-free — same machinery as `dedup-ceiling.ts`)
+ *   This finds them (over the full TX registry, geocode-free — same implementation as `dedup-ceiling.ts`)
  *   and writes each as a JSONL row carrying BOTH records' fields (org name, address, authorized
  *   official, taxonomy, subpart/parent flags) plus the programmatic verdict, so an adjudicator
  *   (human or LLM-as-judge, flagged as such) can label "same real-world entity? yes/no" and we can
@@ -19,8 +19,7 @@
  *   [--out-jsonl <path>]`
  */
 
-import { writeFileSync } from "node:fs"
-
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
@@ -241,7 +240,7 @@ export async function goldSetSample(
 	report?.(`    sampling ${sample.length} (stride ${stride}) for adjudication`)
 
 	if (OUT) {
-		writeFileSync(OUT, sample.map((p) => JSON.stringify(p)).join("\n") + "\n")
+		await writeLocalTextFile(sample.map((p) => JSON.stringify(p)).join("\n") + "\n", OUT)
 		report?.(`[written] ${OUT}`)
 	} else {
 		for (const p of sample.slice(0, 10)) {
