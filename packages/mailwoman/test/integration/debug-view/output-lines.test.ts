@@ -60,7 +60,7 @@ const TRACE = {
 		confidence: 0.9,
 		alternatives: [{ kind: "vague", confidence: 0.3 }],
 	},
-} as GeocodeTrace
+} satisfies Pick<GeocodeTrace, "kind">
 
 function labels(lines: ReturnType<typeof outputLines>): string[] {
 	return lines.filter((line) => line.kind === "heading").map((line) => line.label)

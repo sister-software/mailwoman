@@ -25,7 +25,7 @@ import { join } from "path-ts"
 export type DataReleaseManifest = Record<string, string>
 
 /**
- * Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed.
+ * Read `<dataRoot>/releases.json`. Returns null (legacy mode) when absent or malformed. TODO: Should be async.
  */
 export function readReleaseManifest(dataRoot: string): DataReleaseManifest | null {
 	try {

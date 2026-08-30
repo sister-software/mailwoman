@@ -20,12 +20,12 @@ const tree: AddressTree = {
 }
 
 function stubFetch(response: unknown, status = 200) {
-	return vi.fn(async () => ({
+	return vi.fn(async (_url: string, _init: { body: string }) => ({
 		ok: status >= 200 && status < 300,
 		status,
 		statusText: "",
 		json: async () => response,
-	})) as typeof fetch
+	}))
 }
 
 describe("serializableResolveOpts", () => {
@@ -58,8 +58,8 @@ describe("RemoteResolver", () => {
 		const got = await r.resolveTree(tree, { defaultCountry: "US", addressPoints: {} as AddressPointLookup })
 
 		expect(got).toEqual(resolved)
-		const [, init] = (fetchSpy as { mock: { calls: [string, RequestInit][] } }).mock.calls[0]!
-		const body = parseJSONStrict<{ tree: AddressTree; opts: unknown }>(init.body as string)
+		const [, init] = fetchSpy.mock.calls[0]!
+		const body = parseJSONStrict<{ tree: AddressTree; opts: unknown }>(init.body)
 		expect(body.tree.raw).toBe(tree.raw)
 		expect(body.opts).toEqual({ defaultCountry: "US" }) // addressPoints stripped
 	})

@@ -198,7 +198,8 @@ function spliceStreetTree(
  * @param grammar The segment-transition grammar from the weights bundle's `semi-crf-transitions.json`.
  */
 export async function rerankByStreetEvidence(
-	classifier: NeuralAddressClassifier,
+	// Only `traceParse` is called; `Pick` says so, and a test double is then an object rather than an assertion.
+	classifier: Pick<NeuralAddressClassifier, "traceParse">,
 	text: string,
 	evidence: StreetLocalityEvidence,
 	grammar: SemiCRFTransitions,

@@ -20,7 +20,9 @@ interface WiringEcho {
 	cols: number
 }
 
-const echoOf = (record: SourceRecord): WiringEcho => record.address as WiringEcho
+// The fake worker smuggles the echo through the `address` slot, so the value genuinely is not a `PostalAddress`.
+// Read the slot as what it is on this wire — unknown JSON — and assert once from there.
+const echoOf = (record: SourceRecord): WiringEcho => (record as { address?: unknown }).address as WiringEcho
 
 async function* records(n: number): AsyncIterableIterator<SourceRecord> {
 	for (let i = 0; i < n; i++) {

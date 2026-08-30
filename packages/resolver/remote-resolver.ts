@@ -39,6 +39,11 @@ export function serializableResolveOpts(opts?: ResolveOpts): SerializableResolve
 	return rest
 }
 
+export type RemoteResolverFetch = (
+	url: string,
+	init: { method: string; headers: Record<string, string>; body: string; signal?: AbortSignal }
+) => Promise<{ ok: boolean; status: number; statusText: string; json(): Promise<unknown> }>
+
 export interface RemoteResolverOpts {
 	/**
 	 * Full URL of the resolver service's resolve-tree endpoint, e.g. `http://resolver:7081/v1/resolve`.
@@ -46,8 +51,12 @@ export interface RemoteResolverOpts {
 	endpoint: string
 	/**
 	 * Injectable fetch (tests / custom agents). Defaults to the global `fetch`.
+	 *
+	 * Typed by what this module reads — `ok`, `status`, `statusText`, `json()` — rather than the full `fetch`, whose
+	 * `Response` carries a body stream and headers no code here touches. The global `fetch` satisfies this shape, and a
+	 * test double can be an object instead of an assertion.
 	 */
-	fetch?: typeof fetch
+	fetch?: RemoteResolverFetch
 	/**
 	 * Per-request timeout in ms. Default 10000.
 	 */
@@ -75,7 +84,7 @@ export interface ResolveTreeResponse {
 
 export class RemoteResolver implements Resolver {
 	readonly #endpoint: string
-	readonly #fetch: typeof fetch
+	readonly #fetch: RemoteResolverFetch
 	readonly #timeoutMs: number
 	readonly #headers: Record<string, string>
 
