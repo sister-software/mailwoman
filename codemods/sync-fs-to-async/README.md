@@ -106,6 +106,21 @@ the cause.
   default or namespace binding is still live, and `const {} = await import(…)` still evaluates the module.
 - Imports are prepended as a block. Placement within the existing import list is the formatter's job.
 
+## The three parameters
+
+All opt-in. Without them the codemod does the mechanical half and nothing else.
+
+| parameter                        | what it unlocks                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `topLevelAwait=<path fragments>` | a module-scope call may become a top-level `await` in a file matching one of these. Pass only ENTRIES — `.test.ts`, `/scripts/`, `/dev-tools/`, `.run.ts` — because top-level await in an IMPORTED module makes its evaluation asynchronous, which this repository has already had to undo once for cause (`packages/core/resources/libpostal.ts`, #481). |
+| `promote=<names>`                | function names this run is making `async` across the whole repository, so a call to one gets its `await` in every file. Computed as a repo-wide fixpoint by `scratchpad/codemod/promotion-set.ts`, which is where the cross-file question is answered.                                                                                                    |
+| `syncFallback=true`              | where the call cannot become asynchronous at all, rewrite to the `Sync`-suffixed helper rather than leaving the builtin. This is the second pass: after everything that could move has moved, what remains still reaches a HELPER, which is what leaves `@mailwoman/platform/fs` to `packages/core/fs/*` alone.                                           |
+
+The promises mirror needs no parameter. `@mailwoman/platform/fs/promises` and
+`node:fs/promises` map onto the same helpers by the same rules, and the rewrite
+adds no `await` — those names already answer a promise, so the call site's
+existing handling is correct as it stands.
+
 ## Running it
 
 ```bash
@@ -122,24 +137,44 @@ the before-and-after it is measured against.
 repository at every combination of relative and absolute `base_path` and `js_file` that was tried, where `jssg run` over
 the identical target found ten. Until that is understood, `jssg run` is the path that works.
 
+## What it never touches
+
+- `packages/core/fs/*` — the destination. It rewrote the helper BODIES to call themselves on the first run, which
+  typecheck accepts and which is an infinite loop at runtime.
+- `docs/scripts/{check-docs-structure,list-stale-docs,docs-frontmatter}.ts` — the Docs workflow runs these BEFORE
+  `yarn install`, so every module they import must resolve from the checkout alone. A workspace import here resolves on
+  a developer machine, passes review, and fails only on CI as `ERR_MODULE_NOT_FOUND`.
+  `scripts/preinstall-scripts.test.ts` is the executable half of that exemption; keep the two lists in step.
+
 ## Tests
 
 ```bash
 yarn test
 ```
 
-| fixture                            | asserts                                                                                                          |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `positive-async-context`           | every mapping fires, imports are added, the orphaned import goes                                                 |
-| `positive-deferred-import`         | the `await import(…)` form is rewritten, and a name a sync callback still uses survives the prune                |
-| `negative-sync-context`            | a sync function, a top-level statement and a non-async callback are all left alone                               |
-| `edge-unread-shapes`               | a read return value, a `latin1` encoding, stat options and an unrecognized removal are all left alone            |
-| `edge-shebang-and-existing-import` | the import lands below a shebang and a `@copyright` block, and merges into an existing import of the same module |
+Twelve fixtures. The ones worth naming are the ones that caught a real defect while running over this repository:
 
-The last two are the ones that caught real defects. `edge-shebang-and-existing-import` exists because the first run over
-this repository put an import above `#!/usr/bin/env node` in two executable files — a shebang is not a `comment` in the
-grammar — and added a second `import … from "@mailwoman/core/fs/writers"` beside an existing one, which no formatter
-merges.
+| fixture                            | asserts                                                                                               |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `positive-async-context`           | every mapping fires, imports are added, the orphaned import goes                                      |
+| `positive-awaited-callback`        | an `it`/`test`/`before*` callback is marked `async`, once per callback; `describe` is not             |
+| `positive-local-cascade`           | a file-local function and every in-file caller become `async` together                                |
+| `positive-deferred-import`         | the `await import(…)` form is rewritten, and a name a sync callback still uses survives the prune     |
+| `positive-module-alias`            | `fs.readFileSync(…)` where `fs` is one element of an array pattern destructured from `Promise.all`    |
+| `positive-json-collapse`           | `parseJSONStrict<T>(readFileSync(p, "utf8"))` → `readLocalJSONFile<T>(p)`, type argument carried      |
+| `negative-sync-context`            | a sync function, a top-level statement and a non-async callback are all left alone                    |
+| `negative-cascade-refused`         | a module-scope caller and a name passed as a value each refuse the whole closure                      |
+| `negative-sync-fallback-is-opt-in` | without `syncFallback=true`, an unreachable call stays as it is                                       |
+| `edge-unread-shapes`               | a read return value, a `latin1` encoding, stat options and an unrecognized removal are all left alone |
+| `edge-shebang-and-existing-import` | the import lands below a shebang and a `@copyright` block, and merges into an existing import         |
+| `edge-cascade-boundaries`          | a recursive call is awaited; an annotated binding and a file descriptor are refused                   |
+
+`edge-shebang-and-existing-import` exists because the first run put an import above `#!/usr/bin/env node` in two
+executable files — a shebang is a `hash_bang_line`, not a `comment` — and added a second
+`import … from "@mailwoman/core/fs/writers"` beside an existing one, which no formatter merges.
+`edge-cascade-boundaries` exists because a recursive `out.push(...walk(child))` left un-awaited reports as a missing
+`[Symbol.iterator]` several frames from the cause, and because `readFileSync(0, "utf8")` reads STDIN — the first
+argument is a DESCRIPTOR, and no path helper accepts one.
 
 ## The rule that keeps it done
 
