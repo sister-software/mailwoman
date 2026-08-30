@@ -25,6 +25,7 @@
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import * as path from "@mailwoman/platform/path"
 import type {
 	GlossaryData,
@@ -201,8 +202,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 
 			glossary = content as GlossaryData
 
-			const { readFile } = await import("@mailwoman/platform/fs/promises")
-			const registry = parseYAML(await readFile(tagsPath, "utf8")) as Record<string, TagRegistryEntry>
+			const registry = parseYAML(await readLocalTextFile(tagsPath)) as Record<string, TagRegistryEntry>
 			const registered = new Set(Object.keys(registry))
 
 			const problems: string[] = []
@@ -261,7 +261,6 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 				.flatMap((version) => version.docs)
 				.filter((doc) => !doc.draft && !doc.unlisted)
 
-			const { readFile } = await import("@mailwoman/platform/fs/promises")
 			const backlinks: GlossaryBacklinks = {}
 			const terms = (glossary.terms ?? []) as TaggedGlossaryTerm[]
 
@@ -279,7 +278,7 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 				let raw: string
 
 				try {
-					raw = await readFile(sourcePath, "utf8")
+					raw = await readLocalTextFile(sourcePath)
 				} catch {
 					continue
 				}

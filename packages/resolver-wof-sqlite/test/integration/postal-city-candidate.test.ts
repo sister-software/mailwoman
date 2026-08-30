@@ -10,9 +10,8 @@
  *   geographic locality; a bare query (no postcode), a postcode miss, a non-locality request, and a
  *   candidate.db WITHOUT the side-index are all untouched (byte-stable).
  */
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite/candidate-lookup"
 import {
@@ -24,7 +23,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-n
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 let candidatePath: string
 
 function buildFixtureAdmin(path: string): void {
@@ -72,15 +71,15 @@ async function attachPostalCityIndex(path: string): Promise<void> {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-pcc-"))
-	const input = join(scratch, "admin.db")
-	candidatePath = join(scratch, "candidate.db")
+	scratch = await temporaryDirectory("mailwoman-pcc-")
+	const input = scratch.resolve("admin.db")
+	candidatePath = scratch.resolve("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output: candidatePath, postcodes: [] })
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("WOFCandidateTableLookup postal-city side-index (#741)", () => {

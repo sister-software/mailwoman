@@ -68,12 +68,9 @@ async function printVersion(): Promise<number> {
 
 	if (!packageJSONPath) throw new Error("Could not find package.json for mailwoman/cli")
 
-	const [{ readFile }, { parseJSONStrict }] = await Promise.all([
-		import("@mailwoman/platform/fs/promises"),
-		import("@mailwoman/core/objects"),
-	])
+	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 
-	const packageJSON: unknown = parseJSONStrict(await readFile(packageJSONPath, "utf8"))
+	const packageJSON: unknown = await readLocalJSONFile(packageJSONPath)
 
 	if (
 		typeof packageJSON !== "object" ||

@@ -25,7 +25,7 @@
  */
 
 import { isOfficialLanguage } from "@mailwoman/codex/country"
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
@@ -265,7 +265,7 @@ export async function ingestGeonamesAliases(
 	for (const cc of countries) {
 		const file = join(geonamesDir, `${cc}.txt`)
 
-		if (!existsSync(file)) {
+		if (!(await pathExists(file))) {
 			report({ country: cc, places: 0, skipped: true }, file)
 
 			continue
@@ -275,7 +275,7 @@ export async function ingestGeonamesAliases(
 		// #267: add A-class admin + ancestry only for the gap countries this country is in (never the EU set).
 		const addAdmin = opts?.adminForCountries?.has(cc) ?? false
 		const v2File = opts?.alternateDir ? join(opts.alternateDir, `${cc}.txt`) : undefined
-		const readV2 = Boolean(v2File && existsSync(v2File))
+		const readV2 = Boolean(v2File && (await pathExists(v2File)))
 
 		// Survey pass. The dump is STREAMED — NO's is 71 MB and only the caller knows which country
 		// comes next — so what a later pass needs has to be collected here rather than re-scanned off a

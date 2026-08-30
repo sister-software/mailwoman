@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { LocaleHint, PipelineResult } from "@mailwoman/core/pipeline"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -355,7 +354,8 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 	)
 
 	it("routes an exact poi.db name hit and rejects a longer token-overlap control", async () => {
-		const directory = await mkdtemp(join(tmpdir(), "mailwoman-poi-name-"))
+		await using directoryDirectory = await temporaryDirectory("mailwoman-poi-name-")
+		const directory = directoryDirectory.path
 		const databasePath = join(directory, "poi.db")
 		const db = new DatabaseClient<POIDatabase>(databasePath)
 		vi.stubEnv("MAILWOMAN_DATA_ROOT", "/nonexistent/never/mailwoman-data-root")
@@ -437,7 +437,6 @@ describe("createRuntimePipeline poiQueryKind flag", () => {
 				// Already closed after fixture setup.
 			}
 
-			await rm(directory, { recursive: true, force: true })
 			vi.unstubAllEnvs()
 		}
 	})

@@ -58,7 +58,7 @@ import {
 	type LayerManifest,
 } from "@mailwoman/core/layers"
 import { recoverShortCellResolution, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { DatabaseClient, type StatementSync } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
 import { pointInEncodedRings } from "./rings.ts"
@@ -259,16 +259,16 @@ interface AreaRow {
  * always answers `unknown` — or, in the exclusion case, as a reader that confidently reports England as free of coastal
  * erosion.
  */
-export class CoastalErosionLookup {
+export class CoastalErosionLookup implements Disposable {
 	readonly identity: CoastalLayerIdentity
 
 	readonly #database: DatabaseClient<CoastalDatabase>
-	readonly #selectCell: ReturnType<DatabaseClient["prepare"]>
-	readonly #selectArea: ReturnType<DatabaseClient["prepare"]>
-	readonly #selectAreaRings: ReturnType<DatabaseClient["prepare"]>
-	readonly #selectCoverage: ReturnType<DatabaseClient["prepare"]>
-	readonly #selectInstability: ReturnType<DatabaseClient["prepare"]>
-	readonly #selectInstabilityRings: ReturnType<DatabaseClient["prepare"]>
+	readonly #selectCell: StatementSync
+	readonly #selectArea: StatementSync
+	readonly #selectAreaRings: StatementSync
+	readonly #selectCoverage: StatementSync
+	readonly #selectInstability: StatementSync
+	readonly #selectInstabilityRings: StatementSync
 
 	constructor(options: CoastalErosionLookupOptions) {
 		this.#database = new DatabaseClient<CoastalDatabase>(options.databasePath, { readOnly: true })
@@ -393,8 +393,8 @@ export class CoastalErosionLookup {
 		return readings
 	}
 
-	public close(): void {
-		this.#database.destroy()
+	public [Symbol.dispose]() {
+		return this.#database.destroy()
 	}
 
 	/**

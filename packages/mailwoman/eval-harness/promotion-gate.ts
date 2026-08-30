@@ -68,11 +68,11 @@
  *       (whose fold reports 0 even on a perfect split).
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile, statPath, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
@@ -181,34 +181,32 @@ export interface PromotionGateOptions {
  * type. Before that was true, `--gate v5.3.0-family` fell through to `readFileSync("v5.3.0-family")` and died on a bare
  * ENOENT naming a file nobody asked for — which is how it read on 2026-07-16.
  */
-export function resolveGateSpecPath(gate: string): string {
-	if (existsSync(gate)) return gate
+export async function resolveGateSpecPath(gate: string): Promise<string> {
+	if (await pathExists(gate)) return gate
 
 	const name = basename(gate)
 
 	for (const candidate of name.endsWith(".json") ? [name] : [name, `${name}.json`]) {
 		const sibling = new URL(`./gates/${candidate}`, import.meta.url)
 
-		if (existsSync(sibling)) return fileURLToPath(sibling)
+		if (await pathExists(sibling)) return fileURLToPath(sibling)
 
 		const sourceTree = new URL(`../../eval-harness/gates/${candidate}`, import.meta.url)
 
-		if (existsSync(sourceTree)) return fileURLToPath(sourceTree)
+		if (await pathExists(sourceTree)) return fileURLToPath(sourceTree)
 	}
 
-	throw new Error(`Gate spec not found: "${gate}". Known specs: ${listGateSpecs().join(", ") || "(none)"}`)
+	throw new Error(`Gate spec not found: "${gate}". Known specs: ${(await listGateSpecs()).join(", ") || "(none)"}`)
 }
 
 /**
  * Every gate spec shipped beside this module, newest-looking last. For `--gate` errors and tooling.
  */
-export function listGateSpecs(): string[] {
+export async function listGateSpecs(): Promise<string[]> {
 	for (const dir of [new URL("./gates/", import.meta.url), new URL("../../eval-harness/gates/", import.meta.url)]) {
-		if (!existsSync(dir)) continue
+		if (!(await pathExists(dir))) continue
 
-		return readdirSync(fileURLToPath(dir))
-			.filter((file) => file.endsWith(".json"))
-			.toSorted()
+		return (await readDirectory(fileURLToPath(dir))).filter((file) => file.endsWith(".json")).toSorted()
 	}
 
 	return []
@@ -250,26 +248,26 @@ async function runLoreGuards(env: {
 	// Was `find packages/core -maxdepth 2 -name '*.ts' -newer packages/core/out -print -quit`. Same shape in-process: the
 	// same two directory levels, the same `.ts` filter, the same reference mtime (`packages/core/out` itself),
 	// and the same short-circuit on the FIRST hit — the `-quit` mattered, since `packages/core/` is large.
-	if (existsSync("packages/core/out")) {
-		const reference = statSync("packages/core/out").mtimeMs
+	if (await pathExists("packages/core/out")) {
+		const reference = (await statPath("packages/core/out")).mtimeMs
 
 		const staleSource = ((): string | undefined => {
-			for (const depth1 of readdirSync("packages/core", { withFileTypes: true })) {
+			for (const depth1 of readDirectoryEntriesSync("packages/core")) {
 				const path1 = join("packages/core", depth1.name)
 
 				if (depth1.isFile()) {
-					if (depth1.name.endsWith(".ts") && statSync(path1).mtimeMs > reference) return path1
+					if (depth1.name.endsWith(".ts") && statPathSync(path1).mtimeMs > reference) return path1
 
 					continue
 				}
 
 				if (!depth1.isDirectory()) continue
 
-				for (const depth2 of readdirSync(path1, { withFileTypes: true })) {
+				for (const depth2 of readDirectoryEntriesSync(path1)) {
 					if (!depth2.isFile() || !depth2.name.endsWith(".ts")) continue
 					const path2 = join(path1, depth2.name)
 
-					if (statSync(path2).mtimeMs > reference) return path2
+					if (statPathSync(path2).mtimeMs > reference) return path2
 				}
 			}
 
@@ -295,7 +293,7 @@ async function runLoreGuards(env: {
 	// interpolated verbatim into provenance.txt and compared against the literal "0".
 	const dql = async (p: string): Promise<string> => {
 		const needle = Buffer.from("DynamicQuantizeLinear", "latin1")
-		const buffer = await readFile(p)
+		const buffer = await readLocalBuffer(p)
 
 		const NEWLINE = 0x0a
 
@@ -341,7 +339,7 @@ async function runLoreGuards(env: {
 		}
 
 		const provenance = provLines.join("\n") + "\n"
-		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance)
+		await writeLocalFile(provenance, `${OUT_DIR}/provenance.txt`)
 		process.stdout.write(provenance)
 
 		if (WC8_MODEL) {
@@ -379,7 +377,7 @@ async function runLoreGuards(env: {
 		}
 
 		const provenance = provLines.join("\n") + "\n"
-		writeFileSync(`${OUT_DIR}/provenance.txt`, provenance) // tee → file …
+		await writeLocalFile(provenance, `${OUT_DIR}/provenance.txt`) // tee → file …
 		process.stdout.write(provenance)
 
 		//                       … and stdout
@@ -427,9 +425,9 @@ async function runDemoCascadeLeg(env: {
 	const { outDir, shipModel, tokenizer, card, gazetteerLexicon } = env
 	const HOT_DB = resolveWOFHotDB()
 
-	if (!existsSync(HOT_DB)) {
+	if (!(await pathExists(HOT_DB))) {
 		const msg = `⚠ demo-cascade smoke SKIPPED — no wof-hot.db at ${HOT_DB} (set MAILWOMAN_WOF_HOT_DB). The whole-stack lens did NOT run (#524).`
-		writeFileSync(`${outDir}/cascade-smoke.md`, msg + "\n")
+		await writeLocalFile(msg + "\n", `${outDir}/cascade-smoke.md`)
 
 		console.error(msg)
 
@@ -464,7 +462,7 @@ async function runDemoCascadeLeg(env: {
 		cascadeExit = 1
 	}
 
-	writeFileSync(`${outDir}/cascade-smoke.md`, renderLines(cascadeLines))
+	await writeLocalFile(renderLines(cascadeLines), `${outDir}/cascade-smoke.md`)
 
 	if (cascadeExit !== 0) {
 		console.error(
@@ -480,7 +478,7 @@ async function runDemoCascadeLeg(env: {
 export async function runPromotionGate(options: PromotionGateOptions): Promise<number> {
 	const MODEL = options.model ?? ""
 	const INT8 = options.int8 ?? ""
-	const GATE = options.gate ? resolveGateSpecPath(options.gate) : ""
+	const GATE = options.gate ? await resolveGateSpecPath(options.gate) : ""
 	let OUT_DIR = options.outDir ?? ""
 	const TOK = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
 	const CARD = options.card ?? "packages/neural-weights-en-us/model-card.json"
@@ -532,7 +530,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		return 2
 	}
 
-	const gate = parseJSONStrict<GateSpec>(readFileSync(GATE, "utf8"))
+	const gate = await readLocalJSONFile<GateSpec>(GATE)
 	// A label-less spec must not crash the PASS path (the post-verdict ledger hint interpolates
 	// LABEL — bit on the first v7.0.0-base run, whose spec omitted the field).
 	const LABEL = gate.label ?? basename(GATE).replace(/\.json$/, "")
@@ -542,9 +540,9 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		OUT_DIR = `/tmp/gate-${LABEL}-${hhmm}`
 	}
 
-	mkdirSync(OUT_DIR, { recursive: true })
+	await makeDirectories(OUT_DIR)
 
-	const card = parseJSONStrict<ModelCard>(readFileSync(EFF_CARD, "utf8"))
+	const card = await readLocalJSONFile<ModelCard>(EFF_CARD)
 	const guardExit = await runLoreGuards({ WC, WC_MODEL, WC8_MODEL, MODEL, INT8, TOK, OUT_DIR, card })
 
 	if (guardExit !== null) return guardExit
@@ -631,7 +629,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			(line) => perLocaleLines.push(line)
 		)
 
-		writeFileSync(`${OUT_DIR}/${tag}-per-locale.md`, renderLines(perLocaleLines))
+		await writeLocalFile(renderLines(perLocaleLines), `${OUT_DIR}/${tag}-per-locale.md`)
 
 		// One helper for the SIX score-affix legs — the gate's most repeated spawn, and the migration's
 		// clearest win: `file`/`json` are the only things that varied.
@@ -640,7 +638,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 
 			await scoreAffix({ ...probeOptions, ...channelOptions, ...extra }, (line) => lines.push(line))
 
-			writeFileSync(`${OUT_DIR}/${mdName}`, renderLines(lines))
+			await writeLocalFile(renderLines(lines), `${OUT_DIR}/${mdName}`)
 		}
 
 		await runAffix(`${tag}-affix.md`, { json: `${OUT_DIR}/${tag}-affix.json` })
@@ -664,7 +662,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			(line) => countryLines.push(line)
 		)
 
-		writeFileSync(`${OUT_DIR}/${tag}-country.md`, renderLines(countryLines))
+		await writeLocalFile(renderLines(countryLines), `${OUT_DIR}/${tag}-country.md`)
 
 		// v4.4.0 floors: po_box/cedex (the coverage-shard val) + intersections (real TIGER crossings).
 		await runAffix(`${tag}-pobox.md`, {
@@ -704,7 +702,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			deorderErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 		}
 
-		writeFileSync(`${OUT_DIR}/${tag}-deorder.md`, `${renderLines(deorderOut)}${renderLines(deorderErr)}`)
+		await writeLocalTextFile(`${renderLines(deorderOut)}${renderLines(deorderErr)}`, `${OUT_DIR}/${tag}-deorder.md`)
 	}
 
 	// --weights-cache alone grades the single shipped package (int8) in the primary slot; the verdict
@@ -738,7 +736,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 		console.error(`⚠ preset-compare errored: ${error instanceof Error ? error.message : String(error)}`)
 	}
 
-	writeFileSync(`${OUT_DIR}/presets.md`, presetLines.map((line) => `${line}\n`).join(""))
+	await writeLocalTextFile(presetLines.map((line) => `${line}\n`).join(""), `${OUT_DIR}/presets.md`)
 
 	// Demo-cascade smoke (#524): the whole-stack parse→reconcile→resolve pass the per-layer battery
 	// lacks (the 2026-06-11 lesson: #520/#521/#522 all shipped through green per-layer gates). Runs on
@@ -787,7 +785,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			arenaFailed = true
 		}
 
-		writeFileSync(`${OUT_DIR}/arenas.md`, `${renderLines(arenaOut)}${renderLines(arenaErr)}`)
+		await writeLocalTextFile(`${renderLines(arenaOut)}${renderLines(arenaErr)}`, `${OUT_DIR}/arenas.md`)
 
 		// set -e: a non-zero arena run aborts the gate before the verdict.
 		if (arenaFailed) {
@@ -832,7 +830,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			barePassed = false
 		}
 
-		writeFileSync(`${OUT_DIR}/fr-bare-street.md`, `${renderLines(bareOut)}${renderLines(bareErr)}`)
+		await writeLocalTextFile(`${renderLines(bareOut)}${renderLines(bareErr)}`, `${OUT_DIR}/fr-bare-street.md`)
 
 		if (!barePassed) {
 			console.error(`✗ fr.bare_street_intact FAIL (floor ${bareStreetFloor}%) — see ${OUT_DIR}/fr-bare-street.md`)
@@ -877,7 +875,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 			MASK_GATE_STATUS = 1
 		}
 
-		writeFileSync(`${OUT_DIR}/mask-regression.md`, maskLines.map((line) => `${line}\n`).join(""))
+		await writeLocalTextFile(maskLines.map((line) => `${line}\n`).join(""), `${OUT_DIR}/mask-regression.md`)
 
 		if (MASK_GATE_STATUS === 0) {
 			console.log("✓ mask-regression gate PASS (no tag regresses >2pp under the conventions mask)")
@@ -895,7 +893,7 @@ export async function runPromotionGate(options: PromotionGateOptions): Promise<n
 	let VERDICT_STATUS: number
 
 	try {
-		const { failed } = assemblePromotionVerdict({
+		const { failed } = await assemblePromotionVerdict({
 			gate: GATE,
 			outDir: OUT_DIR,
 			withInt8: Boolean(INT8 || WC8),

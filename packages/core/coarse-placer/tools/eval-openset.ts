@@ -33,11 +33,11 @@
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
 
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
+import { writeLocalFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import type { CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -194,8 +194,8 @@ export async function evalOpenSet(
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 	const fitPerClass = options.fitPerClass ?? 2000
 
-	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
-	const weightBytes = readFileSync(path.join(modelDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(modelDir, "meta.json"))
+	const weightBytes = await readLocalBuffer(path.join(modelDir, "weights.bin"))
 
 	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
 	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
@@ -586,7 +586,7 @@ export async function evalOpenSet(
 	console.log(md)
 
 	if (options.outMd) {
-		writeFileSync(options.outMd, md)
+		await writeLocalFile(md, options.outMd)
 		report?.(`\n[written] ${options.outMd}`)
 	}
 

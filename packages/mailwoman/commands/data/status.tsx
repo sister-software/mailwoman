@@ -17,8 +17,8 @@
  */
 
 import type { APIClient } from "@mailwoman/core/api"
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
-import { existsSync, statSync } from "@mailwoman/platform/fs"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
@@ -62,17 +62,17 @@ async function headContentLength(client: APIClient, artifact: BundleArtifact): P
 	}
 }
 
-function existingLocalPath(
+async function existingLocalPath(
 	dataRoot: string,
 	manifest: DataReleaseManifest | null,
 	artifact: BundleArtifact,
 	resolvedAbsPath: string
-): string | null {
+): Promise<string | null> {
 	if (artifact.family && artifact.stateSlug) {
-		return resolveShardPath(dataRoot, artifact.family, artifact.stateSlug, manifest)
+		return await resolveShardPath(dataRoot, artifact.family, artifact.stateSlug, manifest)
 	}
 
-	return existsSync(resolvedAbsPath) ? resolvedAbsPath : null
+	return (await pathExists(resolvedAbsPath)) ? resolvedAbsPath : null
 }
 
 async function statusForBundles(
@@ -110,7 +110,7 @@ async function statusForBundles(
 		for (const artifact of resolveBundleArtifacts(bundle, manifest)) {
 			const label = `${name}: ${artifact.localPath}`
 			const localAbsPath = resolvePath(dataRoot, artifact.localPath)
-			const existing = existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
+			const existing = await existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
 
 			if (!existing) {
 				ok = false
@@ -124,7 +124,7 @@ async function statusForBundles(
 				continue
 			}
 
-			const sizeBytes = statSync(existing).size
+			const sizeBytes = (await statPath(existing)).size
 
 			const expected = checkRemote
 				? ((await headContentLength(client!, artifact)) ?? artifact.approxBytes)
@@ -159,7 +159,7 @@ const DataStatus: ParsedCommandComponent<Options> = ({ options, args }) => {
 			const dataRoot = options.dataRoot ?? mailwomanDataRoot()
 			const names = args.length ? args : Object.keys(BUNDLES)
 
-			return statusForBundles(names, dataRoot, options.checkRemote)
+			return await statusForBundles(names, dataRoot, options.checkRemote)
 		},
 		(result) => (result.ok ? 0 : 1)
 	)

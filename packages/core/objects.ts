@@ -10,6 +10,10 @@ import type { PathBuilderLike } from "path-ts"
 import { isIterable } from "spliterator"
 import type { JsonObject } from "type-fest"
 
+export function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
 type SetLike<T> = { has(value: T): boolean } | Iterable<T>
 
 /**
@@ -235,6 +239,13 @@ export type FlattenObjectKeys<T extends JsonObject, Key = keyof T> = Key extends
 		? `${Key}.${FlattenObjectKeys<T[Key]>}`
 		: `${Key}`
 	: never
+
+/**
+ * Pretty-print an object as JSON with tabs for indentation.
+ */
+export function prettyJSON(input: unknown, newline = true, space = "\t"): string {
+	return JSON.stringify(input, null, space) + (newline ? "\n" : "")
+}
 
 /**
  * Flattens an object into a single-level object with dot-separated keys.

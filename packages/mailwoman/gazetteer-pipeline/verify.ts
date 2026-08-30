@@ -19,7 +19,6 @@
  *   land in the right country — border towns are the hard class by construction.
  */
 
-import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { DEFAULT_VERIFY_BASELINE } from "./verify-baseline.ts"

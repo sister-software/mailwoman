@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { readAttribution, TileSource } from "@mailwoman/map-tui/tile-source"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { createServer } from "@mailwoman/platform/http"
 import type { AddressInfo } from "@mailwoman/platform/net"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -16,7 +16,7 @@ const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.met
 describe("TileSource", async () => {
 	const source = await TileSource.open(FIXTURE)
 
-	afterAll(() => source.close())
+	afterAll(() => source[Symbol.asyncDispose]())
 
 	it("reads header zoom bounds", () => {
 		expect(source.minZoom).toBe(0)
@@ -52,7 +52,7 @@ describe("TileSource", async () => {
 
 describe("TileSource over HTTP", async () => {
 	// A minimal static server honoring single Range requests — all a remote PMTiles archive requires of its host.
-	const fixture = await readFile(FIXTURE)
+	const fixture = await readLocalBuffer(FIXTURE)
 
 	const server = createServer((request, response) => {
 		const range = /^bytes=(\d+)-(\d+)$/u.exec(request.headers.range ?? "")
@@ -83,11 +83,8 @@ describe("TileSource over HTTP", async () => {
 	const source = await TileSource.open(`http://127.0.0.1:${port}/portland.pmtiles`)
 
 	afterAll(async () => {
-		await source.close()
-
-		await new Promise((resolve) => {
-			server.close(resolve)
-		})
+		await source[Symbol.asyncDispose]()
+		await server[Symbol.asyncDispose]()
 	})
 
 	it("reads the same header bounds as the local file", () => {

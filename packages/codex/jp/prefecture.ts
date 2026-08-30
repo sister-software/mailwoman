@@ -6,7 +6,10 @@
  *   The 47 Japanese prefectures (都道府県, todōfuken), keyed by their ISO 3166-2:JP code — the two-digit
  *   numeric string `"01"`..`"47"` standing in for `JP-01`..`JP-47`.
  *
- *   The contrast with `fr/region.ts`, `de/bundesland.ts`, and `us/state.ts` is in the name itself.
+ *   Compared to `fr/region.ts`, `de/bundesland.ts`, and `us/state.ts`,
+ * 	 this is a more complex case because the top-level admin unit comes in four legally distinct flavours,
+ *   and the prefecture name is written on the address line (not inferred from postcode).
+ *
  *   "都道府県" is four kanji because the top-level admin unit comes in four legally distinct flavours,
  *   even though all 47 are peers in practice:
  *

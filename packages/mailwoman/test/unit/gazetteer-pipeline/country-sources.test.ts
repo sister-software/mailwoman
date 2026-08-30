@@ -11,7 +11,7 @@
  *   never catch the accident. Both failures print a clean result.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { planCountryMove, servingSources } from "mailwoman/gazetteer-pipeline/country-plan"
 import {
 	ACCEPTED_TWO_SOURCE_COUNTRIES,
@@ -126,7 +126,7 @@ describe("the id-band literals in country-plan.ts", () => {
 		// This is what stops that duplication from drifting: a fold that moves its base moves this test.
 		const { OVERTURE_ID_BASE } = await import("mailwoman/gazetteer-pipeline/admin/fold-overture")
 		const { GEONAMES_ID_BASE } = await import("@mailwoman/resolver-wof-sqlite/geonames-aliases")
-		const source = readFileSync(new URL("../../../gazetteer-pipeline/country-plan.ts", import.meta.url), "utf8")
+		const source = await readLocalTextFile(new URL("../../../gazetteer-pipeline/country-plan.ts", import.meta.url))
 
 		expect(source).toContain(
 			`const OVERTURE_BAND_START = ${OVERTURE_ID_BASE.toLocaleString("en-US").replaceAll(",", "_")}`

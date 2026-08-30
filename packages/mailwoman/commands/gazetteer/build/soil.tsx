@@ -220,7 +220,7 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		const lines = [
-			`soil.db: ${out} (${artifactSizeMB(out)} MB)`,
+			`soil.db: ${out} (${await artifactSizeMB(out)} MB)`,
 			`${result.surveyAreas} survey area(s) · ${result.delineations.toLocaleString()} delineations · ` +
 				`${result.mapUnits.toLocaleString()} map units · ${result.components.toLocaleString()} components`,
 			`index: ${result.wholeCellRows.toLocaleString()} whole (compacted) · ${result.partialCellRows.toLocaleString()} partial ` +

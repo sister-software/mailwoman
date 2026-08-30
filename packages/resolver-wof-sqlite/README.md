@@ -17,7 +17,7 @@ Requires Node 22+ for built-in `node:sqlite`.
 ```ts
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 
-const lookup = new WOFSQLitePlaceLookup({
+using lookup = new WOFSQLitePlaceLookup({
 	databasePath: "/path/to/whosonfirst-data-admin-us-latest.db",
 	buildFTS: true, // build the FTS5 index on first open (one-time cost)
 })
@@ -31,8 +31,6 @@ const candidates = await lookup.findPlace({
 for (const c of candidates) {
 	console.log(c.id, c.name, c.country, c.lat, c.lon, "score:", c.score)
 }
-
-lookup.close()
 ```
 
 ## A database that cannot answer says so on construction
@@ -170,12 +168,11 @@ You can also build the index programmatically via the package's `./fts` subpath:
 import { DatabaseSync } from "node:sqlite"
 import { buildPlaceSearchFts } from "@mailwoman/resolver-wof-sqlite/fts"
 
-const db = new DatabaseSync("/path/to/wof.db")
+using db = new DatabaseSync("/path/to/wof.db")
 const { created, indexedRows, durationMs } = buildPlaceSearchFts(db, {
 	drop: false,
 	onProgress: (phase, detail) => console.log(phase, detail),
 })
-db.close()
 ```
 
 ## Ranking

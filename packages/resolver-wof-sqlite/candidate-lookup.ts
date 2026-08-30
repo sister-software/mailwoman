@@ -633,7 +633,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		// SHAPE subset (placetype/bbox/primary — everything but the country scope) is kept separately
 		// because the admin-containment injection probe (#1717 stage 2) runs under the shape conds
 		// WITHOUT the country: bypassing a locale-inferred country scope for a qualifier-vouched
-		// candidate is the lever's whole point, and it is the one filter injection may cross.
+		// candidate is the lever's whole point and the one filter injection may cross.
 		const filters: string[] = []
 		const filterParams: Array<string | number> = []
 		const shapeFilters: string[] = []
@@ -969,11 +969,7 @@ export class WOFCandidateTableLookup implements PlaceLookup, Disposable {
 		return candidates
 	}
 
-	close(): void {
-		this.#resources.dispose()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#resources[Symbol.dispose]()
 	}
 }

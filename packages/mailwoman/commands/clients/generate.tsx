@@ -46,7 +46,7 @@ const ClientsGenerate: ParsedCommandComponent<Options> = ({ options }) => {
 		async () => {
 			const { generateClients } = await import("../../tools/generate-clients.ts")
 
-			return generateClients({
+			return await generateClients({
 				outDir: options.outDir,
 				skipVerify: options.skipVerify,
 				onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),

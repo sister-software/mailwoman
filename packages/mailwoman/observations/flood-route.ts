@@ -122,7 +122,7 @@ export type DesignationDecision =
 	| { fired: true; observation: AuthorityDesignationObservation }
 	| { fired: false; refusal: DesignationRefusal }
 
-export interface AuthorityDesignationRoute {
+export interface AuthorityDesignationRoute extends Disposable {
 	identity: FloodLayerIdentity
 	/**
 	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
@@ -132,7 +132,6 @@ export interface AuthorityDesignationRoute {
 	 * here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => DesignationDecision
-	close: () => void
 }
 
 export interface AuthorityDesignationRouteOptions {
@@ -163,7 +162,7 @@ export function createAuthorityDesignationRoute(options: AuthorityDesignationRou
 
 			return decide(lookup.lookup(latitude, longitude), lookup.identity, latitude, longitude, options.databasePath)
 		},
-		close: () => lookup.close(),
+		[Symbol.dispose]: () => lookup[Symbol.dispose](),
 	}
 }
 

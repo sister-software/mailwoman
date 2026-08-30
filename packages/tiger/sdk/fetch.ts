@@ -25,11 +25,11 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { spawn } from "@mailwoman/platform/child_process"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { dirname, join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { TextSpliterator } from "spliterator"
@@ -204,8 +204,8 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	// the per-table idempotent delete keeps a re-fetch (newer vintage) clean. The download CACHE stays
 	// vintage-partitioned below so zips don't collide across vintages.
 	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
-	await mkdir(cacheDir, { recursive: true })
-	await mkdir(dirname(outPath), { recursive: true })
+	await makeDirectories(cacheDir)
+	await makeDirectories(dirname(outPath))
 
 	// Source units: one (per-state) for block/place; one per county for addrfeat.
 	const geoCodes = level === "addrfeat" ? await discoverCounties(state, vintage) : [""]

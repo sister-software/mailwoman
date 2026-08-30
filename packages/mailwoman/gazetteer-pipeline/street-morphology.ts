@@ -27,8 +27,8 @@
  *   in-place), then seal read-only.
  */
 
+import { changeMode, makeDirectories, movePath, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { chmodSync, mkdirSync, renameSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname, resolve } from "@mailwoman/platform/path"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { buildStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-builder"
@@ -65,9 +65,9 @@ export interface BuiltStreetMorphologyArtifact {
 /**
  * Build + seal the street-morphology FST artifact. Returns the written path and build counts.
  */
-export function buildStreetMorphologyArtifact(
+export async function buildStreetMorphologyArtifact(
 	opts: BuildStreetMorphologyArtifactOpts = {}
-): BuiltStreetMorphologyArtifact {
+): Promise<BuiltStreetMorphologyArtifact> {
 	const progress = opts.onProgress ?? (() => {})
 	const dictionariesDir = opts.dictionariesDir ?? resourceDictionaryPath("libpostal")
 	const outPath = resolve(opts.output ?? String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
@@ -84,11 +84,11 @@ export function buildStreetMorphologyArtifact(
 	// Provenance rides the artifact trailer (locales-as-countries, counts, sourceDB = the dictionaries dir).
 	const bytes = serializeFST(result.matcher, result.provenance)
 
-	mkdirSync(dirname(outPath), { recursive: true })
+	await makeDirectories(dirname(outPath))
 	const staging = `${outPath}.staging-${Date.now()}`
-	writeFileSync(staging, bytes)
-	renameSync(staging, outPath)
-	chmodSync(outPath, 0o444)
+	await writeLocalFile(bytes, staging)
+	await movePath(staging, outPath)
+	await changeMode(outPath, 0o444)
 
 	progress(
 		`  wrote ${outPath} (${(bytes.length / 1e3).toFixed(0)} kB, ${result.canonicalCount} canonicals, ${result.variantCount} variants, ${result.locales.length} locales) — sealed 0444`

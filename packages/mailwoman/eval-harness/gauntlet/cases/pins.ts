@@ -14,8 +14,9 @@
  *   three constant lines so the pin test's dated history comments survive byte-identically.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import { ablationBoardID } from "../ablation.ts"
@@ -105,7 +106,7 @@ export interface PinCheck {
 export async function checkBoardPins(): Promise<PinCheck> {
 	const measured = await measureBoardPins()
 	const testPath = resolve(String(repoRootPath()), PIN_TEST_PATH)
-	const committed = readCommittedPins(readFileSync(testPath, "utf8"))
+	const committed = readCommittedPins(await readLocalTextFile(testPath))
 	const stale = (Object.keys(measured) as Array<keyof BoardPins>).filter((key) => measured[key] !== committed[key])
 
 	return { measured, committed, stale }
@@ -119,7 +120,7 @@ export async function updateBoardPins(): Promise<PinCheck> {
 	const path = resolve(String(repoRootPath()), PIN_TEST_PATH)
 	const measured = await measureBoardPins()
 
-	writeFileSync(path, writeCommittedPins(readFileSync(path, "utf8"), measured))
+	await writeLocalFile(writeCommittedPins(await readLocalTextFile(path), measured), path)
 
 	return checkBoardPins()
 }

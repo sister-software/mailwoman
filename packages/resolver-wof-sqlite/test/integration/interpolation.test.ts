@@ -89,7 +89,7 @@ let db: DatabaseClient<StreetSegmentDatabase>
 let interpolator: StreetInterpolator
 
 beforeAll(() => {
-	db = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+	db = DatabaseClient.temp<StreetSegmentDatabase>()
 
 	seed(db, [
 		MAIN_EVEN,
@@ -175,7 +175,7 @@ beforeAll(() => {
 })
 
 afterAll(() => {
-	interpolator.close()
+	interpolator[Symbol.dispose]()
 	db.destroy()
 })
 
@@ -279,7 +279,7 @@ describe("StreetInterpolator", () => {
 // time. A shard predating the table (the shipped fleet) reads `undefined` — never a throw, never a guess.
 describe("StreetInterpolator — artifact-carried radius calibration (#374)", () => {
 	it("reads the shard's baked multiplier at open time", async () => {
-		await using kdb = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+		await using kdb = DatabaseClient.temp<StreetSegmentDatabase>()
 		seed(kdb, [MAIN_EVEN])
 		// The SAME producer the shard builder runs (`writeInterpCalibration`), so the fixture can't
 		// drift from the production shape.
@@ -294,7 +294,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 		expect(hit).not.toBeNull()
 		expect(hit!.uncertaintyM).toBeGreaterThan(40)
 		expect(hit!.uncertaintyM).toBeLessThan(70)
-		calibrated.close()
+		calibrated[Symbol.dispose]()
 	})
 
 	it("reports undefined for a shard predating the metadata table", () => {
@@ -303,7 +303,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 	})
 
 	it("reports undefined for an empty or invalid calibration table", () => {
-		using emptyDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+		using emptyDB = DatabaseClient.temp<StreetSegmentDatabase>()
 		seed(emptyDB, [MAIN_EVEN])
 
 		emptyDB.exec(
@@ -312,7 +312,7 @@ describe("StreetInterpolator — artifact-carried radius calibration (#374)", ()
 
 		const emptyCalib = new StreetInterpolator({ database: emptyDB })
 		expect(emptyCalib.radiusCalibration).toBeUndefined()
-		emptyCalib.close()
+		emptyCalib[Symbol.dispose]()
 	})
 })
 
@@ -342,7 +342,7 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 		let nearInterp: StreetInterpolator
 
 		beforeAll(() => {
-			nearDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+			nearDB = DatabaseClient.temp<StreetSegmentDatabase>()
 
 			seed(nearDB, [
 				// Same street, same parity, two ZIPs ~20 km apart along the meridian.
@@ -414,7 +414,7 @@ describe("StreetInterpolator — parity-first ambiguity, near tie-break, key var
 		})
 
 		afterAll(() => {
-			nearInterp.close()
+			nearInterp[Symbol.dispose]()
 			nearDB.destroy()
 		})
 

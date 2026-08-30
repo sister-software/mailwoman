@@ -23,13 +23,13 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
@@ -50,30 +50,30 @@ const ABSENT_PACKAGE = "@mailwoman/neural-weights-pt-br"
 /**
  * An empty $HOME so the user weights cache (`~/.cache/mailwoman/weights`) is empty for the child too.
  */
-let homeStub: string
+let homeStub: TemporaryDirectory
 /**
  * A dir holding a stub model.onnx for the corrupt/partial-load case.
  */
-let stubDir: string
+let stubDir: TemporaryDirectory
 
-beforeAll(() => {
-	homeStub = mkdtempSync(join(tmpdir(), "mailwoman-nohome-"))
-	stubDir = mkdtempSync(join(tmpdir(), "mailwoman-stub-weights-"))
+beforeAll(async () => {
+	homeStub = await temporaryDirectory("mailwoman-nohome-")
+	stubDir = await temporaryDirectory("mailwoman-stub-weights-")
 	// A present-but-not-a-model file so `resolveWeights`'s existsSync(modelPath) passes and the failure
 	// lands on the (deliberately absent) tokenizer path — a deterministic load error, no onnx runtime needed.
-	writeFileSync(join(stubDir, "model.onnx"), "not a real onnx graph")
+	await writeLocalTextFile("not a real onnx graph", stubDir.resolve("model.onnx"))
 })
 
 afterAll(() => {
-	rmSync(homeStub, { recursive: true, force: true })
-	rmSync(stubDir, { recursive: true, force: true })
+	homeStub[Symbol.asyncDispose]()
+	stubDir[Symbol.asyncDispose]()
 })
 
 /**
  * Child env with weights forced absent: empty $HOME + quiet node.
  */
 function absentEnv(extra: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
-	return childEnv({ HOME: homeStub, NODE_NO_WARNINGS: "1", ...extra })
+	return childEnv({ HOME: homeStub.path, NODE_NO_WARNINGS: "1", ...extra })
 }
 
 /**
@@ -163,8 +163,8 @@ describe("#1108 loud weights fallback — weights ABSENT (non-interactive / pipe
 
 describe("#1108 loud weights fallback — weights LOAD error surfaced, not swallowed", () => {
 	test("bad explicit --model/--tokenizer: the underlying load error is surfaced (distinct from 'not found'), exit 0", async () => {
-		const modelPath = join(stubDir, "model.onnx")
-		const tokenizerPath = join(stubDir, "does-not-exist-tokenizer.model")
+		const modelPath = stubDir.resolve("model.onnx")
+		const tokenizerPath = stubDir.resolve("does-not-exist-tokenizer.model")
 
 		const { stdout, stderr, code } = await runCLI(
 			["parse", "--model", modelPath, "--tokenizer", tokenizerPath, ADDRESS],
@@ -200,7 +200,7 @@ describe("#1108 — the interactive/declined degraded banner is unchanged (regre
 // output + exit 0 combination the audit's test (1) calls for on the full --resolve path.
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB || DEFAULT_WOF_PATH
-const hasWOFDB = existsSync(wofPath)
+const hasWOFDB = await pathExists(wofPath)
 
 describe.skipIf(!hasWOFDB)("#1108 loud weights fallback — --resolve degraded end-to-end (WOF DB present)", () => {
 	test("missing weights + --resolve: warns on stderr, resolver-decorated output on stdout, exit 0", async () => {

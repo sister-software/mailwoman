@@ -20,9 +20,9 @@
  *   re-derives what a consumer reads: the FST collapse is `collapseFSTBias`, the decoder's own function.
  */
 
+import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalize } from "@mailwoman/normalize"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
@@ -215,10 +215,12 @@ export function lookupNormalize(queries: string[], locale: string): LookupRow[] 
  * is never modified after creation, so a read-write open would fail on a correctly-sealed artifact and succeed — with a
  * journal file beside it — on one that was not.
  */
-export function openSealedArtifact<DB>(path: string | undefined): { db: DatabaseClient<DB> } | { unavailable: string } {
+export async function openSealedArtifact<DB>(
+	path: string | undefined
+): Promise<{ db: DatabaseClient<DB> } | { unavailable: string }> {
 	if (!path) return { unavailable: "No artifact path was resolved for this source." }
 
-	if (!existsSync(path)) return { unavailable: `Artifact not found at ${path}.` }
+	if (!(await pathExists(path))) return { unavailable: `Artifact not found at ${path}.` }
 
 	try {
 		return { db: new DatabaseClient<DB>(path, { readOnly: true }) }
@@ -230,16 +232,16 @@ export function openSealedArtifact<DB>(path: string | undefined): { db: Database
 /**
  * Load an FST artifact, reporting a missing file as unavailable rather than as a source that knows nothing.
  */
-export function loadFSTArtifact(
+export async function loadFSTArtifact(
 	path: string | undefined,
 	deserialize: (buffer: Buffer) => FSTLike
-): { fst: FSTLike } | { unavailable: string } {
+): Promise<{ fst: FSTLike } | { unavailable: string }> {
 	if (!path) return { unavailable: "No artifact path was resolved for this source." }
 
-	if (!existsSync(path)) return { unavailable: `Artifact not found at ${path}.` }
+	if (!(await pathExists(path))) return { unavailable: `Artifact not found at ${path}.` }
 
 	try {
-		return { fst: deserialize(readFileSync(path)) }
+		return { fst: deserialize(await readLocalBuffer(path)) }
 	} catch (error) {
 		return { unavailable: `Artifact at ${path} did not deserialize: ${(error as Error).message}` }
 	}

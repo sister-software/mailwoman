@@ -1,3 +1,4 @@
+import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	CLIENT_SURFACES,
 	pythonInitPy,
@@ -70,7 +71,6 @@ test("rustLibRs declares a generate_api! module + a *_local() constructor for ev
 })
 
 test("emitterCLIPath resolves every surface inside its real workspace, from repository root", async () => {
-	const { existsSync } = await import("@mailwoman/platform/fs")
 	const { sep } = await import("@mailwoman/platform/path")
 	const { dirname, join } = await import("@mailwoman/platform/path")
 	const { emitterCLIPath } = await import("mailwoman/tools/generate-clients")
@@ -88,6 +88,6 @@ test("emitterCLIPath resolves every surface inside its real workspace, from repo
 
 		// Tie the resolution to the real tree: the workspace directory the path claims must exist,
 		// so the NEXT layout move fails here loudly instead of inside a red release job.
-		expect(existsSync(manifest)).toBe(true)
+		expect(await pathExists(manifest)).toBe(true)
 	}
 })

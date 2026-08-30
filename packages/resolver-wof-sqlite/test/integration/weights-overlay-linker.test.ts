@@ -8,70 +8,65 @@
  *   or malformed one recomputes and rewrites, and the rewrite self-heals the cache.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, setTimestamps, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/utils"
-import { mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { md5FileWithSidecar } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
-const roots: string[] = []
+const fixtures = new AsyncDisposableStack()
 
-afterEach(() => {
-	for (const root of roots.splice(0)) {
-		rmSync(root, { recursive: true, force: true })
-	}
-})
+afterAll(() => fixtures.disposeAsync())
 
-function scratchFile(content: string): string {
-	const root = mkdtempSync(join(tmpdir(), "mw-md5-sidecar-"))
-
-	roots.push(root)
+async function scratchFile(content: string): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("mw-md5-sidecar-")).path
 
 	const path = join(root, "source.bin")
 
-	writeFileSync(path, content)
+	await writeLocalFile(content, path)
 
 	return path
 }
 
 describe("md5FileWithSidecar (#1734)", () => {
 	it("computes, writes the sidecar, and returns the true md5 on first contact", async () => {
-		const path = scratchFile("payload")
+		const path = await scratchFile("payload")
 
 		const hash = await md5FileWithSidecar(path)
 
 		expect(hash).toBe(await md5File(path))
-		expect(readFileSync(`${path}.md5`, "utf8")).toBe(`${hash}  source.bin\n`)
+		expect(await readLocalTextFile(`${path}.md5`)).toBe(`${hash}  source.bin\n`)
 	})
 
 	it("TRUSTS a sidecar at least as new as the source — no re-hash", async () => {
-		const path = scratchFile("payload")
+		const path = await scratchFile("payload")
 		const fake = "deadbeefdeadbeefdeadbeefdeadbeef"
 
-		writeFileSync(`${path}.md5`, `${fake}  source.bin\n`)
+		await writeLocalTextFile(`${fake}  source.bin\n`, `${path}.md5`)
 
 		expect(await md5FileWithSidecar(path)).toBe(fake)
 	})
 
 	it("recomputes and heals when the sidecar is older than the source", async () => {
-		const path = scratchFile("payload")
+		const path = await scratchFile("payload")
 		const fake = "deadbeefdeadbeefdeadbeefdeadbeef"
 
-		writeFileSync(`${path}.md5`, `${fake}  source.bin\n`)
+		await writeLocalTextFile(`${fake}  source.bin\n`, `${path}.md5`)
 		// Sidecar mtime strictly before the source's — the state after a source swap that forgot the sidecar.
-		utimesSync(`${path}.md5`, new Date(0), new Date(0))
+		await setTimestamps(`${path}.md5`, new Date(0), new Date(0))
 
 		const hash = await md5FileWithSidecar(path)
 
 		expect(hash).toBe(await md5File(path))
-		expect(readFileSync(`${path}.md5`, "utf8")).toContain(hash)
+		expect(await readLocalTextFile(`${path}.md5`)).toContain(hash)
 	})
 
 	it("recomputes past a malformed sidecar rather than returning garbage", async () => {
-		const path = scratchFile("payload")
+		const path = await scratchFile("payload")
 
-		writeFileSync(`${path}.md5`, "not-a-hash\n")
+		await writeLocalTextFile("not-a-hash\n", `${path}.md5`)
 
 		expect(await md5FileWithSidecar(path)).toBe(await md5File(path))
 	})

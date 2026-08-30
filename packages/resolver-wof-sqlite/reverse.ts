@@ -457,7 +457,7 @@ export class WOFReverseGeocoder implements Disposable {
 		return geometry
 	}
 
-	close(): void {
+	[Symbol.dispose](): void {
 		if (this.#ownsAdmin) {
 			this.#admin.destroy()
 		}
@@ -465,9 +465,5 @@ export class WOFReverseGeocoder implements Disposable {
 		if (this.#ownsPolygons) {
 			this.#polygons?.destroy()
 		}
-	}
-
-	[Symbol.dispose](): void {
-		this.close()
 	}
 }

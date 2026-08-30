@@ -13,9 +13,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
@@ -71,7 +69,7 @@ function buildFixtureAdmin(path: string): void {
 	`)
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let lookup: WOFCandidateTableLookup
 
 const node = (tag: string, value: string): AddressNode => ({
@@ -99,17 +97,17 @@ function flatten(roots: readonly AddressNode[]): AddressNode[] {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-coherence-candidate-"))
-	const input = join(scratch, "admin.db")
-	const candidatePath = join(scratch, "candidate.db")
+	scratch = await temporaryDirectory("mailwoman-coherence-candidate-")
+	const input = scratch.resolve("admin.db")
+	const candidatePath = scratch.resolve("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output: candidatePath })
 	lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
 })
 
 afterEach(async () => {
-	lookup.close()
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	lookup[Symbol.dispose]()
+	scratch[Symbol.asyncDispose]()
 })
 
 /**

@@ -46,6 +46,13 @@ import { SqliteDialect } from "./dialect.ts"
 export type RawStatements = Pick<DatabaseClient, "exec" | "prepare" | "function" | "destroy"> & Disposable
 
 export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposable {
+	/**
+	 * A memory-only database, for tests and other ephemeral work. The connection is open until the client is disposed.
+	 */
+	public static temp<DB = Database>(): DatabaseClient<DB> {
+		return new DatabaseClient<DB>(":memory:")
+	}
+
 	readonly #database: DatabaseSync
 
 	constructor(location: string, options?: DatabaseSyncOptions, config?: Partial<KyselyConfig>)
@@ -142,7 +149,7 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	 * afterwards fails on the closed handle rather than on a pool that thinks it is alive.
 	 */
 	[Symbol.dispose](): void {
-		this.#database.close()
+		this.#database[Symbol.dispose]()
 	}
 }
 

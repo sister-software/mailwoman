@@ -48,7 +48,7 @@ let db: DatabaseClient<AddressPointDatabase>
 let interpolator: AddressPointInterpolator
 
 beforeAll(async () => {
-	db = new DatabaseClient<AddressPointDatabase>(":memory:")
+	db = DatabaseClient.temp<AddressPointDatabase>()
 
 	await seedPoints(db, [
 		// Both-sided bracket fixture: known points at 100 and 200.
@@ -77,7 +77,7 @@ beforeAll(async () => {
 })
 
 afterAll(() => {
-	interpolator.close()
+	interpolator[Symbol.dispose]()
 	db.destroy()
 })
 
@@ -149,7 +149,7 @@ describe("AddressPointInterpolator", () => {
 	})
 
 	it("falls through to the TIGER segment fallback when bracketing cannot answer", () => {
-		using segDB = new DatabaseClient<StreetSegmentDatabase>(":memory:")
+		using segDB = DatabaseClient.temp<StreetSegmentDatabase>()
 
 		segDB.exec(`
 			CREATE TABLE street_segment (
@@ -194,7 +194,7 @@ describe("AddressPointInterpolator", () => {
 		const noScope = ladder.find({ street: "Lone Ln", number: "51" })
 		expect(noScope!.method).toBe("tiger_range")
 
-		ladder.close()
-		tiger.close()
+		ladder[Symbol.dispose]()
+		tiger[Symbol.dispose]()
 	})
 })

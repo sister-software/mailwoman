@@ -48,9 +48,9 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { dirname } from "@mailwoman/platform/path"
 import { createNewlineWriter } from "spliterator"
 
@@ -504,7 +504,7 @@ export async function expandGolden(
 		throw new Error("no seeds loaded — corpus path or filter is wrong")
 	}
 
-	await mkdir(dirname(outputPath), { recursive: true })
+	await makeDirectories(dirname(outputPath))
 	const outRows: GoldenCandidate[] = []
 	let kept = 0
 	let dropped = 0

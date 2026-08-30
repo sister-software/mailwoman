@@ -138,7 +138,9 @@ const PLACES: ResolvedPlace[] = [
 	{ id: 900, name: "54923", placetype: "postalcode", country: "US", lat: 43.97, lon: -88.95, score: 1 },
 ]
 
-function makeBackend(calls?: Array<{ text: string; country?: string; limit?: number }>): ResolverBackend {
+async function makeBackend(
+	calls?: Array<{ text: string; country?: string; limit?: number }>
+): Promise<ResolverBackend> {
 	return {
 		async findPlace(query) {
 			calls?.push({ text: query.text, country: query.country, limit: query.limit })
@@ -164,7 +166,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	it("resolves a bare 'Zürich' under an en-US locale to Switzerland, not Kansas", async () => {
 		const raw = "Zürich"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "US" })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "US" })
 
 		expect(hit?.place.country).toBe("CH")
 		expect(hit?.place.id).toBe(1)
@@ -174,7 +176,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		// GB holds no Zurich at all, so the hard filter made this an EMPTY result — the worst answer.
 		const raw = "Zürich"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "GB" })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "GB" })
 
 		expect(hit?.place.country).toBe("CH")
 	})
@@ -182,7 +184,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	it("KEEPS the in-country answer when the locale bonus carries it (Manchester under en-US)", async () => {
 		const raw = "Manchester"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "US" })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "US" })
 
 		expect(hit?.place.country).toBe("US")
 		expect(hit?.place.id).toBe(7)
@@ -191,7 +193,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 	it("carries the losing namesakes as alternatives so the ambiguity margin stays computable", async () => {
 		const raw = "Zürich"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "US" })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "US" })
 
 		expect(hit?.alternatives.map((a) => a.country)).toContain("US")
 	})
@@ -205,7 +207,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 			node({ tag: "postcode", value: "54923", start: 7, end: 12, confidence: 0.95 }),
 		]
 
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "US", postcode: "54923" })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "US", postcode: "54923" })
 		expect(hit?.place.country).toBe("US")
 		expect(hit?.place.id).toBe(5)
 	})
@@ -219,7 +221,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 			node({ tag: "region", value: "Wisconsin", start: 7, end: 16, confidence: 0.9 }),
 		]
 
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), { country: "US" })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), { country: "US" })
 		expect(hit?.place.country).toBe("US")
 	})
 
@@ -229,7 +231,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const raw = "Weimar Thüringen"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
 		const calls: Array<{ text: string; country?: string }> = []
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(calls), { country: "DE" })
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(calls), { country: "DE" })
 
 		expect(hit?.place.id).toBe(8) // Weimar DE, not Thüringen AT
 		expect(calls.filter((c) => c.text === "Thüringen").every((c) => c.country === "DE")).toBe(true)
@@ -239,7 +241,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const raw = "Berlin"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
 		const calls: Array<{ text: string; country?: string; limit?: number }> = []
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(calls), {})
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(calls), {})
 
 		expect(hit?.place.country).toBe("DE")
 		// One probe per span, exactly as before — no widened re-probe when there is no filter to soften.
@@ -250,7 +252,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const raw = "Zürich"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
 
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), {
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), {
 			country: "US",
 			bareToponymCountryWeight: 99,
 		})
@@ -262,7 +264,7 @@ describe("bare-toponym soft country prior (#17)", () => {
 		const raw = "Zürich"
 		const roots = [node({ tag: "street", value: raw, start: 0, end: raw.length })]
 
-		const hit = await findRescoreCandidate(raw, roots, makeBackend(), {
+		const hit = await findRescoreCandidate(raw, roots, await makeBackend(), {
 			country: "US",
 			bareToponymSoftCountry: false,
 		})

@@ -18,7 +18,7 @@ const TINY_BASELINE: VerifyBaseline = {
 
 async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 	await createUnifiedSchema(db)
 
 	// Non-zero coords + real extents — the place_bbox R*Tree insert skips all-zero placeholder rows.
@@ -31,7 +31,7 @@ async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 	ins.run(3, 2, "Testtown", "locality", "TL", 1.5, 1.5, 1.4, 1.4, 1.6, 1.6)
 	// The US spot-check target (VT→Vermont) — every real admin DB carries US.
 	ins.run(85_688_763, -1, "Vermont", "region", "US", 44, -72.7, 42.7, -73.4, 45, -71.5)
-	enrichAdmin(db)
+	await enrichAdmin(db)
 	await buildFTS(db)
 
 	return db

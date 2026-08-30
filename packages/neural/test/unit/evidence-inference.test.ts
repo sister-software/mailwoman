@@ -15,10 +15,9 @@
  *   longest-first multi-token matches, the lowercase register (operator doctrine), negatives.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { buildGazetteerFeatures, parseGazetteerLexicon } from "@mailwoman/neural/gazetteer-inference"
 import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -35,9 +34,7 @@ interface Fixture {
 	cases: FixtureCase[]
 }
 
-const fixture = parseJSONStrict<Fixture>(
-	readFileSync(join(import.meta.dirname, "../fixtures/evidence-parity-v2.json"), "utf8")
-)
+const fixture = await readLocalJSONFile<Fixture>(join(import.meta.dirname, "../fixtures/evidence-parity-v2.json"))
 
 const toPieces = (c: FixtureCase): TokenizedPiece[] =>
 	c.pieces.map((p) => ({ piece: p.piece, id: 0, start: p.start, end: p.end }))

@@ -19,6 +19,9 @@
  *   apart?), not clustering internals, which `cluster-filers.test.ts` already gates.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { changeMode } from "@mailwoman/core/fs/writers"
 import {
 	createFilerAttributeTable,
 	createFilerClusterTable,
@@ -50,16 +53,12 @@ import {
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
-import { chmodSync, existsSync } from "@mailwoman/platform/fs"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { Insertable } from "kysely"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): DatabaseClient<FilerDatabase> {
-	return new DatabaseClient<FilerDatabase>(":memory:")
+	return DatabaseClient.temp<FilerDatabase>()
 }
 
 async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void> {
@@ -110,20 +109,6 @@ function authoritativeEdge(
  */
 function openFilerDB(path: string): DatabaseClient<FilerDatabase> {
 	return new DatabaseClient<FilerDatabase>(path, { readOnly: true })
-}
-
-let scratch: string | undefined
-
-async function withScratchDir<T>(fn: (out: string) => Promise<T>): Promise<T> {
-	scratch = await mkdtemp(join(tmpdir(), "filer-lookup-gate1-"))
-	const out = join(scratch, "filer.db")
-
-	try {
-		return await fn(out)
-	} finally {
-		await rm(scratch, { recursive: true, force: true })
-		scratch = undefined
-	}
 }
 
 function minimalForm499Row(overrides: Partial<Form499Row> = {}): Form499Row {
@@ -274,68 +259,72 @@ describe("§7-3a gates", () => {
 		})
 
 		it("guards reject a whitespace-only lastFiledAt (not just empty) via buildFilerDatabase", async () => {
-			await withScratchDir(async (out) => {
-				await expect(
-					buildFilerDatabase({
-						form499Rows: [minimalForm499Row({ lastFiledAt: "   " })],
-						out,
-						sourceVintage: "2026-Q1",
-						buildSHA: "deadbeef",
-					})
-				).rejects.toThrow(/malformed.*lastFiledAt/i)
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				expect(existsSync(out)).toBe(false)
-			})
+			await expect(
+				buildFilerDatabase({
+					form499Rows: [minimalForm499Row({ lastFiledAt: "   " })],
+					out,
+					sourceVintage: "2026-Q1",
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/malformed.*lastFiledAt/i)
+
+			expect(await pathExists(out)).toBe(false)
 		})
 
 		it("guards reject an empty lastFiledAt via buildFilerDatabase", async () => {
-			await withScratchDir(async (out) => {
-				await expect(
-					buildFilerDatabase({
-						form499Rows: [minimalForm499Row({ lastFiledAt: "" })],
-						out,
-						sourceVintage: "2026-Q1",
-						buildSHA: "deadbeef",
-					})
-				).rejects.toThrow(/malformed.*lastFiledAt/i)
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				expect(existsSync(out)).toBe(false)
-			})
+			await expect(
+				buildFilerDatabase({
+					form499Rows: [minimalForm499Row({ lastFiledAt: "" })],
+					out,
+					sourceVintage: "2026-Q1",
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/malformed.*lastFiledAt/i)
+
+			expect(await pathExists(out)).toBe(false)
 		})
 
 		it("guards reject a whitespace-only form499ID (not just empty) via buildFilerDatabase", async () => {
-			await withScratchDir(async (out) => {
-				await expect(
-					buildFilerDatabase({
-						form499Rows: [minimalForm499Row({ form499ID: "   " })],
-						out,
-						sourceVintage: "2026-Q1",
-						buildSHA: "deadbeef",
-					})
-				).rejects.toThrow(/malformed.*empty form499ID/i)
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				expect(existsSync(out)).toBe(false)
-			})
+			await expect(
+				buildFilerDatabase({
+					form499Rows: [minimalForm499Row({ form499ID: "   " })],
+					out,
+					sourceVintage: "2026-Q1",
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/malformed.*empty form499ID/i)
+
+			expect(await pathExists(out)).toBe(false)
 		})
 
 		it("guards reject a whitespace-only provider-list frn (not just empty) via buildFilerDatabase", async () => {
-			await withScratchDir(async (out) => {
-				const malformedRows: ProviderListRow[] = [
-					{ providerID: 900_010, frn: "   " as ProviderListRow["frn"], holdingCompany: null },
-				]
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				await expect(
-					buildFilerDatabase({
-						providerRows: malformedRows,
-						out,
-						sourceVintage: "2026-Q1",
-						validFrom: "2026-01-31",
-						buildSHA: "deadbeef",
-					})
-				).rejects.toThrow(/malformed.*empty frn/i)
+			const malformedRows: ProviderListRow[] = [
+				{ providerID: 900_010, frn: "   " as ProviderListRow["frn"], holdingCompany: null },
+			]
 
-				expect(existsSync(out)).toBe(false)
-			})
+			await expect(
+				buildFilerDatabase({
+					providerRows: malformedRows,
+					out,
+					sourceVintage: "2026-Q1",
+					validFrom: "2026-01-31",
+					buildSHA: "deadbeef",
+				})
+			).rejects.toThrow(/malformed.*empty frn/i)
+
+			expect(await pathExists(out)).toBe(false)
 		})
 	})
 
@@ -845,47 +834,46 @@ describe("§7-3a gates", () => {
 		 * this test would fail.
 		 */
 		it("REAL builder path: a non-ISO sourceVintage never leaks into valid_from — a provider-list edge built via buildFilerDatabase stays findable asOf a real date", async () => {
-			await withScratchDir(async (out) => {
-				await buildFilerDatabase({
-					providerRows: [{ providerID: 600_001, frn: toFRN("0006000001")!, holdingCompany: "Realbuild Co" }],
-					out,
-					sourceVintage: "2026-Q2",
-					validFrom: "2026-06-30",
-					buildSHA: "deadbeef",
-				})
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				using db = openFilerDB(out)
+			await buildFilerDatabase({
+				providerRows: [{ providerID: 600_001, frn: toFRN("0006000001")!, holdingCompany: "Realbuild Co" }],
+				out,
+				sourceVintage: "2026-Q2",
+				validFrom: "2026-06-30",
+				buildSHA: "deadbeef",
+			})
 
-				const result = await filerLookup(db, { bdcProviderID: 600_001, asOf: "2026-12-31" })
+			using db = openFilerDB(out)
 
-				// Plain loop, not .filter().map() — keeps this callback within max-nested-callbacks under
-				// withScratchDir's own async closure.
-				const frnValues: string[] = []
-				const holdingValues: string[] = []
+			const result = await filerLookup(db, { bdcProviderID: 600_001, asOf: "2026-12-31" })
 
-				for (const identifier of result.identifiers) {
-					if (identifier.type === FilerIdentifierType.FRN) {
-						frnValues.push(identifier.value)
-					}
+			const frnValues: string[] = []
+			const holdingValues: string[] = []
 
-					if (identifier.type === FilerIdentifierType.HoldingCompanyName) {
-						holdingValues.push(identifier.value)
-					}
+			for (const identifier of result.identifiers) {
+				if (identifier.type === FilerIdentifierType.FRN) {
+					frnValues.push(identifier.value)
 				}
 
-				expect(frnValues).toEqual(["0006000001"])
+				if (identifier.type === FilerIdentifierType.HoldingCompanyName) {
+					holdingValues.push(identifier.value)
+				}
+			}
 
-				// identifiers is relationship: same_entity ONLY now — a
-				// HoldingCompanyName never surfaces here regardless of how findable its edge is asOf this date.
-				expect(holdingValues).toEqual([])
+			expect(frnValues).toEqual(["0006000001"])
 
-				// The holding-company relationship itself is STILL correctly asOf-scoped (this test's whole point —
-				// the non-ISO sourceVintage never leaking into valid_from) — just surfaced via `families`, not
-				// `identifiers`, now that the two rollups are kept apart.
-				expect(result.families).toHaveLength(1)
-				expect(result.families[0]?.relationship).toBe(FilerRelationship.HoldingCompany)
-				expect(result.families[0]?.family_id.startsWith(`${FilerIdentifierType.HoldingCompanyName}:`)).toBe(true)
-			})
+			// identifiers is relationship: same_entity ONLY now — a
+			// HoldingCompanyName never surfaces here regardless of how findable its edge is asOf this date.
+			expect(holdingValues).toEqual([])
+
+			// The holding-company relationship itself is STILL correctly asOf-scoped (this test's whole point —
+			// the non-ISO sourceVintage never leaking into valid_from) — just surfaced via `families`, not
+			// `identifiers`, now that the two rollups are kept apart.
+			expect(result.families).toHaveLength(1)
+			expect(result.families[0]?.relationship).toBe(FilerRelationship.HoldingCompany)
+			expect(result.families[0]?.family_id.startsWith(`${FilerIdentifierType.HoldingCompanyName}:`)).toBe(true)
 		})
 
 		const FRN_NODE = `${FilerIdentifierType.FRN}:9999999999`
@@ -1136,117 +1124,116 @@ describe("§7-3b gates", () => {
 		 * this test immediately.
 		 */
 		it("REAL builder + REAL clusterAuthoritativeComponents: 3 FRNs sharing one holding company yield 3 distinct entity clusters and 1 shared family — never merged", async () => {
-			await withScratchDir(async (out) => {
-				const SHARED_HOLDING = "Real Pipeline Holdco Inc"
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				const FRN_1 = toFRN("0009200001")!
-				const FRN_2 = toFRN("0009200002")!
-				const FRN_3 = toFRN("0009200003")!
+			const SHARED_HOLDING = "Real Pipeline Holdco Inc"
 
-				await buildFilerDatabase({
-					form499Rows: [
-						minimalForm499Row({
-							form499ID: "920001",
-							frn: FRN_1,
-							holdingCompany: SHARED_HOLDING,
-							lastFiledAt: "2026-05-01",
-						}),
-						minimalForm499Row({
-							form499ID: "920002",
-							frn: FRN_2,
-							holdingCompany: SHARED_HOLDING,
-							lastFiledAt: "2026-05-01",
-						}),
-						minimalForm499Row({
-							form499ID: "920003",
-							frn: FRN_3,
-							holdingCompany: SHARED_HOLDING,
-							lastFiledAt: "2026-05-01",
-						}),
-					],
-					out,
-					sourceVintage: "2026-Q2",
-					buildSHA: "deadbeef",
-				})
+			const FRN_1 = toFRN("0009200001")!
+			const FRN_2 = toFRN("0009200002")!
+			const FRN_3 = toFRN("0009200003")!
 
-				// buildFilerDatabase seals the artifact read-only (core/utils/sealed-db.ts) — clusterAuthoritativeComponents
-				// writes filer_cluster, so this unseals it first, the same as a real incremental-clustering pass would.
-				chmodSync(out, 0o644)
-				using db = new DatabaseClient<FilerDatabase>(out)
-
-				await clusterAuthoritativeComponents(db)
-
-				// Plain loop, not .map() — keeps this callback within max-nested-callbacks under withScratchDir's own
-				// async closure (the same discipline the "REAL builder path" gate-4 test above already follows).
-				const frnNodeIDs: string[] = []
-
-				for (const frn of [FRN_1, FRN_2, FRN_3]) {
-					frnNodeIDs.push(`${FilerIdentifierType.FRN}:${frn}`)
-				}
-
-				const clusterRows = await db
-					.selectFrom("filer_cluster")
-					.select(["node_id", "cluster_id"])
-					.where("node_id", "in", frnNodeIDs)
-					.where("assertion", "=", FilerEdgeAssertion.Authoritative)
-					.execute()
-
-				const distinctClusterIDs = new Set<string>()
-
-				for (const row of clusterRows) {
-					distinctClusterIDs.add(row.cluster_id)
-				}
-
-				// THE GATE: 3 distinct cluster_ids — never one shared cluster_id across the 3 FRNs.
-				expect(distinctClusterIDs.size).toBe(3)
-
-				const asOf = "2026-12-31"
-
-				const result1 = await filerLookup(db, { frn: FRN_1, asOf })
-				const result2 = await filerLookup(db, { frn: FRN_2, asOf })
-				const result3 = await filerLookup(db, { frn: FRN_3, asOf })
-
-				// Each FRN's own entity cluster is just itself + its own form499ID — never any of the other two FRNs.
-				expect(result1.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_2}`)
-				expect(result1.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_3}`)
-				expect(result2.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_1}`)
-				expect(result2.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_3}`)
-				expect(result3.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_1}`)
-				expect(result3.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_2}`)
-
-				expect(result1.cluster?.cluster_id).not.toBe(result2.cluster?.cluster_id)
-				expect(result1.cluster?.cluster_id).not.toBe(result3.cluster?.cluster_id)
-				expect(result2.cluster?.cluster_id).not.toBe(result3.cluster?.cluster_id)
-
-				// All 3 share exactly ONE family, via BOTH the filerLookup.families surface and familyRollup itself.
-				expect(result1.families).toHaveLength(1)
-				expect(result2.families).toHaveLength(1)
-				expect(result3.families).toHaveLength(1)
-
-				const sharedFamilyID = result1.families[0]?.family_id
-
-				expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
-				expect(result3.families[0]?.family_id).toBe(sharedFamilyID)
-
-				// Single-spelling case: all 3 filers reported the IDENTICAL raw spelling
-				// (SHARED_HOLDING), so display_names carries exactly that one value, everywhere it's surfaced.
-				expect(result1.families[0]?.display_names).toEqual([SHARED_HOLDING])
-				expect(result2.families[0]?.display_names).toEqual([SHARED_HOLDING])
-				expect(result3.families[0]?.display_names).toEqual([SHARED_HOLDING])
-
-				const rollup = await familyRollup(db, { familyID: sharedFamilyID!, asOf })
-				expect(rollup).toHaveLength(1)
-				expect(rollup[0]?.distinct_member_count).toBe(3)
-				expect(rollup[0]?.display_names).toEqual([SHARED_HOLDING])
-
-				const memberFRNValues: string[] = []
-
-				for (const member of rollup[0]?.members ?? []) {
-					memberFRNValues.push(member.node_id)
-				}
-
-				expect(memberFRNValues.toSorted()).toEqual(frnNodeIDs.toSorted())
+			await buildFilerDatabase({
+				form499Rows: [
+					minimalForm499Row({
+						form499ID: "920001",
+						frn: FRN_1,
+						holdingCompany: SHARED_HOLDING,
+						lastFiledAt: "2026-05-01",
+					}),
+					minimalForm499Row({
+						form499ID: "920002",
+						frn: FRN_2,
+						holdingCompany: SHARED_HOLDING,
+						lastFiledAt: "2026-05-01",
+					}),
+					minimalForm499Row({
+						form499ID: "920003",
+						frn: FRN_3,
+						holdingCompany: SHARED_HOLDING,
+						lastFiledAt: "2026-05-01",
+					}),
+				],
+				out,
+				sourceVintage: "2026-Q2",
+				buildSHA: "deadbeef",
 			})
+
+			// buildFilerDatabase seals the artifact read-only (core/utils/sealed-db.ts) — clusterAuthoritativeComponents
+			// writes filer_cluster, so this unseals it first, the same as a real incremental-clustering pass would.
+			await changeMode(out, 0o644)
+			using db = new DatabaseClient<FilerDatabase>(out)
+
+			await clusterAuthoritativeComponents(db)
+
+			const frnNodeIDs: string[] = []
+
+			for (const frn of [FRN_1, FRN_2, FRN_3]) {
+				frnNodeIDs.push(`${FilerIdentifierType.FRN}:${frn}`)
+			}
+
+			const clusterRows = await db
+				.selectFrom("filer_cluster")
+				.select(["node_id", "cluster_id"])
+				.where("node_id", "in", frnNodeIDs)
+				.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+				.execute()
+
+			const distinctClusterIDs = new Set<string>()
+
+			for (const row of clusterRows) {
+				distinctClusterIDs.add(row.cluster_id)
+			}
+
+			// THE GATE: 3 distinct cluster_ids — never one shared cluster_id across the 3 FRNs.
+			expect(distinctClusterIDs.size).toBe(3)
+
+			const asOf = "2026-12-31"
+
+			const result1 = await filerLookup(db, { frn: FRN_1, asOf })
+			const result2 = await filerLookup(db, { frn: FRN_2, asOf })
+			const result3 = await filerLookup(db, { frn: FRN_3, asOf })
+
+			// Each FRN's own entity cluster is just itself + its own form499ID — never any of the other two FRNs.
+			expect(result1.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_2}`)
+			expect(result1.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_3}`)
+			expect(result2.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_1}`)
+			expect(result2.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_3}`)
+			expect(result3.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_1}`)
+			expect(result3.cluster?.members).not.toContain(`${FilerIdentifierType.FRN}:${FRN_2}`)
+
+			expect(result1.cluster?.cluster_id).not.toBe(result2.cluster?.cluster_id)
+			expect(result1.cluster?.cluster_id).not.toBe(result3.cluster?.cluster_id)
+			expect(result2.cluster?.cluster_id).not.toBe(result3.cluster?.cluster_id)
+
+			// All 3 share exactly ONE family, via BOTH the filerLookup.families surface and familyRollup itself.
+			expect(result1.families).toHaveLength(1)
+			expect(result2.families).toHaveLength(1)
+			expect(result3.families).toHaveLength(1)
+
+			const sharedFamilyID = result1.families[0]?.family_id
+
+			expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
+			expect(result3.families[0]?.family_id).toBe(sharedFamilyID)
+
+			// Single-spelling case: all 3 filers reported the IDENTICAL raw spelling
+			// (SHARED_HOLDING), so display_names carries exactly that one value, everywhere it's surfaced.
+			expect(result1.families[0]?.display_names).toEqual([SHARED_HOLDING])
+			expect(result2.families[0]?.display_names).toEqual([SHARED_HOLDING])
+			expect(result3.families[0]?.display_names).toEqual([SHARED_HOLDING])
+
+			const rollup = await familyRollup(db, { familyID: sharedFamilyID!, asOf })
+			expect(rollup).toHaveLength(1)
+			expect(rollup[0]?.distinct_member_count).toBe(3)
+			expect(rollup[0]?.display_names).toEqual([SHARED_HOLDING])
+
+			const memberFRNValues: string[] = []
+
+			for (const member of rollup[0]?.members ?? []) {
+				memberFRNValues.push(member.node_id)
+			}
+
+			expect(memberFRNValues.toSorted()).toEqual(frnNodeIDs.toSorted())
 		})
 
 		/**
@@ -1258,52 +1245,53 @@ describe("§7-3b gates", () => {
 		 * `display_names`, sorted, never silently collapsed to one.
 		 */
 		it("REAL builder, multi-spelling family: two raw holding-company spellings that canonicalize identically both survive in display_names, sorted — never collapsed to one", async () => {
-			await withScratchDir(async (out) => {
-				const FRN_SPELLING_1 = toFRN("0009300001")!
-				const FRN_SPELLING_2 = toFRN("0009300002")!
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				await buildFilerDatabase({
-					form499Rows: [
-						minimalForm499Row({
-							form499ID: "930001",
-							frn: FRN_SPELLING_1,
-							holdingCompany: "Acme Corp",
-							lastFiledAt: "2026-01-01",
-						}),
-						minimalForm499Row({
-							form499ID: "930002",
-							frn: FRN_SPELLING_2,
-							holdingCompany: "Acme Corporation, LLC",
-							lastFiledAt: "2026-02-01",
-						}),
-					],
-					out,
-					sourceVintage: "2026-Q2",
-					buildSHA: "deadbeef",
-				})
+			const FRN_SPELLING_1 = toFRN("0009300001")!
+			const FRN_SPELLING_2 = toFRN("0009300002")!
 
-				using db = openFilerDB(out)
-
-				const result1 = await filerLookup(db, { frn: FRN_SPELLING_1, asOf: "2026-12-31" })
-				const result2 = await filerLookup(db, { frn: FRN_SPELLING_2, asOf: "2026-12-31" })
-
-				expect(result1.families).toHaveLength(1)
-				expect(result2.families).toHaveLength(1)
-
-				// Same family_id — proves the two spellings really did canonicalize together, not a coincidence of
-				// the fixture.
-				const sharedFamilyID = result1.families[0]?.family_id
-				expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
-
-				const expectedSpellings = ["Acme Corp", "Acme Corporation, LLC"].toSorted()
-
-				// THE RULE: both spellings, sorted, on every surface that reports them.
-				expect(result1.families[0]?.display_names).toEqual(expectedSpellings)
-				expect(result2.families[0]?.display_names).toEqual(expectedSpellings)
-
-				const rollup = await familyRollup(db, { familyID: sharedFamilyID!, asOf: "2026-12-31" })
-				expect(rollup[0]?.display_names).toEqual(expectedSpellings)
+			await buildFilerDatabase({
+				form499Rows: [
+					minimalForm499Row({
+						form499ID: "930001",
+						frn: FRN_SPELLING_1,
+						holdingCompany: "Acme Corp",
+						lastFiledAt: "2026-01-01",
+					}),
+					minimalForm499Row({
+						form499ID: "930002",
+						frn: FRN_SPELLING_2,
+						holdingCompany: "Acme Corporation, LLC",
+						lastFiledAt: "2026-02-01",
+					}),
+				],
+				out,
+				sourceVintage: "2026-Q2",
+				buildSHA: "deadbeef",
 			})
+
+			using db = openFilerDB(out)
+
+			const result1 = await filerLookup(db, { frn: FRN_SPELLING_1, asOf: "2026-12-31" })
+			const result2 = await filerLookup(db, { frn: FRN_SPELLING_2, asOf: "2026-12-31" })
+
+			expect(result1.families).toHaveLength(1)
+			expect(result2.families).toHaveLength(1)
+
+			// Same family_id — proves the two spellings really did canonicalize together, not a coincidence of
+			// the fixture.
+			const sharedFamilyID = result1.families[0]?.family_id
+			expect(result2.families[0]?.family_id).toBe(sharedFamilyID)
+
+			const expectedSpellings = ["Acme Corp", "Acme Corporation, LLC"].toSorted()
+
+			// THE RULE: both spellings, sorted, on every surface that reports them.
+			expect(result1.families[0]?.display_names).toEqual(expectedSpellings)
+			expect(result2.families[0]?.display_names).toEqual(expectedSpellings)
+
+			const rollup = await familyRollup(db, { familyID: sharedFamilyID!, asOf: "2026-12-31" })
+			expect(rollup[0]?.display_names).toEqual(expectedSpellings)
 		})
 
 		/**
@@ -1323,88 +1311,87 @@ describe("§7-3b gates", () => {
 		 * counts distinct member NODES, never rows).
 		 */
 		it("REAL builder, one filer reporting TWO spellings of one family: both survive in display_names, families stays one entry, distinct_member_count stays 1", async () => {
-			await withScratchDir(async (out) => {
-				const FRN_TWO_SPELLINGS = toFRN("0009500001")!
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				await buildFilerDatabase({
-					form499Rows: [
-						minimalForm499Row({
-							form499ID: "950001",
-							frn: FRN_TWO_SPELLINGS,
-							holdingCompany: "Acme Corp",
-							lastFiledAt: "2026-05-01",
-						}),
-						minimalForm499Row({
-							form499ID: "950002",
-							frn: FRN_TWO_SPELLINGS,
-							holdingCompany: "Acme Corporation, LLC",
-							lastFiledAt: "2026-05-01",
-						}),
-					],
-					out,
-					sourceVintage: "2026-Q2",
-					buildSHA: "deadbeef",
-				})
+			const FRN_TWO_SPELLINGS = toFRN("0009500001")!
 
-				using db = openFilerDB(out)
-
-				const familyID = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corp")!
-				const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_TWO_SPELLINGS}`
-
-				// THE KEY DECISION, asserted against the artifact itself: two rows, identical on every column the OLD
-				// primary key covered, distinguished ONLY by naming_node_id. Narrow the key and this is 1.
-				const familyRows = await db
-					.selectFrom("filer_family")
-					.selectAll()
-					.where("node_id", "=", frnNodeID)
-					.orderBy("naming_node_id")
-					.execute()
-
-				expect(familyRows).toHaveLength(2)
-
-				// Plain loops, not .map() — keeps this callback within max-nested-callbacks under withScratchDir's own
-				// async closure (the same discipline every other real-builder test in this block follows).
-				const namingNodeIDs: string[] = []
-				const distinctFamilyIDs = new Set<string>()
-
-				for (const row of familyRows) {
-					namingNodeIDs.push(row.naming_node_id)
-					distinctFamilyIDs.add(row.family_id)
-				}
-
-				expect(distinctFamilyIDs).toEqual(new Set([familyID]))
-
-				expect(namingNodeIDs).toEqual([
-					`${FilerIdentifierType.HoldingCompanyName}:Acme Corp`,
-					`${FilerIdentifierType.HoldingCompanyName}:Acme Corporation, LLC`,
-				])
-
-				const expectedSpellings = ["Acme Corp", "Acme Corporation, LLC"].toSorted()
-
-				const result = await filerLookup(db, { frn: FRN_TWO_SPELLINGS, asOf: "2026-12-31" })
-
-				// One family, both names — the widened key must not turn into a duplicated `families` entry.
-				expect(result.families).toHaveLength(1)
-				expect(result.families[0]?.family_id).toBe(familyID)
-				expect(result.families[0]?.display_names).toEqual(expectedSpellings)
-
-				const rollup = await familyRollup(db, { familyID, asOf: "2026-12-31" })
-
-				expect(rollup).toHaveLength(1)
-				expect(rollup[0]?.display_names).toEqual(expectedSpellings)
-
-				// Member count unchanged: one filer, however many spellings it filed. `members` itself stays plural
-				// (one entry per row, never deduped) — that asymmetry is exactly what distinct_member_count exists for.
-				expect(rollup[0]?.distinct_member_count).toBe(1)
-
-				const memberNodeIDs: string[] = []
-
-				for (const member of rollup[0]?.members ?? []) {
-					memberNodeIDs.push(member.node_id)
-				}
-
-				expect(memberNodeIDs).toEqual([frnNodeID, frnNodeID])
+			await buildFilerDatabase({
+				form499Rows: [
+					minimalForm499Row({
+						form499ID: "950001",
+						frn: FRN_TWO_SPELLINGS,
+						holdingCompany: "Acme Corp",
+						lastFiledAt: "2026-05-01",
+					}),
+					minimalForm499Row({
+						form499ID: "950002",
+						frn: FRN_TWO_SPELLINGS,
+						holdingCompany: "Acme Corporation, LLC",
+						lastFiledAt: "2026-05-01",
+					}),
+				],
+				out,
+				sourceVintage: "2026-Q2",
+				buildSHA: "deadbeef",
 			})
+
+			using db = openFilerDB(out)
+
+			const familyID = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Acme Corp")!
+			const frnNodeID = `${FilerIdentifierType.FRN}:${FRN_TWO_SPELLINGS}`
+
+			// THE KEY DECISION, asserted against the artifact itself: two rows, identical on every column the OLD
+			// primary key covered, distinguished ONLY by naming_node_id. Narrow the key and this is 1.
+			const familyRows = await db
+				.selectFrom("filer_family")
+				.selectAll()
+				.where("node_id", "=", frnNodeID)
+				.orderBy("naming_node_id")
+				.execute()
+
+			expect(familyRows).toHaveLength(2)
+
+			const namingNodeIDs: string[] = []
+			const distinctFamilyIDs = new Set<string>()
+
+			for (const row of familyRows) {
+				namingNodeIDs.push(row.naming_node_id)
+				distinctFamilyIDs.add(row.family_id)
+			}
+
+			expect(distinctFamilyIDs).toEqual(new Set([familyID]))
+
+			expect(namingNodeIDs).toEqual([
+				`${FilerIdentifierType.HoldingCompanyName}:Acme Corp`,
+				`${FilerIdentifierType.HoldingCompanyName}:Acme Corporation, LLC`,
+			])
+
+			const expectedSpellings = ["Acme Corp", "Acme Corporation, LLC"].toSorted()
+
+			const result = await filerLookup(db, { frn: FRN_TWO_SPELLINGS, asOf: "2026-12-31" })
+
+			// One family, both names — the widened key must not turn into a duplicated `families` entry.
+			expect(result.families).toHaveLength(1)
+			expect(result.families[0]?.family_id).toBe(familyID)
+			expect(result.families[0]?.display_names).toEqual(expectedSpellings)
+
+			const rollup = await familyRollup(db, { familyID, asOf: "2026-12-31" })
+
+			expect(rollup).toHaveLength(1)
+			expect(rollup[0]?.display_names).toEqual(expectedSpellings)
+
+			// Member count unchanged: one filer, however many spellings it filed. `members` itself stays plural
+			// (one entry per row, never deduped) — that asymmetry is exactly what distinct_member_count exists for.
+			expect(rollup[0]?.distinct_member_count).toBe(1)
+
+			const memberNodeIDs: string[] = []
+
+			for (const member of rollup[0]?.members ?? []) {
+				memberNodeIDs.push(member.node_id)
+			}
+
+			expect(memberNodeIDs).toEqual([frnNodeID, frnNodeID])
 		})
 
 		/**
@@ -1423,92 +1410,92 @@ describe("§7-3b gates", () => {
 		 * cross-contamination output whenever the scoping predicate is removed, whatever form it takes.
 		 */
 		it("display_names never leaks across a DIFFERENT family: REAL builder, provider-list path — one providerID with two DIFFERENT holding companies under the same source+valid_from never cross-contaminates each family's display_names", async () => {
-			await withScratchDir(async (out) => {
-				const FRN_SHARED = toFRN("0009400001")!
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				await buildFilerDatabase({
-					providerRows: [
-						{ providerID: 940_001, frn: FRN_SHARED, holdingCompany: "Alpha Holdco" },
-						{ providerID: 940_001, frn: FRN_SHARED, holdingCompany: "Zenith Unrelated Group" },
-					],
-					out,
-					sourceVintage: "2026-Q2",
-					validFrom: "2026-06-30",
-					buildSHA: "deadbeef",
-				})
+			const FRN_SHARED = toFRN("0009400001")!
 
-				using db = openFilerDB(out)
-
-				const result = await filerLookup(db, { bdcProviderID: 940_001, asOf: "2026-12-31" })
-
-				expect(result.families).toHaveLength(2)
-
-				const familyIDAlpha = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Alpha Holdco")!
-				const familyIDZenith = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Zenith Unrelated Group")!
-
-				// Plain loop, not .map(), to build the lookup — keeps this callback within max-nested-callbacks
-				// under withScratchDir's own async closure.
-				const familyByID = new Map<string, (typeof result.families)[number]>()
-
-				for (const family of result.families) {
-					familyByID.set(family.family_id, family)
-				}
-
-				// THE BUG (pre-fix): BOTH entries' display_names would each contain BOTH names. THE FIX: each
-				// family reports ONLY the one name that actually implies it.
-				expect(familyByID.get(familyIDAlpha)?.display_names).toEqual(["Alpha Holdco"])
-				expect(familyByID.get(familyIDZenith)?.display_names).toEqual(["Zenith Unrelated Group"])
-
-				const rollupAlpha = await familyRollup(db, { familyID: familyIDAlpha, asOf: "2026-12-31" })
-				const rollupZenith = await familyRollup(db, { familyID: familyIDZenith, asOf: "2026-12-31" })
-
-				expect(rollupAlpha[0]?.display_names).toEqual(["Alpha Holdco"])
-				expect(rollupZenith[0]?.display_names).toEqual(["Zenith Unrelated Group"])
+			await buildFilerDatabase({
+				providerRows: [
+					{ providerID: 940_001, frn: FRN_SHARED, holdingCompany: "Alpha Holdco" },
+					{ providerID: 940_001, frn: FRN_SHARED, holdingCompany: "Zenith Unrelated Group" },
+				],
+				out,
+				sourceVintage: "2026-Q2",
+				validFrom: "2026-06-30",
+				buildSHA: "deadbeef",
 			})
+
+			using db = openFilerDB(out)
+
+			const result = await filerLookup(db, { bdcProviderID: 940_001, asOf: "2026-12-31" })
+
+			expect(result.families).toHaveLength(2)
+
+			const familyIDAlpha = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Alpha Holdco")!
+			const familyIDZenith = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Zenith Unrelated Group")!
+
+			const familyByID = new Map<string, (typeof result.families)[number]>()
+
+			for (const family of result.families) {
+				familyByID.set(family.family_id, family)
+			}
+
+			// THE BUG (pre-fix): BOTH entries' display_names would each contain BOTH names. THE FIX: each
+			// family reports ONLY the one name that actually implies it.
+			expect(familyByID.get(familyIDAlpha)?.display_names).toEqual(["Alpha Holdco"])
+			expect(familyByID.get(familyIDZenith)?.display_names).toEqual(["Zenith Unrelated Group"])
+
+			const rollupAlpha = await familyRollup(db, { familyID: familyIDAlpha, asOf: "2026-12-31" })
+			const rollupZenith = await familyRollup(db, { familyID: familyIDZenith, asOf: "2026-12-31" })
+
+			expect(rollupAlpha[0]?.display_names).toEqual(["Alpha Holdco"])
+			expect(rollupZenith[0]?.display_names).toEqual(["Zenith Unrelated Group"])
 		})
 
 		it("display_names never leaks across a DIFFERENT family: REAL builder, 499 path — one FRN with two DIFFERENT holding companies filed the same day never cross-contaminates each family's display_names", async () => {
-			await withScratchDir(async (out) => {
-				const FRN_SHARED = toFRN("0009400002")!
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				await buildFilerDatabase({
-					form499Rows: [
-						minimalForm499Row({
-							form499ID: "940201",
-							frn: FRN_SHARED,
-							holdingCompany: "Alpha Holdco",
-							lastFiledAt: "2026-05-01",
-						}),
-						minimalForm499Row({
-							form499ID: "940202",
-							frn: FRN_SHARED,
-							holdingCompany: "Zenith Unrelated Group",
-							lastFiledAt: "2026-05-01",
-						}),
-					],
-					out,
-					sourceVintage: "2026-Q2",
-					buildSHA: "deadbeef",
-				})
+			const FRN_SHARED = toFRN("0009400002")!
 
-				using db = openFilerDB(out)
-
-				const result = await filerLookup(db, { frn: FRN_SHARED, asOf: "2026-12-31" })
-
-				expect(result.families).toHaveLength(2)
-
-				const familyIDAlpha = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Alpha Holdco")!
-				const familyIDZenith = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Zenith Unrelated Group")!
-
-				const familyByID = new Map<string, (typeof result.families)[number]>()
-
-				for (const family of result.families) {
-					familyByID.set(family.family_id, family)
-				}
-
-				expect(familyByID.get(familyIDAlpha)?.display_names).toEqual(["Alpha Holdco"])
-				expect(familyByID.get(familyIDZenith)?.display_names).toEqual(["Zenith Unrelated Group"])
+			await buildFilerDatabase({
+				form499Rows: [
+					minimalForm499Row({
+						form499ID: "940201",
+						frn: FRN_SHARED,
+						holdingCompany: "Alpha Holdco",
+						lastFiledAt: "2026-05-01",
+					}),
+					minimalForm499Row({
+						form499ID: "940202",
+						frn: FRN_SHARED,
+						holdingCompany: "Zenith Unrelated Group",
+						lastFiledAt: "2026-05-01",
+					}),
+				],
+				out,
+				sourceVintage: "2026-Q2",
+				buildSHA: "deadbeef",
 			})
+
+			using db = openFilerDB(out)
+
+			const result = await filerLookup(db, { frn: FRN_SHARED, asOf: "2026-12-31" })
+
+			expect(result.families).toHaveLength(2)
+
+			const familyIDAlpha = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Alpha Holdco")!
+			const familyIDZenith = mintFamilyID(FilerIdentifierType.HoldingCompanyName, "Zenith Unrelated Group")!
+
+			const familyByID = new Map<string, (typeof result.families)[number]>()
+
+			for (const family of result.families) {
+				familyByID.set(family.family_id, family)
+			}
+
+			expect(familyByID.get(familyIDAlpha)?.display_names).toEqual(["Alpha Holdco"])
+			expect(familyByID.get(familyIDZenith)?.display_names).toEqual(["Zenith Unrelated Group"])
 		})
 	})
 
@@ -1773,102 +1760,101 @@ describe("§7-3b gates", () => {
 	 */
 	describe("2. EDGAR-sourced families extend gates 1-2", () => {
 		it("an inferred EDGAR subsidiary relationship never leaks into entity clustering or identifiers, but DOES surface as a family via familyRollup/filerLookup.families", async () => {
-			await withScratchDir(async (out) => {
-				const FRN_SUBSIDIARY = toFRN("0009600001")!
-				const CIK_PARENT = "0001234567"
+			await using scratch = await temporaryDirectory("filer-lookup-gate1-")
+			const out = scratch.resolve("filer.db")
 
-				const edgarRows: EdgarSubsidiaryRow[] = [
-					{ cik: CIK_PARENT, subsidiaryName: "Cascade Fiber Networks LLC", filingDate: "2026-04-01" },
-				]
+			const FRN_SUBSIDIARY = toFRN("0009600001")!
+			const CIK_PARENT = "0001234567"
 
-				await buildFilerDatabase({
-					form499Rows: [
-						minimalForm499Row({
-							form499ID: "960001",
-							frn: FRN_SUBSIDIARY,
-							legalNameOfCarrier: "Cascade Fiber Networks LLC",
-							lastFiledAt: "2026-03-01",
-						}),
-					],
-					edgarRows,
-					out,
-					sourceVintage: "2026-Q2",
-					buildSHA: "deadbeef",
-				})
+			const edgarRows: EdgarSubsidiaryRow[] = [
+				{ cik: CIK_PARENT, subsidiaryName: "Cascade Fiber Networks LLC", filingDate: "2026-04-01" },
+			]
 
-				chmodSync(out, 0o644)
-				using db = new DatabaseClient<FilerDatabase>(out)
-
-				await clusterAuthoritativeComponents(db)
-
-				const asOf = "2026-12-31"
-				const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
-
-				const result = await filerLookup(db, { frn: FRN_SUBSIDIARY, asOf })
-
-				// GATE 1/2 extended, negative half: the EDGAR family fact never leaks into cluster/identifiers. The
-				// FRN's own entity cluster (itself + its own form499ID, from the ordinary FRN<->form499ID identity
-				// edge every builder emits) never gains the CIK or the subsidiary-name node as a member, and
-				// `identifiers` (relationship: same_entity only) never lists the CIK either.
-				expect(result.cluster?.members).not.toContain(cikNodeID)
-
-				// Plain loop, not .some() — keeps this callback within max-nested-callbacks under withScratchDir's
-				// own async closure (the same discipline the "REAL builder path" gate tests elsewhere follow).
-				let hasCIKIdentifier = false
-
-				for (const identifier of result.identifiers) {
-					if (identifier.type === FilerIdentifierType.CIK) {
-						hasCIKIdentifier = true
-					}
-				}
-
-				expect(hasCIKIdentifier).toBe(false)
-
-				// GATE 1/2 extended, positive half: the family membership DOES surface, on the family-shaped field —
-				// and it surfaces AS AN INFERENCE. `assertion: inferred` plus a `match_score` is the
-				// whole difference between this row and a Form 499 holding-company membership the filer itself
-				// filed; before those two fields existed this entry was byte-identical to one, which is how a
-				// name-match guess reached the product surface wearing a filed disclosure's clothes.
-				expect(result.families).toEqual([
-					{
-						family_id: cikNodeID,
-						relationship: FilerRelationship.ParentCompany,
-						assertion: FilerEdgeAssertion.Inferred,
-						match_score: 0.9,
-						display_names: ["0001234567"],
-					},
-				])
-
-				// The CIK gets its own singleton entity-cluster assignment (every filer_node row lands in exactly
-				// one, per clusterAuthoritativeComponents's own contract) — but NEVER the FRN's cluster: the
-				// disclosure edge (cik -> subsidiary name) is relationship: Subsidiary, not same_entity, so
-				// readAuthoritativeGroups correctly never unions it with anything.
-				const cikCluster = await db
-					.selectFrom("filer_cluster")
-					.selectAll()
-					.where("node_id", "=", cikNodeID)
-					.where("assertion", "=", FilerEdgeAssertion.Authoritative)
-					.executeTakeFirstOrThrow()
-
-				expect(cikCluster.cluster_id).not.toBe(result.cluster?.cluster_id)
-
-				// familyRollup answers the identical fact from the other direction.
-				const rollup = await familyRollup(db, { familyID: cikNodeID, asOf })
-				expect(rollup).toHaveLength(1)
-
-				// familyRollup carries the same grading on its own member shape — `source: "edgar-exhibit-21"` alone
-				// could not supply it, since that one source writes an authoritative disclosure edge AND this
-				// inferred corroboration in the same build.
-				expect(rollup[0]?.members).toEqual([
-					{
-						node_id: `${FilerIdentifierType.FRN}:${FRN_SUBSIDIARY}`,
-						relationship: FilerRelationship.ParentCompany,
-						assertion: FilerEdgeAssertion.Inferred,
-						match_score: 0.9,
-						source: "edgar-exhibit-21",
-					},
-				])
+			await buildFilerDatabase({
+				form499Rows: [
+					minimalForm499Row({
+						form499ID: "960001",
+						frn: FRN_SUBSIDIARY,
+						legalNameOfCarrier: "Cascade Fiber Networks LLC",
+						lastFiledAt: "2026-03-01",
+					}),
+				],
+				edgarRows,
+				out,
+				sourceVintage: "2026-Q2",
+				buildSHA: "deadbeef",
 			})
+
+			await changeMode(out, 0o644)
+			using db = new DatabaseClient<FilerDatabase>(out)
+
+			await clusterAuthoritativeComponents(db)
+
+			const asOf = "2026-12-31"
+			const cikNodeID = `${FilerIdentifierType.CIK}:${CIK_PARENT}`
+
+			const result = await filerLookup(db, { frn: FRN_SUBSIDIARY, asOf })
+
+			// GATE 1/2 extended, negative half: the EDGAR family fact never leaks into cluster/identifiers. The
+			// FRN's own entity cluster (itself + its own form499ID, from the ordinary FRN<->form499ID identity
+			// edge every builder emits) never gains the CIK or the subsidiary-name node as a member, and
+			// `identifiers` (relationship: same_entity only) never lists the CIK either.
+			expect(result.cluster?.members).not.toContain(cikNodeID)
+
+			let hasCIKIdentifier = false
+
+			for (const identifier of result.identifiers) {
+				if (identifier.type === FilerIdentifierType.CIK) {
+					hasCIKIdentifier = true
+				}
+			}
+
+			expect(hasCIKIdentifier).toBe(false)
+
+			// GATE 1/2 extended, positive half: the family membership DOES surface, on the family-shaped field —
+			// and it surfaces AS AN INFERENCE. `assertion: inferred` plus a `match_score` is the
+			// whole difference between this row and a Form 499 holding-company membership the filer itself
+			// filed; before those two fields existed this entry was byte-identical to one, which is how a
+			// name-match guess reached the product surface wearing a filed disclosure's clothes.
+			expect(result.families).toEqual([
+				{
+					family_id: cikNodeID,
+					relationship: FilerRelationship.ParentCompany,
+					assertion: FilerEdgeAssertion.Inferred,
+					match_score: 0.9,
+					display_names: ["0001234567"],
+				},
+			])
+
+			// The CIK gets its own singleton entity-cluster assignment (every filer_node row lands in exactly
+			// one, per clusterAuthoritativeComponents's own contract) — but NEVER the FRN's cluster: the
+			// disclosure edge (cik -> subsidiary name) is relationship: Subsidiary, not same_entity, so
+			// readAuthoritativeGroups correctly never unions it with anything.
+			const cikCluster = await db
+				.selectFrom("filer_cluster")
+				.selectAll()
+				.where("node_id", "=", cikNodeID)
+				.where("assertion", "=", FilerEdgeAssertion.Authoritative)
+				.executeTakeFirstOrThrow()
+
+			expect(cikCluster.cluster_id).not.toBe(result.cluster?.cluster_id)
+
+			// familyRollup answers the identical fact from the other direction.
+			const rollup = await familyRollup(db, { familyID: cikNodeID, asOf })
+			expect(rollup).toHaveLength(1)
+
+			// familyRollup carries the same grading on its own member shape — `source: "edgar-exhibit-21"` alone
+			// could not supply it, since that one source writes an authoritative disclosure edge AND this
+			// inferred corroboration in the same build.
+			expect(rollup[0]?.members).toEqual([
+				{
+					node_id: `${FilerIdentifierType.FRN}:${FRN_SUBSIDIARY}`,
+					relationship: FilerRelationship.ParentCompany,
+					assertion: FilerEdgeAssertion.Inferred,
+					match_score: 0.9,
+					source: "edgar-exhibit-21",
+				},
+			])
 		})
 	})
 })

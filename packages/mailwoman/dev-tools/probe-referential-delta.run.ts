@@ -32,9 +32,10 @@
  *   Usage: node packages/mailwoman/dev-tools/probe-referential-delta.run.ts [--board <path>]
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -52,7 +53,7 @@ console.log(`## Referential/population ordering — D-rule measurement\n`)
 console.log(`Saturation population: ${REFERENTIAL_SATURATION_POPULATION.toLocaleString()}\n`)
 console.log(`### 1. Live gazetteer census (\`${adminPath}\`)\n`)
 
-if (!existsSync(adminPath)) {
+if (!(await pathExists(adminPath))) {
 	console.log(`- admin DB absent — census skipped\n`)
 } else {
 	using db = new DatabaseClient<WOFDatabase>(adminPath, { open: true })
@@ -112,7 +113,7 @@ const preSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number =>
  */
 const postSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number => compareReferential(a, b) || b.score - a.score
 
-const wofPaths = wofShardPaths().filter(existsSync)
+const wofPaths = wofShardPaths().filter(pathExistsSync)
 
 console.log(`### 2. Live query replay\n`)
 

@@ -8,7 +8,7 @@
  *   are the regression fence around that tuition.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { tmpdir } from "@mailwoman/platform/os"
 import {
 	buildStreetTypeLexicon,
@@ -67,8 +67,8 @@ describe("three-law selectivity — pure units", () => {
 		expect(clearsProminenceFloor("obscureplace", 0, personNames, 0.1)).toBe(false)
 	})
 
-	it("law 1: the degenerate set carries the shipped-index victims", () => {
-		const { surfaces, stopwordTokens } = loadDegenerateSurfaces()
+	it("law 1: the degenerate set carries the shipped-index victims", async () => {
+		const { surfaces, stopwordTokens } = await loadDegenerateSurfaces()
 
 		// The case-folded alias collisions + street vocabulary the FST curation prunes.
 		for (const s of ["la", "op", "boulevard", "lane", "street"]) {
@@ -80,8 +80,8 @@ describe("three-law selectivity — pure units", () => {
 		expect(stopwordTokens.has("la")).toBe(true)
 	})
 
-	it("law-1 directional closure (v5): the census flip surfaces are in the directional set", () => {
-		const directionals = loadDirectionalSurfaces()
+	it("law-1 directional closure (v5): the census flip surfaces are in the directional set", async () => {
+		const directionals = await loadDirectionalSurfaces()
 
 		// The v3.19 flip census: US neighbourhoods literally named these painted evidence onto street
 		// directionals ("3rd Ave East" → street "3rd", "Fargo" → locality "North").
@@ -91,7 +91,7 @@ describe("three-law selectivity — pure units", () => {
 
 		// The set stays out of the shipped FST policy — loadDegenerateSurfaces alone must NOT carry
 		// "northeast" (policy separation: degenerate-surface-exclusion v1.1 is baked into FST trailers).
-		expect(loadDegenerateSurfaces(undefined, painterFold).surfaces.has("northeast")).toBe(false)
+		expect((await loadDegenerateSurfaces(undefined, painterFold)).surfaces.has("northeast")).toBe(false)
 	})
 
 	it("law 4 (v5): US region vocabulary carries the census flip surfaces", () => {
@@ -165,8 +165,7 @@ describe("street-type lexicon build", () => {
 		const built = await buildStreetTypeLexicon({ output: tmp })
 
 		expect(built.entries).toBeGreaterThan(400)
-		const { readFileSync } = await import("@mailwoman/platform/fs")
-		const j = parseJSONStrict<StreetTypeLexicon>(readFileSync(tmp, "utf8"))
+		const j = await readLocalJSONFile<StreetTypeLexicon>(tmp)
 
 		// "rue" must match lowercase (the FR probe class); "R" only as an uppercase code.
 		expect(j.rules.digit_guard).toBe(true)
@@ -181,8 +180,7 @@ describe("street-type lexicon build", () => {
 		const built = await buildStreetTypeLexicon({ output: tmp })
 
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)
-		const { readFileSync } = await import("@mailwoman/platform/fs")
-		const j = parseJSONStrict<StreetTypeLexicon>(readFileSync(tmp, "utf8"))
+		const j = await readLocalJSONFile<StreetTypeLexicon>(tmp)
 
 		// "MOUNTAIN WAY WY 82601" / "SUSIE CT WY 83101" — the state token must carry NO street evidence.
 		for (const code of ["WY", "CT", "KY", "MT", "PR"]) {

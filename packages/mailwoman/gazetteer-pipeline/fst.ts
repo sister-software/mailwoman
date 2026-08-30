@@ -28,8 +28,10 @@
  *   operator-gated after the battery.
  */
 
+import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { fstStaleReason, peekFSTStampFields, readWOFSourceIdentity } from "@mailwoman/resolver-wof-sqlite/fst-freshness"
@@ -149,8 +151,8 @@ export interface FSTFreshnessRow {
  * `fst-ja-jp.bin` would report the true-but-useless "(none) → v1.1" on an artifact no command can rebuild, burying the
  * reason that matters.
  */
-export function checkAdminDerivedFSTFreshness(dbPath: string): FSTFreshnessRow[] {
-	const source = readWOFSourceIdentity(dbPath)
+export async function checkAdminDerivedFSTFreshness(dbPath: string): Promise<FSTFreshnessRow[]> {
+	const source = await readWOFSourceIdentity(dbPath)
 	const wofRoot = String(dataRootPath("wof"))
 
 	return ADMIN_DERIVED_FST_ARTIFACTS.map((relative): FSTFreshnessRow => {
@@ -162,7 +164,7 @@ export function checkAdminDerivedFSTFreshness(dbPath: string): FSTFreshnessRow[]
 			? `mailwoman gazetteer build fst --locales ${locale}`
 			: `NO BUILDER — ${locale ?? "this artifact"} has no FST_LOCALES entry (built by the pre-#1318 flow)`
 
-		if (!existsSync(path)) return { artifact: relative, present: false, rebuildCommand }
+		if (!pathExistsSync(path)) return { artifact: relative, present: false, rebuildCommand }
 
 		const fields = peekFSTStampFields(path)
 
@@ -195,13 +197,13 @@ function surfacesOfLine(line: string): string[] {
  * Load the degenerate-surface exclusion sets from the shipped libpostal dictionaries. Returns normalized-join keys
  * (`normalizeTokens(surface).join(" ")`) so they compare exactly against the builder's insertion keys.
  */
-export function loadDegenerateSurfaces(
+export async function loadDegenerateSurfaces(
 	languages: readonly string[] = CURATION_LANGUAGES,
 	fold: (surface: string) => string[] = normalizeTokens
-): {
+): Promise<{
 	surfaces: Set<string>
 	stopwordTokens: Set<string>
-} {
+}> {
 	// Memoized like loadPersonNameSurfaces: static dictionaries, so process-lifetime with no
 	// invalidation key. Keyed by fold IDENTITY then language set — the FST and painter worlds fold
 	// differently by design and must not share an entry. Without this the fixture-layer test paid
@@ -221,7 +223,7 @@ export function loadDegenerateSurfaces(
 	let parsed = byLanguages.get(key)
 
 	if (!parsed) {
-		parsed = scanDegenerateSurfaces(languages, fold)
+		parsed = await scanDegenerateSurfaces(languages, fold)
 		byLanguages.set(key, parsed)
 	}
 
@@ -233,13 +235,13 @@ const degenerateSurfacesMemo = new Map<
 	Map<string, { surfaces: Set<string>; stopwordTokens: Set<string> }>
 >()
 
-function scanDegenerateSurfaces(
+async function scanDegenerateSurfaces(
 	languages: readonly string[],
 	fold: (surface: string) => string[]
-): {
+): Promise<{
 	surfaces: Set<string>
 	stopwordTokens: Set<string>
-} {
+}> {
 	const dictionariesDir = resourceDictionaryPath("libpostal")
 	const surfaces = new Set<string>()
 	const stopwordTokens = new Set<string>()
@@ -251,9 +253,9 @@ function scanDegenerateSurfaces(
 		] as const) {
 			const path = join(dictionariesDir, lang, file)
 
-			if (!existsSync(path)) continue
+			if (!(await pathExists(path))) continue
 
-			for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
+			for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
 				for (const surface of surfacesOfLine(line)) {
 					const tokens = fold(surface)
 
@@ -290,8 +292,8 @@ function scanDegenerateSurfaces(
  * is deliberately global so a US-scoped FST still knows "pierre" is also a place-surface elsewhere (and, one day, that
  * "paris" is). Primary spr names + all alt names.
  */
-export function computeSurfaceCountryCounts(dbPath: string): Map<string, number> {
-	const { mtimeMs, size } = statSync(dbPath)
+export async function computeSurfaceCountryCounts(dbPath: string): Promise<Map<string, number>> {
+	const { mtimeMs, size } = await statPath(dbPath)
 	const memoKey = `${dbPath}\0${mtimeMs}\0${size}`
 	const hit = surfaceCountryCountsMemo.get(memoKey)
 
@@ -320,7 +322,7 @@ export function computeSurfaceCountryCounts(dbPath: string): Map<string, number>
 const surfaceCountryCountsMemo = new Map<string, Map<string, number>>()
 
 function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
-	const db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
+	using db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
 	const placetypes = ["country", "region", "county", "locality", "localadmin", "borough", "neighbourhood"]
 	const ph = placetypes.map(() => "?").join(",")
 	// Memory shape matters: the names table runs to millions of rows (GeoNames alias folds included)
@@ -368,8 +370,6 @@ function scanSurfaceCountryCounts(dbPath: string): Map<string, number> {
 		paint(row.name, row.country)
 	}
 
-	db.destroy()
-
 	const counts = new Map<string, number>()
 
 	for (const key of first.keys()) {
@@ -407,13 +407,13 @@ export interface BuiltLocaleFST {
 	excludedInsertions: number
 }
 
-export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[] {
+export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<BuiltLocaleFST[]> {
 	const locales = opts.locales ?? [...FST_LOCALES.keys()]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
 	const outputDir = resolve(opts.outputDir ?? String(dataRootPath("wof", "fst-per-locale-curated")))
 	const progress = opts.onProgress ?? (() => {})
 
-	const exclusion = opts.uncurated ? undefined : loadDegenerateSurfaces()
+	const exclusion = opts.uncurated ? undefined : await loadDegenerateSurfaces()
 
 	if (exclusion) {
 		progress(
@@ -423,13 +423,13 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 
 	// Ambiguity classes (survey #4) ride the curated builds only — the uncurated control stays a pure
 	// pre-curation byte baseline. One global scan shared by every locale.
-	const surfaceCountryCounts = opts.uncurated ? undefined : computeSurfaceCountryCounts(dbPath)
+	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath)
 
 	if (surfaceCountryCounts) {
 		progress(`ambiguity: ${surfaceCountryCounts.size} surfaces scanned across all countries`)
 	}
 
-	mkdirSync(outputDir, { recursive: true })
+	await makeDirectories(outputDir)
 
 	const built: BuiltLocaleFST[] = []
 
@@ -440,7 +440,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 
 		progress(`building fst-${locale} (countries=[${countries}]) from ${dbPath}`)
 
-		const { matcher, provenance } = buildFSTFromWOF({
+		const { matcher, provenance } = await buildFSTFromWOF({
 			dbPath,
 			countries,
 			...(exclusion
@@ -456,7 +456,7 @@ export function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): BuiltLocaleFST[
 
 		const outPath = join(outputDir, `fst-${locale}${opts.uncurated ? ".uncurated" : ""}.bin`)
 		const bytes = serializeFST(matcher, provenance)
-		writeFileSync(outPath, bytes)
+		await writeLocalFile(bytes, outPath)
 
 		built.push({
 			locale,

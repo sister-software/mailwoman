@@ -5,6 +5,7 @@
  */
 
 import { ResourceError } from "@mailwoman/core/errors"
+import { prettyJSON } from "@mailwoman/core/objects"
 import type { GeoFeature, PointLiteral } from "@mailwoman/spatial"
 
 import { applyAccessControlAllowOrigin } from "../cors.ts"
@@ -49,7 +50,7 @@ export const GeolocateRoute = WorkerRoute.GET("/geolocate", ({ request }) => {
 		properties: geolocation,
 	}
 
-	const response = new Response(JSON.stringify(feature, null, "\t"), {
+	const response = new Response(prettyJSON(feature), {
 		headers: {
 			"Content-Type": "application/json",
 			"Cache-Control": `public, max-age=${60 * 60}`,

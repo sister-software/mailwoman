@@ -16,7 +16,7 @@
  *   one request.
  *
  *   Anonymous HTTP against the public bucket, not the S3 SDK or DuckDB: this must be answerable before any heavy
- *   optional dependency loads, and it is the same listing a human would check.
+ *   optional dependency loads and the same listing a human would check.
  */
 
 import { APIClient } from "@mailwoman/core/api"

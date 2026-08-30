@@ -62,7 +62,7 @@ const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		return [
-			`admin gazetteer: ${result.out} (${artifactSizeMB(result.out)} MB, ${result.elapsedSeconds}s)`,
+			`admin gazetteer: ${result.out} (${await artifactSizeMB(result.out)} MB, ${result.elapsedSeconds}s)`,
 			`${result.placesIngested.toLocaleString()} WOF + ${result.overtureIngested.toLocaleString()} overture + ${result.geonamesIngested.toLocaleString()} geonames`,
 			result.verify ? `verify: PASS (${result.verify.checks.length} checks)` : "verify: SKIPPED (--skip-verify)",
 			"sealed 0444",

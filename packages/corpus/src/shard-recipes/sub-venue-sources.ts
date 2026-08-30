@@ -25,9 +25,8 @@
  *       smoke output, not predicted; the docstrings name the strings that produced them.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -56,8 +55,8 @@ export function defaultLexiconPath(): string {
 /**
  * Read and parse the lexicon. Strict: a corrupt lexicon is a build failure, not a fallback.
  */
-export function readSubVenueLexicon(path: string = defaultLexiconPath()): SubVenueLexiconTable {
-	return parseJSONStrict<SubVenueLexiconTable>(readFileSync(path, "utf8"))
+export async function readSubVenueLexicon(path: string = defaultLexiconPath()): Promise<SubVenueLexiconTable> {
+	return await readLocalJSONFile<SubVenueLexiconTable>(path)
 }
 
 //#endregion
@@ -591,8 +590,8 @@ function isLongerProperName(low: string, name: string, designatorPhrases: readon
 /**
  * Read one OSM extract and split it into name pools.
  */
-export function readExtractPools(path: string, query: PoolQuery): NamePools {
-	const rows = readSubVenueJSONL(path)
+export async function readExtractPools(path: string, query: PoolQuery): Promise<NamePools> {
+	const rows = await readSubVenueJSONL(path)
 	const venues = new Set<string>()
 	const attested = new Set<string>()
 	const rejectedVenues = new Set<string>()
@@ -677,63 +676,59 @@ const POI_CONFOUND_CATEGORIES: readonly string[] = [
  * fr-FR and nothing else, and a zero here is evidence of absence in four countries rather than in the world.
  */
 export function readPOIPools(dbPath: string, country: string, query: PoolQuery): NamePools {
-	const db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
+	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
-	try {
-		const codes = db.prepare("select id, category from poi_category_codes").all() as Array<{
-			id: number
-			category: string
-		}>
+	const codes = db.prepare("select id, category from poi_category_codes").all() as Array<{
+		id: number
+		category: string
+	}>
 
-		const byName = new Map(codes.map((c) => [c.category, c.id]))
-		const venueIDs = POI_VENUE_CATEGORIES.map((c) => byName.get(c)).filter((id): id is number => id != null)
-		const confoundIDs = POI_CONFOUND_CATEGORIES.map((c) => byName.get(c)).filter((id): id is number => id != null)
-		const wanted = [...venueIDs, ...confoundIDs]
+	const byName = new Map(codes.map((c) => [c.category, c.id]))
+	const venueIDs = POI_VENUE_CATEGORIES.map((c) => byName.get(c)).filter((id): id is number => id != null)
+	const confoundIDs = POI_CONFOUND_CATEGORIES.map((c) => byName.get(c)).filter((id): id is number => id != null)
+	const wanted = [...venueIDs, ...confoundIDs]
 
-		if (!wanted.length) throw new Error(`poi.db at ${dbPath} has none of the expected categories`)
+	if (!wanted.length) throw new Error(`poi.db at ${dbPath} has none of the expected categories`)
 
-		// One filtered full scan (measured 4.3 s over all 13,681,698 rows, 2026-08-05) rather than one
-		// query per category: `poi` is `without rowid` on (h3_cell, category_id, …), so a category
-		// predicate scans either way and scanning once is the cheaper shape.
-		const rows = db
-			.prepare(
-				`select name, category_id from poi where country = ? and name is not null and category_id in (${wanted.map(() => "?").join(",")})`
-			)
-			.all(country, ...wanted) as Array<{ name: string; category_id: number }>
+	// One filtered full scan (measured 4.3 s over all 13,681,698 rows, 2026-08-05) rather than one
+	// query per category: `poi` is `without rowid` on (h3_cell, category_id, …), so a category
+	// predicate scans either way and scanning once is the cheaper shape.
+	const rows = db
+		.prepare(
+			`select name, category_id from poi where country = ? and name is not null and category_id in (${wanted.map(() => "?").join(",")})`
+		)
+		.all(country, ...wanted) as Array<{ name: string; category_id: number }>
 
-		const venueSet = new Set(venueIDs)
-		const venues = new Set<string>()
-		const rejectedVenues = new Set<string>()
-		const longerNames = new Set<string>()
+	const venueSet = new Set(venueIDs)
+	const venues = new Set<string>()
+	const rejectedVenues = new Set<string>()
+	const longerNames = new Set<string>()
 
-		for (const row of rows) {
-			const name = row.name.trim()
+	for (const row of rows) {
+		const name = row.name.trim()
 
-			if (!isVenueSlotName(name)) continue
-			const low = name.toLowerCase()
+		if (!isVenueSlotName(name)) continue
+		const low = name.toLowerCase()
 
-			if (venueSet.has(row.category_id)) {
-				venues.add(name)
-			}
-
-			if (query.rejectedPhrases.some((phrase) => containsPhrase(low, phrase))) {
-				rejectedVenues.add(name)
-			}
-
-			if (isLongerProperName(low, name, query.designatorPhrases)) {
-				longerNames.add(name)
-			}
+		if (venueSet.has(row.category_id)) {
+			venues.add(name)
 		}
 
-		return {
-			venues: [...venues],
-			attested: [],
-			rejectedVenues: [...rejectedVenues],
-			longerNames: [...longerNames],
-			unpromotedShapes: [],
+		if (query.rejectedPhrases.some((phrase) => containsPhrase(low, phrase))) {
+			rejectedVenues.add(name)
 		}
-	} finally {
-		db.destroy()
+
+		if (isLongerProperName(low, name, query.designatorPhrases)) {
+			longerNames.add(name)
+		}
+	}
+
+	return {
+		venues: [...venues],
+		attested: [],
+		rejectedVenues: [...rejectedVenues],
+		longerNames: [...longerNames],
+		unpromotedShapes: [],
 	}
 }
 

@@ -34,7 +34,7 @@
  *   design, not by oversight.
  */
 
-import { createReadStream } from "@mailwoman/platform/fs"
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { createInterface } from "@mailwoman/platform/readline"
 
 import type { Form499Lifecycle } from "./form499-notes.ts"
@@ -253,7 +253,7 @@ function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
  */
 export async function* parseForm499(tsvPath: string): AsyncIterable<Form499Row> {
 	const lines = createInterface({
-		input: createReadStream(tsvPath, { encoding: "utf8" }),
+		input: openReadStream(tsvPath, { encoding: "utf8" }),
 		crlfDelay: Infinity,
 	})
 

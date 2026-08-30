@@ -22,9 +22,10 @@
  *   by each package's `link-dev-weights.ts`, so a lean checkout legitimately has none.
  */
 
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -58,8 +59,8 @@ interface PairIndexFacts {
  * Read a PIX1 binary's header and entry count without constructing a resolver — this test cares about what the FILE
  * says, so it deliberately does not route through the reader that a bug could also affect.
  */
-function readPairIndexFacts(path: string): PairIndexFacts {
-	const bytes = readFileSync(path)
+async function readPairIndexFacts(path: string): Promise<PairIndexFacts> {
+	const bytes = await readLocalBuffer(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	// "PIX1" little-endian.
 	const MAGIC = 0x31_58_49_50
@@ -88,8 +89,8 @@ describe("pair-index ↔ model-card parity", () => {
 		const binPath = String(repoRootPath(pkg, `pair-index-${country}.bin`))
 		const cardPath = String(repoRootPath(pkg, "model-card.json"))
 
-		test.skipIf(!existsSync(binPath))(`${pkg}: the card describes the artifact on disk`, () => {
-			const card = parseJSONStrict<Record<string, unknown>>(readFileSync(cardPath, "utf8"))
+		test.skipIf(!pathExistsSync(binPath))(`${pkg}: the card describes the artifact on disk`, async () => {
+			const card = await readLocalJSONFile<Record<string, unknown>>(cardPath)
 			const [outerKey, innerKey] = cardKeys
 			const outer = card[outerKey] as Record<string, unknown> | undefined
 			const block = outer?.[innerKey] as Record<string, unknown> | undefined
@@ -99,7 +100,7 @@ describe("pair-index ↔ model-card parity", () => {
 				`${cardPath} has no ${outerKey}.${innerKey} block — a shipped artifact must be described`
 			).toBeDefined()
 
-			const facts = readPairIndexFacts(binPath)
+			const facts = await readPairIndexFacts(binPath)
 
 			// Pair count is the required one: it is what changed, unnoticed, across three increments.
 			expect(block!.pairs, `${pkg}: card pairs != artifact pairs — rebuild the artifact or update the card`).toBe(

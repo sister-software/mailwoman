@@ -9,8 +9,8 @@
  *   between the primaries pass and the alias pass.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { isStrictlyFiner } from "@mailwoman/core/resources/whosonfirst"
-import { existsSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -87,7 +87,7 @@ export async function resurrectCurrencyHoles(ctx: {
 		const cc = country.toUpperCase()
 		const dumpPath = resolve(ctx.geonamesDir, `${cc}.txt`)
 
-		if (!existsSync(dumpPath)) {
+		if (!(await pathExists(dumpPath))) {
 			ctx.progress("currency-backfill", `${cc}: no GeoNames dump at ${dumpPath} — holes stay dead`)
 
 			continue

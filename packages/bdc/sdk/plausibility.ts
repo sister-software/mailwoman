@@ -112,12 +112,7 @@
  *   — that gap needs the schema addition, not a runtime assertion.
  */
 
-import {
-	readLayerCoverage,
-	readLayerManifest,
-	type LayerContractDatabase,
-	type LayerContractHandle,
-} from "@mailwoman/core/layers"
+import { readLayerCoverage, readLayerManifest, type LayerContractHandle } from "@mailwoman/core/layers"
 import type { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

@@ -15,7 +15,11 @@
  *   built-artifact lifecycle, and because a rule the project states in prose and implements more than
  *   once in code should be a function.
  */
-import { chmodSync, existsSync, renameSync, rmSync, statSync, unlinkSync } from "@mailwoman/platform/fs"
+
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { changeMode, removePath } from "@mailwoman/core/fs/writers"
+import { movePathSync, removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
 import { basename } from "@mailwoman/platform/path"
 import type { DatabaseSync } from "@mailwoman/platform/sqlite"
 
@@ -53,41 +57,43 @@ export class SealedArtifactError extends Error {
  * True when the artifact exists and carries no write bits (the sealed state {@link sealDatabase} leaves).
  */
 export function isSealed(path: string): boolean {
-	return existsSync(path) && (statSync(path).mode & 0o222) === 0
+	return pathExistsSync(path) && (statPathSync(path).mode & 0o222) === 0
 }
 
 /**
  * Finalize a built DB: WAL-checkpoint → `journal_mode = DELETE` → remove `-wal`/`-shm` sidecars → `chmod 0o444`.
  * Idempotent. Throws if the checkpoint cannot complete (another writer holds the DB).
  */
-export function sealDatabase(path: string): void {
+export async function sealDatabase(path: string): Promise<void> {
 	// A previously sealed artifact needs the write bit back for the journal-mode switch.
 	if (isSealed(path)) {
-		chmodSync(path, 0o644)
+		await changeMode(path, 0o644)
 	}
 
-	const db = new (sqlite().DatabaseSync)(path)
-	const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
+	let mode: { journal_mode: string }
 
-	if (checkpoint.busy !== 0) {
-		db.close()
-		throw new Error(`sealDatabase: WAL checkpoint busy on ${path} — close all writers first`)
+	{
+		using db = new (sqlite().DatabaseSync)(path)
+		const checkpoint = db.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get() as { busy: number }
+
+		if (checkpoint.busy !== 0) {
+			throw new Error(`sealDatabase: WAL checkpoint busy on ${path} — close all writers first`)
+		}
+
+		mode = db.prepare("PRAGMA journal_mode = DELETE").get() as { journal_mode: string }
 	}
-
-	const mode = db.prepare("PRAGMA journal_mode = DELETE").get() as { journal_mode: string }
-	db.close()
 
 	if (mode.journal_mode !== "delete") {
 		throw new Error(`sealDatabase: journal_mode switch failed on ${path} (still ${mode.journal_mode})`)
 	}
 
 	for (const sidecar of [`${path}-wal`, `${path}-shm`]) {
-		if (existsSync(sidecar)) {
-			unlinkSync(sidecar)
+		if (await pathExists(sidecar)) {
+			await removePath(sidecar)
 		}
 	}
 
-	chmodSync(path, 0o444)
+	await changeMode(path, 0o444)
 }
 
 /**
@@ -137,29 +143,29 @@ export function assertUnsealedForWrite(path: string): void {
 export function swapDatabaseIntoPlace(tmpPath: string, finalPath: string): void {
 	const aside = `${finalPath}.old-${process.pid}`
 
-	if (existsSync(finalPath)) {
-		renameSync(finalPath, aside)
+	if (pathExistsSync(finalPath)) {
+		movePathSync(finalPath, aside)
 	}
 
 	for (const sfx of ["-wal", "-shm"]) {
-		rmSync(finalPath + sfx, { force: true })
+		removePathIfPresentSync(finalPath + sfx)
 	}
 
 	try {
-		renameSync(tmpPath, finalPath)
+		movePathSync(tmpPath, finalPath)
 	} catch (error) {
 		// The prior version is already aside at this point — a failed forward rename must not leave
 		// the slot empty while a restorable artifact sits one rename away.
-		if (existsSync(aside) && !existsSync(finalPath)) {
-			renameSync(aside, finalPath)
+		if (pathExistsSync(aside) && !pathExistsSync(finalPath)) {
+			movePathSync(aside, finalPath)
 		}
 
 		throw error
 	}
 
 	for (const sfx of ["-wal", "-shm"]) {
-		rmSync(tmpPath + sfx, { force: true })
+		removePathIfPresentSync(tmpPath + sfx)
 	}
 
-	rmSync(aside, { force: true })
+	removePathIfPresentSync(aside)
 }

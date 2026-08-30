@@ -49,9 +49,11 @@
  *   ```
  */
 
+import { statPath, realPath, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalBufferSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
+import { openReadStream } from "@mailwoman/core/fs/streams"
 import { dataRootPath, median, percentile, repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural"
-import { createReadStream, existsSync, readFileSync, realpathSync, statSync } from "@mailwoman/platform/fs"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "@mailwoman/platform/http"
 import { createRequire } from "@mailwoman/platform/module"
 import { arch, cpus, platform, totalmem } from "@mailwoman/platform/os"
@@ -232,40 +234,40 @@ function tryResolveWeights(): ResolvedWeights | null {
  * Ask a package where one of its files lives. Never assemble a path into another package's install directory by hand —
  * the layout is its owner's to change.
  */
-function tryResolveFile(specifier: string): string | null {
+async function tryResolveFile(specifier: string): Promise<string | null> {
 	try {
 		const resolved = requireFromHere.resolve(specifier)
 
-		return existsSync(resolved) ? resolved : null
+		return (await pathExists(resolved)) ? resolved : null
 	} catch {
 		return null
 	}
 }
 
-function tryChromiumExecutable(): string | null {
+async function tryChromiumExecutable(): Promise<string | null> {
 	try {
 		const executable = chromium.executablePath()
 
-		return existsSync(executable) ? executable : null
+		return (await pathExists(executable)) ? executable : null
 	} catch {
 		return null
 	}
 }
 
 const weights = tryResolveWeights()
-const haveModel = weights !== null && existsSync(weights.modelPath) && existsSync(weights.tokenizerPath)
-const haveBrowser = tryChromiumExecutable() !== null
+const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (await pathExists(weights.tokenizerPath))
+const haveBrowser = (await tryChromiumExecutable()) !== null
 
 /**
  * A LOCATOR for the onnxruntime-web asset directory, not the file the runtime will fetch: ORT picks its own `.wasm`
  * variant at load time, and the whole directory is mounted at `/ort/` so whichever it asks for is served and counted.
  */
-const ORT_DIST_LOCATOR = tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
+const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
-const SQLJS_ENTRY_FILE = tryResolveFile("sql.js-httpvfs/dist/index.js")
+const SQLJS_ENTRY_FILE = await tryResolveFile("sql.js-httpvfs/dist/index.js")
 const CANDIDATE_DB_PATH = String(dataRootPath("wof", "candidate.db"))
 
-const haveGazetteer = SQLJS_ENTRY_FILE !== null && existsSync(CANDIDATE_DB_PATH)
+const haveGazetteer = SQLJS_ENTRY_FILE !== null && (await pathExists(CANDIDATE_DB_PATH))
 const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null
 
 /**
@@ -318,10 +320,9 @@ interface RangeMount {
 	readonly assetClass: AssetClass
 }
 
-interface AssetServer {
+interface AssetServer extends AsyncDisposable {
 	readonly origin: string
 	snapshot(): Tally
-	close(): Promise<void>
 }
 
 const HTTP_OK = 200
@@ -393,7 +394,7 @@ function parseRange(header: string | undefined, size: number): RangeSpec | null 
 	return start > end || start >= size ? null : { start, end }
 }
 
-function createAssetServer(
+async function createAssetServer(
 	inlineRoutes: ReadonlyMap<string, InlineRoute>,
 	mounts: readonly DirectoryMount[],
 	rangeMount: RangeMount | null
@@ -440,7 +441,7 @@ function createAssetServer(
 	}
 
 	const serveRange = (req: IncomingMessage, res: ServerResponse, mount: RangeMount): void => {
-		const size = statSync(mount.file).size
+		const size = statPathSync(mount.file).size
 
 		if (req.method === "HEAD") {
 			res.writeHead(HTTP_OK, { "Content-Length": String(size), "Accept-Ranges": "bytes" })
@@ -470,7 +471,7 @@ function createAssetServer(
 			"Accept-Ranges": "bytes",
 		})
 
-		createReadStream(mount.file, { start: range.start, end: range.end }).pipe(res)
+		openReadStream(mount.file, { start: range.start, end: range.end }).pipe(res)
 	}
 
 	const serveMount = (
@@ -481,10 +482,10 @@ function createAssetServer(
 	): boolean => {
 		const filePath = safeJoin(mount.directory, requestPath.slice(mount.prefix.length))
 
-		if (!filePath || !existsSync(filePath) || !statSync(filePath).isFile()) return false
+		if (!filePath || !pathExistsSync(filePath) || !statPathSync(filePath).isFile()) return false
 		const compressible = COMPRESSIBLE_EXTENSIONS.has(extname(filePath))
 		const assetClass = mount.classify(basename(filePath))
-		sendBuffer(req, res, requestPath, readFileSync(filePath), contentTypeFor(filePath), assetClass, compressible)
+		sendBuffer(req, res, requestPath, readLocalBufferSync(filePath), contentTypeFor(filePath), assetClass, compressible)
 
 		return true
 	}
@@ -527,11 +528,10 @@ function createAssetServer(
 			ready({
 				origin: `http://127.0.0.1:${port}`,
 				snapshot: () => structuredClone(tally),
-				close: () =>
-					new Promise<void>((done) => {
-						server.closeAllConnections()
-						server.close(() => done())
-					}),
+				[Symbol.asyncDispose]: async () => {
+					server.closeAllConnections()
+					await server[Symbol.asyncDispose]()
+				},
 			})
 		})
 	})
@@ -819,91 +819,89 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 		? { path: "/gazetteer/candidate.db", file: CANDIDATE_DB_PATH, assetClass: "gazetteerRanges" }
 		: null
 
-	const server = await createAssetServer(inlineRoutes, mounts, rangeMount)
-	const browser: Browser = await chromium.launch({ args: [...WEBGPU_LAUNCH_ARGS] })
+	// Declared server-first so disposal runs browser-first: the pages have to be gone before the origin they were
+	// fetching from stops answering.
+	await using server = await createAssetServer(inlineRoutes, mounts, rangeMount)
+	await using browser: Browser = await chromium.launch({ args: [...WEBGPU_LAUNCH_ARGS] })
 	const pageErrors: string[] = []
 
-	try {
-		const page = await browser.newPage()
-		page.on("pageerror", (error) => pageErrors.push(String(error)))
+	const page = await browser.newPage()
+	page.on("pageerror", (error) => pageErrors.push(String(error)))
 
-		page.on("console", (message) => {
-			// ORT writes its own WARNINGS to the WASM stderr, which reaches the page as a console error
-			// (`VerifyEachNodeIsAssignedToAnEp` fires on every session). Reporting those as page errors
-			// trains the reader to ignore the channel, and then a real one goes unread.
-			if (message.type() === "error" && !message.text().includes("W:onnxruntime")) {
-				pageErrors.push(message.text())
-			}
-		})
+	page.on("console", (message) => {
+		// ORT writes its own WARNINGS to the WASM stderr, which reaches the page as a console error
+		// (`VerifyEachNodeIsAssignedToAnEp` fires on every session). Reporting those as page errors
+		// trains the reader to ignore the channel, and then a real one goes unread.
+		if (message.type() === "error" && !message.text().includes("W:onnxruntime")) {
+			pageErrors.push(message.text())
+		}
+	})
 
-		await page.goto(`${server.origin}/`)
-		await page.waitForFunction(() => "mwSLO" in globalThis)
+	await page.goto(`${server.origin}/`)
+	await page.waitForFunction(() => "mwSLO" in globalThis)
 
-		const modelURL = `${server.origin}/weights/${MODEL_FILENAME}`
-		const tokenizerURL = `${server.origin}/weights/${TOKENIZER_FILENAME}`
-		const evidenceURLs = evidenceURLsFor(resolved, weightsDirectory, server.origin)
+	const modelURL = `${server.origin}/weights/${MODEL_FILENAME}`
+	const tokenizerURL = `${server.origin}/weights/${TOKENIZER_FILENAME}`
+	const evidenceURLs = await evidenceURLsFor(resolved, weightsDirectory, server.origin)
 
-		const downloadResult = await page.evaluate(
-			(urls) => globalThis.mwSLO.download(urls),
-			[modelURL, tokenizerURL, ...evidenceURLs]
-		)
+	const downloadResult = await page.evaluate(
+		(urls) => globalThis.mwSLO.download(urls),
+		[modelURL, tokenizerURL, ...evidenceURLs]
+	)
 
-		const wasmInit = await page.evaluate((options) => globalThis.mwSLO.initRunner(options), {
+	const wasmInit = await page.evaluate((options) => globalThis.mwSLO.initRunner(options), {
+		modelURL,
+		tokenizerURL,
+		useWebGPU: false,
+	})
+
+	const wasmDurations = await page.evaluate((args) => globalThis.mwSLO.warm(args.texts, args.iterations, args.warmup), {
+		texts: [...WARM_INPUTS],
+		iterations: WARM_ITERATIONS,
+		warmup: WARM_WARMUP_ITERATIONS,
+	})
+
+	const gazetteer = rangeMount ? await measureGazetteer(browser, server, rangeMount.path) : null
+
+	// The byte table is snapshotted HERE, not after the explicit fetches: onnxruntime-web pulls its
+	// `.wasm` during session creation and sql.js-httpvfs pulls its worker + wasm when the gazetteer
+	// page opens, so an earlier snapshot reports both classes as ZERO — which reads as "this
+	// session downloads no WASM" rather than "the snapshot was early". Everything after this line
+	// is deliberately excluded: a second session on the WebGPU arm re-fetches artifacts a cold user
+	// session pays for once.
+	const download = server.snapshot()
+	const webgpuProbe = await page.evaluate(() => globalThis.mwSLO.probeWebGPU())
+	let webgpuInit: ArmInit | null = null
+
+	if (webgpuProbe.adapter) {
+		const attempt = await page.evaluate((options) => globalThis.mwSLO.initRunner(options), {
 			modelURL,
 			tokenizerURL,
-			useWebGPU: false,
+			useWebGPU: true,
 		})
 
-		const wasmDurations = await page.evaluate(
-			(args) => globalThis.mwSLO.warm(args.texts, args.iterations, args.warmup),
-			{ texts: [...WARM_INPUTS], iterations: WARM_ITERATIONS, warmup: WARM_WARMUP_ITERATIONS }
-		)
+		// `WebONNXRunner` falls back to WASM silently when the WebGPU session fails to build, so the
+		// arm is only real if the diagnostics say so.
+		webgpuInit = attempt.backend === "webgpu" ? attempt : null
+	}
 
-		const gazetteer = rangeMount ? await measureGazetteer(browser, server, rangeMount.path) : null
+	const heapSupported = await page.evaluate(() => globalThis.mwSLO.heapSupported())
+	const peakHeapBytes = await page.evaluate(() => globalThis.mwSLO.peakHeapBytes())
 
-		// The byte table is snapshotted HERE, not after the explicit fetches: onnxruntime-web pulls its
-		// `.wasm` during session creation and sql.js-httpvfs pulls its worker + wasm when the gazetteer
-		// page opens, so an earlier snapshot reports both classes as ZERO — which reads as "this
-		// session downloads no WASM" rather than "the snapshot was early". Everything after this line
-		// is deliberately excluded: a second session on the WebGPU arm re-fetches artifacts a cold user
-		// session pays for once.
-		const download = server.snapshot()
-		const webgpuProbe = await page.evaluate(() => globalThis.mwSLO.probeWebGPU())
-		let webgpuInit: ArmInit | null = null
-
-		if (webgpuProbe.adapter) {
-			const attempt = await page.evaluate((options) => globalThis.mwSLO.initRunner(options), {
-				modelURL,
-				tokenizerURL,
-				useWebGPU: true,
-			})
-
-			// `WebONNXRunner` falls back to WASM silently when the WebGPU session fails to build, so the
-			// arm is only real if the diagnostics say so.
-			webgpuInit = attempt.backend === "webgpu" ? attempt : null
-		}
-
-		const heapSupported = await page.evaluate(() => globalThis.mwSLO.heapSupported())
-		const peakHeapBytes = await page.evaluate(() => globalThis.mwSLO.peakHeapBytes())
-
-		return {
-			device: describeDevice(),
-			browser: `Chromium ${browser.version()}`,
-			modelFile: `${basename(realpathSync(resolved.modelPath))} (${statSync(resolved.modelPath).size} B)`,
-			weightsSource: resolved.source,
-			download,
-			downloadMs: downloadResult.totalMs,
-			wasmInit,
-			webgpu: { exposed: webgpuProbe.exposed, adapter: webgpuProbe.info, init: webgpuInit },
-			wasmWarm: statsOf(wasmDurations),
-			gazetteer,
-			peakHeapBytes,
-			heapSupported,
-			pageErrors,
-		}
-	} finally {
-		await browser.close()
-		await server.close()
+	return {
+		device: describeDevice(),
+		browser: `Chromium ${browser.version()}`,
+		modelFile: `${basename(await realPath(resolved.modelPath))} (${(await statPath(resolved.modelPath)).size} B)`,
+		weightsSource: resolved.source,
+		download,
+		downloadMs: downloadResult.totalMs,
+		wasmInit,
+		webgpu: { exposed: webgpuProbe.exposed, adapter: webgpuProbe.info, init: webgpuInit },
+		wasmWarm: statsOf(wasmDurations),
+		gazetteer,
+		peakHeapBytes,
+		heapSupported,
+		pageErrors,
 	}
 }
 
@@ -911,7 +909,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
  * URLs for every evidence artifact the shipped web loader fetches beside the model — skipping the ones this weights
  * package does not ship, since an overlay's absence is a packaging fact, not a failure.
  */
-function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: string, origin: string): string[] {
+async function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: string, origin: string): Promise<string[]> {
 	const candidates = [
 		resolved.modelCardPath,
 		resolved.gazetteerLexiconPath,
@@ -922,59 +920,55 @@ function evidenceURLsFor(resolved: ResolvedWeights, weightsDirectory: string, or
 		resolved.pairIndexPath,
 	]
 
-	const present = candidates.filter((path): path is string => typeof path === "string" && existsSync(path))
+	const present = candidates.filter((path): path is string => typeof path === "string" && pathExistsSync(path))
 
 	return present.map((path) => `${origin}/weights/${path.slice(weightsDirectory.length + 1)}`)
 }
 
 async function measureGazetteer(browser: Browser, server: AssetServer, dbPath: string): Promise<GazetteerMeasurement> {
-	const page = await browser.newPage()
+	await using page = await browser.newPage()
 
-	try {
-		await page.goto(`${server.origin}/gazetteer.html`)
-		await page.waitForFunction(() => typeof globalThis.createDbWorker === "function")
-		const before = server.snapshot().gazetteerRanges
+	await page.goto(`${server.origin}/gazetteer.html`)
+	await page.waitForFunction(() => typeof globalThis.createDbWorker === "function")
+	const before = server.snapshot().gazetteerRanges
 
-		const result = await page.evaluate(
-			async (args) => {
-				const config = { serverMode: "full", url: args.dbURL, requestChunkSize: args.chunkSize }
-				const startedAt = performance.now()
+	const result = await page.evaluate(
+		async (args) => {
+			const config = { serverMode: "full", url: args.dbURL, requestChunkSize: args.chunkSize }
+			const startedAt = performance.now()
 
-				const opened = await globalThis.createDbWorker([{ from: "inline", config }], args.workerURL, args.wasmURL)
+			const opened = await globalThis.createDbWorker([{ from: "inline", config }], args.workerURL, args.wasmURL)
 
-				// Forces the header + schema pages through SQLite, so "open" covers the whole cost of
-				// getting to a queryable database: the worker, its wasm, and the first range fetches.
-				await opened.db.exec("SELECT count(*) FROM sqlite_master")
-				const readyAt = performance.now()
-				const rows: number[] = []
+			// Forces the header + schema pages through SQLite, so "open" covers the whole cost of
+			// getting to a queryable database: the worker, its wasm, and the first range fetches.
+			await opened.db.exec("SELECT count(*) FROM sqlite_master")
+			const readyAt = performance.now()
+			const rows: number[] = []
 
-				for (const key of args.keys) {
-					rows.push((await opened.db.query(args.sql, [key])).length)
-				}
-
-				return { openMs: readyAt - startedAt, probeMs: performance.now() - readyAt, rows }
-			},
-			{
-				dbURL: `${server.origin}${dbPath}`,
-				workerURL: `${server.origin}/sqljs/sqlite.worker.js`,
-				wasmURL: `${server.origin}/sqljs/sql-wasm.wasm`,
-				chunkSize: HTTPVFS_CHUNK_SIZE,
-				keys: [...CANDIDATE_PROBE_KEYS],
-				sql: CANDIDATE_PROBE_SQL,
+			for (const key of args.keys) {
+				rows.push((await opened.db.query(args.sql, [key])).length)
 			}
-		)
 
-		const after = server.snapshot().gazetteerRanges
-
-		return {
-			openMs: result.openMs,
-			probeMs: result.probeMs,
-			requests: after.requests - before.requests,
-			bytes: after.rawBytes - before.rawBytes,
-			rows: result.rows,
+			return { openMs: readyAt - startedAt, probeMs: performance.now() - readyAt, rows }
+		},
+		{
+			dbURL: `${server.origin}${dbPath}`,
+			workerURL: `${server.origin}/sqljs/sqlite.worker.js`,
+			wasmURL: `${server.origin}/sqljs/sql-wasm.wasm`,
+			chunkSize: HTTPVFS_CHUNK_SIZE,
+			keys: [...CANDIDATE_PROBE_KEYS],
+			sql: CANDIDATE_PROBE_SQL,
 		}
-	} finally {
-		await page.close()
+	)
+
+	const after = server.snapshot().gazetteerRanges
+
+	return {
+		openMs: result.openMs,
+		probeMs: result.probeMs,
+		requests: after.requests - before.requests,
+		bytes: after.rawBytes - before.rawBytes,
+		rows: result.rows,
 	}
 }
 

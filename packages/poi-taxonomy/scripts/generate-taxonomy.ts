@@ -6,7 +6,7 @@
  *   Generator for `data/taxonomy.json` — merges the FULL Overture Places category taxonomy snapshot
  *   with mailwoman's hand-maintained curated overlay. Two committed inputs, one committed output;
  *   the merge is a PURE, deterministic function so a regenerate against the same inputs is
- *   byte-identical (the {@link buildTaxonomyTable} → {@link serializeTaxonomyTable} pair is what the
+ *   byte-identical (the {@link buildTaxonomyTable} → {@link prettyJSON} pair is what the
  *   determinism test in `lookup.test.ts` exercises).
  *
  *   ── Provenance (the `overture-categories.csv` snapshot) ──────────────────────────────────────────
@@ -46,9 +46,9 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -93,6 +93,8 @@ export interface CuratedOverlay {
  * category code the db actually stores; for those the code is APPENDED as the true leaf so the invariant `lookup.ts`'s
  * integrity test relies on (`hierarchy.at(-1) === id`) holds while the display ancestry is preserved. Throws only on a
  * structurally broken row (no code / empty path) or a repeated code.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY PORT THIS TO `CSVSpliterator` AND REMOVE ANY SIMILAR CODE.
  */
 export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 	const lines = csvText.replace(/^﻿/, "").split(/\r?\n/)
@@ -139,6 +141,9 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 
 /**
  * Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY CHANGE TO `smartSnakeCase` FROM `@mailwoman/core/identifiers` AND REMOVE
+ * ANY SIMILAR CODE.
  */
 export function humanizeCode(code: string): string {
 	const spaced = code.replaceAll("_", " ")
@@ -178,13 +183,6 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 }
 
 /**
- * Stable serialization — tab-indented, trailing newline. Matches `build-brands.ts`'s `serializeBrandTable`.
- */
-export function serializeTaxonomyTable(table: POITaxonomyTable): string {
-	return `${JSON.stringify(table, null, "\t")}\n`
-}
-
-/**
  * Committed input/output paths, resolved off this module's own directory. This is a DEV generator — run from source
  * (`node poi-taxonomy/scripts/generate-taxonomy.ts`) and imported from source by the tests — so `import.meta.dirname`
  * is always `poi-taxonomy/scripts/` and `../data` is the package's data directory. It is never run from `out/`, so the
@@ -204,10 +202,10 @@ export function taxonomyPaths() {
 /**
  * Read the committed CSV + overlay, merge, and return the table (no write).
  */
-export function generateTaxonomyTable(): POITaxonomyTable {
+export async function generateTaxonomyTable(): Promise<POITaxonomyTable> {
 	const paths = taxonomyPaths()
-	const snapshot = parseOvertureCSV(readFileSync(paths.csv, "utf8"))
-	const overlay = parseJSONStrict<CuratedOverlay>(readFileSync(paths.overlay, "utf8"))
+	const snapshot = parseOvertureCSV(await readLocalTextFile(paths.csv))
+	const overlay = await readLocalJSONFile<CuratedOverlay>(paths.overlay)
 
 	return buildTaxonomyTable(snapshot, overlay)
 }
@@ -222,14 +220,14 @@ async function main(): Promise<void> {
 			.fetch<string>({ url: OVERTURE_CATEGORIES_URL, responseType: "text" })
 			.then(pluckResponseData)
 
-		writeFileSync(paths.csv, csv)
+		await writeLocalFile(csv, paths.csv)
 
 		console.log(`fetched snapshot → ${paths.csv}`)
 	}
 
-	const table = generateTaxonomyTable()
+	const table = await generateTaxonomyTable()
 
-	writeFileSync(paths.out, serializeTaxonomyTable(table))
+	await writeLocalJSONFile(table, paths.out)
 
 	console.log(
 		`wrote ${paths.out}: ${table.categories.length} categories (${table.synonyms.length} synonyms), Overture ${table.overtureRelease}`

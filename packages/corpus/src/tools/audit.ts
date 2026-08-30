@@ -15,8 +15,12 @@
  *   Emits warnings to stderr and the audit table to stdout; never throws on an empty corpus.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { existsSync, readFileSync, readdirSync } from "@mailwoman/platform/fs"
+import {
+	pathExistsSync,
+	readDirectorySync,
+	readLocalBufferSync,
+	readLocalJSONFileSync,
+} from "@mailwoman/core/fs/readers-sync"
 import { basename, join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -67,12 +71,12 @@ interface ParsedConfig {
  * dep-free.
  */
 function parseConfig(configPath: string): ParsedConfig | null {
-	if (!existsSync(configPath)) return null
+	if (!pathExistsSync(configPath)) return null
 	const weights: Record<string, number> = {}
 	let inBlock = false
 	let blockIndent = -1
 
-	for (const raw of TextSpliterator.from(readFileSync(configPath))) {
+	for (const raw of TextSpliterator.from(readLocalBufferSync(configPath))) {
 		const sourceWeightsMatch = raw.match(/^([\t ]*)source_weights:\s*$/)
 
 		if (sourceWeightsMatch) {
@@ -115,9 +119,9 @@ function scanShards(corpusDir: string, sampleCount: number): ShardStats {
 	for (const split of ["train", "val", "test"]) {
 		const splitDir = join(corpusDir, split)
 
-		if (!existsSync(splitDir)) continue
+		if (!pathExistsSync(splitDir)) continue
 
-		const files = readdirSync(splitDir)
+		const files = readDirectorySync(splitDir)
 			.filter((f) => f.endsWith(".parquet"))
 			.toSorted()
 
@@ -215,11 +219,11 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
 function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): ShardStats | null {
 	const manifestPath = join(corpusDir, "MANIFEST.json")
 
-	if (!existsSync(manifestPath)) return null
+	if (!pathExistsSync(manifestPath)) return null
 
-	const manifest = parseJSONStrict<{
+	const manifest = readLocalJSONFileSync<{
 		shards?: Array<{ split: string; source?: string | null; first_source_id?: string | null }>
-	}>(readFileSync(manifestPath, "utf8"))
+	}>(manifestPath)
 
 	if (!Array.isArray(manifest.shards)) return null
 	const bySplit: Record<string, Record<string, number>> = {}

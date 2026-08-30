@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { prettyJSON } from "@mailwoman/core/objects"
 import { resolve } from "@mailwoman/platform/path"
 import {
 	getAllCategories,
@@ -13,7 +14,7 @@ import {
 	requiresBuildLocalLayer,
 	resolveOvertureCategories,
 } from "@mailwoman/poi-taxonomy/lookup"
-import { generateTaxonomyTable, serializeTaxonomyTable } from "@mailwoman/poi-taxonomy/scripts/generate-taxonomy"
+import { generateTaxonomyTable } from "@mailwoman/poi-taxonomy/scripts/generate-taxonomy"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 describe("lookupPOICategory", () => {
@@ -203,17 +204,17 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["credit_union", "bank"])
 	})
 
-	it("regenerates deterministically and matches the committed table by content", () => {
+	it("regenerates deterministically and matches the committed table by content", async () => {
 		// The generator is self-deterministic: two runs produce byte-identical output (no Map/sort nondeterminism).
-		const once = serializeTaxonomyTable(generateTaxonomyTable())
-		expect(serializeTaxonomyTable(generateTaxonomyTable())).toBe(once)
+		const once = prettyJSON(await generateTaxonomyTable())
+		expect(prettyJSON(await generateTaxonomyTable())).toBe(once)
 
 		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON is
 		// oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte). So the committed
 		// file is compared by PARSED content, not raw bytes: same data, formatting aside.
-		// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/poi-taxonomy` declares no dependencies.
-		const committed = JSON.parse(readFileSync(resolve(import.meta.dirname, "../../data/taxonomy.json"), "utf8"))
-		expect(committed).toEqual(generateTaxonomyTable())
+		const committed = await readLocalJSONFile(resolve(import.meta.dirname, "../../data/taxonomy.json"))
+
+		expect(committed).toEqual(await generateTaxonomyTable())
 	})
 })
 

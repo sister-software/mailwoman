@@ -8,7 +8,7 @@
  *   property of the formatter.
  */
 
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { describe, expect, it } from "vitest"
 
 const si = (bytes: number) => ByteFormatter.formatSI(bytes, { locales: "en-US" })

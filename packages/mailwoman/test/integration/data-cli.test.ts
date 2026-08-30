@@ -14,17 +14,14 @@
  *   type-checks, tests, and publishes — and only the consumer who typed `mw` finds out.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { existsSync, mkdtempSync } from "@mailwoman/platform/fs"
-import { readFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 import { BUNDLES } from "mailwoman/data-bundles"
-import { describe, expect, test } from "vitest"
+import { afterAll, describe, expect, test } from "vitest"
 
 const exec = promisify(execFile)
 
@@ -34,12 +31,14 @@ const cliBin = workspacePath("mailwoman", "out", "cli.js")
  * A directory that exists but holds nothing — so `data --list` reports destinations under it without any bundle
  * appearing installed.
  */
-const emptyDataRoot = mkdtempSync(join(tmpdir(), "mw-data-cli-"))
+const emptyDataRoot = await temporaryDirectory("mw-data-cli-")
 
-describe.skipIf(!existsSync(cliBin))("mailwoman data (group landing page)", () => {
+afterAll(() => emptyDataRoot[Symbol.asyncDispose]())
+
+describe.skipIf(!(await pathExists(cliBin)))("mailwoman data (group landing page)", () => {
 	test("bare `data` explains why the command exists and points at pull / status / doctor", async () => {
 		const { stdout } = await exec("node", [cliBin, "data"], {
-			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRoot }),
+			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRoot.path }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 
@@ -47,12 +46,12 @@ describe.skipIf(!existsSync(cliBin))("mailwoman data (group landing page)", () =
 		expect(stdout).toMatch(/mailwoman data status/)
 		// The #1577 ask: the landing page has to hand the reader off to doctor.
 		expect(stdout).toMatch(/mailwoman doctor/)
-		expect(stdout).toContain(emptyDataRoot)
+		expect(stdout).toContain(emptyDataRoot.path)
 	}, 60_000)
 
 	test("--list names every registered bundle, its size, and where it lands", async () => {
 		const { stdout } = await exec("node", [cliBin, "data", "--list"], {
-			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRoot }),
+			env: childEnv({ NODE_NO_WARNINGS: "1", MAILWOMAN_DATA_ROOT: emptyDataRoot.path }),
 			maxBuffer: 4 * 1024 * 1024,
 		})
 
@@ -62,7 +61,7 @@ describe.skipIf(!existsSync(cliBin))("mailwoman data (group landing page)", () =
 
 		// Sizes read in GB at this scale — "41261.8 MB" was the pre-fix rendering and is unreadable.
 		expect(stdout).toMatch(/41\.3 GB/)
-		expect(stdout).toContain(emptyDataRoot)
+		expect(stdout).toContain(emptyDataRoot.path)
 	}, 60_000)
 
 	test("the subcommands survive the group's own index command", async () => {
@@ -79,8 +78,8 @@ describe.skipIf(!existsSync(cliBin))("mailwoman data (group landing page)", () =
 
 describe("the published bin names", () => {
 	test("`mailwoman` and `mw` both point at the compiled CLI", async () => {
-		const manifest = parseJSONStrict<{ bin: Record<string, string> }>(
-			await readFile(workspacePath("mailwoman", "package.json"), "utf8")
+		const manifest = await readLocalJSONFile<{ bin: Record<string, string> }>(
+			workspacePath("mailwoman", "package.json")
 		)
 
 		expect(manifest.bin).toEqual({ mailwoman: "./out/cli.js", mw: "./out/cli.js" })

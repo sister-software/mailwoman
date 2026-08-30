@@ -17,8 +17,8 @@
  *   strict e2e run against production.
  */
 
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { PAIR_INDEX_VERSION, pairIndexBaseURL, pairIndexURLs } from "@mailwoman/docs/shared/resources"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, test } from "vitest"
 
@@ -48,7 +48,7 @@ describe("the demo loader owns no pair-index URL of its own", () => {
 	// (`const pairIndexBaseURL = "https://public.mailwoman.ai/mailwoman/pair-index"`), which is
 	// how the path escaped the versioning discipline the sibling assets follow. Keep the literal in
 	// resources/, where the version constant lives next to it.
-	const source = readFileSync(fileURLToPath(import.meta.resolve("@mailwoman/docs/shared/demo-loader")), "utf8")
+	const source = readLocalTextFileSync(fileURLToPath(import.meta.resolve("@mailwoman/docs/shared/demo-loader")))
 
 	test("the loader does not build a bucket pair-index path itself", () => {
 		expect(source).not.toMatch(/"https:\/\/public\.sister\.software\/mailwoman\/pair-index/)

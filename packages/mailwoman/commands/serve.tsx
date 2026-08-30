@@ -41,7 +41,7 @@ export const spec = {
 // NOTE(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance to
 // move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup, and
 // ChildThread's effect boots the @mailwoman/api Hono app over a node listener; there is no
-// `setImmediate(process.exit)` here — SIGINT/SIGTERM now drive an explicit graceful `server.close()`).
+// `setImmediate(process.exit)` here — SIGINT/SIGTERM now dispose the server after it drains).
 
 const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus = availableParallelism() } }) => {
 	const [workers, setWorkers] = useState<Worker[]>()
@@ -192,6 +192,7 @@ const WorkerStatus: React.FC<{ worker: Worker }> = ({ worker }) => {
 const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, host } }) => {
 	useEffect(() => {
 		let handle: ServerHandle | undefined
+		let disposed = false
 
 		void (async () => {
 			const { createMailwomanAPI } = await import("@mailwoman/api")
@@ -223,12 +224,20 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			// createMailwomanAPI's own default — carried from the express server's `express.json({ limit: "2mb" })`.
 			const app = createMailwomanAPI(engine, { batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) })
 
-			handle = serveNode({
+			const server = await serveNode({
 				fetch: app.fetch,
 				port,
 				hostname: host,
 				onListen: () => cluster.worker?.send("HTTP server ready"),
 			})
+
+			if (disposed) {
+				await server[Symbol.asyncDispose]()
+
+				return
+			}
+
+			handle = server
 
 			// Duplicate signal deliveries (group signal + primary forward) must be no-ops — the drain runs once.
 			let draining = false
@@ -239,14 +248,17 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 
 				console.error(`[serve] worker ${process.pid} draining`)
 
-				void handle?.close().finally(() => process.exit(0))
+				void handle?.[Symbol.asyncDispose]().finally(() => process.exit(0))
 			}
 
 			process.on("SIGINT", shutdown)
 			process.on("SIGTERM", shutdown)
 		})()
 
-		return () => void handle?.close()
+		return () => {
+			disposed = true
+			void handle?.[Symbol.asyncDispose]()
+		}
 	}, [host, port])
 
 	return null

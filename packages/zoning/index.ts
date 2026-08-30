@@ -298,7 +298,7 @@ interface PlanRow {
  * always answers `unknown` — or, in the exclusion case, as a reader that confidently reports unzoned-and-unmapped land
  * as free of restriction.
  */
-export class ZoningLookup {
+export class ZoningLookup implements Disposable {
 	readonly identity: ZoningLayerIdentity
 
 	readonly #database: DatabaseClient<ZoningDatabase>
@@ -363,7 +363,7 @@ export class ZoningLookup {
 		}
 	}
 
-	public close(): void {
+	public [Symbol.dispose](): void {
 		this.#database.destroy()
 	}
 

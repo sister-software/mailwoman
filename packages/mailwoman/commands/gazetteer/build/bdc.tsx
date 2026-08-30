@@ -28,9 +28,9 @@
  *   list to resolve FRNs FOR.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { FilerDatabase } from "@mailwoman/filer"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
@@ -103,13 +103,13 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		let filerDBPath: string | undefined
 
 		if (options.providerListPath) {
-			if (!existsSync(options.providerListPath)) {
+			if (!(await pathExists(options.providerListPath))) {
 				throw new Error(`gazetteer build bdc: --provider-list-path not found: "${options.providerListPath}"`)
 			}
 
 			filerDBPath = options.filerDBPath ?? dataRootPath("filer", "filer.db")
 
-			if (!existsSync(filerDBPath)) {
+			if (!(await pathExists(filerDBPath))) {
 				throw new Error(`gazetteer build bdc: filer.db not found at "${filerDBPath}" (--filer-db-path)`)
 			}
 		}
@@ -183,7 +183,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 			})
 
 			return [
-				`bdc.db: ${out} (${artifactSizeMB(out)} MB)`,
+				`bdc.db: ${out} (${await artifactSizeMB(out)} MB)`,
 				`${result.rows.toLocaleString()} rows · ${result.providers} provider(s) · ${result.deduped.toLocaleString()} deduped` +
 					` · ${result.unknownGeoids.toLocaleString()} unknown geoid(s) · ${result.coverageCells.toLocaleString()} coverage cells` +
 					(options.providerListPath ? ` · ${result.providersPopulated.toLocaleString()} bdc_provider row(s)` : ""),

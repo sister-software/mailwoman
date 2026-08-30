@@ -7,9 +7,9 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Resolve the FST artifact from an explicit flag, environment, or the application data directory.
@@ -41,7 +41,7 @@ export async function runAutocomplete(
 	prefix: string,
 	opts: { fstPath: string; limit?: number }
 ): Promise<AutocompleteEntry[]> {
-	if (!existsSync(opts.fstPath)) {
+	if (!(await pathExists(opts.fstPath))) {
 		throw new CommandError(
 			`FST binary not found at ${opts.fstPath}.\n` +
 				"Pass --fst <path>, set $MAILWOMAN_FST_BIN, or build it with `mailwoman gazetteer build fst`."
@@ -51,7 +51,7 @@ export async function runAutocomplete(
 	let buffer: Buffer
 
 	try {
-		buffer = readFileSync(opts.fstPath)
+		buffer = await readLocalBuffer(opts.fstPath)
 	} catch (error) {
 		throw new CommandError(`Failed to read FST binary at ${opts.fstPath}`, { cause: error })
 	}

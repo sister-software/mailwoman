@@ -58,10 +58,10 @@
  *   is a property of the invocation, not of a feature. Rows carry `country: ""` and the caller stamps it.
  */
 
+import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { spawn } from "@mailwoman/platform/child_process"
 import { once } from "@mailwoman/platform/events"
-import { createWriteStream } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 import { representativePoint } from "./representative-point.ts"
@@ -570,7 +570,7 @@ export interface WriteSubVenueJSONLOptions {
  * Returns the row count.
  */
 export async function writeSubVenueJSONL(options: WriteSubVenueJSONLOptions): Promise<number> {
-	const stream = createWriteStream(options.outPath)
+	const stream = openWriteStream(options.outPath)
 	let rows = 0
 
 	for await (const row of extractOSMSubVenues(options.pbfPath, options.rules)) {

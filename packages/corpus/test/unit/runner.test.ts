@@ -4,11 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
-import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -43,14 +42,14 @@ function makeAdapter(opts: {
 	}
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-corpus-runner-"))
+	scratch = await temporaryDirectory("mailwoman-corpus-runner-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("runAdapter", () => {
@@ -77,7 +76,7 @@ describe("runAdapter", () => {
 		const manifest = await runAdapter({
 			adapter,
 			adapterOptions: { inputPath: "ignored" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -89,16 +88,14 @@ describe("runAdapter", () => {
 		expect(manifest.sha256).toMatch(/^[0-9a-f]{64}$/)
 
 		const lines = await Array.fromAsync(
-			JSONSpliterator.fromAsync<CanonicalRow>(join(scratch, "syn", "canonical.jsonl"))
+			JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl"))
 		)
 
 		expect(lines).toHaveLength(2)
 		expect(lines[0]!.corpus_version).toBe("0.1.0")
 		expect(lines[0]!.source).toBe("syn")
 
-		const manifestOnDisk = parseJSONStrict<{ sha256: string }>(
-			await readFile(join(scratch, "syn", "MANIFEST.json"), "utf8")
-		)
+		const manifestOnDisk = await readLocalJSONFile<{ sha256: string }>(scratch.resolve("syn", "MANIFEST.json"))
 
 		expect(manifestOnDisk.sha256).toBe(manifest.sha256)
 	})
@@ -116,7 +113,7 @@ describe("runAdapter", () => {
 		const manifest = await runAdapter({
 			adapter,
 			adapterOptions: { inputPath: "ignored" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
@@ -138,7 +135,7 @@ describe("runAdapter", () => {
 		await runAdapter({
 			adapter,
 			adapterOptions: { inputPath: "ignored" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 			onProgress: (s) => ticks.push(s),
 			progressEvery: 2,
@@ -168,7 +165,7 @@ describe("runAdapter", () => {
 			runAdapter({
 				adapter: bad,
 				adapterOptions: { inputPath: "ignored" },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/row\.source must equal adapter\.id/)
@@ -188,7 +185,7 @@ describe("runAdapter", () => {
 			runAdapter({
 				adapter: bad,
 				adapterOptions: { inputPath: "ignored" },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/row\.raw is empty/)
@@ -209,7 +206,7 @@ describe("runAdapter", () => {
 			runAdapter({
 				adapter,
 				adapterOptions: { inputPath: "ignored", signal: ac.signal },
-				outputDir: scratch,
+				outputDir: scratch.path,
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/aborted/i)
@@ -232,21 +229,21 @@ describe("runAdapter", () => {
 		const first = await runAdapter({
 			adapter: make(),
 			adapterOptions: { inputPath: "ignored" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		const firstJsonl = await readFile(join(scratch, "syn", "canonical.jsonl"), "utf8")
-		await rm(join(scratch, "syn"), { recursive: true, force: true })
+		const firstJsonl = await readLocalTextFile(scratch.resolve("syn", "canonical.jsonl"))
+		await removePathIfPresent(scratch.resolve("syn"))
 
 		const second = await runAdapter({
 			adapter: make(),
 			adapterOptions: { inputPath: "ignored" },
-			outputDir: scratch,
+			outputDir: scratch.path,
 			corpusVersion: "0.1.0",
 		})
 
-		const secondJsonl = await readFile(join(scratch, "syn", "canonical.jsonl"), "utf8")
+		const secondJsonl = await readLocalTextFile(scratch.resolve("syn", "canonical.jsonl"))
 
 		expect(firstJsonl).toBe(secondJsonl)
 		expect(first.sha256).toBe(second.sha256)

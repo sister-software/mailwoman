@@ -167,7 +167,7 @@ function seedPopulation(db: DatabaseClient<PlaceImportanceDatabase>, rows: Reado
 
 describe("loadImportanceSplit", () => {
 	it("reads the split columns verbatim when they exist", async () => {
-		await using kdb = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		await using kdb = DatabaseClient.temp<PlaceImportanceDatabase>()
 		seedPopulation(kdb, [[1, 96_128]])
 
 		await createPlaceImportanceTable(kdb)
@@ -190,7 +190,7 @@ describe("loadImportanceSplit", () => {
 	})
 
 	it("reconstructs the split from a legacy conflated table", () => {
-		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		using db = DatabaseClient.temp<PlaceImportanceDatabase>()
 
 		seedPopulation(db, [
 			[1, 418],
@@ -217,7 +217,7 @@ describe("loadImportanceSplit", () => {
 	})
 
 	it("falls back to population alone when there is no importance table", () => {
-		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		using db = DatabaseClient.temp<PlaceImportanceDatabase>()
 		seedPopulation(db, [[1, 96_128]])
 
 		const split = loadImportanceSplit(db)
@@ -228,7 +228,7 @@ describe("loadImportanceSplit", () => {
 	})
 
 	it("reports `none` rather than a table of zeros when the database carries no salience at all", () => {
-		using db = new DatabaseClient<PlaceImportanceDatabase>(":memory:")
+		using db = DatabaseClient.temp<PlaceImportanceDatabase>()
 
 		const split = loadImportanceSplit(db)
 

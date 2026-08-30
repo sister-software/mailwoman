@@ -27,7 +27,7 @@
  *   place (scripts/AGENTS.md) — the original script rebuilt in place.
  */
 
-import { mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { basename, dirname } from "@mailwoman/platform/path"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
@@ -129,12 +129,12 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 				: []
 		)
 
-		mkdirSync(dirname(finalOut), { recursive: true })
+		await makeDirectories(dirname(finalOut))
 		// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
 		const tmpOut = `${finalOut}.building-${process.pid}.db`
 
 		for (const sfx of ["", "-wal", "-shm"]) {
-			rmSync(tmpOut + sfx, { force: true })
+			await removePathIfPresent(tmpOut + sfx)
 		}
 
 		const instance = await DuckDBInstance.create()

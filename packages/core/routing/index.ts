@@ -6,6 +6,8 @@
 
 import type { AxiosRequestConfig } from "axios"
 
+import { prettyJSON } from "#objects"
+
 /**
  * Derived from React Router, this type helper is used to extract the parameters from a path pattern.
  *
@@ -85,7 +87,7 @@ const URLPatternComponents = [
  */
 export class URLRoutePattern<I extends URLPatternPathnameInit | string = string> extends URLPattern {
 	public override toString(): string {
-		return JSON.stringify(this.toJSON(), null, "\t")
+		return prettyJSON(this.toJSON())
 	}
 
 	constructor(init: I) {

@@ -27,6 +27,8 @@
  *   Consumed by #1926's compiler, which validates before it emits, and by #1927's authored document.
  */
 
+import { isPlainObject } from "@mailwoman/core/objects"
+
 import {
 	ConceptKind,
 	ConceptStatus,
@@ -39,7 +41,6 @@ import {
 import {
 	add,
 	checkFieldNames,
-	isPlainObject,
 	listVocabulary,
 	readArray,
 	readBoolean,

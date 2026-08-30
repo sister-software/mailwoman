@@ -15,8 +15,7 @@
  *   the shared subset and drop the `cp` in publish.yml.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, test } from "vitest"
 
@@ -49,13 +48,13 @@ interface EvidenceChannel {
 	lexicon?: string
 }
 
-const readCard = (locale: string) =>
-	parseJSONStrict<ModelCard>(
-		readFileSync(fileURLToPath(import.meta.resolve(`@mailwoman/neural-weights-${locale}/model-card.json`)), "utf8")
+const readCard = async (locale: string) =>
+	await readLocalJSONFile<ModelCard>(
+		fileURLToPath(import.meta.resolve(`@mailwoman/neural-weights-${locale}/model-card.json`))
 	)
 
-const enUs = readCard("en-us")
-const frFr = readCard("fr-fr")
+const enUs = await readCard("en-us")
+const frFr = await readCard("fr-fr")
 
 describe("fr-fr ↔ en-us model-card parity (#721 — fr-fr ships en-us's model via publish.yml cp)", () => {
 	test("labels are identical (fr-fr must decode the en-us binary's 33 logits)", () => {
@@ -107,8 +106,8 @@ function semanticFields(channel: EvidenceChannel | undefined): Record<string, un
 describe("overlay ↔ base evidence-channel parity (#1511 class — a declared block must not be a subset)", () => {
 	for (const overlay of OVERLAYS_WITH_CARDS) {
 		for (const channel of EVIDENCE_CHANNELS) {
-			test(`${overlay} declares ${channel} as the base does, or declares no block at all`, () => {
-				const card = readCard(overlay)
+			test(`${overlay} declares ${channel} as the base does, or declares no block at all`, async () => {
+				const card = await readCard(overlay)
 				// A card with no block is exempt by design (graph inference covers it), so the expected value is the
 				// base's declaration only when this overlay declares anything at all.
 				const expected = card.requires ? semanticFields(enUs.requires![channel]) : undefined

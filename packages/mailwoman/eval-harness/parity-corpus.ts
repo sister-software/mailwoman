@@ -14,6 +14,7 @@
  */
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -125,9 +126,8 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 
 		if (fstPath) {
 			const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
-			const { readFileSync } = await import("@mailwoman/platform/fs")
 
-			fstGazetteer = deserializeFST(readFileSync(fstPath))
+			fstGazetteer = deserializeFST(await readLocalBuffer(fstPath))
 
 			console.log(`gazetteer prior ON (${fstPath})`)
 		} else {

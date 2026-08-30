@@ -19,11 +19,11 @@
  *   Run: `mailwoman placer probe-frontier [--model <dir>] [--n 2000] [--out <md>]`
  */
 
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalJSONFile } from "#fs/readers"
+import { writeLocalTextFile } from "#fs/writers"
 import { dataRootPath, corePackagePath, median } from "#utils"
 
 import { CoarsePlacer, type CoarsePlacerMeta } from "../coarse-placer.ts"
@@ -129,7 +129,7 @@ export async function probeFrontier(
 	// `@mailwoman/codex` is a devDependency of core (operator tooling) — lazy-imported inside the fn.
 	const { ISO2_TO_NAME } = await import("@mailwoman/codex/country")
 
-	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(join(String(modelDir), "meta.json"), "utf8"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(String(modelDir), "meta.json"))
 	// The deployed bundle is int8-per-row quantized — fromArtifactDir dequantizes via meta.scales.
 	const placer = await CoarsePlacer.fromArtifactDir(modelDir, { abstainBelow: 0 })
 	const classSet = new Set(meta.classes)
@@ -241,7 +241,7 @@ export async function probeFrontier(
 	console.log("…")
 
 	if (options.out) {
-		writeFileSync(options.out, `${md}\n`)
+		await writeLocalTextFile(`${md}\n`, options.out)
 		report?.(`[probe] wrote ${options.out}`)
 	}
 

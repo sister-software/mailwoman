@@ -30,9 +30,10 @@
  *   bytes, 97 files, no `.mdb`).
  */
 
-import { pathExists, streamToDisk } from "@mailwoman/core/utils"
+import { tryStat } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { streamToDisk } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 
@@ -112,10 +113,10 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 	const root = join(vintageDirectory, options.areaSymbol)
 	const archivePath = join(vintageDirectory, `wss_SSA_${options.areaSymbol}.zip`)
 
-	if (!(await pathExists(root))) {
-		await mkdir(vintageDirectory, { recursive: true })
+	if (!(await tryStat(root))) {
+		await makeDirectories(vintageDirectory)
 
-		if (await pathExists(archivePath)) {
+		if (await tryStat(archivePath)) {
 			options.onProgress?.(`${options.areaSymbol}: archive for ${options.versionDate} already downloaded`)
 		} else {
 			await streamToDisk({
@@ -145,7 +146,7 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 	const tabularDirectory = join(root, "tabular")
 
 	for (const directory of [spatialDirectory, tabularDirectory]) {
-		if (!(await pathExists(directory))) {
+		if (!(await tryStat(directory))) {
 			throw new Error(
 				`soil download: ${options.areaSymbol} extracted without a ${directory} directory — every survey area publishes both spatial/ and tabular/, so this archive is not the product`
 			)

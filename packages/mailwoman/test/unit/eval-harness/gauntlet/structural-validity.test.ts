@@ -23,17 +23,17 @@
  */
 
 import { validateTree } from "@mailwoman/core/decoder"
+import { readDirectory, readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { parseForGeocode } from "mailwoman/geocode-core"
 import { describe, expect, it } from "vitest"
 
-function weightsPresent(): boolean {
+async function weightsPresent(): Promise<boolean> {
 	try {
-		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
 	} catch {
 		return false
 	}
@@ -54,24 +54,24 @@ interface Row {
 	input: string
 }
 
-function boardRows(): Row[] {
+async function boardRows(): Promise<Row[]> {
 	const root = String(repoRootPath("packages", "mailwoman", "eval-harness", "gauntlet", "cases"))
 	const rows: Row[] = []
 
-	for (const entry of readdirSync(root)) {
+	for (const entry of await readDirectory(root)) {
 		let files: string[]
 
 		try {
 			// A country directory carries more than `regression.jsonl` — street-name-boundaries, gloss-keys, others.
 			// Reading only the first name silently measured 326 of 854 rows.
-			files = readdirSync(join(root, entry)).filter((f) => f.endsWith(".jsonl"))
+			files = (await readDirectory(join(root, entry))).filter((f) => f.endsWith(".jsonl"))
 		} catch {
 			continue
 		}
 
 		for (const name of files) {
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- committed board files, read whole and bounded
-			for (const line of readFileSync(join(root, entry, name), "utf8").split("\n")) {
+			for (const line of (await readLocalTextFile(join(root, entry, name))).split("\n")) {
 				if (!line.trim()) continue
 
 				const row = parseJSONStrict(line) as Partial<Row>
@@ -86,11 +86,11 @@ function boardRows(): Row[] {
 	return rows
 }
 
-describe.skipIf(!weightsPresent())("board structural validity", () => {
+describe.skipIf(!(await weightsPresent()))("board structural validity", () => {
 	it("flags exactly the rows on the known-invalid list, and no others", { timeout: 300_000 }, async () => {
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })
-		const rows = boardRows()
+		const rows = await boardRows()
 
 		// A sweep that silently read no rows would pass every assertion below.
 		expect(rows.length).toBeGreaterThan(500)

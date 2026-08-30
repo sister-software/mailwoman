@@ -35,11 +35,10 @@
  *   as a custom postcode DB, isn't built yet).
  */
 
-import { copyFileSync, existsSync, mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { copyFileTo, removePath } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { SqliteDialect } from "@mailwoman/sqlite/dialect"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { sql } from "kysely"
 import type { Kysely } from "kysely"
@@ -156,13 +155,13 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	if (!inputs.length) throw new Error("no input WOF dbs provided")
 
 	for (const input of inputs) {
-		if (!existsSync(input)) throw new Error(`input WOF db not found: ${input}`)
+		if (!(await pathExists(input))) throw new Error(`input WOF db not found: ${input}`)
 	}
 
 	progress("init", `${inputs.length} input(s) → ${opts.output}`)
 
-	if (existsSync(opts.output)) {
-		rmSync(opts.output)
+	if (await pathExists(opts.output)) {
+		await removePath(opts.output)
 	}
 
 	// Open the output DB and create the empty schema. We discover the schema from the FIRST input
@@ -173,35 +172,31 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	let result: BuildSlimResult
 
 	try {
-		const firstSource = new DatabaseClient<WOFDatabase>(inputs[0]!, { readOnly: true })
+		using firstSource = new DatabaseClient<WOFDatabase>(inputs[0]!, { readOnly: true })
 
-		try {
-			progress("schema", "copying spr / names / place_population schemas from first input")
+		progress("schema", "copying spr / names / place_population schemas from first input")
 
-			for (const table of COPIED_TABLES) {
-				const createSQL = firstSource
-					.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`)
-					.get(table) as { sql?: string } | undefined
+		for (const table of COPIED_TABLES) {
+			const createSQL = firstSource
+				.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?`)
+				.get(table) as { sql?: string } | undefined
 
-				if (createSQL?.sql) {
-					// Raw DDL by design (introspect-and-replay): we exec the SOURCE DB's own CREATE TABLE
-					// string read from sqlite_master, so a static Kysely builder can't express it. See AGENTS.md.
-					out.exec(createSQL.sql)
-				} else if (table === PLACE_POPULATION_TABLE) {
-					// Older source builds may predate the aux table — create it empty so the per-source
-					// copy + ranking have somewhere to land. Sparse-by-design; missing rows are fine.
-					out.exec(PLACE_POPULATION_DDL)
-				} else {
-					throw new Error(`source DB ${inputs[0]} is missing required table '${table}'`)
-				}
+			if (createSQL?.sql) {
+				// Raw DDL by design (introspect-and-replay): we exec the SOURCE DB's own CREATE TABLE
+				// string read from sqlite_master, so a static Kysely builder can't express it. See AGENTS.md.
+				out.exec(createSQL.sql)
+			} else if (table === PLACE_POPULATION_TABLE) {
+				// Older source builds may predate the aux table — create it empty so the per-source
+				// copy + ranking have somewhere to land. Sparse-by-design; missing rows are fine.
+				out.exec(PLACE_POPULATION_DDL)
+			} else {
+				throw new Error(`source DB ${inputs[0]} is missing required table '${table}'`)
 			}
-
-			// PRIMARY KEY on spr.id + place_population.id come from the schemas we copied; an explicit
-			// index on names.id helps the per-id INSERT SELECT later.
-			out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
-		} finally {
-			await firstSource.destroy()
 		}
+
+		// PRIMARY KEY on spr.id + place_population.id come from the schemas we copied; an explicit
+		// index on names.id helps the per-id INSERT SELECT later.
+		out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
 
 		// Pull rows from each input.
 		for (const inputPath of inputs) {
@@ -262,7 +257,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 
 		result = {
 			outputPath: opts.output,
-			outputBytes: statSync(opts.output).size,
+			outputBytes: (await statPath(opts.output)).size,
 			rowCounts,
 		}
 	} finally {
@@ -270,7 +265,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	}
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(opts.output)
+	await sealDatabase(opts.output)
 
 	return result
 }
@@ -288,129 +283,126 @@ async function copyFromSource(
 	// ATTACH will still want a writable journal on the side; copying to /tmp dodges that without
 	// mutating the canonical files in /mnt/playpen/mailwoman-data/wof/. ATTACH / DETACH stay raw
 	// — Kysely doesn't model them.
-	const tmpScratch = mkdtempSync(join(tmpdir(), "mailwoman-slim-src-"))
-	const scratchPath = join(tmpScratch, "src.db")
-	copyFileSync(inputPath, scratchPath)
+	await using tmpScratch = await temporaryDirectory("mailwoman-slim-src-")
+	const scratchPath = tmpScratch.resolve("src.db")
+
+	await copyFileTo(inputPath, scratchPath)
+
+	out.exec(`ATTACH DATABASE '${scratchPath.replaceAll("'", "''")}' AS src;`)
 
 	try {
-		out.exec(`ATTACH DATABASE '${scratchPath.replaceAll("'", "''")}' AS src;`)
+		// Does this shard carry the pre-built population aux table? The admin source does; a bare
+		// postcode shard might not. The locality ranking + population copy below adapt accordingly.
+		const srcHasPopulation = Boolean(
+			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
+		)
 
-		try {
-			// Does this shard carry the pre-built population aux table? The admin source does; a bare
-			// postcode shard might not. The locality ranking + population copy below adapt accordingly.
-			const srcHasPopulation = Boolean(
-				out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
+		// The SELECT-INSERT queries below go through Kysely. The cross-schema FROM is the only
+		// "interesting" bit: by declaring `src.spr` / `src.names` / `src.place_population` in
+		// `BuildSchema`, Kysely lets us write `selectFrom("src.spr")` with the same column-type
+		// checking as the regular schema. SQLite parses the dotted identifier as a schema-name
+		// qualifier, so this works directly without any aliasing trick.
+
+		// 1. Ancestor placetypes (country / region / county / etc.) — always-kept.
+		progress("country", `${inputPath}: ancestor placetypes in (${countries.join(",")})`)
+
+		await kysely
+			.insertInto("spr")
+			.expression((eb) =>
+				eb
+					.selectFrom("src.spr")
+					.selectAll()
+					.where("is_current", "!=", 0)
+					.where("is_deprecated", "=", 0)
+					.where("country", "in", countries)
+					.where("placetype", "in", [...ANCESTOR_PLACETYPES])
+			)
+			.onConflict((oc) => oc.doNothing())
+			.execute()
+
+		// 2. Top-K localities by population. Population lives in the pre-built `place_population`
+		// aux table — left-join it so localities without a population row still qualify (sorted
+		// last). If the shard has no population table, fall back to a deterministic id ordering.
+		progress("locality", `${inputPath}: top-${topLocalities} localities by population`)
+
+		await kysely
+			.insertInto("spr")
+			.expression((eb) =>
+				eb
+					.selectFrom("src.spr as s")
+					.$if(srcHasPopulation, (qb) => qb.leftJoin("src.place_population as p", "p.id", "s.id"))
+					.selectAll("s")
+					.where("s.is_current", "!=", 0)
+					.where("s.is_deprecated", "=", 0)
+					.where("s.country", "in", countries)
+					.where("s.placetype", "=", "locality")
+					.orderBy(srcHasPopulation ? sql<number>`COALESCE(p.population, 0)` : sql<number>`s.id`, "desc")
+					.limit(topLocalities)
+			)
+			.onConflict((oc) => oc.doNothing())
+			.execute()
+
+		// 3. All postcodes in scope.
+		progress("postcode", `${inputPath}: all postcodes`)
+
+		await kysely
+			.insertInto("spr")
+			.expression((eb) =>
+				eb
+					.selectFrom("src.spr")
+					.selectAll()
+					.where("is_current", "!=", 0)
+					.where("is_deprecated", "=", 0)
+					.where("country", "in", countries)
+					.where("placetype", "=", "postalcode")
+			)
+			.onConflict((oc) => oc.doNothing())
+			.execute()
+
+		// 4. Pull names for the IDs we just selected.
+		progress("names", `${inputPath}: names rows for selected IDs`)
+
+		await kysely
+			.insertInto("names")
+			.expression((eb) => eb.selectFrom("src.names").selectAll().where("id", "in", eb.selectFrom("spr").select("id")))
+			.onConflict((oc) => oc.doNothing())
+			.execute()
+
+		// 5. Pull population rows for the selected IDs (sparse — only the places WOF has a count for).
+		if (srcHasPopulation) {
+			progress("place_population", `${inputPath}: population rows for selected IDs`)
+
+			await kysely
+				.insertInto("place_population")
+				.expression((eb) =>
+					eb.selectFrom("src.place_population").selectAll().where("id", "in", eb.selectFrom("spr").select("id"))
+				)
+				.onConflict((oc) => oc.doNothing())
+				.execute()
+		}
+
+		// 6. Carry the coincident_roles relation (#402) when this source has it (the admin DB), so the
+		// slim/demo DB supports dual-role hierarchy completion (on by default). Filtered to surviving
+		// spr ids → no orphans. Tiny (~hundreds of rows). `ancestors` is intentionally NOT copied (huge
+		// + build-only), so we copy the derived table rather than rebuild it. Raw SQL — conditional +
+		// not in the Kysely build schema.
+		const relationSchema = out
+			.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)
+			.get() as { sql?: string } | undefined
+
+		if (relationSchema?.sql) {
+			progress("coincident_roles", `${inputPath}: copying dual-role relation`)
+			out.exec(relationSchema.sql.replace(/CREATE TABLE/i, "CREATE TABLE IF NOT EXISTS"))
+
+			out.exec(
+				`INSERT OR IGNORE INTO coincident_roles SELECT * FROM src.coincident_roles
+					WHERE admin_id IN (SELECT id FROM spr) AND locality_id IN (SELECT id FROM spr)`
 			)
 
-			// The SELECT-INSERT queries below go through Kysely. The cross-schema FROM is the only
-			// "interesting" bit: by declaring `src.spr` / `src.names` / `src.place_population` in
-			// `BuildSchema`, Kysely lets us write `selectFrom("src.spr")` with the same column-type
-			// checking as the regular schema. SQLite parses the dotted identifier as a schema-name
-			// qualifier, so this works directly without any aliasing trick.
-
-			// 1. Ancestor placetypes (country / region / county / etc.) — always-kept.
-			progress("country", `${inputPath}: ancestor placetypes in (${countries.join(",")})`)
-
-			await kysely
-				.insertInto("spr")
-				.expression((eb) =>
-					eb
-						.selectFrom("src.spr")
-						.selectAll()
-						.where("is_current", "!=", 0)
-						.where("is_deprecated", "=", 0)
-						.where("country", "in", countries)
-						.where("placetype", "in", [...ANCESTOR_PLACETYPES])
-				)
-				.onConflict((oc) => oc.doNothing())
-				.execute()
-
-			// 2. Top-K localities by population. Population lives in the pre-built `place_population`
-			// aux table — left-join it so localities without a population row still qualify (sorted
-			// last). If the shard has no population table, fall back to a deterministic id ordering.
-			progress("locality", `${inputPath}: top-${topLocalities} localities by population`)
-
-			await kysely
-				.insertInto("spr")
-				.expression((eb) =>
-					eb
-						.selectFrom("src.spr as s")
-						.$if(srcHasPopulation, (qb) => qb.leftJoin("src.place_population as p", "p.id", "s.id"))
-						.selectAll("s")
-						.where("s.is_current", "!=", 0)
-						.where("s.is_deprecated", "=", 0)
-						.where("s.country", "in", countries)
-						.where("s.placetype", "=", "locality")
-						.orderBy(srcHasPopulation ? sql<number>`COALESCE(p.population, 0)` : sql<number>`s.id`, "desc")
-						.limit(topLocalities)
-				)
-				.onConflict((oc) => oc.doNothing())
-				.execute()
-
-			// 3. All postcodes in scope.
-			progress("postcode", `${inputPath}: all postcodes`)
-
-			await kysely
-				.insertInto("spr")
-				.expression((eb) =>
-					eb
-						.selectFrom("src.spr")
-						.selectAll()
-						.where("is_current", "!=", 0)
-						.where("is_deprecated", "=", 0)
-						.where("country", "in", countries)
-						.where("placetype", "=", "postalcode")
-				)
-				.onConflict((oc) => oc.doNothing())
-				.execute()
-
-			// 4. Pull names for the IDs we just selected.
-			progress("names", `${inputPath}: names rows for selected IDs`)
-
-			await kysely
-				.insertInto("names")
-				.expression((eb) => eb.selectFrom("src.names").selectAll().where("id", "in", eb.selectFrom("spr").select("id")))
-				.onConflict((oc) => oc.doNothing())
-				.execute()
-
-			// 5. Pull population rows for the selected IDs (sparse — only the places WOF has a count for).
-			if (srcHasPopulation) {
-				progress("place_population", `${inputPath}: population rows for selected IDs`)
-
-				await kysely
-					.insertInto("place_population")
-					.expression((eb) =>
-						eb.selectFrom("src.place_population").selectAll().where("id", "in", eb.selectFrom("spr").select("id"))
-					)
-					.onConflict((oc) => oc.doNothing())
-					.execute()
-			}
-
-			// 6. Carry the coincident_roles relation (#402) when this source has it (the admin DB), so the
-			// slim/demo DB supports dual-role hierarchy completion (on by default). Filtered to surviving
-			// spr ids → no orphans. Tiny (~hundreds of rows). `ancestors` is intentionally NOT copied (huge
-			// + build-only), so we copy the derived table rather than rebuild it. Raw SQL — conditional +
-			// not in the Kysely build schema.
-			const relationSchema = out
-				.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)
-				.get() as { sql?: string } | undefined
-
-			if (relationSchema?.sql) {
-				progress("coincident_roles", `${inputPath}: copying dual-role relation`)
-				out.exec(relationSchema.sql.replace(/CREATE TABLE/i, "CREATE TABLE IF NOT EXISTS"))
-
-				out.exec(
-					`INSERT OR IGNORE INTO coincident_roles SELECT * FROM src.coincident_roles
-						WHERE admin_id IN (SELECT id FROM spr) AND locality_id IN (SELECT id FROM spr)`
-				)
-
-				out.exec(`CREATE INDEX IF NOT EXISTS coincident_roles_by_admin ON coincident_roles (admin_id)`)
-			}
-		} finally {
-			out.exec(`DETACH DATABASE src;`)
+			out.exec(`CREATE INDEX IF NOT EXISTS coincident_roles_by_admin ON coincident_roles (admin_id)`)
 		}
 	} finally {
-		rmSync(tmpScratch, { recursive: true, force: true })
+		out.exec(`DETACH DATABASE src;`)
 	}
 }
 

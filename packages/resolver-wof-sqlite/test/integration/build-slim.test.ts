@@ -13,15 +13,13 @@
  *   population straight from that table.
  */
 
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildSlimWOFDatabase } from "@mailwoman/resolver-wof-sqlite/build-slim"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 function buildFixtureWOF(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -75,17 +73,17 @@ function buildFixtureWOF(path: string): void {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-slim-"))
+	scratch = await temporaryDirectory("mailwoman-slim-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("buildSlimWOFDatabase", () => {
 	test("keeps ancestors, top-K localities by population, and all postcodes", async () => {
-		const source = join(scratch, "src.db")
-		const output = join(scratch, "slim.db")
+		const source = scratch.resolve("src.db")
+		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)
 
 		const result = await buildSlimWOFDatabase({
@@ -98,91 +96,79 @@ describe("buildSlimWOFDatabase", () => {
 		expect(result.rowCounts.placeSearch).toBe(6)
 		expect(result.rowCounts.placeBbox).toBe(6)
 
-		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		try {
-			const names = slim
-				.prepare(`SELECT name FROM spr ORDER BY id`)
-				.all()
-				.map((r) => (r as { name: string }).name)
+		const names = slim
+			.prepare(`SELECT name FROM spr ORDER BY id`)
+			.all()
+			.map((r) => (r as { name: string }).name)
 
-			expect(names).toEqual(["United States", "Illinois", "Chicago", "Springfield", "62701", "60601"])
+		expect(names).toEqual(["United States", "Illinois", "Chicago", "Springfield", "62701", "60601"])
 
-			// Mascoutah, Paris, and Old Town must be absent.
-			expect(names).not.toContain("Mascoutah")
-			expect(names).not.toContain("Paris")
-			expect(names).not.toContain("Old Town")
-		} finally {
-			await slim.destroy()
-		}
+		// Mascoutah, Paris, and Old Town must be absent.
+		expect(names).not.toContain("Mascoutah")
+		expect(names).not.toContain("Paris")
+		expect(names).not.toContain("Old Town")
 	})
 
 	test("preserves names + place_population only for selected IDs", async () => {
-		const source = join(scratch, "src.db")
-		const output = join(scratch, "slim.db")
+		const source = scratch.resolve("src.db")
+		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 1 })
 
-		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		try {
-			const nameIDs = slim
-				.prepare(`SELECT DISTINCT id FROM names ORDER BY id`)
-				.all()
-				.map((r) => (r as { id: number }).id)
+		const nameIDs = slim
+			.prepare(`SELECT DISTINCT id FROM names ORDER BY id`)
+			.all()
+			.map((r) => (r as { id: number }).id)
 
-			// Top-1 locality = Chicago (200); ancestors 100/101; postcodes 300/301.
-			expect(nameIDs).toEqual([100, 200, 300])
-			// Paris (400) and Mascoutah (202) names must be gone.
-			expect(nameIDs).not.toContain(400)
-			expect(nameIDs).not.toContain(202)
+		// Top-1 locality = Chicago (200); ancestors 100/101; postcodes 300/301.
+		expect(nameIDs).toEqual([100, 200, 300])
+		// Paris (400) and Mascoutah (202) names must be gone.
+		expect(nameIDs).not.toContain(400)
+		expect(nameIDs).not.toContain(202)
 
-			// place_population is filtered to surviving spr ids: ancestors 100/101 + top-1 locality 200.
-			// Postcodes (300/301) have no population row; trimmed places (202/400) are gone.
-			const popIDs = slim
-				.prepare(`SELECT id FROM place_population ORDER BY id`)
-				.all()
-				.map((r) => (r as { id: number }).id)
+		// place_population is filtered to surviving spr ids: ancestors 100/101 + top-1 locality 200.
+		// Postcodes (300/301) have no population row; trimmed places (202/400) are gone.
+		const popIDs = slim
+			.prepare(`SELECT id FROM place_population ORDER BY id`)
+			.all()
+			.map((r) => (r as { id: number }).id)
 
-			expect(popIDs).toEqual([100, 101, 200])
-			expect(popIDs).not.toContain(400)
-			expect(popIDs).not.toContain(202)
+		expect(popIDs).toEqual([100, 101, 200])
+		expect(popIDs).not.toContain(400)
+		expect(popIDs).not.toContain(202)
 
-			// The slim DB never carries a geojson table — production source has none, and the builder
-			// reads population from place_population, not geojson.
-			const geojsonExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'geojson'`).get()
-			expect(geojsonExists).toBeUndefined()
-		} finally {
-			await slim.destroy()
-		}
+		// The slim DB never carries a geojson table — production source has none, and the builder
+		// reads population from place_population, not geojson.
+		const geojsonExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'geojson'`).get()
+		expect(geojsonExists).toBeUndefined()
 	})
 
 	test("carries place_population for the trimmed row set, ranked by population", async () => {
-		const source = join(scratch, "src.db")
-		const output = join(scratch, "slim.db")
+		const source = scratch.resolve("src.db")
+		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 })
 
-		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		try {
-			const rows = slim
-				.prepare(`SELECT id, population FROM place_population ORDER BY population DESC LIMIT 3`)
-				.all() as Array<{ id: number; population: number }>
+		const rows = slim
+			.prepare(`SELECT id, population FROM place_population ORDER BY population DESC LIMIT 3`)
+			.all() as Array<{ id: number; population: number }>
 
-			expect(rows[0]?.id).toBe(100) // US country, biggest population
-			expect(rows[0]?.population).toBe(331_000_000)
-		} finally {
-			await slim.destroy()
-		}
+		expect(rows[0]?.id).toBe(100) // US country, biggest population
+		expect(rows[0]?.population).toBe(331_000_000)
 	})
 
 	test("merges rows across multiple input shards without duplicating", async () => {
-		const adminSource = join(scratch, "admin.db")
-		const postcodeSource = join(scratch, "postcode.db")
-		const output = join(scratch, "slim.db")
+		const adminSource = scratch.resolve("admin.db")
+		const postcodeSource = scratch.resolve("postcode.db")
+		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(adminSource)
 		// Postcode shard: same schema, only contributes postcodes (here, re-use the admin fixture's
 		// postcode rows to verify INSERT OR IGNORE actually de-dupes on id).
@@ -199,8 +185,8 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test("dropNames removes the names table but keeps a working FTS index", async () => {
-		const source = join(scratch, "src.db")
-		const output = join(scratch, "slim.db")
+		const source = scratch.resolve("src.db")
+		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)
 
 		const result = await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
@@ -208,26 +194,22 @@ describe("buildSlimWOFDatabase", () => {
 		expect(result.rowCounts.names).toBeGreaterThan(0)
 		expect(result.rowCounts.placeSearch).toBe(6)
 
-		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		try {
-			const namesExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'`).get()
-			expect(namesExists).toBeUndefined()
+		const namesExists = slim.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'names'`).get()
+		expect(namesExists).toBeUndefined()
 
-			// place_search is a self-contained FTS5, so name MATCH still works with names gone.
-			const hit = slim.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH 'Chicago'`).get() as
-				| { wof_id: number }
-				| undefined
+		// place_search is a self-contained FTS5, so name MATCH still works with names gone.
+		const hit = slim.prepare(`SELECT wof_id FROM place_search WHERE place_search MATCH 'Chicago'`).get() as
+			| { wof_id: number }
+			| undefined
 
-			expect(hit?.wof_id).toBe(200)
-		} finally {
-			await slim.destroy()
-		}
+		expect(hit?.wof_id).toBe(200)
 	})
 
 	test('skips empty input paths (callers pass "" for an unbuilt shard)', async () => {
-		const source = join(scratch, "src.db")
-		const output = join(scratch, "slim.db")
+		const source = scratch.resolve("src.db")
+		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)
 
 		// Both the demo plugin and build-demo-assets.ts pass `--in ""` when the custom postcode DB
@@ -237,11 +219,11 @@ describe("buildSlimWOFDatabase", () => {
 	})
 
 	test("carries the coincident_roles relation, filtered to surviving spr ids (#402)", async () => {
-		const source = join(scratch, "src.db")
-		const output = join(scratch, "slim.db")
+		const source = scratch.resolve("src.db")
+		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)
 		// A dual-role relation: Illinois(101) ⊃ Springfield(201) [survives top-2] and ⊃ Mascoutah(202) [trimmed].
-		const s = new DatabaseClient<WOFDatabase>(source)
+		using s = new DatabaseClient<WOFDatabase>(source)
 
 		s.exec(`CREATE TABLE coincident_roles (
 			admin_id INTEGER NOT NULL, locality_id INTEGER NOT NULL, relationship_type TEXT NOT NULL,
@@ -250,43 +232,33 @@ describe("buildSlimWOFDatabase", () => {
 
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 201, 'capital-seat', 'region', 5.0, 114000)`)
 		s.exec(`INSERT INTO coincident_roles VALUES (101, 202, 'capital-seat', 'region', 6.0, 8000)`)
-		await s.destroy()
 
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2 }) // keeps Springfield, drops Mascoutah
 
-		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		try {
-			const rows = slim.prepare(`SELECT admin_id, locality_id FROM coincident_roles ORDER BY locality_id`).all()
-			// Only the surviving pair — Mascoutah's row is dropped because 202 was trimmed from spr.
-			expect(rows).toEqual([{ admin_id: 101, locality_id: 201 }])
-		} finally {
-			await slim.destroy()
-		}
+		const rows = slim.prepare(`SELECT admin_id, locality_id FROM coincident_roles ORDER BY locality_id`).all()
+		// Only the surviving pair — Mascoutah's row is dropped because 202 was trimmed from spr.
+		expect(rows).toEqual([{ admin_id: 101, locality_id: 201 }])
 	})
 
 	test("materializes place_abbr from language='abbr' names, filtered to surviving ids, surviving dropNames (#189)", async () => {
-		const source = join(scratch, "src.db")
-		const output = join(scratch, "slim.db")
+		const source = scratch.resolve("src.db")
+		const output = scratch.resolve("slim.db")
 		buildFixtureWOF(source)
-		const s = new DatabaseClient<WOFDatabase>(source)
+		using s = new DatabaseClient<WOFDatabase>(source)
 		s.exec(`INSERT INTO names (id, language, name) VALUES (101, 'abbr', 'IL')`) // Illinois (region) — survives
 		s.exec(`INSERT INTO names (id, language, name) VALUES (202, 'abbr', 'MZ')`) // Mascoutah (locality) — trimmed
-		await s.destroy()
 
 		// top-2 keeps Springfield, drops Mascoutah; dropNames removes the source names table afterward.
 		await buildSlimWOFDatabase({ inputs: [source], output, topLocalitiesPerCountry: 2, dropNames: true })
 
-		const slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
+		using slim = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		try {
-			const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
-			// Illinois keeps its abbr; the trimmed locality's is gone (names was pre-filtered to surviving
-			// ids). And place_abbr persists even though dropNames removed the source `names` table.
-			expect(rows).toEqual([{ id: 101, abbr: "IL" }])
-			expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()
-		} finally {
-			await slim.destroy()
-		}
+		const rows = slim.prepare(`SELECT id, abbr FROM place_abbr ORDER BY abbr`).all()
+		// Illinois keeps its abbr; the trimmed locality's is gone (names was pre-filtered to surviving
+		// ids). And place_abbr persists even though dropNames removed the source `names` table.
+		expect(rows).toEqual([{ id: 101, abbr: "IL" }])
+		expect(slim.prepare(`SELECT 1 FROM sqlite_master WHERE name='names'`).get()).toBeUndefined()
 	})
 })

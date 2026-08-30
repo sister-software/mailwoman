@@ -1,0 +1,49 @@
+{
+	"schema_version": "1",
+	"harness": "claude",
+	"scope": "project",
+	"components": [
+		{
+			"id": "command:codemod",
+			"kind": "command",
+			"path": "/home/lab/Projects/mailwoman/.claude/commands/codemod.md",
+			"version": "1.15.3",
+			"fingerprint": "514d4336ddbdc78acf9476c1329410b18d25ba79966ebc69e86038fd4174757e"
+		},
+		{
+			"id": "discovery-guide:CLAUDE.md",
+			"kind": "discovery_guide",
+			"path": "/home/lab/Projects/mailwoman/CLAUDE.md",
+			"version": null,
+			"fingerprint": "9a4cdbb8649723aef324513f192a380cf8655d2e62a1e3294291e71da6d80f74"
+		},
+		{
+			"id": "periodic-trigger:check-updates.sh",
+			"kind": "discovery_guide",
+			"path": "/home/lab/Projects/mailwoman/.claude/codemod/periodic-update/check-updates.sh",
+			"version": null,
+			"fingerprint": "611a610879db408d3076c5ed14d0f173da0b7048d215e4756acb7694e6308d54"
+		},
+		{
+			"id": "periodic-trigger:settings.json",
+			"kind": "discovery_guide",
+			"path": "/home/lab/Projects/mailwoman/.claude/settings.json",
+			"version": null,
+			"fingerprint": "849fcebb4aa5b84e33887ab03650a2fbbdb94a3bdcf95726e008e30884cd4dbd"
+		},
+		{
+			"id": "codemod-mcp",
+			"kind": "mcp_config",
+			"path": "/home/lab/Projects/mailwoman/.mcp.json",
+			"version": null,
+			"fingerprint": "837f53f81954801f2816fb003624658d37b5f0f57d352cdd4169024094c7e4be"
+		},
+		{
+			"id": "codemod",
+			"kind": "skill",
+			"path": "/home/lab/Projects/mailwoman/.claude/skills/codemod/SKILL.md",
+			"version": "1.1.0",
+			"fingerprint": "b4062d5a201d28bbb1b6b6157354d05400114070740f0d381b7541cea97ae9ed"
+		}
+	]
+}

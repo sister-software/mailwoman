@@ -14,7 +14,7 @@
  *   which no build step asks today.
  */
 
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -70,8 +70,8 @@ const GazetteerTriage: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const emitted = options.uncoveredOnly ? rows.filter((r) => r.coverage === CoverageVerdict.Uncovered) : rows
 
-		mkdirSync(dirname(outPath), { recursive: true })
-		writeFileSync(outPath, emitted.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf8")
+		await makeDirectories(dirname(outPath))
+		await writeLocalTextFile(emitted.map((r) => JSON.stringify(r)).join("\n") + "\n", outPath)
 
 		// The review queue's head: uncovered AND independently attested, most populous first — the rows most likely to
 		// be an upstream mistake rather than a real cessation.

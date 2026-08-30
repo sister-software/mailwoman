@@ -15,11 +15,9 @@
  *        never-measured (absent).
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor } from "@mailwoman/core/pipeline"
 import { hardCountrySafelistFromCoverage } from "@mailwoman/core/resolver"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { COUNTRY_BBOX } from "@mailwoman/resolver"
 import { readGazetteerCoverageManifest, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
 import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candidate"
@@ -32,14 +30,14 @@ import {
 } from "mailwoman/gazetteer-pipeline/coverage-manifest"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-coverage-manifest-"))
+	scratch = await temporaryDirectory("mailwoman-coverage-manifest-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 /**
@@ -65,11 +63,11 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /**
- * Build a real (unsealed) candidate DB in the scratch dir and return its path.
+ * Build a real (unsealed) candidate database in the scratch directory and return its path.
  */
 async function buildFixtureCandidate(): Promise<string> {
-	const input = join(scratch, "admin.db")
-	const output = join(scratch, "candidate.db")
+	const input = scratch.resolve("admin.db")
+	const output = scratch.resolve("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output })
 

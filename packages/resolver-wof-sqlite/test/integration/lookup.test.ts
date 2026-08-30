@@ -12,8 +12,8 @@
  *   fetch).
  */
 
-import { chmodSync, mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { changeMode } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -308,7 +308,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-	lookup.close()
+	lookup[Symbol.dispose]()
 })
 
 describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
@@ -414,7 +414,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 		// exact-named borough above the fuzzy "Brooklyn Park" against a hot/slim DB.
 		const db = buildFixtureDB()
 		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
-		withFTS.close() // releases nothing we need — the FTS table now exists on `db`, which we own
+		withFTS[Symbol.dispose]() // releases nothing we need — the FTS table now exists on `db`, which we own
 		db.exec(`DROP TABLE names`)
 		const lookup2 = new WOFSQLitePlaceLookup({ database: db })
 
@@ -423,7 +423,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 			expect(candidates[0]).toMatchObject({ id: 421_205_765, name: "Brooklyn", placetype: "borough" })
 			expect(candidates[0]?.exactMatch).toBe(true)
 		} finally {
-			lookup2.close()
+			lookup2[Symbol.dispose]()
 			await db.destroy()
 		}
 	})
@@ -434,7 +434,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 		// containment check (' old york new city ' ⊇ ' york new ') false-promoted exactly this shape.
 		const db = buildFixtureDB()
 		const withFTS = new WOFSQLitePlaceLookup({ database: db, buildFTS: true })
-		withFTS.close()
+		withFTS[Symbol.dispose]()
 		db.exec(`DROP TABLE names`)
 		const lookup2 = new WOFSQLitePlaceLookup({ database: db })
 
@@ -445,7 +445,7 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 			const alias = await lookup2.findPlace({ text: "New City", placetype: "locality" })
 			expect(alias[0]).toMatchObject({ id: 999_000_001, exactMatch: true })
 		} finally {
-			lookup2.close()
+			lookup2[Symbol.dispose]()
 			await db.destroy()
 		}
 	})
@@ -470,13 +470,12 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		expect(() => new WOFSQLitePlaceLookup({})).toThrow(/one of/)
 
 		expect(
-			() =>
-				new WOFSQLitePlaceLookup({ database: new DatabaseClient<WOFDatabase>(":memory:"), databasePath: "/tmp/x.db" })
+			() => new WOFSQLitePlaceLookup({ database: DatabaseClient.temp<WOFDatabase>(), databasePath: "/tmp/x.db" })
 		).toThrow(/not both/)
 	})
 
 	test("errors loudly when FTS table is missing and buildFTS is false", () => {
-		using db = new DatabaseClient<WOFDatabase>(":memory:")
+		using db = DatabaseClient.temp<WOFDatabase>()
 		db.exec(`CREATE TABLE places (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT);`)
 		expect(() => new WOFSQLitePlaceLookup({ database: db, buildFTS: false })).toThrow(/place_search/)
 	})
@@ -487,16 +486,17 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		// from new code. It proves a genuinely sealed file resolves end-to-end. The real invariant (the open
 		// mode chosen per `buildFTS` — read-only on every query path, read-write only for the FTS build) is
 		// enforced by the DatabaseSync construction spy in `lookup-readonly-open.test.ts`.
-		const dir = mkdtempSync(join(tmpdir(), "mw-wof-ro-"))
+		await using dirDirectory = await temporaryDirectory("mw-wof-ro-")
+		const dir = dirDirectory.path
 		const dbPath = join(dir, "admin-fixture.db")
 
 		// Build the fixture ON DISK with its FTS index, then seal the file 0444 to mimic a shipped shard.
 		{
 			await using disk = buildFixtureDB(dbPath)
 			const builder = new WOFSQLitePlaceLookup({ database: disk, buildFTS: true })
-			builder.close()
+			builder[Symbol.dispose]()
 		}
-		chmodSync(dbPath, 0o444)
+		await changeMode(dbPath, 0o444)
 
 		let ro: WOFSQLitePlaceLookup | undefined
 
@@ -508,10 +508,9 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 			expect(candidates.length).toBeGreaterThan(0)
 			expect(candidates[0]).toMatchObject({ name: "Paris", country: "US", placetype: "locality" })
 		} finally {
-			ro?.close()
+			ro?.[Symbol.dispose]()
 			// Restore write permission so the temp dir can be cleaned up.
-			chmodSync(dbPath, 0o644)
-			rmSync(dir, { recursive: true, force: true })
+			await changeMode(dbPath, 0o644)
 		}
 	})
 })

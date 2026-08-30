@@ -37,6 +37,7 @@ import {
 	type PlausibilityEvidence,
 } from "@mailwoman/bdc/sdk/plausibility"
 import { BroadbandTechnologyCode } from "@mailwoman/bdc/sdk/technologies"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -44,9 +45,6 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -127,15 +125,13 @@ function fixtureRows(): BDCAvailabilityRow[] {
 }
 
 /**
- * A built `bdc.db` and its scratch directory, both released when the binding leaves scope.
+ * A built `bdc.db`, its open reader, and the scratch directory holding it — all released when the binding leaves scope.
  */
-interface BDCFixture extends AsyncDisposable {
-	db: DatabaseClient<BDCDatabase>
-}
+type BDCFixture = TemporaryDirectory & { db: DatabaseClient<BDCDatabase> }
 
 async function buildBDCFixture(): Promise<BDCFixture> {
-	const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-bdc-"))
-	const out = join(scratch, "bdc.db")
+	await using fixture = await temporaryDirectory("bdc-plausibility-bdc-")
+	const out = fixture.resolve("bdc.db")
 
 	await buildBDCDatabase({
 		rows: fixtureRows(),
@@ -145,15 +141,7 @@ async function buildBDCFixture(): Promise<BDCFixture> {
 		blockCentroids,
 	})
 
-	const db = new DatabaseClient<BDCDatabase>(out, { readOnly: true })
-
-	return {
-		db,
-		async [Symbol.asyncDispose]() {
-			db[Symbol.dispose]()
-			await rm(scratch, { recursive: true, force: true })
-		},
-	}
+	return fixture.moveWith({ db: fixture.use(new DatabaseClient<BDCDatabase>(out, { readOnly: true })) })
 }
 
 interface POIFixtureRow {
@@ -179,15 +167,13 @@ function cellFor(latitude: number, longitude: number): number {
 }
 
 /**
- * A built `poi.db` path and its scratch directory, removed when the binding leaves scope.
+ * A built `poi.db` and the scratch directory holding it, both removed when the binding leaves scope.
  */
-interface POIFixture extends AsyncDisposable {
-	path: string
-}
+type POIFixture = TemporaryDirectory & { path: string }
 
 async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<POIFixture> {
-	const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-poi-"))
-	const path = join(scratch, "poi.db")
+	await using scratch = await temporaryDirectory("bdc-plausibility-poi-")
+	const path = scratch.resolve("poi.db")
 
 	await using kdb = new DatabaseClient<POIDatabase>(path)
 
@@ -226,10 +212,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
 	await createPOINameKeyIndex(kdb)
 	await createPOIBrandIndex(kdb)
 
-	return {
-		path,
-		[Symbol.asyncDispose]: () => rm(scratch, { recursive: true, force: true }),
-	}
+	return scratch.moveWith({ path })
 }
 
 /**
@@ -239,7 +222,7 @@ async function buildPOILookupFixture(rows: readonly POIFixtureRow[]): Promise<PO
  * happy-path tests. `resolutionOverride` lets the mismatch test set something else.
  */
 async function openPOIContractDB(resolutionOverride = 9): Promise<DatabaseClient<LayerContractDatabase>> {
-	const kdb = new DatabaseClient<LayerContractDatabase>(":memory:")
+	const kdb = DatabaseClient.temp<LayerContractDatabase>()
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
@@ -267,7 +250,7 @@ async function openPOIContractDB(resolutionOverride = 9): Promise<DatabaseClient
  * Hoisted to module scope — shared by the "full composition" suite below AND the `§7-2b gates` block (Gate 2's
  * co-presence claim reuses this exact fixture rather than re-deriving it).
  */
-async function openBoth(): Promise<{ deps: PlausibilityDeps } & AsyncDisposable> {
+async function openBoth(): Promise<AsyncDisposableStack & { deps: PlausibilityDeps }> {
 	const stack = new AsyncDisposableStack()
 	const bdc = stack.use(await buildBDCFixture())
 	const poi = stack.use(await buildPOILookupFixture([TELECOM_EXCHANGE_NEAR]))
@@ -277,10 +260,9 @@ async function openBoth(): Promise<{ deps: PlausibilityDeps } & AsyncDisposable>
 	// Coverage for exactly Springfield's own res-6 parent — the query point's cell.
 	await writeLayerCoverage(poiContractDB, [{ h3Cell: SPRINGFIELD_RES6_PARENT_SHORT, completeness: 1, observedRows: 1 }])
 
-	return {
+	return Object.assign(stack, {
 		deps: { bdcDB: bdc.db, poi: { lookup: poiLookup, contractDB: poiContractDB } },
-		[Symbol.asyncDispose]: () => stack.disposeAsync(),
-	}
+	})
 }
 
 describe("physicalCategoriesForTechnology / PLAUSIBILITY_TECH_PHYSICAL_CATEGORIES", () => {
@@ -464,8 +446,8 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 	})
 
 	it("corroborates false for a same-tech but LESSER speed filing", async () => {
-		const scratch = await mkdtemp(join(tmpdir(), "bdc-plausibility-lesser-"))
-		const out = join(scratch, "bdc.db")
+		await using scratch = await temporaryDirectory("bdc-plausibility-lesser-")
+		const out = scratch.resolve("bdc.db")
 
 		await buildBDCDatabase({
 			rows: [
@@ -486,11 +468,7 @@ describe("plausibilityCheck — filing evidence + corroboration", () => {
 			blockCentroids,
 		})
 
-		await using stack = new AsyncDisposableStack()
-
-		stack.defer(() => rm(scratch, { recursive: true, force: true }))
-
-		const inlineDB = stack.use(new DatabaseClient<BDCDatabase>(out, { readOnly: true }))
+		const inlineDB = scratch.use(new DatabaseClient<BDCDatabase>(out, { readOnly: true }))
 
 		const bundle = await plausibilityCheck(
 			{

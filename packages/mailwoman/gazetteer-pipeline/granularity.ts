@@ -157,119 +157,115 @@ function ladderPlacetypes(): string[] {
  * parents per placetype and summing in JS would double it.
  */
 export function buildGranularityLadder(adminDBPath: string): CountryGranularity[] {
-	const db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
-	try {
-		const placetypeList = ladderPlacetypes()
-			.map((placetype) => `'${placetype}'`)
-			.join(", ")
+	const placetypeList = ladderPlacetypes()
+		.map((placetype) => `'${placetype}'`)
+		.join(", ")
 
-		const parentList = PARENT_PLACETYPES.map((placetype) => `'${placetype}'`).join(", ")
-		// Alias-qualified: the parent query joins `spr` to itself, so an unqualified `is_deprecated` is ambiguous.
-		const live = (alias: string): string => `${alias}.is_current != 0 AND ${alias}.is_deprecated = 0`
+	const parentList = PARENT_PLACETYPES.map((placetype) => `'${placetype}'`).join(", ")
+	// Alias-qualified: the parent query joins `spr` to itself, so an unqualified `is_deprecated` is ambiguous.
+	const live = (alias: string): string => `${alias}.is_current != 0 AND ${alias}.is_deprecated = 0`
 
-		const nodeRows = db
-			.prepare(
-				`SELECT s.country AS country,
-					${rungCaseExpression("s.placetype")} AS rung,
-					COUNT(*) AS nodes,
-					SUM(CASE WHEN s.id >= ? AND s.id < ? THEN 1 ELSE 0 END) AS overtureBackfilled,
-					SUM(CASE WHEN s.id >= ? THEN 1 ELSE 0 END) AS geonamesBackfilled
-				 FROM spr s
-				 WHERE ${live("s")} AND s.country != '' AND s.placetype IN (${placetypeList})
-				 GROUP BY s.country, rung`
-			)
-			.all(OVERTURE_ID_BASE, GEONAMES_ID_BASE, GEONAMES_ID_BASE) as Array<{
-			country: string
-			rung: ComponentTag
-			nodes: number
-			overtureBackfilled: number | null
-			geonamesBackfilled: number | null
-		}>
+	const nodeRows = db
+		.prepare(
+			`SELECT s.country AS country,
+				${rungCaseExpression("s.placetype")} AS rung,
+				COUNT(*) AS nodes,
+				SUM(CASE WHEN s.id >= ? AND s.id < ? THEN 1 ELSE 0 END) AS overtureBackfilled,
+				SUM(CASE WHEN s.id >= ? THEN 1 ELSE 0 END) AS geonamesBackfilled
+			 FROM spr s
+			 WHERE ${live("s")} AND s.country != '' AND s.placetype IN (${placetypeList})
+			 GROUP BY s.country, rung`
+		)
+		.all(OVERTURE_ID_BASE, GEONAMES_ID_BASE, GEONAMES_ID_BASE) as Array<{
+		country: string
+		rung: ComponentTag
+		nodes: number
+		overtureBackfilled: number | null
+		geonamesBackfilled: number | null
+	}>
 
-		const parentRows = db
-			.prepare(
-				`SELECT p.country AS country,
-					${rungCaseExpression("s.placetype")} AS rung,
-					COUNT(DISTINCT p.id) AS parentsCovered
-				 FROM spr s
-				 JOIN ancestors a ON a.id = s.id
-				 JOIN spr p ON p.id = a.ancestor_id
-				 WHERE p.placetype IN (${parentList})
-				   AND s.placetype IN (${placetypeList})
-				   AND s.country = p.country
-				   AND s.id != p.id
-				   AND ${live("s")}
-				   AND ${live("p")}
-				 GROUP BY p.country, rung`
-			)
-			.all() as Array<{ country: string; rung: ComponentTag; parentsCovered: number }>
+	const parentRows = db
+		.prepare(
+			`SELECT p.country AS country,
+				${rungCaseExpression("s.placetype")} AS rung,
+				COUNT(DISTINCT p.id) AS parentsCovered
+			 FROM spr s
+			 JOIN ancestors a ON a.id = s.id
+			 JOIN spr p ON p.id = a.ancestor_id
+			 WHERE p.placetype IN (${parentList})
+			   AND s.placetype IN (${placetypeList})
+			   AND s.country = p.country
+			   AND s.id != p.id
+			   AND ${live("s")}
+			   AND ${live("p")}
+			 GROUP BY p.country, rung`
+		)
+		.all() as Array<{ country: string; rung: ComponentTag; parentsCovered: number }>
 
-		const denominatorRows = db
-			.prepare(
-				`SELECT s.country AS country, COUNT(*) AS localityParents
-				 FROM spr s
-				 WHERE ${live("s")} AND s.country != '' AND s.placetype IN (${parentList})
-				 GROUP BY s.country`
-			)
-			.all() as Array<{ country: string; localityParents: number }>
+	const denominatorRows = db
+		.prepare(
+			`SELECT s.country AS country, COUNT(*) AS localityParents
+			 FROM spr s
+			 WHERE ${live("s")} AND s.country != '' AND s.placetype IN (${parentList})
+			 GROUP BY s.country`
+		)
+		.all() as Array<{ country: string; localityParents: number }>
 
-		const byCountry = new Map<string, CountryGranularity>()
+	const byCountry = new Map<string, CountryGranularity>()
 
-		const ensure = (country: string): CountryGranularity => {
-			const existing = byCountry.get(country)
+	const ensure = (country: string): CountryGranularity => {
+		const existing = byCountry.get(country)
 
-			if (existing) return existing
+		if (existing) return existing
 
-			// Seed EVERY rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
-			// measurable source at all is dropped by the caller, not left implicit here.
-			const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
+		// Seed EVERY rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
+		// measurable source at all is dropped by the caller, not left implicit here.
+		const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
 
-			for (const rung of LADDER) {
-				rungs[rung] = { nodes: 0, overtureBackfilled: 0, geonamesBackfilled: 0, parentsCovered: 0, parentCoverage: 0 }
-			}
-
-			const row: CountryGranularity = { country, localityParents: 0, rungs }
-
-			byCountry.set(country, row)
-
-			return row
+		for (const rung of LADDER) {
+			rungs[rung] = { nodes: 0, overtureBackfilled: 0, geonamesBackfilled: 0, parentsCovered: 0, parentCoverage: 0 }
 		}
 
-		for (const row of denominatorRows) {
-			ensure(row.country).localityParents = row.localityParents
-		}
+		const row: CountryGranularity = { country, localityParents: 0, rungs }
 
-		for (const row of nodeRows) {
-			if (!row.rung) continue
+		byCountry.set(country, row)
 
-			const measurement = ensure(row.country).rungs[row.rung]!
-
-			measurement.nodes = row.nodes
-			measurement.overtureBackfilled = row.overtureBackfilled ?? 0
-			measurement.geonamesBackfilled = row.geonamesBackfilled ?? 0
-		}
-
-		for (const row of parentRows) {
-			if (!row.rung) continue
-
-			const measurement = ensure(row.country).rungs[row.rung]!
-
-			measurement.parentsCovered = row.parentsCovered
-		}
-
-		for (const country of byCountry.values()) {
-			for (const rung of LADDER) {
-				const measurement = country.rungs[rung]!
-
-				measurement.parentCoverage = country.localityParents ? measurement.parentsCovered / country.localityParents : 0
-			}
-		}
-
-		return [...byCountry.values()].toSorted((a, b) => a.country.localeCompare(b.country))
-	} finally {
-		db.destroy()
+		return row
 	}
+
+	for (const row of denominatorRows) {
+		ensure(row.country).localityParents = row.localityParents
+	}
+
+	for (const row of nodeRows) {
+		if (!row.rung) continue
+
+		const measurement = ensure(row.country).rungs[row.rung]!
+
+		measurement.nodes = row.nodes
+		measurement.overtureBackfilled = row.overtureBackfilled ?? 0
+		measurement.geonamesBackfilled = row.geonamesBackfilled ?? 0
+	}
+
+	for (const row of parentRows) {
+		if (!row.rung) continue
+
+		const measurement = ensure(row.country).rungs[row.rung]!
+
+		measurement.parentsCovered = row.parentsCovered
+	}
+
+	for (const country of byCountry.values()) {
+		for (const rung of LADDER) {
+			const measurement = country.rungs[rung]!
+
+			measurement.parentCoverage = country.localityParents ? measurement.parentsCovered / country.localityParents : 0
+		}
+	}
+
+	return [...byCountry.values()].toSorted((a, b) => a.country.localeCompare(b.country))
 }
 
 /**

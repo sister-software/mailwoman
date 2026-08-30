@@ -14,14 +14,12 @@
  *   3.9 GB database no CI runner has.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	OVERTURE_SUBVENUE_CATEGORIES,
 	readOvertureLayerVintage,
 	readOvertureSubVenues,
 } from "@mailwoman/corpus/tools/overture-subvenue"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
 import { afterAll, beforeAll, expect, test } from "vitest"
@@ -88,7 +86,7 @@ const ROWS: FixtureRow[] = [
 	{ category: "airport_terminal", name: null, country: "US" },
 ]
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 async function buildFixture(path: string): Promise<void> {
@@ -154,15 +152,13 @@ async function buildFixture(path: string): Promise<void> {
 }
 
 beforeAll(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "overture-subvenue-"))
-	databasePath = join(scratch, "poi.db")
+	scratch = await temporaryDirectory("overture-subvenue-")
+	databasePath = scratch.resolve("poi.db")
 
 	await buildFixture(databasePath)
 })
 
-afterAll(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 test("readOvertureSubVenues reads only the sub-venue categories, and only named rows", async () => {
 	const rows = await readOvertureSubVenues({ databasePath })

@@ -175,69 +175,65 @@ export interface PlacetypeCensusBuildResult {
  * some) would attribute a child's evidence to the wrong locale's artifact.
  */
 export function buildPlacetypeCensus(adminDBPath: string, country: string): PlacetypeCensusBuildResult {
-	const db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
-	try {
-		const parentList = PARENT_PLACETYPES.map((placetype) => `'${placetype}'`).join(", ")
+	const parentList = PARENT_PLACETYPES.map((placetype) => `'${placetype}'`).join(", ")
 
-		const rows = db
-			.prepare(
-				`SELECT p.name AS parent, s.placetype AS childPlacetype, COUNT(*) AS n
-				 FROM spr s
-				 JOIN ancestors a ON a.id = s.id
-				 JOIN spr p ON p.id = a.ancestor_id
-				 WHERE p.placetype IN (${parentList})
-				   AND s.country = ?
-				   AND p.country = s.country
-				   AND s.id != p.id
-				 GROUP BY p.name, s.placetype`
-			)
-			.all(country) as Array<{ parent: string; childPlacetype: string; n: number }>
+	const rows = db
+		.prepare(
+			`SELECT p.name AS parent, s.placetype AS childPlacetype, COUNT(*) AS n
+			 FROM spr s
+			 JOIN ancestors a ON a.id = s.id
+			 JOIN spr p ON p.id = a.ancestor_id
+			 WHERE p.placetype IN (${parentList})
+			   AND s.country = ?
+			   AND p.country = s.country
+			   AND s.id != p.id
+			 GROUP BY p.name, s.placetype`
+		)
+		.all(country) as Array<{ parent: string; childPlacetype: string; n: number }>
 
-		const byParent = new Map<string, Partial<Record<ComponentTag, number>>>()
-		const countryTotals: Partial<Record<ComponentTag, number>> = {}
-		const unmapped = new Set<string>()
-		let links = 0
+	const byParent = new Map<string, Partial<Record<ComponentTag, number>>>()
+	const countryTotals: Partial<Record<ComponentTag, number>> = {}
+	const unmapped = new Set<string>()
+	let links = 0
 
-		for (const { parent, childPlacetype, n } of rows) {
-			if (!parent) continue
+	for (const { parent, childPlacetype, n } of rows) {
+		if (!parent) continue
 
-			if (!(childPlacetype in PLACETYPE_PROJECTION)) {
-				unmapped.add(childPlacetype)
+		if (!(childPlacetype in PLACETYPE_PROJECTION)) {
+			unmapped.add(childPlacetype)
 
-				continue
-			}
-
-			const tag = PLACETYPE_PROJECTION[childPlacetype]
-
-			if (!tag) continue
-
-			const counts = byParent.get(parent) ?? {}
-
-			counts[tag] = (counts[tag] ?? 0) + n
-			byParent.set(parent, counts)
-
-			countryTotals[tag] = (countryTotals[tag] ?? 0) + n
-			links += n
+			continue
 		}
 
-		const nodes: PlacetypeCensusNode[] = []
+		const tag = PLACETYPE_PROJECTION[childPlacetype]
 
-		for (const [parent, counts] of byParent) {
-			// The inclusion rule: locality-only parents carry no discriminative mass (see the module header).
-			const discriminative = Object.entries(counts).some(([tag, n]) => tag !== "locality" && (n ?? 0) > 0)
+		if (!tag) continue
 
-			if (!discriminative) continue
+		const counts = byParent.get(parent) ?? {}
 
-			const total = Object.values(counts).reduce<number>((sum, n) => sum + (n ?? 0), 0)
+		counts[tag] = (counts[tag] ?? 0) + n
+		byParent.set(parent, counts)
 
-			nodes.push({ parent, counts, total })
-		}
-
-		return { nodes, countryTotals, links, unmappedPlacetypes: [...unmapped].toSorted() }
-	} finally {
-		db.destroy()
+		countryTotals[tag] = (countryTotals[tag] ?? 0) + n
+		links += n
 	}
+
+	const nodes: PlacetypeCensusNode[] = []
+
+	for (const [parent, counts] of byParent) {
+		// The inclusion rule: locality-only parents carry no discriminative mass (see the module header).
+		const discriminative = Object.entries(counts).some(([tag, n]) => tag !== "locality" && (n ?? 0) > 0)
+
+		if (!discriminative) continue
+
+		const total = Object.values(counts).reduce<number>((sum, n) => sum + (n ?? 0), 0)
+
+		nodes.push({ parent, counts, total })
+	}
+
+	return { nodes, countryTotals, links, unmappedPlacetypes: [...unmapped].toSorted() }
 }
 
 /**

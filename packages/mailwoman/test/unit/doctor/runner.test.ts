@@ -11,8 +11,7 @@
  *   that resolves a real file, so nothing above it can catch a broken resolution.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import {
 	CheckStatus,
 	defaultDoctorDeps,
@@ -176,19 +175,19 @@ describe("runDoctor (injected seams)", () => {
 // construction — that is the thing under test — and it degrades to ">=0" on any failure, so a broken resolution would
 // otherwise show up only as a doctor report that silently stops enforcing the Node floor.
 describe("defaultDoctorDeps — engines floor via package self-reference", () => {
-	it("reads the real engines.node, not the >=0 fallback", () => {
-		const manifest = parseJSONStrict<{ engines?: { node?: string } }>(
-			readFileSync(new URL("../../../package.json", import.meta.url), "utf8")
+	it("reads the real engines.node, not the >=0 fallback", async () => {
+		const manifest = await readLocalJSONFile<{ engines?: { node?: string } }>(
+			new URL("../../../package.json", import.meta.url)
 		)
 
 		expect(manifest.engines?.node).toBeTruthy()
-		expect(defaultDoctorDeps().enginesFloor).toBe(manifest.engines!.node)
+		expect((await defaultDoctorDeps()).enginesFloor).toBe(manifest.engines!.node)
 	})
 })
 
 describe("describeEnvironment (--verbose)", () => {
-	it("reports the resolved paths through the same seams the checks used", () => {
-		const entries = describeEnvironment(healthyDeps())
+	it("reports the resolved paths through the same seams the checks used", async () => {
+		const entries = await describeEnvironment(healthyDeps())
 		const byKey = new Map(entries.map((entry) => [entry.key, entry]))
 
 		expect(byKey.get("data root (resolved)")?.value).toBe("/data")
@@ -200,18 +199,18 @@ describe("describeEnvironment (--verbose)", () => {
 		expect(byKey.get("WOF shard [0]")).toEqual({ key: "WOF shard [0]", value: "/data/wof/admin.db", source: "on disk" })
 	})
 
-	it("keys with no value are present and marked, never dropped", () => {
+	it("keys with no value are present and marked, never dropped", async () => {
 		// The dump exists to tell "set to something surprising" apart from "never set". A row that
 		// disappears when the variable is unset answers neither question.
-		const entries = describeEnvironment({ ...healthyDeps(), conventionCandidatePath: () => undefined })
+		const entries = await describeEnvironment({ ...healthyDeps(), conventionCandidatePath: () => undefined })
 		const convention = entries.find((entry) => entry.key === "candidate.db (convention)")
 
 		expect(convention).toBeDefined()
 		expect(convention?.value).toBeUndefined()
 	})
 
-	it("an unresolvable weights package is reported, not thrown", () => {
-		const entries = describeEnvironment({
+	it("an unresolvable weights package is reported, not thrown", async () => {
+		const entries = await describeEnvironment({
 			...healthyDeps(),
 			resolveWeights: () => {
 				throw new Error("Could not resolve @mailwoman/neural-weights-en-us")

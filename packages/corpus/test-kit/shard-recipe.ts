@@ -11,10 +11,9 @@
  *   build project, so it is never emitted into `out/` and never reaches the published tarball.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 
 import type { ShardRecipeOpts } from "../src/shard-recipes/scaffold.ts"
 
@@ -43,17 +42,25 @@ export interface ShardRecipe<TStats> {
 }
 
 /**
- * Write the tuple + reserved-surface inputs a recipe reads, into a fresh temp directory.
+ * The two input paths a recipe reads, plus the directory holding them.
+ *
+ * The CALLER owns it: a recipe opens both files by path well after this function returns, so the directory has to
+ * outlive the call. Bind it with `using` and it goes when the test does.
  */
-export function scratch(prefix: string, tuples: object[], surfaces: string[]): { input: string; exclude: string } {
-	const dir = mkdtempSync(join(tmpdir(), `${prefix}-`))
-	const input = join(dir, "tuples.jsonl")
-	const exclude = join(dir, "surfaces.txt")
+export type ShardRecipeInputs = TemporaryDirectory & { input: string; exclude: string }
 
-	writeFileSync(input, tuples.map((t) => JSON.stringify(t)).join("\n") + "\n")
-	writeFileSync(exclude, "# reserved\n" + surfaces.join("\n") + "\n")
+/**
+ * Write the tuple + reserved-surface inputs a recipe reads, into a fresh temporary directory.
+ */
+export async function scratch(prefix: string, tuples: object[], surfaces: string[]): Promise<ShardRecipeInputs> {
+	const dir = await temporaryDirectory(`${prefix}-`)
+	const input = dir.resolve("tuples.jsonl")
+	const exclude = dir.resolve("surfaces.txt")
 
-	return { input, exclude }
+	await writeLocalTextFile(tuples.map((t) => JSON.stringify(t)).join("\n") + "\n", input)
+	await writeLocalTextFile("# reserved\n" + surfaces.join("\n") + "\n", exclude)
+
+	return dir.moveWith({ input, exclude })
 }
 
 /**
@@ -66,11 +73,11 @@ export function shardRunner<TStats>(prefix: string, recipe: ShardRecipe<TStats>,
 		surfaces: string[],
 		opts: Partial<ShardRecipeOpts> = {}
 	): Promise<{ stats: TStats; rows: ShardRow[] }> {
-		const { input, exclude } = scratch(prefix, tuples, surfaces)
+		await using inputs = await scratch(prefix, tuples, surfaces)
 		const lines: string[] = []
 
 		const stats = await recipe.run(
-			{ output: "", seed, variants: 1, input, excludeSurfaces: exclude, ...opts },
+			{ output: "", seed, variants: 1, input: inputs.input, excludeSurfaces: inputs.exclude, ...opts },
 			(line) => lines.push(line)
 		)
 

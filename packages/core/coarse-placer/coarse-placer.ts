@@ -10,8 +10,9 @@
  *   browser.
  */
 
+import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
+
 import { $public } from "../env/index.ts"
-import { parseJSONStrict } from "../objects.ts"
 import { featurize } from "./featurize.ts"
 
 export { COARSE_CLASSES, FEATURE_DIM, featurize } from "./featurize.ts"
@@ -151,10 +152,9 @@ export class CoarsePlacer {
 	 * doesn't pull them in.
 	 */
 	static async fromArtifactDir(dir: string, opts?: CoarsePlacerOpts): Promise<CoarsePlacer> {
-		const { readFile } = await import("@mailwoman/platform/fs/promises")
 		const { join } = await import("@mailwoman/platform/path")
-		const meta = parseJSONStrict<CoarsePlacerMeta>(await readFile(join(dir, "meta.json"), "utf8"))
-		const buf = await readFile(join(dir, "weights.bin"))
+		const meta = await readLocalJSONFile<CoarsePlacerMeta>(join(dir, "meta.json"))
+		const buf = await readLocalBuffer(join(dir, "weights.bin"))
 		// Copy out of the (possibly pooled, possibly mis-aligned) Buffer into a fresh ArrayBuffer so the
 		// typed-array view is always validly aligned.
 		const bytes = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)

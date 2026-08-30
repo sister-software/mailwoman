@@ -23,9 +23,9 @@
  */
 
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -66,7 +66,7 @@ const candidatePath = conventionCandidateDBPath()
 const backend: ResolverBackend =
 	backendName === "candidate"
 		? new WOFCandidateTableLookup({ databasePath: candidatePath })
-		: new WOFSQLitePlaceLookup({ databasePath: wofShardPaths().filter(existsSync) })
+		: new WOFSQLitePlaceLookup({ databasePath: wofShardPaths().filter(pathExistsSync) })
 
 //#region 1. Row counts
 
@@ -88,7 +88,7 @@ if (backendName === "candidate") {
 		rows.set((r.country ?? "").toUpperCase(), r.n)
 	}
 } else {
-	for (const path of wofShardPaths().filter(existsSync)) {
+	for (const path of wofShardPaths().filter(pathExistsSync)) {
 		using db = new DatabaseClient<CandidateDatabase>(path, { readOnly: true })
 
 		for (const r of db
@@ -105,7 +105,7 @@ if (backendName === "candidate") {
 //#region 2. Live reachability, through the pass's own lookups
 
 console.log(
-	`\n### ${backendName} backend · ${backendName === "fts" ? wofShardPaths().filter(existsSync).length : 1} source(s)`
+	`\n### ${backendName} backend · ${backendName === "fts" ? wofShardPaths().filter(pathExistsSync).length : 1} source(s)`
 )
 console.log(`\n| system | country | postcode rows | postcode resolves | exact locality | pair coherent |`)
 console.log(`| --- | --- | ---: | --- | --- | --- |`)

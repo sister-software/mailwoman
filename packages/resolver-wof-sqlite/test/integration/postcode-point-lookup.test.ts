@@ -8,9 +8,7 @@
  *   the `is_current` filter, coordinate-less membership, and the cross-shard union.
  */
 
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite/postcode-point-lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -35,13 +33,13 @@ function seedShard(path: string, rows: Array<[number, string, string, string, nu
 	}
 }
 
-let dir: string
+let dir: TemporaryDirectory
 let lookup: WOFPostcodeLookup
 
-beforeAll(() => {
-	dir = mkdtempSync(join(tmpdir(), "mailwoman-pc-lookup-"))
-	const intl = join(dir, "postalcode-intl.db")
-	const us = join(dir, "postalcode-us.db")
+beforeAll(async () => {
+	dir = await temporaryDirectory("mailwoman-pc-lookup-")
+	const intl = dir.resolve("postalcode-intl.db")
+	const us = dir.resolve("postalcode-us.db")
 
 	seedShard(intl, [
 		[1, "75008", "postalcode", "FR", 48.873, 2.313, 1],
@@ -60,8 +58,8 @@ beforeAll(() => {
 })
 
 afterAll(() => {
-	lookup.close()
-	rmSync(dir, { recursive: true, force: true })
+	lookup[Symbol.dispose]()
+	dir[Symbol.asyncDispose]()
 })
 
 describe("WOFPostcodeLookup", () => {

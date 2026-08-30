@@ -14,8 +14,6 @@ import { expandPlacetypeFilter, type Ancestor, type CoincidentLocality } from "@
 import { haversineKm } from "@mailwoman/spatial"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { SqliteDialect } from "@mailwoman/sqlite/dialect"
-import { Kysely } from "kysely"
 
 import { ancestorLineage } from "./ancestry.ts"
 import { candidateFromSearchRow, rankCandidates } from "./candidate-scoring.ts"
@@ -837,14 +835,10 @@ export class WOFSQLitePlaceLookup implements PlaceLookup, Disposable {
 		})
 	}
 
-	close(): void {
+	[Symbol.dispose](): void {
 		// Only when we opened it. A caller who passed a pre-opened client keeps using it after this returns — the FTS
 		// build this lookup performed lives on their connection, and closing it would take that with us.
-		this.#resources.dispose()
-	}
-
-	[Symbol.dispose](): void {
-		this.close()
+		this.#resources[Symbol.dispose]()
 	}
 
 	/**

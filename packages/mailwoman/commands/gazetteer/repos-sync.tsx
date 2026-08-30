@@ -19,7 +19,8 @@
  *   six months behind produces a plausible artifact and no complaint.
  */
 
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -65,7 +66,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { execFile } = await import("@mailwoman/platform/child_process")
 		const { promisify } = await import("@mailwoman/platform/util")
-		const { existsSync } = await import("@mailwoman/platform/fs")
+
 		const { join } = await import("@mailwoman/platform/path")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { auditReposRoot } = await import("../../gazetteer-pipeline/repos-audit.ts")
@@ -81,7 +82,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 			.filter((cc) => cc.length > 0)
 			.map((cc) => `whosonfirst-data-admin-${cc}`)
 
-		const audit = auditReposRoot(root, { readCommits: false })
+		const audit = await auditReposRoot(root, { readCommits: false })
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()
 
 		/**
@@ -129,9 +130,9 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 				const nested = join(root, UPSTREAM_ORG, repo)
 				const flat = join(root, repo)
 
-				if (existsSync(nested)) return nested
+				if (pathExistsSync(nested)) return nested
 
-				if (existsSync(flat)) return flat
+				if (pathExistsSync(flat)) return flat
 
 				return nested
 			},
@@ -144,7 +145,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 			for (const plan of plans) {
 				try {
 					if (plan.action === SyncAction.Clone) {
-						mkdirSync(dirname(plan.directory), { recursive: true })
+						await makeDirectories(dirname(plan.directory))
 						await exec("git", ["clone", "--depth", "1", plan.origin.url, plan.directory])
 						performed.push(`cloned ${plan.repo} from ${plan.origin.source}`)
 					} else if (plan.action === SyncAction.FastForward) {
@@ -181,27 +182,22 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 		// more thing for that glob to consider.
 		const vintagePath = String(dataRootPath("wof", "repos-vintage.json"))
 
-		mkdirSync(dirname(vintagePath), { recursive: true })
+		await makeDirectories(dirname(vintagePath))
 
-		writeFileSync(
-			vintagePath,
-			JSON.stringify(
-				{
-					root,
-					repos: plans.map((p) => ({
-						repo: p.repo,
-						origin: p.origin.org,
-						source: p.origin.source,
-						head: p.state.head ?? null,
-						headDate: p.state.headDate ?? null,
-						shallow: p.state.shallow ?? null,
-						action: p.action,
-					})),
-				},
-				null,
-				1
-			),
-			"utf8"
+		await writeLocalJSONFile(
+			{
+				root,
+				repos: plans.map((p) => ({
+					repo: p.repo,
+					origin: p.origin.org,
+					source: p.origin.source,
+					head: p.state.head ?? null,
+					headDate: p.state.headDate ?? null,
+					shallow: p.state.shallow ?? null,
+					action: p.action,
+				})),
+			},
+			vintagePath
 		)
 
 		return { plans, sentence: syncSentence(plans), performed, vintagePath, applied: options.apply }

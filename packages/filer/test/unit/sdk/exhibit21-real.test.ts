@@ -23,9 +23,9 @@
  *   every one of which the hand-written suite was happy with. Do not regenerate it from parser output.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { decodeEntities, normalizeWhitespace, parseExhibit21, stripTags } from "@mailwoman/filer/sdk/exhibit21"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -42,12 +42,12 @@ const FIXTURE_DIRECTORY = join(import.meta.dirname, "../../../test-fixtures/edga
 
 // parseJSONStrict, not tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
 // degrade to a fallback, since it IS the contract every assertion below is measured against.
-const expected = parseJSONStrict<ExpectedFixtures>(readFileSync(join(FIXTURE_DIRECTORY, "expected.json"), "utf8"))
+const expected = await readLocalJSONFile<ExpectedFixtures>(join(FIXTURE_DIRECTORY, "expected.json"))
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
 
 function fixture(name: string): string {
-	return readFileSync(join(FIXTURE_DIRECTORY, name), "utf8")
+	return readLocalTextFileSync(join(FIXTURE_DIRECTORY, name))
 }
 
 /**

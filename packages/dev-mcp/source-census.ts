@@ -25,8 +25,9 @@
  *   returned nothing" and "we never looked there" are the two facts this file exists to keep apart.
  */
 
+import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
-import { existsSync, readdirSync, statSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -80,11 +81,11 @@ function tableNames(db: DatabaseClient<WOFDatabase>): string[] {
 export function censusArtifact(path: string, countries?: readonly string[]): SourceCensusRow {
 	const artifact = path.split("/").pop() ?? path
 
-	if (!existsSync(path)) {
+	if (!pathExistsSync(path)) {
 		return { artifact, bytes: 0, tables: 0, join: [], readable: false, reason: "not on disk" }
 	}
 
-	const bytes = statSync(path).size
+	const bytes = statPathSync(path).size
 
 	let db: DatabaseClient<WOFDatabase>
 
@@ -160,12 +161,12 @@ export function censusArtifact(path: string, countries?: readonly string[]): Sou
  * `.prev`, `.bak` and journal siblings are excluded: they are on disk on purpose and censusing them reports the same
  * country twice under names nobody can act on.
  */
-export function gazetteerArtifacts(dataRoot?: string): string[] {
+export async function gazetteerArtifacts(dataRoot?: string): Promise<string[]> {
 	const wof = join(dataRoot ?? String(mailwomanDataRoot()), "wof")
 
-	if (!existsSync(wof)) return []
+	if (!(await pathExists(wof))) return []
 
-	return readdirSync(wof)
+	return (await readDirectory(wof))
 		.filter((name) => name.endsWith(".db"))
 		.filter((name) => !/\.(?:prev\d*|bak)\b/.test(name))
 		.toSorted()

@@ -16,8 +16,8 @@
  *   suffix: "Blvd" }
  */
 
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resourceDictionaryPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 function loadDictionary(filename: string): Set<string> {
@@ -25,7 +25,7 @@ function loadDictionary(filename: string): Set<string> {
 	// packaged `out/` tree. The candidate list this replaced named it TWICE and then guessed a third path
 	// off `process.cwd()`, and swallowed every error while probing, so a corrupt dictionary reported as a
 	// missing one.
-	const text = readFileSync(resourceDictionaryPath("libpostal", "en", filename), "utf8")
+	const text = readLocalTextFileSync(resourceDictionaryPath("libpostal", "en", filename))
 	const set = new Set<string>()
 
 	// The largest libpostal dictionary is 8.4 KB, and this runs once per process at module load.

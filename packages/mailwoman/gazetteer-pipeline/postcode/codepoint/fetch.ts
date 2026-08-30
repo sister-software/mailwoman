@@ -35,9 +35,9 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/utils"
-import { createWriteStream } from "@mailwoman/platform/fs"
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
 import { join } from "path-ts"
@@ -328,7 +328,7 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 		)
 	}
 
-	await mkdir(destDir, { recursive: true })
+	await makeDirectories(destDir)
 	const archivePath = String(join(destDir, download.fileName))
 
 	if (reuseExisting) {
@@ -359,7 +359,7 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 		},
 	})
 
-	await pipeline(Readable.fromWeb(response.body.pipeThrough(counter)), createWriteStream(archivePath))
+	await pipeline(Readable.fromWeb(response.body.pipeThrough(counter)), openWriteStream(archivePath))
 
 	phase("verify", `md5 vs OS-published ${download.md5}`)
 	const md5 = await md5File(archivePath)
@@ -373,12 +373,11 @@ export async function downloadCodePointOpen(options: DownloadCodePointOptions): 
 
 	// The sidecar makes the archive self-describing on disk: a later reader can tell WHICH OS release these
 	// bytes are without re-querying an API whose answer will have moved on.
-	await writeFile(`${archivePath}.md5`, `${md5}  ${download.fileName}\n`, "utf8")
+	await writeLocalTextFile(`${md5}  ${download.fileName}\n`, `${archivePath}.md5`)
 
-	await writeFile(
-		String(join(destDir, "acquisition.json")),
+	await writeLocalTextFile(
 		`${JSON.stringify({ product, download, bytes, md5, acquiredAt: new Date().toISOString() }, null, 2)}\n`,
-		"utf8"
+		String(join(destDir, "acquisition.json"))
 	)
 
 	return { archivePath, bytes, md5, version: product.version, download, reused: false }

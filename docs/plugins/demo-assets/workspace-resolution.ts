@@ -5,7 +5,7 @@
  * @file Package-aware source resolution for the docs webpack build.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { createRequire } from "@mailwoman/platform/module"
 import { dirname, join } from "path-ts"
 
@@ -34,10 +34,10 @@ export function resolvePackagePath(packageName: string, ...segments: string[]): 
 /**
  * Resolve a package's source entry, falling back to compiled output when source is unavailable.
  */
-export function resolvePackageEntry(packageName: string): string | null {
+export async function resolvePackageEntry(packageName: string): Promise<string | null> {
 	const source = resolvePackagePath(packageName, "index.ts")
 
-	if (source && existsSync(source)) return source
+	if (source && (await pathExists(source))) return source
 
 	return resolvePackagePath(packageName, "out", "index.js")
 }
@@ -45,10 +45,10 @@ export function resolvePackageEntry(packageName: string): string | null {
 /**
  * Resolve a single-file package subpath such as `objects.ts`.
  */
-export function resolvePackageFile(packageName: string, subpath: string): string | null {
+export async function resolvePackageFile(packageName: string, subpath: string): Promise<string | null> {
 	const source = resolvePackagePath(packageName, `${subpath}.ts`)
 
-	if (source && existsSync(source)) return source
+	if (source && (await pathExists(source))) return source
 
 	return resolvePackagePath(packageName, "out", `${subpath}.js`)
 }
@@ -56,10 +56,10 @@ export function resolvePackageFile(packageName: string, subpath: string): string
 /**
  * Resolve a directory package subpath such as `decoder/index.ts`.
  */
-export function resolvePackageDirectoryEntry(packageName: string, subpath: string): string | null {
+export async function resolvePackageDirectoryEntry(packageName: string, subpath: string): Promise<string | null> {
 	const source = resolvePackagePath(packageName, subpath, "index.ts")
 
-	if (source && existsSync(source)) return source
+	if (source && (await pathExists(source))) return source
 
 	return resolvePackagePath(packageName, "out", subpath, "index.js")
 }

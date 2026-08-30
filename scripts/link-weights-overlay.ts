@@ -22,17 +22,12 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalTextFileSync, statLinkSync } from "@mailwoman/core/fs/readers-sync"
+import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { createSymbolicLinkSync, removePathIfPresentSync } from "@mailwoman/core/fs/writers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot, md5File, repoRootPath, workspacePath } from "@mailwoman/core/utils"
-import {
-	copyFileSync,
-	existsSync,
-	lstatSync,
-	mkdirSync,
-	readFileSync,
-	rmSync,
-	symlinkSync,
-} from "@mailwoman/platform/fs"
 import { relative, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -67,9 +62,9 @@ const locales = values.locale ? [values.locale.toLowerCase()] : recipe.locales
 function recordedDigests(locale: string): Record<string, string> {
 	const card = resolve(String(workspacePath(`neural-weights-${locale}`)), "model-card.json")
 
-	if (!existsSync(card)) return {}
+	if (!pathExistsSync(card)) return {}
 
-	return tryParsingJSON<{ files_md5?: Record<string, string> }>(readFileSync(card, "utf8"))?.files_md5 ?? {}
+	return tryParsingJSON<{ files_md5?: Record<string, string> }>(readLocalTextFileSync(card))?.files_md5 ?? {}
 }
 
 /**
@@ -80,13 +75,13 @@ function recordedDigests(locale: string): Record<string, string> {
  */
 function linkForce(source: string, dest: string): void {
 	try {
-		lstatSync(dest)
-		rmSync(dest, { force: true })
+		statLinkSync(dest)
+		removePathIfPresentSync(dest)
 	} catch {
 		// Nothing there. The lstat throw IS the check — `existsSync` would answer the wrong question.
 	}
 
-	symlinkSync(source, dest)
+	createSymbolicLinkSync(source, dest)
 }
 
 let linked = 0
@@ -99,7 +94,7 @@ for (const locale of locales) {
 	const digests = recordedDigests(locale)
 
 	if (!values.plan) {
-		mkdirSync(dir, { recursive: true })
+		await makeDirectories(dir)
 	}
 
 	process.stdout.write(`\n${locale}  →  ${relative(dataRoot, dir)}\n`)
@@ -115,16 +110,16 @@ for (const locale of locales) {
 	// symlink to the card would make the whole overlay depend on one working tree still existing at that
 	// path — and a worktree removed after linking would leave the overlay resolving a dangling card, which
 	// degrades to STAGE2_BIO_LABELS against a 33-logit model rather than to an error.
-	if (existsSync(cardSource) && !values.plan) {
-		mkdirSync(dir, { recursive: true })
-		rmSync(resolve(dir, "model-card.json"), { force: true })
-		copyFileSync(cardSource, resolve(dir, "model-card.json"))
+	if ((await pathExists(cardSource)) && !values.plan) {
+		await makeDirectories(dir)
+		await removePathIfPresent(resolve(dir, "model-card.json"))
+		await copyFileTo(cardSource, resolve(dir, "model-card.json"))
 	}
 
 	const artifacts = recipe.linkableFor(locale)
 
 	for (const { shippedName, sourcePath } of artifacts) {
-		if (!existsSync(sourcePath)) {
+		if (!(await pathExists(sourcePath))) {
 			missing++
 			process.stdout.write(`  ✗ ${shippedName}  source missing: ${sourcePath}\n`)
 
@@ -166,13 +161,13 @@ for (const locale of locales) {
 	// AGENTS.md documents for the publish path, reappearing one directory over. The per-locale
 	// `link-dev-weights.ts` scripts build these into the overlay directly; this only says whether they have.
 	for (const { shippedName, buildCommand, inputPath } of recipe.buildableFor(locale)) {
-		const present = existsSync(resolve(dir, shippedName))
+		const present = await pathExists(resolve(dir, shippedName))
 
 		process.stdout.write(
 			present
 				? `  ✓ ${shippedName}  already built\n`
 				: `  — ${shippedName}  NOT built (${buildCommand}` +
-						`${inputPath ? `; input ${existsSync(inputPath) ? "present" : "MISSING"}` : ""})\n`
+						`${inputPath ? `; input ${(await pathExists(inputPath)) ? "present" : "MISSING"}` : ""})\n`
 		)
 	}
 }

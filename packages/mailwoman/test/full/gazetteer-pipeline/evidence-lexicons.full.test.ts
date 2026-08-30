@@ -11,7 +11,7 @@
  *
  *   - `test.yml` job `lexicon-full`, path-gated — a PR that changes the builder or its inputs.
  *   - `lexicon-nightly.yml` — DATA drift. The gazetteer is rebuilt outside any PR, so no path filter
- *       can see it. This is the only layer that catches that, and it is the control for the fixture
+ *       can see it. This is the only layer that catches that and the control for the fixture
  *       layer: if the fixture stops representing the real data, this is what says so.
  *   - `publish.yml` prepare — the release gate.
  *
@@ -21,21 +21,20 @@
  *   claims about the gazetteer rather than about the laws.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { describe, expect, it } from "vitest"
 
 const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
 
-describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (admin DB)", () => {
+describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integration (admin DB)", () => {
 	it("applies all three laws end to end", async () => {
 		const { buildLocalitySurfaceLexicon } = await import("mailwoman/gazetteer-pipeline/evidence-lexicons")
 		const tmp = `${tmpdir()}/locality-surface-lexicon-test.json`
 
 		// v3-parity placetypes for run-to-run comparability with the probe chain's numbers.
-		const built = buildLocalitySurfaceLexicon({
+		const built = await buildLocalitySurfaceLexicon({
 			countries: ["FR"],
 			placetypes: ["locality", "localadmin"],
 			output: tmp,
@@ -44,8 +43,8 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 		expect(built.entries).toBeGreaterThan(10_000)
 		expect(built.skippedDegenerate).toBeGreaterThan(0)
 		expect(built.skippedProminence).toBeGreaterThan(0)
-		const { readFileSync } = await import("@mailwoman/platform/fs")
-		const j = parseJSONStrict<{ entries: Record<string, number> }>(readFileSync(tmp, "utf8"))
+
+		const j = await readLocalJSONFile<{ entries: Record<string, number> }>(tmp)
 
 		expect(j.entries.paris).toBe(3) // metro clears the person-name tier, homograph-flagged
 		expect(j.entries.joseph).toBeUndefined() // law 3
@@ -57,7 +56,7 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 		const { buildLocalitySurfaceLexicon } = await import("mailwoman/gazetteer-pipeline/evidence-lexicons")
 		const tmp = `${tmpdir()}/locality-surface-lexicon-v5-us-test.json`
 
-		const built = buildLocalitySurfaceLexicon({
+		const built = await buildLocalitySurfaceLexicon({
 			countries: ["US"],
 			placetypes: ["locality", "localadmin", "neighbourhood"],
 			output: tmp,
@@ -65,8 +64,8 @@ describe.skipIf(!existsSync(ADMIN_DB))("locality-surface build — integration (
 
 		expect(built.skippedRegionVocabulary).toBeGreaterThan(0)
 		expect(built.skippedSubPhrase).toBeGreaterThan(0)
-		const { readFileSync } = await import("@mailwoman/platform/fs")
-		const j = parseJSONStrict<{ entries: Record<string, number> }>(readFileSync(tmp, "utf8"))
+
+		const j = await readLocalJSONFile<{ entries: Record<string, number> }>(tmp)
 
 		// Family F2b — directionals (neighbourhoods literally named these; law-1 closure):
 		for (const s of ["east", "west", "north", "south", "northeast", "southwest"]) {

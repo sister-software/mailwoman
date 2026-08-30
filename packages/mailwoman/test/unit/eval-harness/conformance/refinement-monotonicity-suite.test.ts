@@ -19,7 +19,7 @@
  *   counted once however many links it carries.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { join } from "@mailwoman/platform/path"
 import { type ConformanceFixture, loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import {
@@ -67,7 +67,7 @@ describe("the committed refinement suite", () => {
 		expect(auditRefinementSuite(fixtures)).toEqual([])
 	})
 
-	it("ends every chain at a committed board row, verbatim", () => {
+	it("ends every chain at a committed board row, verbatim", async () => {
 		const chains = refinementChains(fixtures)
 
 		expect(chains.length).toBeGreaterThan(0)
@@ -80,7 +80,7 @@ describe("the committed refinement suite", () => {
 			expect(chain.tip, `${chain.rowRef}: the chain's fullest query is not the committed input`).toBe(seedCase!.input)
 
 			expect(
-				existsSync(join(CASES_DIR, file.replace(/^cases\//u, ""))),
+				await pathExists(join(CASES_DIR, file.replace(/^cases\//u, ""))),
 				`${chain.rowRef}: names no file (${file})`
 			).toBe(true)
 		}

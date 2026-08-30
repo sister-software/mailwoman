@@ -131,8 +131,8 @@ export class AddressPointInterpolator<
 		return hit ?? this.#fallback?.find(query) ?? null
 	}
 
-	close(): void {
-		this.#resources.dispose()
+	[Symbol.dispose](): void {
+		this.#resources[Symbol.dispose]()
 	}
 }
 

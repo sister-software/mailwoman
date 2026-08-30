@@ -29,9 +29,9 @@
  */
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createHash } from "@mailwoman/platform/crypto"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
@@ -171,7 +171,7 @@ for (const shape of SHAPES) {
 console.log(`span serialization sha256: ${createHash("sha256").update(spans.join("\n")).digest("hex")}`)
 
 if (values["dump-spans"]) {
-	writeFileSync(values["dump-spans"], spans.join("\n") + "\n")
+	await writeLocalTextFile(spans.join("\n") + "\n", values["dump-spans"])
 
 	console.log(`spans → ${values["dump-spans"]} (${spans.length} parses)`)
 }

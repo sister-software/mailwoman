@@ -29,7 +29,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 // same-named towns ("Sheldon") — the Vermont one small, the Iowa one larger — plus the ancestry
 // the wof:hierarchy backfill restores so the region constraint can reach the descendant town.
 function buildDB(): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -96,7 +96,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-	lookup.close()
+	lookup[Symbol.dispose]()
 })
 
 describe("region-abbreviation resolution (#440/#441)", () => {

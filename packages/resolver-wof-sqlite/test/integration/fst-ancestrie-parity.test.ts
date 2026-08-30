@@ -28,8 +28,8 @@
  *       stale-format file.
  */
 
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import type {
 	AutocompleteOpts,
 	AutocompleteResult,
@@ -319,17 +319,17 @@ const CURATED_QUERIES: Record<string, readonly string[]> = {
 
 for (const locale of ["en-gb", "es-es", "it-it"]) {
 	const artifactPath = String(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
-	const present = existsSync(artifactPath)
+	const present = await pathExists(artifactPath)
 
 	describe.skipIf(!present)(`fst-autocomplete ↔ ancestrie parity — shipped ${locale}`, () => {
-		it("answers identically across the derived + curated battery", () => {
+		it("answers identically across the derived + curated battery", async () => {
 			const stamp = peekFSTStampFields(artifactPath)
 
 			// v5 = the two-score split. A stale-format artifact would pin parity against bytes production
 			// no longer ships — fail loudly instead.
 			expect(stamp?.formatVersion).toBe(5)
 
-			const matcher = deserializeFST(readFileSync(artifactPath))
+			const matcher = deserializeFST(await readLocalBuffer(artifactPath))
 
 			// Deterministic derived battery: the artifact's first dozen root tokens (sorted), each as a
 			// bare query, a two-token walk through its own first continuation, and a partial prefix.

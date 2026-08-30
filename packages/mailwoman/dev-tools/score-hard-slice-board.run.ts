@@ -49,9 +49,11 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver, mostSpecificResolved } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -95,7 +97,7 @@ console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
 //#region Resolver + pipelines
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-const wofPaths = wofShardPaths().filter(existsSync)
+const wofPaths = wofShardPaths().filter(pathExistsSync)
 
 if (!wofPaths.length)
 	throw new Error("no WOF shards found — this board grades the RESOLVED place, so it needs the gazetteer")
@@ -121,7 +123,7 @@ for (const arm of arms) {
 
 	for (const locale of locales) {
 		const binPath = dir ? `${dir}/fst-${locale}.bin` : undefined
-		const fst = binPath && existsSync(binPath) ? deserializeFST(readFileSync(binPath)) : false
+		const fst = binPath && (await pathExists(binPath)) ? deserializeFST(await readLocalBuffer(binPath)) : false
 
 		if (dir && !fst) {
 			console.error(`[arm ${arm}] ${locale}: NO fst-${locale}.bin in ${dir} — this locale runs FST-free in this arm`)
@@ -434,13 +436,13 @@ if (arms.includes("pop") && arms.includes("imp")) {
 }
 
 if (values["out-json"]) {
-	writeFileSync(values["out-json"], `${JSON.stringify({ board: board.length, arms, results }, null, 2)}\n`)
+	await writeLocalJSONFile({ board: board.length, arms, results }, values["out-json"])
 
 	console.error(`[out] ${values["out-json"]}`)
 }
 
 if (values["out-rows"]) {
-	writeFileSync(values["out-rows"], `${results.map((r) => JSON.stringify(r)).join("\n")}\n`)
+	await writeLocalTextFile(`${results.map((r) => JSON.stringify(r)).join("\n")}\n`, values["out-rows"])
 
 	console.error(`[out] ${values["out-rows"]}`)
 }

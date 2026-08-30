@@ -20,10 +20,10 @@
  *   [--out-jsonl <path>]`
  */
 
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
-import { writeFileSync } from "@mailwoman/platform/fs"
 
 import { addressFrequencyKey, streamRows } from "#index"
 
@@ -241,7 +241,7 @@ export async function goldSetSample(
 	report?.(`    sampling ${sample.length} (stride ${stride}) for adjudication`)
 
 	if (OUT) {
-		writeFileSync(OUT, sample.map((p) => JSON.stringify(p)).join("\n") + "\n")
+		await writeLocalTextFile(sample.map((p) => JSON.stringify(p)).join("\n") + "\n", OUT)
 		report?.(`[written] ${OUT}`)
 	} else {
 		for (const p of sample.slice(0, 10)) {

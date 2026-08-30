@@ -89,7 +89,7 @@ function buildFixtureDB(
 	places: readonly FixturePlace[],
 	{ withEncyclopedic }: { withEncyclopedic: boolean }
 ): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -146,7 +146,7 @@ const open = (places: readonly FixturePlace[], withEncyclopedic: boolean): WOFSQ
 let lookup: WOFSQLitePlaceLookup | undefined
 
 afterEach(() => {
-	lookup?.close()
+	lookup?.[Symbol.dispose]()
 	lookup = undefined
 })
 
@@ -256,8 +256,8 @@ describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 				expect(afterIDs).toEqual(beforeIDs)
 				expect(beforeIDs.length).toBeGreaterThan(0)
 			} finally {
-				before.close()
-				after.close()
+				before[Symbol.dispose]()
+				after[Symbol.dispose]()
 			}
 		})
 	}
@@ -281,8 +281,8 @@ describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 			expect(afterIDs).toEqual(beforeIDs)
 			expect(afterIDs[0]).toBe(101_751_155)
 		} finally {
-			before.close()
-			after.close()
+			before[Symbol.dispose]()
+			after[Symbol.dispose]()
 		}
 	})
 })

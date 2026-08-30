@@ -23,7 +23,7 @@
  *   the result the asymmetry claim is graded on.
  */
 
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -75,7 +75,7 @@ const EvalAbsenceObservationProbe: ParsedCommandComponent<Options> = ({ options 
 			})
 
 			if (options.out) {
-				writeFileSync(options.out, `${JSON.stringify(receipt, null, "\t")}\n`)
+				await writeLocalJSONFile(receipt, options.out)
 			}
 
 			if (!options.json) {

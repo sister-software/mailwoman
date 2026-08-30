@@ -12,6 +12,7 @@
 
 // Never the `@mailwoman/core` barrel: this is shared by every interactive command, and the barrel needlessly widens
 // each selected command's import graph.
+import { prettyJSON } from "@mailwoman/core/objects"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
@@ -158,8 +159,10 @@ export function lazyComponent<P extends object>(load: () => Promise<React.FC<P>>
  * {@linkcode useCommandTask} renders the done frame exactly once before its `process.exit`. Same pattern as
  * `commands/gazetteer/inspect/graph.tsx`.
  */
-export function writeRawStdout(text: string): null {
-	process.stdout.write(text + "\n")
+export function writeRawStdout(text: string | object): null {
+	const normalized = typeof text === "string" ? text + "\n" : prettyJSON(text)
+
+	process.stdout.write(normalized)
 
 	return null
 }

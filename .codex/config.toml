@@ -1,3 +1,10 @@
+notify = ["sh", "/home/lab/Projects/mailwoman/.codex/codemod/periodic-update/check-updates.sh"]
+[mcp_servers]
+codemod = { command = "/home/lab/.npm/_npx/bef22f83919465d9/node_modules/@codemod.com/cli-linux-x64-gnu/codemod", args = [
+	"mcp",
+] }
 [mcp_servers.mailwoman-dev]
 command = "node"
 args = ["packages/dev-mcp/cli.ts"]
+
+

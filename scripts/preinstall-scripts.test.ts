@@ -20,8 +20,8 @@
  *   starts running a script before its install step; remove one when that ordering changes.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { dirname, join, relative, resolve } from "@mailwoman/platform/path"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
@@ -102,7 +102,7 @@ async function collectReachableExternals(entryPoint: string): Promise<Array<{ fi
 		if (seen.has(filePath)) continue
 		seen.add(filePath)
 
-		const source = await readFile(filePath, "utf8")
+		const source = await readLocalTextFile(filePath)
 
 		for (const specifier of collectSpecifiers(filePath, source)) {
 			if (!specifier.startsWith(".")) {

@@ -56,8 +56,7 @@ export interface SpanProposalPriorOpts {
 	 * it is that margin divided by the proposal's confidence (0.85 for a non-weak designator, 0.5 for a weak one). Doing
 	 * this for a handful of intended-flip and intended-veto cases reconstructs the window directly.
 	 *
-	 * Two properties of the margins are easy to get wrong and worth stating, because both have already produced a false
-	 * reading here:
+	 * Two properties of the margins are easy to get wrong because both have already produced a false reading here:
 	 *
 	 * - Margins are CONTEXT-dependent, not surface-dependent. The same span in two inputs can sit either side of the window
 	 *   (measured 2026-08-02: `Terminal 5` carries a 5.01-nat margin before `O'Hare…` and 3.16 before `Heathrow…`). A
@@ -139,7 +138,7 @@ export function buildSpanProposalPriors(
 	const matrix: number[][] = []
 
 	for (let t = 0; t < T; t++) {
-		matrix.push(new Array<number>(L).fill(0))
+		matrix.push(Array.from<number>({ length: L }).fill(0))
 	}
 
 	if (!proposals.length) return matrix

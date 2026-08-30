@@ -15,8 +15,8 @@
  *   Example `releases.json`: { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
  */
 
+import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join } from "path-ts"
 
 /**
@@ -29,7 +29,7 @@ export type DataReleaseManifest = Record<string, string>
  */
 export function readReleaseManifest(dataRoot: string): DataReleaseManifest | null {
 	try {
-		const raw = tryParsingJSON(readFileSync(join(dataRoot, "releases.json"), "utf8"))
+		const raw = tryParsingJSON(readLocalTextFileSync(join(dataRoot, "releases.json")))
 
 		if (!raw || typeof raw !== "object") return null
 		const out: DataReleaseManifest = {}
@@ -61,10 +61,10 @@ export function resolveShardPath(
 	if (version) {
 		const versioned = join(dataRoot, family, `${family}-us-${slug}-${version}.db`)
 
-		if (existsSync(versioned)) return versioned
+		if (pathExistsSync(versioned)) return versioned
 	}
 
 	const legacy = join(dataRoot, family, `${family}-us-${slug}.db`)
 
-	return existsSync(legacy) ? legacy : null
+	return pathExistsSync(legacy) ? legacy : null
 }

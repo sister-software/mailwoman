@@ -61,8 +61,8 @@ interface Staged {
  * writing rows — the pass owns the loop, not the storage.
  */
 function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number, PlaceAttrs>) {
-	const src = new DatabaseClient<WOFDatabase>(":memory:")
-	using out = new DatabaseClient<CandidateDatabase>(":memory:")
+	using src = DatabaseClient.temp<WOFDatabase>()
+	using out = DatabaseClient.temp<CandidateDatabase>()
 
 	src.exec("CREATE TABLE place_search (wof_id INTEGER PRIMARY KEY, alt_names TEXT)")
 
@@ -77,8 +77,6 @@ function run(rows: Array<{ id: number; alt: string | null }>, attrs: Map<number,
 	const result = explodeAliasBags(src, out, attrs, (k, _a, sid, isPrimary) => {
 		staged.push({ k, sid, isPrimary })
 	})
-
-	src.destroy()
 
 	return { ...result, staged }
 }

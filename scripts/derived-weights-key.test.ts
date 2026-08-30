@@ -12,10 +12,16 @@
  *   stale-artifact machine.
  */
 
-import { mkdir, mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import {
+	makeDirectories,
+	removePath,
+	writeLocalBuffer,
+	writeLocalFile,
+	writeLocalTextFile,
+} from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
 	DERIVED_WEIGHTS_INPUTS,
@@ -26,6 +32,10 @@ import {
 	derivedWeightsKeyFrom,
 } from "./derived-weights-key.ts"
 
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
+
 /**
  * Name an absolute path by its basename — the shape production uses (repo-relative name, absolute read path).
  */
@@ -33,66 +43,64 @@ function at(path: string, name?: string): DerivedWeightsInput {
 	return { name: name ?? path.slice(path.lastIndexOf("/") + 1), path }
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "derived-weights-key-"))
+	scratch = await temporaryDirectory("derived-weights-key-")
 })
 
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("derivedWeightsKeyFrom", () => {
 	it("is stable for identical inputs", async () => {
-		const a = join(scratch, "a.json")
-		await writeFile(a, '{"x":1}')
+		const a = scratch.resolve("a.json")
+		await writeLocalTextFile('{"x":1}', a)
 
 		expect(derivedWeightsKeyFrom([at(a)])).toBe(derivedWeightsKeyFrom([at(a)]))
 	})
 
 	it("changes when a hashed input's CONTENT changes", async () => {
-		const a = join(scratch, "a.json")
-		await writeFile(a, '{"x":1}')
+		const a = scratch.resolve("a.json")
+		await writeLocalTextFile('{"x":1}', a)
 		const before = derivedWeightsKeyFrom([at(a)])
 
-		await writeFile(a, '{"x":2}')
+		await writeLocalTextFile('{"x":2}', a)
 
 		expect(derivedWeightsKeyFrom([at(a)])).not.toBe(before)
 	})
 
 	it("changes when a GENERATING MODULE changes — the currency-filter regression", async () => {
-		const config = join(scratch, "release.config.json")
-		const generator = join(scratch, "pair-index.tsx")
-		await writeFile(config, '{"weights":{"model":"m.onnx"}}')
-		await writeFile(generator, "export const delta = 1")
+		const config = scratch.resolve("release.config.json")
+		const generator = scratch.resolve("pair-index.tsx")
+		await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', config)
+		await writeLocalTextFile("export const delta = 1", generator)
 		const before = derivedWeightsKeyFrom([at(config), at(generator)])
 
 		// The config is untouched; only the code that produces the binaries changed.
-		await writeFile(generator, "export const delta = 2")
+		await writeLocalTextFile("export const delta = 2", generator)
 
 		expect(derivedWeightsKeyFrom([at(config), at(generator)])).not.toBe(before)
 	})
 
 	it("is order-independent across the input list", async () => {
-		const a = join(scratch, "a.json")
-		const b = join(scratch, "b.json")
-		await writeFile(a, "1")
-		await writeFile(b, "2")
+		const a = scratch.resolve("a.json")
+		const b = scratch.resolve("b.json")
+		await writeLocalTextFile("1", a)
+		await writeLocalTextFile("2", b)
 
 		expect(derivedWeightsKeyFrom([at(a), at(b)])).toBe(derivedWeightsKeyFrom([at(b), at(a)]))
 	})
 
 	it("treats a MISSING input as a distinct state, not as empty", async () => {
-		const a = join(scratch, "a.json")
-		await writeFile(a, "1")
+		const a = scratch.resolve("a.json")
+		await writeLocalTextFile("1", a)
 		const present = derivedWeightsKeyFrom([at(a)])
 
-		await rm(a)
+		await removePath(a)
 		const absent = derivedWeightsKeyFrom([at(a)])
 
-		const empty = join(scratch, "empty.json")
-		await writeFile(empty, "")
+		const empty = scratch.resolve("empty.json")
+		await writeLocalTextFile("", empty)
 
 		// Absence is not zero: a file that is gone must not hash like a file that is empty.
 		expect(absent).not.toBe(present)
@@ -100,10 +108,10 @@ describe("derivedWeightsKeyFrom", () => {
 	})
 
 	it("distinguishes inputs by NAME", async () => {
-		const a = join(scratch, "a.json")
-		const b = join(scratch, "b.json")
-		await writeFile(a, "same")
-		await writeFile(b, "same")
+		const a = scratch.resolve("a.json")
+		const b = scratch.resolve("b.json")
+		await writeLocalTextFile("same", a)
+		await writeLocalTextFile("same", b)
 
 		// Renaming an input is a change, even when the bytes are identical.
 		expect(derivedWeightsKeyFrom([at(a)])).not.toBe(derivedWeightsKeyFrom([at(b)]))
@@ -114,13 +122,13 @@ describe("derivedWeightsKeyFrom", () => {
 		// so lab-1, lab-2, lab-3 and a local worktree each computed a different key over byte-identical
 		// inputs and none ever saw another's work: four store directories holding the same eleven
 		// artifacts, and a 41s pair-index-nz.bin rebuild on a runner that already had the file.
-		const checkoutA = join(scratch, "runner-1", "_work", "mailwoman")
-		const checkoutB = join(scratch, "runner-2", "_work", "mailwoman")
+		const checkoutA = scratch.resolve("runner-1", "_work", "mailwoman")
+		const checkoutB = scratch.resolve("runner-2", "_work", "mailwoman")
 
 		for (const root of [checkoutA, checkoutB]) {
-			await mkdir(root, { recursive: true })
-			await writeFile(join(root, "release.config.json"), '{"weights":{"model":"m.onnx"}}')
-			await writeFile(join(root, "pair-index.tsx"), "export const delta = 10")
+			await makeDirectories(root)
+			await writeLocalTextFile('{"weights":{"model":"m.onnx"}}', join(root, "release.config.json"))
+			await writeLocalTextFile("export const delta = 10", join(root, "pair-index.tsx"))
 		}
 
 		const inputsFor = (root: string) => [
@@ -168,45 +176,41 @@ describe("derivedStoreServeViolation — the serve-time floor (#1528)", () => {
 	let dir: string
 
 	beforeEach(async () => {
-		dir = await mkdtemp(join(tmpdir(), "derived-serve-"))
-	})
-
-	afterEach(async () => {
-		await rm(dir, { recursive: true, force: true })
+		dir = fixtures.use(await temporaryDirectory("derived-serve-")).path
 	})
 
 	it("refuses the #1528 reproduction: an empty GB binary is never a valid entry", async () => {
 		const path = join(dir, "postcode-gb.bin")
-		await writeFile(path, pcb1(0))
+		await writeLocalFile(pcb1(0), path)
 
-		expect(derivedStoreServeViolation("postcode-gb.bin", path)).toMatch(/below the GB floor/)
+		expect(await derivedStoreServeViolation("postcode-gb.bin", path)).toMatch(/below the GB floor/)
 	})
 
 	it("refuses a collapsed FR binary below its calibrated floor", async () => {
 		const path = join(dir, "postcode-fr.bin")
-		await writeFile(path, pcb1(500))
+		await writeLocalFile(pcb1(500), path)
 
-		expect(derivedStoreServeViolation("postcode-fr.bin", path)).toMatch(/below the FR floor of 13,000/)
+		expect(await derivedStoreServeViolation("postcode-fr.bin", path)).toMatch(/below the FR floor of 13,000/)
 	})
 
 	it("serves a GB binary at outward granularity — the LOWEST GB floor is the serve gate", async () => {
 		const path = join(dir, "postcode-gb.bin")
-		await writeFile(path, pcb1(1500))
+		await writeLocalFile(pcb1(1500), path)
 
-		expect(derivedStoreServeViolation("postcode-gb.bin", path)).toBeNull()
+		expect(await derivedStoreServeViolation("postcode-gb.bin", path)).toBeNull()
 	})
 
 	it("refuses bytes that are not a PCB1 at all", async () => {
 		const path = join(dir, "postcode-de.bin")
-		await writeFile(path, Buffer.from("not a binary"))
+		await writeLocalBuffer(Buffer.from("not a binary"), path)
 
-		expect(derivedStoreServeViolation("postcode-de.bin", path)).toMatch(/not a PCB1/)
+		expect(await derivedStoreServeViolation("postcode-de.bin", path)).toMatch(/not a PCB1/)
 	})
 
 	it("passes non-postcode entries untouched — pair indexes validate their own header on load", async () => {
 		const path = join(dir, "pair-index-gb.bin")
-		await writeFile(path, Buffer.from("anything"))
+		await writeLocalBuffer(Buffer.from("anything"), path)
 
-		expect(derivedStoreServeViolation("pair-index-gb.bin", path)).toBeNull()
+		expect(await derivedStoreServeViolation("pair-index-gb.bin", path)).toBeNull()
 	})
 })

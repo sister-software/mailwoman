@@ -16,9 +16,9 @@
  *   imports, plus `HEAD` and the dirty set, and a change makes the engine UNREACHABLE rather than wrong.
  */
 
+import { readDirectoryEntriesSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { execFileSync } from "@mailwoman/platform/child_process"
 import { createHash } from "@mailwoman/platform/crypto"
-import { readdirSync, statSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 
 /**
@@ -86,7 +86,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 		let entries
 
 		try {
-			entries = readdirSync(dir, { withFileTypes: true })
+			entries = readDirectoryEntriesSync(dir)
 		} catch {
 			// A workspace that does not exist in this checkout contributes nothing rather than throwing — the caller's
 			// emptiness check is what catches a list that is wrong in total.
@@ -107,7 +107,7 @@ function newestSourceMtime(root: string): { mtimeMs: number; path: string | null
 			count++
 
 			const full = join(dir, entry.name)
-			const { mtimeMs } = statSync(full)
+			const { mtimeMs } = statPathSync(full)
 
 			if (mtimeMs > newest) {
 				newest = mtimeMs

@@ -17,8 +17,8 @@
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeNUTSAnnotator, NUTSLookup } from "@mailwoman/nuts-lookup"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { coordinateFormatAnnotator } from "@mailwoman/spatial"
@@ -124,7 +124,7 @@ async function serve(): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = resolveGazetteerOrExit(values["candidate-db"])
+	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"])
 	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
@@ -147,19 +147,19 @@ async function serve(): Promise<void> {
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
 	const tzDBPath = dataRootPath("timezone", "timezone.db")
 
-	if (existsSync(tzDBPath)) {
+	if (await pathExists(tzDBPath)) {
 		annotators.push(makeTimezoneAnnotator(new TimezoneLookup({ databasePath: tzDBPath })))
 	}
 
 	const ulDBPath = dataRootPath("un-locode", "un-locode.db")
 
-	if (existsSync(ulDBPath)) {
+	if (await pathExists(ulDBPath)) {
 		annotators.push(makeUnLocodeAnnotator(new UnLocodeLookup({ databasePath: ulDBPath })))
 	}
 
 	const nutsDBPath = dataRootPath("nuts", "nuts.db")
 
-	if (existsSync(nutsDBPath)) {
+	if (await pathExists(nutsDBPath)) {
 		annotators.push(makeNUTSAnnotator(new NUTSLookup({ databasePath: nutsDBPath })))
 	}
 

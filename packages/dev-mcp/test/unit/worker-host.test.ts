@@ -9,21 +9,19 @@
  *   with no signal to refresh.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { WorkerHost } from "@mailwoman/dev-mcp/worker-host"
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
-const STUB_DIR = mkdtempSync(join(tmpdir(), "mwdev-stub-worker-"))
-const STUB_PATH = join(STUB_DIR, "stub-worker.mjs")
-const TOOLS_PATH = join(STUB_DIR, "tools.json")
+const STUB_DIR = await temporaryDirectory("mwdev-stub-worker-")
+const STUB_PATH = STUB_DIR.resolve("stub-worker.mjs")
+const TOOLS_PATH = STUB_DIR.resolve("tools.json")
 
 /**
  * A minimal worker speaking the IPC protocol: ready on handshake with the sidecar's tool metas, echo on call.
  */
-writeFileSync(
-	STUB_PATH,
+await writeLocalTextFile(
 	`const { readFileSync } = process.getBuiltinModule("node:fs")
 const tools = JSON.parse(readFileSync(process.argv[2], "utf8"))
 process.on("message", (message) => {
@@ -34,39 +32,34 @@ process.on("message", (message) => {
 		process.send({ type: "result", id: message.id, ok: true, value: message.args })
 	}
 })
-`
+`,
+	STUB_PATH
 )
 
-function writeTools(schema: Record<string, unknown>): void {
-	writeFileSync(TOOLS_PATH, JSON.stringify([{ name: "stub_tool", description: "a stub", inputSchema: schema }]))
+async function writeTools(schema: Record<string, unknown>): Promise<void> {
+	await writeLocalJSONFile([{ name: "stub_tool", description: "a stub", inputSchema: schema }], TOOLS_PATH)
 }
 
-afterAll(() => {
-	rmSync(STUB_DIR, { recursive: true, force: true })
-})
+afterAll(() => STUB_DIR[Symbol.asyncDispose]())
 
 describe("WorkerHost restart", () => {
 	it("reports tools_changed when a schema changes without a name changing", async () => {
-		writeTools({ type: "object", properties: {} })
+		await writeTools({ type: "object", properties: {} })
 
-		const host = new WorkerHost({ workerPath: STUB_PATH, workerArgs: [TOOLS_PATH] })
+		await using host = new WorkerHost({ workerPath: STUB_PATH, workerArgs: [TOOLS_PATH] })
 
-		try {
-			await host.start()
+		await host.start()
 
-			// Same list, same fork state — a restart with nothing edited stays quiet.
-			const unchanged = await host.restart()
+		// Same list, same fork state — a restart with nothing edited stays quiet.
+		const unchanged = await host.restart()
 
-			expect(unchanged.tools_changed).toBe(false)
+		expect(unchanged.tools_changed).toBe(false)
 
-			// A new parameter, same tool name: the client's copy of the schema is now wrong, so this MUST announce.
-			writeTools({ type: "object", properties: { tally: { type: "array" } } })
+		// A new parameter, same tool name: the client's copy of the schema is now wrong, so this MUST announce.
+		await writeTools({ type: "object", properties: { tally: { type: "array" } } })
 
-			const changed = await host.restart()
+		const changed = await host.restart()
 
-			expect(changed.tools_changed).toBe(true)
-		} finally {
-			await host.shutdown()
-		}
+		expect(changed.tools_changed).toBe(true)
 	}, 30_000)
 })

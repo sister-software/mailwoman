@@ -11,21 +11,25 @@
  *   nothing in the pipeline could tell them apart.
  */
 
-import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildRegressionDB } from "mailwoman/eval-harness/gauntlet/build-regression-db"
 import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { assertCorpusStampFresh, readCorpusStamp } from "mailwoman/eval-harness/gauntlet/corpus-stamp"
 import { createGauntletTable, type GauntletDatabase } from "mailwoman/eval-harness/gauntlet/schema"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterAll, afterEach, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const opened: DatabaseClient<GauntletDatabase>[] = []
 
 afterEach(async () => {
 	for (const kdb of opened.splice(0)) {
-		await kdb.destroy()
+		kdb.destroy()
 	}
 })
 
@@ -44,17 +48,17 @@ function row(id: string, input: string): string {
 /**
  * Write a throwaway corpus tree (one `xx/regression.jsonl`) and return its root.
  */
-function scratchCorpus(...rows: string[]): string {
-	const root = mkdtempSync(join(tmpdir(), "gauntlet-stamp-"))
+async function scratchCorpus(...rows: string[]): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("gauntlet-stamp-")).path
 
-	mkdirSync(join(root, "xx"), { recursive: true })
-	writeFileSync(join(root, "xx", "regression.jsonl"), `${rows.join("\n")}\n`, "utf8")
+	await makeDirectories(join(root, "xx"))
+	await writeLocalTextFile(`${rows.join("\n")}\n`, join(root, "xx", "regression.jsonl"))
 
 	return root
 }
 
-function scratchDB(): string {
-	return join(mkdtempSync(join(tmpdir(), "gauntlet-db-")), "regression.db")
+async function scratchDB(): Promise<string> {
+	return join(fixtures.use(await temporaryDirectory("gauntlet-db-")).path, "regression.db")
 }
 
 function open(path: string): DatabaseClient<GauntletDatabase> {
@@ -67,8 +71,8 @@ function open(path: string): DatabaseClient<GauntletDatabase> {
 
 describe("the build stamp", () => {
 	it("records the corpus hash and case count the DB was built from", async () => {
-		const corpus = scratchCorpus(row("xx-a", "1 Test Street"), row("xx-b", "2 Test Street"))
-		const output = scratchDB()
+		const corpus = await scratchCorpus(row("xx-a", "1 Test Street"), row("xx-b", "2 Test Street"))
+		const output = await scratchDB()
 
 		await buildRegressionDB({ casesDir: corpus, output })
 
@@ -80,8 +84,8 @@ describe("the build stamp", () => {
 	})
 
 	it("accepts a DB whose stamp matches the corpus on disk", async () => {
-		const corpus = scratchCorpus(row("xx-a", "1 Test Street"))
-		const output = scratchDB()
+		const corpus = await scratchCorpus(row("xx-a", "1 Test Street"))
+		const output = await scratchDB()
 
 		await buildRegressionDB({ casesDir: corpus, output })
 
@@ -89,14 +93,14 @@ describe("the build stamp", () => {
 	})
 
 	it("REFUSES a DB built from corpus state A once the corpus is at state B", async () => {
-		const stateA = scratchCorpus(row("xx-a", "1 Test Street"))
-		const output = scratchDB()
+		const stateA = await scratchCorpus(row("xx-a", "1 Test Street"))
+		const output = await scratchDB()
 
 		await buildRegressionDB({ casesDir: stateA, output })
 
 		// State B: the same tree, one row edited — the shape of an operator fixing an expectation and re-running
 		// the gate without rebuilding.
-		const stateB = scratchCorpus(row("xx-a", "1 Test Avenue"))
+		const stateB = await scratchCorpus(row("xx-a", "1 Test Avenue"))
 		const kdb = open(output)
 
 		await expect(assertCorpusStampFresh(kdb, await loadRegressionCases(stateB))).rejects.toThrow(
@@ -113,14 +117,13 @@ describe("the build stamp", () => {
 	})
 
 	it("REFUSES a DB that predates the stamp entirely", async () => {
-		const output = scratchDB()
-		const writer = new DatabaseClient<GauntletDatabase>(output)
+		const output = await scratchDB()
+		using writer = new DatabaseClient<GauntletDatabase>(output)
 
 		// A pre-2026-08-06 artifact: cases, no meta table.
 		await createGauntletTable(writer)
-		await writer.destroy()
 
-		const corpus = scratchCorpus(row("xx-a", "1 Test Street"))
+		const corpus = await scratchCorpus(row("xx-a", "1 Test Street"))
 
 		await expect(assertCorpusStampFresh(open(output), await loadRegressionCases(corpus))).rejects.toThrow(
 			/carries no corpus stamp/
@@ -130,16 +133,21 @@ describe("the build stamp", () => {
 
 describe("the emptiness guard", () => {
 	it("refuses to build from a corpus directory with no country dirs", async () => {
-		const empty = mkdtempSync(join(tmpdir(), "gauntlet-empty-"))
+		await using emptyDirectory = await temporaryDirectory("gauntlet-empty-")
+		const empty = emptyDirectory.path
 
-		await expect(buildRegressionDB({ casesDir: empty, output: scratchDB() })).rejects.toThrow(
+		await expect(buildRegressionDB({ casesDir: empty, output: await scratchDB() })).rejects.toThrow(
 			/resolved ZERO cases[\s\S]*refusing to build an empty regression\.db/
 		)
 	})
 
 	it("names the directory it read, so the diagnosis is not a guess", async () => {
-		const empty = mkdtempSync(join(tmpdir(), "gauntlet-empty-"))
-		const error = await buildRegressionDB({ casesDir: empty, output: scratchDB() }).catch((caught: Error) => caught)
+		await using emptyDirectory = await temporaryDirectory("gauntlet-empty-")
+		const empty = emptyDirectory.path
+
+		const error = await buildRegressionDB({ casesDir: empty, output: await scratchDB() }).catch(
+			(caught: Error) => caught
+		)
 
 		expect((error as Error).message).toContain(empty)
 		expect((error as Error).message).toMatch(/stale-compiled-tree/)

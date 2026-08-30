@@ -10,10 +10,11 @@
 		"docs/build/**",
 		"packages/mailwoman/commands/**/*.tsx",
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
-		"packages/*/out/**"
+		"packages/*/out/**",
+		"codemods/**"
 	],
 	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uvx"],
-	"ignoreDependencies": ["@duckdb/node-api"],
+	"ignoreDependencies": ["@duckdb/node-api", "ts-morph"],
 	"workspaces": {
 		"packages/*": {
 			"entry": ["index.ts", "cli.ts", "cli.tsx", "scripts/**/*.ts", "tools/**/*.ts", "dev-tools/**/*.ts"]

@@ -9,7 +9,7 @@
  *   `mailwoman-wof-build-fts` bin.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Text } from "ink"
@@ -45,13 +45,13 @@ const GazetteerBuildFTS: ParsedCommandComponent<Options> = ({ options, args }) =
 			const checks: Check[] = []
 
 			for (const path of args) {
-				if (!existsSync(path)) {
+				if (!(await pathExists(path))) {
 					checks.push({ ok: false, check: path, detail: "file not found" })
 
 					continue
 				}
 
-				const db = new DatabaseClient<WOFDatabase>(path)
+				using db = new DatabaseClient<WOFDatabase>(path)
 
 				try {
 					const result = buildPlaceSearchFTS(db, {
@@ -66,8 +66,6 @@ const GazetteerBuildFTS: ParsedCommandComponent<Options> = ({ options, args }) =
 					})
 				} catch (error) {
 					checks.push({ ok: false, check: path, detail: error instanceof Error ? error.message : String(error) })
-				} finally {
-					await db.destroy()
 				}
 			}
 

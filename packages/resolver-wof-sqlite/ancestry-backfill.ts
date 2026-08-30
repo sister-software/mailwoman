@@ -45,8 +45,8 @@
  *   nothing.
  */
 
+import { readDirectoryEntries } from "@mailwoman/core/fs/readers"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
-import { readdirSync } from "@mailwoman/platform/fs"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 
@@ -79,18 +79,16 @@ export interface AncestryBackfillResult {
  * the nested lab layout (a `whosonfirst-data` group dir holding the admin repos) and a flat layout (admin repos
  * directly under the root); searches at most two directory levels deep.
  */
-export function discoverAdminDataRoots(reposRoot: string): string[] {
+export async function discoverAdminDataRoots(reposRoot: string): Promise<string[]> {
 	const roots: string[] = []
 
-	const visit = (dir: string, depth: number): void => {
+	const visit = async (dir: string, depth: number): Promise<void> => {
 		if (depth > 2) return
 
 		let names: string[]
 
 		try {
-			names = readdirSync(dir, { withFileTypes: true })
-				.filter((e) => e.isDirectory())
-				.map((e) => e.name)
+			names = (await readDirectoryEntries(dir)).filter((e) => e.isDirectory()).map((e) => e.name)
 		} catch {
 			return
 		}
@@ -101,12 +99,12 @@ export function discoverAdminDataRoots(reposRoot: string): string[] {
 			if (name === "data") {
 				roots.push(child)
 			} else if (name.startsWith("whosonfirst-data")) {
-				visit(child, depth + 1)
+				await visit(child, depth + 1)
 			}
 		}
 	}
 
-	visit(reposRoot, 0)
+	await visit(reposRoot, 0)
 
 	return roots
 }

@@ -28,8 +28,10 @@
  *   - `--check-only` — resolve + validate + print, but write nothing (the dry-run path).
  */
 
+import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import semver from "semver"
@@ -56,7 +58,7 @@ if (!values.version) {
 }
 
 const rootManifestPath = resolve(repoRoot, "package.json")
-const rootManifest = parseJSONStrict<{ version?: string }>(readFileSync(rootManifestPath, "utf8"))
+const rootManifest = await readLocalJSONFile<{ version?: string }>(rootManifestPath)
 
 if (typeof rootManifest.version !== "string" || !semver.valid(rootManifest.version)) {
 	fail(`root package.json version is not a valid semver: ${String(rootManifest.version)}`)
@@ -82,9 +84,9 @@ if (values.version === "major" || values.version === "minor" || values.version =
 }
 
 // The SAME workspace list the publish loop uses (#756) — root + these is the full bump surface.
-const releaseItConfig = parseJSONStrict<{
+const releaseItConfig = await readLocalJSONFile<{
 	plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+}>(resolve(repoRoot, ".release-it.json"))
 
 const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
 
@@ -96,7 +98,7 @@ const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolve(repoR
 
 // Validate the whole set BEFORE writing anything — a half-bumped tree is worse than a failed run.
 const parsed = manifestPaths.map((path) => {
-	const manifest = parseJSONStrict<Record<string, unknown>>(readFileSync(path, "utf8"))
+	const manifest = readLocalJSONFileSync<Record<string, unknown>>(path)
 
 	if (typeof manifest.version !== "string") {
 		fail(`${path} has no version field`)
@@ -120,7 +122,7 @@ for (const { path, manifest } of parsed) {
 // the stringify write path used for the manifests would reformat it wholesale, moving the `weights` block a
 // code-only release must never touch (release-config-bump.test.ts pins the exact-one-line contract).
 const releaseConfigPath = resolve(repoRoot, "release.config.json")
-const releaseConfigText = readFileSync(releaseConfigPath, "utf8")
+const releaseConfigText = await readLocalTextFile(releaseConfigPath)
 const releaseConfig = parseJSONStrict<{ version?: string }>(releaseConfigText)
 
 if (releaseConfig.version !== rootManifest.version) {
@@ -133,10 +135,13 @@ if (releaseConfig.version !== rootManifest.version) {
 if (!values["check-only"]) {
 	for (const { path, manifest } of parsed) {
 		manifest.version = targetVersion
-		writeFileSync(path, `${JSON.stringify(manifest, null, "\t")}\n`)
+		await writeLocalJSONFile(manifest, path)
 	}
 
-	writeFileSync(releaseConfigPath, bumpReleaseConfigVersion(releaseConfigText, rootManifest.version, targetVersion))
+	await writeLocalTextFile(
+		bumpReleaseConfigVersion(releaseConfigText, rootManifest.version, targetVersion),
+		releaseConfigPath
+	)
 
 	console.log(
 		`bumped ${parsed.length + 1} version-bearing files (root + ${workspaces.length} workspaces + release.config.json) to ${targetVersion}`

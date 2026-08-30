@@ -13,8 +13,8 @@
  *   Invoke via `mailwoman corpus fetch hrsa --out-root <path>`.
  */
 
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { mkdirSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -36,7 +36,7 @@ interface SourceManifest {
 
 export async function fetchHRSA(options: FetchHRSAOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const destDir = join(options.outRoot, SLUG)
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 	const dest = join(destDir, FILENAME)
 
 	report?.(`=== ${SLUG} / ${FILENAME}`)

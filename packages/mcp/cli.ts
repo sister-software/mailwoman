@@ -49,10 +49,10 @@
  */
 
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
 import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
@@ -113,7 +113,7 @@ const CORE_FREE_TOOLS =
 function loadCore(): Promise<{ classifier: NeuralAddressClassifier; resolver: Resolver; shards: ShardProvider }> {
 	corePromise ??= (async () => {
 		const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-		const wofPaths = wofShardPaths().filter(existsSync)
+		const wofPaths = wofShardPaths().filter(pathExistsSync)
 		const candidateDB = resolveCandidateDBPath()
 
 		// #1009 friendly-failure discipline, the MCP shape of it. `server.ts` turns a thrown Error into an
@@ -280,7 +280,7 @@ const deps: MCPToolDeps = {
 		// Decision 6: `mailwoman_bdc_filing_landscape` requires bdc.db unconditionally (no optional-dep
 		// abstain shape exists for this tool), so a missing file becomes a friendly thrown Error naming the layer —
 		// never the raw `node:sqlite` "unable to open database file" message.
-		assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
+		await assertBDCDatabaseExists("mailwoman_bdc_filing_landscape", q.databasePath)
 
 		using db = new DatabaseClient<BDCDatabase>(q.databasePath, { readOnly: true })
 
@@ -288,7 +288,7 @@ const deps: MCPToolDeps = {
 	},
 
 	async plausibilityCheck(q) {
-		const bdcDB = openBDCDatabaseIfPresent(q.bdcDatabasePath)
+		const bdcDB = await openBDCDatabaseIfPresent(q.bdcDatabasePath)
 		const poi = await openPlausibilityPOIDeps(q.poiDatabasePath)
 
 		try {
@@ -312,9 +312,9 @@ const deps: MCPToolDeps = {
 		// Decision 6/gate 4: filerLookup has no optional-dep abstain shape — it throws rather than
 		// answer unstamped — so filer.db is required unconditionally, same discipline as bdc.db is for
 		// mailwoman_bdc_filing_landscape.
-		assertFilerDatabaseExists("mailwoman_filer_lookup", q.databasePath)
+		await assertFilerDatabaseExists("mailwoman_filer_lookup", q.databasePath)
 
-		using db = openFilerDatabaseIfPresent(q.databasePath)!
+		using db = (await openFilerDatabaseIfPresent(q.databasePath))!
 
 		let frn: FRN | undefined
 
@@ -328,7 +328,7 @@ const deps: MCPToolDeps = {
 			frn = parsed
 		}
 
-		return filerLookup(db, {
+		return await filerLookup(db, {
 			frn,
 			form499ID: q.form499ID,
 			bdcProviderID: q.bdcProviderID,
@@ -339,9 +339,9 @@ const deps: MCPToolDeps = {
 	async filerFamily(q) {
 		// Same discipline as mailwoman_filer_lookup — familyRollup has no optional-dep abstain shape
 		// either, so filer.db is required unconditionally.
-		assertFilerDatabaseExists("mailwoman_filer_family", q.databasePath)
+		await assertFilerDatabaseExists("mailwoman_filer_family", q.databasePath)
 
-		using db = openFilerDatabaseIfPresent(q.databasePath)!
+		using db = (await openFilerDatabaseIfPresent(q.databasePath))!
 
 		return familyRollup(db, {
 			familyID: q.familyID,

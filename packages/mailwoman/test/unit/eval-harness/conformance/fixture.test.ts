@@ -11,9 +11,9 @@
  *   fixture's own id — a refusal that does not name the row sends the reader to a file with no line to open.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import {
 	CONFORMANCE_RELATIONS,
@@ -23,7 +23,14 @@ import {
 	parseConformanceFixture,
 	RELATIONS_BY_COMPARATOR,
 } from "mailwoman/eval-harness/conformance/fixture"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+/**
+ * Scratch directories for this file's fixtures, removed when the suite ends.
+ */
+const scratchDirectories = new AsyncDisposableStack()
+
+afterAll(() => scratchDirectories.disposeAsync())
 
 const EXAMPLE_SUITE = String(
 	repoRootPath("packages", "mailwoman", "test-fixtures", "conformance", "contract-example.jsonl")
@@ -41,11 +48,11 @@ function record(over: Record<string, unknown> = {}): Record<string, unknown> {
 	}
 }
 
-function writeSuite(rows: ReadonlyArray<Record<string, unknown>>): string {
-	const dir = mkdtempSync(join(tmpdir(), "mw-conformance-"))
+async function writeSuite(rows: ReadonlyArray<Record<string, unknown>>): Promise<string> {
+	const dir = scratchDirectories.use(await temporaryDirectory("mw-conformance-")).path
 	const path = join(dir, "suite.jsonl")
 
-	writeFileSync(path, `${rows.map((row) => JSON.stringify(row)).join("\n")}\n`)
+	await writeLocalTextFile(`${rows.map((row) => JSON.stringify(row)).join("\n")}\n`, path)
 
 	return path
 }
@@ -234,12 +241,12 @@ describe("loadConformanceFixtures", () => {
 	it("refuses a duplicate id", async () => {
 		const path = writeSuite([record(), record({ law: "whitespace-invariance" })])
 
-		await expect(loadConformanceFixtures(path)).rejects.toThrow(/duplicate fixture id "cnf-sample-01"/)
+		await expect(loadConformanceFixtures(await path)).rejects.toThrow(/duplicate fixture id "cnf-sample-01"/)
 	})
 
 	it("refuses the whole suite on one bad row rather than loading the good ones", async () => {
 		const path = writeSuite([record(), record({ id: "cnf-sample-02", outcomeComparator: "vibes" })])
 
-		await expect(loadConformanceFixtures(path)).rejects.toThrow(/cnf-sample-02.*unknown outcomeComparator/s)
+		await expect(loadConformanceFixtures(await path)).rejects.toThrow(/cnf-sample-02.*unknown outcomeComparator/s)
 	})
 })

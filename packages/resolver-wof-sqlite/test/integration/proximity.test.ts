@@ -67,7 +67,7 @@ const FIXTURE: FixturePlace[] = [
 ]
 
 function buildFixtureDB(): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -120,7 +120,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-	lookup.close()
+	lookup[Symbol.dispose]()
 })
 
 describe("haversineKm (sanity)", () => {

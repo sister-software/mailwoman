@@ -21,8 +21,8 @@
  */
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 
@@ -108,7 +108,7 @@ async function readDemoDefaultVersion(): Promise<string> {
 }
 
 function readDocsCurrentVersion(): string {
-	const mdx = readFileSync(RELEASES_MDX_PATH, "utf8")
+	const mdx = readLocalTextFileSync(RELEASES_MDX_PATH)
 	const version = mdx.match(/^\|\s*\*\*([\d.]+)\*\*\s*\(current\)/m)?.[1]
 
 	if (!version) throw new Error(`${RELEASES_MDX_PATH} has no "| **X.Y.Z** (current)" row`)
@@ -128,10 +128,10 @@ const checks: ParityCheck[] = []
 // compares against the SHIPPED model identity: `packages/neural-weights-en-us/model-card.json#version`
 // (the same source verify-release-metadata keys off). The docs matrix row stays vs npm latest —
 // that surface documents package releases.
-const localCard = parseJSONStrict<{
+const localCard = await readLocalJSONFile<{
 	version: string
 	files_md5?: Record<string, string>
-}>(readFileSync(MODEL_CARD_PATH, "utf8"))
+}>(MODEL_CARD_PATH)
 
 const cardModelVersion = normalizeVersion(localCard.version)
 

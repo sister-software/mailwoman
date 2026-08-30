@@ -15,7 +15,7 @@
  *   diffing the report is the intended workflow.
  */
 
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -67,8 +67,8 @@ const GazetteerGranularity: ParsedCommandComponent<Options> = ({ options }) => {
 			floor: options.floor,
 		})
 
-		mkdirSync(dirname(options.out), { recursive: true })
-		writeFileSync(options.out, markdown)
+		await makeDirectories(dirname(options.out))
+		await writeLocalFile(markdown, options.out)
 
 		const byBottom = new Map<string, number>()
 

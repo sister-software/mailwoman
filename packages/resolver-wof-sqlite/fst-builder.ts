@@ -55,18 +55,18 @@ interface NameRow {
 	privateuse: string
 }
 
-export function buildFSTFromWOF(opts: BuildFSTOpts): {
+export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	matcher: FSTMatcher
 	provenance: FSTProvenance
 	result: BuildFSTResult
-} {
+}> {
 	const countries = opts.countries ?? DEFAULT_COUNTRIES
 	const placetypes = opts.placetypes ?? DEFAULT_PLACETYPES
 	const languages = opts.languages ?? DEFAULT_LANGUAGES
 	const progress = opts.onProgress ?? (() => {})
 
 	progress("open", opts.dbPath)
-	const db = new DatabaseClient<WOFDatabase>(opts.dbPath, { open: true })
+	using db = new DatabaseClient<WOFDatabase>(opts.dbPath, { open: true })
 
 	// Phase 1: Load all matching SPR rows.
 	progress("spr", `Loading places for countries=[${countries}], placetypes=[${placetypes}]`)
@@ -325,8 +325,6 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 		}
 	}
 
-	db.destroy()
-
 	progress(
 		"done",
 		`Built trie: ${nodes.length} states, ${insertCount} name insertions` +
@@ -343,7 +341,7 @@ export function buildFSTFromWOF(opts: BuildFSTOpts): {
 	// `sourceIdentity` lets a caller that already knows the digest (or is building from something that
 	// is not a file at all) supply it instead.
 	progress("stamp", `Reading source identity for ${opts.dbPath}`)
-	const source = opts.sourceIdentity ?? readWOFSourceIdentity(opts.dbPath)
+	const source = opts.sourceIdentity ?? (await readWOFSourceIdentity(opts.dbPath))
 
 	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),

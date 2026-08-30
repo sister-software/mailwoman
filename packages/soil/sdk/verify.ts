@@ -192,7 +192,7 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}
 	} finally {
-		lookup.close()
+		lookup[Symbol.dispose]()
 		await database.destroy()
 	}
 }
@@ -329,45 +329,41 @@ export function sampleAgreementPoints(
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number }> {
 	const count = options.count ?? 60
-	const database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
+	using database = new DatabaseClient<SoilDatabase>(databasePath, { readOnly: true })
 
-	try {
-		const total = (database.prepare("SELECT count(*) AS n FROM soil_map_unit_area").get() as { n: number }).n
-		const stride = Math.max(1, Math.floor(total / Math.max(1, count)))
+	const total = (database.prepare("SELECT count(*) AS n FROM soil_map_unit_area").get() as { n: number }).n
+	const stride = Math.max(1, Math.floor(total / Math.max(1, count)))
 
-		// One OFFSET probe per sample point rather than one materialized key list. The list looks cheap because it reads
-		// only the primary key, and at the pilot's 2.7 million delineations it is still 2.7 million strings held to keep
-		// sixty of them.
-		const selectByOffset = database.prepare(
-			"SELECT area_id, mukey, min_lat, min_lon, max_lat, max_lon, rings FROM soil_map_unit_area ORDER BY area_id LIMIT 1 OFFSET ?"
-		)
+	// One OFFSET probe per sample point rather than one materialized key list. The list looks cheap because it reads
+	// only the primary key, and at the pilot's 2.7 million delineations it is still 2.7 million strings held to keep
+	// sixty of them.
+	const selectByOffset = database.prepare(
+		"SELECT area_id, mukey, min_lat, min_lon, max_lat, max_lon, rings FROM soil_map_unit_area ORDER BY area_id LIMIT 1 OFFSET ?"
+	)
 
-		const points: Array<{ label: string; latitude: number; longitude: number }> = []
+	const points: Array<{ label: string; latitude: number; longitude: number }> = []
 
-		for (let index = 0; index < total && points.length < count; index += stride) {
-			const area = selectByOffset.get(index) as
-				| {
-						area_id: string
-						mukey: string
-						min_lat: number
-						min_lon: number
-						max_lat: number
-						max_lon: number
-						rings: Uint8Array
-				  }
-				| undefined
+	for (let index = 0; index < total && points.length < count; index += stride) {
+		const area = selectByOffset.get(index) as
+			| {
+					area_id: string
+					mukey: string
+					min_lat: number
+					min_lon: number
+					max_lat: number
+					max_lon: number
+					rings: Uint8Array
+			  }
+			| undefined
 
-			if (!area) continue
+		if (!area) continue
 
-			const interior = interiorPointOfEncodedRings(area, 7)
+		const interior = interiorPointOfEncodedRings(area, 7)
 
-			if (!interior) continue
+		if (!interior) continue
 
-			points.push({ label: `map unit ${area.mukey} delineation ${area.area_id}`, ...interior })
-		}
-
-		return points
-	} finally {
-		database.destroy()
+		points.push({ label: `map unit ${area.mukey} delineation ${area.area_id}`, ...interior })
 	}
+
+	return points
 }

@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	downloadToFile,
 	isTransientStatus,
@@ -11,11 +13,8 @@ import {
 	readManifest,
 	writeManifest,
 } from "@mailwoman/corpus/tools/fetch/download"
-import { readFileSync, mkdtempSync } from "@mailwoman/platform/fs"
 import { createServer, type Server } from "@mailwoman/platform/http"
 import type { AddressInfo } from "@mailwoman/platform/net"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let server: Server
@@ -50,28 +49,29 @@ beforeAll(async () => {
 	base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`
 })
 
-afterAll(() => {
-	server.close()
-})
+afterAll(() => server[Symbol.asyncDispose]())
 
 describe("downloadToFile", () => {
 	it("writes the body and reports bytes", async () => {
-		const dest = join(mkdtempSync(join(tmpdir(), "dl-")), "ok.txt")
+		await using scratch = await temporaryDirectory("dl-")
+		const dest = scratch.resolve("ok.txt")
 		const { bytes } = await downloadToFile({ url: `${base}/ok`, dest })
 		expect(bytes).toBe(7)
-		expect(readFileSync(dest, "utf8")).toBe("payload")
+		expect(await readLocalTextFile(dest)).toBe("payload")
 	})
 
 	it("retries transient statuses until success", async () => {
 		flakyHits = 0
-		const dest = join(mkdtempSync(join(tmpdir(), "dl-")), "flaky.txt")
+		await using scratch = await temporaryDirectory("dl-")
+		const dest = scratch.resolve("flaky.txt")
 		const { bytes } = await downloadToFile({ url: `${base}/flaky`, dest, retries: 3, retryDelayMs: 10 })
 		expect(bytes).toBe(7)
 		expect(flakyHits).toBe(3)
 	})
 
 	it("throws immediately on a non-transient status", async () => {
-		const dest = join(mkdtempSync(join(tmpdir(), "dl-")), "missing.txt")
+		await using scratch = await temporaryDirectory("dl-")
+		const dest = scratch.resolve("missing.txt")
 
 		await expect(downloadToFile({ url: `${base}/missing`, dest, retries: 2, retryDelayMs: 10 })).rejects.toThrow(
 			/HTTP 404/
@@ -81,7 +81,8 @@ describe("downloadToFile", () => {
 
 describe("manifest helpers", () => {
 	it("round-trips and keys entries; corrupt reads as null", async () => {
-		const path = join(mkdtempSync(join(tmpdir(), "manifest-")), "MANIFEST.json")
+		await using scratch = await temporaryDirectory("manifest-")
+		const path = scratch.resolve("MANIFEST.json")
 
 		const entries = [
 			{ id: "a", sha256: "x" },

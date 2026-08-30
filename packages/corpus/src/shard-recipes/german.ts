@@ -49,7 +49,7 @@ async function readGermanTuples(source: GermanSource): Promise<LocaleBaseTuple[]
 	const tuples: LocaleBaseTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
+	for await (const row of await readZippedCSVRecords(source.zip, source.csv)) {
 		const street = row.street ?? ""
 		const locality = row.city ?? ""
 

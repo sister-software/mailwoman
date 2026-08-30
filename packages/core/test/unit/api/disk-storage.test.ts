@@ -11,12 +11,12 @@
 import { APIClient } from "@mailwoman/core/api/APIClient"
 import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { isTransientResourceError } from "@mailwoman/core/api/responses"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { chmodSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import type { CachedStorageValue, NotEmptyStorageValue } from "axios-cache-interceptor"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
+
+import { readDirectory, readDirectoryEntries, readLocalJSONFile } from "#fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "#fs/temporary"
+import { changeMode, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
 
 const ONE_HOUR_MS = 60 * 60 * 1000
 
@@ -34,23 +34,21 @@ function cachedValue(body: unknown, ttl: number = ONE_HOUR_MS): CachedStorageVal
 	}
 }
 
-let directory: string
+let directory: TemporaryDirectory
 
-beforeEach(() => {
-	directory = mkdtempSync(join(tmpdir(), "disk-storage-test-"))
+beforeEach(async () => {
+	directory = await temporaryDirectory("disk-storage-test-")
 })
 
-afterEach(() => {
-	rmSync(directory, { recursive: true, force: true })
-})
+afterEach(() => directory[Symbol.asyncDispose]())
 
 describe("buildDiskStorage: round trip", () => {
 	it("persists an entry and reads it back across two independent storage instances", async () => {
-		const writer = buildDiskStorage({ directory })
+		const writer = buildDiskStorage({ directory: directory.path })
 
 		await writer.set("https://example.invalid/a.json", cachedValue({ hello: "world" }))
 
-		const reader = buildDiskStorage({ directory })
+		const reader = buildDiskStorage({ directory: directory.path })
 		const found = await reader.get("https://example.invalid/a.json")
 
 		expect(found.state).toBe("cached")
@@ -58,12 +56,12 @@ describe("buildDiskStorage: round trip", () => {
 	})
 
 	it("keys entries by the full request key, so two keys never collide", async () => {
-		const storage = buildDiskStorage({ directory })
+		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("GET|https://example.invalid/x?cik=1", cachedValue({ cik: 1 }))
 		await storage.set("GET|https://example.invalid/x?cik=2", cachedValue({ cik: 2 }))
 
-		expect(readdirSync(directory)).toHaveLength(2)
+		expect(await readDirectory(directory.path)).toHaveLength(2)
 
 		expect(((await storage.get("GET|https://example.invalid/x?cik=1")) as CachedStorageValue).data.data).toEqual({
 			cik: 1,
@@ -71,40 +69,40 @@ describe("buildDiskStorage: round trip", () => {
 	})
 
 	it("treats an expired entry as a miss and evicts the file", async () => {
-		const storage = buildDiskStorage({ directory })
+		const storage = buildDiskStorage({ directory: directory.path })
 		const expired: CachedStorageValue = { ...cachedValue({ stale: true }, 1), createdAt: Date.now() - 10_000 }
 
 		await storage.set("expired", expired)
-		expect(readdirSync(directory)).toHaveLength(1)
+		expect(await readDirectory(directory.path)).toHaveLength(1)
 
 		expect((await storage.get("expired")).state).toBe("empty")
-		expect(readdirSync(directory)).toHaveLength(0)
+		expect(await readDirectory(directory.path)).toHaveLength(0)
 	})
 
-	it("removes an entry on request, and clears the whole directory", async () => {
-		const storage = buildDiskStorage({ directory })
+	it("removes an entry on request, and clears the whole directory.path", async () => {
+		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("a", cachedValue({ a: 1 }))
 		await storage.set("b", cachedValue({ b: 2 }))
 
 		await storage.remove("a")
-		expect(readdirSync(directory)).toHaveLength(1)
+		expect(await readDirectory(directory.path)).toHaveLength(1)
 
 		await storage.clear?.()
-		expect(readdirSync(directory, { withFileTypes: true })).toHaveLength(0)
+		expect(await readDirectoryEntries(directory.path)).toHaveLength(0)
 	})
 
 	it("holds `loading` markers in memory only — never a file per in-flight request", async () => {
-		const storage = buildDiskStorage({ directory })
+		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("in-flight", { state: "loading", previous: "empty" })
 
-		expect(readdirSync(directory)).toHaveLength(0)
+		expect(await readDirectory(directory.path)).toHaveLength(0)
 		expect((await storage.get("in-flight")).state).toBe("loading")
 
 		// And a separate instance (a separate process, in production) sees a clean miss rather than a
 		// `loading` marker it can never resolve.
-		expect((await buildDiskStorage({ directory }).get("in-flight")).state).toBe("empty")
+		expect((await buildDiskStorage({ directory: directory.path }).get("in-flight")).state).toBe("empty")
 	})
 
 	it("keeps a key continuously visible across the write, never showing a gap", async () => {
@@ -112,7 +110,7 @@ describe("buildDiskStorage: round trip", () => {
 		// file lands leaves the key in neither place, and a concurrent reader gets `empty` for a response
 		// already in hand — measured as 3 dispatches for 3 concurrent requests to one URL through
 		// `APIClient`, i.e. the cache interceptor's stampede guard fully defeated.
-		const storage = buildDiskStorage({ directory })
+		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("k", { state: "loading", previous: "empty" })
 
@@ -126,16 +124,16 @@ describe("buildDiskStorage: round trip", () => {
 	})
 
 	it("treats a corrupt file as a miss and evicts it rather than throwing", async () => {
-		const storage = buildDiskStorage({ directory })
+		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("corrupt", cachedValue({ good: true }))
 
-		const [fileName] = readdirSync(directory)
+		const [fileName] = await readDirectory(directory.path)
 
-		writeFileSync(join(directory, fileName!), "{ not json")
+		await writeLocalTextFile("{ not json", directory.resolve(fileName!))
 
 		expect((await storage.get("corrupt")).state).toBe("empty")
-		expect(readdirSync(directory)).toHaveLength(0)
+		expect(await readDirectory(directory.path)).toHaveLength(0)
 	})
 })
 
@@ -144,35 +142,35 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 		// The historical failure: a 200 carrying an HTML error page was cached under a permanent TTL, so
 		// every later request replayed the poisoned entry forever with no self-healing path.
 		const storage = buildDiskStorage({
-			directory,
+			directory: directory.path,
 			validate: (value: NotEmptyStorageValue) => typeof value.data?.data !== "string",
 		})
 
 		await storage.set("poisoned", cachedValue("<html>not json</html>"))
 
-		expect(readdirSync(directory)).toHaveLength(0)
+		expect(await readDirectory(directory.path)).toHaveLength(0)
 		expect((await storage.get("poisoned")).state).toBe("empty")
 
 		// Self-heals: a later, valid response for the same key caches normally.
 		await storage.set("poisoned", cachedValue({ ok: true }))
-		expect(readdirSync(directory)).toHaveLength(1)
+		expect(await readDirectory(directory.path)).toHaveLength(1)
 	})
 
 	it("drops a superseded entry rather than leaving the older body behind", async () => {
 		let accept = true
 
 		const storage = buildDiskStorage({
-			directory,
+			directory: directory.path,
 			validate: () => accept,
 		})
 
 		await storage.set("k", cachedValue({ generation: 1 }))
-		expect(readdirSync(directory)).toHaveLength(1)
+		expect(await readDirectory(directory.path)).toHaveLength(1)
 
 		accept = false
 		await storage.set("k", cachedValue({ generation: 2 }))
 
-		expect(readdirSync(directory)).toHaveLength(0)
+		expect(await readDirectory(directory.path)).toHaveLength(0)
 		expect((await storage.get("k")).state).toBe("empty")
 	})
 
@@ -180,21 +178,21 @@ describe("buildDiskStorage: validate BEFORE writing", () => {
 		// `JSON.stringify(Infinity)` is `"null"`, and `null` reads back as 0 in the interceptor's
 		// `createdAt + ttl < Date.now()` expiry test — so "cache forever" would round-trip into
 		// "expired the instant it is read". Rejecting loudly beats caching nothing.
-		const storage = buildDiskStorage({ directory })
+		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("forever", cachedValue({ immutable: true }, Number.POSITIVE_INFINITY))
 
-		expect(readdirSync(directory)).toHaveLength(0)
+		expect(await readDirectory(directory.path)).toHaveLength(0)
 	})
 
 	it("refuses an unserializable body instead of throwing out of set()", async () => {
-		const storage = buildDiskStorage({ directory })
+		const storage = buildDiskStorage({ directory: directory.path })
 		const circular: Record<string, unknown> = {}
 
 		circular.self = circular
 
 		await expect(storage.set("circular", cachedValue(circular))).resolves.toBeUndefined()
-		expect(readdirSync(directory)).toHaveLength(0)
+		expect(await readDirectory(directory.path)).toHaveLength(0)
 	})
 })
 
@@ -212,45 +210,45 @@ describe("buildDiskStorage: atomic write with a per-write-unique temp name", () 
 			const key = `https://example.invalid/race.json?round=${round}`
 			const body = { round, payload: "x".repeat(BODY_BYTES) }
 
-			const writerA = buildDiskStorage({ directory })
-			const writerB = buildDiskStorage({ directory })
+			const writerA = buildDiskStorage({ directory: directory.path })
+			const writerB = buildDiskStorage({ directory: directory.path })
 
-			const before = new Set(readdirSync(directory))
+			const before = new Set(await readDirectory(directory.path))
 
 			await Promise.all([writerA.set(key, cachedValue(body)), writerB.set(key, cachedValue(body))])
 
-			const added = readdirSync(directory).filter((name) => !before.has(name))
+			const added = (await readDirectory(directory.path)).filter((name) => !before.has(name))
 
 			// Exactly one: not zero (both writes vanished), not two (an orphaned `.building` file left
 			// behind alongside the final one — the old bug's ENOENT path did exactly that).
 			expect(added).toHaveLength(1)
 
-			const entry = parseJSONStrict<CachedStorageValue>(readFileSync(join(directory, added[0]!), "utf8"))
+			const entry = await readLocalJSONFile<CachedStorageValue>(directory.resolve(added[0]!))
 
 			expect(entry.data.data).toEqual(body)
 		}
 	})
 
 	it("leaves no .building temp file behind after a normal write", async () => {
-		const storage = buildDiskStorage({ directory })
+		const storage = buildDiskStorage({ directory: directory.path })
 
 		await storage.set("clean", cachedValue({ ok: true }))
 
-		expect(readdirSync(directory).filter((name) => name.endsWith(".building"))).toHaveLength(0)
+		expect((await readDirectory(directory.path)).filter((name) => name.endsWith(".building"))).toHaveLength(0)
 	})
 })
 
 describe("buildDiskStorage: a failed cache write is a cache miss, not a request failure", () => {
 	/**
-	 * Make `directory` unwritable and report whether it took. Running as root defeats mode bits entirely, and a test that
-	 * silently passes because it could not reproduce the condition is worse than one that says so.
+	 * Make `directory.path` unwritable and report whether it took. Running as root defeats mode bits entirely, and a test
+	 * that silently passes because it could not reproduce the condition is worse than one that says so.
 	 */
-	function makeUnwritable(): boolean {
-		chmodSync(directory, 0o500)
+	async function makeUnwritable(): Promise<boolean> {
+		await changeMode(directory.path, 0o500)
 
 		try {
-			writeFileSync(join(directory, "probe"), "x")
-			rmSync(join(directory, "probe"), { force: true })
+			await writeLocalTextFile("x", directory.resolve("probe"))
+			await removePathIfPresent(directory.resolve("probe"))
 
 			return false
 		} catch {
@@ -258,25 +256,25 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 		}
 	}
 
-	function restore(): void {
-		chmodSync(directory, 0o700)
+	async function restore(): Promise<void> {
+		await changeMode(directory.path, 0o700)
 	}
 
 	it("resolves instead of throwing when the entry cannot be written", async () => {
-		if (!makeUnwritable()) {
-			restore()
-			throw new Error("could not make the cache directory unwritable (running as root?) — test cannot reproduce")
+		if (!(await makeUnwritable())) {
+			await restore()
+			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")
 		}
 
 		try {
-			const storage = buildDiskStorage({ directory })
+			const storage = buildDiskStorage({ directory: directory.path })
 
 			await expect(storage.set("k", cachedValue({ v: 1 }))).resolves.toBeUndefined()
 
 			// And the key reads back as a plain miss, not as a half-written entry.
 			expect((await storage.get("k")).state).toBe("empty")
 		} finally {
-			restore()
+			await restore()
 		}
 	})
 
@@ -286,15 +284,15 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 		// escapes as a bare `Error` — no `status` — which `isTransientResourceError` reads as FALSE, so a
 		// caller is told the failure is permanent and drops the work. ANY filesystem error does this;
 		// reproduced here with a `0o500` parent.
-		if (!makeUnwritable()) {
-			restore()
-			throw new Error("could not make the cache directory unwritable (running as root?) — test cannot reproduce")
+		if (!(await makeUnwritable())) {
+			await restore()
+			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")
 		}
 
 		try {
 			const client = new APIClient({
 				displayName: "unwritable-cache",
-				caching: { storage: buildDiskStorage({ directory }) },
+				caching: { storage: buildDiskStorage({ directory: directory.path }) },
 				axios: {
 					adapter: async (config) => ({
 						data: { ok: true },
@@ -310,22 +308,22 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 
 			expect(response.data).toEqual({ ok: true })
 		} finally {
-			restore()
+			await restore()
 		}
 	})
 
 	it("keeps three concurrent requests consistent when the cache cannot be written", async () => {
 		// The same repro showed one rejection and two successes for the SAME response — a request's
 		// outcome depending on whether it happened to be the one that lost a cache-write race.
-		if (!makeUnwritable()) {
-			restore()
-			throw new Error("could not make the cache directory unwritable (running as root?) — test cannot reproduce")
+		if (!(await makeUnwritable())) {
+			await restore()
+			throw new Error("could not make the cache directory.path unwritable (running as root?) — test cannot reproduce")
 		}
 
 		try {
 			const client = new APIClient({
 				displayName: "unwritable-cache-concurrent",
-				caching: { storage: buildDiskStorage({ directory }) },
+				caching: { storage: buildDiskStorage({ directory: directory.path }) },
 				axios: {
 					adapter: async (config) => ({
 						data: { ok: true },
@@ -351,7 +349,7 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 				}
 			}
 		} finally {
-			restore()
+			await restore()
 		}
 	})
 })

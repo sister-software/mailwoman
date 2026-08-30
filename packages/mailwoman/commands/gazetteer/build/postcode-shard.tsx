@@ -58,7 +58,7 @@ const GazetteerBuildPostcodeShard: ParsedCommandComponent<Options> = ({ options 
 		})
 
 		return [
-			`postcode shard: ${result.out} (${artifactSizeMB(result.out)} MB)`,
+			`postcode shard: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
 			`${result.postcodesIngested.toLocaleString()} postcodes; placed ${result.fills.placedBefore.toLocaleString()} → ${result.fills.placedAfter.toLocaleString()} of ${result.fills.total.toLocaleString()}` +
 				(result.zctaFilled
 					? ` (zcta ${result.zctaFilled.toLocaleString()}` +

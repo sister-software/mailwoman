@@ -12,6 +12,7 @@
 
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"
@@ -19,7 +20,6 @@ import {
 	createNeuralProposalClassifier,
 	type NeuralProposalClassifierConfig,
 } from "@mailwoman/neural/proposal-classifier"
-import { existsSync } from "@mailwoman/platform/fs"
 import { describe, expect, test } from "vitest"
 
 /**
@@ -35,7 +35,7 @@ const MODEL_PATH =
 	$public.MAILWOMAN_TEST_ONNX_MODEL ??
 	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
 
-const haveModel = existsSync(MODEL_PATH)
+const haveModel = await pathExists(MODEL_PATH)
 
 /**
  * The coarse tags the v0.2.0 model is expected to reach at least one of. Typed so a tag that leaves the union stops

@@ -14,8 +14,9 @@
  *   Run: `mailwoman registry convert tx-hhsc [--src <tsv>] [--out /tmp/txhhsc-oarow.jsonl]`
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { TSVSpliterator } from "spliterator"
 
 /**
@@ -57,10 +58,10 @@ const GEO = /^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/
 /**
  * Convert the TX HHSC nursing-facilities TSV into OaRow JSONL for `oa-resolver-eval`.
  */
-export function convertTXHHSC(
+export async function convertTXHHSC(
 	options: TXHHSCConvertOptions = {},
 	report?: (line: string) => void
-): { written: number; skipped: number; out: string } {
+): Promise<{ written: number; skipped: number; out: string }> {
 	const src = options.src || String(dataRootPath("record-matcher", "sources", "txhhsc_nursing-facilities_20260611.tsv"))
 	const out = options.out || tempRootPath("txhhsc-oarow.jsonl")
 
@@ -75,7 +76,7 @@ export function convertTXHHSC(
 	let cGeo = -1
 	let sawHeader = false
 
-	for (const f of TSVSpliterator.from(readFileSync(src, "utf8"), { header: false })) {
+	for (const f of TSVSpliterator.from(await readLocalTextFile(src), { header: false })) {
 		if (f.every((value) => !value.trim())) continue
 
 		if (!sawHeader) {
@@ -122,7 +123,7 @@ export function convertTXHHSC(
 		)
 	}
 
-	writeFileSync(out, records.join("\n") + "\n")
+	await writeLocalTextFile(records.join("\n") + "\n", out)
 	report?.(`wrote ${records.length} rows (skipped ${skipped}) → ${out}`)
 
 	return { written: records.length, skipped, out }

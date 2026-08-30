@@ -21,14 +21,13 @@
  *   spending money; the operator has to have written it down first.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	createCensusGeocoderClient,
 	createGoogleGeocoderClient,
 	type OracleGeocodeResult,
 } from "@mailwoman/geocode-oracle"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 
 import type { ExternalAnswer } from "./external-arm.ts"
 
@@ -75,10 +74,10 @@ export interface OracleConfig {
 export const DEFAULT_GOOGLE_CALL_CAP = 500
 
 export function readOracleConfig(path: string = ORACLE_CONFIG_PATH): OracleConfig {
-	if (!existsSync(path)) return {}
+	if (!pathExistsSync(path)) return {}
 
 	try {
-		return parseJSONStrict<OracleConfig>(readFileSync(path, "utf8"))
+		return readLocalJSONFileSync<OracleConfig>(path)
 	} catch {
 		// A malformed config must not read as "enabled". Absence and garbage both mean off.
 		return {}

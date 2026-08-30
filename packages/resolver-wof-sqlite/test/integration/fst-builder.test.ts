@@ -4,22 +4,22 @@
  * @author Teffen Ellis, et al.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import type { BuildFSTResult, FSTProvenance } from "@mailwoman/resolver-wof-sqlite/fst-types"
 import { beforeAll, describe, expect, it } from "vitest"
 
 const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
-const HAS_WOF = existsSync(WOF_DB)
+const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 	let matcher: FSTMatcher
 	let result: BuildFSTResult
 
-	beforeAll(() => {
-		const built = buildFSTFromWOF({
+	beforeAll(async () => {
+		const built = await buildFSTFromWOF({
 			dbPath: WOF_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],
@@ -98,14 +98,14 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 // The curation block runs against the canonical admin DB (the artifact the shipped per-locale FSTs
 // are actually built from) — the per-repo DB above is a legacy fixture absent on newer hosts.
 const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
-const HAS_ADMIN = existsSync(ADMIN_DB)
+const HAS_ADMIN = await pathExists(ADMIN_DB)
 
 describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", () => {
 	let matcher: FSTMatcher
 	let provenance: FSTProvenance
 
-	beforeAll(() => {
-		const built = buildFSTFromWOF({
+	beforeAll(async () => {
+		const built = await buildFSTFromWOF({
 			dbPath: ADMIN_DB,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],

@@ -32,7 +32,7 @@ function line(row: SourceCensusRow, countries?: readonly string[]): string {
 	return `${row.artifact} (${mb}, join:${joins}, parent_id linked: ${row.parentLinked ? "yes" : "NO"}) ${rendered}${more}`
 }
 
-export const sourcesTool = (_deps: DevToolDeps): DevTool => ({
+export const sourcesTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_sources",
 	description:
 		"What gazetteer data we HOLD, per country, per artifact — the question that comes before `mwdev_lookup`'s " +
@@ -65,7 +65,7 @@ export const sourcesTool = (_deps: DevToolDeps): DevTool => ({
 		const countries = (args["countries"] as string[] | undefined)?.map((code) => code.toUpperCase())
 		const filter = args["artifact"] as string | undefined
 
-		const paths = gazetteerArtifacts().filter((path) => (filter ? path.includes(filter) : true))
+		const paths = (await gazetteerArtifacts()).filter((path) => (filter ? path.includes(filter) : true))
 
 		if (!paths.length) {
 			return {

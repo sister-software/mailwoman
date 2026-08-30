@@ -31,9 +31,11 @@
  *   count table) — this sizes the word-span window the decode-side prior walks.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { openReadStream } from "@mailwoman/core/fs/streams"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver"
-import { createReadStream, existsSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -214,7 +216,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		const sourcePath =
 			options.source ?? (country === "gb" ? String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")) : undefined)
 
-		if (sourcePath && !existsSync(sourcePath)) {
+		if (sourcePath && !(await pathExists(sourcePath))) {
 			throw new Error(`pair-index: source CSV not found: ${sourcePath}`)
 		}
 
@@ -234,7 +236,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		// row consumed by the parser (`header: false`), so we build the column index off the first yielded row
 		// ourselves and skip forward from there.
 		if (sourcePath) {
-			for await (const cells of CSVSpliterator.fromAsync<string[]>(createReadStream(sourcePath), {
+			for await (const cells of CSVSpliterator.fromAsync<string[]>(openReadStream(sourcePath), {
 				mode: "array",
 				header: false,
 				enableQuoteHandling: true,
@@ -356,7 +358,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		const bytes = serializePairIndex(pairIndexHeader, entries)
 		const outPath = join(options.out, `pair-index-${country}.bin`)
 
-		writeFileSync(outPath, bytes)
+		await writeLocalFile(bytes, outPath)
 
 		// Self-verifying readback: construct a fresh resolver over the bytes we just wrote (not the in-memory
 		// `entries`) and probe known pairs, rather than trusting the write silently succeeded.

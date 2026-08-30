@@ -8,9 +8,8 @@
  * measurement contract, truth unit, and leakage controls.
  */
 
-import { chmodSync } from "@mailwoman/platform/fs"
-import { mkdtemp, rm, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { changeMode, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -579,62 +578,58 @@ export interface LinkageEvalPassOptions {
 export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<LinkageEvalRun> {
 	const { inputs, registrants, truthGroupOf, label, holdingCompanyWithheld, injectEvidence } = options
 
-	const scratch = await mkdtemp(join(tmpdir(), `filer-linkage-eval-${label}-`))
-	const out = join(scratch, "filer.db")
+	await using scratch = await temporaryDirectory(`filer-linkage-eval-${label}-`)
+	const out = join(scratch.path, "filer.db")
 
-	try {
-		await buildFilerDatabase({
-			form499Rows: inputs.form499Rows,
-			providerRows: inputs.providerRows,
-			out,
-			sourceVintage: EVAL_SOURCE_VINTAGE,
-			validFrom: EVAL_VALID_FROM,
-			buildSHA: EVAL_BUILD_SHA,
-		})
+	await buildFilerDatabase({
+		form499Rows: inputs.form499Rows,
+		providerRows: inputs.providerRows,
+		out,
+		sourceVintage: EVAL_SOURCE_VINTAGE,
+		validFrom: EVAL_VALID_FROM,
+		buildSHA: EVAL_BUILD_SHA,
+	})
 
-		// buildFilerDatabase seals the artifact read-only — clusterFilers writes filer_cluster/filer_edge, so unseal
-		// first (mirrors filer-lookup.test.ts's "REAL builder + REAL clusterAuthoritativeComponents" gate).
-		chmodSync(out, 0o644)
+	// buildFilerDatabase seals the artifact read-only — clusterFilers writes filer_cluster/filer_edge, so unseal
+	// first (mirrors filer-lookup.test.ts's "REAL builder + REAL clusterAuthoritativeComponents" gate).
+	await changeMode(out, 0o644)
 
-		using db = new DatabaseClient<FilerDatabase>(out)
+	using db = new DatabaseClient<FilerDatabase>(out)
 
-		// Run the full shipped pipeline, not just the builder — the entity-resolution pass is part of what produces a
-		// real filer.db, and its counters belong in the report even though this eval scores a different table.
-		const { inferred } = await clusterFilers(db, { sourceVintage: EVAL_SOURCE_VINTAGE, validFrom: EVAL_VALID_FROM })
+	// Run the full shipped pipeline, not just the builder — the entity-resolution pass is part of what produces a
+	// real filer.db, and its counters belong in the report even though this eval scores a different table.
+	const { inferred } = await clusterFilers(db, { sourceVintage: EVAL_SOURCE_VINTAGE, validFrom: EVAL_VALID_FROM })
 
-		// Gate the BUILD, then inject, then census what will actually be scored. Taking one census for both jobs is what
-		// let three injected `subsidiary` family rows move recall to 0.500 while the published census still read 0.
-		if (holdingCompanyWithheld) {
-			assertNoOwnershipLeak(await readLeakageCensus(db))
-		}
+	// Gate the BUILD, then inject, then census what will actually be scored. Taking one census for both jobs is what
+	// let three injected `subsidiary` family rows move recall to 0.500 while the published census still read 0.
+	if (holdingCompanyWithheld) {
+		assertNoOwnershipLeak(await readLeakageCensus(db))
+	}
 
-		await injectEvidence?.(db)
+	await injectEvidence?.(db)
 
-		const census = await readLeakageCensus(db)
-		const { predicted, observed } = await readRegistrantFamilies(db, registrants)
+	const census = await readLeakageCensus(db)
+	const { predicted, observed } = await readRegistrantFamilies(db, registrants)
 
-		const predictedSame = (a: FRN, b: FRN): boolean => {
-			const familiesOfA = new Set(predicted.get(a))
+	const predictedSame = (a: FRN, b: FRN): boolean => {
+		const familiesOfA = new Set(predicted.get(a))
 
-			return (predicted.get(b) ?? []).some((familyID) => familiesOfA.has(familyID))
-		}
+		return (predicted.get(b) ?? []).some((familyID) => familiesOfA.has(familyID))
+	}
 
-		const representatives = registrants.map((registrant) => registrant.representative)
-		const score = scorePairwiseGrouping(representatives, groupPredicateFromMap(truthGroupOf), predictedSame)
+	const representatives = registrants.map((registrant) => registrant.representative)
+	const score = scorePairwiseGrouping(representatives, groupPredicateFromMap(truthGroupOf), predictedSame)
 
-		return {
-			label,
-			holdingCompanyWithheld,
-			inputsSHA256: hashLinkageEvalInputs(inputs),
-			score,
-			inferred,
-			census,
-			predictedFamilyIDsOf: predicted,
-			observedFamilyIDsOf: observed,
-			truthPositivePairs: findTruthPositivePairs(representatives, truthGroupOf, predictedSame),
-		}
-	} finally {
-		await rm(scratch, { recursive: true, force: true })
+	return {
+		label,
+		holdingCompanyWithheld,
+		inputsSHA256: hashLinkageEvalInputs(inputs),
+		score,
+		inferred,
+		census,
+		predictedFamilyIDsOf: predicted,
+		observedFamilyIDsOf: observed,
+		truthPositivePairs: findTruthPositivePairs(representatives, truthGroupOf, predictedSame),
 	}
 }
 
@@ -700,7 +695,7 @@ function renderWhySection(withheld: LinkageEvalRun): string {
  */
 function renderWhatWouldMoveItSection(): string {
 	return (
-		"It is tempting to call the withheld number a floor that any better evidence would lift. That is not what this " +
+		"It's tempting to call the withheld number a floor that any better evidence would lift. That is not what this " +
 		"code does, and an earlier version of this page said it anyway. Two probes establish the behavior.\n\n" +
 		"**Populating the address and contact columns changes nothing.** Fill `hqAddress`, " +
 		"`customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family " +
@@ -713,7 +708,7 @@ function renderWhatWouldMoveItSection(): string {
 		"Corporate-family MEMBERSHIP is read from `filer_family` alone. The family readers do query `filer_edge`, but " +
 		"only to recover the raw company name behind a canonicalized family id — never to decide who belongs to a " +
 		"family, which is the only thing this eval scores.\n\n" +
-		"The accurate statement is narrower, and worth stating exactly: **a channel that produces a `filer_family` row " +
+		"The accurate statement is narrower: **a channel that produces a `filer_family` row " +
 		"moves this number; a channel that produces only a `filer_edge` row does not.** Injecting three ownership " +
 		"`filer_family` rows into the withheld build moves recall from 0.000 to 0.500 at precision 1.000. A standing test " +
 		'holds that open, so "this baseline can be beaten" is re-checked on every run rather than asserted here.\n\n' +
@@ -972,7 +967,7 @@ export async function filerLinkageEval(
 	}
 
 	if (options.outMd) {
-		await writeFile(options.outMd, markdown)
+		await writeLocalFile(markdown, options.outMd)
 		progress(`[written] ${options.outMd}`)
 	}
 

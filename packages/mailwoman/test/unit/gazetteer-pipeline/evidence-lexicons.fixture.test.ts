@@ -28,18 +28,15 @@
  *   why it is seeded at 130 k rather than something merely above 10 k.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { BuiltLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
 import { buildLocalitySurfaceLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 /**
  * A minimal admin WOF carrying the four tables `buildLocalitySurfaceLexicon` reads: `spr` (primaries), `names`
@@ -137,12 +134,10 @@ function buildFixtureAdmin(path: string): void {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "evidence-lexicons-fixture-"))
+	scratch = await temporaryDirectory("evidence-lexicons-fixture-")
 })
 
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 /**
  * Build against the fixture and return the emitted surface map plus the build's counters.
@@ -153,26 +148,26 @@ afterEach(async () => {
  */
 let buildSeq = 0
 
-function buildAgainstFixture(
+async function buildAgainstFixture(
 	countries: string[],
 	placetypes: string[]
-): { built: BuiltLexicon; surfaces: Record<string, number> } {
+): Promise<{ built: BuiltLexicon; surfaces: Record<string, number> }> {
 	// A fresh DB per call. Two tests build twice — the sub-phrase one covers both country sets, and
 	// the invariance one runs the same build twice on purpose — and `CREATE TABLE` is not idempotent.
 	const seq = buildSeq++
-	const dbPath = join(scratch, `admin-${seq}.db`)
-	const output = join(scratch, `lexicon-${seq}.json`)
+	const dbPath = scratch.resolve(`admin-${seq}.db`)
+	const output = scratch.resolve(`lexicon-${seq}.json`)
 	buildFixtureAdmin(dbPath)
 
-	const built = buildLocalitySurfaceLexicon({ countries, placetypes, dbPath, output })
-	const lexicon = parseJSONStrict<{ entries: Record<string, number> }>(readFileSync(output, "utf8"))
+	const built = await buildLocalitySurfaceLexicon({ countries, placetypes, dbPath, output })
+	const lexicon = await readLocalJSONFile<{ entries: Record<string, number> }>(output)
 
 	return { built, surfaces: lexicon.entries }
 }
 
 describe("locality-surface build — fixture (four laws end to end)", () => {
-	it("law 3: metros survive, given-name homographs do not", () => {
-		const { surfaces } = buildAgainstFixture(["FR"], ["locality", "localadmin"])
+	it("law 3: metros survive, given-name homographs do not", async () => {
+		const { surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		// Paris and Lyon clear the person-name tier on their own metro prominence.
 		expect(surfaces.paris).toBeDefined()
@@ -183,8 +178,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(surfaces.rennes).toBeDefined()
 	})
 
-	it("law-3 guard: parent prominence never launders a person-name neighbourhood", () => {
-		const { surfaces } = buildAgainstFixture(["FR"], ["locality", "localadmin", "neighbourhood"])
+	it("law-3 guard: parent prominence never launders a person-name neighbourhood", async () => {
+		const { surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin", "neighbourhood"])
 
 		// Joseph-the-neighbourhood sits inside Paris and STILL does not clear.
 		expect(surfaces.joseph).toBeUndefined()
@@ -192,16 +187,16 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(surfaces.belleville).toBeDefined()
 	})
 
-	it("law 1: all-stopword compositions and letters-free surfaces are refused", () => {
-		const { built, surfaces } = buildAgainstFixture(["FR"], ["locality", "localadmin"])
+	it("law 1: all-stopword compositions and letters-free surfaces are refused", async () => {
+		const { built, surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		expect(surfaces["de la"]).toBeUndefined()
 		expect(surfaces["12"]).toBeUndefined()
 		expect(built.skippedDegenerate).toBeGreaterThanOrEqual(2)
 	})
 
-	it("law 2: the one-token floor refuses exactly the two rows seeded below their tier", () => {
-		const { built, surfaces } = buildAgainstFixture(["FR"], ["locality", "localadmin"])
+	it("law 2: the one-token floor refuses exactly the two rows seeded below their tier", async () => {
+		const { built, surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		expect(surfaces.smallville).toBeUndefined()
 		// EXACT, which the full build cannot assert. Two surfaces fail the post-scan prominence pass
@@ -211,8 +206,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(built.skippedProminence).toBe(2)
 	})
 
-	it("law 4: region vocabulary and the directional closure are out", () => {
-		const { built, surfaces } = buildAgainstFixture(["US"], ["locality", "localadmin", "neighbourhood"])
+	it("law 4: region vocabulary and the directional closure are out", async () => {
+		const { built, surfaces } = await buildAgainstFixture(["US"], ["locality", "localadmin", "neighbourhood"])
 
 		for (const surface of ["washington", "wyoming", "vermont", "missouri", "north dakota"]) {
 			expect(surfaces[surface], surface).toBeUndefined()
@@ -225,8 +220,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(built.skippedRegionVocabulary).toBeGreaterThan(0)
 	})
 
-	it("keeps the ordinary localities the census rows need", () => {
-		const { built, surfaces } = buildAgainstFixture(["US"], ["locality", "localadmin", "neighbourhood"])
+	it("keeps the ordinary localities the census rows need", async () => {
+		const { built, surfaces } = await buildAgainstFixture(["US"], ["locality", "localadmin", "neighbourhood"])
 
 		for (const surface of ["fargo", "minot", "rutland", "plainfield", "cheyenne"]) {
 			expect(surfaces[surface], surface).toBeDefined()
@@ -239,21 +234,21 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(built.skippedProminence).toBe(0)
 	})
 
-	it("sub-phrase aliases are refused, genuine nicknames are kept", () => {
-		const us = buildAgainstFixture(["US"], ["locality", "localadmin", "neighbourhood"])
+	it("sub-phrase aliases are refused, genuine nicknames are kept", async () => {
+		const us = await buildAgainstFixture(["US"], ["locality", "localadmin", "neighbourhood"])
 
 		// "East" ⊂ "East Nashville" and "Washington" ⊂ "Mount Washington" — the names-table leak.
 		expect(us.built.skippedSubPhrase).toBe(2)
 
-		const fr = buildAgainstFixture(["FR"], ["locality", "localadmin"])
+		const fr = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		// "Roazhon" is a real Breton nickname for Rennes, not a sub-phrase of it.
 		expect(fr.surfaces.roazhon).toBeDefined()
 	})
 
-	it("is invariant to gazetteer size — the reason this layer exists", () => {
-		const first = buildAgainstFixture(["FR"], ["locality", "localadmin"])
-		const second = buildAgainstFixture(["FR"], ["locality", "localadmin"])
+	it("is invariant to gazetteer size — the reason this layer exists", async () => {
+		const first = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
+		const second = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		expect(second.built.entries).toBe(first.built.entries)
 		expect(second.built.skippedProminence).toBe(first.built.skippedProminence)

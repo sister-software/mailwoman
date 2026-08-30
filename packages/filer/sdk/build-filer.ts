@@ -182,7 +182,8 @@
  *   `build/edgar-rows.ts` (one Exhibit 21 disclosure's two edges).
  */
 
-import { existsSync, mkdirSync, renameSync, rmSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { removePath, movePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -354,6 +355,10 @@ export interface BuildFilerResult {
  * into `filer_node`/`filer_edge` → index-after-load → manifest → seal → atomic move-into-place. See the module
  * docstring for the full flow rationale and the edges/attributes emitted.
  */
+function countRows(kdb: DatabaseClient<FilerDatabase>, table: string): number {
+	return (kdb.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get() as { c: number }).c
+}
+
 export async function buildFilerDatabase(options: BuildFilerOptions): Promise<BuildFilerResult> {
 	const progress = options.onProgress ?? (() => {})
 
@@ -374,11 +379,11 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 	const buildingPath = `${options.out}.building`
 
-	if (existsSync(buildingPath)) {
-		rmSync(buildingPath)
+	if (await pathExists(buildingPath)) {
+		await removePath(buildingPath)
 	}
 
-	mkdirSync(dirname(options.out), { recursive: true })
+	await makeDirectories(dirname(options.out))
 
 	const form499Source: AsyncIterable<Form499Row> | Iterable<Form499Row> =
 		options.form499Rows ?? (options.form499Path ? parseForm499(options.form499Path) : [])
@@ -388,180 +393,170 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 
 	const edgarSource: AsyncIterable<EdgarSubsidiaryRow> | Iterable<EdgarSubsidiaryRow> = options.edgarRows ?? []
 
-	const kdb = new DatabaseClient<FilerDatabase>(buildingPath)
-	// Build-tuning pragmas — identical to build-bdc.ts's discipline.
-	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-
-	progress("creating manifest/node/edge/attribute/cluster/family/attribute-stage tables")
-	await createFilerBuildTables(kdb)
-
-	const insNode = kdb.prepare(
-		`INSERT OR IGNORE INTO filer_node (node_id, identifier_type, identifier_value) VALUES (?, ?, ?)`
-	)
-
-	// relationship: FRN<->form499ID and bdcProviderID<->FRN assert identity (SameEntity); the
-	// holding-/management-company edges below assert HoldingCompany/ManagementCompany — see the module docstring's
-	// "relationship is fully typed" section.
-	const insEdge = kdb.prepare(
-		`INSERT OR IGNORE INTO filer_edge (
-			from_node_id, to_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score, evidence
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	)
-
-	// filer_family — same "no staging table needed" discipline as filer_node/filer_edge above (module
-	// docstring): the composite PK (node_id, family_id, naming_node_id, source, valid_from) already provides the
-	// uniqueness a staging table would otherwise exist to give. naming_node_id belongs in that key —
-	// see createFilerFamilyTable's docstring for why leaving it out would make THIS statement's OR IGNORE drop a
-	// second, differently-spelled report of the same family.
-	const insFamily = kdb.prepare(
-		`INSERT OR IGNORE INTO filer_family (
-			node_id, family_id, naming_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	)
-
-	const insAttrStage = kdb.prepare(
-		`INSERT OR IGNORE INTO filer_attribute_stage (node_id, key, value, source, source_vintage) VALUES (?, ?, ?, ?, ?)`
-	)
-
-	let skipped = 0
-	let batch = 0
-
-	function commitBatch(): void {
-		batch++
-
-		if (batch >= STAGE_BATCH_SIZE) {
-			kdb.exec("COMMIT")
-			kdb.exec("BEGIN")
-			batch = 0
-		}
-	}
-
-	function stageAttribute(nodeID: string, key: string, value: string, source: string, sourceVintage: string): void {
-		if (!value) return
-
-		insAttrStage.run(nodeID, key, value, source, sourceVintage)
-	}
-
-	progress("staging nodes/edges/attributes — raw prepared INSERT OR IGNORE")
-	kdb.exec("BEGIN")
-
-	// EDGAR corroboration input — keyed by FRN, keeping the LATEST lastFiledAt's legal name per FRN, the
-	// same "latest wins" convention cluster-filers.ts's readLatestLegalNames uses for the identical reason (a
-	// re-filing under a new legal name is real). Built here (in-memory, from the SAME form499Source this call
-	// already iterates) rather than by re-querying the DB, since the edgar loop runs later in this same function —
-	// see the module docstring's "EDGAR Exhibit 21 ingest" section.
-	const legalNameByFRN = new Map<string, { name: string; filedAt: string }>()
-
-	let form499RowIndex = 0
 	const lifecycleTotals: Form499LifecycleTotals = { closed: 0, abstained: 0, supersessions: 0 }
+	let skipped = 0
 
-	for await (const row of form499Source) {
-		form499RowIndex++
+	/**
+	 * Row tallies read off the built tables — the connection is gone by the time the summary is assembled.
+	 */
+	let materialized: { nodes: number; edges: number; attributes: number; families: number }
 
-		const form499NodeID = mintForm499NodeID(row.form499ID, form499RowIndex)
-		insNode.run(form499NodeID, FilerIdentifierType.Form499ID, row.form499ID)
+	{
+		using kdb = new DatabaseClient<FilerDatabase>(buildingPath)
+		// Build-tuning pragmas — identical to build-bdc.ts's discipline.
+		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
-		// Guarded ONCE per row, before anything below writes it into source_vintage/valid_from — see the
-		// docstring above assertLastFiledAt. ISO-validated too: this SAME value becomes valid_from on every edge this row emits, and valid_from must
-		// always be ISO-sortable — see assertISODate's docstring.
-		const lastFiledAt = assertISODate(
-			assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex),
-			`form499 row #${form499RowIndex} (form499ID=${JSON.stringify(row.form499ID)}) lastFiledAt`
+		progress("creating manifest/node/edge/attribute/cluster/family/attribute-stage tables")
+		await createFilerBuildTables(kdb)
+
+		const insNode = kdb.prepare(
+			`INSERT OR IGNORE INTO filer_node (node_id, identifier_type, identifier_value) VALUES (?, ?, ?)`
 		)
 
-		// Attributes attach to the form499ID node — the only identifier guaranteed present on every row
-		// (frn can legitimately be null). See the module docstring's DC-agent doctrine: dcAgent* fields land
-		// here as plain attributes ONLY, never as edges.
-		stageAttribute(form499NodeID, "legal_name", row.legalNameOfCarrier, "form-499", lastFiledAt)
-		stageAttribute(form499NodeID, "dba", row.doingBusinessAs, "form-499", lastFiledAt)
+		// relationship: FRN<->form499ID and bdcProviderID<->FRN assert identity (SameEntity); the
+		// holding-/management-company edges below assert HoldingCompany/ManagementCompany — see the module docstring's
+		// "relationship is fully typed" section.
+		const insEdge = kdb.prepare(
+			`INSERT OR IGNORE INTO filer_edge (
+				from_node_id, to_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score, evidence
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
 
-		for (const classification of classifyFiler(row)) {
-			stageAttribute(form499NodeID, "classification", classification, "form-499", lastFiledAt)
+		// filer_family — same "no staging table needed" discipline as filer_node/filer_edge above (module
+		// docstring): the composite PK (node_id, family_id, naming_node_id, source, valid_from) already provides the
+		// uniqueness a staging table would otherwise exist to give. naming_node_id belongs in that key —
+		// see createFilerFamilyTable's docstring for why leaving it out would make THIS statement's OR IGNORE drop a
+		// second, differently-spelled report of the same family.
+		const insFamily = kdb.prepare(
+			`INSERT OR IGNORE INTO filer_family (
+				node_id, family_id, naming_node_id, assertion, relationship, source, source_vintage, valid_from, valid_to, match_score
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
+
+		const insAttrStage = kdb.prepare(
+			`INSERT OR IGNORE INTO filer_attribute_stage (node_id, key, value, source, source_vintage) VALUES (?, ?, ?, ?, ?)`
+		)
+
+		let batch = 0
+
+		function commitBatch(): void {
+			batch++
+
+			if (batch >= STAGE_BATCH_SIZE) {
+				kdb.exec("COMMIT")
+				kdb.exec("BEGIN")
+				batch = 0
+			}
 		}
 
-		stageAttribute(form499NodeID, "hq_address", row.hqAddress, "form-499", lastFiledAt)
+		function stageAttribute(nodeID: string, key: string, value: string, source: string, sourceVintage: string): void {
+			if (!value) return
 
-		stageAttribute(
-			form499NodeID,
-			"customer_inquiries_telephone",
-			row.customerInquiriesTelephone,
-			"form-499",
-			lastFiledAt
-		)
+			insAttrStage.run(nodeID, key, value, source, sourceVintage)
+		}
 
-		stageAttribute(form499NodeID, "customer_inquiries_address", row.customerInquiriesAddress, "form-499", lastFiledAt)
+		progress("staging nodes/edges/attributes — raw prepared INSERT OR IGNORE")
+		kdb.exec("BEGIN")
 
-		stageAttribute(form499NodeID, "dc_agent_display_name", row.dcAgentDisplayName, "form-499", lastFiledAt)
+		// EDGAR corroboration input — keyed by FRN, keeping the LATEST lastFiledAt's legal name per FRN, the
+		// same "latest wins" convention cluster-filers.ts's readLatestLegalNames uses for the identical reason (a
+		// re-filing under a new legal name is real). Built here (in-memory, from the SAME form499Source this call
+		// already iterates) rather than by re-querying the DB, since the edgar loop runs later in this same function —
+		// see the module docstring's "EDGAR Exhibit 21 ingest" section.
+		const legalNameByFRN = new Map<string, { name: string; filedAt: string }>()
 
-		stageAttribute(form499NodeID, "dc_agent_organization_name", row.dcAgentOrganizationName, "form-499", lastFiledAt)
+		let form499RowIndex = 0
 
-		stageAttribute(form499NodeID, "dc_agent_telephone", row.dcAgentTelephone, "form-499", lastFiledAt)
-		stageAttribute(form499NodeID, "dc_agent_email_address", row.dcAgentEmailAddress, "form-499", lastFiledAt)
-		stageAttribute(form499NodeID, "dc_agent_address", row.dcAgentAddress, "form-499", lastFiledAt)
+		for await (const row of form499Source) {
+			form499RowIndex++
 
-		// The FCC's own lifecycle notes, when the source carried them (workbook only — the 17-column TSV has
-		// no note columns, so `lifecycle` is undefined there and this is a no-op).
-		const relationshipValidTo = processForm499Lifecycle(insNode, insEdge, stageAttribute, lifecycleTotals, {
-			lifecycle: row.lifecycle,
-			form499NodeID,
-			lastFiledAt,
-		})
+			const form499NodeID = mintForm499NodeID(row.form499ID, form499RowIndex)
+			insNode.run(form499NodeID, FilerIdentifierType.Form499ID, row.form499ID)
 
-		if (row.frn) {
-			skipped += processForm499FRNRelationships(insNode, insEdge, insFamily, legalNameByFRN, {
-				row,
-				frn: row.frn,
+			// Guarded ONCE per row, before anything below writes it into source_vintage/valid_from — see the
+			// docstring above assertLastFiledAt. ISO-validated too: this SAME value becomes valid_from on every edge this row emits, and valid_from must
+			// always be ISO-sortable — see assertISODate's docstring.
+			const lastFiledAt = assertISODate(
+				assertLastFiledAt(row.lastFiledAt, row.form499ID, form499RowIndex),
+				`form499 row #${form499RowIndex} (form499ID=${JSON.stringify(row.form499ID)}) lastFiledAt`
+			)
+
+			// Attributes attach to the form499ID node — the only identifier guaranteed present on every row
+			// (frn can legitimately be null). See the module docstring's DC-agent doctrine: dcAgent* fields land
+			// here as plain attributes ONLY, never as edges.
+			stageAttribute(form499NodeID, "legal_name", row.legalNameOfCarrier, "form-499", lastFiledAt)
+			stageAttribute(form499NodeID, "dba", row.doingBusinessAs, "form-499", lastFiledAt)
+
+			for (const classification of classifyFiler(row)) {
+				stageAttribute(form499NodeID, "classification", classification, "form-499", lastFiledAt)
+			}
+
+			stageAttribute(form499NodeID, "hq_address", row.hqAddress, "form-499", lastFiledAt)
+
+			stageAttribute(
 				form499NodeID,
-				form499RowIndex,
+				"customer_inquiries_telephone",
+				row.customerInquiriesTelephone,
+				"form-499",
+				lastFiledAt
+			)
+
+			stageAttribute(form499NodeID, "customer_inquiries_address", row.customerInquiriesAddress, "form-499", lastFiledAt)
+
+			stageAttribute(form499NodeID, "dc_agent_display_name", row.dcAgentDisplayName, "form-499", lastFiledAt)
+
+			stageAttribute(form499NodeID, "dc_agent_organization_name", row.dcAgentOrganizationName, "form-499", lastFiledAt)
+
+			stageAttribute(form499NodeID, "dc_agent_telephone", row.dcAgentTelephone, "form-499", lastFiledAt)
+			stageAttribute(form499NodeID, "dc_agent_email_address", row.dcAgentEmailAddress, "form-499", lastFiledAt)
+			stageAttribute(form499NodeID, "dc_agent_address", row.dcAgentAddress, "form-499", lastFiledAt)
+
+			// The FCC's own lifecycle notes, when the source carried them (workbook only — the 17-column TSV has
+			// no note columns, so `lifecycle` is undefined there and this is a no-op).
+			const relationshipValidTo = processForm499Lifecycle(insNode, insEdge, stageAttribute, lifecycleTotals, {
+				lifecycle: row.lifecycle,
+				form499NodeID,
 				lastFiledAt,
-				relationshipValidTo,
 			})
-		} else {
-			// No FRN on this row at all — legitimate (decision 3: not yet registered in CORES), not malformed.
-			// None of the three FRN-anchored edges above can be minted for this row.
-			skipped++
+
+			if (row.frn) {
+				skipped += processForm499FRNRelationships(insNode, insEdge, insFamily, legalNameByFRN, {
+					row,
+					frn: row.frn,
+					form499NodeID,
+					form499RowIndex,
+					lastFiledAt,
+					relationshipValidTo,
+				})
+			} else {
+				// No FRN on this row at all — legitimate (decision 3: not yet registered in CORES), not malformed.
+				// None of the three FRN-anchored edges above can be minted for this row.
+				skipped++
+			}
+
+			commitBatch()
 		}
 
-		commitBatch()
-	}
+		let providerRowIndex = 0
 
-	let providerRowIndex = 0
+		for await (const row of providerSource) {
+			providerRowIndex++
 
-	for await (const row of providerSource) {
-		providerRowIndex++
+			const providerNodeID = mintProviderNodeID(row.providerID, providerRowIndex)
+			insNode.run(providerNodeID, FilerIdentifierType.BDCProviderID, String(row.providerID))
 
-		const providerNodeID = mintProviderNodeID(row.providerID, providerRowIndex)
-		insNode.run(providerNodeID, FilerIdentifierType.BDCProviderID, String(row.providerID))
+			const frnNodeID = mintFRNNodeID(row.frn, `provider-list row #${providerRowIndex} (providerID=${row.providerID})`)
+			insNode.run(frnNodeID, FilerIdentifierType.FRN, row.frn)
 
-		const frnNodeID = mintFRNNodeID(row.frn, `provider-list row #${providerRowIndex} (providerID=${row.providerID})`)
-		insNode.run(frnNodeID, FilerIdentifierType.FRN, row.frn)
-
-		// source_vintage stays the (possibly non-ISO) human vintage label; valid_from is the SEPARATE, always-ISO
-		// providerValidFrom — see BuildFilerOptions.validFrom's docstring. Non-null
-		// here by construction: this loop only runs when hasProviderSource is true, the same condition that made
-		// providerValidFrom non-null above.
-		insEdge.run(
-			providerNodeID,
-			frnNodeID,
-			FilerEdgeAssertion.Authoritative,
-			FilerRelationship.SameEntity,
-			"bdc-provider-list",
-			options.sourceVintage,
-			providerValidFrom!,
-			null,
-			null,
-			null
-		)
-
-		if (row.holdingCompany) {
-			const holdingNodeID = mintHoldingCompanyNodeID(row.holdingCompany)
-			insNode.run(holdingNodeID, FilerIdentifierType.HoldingCompanyName, row.holdingCompany)
-
+			// source_vintage stays the (possibly non-ISO) human vintage label; valid_from is the SEPARATE, always-ISO
+			// providerValidFrom — see BuildFilerOptions.validFrom's docstring. Non-null
+			// here by construction: this loop only runs when hasProviderSource is true, the same condition that made
+			// providerValidFrom non-null above.
 			insEdge.run(
 				providerNodeID,
-				holdingNodeID,
+				frnNodeID,
 				FilerEdgeAssertion.Authoritative,
-				FilerRelationship.HoldingCompany,
+				FilerRelationship.SameEntity,
 				"bdc-provider-list",
 				options.sourceVintage,
 				providerValidFrom!,
@@ -570,138 +565,158 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 				null
 			)
 
-			insertFamilyMembership(insFamily, {
-				memberNodeID: providerNodeID,
-				namingNodeID: holdingNodeID,
-				identifierType: FilerIdentifierType.HoldingCompanyName,
-				name: row.holdingCompany,
-				relationship: FilerRelationship.HoldingCompany,
-				assertion: FilerEdgeAssertion.Authoritative,
-				matchScore: null,
-				source: "bdc-provider-list",
-				sourceVintage: options.sourceVintage,
-				validFrom: providerValidFrom!,
-			})
-		} else {
-			skipped++
+			if (row.holdingCompany) {
+				const holdingNodeID = mintHoldingCompanyNodeID(row.holdingCompany)
+				insNode.run(holdingNodeID, FilerIdentifierType.HoldingCompanyName, row.holdingCompany)
+
+				insEdge.run(
+					providerNodeID,
+					holdingNodeID,
+					FilerEdgeAssertion.Authoritative,
+					FilerRelationship.HoldingCompany,
+					"bdc-provider-list",
+					options.sourceVintage,
+					providerValidFrom!,
+					null,
+					null,
+					null
+				)
+
+				insertFamilyMembership(insFamily, {
+					memberNodeID: providerNodeID,
+					namingNodeID: holdingNodeID,
+					identifierType: FilerIdentifierType.HoldingCompanyName,
+					name: row.holdingCompany,
+					relationship: FilerRelationship.HoldingCompany,
+					assertion: FilerEdgeAssertion.Authoritative,
+					matchScore: null,
+					source: "bdc-provider-list",
+					sourceVintage: options.sourceVintage,
+					validFrom: providerValidFrom!,
+				})
+			} else {
+				skipped++
+			}
+
+			commitBatch()
 		}
 
-		commitBatch()
+		// EDGAR Exhibit 21 ingest — see the module docstring's own section for the full rationale, and
+		// processEdgarSubsidiaryRow's docstring (build/edgar-rows.ts) for the per-row edge/family logic. The
+		// bucket map is built from THIS call's own form499 rows, so it must be grouped after that loop has run.
+		const frnsByCanonicalLegalName = groupFRNsByCanonicalLegalName(legalNameByFRN)
+
+		let edgarRowIndex = 0
+
+		for await (const row of edgarSource) {
+			edgarRowIndex++
+			processEdgarSubsidiaryRow(insNode, insEdge, insFamily, frnsByCanonicalLegalName, row, edgarRowIndex)
+			commitBatch()
+		}
+
+		kdb.exec("COMMIT")
+
+		const stagedCountRow = kdb.prepare("SELECT COUNT(*) AS staged_count FROM filer_attribute_stage").get() as {
+			staged_count: number
+		}
+
+		progress(`staged ${stagedCountRow.staged_count.toLocaleString()} distinct attribute fact(s)`)
+
+		progress("materializing filer_attribute from the staged, deduped facts")
+
+		kdb.exec(
+			`INSERT INTO filer_attribute (node_id, key, value, source, source_vintage)
+			 SELECT node_id, key, value, source, source_vintage FROM filer_attribute_stage`
+		)
+
+		await kdb.schema.dropTable("filer_attribute_stage").execute()
+
+		progress("index-after-load")
+		await createFilerEdgeToNodeIndex(kdb)
+		await createFilerAttributeNodeIndex(kdb)
+		await createFilerClusterIndex(kdb)
+		await createFilerFamilyIndex(kdb)
+
+		const sourcesUsed: string[] = []
+
+		if (hasForm499Source) {
+			sourcesUsed.push("form-499")
+		}
+
+		if (hasProviderSource) {
+			sourcesUsed.push("bdc-provider-list")
+		}
+
+		if (hasEdgarSource) {
+			sourcesUsed.push("edgar-exhibit-21")
+		}
+
+		progress("writing filer_manifest")
+
+		await kdb
+			.insertInto("filer_manifest")
+			.values({
+				name: "filer",
+				// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
+				version: options.sourceVintage,
+				// The current schema version from filer/schema.ts — bumped to 3 when SupersededBy and
+				// valid_to semantics landed. Every reader that needs temporal awareness should gate on this.
+				schema_version: FILER_SCHEMA_VERSION,
+				source: sourcesUsed.join(","),
+				source_vintage: options.sourceVintage,
+				// No `mailwoman filer build` CLI exists (filer.db has no CLI wiring in 3a — see the module docstring's
+				// decision-2 note) — name the actual API entrypoint that produced this artifact instead of a command
+				// that isn't there.
+				build_cmd: "buildFilerDatabase (@mailwoman/filer/sdk)",
+				build_sha: options.buildSHA,
+				created_at: new Date().toISOString(),
+			})
+			.execute()
+
+		materialized = {
+			nodes: countRows(kdb, "filer_node"),
+			edges: countRows(kdb, "filer_edge"),
+			attributes: countRows(kdb, "filer_attribute"),
+			families: countRows(kdb, "filer_family"),
+		}
+
+		progress(
+			`materialized ${materialized.nodes.toLocaleString()} node(s), ${materialized.edges.toLocaleString()} edge(s), ` +
+				`${materialized.attributes.toLocaleString()} attribute(s), ` +
+				`${materialized.families.toLocaleString()} family membership(s) ` +
+				`(${skipped.toLocaleString()} edge opportunity/ies skipped)`
+		)
+
+		progress("finalize: ANALYZE + VACUUM")
+		kdb.exec("ANALYZE")
+		// page_size MUST be set right before VACUUM — node:sqlite initializes the file at the 4096 default on
+		// `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size (matches
+		// build-bdc.ts's same discipline).
+		kdb.exec("PRAGMA page_size=8192")
+		kdb.exec("VACUUM")
 	}
-
-	// EDGAR Exhibit 21 ingest — see the module docstring's own section for the full rationale, and
-	// processEdgarSubsidiaryRow's docstring (build/edgar-rows.ts) for the per-row edge/family logic. The
-	// bucket map is built from THIS call's own form499 rows, so it must be grouped after that loop has run.
-	const frnsByCanonicalLegalName = groupFRNsByCanonicalLegalName(legalNameByFRN)
-
-	let edgarRowIndex = 0
-
-	for await (const row of edgarSource) {
-		edgarRowIndex++
-		processEdgarSubsidiaryRow(insNode, insEdge, insFamily, frnsByCanonicalLegalName, row, edgarRowIndex)
-		commitBatch()
-	}
-
-	kdb.exec("COMMIT")
-
-	const stagedCountRow = kdb.prepare("SELECT COUNT(*) AS staged_count FROM filer_attribute_stage").get() as {
-		staged_count: number
-	}
-
-	progress(`staged ${stagedCountRow.staged_count.toLocaleString()} distinct attribute fact(s)`)
-
-	progress("materializing filer_attribute from the staged, deduped facts")
-
-	kdb.exec(
-		`INSERT INTO filer_attribute (node_id, key, value, source, source_vintage)
-		 SELECT node_id, key, value, source, source_vintage FROM filer_attribute_stage`
-	)
-
-	await kdb.schema.dropTable("filer_attribute_stage").execute()
-
-	progress("index-after-load")
-	await createFilerEdgeToNodeIndex(kdb)
-	await createFilerAttributeNodeIndex(kdb)
-	await createFilerClusterIndex(kdb)
-	await createFilerFamilyIndex(kdb)
-
-	const sourcesUsed: string[] = []
-
-	if (hasForm499Source) {
-		sourcesUsed.push("form-499")
-	}
-
-	if (hasProviderSource) {
-		sourcesUsed.push("bdc-provider-list")
-	}
-
-	if (hasEdgarSource) {
-		sourcesUsed.push("edgar-exhibit-21")
-	}
-
-	progress("writing filer_manifest")
-
-	await kdb
-		.insertInto("filer_manifest")
-		.values({
-			name: "filer",
-			// filer.db has no independent versioning yet — same deferral build-bdc.ts makes for bdc.db's `release`.
-			version: options.sourceVintage,
-			// The current schema version from filer/schema.ts — bumped to 3 when SupersededBy and
-			// valid_to semantics landed. Every reader that needs temporal awareness should gate on this.
-			schema_version: FILER_SCHEMA_VERSION,
-			source: sourcesUsed.join(","),
-			source_vintage: options.sourceVintage,
-			// No `mailwoman filer build` CLI exists (filer.db has no CLI wiring in 3a — see the module docstring's
-			// decision-2 note) — name the actual API entrypoint that produced this artifact instead of a command
-			// that isn't there.
-			build_cmd: "buildFilerDatabase (@mailwoman/filer/sdk)",
-			build_sha: options.buildSHA,
-			created_at: new Date().toISOString(),
-		})
-		.execute()
-
-	const nodeCount = (kdb.prepare("SELECT COUNT(*) AS c FROM filer_node").get() as { c: number }).c
-	const edgeCount = (kdb.prepare("SELECT COUNT(*) AS c FROM filer_edge").get() as { c: number }).c
-	const attributeCount = (kdb.prepare("SELECT COUNT(*) AS c FROM filer_attribute").get() as { c: number }).c
-	const familyCount = (kdb.prepare("SELECT COUNT(*) AS c FROM filer_family").get() as { c: number }).c
-
-	progress(
-		`materialized ${nodeCount.toLocaleString()} node(s), ${edgeCount.toLocaleString()} edge(s), ` +
-			`${attributeCount.toLocaleString()} attribute(s), ${familyCount.toLocaleString()} family membership(s) ` +
-			`(${skipped.toLocaleString()} edge opportunity/ies skipped)`
-	)
-
-	progress("finalize: ANALYZE + VACUUM")
-	kdb.exec("ANALYZE")
-	// page_size MUST be set right before VACUUM — node:sqlite initializes the file at the 4096 default on
-	// `new DatabaseSync`, so the earlier pragma is a no-op until a VACUUM rebuilds at the new size (matches
-	// build-bdc.ts's same discipline).
-	kdb.exec("PRAGMA page_size=8192")
-	kdb.exec("VACUUM")
-	await kdb.destroy()
 
 	progress("seal")
-	sealDatabase(buildingPath)
+	await sealDatabase(buildingPath)
 
 	// Atomic move-into-place — the previous version is moved ASIDE FIRST, per the AGENTS.md database house
 	// rule and build-bdc.ts's identical `${out}.prev` swap.
-	if (existsSync(options.out)) {
-		renameSync(options.out, `${options.out}.prev`)
+	if (await pathExists(options.out)) {
+		await movePath(options.out, `${options.out}.prev`)
 	}
 
-	renameSync(buildingPath, options.out)
+	await movePath(buildingPath, options.out)
 
-	if (existsSync(`${options.out}.prev`)) {
-		rmSync(`${options.out}.prev`)
+	if (await pathExists(`${options.out}.prev`)) {
+		await removePath(`${options.out}.prev`)
 	}
 
 	return {
 		out: options.out,
-		nodes: nodeCount,
-		edges: edgeCount,
-		attributes: attributeCount,
-		families: familyCount,
+		nodes: materialized.nodes,
+		edges: materialized.edges,
+		attributes: materialized.attributes,
+		families: materialized.families,
 		skipped,
 		closedByCessation: lifecycleTotals.closed,
 		cessationWindowAbstained: lifecycleTotals.abstained,

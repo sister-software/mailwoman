@@ -131,13 +131,13 @@ Nothing else in the build produces an ownership fact. Two mechanisms account for
 
 ## What would move this number
 
-It is tempting to call the withheld number a floor that any better evidence would lift. That is not what this code does, and an earlier version of this page said it anyway. Two probes establish the behavior.
+It's tempting to call the withheld number a floor that any better evidence would lift. That is not what this code does, and an earlier version of this page said it anyway. Two probes establish the behavior.
 
 **Populating the address and contact columns changes nothing.** Fill `hqAddress`, `customerInquiriesTelephone` and `customerInquiriesAddress` identically across all three members of one family in the withheld corpus, then rebuild, re-cluster and re-score: byte-identical result, 0 pairs recovered. Those columns are stored as attributes and nothing on the family path — or on the entity-resolution path, which reads only legal names and identifier codes — ever looks at them. That is a property of the pipeline, not a gap in the corpus.
 
 **Adding an ownership EDGE changes nothing either.** Write inferred `subsidiary` `filer_edge` rows joining those same filers to a parent — the shape a corporate-filing importer is specified to emit — and recall stays 0.000. Corporate-family MEMBERSHIP is read from `filer_family` alone. The family readers do query `filer_edge`, but only to recover the raw company name behind a canonicalized family id — never to decide who belongs to a family, which is the only thing this eval scores.
 
-The accurate statement is narrower, and worth stating exactly: **a channel that produces a `filer_family` row moves this number; a channel that produces only a `filer_edge` row does not.** Injecting three ownership `filer_family` rows into the withheld build moves recall from 0.000 to 0.500 at precision 1.000. A standing test holds that open, so "this baseline can be beaten" is re-checked on every run rather than asserted here.
+The accurate statement is narrower: **a channel that produces a `filer_family` row moves this number; a channel that produces only a `filer_edge` row does not.** Injecting three ownership `filer_family` rows into the withheld build moves recall from 0.000 to 0.500 at precision 1.000. A standing test holds that open, so "this baseline can be beaten" is re-checked on every run rather than asserted here.
 
 That is also the forward dependency for anyone using this page as a before/after baseline. A later build beats 0.000 only if its new evidence lands as `filer_family` membership rows. An importer that writes ownership edges and stops there re-runs to 0.000 — and it will read as though the evidence didn't help, when in fact nothing read it.
 

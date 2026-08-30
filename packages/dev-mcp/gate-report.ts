@@ -14,9 +14,9 @@
  *   silent gate drift the eval discipline exists to catch.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { join, resolve } from "@mailwoman/platform/path"
 
 /**
@@ -107,16 +107,16 @@ export const LEDGER_NOTE =
 /**
  * Assemble a report from a finished gate run's out-dir plus its log.
  */
-export function readGateReport(outDir: string, stdout: string, stderr: string): GateReport {
+export async function readGateReport(outDir: string, stdout: string, stderr: string): Promise<GateReport> {
 	const notes: string[] = []
 	const verdictPath = join(outDir, "verdict.json")
 	const provenancePath = join(outDir, "provenance.txt")
 
 	let raw: RawVerdict | null = null
 
-	if (existsSync(verdictPath)) {
+	if (await pathExists(verdictPath)) {
 		try {
-			raw = parseJSONStrict<RawVerdict>(readFileSync(verdictPath, "utf8"))
+			raw = await readLocalJSONFile<RawVerdict>(verdictPath)
 		} catch (error) {
 			notes.push(`verdict.json exists but did not parse: ${(error as Error).message}`)
 		}
@@ -174,7 +174,7 @@ export function readGateReport(outDir: string, stdout: string, stderr: string): 
 		}
 	}
 
-	if (!existsSync(provenancePath)) {
+	if (!(await pathExists(provenancePath))) {
 		notes.push(`No provenance.txt at ${provenancePath}, so the graded artifacts' md5s are unrecorded for this run.`)
 	}
 
@@ -185,7 +185,7 @@ export function readGateReport(outDir: string, stdout: string, stderr: string): 
 		floors,
 		int8_vs_fp32_deltas: raw?.int8_vs_fp32_deltas ?? {},
 		out_dir: outDir,
-		provenance: existsSync(provenancePath) ? readFileSync(provenancePath, "utf8") : null,
+		provenance: (await pathExists(provenancePath)) ? await readLocalTextFile(provenancePath) : null,
 		ledger_command: ledgerCommand,
 		ledger_note: LEDGER_NOTE,
 		lore_guard_refusal: loreGuardRefusal,
@@ -230,10 +230,10 @@ export function summarizeGateReport(report: GateReport): string {
 function declaredArtifacts(packageDir: string): string[] {
 	const cardPath = resolve(packageDir, "model-card.json")
 
-	if (!existsSync(cardPath)) return []
+	if (!pathExistsSync(cardPath)) return []
 
 	try {
-		const card = parseJSONStrict<{ files_md5?: Record<string, unknown> }>(readFileSync(cardPath, "utf8"))
+		const card = readLocalJSONFileSync<{ files_md5?: Record<string, unknown> }>(cardPath)
 
 		return Object.keys(card.files_md5 ?? {}).filter((key) => !key.startsWith("$"))
 	} catch {
@@ -262,7 +262,10 @@ export function missingWeightsCacheArtifacts(
 ): { kind: "ok" | "wrong-shape" | "under-staged"; paths: string[] } {
 	const packageDir = weightsCachePackageDir(cacheRoot, locale)
 	const required = ["model.onnx", "tokenizer.model", "model-card.json"]
-	const missingRequired = required.map((artifact) => resolve(packageDir, artifact)).filter((path) => !existsSync(path))
+
+	const missingRequired = required
+		.map((artifact) => resolve(packageDir, artifact))
+		.filter((path) => !pathExistsSync(path))
 
 	// Without a card there is nothing to check the rest against, and the caller already has a fatal answer.
 	if (missingRequired.length) return { kind: "wrong-shape", paths: missingRequired }
@@ -273,7 +276,7 @@ export function missingWeightsCacheArtifacts(
 	// `us.country_homograph_f1` at 0.0 against a 64.8 floor, which reads exactly like a collapsed country channel.
 	const undeclared = declaredArtifacts(packageDir)
 		.map((artifact) => resolve(packageDir, artifact))
-		.filter((path) => !existsSync(path))
+		.filter((path) => !pathExistsSync(path))
 
 	return undeclared.length ? { kind: "under-staged", paths: undeclared } : { kind: "ok", paths: [] }
 }

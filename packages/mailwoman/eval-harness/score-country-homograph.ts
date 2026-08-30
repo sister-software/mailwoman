@@ -17,12 +17,12 @@
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -120,9 +120,7 @@ export async function scoreCountryHomograph(
 	const neural = WEIGHTS_CACHE
 		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
 		: await (async () => {
-				const card = parseJSONStrict<{ labels: string[] }>(
-					readFileSync("packages/neural-weights-en-us/model-card.json", "utf8")
-				)
+				const card = await readLocalJSONFile<{ labels: string[] }>("packages/neural-weights-en-us/model-card.json")
 
 				const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(model)])
 
@@ -130,10 +128,8 @@ export async function scoreCountryHomograph(
 					tokenizer,
 					runner,
 					labels: card.labels,
-					postcodeAnchorLookup: parseAnchorLookup(parseJSONStrict(readFileSync(LK, "utf8"))),
-					...(existsSync(GAZ)
-						? { gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(GAZ, "utf8"))) }
-						: {}),
+					postcodeAnchorLookup: parseAnchorLookup(await readLocalJSONFile(LK)),
+					...((await pathExists(GAZ)) ? { gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(GAZ)) } : {}),
 					suppressGazetteerNearPostcode: options.suppressGazNearPostcode ?? false,
 					// #511 Tier A: `conventions` auto|<system> enables the address-system conventions mask.
 					...(options.conventions ? { addressSystemConventions: options.conventions as "auto" } : {}),
@@ -217,7 +213,7 @@ export async function scoreCountryHomograph(
 	const result: ScoreCountryHomographResult = { n: rows.length, file, tags: sidecar, overfire, missedCountry }
 
 	if (options.json) {
-		writeFileSync(options.json, JSON.stringify(result, null, "\t") + "\n")
+		await writeLocalJSONFile(result, options.json)
 	}
 
 	report(`\nover-fire (region/locality tagged as country): ${overfire}`)

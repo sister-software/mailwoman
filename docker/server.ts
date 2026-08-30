@@ -32,12 +32,12 @@
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
-import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike } from "@mailwoman/api"
+import type { MailwomanAPIEngine, GeocodeCallback, GeocodeOutcomeLike, BatchResultEntry } from "@mailwoman/api"
 import { serveNode } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import { $public } from "@mailwoman/core/env"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { geocodeAddress, ShardProvider } from "mailwoman/geocode-core"
 import {
@@ -65,7 +65,7 @@ function wofPaths() {
 			.filter(Boolean)
 	}
 
-	return wofShardPaths().filter((p) => existsSync(p))
+	return wofShardPaths().filter((p) => pathExistsSync(p))
 }
 
 /**
@@ -126,7 +126,7 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 
 				engine.batch = async (addresses) => {
 					const inputs = addresses.map((a) => a.trim())
-					const results = new Array(inputs.length)
+					const results: BatchResultEntry<T>[] = Array.from({ length: inputs.length })
 
 					for (let i = 0; i < inputs.length; i++) {
 						const input = inputs[i]!
@@ -163,11 +163,10 @@ async function buildEngine<T extends GeocodeOutcomeLike = GeocodeOutcomeLike>() 
 const engine = await buildEngine()
 const app = createMailwomanAPI(engine, { batchMax: Math.max(1, $public.MAILWOMAN_BATCH_MAX) })
 
-const handle = serveNode({
+await using handle = await serveNode({
 	fetch: app.fetch,
 	port: PORT,
 	hostname: HOST,
-	onListen: ({ port, address }) => console.error(`[mailwoman] native /v1 API listening on http://${address}:${port}`),
 })
 
 let draining = false
@@ -178,7 +177,7 @@ const shutdown = () => {
 
 	console.error("[mailwoman] draining")
 
-	void handle.close().finally(() => process.exit(0))
+	void handle[Symbol.asyncDispose]().finally(() => process.exit(0))
 }
 
 process.on("SIGINT", shutdown)

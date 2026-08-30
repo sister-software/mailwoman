@@ -18,6 +18,8 @@ import type { BDCDatabase } from "@mailwoman/bdc/schema"
 import { buildBDCDatabase, geometryCentroid, peekProviderID, type BuildBDCResult } from "@mailwoman/bdc/sdk/build-bdc"
 import type { ProviderID } from "@mailwoman/bdc/sdk/common"
 import type { BDCAvailabilityRow } from "@mailwoman/bdc/sdk/parsing"
+import { pathExists, statPath, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers"
 import {
@@ -34,9 +36,6 @@ import {
 	type FilerDatabase,
 } from "@mailwoman/filer"
 import { toFRN, type ProviderListRow } from "@mailwoman/filer/sdk"
-import { existsSync, statSync } from "@mailwoman/platform/fs"
-import { mkdtemp, readFile, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -117,17 +116,15 @@ function fixtureRows(): BDCAvailabilityRow[] {
 	]
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let out: string
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "bdc-build-"))
-	out = join(scratch, "bdc.db")
+	scratch = await temporaryDirectory("bdc-build-")
+	out = scratch.resolve("bdc.db")
 })
 
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("buildBDCDatabase", () => {
 	let result: BuildBDCResult
@@ -142,12 +139,12 @@ describe("buildBDCDatabase", () => {
 		})
 	})
 
-	it("(a) builds a sealed file at `out`", () => {
-		expect(existsSync(out)).toBe(true)
-		expect(statSync(out).mode & 0o222).toBe(0)
+	it("(a) builds a sealed file at `out`", async () => {
+		expect(await pathExists(out)).toBe(true)
+		expect((await statPath(out)).mode & 0o222).toBe(0)
 		// The `.building` temp path and any aside copy must not survive the swap.
-		expect(existsSync(`${out}.building`)).toBe(false)
-		expect(existsSync(`${out}.prev`)).toBe(false)
+		expect(await pathExists(`${out}.building`)).toBe(false)
+		expect(await pathExists(`${out}.prev`)).toBe(false)
 	})
 
 	it("(b) dedupes an exact-duplicate row on the natural key", () => {
@@ -187,7 +184,7 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("(d) populates location_id when includeLocationIDs is true", async () => {
-		const includeOut = join(scratch, "bdc-with-location-ids.db")
+		const includeOut = scratch.resolve("bdc-with-location-ids.db")
 
 		await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -256,8 +253,8 @@ describe("buildBDCDatabase", () => {
 		vi.setSystemTime(frozenNow)
 
 		try {
-			const firstOut = join(scratch, "bdc-determinism-a.db")
-			const secondOut = join(scratch, "bdc-determinism-b.db")
+			const firstOut = scratch.resolve("bdc-determinism-a.db")
+			const secondOut = scratch.resolve("bdc-determinism-b.db")
 
 			await buildBDCDatabase({
 				rows: fixtureRows(),
@@ -275,14 +272,14 @@ describe("buildBDCDatabase", () => {
 				blockCentroids,
 			})
 
-			expect(await readFile(firstOut)).toEqual(await readFile(secondOut))
+			expect(await readLocalBuffer(firstOut)).toEqual(await readLocalBuffer(secondOut))
 		} finally {
 			vi.useRealTimers()
 		}
 	})
 
 	it("bootstraps missing intermediate output directories", async () => {
-		const nestedOut = join(scratch, "nested", "deeper", "bdc.db")
+		const nestedOut = scratch.resolve("nested", "deeper", "bdc.db")
 
 		const nestedResult = await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -293,7 +290,7 @@ describe("buildBDCDatabase", () => {
 		})
 
 		expect(nestedResult.rows).toBe(3)
-		expect(statSync(nestedOut).isFile()).toBe(true)
+		expect((await statPath(nestedOut)).isFile()).toBe(true)
 	})
 
 	it("moves an existing artifact aside before the new build takes its place", async () => {
@@ -307,7 +304,7 @@ describe("buildBDCDatabase", () => {
 		})
 
 		expect(second.rows).toBe(3)
-		expect(existsSync(`${out}.prev`)).toBe(false)
+		expect(await pathExists(`${out}.prev`)).toBe(false)
 
 		using kdb = new DatabaseClient<LayerContractDatabase>(out, { readOnly: true })
 		const manifest = await readLayerManifest(kdb)
@@ -338,7 +335,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	}
 
 	it("collapses multiple BSLs at the same triple to exactly 1 row by default", async () => {
-		const collapsedOut = join(scratch, "bdc-multi-bsl-default.db")
+		const collapsedOut = scratch.resolve("bdc-multi-bsl-default.db")
 
 		const result = await buildBDCDatabase({
 			rows: multiBSLRows(),
@@ -366,7 +363,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	})
 
 	it("keeps every distinct BSL as its own row when includeLocationIDs is true", async () => {
-		const perBSLOut = join(scratch, "bdc-multi-bsl-included.db")
+		const perBSLOut = scratch.resolve("bdc-multi-bsl-included.db")
 
 		const result = await buildBDCDatabase({
 			rows: multiBSLRows(),
@@ -399,7 +396,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	const FRN_SOLO = toFRN("0003333333")!
 
 	function openFilerMemory(): DatabaseClient<FilerDatabase> {
-		return new DatabaseClient<FilerDatabase>(":memory:")
+		return DatabaseClient.temp<FilerDatabase>()
 	}
 
 	/**
@@ -562,7 +559,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		using filerDB = openFilerMemory()
 		await seedTwoFRNFixture(filerDB)
 
-		const providerOut = join(scratch, "bdc-providers.db")
+		const providerOut = scratch.resolve("bdc-providers.db")
 
 		const result = await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -647,7 +644,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	})
 
 	it("throws naming the offending provider_id when a multi-FRN provider is given without `filerDB`", async () => {
-		const providerOut = join(scratch, "bdc-providers-no-filerdb.db")
+		const providerOut = scratch.resolve("bdc-providers-no-filerdb.db")
 
 		await expect(
 			buildBDCDatabase({
@@ -661,7 +658,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		).rejects.toThrow(/700001/)
 
 		// Loud, not partial: no sealed artifact from a build that couldn't resolve a required primary FRN.
-		expect(existsSync(providerOut)).toBe(false)
+		expect(await pathExists(providerOut)).toBe(false)
 	})
 
 	it("inserts frn: NULL when a multi-FRN provider's FRNs carry no 499 filing to rank by, rather than guessing", async () => {
@@ -674,7 +671,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		await createFilerManifestTable(filerDB)
 		// No filer_edge rows at all — neither FRN has a form-499 filing edge to rank by.
 
-		const providerOut = join(scratch, "bdc-providers-no-candidates.db")
+		const providerOut = scratch.resolve("bdc-providers-no-candidates.db")
 
 		const result = await buildBDCDatabase({
 			rows: fixtureRows(),
@@ -767,7 +764,7 @@ describe("buildBDCDatabase — malformed provider_id via csvPaths (the productio
 
 		// The rejection must be loud, not partial: no sealed artifact from a file whose rows were all rejected,
 		// never silently materialized/counted as "deduped".
-		expect(existsSync(out)).toBe(false)
+		expect(await pathExists(out)).toBe(false)
 	})
 })
 

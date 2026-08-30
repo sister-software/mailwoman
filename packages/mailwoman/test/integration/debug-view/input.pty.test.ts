@@ -22,8 +22,8 @@
  *   PATH, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
  */
 
+import { isExecutableSync } from "@mailwoman/core/fs/readers-sync"
 import { spawn } from "@mailwoman/platform/child_process"
-import { accessSync, constants } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { describe, expect, it } from "vitest"
 
@@ -51,13 +51,7 @@ const TEST_TIMEOUT_MS = 60_000
 function hasLinuxScript(): boolean {
 	if (process.platform !== "linux") return false
 
-	try {
-		accessSync("/usr/bin/script", constants.X_OK)
-
-		return true
-	} catch {
-		return false
-	}
+	return isExecutableSync("/usr/bin/script")
 }
 
 function delay(ms: number): Promise<void> {

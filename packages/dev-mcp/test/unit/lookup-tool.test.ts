@@ -8,12 +8,10 @@
  *   a row per query saying "no", which is the shape a genuine absence has.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import { runLookup } from "@mailwoman/dev-mcp/lookup-tool"
-import { mkdtempSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { resolvePath } from "path-ts"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
 /**
  * The five artifact-backed sources never touch the registry; passing one that would throw proves it.
@@ -24,7 +22,9 @@ const noRegistry = new Proxy({} as EngineRegistry, {
 	},
 })
 
-const emptyRoot = mkdtempSync(resolvePath(tmpdir(), "mwdev-lookup-"))
+const emptyRoot = await temporaryDirectory("mwdev-lookup-")
+
+afterAll(() => emptyRoot[Symbol.asyncDispose]())
 
 describe("runLookup", () => {
 	it("reports a pinned candidate path BY NAME rather than as an unresolved one", async () => {
@@ -44,7 +44,7 @@ describe("runLookup", () => {
 		const result = await runLookup(noRegistry, {
 			source: "poi",
 			queries: ["Eiffel Tower", "Sultan Qaboos Grand Mosque"],
-			config: { data_root: emptyRoot },
+			config: { data_root: emptyRoot.path },
 		})
 
 		expect(result.rows).toEqual([])
@@ -56,7 +56,7 @@ describe("runLookup", () => {
 		const result = await runLookup(noRegistry, {
 			source: "wof",
 			queries: ["Vaduz"],
-			config: { resolve_db: resolvePath(emptyRoot, "no-such-shard.db") },
+			config: { resolve_db: emptyRoot.resolve("no-such-shard.db") },
 		})
 
 		expect(result.rows).toEqual([])

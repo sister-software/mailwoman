@@ -37,7 +37,8 @@
  *   verbatim.
  */
 
-import { copyFileSync, existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { copyFileTo } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
 
@@ -209,7 +210,7 @@ const SPR_COLUMNS = [
 async function buildShard(acc: Map<string, PostcodeAcc>, outPath: string, normalizeKey: NormalizeKey): Promise<number> {
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 
-	if (existsSync(outPath)) {
+	if (await pathExists(outPath)) {
 		console.error(`out exists, overwriting: ${outPath}`)
 	}
 
@@ -277,11 +278,11 @@ async function foldIntoCandidate(
 	dstPath: string,
 	normalizeKey: NormalizeKey
 ): Promise<number> {
-	copyFileSync(srcPath, dstPath)
+	await copyFileTo(srcPath, dstPath)
 
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await using out = new DatabaseClient<WOFDatabase>(dstPath)
-	const shard = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
+	using shard = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 
 	const ptRow = out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'").get() as
 		| { id: number }
@@ -361,7 +362,6 @@ async function foldIntoCandidate(
 	out.exec("COMMIT")
 	// Re-cluster the WITHOUT ROWID B-tree contiguously after the mid-tree inserts.
 	out.exec("VACUUM")
-	await shard.destroy()
 
 	return n
 }
@@ -383,7 +383,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 		const foldInto = options.foldInto
 		const foldOut = options.foldOut
 
-		if (!existsSync(geonames)) {
+		if (!(await pathExists(geonames))) {
 			throw new CommandError(`Missing GeoNames file: ${geonames}`)
 		}
 
@@ -413,7 +413,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 		]
 
 		if (foldInto && foldOut) {
-			if (!existsSync(foldInto)) {
+			if (!(await pathExists(foldInto))) {
 				throw new CommandError(`Missing --fold-into candidate DB: ${foldInto}`)
 			}
 

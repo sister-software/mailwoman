@@ -10,10 +10,11 @@
  *   loader against temporary copies of the committed files, so every threshold is exercised without a run.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { POIIntent, POIResult } from "@mailwoman/core/pipeline"
-import { mkdtempSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { POI_BOARD_FIXTURES, type POIBoardFixture, type POIBoardOutcome } from "mailwoman/eval-harness/poi-board"
 import {
@@ -38,11 +39,15 @@ import {
 	type SemanticProbeDefinition,
 } from "mailwoman/eval-harness/semantic-utility/probe"
 import { JSONSpliterator } from "spliterator"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const committed = await Array.fromAsync(JSONSpliterator.fromAsync<POIBoardFixture>(POI_BOARD_FIXTURES))
 const definition = loadProbeDefinition()
-const freeze = parseJSONStrict<ProbeFreezeRecord>(readFileSync(PROBE_FREEZE_PATH, "utf8"))
+const freeze = await readLocalJSONFile<ProbeFreezeRecord>(PROBE_FREEZE_PATH)
 
 interface BaselineReceipt {
 	probeID: string
@@ -58,20 +63,20 @@ interface BaselineReceipt {
  * Write a definition + freeze pair into a scratch directory, so a refusal can be provoked without touching the
  * committed ruler.
  */
-function scratchPair(
+async function scratchPair(
 	mutate: (definition: SemanticProbeDefinition) => void,
 	freezeOverride?: Partial<ProbeFreezeRecord>
-): { definitionPath: string; freezePath: string } {
-	const dir = mkdtempSync(join(tmpdir(), "semantic-utility-probe-"))
-	const copy = parseJSONStrict<SemanticProbeDefinition>(readFileSync(PROBE_DEFINITION_PATH, "utf8"))
+): Promise<{ definitionPath: string; freezePath: string }> {
+	const dir = fixtures.use(await temporaryDirectory("semantic-utility-probe-")).path
+	const copy = await readLocalJSONFile<SemanticProbeDefinition>(PROBE_DEFINITION_PATH)
 
 	mutate(copy)
 
 	const definitionPath = join(dir, "probe-definition.json")
 	const freezePath = join(dir, "probe-freeze.json")
 
-	writeFileSync(definitionPath, JSON.stringify(copy, null, "\t"))
-	writeFileSync(freezePath, JSON.stringify({ ...freeze, ...freezeOverride }, null, "\t"))
+	await writeLocalJSONFile(copy, definitionPath)
+	await writeLocalJSONFile({ ...freeze, ...freezeOverride }, freezePath)
 
 	return { definitionPath, freezePath }
 }
@@ -102,30 +107,30 @@ function counts(overrides: Partial<ProbeCounts> = {}): ProbeCounts {
 }
 
 describe("the committed pre-registration", () => {
-	it("loads, which means its content hash still matches the freeze record", () => {
+	it("loads, which means its content hash still matches the freeze record", async () => {
 		expect(probeDefinitionHash(definition)).toBe(freeze.sha256)
 		expect(freeze.probeID).toBe(definition.probeID)
 		expect(freeze.version).toBe(definition.version)
 	})
 
-	it("audits clean", () => {
+	it("audits clean", async () => {
 		expect(auditProbeDefinition(definition)).toEqual([])
 	})
 
-	it("registers four target rows and six control rows across both groups", () => {
+	it("registers four target rows and six control rows across both groups", async () => {
 		expect(definition.targetRows).toHaveLength(4)
 		expect(definition.controlRows).toHaveLength(6)
 		expect(definition.controlRows.filter((row) => row.group === "same_category")).toHaveLength(3)
 		expect(definition.controlRows.filter((row) => row.group === "adjacent")).toHaveLength(3)
 	})
 
-	it("resolves every control row against the committed board file, byte-for-byte", () => {
+	it("resolves every control row against the committed board file, byte-for-byte", async () => {
 		const resolved = resolveControlRows(definition, committed)
 
 		expect(resolved.map((row) => row.id)).toEqual(definition.controlRows.map((row) => row.id))
 	})
 
-	it("copies each target row's anchor and expectation from the committed row it names", () => {
+	it("copies each target row's anchor and expectation from the committed row it names", async () => {
 		const byID = new Map(committed.map((fixture) => [fixture.id, fixture]))
 
 		for (const target of definition.targetRows) {
@@ -136,14 +141,14 @@ describe("the committed pre-registration", () => {
 		}
 	})
 
-	it("states a missing distinction and a measured baseline shape on every target row", () => {
+	it("states a missing distinction and a measured baseline shape on every target row", async () => {
 		for (const target of definition.targetRows) {
 			expect(target.missingDistinction.length).toBeGreaterThan(0)
 			expect(POI_OUTCOME_SHAPES).toContain(target.baselineShape)
 		}
 	})
 
-	it("gives every control row the failure it guards", () => {
+	it("gives every control row the failure it guards", async () => {
 		for (const control of definition.controlRows) {
 			expect(control.guards.length, control.id).toBeGreaterThan(0)
 		}
@@ -151,39 +156,39 @@ describe("the committed pre-registration", () => {
 })
 
 describe("the freeze mechanism", () => {
-	it("refuses a definition whose content moved without the hash record moving", () => {
-		const paths = scratchPair((copy) => {
+	it("refuses a definition whose content moved without the hash record moving", async () => {
+		const paths = await scratchPair((copy) => {
 			copy.thresholds.minimumPrimaryNumerator = 1
 		})
 
 		expect(() => loadProbeDefinition(paths.definitionPath, paths.freezePath)).toThrow(/content hash/u)
 	})
 
-	it("refuses a row edit just as loudly as a threshold edit", () => {
-		const paths = scratchPair((copy) => {
+	it("refuses a row edit just as loudly as a threshold edit", async () => {
+		const paths = await scratchPair((copy) => {
 			copy.targetRows[0]!.query = "where can i pick up a prescription near Boulder CO"
 		})
 
 		expect(() => loadProbeDefinition(paths.definitionPath, paths.freezePath)).toThrow(/content hash/u)
 	})
 
-	it("refuses a version bump that does not carry a new hash", () => {
-		const paths = scratchPair((copy) => {
+	it("refuses a version bump that does not carry a new hash", async () => {
+		const paths = await scratchPair((copy) => {
 			copy.version = "1.1.0"
 		})
 
 		expect(() => loadProbeDefinition(paths.definitionPath, paths.freezePath)).toThrow(/pins version/u)
 	})
 
-	it("refuses a freeze record that names another probe", () => {
-		const paths = scratchPair(() => undefined, { probeID: "some-other-probe" })
+	it("refuses a freeze record that names another probe", async () => {
+		const paths = await scratchPair(() => undefined, { probeID: "some-other-probe" })
 
 		expect(() => loadProbeDefinition(paths.definitionPath, paths.freezePath)).toThrow(/names probe/u)
 	})
 })
 
 describe("execution refusals", () => {
-	it("refuses an unregistered comparator", () => {
+	it("refuses an unregistered comparator", async () => {
 		const fixture = definition.targetRows[0]!
 		const outcome: POIBoardOutcome = { path: "full" }
 		// A name the conformance layer registers and this probe does not — the exact way a definition acquires one.
@@ -192,13 +197,13 @@ describe("execution refusals", () => {
 		expect(() => gradeWithComparator(unregistered, fixture, outcome)).toThrow(/unregistered outcome comparator/u)
 	})
 
-	it("refuses a control row that is not in its committed file", () => {
+	it("refuses a control row that is not in its committed file", async () => {
 		const withoutControl = committed.filter((fixture) => fixture.id !== definition.controlRows[0]!.id)
 
 		expect(() => resolveControlRows(definition, withoutControl)).toThrow(/is not in/u)
 	})
 
-	it("refuses a control row whose committed contents have moved", () => {
+	it("refuses a control row whose committed contents have moved", async () => {
 		const drifted = committed.map((fixture) =>
 			fixture.id === definition.controlRows[0]!.id ? { ...fixture, query: "pharmacy near Boulder CO" } : fixture
 		)
@@ -206,36 +211,36 @@ describe("execution refusals", () => {
 		expect(() => resolveControlRows(definition, drifted)).toThrow(/has moved/u)
 	})
 
-	it("refuses a denominator that disagrees with the registered row count", () => {
-		const copy = parseJSONStrict<SemanticProbeDefinition>(readFileSync(PROBE_DEFINITION_PATH, "utf8"))
+	it("refuses a denominator that disagrees with the registered row count", async () => {
+		const copy = await readLocalJSONFile<SemanticProbeDefinition>(PROBE_DEFINITION_PATH)
 		copy.primaryMetric.denominator = 5
 
 		expect(auditProbeDefinition(copy)).toContain("primaryMetric.denominator 5 !== 4 registered target rows")
 	})
 
-	it("refuses a threshold that is not a whole row count", () => {
-		const copy = parseJSONStrict<SemanticProbeDefinition>(readFileSync(PROBE_DEFINITION_PATH, "utf8"))
+	it("refuses a threshold that is not a whole row count", async () => {
+		const copy = await readLocalJSONFile<SemanticProbeDefinition>(PROBE_DEFINITION_PATH)
 		copy.thresholds.minimumPrimaryNumerator = 2.5
 
 		expect(auditProbeDefinition(copy).join("\n")).toMatch(/thresholds\.minimumPrimaryNumerator is 2\.5/u)
 	})
 
-	it("refuses a bar no run could reach", () => {
-		const copy = parseJSONStrict<SemanticProbeDefinition>(readFileSync(PROBE_DEFINITION_PATH, "utf8"))
+	it("refuses a bar no run could reach", async () => {
+		const copy = await readLocalJSONFile<SemanticProbeDefinition>(PROBE_DEFINITION_PATH)
 		copy.thresholds.minimumPrimaryNumerator = 9
 
 		expect(auditProbeDefinition(copy).join("\n")).toMatch(/exceeds the primary denominator/u)
 	})
 
-	it("refuses a control tolerance that lets every control row move", () => {
-		const copy = parseJSONStrict<SemanticProbeDefinition>(readFileSync(PROBE_DEFINITION_PATH, "utf8"))
+	it("refuses a control tolerance that lets every control row move", async () => {
+		const copy = await readLocalJSONFile<SemanticProbeDefinition>(PROBE_DEFINITION_PATH)
 		copy.thresholds.controlRegressionTolerance = 6
 
 		expect(auditProbeDefinition(copy).join("\n")).toMatch(/would decide nothing/u)
 	})
 
-	it("refuses a control set with only one group", () => {
-		const copy = parseJSONStrict<SemanticProbeDefinition>(readFileSync(PROBE_DEFINITION_PATH, "utf8"))
+	it("refuses a control set with only one group", async () => {
+		const copy = await readLocalJSONFile<SemanticProbeDefinition>(PROBE_DEFINITION_PATH)
 		copy.controlRows = copy.controlRows.filter((row) => row.group === "same_category")
 		copy.controlMetric.denominator = copy.controlRows.length
 
@@ -244,7 +249,7 @@ describe("execution refusals", () => {
 })
 
 describe("the outcome-shape vocabulary", () => {
-	it("names a shape for every reachable pipeline outcome", () => {
+	it("names a shape for every reachable pipeline outcome", async () => {
 		expect(poiOutcomeShape({ path: "full" })).toBe("no_poi_branch")
 		expect(poiOutcomeShape({ path: "fast-path" })).toBe("no_poi_branch")
 		expect(poiOutcomeShape({ path: "poi" })).toBe("no_poi_branch")
@@ -286,7 +291,7 @@ describe("the metric arithmetic", () => {
 		}
 	}
 
-	it("counts over the registered denominators, never over the rows that answered", () => {
+	it("counts over the registered denominators, never over the rows that answered", async () => {
 		const measured = computeProbeCounts(definition, [
 			outcome("sem-act-us-01", "target", true, "poi_intent_results"),
 			outcome("sem-act-us-02", "target", false),
@@ -298,7 +303,7 @@ describe("the metric arithmetic", () => {
 		expect(measured.controlDenominator).toBe(6)
 	})
 
-	it("reads the diagnostic numerator off the shape, not off the grade", () => {
+	it("reads the diagnostic numerator off the shape, not off the grade", async () => {
 		const measured = computeProbeCounts(definition, [
 			outcome("sem-act-us-01", "target", false, "poi_intent_results"),
 			outcome("sem-act-fr-01", "target", false, "poi_abstain"),
@@ -311,35 +316,35 @@ describe("the metric arithmetic", () => {
 })
 
 describe("the decision", () => {
-	it("records STOP-REDESIGN for the baseline arm compared against its own frozen baseline", () => {
+	it("records STOP-REDESIGN for the baseline arm compared against its own frozen baseline", async () => {
 		expect(decideProbe(definition, counts()).decision).toBe("STOP-REDESIGN")
 	})
 
-	it("records GO at the frozen primary bar", () => {
+	it("records GO at the frozen primary bar", async () => {
 		const verdict = decideProbe(definition, counts({ primaryNumerator: 3, diagnosticNumerator: 3 }))
 
 		expect(verdict.decision).toBe("GO")
 		expect(verdict.primaryDelta).toBe(3)
 	})
 
-	it("holds GO back one row short of the bar", () => {
+	it("holds GO back one row short of the bar", async () => {
 		expect(decideProbe(definition, counts({ primaryNumerator: 2, diagnosticNumerator: 2 })).decision).toBe(
 			"STOP-REDESIGN"
 		)
 	})
 
-	it("records DIAGNOSTIC-ONLY when only the routing bar is reached", () => {
+	it("records DIAGNOSTIC-ONLY when only the routing bar is reached", async () => {
 		const verdict = decideProbe(definition, counts({ primaryNumerator: 0, diagnosticNumerator: 3 }))
 
 		expect(verdict.decision).toBe("DIAGNOSTIC-ONLY")
 		expect(verdict.diagnosticDelta).toBe(2)
 	})
 
-	it("holds DIAGNOSTIC-ONLY back when routing rises without reaching the bar", () => {
+	it("holds DIAGNOSTIC-ONLY back when routing rises without reaching the bar", async () => {
 		expect(decideProbe(definition, counts({ diagnosticNumerator: 2 })).decision).toBe("STOP-REDESIGN")
 	})
 
-	it("stops on a control regression even when the primary bar is cleared", () => {
+	it("stops on a control regression even when the primary bar is cleared", async () => {
 		const verdict = decideProbe(
 			definition,
 			counts({ primaryNumerator: 4, diagnosticNumerator: 4, controlHoldNumerator: 5 })
@@ -350,7 +355,7 @@ describe("the decision", () => {
 		expect(verdict.reasons.at(-1)).toMatch(/control regressions exceed tolerance/u)
 	})
 
-	it("prints every count with its denominator, its baseline and its bar", () => {
+	it("prints every count with its denominator, its baseline and its bar", async () => {
 		const verdict = decideProbe(definition, counts({ primaryNumerator: 3, diagnosticNumerator: 3 }))
 
 		expect(verdict.reasons[0]).toBe("primary 3/4 (baseline 0, delta +3; bars 3 and +3)")
@@ -360,28 +365,28 @@ describe("the decision", () => {
 })
 
 describe("the committed baseline receipt", () => {
-	const receipt = parseJSONStrict<BaselineReceipt>(readFileSync(PROBE_BASELINE_RECEIPT_PATH, "utf8"))
+	const receipt = readLocalJSONFileSync<BaselineReceipt>(PROBE_BASELINE_RECEIPT_PATH)
 
-	it("was measured against this version of the pre-registration", () => {
+	it("was measured against this version of the pre-registration", async () => {
 		expect(receipt.probeID).toBe(definition.probeID)
 		expect(receipt.definitionVersion).toBe(definition.version)
 		expect(receipt.definitionSHA256).toBe(freeze.sha256)
 		expect(receipt.arm).toBe("baseline")
 	})
 
-	it("carries the numbers the frozen baseline block states", () => {
+	it("carries the numbers the frozen baseline block states", async () => {
 		expect(receipt.counts.primaryNumerator).toBe(definition.baseline.primaryNumerator)
 		expect(receipt.counts.diagnosticNumerator).toBe(definition.baseline.diagnosticNumerator)
 		expect(receipt.counts.controlHoldNumerator).toBe(definition.baseline.controlHoldNumerator)
 	})
 
-	it("records every registered row once", () => {
+	it("records every registered row once", async () => {
 		expect(receipt.rows.map((row) => row.id).toSorted()).toEqual(
 			[...definition.targetRows, ...definition.controlRows].map((row) => row.id).toSorted()
 		)
 	})
 
-	it("records the per-row baseline shape the pre-registration froze", () => {
+	it("records the per-row baseline shape the pre-registration froze", async () => {
 		const shapeByID = new Map(receipt.rows.map((row) => [row.id, row.shape]))
 
 		for (const target of definition.targetRows) {
@@ -389,7 +394,7 @@ describe("the committed baseline receipt", () => {
 		}
 	})
 
-	it("records STOP-REDESIGN, because a baseline compared against itself moves nothing", () => {
+	it("records STOP-REDESIGN, because a baseline compared against itself moves nothing", async () => {
 		expect(receipt.verdict.decision).toBe("STOP-REDESIGN")
 	})
 })

@@ -61,7 +61,7 @@ export async function renderServedMapToPNG(
 	// MapLibre composites tiles + the marker layer async after the network settles; give it a beat.
 	await page.waitForTimeout(4000)
 	await page.screenshot({ path: options.outPNG })
-	await browser.close()
+	await browser[Symbol.asyncDispose]()
 
 	report?.(`[map-render] ${options.outPNG}; console errors=${errors.length}`)
 

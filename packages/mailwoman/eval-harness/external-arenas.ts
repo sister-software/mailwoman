@@ -38,8 +38,8 @@
  *   while it is gone from `promotion-gate.ts`.
  */
 
+import { writeLocalFile, copyFileTo, makeDirectories } from "@mailwoman/core/fs/writers"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { copyFileSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
@@ -90,9 +90,9 @@ export async function externalArenas(
 	$.verbose = false
 
 	const outDir = options.outDir ?? tempRootPath("external-arenas")
-	mkdirSync(outDir, { recursive: true })
+	await makeDirectories(outDir)
 	const emptyTests = join(outDir, "empty-tests")
-	mkdirSync(emptyTests, { recursive: true })
+	await makeDirectories(emptyTests)
 
 	// Model args: pass through if a model is set, else the harness uses its loadFromWeights() default.
 	const modelArgs: string[] = []
@@ -141,10 +141,10 @@ export async function externalArenas(
 	}
 
 	// Stage each arena in its own dir (harness loads ALL .jsonl in a --falsehoods dir).
-	mkdirSync(join(outDir, "libpostal"), { recursive: true })
-	mkdirSync(join(outDir, "postal"), { recursive: true })
-	copyFileSync("data/eval/external/libpostal-cases.jsonl", join(outDir, "libpostal", "libpostal-cases.jsonl"))
-	copyFileSync("data/eval/external/postal-cases.jsonl", join(outDir, "postal", "postal-cases.jsonl"))
+	await makeDirectories(join(outDir, "libpostal"))
+	await makeDirectories(join(outDir, "postal"))
+	await copyFileTo("data/eval/external/libpostal-cases.jsonl", join(outDir, "libpostal", "libpostal-cases.jsonl"))
+	await copyFileTo("data/eval/external/postal-cases.jsonl", join(outDir, "postal", "postal-cases.jsonl"))
 
 	// Harness writes its progress to <name>.stderr; we tail the last 40 summary lines off stdout.
 	const runArena = async (name: string, dir: string): Promise<void> => {
@@ -153,7 +153,7 @@ export async function externalArenas(
 		const r =
 			await $`node scripts/eval/harness-neural.ts --tests ${emptyTests} --falsehoods ${dir} ${modelArgs} --postcode-repair --out-json ${join(outDir, `${name}.results.json`)}`
 
-		writeFileSync(join(outDir, `${name}.stderr`), r.stderr)
+		await writeLocalFile(r.stderr, join(outDir, `${name}.stderr`))
 
 		report([...TextSpliterator.from(r.stdout)].slice(-40).join("\n"))
 	}

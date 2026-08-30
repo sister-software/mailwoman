@@ -18,15 +18,13 @@
  *        somewhere else.
  */
 
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { IMPORTANCE_JOIN_GATE_KM, loadImportanceIndex } from "@mailwoman/resolver-wof-sqlite/candidate-importance"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 let sourcePath: string
 
 /**
@@ -78,13 +76,13 @@ function buildFixtureSource(path: string): void {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-candidate-importance-"))
-	sourcePath = join(scratch, "importance.db")
+	scratch = await temporaryDirectory("mailwoman-candidate-importance-")
+	sourcePath = scratch.resolve("importance.db")
 	buildFixtureSource(sourcePath)
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("loadImportanceIndex", () => {

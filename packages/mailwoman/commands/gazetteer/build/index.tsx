@@ -49,7 +49,7 @@ const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 
 		console.error(`▸ build candidate ← ${admin.out}`)
 
-		const shards = resolvePostcodeShards()
+		const shards = await resolvePostcodeShards()
 
 		const candidate = await buildCandidate({
 			adminDB: admin.out,
@@ -59,8 +59,8 @@ const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		return [
-			`admin: ${admin.out} (${artifactSizeMB(admin.out)} MB) — ${admin.verify ? "verify PASS" : "verify SKIPPED"}, sealed`,
-			`candidate: ${candidateOut} (${artifactSizeMB(candidateOut)} MB) — ${candidate.rows.toLocaleString()} rows, sealed`,
+			`admin: ${admin.out} (${await artifactSizeMB(admin.out)} MB) — ${admin.verify ? "verify PASS" : "verify SKIPPED"}, sealed`,
+			`candidate: ${candidateOut} (${await artifactSizeMB(candidateOut)} MB) — ${candidate.rows.toLocaleString()} rows, sealed`,
 			"next: mailwoman gazetteer verify --db <admin>, then swap + promote per RELEASING.md",
 		]
 	})

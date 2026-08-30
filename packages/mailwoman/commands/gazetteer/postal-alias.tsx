@@ -25,7 +25,7 @@
  *   build.
  */
 
-import { mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import type { PostalCityAliasDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
@@ -65,8 +65,8 @@ const GazetteerPostalAlias: ParsedCommandComponent<Options> = ({ options }) => {
 		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
 		const minCount = options.minCount
 
-		mkdirSync(dirname(out), { recursive: true })
-		rmSync(out, { force: true })
+		await makeDirectories(dirname(out))
+		await removePathIfPresent(out)
 
 		// @duckdb/node-api is an OPTIONAL peer dep — import it dynamically so merely loading this
 		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when

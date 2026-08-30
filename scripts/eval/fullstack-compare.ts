@@ -22,9 +22,9 @@
  *   Optional: --geocode-earth-key <key> also queries api.geocode.earth (real Pelias) per case.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 
 interface Args {
@@ -278,7 +278,7 @@ async function fetchJSON(url: string, headers: Record<string, string> = {}): Pro
 
 async function main(): Promise<void> {
 	const args = parseArgs()
-	const harness = parseJSONStrict<HarnessRow[]>(readFileSync(args.harnessPath, "utf8"))
+	const harness = await readLocalJSONFile<HarnessRow[]>(args.harnessPath)
 	const bothFail = harness.filter((r) => !r.v0_pass && !r.neural_pass)
 
 	console.error(`Both-fail cases: ${bothFail.length}`)
@@ -399,11 +399,11 @@ async function main(): Promise<void> {
 	const mdText = md.join("\n") + "\n"
 
 	if (args.outMd) {
-		writeFileSync(args.outMd, mdText)
+		await writeLocalFile(mdText, args.outMd)
 	}
 
 	if (args.outJSON) {
-		writeFileSync(args.outJSON, JSON.stringify(results, null, 2))
+		await writeLocalJSONFile(results, args.outJSON)
 	}
 
 	console.log(mdText)

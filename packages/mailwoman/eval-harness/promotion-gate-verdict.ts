@@ -13,8 +13,10 @@
  *   can't be found is a FAIL, never a skip).
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -129,18 +131,18 @@ export interface PromotionVerdict {
  * Assemble the verdict from the out-dir's battery outputs, write `verdict.json`, and report the per-floor lines.
  * Returns `failed` (any floor missed) — the caller owns the exit code.
  */
-export function assemblePromotionVerdict(
+export async function assemblePromotionVerdict(
 	options: PromotionVerdictOptions,
 	report: (line: string) => void = console.log
-): { failed: boolean; verdict: PromotionVerdict } {
-	const gate = parseJSONStrict<{
+): Promise<{ failed: boolean; verdict: PromotionVerdict }> {
+	const gate = await readLocalJSONFile<{
 		label: string
 		floors: Record<string, number>
 		int8_vs_fp32_max_delta_pp?: number
-	}>(readFileSync(options.gate, "utf8"))
+	}>(options.gate)
 
 	const dir = options.outDir
-	const read = (f: string) => readFileSync(path.join(dir, f), "utf8")
+	const read = (f: string) => readLocalTextFileSync(path.join(dir, f))
 
 	function maybeRead(f: string): string | undefined {
 		try {
@@ -295,7 +297,7 @@ export function assemblePromotionVerdict(
 		generated_at_dir: dir,
 	}
 
-	writeFileSync(path.join(dir, "verdict.json"), JSON.stringify(verdict, null, "\t"))
+	await writeLocalJSONFile(verdict, path.join(dir, "verdict.json"))
 
 	report(`\n== promotion gate [${gate.label}] — ${verdict.verdict} ==`)
 

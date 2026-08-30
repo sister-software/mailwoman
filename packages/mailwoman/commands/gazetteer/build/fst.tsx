@@ -38,7 +38,7 @@ const GazetteerBuildFST: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildLocaleFSTs } = await import("#gazetteer/fst")
 
-		const built = buildLocaleFSTs({
+		const built = await buildLocaleFSTs({
 			locales: options.locales?.split(",").map((s) => s.trim()),
 			dbPath: options.db,
 			outputDir: options.output,

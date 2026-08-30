@@ -47,7 +47,7 @@ const GazetteerBuildAnchorLookup: ParsedCommandComponent<Options> = ({ options }
 	const state = useCommandTask(async () => {
 		const { buildAnchorLookup } = await import("#gazetteer/anchor-lookup")
 
-		const stats = buildAnchorLookup({
+		const stats = await buildAnchorLookup({
 			output: options.output,
 			zcta: options.zcta,
 			include: options.include

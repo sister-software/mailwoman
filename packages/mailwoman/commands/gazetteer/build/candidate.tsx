@@ -94,8 +94,11 @@ const GazetteerBuildCandidate: ParsedCommandComponent<Options> = ({ options }) =
 			adminDB = foldOut
 		}
 
-		const shards = resolvePostcodeShards(undefined, root)
-		const importanceDB = options.skipImportance ? false : (options.importance ?? resolveImportanceDB(undefined, root))
+		const shards = await resolvePostcodeShards(undefined, root)
+
+		const importanceDB = options.skipImportance
+			? false
+			: (options.importance ?? (await resolveImportanceDB(undefined, root)))
 
 		console.error(`▸ candidate build ← ${adminDB} (${shards.length} postcode shards; FTS baked in)`)
 

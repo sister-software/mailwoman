@@ -11,10 +11,10 @@
  *   writes a trailer at a non-zero offset and the reader is never handed the buffer.
  */
 
+import { readLocalBuffer, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { setTimestamps, writeLocalBuffer, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { createHash } from "@mailwoman/platform/crypto"
-import { mkdtempSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import {
 	fstFreshnessWarning,
 	fstStaleReason,
@@ -28,9 +28,9 @@ import { FST_FORMAT_VERSION, serializeFST } from "@mailwoman/resolver-wof-sqlite
 import type { FSTProvenance } from "@mailwoman/resolver-wof-sqlite/fst-types"
 import { afterAll, describe, expect, it } from "vitest"
 
-const TMP = mkdtempSync(join(tmpdir(), "fst-freshness-"))
+const TMP = await temporaryDirectory("fst-freshness-")
 
-afterAll(() => rmSync(TMP, { recursive: true, force: true }))
+afterAll(() => TMP[Symbol.asyncDispose]())
 
 /**
  * A two-token FST ("aa" → "bb") with one place, so the serialized artifact has a real string table, edge table and
@@ -57,9 +57,9 @@ function fixtureMatcher(): FSTMatcher {
 	])
 }
 
-function writeFST(name: string, provenance?: FSTProvenance): string {
-	const path = join(TMP, name)
-	writeFileSync(path, serializeFST(fixtureMatcher(), provenance))
+async function writeFST(name: string, provenance?: FSTProvenance): Promise<string> {
+	const path = TMP.resolve(name)
+	await writeLocalFile(serializeFST(fixtureMatcher(), provenance), path)
 
 	return path
 }
@@ -77,64 +77,64 @@ function provenanceOf(overrides: Partial<FSTProvenance> = {}): FSTProvenance {
 	}
 }
 
-const SOURCE = join(TMP, "source.db")
-writeFileSync(SOURCE, "source bytes")
-const SOURCE_IDENTITY = { md5: md5FileSync(SOURCE), bytes: statSync(SOURCE).size }
+const SOURCE = TMP.resolve("source.db")
+await writeLocalTextFile("source bytes", SOURCE)
+const SOURCE_IDENTITY = { md5: md5FileSync(SOURCE), bytes: (await statPath(SOURCE)).size }
 
 describe("md5FileSync", () => {
 	it("matches the digest of the same bytes hashed in one pass", () => {
 		expect(md5FileSync(SOURCE)).toBe(createHash("md5").update("source bytes").digest("hex"))
 	})
 
-	it("hashes a file LARGER than one read chunk identically", () => {
+	it("hashes a file LARGER than one read chunk identically", async () => {
 		// The defect this catches lives in the input tail: every fixture-sized file fits one 8 MiB read,
 		// so an off-by-one in the chunk loop is invisible until a real 5 GB source arrives. 20 MiB runs
 		// the loop three times, with the last read short.
 		const bytes = Buffer.alloc(20 * 1024 * 1024 + 7, 0xab)
-		const big = join(TMP, "big.bin")
-		writeFileSync(big, bytes)
+		const big = TMP.resolve("big.bin")
+		await writeLocalFile(bytes, big)
 
 		expect(md5FileSync(big)).toBe(createHash("md5").update(bytes).digest("hex"))
 	})
 })
 
 describe("readWOFSourceIdentity", () => {
-	it("computes and caches the digest in an md5sum-format sidecar", () => {
-		const path = join(TMP, "sidecar-source.db")
-		writeFileSync(path, "abc")
-		const identity = readWOFSourceIdentity(path)
+	it("computes and caches the digest in an md5sum-format sidecar", async () => {
+		const path = TMP.resolve("sidecar-source.db")
+		await writeLocalTextFile("abc", path)
+		const identity = await readWOFSourceIdentity(path)
 
 		expect(identity.md5).toBe(md5FileSync(path))
 		expect(identity.bytes).toBe(3)
 		// md5sum(1) format: "<hash>  <basename>".
-		expect(readFileSync(`${path}.md5`, "utf8")).toBe(`${identity.md5}  sidecar-source.db\n`)
+		expect(await readLocalTextFile(`${path}.md5`)).toBe(`${identity.md5}  sidecar-source.db\n`)
 	})
 
-	it("recomputes when the sidecar is OLDER than the source", () => {
-		const path = join(TMP, "stale-sidecar.db")
-		writeFileSync(path, "one")
-		writeFileSync(`${path}.md5`, "00000000000000000000000000000000  stale-sidecar.db\n")
+	it("recomputes when the sidecar is OLDER than the source", async () => {
+		const path = TMP.resolve("stale-sidecar.db")
+		await writeLocalTextFile("one", path)
+		await writeLocalTextFile("00000000000000000000000000000000  stale-sidecar.db\n", `${path}.md5`)
 		// Sidecar predates the source: the guard must not trust it.
-		utimesSync(`${path}.md5`, new Date(1000), new Date(1000))
+		await setTimestamps(`${path}.md5`, new Date(1000), new Date(1000))
 
-		expect(readWOFSourceIdentity(path).md5).toBe(md5FileSync(path))
+		expect((await readWOFSourceIdentity(path)).md5).toBe(md5FileSync(path))
 	})
 
-	it("trusts a sidecar at or after the source's mtime without reading the source", () => {
-		const path = join(TMP, "trusted-sidecar.db")
-		writeFileSync(path, "two")
+	it("trusts a sidecar at or after the source's mtime without reading the source", async () => {
+		const path = TMP.resolve("trusted-sidecar.db")
+		await writeLocalTextFile("two", path)
 		const lie = "11111111111111111111111111111111"
-		writeFileSync(`${path}.md5`, `${lie}  trusted-sidecar.db\n`)
+		await writeLocalTextFile(`${lie}  trusted-sidecar.db\n`, `${path}.md5`)
 
 		// The lie proves the sidecar was READ rather than the file re-hashed — the property that keeps
 		// the guard cheap enough to leave switched on for a 5 GB source.
-		expect(readWOFSourceIdentity(path).md5).toBe(lie)
+		expect((await readWOFSourceIdentity(path)).md5).toBe(lie)
 	})
 })
 
 describe("peekFSTStampFields", () => {
-	it("reads the format version and the provenance trailer", () => {
-		const path = writeFST("stamped.bin", provenanceOf({ sourceDBMD5: "deadbeef", sourceDBBytes: 12 }))
+	it("reads the format version and the provenance trailer", async () => {
+		const path = await writeFST("stamped.bin", provenanceOf({ sourceDBMD5: "deadbeef", sourceDBBytes: 12 }))
 		const fields = peekFSTStampFields(path)
 
 		expect(fields?.formatVersion).toBe(FST_FORMAT_VERSION)
@@ -142,30 +142,30 @@ describe("peekFSTStampFields", () => {
 		expect(fields?.provenance?.sourceDBBytes).toBe(12)
 	})
 
-	it("reports no provenance for an artifact serialized without one", () => {
-		const fields = peekFSTStampFields(writeFST("unstamped.bin"))
+	it("reports no provenance for an artifact serialized without one", async () => {
+		const fields = peekFSTStampFields(await writeFST("unstamped.bin"))
 
 		expect(fields?.formatVersion).toBe(FST_FORMAT_VERSION)
 		expect(fields?.provenance).toBeUndefined()
 	})
 
-	it("returns undefined for a non-FST file, a stub, and an absent path", () => {
-		const notFST = join(TMP, "not-an-fst.bin")
-		writeFileSync(notFST, Buffer.alloc(64, 0x7f))
+	it("returns undefined for a non-FST file, a stub, and an absent path", async () => {
+		const notFST = TMP.resolve("not-an-fst.bin")
+		await writeLocalBuffer(Buffer.alloc(64, 0x7f), notFST)
 		expect(peekFSTStampFields(notFST)).toBeUndefined()
 
-		const tooSmall = join(TMP, "tiny.bin")
-		writeFileSync(tooSmall, Buffer.from("FST\0"))
+		const tooSmall = TMP.resolve("tiny.bin")
+		await writeLocalBuffer(Buffer.from("FST\0"), tooSmall)
 		expect(peekFSTStampFields(tooSmall)).toBeUndefined()
 
-		expect(peekFSTStampFields(join(TMP, "nope.bin"))).toBeUndefined()
+		expect(peekFSTStampFields(TMP.resolve("nope.bin"))).toBeUndefined()
 	})
 
-	it("survives a truncated trailer instead of throwing", () => {
-		const path = writeFST("truncated.bin", provenanceOf({ sourceDBMD5: "deadbeef" }))
-		const bytes = readFileSync(path)
+	it("survives a truncated trailer instead of throwing", async () => {
+		const path = await writeFST("truncated.bin", provenanceOf({ sourceDBMD5: "deadbeef" }))
+		const bytes = await readLocalBuffer(path)
 		// Cut into the JSON: the declared length now runs past EOF.
-		writeFileSync(path, bytes.subarray(0, -20))
+		await writeLocalFile(bytes.subarray(0, -20), path)
 
 		expect(peekFSTStampFields(path)?.provenance).toBeUndefined()
 	})
@@ -174,8 +174,8 @@ describe("peekFSTStampFields", () => {
 describe("fstStaleReason", () => {
 	const expected = { source: SOURCE_IDENTITY }
 
-	it("passes an artifact stamped with the current source", () => {
-		const path = writeFST(
+	it("passes an artifact stamped with the current source", async () => {
+		const path = await writeFST(
 			"current.bin",
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })
 		)
@@ -183,8 +183,8 @@ describe("fstStaleReason", () => {
 		expect(fstStaleReason(peekFSTStampFields(path), expected)).toBeUndefined()
 	})
 
-	it("flags a source md5 that has moved, and names the build date", () => {
-		const path = writeFST(
+	it("flags a source md5 that has moved, and names the build date", async () => {
+		const path = await writeFST(
 			"moved.bin",
 			provenanceOf({ builtAt: "2026-07-26T21:10:37.566Z", sourceDBMD5: "aaaaaaaabbbbbbbbccccccccdddddddd" })
 		)
@@ -196,19 +196,19 @@ describe("fstStaleReason", () => {
 		expect(reason).toContain("2026-07-26")
 	})
 
-	it("distinguishes 'no stamp at all' from 'stamp without a checksum'", () => {
+	it("distinguishes 'no stamp at all' from 'stamp without a checksum'", async () => {
 		// The meaning-of-zero rule, applied to the stamp: these are different states and the operator
 		// does different things about them (rebuild vs. rebuild-to-stamp), so they must not share prose.
-		expect(fstStaleReason(peekFSTStampFields(writeFST("bare.bin")), expected)).toBe("carries no build stamp")
+		expect(fstStaleReason(peekFSTStampFields(await writeFST("bare.bin")), expected)).toBe("carries no build stamp")
 
-		const unchecksummed = writeFST("no-md5.bin", provenanceOf({ sourceDB: "/some/where.db" }))
+		const unchecksummed = await writeFST("no-md5.bin", provenanceOf({ sourceDB: "/some/where.db" }))
 		expect(fstStaleReason(peekFSTStampFields(unchecksummed), expected)).toContain("no source checksum")
 	})
 
-	it("flags a format older than the tree writes even when the source matches", () => {
+	it("flags a format older than the tree writes even when the source matches", async () => {
 		// The R5 lesson in format edition: a guard comparing only the source reads a format-obsolete
 		// artifact as current.
-		const path = writeFST(
+		const path = await writeFST(
 			"format-stale.bin",
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })
 		)
@@ -218,8 +218,8 @@ describe("fstStaleReason", () => {
 		)
 	})
 
-	it("flags a size disagreement at a matching md5", () => {
-		const path = writeFST(
+	it("flags a size disagreement at a matching md5", async () => {
+		const path = await writeFST(
 			"size-skew.bin",
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes + 1 })
 		)
@@ -227,8 +227,8 @@ describe("fstStaleReason", () => {
 		expect(fstStaleReason(peekFSTStampFields(path), expected)).toContain("misrecorded")
 	})
 
-	it("flags a changed exclusion policy only when the caller supplies one", () => {
-		const path = writeFST(
+	it("flags a changed exclusion policy only when the caller supplies one", async () => {
+		const path = await writeFST(
 			"policy.bin",
 			provenanceOf({
 				sourceDBMD5: SOURCE_IDENTITY.md5,
@@ -253,10 +253,10 @@ describe("fstStaleReason", () => {
 })
 
 describe("fstFreshnessWarning", () => {
-	it("names the artifact, the reason, and the rebuild command", () => {
-		const path = writeFST("warn.bin", provenanceOf({ sourceDBMD5: "0".repeat(32) }))
+	it("names the artifact, the reason, and the rebuild command", async () => {
+		const path = await writeFST("warn.bin", provenanceOf({ sourceDBMD5: "0".repeat(32) }))
 
-		const warning = fstFreshnessWarning({
+		const warning = await fstFreshnessWarning({
 			fstPath: path,
 			sourceDBPath: SOURCE,
 			rebuildCommand: "mailwoman gazetteer build fst --locales en-us",
@@ -267,24 +267,24 @@ describe("fstFreshnessWarning", () => {
 		expect(warning).toContain("mailwoman gazetteer build fst --locales en-us")
 	})
 
-	it("is silent for a current artifact", () => {
-		const path = writeFST(
+	it("is silent for a current artifact", async () => {
+		const path = await writeFST(
 			"quiet.bin",
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })
 		)
 
-		expect(fstFreshnessWarning({ fstPath: path, sourceDBPath: SOURCE, rebuildCommand: "x" })).toBeUndefined()
+		expect(await fstFreshnessWarning({ fstPath: path, sourceDBPath: SOURCE, rebuildCommand: "x" })).toBeUndefined()
 	})
 
-	it("is silent when either side is absent — a missing file is a different report", () => {
+	it("is silent when either side is absent — a missing file is a different report", async () => {
 		expect(
-			fstFreshnessWarning({ fstPath: join(TMP, "gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
+			await fstFreshnessWarning({ fstPath: TMP.resolve("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
 		).toBeUndefined()
 
 		expect(
-			fstFreshnessWarning({
-				fstPath: writeFST("orphan.bin", provenanceOf()),
-				sourceDBPath: join(TMP, "gone.db"),
+			await fstFreshnessWarning({
+				fstPath: await writeFST("orphan.bin", provenanceOf()),
+				sourceDBPath: TMP.resolve("gone.db"),
 				rebuildCommand: "x",
 			})
 		).toBeUndefined()

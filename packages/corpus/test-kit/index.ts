@@ -17,10 +17,9 @@
  *   — `mailwoman/test-kit/index.ts` imports it on the same grounds.
  */
 
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { join } from "@mailwoman/platform/path"
-import { JSONSpliterator } from "spliterator"
+import { createNewlineWriter, JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach } from "vitest"
 
 import type { CanonicalRow } from "#types"
@@ -41,13 +40,28 @@ export interface ScratchDir {
  */
 export function useScratchDir(slug: string): ScratchDir {
 	const dir = { path: "" }
+	let owned: TemporaryDirectory | undefined
 
 	beforeEach(async () => {
-		dir.path = await mkdtemp(join(tmpdir(), `mailwoman-${slug}-`))
+		owned = await temporaryDirectory(`mailwoman-${slug}-`)
+		dir.path = owned.path
 	})
 
+	// The directory is owned by the TEST, never by a module-scoped stack. Under `isolate: false` this module is shared
+	// across every corpus adapter suite in a fork, so a stack disposed by the first file's `afterAll` left every later
+	// file calling `use()` on a disposed stack — which is what "Cannot call AsyncDisposableStack.prototype.use on an
+	// already-disposed DisposableStack" was, across a different set of adapter suites on each run.
+	//
+	// Teardown swallows its own errors: a test that already removed the directory, or a platform that holds a handle
+	// open, must not turn a passing assertion into a failing suite.
 	afterEach(async () => {
-		await rm(dir.path, { recursive: true, force: true }).catch(() => {})
+		try {
+			await owned?.[Symbol.asyncDispose]()
+		} catch {
+			// See above.
+		}
+
+		owned = undefined
 	})
 
 	return dir
@@ -59,4 +73,28 @@ export function useScratchDir(slug: string): ScratchDir {
  */
 export function readCanonicalRows(outputDir: string, adapterID: string): Promise<CanonicalRow[]> {
 	return Array.fromAsync(JSONSpliterator.fromAsync<CanonicalRow>(join(outputDir, adapterID, "canonical.jsonl")))
+}
+
+/**
+ * Write a delimited fixture — a header line plus the given rows — and answer its path.
+ *
+ * Three adapter suites carried a hand-rolled copy of this, and the copies disagreed about the one thing a reader cannot
+ * see: two joined the rows without a trailing newline and the third appended one. `createNewlineWriter` terminates
+ * every line it writes, so the file round-trips through `CSVSpliterator` the same way whichever suite produced it, and
+ * a caller passes content without a delimiter.
+ */
+export async function writeDelimitedFixture(
+	filePath: string,
+	header: string,
+	rows: readonly string[]
+): Promise<string> {
+	await using out = createNewlineWriter(filePath)
+
+	await out.write(header)
+
+	for (const row of rows) {
+		await out.write(row)
+	}
+
+	return filePath
 }

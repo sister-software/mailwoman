@@ -8,7 +8,7 @@
  *   deployment needs no changes to them.
  */
 
-import { serve } from "@hono/node-server"
+import { serve, type ServerType } from "@hono/node-server"
 
 /**
  * A `fetch`-shaped request handler (what `OpenAPIHono.fetch` provides).
@@ -25,22 +25,36 @@ export type ServeNodeOptions = Parameters<typeof serve>[0] & {
 	onListen?: (info: { port: number; address: string }) => void
 }
 
-export interface ServerHandle {
-	close(): Promise<void>
-}
+export type ServerHandle = ServerType &
+	AsyncDisposable & {
+		readonly port: number
+		readonly address: string
+	}
+
+const defaultOnListen = ({ port, address }: { port: number; address: string }) =>
+	console.error(`[mailwoman] native /v1 API listening on http://${address}:${port}`)
 
 /**
- * Boot a node HTTP listener for a Hono app. Returns a handle whose `close()` resolves when the listener is down.
+ * Boot a node HTTP listener for a Hono app. Returns an async-disposable handle once the listener is ready.
  */
-export function serveNode(options: ServeNodeOptions): ServerHandle {
-	const server = serve({ fetch: options.fetch, port: options.port, hostname: options.hostname }, (info) =>
-		options.onListen?.({ port: info.port, address: info.address })
-	)
+export function serveNode({ onListen = defaultOnListen, ...options }: ServeNodeOptions): Promise<ServerHandle> {
+	return new Promise<ServerHandle>((resolve, reject) => {
+		const server = serve(options, (info) => {
+			server.off("error", reject)
 
-	return {
-		close: () =>
-			new Promise<void>((resolve, reject) => {
-				server.close((error?: Error) => (error ? reject(error) : resolve()))
-			}),
-	}
+			Object.defineProperties(server, {
+				port: { value: info.port, writable: false },
+				address: { value: info.address, writable: false },
+			})
+
+			try {
+				onListen(info)
+				resolve(server as ServerHandle)
+			} catch (error) {
+				void server[Symbol.asyncDispose]().then(() => reject(error), reject)
+			}
+		})
+
+		server.once("error", reject)
+	})
 }

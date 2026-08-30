@@ -8,7 +8,7 @@
  *   exit-code discipline are covered here without standing up a data root.
  */
 
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import {
 	assembleReport,
 	checkPOI,

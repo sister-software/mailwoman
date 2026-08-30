@@ -33,18 +33,11 @@
  *   for the same reason, since "source that can change a geocode" is the one question both are asking.
  */
 
+import { readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import {
-	mkdirSync,
-	mkdtempSync,
-	readdirSync,
-	readFileSync,
-	rmSync,
-	symlinkSync,
-	writeFileSync,
-} from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 
 import { FINGERPRINTED_WORKSPACES } from "./tree-fingerprint.ts"
@@ -78,8 +71,8 @@ interface WorkspaceLink {
  * Reads the WORKTREE's own manifests, not the main checkout's, because a ref that predates a workspace must not have
  * that workspace linked into it — an import that should fail at the older ref has to actually fail.
  */
-function workspaceLinks(root: string): WorkspaceLink[] {
-	const manifest = parseJSONStrict<{ workspaces?: string[] }>(readFileSync(join(root, "package.json"), "utf8"))
+async function workspaceLinks(root: string): Promise<WorkspaceLink[]> {
+	const manifest = await readLocalJSONFile<{ workspaces?: string[] }>(join(root, "package.json"))
 	const links: WorkspaceLink[] = []
 
 	for (const entry of manifest.workspaces ?? []) {
@@ -88,7 +81,7 @@ function workspaceLinks(root: string): WorkspaceLink[] {
 		let name: string
 
 		try {
-			name = parseJSONStrict<{ name?: string }>(readFileSync(join(root, entry, "package.json"), "utf8")).name ?? ""
+			name = (await readLocalJSONFile<{ name?: string }>(join(root, entry, "package.json"))).name ?? ""
 		} catch {
 			continue
 		}
@@ -107,11 +100,11 @@ function workspaceLinks(root: string): WorkspaceLink[] {
  * Scoped directories are handled one level down when the scope contains a workspace, and whole otherwise: `@types` is
  * thousands of identical packages and is linked as one entry, while `@mailwoman` is rebuilt member by member.
  */
-function linkNodeModules(mainRoot: string, worktree: string): void {
+async function linkNodeModules(mainRoot: string, worktree: string): Promise<void> {
 	const source = join(mainRoot, "node_modules")
 	const target = join(worktree, "node_modules")
 	const fingerprinted = new Set<string>(FINGERPRINTED_WORKSPACES)
-	const links = workspaceLinks(worktree).filter((link) => fingerprinted.has(link.directory))
+	const links = (await workspaceLinks(worktree)).filter((link) => fingerprinted.has(link.directory))
 
 	const workspaceByName = new Map(links.map((link) => [link.packageName, link.directory]))
 
@@ -119,19 +112,22 @@ function linkNodeModules(mainRoot: string, worktree: string): void {
 		links.map((link) => link.packageName).flatMap((name) => (name.startsWith("@") ? [name.split("/")[0]!] : []))
 	)
 
-	mkdirSync(target, { recursive: true })
+	await makeDirectories(target)
 
-	for (const entry of readdirSync(source)) {
+	for (const entry of await readDirectory(source)) {
 		if (scopesWithWorkspaces.has(entry)) {
 			const scopeTarget = join(target, entry)
 
-			mkdirSync(scopeTarget, { recursive: true })
+			await makeDirectories(scopeTarget)
 
-			for (const member of readdirSync(join(source, entry))) {
+			for (const member of await readDirectory(join(source, entry))) {
 				const full = `${entry}/${member}`
 				const workspace = workspaceByName.get(full)
 
-				symlinkSync(workspace ? join(worktree, workspace) : join(source, entry, member), join(scopeTarget, member))
+				await createSymbolicLink(
+					workspace ? join(worktree, workspace) : join(source, entry, member),
+					join(scopeTarget, member)
+				)
 			}
 
 			continue
@@ -139,7 +135,7 @@ function linkNodeModules(mainRoot: string, worktree: string): void {
 
 		const workspace = workspaceByName.get(entry)
 
-		symlinkSync(workspace ? join(worktree, workspace) : join(source, entry), join(target, entry))
+		await createSymbolicLink(workspace ? join(worktree, workspace) : join(source, entry), join(target, entry))
 	}
 }
 
@@ -169,7 +165,7 @@ for (const input of request.inputs) {
 	}
 }
 
-session.close()
+session[Symbol.dispose]()
 process.stdout.write(JSON.stringify({ answers }))
 `
 
@@ -226,68 +222,77 @@ export async function runWorktreeArm(args: {
 	// ref arm is what keeps the comparison honest: one script, one config path, so a difference between the arms
 	// is a difference in source rather than in how each side was invoked.
 	const live = ref === WORKING_TREE_REF
-	const parent = live ? undefined : mkdtempSync(join(tmpdir(), "mwdev-worktree-"))
-	const worktree = parent ? join(parent, "checkout") : repoRoot
 
-	try {
-		if (!live) {
-			execFileSync("git", ["worktree", "add", "--detach", worktree, ref], { cwd: repoRoot, stdio: "pipe" })
-		}
+	await using resources = new AsyncDisposableStack()
 
-		const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: worktree, encoding: "utf8" }).trim()
+	// The working-tree arm owns nothing: it runs in the main checkout. A ref arm owns a scratch parent, and its
+	// teardown is ordered: git releases the worktree, then the directory under it goes, then the prune clears the
+	// admin entry for a directory that is now gone. The stack unwinds last-in, first-out, so registering in the
+	// reverse of that order is what states it — prune first, so prune runs last.
+	if (!live) {
+		resources.defer(() => {
+			execFileSync("git", ["worktree", "prune"], { cwd: repoRoot, stdio: "pipe" })
+		})
+	}
 
-		const dirty = live
-			? execFileSync("git", ["status", "--porcelain"], { cwd: repoRoot, encoding: "utf8" }).trim().length > 0
-			: false
+	const parent = live ? undefined : resources.use(await temporaryDirectory("mwdev-worktree-"))
+	const worktree = parent ? parent.resolve("checkout") : repoRoot
 
-		// A dirty working tree is NOT its HEAD, and reporting the sha alone would let a comparison claim it ran
-		// that commit when it ran that commit plus uncommitted edits.
-		const commit = dirty ? `${head}+dirty` : head
+	if (!live) {
+		execFileSync("git", ["worktree", "add", "--detach", worktree, ref], { cwd: repoRoot, stdio: "pipe" })
 
-		if (!live) {
-			linkNodeModules(repoRoot, worktree)
-		}
-
-		const runnerPath = join(worktree, RUNNER_FILENAME)
-
-		writeFileSync(runnerPath, RUNNER_SOURCE)
-
-		const setupMs = Date.now() - setupStartedAt
-		const runStartedAt = Date.now()
-
-		try {
-			const stdout = execFileSync(process.execPath, [runnerPath], {
-				cwd: worktree,
-				input: JSON.stringify({ inputs, options }),
-				encoding: "utf8",
-				// A full board through a cold engine is minutes, and the payload is megabytes; both defaults are far
-				// too small and both failures look like a crash rather than a limit.
-				timeout: args.timeoutMs ?? 30 * 60 * 1000,
-				maxBuffer: 512 * 1024 * 1024,
-			})
-
-			const parsed = parseJSONStrict<{ answers: WorktreeAnswer[] }>(stdout)
-
-			return { commit, answers: parsed.answers, setupMs, runMs: Date.now() - runStartedAt }
-		} finally {
-			// The live arm runs IN the operator's checkout, so its runner is the one piece of litter a comparison
-			// could leave in a tracked tree. Remove it on every path, including a child crash.
-			if (live) {
-				rmSync(runnerPath, { force: true })
-			}
-		}
-	} finally {
-		if (parent) {
-			// `git worktree remove` refuses on a dirty checkout, and this one always is — the runner script and the
-			// node_modules farm are both untracked. `--force` is the normal path here, not an override.
+		// `git worktree remove` refuses on a dirty checkout, and this one always is — the runner script and the
+		// node_modules farm are both untracked. `--force` is the normal path here, not an override.
+		resources.defer(() => {
 			try {
 				execFileSync("git", ["worktree", "remove", "--force", worktree], { cwd: repoRoot, stdio: "pipe" })
 			} catch {
-				// A failed removal must not mask the arm's own error; the rm and prune below clean up regardless.
+				// A failed removal must not mask the arm's own error; removing the parent directory and pruning
+				// afterwards clean up regardless.
 			}
+		})
+	}
 
-			rmSync(parent, { recursive: true, force: true })
-			execFileSync("git", ["worktree", "prune"], { cwd: repoRoot, stdio: "pipe" })
+	const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: worktree, encoding: "utf8" }).trim()
+
+	const dirty = live
+		? execFileSync("git", ["status", "--porcelain"], { cwd: repoRoot, encoding: "utf8" }).trim().length > 0
+		: false
+
+	// A dirty working tree is NOT its HEAD, and reporting the sha alone would let a comparison claim it ran
+	// that commit when it ran that commit plus uncommitted edits.
+	const commit = dirty ? `${head}+dirty` : head
+
+	if (!live) {
+		await linkNodeModules(repoRoot, worktree)
+	}
+
+	const runnerPath = join(worktree, RUNNER_FILENAME)
+
+	await writeLocalFile(RUNNER_SOURCE, runnerPath)
+
+	const setupMs = Date.now() - setupStartedAt
+	const runStartedAt = Date.now()
+
+	try {
+		const stdout = execFileSync(process.execPath, [runnerPath], {
+			cwd: worktree,
+			input: JSON.stringify({ inputs, options }),
+			encoding: "utf8",
+			// A full board through a cold engine is minutes, and the payload is megabytes; both defaults are far
+			// too small and both failures look like a crash rather than a limit.
+			timeout: args.timeoutMs ?? 30 * 60 * 1000,
+			maxBuffer: 512 * 1024 * 1024,
+		})
+
+		const parsed = parseJSONStrict<{ answers: WorktreeAnswer[] }>(stdout)
+
+		return { commit, answers: parsed.answers, setupMs, runMs: Date.now() - runStartedAt }
+	} finally {
+		// The live arm runs IN the operator's checkout, so its runner is the one piece of litter a comparison
+		// could leave in a tracked tree. Remove it on every path, including a child crash.
+		if (live) {
+			await removePathIfPresent(runnerPath)
 		}
 	}
 }

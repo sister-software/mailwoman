@@ -16,13 +16,16 @@
  *   Usage (label=cacheRoot pairs; label=shipped uses the installed default):
  *     node packages/mailwoman/dev-tools/failure-report.run.ts \
  *       [--corpus golden:<dir>[:N]] [--out docs/articles/evals/competitive-parity/<file>.mdx] [--date YYYY-MM-DD] \
- *       shipped=shipped v257=/abs/scratchpad/v257-cache v261=/abs/scratchpad/v261-cache
- *   Writes the MDX (default docs/articles/evals/competitive-parity/failure-report.mdx) + scratchpad/failure-report.json.
+ *       shipped=shipped v257=$MAILWOMAN_TEMP_ROOT/v257-cache v261=$MAILWOMAN_TEMP_ROOT/v261-cache
+ *   Writes the MDX (default docs/articles/evals/competitive-parity/failure-report.mdx) plus
+ *   `$MAILWOMAN_TEMP_ROOT/failure-report.json`.
  */
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { readDirectory } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { tempRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { readdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { basename, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
@@ -65,7 +68,7 @@ async function loadCorpus(
 	if (spec?.startsWith("golden:")) {
 		const [, dir, sampleArg] = spec.split(":")
 		const sampleN = sampleArg ? Number(sampleArg) : Infinity
-		const files = readdirSync(resolve(dir!)).filter((f) => f.endsWith(".jsonl"))
+		const files = (await readDirectory(resolve(dir!))).filter((f) => f.endsWith(".jsonl"))
 		const fixtures: Fixture[] = []
 
 		for (const file of files) {
@@ -261,8 +264,6 @@ const summary = {
 	beyondReachCount: beyondReach.length,
 }
 
-writeFileSync("scratchpad/failure-report.json", JSON.stringify({ summary, records: all }, null, 2))
-
 // --- MDX report (folds into the Docusaurus evals tree; #1104-adjacent) -------
 // MDX-safe: every dynamic cell is backtick-wrapped (angle brackets / braces stay literal in a code
 // span) with pipes + backticks escaped, so an address like "U12/345 <x>" can't break the table or trip
@@ -414,11 +415,16 @@ A ✓ under one model and a failure under another = a fix or a regression **betw
 ${diffTable}
 `
 
-writeFileSync(outPath, mdx)
-writeFileSync("scratchpad/failure-report.json", JSON.stringify({ summary, records: all }, null, 2))
+await writeLocalFile(mdx, outPath)
+
+// The machine-readable twin of the MDX above. It goes under `$MAILWOMAN_TEMP_ROOT` rather than a repo-relative
+// path, which git ignores — a file written there exists only on the machine that wrote it.
+const jsonPath = tempRootPath("failure-report.json")
+
+await writeLocalJSONFile({ summary, records: all }, jsonPath)
 
 process.stderr.write(
 	`\nfailure-report: ${fixtures.length} fixtures, ${beyondReach.length} beyond-reach, ${diffs.length} model-specific.\n` +
 		`  per-model label-failures: ${JSON.stringify(summary.perModelFailCount)}\n` +
-		`  wrote ${outPath} + scratchpad/failure-report.json\n`
+		`  wrote ${outPath} + ${jsonPath}\n`
 )

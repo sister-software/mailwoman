@@ -29,7 +29,9 @@
  */
 
 import { type ComponentTag, decodeAsJSON, type TreeViolation, validateTree } from "@mailwoman/core/decoder"
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { readDirectory, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import type { ClassificationRecord } from "@mailwoman/core/types"
 import {
@@ -41,7 +43,6 @@ import {
 } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
-import { readdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { basename, join } from "@mailwoman/platform/path"
 import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -237,8 +238,8 @@ function objectLiteralToRecord(node: ts.ObjectLiteralExpression): Classification
 	return out as ClassificationRecord
 }
 
-function extractAssertions(file: string): ExtractedAssertion[] {
-	const source = readFileSync(file, "utf8")
+async function extractAssertions(file: string): Promise<ExtractedAssertion[]> {
+	const source = await readLocalTextFile(file)
 	const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true)
 	const locale = localeFromFilename(file)
 	const out: ExtractedAssertion[] = []
@@ -294,10 +295,10 @@ function extractAssertions(file: string): ExtractedAssertion[] {
 	return out
 }
 
-function discoverAssertions(testsDir: string): ExtractedAssertion[] {
+async function discoverAssertions(testsDir: string): Promise<ExtractedAssertion[]> {
 	const all: ExtractedAssertion[] = []
 
-	for (const entry of readdirSync(testsDir)) {
+	for (const entry of await readDirectory(testsDir)) {
 		// Only the address.*.test.ts / addressit.*.test.ts / venue.*.test.ts / intersection.test.ts
 		// / compound_street.test.ts / place.*.test.ts / transit.test.ts / libpostal.test.ts /
 		// functional.test.ts use the `assert(input, ...expected)` shape. CLI integration tests
@@ -308,7 +309,7 @@ function discoverAssertions(testsDir: string): ExtractedAssertion[] {
 		const filePath = join(testsDir, entry)
 
 		try {
-			const assertions = extractAssertions(filePath)
+			const assertions = await extractAssertions(filePath)
 			all.push(...assertions)
 		} catch (error) {
 			console.error(`[harness] WARN: failed to extract from ${entry}: ${(error as Error).message}`)
@@ -538,7 +539,7 @@ interface FalsehoodRow {
 async function loadFalsehoods(dir: string): Promise<ExtractedAssertion[]> {
 	const out: ExtractedAssertion[] = []
 
-	for (const entry of readdirSync(dir)) {
+	for (const entry of await readDirectory(dir)) {
 		if (!entry.endsWith(".jsonl")) continue
 		const file = basename(entry, ".jsonl")
 
@@ -699,7 +700,7 @@ async function main(): Promise<void> {
 
 	console.error("Extracting assertions...")
 
-	const fromTests = discoverAssertions(args.testsDir)
+	const fromTests = await discoverAssertions(args.testsDir)
 	const fromFalsehoods = args.falsehoodsDir ? await loadFalsehoods(args.falsehoodsDir) : []
 	const all = [...fromTests, ...fromFalsehoods]
 
@@ -710,7 +711,7 @@ async function main(): Promise<void> {
 	let neural: NeuralAddressClassifier
 
 	if (args.modelPath && args.tokenizerPath && args.modelCardPath) {
-		const modelCard = parseJSONStrict<{ labels: readonly string[] }>(readFileSync(args.modelCardPath, "utf8"))
+		const modelCard = await readLocalJSONFile<{ labels: readonly string[] }>(args.modelCardPath)
 		const labels: readonly string[] = modelCard.labels
 
 		const [tokenizer, runner] = await Promise.all([
@@ -724,13 +725,13 @@ async function main(): Promise<void> {
 		let gazetteerLexicon: GazetteerLexicon | undefined
 
 		if (args.gazetteerLexiconPath) {
-			gazetteerLexicon = parseGazetteerLexicon(parseJSONStrict(readFileSync(args.gazetteerLexiconPath, "utf8")))
+			gazetteerLexicon = parseGazetteerLexicon(await readLocalJSONFile(args.gazetteerLexiconPath))
 		}
 
 		let postcodeAnchorLookup: AnchorLookup | undefined
 
 		if (args.anchorLookupPath) {
-			postcodeAnchorLookup = parseAnchorLookup(parseJSONStrict(readFileSync(args.anchorLookupPath, "utf8")))
+			postcodeAnchorLookup = parseAnchorLookup(await readLocalJSONFile(args.anchorLookupPath))
 		}
 
 		neural = new NeuralAddressClassifier({
@@ -752,7 +753,7 @@ async function main(): Promise<void> {
 	if (args.adminFSTPath) {
 		console.error("Loading admin FST...")
 
-		adminFST = deserializeFST(readFileSync(args.adminFSTPath))
+		adminFST = deserializeFST(await readLocalBuffer(args.adminFSTPath))
 	}
 
 	let morphologyFST: ReturnType<typeof deserializeFST> | undefined
@@ -761,7 +762,7 @@ async function main(): Promise<void> {
 		if (args.morphologyBinPath) {
 			console.error("Loading morphology FST from", args.morphologyBinPath)
 
-			morphologyFST = deserializeFST(readFileSync(args.morphologyBinPath))
+			morphologyFST = deserializeFST(await readLocalBuffer(args.morphologyBinPath))
 		} else {
 			// Sealed-artifact-first (static-index candidate 1): the loader's shared ladder — data-root
 			// `fst-street-morphology.bin`, degrading to the per-process dictionary build this site used to inline.
@@ -820,7 +821,7 @@ async function main(): Promise<void> {
 	printReport(results)
 
 	if (args.outJSON) {
-		writeFileSync(args.outJSON, JSON.stringify(results, null, 2))
+		await writeLocalJSONFile(results, args.outJSON)
 
 		console.error(`Wrote ${results.length} results to ${args.outJSON}`)
 	}

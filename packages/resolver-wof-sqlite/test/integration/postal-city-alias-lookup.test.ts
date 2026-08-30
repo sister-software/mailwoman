@@ -28,7 +28,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
  * A `postal_city_alias` fixture DB with the production DDL + a divergent and a non-divergent row.
  */
 async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> {
-	const kdb = new DatabaseClient<PostalCityAliasDatabase>(":memory:")
+	const kdb = DatabaseClient.temp<PostalCityAliasDatabase>()
 	// `kdb` wraps `db` for the DDL; the test owns `db`'s lifecycle (reader.destroy()/aliasDB.destroy()),
 	// so we don't destroy `kdb`.
 
@@ -52,7 +52,7 @@ async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> 
  * Main resolver fixture: Nashville (the geographic city 37013 sits in) + a far Antioch distractor.
  */
 function buildMainDB(): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -86,7 +86,7 @@ describe("WOFPostalCityAliasLookup (#475 reader)", () => {
 		reader = new WOFPostalCityAliasLookup({ database: await buildAliasDB() })
 	})
 
-	afterEach(() => reader.close())
+	afterEach(() => reader[Symbol.dispose]())
 
 	it("returns the divergent alias for a known postcode", async () => {
 		const aliases = await reader.getDivergentAliases("37013")

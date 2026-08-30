@@ -31,11 +31,11 @@ const TUPLES = [
 
 describe("no-fragment", () => {
 	it("REFUSES to run without an exclusion list", async () => {
-		const { input } = scratch("no-fragment", TUPLES, [])
+		await using inputs = await scratch("no-fragment", TUPLES, [])
 
-		await expect(noFragmentRecipe.run({ output: "", seed: 901, variants: 1, input }, () => {})).rejects.toThrow(
-			/--exclude-surfaces is REQUIRED/
-		)
+		await expect(
+			noFragmentRecipe.run({ output: "", seed: 901, variants: 1, input: inputs.input }, () => {})
+		).rejects.toThrow(/--exclude-surfaces is REQUIRED/)
 	})
 
 	it("skips a reserved surface KEEPING diacritics", async () => {

@@ -182,47 +182,43 @@ export class ImportanceIndex {
  * 25 s.
  */
 export function loadImportanceIndex(databasePath: string): ImportanceIndex {
-	const db = new DatabaseClient<CandidateDatabase>(databasePath, { readOnly: true })
+	using db = new DatabaseClient<CandidateDatabase>(databasePath, { readOnly: true })
 
-	try {
-		const groups = new Map<string, ScoredPlace[]>()
-		let places = 0
-		let unkeyable = 0
+	const groups = new Map<string, ScoredPlace[]>()
+	let places = 0
+	let unkeyable = 0
 
-		for (const row of db
-			.prepare(
-				`SELECT s.name AS name, s.country AS country, s.placetype AS placetype,
-					s.latitude AS latitude, s.longitude AS longitude, i.importance AS importance
-				 FROM place_importance i JOIN spr s ON s.id = i.id
-				 WHERE s.is_current != 0 AND s.is_deprecated = 0`
-			)
-			.iterate()) {
-			const importance = Number(row.importance)
+	for (const row of db
+		.prepare(
+			`SELECT s.name AS name, s.country AS country, s.placetype AS placetype,
+				s.latitude AS latitude, s.longitude AS longitude, i.importance AS importance
+			 FROM place_importance i JOIN spr s ON s.id = i.id
+			 WHERE s.is_current != 0 AND s.is_deprecated = 0`
+		)
+		.iterate()) {
+		const importance = Number(row.importance)
 
-			if (!Number.isFinite(importance)) continue
-			const nameKey = normalizeLocalityForKey(String(row.name ?? ""))
+		if (!Number.isFinite(importance)) continue
+		const nameKey = normalizeLocalityForKey(String(row.name ?? ""))
 
-			if (!nameKey) {
-				unkeyable++
+		if (!nameKey) {
+			unkeyable++
 
-				continue
-			}
-
-			const key = groupKey(nameKey, row.country as string | null, row.placetype as string | null)
-			let group = groups.get(key)
-
-			if (!group) {
-				group = []
-				groups.set(key, group)
-			}
-
-			group.push({ lat: Number(row.latitude), lon: Number(row.longitude), importance })
-
-			places++
+			continue
 		}
 
-		return new ImportanceIndex(groups, { places, keys: groups.size, unkeyable })
-	} finally {
-		db.destroy()
+		const key = groupKey(nameKey, row.country as string | null, row.placetype as string | null)
+		let group = groups.get(key)
+
+		if (!group) {
+			group = []
+			groups.set(key, group)
+		}
+
+		group.push({ lat: Number(row.latitude), lon: Number(row.longitude), importance })
+
+		places++
 	}
+
+	return new ImportanceIndex(groups, { places, keys: groups.size, unkeyable })
 }

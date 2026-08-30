@@ -1,5 +1,5 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
@@ -14,9 +14,10 @@ import { expect, test } from "vitest"
 
 test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordinates untouched", async () => {
 	// The staging shard: two postcodes — one placeholder (parented), one already placed.
-	const dir = mkdtempSync(join(tmpdir(), "centroid-fills-"))
+	await using dirDirectory = await temporaryDirectory("centroid-fills-")
+	const dir = dirDirectory.path
 	const shardPath = join(dir, "postalcode-tl.db")
-	const shard = new DatabaseClient<WOFDatabase>(shardPath)
+	using shard = new DatabaseClient<WOFDatabase>(shardPath)
 	await createUnifiedSchema(shard)
 
 	const ins = shard.prepare(
@@ -25,11 +26,10 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 
 	ins.run(100, 9, "1000", "postalcode", "TL", 0, 0) // placeholder → should fill from parent 9
 	ins.run(101, 9, "2000", "postalcode", "TL", 5.5, 6.5) // real coordinate → must be untouched
-	await shard.destroy()
 
 	// The admin gazetteer carrying the parent locality.
 	const adminPath = join(dir, "admin.db")
-	const admin = new DatabaseClient<WOFDatabase>(adminPath)
+	using admin = new DatabaseClient<WOFDatabase>(adminPath)
 	await createUnifiedSchema(admin)
 
 	admin
@@ -37,8 +37,6 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 			"INSERT INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (9, -1, 'Testtown', 'locality', 'TL', 1.25, 2.5, 1, 2, 1.5, 3, 1, 0, 0, 0, 0, 0)"
 		)
 		.run()
-
-	await admin.destroy()
 
 	await using db = new DatabaseClient<WOFDatabase>(shardPath)
 	const r = await fillPostcodeCentroids(db, { adminPath })
@@ -64,9 +62,10 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 test("GeoNames postal names each postcode's delivery city, including territories filed under their own ISO code", async () => {
 	// A delivery city is not the geographic locality: 11201 is Brooklyn inside the locality New York,
 	// and Queens uses neighbourhood names rather than the borough. Both shapes are here on purpose.
-	const dir = mkdtempSync(join(tmpdir(), "centroid-names-"))
+	await using dirDirectory = await temporaryDirectory("centroid-names-")
+	const dir = dirDirectory.path
 	const shardPath = join(dir, "postalcode-us.db")
-	const shard = new DatabaseClient<WOFDatabase>(shardPath)
+	using shard = new DatabaseClient<WOFDatabase>(shardPath)
 
 	await createUnifiedSchema(shard)
 
@@ -77,21 +76,20 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(1, -1, "11201", "postalcode", "US", 40.69, -73.99) // already placed, still nameless
 	ins.run(2, -1, "11375", "postalcode", "US", 40.72, -73.85) // Queens: a neighbourhood delivery city
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
-	await shard.destroy()
 
 	// GeoNames files a US territory under PR, not US. The shard files it under US. Reading only `US`
 	// rows leaves every territory postcode unnamed — 149 of them against the 2024 Census ZCTA list.
 	const geonamesDir = join(dir, "geonames-postal")
 
-	mkdirSync(geonamesDir, { recursive: true })
+	await makeDirectories(geonamesDir)
 
-	writeFileSync(
-		join(geonamesDir, "US.txt"),
+	await writeLocalTextFile(
 		[
 			"US\t11201\tBrooklyn\tNew York\tNY\tKings\t047\t\t\t40.694\t-73.9903\t4",
 			"US\t11375\tForest Hills\tNew York\tNY\tQueens\t081\t\t\t40.7229\t-73.8473\t4",
 			"PR\t00601\tAdjuntas\tPuerto Rico\tPR\tAdjuntas\t001\t\t\t18.1801\t-66.7522\t4",
-		].join("\n")
+		].join("\n"),
+		join(geonamesDir, "US.txt")
 	)
 
 	await using db = new DatabaseClient<WOFDatabase>(shardPath)
@@ -122,9 +120,10 @@ test("GeoNames postal names each postcode's delivery city, including territories
 test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
 	// The US case. `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt, so
 	// without this branch the whole GeoNames pass short-circuits on existsSync and writes nothing.
-	const dir = mkdtempSync(join(tmpdir(), "centroid-combined-"))
+	await using dirDirectory = await temporaryDirectory("centroid-combined-")
+	const dir = dirDirectory.path
 	const shardPath = join(dir, "postalcode-us.db")
-	const shard = new DatabaseClient<WOFDatabase>(shardPath)
+	using shard = new DatabaseClient<WOFDatabase>(shardPath)
 
 	await createUnifiedSchema(shard)
 
@@ -134,20 +133,18 @@ test("falls back to the combined dump for a country the per-country directory ha
 		)
 		.run()
 
-	await shard.destroy()
-
 	// An EMPTY per-country directory — the shape on disk that made this branch required.
 	const geonamesDir = join(dir, "geonames-postal")
 
-	mkdirSync(geonamesDir, { recursive: true })
+	await makeDirectories(geonamesDir)
 
 	const geonamesCombined = join(dir, "allCountries-postal.txt")
 
-	writeFileSync(
-		geonamesCombined,
+	await writeLocalTextFile(
 		["FI\t11201\tSomewhere\t\t\t\t\t\t\t60.1\t24.9\t4", "US\t11201\tBrooklyn\t\t\t\t\t\t\t40.694\t-73.9903\t4"].join(
 			"\n"
-		)
+		),
+		geonamesCombined
 	)
 
 	await using db = new DatabaseClient<WOFDatabase>(shardPath)

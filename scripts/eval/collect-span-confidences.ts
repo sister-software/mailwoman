@@ -40,10 +40,10 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
@@ -191,8 +191,8 @@ async function main(): Promise<void> {
 	const { ONNXRunner } = await import("@mailwoman/neural/onnx-runner")
 	const { MailwomanTokenizer } = await import("@mailwoman/neural/tokenizer")
 
-	const modelCard = parseJSONStrict<{ labels: string[] }>(
-		readFileSync(values["model-card"] || "packages/neural-weights-en-us/model-card.json", "utf8")
+	const modelCard = await readLocalJSONFile<{ labels: string[] }>(
+		values["model-card"] || "packages/neural-weights-en-us/model-card.json"
 	)
 
 	const [tokenizer, runner] = await Promise.all([
@@ -210,8 +210,8 @@ async function main(): Promise<void> {
 		tokenizer,
 		runner,
 		labels: modelCard.labels,
-		postcodeAnchorLookup: parseAnchorLookup(parseJSONStrict(readFileSync(anchorPath, "utf8"))),
-		gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(gazPath, "utf8"))),
+		postcodeAnchorLookup: parseAnchorLookup(await readLocalJSONFile(anchorPath)),
+		gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(gazPath)),
 		suppressGazetteerNearPostcode: true,
 		addressSystemConventions: "auto",
 		bridgePunctuationGaps: true,
@@ -258,7 +258,7 @@ async function main(): Promise<void> {
 		}
 	}
 
-	writeFileSync(outPath, records.map((r) => JSON.stringify(r)).join("\n") + "\n")
+	await writeLocalTextFile(records.map((r) => JSON.stringify(r)).join("\n") + "\n", outPath)
 	const n = records.length
 	const acc = records.filter((r) => r.correct).length / n
 	const meanConf = records.reduce((a, r) => a + r.conf, 0) / n

@@ -17,7 +17,7 @@ import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
 function openMemoryDB(): DatabaseClient<LayerContractDatabase> {
-	return new DatabaseClient<LayerContractDatabase>(":memory:")
+	return DatabaseClient.temp<LayerContractDatabase>()
 }
 
 describe("layer contract DDL", () => {

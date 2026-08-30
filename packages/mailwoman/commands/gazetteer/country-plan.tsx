@@ -17,8 +17,9 @@
  *   tall as the viewport emits `\x1b[3J`, which wipes the scrollback.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
@@ -98,7 +99,7 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 			// is presence-driven, so a clone nobody declared becomes coverage on the next build and a declaration
 			// nobody cloned silently does not — and only comparing the two can tell those apart.
 			const reposRoot = String(resolvePath(mailwomanDataRoot(), "wof", "repos"))
-			const audit = auditReposRoot(reposRoot)
+			const audit = await auditReposRoot(reposRoot)
 			const cloned = clonedCountries(audit)
 
 			const sources = countrySourceMap(lists)
@@ -171,7 +172,7 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 				return { conflicts: conflicts.length }
 			}
 
-			if (!adminDBAvailable(adminDB)) {
+			if (!(await adminDBAvailable(adminDB))) {
 				// Absence reported as absence: without the artifact there is no current state to move FROM, and
 				// guessing it from the lists is the thing this command exists not to do.
 				lines.push(
@@ -240,7 +241,7 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 			// is what keeps that reviewable. A commit would move the review to after the fact.
 			if (options.write && plan.edits.length && !plan.blockers.length) {
 				const defaultsPath = String(repoRootPath("packages", "mailwoman", "gazetteer-pipeline", "defaults.ts"))
-				let source = readFileSync(defaultsPath, "utf8")
+				let source = await readLocalTextFile(defaultsPath)
 				const applied: string[] = []
 
 				for (const edit of plan.edits) {
@@ -269,7 +270,7 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 				if (writeFailures) {
 					lines.push("", "NOT WRITTEN — every edit must apply or none do:", ...applied)
 				} else {
-					writeFileSync(defaultsPath, source)
+					await writeLocalFile(source, defaultsPath)
 					lines.push("", `wrote ${defaultsPath}:`, ...applied, "", "  Review with `git diff`, then commit.")
 				}
 			} else if (plan.edits.length && !plan.blockers.length) {

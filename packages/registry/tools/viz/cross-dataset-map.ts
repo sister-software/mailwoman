@@ -7,9 +7,9 @@
  *   `crossAgencyOnly` removes links whose sources belong to one agency.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
 import { type MapFeatureData, toMapHTML } from "#index"
@@ -68,15 +68,15 @@ const sourcesOf = (f: GeoFeature<PointLiteral, MapFeatureData>): string[] =>
 /**
  * Render the cross-dataset-links GeoJSON to a bucket-colored MapLibre HTML page.
  */
-export function crossDatasetMap(
+export async function crossDatasetMap(
 	options: CrossDatasetMapOptions = {},
 	report?: (line: string) => void
-): { outHTML: string; kept: number; total: number; triple: number } {
+): Promise<{ outHTML: string; kept: number; total: number; triple: number }> {
 	const IN = options.in || dataRootPath("record-matcher", "2026-06-16-cross-dataset-links.geojson")
 	const OUT = options.outHTML || tempRootPath("cross-dataset-map.html")
 	const CROSS_AGENCY_ONLY = options.crossAgencyOnly ?? false
 
-	const parsed = parseJSONStrict<GeoFeatureCollection<PointLiteral, MapFeatureData>>(readFileSync(IN, "utf8"))
+	const parsed = await readLocalJSONFile<GeoFeatureCollection<PointLiteral, MapFeatureData>>(IN)
 
 	const total = parsed.features.length
 
@@ -113,7 +113,7 @@ export function crossDatasetMap(
 		colorBy: "bucket",
 	})
 
-	writeFileSync(OUT, html)
+	await writeLocalFile(html, OUT)
 	report?.(`[written] ${OUT}  (${kept}${CROSS_AGENCY_ONLY ? ` of ${total} cross-AGENCY` : ""} entities)`)
 	report?.(`  source combinations:`)
 

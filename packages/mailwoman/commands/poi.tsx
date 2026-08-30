@@ -26,9 +26,9 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pipeline"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
-import { existsSync } from "@mailwoman/platform/fs"
 import type { Resolver } from "@mailwoman/resolver"
 import { Text } from "ink"
 
@@ -85,14 +85,14 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
  * rather than failing the probe — a stderr note explains what's missing. Caller owns closing the returned handle's
  * backend lookup.
  */
-async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; close: () => void } | undefined> {
+async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
 	const { resolveCandidateDBPath, wofShardPaths } = await import("../resolver-backend.ts")
 	const candidateDB = resolveCandidateDBPath(options.candidateDB)
 
 	const wofPaths = candidateDB
 		? []
 		: (options.resolveDB ? options.resolveDB.split(",").map((p) => p.trim()) : wofShardPaths()).filter((p) =>
-				existsSync(p)
+				pathExistsSync(p)
 			)
 
 	if (!candidateDB && !wofPaths.length) {
@@ -112,7 +112,7 @@ async function tryLoadResolver(options: Options): Promise<{ resolver: Resolver; 
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 		const lookup = createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
-		return { resolver: createWOFResolver(lookup), close: () => lookup.close() }
+		return { resolver: createWOFResolver(lookup), [Symbol.dispose]: () => lookup[Symbol.dispose]() }
 	} catch {
 		console.error(
 			"note: `@mailwoman/resolver-wof-sqlite` is not installed — anchor localities will not resolve to " +
@@ -251,7 +251,7 @@ async function runPOI(input: string, options: Options): Promise<string> {
 
 		return formatOutcome(result.poiIntent, options)
 	} finally {
-		resolverHandle?.close()
+		resolverHandle?.[Symbol.dispose]()
 	}
 }
 
@@ -265,7 +265,7 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 			)
 		}
 
-		return runPOI(input.trim(), options)
+		return await runPOI(input.trim(), options)
 	})
 
 	if (state.status === "error") {

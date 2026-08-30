@@ -11,11 +11,11 @@
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { removePathIfPresent, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join, resolve } from "@mailwoman/platform/path"
+import { resolve } from "@mailwoman/platform/path"
 import {
 	candidateSubjects,
 	type CensusVenue,
@@ -30,30 +30,32 @@ const COMMITTED_CENSUS = "packages/mailwoman/eval-harness/activity-lexicon/colli
 const lexicon = readActivityLexicon()
 
 const committedCensusPath = resolve(String(repoRootPath()), COMMITTED_CENSUS)
-const committed = parseJSONStrict<PhraseCollisionCensus>(readFileSync(committedCensusPath, "utf8"))
+const committed = await readLocalJSONFile<PhraseCollisionCensus>(committedCensusPath)
 
 /**
  * A repository root carrying one committed query, so the carrier-prefix family is exercised without reading the real
  * 17k-input corpus on every run.
  */
-const scratchRoot = mkdtempSync(join(tmpdir(), "collision-census-"))
+const scratchRoot = await temporaryDirectory("collision-census-")
 
-mkdirSync(join(scratchRoot, "packages/mailwoman/eval-harness/fixtures"), { recursive: true })
+afterAll(() => scratchRoot[Symbol.asyncDispose]())
 
-writeFileSync(
-	join(scratchRoot, "packages/mailwoman/eval-harness/fixtures/rows.jsonl"),
+await makeDirectories(scratchRoot.resolve("packages/mailwoman/eval-harness/fixtures"))
+
+await writeLocalTextFile(
 	`${JSON.stringify({ id: "sem-act-fr-01", query: "somewhere to fill a prescription near Toulouse" })}\n` +
-		`${JSON.stringify({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`
+		`${JSON.stringify({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`,
+	scratchRoot.resolve("packages/mailwoman/eval-harness/fixtures/rows.jsonl")
 )
 
-afterAll(() => {
-	rmSync(scratchRoot, { force: true, recursive: true })
+afterAll(async () => {
+	await removePathIfPresent(scratchRoot.path)
 })
 
 function census(venues: CensusVenue[]): PhraseCollisionCensus {
 	return runPhraseCollisionCensus({
-		databasePath: join(scratchRoot, "absent.db"),
-		repositoryRoot: scratchRoot,
+		databasePath: scratchRoot.resolve("absent.db"),
+		repositoryRoot: scratchRoot.path,
 		reader: {
 			candidates: () => venues,
 			claimedByShippedRung: () => true,

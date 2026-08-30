@@ -20,11 +20,11 @@
  *   CSV exists and sha matches MANIFEST, skips download.
  */
 
-import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
 import { spawn, spawnSync } from "@mailwoman/platform/child_process"
-import { existsSync, mkdirSync, statSync } from "@mailwoman/platform/fs"
-import { unlink } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
@@ -115,7 +115,7 @@ export async function fetchStateHISchools(
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
 	const destDir = join(options.outRoot, SLUG)
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	const xlsxDest = join(destDir, XLSX_FILENAME)
 	const csvDest = join(destDir, CSV_FILENAME)
@@ -124,7 +124,7 @@ export async function fetchStateHISchools(
 	report?.(`=== ${SLUG}`)
 
 	// Idempotency: skip if CSV exists and sha matches recorded MANIFEST.
-	if (existsSync(csvDest)) {
+	if (await pathExists(csvDest)) {
 		const recorded = await readManifest<Partial<Manifest>>(manifestPath)
 
 		if (recorded?.sha256 && recorded.filename === CSV_FILENAME) {
@@ -168,7 +168,7 @@ export async function fetchStateHISchools(
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
-	const xlsxSize = statSync(xlsxDest).size
+	const xlsxSize = (await statPath(xlsxDest)).size
 	report?.(`  Downloaded XLSX: ${ByteFormatter.formatIEC(xlsxSize)}`)
 
 	if (xlsxSize < BYTES_PER_KIB) {
@@ -181,11 +181,11 @@ export async function fetchStateHISchools(
 	report?.(`  Converting XLSX → CSV (concatenating sheets) ...`)
 	await convertXLSXToCSV(xlsxDest, csvDest)
 
-	const csvSize = statSync(csvDest).size
+	const csvSize = (await statPath(csvDest)).size
 	const csvSha = await sha256File(csvDest)
 
 	// Remove XLSX (CSV is the canonical artifact the adapter consumes).
-	await unlink(xlsxDest)
+	await removePath(xlsxDest)
 	report?.(`  Removed XLSX (CSV kept)`)
 
 	// Write MANIFEST.

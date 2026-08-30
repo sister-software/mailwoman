@@ -29,6 +29,8 @@
  *   well-formed and simply answers "inside" for ground the authority did not map.
  */
 
+import { statPath } from "@mailwoman/core/fs/readers"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -40,7 +42,6 @@ import {
 	type CoverageCell,
 } from "@mailwoman/core/layers"
 import { runChunkProcess } from "@mailwoman/core/utils"
-import { rmSync, statSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import {
 	geometryContains,
@@ -281,7 +282,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			}
 		} catch (error) {
 			await kdb.destroy().catch(() => undefined)
-			rmSync(tmpPath, { force: true })
+			await removePathIfPresent(tmpPath)
 
 			throw error
 		}
@@ -291,7 +292,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 		try {
 			streamed = aggregateChunks(await runBatchedIngest(tmpPath, options))
 		} catch (error) {
-			rmSync(tmpPath, { force: true })
+			await removePathIfPresent(tmpPath)
 
 			throw error
 		}
@@ -352,7 +353,7 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 
 		await kdb.destroy()
 
-		sealDatabase(tmpPath)
+		await sealDatabase(tmpPath)
 		swapDatabaseIntoPlace(tmpPath, options.out)
 
 		const totalCellRows = cells.wholeRows + cells.partialRows
@@ -381,14 +382,14 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			coverageCells: coverage.cells.length,
 			coverageCellsWithoutMapping: coverage.withoutMapping,
 			area,
-			sizeBytes: sizeOf(options.out),
+			sizeBytes: await sizeOf(options.out),
 		}
 	} catch (error) {
 		await kdb.destroy().catch(() => undefined)
 
 		// A failed build leaves a partial file whose name carries this process's pid, so nothing will ever pick it up
 		// again. Removing it is the difference between a retry loop that fails and one that fills a disk.
-		rmSync(tmpPath, { force: true })
+		await removePathIfPresent(tmpPath)
 
 		throw error
 	}
@@ -850,6 +851,6 @@ function writeVocabularyRows(database: DatabaseClient<SoilDatabase>, areas: Read
 /**
  * The artifact's size on disk, read once for the receipt.
  */
-function sizeOf(path: string): number {
-	return statSync(path).size
+async function sizeOf(path: string): Promise<number> {
+	return (await statPath(path)).size
 }

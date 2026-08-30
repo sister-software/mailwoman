@@ -1,17 +1,13 @@
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
 import type { EngineConfig, EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import type { ResolvedInput } from "@mailwoman/dev-mcp/input-sets"
 import type { RoutedMailwomanArm } from "@mailwoman/dev-mcp/routed-mailwoman-arm"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
-const RUN_STORE = mkdtempSync(join(tmpdir(), "mwdev-routed-compare-"))
+const RUN_STORE = await temporaryDirectory("mwdev-routed-compare-")
 
-afterAll(() => {
-	rmSync(RUN_STORE, { recursive: true, force: true })
-})
+afterAll(() => RUN_STORE[Symbol.asyncDispose]())
 
 function registry(): EngineRegistry {
 	const fingerprint = {
@@ -49,7 +45,7 @@ describe("mwdev_compare — production board routing", () => {
 				execution_path: "board-routed",
 			},
 			{
-				runStoreDir: RUN_STORE,
+				runStoreDir: RUN_STORE.path,
 				buildRoutedMailwomanArm: async (config, inputs): Promise<RoutedMailwomanArm> => {
 					builds.push({ config, inputs })
 
@@ -78,7 +74,7 @@ describe("mwdev_compare — production board routing", () => {
 							postcode_country_scope: null,
 							hierarchy: [],
 						}),
-						close: () => {
+						[Symbol.dispose]: () => {
 							closes += 1
 						},
 					}
@@ -108,7 +104,7 @@ describe("mwdev_compare — production board routing", () => {
 					execution_path: "board-routed",
 				},
 				{
-					runStoreDir: RUN_STORE,
+					runStoreDir: RUN_STORE.path,
 					buildRoutedMailwomanArm: async () => {
 						builds += 1
 						throw new Error("unreachable")

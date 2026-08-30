@@ -24,11 +24,11 @@
  *   - `--force` — delete an existing `./dictionaries` directory instead of erroring out
  */
 
-import { cp, mkdtemp, readdir, readFile, rm, writeFile } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 
-import { isDirectory } from "#fs"
+import { isDirectory, readDirectoryEntries, readLocalTextFile } from "#fs/readers"
+import { temporaryDirectory } from "#fs/temporary"
+import { copyPath, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
 import { CommandError } from "#scripting/command"
 import { resourceDictionaryPath } from "#utils"
 
@@ -40,7 +40,7 @@ const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
  * as `sort` orders empty strings; a trailing newline is preserved.
  */
 async function sortFileInPlace(path: string): Promise<void> {
-	const text = await readFile(path, "utf8")
+	const text = await readLocalTextFile(path)
 	const hadTrailingNewline = text.endsWith("\n")
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Sorting needs every line resident; the largest libpostal dictionary is 409 KB.
 	const lines = text.split("\n")
@@ -51,7 +51,7 @@ async function sortFileInPlace(path: string): Promise<void> {
 	}
 
 	lines.sort()
-	await writeFile(path, lines.join("\n") + (hadTrailingNewline ? "\n" : ""))
+	await writeLocalTextFile(lines.join("\n") + (hadTrailingNewline ? "\n" : ""), path)
 }
 
 /**
@@ -67,31 +67,27 @@ export async function downloadLibpostalResources(
 	if (await isDirectory(DICTIONARIES_DIR)) {
 		if (options.force) {
 			report?.("Warning: The dictionaries directory already exists. Deleting it due to --force flag.")
-			await rm(DICTIONARIES_DIR, { recursive: true, force: true })
+			await removePathIfPresent(DICTIONARIES_DIR)
 		} else {
 			throw new CommandError("The dictionaries directory already exists. Remove it first or pass --force.")
 		}
 	}
 
 	const { $ } = await import("zx")
-	const tempDir = await mkdtemp(join(tmpdir(), "libpostal-"))
+	await using tempDir = await temporaryDirectory("libpostal-")
 
-	try {
-		const cloneDir = join(tempDir, "libpostal")
-		await $`git clone --depth 1 ${REPO_URL} ${cloneDir}`
+	const cloneDir = join(tempDir.path, "libpostal")
+	await $`git clone --depth 1 ${REPO_URL} ${cloneDir}`
 
-		const sourceDicts = join(cloneDir, "resources", "dictionaries")
+	const sourceDicts = join(cloneDir, "resources", "dictionaries")
 
-		// Alphabetize the contents of each dictionary file in place.
-		for (const entry of await readdir(sourceDicts, { withFileTypes: true })) {
-			if (entry.isFile()) {
-				await sortFileInPlace(join(sourceDicts, entry.name))
-			}
+	// Alphabetize the contents of each dictionary file in place.
+	for (const entry of await readDirectoryEntries(sourceDicts)) {
+		if (entry.isFile()) {
+			await sortFileInPlace(join(sourceDicts, entry.name))
 		}
-
-		// Copy the (now-sorted) dictionaries tree into the checked-in data home.
-		await cp(sourceDicts, DICTIONARIES_DIR, { recursive: true })
-	} finally {
-		await rm(tempDir, { recursive: true, force: true })
 	}
+
+	// Copy the (now-sorted) dictionaries tree into the checked-in data home.
+	await copyPath(sourceDicts, DICTIONARIES_DIR)
 }

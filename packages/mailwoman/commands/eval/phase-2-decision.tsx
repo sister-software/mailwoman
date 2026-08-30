@@ -19,7 +19,7 @@
  *   the RECORDING itself is the operator's.
  */
 
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -70,7 +70,7 @@ const EvalPhase2Decision: ParsedCommandComponent<Options> = ({ options }) => {
 			})
 
 			if (options.out) {
-				writeFileSync(options.out, `${JSON.stringify(receipt, null, "\t")}\n`)
+				await writeLocalJSONFile(receipt, options.out)
 			}
 
 			if (!options.json) {

@@ -20,10 +20,11 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
@@ -112,15 +113,15 @@ export const DEFAULT_MAPPING: ColumnMapping = {
 /**
  * Resolve --mapping (a file path or inline JSON) and merge it over `base` (default {@link DEFAULT_MAPPING}).
  */
-export function loadMapping(
+export async function loadMapping(
 	option: string | undefined,
 	source: string | undefined,
 	base: ColumnMapping = DEFAULT_MAPPING
-): ColumnMapping {
+): Promise<ColumnMapping> {
 	let provided: Partial<ColumnMapping> = {}
 
 	if (option) {
-		const text = option.trim().startsWith("{") ? option : readFileSync(option, "utf8")
+		const text = option.trim().startsWith("{") ? option : await readLocalTextFile(option)
 		const parsed = tryParsingJSON<Partial<ColumnMapping>>(text)
 
 		if (!parsed) {
@@ -146,10 +147,10 @@ async function resolveWOFPath(options: Options): Promise<string> {
 
 /**
  * Construct the heavy geocoder once (neural parser + WOF resolver + per-state shards) and wire it into the matcher's
- * {@link GeocodeAddress} seam. Returns the seam plus a `close` to release the DB handles. Shared by the single-CSV and
- * multi-source paths.
+ * {@link GeocodeAddress} seam. Returns the seam plus a disposal hook for the database handles. Shared by the single-CSV
+ * and multi-source paths.
  */
-async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress; close: () => void }> {
+async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress } & Disposable> {
 	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
 	const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 	const { geocodeAddressVia } = await import("@mailwoman/registry")
@@ -201,9 +202,9 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress; 
 
 	return {
 		seam,
-		close: () => {
-			shardProvider.close()
-			lookup.close()
+		[Symbol.dispose]: () => {
+			shardProvider[Symbol.dispose]()
+			lookup[Symbol.dispose]()
 		},
 	}
 }
@@ -282,9 +283,9 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		return {
 			seam,
 			geocode,
-			close: () => {
-				shardProvider.close()
-				lookup.close()
+			[Symbol.dispose]: () => {
+				shardProvider[Symbol.dispose]()
+				lookup[Symbol.dispose]()
 			},
 		}
 	}
@@ -311,8 +312,8 @@ interface MultiSourceSpec {
 /**
  * Parse `--sources` (a file path or inline JSON) into specs.
  */
-export function loadSources(option: string): MultiSourceSpec[] {
-	const text = /^[[{]/.test(option.trim()) ? option : readFileSync(option, "utf8")
+export async function loadSources(option: string): Promise<MultiSourceSpec[]> {
+	const text = /^[[{]/.test(option.trim()) ? option : await readLocalTextFile(option)
 	const parsed = tryParsingJSON(text)
 
 	if (parsed === null) {
@@ -341,12 +342,16 @@ async function writeOutputs(
 	const lines: string[] = []
 
 	if (options.out) {
-		writeFileSync(options.out, JSON.stringify(geojson, null, 2))
+		await writeLocalJSONFile(geojson, options.out)
 		lines.push(`wrote ${geojson.features.length} features → ${options.out}`)
 	}
 
 	if (options.mapOut) {
-		writeFileSync(options.mapOut, toMapHTML(geojson, options.source ? { title: `Mailwoman — ${options.source}` } : {}))
+		await writeLocalFile(
+			toMapHTML(geojson, options.source ? { title: `Mailwoman — ${options.source}` } : {}),
+			options.mapOut
+		)
+
 		lines.push(`wrote map → ${options.mapOut} (serve over localhost to view)`)
 	}
 
@@ -369,102 +374,99 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		toGeoJSON,
 	} = await import("@mailwoman/registry")
 
-	const { seam, close } = await buildGeocoder(options)
+	using geocoder = await buildGeocoder(options)
+	const { seam } = geocoder
 
-	try {
-		const records: SourceRecord[] = []
-		const perSource: string[] = []
+	const records: SourceRecord[] = []
+	const perSource: string[] = []
 
-		for (const sourceSpec of specs) {
-			const label = sourceSpec.source ?? sourceSpec.path
-			const mapping: ColumnMapping = { ...sourceSpec.mapping, source: label }
-			let read = 0
+	for (const sourceSpec of specs) {
+		const label = sourceSpec.source ?? sourceSpec.path
+		const mapping: ColumnMapping = { ...sourceSpec.mapping, source: label }
+		let read = 0
 
-			const rows = (async function* () {
-				for await (const row of streamRows(
-					sourceSpec.path,
-					sourceSpec.delimiter ? { delimiter: sourceSpec.delimiter } : {}
-				)) {
-					if (sourceSpec.limit !== undefined && read >= sourceSpec.limit) break
+		const rows = (async function* () {
+			for await (const row of streamRows(
+				sourceSpec.path,
+				sourceSpec.delimiter ? { delimiter: sourceSpec.delimiter } : {}
+			)) {
+				if (sourceSpec.limit !== undefined && read >= sourceSpec.limit) break
 
-					read++
-					yield row
-				}
-			})()
-
-			const recs = await ingestRows(rows, mapping, { geocodeAddress: seam })
-
-			for (const record of recs) {
-				record.id = `${label}:${record.id}`
+				read++
+				yield row
 			}
+		})()
 
-			// namespace ids so cross-source ids never collide
-			records.push(...recs)
-			perSource.push(`${label} ${recs.length}`)
+		const recs = await ingestRows(rows, mapping, { geocodeAddress: seam })
+
+		for (const record of recs) {
+			record.id = `${label}:${record.id}`
 		}
 
-		// learnedScorer:false — multi-source is CROSS-dataset link discovery (recall-oriented): the same
-		// facility under different operational names across sources is the signal we want. The default GBT is
-		// dedup-calibrated and rejects exactly that (it learned "same place + name drift = distinct"), so the
-		// cross-dataset path uses the FS spine. (Single-CSV dedup below keeps the GBT default.)
-		const result = resolveEntities(records, {
-			trainEM: options.trainEm,
-			threshold: options.threshold,
-			learnedScorer: false,
-			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
+		// namespace ids so cross-source ids never collide
+		records.push(...recs)
+		perSource.push(`${label} ${recs.length}`)
+	}
+
+	// learnedScorer:false — multi-source is CROSS-dataset link discovery (recall-oriented): the same
+	// facility under different operational names across sources is the signal we want. The default GBT is
+	// dedup-calibrated and rejects exactly that (it learned "same place + name drift = distinct"), so the
+	// cross-dataset path uses the FS spine. (Single-CSV dedup below keeps the GBT default.)
+	const result = resolveEntities(records, {
+		trainEM: options.trainEm,
+		threshold: options.threshold,
+		learnedScorer: false,
+		...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
+	})
+
+	const geocoded = records.filter((r) => r.address?.geocode).length
+
+	// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
+	// SAME @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
+	if (options.reconcile) {
+		const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
+		const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
+		const fundingSources = specs.filter((s) => s.role === "funding").map(labelOf)
+
+		if (!eligibilitySources.length || !fundingSources.length) {
+			throw new CommandError(
+				'--reconcile needs each --sources entry tagged with `role: "eligibility"` or `role: "funding"` ' +
+					"(at least one of each)."
+			)
+		}
+
+		const recon = reconcileCoverage(result.entities, { eligibilitySources, fundingSources })
+		const geojson = reconciliationGeoJSON(recon)
+
+		const report = reconciliationReport(recon, {
+			scopeNote:
+				`Resolved BLIND across ${specs.length} sources via \`mailwoman registry --reconcile\` ` +
+				`(${perSource.join(", ")}). Eligibility: ${eligibilitySources.join(", ")}; funding/enrollment: ` +
+				`${fundingSources.join(", ")}.`,
+			scorerNote:
+				"Scored with the Fellegi-Sunter spine (cross-dataset join, recall-oriented): the dedup-calibrated " +
+				'GBT default (#603) rejects the "same place, different operational name" pattern that IS the ' +
+				"cross-source signal, so it is pinned off here. See #655.",
 		})
-
-		const geocoded = records.filter((r) => r.address?.geocode).length
-
-		// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
-		// SAME @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
-		if (options.reconcile) {
-			const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
-			const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
-			const fundingSources = specs.filter((s) => s.role === "funding").map(labelOf)
-
-			if (!eligibilitySources.length || !fundingSources.length) {
-				throw new CommandError(
-					'--reconcile needs each --sources entry tagged with `role: "eligibility"` or `role: "funding"` ' +
-						"(at least one of each)."
-				)
-			}
-
-			const recon = reconcileCoverage(result.entities, { eligibilitySources, fundingSources })
-			const geojson = reconciliationGeoJSON(recon)
-
-			const report = reconciliationReport(recon, {
-				scopeNote:
-					`Resolved BLIND across ${specs.length} sources via \`mailwoman registry --reconcile\` ` +
-					`(${perSource.join(", ")}). Eligibility: ${eligibilitySources.join(", ")}; funding/enrollment: ` +
-					`${fundingSources.join(", ")}.`,
-				scorerNote:
-					"Scored with the Fellegi-Sunter spine (cross-dataset join, recall-oriented): the dedup-calibrated " +
-					'GBT default (#603) rejects the "same place, different operational name" pattern that IS the ' +
-					"cross-source signal, so it is pinned off here. See #655.",
-			})
-
-			const written = await writeOutputs(geojson, options)
-
-			return written === null ? report : `${report}\n\n${written}`
-		}
-
-		const geojson = toGeoJSON(result.entities)
-
-		const crossSource = result.entities.filter(
-			(e) => new Set(e.records.map((r) => r.source).filter(isPresent)).size >= 2
-		).length
-
-		const summary =
-			`registry --sources: ${specs.length} sources (${perSource.join(", ")}) → ${records.length} records ` +
-			`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
 
 		const written = await writeOutputs(geojson, options)
 
-		return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
-	} finally {
-		close()
+		return written === null ? report : `${report}\n\n${written}`
 	}
+
+	const geojson = toGeoJSON(result.entities)
+
+	const crossSource = result.entities.filter(
+		(e) => new Set(e.records.map((r) => r.source).filter(isPresent)).size >= 2
+	).length
+
+	const summary =
+		`registry --sources: ${specs.length} sources (${perSource.join(", ")}) → ${records.length} records ` +
+		`(${geocoded} geocoded) → ${result.entities.length} entities; ${crossSource} span ≥2 sources (cross-dataset links)`
+
+	const written = await writeOutputs(geojson, options)
+
+	return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
 }
 
 //#endregion
@@ -481,37 +483,34 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 		)
 	}
 
-	const rows = parseCSV(readFileSync(csvPath, "utf8"))
+	const rows = parseCSV(await readLocalTextFile(csvPath))
 	// --infer-mapping reads the header (the first row's keys) and guesses the mapping; an explicit --mapping
 	// still merges on top of it. Otherwise the base is the built-in default.
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
-	const mapping = loadMapping(options.mapping, options.source, base)
-	const { seam, close } = await buildGeocoder(options)
+	const mapping = await loadMapping(options.mapping, options.source, base)
+	using geocoder = await buildGeocoder(options)
+	const { seam } = geocoder
 
-	try {
-		const records = await ingestRows(rows, mapping, { geocodeAddress: seam })
+	const records = await ingestRows(rows, mapping, { geocodeAddress: seam })
 
-		const result = resolveEntities(records, {
-			trainEM: options.trainEm,
-			threshold: options.threshold,
-			...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
-		})
+	const result = resolveEntities(records, {
+		trainEM: options.trainEm,
+		threshold: options.threshold,
+		...(options.maxBlockSize !== undefined ? { maxBlockSize: options.maxBlockSize } : {}),
+	})
 
-		const geojson = toGeoJSON(result.entities)
+	const geojson = toGeoJSON(result.entities)
 
-		const geocoded = records.filter((r) => r.address?.geocode).length
+	const geocoded = records.filter((r) => r.address?.geocode).length
 
-		const summary =
-			`registry: ${rows.length} rows → ${records.length} records (${geocoded} geocoded) → ` +
-			`${result.entities.length} entities ` +
-			`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
+	const summary =
+		`registry: ${rows.length} rows → ${records.length} records (${geocoded} geocoded) → ` +
+		`${result.entities.length} entities ` +
+		`(${result.candidatePairs} candidate pairs${result.droppedBlocks.length ? `, ${result.droppedBlocks.length} oversized blocks skipped` : ""})`
 
-		const written = await writeOutputs(geojson, options)
+	const written = await writeOutputs(geojson, options)
 
-		return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
-	} finally {
-		close()
-	}
+	return written === null ? JSON.stringify(geojson, null, 2) : `${summary}\n${written}`
 }
 
 //#endregion
@@ -522,7 +521,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 	const state = useCommandTask(async () => {
 		// `loadSources` can throw on a malformed config — the hook routes its error to the same handler.
 		if (options.sources) {
-			return runMultiSource(loadSources(options.sources), options)
+			return await runMultiSource(await loadSources(options.sources), options)
 		}
 
 		const csv = args?.[0]
@@ -534,7 +533,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 			)
 		}
 
-		return runRegistry(csv.trim(), options)
+		return await runRegistry(csv.trim(), options)
 	})
 
 	if (state.status === "error") {

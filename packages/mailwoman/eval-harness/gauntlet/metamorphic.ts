@@ -467,7 +467,7 @@ export async function runMetamorphicLayer(options: GauntletLayerOptions = {}): P
 		}
 	}
 
-	deps.close()
+	deps[Symbol.dispose]()
 
 	// Anti-rot: a tracked xfail that did NOT fire has been fixed — surface it so the list can't accrete stale entries.
 	const newlyPassing = [

@@ -115,7 +115,7 @@ async function main(): Promise<void> {
 		distances.push(haversineKm(lat, lon, placedHit.lat, placedHit.lon))
 	}
 
-	lookup.close()
+	lookup[Symbol.dispose]()
 	distances.sort((a, b) => a - b)
 
 	console.log(`# Postcode-anchor centroid accuracy — ${country}`)

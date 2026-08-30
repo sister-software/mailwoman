@@ -23,9 +23,9 @@
  *   $MAILWOMAN_DATA_ROOT/overture/2026-05-20.0]`
  */
 
-import { appendFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 
+import { writeLocalTextFile, appendLocalTextFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import { hashFNV1a } from "./fnv-hash.ts"
@@ -220,9 +220,14 @@ export async function buildOutlierLatin(
 
 	// Append OTHER rows to train/val; write the dedicated Latin off-map test file.
 	const wr = (rows: string[]): string => rows.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-	appendFileSync(path.join(dataDir, "train.jsonl"), wr(trainAppend))
-	appendFileSync(path.join(dataDir, "val.jsonl"), wr(valAppend))
-	writeFileSync(path.join(dataDir, "test-latin-offmap.jsonl"), testRows.map((r) => JSON.stringify(r)).join("\n") + "\n")
+	await appendLocalTextFile(wr(trainAppend), path.join(dataDir, "train.jsonl"))
+	await appendLocalTextFile(wr(valAppend), path.join(dataDir, "val.jsonl"))
+
+	await writeLocalTextFile(
+		testRows.map((r) => JSON.stringify(r)).join("\n") + "\n",
+		path.join(dataDir, "test-latin-offmap.jsonl")
+	)
+
 	report?.(`\nappended OTHER → train +${trainAppend.length}, val +${valAppend.length}`)
 
 	report?.(

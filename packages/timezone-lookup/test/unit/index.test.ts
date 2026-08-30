@@ -41,8 +41,8 @@ test("offsetSecForTimezone: Intl-derived, DST-aware", () => {
 	expect(offsetSecForTimezone("Not/AZone")).toBeUndefined()
 })
 
-function fixtureDB(): DatabaseClient<TimezoneDatabase> {
-	const db = new DatabaseClient<TimezoneDatabase>(":memory:")
+async function fixtureDB(): Promise<DatabaseClient<TimezoneDatabase>> {
+	const db = DatabaseClient.temp<TimezoneDatabase>()
 	db.exec("CREATE TABLE timezone_polygons (tzid TEXT, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)")
 
 	db.prepare("INSERT INTO timezone_polygons VALUES (?,?,?,?,?,?)").run(
@@ -57,15 +57,15 @@ function fixtureDB(): DatabaseClient<TimezoneDatabase> {
 	return db
 }
 
-test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", () => {
-	using db = fixtureDB()
+test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", async () => {
+	using db = await fixtureDB()
 	using lookup = new TimezoneLookup({ database: db })
 	expect(lookup.find(5, 5)).toBe("Test/Zone")
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
-test("makeTimezoneAnnotator: fills AnnotationSet.timezone", () => {
-	using db = fixtureDB()
+test("makeTimezoneAnnotator: fills AnnotationSet.timezone", async () => {
+	using db = await fixtureDB()
 	using lookup = new TimezoneLookup({ database: db })
 	const annotate = makeTimezoneAnnotator(lookup)
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ timezone: { name: "Test/Zone" } })

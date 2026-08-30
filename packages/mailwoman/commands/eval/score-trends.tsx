@@ -35,7 +35,7 @@ const EvalScoreTrends: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { buildScoreTrends } = await import("../../eval-harness/score-trends.ts")
 
-		return buildScoreTrends(options)
+		return await buildScoreTrends(options)
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

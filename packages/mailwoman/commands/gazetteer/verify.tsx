@@ -53,9 +53,8 @@ const GazetteerVerify: ParsedCommandComponent<Options> = ({ options }) => {
 
 			console.error(`Verifying ${dbPath}...`)
 
-			const db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
+			using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 			const structural = verifyAdmin(db, loadDefaultBaseline())
-			await db.destroy()
 			const checks = [...structural.checks]
 			let ok = structural.ok
 
@@ -69,7 +68,7 @@ const GazetteerVerify: ParsedCommandComponent<Options> = ({ options }) => {
 				// Lazy: the FST module pulls the resolver + the libpostal dictionaries, and a verify run
 				// that skips this section should not pay for either.
 				const { checkAdminDerivedFSTFreshness } = await import("../../gazetteer-pipeline/fst.ts")
-				const rows = checkAdminDerivedFSTFreshness(dbPath)
+				const rows = await checkAdminDerivedFSTFreshness(dbPath)
 				const stale = rows.filter((row) => row.staleReason)
 				const missing = rows.filter((row) => !row.present)
 

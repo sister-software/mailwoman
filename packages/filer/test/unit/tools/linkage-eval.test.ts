@@ -11,6 +11,7 @@
  *   `buildFilerDatabase`/`clusterFilers` pipeline end to end against scratch on-disk artifacts.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { FilerEdgeAssertion, FilerRelationship, type FilerDatabase } from "@mailwoman/filer/schema"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
 import {
@@ -32,7 +33,6 @@ import {
 	type FilerLinkageEvalResult,
 	type LinkageEvalRun,
 } from "@mailwoman/filer/tools/linkage-eval"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, it } from "vitest"
@@ -69,10 +69,12 @@ const INJECTED_FAMILY_ID = "cik:0001234567"
  */
 let cached: Promise<FilerLinkageEvalResult> | undefined
 
-function runEval(): Promise<FilerLinkageEvalResult> {
+async function runEval(): Promise<FilerLinkageEvalResult> {
+	// The PROMISE is what is cached, not its value: `??=` on an awaited call would run the eval once per concurrent
+	// caller, and the point of the memo is that it runs once.
 	cached ??= filerLinkageEval({ date: PUBLISHED_LINKAGE_EVAL_DATE, printMarkdown: false })
 
-	return cached
+	return await cached
 }
 
 describe("buildFilteredEvalInputs — decision 4's leakage exclusion (gate 4)", () => {
@@ -322,7 +324,7 @@ describe("filerLinkageEval — reproducibility (gate 4)", () => {
 	it("regenerates the committed scorecard byte for byte", async () => {
 		const { markdown } = await runEval()
 
-		expect(markdown).toBe(await readFile(PUBLISHED_REPORT_PATH, "utf8"))
+		expect(markdown).toBe(await readLocalTextFile(PUBLISHED_REPORT_PATH))
 	})
 
 	it("emits a markdown report — no embedded JSON, headed by a dated H1", async () => {
@@ -457,7 +459,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 		const form499Rows = buildLinkageEvalForm499Rows()
 		const providerRows = buildLinkageEvalProviderRows()
 
-		return runLinkagePass({
+		return await runLinkagePass({
 			inputs: buildFilteredEvalInputs(),
 			registrants: buildTruthRegistrants(form499Rows, providerRows),
 			truthGroupOf: buildTruthFamilyGroups(form499Rows, providerRows),

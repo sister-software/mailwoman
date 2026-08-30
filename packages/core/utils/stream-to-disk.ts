@@ -24,10 +24,11 @@
  *   on, and what to do with the bytes afterwards.
  */
 
-import { createWriteStream } from "@mailwoman/platform/fs"
-import { rename, rm } from "@mailwoman/platform/fs/promises"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
+
+import { openWriteStream } from "#fs/streams"
+import { movePath, removePathIfPresent } from "#fs/writers"
 
 /**
  * Bytes between progress reports, where the caller states no preference.
@@ -101,14 +102,14 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 	})
 
 	try {
-		await pipeline(source, createWriteStream(partialPath))
+		await pipeline(source, openWriteStream(partialPath))
 	} catch (error) {
-		await rm(partialPath, { force: true })
+		await removePathIfPresent(partialPath)
 
 		throw error
 	}
 
-	await rename(partialPath, options.destination)
+	await movePath(partialPath, options.destination)
 
 	options.onProgress?.(`downloaded ${received.toLocaleString()} bytes`)
 

@@ -41,26 +41,22 @@ function required(name: string, value: string | undefined): string {
 	return value
 }
 
-const database = new DatabaseClient<FloodDatabase>(required("database", values.database))
+using database = new DatabaseClient<FloodDatabase>(required("database", values.database))
 
-try {
-	database.exec("PRAGMA journal_mode = OFF")
-	database.exec("PRAGMA synchronous = OFF")
+database.exec("PRAGMA journal_mode = OFF")
+database.exec("PRAGMA synchronous = OFF")
 
-	const result = await ingestFloodChunk(database, {
-		source: await createGeodatabaseFeatureSource({
-			geodatabasePath: required("gdb", values.gdb),
-			...(values.layer ? { layer: values.layer } : {}),
-			objectIDFrom: Number(required("object-id-from", values["object-id-from"])),
-			objectIDTo: Number(required("object-id-to", values["object-id-to"])),
-			declaredFeatureCount: Number(required("declared-feature-count", values["declared-feature-count"])),
-		}),
-		indexResolution: Number(required("index-resolution", values["index-resolution"])),
-		coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
-		onProgress: (message) => console.error(`  [chunk] ${message}`),
-	})
+const result = await ingestFloodChunk(database, {
+	source: await createGeodatabaseFeatureSource({
+		geodatabasePath: required("gdb", values.gdb),
+		...(values.layer ? { layer: values.layer } : {}),
+		objectIDFrom: Number(required("object-id-from", values["object-id-from"])),
+		objectIDTo: Number(required("object-id-to", values["object-id-to"])),
+		declaredFeatureCount: Number(required("declared-feature-count", values["declared-feature-count"])),
+	}),
+	indexResolution: Number(required("index-resolution", values["index-resolution"])),
+	coverageResolution: Number(required("coverage-resolution", values["coverage-resolution"])),
+	onProgress: (message) => console.error(`  [chunk] ${message}`),
+})
 
-	console.log(JSON.stringify(result))
-} finally {
-	await database.destroy()
-}
+console.log(JSON.stringify(result))

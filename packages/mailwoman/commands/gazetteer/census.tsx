@@ -22,9 +22,10 @@
  *   node's dependent-locality share and lift rather than trusting the write.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { ComponentTag } from "@mailwoman/core/types"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype-census"
-import { existsSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -70,7 +71,7 @@ const GazetteerCensus: ParsedCommandComponent<Options> = ({ options }) => {
 		const country = options.country.toLowerCase()
 		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
 
-		if (!existsSync(sourcePath)) {
+		if (!(await pathExists(sourcePath))) {
 			throw new Error(`census: source WOF admin DB not found: ${sourcePath}`)
 		}
 
@@ -126,7 +127,7 @@ const GazetteerCensus: ParsedCommandComponent<Options> = ({ options }) => {
 		const bytes = serializePlacetypeCensus(header, nodes)
 		const outPath = join(options.out, `placetype-census-${country}.bin`)
 
-		writeFileSync(outPath, bytes)
+		await writeLocalFile(bytes, outPath)
 
 		// Self-verifying readback over the bytes just written, not the in-memory nodes.
 		const resolver = new PlacetypeCensusResolver(bytes)

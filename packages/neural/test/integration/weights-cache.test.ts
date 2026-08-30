@@ -5,15 +5,15 @@
  *
  *   Cache-fallback resolution for the CLI weights guard (plan 3): when no
  *   `@mailwoman/neural-weights-<locale>` package resolves, `resolveWeights` probes the user-level
- *   npm-prefix cache (`~/.cache/mailwoman/weights` — `cacheRoot` injects a test root). Uses the
+ *   npm-prefix cache (`~/.cache/mailwoman/weights` — `cacheRoot.path` injects a test root). Uses the
  *   `pt-BR` locale throughout because no workspace package exists for it, so the package branch
  *   (was `de-DE` until 2026-08-02, when campaign R9 shipped that package and made the locale resolvable — the
  *   negative control has to name a locale nobody has claimed yet)
  *   falls through to the cache on every host, lab or CI.
  */
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
@@ -22,7 +22,7 @@ import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackage
 const LOCALE = "pt-BR"
 const PACKAGE_NAME = "@mailwoman/neural-weights-pt-br"
 
-let cacheRoot: string
+let cacheRoot: TemporaryDirectory
 
 /**
  * THIS FILE SPELLS THE LAYOUT OUT BY HAND ON PURPOSE (2026-08-06 triage). Everywhere else in the tree that literal
@@ -31,29 +31,30 @@ let cacheRoot: string
  * the implementation's own helper cannot fail when the implementation is wrong. The helper is tied back to the
  * independent spelling by the last test in this file instead.
  */
-function layoutCachedPackage(files: string[]): string {
-	const packageDir = join(cacheRoot, "node_modules", PACKAGE_NAME)
+async function layoutCachedPackage(files: string[]): Promise<string> {
+	const packageDir = cacheRoot.resolve("node_modules", PACKAGE_NAME)
 
-	mkdirSync(packageDir, { recursive: true })
+	await makeDirectories(packageDir)
 
 	for (const file of files) {
-		writeFileSync(join(packageDir, file), file === "model-card.json" ? JSON.stringify({ version: "0.0.0" }) : "stub")
+		await writeLocalFile(
+			file === "model-card.json" ? JSON.stringify({ version: "0.0.0" }) : "stub",
+			join(packageDir, file)
+		)
 	}
 
 	return packageDir
 }
 
-beforeEach(() => {
-	cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-weights-cache-"))
+beforeEach(async () => {
+	cacheRoot = await temporaryDirectory("mailwoman-weights-cache-")
 })
 
-afterEach(() => {
-	rmSync(cacheRoot, { recursive: true, force: true })
-})
+afterEach(() => cacheRoot[Symbol.asyncDispose]())
 
 describe("resolveWeights cache fallback", () => {
-	test("resolves a cache-installed package, sibling artifacts included", () => {
-		const packageDir = layoutCachedPackage([
+	test("resolves a cache-installed package, sibling artifacts included", async () => {
+		const packageDir = await layoutCachedPackage([
 			"model.onnx",
 			"tokenizer.model",
 			"model-card.json",
@@ -61,7 +62,7 @@ describe("resolveWeights cache fallback", () => {
 			"crf-transitions.json",
 		])
 
-		const resolved = resolveWeights({ locale: LOCALE, cacheRoot })
+		const resolved = resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe(`cache:${PACKAGE_NAME}`)
 		expect(resolved.modelPath).toBe(join(packageDir, "model.onnx"))
@@ -71,57 +72,57 @@ describe("resolveWeights cache fallback", () => {
 		expect(resolved.anchorLookupPath).toEqual({ path: join(packageDir, "postcode-br.bin"), binary: true })
 	})
 
-	test("a binary-less cache install without a base declaration does not resolve", () => {
-		layoutCachedPackage(["model-card.json"])
+	test("a binary-less cache install without a base declaration does not resolve", async () => {
+		await layoutCachedPackage(["model-card.json"])
 
-		expect(() => resolveWeights({ locale: LOCALE, cacheRoot })).toThrow(/missing model files/)
+		expect(() => resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).toThrow(/missing model files/)
 	})
 
 	test("the not-found error names the probed cache path", () => {
-		expect(() => resolveWeights({ locale: LOCALE, cacheRoot })).toThrow(
-			new RegExp(join(cacheRoot, "node_modules", PACKAGE_NAME).replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+		expect(() => resolveWeights({ locale: LOCALE, cacheRoot: cacheRoot.path })).toThrow(
+			new RegExp(cacheRoot.resolve("node_modules", PACKAGE_NAME).replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
 		)
 	})
 
-	test("an EXPLICIT cacheRoot outranks an installed package (candidate grading, en-US resolves in-repo)", () => {
-		const packageDir = join(cacheRoot, "node_modules", "@mailwoman/neural-weights-en-us")
+	test("an EXPLICIT cacheRoot.path outranks an installed package (candidate grading, en-US resolves in-repo)", async () => {
+		const packageDir = cacheRoot.resolve("node_modules", "@mailwoman/neural-weights-en-us")
 
-		mkdirSync(packageDir, { recursive: true })
+		await makeDirectories(packageDir)
 
 		for (const file of ["model.onnx", "tokenizer.model"]) {
-			writeFileSync(join(packageDir, file), "stub")
+			await writeLocalTextFile("stub", join(packageDir, file))
 		}
 
-		// The workspace package exists and resolves, but the explicit cacheRoot names the candidate.
-		const resolved = resolveWeights({ locale: "en-US", cacheRoot })
+		// The workspace package exists and resolves, but the explicit cacheRoot.path names the candidate.
+		const resolved = resolveWeights({ locale: "en-US", cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-us")
 		expect(resolved.modelPath).toBe(join(packageDir, "model.onnx"))
 	})
 
-	test("a cached data-only overlay resolves the candidate base beside it", () => {
-		const scopeDir = join(cacheRoot, "node_modules", "@mailwoman")
+	test("a cached data-only overlay resolves the candidate base beside it", async () => {
+		const scopeDir = cacheRoot.resolve("node_modules", "@mailwoman")
 		const baseDir = join(scopeDir, "neural-weights-en-us")
 		const overlayDir = join(scopeDir, "neural-weights-en-gb")
 
-		mkdirSync(baseDir, { recursive: true })
-		mkdirSync(overlayDir, { recursive: true })
-		writeFileSync(join(baseDir, "package.json"), JSON.stringify({ name: "@mailwoman/neural-weights-en-us" }))
-		writeFileSync(join(baseDir, "model.onnx"), "candidate-model")
-		writeFileSync(join(baseDir, "tokenizer.model"), "candidate-tokenizer")
-		writeFileSync(join(baseDir, "model-card.json"), JSON.stringify({ version: "candidate" }))
+		await makeDirectories(baseDir)
+		await makeDirectories(overlayDir)
+		await writeLocalJSONFile({ name: "@mailwoman/neural-weights-en-us" }, join(baseDir, "package.json"))
+		await writeLocalTextFile("candidate-model", join(baseDir, "model.onnx"))
+		await writeLocalTextFile("candidate-tokenizer", join(baseDir, "tokenizer.model"))
+		await writeLocalJSONFile({ version: "candidate" }, join(baseDir, "model-card.json"))
 
-		writeFileSync(
-			join(overlayDir, "package.json"),
-			JSON.stringify({
+		await writeLocalJSONFile(
+			{
 				name: "@mailwoman/neural-weights-en-gb",
 				mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
-			})
+			},
+			join(overlayDir, "package.json")
 		)
 
-		writeFileSync(join(overlayDir, "pair-index-gb.bin"), "overlay-pairs")
+		await writeLocalTextFile("overlay-pairs", join(overlayDir, "pair-index-gb.bin"))
 
-		const resolved = resolveWeights({ locale: "en-GB", cacheRoot })
+		const resolved = resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
 
 		expect(resolved.source).toBe("cache:@mailwoman/neural-weights-en-gb+base")
 		expect(resolved.modelPath).toBe(join(baseDir, "model.onnx"))
@@ -130,23 +131,23 @@ describe("resolveWeights cache fallback", () => {
 		expect(resolved.pairIndexPath).toBe(join(overlayDir, "pair-index-gb.bin"))
 	})
 
-	test("a cached data-only overlay refuses a missing cached base instead of falling through", () => {
-		const overlayDir = join(cacheRoot, "node_modules", "@mailwoman", "neural-weights-en-gb")
+	test("a cached data-only overlay refuses a missing cached base instead of falling through", async () => {
+		const overlayDir = cacheRoot.resolve("node_modules", "@mailwoman", "neural-weights-en-gb")
 
-		mkdirSync(overlayDir, { recursive: true })
+		await makeDirectories(overlayDir)
 
-		writeFileSync(
-			join(overlayDir, "package.json"),
-			JSON.stringify({
+		await writeLocalJSONFile(
+			{
 				name: "@mailwoman/neural-weights-en-gb",
 				mailwoman: { baseWeights: "@mailwoman/neural-weights-en-us" },
-			})
+			},
+			join(overlayDir, "package.json")
 		)
 
 		let message = ""
 
 		try {
-			resolveWeights({ locale: "en-GB", cacheRoot })
+			resolveWeights({ locale: "en-GB", cacheRoot: cacheRoot.path })
 		} catch (error) {
 			message = (error as Error).message
 		}
@@ -166,8 +167,11 @@ describe("resolveWeights cache fallback", () => {
 	// the tree now builds the directory with `weightsCachePackageDir`; if it and the hand-spelled path ever disagree,
 	// they disagree HERE and not in a gate run that silently graded the wrong bundle.
 	test("weightsCachePackageDir builds exactly the layout this file pins", () => {
-		expect(weightsCachePackageDir(cacheRoot, LOCALE)).toBe(join(cacheRoot, "node_modules", PACKAGE_NAME))
+		expect(weightsCachePackageDir(cacheRoot.path, LOCALE)).toBe(cacheRoot.resolve("node_modules", PACKAGE_NAME))
+
 		// Locale casing is normalized the same way the package name is.
-		expect(weightsCachePackageDir(cacheRoot)).toBe(join(cacheRoot, "node_modules", "@mailwoman/neural-weights-en-us"))
+		expect(weightsCachePackageDir(cacheRoot.path)).toBe(
+			cacheRoot.resolve("node_modules", "@mailwoman/neural-weights-en-us")
+		)
 	})
 })

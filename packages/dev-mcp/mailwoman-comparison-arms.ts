@@ -13,14 +13,13 @@ import type { ResolvedInput, ResolvedInputSet } from "./input-sets.ts"
 import { buildRoutedMailwomanArm } from "./routed-mailwoman-arm.ts"
 import { inputSetProvenance, provenanceFor } from "./tool-kit.ts"
 
-export interface PreparedMailwomanArms {
+export interface PreparedMailwomanArms extends Disposable {
 	geocodeA(input: ResolvedInput): Promise<GauntletResult>
 	geocodeB(input: ResolvedInput): Promise<GauntletResult>
 	provenanceA: unknown
 	provenanceB: unknown
 	comparisonEngineID: string
 	confounds: ConfoundReading
-	close(): void
 }
 
 export interface PrepareMailwomanArmDeps {
@@ -36,6 +35,7 @@ export async function prepareMailwomanArms(
 	executionPath: "single-config" | "board-routed",
 	deps: PrepareMailwomanArmDeps
 ): Promise<PreparedMailwomanArms> {
+	using resources = new DisposableStack()
 	const fingerprint = registry.fingerprint()
 	const effectiveA = resolveConfig(configA)
 	const effectiveB = resolveConfig(configB)
@@ -62,15 +62,14 @@ export async function prepareMailwomanArms(
 			)
 		}
 
-		return {
-			geocodeA: async (input) => toGauntletResult((await engineA.session.geocode(input.input)).result),
-			geocodeB: async (input) => toGauntletResult((await engineB.session.geocode(input.input)).result),
+		return Object.assign(resources.move(), {
+			geocodeA: async (input: ResolvedInput) => toGauntletResult((await engineA.session.geocode(input.input)).result),
+			geocodeB: async (input: ResolvedInput) => toGauntletResult((await engineB.session.geocode(input.input)).result),
 			provenanceA: provenanceFor(engineA, set),
 			provenanceB: provenanceFor(engineB, set),
 			comparisonEngineID: engineA.engineID,
 			confounds,
-			close: () => {},
-		}
+		})
 	}
 
 	if (!set.setID.startsWith("board")) {
@@ -87,15 +86,8 @@ export async function prepareMailwomanArms(
 	}
 
 	const buildRoutedArm = deps.buildRoutedMailwomanArm ?? buildRoutedMailwomanArm
-	const routedA = await buildRoutedArm(configA, set.inputs)
-	let routedB
-
-	try {
-		routedB = await buildRoutedArm(configB, set.inputs)
-	} catch (error) {
-		routedA.close()
-		throw error
-	}
+	const routedA = resources.use(await buildRoutedArm(configA, set.inputs))
+	const routedB = resources.use(await buildRoutedArm(configB, set.inputs))
 
 	const sourceProvenance = {
 		tree_fingerprint: fingerprint.digest,
@@ -105,16 +97,12 @@ export async function prepareMailwomanArms(
 		input_set: inputSetProvenance(set),
 	}
 
-	return {
+	return Object.assign(resources.move(), {
 		geocodeA: routedA.geocode,
 		geocodeB: routedB.geocode,
 		provenanceA: { ...routedA.provenance, ...sourceProvenance },
 		provenanceB: { ...routedB.provenance, ...sourceProvenance },
 		comparisonEngineID: engineID(effectiveA, fingerprint),
 		confounds,
-		close: () => {
-			routedA.close()
-			routedB.close()
-		},
-	}
+	})
 }

@@ -22,33 +22,36 @@
  *   is the whitespace leg. Measured 8.6 s end to end for 64 rows — two geocodes each plus one engine load.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync } from "@mailwoman/platform/fs"
 import { runConformanceCommand } from "mailwoman/eval-harness/conformance/command"
 import { loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
 import { auditWhitespaceSuite, WHITESPACE_SUITE_PATH } from "mailwoman/eval-harness/conformance/whitespace"
 import { describe, expect, it } from "vitest"
 
-function weightsPresent(): boolean {
+async function weightsPresent(): Promise<boolean> {
 	try {
 		// ASK THE RESOLVER — see the module docstring, and `v1-parse-gate.test.ts`, which carries the incident.
-		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
 	} catch {
 		return false
 	}
 }
 
-const gazetteerPresent = (): boolean =>
-	existsSync(String(dataRootPath("wof", "admin-global-priority.db"))) &&
-	existsSync(String(dataRootPath("wof", "postcode-locality-intl.db")))
+const gazetteerPresent = async (): Promise<boolean> =>
+	(await pathExists(String(dataRootPath("wof", "admin-global-priority.db")))) &&
+	(await pathExists(String(dataRootPath("wof", "postcode-locality-intl.db"))))
 
-describe.skipIf(!weightsPresent() || !gazetteerPresent())("whitespace invariance — live pipeline", () => {
-	it("audits the committed suite before anything is geocoded", async () => {
-		expect(auditWhitespaceSuite(await loadConformanceFixtures(WHITESPACE_SUITE_PATH))).toEqual([])
-	})
+describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
+	"whitespace invariance — live pipeline",
+	() => {
+		it("audits the committed suite before anything is geocoded", async () => {
+			expect(auditWhitespaceSuite(await loadConformanceFixtures(WHITESPACE_SUITE_PATH))).toEqual([])
+		})
 
-	it("holds on every gating row, and prints the tracked ones", async () => {
-		expect(await runConformanceCommand({ suite: WHITESPACE_SUITE_PATH })).toBe(0)
-	}, 600_000)
-})
+		it("holds on every gating row, and prints the tracked ones", async () => {
+			expect(await runConformanceCommand({ suite: WHITESPACE_SUITE_PATH })).toBe(0)
+		}, 600_000)
+	}
+)

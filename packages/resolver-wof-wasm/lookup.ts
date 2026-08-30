@@ -25,6 +25,8 @@ import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "
 import { aliasBagExactMatch } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { Database } from "@sqlite.org/sqlite-wasm"
 
+import { disposeSlimWOFDatabase } from "./loader.ts"
+
 export interface WOFWasmPlaceLookupOpts {
 	/**
 	 * Open `@sqlite.org/sqlite-wasm` Database (from `loadSlimWOFDatabase`).
@@ -321,8 +323,8 @@ export class WOFWasmPlaceLookup implements PlaceLookup {
 		return this.#coincidentRolesCache.get(id) ?? []
 	}
 
-	close(): void {
-		this.#db.close()
+	[Symbol.dispose](): void {
+		disposeSlimWOFDatabase(this.#db)
 	}
 }
 

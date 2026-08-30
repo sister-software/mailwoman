@@ -89,10 +89,6 @@ const RANKING_FIELD_FRAGMENTS = [
 	"ordering",
 ] as const
 
-export function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
 export function add(issues: ValidationIssue[], path: string, code: ValidationIssueCode, message: string): void {
 	issues.push({ path, code, message })
 }

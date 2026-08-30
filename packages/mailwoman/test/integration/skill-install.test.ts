@@ -11,16 +11,21 @@
  *   the task review caught: `cpSync` alone never deletes).
  */
 
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { withCLISpawnLock } from "mailwoman/test-kit/cli-spawn-lock"
-import { afterEach, describe, expect, test, vi } from "vitest"
+import { afterAll, describe, expect, test, vi } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
-const hasCLICompiled = existsSync(CLI_PATH)
+const hasCLICompiled = await pathExists(CLI_PATH)
 
 /**
  * Wall-clock budget for a CLI spawn — see the note in `geocode.test.ts`. A single spawn costs ~5.6 s, 2.7 s of it node
@@ -46,22 +51,16 @@ vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 	const tempDirs: string[] = []
 
-	function makeTempDir(prefix: string): string {
-		const dir = mkdtempSync(join(tmpdir(), prefix))
+	async function makeTempDir(prefix: string): Promise<string> {
+		const dir = fixtures.use(await temporaryDirectory(prefix)).path
 
 		tempDirs.push(dir)
 
 		return dir
 	}
 
-	afterEach(() => {
-		for (const dir of tempDirs.splice(0)) {
-			rmSync(dir, { recursive: true, force: true })
-		}
-	})
-
-	test("installs into <cwd>/.claude/skills/mailwoman/SKILL.md by default", () => {
-		const cwd = makeTempDir("mw-skill-install-")
+	test("installs into <cwd>/.claude/skills/mailwoman/SKILL.md by default", async () => {
+		const cwd = await makeTempDir("mw-skill-install-")
 
 		withCLISpawnLock(() =>
 			execFileSync(process.execPath, [CLI_PATH, "skill", "install"], {
@@ -73,12 +72,12 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 
 		const skillPath = join(cwd, ".claude", "skills", "mailwoman", "SKILL.md")
 
-		expect(existsSync(skillPath)).toBe(true)
-		expect(readFileSync(skillPath, "utf8")).toMatch(/^---\nname: mailwoman\n/)
+		expect(await pathExists(skillPath)).toBe(true)
+		expect(await readLocalTextFile(skillPath)).toMatch(/^---\nname: mailwoman\n/)
 	})
 
-	test("second run is idempotent — overwrites cleanly with no error", () => {
-		const cwd = makeTempDir("mw-skill-install-idempotent-")
+	test("second run is idempotent — overwrites cleanly with no error", async () => {
+		const cwd = await makeTempDir("mw-skill-install-idempotent-")
 
 		const spawn = () =>
 			withCLISpawnLock(() =>
@@ -94,12 +93,12 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 
 		const skillPath = join(cwd, ".claude", "skills", "mailwoman", "SKILL.md")
 
-		expect(existsSync(skillPath)).toBe(true)
+		expect(await pathExists(skillPath)).toBe(true)
 	})
 
-	test("--dest <dir> installs there instead of cwd", () => {
-		const cwd = makeTempDir("mw-skill-install-cwd-")
-		const dest = makeTempDir("mw-skill-install-dest-")
+	test("--dest <dir> installs there instead of cwd", async () => {
+		const cwd = await makeTempDir("mw-skill-install-cwd-")
+		const dest = await makeTempDir("mw-skill-install-dest-")
 
 		withCLISpawnLock(() =>
 			execFileSync(process.execPath, [CLI_PATH, "skill", "install", "--dest", dest], {
@@ -109,19 +108,19 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			})
 		)
 
-		expect(existsSync(join(dest, ".claude", "skills", "mailwoman", "SKILL.md"))).toBe(true)
-		expect(existsSync(join(cwd, ".claude"))).toBe(false)
+		expect(await pathExists(join(dest, ".claude", "skills", "mailwoman", "SKILL.md"))).toBe(true)
+		expect(await pathExists(join(cwd, ".claude"))).toBe(false)
 	})
 
-	test("a stale file left over from an older shipped skill is removed, not merged", () => {
-		const cwd = makeTempDir("mw-skill-install-stale-")
+	test("a stale file left over from an older shipped skill is removed, not merged", async () => {
+		const cwd = await makeTempDir("mw-skill-install-stale-")
 		const skillDir = join(cwd, ".claude", "skills", "mailwoman")
 		const staleFile = join(skillDir, "stale-reference.md")
 
 		// Plant a file that a hypothetical OLDER install left behind and the current shipped skill no
 		// longer carries — a merge-only copy (bare cpSync) would leave this in place forever.
-		mkdirSync(skillDir, { recursive: true })
-		writeFileSync(staleFile, "belongs to an older skill version; must not survive a reinstall")
+		await makeDirectories(skillDir)
+		await writeLocalTextFile("belongs to an older skill version; must not survive a reinstall", staleFile)
 
 		withCLISpawnLock(() =>
 			execFileSync(process.execPath, [CLI_PATH, "skill", "install"], {
@@ -131,7 +130,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			})
 		)
 
-		expect(existsSync(staleFile)).toBe(false)
-		expect(existsSync(join(skillDir, "SKILL.md"))).toBe(true)
+		expect(await pathExists(staleFile)).toBe(false)
+		expect(await pathExists(join(skillDir, "SKILL.md"))).toBe(true)
 	})
 })

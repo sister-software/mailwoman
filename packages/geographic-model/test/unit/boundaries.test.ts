@@ -13,9 +13,8 @@
  *   later ordering API trips it on the commit that adds it.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import * as geographicModel from "@mailwoman/geographic-model"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { createRequire } from "@mailwoman/platform/module"
 import { describe, expect, it } from "vitest"
 
@@ -31,8 +30,8 @@ interface Manifest {
  * Resolve a sibling manifest through its own `exports` map rather than by composing a path into `node_modules`, so a
  * hoist, a rename, or a package move reports as an unresolvable specifier instead of as an absent dependency.
  */
-function readManifest(specifier: string): Manifest {
-	return parseJSONStrict<Manifest>(readFileSync(createRequire(import.meta.url).resolve(specifier), "utf8"))
+async function readManifest(specifier: string): Promise<Manifest> {
+	return await readLocalJSONFile<Manifest>(createRequire(import.meta.url).resolve(specifier))
 }
 
 /**
@@ -42,8 +41,8 @@ function readManifest(specifier: string): Manifest {
 const RANKING_POLICY_FRAGMENTS = ["boost", "penalt", "weight", "rank", "score", "prioriti", "ordering"]
 
 describe("the geographic model's recorded dependency direction", () => {
-	it("keeps @mailwoman/core free of a dependency on @mailwoman/geographic-model", () => {
-		const core = readManifest("@mailwoman/core/package.json")
+	it("keeps @mailwoman/core free of a dependency on @mailwoman/geographic-model", async () => {
+		const core = await readManifest("@mailwoman/core/package.json")
 
 		// Name the manifest that was actually read. Without this, a specifier that resolved somewhere else
 		// would report zero declarations — the absence this test exists to distinguish from a real one.

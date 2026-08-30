@@ -30,9 +30,10 @@
  *   the report [--out docs/articles/evals/experiments/2026-06-08-honest-eval.md] [--tmp /tmp/honest]
  */
 
+import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalFile, appendLocalTextFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
@@ -99,25 +100,25 @@ async function main() {
 		TMP = cliValues["tmp"] as string
 	}
 
-	mkdirSync(TMP, { recursive: true })
+	await makeDirectories(TMP)
 	const US_SAMPLE = "data/eval/external/openaddresses-us-sample.jsonl"
 	const US_HELD_REGIONS = ["VT", "WY", "ND"] // corpus defaultHoldouts() for US
 	const TRUST_FLOOR = 1000
 
 	// --- build the US held-out slice (leakage-free: never in training) ---
 	const US_SLICE = `${TMP}/us-heldout.jsonl`
-	writeFileSync(US_SLICE, "")
+	await writeLocalTextFile("", US_SLICE)
 
 	// : > "$US_SLICE"
 	for (const st of US_HELD_REGIONS) {
 		const r = await $({ nothrow: true })`jq -c --arg st ${st} ${"select((.state|ascii_upcase) == $st)"} ${US_SAMPLE}`
 
 		if (r.stdout) {
-			appendFileSync(US_SLICE, r.stdout)
+			await appendLocalTextFile(r.stdout, US_SLICE)
 		}
 	}
 
-	const US_N = (readFileSync(US_SLICE, "utf8").match(/\n/g) || []).length
+	const US_N = ((await readLocalTextFile(US_SLICE)).match(/\n/g) || []).length
 
 	console.error(`US held-out slice (${US_HELD_REGIONS.join("/")}): ${US_N} rows`)
 
@@ -126,7 +127,7 @@ async function main() {
 	 * coordP50 coordP90 pipAll pipPoly polyCov
 	 */
 	const runLocale = async (name: string, slice: string, cc: string, tag: string): Promise<string> => {
-		const n = (existsSync(slice) ? readFileSync(slice, "utf8").match(/\n/g) || [] : []).length
+		const n = ((await pathExists(slice)) ? (await readLocalTextFile(slice)).match(/\n/g) || [] : []).length
 
 		if (n < TRUST_FLOOR) {
 			return `${name}\t${n}\tUNTRUSTED\t-\t-\t-\t-\t-\t-`
@@ -137,8 +138,8 @@ async function main() {
 		const evalOut =
 			await $`node scripts/eval/oa-resolver-eval.ts --eval ${slice} --model ${MODEL} --model-card ${CARD} --tokenizer ${TOK} --wof ${WOF} --default-country ${cc} --out-resolved ${resolved}`
 
-		writeFileSync(`${TMP}/${tag}.eval.md`, evalOut.stdout)
-		writeFileSync(`${TMP}/${tag}.log`, evalOut.stderr)
+		await writeLocalFile(evalOut.stdout, `${TMP}/${tag}.eval.md`)
+		await writeLocalFile(evalOut.stderr, `${TMP}/${tag}.log`)
 		const row = [...TextSpliterator.from(evalOut.stdout)].find((l) => l.startsWith("| **neural** |")) ?? ""
 		const cols = row.split("|").map((c) => c.replaceAll(" ", ""))
 		const loc = cols[2] ?? ""
@@ -151,7 +152,7 @@ async function main() {
 			nothrow: true,
 		})`python3 scripts/eval/pip-containment.py ${resolved} --label ${name} --json ${pipJson}`
 
-		writeFileSync(`${TMP}/${tag}.pip.txt`, pip.stdout)
+		await writeLocalFile(pip.stdout, `${TMP}/${tag}.pip.txt`)
 
 		// jq: percent rounded to 1 decimal, "-" when the field is null/missing, "" when the file can't be read.
 		const jqPct = async (field: string): Promise<string> => {
@@ -189,7 +190,7 @@ async function main() {
 	].join("\n")
 
 	if (OUT) {
-		writeFileSync(OUT, emit + "\n")
+		await writeLocalFile(emit + "\n", OUT)
 
 		console.error(`wrote → ${OUT}`)
 	} else {

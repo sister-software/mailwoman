@@ -22,10 +22,12 @@
  *   dependency graph.
  */
 
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { resolve } from "@mailwoman/platform/path"
 
-import { type CompiledGeographicModel, parseCompiledGeographicModel, serializeCompiledModel } from "../artifact.ts"
+import { type CompiledGeographicModel, parseCompiledGeographicModel } from "../artifact.ts"
 import { compileGeographicModel } from "../compile.ts"
 import { loadGeographicModelDirectory } from "../load.ts"
 
@@ -45,7 +47,7 @@ export const REGENERATE_ARTIFACT_COMMAND =
  */
 export function packagedModelPaths(): { source: string; artifact: string } {
 	const candidates = [resolve(import.meta.dirname, "../data"), resolve(import.meta.dirname, "../../data")]
-	const found = candidates.find((candidate) => existsSync(resolve(candidate, "model/model.json")))
+	const found = candidates.find((candidate) => pathExistsSync(resolve(candidate, "model/model.json")))
 
 	if (!found) {
 		throw new Error(`geographic-model: could not find data/model — looked in ${candidates.join(", ")}`)
@@ -66,8 +68,8 @@ export function compileAuthoredGeographicModel(): CompiledGeographicModel {
  * Read the committed artifact. The format version is checked; the records are not re-validated, because they were
  * validated on the way in.
  */
-export function readCompiledGeographicModel(): CompiledGeographicModel {
-	const text = readFileSync(packagedModelPaths().artifact, "utf8")
+export async function readCompiledGeographicModel(): Promise<CompiledGeographicModel> {
+	const text = await readLocalTextFile(packagedModelPaths().artifact)
 
 	// A corrupt committed artifact is a broken build, and the `SyntaxError` names the offset. The package's parse
 	// wrappers live in `@mailwoman/core`, which this package deliberately does not depend on.
@@ -79,7 +81,7 @@ function main(): void {
 	const { artifact } = packagedModelPaths()
 	const model = compileAuthoredGeographicModel()
 
-	writeFileSync(artifact, serializeCompiledModel(model))
+	writeLocalJSONFile(model, artifact)
 
 	console.log(
 		`wrote ${artifact}: ${model.concepts.length} concepts, ${model.relations.length} relations, ${model.mappings.length} mappings, ${model.observations.length} observations, ${model.derivedFacts.length} derived facts (model ${model.modelVersion})`

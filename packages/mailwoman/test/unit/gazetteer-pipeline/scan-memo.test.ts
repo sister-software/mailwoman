@@ -12,15 +12,14 @@
  *   against the new file for the life of the process.
  */
 
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { removePath } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { computeSurfaceCountryCounts } from "mailwoman/gazetteer-pipeline/fst"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 /**
  * The columns {@link computeSurfaceCountryCounts} reads: `spr` primaries plus the `names` alias table.
@@ -45,54 +44,52 @@ function buildFixture(path: string, extraName?: string): void {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "scan-memo-"))
+	scratch = await temporaryDirectory("scan-memo-")
 })
 
-afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 describe("computeSurfaceCountryCounts memoization", () => {
-	it("counts distinct countries per folded surface", () => {
-		const path = join(scratch, "a.db")
+	it("counts distinct countries per folded surface", async () => {
+		const path = scratch.resolve("a.db")
 		buildFixture(path)
 
-		const counts = computeSurfaceCountryCounts(path)
+		const counts = await computeSurfaceCountryCounts(path)
 
 		expect(counts.get("springfield")).toBe(2)
 		expect(counts.get("rennes")).toBe(1)
 	})
 
-	it("returns the SAME map instance on a repeat call for an unchanged file", () => {
-		const path = join(scratch, "a.db")
+	it("returns the SAME map instance on a repeat call for an unchanged file", async () => {
+		const path = scratch.resolve("a.db")
 		buildFixture(path)
 
-		expect(computeSurfaceCountryCounts(path)).toBe(computeSurfaceCountryCounts(path))
+		expect(await computeSurfaceCountryCounts(path)).toBe(await computeSurfaceCountryCounts(path))
 	})
 
 	it("re-scans when the file is REPLACED — the sealed-artifact rebuild case", async () => {
-		const path = join(scratch, "a.db")
+		const path = scratch.resolve("a.db")
 		buildFixture(path)
-		const first = computeSurfaceCountryCounts(path)
+		const first = await computeSurfaceCountryCounts(path)
 
 		expect(first.get("roazhon")).toBeUndefined()
 
 		// Rebuild the artifact in place with different content, exactly as a gazetteer rebuild does.
-		await rm(path)
+		await removePath(path)
 		buildFixture(path, "Roazhon")
-		const second = computeSurfaceCountryCounts(path)
+		const second = await computeSurfaceCountryCounts(path)
 
 		expect(second).not.toBe(first)
 		expect(second.get("roazhon")).toBe(1)
 	})
 
-	it("keeps separate entries for separate paths", () => {
-		const a = join(scratch, "a.db")
-		const b = join(scratch, "b.db")
+	it("keeps separate entries for separate paths", async () => {
+		const a = scratch.resolve("a.db")
+		const b = scratch.resolve("b.db")
 		buildFixture(a)
 		buildFixture(b, "Roazhon")
 
-		expect(computeSurfaceCountryCounts(a)).not.toBe(computeSurfaceCountryCounts(b))
-		expect(computeSurfaceCountryCounts(b).get("roazhon")).toBe(1)
+		expect(await computeSurfaceCountryCounts(a)).not.toBe(await computeSurfaceCountryCounts(b))
+		expect((await computeSurfaceCountryCounts(b)).get("roazhon")).toBe(1)
 	})
 })

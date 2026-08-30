@@ -14,7 +14,7 @@
 
 /// <reference types="vitest/config" />
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import type { Alias } from "vite"
@@ -46,7 +46,7 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  */
 function readManifest<T>(path: string): T {
 	// oxlint-disable-next-line no-restricted-properties -- see above.
-	return JSON.parse(readFileSync(path, "utf8")) as T
+	return readLocalJSONFileSync<T>(path)
 }
 
 function workspaceAliases(): Alias[] {
@@ -126,6 +126,12 @@ export default defineConfig({
 		// resolver-wof-sqlite/lookup-readonly-open.test.ts, neural/web-loader.tolerance.test.ts).
 		isolate: false,
 		testTimeout: 15_000,
+		coverage: {
+			// `reportOnFailure` defaults to false, which means ONE failing test suppresses the entire report — and the
+			// symptom is an empty coverage directory, which reads as "coverage is broken" rather than "a test failed".
+			// A run that measured 64.45% statements on the unit leg is worth keeping when a suite goes red.
+			reportOnFailure: true,
+		},
 		exclude: [
 			"**/node_modules/**",
 			"**/dist/**",

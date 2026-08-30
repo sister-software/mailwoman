@@ -49,14 +49,15 @@
  */
 
 import { flattenTreeNodes } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runPipeline } from "@mailwoman/core/pipeline"
 import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -201,7 +202,7 @@ export async function demoCascadeSmoke(
 		gazetteer: GAZ,
 		rows: FILE,
 	})
-		.filter(([, p]) => !existsSync(p))
+		.filter(([, p]) => !pathExistsSync(p))
 		.map(([k, p]) => `  ${k}: ${p}`)
 
 	if (missing.length) {
@@ -216,7 +217,7 @@ export async function demoCascadeSmoke(
 	let rows: SmokeRow[]
 
 	try {
-		rows = parseSmokeRows(readFileSync(FILE, "utf8"), FILE)
+		rows = parseSmokeRows(await readLocalTextFile(FILE), FILE)
 	} catch (error) {
 		reportError(`✗ ${(error as Error).message}`)
 
@@ -224,18 +225,20 @@ export async function demoCascadeSmoke(
 	}
 
 	// ── Ship-config classifier (mirrors neural-web's loadNeuralClassifierFromURLs defaults) ─────────
-	const card = parseJSONStrict<{ labels?: readonly string[] }>(readFileSync(CARD, "utf8"))
+	const card = await readLocalJSONFile<{ labels?: readonly string[] }>(CARD)
 
 	const postcodeBinaries = ["postcode-us.bin", "postcode-de.bin", "postcode-fr.bin"]
 		.map((f) => join(STAGE, f))
-		.filter((p) => existsSync(p))
+		.filter((p) => pathExistsSync(p))
 
 	if (!postcodeBinaries.length) {
 		reportError(`⚠ no postcode-*.bin under ${STAGE} — anchor channel unfed (anchor-trained models will degrade)`)
 	}
 
 	const anchorLookup = postcodeBinaries.length
-		? mergeAnchorLookups(postcodeBinaries.map((p) => new PostcodeBinaryResolver(readFileSync(p)).toAnchorLookup()))
+		? mergeAnchorLookups(
+				postcodeBinaries.map((p) => new PostcodeBinaryResolver(readLocalBufferSync(p)).toAnchorLookup())
+			)
 		: undefined
 
 	const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(MODEL)])
@@ -245,13 +248,13 @@ export async function demoCascadeSmoke(
 		runner,
 		labels: card.labels,
 		...(anchorLookup ? { postcodeAnchorLookup: anchorLookup } : {}),
-		gazetteerLexicon: parseGazetteerLexicon(parseJSONStrict(readFileSync(GAZ, "utf8"))),
+		gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(GAZ)),
 		suppressGazetteerNearPostcode: true,
 		addressSystemConventions: "auto",
 		bridgePunctuationGaps: true,
 	})
 
-	const fst = deserializeFST(readFileSync(FST))
+	const fst = deserializeFST(await readLocalBuffer(FST))
 	const lookup = new WOFSQLitePlaceLookup({ databasePath: DB })
 
 	// ── Run ──────────────────────────────────────────────────────────────────────────────────────────
@@ -320,7 +323,7 @@ export async function demoCascadeSmoke(
 		}
 	}
 
-	lookup.close()
+	lookup[Symbol.dispose]()
 
 	// ── Report ───────────────────────────────────────────────────────────────────────────────────────
 	const passCount = results.filter((r) => r.pass).length
@@ -361,7 +364,7 @@ export async function demoCascadeSmoke(
 			summary: { total: results.length, pass: passCount, fail: results.length - passCount, pass_rate_pct: passRate },
 		}
 
-		writeFileSync(JSON_OUT, JSON.stringify(sidecar, null, "\t"))
+		await writeLocalJSONFile(sidecar, JSON_OUT)
 
 		report(`\nsidecar: ${JSON_OUT}`)
 	}

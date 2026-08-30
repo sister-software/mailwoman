@@ -5,9 +5,11 @@
  * @file FCC BDC availability-file download + zip extraction.
  */
 
+import { tryStat } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { extractSingleFileZip } from "@mailwoman/core/fs/zip"
-import * as fs from "@mailwoman/platform/fs/promises"
-import * as path from "@mailwoman/platform/path"
+import type { PathBuilderLike } from "path-ts"
+import { resolvePath } from "path-ts/resolve"
 
 import type { BDCClient } from "./client.ts"
 import { BDCFilingDataType, type BDCFile } from "./common.ts"
@@ -27,15 +29,18 @@ import { BDCFilingDataType, type BDCFile } from "./common.ts"
  *
  * @returns The path of the extracted (and now cached) CSV file.
  */
-export async function downloadBDCFile(client: BDCClient, file: BDCFile, destinationDir: string): Promise<string> {
-	const csvPath = path.join(destinationDir, `${file.fileName}.csv`)
+export async function downloadBDCFile(
+	client: BDCClient,
+	file: BDCFile,
+	destinationDir: PathBuilderLike
+): Promise<string> {
+	const csvPath = resolvePath(destinationDir, `${file.fileName}.csv`)
 
-	const alreadyCached = await fs
-		.access(csvPath)
-		.then(() => true)
-		.catch(() => false)
+	const alreadyCached = await tryStat(csvPath)
 
-	if (alreadyCached) return csvPath
+	if (alreadyCached) {
+		return csvPath.toString()
+	}
 
 	const zippedArrayBuffer = await client.getArrayBuffer(
 		`/map/downloads/downloadFile/${BDCFilingDataType.Availability}/${file.fileID}`
@@ -43,8 +48,8 @@ export async function downloadBDCFile(client: BDCClient, file: BDCFile, destinat
 
 	const csvBuffer = await extractSingleFileZip(Buffer.from(zippedArrayBuffer))
 
-	await fs.mkdir(destinationDir, { recursive: true })
-	await fs.writeFile(csvPath, csvBuffer)
+	await makeDirectories(destinationDir.toString())
+	await writeLocalFile(csvBuffer, csvPath.toString())
 
-	return csvPath
+	return csvPath.toString()
 }

@@ -80,6 +80,9 @@ const config = createOxlintConfig({
 		"**/*.egg-info/**",
 		// Emscripten-generated single-file artifact (rebuilt by sentencepiece-wasm/build.sh).
 		"packages/sentencepiece-wasm/sentencepiece.mjs",
+		// A codemod's fixtures ARE the shape it rewrites, so they are data rather than source. Linting the forbidden
+		// form out of an `input.ts` would leave the codemod asserting a transformation nothing still needs.
+		"codemods/*/tests/**",
 	],
 })
 
@@ -135,6 +138,49 @@ const NODE_ONLY_NEURAL_MODULES = [
  */
 const NODE_BUILTIN_PATTERN = "node:*"
 
+/**
+ * `mkdtemp` answers a STRING, so nothing owns the directory and nothing removes it. A 2026-08-29 census of the 205 call
+ * sites outside `@mailwoman/platform` found 89 that never removed theirs — 43%, and none of them looked wrong at the
+ * call site, because a leaked scratch directory has no symptom a test can see.
+ *
+ * `@mailwoman/core/fs/temporary` answers a handle instead, rooted at `$MAILWOMAN_TEMP_ROOT` rather than the operating
+ * system's `tmpdir()`: `path`, `resolve(...)`, `use(...)` for whatever must be released before the directory goes, and
+ * `move()`/`moveWith(...)` for a factory handing one to a caller that outlives it. Reaching the builtin through the
+ * platform mirror is the correct FIRST hop and the wrong LAST one, which is why this names the second.
+ */
+const TEMPORARY_DIRECTORY_REDIRECTS = ["@mailwoman/platform/fs", "@mailwoman/platform/fs/promises"].map((name) => ({
+	name,
+	importNames: ["mkdtemp", "mkdtempSync", "mkdtempDisposable", "mkdtempDisposableSync"],
+	message:
+		"A temporary directory is owned, not named. Use `await temporaryDirectory(prefix)` from " +
+		"`@mailwoman/core/fs/temporary` and bind it with `await using`, so the directory is removed when the scope " +
+		"ends. It carries `resolve(...)` for a path inside it, `use(...)` for a resource that must be released first, " +
+		"and `moveWith(...)` for a fixture handed to a longer-lived scope. Where the lifetime is a suite rather than a " +
+		"scope, register it on a file-level `AsyncDisposableStack` that one `afterAll` disposes.",
+}))
+
+/**
+ * `@mailwoman/platform/fs` and `/fs/promises` mirror `node:fs` one name for one name, because a mirror that omitted a
+ * builtin would lie about the runtime. `@mailwoman/core/fs/*` is the house idiom over that mirror, and after the
+ * 2026-08-30 migration it is the only importer left — the same posture `@mailwoman/platform/sqlite` has toward
+ * `@mailwoman/sqlite`.
+ *
+ * Both surfaces exist, and the name carries the contract on each: `statPath` raises where `tryStat` answers null,
+ * `removePath` raises where `removePathIfPresent` forgives, `makeDirectories` is idempotent where
+ * `makeDirectoryExclusive` raises EEXIST — which is what holds a lock. Reach for `readers`/`writers` first;
+ * `readers-sync`/`writers-sync` are for the slots whose caller is synchronous and not ours to change.
+ */
+const FILESYSTEM_MIRROR_REDIRECT = ["@mailwoman/platform/fs", "@mailwoman/platform/fs/promises"].map((name) => ({
+	name,
+	allowTypeImports: true,
+	message:
+		"`@mailwoman/core/fs` is the house filesystem surface, and the only importer of this mirror. Use " +
+		"`@mailwoman/core/fs/readers` + `/writers` (asynchronous, preferred), `/readers-sync` + `/writers-sync` where " +
+		"the caller is synchronous and not yours to change, `/streams` for `createReadStream`/`createWriteStream`, or " +
+		"`/temporary` for a scratch directory. Every helper takes a `PathBuilderLike` and states its contract in its " +
+		"name. File-DESCRIPTOR work has no helper yet and is the one reason to reach past this.",
+}))
+
 export default {
 	...config,
 	// The repo-local plugin (`oxlint.plugin.ts`) rides alongside the bundled Sister Software one.
@@ -184,22 +230,77 @@ export default {
 				"typescript/no-restricted-imports": "off",
 			},
 		},
+		{
+			// `packages/core/fs/*` IS the idiom the redirects below point AT, so it is the one place that reaches the
+			// `node:fs` mirror directly.
+			files: ["packages/core/fs/**/*.ts"],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
+			// These workspaces do not depend on `@mailwoman/core`, so for them the mirror IS the filesystem surface.
+			// Three of them say so at the call site, next to a `JSON.parse` that reaches for no wrapper for the same
+			// reason. The dependency is what the exemption buys back: `@mailwoman/core` ships ~9 MB of libpostal + WOF
+			// data under `packages/core/data/`, and npm installs a tarball whether or not a subpath import touches it —
+			// so adding it to a small alias table or a point-in-polygon lookup is a shipped-artifact cost, not a style
+			// one. `@mailwoman/platform` itself is already exempt above, and must be: it declares NO dependencies, and
+			// core depends on IT.
+			files: [
+				"packages/api-kit/openapi.ts",
+				"packages/nuts-lookup/build.ts",
+				"packages/timezone-lookup/build.ts",
+				"packages/un-locode-lookup/build.ts",
+				"packages/variant-aliases/lookup.ts",
+			],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
+			// File-DESCRIPTOR work no helper covers: a `FileHandle` held across calls, and a log opened in append mode for
+			// a child's stdio. A handle is OWNED, and moving ownership is not a rename — so these keep the mirror, and
+			// each says so in place. The two shapes that DID have an idiom left this list: a positional header peek is
+			// `readFileRangeSync`, and a chunked hash is `readFileChunksSync` under `md5FileSync`.
+			files: [
+				"corpus-python/scripts/train_with_resume.ts",
+				"packages/bdc/sdk/build-bdc.ts",
+				"packages/core/tools/generate-language-types.ts",
+				"packages/corpus/src/tools/fetch/geonames-dump.ts",
+				"packages/map-tui/tile-source.ts",
+			],
+			rules: {
+				"typescript/no-restricted-imports": "off",
+			},
+		},
+		{
+			// A codemod reads argument COUNTS to tell one builtin overload from another. `args.length === 3` is an arity,
+			// not a tuned threshold, and naming each one costs a constant per overload and explains nothing.
+			files: ["codemods/**/*.ts"],
+			rules: {
+				"sister-software/no-unnamed-threshold": "off",
+			},
+		},
 	],
 	rules: {
 		...(config.rules as Record<string, unknown>),
 		"guard-for-in": "error",
 		"mailwoman/no-database-boundary-cast": "error",
 		"mailwoman/no-database-handle-cast": "error",
+		"mailwoman/no-sync-fs-in-async": "error",
 		"mailwoman/require-database-schema-argument": "error",
 		"mailwoman/require-disable-reason": "error",
 		"typescript/no-restricted-imports": [
 			"error",
 			{
+				paths: [...TEMPORARY_DIRECTORY_REDIRECTS, ...FILESYSTEM_MIRROR_REDIRECT],
 				patterns: [
 					{
 						group: [NODE_BUILTIN_PATTERN],
 						message:
-							"Node builtins are isolated behind @mailwoman/platform. Import the matching platform subpath instead.",
+							"Node builtins are isolated behind @mailwoman/platform. Import the matching platform subpath instead — " +
+							"and where the subpath carries a house idiom (a scratch directory, a database connection), reach for " +
+							"the idiom rather than the raw builtin it is built on.",
 					},
 					{
 						group: ["@mailwoman/platform/sqlite"],

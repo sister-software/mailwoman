@@ -44,8 +44,7 @@ export function postScriptCleanup(signal: NodeJS.Signals = "SIGTERM", exitCode?:
 		process.exit(1)
 	}, 15_000)
 
-	return defaultRegistry
-		.dispose()
+	return defaultRegistry[Symbol.asyncDispose]()
 		.catch(logScriptError)
 		.finally(() => {
 			clearTimeout(timeout)

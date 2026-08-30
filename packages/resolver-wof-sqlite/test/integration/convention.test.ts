@@ -79,7 +79,7 @@ describe("convention engine — merge + resolve", () => {
 // --- Live dispatch: an injected convention reroutes findPlace -------------------------------------
 
 function buildDB(): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
@@ -112,7 +112,7 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	afterEach(() => {
-		// lookup.close() in each test closes db; nothing else to do.
+		// lookup[Symbol.dispose]() in each test closes db; nothing else to do.
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {

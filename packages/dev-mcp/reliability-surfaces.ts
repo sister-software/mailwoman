@@ -18,7 +18,7 @@
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { componentMatches } from "mailwoman/eval-harness/gauntlet/check-case"
 import { JSONSpliterator } from "spliterator"
 
@@ -241,7 +241,7 @@ export async function decodeReliabilitySample(
  * that property without any other symptom, so the resolved path travels with the result.
  */
 export async function coarsePlacerReliabilitySample(corpusPath: string): Promise<SurfaceSample> {
-	if (!existsSync(corpusPath)) {
+	if (!(await pathExists(corpusPath))) {
 		throw new Error(
 			`No coarse-placer corpus at ${corpusPath}. This split is a LOCAL artifact — it is not tracked in git, so a ` +
 				"fresh worktree does not carry it. Pass `corpus` pointing at a checkout that has it. An absent corpus is " +

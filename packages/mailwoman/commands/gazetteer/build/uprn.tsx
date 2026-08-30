@@ -57,7 +57,7 @@ const GazetteerBuildUPRN: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		return [
-			`uprn layer: ${result.out} (${artifactSizeMB(result.out)} MB)`,
+			`uprn layer: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
 			`${result.inserted.toLocaleString()} UPRN points — OS release ${result.osVersion}`,
 			`read ${result.read.toLocaleString()} · malformed ${result.skippedMalformed.toLocaleString()} · duplicate ${result.skippedDuplicate.toLocaleString()} (both expected zero)`,
 			`coverage ${result.coverageCells.toLocaleString()} res-6 cells (basis: designated)`,

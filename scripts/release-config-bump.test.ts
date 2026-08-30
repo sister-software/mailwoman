@@ -9,9 +9,10 @@
  *   wholesale (measured: the single-line `locales` array expands to eleven lines).
  */
 
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -19,7 +20,7 @@ import { bumpReleaseConfigVersion } from "./release-config-version.ts"
 
 describe("release.config.json under the prepare bump", () => {
 	const path = resolve(String(repoRootPath()), "release.config.json")
-	const original = readFileSync(path, "utf8")
+	const original = readLocalTextFileSync(path)
 	const currentVersion = parseJSONStrict<{ version: string }>(original).version
 
 	it("a bump changes exactly one line and leaves the weights block byte-equivalent", () => {
@@ -41,9 +42,9 @@ describe("release.config.json under the prepare bump", () => {
 		expect(() => bumpReleaseConfigVersion(original, "0.0.1", "999.0.0")).toThrow(/version drift/)
 	})
 
-	it("carries the current release number, not a lagged one", () => {
+	it("carries the current release number, not a lagged one", async () => {
 		const rootManifestPath = resolve(String(repoRootPath()), "package.json")
-		const root = parseJSONStrict<{ version: string }>(readFileSync(rootManifestPath, "utf8"))
+		const root = await readLocalJSONFile<{ version: string }>(rootManifestPath)
 
 		// The v9.2.0 incident: the root moved and this file did not. The prepare bump now writes both,
 		// and its pre-write sync check refuses drift — this assertion is the standing regression check.

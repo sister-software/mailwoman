@@ -28,8 +28,8 @@
  *   License: stamped `"CC-BY-4.0"` per row (GeoNames' terms); provenance is the `geonames-<id>` key.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { reconcileComponents } from "@mailwoman/formatter"
-import { existsSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
@@ -72,7 +72,7 @@ async function loadAdmin1(dir: string): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "admin1CodesASCII.txt")
 
-	if (!existsSync(fp)) return map
+	if (!(await pathExists(fp))) return map
 
 	// `header: false` — the file is headerless, and the spliterator eats row 1 as a header otherwise.
 	for await (const cols of TSVSpliterator.fromAsync(fp, { header: false })) {
@@ -91,7 +91,7 @@ async function loadCountries(dir: string): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
 	const fp = join(dir, "countryInfo.txt")
 
-	if (!existsSync(fp)) return map
+	if (!(await pathExists(fp))) return map
 
 	// `header: false` — the file's header IS a `#` comment, so it falls out with the other comments
 	// rather than being consumed as column names.

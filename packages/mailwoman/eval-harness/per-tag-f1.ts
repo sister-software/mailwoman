@@ -5,7 +5,7 @@
  * @file Shared exact-match per-tag scoring for weight-dependent evaluation gates.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { JSONSpliterator } from "spliterator"
 
 export interface PerTagEvalRow {
@@ -39,7 +39,7 @@ export async function loadPerTagEvalRows(files: readonly string[]): Promise<PerT
 	const rows: PerTagEvalRow[] = []
 
 	for (const file of files) {
-		if (!existsSync(file)) throw new Error(`eval file not found: ${file}`)
+		if (!(await pathExists(file))) throw new Error(`eval file not found: ${file}`)
 
 		for await (const row of JSONSpliterator.fromAsync<PerTagEvalRow>(file)) {
 			rows.push(row)

@@ -44,11 +44,11 @@
 // <DATA_ROOT>/wof/candidate.db and the BAN shard from <DATA_ROOT>/ban/address-points-fr.db.
 
 import { BANShardProvider } from "@mailwoman/ban/sdk"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile, realPath } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { median, mulberry32, percentile } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { readFileSync, realpathSync, writeFileSync } from "@mailwoman/platform/fs"
 import { createRequire } from "@mailwoman/platform/module"
 import { basename, dirname, join, resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -262,7 +262,7 @@ async function resample(): Promise<void> {
 		rows,
 	}
 
-	writeFileSync(flags.sample, `${JSON.stringify(panel, null, "\t")}\n`)
+	await writeLocalTextFile(`${JSON.stringify(panel, null, "\t")}\n`, flags.sample)
 
 	console.error(`fr-ban-panel: wrote ${rows.length} rows to ${flags.sample} (BAN release ${release}).`)
 }
@@ -282,7 +282,7 @@ async function resample(): Promise<void> {
  * name says nothing about which checkpoint is behind it. The BAN release itself is recorded separately, on the
  * committed panel file, because it is a property of the addresses rather than of the run.
  */
-function versionStamp() {
+async function versionStamp() {
 	const require = createRequire(import.meta.url)
 	const resolved = resolveWeights({ locale: LOCALE })
 
@@ -290,14 +290,14 @@ function versionStamp() {
 	// missing card is a failure to report rather than a field to omit.
 	if (!resolved.modelCardPath) throw new Error("fr-ban-panel: the resolved weights bundle carries no model card.")
 
-	const card = parseJSONStrict<{ name: string; version: string }>(readFileSync(resolved.modelCardPath, "utf8"))
+	const card = await readLocalJSONFile<{ name: string; version: string }>(resolved.modelCardPath)
 
 	return {
 		mailwoman: (require("mailwoman/package.json") as { version: string }).version,
-		model: basename(realpathSync(resolved.modelPath)),
+		model: basename(await realPath(resolved.modelPath)),
 		modelCard: `${card.name}@${card.version}`,
-		gazetteer: basename(realpathSync(candidatePath)),
-		nationalShard: basename(realpathSync(banPath)),
+		gazetteer: basename(await realPath(candidatePath)),
+		nationalShard: basename(await realPath(banPath)),
 	}
 }
 
@@ -338,7 +338,7 @@ function summarize(records: GradedRecord[]) {
 //#endregion
 
 async function run() {
-	const panel = parseJSONStrict<PanelFile>(readFileSync(flags.sample, "utf8"))
+	const panel = await readLocalJSONFile<PanelFile>(flags.sample)
 	const rows = flags.limit ? panel.rows.slice(0, Number(flags.limit)) : panel.rows
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: LOCALE })
@@ -418,7 +418,7 @@ async function run() {
 			seed: panel.seed,
 			rows: rows.length,
 		},
-		versions: versionStamp(),
+		versions: await versionStamp(),
 		config: {
 			locale: LOCALE,
 			defaultCountry: "FR",
@@ -430,7 +430,7 @@ async function run() {
 		records: Object.fromEntries(Object.entries(results).map(([arm, r]) => [arm, r.records])),
 	}
 
-	writeFileSync(flags.out, `${JSON.stringify(report, null, "\t")}\n`)
+	await writeLocalTextFile(`${JSON.stringify(report, null, "\t")}\n`, flags.out)
 
 	for (const [arm, summary] of Object.entries(report.arms)) {
 		console.log(

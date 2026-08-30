@@ -37,7 +37,7 @@ export interface InvarianceCommandOptions extends ModelSelectOptions {
  * Run the invariance mini-suite from CLI-shaped options. Returns the process exit code (0 = PASS).
  */
 export async function runInvarianceCommand(options: InvarianceCommandOptions): Promise<number> {
-	const rows = loadSuite(options.suite)
+	const rows = await loadSuite(options.suite)
 
 	console.error(`[invariance] loaded ${rows.length} rows from ${options.suite ?? "the shipped suite.jsonl"}`)
 

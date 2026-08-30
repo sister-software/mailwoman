@@ -152,7 +152,7 @@ const PORTLAND_ME: ResolvedPlace = {
  * Backend filtered by name equality (regions also match their two-letter `abbrev`), placetype, country, and `parentID`
  * (descendant scope). Models the HARD `spr.country` filter: a query with `country` set never returns a foreign row.
  */
-function makeBackend(places: ResolvedPlace[]): ResolverBackend {
+async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 	return {
 		async findPlace(query) {
 			const text = query.text.toLowerCase()
@@ -223,7 +223,7 @@ const CA_POOL = [QUEBEC, ONTARIO, ILLINOIS, MAINE, MONTREAL_CA, MONTREAL_WI, LON
 
 describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	it("rescues 'Montreal QC' from the US namesake to Montréal, Quebec under a US default country", async () => {
-		const resolver = createWOFResolver(makeBackend(CA_POOL))
+		const resolver = createWOFResolver(await makeBackend(CA_POOL))
 		// defaultCountry US models the en-US locale hard filter that discards the "QC" region and picks Montreal WI.
 		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "QC"), { defaultCountry: "US" })
 		const loc = localityOf(out)
@@ -240,7 +240,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	})
 
 	it("also rescues the region FULL NAME 'Montreal, Quebec' (no abbreviation needed)", async () => {
-		const resolver = createWOFResolver(makeBackend(CA_POOL))
+		const resolver = createWOFResolver(await makeBackend(CA_POOL))
 		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "Quebec"), { defaultCountry: "US" })
 		const loc = localityOf(out)
 
@@ -250,7 +250,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	})
 
 	it("rescues 'London ON' to London, Ontario (generality — a second CA subdivision)", async () => {
-		const resolver = createWOFResolver(makeBackend(CA_POOL))
+		const resolver = createWOFResolver(await makeBackend(CA_POOL))
 		const out = await resolver.resolveTree(regionLocalityTree("London", "ON"), { defaultCountry: "US" })
 		const loc = localityOf(out)
 
@@ -260,7 +260,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	})
 
 	it("stays inert for the domestic control 'Springfield IL' (region resolves under US → trigger never fires)", async () => {
-		const resolver = createWOFResolver(makeBackend([ILLINOIS, MAINE, QUEBEC, SPRINGFIELD_IL]))
+		const resolver = createWOFResolver(await makeBackend([ILLINOIS, MAINE, QUEBEC, SPRINGFIELD_IL]))
 		const out = await resolver.resolveTree(regionLocalityTree("Springfield", "IL"), { defaultCountry: "US" })
 		const loc = localityOf(out)
 
@@ -272,7 +272,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	})
 
 	it("stays inert for the domestic control 'Portland ME'", async () => {
-		const resolver = createWOFResolver(makeBackend([ILLINOIS, MAINE, QUEBEC, ONTARIO, PORTLAND_ME]))
+		const resolver = createWOFResolver(await makeBackend([ILLINOIS, MAINE, QUEBEC, ONTARIO, PORTLAND_ME]))
 		const out = await resolver.resolveTree(regionLocalityTree("Portland", "ME"), { defaultCountry: "US" })
 		const loc = localityOf(out)
 
@@ -282,7 +282,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	})
 
 	it("does not fire without a default country (nothing was hard-filtered → nothing to rescue)", async () => {
-		const resolver = createWOFResolver(makeBackend(CA_POOL))
+		const resolver = createWOFResolver(await makeBackend(CA_POOL))
 		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "QC"), {})
 		const loc = localityOf(out)
 
@@ -290,7 +290,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	})
 
 	it("does not fire when adminCoherence is explicitly false (the opt-out)", async () => {
-		const resolver = createWOFResolver(makeBackend(CA_POOL))
+		const resolver = createWOFResolver(await makeBackend(CA_POOL))
 
 		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "QC"), {
 			defaultCountry: "US",
@@ -306,7 +306,7 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 
 	it("keeps the greedy result when the foreign country has no same-named locality (fail-safe)", async () => {
 		// Quebec resolves under CA, but there is NO 'Gotham' locality anywhere → no re-pick, region stays unresolved.
-		const resolver = createWOFResolver(makeBackend([QUEBEC, ILLINOIS]))
+		const resolver = createWOFResolver(await makeBackend([QUEBEC, ILLINOIS]))
 		const out = await resolver.resolveTree(regionLocalityTree("Gotham", "QC"), { defaultCountry: "US" })
 		const loc = localityOf(out)
 

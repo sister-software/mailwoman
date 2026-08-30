@@ -382,13 +382,12 @@ import { geocodeAddress } from "mailwoman/geocode-core"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 // Replace <CANDIDATE_DB> with the path `mailwoman data pull candidate` printed.
-const lookup = new WOFCandidateTableLookup({ databasePath: "<CANDIDATE_DB>" })
+using lookup = new WOFCandidateTableLookup({ databasePath: "<CANDIDATE_DB>" })
 const resolver = createWOFResolver(lookup)
 
 const result = await geocodeAddress("350 5th Ave, New York, NY 10118", { classifier, resolver })
 
 console.log(JSON.stringify(result, null, 2))
-lookup.close()
 ```
 
 Output:

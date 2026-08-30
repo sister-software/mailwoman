@@ -21,7 +21,7 @@
  *   unresolved control row, a missing database. A recorded STOP-REDESIGN is a result, not a failure.
  */
 
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -79,7 +79,7 @@ const EvalSemanticUtilityProbe: ParsedCommandComponent<Options> = ({ options }) 
 			})
 
 			if (options.out) {
-				writeFileSync(options.out, `${JSON.stringify(receipt, null, "\t")}\n`)
+				await writeLocalJSONFile(receipt, options.out)
 			}
 
 			if (!options.json) {

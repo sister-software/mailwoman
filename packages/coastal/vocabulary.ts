@@ -303,7 +303,7 @@ export const NCERM_POLICY_VALUES: ReadonlySet<string> = new Set([
 
 /**
  * The policy-interpretation domain — `mt_smp_int` and `lt_smp_int`. This is the field that says what the policy means
- * for erosion, and it is the one a reader acts on.
+ * for erosion.
  */
 export const NCERM_POLICY_INTERPRETATIONS: ReadonlyArray<CoastalTermDefinition> = [
 	{

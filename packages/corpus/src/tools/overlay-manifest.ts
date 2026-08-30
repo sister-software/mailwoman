@@ -23,9 +23,9 @@
  *   # then push the overlay to R2 + sync + `modal run -d ... --config <recipe>.yaml --resume none`.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { basename, dirname, join } from "@mailwoman/platform/path"
 
 interface ShardDescriptor {
@@ -77,8 +77,8 @@ async function descriptor(
 		format: "parquet",
 		compression: "SNAPPY",
 		rows: sids.length,
-		bytes: statSync(localPath).size,
-		sha256: sha256Hex(readFileSync(localPath)),
+		bytes: (await statPath(localPath)).size,
+		sha256: sha256Hex(await readLocalBuffer(localPath)),
 		first_source_id: sids[0]!,
 		last_source_id: sids.at(-1)!,
 		source,
@@ -114,7 +114,7 @@ export function rerootBaseShardPath(path: string, baseManifestPath: string): str
 }
 
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
-	const base = parseJSONStrict<BaseManifest>(readFileSync(args.base, "utf8"))
+	const base = await readLocalJSONFile<BaseManifest>(args.base)
 
 	if (base.shards.some((s) => s.source === args.source)) {
 		console.log(`WARN: base already contains source '${args.source}' — is this the right base?`)
@@ -147,7 +147,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	}
 
 	const out = join(args.newDir, "MANIFEST.json")
-	writeFileSync(out, JSON.stringify(manifest, null, 1) + "\n")
+	await writeLocalJSONFile(manifest, out)
 
 	console.log(`wrote ${out}`)
 	console.log(`  shards: ${manifest.shards.length} (${kept.length} base kept, +1 ${args.source})`)

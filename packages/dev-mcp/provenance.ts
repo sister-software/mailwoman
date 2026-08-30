@@ -23,8 +23,8 @@
  *   middle of someone else's build.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { existsSync, lstatSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
+import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLinkSync, statLinkSync, statPathSync } from "@mailwoman/core/fs/readers-sync"
 
 interface ArtifactState {
 	name: string
@@ -74,12 +74,12 @@ export interface ProvenanceReport {
 }
 
 function artifactState(name: string, path: string): ArtifactState {
-	if (!existsSync(path)) {
+	if (!pathExistsSync(path)) {
 		return { name, path, exists: false, bytes: null, modified: null, linkTarget: null, sealed: null }
 	}
 
-	const link = lstatSync(path)
-	const stat = statSync(path)
+	const link = statLinkSync(path)
+	const stat = statPathSync(path)
 
 	return {
 		name,
@@ -87,7 +87,7 @@ function artifactState(name: string, path: string): ArtifactState {
 		exists: true,
 		bytes: stat.size,
 		modified: stat.mtime.toISOString(),
-		linkTarget: link.isSymbolicLink() ? readlinkSync(path) : null,
+		linkTarget: link.isSymbolicLink() ? readLinkSync(path) : null,
 		// The house convention seals a finished database 0444. Owner-write means it is not finished.
 		sealed: (stat.mode & 0o200) === 0,
 	}
@@ -107,7 +107,6 @@ export interface ProvenanceOptions {
  */
 export async function runProvenance(options: ProvenanceOptions = {}): Promise<ProvenanceReport> {
 	const { dataRootPath, mailwomanDataRoot, repoRootPath } = await import("@mailwoman/core/utils")
-	const { readFileSync } = await import("@mailwoman/platform/fs")
 
 	const dataRoot = String(mailwomanDataRoot())
 
@@ -132,12 +131,12 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	let repos: RepoVintage[] | null = null
 	let reposStampAge: string | null = null
 
-	if (existsSync(reposStampPath)) {
+	if (await pathExists(reposStampPath)) {
 		try {
-			const stamp = parseJSONStrict(readFileSync(reposStampPath, "utf8")) as { repos?: RepoVintage[] }
+			const stamp = (await readLocalJSONFile(reposStampPath)) as { repos?: RepoVintage[] }
 
 			repos = stamp.repos ?? []
-			reposStampAge = statSync(reposStampPath).mtime.toISOString()
+			reposStampAge = (await statPath(reposStampPath)).mtime.toISOString()
 		} catch {
 			// A corrupt stamp is reported as no stamp. Guessing at its contents would be worse than saying nothing.
 			repos = null
@@ -147,11 +146,11 @@ export async function runProvenance(options: ProvenanceOptions = {}): Promise<Pr
 	const buildLogPath = String(repoRootPath("scripts", "wof-build-manifest.json"))
 	let buildLog: string[] = []
 
-	if (existsSync(buildLogPath)) {
+	if (await pathExists(buildLogPath)) {
 		try {
 			// The build appends to `notes` — verified against the committed file, not assumed from the key's name. Each
 			// entry is one dated line carrying the record counts, the Overture release and whether it was swapped live.
-			const log = parseJSONStrict(readFileSync(buildLogPath, "utf8")) as { notes?: unknown }
+			const log = (await readLocalJSONFile(buildLogPath)) as { notes?: unknown }
 			const entries = Array.isArray(log.notes) ? log.notes.filter((n): n is string => typeof n === "string") : []
 
 			buildLog = entries.slice(-(options.buildLogEntries ?? 3))

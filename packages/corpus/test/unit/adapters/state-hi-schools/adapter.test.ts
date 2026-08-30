@@ -4,17 +4,21 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	createStateHiSchoolsAdapter,
 	STATE_HI_SCHOOLS_ADAPTER_ID,
 	STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/state-hi-schools/adapter"
-import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 import { InMemoryAdapterRegistry } from "#adapters/utils"
+import { writeDelimitedFixture } from "#test-kit"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const CSV_HEADER = [
 	"code",
@@ -38,16 +42,12 @@ const CSV_HEADER = [
 
 let scratch: string
 
-beforeEach(() => {
-	scratch = mkdtempSync(join(tmpdir(), "mailwoman-hi-schools-"))
+beforeEach(async () => {
+	scratch = fixtures.use(await temporaryDirectory("mailwoman-hi-schools-")).path
 })
 
-function writeCSV(...lines: string[]): string {
-	const p = join(scratch, "test.csv")
-	const header = CSV_HEADER + "\n"
-	writeFileSync(p, header + lines.join("\n"), "utf8")
-
-	return p
+function writeCSV(...lines: string[]): Promise<string> {
+	return writeDelimitedFixture(join(scratch, "test.csv"), CSV_HEADER, lines)
 }
 
 describe("state-hi-schools adapter", () => {
@@ -58,7 +58,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("emits a row for a HIDOE school with a hyphenated Oahu address", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			"335,Ahuimanu Elem School,47-470 Hui Aeko Place,Kaneohe,96744,808.305.4800,808.239.3127,Kimi Ikeda,K,6,Elementary,http://example,Castle,Castle-Kahuku,Windward,Oahu,False"
 		)
 
@@ -85,7 +85,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("emits a row for a charter (PCS) school with a non-hyphenated address", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			"540,Halau Ku Mana - PCS,2101 Makiki Heights Drive,Honolulu,96822,808.945.1600,808.945.1604,Lori Pereia,4,12,K - 12,http://example,Roosevelt,Kaimuki-McKinley-Roosevelt,Honolulu,Oahu,True"
 		)
 
@@ -108,7 +108,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("skips rows with missing required fields", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			// missing name
 			",,200 Some Way,Honolulu,96813,,,,,,,,,,,,",
 			// missing address
@@ -149,7 +149,7 @@ describe("state-hi-schools adapter", () => {
 	})
 
 	it("honors limit", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			"100,A School,100 A St,Honolulu,96813,,,,,,,,,,,,",
 			"101,B School,200 B St,Honolulu,96813,,,,,,,,,,,,",
 			"102,C School,300 C St,Honolulu,96813,,,,,,,,,,,,"

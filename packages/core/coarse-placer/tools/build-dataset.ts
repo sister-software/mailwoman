@@ -18,9 +18,9 @@
  *   `<repo>/data/coarse-placer/{train,val,test}.jsonl` (rows: {raw, country})
  */
 
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 
+import { writeLocalTextFile, makeDirectories } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import { hashFNV1a } from "./fnv-hash.ts"
@@ -122,7 +122,7 @@ export async function buildDataset(
 	)
 
 	const OVERTURE_DIR = dataRootPath("overture", "2026-06-17.0")
-	mkdirSync(OUT_DIR, { recursive: true })
+	await makeDirectories(OUT_DIR)
 
 	// Heavy dep (devDependency — operator tooling), lazy-imported so loading the tools barrel stays cheap.
 	const { DuckDBInstance } = await import("@duckdb/node-api")
@@ -239,7 +239,7 @@ export async function buildDataset(
 	for (const [name, rows] of splits) {
 		rows.sort((a, b) => hashFNV1a(a.raw + a.country) - hashFNV1a(b.raw + b.country)) // deterministic class-interleave
 		const p = path.join(OUT_DIR, `${name}.jsonl`)
-		writeFileSync(p, rows.map((r) => JSON.stringify(r)).join("\n") + "\n")
+		await writeLocalTextFile(rows.map((r) => JSON.stringify(r)).join("\n") + "\n", p)
 		report?.(`→ ${p}  (${rows.length} rows)`)
 	}
 

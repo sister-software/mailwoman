@@ -12,7 +12,7 @@
  *   Regenerate: `node codex/tools/export-country-surfaces.ts` (writes the corpus-python data file).
  */
 
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
 import { resolve } from "@mailwoman/platform/path"
 
 import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
@@ -33,8 +33,7 @@ for (const [iso2, name] of ISO2_TO_NAME) {
 
 const out = resolve(import.meta.dirname, "../../../corpus-python/src/mailwoman_train/data/country-surfaces.json")
 
-writeFileSync(
-	out,
+writeLocalTextFileSync(
 	JSON.stringify(
 		{
 			_generated: "codex/tools/export-country-surfaces.ts from @mailwoman/codex COUNTRY_SURFACE_FORMS + ISO2_TO_NAME",
@@ -42,7 +41,8 @@ writeFileSync(
 		},
 		null,
 		2
-	) + "\n"
+	) + "\n",
+	out
 )
 
 process.stderr.write(`wrote ${Object.keys(surfaces).length} countries → ${out}\n`)

@@ -21,9 +21,10 @@
  *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
@@ -59,7 +60,7 @@ interface BuildArgs {
 	recoverRadiusKm: number
 }
 
-function parse(): BuildArgs {
+async function parse(): Promise<BuildArgs> {
 	const { values } = parseArgs({
 		options: {
 			country: { type: "string" },
@@ -84,7 +85,7 @@ function parse(): BuildArgs {
 		)
 	}
 
-	if (!existsSync(pbf)) throw new Error(`PBF not found: ${pbf}`)
+	if (!(await pathExists(pbf))) throw new Error(`PBF not found: ${pbf}`)
 	// Throws for an unsupported country — fail loud, never key with the wrong normalizer.
 	streetLocaleForCountry(country)
 	const slug = values.slug?.toLowerCase() || country
@@ -105,7 +106,7 @@ function parse(): BuildArgs {
 }
 
 async function main(): Promise<void> {
-	const args = parse()
+	const args = await parse()
 	const locale = streetLocaleForCountry(args.country)
 	const source = `openstreetmap:${args.country}`
 	const recoverSource = `${source}#recovered`
@@ -120,134 +121,136 @@ async function main(): Promise<void> {
 
 	const tmp = `${args.output}.tmp-${process.pid}`
 
-	mkdirSync(dirname(args.output), { recursive: true })
+	await makeDirectories(dirname(args.output))
 
-	if (existsSync(tmp)) {
-		rmSync(tmp)
+	if (await pathExists(tmp)) {
+		await removePath(tmp)
 	}
 
-	const kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)
-	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-	await createOSMAddressPointTables(kdb)
-
-	const insert = kdb.prepare(
-		`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
-	)
-
+	let badCoord = 0
+	let noStreet = 0
+	let recovered = 0
 	let total = 0
 	let written = 0
-	let recovered = 0
-	let noStreet = 0
-	let badCoord = 0
-	const BATCH = 50_000
 
-	console.error(`[osm] building ${args.country}/${args.slug} rooftop shard from ${args.pbf}`)
+	{
+		using kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)
+		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
+		await createOSMAddressPointTables(kdb)
 
-	kdb.exec("BEGIN")
+		const insert = kdb.prepare(
+			`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
+		)
 
-	for await (const rec of extractAddrPoints(args.pbf)) {
-		total++
+		const BATCH = 50_000
 
-		if (!Number.isFinite(rec.lat) || !Number.isFinite(rec.lon)) {
-			badCoord++
+		console.error(`[osm] building ${args.country}/${args.slug} rooftop shard from ${args.pbf}`)
 
-			continue
-		}
+		kdb.exec("BEGIN")
 
-		// #250: a point with no addr:street recovers its street from the nearest named highway (when --recover).
-		let street = rec.street
-		let rowSource = source
+		for await (const rec of extractAddrPoints(args.pbf)) {
+			total++
 
-		if (street == null) {
-			const hit = recoveryIndex?.nearest(rec.lon, rec.lat, args.recoverRadiusKm)
+			if (!Number.isFinite(rec.lat) || !Number.isFinite(rec.lon)) {
+				badCoord++
 
-			if (!hit) {
+				continue
+			}
+
+			// #250: a point with no addr:street recovers its street from the nearest named highway (when --recover).
+			let street = rec.street
+			let rowSource = source
+
+			if (street == null) {
+				const hit = recoveryIndex?.nearest(rec.lon, rec.lat, args.recoverRadiusKm)
+
+				if (!hit) {
+					noStreet++
+
+					continue
+				}
+
+				street = hit.name
+				rowSource = recoverSource
+
+				recovered++
+			}
+
+			// Per-SURFACE locale routing (the Québec finishing move): a French-lead surface folds under the fr
+			// rules whatever the country default; the probe side routes with the same shared function.
+			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
+			const number = rec.housenumber.trim().toLowerCase()
+
+			if (!streetNorm || !number) {
 				noStreet++
 
 				continue
 			}
 
-			street = hit.name
-			rowSource = recoverSource
+			const h3Cell = shortCellToInt(latLngToCell(rec.lat, rec.lon, OSM_ADDRESS_H3_RESOLUTION) as H3Cell)
+			const locality = rec.suburb ?? rec.city
 
-			recovered++
-		}
+			// Positional, in OSM_ADDRESS_POINT_COLUMNS order: the shared address columns, then h3_cell.
+			insert.run(
+				streetNorm,
+				canonicalizeRouteKey(streetNorm),
+				number,
+				null,
+				rec.postcode?.trim() || null,
+				locality ? normalizeLocalityForKey(locality) : null,
+				street,
+				rec.lat,
+				rec.lon,
+				rowSource,
+				args.release,
+				h3Cell
+			)
 
-		// Per-SURFACE locale routing (the Québec finishing move): a French-lead surface folds under the fr
-		// rules whatever the country default; the probe side routes with the same shared function.
-		const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
-		const number = rec.housenumber.trim().toLowerCase()
+			written++
 
-		if (!streetNorm || !number) {
-			noStreet++
+			if (written % BATCH === 0) {
+				kdb.exec("COMMIT")
+				kdb.exec("BEGIN")
 
-			continue
-		}
-
-		const h3Cell = shortCellToInt(latLngToCell(rec.lat, rec.lon, OSM_ADDRESS_H3_RESOLUTION) as H3Cell)
-		const locality = rec.suburb ?? rec.city
-
-		// Positional, in OSM_ADDRESS_POINT_COLUMNS order: the shared address columns, then h3_cell.
-		insert.run(
-			streetNorm,
-			canonicalizeRouteKey(streetNorm),
-			number,
-			null,
-			rec.postcode?.trim() || null,
-			locality ? normalizeLocalityForKey(locality) : null,
-			street,
-			rec.lat,
-			rec.lon,
-			rowSource,
-			args.release,
-			h3Cell
-		)
-
-		written++
-
-		if (written % BATCH === 0) {
-			kdb.exec("COMMIT")
-			kdb.exec("BEGIN")
-
-			if (written % 500_000 === 0) {
-				console.error(`[osm]   ${written.toLocaleString()} written…`)
+				if (written % 500_000 === 0) {
+					console.error(`[osm]   ${written.toLocaleString()} written…`)
+				}
 			}
 		}
+
+		kdb.exec("COMMIT")
+
+		console.error(`[osm] indexing…`)
+
+		await createAddressPointIndexes(kdb)
+		await createOSMAddressPointIndexes(kdb)
+
+		await writeLayerManifest(kdb, {
+			name: `osm-address-points-${args.country}-${args.slug}`,
+			version: args.release,
+			schemaVersion: 1,
+			tier: LayerTier.BuildLocal,
+			license: "ODbL-1.0",
+			attribution: "© OpenStreetMap contributors",
+			source,
+			sourceVintage: args.release,
+			// The path this recorded — `osm/out/scripts/build-rooftop-shard.js` — moved under `packages/` in the
+			// workspace regroup, and the literal survived INSIDE every shard built before then, where no lint can
+			// reach it. `mailwoman data inventory` is what surfaced it, on three shipped artifacts that pass every
+			// "has a manifest" check and cannot be rebuilt from what they say.
+			buildCmd: "node packages/osm/out/scripts/build-rooftop-shard.js",
+			buildSHA: args.buildSHA,
+			freshnessPolicy: LayerFreshnessPolicy.Sealed,
+			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
+			createdAt: args.createdAt,
+		})
+
+		kdb.exec("ANALYZE")
 	}
-
-	kdb.exec("COMMIT")
-
-	console.error(`[osm] indexing…`)
-
-	await createAddressPointIndexes(kdb)
-	await createOSMAddressPointIndexes(kdb)
-
-	await writeLayerManifest(kdb, {
-		name: `osm-address-points-${args.country}-${args.slug}`,
-		version: args.release,
-		schemaVersion: 1,
-		tier: LayerTier.BuildLocal,
-		license: "ODbL-1.0",
-		attribution: "© OpenStreetMap contributors",
-		source,
-		sourceVintage: args.release,
-		// The path this recorded — `osm/out/scripts/build-rooftop-shard.js` — moved under `packages/` in the
-		// workspace regroup, and the literal survived INSIDE every shard built before then, where no lint can
-		// reach it. `mailwoman data inventory` is what surfaced it, on three shipped artifacts that pass every
-		// "has a manifest" check and cannot be rebuilt from what they say.
-		buildCmd: "node packages/osm/out/scripts/build-rooftop-shard.js",
-		buildSHA: args.buildSHA,
-		freshnessPolicy: LayerFreshnessPolicy.Sealed,
-		spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
-		createdAt: args.createdAt,
-	})
-
-	kdb.exec("ANALYZE")
-	await kdb.destroy()
 
 	// Build-on-copy: only now swap the freshly-built shard into place.
 	swapDatabaseIntoPlace(tmp, args.output)
-	sealDatabase(args.output)
+	await sealDatabase(args.output)
 
 	const gap = total > 0 ? ((noStreet / total) * 100).toFixed(1) : "0.0"
 

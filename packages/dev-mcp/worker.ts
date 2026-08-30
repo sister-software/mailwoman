@@ -79,7 +79,7 @@ const registry = new EngineRegistry(
 )
 
 const jobs = new JobRegistry()
-const table = buildToolTable({ registry, jobs, startedAt: Date.now() })
+const table = await buildToolTable({ registry, jobs, startedAt: Date.now() })
 const byName = new Map<string, DevTool>(table.map((tool) => [tool.name, tool]))
 
 function send(message: WorkerOutbound): void {
@@ -102,7 +102,7 @@ process.on("message", (message: WorkerInbound) => {
 	}
 
 	if (message.type === "shutdown") {
-		registry.closeAll()
+		registry.evictAll()
 		jobs.cancelAll()
 		process.exit(0)
 	}
@@ -152,7 +152,7 @@ process.on("message", (message: WorkerInbound) => {
 // The shim restarts by SIGTERM; the same cleanup the old single-process server ran on its signals.
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
 	process.on(signal, () => {
-		registry.closeAll()
+		registry.evictAll()
 		jobs.cancelAll()
 		process.exit(0)
 	})

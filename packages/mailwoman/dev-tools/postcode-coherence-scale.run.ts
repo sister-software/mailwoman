@@ -40,9 +40,10 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { wofShardPaths } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
@@ -124,11 +125,11 @@ function rootsFor(pair: Pair): AddressNode[] {
 	]
 }
 
-function makeBackend(): ResolverBackend {
+async function makeBackend(): Promise<ResolverBackend> {
 	if (backendName === "candidate") {
 		const path = conventionCandidateDBPath()
 
-		if (!existsSync(path)) throw new Error(`candidate gazetteer not found at ${path}`)
+		if (!(await pathExists(path))) throw new Error(`candidate gazetteer not found at ${path}`)
 
 		console.error(`[probe] candidate-table backend: ${path}`)
 
@@ -137,14 +138,14 @@ function makeBackend(): ResolverBackend {
 
 	// The PRODUCTION shard set, exactly as `wofShardPaths()` orders it — the point of the FTS leg is to measure what a
 	// default-on mechanism would see in production, not what a hand-picked shard list can be made to show.
-	const paths = wofShardPaths().filter(existsSync)
+	const paths = wofShardPaths().filter(pathExistsSync)
 
 	console.error(`[probe] FTS backend over ${paths.length} shards: ${paths.join(", ")}`)
 
 	return new WOFSQLitePlaceLookup({ databasePath: paths })
 }
 
-const backend = makeBackend()
+const backend = await makeBackend()
 const pairs: Pair[] = []
 
 for await (const row of JSONSpliterator.fromAsync<never>(panel.path)) {

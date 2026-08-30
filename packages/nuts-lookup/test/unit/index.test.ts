@@ -32,8 +32,8 @@ test("pointInMultiPolygon: inside vs outside", () => {
 	expect(pointInMultiPolygon(20, 20, square)).toBe(false)
 })
 
-function fixtureDB(): DatabaseClient<NUTSDatabase> {
-	const db = new DatabaseClient<NUTSDatabase>(":memory:")
+async function fixtureDB(): Promise<DatabaseClient<NUTSDatabase>> {
+	const db = DatabaseClient.temp<NUTSDatabase>()
 
 	db.exec(
 		"CREATE TABLE nuts_regions (nutsID TEXT, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT)"
@@ -58,15 +58,15 @@ function fixtureDB(): DatabaseClient<NUTSDatabase> {
 	return db
 }
 
-test("NUTSLookup.find: deepest containing region → nested codes", () => {
-	using db = fixtureDB()
+test("NUTSLookup.find: deepest containing region → nested codes", async () => {
+	using db = await fixtureDB()
 	using lookup = new NUTSLookup({ database: db })
 	expect(lookup.find(5, 5)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
 	expect(lookup.find(50, 50)).toBeNull()
 })
 
-test("makeNUTSAnnotator: fills nuts inside, abstains outside", () => {
-	using db = fixtureDB()
+test("makeNUTSAnnotator: fills nuts inside, abstains outside", async () => {
+	using db = await fixtureDB()
 	using lookup = new NUTSLookup({ database: db })
 	const annotate = makeNUTSAnnotator(lookup)
 	expect(annotate({ lat: 5, lon: 5 })).toEqual({ nuts: { level1: "XX3", level2: "XX30", level3: "XX300" } })

@@ -12,10 +12,10 @@
  *   $MAILWOMAN_DATA_ROOT/coarse-placer/model]`
  */
 
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
+import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import { COARSE_CLASSES, FEATURE_DIM, featurize } from "../featurize.ts"
@@ -265,25 +265,21 @@ export async function trainCoarsePlacer(
 
 	report?.(`temperature=${bestT.toFixed(2)}  val_NLL=${bestNLL.toFixed(4)}`)
 
-	mkdirSync(outDir, { recursive: true })
+	await makeDirectories(outDir)
 
-	writeFileSync(
-		path.join(outDir, "meta.json"),
-		JSON.stringify(
-			{
-				classes: [...COARSE_CLASSES],
-				featureDim: D,
-				temperature: bestT,
-				bias: [...b],
-				trainedAt: null,
-				trainRows: train.length,
-			},
-			null,
-			2
-		)
+	await writeLocalJSONFile(
+		{
+			classes: [...COARSE_CLASSES],
+			featureDim: D,
+			temperature: bestT,
+			bias: [...b],
+			trainedAt: null,
+			trainRows: train.length,
+		},
+		path.join(outDir, "meta.json")
 	)
 
-	writeFileSync(path.join(outDir, "weights.bin"), Buffer.from(W.buffer))
+	await writeLocalBuffer(Buffer.from(W.buffer), path.join(outDir, "weights.bin"))
 	report?.(`→ ${outDir}/meta.json + weights.bin (${(W.byteLength / 1e6).toFixed(1)} MB fp32)`)
 
 	return { outDir, trainRows: train.length, valRows: val.length, temperature: bestT, valNLL: bestNLL }

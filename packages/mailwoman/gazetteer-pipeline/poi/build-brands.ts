@@ -25,9 +25,10 @@
  *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { prettyJSON } from "@mailwoman/core/objects"
 import { allRows, dataRootPath, workspacePath } from "@mailwoman/core/utils"
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi-schema"
@@ -76,35 +77,27 @@ export interface BrandNameCount {
  * builder only ever reads a sealed `poi.db`, never writes one.
  */
 export function readBrandNameCounts(dbPath: string): BrandNameCount[] {
-	const db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
+	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
 
-	try {
-		return allRows<BrandNameCount>(
-			db.prepare(
-				`SELECT brand_wikidata AS wikidata, name, COUNT(*) AS n
-				 FROM poi
-				 WHERE brand_wikidata IS NOT NULL AND name IS NOT NULL
-				 GROUP BY brand_wikidata, name`
-			)
+	return allRows<BrandNameCount>(
+		db.prepare(
+			`SELECT brand_wikidata AS wikidata, name, COUNT(*) AS n
+			 FROM poi
+			 WHERE brand_wikidata IS NOT NULL AND name IS NOT NULL
+			 GROUP BY brand_wikidata, name`
 		)
-	} finally {
-		db.destroy()
-	}
+	)
 }
 
 /**
  * Reads `dbPath`'s layer manifest and narrows it to what {@link POIBrandSourceLayer} needs.
  */
 export async function readSourceLayer(dbPath: string): Promise<POIBrandSourceLayer> {
-	const kdb = new DatabaseClient<LayerContractDatabase>(dbPath, { readOnly: true })
+	using kdb = new DatabaseClient<LayerContractDatabase>(dbPath, { readOnly: true })
 
-	try {
-		const manifest = await readLayerManifest(kdb)
+	const manifest = await readLayerManifest(kdb)
 
-		return { name: manifest.name, version: manifest.version, sourceVintage: manifest.sourceVintage }
-	} finally {
-		await kdb.destroy()
-	}
+	return { name: manifest.name, version: manifest.version, sourceVintage: manifest.sourceVintage }
 }
 
 /**
@@ -241,13 +234,13 @@ export async function buildBrandTable(opts: BuildBrandTableOptions = {}): Promis
  * Stable, deterministic serialization — tab-indented (matches `taxonomy.json`), trailing newline.
  */
 export function serializeBrandTable(table: POIBrandTable): string {
-	return `${JSON.stringify(table, null, "\t")}\n`
+	return prettyJSON(table)
 }
 
 /**
  * Writes `table` to `out` (creating parent directories as needed) via {@link serializeBrandTable}.
  */
-export function writeBrandTable(table: POIBrandTable, out: string): void {
-	mkdirSync(dirname(out), { recursive: true })
-	writeFileSync(out, serializeBrandTable(table))
+export async function writeBrandTable(table: POIBrandTable, out: string): Promise<void> {
+	await makeDirectories(dirname(out))
+	await writeLocalFile(serializeBrandTable(table), out)
 }

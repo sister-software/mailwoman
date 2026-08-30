@@ -31,8 +31,8 @@
  *   needs, since a `hall` seen on a platform is a confound and a `hall` seen on a terminal is evidence.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { TextSpliterator } from "spliterator"
 
 import { nameContainsSurfaces, type SurfaceIndex } from "./surfaces.ts"
@@ -212,13 +212,13 @@ export function extractAttestedPhrases(
  * Read a JSONL file of {@link SubVenueHarvestRow}s. Blank lines and unparseable rows are skipped rather than fatal — an
  * extract is a build output, and one malformed line should not cost the whole lexicon.
  */
-export function readSubVenueJSONL(path: string): SubVenueHarvestRow[] {
+export async function readSubVenueJSONL(path: string): Promise<SubVenueHarvestRow[]> {
 	const out: SubVenueHarvestRow[] = []
 
 	// `TextSpliterator` rather than `split("\n")` — a whole-country extract runs to 250,000 lines
 	// (52 MB for Great Britain), and materializing every segment before reading the first is exactly
 	// what the repo lint rule exists to prevent.
-	for (const line of TextSpliterator.from(readFileSync(path, "utf8"))) {
+	for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
 		const trimmed = line.trim()
 
 		if (!trimmed) continue

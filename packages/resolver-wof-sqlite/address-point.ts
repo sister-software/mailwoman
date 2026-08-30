@@ -213,11 +213,7 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 		return row
 	}
 
-	close(): void {
-		this.#db[Symbol.dispose]()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#db[Symbol.dispose]()
 	}
 }

@@ -12,7 +12,7 @@
  *   distribution boundary and the lawyer sign-off gate before shipping any of them.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { join } from "path-ts"
 
@@ -29,7 +29,7 @@ export interface OSMShards {
  * Opens + caches per-country OSM rooftop lookups. A non-US geocode consults `for(country)`; the first hit for a country
  * opens its shard (with the matching street locale) once, subsequent calls reuse it.
  */
-export class OSMShardProvider {
+export class OSMShardProvider implements Disposable {
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, OSMShards>()
 
@@ -56,7 +56,7 @@ export class OSMShardProvider {
 		if (supportedOSMCountries().includes(cc)) {
 			const path = this.#shardPath(cc)
 
-			if (existsSync(path)) {
+			if (pathExistsSync(path)) {
 				entry = { addressPoints: new AddressPointSqliteLookup(path, { streetLocale: streetLocaleForCountry(cc) }) }
 			}
 		}
@@ -64,11 +64,11 @@ export class OSMShardProvider {
 		this.#cache.set(cc, entry)
 
 		return entry
-	}
+	};
 
-	close(): void {
+	[Symbol.dispose](): void {
 		for (const entry of this.#cache.values()) {
-			entry.addressPoints?.close()
+			entry.addressPoints?.[Symbol.dispose]()
 		}
 
 		this.#cache.clear()

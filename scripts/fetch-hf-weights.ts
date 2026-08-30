@@ -24,10 +24,12 @@
 
 import { APIClient } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
-import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { isPresent } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { md5Hex, repoRootPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
@@ -132,7 +134,7 @@ const bucketClient = new APIClient({ displayName: "release-hf-weights", retry: t
 function readWorkspaceManifest(repoRoot: string, workspace: string): { files?: unknown } {
 	const manifestPath = resolve(repoRoot, workspace, "package.json")
 
-	return parseJSONStrict<{ files?: unknown }>(readFileSync(manifestPath, "utf8"))
+	return readLocalJSONFileSync<{ files?: unknown }>(manifestPath)
 }
 
 /**
@@ -161,15 +163,15 @@ function trackedFiles(repoRoot: string, workspaces: readonly string[]): Set<stri
  * declaring DIFFERENT md5s for one filename is refused outright — one bucket object cannot satisfy both, and a fetch
  * has no basis to choose.
  */
-function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Map<string, string> {
+async function declaredChecksums(repoRoot: string, workspaces: readonly string[]): Promise<Map<string, string>> {
 	const declared = new Map<string, string>()
 
 	for (const workspace of workspaces) {
 		const cardPath = resolve(repoRoot, workspace, "model-card.json")
 
-		if (!existsSync(cardPath)) continue
+		if (!(await pathExists(cardPath))) continue
 
-		const card = parseJSONStrict<{ files_md5?: Record<string, unknown> }>(readFileSync(cardPath, "utf8"))
+		const card = await readLocalJSONFile<{ files_md5?: Record<string, unknown> }>(cardPath)
 
 		for (const [filename, md5] of Object.entries(card.files_md5 ?? {})) {
 			// `$comment` keys carry the block's prose, not a checksum.
@@ -216,11 +218,11 @@ function resolveBaseLocale(repoRoot: string, locales: readonly string[]): string
  * The model version a release publishes: the base package's model-card `version`, which is exactly what the publish
  * workflow read out of that card before this script existed.
  */
-export function readBaseModelVersion(repoRoot: string): string {
+export async function readBaseModelVersion(repoRoot: string): Promise<string> {
 	const config = readReleaseConfig(repoRoot)
 	const baseLocale = resolveBaseLocale(repoRoot, config.locales)
 	const cardPath = resolve(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
-	const card = parseJSONStrict<{ version?: unknown }>(readFileSync(cardPath, "utf8"))
+	const card = await readLocalJSONFile<{ version?: unknown }>(cardPath)
 
 	if (typeof card.version !== "string") {
 		throw new TypeError(`fetch-hf-weights: ${cardPath} declares no string "version" — cannot name a bucket directory.`)
@@ -238,12 +240,10 @@ export function readBaseModelVersion(repoRoot: string): string {
  * absence. HEAD-probed with the rest so a half-staged release is refused before it publishes. BOTH halves are probed:
  * the YAML this replaces checked only `file`, and a declared sidecar that never uploaded would have passed.
  */
-function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): string[] {
+async function distributionOnlyRemoteNames(repoRoot: string, baseLocale: string): Promise<string[]> {
 	const cardPath = resolve(repoRoot, weightsWorkspace(baseLocale), "model-card.json")
 
-	const card = parseJSONStrict<{ fisher_artifact?: { file?: unknown; sidecar?: unknown } }>(
-		readFileSync(cardPath, "utf8")
-	)
+	const card = await readLocalJSONFile<{ fisher_artifact?: { file?: unknown; sidecar?: unknown } }>(cardPath)
 
 	const declared = [card.fisher_artifact?.file, card.fisher_artifact?.sidecar]
 
@@ -283,12 +283,12 @@ export function hfVersionBase(repoRoot: string, version: string): string {
  * Derived from three machine-readable owners and nothing else: `release.config.json` names the locales, each package's
  * `files` array names its artifacts, and `git ls-files` says which are already here.
  */
-export function planWeightsMaterialization(repoRoot: string): WeightsArtifactPlan[] {
+export async function planWeightsMaterialization(repoRoot: string): Promise<WeightsArtifactPlan[]> {
 	const config = readReleaseConfig(repoRoot)
 	const repoSources = repoCommittedSoftFeedSources(repoRoot, config.softFeed ?? {})
 	const workspaces = config.locales.map((locale) => weightsWorkspace(locale))
 	const tracked = trackedFiles(repoRoot, workspaces)
-	const checksums = declaredChecksums(repoRoot, workspaces)
+	const checksums = await declaredChecksums(repoRoot, workspaces)
 	const plans: WeightsArtifactPlan[] = []
 
 	for (const workspace of workspaces) {
@@ -354,10 +354,10 @@ async function downloadRemote(url: string): Promise<Buffer> {
  * full of symlinks, and the staging tree can inherit one, so the discipline applies to both destinations. Same rule as
  * `copy-weights.ts`; see AGENTS.md "symlinks in the publish tarball".
  */
-function writeArtifact(destination: string, bytes: Buffer): void {
-	mkdirSync(resolve(destination, ".."), { recursive: true })
-	rmSync(destination, { force: true })
-	writeFileSync(destination, bytes)
+async function writeArtifact(destination: string, bytes: Buffer): Promise<void> {
+	await makeDirectories(resolve(destination, ".."))
+	await removePathIfPresent(destination)
+	await writeLocalFile(bytes, destination)
 }
 
 /**
@@ -402,9 +402,9 @@ export async function fetchHFWeights(
 ): Promise<HFMaterializationReport> {
 	const config = readReleaseConfig(repoRoot)
 	const baseLocale = resolveBaseLocale(repoRoot, config.locales)
-	const resolvedVersion = version ?? readBaseModelVersion(repoRoot)
+	const resolvedVersion = version ?? (await readBaseModelVersion(repoRoot))
 	const base = hfVersionBase(repoRoot, resolvedVersion)
-	const plans = planWeightsMaterialization(repoRoot)
+	const plans = await planWeightsMaterialization(repoRoot)
 	const remoteNames = new Set<string>()
 
 	for (const plan of plans) {
@@ -413,7 +413,7 @@ export async function fetchHFWeights(
 		}
 	}
 
-	const probeOnly = distributionOnlyRemoteNames(repoRoot, baseLocale)
+	const probeOnly = await distributionOnlyRemoteNames(repoRoot, baseLocale)
 
 	process.stderr.write(`hf weights: v${resolvedVersion} → ${base}\n`)
 
@@ -477,7 +477,7 @@ export async function fetchHFWeights(
 				undeclared.add(plan.filename)
 			}
 
-			writeArtifact(resolve(destRoot, plan.workspace, plan.filename), bytes)
+			await writeArtifact(resolve(destRoot, plan.workspace, plan.filename), bytes)
 			report.written += 1
 		}
 
@@ -487,14 +487,14 @@ export async function fetchHFWeights(
 	for (const plan of plans) {
 		if (plan.origin.kind !== "repo") continue
 
-		if (!existsSync(plan.origin.sourcePath)) {
+		if (!(await pathExists(plan.origin.sourcePath))) {
 			throw new Error(
 				`fetch-hf-weights: ${plan.workspace} declares ${plan.filename}, which release.config.json sources from the ` +
 					`checkout at ${plan.origin.sourcePath} — and it is not there.`
 			)
 		}
 
-		const bytes = readFileSync(plan.origin.sourcePath)
+		const bytes = await readLocalBuffer(plan.origin.sourcePath)
 
 		verifyChecksum(plan, bytes, plan.origin.sourcePath)
 
@@ -504,7 +504,7 @@ export async function fetchHFWeights(
 			undeclared.add(plan.filename)
 		}
 
-		writeArtifact(resolve(destRoot, plan.workspace, plan.filename), bytes)
+		await writeArtifact(resolve(destRoot, plan.workspace, plan.filename), bytes)
 		report.written += 1
 		report.bytes += bytes.byteLength
 	}

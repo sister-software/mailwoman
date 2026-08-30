@@ -24,7 +24,7 @@
  *   Usage: mailwoman dev generate language-types
  */
 
-import * as fs from "@mailwoman/platform/fs/promises"
+import { open } from "@mailwoman/platform/fs/promises"
 import { pascalCase } from "change-case"
 import { CSVSpliterator } from "spliterator"
 
@@ -97,7 +97,7 @@ export async function generateLanguageTypes(
 		}
 	}
 
-	const handle = await fs.open(outfile, "w")
+	await using handle = await open(outfile, "w")
 	const writeLine = (line: string) => handle.writeFile(`${line}\n`)
 
 	// Header.
@@ -217,8 +217,6 @@ export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCod
 	await writeLine(`])`)
 
 	// Cleanup.
-
-	await handle.close()
 
 	report?.(`Wrote ${outfile}`)
 

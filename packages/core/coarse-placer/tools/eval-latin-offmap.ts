@@ -13,11 +13,10 @@
  *   Run: `mailwoman placer eval latin-offmap --model <dir> [--abstain 0.5]`
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { dataRootPath, repoRootPath, formatPercent } from "#utils"
 
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
@@ -68,8 +67,8 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 	const abstain = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
-	const buf = readFileSync(path.join(modelDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(modelDir, "meta.json"))
+	const buf = await readLocalBuffer(path.join(modelDir, "weights.bin"))
 	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 	let weights: Float32Array
 

@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
-import * as fs from "@mailwoman/platform/fs/promises"
 import FastGlob from "fast-glob"
 import type { PathBuilder } from "path-ts"
 import { parallelMap } from "spliterator"
 
+import { readLocalTextFile } from "#fs/readers"
 import { parseJSONStrict } from "#objects"
 
 import { prepareRepositoryDirectories, type RepositorySource } from "../../git.ts"
@@ -83,7 +83,7 @@ export class Placetype implements Disposable {
 		const batchIterator = parallelMap(
 			definitionPaths,
 			async (definitionPath) => {
-				const definitionContent = await fs.readFile(definitionPath, "utf8")
+				const definitionContent = await readLocalTextFile(String(definitionPath))
 				const definition = parseJSONStrict<PlacetypeDefinition>(definitionContent)
 
 				Placetype.register(definition)

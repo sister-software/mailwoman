@@ -13,7 +13,7 @@
  *   {@linkcode assertTierMatchesLicense} refuses a `shipped` build. Resolving either one does not resolve the
  *   other.
  *
- *   THE AREA CHECK IS THE HOLE CHECK, AND IT IS THE ONE THING HERE THAT IS EXACT. The service encodes hole
+ *   THE AREA CHECK IS THE HOLE CHECK AND THE ONE THING HERE THAT IS EXACT. The service encodes hole
  *   roles by ring orientation, and reading them wrong is silent — a hole read as an exterior produces a
  *   well-formed polygon that answers "inside" for every location the plan carved out. Measured over the whole
  *   national export: the rings read WITH their holes total 5,444.5 km² and the Department's own `Shape__Area`
@@ -36,6 +36,8 @@
  *   in every chunk that touches them — and merging them in the parent is what keeps the chunk append-only.
  */
 
+import { statPath } from "@mailwoman/core/fs/readers"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -48,7 +50,6 @@ import {
 	type CoverageCell,
 } from "@mailwoman/core/layers"
 import { runChunkProcess } from "@mailwoman/core/utils"
-import { rmSync, statSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -327,7 +328,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 			}
 		} catch (error) {
 			await kdb.destroy().catch(() => undefined)
-			rmSync(tmpPath, { force: true })
+			await removePathIfPresent(tmpPath)
 
 			throw error
 		}
@@ -337,7 +338,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 		try {
 			streamed = await runBatchedIngest(tmpPath, options)
 		} catch (error) {
-			rmSync(tmpPath, { force: true })
+			await removePathIfPresent(tmpPath)
 
 			throw error
 		}
@@ -420,7 +421,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 
 		await kdb.destroy()
 
-		sealDatabase(tmpPath)
+		await sealDatabase(tmpPath)
 		swapDatabaseIntoPlace(tmpPath, options.out)
 
 		const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
@@ -452,14 +453,14 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 					.slice(0, WORST_PAIRS_REPORTED)
 					.map(([authorityCode, localCode, crosswalkCodes]) => ({ authorityCode, localCode, crosswalkCodes })),
 			},
-			sizeBytes: sizeOf(options.out),
+			sizeBytes: await sizeOf(options.out),
 		}
 	} catch (error) {
 		await kdb.destroy().catch(() => undefined)
 
 		// A failed build leaves a partial file whose name carries this process's pid, so nothing will ever pick it up again.
 		// Removing it is the difference between a retry loop that fails and one that fills a disk.
-		rmSync(tmpPath, { force: true })
+		await removePathIfPresent(tmpPath)
 
 		throw error
 	}
@@ -893,6 +894,6 @@ function writeVocabularyRows(
 /**
  * The artifact's size on disk, read once for the receipt.
  */
-function sizeOf(path: string): number {
-	return statSync(path).size
+async function sizeOf(path: string): Promise<number> {
+	return (await statPath(path)).size
 }

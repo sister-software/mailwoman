@@ -28,6 +28,8 @@
 
 import { CoarsePlacer } from "@mailwoman/core/coarse-placer"
 import type { AddressTree } from "@mailwoman/core/decoder"
+import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import {
 	isBareLocalityTree,
 	isBarePostcodeTree,
@@ -39,7 +41,6 @@ import {
 import type { ResolveNodeTrace, Resolver } from "@mailwoman/core/resolver"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath } from "path-ts"
@@ -242,10 +243,10 @@ export interface GeocodeRun {
 }
 
 /**
- * A warm geocoder over one set of options. Call {@link GeocodeSession.close} when done — the gazetteer, shard, OSM and
- * poi.db handles stay open for the session's whole life, and `close` releases every one of them.
+ * A warm geocoder over one set of options. Dispose it when done — the gazetteer, shard, OSM and poi.db handles stay
+ * open for the session's whole life, and disposal releases every one of them.
  */
-export interface GeocodeSession {
+export interface GeocodeSession extends Disposable {
 	/**
 	 * One-time session construction phases, in wall-clock milliseconds.
 	 */
@@ -270,19 +271,18 @@ export interface GeocodeSession {
 		weights?: { modelPath: string; source: string }
 	}
 	geocode(input: string): Promise<GeocodeRun>
-	close(): void
 }
 
 //#endregion
 
 //#region Path + flag helpers
 
-function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): string[] {
+async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | "resolveDB">): Promise<string[]> {
 	// The shared shard SELECTION (explicit list, then $MAILWOMAN_WOF_DB, then the default set) with this
 	// caller's own contract on top: filtered to what exists on disk — the same auto-attach the server and
 	// drop-ins use, so `mailwoman geocode` works out of the box on a standard data root — and a hard error
 	// when nothing survives, which is part of the CLI's construction-order contract.
-	const paths = resolveWOFShardPaths(options.resolveDB, options.dataRoot).filter((p: string) => existsSync(p))
+	const paths = resolveWOFShardPaths(options.resolveDB, options.dataRoot).filter((p: string) => pathExistsSync(p))
 
 	if (!paths.length) {
 		throw new CommandError(
@@ -316,9 +316,9 @@ export interface ForkEntityProbe {
 	deps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric">
 	/**
 	 * The poi.db handle behind {@link deps}' `poiLookup`, so the session can release it. Carried separately because
-	 * `POIExecutorLookup` is a read interface and declares no `close`.
+	 * `POIExecutorLookup` is a read interface and declares no disposal contract.
 	 */
-	handle?: { close(): void }
+	handle?: Disposable
 }
 
 /**
@@ -336,7 +336,7 @@ export async function loadAuthorityDesignationRoute(
 ): Promise<AuthorityDesignationRoute | undefined> {
 	const floodDBPath = resolvePath(options.dataRoot, "flood", "flood.db")
 
-	if (!existsSync(floodDBPath)) return undefined
+	if (!(await pathExists(floodDBPath))) return undefined
 
 	try {
 		const { createAuthorityDesignationRoute } = await import("./observations/flood-route.ts")
@@ -363,7 +363,7 @@ export async function loadSoilCapabilityRoute(
 ): Promise<SoilCapabilityRoute | undefined> {
 	const soilDBPath = resolvePath(options.dataRoot, "soil", "soil.db")
 
-	if (!existsSync(soilDBPath)) return undefined
+	if (!(await pathExists(soilDBPath))) return undefined
 
 	try {
 		const { createSoilCapabilityRoute } = await import("./observations/soil-route.ts")
@@ -396,7 +396,7 @@ export async function loadCoastalErosionRoute(
 ): Promise<CoastalErosionRoute | undefined> {
 	const coastalDBPath = resolvePath(options.dataRoot, "coastal", "coastal-england.db")
 
-	if (!existsSync(coastalDBPath)) return undefined
+	if (!(await pathExists(coastalDBPath))) return undefined
 
 	try {
 		const { createCoastalErosionRoute } = await import("./observations/coastal-route.ts")
@@ -429,7 +429,7 @@ export async function loadZoningDesignationRoute(
 ): Promise<ZoningDesignationRoute | undefined> {
 	const zoningDBPath = resolvePath(options.dataRoot, "zoning", "zoning-ireland.db")
 
-	if (!existsSync(zoningDBPath)) return undefined
+	if (!(await pathExists(zoningDBPath))) return undefined
 
 	try {
 		const { createZoningDesignationRoute } = await import("./observations/zoning-route.ts")
@@ -449,7 +449,7 @@ export async function loadForkEntityDeps(
 ): Promise<ForkEntityProbe> {
 	const poiDBPath = resolvePath(options.dataRoot, "poi", "poi.db")
 
-	if (options.forkEntity === false || !existsSync(poiDBPath)) return { deps: {} }
+	if (options.forkEntity === false || !(await pathExists(poiDBPath))) return { deps: {} }
 
 	const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
@@ -483,7 +483,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// candidate.db (--candidate-db / $MAILWOMAN_CANDIDATE_DB) is the demo-parity backend; when present it
 	// stands alone and a WOF admin path isn't required.
 	const candidateDB = resolveCandidateDBPath(options.candidateDB, options.dataRoot)
-	const wofPath = candidateDB ? [] : resolveWOFPath(options)
+	const wofPath = candidateDB ? [] : await resolveWOFPath(options)
 	const pathsResolvedAt = performance.now()
 
 	// Load the neural classifier (required for street-level; weights must be present).
@@ -526,7 +526,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 		if (fstPath) {
 			try {
-				fst = deserializeFST(readFileSync(fstPath))
+				fst = deserializeFST(await readLocalBuffer(fstPath))
 			} catch (error) {
 				console.warn(`[mailwoman] failed to load the gazetteer FST at ${fstPath}: ${(error as Error).message}`)
 			}
@@ -636,7 +636,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 	// Build-local OSM rooftop tier (#247), behind the package + on-disk-shard boundary. The provider
 	// applies the country's street normalizer and enables the resolver's locality-bbox fall-through;
 	// an absent unpublished @mailwoman/osm package or absent shard remains an admin-only no-op.
-	let osmProvider: { for: (country: string) => StateShards; close(): void } | undefined
+	let osmProvider: ({ for: (country: string) => StateShards } & Disposable) | undefined
 
 	try {
 		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
@@ -647,31 +647,31 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	const optionalProvidersLoadedAt = performance.now()
 
-	let poiHandle: { close(): void } | undefined
+	let poiHandle: Disposable | undefined
 	let designationRoute: AuthorityDesignationRoute | undefined
 	let soilRoute: SoilCapabilityRoute | undefined
 	let coastalRoute: CoastalErosionRoute | undefined
 	let zoningRoute: ZoningDesignationRoute | undefined
 
-	const closeQuietly = (handle: { close(): void } | undefined): void => {
+	const disposeQuietly = (handle: Disposable | undefined): void => {
 		try {
-			handle?.close()
+			handle?.[Symbol.dispose]()
 		} catch {
-			// A handle that refuses to close must not strand the others open.
+			// A handle that refuses disposal must not strand the others open.
 		}
 	}
 
-	const close = (): void => {
-		closeQuietly(explicitAp)
-		closeQuietly(explicitIp)
-		closeQuietly(shardProvider)
-		closeQuietly(osmProvider)
-		closeQuietly(lookup)
-		closeQuietly(poiHandle)
-		closeQuietly(designationRoute)
-		closeQuietly(soilRoute)
-		closeQuietly(coastalRoute)
-		closeQuietly(zoningRoute)
+	const dispose = (): void => {
+		disposeQuietly(explicitAp)
+		disposeQuietly(explicitIp)
+		disposeQuietly(shardProvider)
+		disposeQuietly(osmProvider)
+		disposeQuietly(lookup)
+		disposeQuietly(poiHandle)
+		disposeQuietly(designationRoute)
+		disposeQuietly(soilRoute)
+		disposeQuietly(coastalRoute)
+		disposeQuietly(zoningRoute)
 	}
 
 	// Everything past this point can THROW while the handles above are already open, so it runs behind the
@@ -723,7 +723,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 		coastalRoute = await loadCoastalErosionRoute(options)
 		zoningRoute = await loadZoningDesignationRoute(options)
 	} catch (error) {
-		close()
+		dispose()
 
 		throw error
 	}
@@ -929,7 +929,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 			...(classifier.resolvedWeights ? { weights: classifier.resolvedWeights } : {}),
 		},
 		geocode,
-		close,
+		[Symbol.dispose]: dispose,
 	}
 }
 

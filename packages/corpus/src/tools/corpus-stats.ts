@@ -36,7 +36,9 @@
  *   --output /tmp/corpus-stats-local.json
  */
 
-import { readdirSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 
 import { ParquetReader } from "../parquet-wrapper/index.ts"
@@ -50,13 +52,11 @@ export interface CorpusStatsOptions {
 	limitPerShard?: number
 }
 
-function discoverShards(shardsArg: string): string[] {
-	const stat = statSync(shardsArg)
+async function discoverShards(shardsArg: string): Promise<string[]> {
+	const stat = await statPath(shardsArg)
 
 	if (stat.isDirectory()) {
-		return readdirSync(shardsArg)
-			.filter((f) => f.endsWith(".parquet"))
-			.map((f) => join(shardsArg, f))
+		return (await readDirectory(shardsArg)).filter((f) => f.endsWith(".parquet")).map((f) => join(shardsArg, f))
 	}
 
 	if (stat.isFile() && shardsArg.endsWith(".parquet")) return [shardsArg]
@@ -88,7 +88,7 @@ async function* streamShardRows(
 }
 
 export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> {
-	const shardPaths = discoverShards(args.shardsArg)
+	const shardPaths = await discoverShards(args.shardsArg)
 
 	console.error(`Discovered ${shardPaths.length} parquet shard(s)`)
 
@@ -175,10 +175,10 @@ export async function buildCorpusStats(args: CorpusStatsOptions): Promise<void> 
 		out.bigrams[k] = Object.fromEntries(labelMap)
 	}
 
-	writeFileSync(args.outputPath, JSON.stringify(out))
-	const sizeMB = (Buffer.byteLength(JSON.stringify(out)) / 1024 / 1024).toFixed(1)
+	await writeLocalJSONFile(out, args.outputPath)
+	const formattedSize = ByteFormatter.formatIEC(Buffer.byteLength(JSON.stringify(out)))
 
 	console.error(
-		`Wrote ${args.outputPath} (${sizeMB} MB) — ${totalRows} rows, ${tokenStats.size} tokens, ${bigramStats.size} bigrams`
+		`Wrote ${args.outputPath} (${formattedSize}) — ${totalRows} rows, ${tokenStats.size} tokens, ${bigramStats.size} bigrams`
 	)
 }

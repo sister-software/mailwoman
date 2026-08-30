@@ -34,7 +34,7 @@
  *   the model card like the existing GeoNames alias fold.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 import { TSVSpliterator } from "spliterator"
@@ -160,7 +160,7 @@ export async function ingestGeonamesPostal(
 		const cc = country.toUpperCase()
 		const file = join(postalDir, `${cc}.txt`)
 
-		if (!existsSync(file)) {
+		if (!(await pathExists(file))) {
 			missing.push(cc)
 
 			console.error(

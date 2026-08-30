@@ -22,7 +22,7 @@
  *   final summary lands on stdout.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman; its runtime value `BUILTIN_STRATEGY_NAMES`
 // is imported DYNAMICALLY inside the command (the gazetteer-pipeline convention) so merely loading the
 // commands (e.g. `mailwoman --help`) doesn't fault when the peer is absent. `Convention` is type-only.
@@ -108,7 +108,6 @@ function validate(rows: AuthoredConvention[], known: Set<string>): void {
 const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { parseJSONStrict } = await import("@mailwoman/core/objects")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { assertDatabaseIntegrity } = await import("@mailwoman/sqlite/sealed-db")
 
@@ -118,7 +117,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 		const src = options.src
 		const output = options.output ?? dataRootPath("wof", "conventions.db")
 
-		const rows = parseJSONStrict<AuthoredConvention[]>(readFileSync(src, "utf8"))
+		const rows = await readLocalJSONFile<AuthoredConvention[]>(src)
 
 		if (!Array.isArray(rows)) throw new CommandError(`${src} must be a JSON array of authored conventions`)
 		validate(rows, KNOWN)

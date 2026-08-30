@@ -98,7 +98,7 @@ interface CacheEntry {
 	tile: DecodedTile | null
 }
 
-export class TileSource implements TileProvider {
+export class TileSource implements TileProvider, AsyncDisposable {
 	readonly minZoom: number
 	readonly maxZoom: number
 
@@ -180,7 +180,7 @@ export class TileSource implements TileProvider {
 		return tile
 	}
 
-	async close(): Promise<void> {
-		await this.handle?.close()
+	async [Symbol.asyncDispose](): Promise<void> {
+		await this.handle?.[Symbol.asyncDispose]()
 	}
 }

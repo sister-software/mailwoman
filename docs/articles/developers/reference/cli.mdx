@@ -514,7 +514,7 @@ Every command shares one exit-code contract, owned by `useCommandTask` in `packa
 | `0`  | The command completed. A command with a verdict returns `0` for a pass.     | None.                                                                      |
 | `1`  | The command threw, or its verdict is a failure. The message is on `stderr`. | Read the message. Guidance-grade failures print one line and name the fix. |
 
-Two behaviors are worth stating because they are not failures.
+Two behaviors are exceptional because they are not failures.
 
 - `mailwoman doctor` exits `0` when the core checks pass, even when every optional data layer is
   missing. Parsing works without them.

@@ -27,9 +27,10 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
+import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
 import { allRows, dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { Box, Text } from "ink"
@@ -211,7 +212,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 		const tol = options.tol
 
 		const srcPath = points || admin
-		const src = new DatabaseClient<PolygonDatabase>(srcPath, { readOnly: true })
+		using src = new DatabaseClient<PolygonDatabase>(srcPath, { readOnly: true })
 
 		const where = countries
 			? `placetype NOT IN ('postalcode') AND country IN (${countries.map(() => "?").join(",")})`
@@ -222,16 +223,14 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 			...(countries ?? [])
 		).filter((r) => ADMIN_PLACETYPES.has(r.placetype))
 
-		await src.destroy()
-
 		// Build to a temp sibling, then atomically swap into place (scripts/AGENTS.md: a DB is a
 		// readonly artifact — never write the live path in case the build dies halfway). The
 		// original .mjs wrote `out` directly; this hardens it without changing the result.
 		const tmpOut = `${out}.tmp-${process.pid}`
 
 		for (const stale of [tmpOut, `${tmpOut}-wal`, `${tmpOut}-shm`, `${tmpOut}-journal`]) {
-			if (existsSync(stale)) {
-				rmSync(stale)
+			if (await pathExists(stale)) {
+				await removePath(stale)
 			}
 		}
 
@@ -250,7 +249,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 		for (const r of rows) {
 			const path = geojsonPath(repos, r.country, r.id)
 
-			if (!existsSync(path)) {
+			if (!(await pathExists(path))) {
 				missing++
 
 				continue
@@ -258,7 +257,7 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 
 			try {
 				// A malformed GeoJSON file nulls out and lands in the `dropped` tally with the rest.
-				const feat = tryParsingJSON<{ geometry?: RawGeometry }>(readFileSync(path, "utf8"))
+				const feat = tryParsingJSON<{ geometry?: RawGeometry }>(await readLocalTextFile(path))
 				const simp = feat?.geometry ? simplify(feat.geometry, tol) : null
 
 				if (!simp) {

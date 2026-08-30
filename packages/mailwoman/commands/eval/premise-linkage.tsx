@@ -204,12 +204,9 @@ async function readMailwomanVersion(): Promise<string> {
 
 	if (!manifestPath) throw new Error("premise-linkage: could not locate the mailwoman package manifest.")
 
-	const [{ readFile }, { parseJSONStrict }] = await Promise.all([
-		import("@mailwoman/platform/fs/promises"),
-		import("@mailwoman/core/objects"),
-	])
+	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
 
-	const manifest = parseJSONStrict<{ version?: string }>(await readFile(manifestPath, "utf8"))
+	const manifest = await readLocalJSONFile<{ version?: string }>(manifestPath)
 
 	if (typeof manifest.version !== "string") throw new TypeError(`Missing string version in ${manifestPath}`)
 

@@ -6,7 +6,7 @@
  *   Run one bounded child process and read its result off stdout — the coordination every chunked layer
  *   build uses to keep a polyfill's heap bounded.
  *
- *   THE PROCESS BOUNDARY IS THE POINT, AND IT IS THE CALLER'S REASON RATHER THAN THIS FUNCTION'S. h3's WASM
+ *   THE PROCESS BOUNDARY IS THE POINT AND THE CALLER'S REASON RATHER THAN THIS FUNCTION'S. h3's WASM
  *   heap cannot be reset from JavaScript and does not survive an unbounded number of polyfill calls, so a
  *   build gives each range a heap that starts empty by giving it an interpreter that starts empty. What
  *   lives here is only the plumbing that every such build repeats.

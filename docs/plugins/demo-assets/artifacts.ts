@@ -34,10 +34,12 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists, readLink, statLink, statPath } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
+import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { copyFileSync, existsSync, lstatSync, readFileSync, readlinkSync, statSync } from "@mailwoman/platform/fs"
 import { dirname, resolve } from "@mailwoman/platform/path"
 
 import type { ReleaseInfo } from "#shared/demo-helpers"
@@ -52,10 +54,10 @@ import { resolvePackagePath, resolvePackageSpecifier } from "./workspace-resolut
 export function readModelCard(): ReleaseInfo | null {
 	const cardPath = resolvePackagePath("@mailwoman/neural-weights-en-us", "model-card.json")
 
-	if (!cardPath || !existsSync(cardPath)) return null
+	if (!cardPath || !pathExistsSync(cardPath)) return null
 
 	// Both generics: with only <ReleaseInfo>, F defaults to T and the null fallback fails to type.
-	return tryParsingJSON<ReleaseInfo, null>(readFileSync(cardPath, "utf8"), null)
+	return tryParsingJSON<ReleaseInfo, null>(readLocalTextFileSync(cardPath), null)
 }
 
 /**
@@ -64,18 +66,18 @@ export function readModelCard(): ReleaseInfo | null {
  *
  * @param filename - E.g. "model.onnx" or "tokenizer.model"
  */
-export function resolveWeightsArtifact(filename: string): string | null {
+export async function resolveWeightsArtifact(filename: string): Promise<string | null> {
 	const filePath = resolvePackagePath("@mailwoman/neural-weights-en-us", filename)
 
-	if (!filePath || !existsSync(filePath)) return null
+	if (!filePath || !(await pathExists(filePath))) return null
 
-	const st = lstatSync(filePath)
+	const st = await statLink(filePath)
 
 	if (st.isSymbolicLink()) {
-		const target = readlinkSync(filePath)
+		const target = await readLink(filePath)
 		const resolved = resolve(dirname(filePath), target)
 
-		return existsSync(resolved) ? resolved : null
+		return (await pathExists(resolved)) ? resolved : null
 	}
 
 	return filePath
@@ -88,22 +90,23 @@ export function resolveWeightsArtifact(filename: string): string | null {
  *
  * @returns True if the file was copied
  */
-export function syncArtifact(sourcePath: string, destPath: string, label: string): boolean {
-	if (!existsSync(sourcePath)) {
+export async function syncArtifact(sourcePath: string, destPath: string, label: string): Promise<boolean> {
+	if (!(await pathExists(sourcePath))) {
 		console.warn(`[demo-assets] ${label}: source missing at ${sourcePath}`)
 
 		return false
 	}
 
-	const sourceSize = statSync(sourcePath).size
+	const sourceSize = (await statPath(sourcePath)).size
 
-	if (existsSync(destPath)) {
-		const destSize = statSync(destPath).size
+	if (await pathExists(destPath)) {
+		const destSize = (await statPath(destPath)).size
 
 		if (sourceSize === destSize) return false
 	}
 
-	copyFileSync(sourcePath, destPath)
+	await copyFileTo(sourcePath, destPath)
+	// TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
 	const sizeMB = (sourceSize / 1024 / 1024).toFixed(1)
 
 	console.log(`[demo-assets] ${label}: synced (${sizeMB} MB)`)
@@ -119,7 +122,7 @@ export function syncArtifact(sourcePath: string, destPath: string, label: string
  *
  * @param destDir - E.g. static/mailwoman/sqljs
  */
-export function stageSQLJSHTTPVFS(destDir: string): boolean {
+export async function stageSQLJSHTTPVFS(destDir: string): Promise<boolean> {
 	let distDir: string
 
 	try {
@@ -139,7 +142,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 	for (const f of files) {
 		const src = resolve(distDir, f)
 
-		if (!existsSync(src)) {
+		if (!(await pathExists(src))) {
 			console.warn(`[demo-assets] sql.js-httpvfs: missing ${f} in dist`)
 
 			return false
@@ -154,8 +157,8 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
 		// loadContent() re-runs and re-copies… a reload LOOP that shows up as the /demo page flickering
 		// during `start`. Skipping the no-op copy breaks the cycle. (Prod `build` runs loadContent once,
 		// so the loop is a dev-server-only hazard.)
-		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
-		copyFileSync(src, dest)
+		if ((await pathExists(dest)) && (await statPath(dest)).size === (await statPath(src)).size) continue
+		await copyFileTo(src, dest)
 
 		copied++
 	}
@@ -185,7 +188,7 @@ export function stageSQLJSHTTPVFS(destDir: string): boolean {
  *
  * @param destDir - E.g. static/mailwoman/pair-index
  */
-export function stagePairIndexes(destDir: string): boolean {
+export async function stagePairIndexes(destDir: string): Promise<boolean> {
 	const sources: Array<{ pkg: string; file: string }> = [
 		{ pkg: "@mailwoman/neural-weights-en-gb", file: "pair-index-gb.bin" },
 		{ pkg: "@mailwoman/neural-weights-en-nz", file: "pair-index-nz.bin" },
@@ -202,7 +205,7 @@ export function stagePairIndexes(destDir: string): boolean {
 			continue
 		}
 
-		if (!existsSync(src)) {
+		if (!(await pathExists(src))) {
 			console.warn(
 				`[demo-assets] pair-index: ${file} missing at ${src} — not staged ` +
 					`(run ${pkg}'s scripts/link-dev-weights.ts to build it; the demo tolerates its absence — that country's pair prior stays OFF).`
@@ -214,8 +217,8 @@ export function stagePairIndexes(destDir: string): boolean {
 		const dest = resolve(destDir, file)
 
 		// Idempotent stage (same reload-loop guard as stageSQLJSHTTPVFS): skip a byte-identical copy.
-		if (existsSync(dest) && statSync(dest).size === statSync(src).size) continue
-		copyFileSync(src, dest)
+		if ((await pathExists(dest)) && (await statPath(dest)).size === (await statPath(src)).size) continue
+		await copyFileTo(src, dest)
 
 		copied++
 	}
@@ -238,12 +241,12 @@ export function stagePairIndexes(destDir: string): boolean {
  *
  * @returns True if built successfully
  */
-export function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?: string }): boolean {
+export async function buildFSTBinary(fstPath: string, opts: { repoRoot: string; wofDB?: string }): Promise<boolean> {
 	// Canonical custom-built gazetteer (never the off-the-shelf dumps — see feedback-custom-wof-db-only).
 	const globalDB = dataRootPath("wof", "admin-global-priority.db")
 	const wofDB = opts.wofDB ?? $public.PLAYPEN_WOF_ADMIN_DB ?? globalDB
 
-	if (!existsSync(wofDB)) {
+	if (!(await pathExists(wofDB))) {
 		console.warn(`[demo-assets] FST: WOF admin DB not found at ${wofDB} — skipping FST build`)
 
 		return false

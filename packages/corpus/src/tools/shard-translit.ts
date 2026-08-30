@@ -28,10 +28,9 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
-import { existsSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
-import { mkdir, stat } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
@@ -94,31 +93,31 @@ async function writeOneShard(
 	source: string,
 	corpusVersion: string
 ): Promise<ShardDescriptor> {
-	const writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, outPath, {
-		rowGroupSize: ROW_GROUP_SIZE,
-	})
-
-	writer.setMetadata("mailwoman.corpus_version", corpusVersion)
-	writer.setMetadata("mailwoman.split", "train")
-	writer.setMetadata("mailwoman.shard_source", source)
-
 	let firstSourceID = ""
 	let lastSourceID = ""
 
-	for (const row of rows) {
-		const pq = rowToParquet(row)
-		await writer.appendRow(appendShape(pq))
+	{
+		await using writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, outPath, {
+			rowGroupSize: ROW_GROUP_SIZE,
+		})
 
-		if (firstSourceID === "") {
-			firstSourceID = row.source_id
+		writer.setMetadata("mailwoman.corpus_version", corpusVersion)
+		writer.setMetadata("mailwoman.split", "train")
+		writer.setMetadata("mailwoman.shard_source", source)
+
+		for (const row of rows) {
+			const pq = rowToParquet(row)
+			await writer.appendRow(appendShape(pq))
+
+			if (firstSourceID === "") {
+				firstSourceID = row.source_id
+			}
+
+			lastSourceID = row.source_id
 		}
-
-		lastSourceID = row.source_id
 	}
 
-	await writer.close()
-
-	const fileStat = await stat(outPath)
+	const fileStat = await tryStat(outPath)
 	const sha256 = await sha256File(outPath)
 
 	return {
@@ -127,7 +126,7 @@ async function writeOneShard(
 		format: "parquet",
 		compression: SHARD_COMPRESSION,
 		rows: rows.length,
-		bytes: fileStat.size,
+		bytes: fileStat?.size ?? 0,
 		sha256,
 		first_source_id: firstSourceID,
 		last_source_id: lastSourceID,
@@ -151,13 +150,13 @@ export async function buildTranslitShard(
 	const canonicalPathPrefix = options.canonicalPathPrefix ?? "/data/"
 	const legacyPathPrefix = options.legacyPathPrefix ?? `${mailwomanDataRoot()}/`
 
-	if (!existsSync(options.jsonl)) throw new Error(`jsonl not found: ${options.jsonl}`)
+	if (!(await pathExists(options.jsonl))) throw new Error(`jsonl not found: ${options.jsonl}`)
 
-	if (!existsSync(options.baseManifest)) throw new Error(`base-manifest not found: ${options.baseManifest}`)
+	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
 	const corpusDir = join(options.outDir, `corpus-v${corpusVersion}`)
 	const trainDir = join(corpusDir, "train")
-	await mkdir(trainDir, { recursive: true })
+	await makeDirectories(trainDir)
 
 	// Bucket canonical rows by source. Quarantined rows are logged.
 	const buckets = new Map<string, LabeledRow[]>()
@@ -200,14 +199,14 @@ export async function buildTranslitShard(
 
 	if (quarantine.length) {
 		const qPath = join(corpusDir, "quarantine-transliteration.tsv")
-		writeFileSync(qPath, quarantine.join("\n") + "\n", "utf8")
+		await writeLocalTextFile(quarantine.join("\n") + "\n", qPath)
 		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)
 	}
 
 	// Compose final MANIFEST: rewrite base.shards paths from /mnt/playpen/... → /data/... and append
 	// the new translit shards. Kryptonite shard already lives in the base manifest (it was written
 	// there by Thread B).
-	const base = parseJSONStrict<ShardManifest>(readFileSync(options.baseManifest, "utf8"))
+	const base = await readLocalJSONFile<ShardManifest>(options.baseManifest)
 
 	const rewrittenBase = base.shards.map((sh) => ({
 		...sh,
@@ -231,7 +230,7 @@ export async function buildTranslitShard(
 	}
 
 	const combinedPath = join(corpusDir, "MANIFEST.json")
-	writeFileSync(combinedPath, JSON.stringify(combined, null, 2) + "\n", "utf8")
+	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newTrainRows})`)
 	report?.(`  shards=${combined.shards.length} (base=${base.shards.length}, added=${newShards.length})`)

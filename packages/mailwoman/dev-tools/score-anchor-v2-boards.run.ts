@@ -33,9 +33,9 @@
  */
 
 import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createHash } from "@mailwoman/platform/crypto"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
@@ -277,7 +277,7 @@ if (board === "gb") {
 }
 
 if (values["dump-spans"]) {
-	writeFileSync(values["dump-spans"], spans.join("\n") + "\n")
+	await writeLocalTextFile(spans.join("\n") + "\n", values["dump-spans"])
 
 	console.log(
 		`spans → ${values["dump-spans"]} (${spans.length} parses, sha256 ` +
@@ -286,7 +286,7 @@ if (values["dump-spans"]) {
 }
 
 if (values["dump-misses"]) {
-	writeFileSync(values["dump-misses"], misses.map((m) => JSON.stringify(m)).join("\n") + "\n")
+	await writeLocalTextFile(misses.map((m) => JSON.stringify(m)).join("\n") + "\n", values["dump-misses"])
 
 	console.log(`misses → ${values["dump-misses"]} (${misses.length})`)
 }

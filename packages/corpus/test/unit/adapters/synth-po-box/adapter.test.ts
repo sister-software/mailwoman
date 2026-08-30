@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  */
 
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/synth-po-box/adapter"
-import { writeFileSync } from "@mailwoman/platform/fs"
 import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
-function writeFixture(rows: Array<Record<string, unknown>>): string {
+async function writeFixture(rows: Array<Record<string, unknown>>): Promise<string> {
 	const path = join(tmpdir(), `synth-po-box-fixture-${Math.random().toString(36).slice(2)}.jsonl`)
-	writeFileSync(path, rows.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf8")
+	await writeLocalTextFile(rows.map((r) => JSON.stringify(r)).join("\n") + "\n", path)
 
 	return path
 }
@@ -29,7 +29,7 @@ async function collect(path: string, adapter = createSynthPoBoxAdapter({ seed: 4
 
 describe("synth-po-box adapter", () => {
 	it("emits one row per input by default", async () => {
-		const path = writeFixture([
+		const path = await writeFixture([
 			{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" },
 			{ locality: "Paris", region: "Île-de-France", postcode: "75001", country: "FR" },
 		])
@@ -40,7 +40,7 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("US row produces en-US po_box variant", async () => {
-		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
+		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
 		const rows = await collect(path)
 		expect(rows[0]!.locale).toBe("en-US")
 		expect(rows[0]!.components.po_box).toMatch(/^(PO Box|P\.O\. Box|P\.O\.Box|PO BOX|POB|Post Office Box|Box) /)
@@ -49,14 +49,17 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("FR row produces fr-FR BP variant", async () => {
-		const path = writeFixture([{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" }])
+		const path = await writeFixture([
+			{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" },
+		])
+
 		const rows = await collect(path)
 		expect(rows[0]!.locale).toBe("fr-FR")
 		expect(rows[0]!.components.po_box).toMatch(/^(BP|B\.P\.|Boîte Postale|BP\.) /)
 	})
 
 	it("skips rows missing required fields", async () => {
-		const path = writeFixture([
+		const path = await writeFixture([
 			{ locality: "OK", region: "VT", postcode: "05401", country: "US" }, // valid
 			{ locality: "Missing postcode", region: "VT", country: "US" }, // invalid
 			{ region: "VT", postcode: "05401", country: "US" }, // invalid (no locality)
@@ -67,7 +70,7 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("country filter — only emits matching tuples", async () => {
-		const path = writeFixture([
+		const path = await writeFixture([
 			{ locality: "A", region: "VT", postcode: "05401", country: "US" },
 			{ locality: "B", region: "Île-de-France", postcode: "75001", country: "FR" },
 			{ locality: "C", region: "CA", postcode: "94133", country: "US" },
@@ -86,7 +89,7 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("variantsPerInput emits multiple variants per input", async () => {
-		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
+		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
 		const adapter = createSynthPoBoxAdapter({ seed: 42, variantsPerInput: 5 })
 		const rows = []
 
@@ -101,7 +104,7 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("PMB variant with pmbRatio=1.0 keeps street and adds PMB span", async () => {
-		const path = writeFixture([
+		const path = await writeFixture([
 			{
 				locality: "New York",
 				region: "NY",
@@ -120,7 +123,7 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("limit option caps output", async () => {
-		const path = writeFixture(
+		const path = await writeFixture(
 			Array.from({ length: 10 }, (_, i) => ({
 				locality: `City${i}`,
 				region: "VT",
@@ -140,7 +143,7 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("each row gets a stable, unique source_id", async () => {
-		const path = writeFixture([
+		const path = await writeFixture([
 			{ locality: "A", region: "VT", postcode: "05401", country: "US" },
 			{ locality: "B", region: "VT", postcode: "05402", country: "US" },
 		])
@@ -152,7 +155,7 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("militaryRatio emits a US military/diplomatic PO-box row per input (#517)", async () => {
-		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
+		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
 		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1 })
 		const rows = await collect(path, adapter)
 		// One standard po_box row + one self-contained military row.
@@ -166,14 +169,14 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("militaryRatio defaults off — byte-stable (one row per input, no military)", async () => {
-		const path = writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
+		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
 		const rows = await collect(path)
 		expect(rows).toHaveLength(1)
 		expect(/^(PSC|CMR|Unit) /.test(String(rows[0]!.components.po_box))).toBe(false)
 	})
 
 	it("emits region-less NZ tuples — Private Bag / Box, no region token (#517)", async () => {
-		const path = writeFixture([{ locality: "Auckland", region: "", postcode: "1010", country: "NZ" }])
+		const path = await writeFixture([{ locality: "Auckland", region: "", postcode: "1010", country: "NZ" }])
 		const rows = await collect(path)
 		expect(rows).toHaveLength(1)
 		expect(rows[0]!.locale).toBe("en-NZ")
@@ -183,7 +186,10 @@ describe("synth-po-box adapter", () => {
 	})
 
 	it("military rows are US-only — suppressed under a non-US country filter", async () => {
-		const path = writeFixture([{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" }])
+		const path = await writeFixture([
+			{ locality: "Lyon", region: "Auvergne-Rhône-Alpes", postcode: "69001", country: "FR" },
+		])
+
 		const adapter = createSynthPoBoxAdapter({ seed: 5, militaryRatio: 1 })
 		const rows = []
 

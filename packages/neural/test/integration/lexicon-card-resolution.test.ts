@@ -11,32 +11,32 @@
  *   channel loads, the parse works. The Run B gate had to stage v7's CONTENT under the v6 FILENAME to
  *   score faithfully.
  *
- *   These tests build synthetic package layouts under a `cacheRoot` (the same seam
+ *   These tests build synthetic package layouts under a `cacheRoot.path` (the same seam
  *   `weights.test.ts`'s pair-index gate uses) so they need no model binaries: `resolveWeights` only
  *   `existsSync`-probes `model.onnx` / `tokenizer.model`, so empty stubs are enough to reach the
  *   sibling-resolution code this file is about.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { LexiconVersionMismatchError, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
-let cacheRoot: string
+let cacheRoot: TemporaryDirectory
 let packageDir: string
 
 /**
  * A package-shaped directory the `cache:` resolution rung finds:
- * `<cacheRoot>/node_modules/@mailwoman/neural-weights-en-us`.
+ * `<cacheRoot.path>/node_modules/@mailwoman/neural-weights-en-us`.
  */
-function stagePackage(card: Record<string, unknown>, lexicons: readonly string[]): void {
-	writeFileSync(join(packageDir, "model.onnx"), "")
-	writeFileSync(join(packageDir, "tokenizer.model"), "")
-	writeFileSync(join(packageDir, "model-card.json"), JSON.stringify(card))
+async function stagePackage(card: Record<string, unknown>, lexicons: readonly string[]): Promise<void> {
+	await writeLocalTextFile("", join(packageDir, "model.onnx"))
+	await writeLocalTextFile("", join(packageDir, "tokenizer.model"))
+	await writeLocalJSONFile(card, join(packageDir, "model-card.json"))
 
 	for (const name of lexicons) {
-		writeFileSync(join(packageDir, name), JSON.stringify({ entries: {} }))
+		await writeLocalJSONFile({ entries: {} }, packageDir, name)
 	}
 }
 
@@ -51,35 +51,33 @@ function cardDeclaring(lexicon: string | undefined): Record<string, unknown> {
 	}
 }
 
-beforeEach(() => {
-	cacheRoot = mkdtempSync(join(tmpdir(), "mailwoman-lexicon-card-"))
-	packageDir = weightsCachePackageDir(cacheRoot, "en-us")
-	mkdirSync(packageDir, { recursive: true })
+beforeEach(async () => {
+	cacheRoot = await temporaryDirectory("mailwoman-lexicon-card-")
+	packageDir = weightsCachePackageDir(cacheRoot.path, "en-us")
+	await makeDirectories(packageDir)
 })
 
-afterEach(() => {
-	rmSync(cacheRoot, { recursive: true, force: true })
-})
+afterEach(() => cacheRoot[Symbol.asyncDispose]())
 
 describe("resolveWeights — evidence lexicons resolve from the card (#1510)", () => {
-	test("a card naming v7 resolves v7, not the legacy v6 filename", () => {
-		stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [
+	test("a card naming v7 resolves v7, not the legacy v6 filename", async () => {
+		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [
 			"locality-surface-lexicon-v6.json",
 			"locality-surface-lexicon-v7.json",
 		])
 
-		const resolved = resolveWeights({ locale: "en-us", cacheRoot })
+		const resolved = resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
 
 		expect(resolved.localitySurfaceLexiconPath).toMatch(/locality-surface-lexicon-v7\.json$/)
 	})
 
-	test("a card naming v7 against a package shipping ONLY v6 REFUSES, naming both versions", () => {
-		stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), ["locality-surface-lexicon-v6.json"])
+	test("a card naming v7 against a package shipping ONLY v6 REFUSES, naming both versions", async () => {
+		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), ["locality-surface-lexicon-v6.json"])
 
 		let thrown: unknown
 
 		try {
-			resolveWeights({ locale: "en-us", cacheRoot })
+			resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
 		} catch (error) {
 			thrown = error
 		}
@@ -91,20 +89,20 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 		expect(message).toContain("locality_surface")
 	})
 
-	test("a card naming a lexicon against a package shipping NONE of the family is plain absence, not a mismatch", () => {
+	test("a card naming a lexicon against a package shipping NONE of the family is plain absence, not a mismatch", async () => {
 		// `neural-weights-base-latn` is the live example: it symlinks en-us's card and ships no lexicons.
 		// createScorer's declared-required fail-closed is what covers this case, not a resolution throw.
-		stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [])
+		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [])
 
-		expect(resolveWeights({ locale: "en-us", cacheRoot }).localitySurfaceLexiconPath).toBeUndefined()
+		expect(resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path }).localitySurfaceLexiconPath).toBeUndefined()
 	})
 
-	test("a card with NO lexicon field resolves the legacy filename WITH a warning", () => {
-		stagePackage(cardDeclaring(undefined), ["locality-surface-lexicon-v6.json"])
+	test("a card with NO lexicon field resolves the legacy filename WITH a warning", async () => {
+		await stagePackage(cardDeclaring(undefined), ["locality-surface-lexicon-v6.json"])
 		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
 		try {
-			const resolved = resolveWeights({ locale: "en-us", cacheRoot })
+			const resolved = resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })
 
 			expect(resolved.localitySurfaceLexiconPath).toMatch(/locality-surface-lexicon-v6\.json$/)
 
@@ -121,18 +119,20 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 		}
 	})
 
-	test("the pocket tier still skips the channel entirely — a mismatch there cannot even be reached", () => {
-		stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), ["locality-surface-lexicon-v6.json"])
+	test("the pocket tier still skips the channel entirely — a mismatch there cannot even be reached", async () => {
+		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), ["locality-surface-lexicon-v6.json"])
 
-		expect(resolveWeights({ locale: "en-us", cacheRoot, tier: "pocket" }).localitySurfaceLexiconPath).toBeUndefined()
+		expect(
+			resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path, tier: "pocket" }).localitySurfaceLexiconPath
+		).toBeUndefined()
 	})
 
-	test("a non-string `lexicon` is a loud artifact bug, not a silent fallback", () => {
-		stagePackage({ requires: { locality_surface: { required: true, lexicon: 7 } } }, [
+	test("a non-string `lexicon` is a loud artifact bug, not a silent fallback", async () => {
+		await stagePackage({ requires: { locality_surface: { required: true, lexicon: 7 } } }, [
 			"locality-surface-lexicon-v6.json",
 		])
 
-		expect(() => resolveWeights({ locale: "en-us", cacheRoot })).toThrow(
+		expect(() => resolveWeights({ locale: "en-us", cacheRoot: cacheRoot.path })).toThrow(
 			/malformed `requires.locality_surface.lexicon`/
 		)
 	})

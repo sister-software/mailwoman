@@ -70,7 +70,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 
 	try {
 		const { result, tree, trace, timing } = await session.geocode(input)
-		const tilesPath = resolveTilesPath(options.tiles)
+		const tilesPath = await resolveTilesPath(options.tiles)
 		let frame: MapFrame | null = null
 		let mapNote: string | null = null
 
@@ -101,7 +101,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 					}
 				)
 			} finally {
-				await source.close()
+				await source[Symbol.asyncDispose]()
 			}
 		}
 
@@ -116,7 +116,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
 			columns
 		)
 	} finally {
-		session.close()
+		session[Symbol.dispose]()
 	}
 }
 
@@ -126,7 +126,7 @@ export async function runStaticDebug(input: string, options: GeocodeCommandOptio
  * entirely so it can't be re-wrapped at the piped 80-column default.
  */
 function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptions }): React.ReactElement | null {
-	const state = useCommandTask(() => runStaticDebug(props.input, props.options))
+	const state = useCommandTask(async () => await runStaticDebug(props.input, props.options))
 
 	if (state.status === "error") {
 		return <Text color="red">{state.message}</Text>

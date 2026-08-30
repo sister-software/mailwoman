@@ -37,6 +37,7 @@ import {
 	nearestInfrastructure,
 	NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS,
 } from "@mailwoman/bdc/sdk/nearest-infrastructure"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -46,9 +47,6 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { POI_H3_RESOLUTION, POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import {
 	createPOIBrandIndex,
@@ -191,7 +189,7 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
  * against whatever database the caller passes, independent of poi.db's own coverage.
  */
 async function openEmptyContractDB(): Promise<DatabaseClient<LayerContractDatabase>> {
-	const kdb = new DatabaseClient<LayerContractDatabase>(":memory:")
+	const kdb = DatabaseClient.temp<LayerContractDatabase>()
 
 	await createLayerManifestTable(kdb)
 	await createLayerCoverageTable(kdb)
@@ -214,19 +212,17 @@ async function openEmptyContractDB(): Promise<DatabaseClient<LayerContractDataba
 	return kdb
 }
 
-let scratch: string
+let scratch: TemporaryDirectory
 let poiDBPath: string
 
 beforeAll(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "bdc-nearest-infrastructure-"))
-	poiDBPath = join(scratch, "poi.db")
+	scratch = await temporaryDirectory("bdc-nearest-infrastructure-")
+	poiDBPath = scratch.resolve("poi.db")
 
 	await buildPOIFixture(poiDBPath, ALL_ROWS)
 })
 
-afterAll(async () => {
-	await rm(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 describe("nearestInfrastructure", () => {
 	it("returns telecom infrastructure nearest-first, excluding non-telecom categories", async () => {

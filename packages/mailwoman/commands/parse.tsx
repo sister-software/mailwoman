@@ -6,7 +6,8 @@
 
 import { Spinner } from "@inkjs/ui"
 import type { AddressTree } from "@mailwoman/core/decoder"
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -193,19 +194,19 @@ function ParseTask({
 				)
 			}
 
-			return runBenchmark(input, options, options.benchmark)
+			return await runBenchmark(input, options, options.benchmark)
 		}
 
 		// --policy implies the neural proposal/policy path.
 		if (options.policy && options.policy.length) {
 			const policyOverrides = parsePolicySpecs(options.policy)
 
-			return runNeural(input, options, policyOverrides)
+			return await runNeural(input, options, policyOverrides)
 		}
 
 		// --neural without --policy: legacy direct-neural path (kept for parity with old behavior).
 		if (options.neural) {
-			return runNeural(input, options, [])
+			return await runNeural(input, options, [])
 		}
 
 		// Guard said degraded (user declined the download, download failed, or --degraded): the real
@@ -253,11 +254,9 @@ async function tryBuildFST(options: ParseOptions): Promise<FSTMatcher | undefine
 	if (!dbPath) return undefined
 
 	try {
-		const { existsSync } = await import("@mailwoman/platform/fs")
-
-		if (!existsSync(dbPath)) return undefined
+		if (!(await pathExists(dbPath))) return undefined
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst-builder")
-		const { matcher } = buildFSTFromWOF({ dbPath })
+		const { matcher } = await buildFSTFromWOF({ dbPath })
 
 		return matcher
 	} catch {
@@ -347,7 +346,7 @@ async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) =
 
 		return await fn(resolver)
 	} finally {
-		lookup.close()
+		lookup[Symbol.dispose]()
 	}
 }
 
@@ -520,7 +519,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	const { createRuntimePipeline } = await import("#index")
 
 	if (options.resolve) {
-		return withResolver(options, async (resolver) => {
+		return await withResolver(options, async (resolver) => {
 			const fst = await tryBuildFST(options)
 			const pipeline = createRuntimePipeline({ classifier, resolver, fst, streetEvidence, poiQueryKind: options.poi })
 			const result = await pipeline(input, pipelineOpts)

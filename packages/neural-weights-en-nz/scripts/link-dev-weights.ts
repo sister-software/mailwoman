@@ -44,9 +44,10 @@
  *   not build-time savings.
  */
 
+import { readLocalTextFile, statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
@@ -68,7 +69,7 @@ const MD5_HEX_LENGTH = 32
  */
 const DEST_DIR = String(weightsOverlayPath("en-nz"))
 
-mkdirSync(DEST_DIR, { recursive: true })
+await makeDirectories(DEST_DIR)
 
 /**
  * Read or compute MD5 hash for a file, using a sidecar .md5 cache to avoid re-hashing large files. The sidecar is
@@ -78,14 +79,14 @@ mkdirSync(DEST_DIR, { recursive: true })
  */
 async function md5FileWithSidecar(path: string): Promise<string> {
 	const sidecarPath = `${path}.md5`
-	const sourceStats = statSync(path)
+	const sourceStats = await statPath(path)
 
-	if (existsSync(sidecarPath)) {
+	if (await pathExists(sidecarPath)) {
 		try {
-			const sidecarStats = statSync(sidecarPath)
+			const sidecarStats = await statPath(sidecarPath)
 
 			if (sidecarStats.mtime >= sourceStats.mtime) {
-				const sidecarContent = readFileSync(sidecarPath, "utf8").trim()
+				const sidecarContent = (await readLocalTextFile(sidecarPath)).trim()
 				const [hash] = sidecarContent.split(/\s+/)
 
 				if (hash && hash.length === MD5_HEX_LENGTH) {
@@ -102,15 +103,15 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 
 	const hash = await md5File(path)
 	const filename = path.split(/[/\\]/).pop() || path
-	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
+	await writeLocalTextFile(`${hash}  ${filename}\n`, sidecarPath)
 
 	console.log(`md5(${path}): computed and cached in sidecar`)
 
 	return hash
 }
 
-removeIfPresent(resolve(DEST_DIR, "model.onnx"))
-removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
+await removeIfPresent(resolve(DEST_DIR, "model.onnx"))
+await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----.
@@ -121,7 +122,7 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
  */
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
-if (existsSync(SRC_GAZETTEER_LEXICON)) {
+if (await pathExists(SRC_GAZETTEER_LEXICON)) {
 	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
@@ -129,7 +130,7 @@ if (existsSync(SRC_GAZETTEER_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
 }
 
-if (existsSync(SRC_COUNTRY_LEXICON)) {
+if (await pathExists(SRC_COUNTRY_LEXICON)) {
 	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
@@ -168,9 +169,9 @@ const PAIR_INDEX_PARENT_DELTA = 5
 
 let pairIndexIsFresh = false
 
-if (existsSync(PAIR_INDEX_BIN_DEST)) {
+if (await pathExists(PAIR_INDEX_BIN_DEST)) {
 	try {
-		const header = peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
+		const header = await peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST)
 		const existingSourceMD5s = header.sourceMD5s
 
 		// Format + every calibrated magnitude, through the shared check — see `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`.
@@ -183,7 +184,7 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 
 		if (staleReason) {
 			console.log(`STALE pair-index-nz.bin: ${staleReason} — rebuilding.`)
-		} else if (!existsSync(String(NZ_SOURCE_CSV))) {
+		} else if (!(await pathExists(String(NZ_SOURCE_CSV)))) {
 			// Delta matches but the source CSV isn't on disk to re-hash — can't do better than trust the
 			// delta match (the "missing source, can't build" branch below would fire anyway if this were
 			// stale and needed a rebuild).
@@ -228,11 +229,11 @@ if (existsSync(PAIR_INDEX_BIN_DEST)) {
 
 if (pairIndexIsFresh) {
 	// Nothing to do — the loud skip/rebuild message was already printed above.
-} else if (!existsSync(CLI)) {
+} else if (!(await pathExists(CLI))) {
 	console.error(
 		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build pair-index-nz.bin.`
 	)
-} else if (!existsSync(String(NZ_SOURCE_CSV))) {
+} else if (!(await pathExists(String(NZ_SOURCE_CSV)))) {
 	console.error(
 		`WARNING: missing ${NZ_SOURCE_CSV} — pair-index-nz.bin not built; the placetype-pair prior default will resolve OFF for NZ.`
 	)
@@ -257,7 +258,7 @@ if (pairIndexIsFresh) {
 		{ stdio: "inherit" }
 	)
 
-	if (result.status !== 0 || !existsSync(PAIR_INDEX_BIN_DEST)) {
+	if (result.status !== 0 || !(await pathExists(PAIR_INDEX_BIN_DEST))) {
 		console.error(`ERROR: failed to build ${PAIR_INDEX_BIN_DEST} (exit ${result.status})`)
 
 		process.exit(1)
@@ -279,7 +280,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
  */
 const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
-if (existsSync(MORPHOLOGY_SRC)) {
+if (await pathExists(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
 
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)

@@ -47,7 +47,7 @@
  */
 
 import { candidateSystemsForPostcode, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture } from "./fixture.ts"
@@ -305,7 +305,7 @@ export function whitespaceApplicability(
 export const WHITESPACE_SUITE_PATH = ((): string => {
 	const sibling = fileURLToPath(new URL("whitespace.jsonl", import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL("../../../eval-harness/conformance/whitespace.jsonl", import.meta.url))
 })()

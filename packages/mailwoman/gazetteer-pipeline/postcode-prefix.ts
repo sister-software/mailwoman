@@ -217,36 +217,32 @@ function resolveGBAncestry(adminPath: string): {
 	country: PostcodePrefixAncestor
 	constituent: Record<UkCountryCode, PostcodePrefixAncestor>
 } {
-	const db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
 
-	try {
-		const countryRow = db
-			.prepare(`select id, name from spr where country = 'GB' and placetype = 'country' limit 1`)
-			.get() as AdminSurfaceRow | undefined
+	const countryRow = db
+		.prepare(`select id, name from spr where country = 'GB' and placetype = 'country' limit 1`)
+		.get() as AdminSurfaceRow | undefined
 
-		if (!countryRow) {
-			throw new Error(`postcode-prefix: no GB country row in ${adminPath}`)
+	if (!countryRow) {
+		throw new Error(`postcode-prefix: no GB country row in ${adminPath}`)
+	}
+
+	const stmt = db.prepare(`select id, name from spr where country = 'GB' and placetype = 'macroregion' and name = ?`)
+	const constituent = {} as Record<UkCountryCode, PostcodePrefixAncestor>
+
+	for (const [code, name] of Object.entries(UK_COUNTRY_WOF_NAME) as Array<[UkCountryCode, string]>) {
+		const row = stmt.get(name) as AdminSurfaceRow | undefined
+
+		if (!row) {
+			throw new Error(`postcode-prefix: no GB macroregion named "${name}" in ${adminPath}`)
 		}
 
-		const stmt = db.prepare(`select id, name from spr where country = 'GB' and placetype = 'macroregion' and name = ?`)
-		const constituent = {} as Record<UkCountryCode, PostcodePrefixAncestor>
+		constituent[code] = { placetype: "macroregion", wofID: row.id, name: row.name }
+	}
 
-		for (const [code, name] of Object.entries(UK_COUNTRY_WOF_NAME) as Array<[UkCountryCode, string]>) {
-			const row = stmt.get(name) as AdminSurfaceRow | undefined
-
-			if (!row) {
-				throw new Error(`postcode-prefix: no GB macroregion named "${name}" in ${adminPath}`)
-			}
-
-			constituent[code] = { placetype: "macroregion", wofID: row.id, name: row.name }
-		}
-
-		return {
-			country: { placetype: "country", wofID: countryRow.id, name: countryRow.name },
-			constituent,
-		}
-	} finally {
-		db.destroy()
+	return {
+		country: { placetype: "country", wofID: countryRow.id, name: countryRow.name },
+		constituent,
 	}
 }
 
@@ -607,17 +603,13 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
  * claimed for them because their units land in no US region polygon.
  */
 function resolveUSCountry(adminPath: string): PostcodePrefixAncestor {
-	const db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
 
-	try {
-		const row = db.prepare(`select id, name from spr where country = 'US' and placetype = 'country' limit 1`).get() as
-			| AdminSurfaceRow
-			| undefined
+	const row = db.prepare(`select id, name from spr where country = 'US' and placetype = 'country' limit 1`).get() as
+		| AdminSurfaceRow
+		| undefined
 
-		if (!row) throw new Error(`postcode-prefix: no US country row in ${adminPath}`)
+	if (!row) throw new Error(`postcode-prefix: no US country row in ${adminPath}`)
 
-		return { placetype: "country", wofID: row.id, name: row.name }
-	} finally {
-		db.destroy()
-	}
+	return { placetype: "country", wofID: row.id, name: row.name }
 }

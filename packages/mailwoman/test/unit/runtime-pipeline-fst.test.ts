@@ -8,8 +8,9 @@
  *   default gazetteer on the first call (lazy), with `fst: false` as the byte-stable opt-out.
  */
 
-import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst-builder"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -22,31 +23,27 @@ import { describe, expect, it } from "vitest"
  * Build a minimal but REAL FST binary (one locality entry, "testville") via the actual builder + serializer — no
  * hand-rolled bytes. Returns the written file path.
  */
-function writeTinyFST(dir: string): string {
+async function writeTinyFST(dir: string): Promise<string> {
 	const dbPath = join(dir, "tiny-wof.db")
-	const db = new DatabaseClient<WOFDatabase>(dbPath)
+	using db = new DatabaseClient<WOFDatabase>(dbPath)
 
-	try {
-		db.exec(
-			"CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, parent_id INTEGER, latitude REAL, longitude REAL, is_current INTEGER)"
-		)
+	db.exec(
+		"CREATE TABLE spr (id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, country TEXT, parent_id INTEGER, latitude REAL, longitude REAL, is_current INTEGER)"
+	)
 
-		db.exec("CREATE TABLE names (id INTEGER, name TEXT, language TEXT, privateuse TEXT)")
-		db.exec("CREATE TABLE place_importance (id INTEGER PRIMARY KEY, importance REAL)")
+	db.exec("CREATE TABLE names (id INTEGER, name TEXT, language TEXT, privateuse TEXT)")
+	db.exec("CREATE TABLE place_importance (id INTEGER PRIMARY KEY, importance REAL)")
 
-		db.prepare(
-			"INSERT INTO spr (id, name, placetype, country, latitude, longitude, is_current) VALUES (1, 'Testville', 'locality', 'US', 40.0, -75.0, 1)"
-		).run()
+	db.prepare(
+		"INSERT INTO spr (id, name, placetype, country, latitude, longitude, is_current) VALUES (1, 'Testville', 'locality', 'US', 40.0, -75.0, 1)"
+	).run()
 
-		db.prepare("INSERT INTO names (id, name, language) VALUES (1, 'testville', 'eng')").run()
-		db.prepare("INSERT INTO place_importance (id, importance) VALUES (1, 0.5)").run()
-	} finally {
-		db.destroy()
-	}
+	db.prepare("INSERT INTO names (id, name, language) VALUES (1, 'testville', 'eng')").run()
+	db.prepare("INSERT INTO place_importance (id, importance) VALUES (1, 0.5)").run()
 
-	const { matcher, provenance } = buildFSTFromWOF({ dbPath, countries: ["US"], languages: ["*"] })
+	const { matcher, provenance } = await buildFSTFromWOF({ dbPath, countries: ["US"], languages: ["*"] })
 	const fstPath = join(dir, "fst-en-us.bin")
-	writeFileSync(fstPath, serializeFST(matcher, provenance))
+	await writeLocalFile(serializeFST(matcher, provenance), fstPath)
 
 	return fstPath
 }
@@ -72,8 +69,9 @@ function fakeClassifier(fstPath?: string) {
 
 describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)", () => {
 	it("auto-loads the classifier's fstPath gazetteer and passes it to parse on the first call", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "mw-fst-autoload-"))
-		const { classifier, calls } = fakeClassifier(writeTinyFST(dir))
+		await using dirDirectory = await temporaryDirectory("mw-fst-autoload-")
+		const dir = dirDirectory.path
+		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
 		const pipeline = createRuntimePipeline({ classifier })
 
 		await pipeline("1 Testville Road")
@@ -86,8 +84,9 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 	})
 
 	it("fst: false suppresses the auto-load (byte-stable override)", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "mw-fst-optout-"))
-		const { classifier, calls } = fakeClassifier(writeTinyFST(dir))
+		await using dirDirectory = await temporaryDirectory("mw-fst-optout-")
+		const dir = dirDirectory.path
+		const { classifier, calls } = fakeClassifier(await writeTinyFST(dir))
 		const pipeline = createRuntimePipeline({ classifier, fst: false })
 
 		await pipeline("1 Testville Road")
@@ -106,12 +105,13 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 	})
 
 	it("an explicit caller-supplied FST wins over the auto-load", async () => {
-		const dir = mkdtempSync(join(tmpdir(), "mw-fst-explicit-"))
-		const explicitPath = writeTinyFST(dir)
+		await using dirDirectory = await temporaryDirectory("mw-fst-explicit-")
+		const dir = dirDirectory.path
+		const explicitPath = await writeTinyFST(dir)
 		const { classifier, calls } = fakeClassifier(explicitPath)
 		const { deserializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst-serialize")
-		const { readFileSync } = await import("@mailwoman/platform/fs")
-		const explicit = deserializeFST(readFileSync(explicitPath))
+
+		const explicit = deserializeFST(await readLocalBuffer(explicitPath))
 		const pipeline = createRuntimePipeline({ classifier, fst: explicit })
 
 		await pipeline("1 Testville Road")

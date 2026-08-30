@@ -14,7 +14,7 @@
  *   scrollback. A full listing is 200+ lines, so on any terminal it would.
  */
 
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
 
@@ -93,13 +93,13 @@ const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const dataRoot = options.dataRoot ?? String(mailwomanDataRoot())
 
-		const report = takeInventory({
+		const report = await takeInventory({
 			dataRoot,
 			...(options.depth ? { maxDepth: Number(options.depth) } : {}),
 		})
 
 		if (options.json) {
-			writeRawStdout(`${JSON.stringify(report, null, "\t")}\n`)
+			writeRawStdout(report)
 
 			return { ok: true }
 		}

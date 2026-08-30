@@ -19,8 +19,10 @@
  *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
  */
 
+import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { prettyJSON } from "@mailwoman/core/objects"
 import { looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname, join } from "@mailwoman/platform/path"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 
@@ -182,17 +184,17 @@ export interface BuildCapitalsResult {
  * names, and write the reference. Throws when `countryInfo.txt` is absent — without the catalog there is no
  * denominator, and a reference built from "whatever files exist" cannot state what it failed to cover.
  */
-export function buildCapitalsReference(options: BuildCapitalsOptions): BuildCapitalsResult {
+export async function buildCapitalsReference(options: BuildCapitalsOptions): Promise<BuildCapitalsResult> {
 	const countryInfoPath = join(options.geonamesDir, "countryInfo.txt")
 
-	if (!existsSync(countryInfoPath)) {
+	if (!(await pathExists(countryInfoPath))) {
 		throw new Error(
 			`countryInfo.txt not found in ${options.geonamesDir} — run \`mailwoman corpus fetch geonames-dump\` first; ` +
 				"the catalog is the coverage denominator"
 		)
 	}
 
-	const catalog = parseCountryInfo(readFileSync(countryInfoPath, "utf8"))
+	const catalog = parseCountryInfo(await readLocalTextFile(countryInfoPath))
 
 	const entries: CapitalReferenceEntry[] = []
 	const missingDumps: string[] = []
@@ -204,13 +206,13 @@ export function buildCapitalsReference(options: BuildCapitalsOptions): BuildCapi
 	for (const { country, capital } of catalog) {
 		const dumpPath = join(options.geonamesDir, `${country}.txt`)
 
-		if (!existsSync(dumpPath)) {
+		if (!(await pathExists(dumpPath))) {
 			missingDumps.push(country)
 
 			continue
 		}
 
-		const text = readFileSync(dumpPath, "utf8")
+		const text = await readLocalTextFile(dumpPath)
 
 		if (!looksLikeGazetteerDump(text)) {
 			wrongFormat.push(country)
@@ -261,11 +263,11 @@ export function buildCapitalsReference(options: BuildCapitalsOptions): BuildCapi
 	}
 
 	// One entry per line: the header reads like JSON, the entry block diffs like a table.
-	const head = JSON.stringify({ ...reference, entries: undefined }, null, "\t").replace(/\n\}$/, ",\n")
+	const head = prettyJSON({ ...reference, entries: undefined }, false).replace(/\n\}$/, ",\n")
 	const body = reference.entries.map((e) => "\t\t" + JSON.stringify(e)).join(",\n")
 
-	mkdirSync(dirname(options.outPath), { recursive: true })
-	writeFileSync(options.outPath, `${head}\t"entries": [\n${body}\n\t]\n}\n`)
+	await makeDirectories(dirname(options.outPath))
+	await writeLocalTextFile(`${head}\t"entries": [\n${body}\n\t]\n}\n`, options.outPath)
 
 	return { outPath: options.outPath, coverage: reference.coverage }
 }

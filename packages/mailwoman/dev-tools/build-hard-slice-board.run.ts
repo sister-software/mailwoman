@@ -22,9 +22,10 @@
  *   Run: node packages/mailwoman/dev-tools/build-hard-slice-board.run.ts [--out <path>]
  */
 
+import { readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -49,7 +50,7 @@ const WOF_DB = String(dataRootPath("wof", "fst-staging-2026-08-05", "admin-globa
 const POP_FST_DIR = String(dataRootPath("wof", "fst-per-locale"))
 const IMP_FST_DIR = String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix"))
 
-const db = new DatabaseClient<WOFDatabase>(WOF_DB, { readOnly: true })
+using db = new DatabaseClient<WOFDatabase>(WOF_DB, { readOnly: true })
 const pointStmt = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")
 
 interface Point {
@@ -68,14 +69,14 @@ function pointOf(id: number): Point {
 
 const matcherCache = new Map<string, { pop: unknown; imp: unknown }>()
 
-function matchers(locale: string): { pop: unknown; imp: unknown } {
+async function matchers(locale: string): Promise<{ pop: unknown; imp: unknown }> {
 	const cached = matcherCache.get(locale)
 
 	if (cached) return cached
 
 	const pair = {
-		pop: deserializeFST(readFileSync(`${POP_FST_DIR}/fst-${locale}.bin`)),
-		imp: deserializeFST(readFileSync(`${IMP_FST_DIR}/fst-${locale}.bin`)),
+		pop: deserializeFST(await readLocalBuffer(`${POP_FST_DIR}/fst-${locale}.bin`)),
+		imp: deserializeFST(await readLocalBuffer(`${IMP_FST_DIR}/fst-${locale}.bin`)),
 	}
 
 	matcherCache.set(locale, pair)
@@ -123,7 +124,7 @@ async function sweepRow(cc: string, caseID: string): Promise<Record<string, unkn
 const out: HardSliceCase[] = []
 
 for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
-	const { pop, imp } = matchers(c.locale)
+	const { pop, imp } = await matchers(c.locale)
 	const popTags = biasOf(pop, c.probeSurface)
 	const impTags = biasOf(imp, c.probeSurface)
 	// Report on the tag the row is ABOUT — locality unless the curator named another. A surface the FST
@@ -175,7 +176,7 @@ for (const s of SWEEP_ROWS) {
 	// and "Nassau" 0.0755 → 0.4234 from 8 — real bias, on rows whose correct answer is in RU and BS. A
 	// declared zero would have hidden the single most interesting thing about this class, which is that
 	// the gazetteer can only pull these rows toward the WRONG place.
-	const { pop, imp } = matchers(locale)
+	const { pop, imp } = await matchers(locale)
 	const popTags = biasOf(pop, s.probeSurface)
 	const impTags = biasOf(imp, s.probeSurface)
 
@@ -199,7 +200,7 @@ for (const s of SWEEP_ROWS) {
 }
 
 const sorted = out.toSorted((a, b) => a.id.localeCompare(b.id))
-writeFileSync(OUT, `${sorted.map((c) => JSON.stringify(canonicalizeHardSliceCase(c))).join("\n")}\n`)
+await writeLocalTextFile(`${sorted.map((c) => JSON.stringify(canonicalizeHardSliceCase(c))).join("\n")}\n`, OUT)
 
 const inReach = sorted.filter((c) => c.fstReach === "in").length
 const moved = sorted.filter((c) => c.popBias !== c.impBias).length
@@ -207,7 +208,5 @@ const moved = sorted.filter((c) => c.popBias !== c.impBias).length
 console.error(`wrote ${sorted.length} rows → ${OUT}`)
 console.error(`  fstReach in=${inReach} out=${sorted.length - inReach}`)
 console.error(`  rows whose probe surface has a DIFFERENT bias between arms: ${moved}`)
-
-await db.destroy()
 
 //#endregion

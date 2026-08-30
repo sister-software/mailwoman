@@ -9,9 +9,9 @@
  *   satisfying {@link SECIngestClient}.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { toCIK, type CompanyTickerEntry } from "@mailwoman/filer/sdk/edgar-filings"
 import { collectEdgarSubsidiaryRows, EdgarSkipReason, type SECIngestClient } from "@mailwoman/filer/sdk/edgar-ingest"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
@@ -23,8 +23,8 @@ const TICKERS: CompanyTickerEntry[] = [
 	{ cik: WIDEPOINT, ticker: "WYY", title: "WidePoint Corp" },
 ]
 
-function exhibit(name: string): string {
-	return readFileSync(join(import.meta.dirname, "../../../test-fixtures/edgar", name), "utf8")
+async function exhibit(name: string): Promise<string> {
+	return await readLocalTextFile(join(import.meta.dirname, "../../../test-fixtures/edgar", name))
 }
 
 const CABLE_ONE_HEADERS = `
@@ -36,12 +36,12 @@ const CABLE_ONE_HEADERS = `
 /**
  * Build a client over a per-registrant script: SIC, whether it has a 10-K, and which exhibit fixture to serve.
  */
-function stubClient(
+async function stubClient(
 	script: Record<
 		string,
 		{ sic?: string; name: string; tenK?: boolean; headers?: string; exhibit?: string; cikPath?: string }
 	>
-): SECIngestClient {
+): Promise<SECIngestClient> {
 	return {
 		get: <T>(input: string | URL): Promise<T> => {
 			const cik = /CIK(\d{10})\.json/.exec(String(input))?.[1] ?? ""
@@ -70,14 +70,14 @@ function stubClient(
 
 			if (url.includes("index-headers")) return Promise.resolve(entry?.headers ?? "")
 
-			return Promise.resolve(entry?.exhibit ? exhibit(entry.exhibit) : "")
+			return entry?.exhibit ? exhibit(entry.exhibit) : Promise.resolve("")
 		},
 	}
 }
 
 describe("collectEdgarSubsidiaryRows — the happy path", () => {
 	it("produces EdgarSubsidiaryRows from a real Exhibit 21", async () => {
-		const client = stubClient({
+		const client = await stubClient({
 			"0001632127": {
 				cikPath: "1632127",
 				sic: "4841",
@@ -103,7 +103,7 @@ describe("collectEdgarSubsidiaryRows — the happy path", () => {
 	})
 
 	it("stamps the FILING date on every row, not the run date", async () => {
-		const client = stubClient({
+		const client = await stubClient({
 			"0001632127": {
 				cikPath: "1632127",
 				sic: "4841",
@@ -122,7 +122,7 @@ describe("collectEdgarSubsidiaryRows — the happy path", () => {
 describe("collectEdgarSubsidiaryRows — the gate cannot be bypassed", () => {
 	it("drops a registrant SEC files outside the telecom range, however good the name score", async () => {
 		// This is the WideOpenWest -> WidePoint false match, at 0.886. Without the gate it writes 9 rows.
-		const client = stubClient({
+		const client = await stubClient({
 			"0001034760": {
 				cikPath: "1034760",
 				sic: "7373",
@@ -139,7 +139,7 @@ describe("collectEdgarSubsidiaryRows — the gate cannot be bypassed", () => {
 	})
 
 	it("admits that same registrant once an operator pins it", async () => {
-		const client = stubClient({
+		const client = await stubClient({
 			"0001034760": {
 				cikPath: "1034760",
 				sic: "7373",
@@ -164,7 +164,7 @@ describe("collectEdgarSubsidiaryRows — the gate cannot be bypassed", () => {
 			{ cik: CABLE_ONE, ticker: "CABO", title: "Cable One, Inc." },
 		]
 
-		const client = stubClient({
+		const client = await stubClient({
 			"0001034760": { cikPath: "1034760", sic: "7373", name: "WidePoint Corp" },
 			"0001632127": {
 				cikPath: "1632127",
@@ -186,7 +186,7 @@ describe("collectEdgarSubsidiaryRows — the gate cannot be bypassed", () => {
 			{ cik: WIDEPOINT, ticker: "WYY", title: "American Broadband LLC" },
 		]
 
-		const client = stubClient({
+		const client = await stubClient({
 			"0001632127": { cikPath: "1632127", sic: "4841", name: "American Broadband, Inc." },
 			"0001034760": { cikPath: "1034760", sic: "4813", name: "American Broadband LLC" },
 		})
@@ -201,14 +201,14 @@ describe("collectEdgarSubsidiaryRows — the gate cannot be bypassed", () => {
 
 describe("collectEdgarSubsidiaryRows — every drop is counted", () => {
 	it("records an unresolvable name", async () => {
-		const { report } = await collectEdgarSubsidiaryRows(stubClient({}), ["Zzyzx Unrelated Holdings"], TICKERS)
+		const { report } = await collectEdgarSubsidiaryRows(await stubClient({}), ["Zzyzx Unrelated Holdings"], TICKERS)
 
 		expect(report.skipped[EdgarSkipReason.Unresolved]).toBe(1)
 		expect(report.outcomes[0]).toMatchObject({ query: "Zzyzx Unrelated Holdings", subsidiaries: 0 })
 	})
 
 	it("records a registrant with no 10-K", async () => {
-		const client = stubClient({
+		const client = await stubClient({
 			"0001632127": { cikPath: "1632127", sic: "4841", name: "Cable One, Inc.", tenK: false },
 		})
 
@@ -218,7 +218,7 @@ describe("collectEdgarSubsidiaryRows — every drop is counted", () => {
 	})
 
 	it("records a 10-K carrying no Exhibit 21 — a filer's choice, not a failure", async () => {
-		const client = stubClient({
+		const client = await stubClient({
 			"0001632127": { cikPath: "1632127", sic: "4841", name: "Cable One, Inc.", headers: "<html>none</html>" },
 		})
 
@@ -228,7 +228,7 @@ describe("collectEdgarSubsidiaryRows — every drop is counted", () => {
 	})
 
 	it("emits an outcome for EVERY query, including the ones that worked", async () => {
-		const client = stubClient({
+		const client = await stubClient({
 			"0001632127": {
 				cikPath: "1632127",
 				sic: "4841",
@@ -249,7 +249,7 @@ describe("collectEdgarSubsidiaryRows — every drop is counted", () => {
 	})
 
 	it("carries the parser's abstention count so an unhandled layout is visible", async () => {
-		const client = stubClient({
+		const client = await stubClient({
 			"0001632127": {
 				cikPath: "1632127",
 				sic: "4841",

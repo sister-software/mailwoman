@@ -194,7 +194,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 		const { completeness } = coverage
 
 		return [
-			`poi coverage layer (${options.category}/${region}): ${out} (${artifactSizeMB(out)} MB)`,
+			`poi coverage layer (${options.category}/${region}): ${out} (${await artifactSizeMB(out)} MB)`,
 			`${result.rows.toLocaleString()} rows · ${result.coverageCells.toLocaleString()} surveyed cells ` +
 				`· ${coverage.emptyCells.toLocaleString()} of them observed-empty`,
 			`inventories: reference ${completeness.firstCount.toLocaleString()} · subject ${completeness.secondCount.toLocaleString()}` +

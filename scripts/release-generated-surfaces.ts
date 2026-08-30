@@ -17,9 +17,9 @@
  *   same tree is a no-op by construction (the generators are deterministic over the compiled CLI).
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
 
@@ -36,7 +36,7 @@ async function releaseGeneratedSurfaces(): Promise<void> {
 	const repoRoot = String(repoRootPath())
 	const compiledCLI = resolve(repoRoot, "packages/mailwoman/out/cli.js")
 
-	if (!existsSync(compiledCLI)) {
+	if (!(await pathExists(compiledCLI))) {
 		throw new Error(
 			`release-generated-surfaces: ${compiledCLI} is missing — run \`yarn compile\` first. The generators spawn ` +
 				"the compiled CLI, and running against a stale or absent out/ is how a version stamp goes wrong silently."

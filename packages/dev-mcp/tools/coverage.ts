@@ -7,8 +7,9 @@
  *   The census itself lives in `../coverage-census.ts`; this file is the CONTRACT.
  */
 
+import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
+import { statPathSync } from "@mailwoman/core/fs/readers-sync"
 import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
-import { existsSync, readdirSync, statSync } from "@mailwoman/platform/fs"
 import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage-census"
 import { z } from "zod"
 
@@ -25,14 +26,14 @@ import type { DevTool, DevToolDeps } from "../tool-kit.ts"
  * Mtime is a proxy and can be wrong after a checkout, so the report always names the config it used. Pass one
  * explicitly when the answer matters.
  */
-function newestConfig(repoRoot: string): string {
+async function newestConfig(repoRoot: string): Promise<string> {
 	const dir = `${repoRoot}/corpus-python/src/mailwoman_train/configs`
 
-	if (!existsSync(dir)) return ""
+	if (!(await pathExists(dir))) return ""
 
-	const named = readdirSync(dir)
+	const named = (await readDirectory(dir))
 		.filter((n) => n.endsWith(".yaml") && !n.includes("smoke"))
-		.map((n) => ({ n, at: statSync(`${dir}/${n}`).mtimeMs }))
+		.map((n) => ({ n, at: statPathSync(`${dir}/${n}`).mtimeMs }))
 		.toSorted((a, b) => b.at - a.at)
 
 	return named.length ? `${dir}/${named[0]!.n}` : ""
@@ -46,19 +47,19 @@ function newestConfig(repoRoot: string): string {
  * (`v8` beats both). Measured: the name sort picked `v0.9.9` and reported the coverage of a corpus nine versions old,
  * with nothing in the output to say it had. The report always names the manifest it used.
  */
-function newestManifest(): string {
+async function newestManifest(): Promise<string> {
 	const root = String(dataRootPath("corpus", "versioned"))
 
-	if (!existsSync(root)) return ""
+	if (!(await pathExists(root))) return ""
 
 	const found: Array<{ path: string; at: number }> = []
 
-	for (const version of readdirSync(root)) {
-		for (const inner of readdirSync(`${root}/${version}`)) {
+	for (const version of await readDirectory(root)) {
+		for (const inner of await readDirectory(`${root}/${version}`)) {
 			const candidate = `${root}/${version}/${inner}/MANIFEST.json`
 
-			if (existsSync(candidate)) {
-				found.push({ path: candidate, at: statSync(candidate).mtimeMs })
+			if (await pathExists(candidate)) {
+				found.push({ path: candidate, at: (await statPath(candidate)).mtimeMs })
 			}
 		}
 	}
@@ -93,7 +94,7 @@ function line(c: CountryCoverage): string {
 	return `${c.country} | parse: ${parse} | geocode: ${geo} | board: ${board}${c.weightsPackage ? ` | pkg: ${c.weightsPackage}` : ""}`
 }
 
-export const coverageTool = (_deps: DevToolDeps): DevTool => ({
+export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_coverage",
 	description:
 		"What can mailwoman actually do, per country — parse and geocode kept APART, from primary sources. Answers " +
@@ -127,8 +128,8 @@ export const coverageTool = (_deps: DevToolDeps): DevTool => ({
 			),
 	}),
 	handler: async (args) => {
-		const configPath = (args["config"] as string | undefined) ?? newestConfig(String(repoRootPath()))
-		const manifestPath = newestManifest()
+		const configPath = (args["config"] as string | undefined) ?? (await newestConfig(String(repoRootPath())))
+		const manifestPath = await newestManifest()
 
 		if (!configPath || !manifestPath) {
 			return {

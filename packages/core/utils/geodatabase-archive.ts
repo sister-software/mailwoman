@@ -22,11 +22,12 @@
  */
 
 import { execFile } from "@mailwoman/platform/child_process"
-import { mkdir } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 
-import { pathExists } from "./path-exists.ts"
+import { tryStat } from "#fs/readers"
+import { makeDirectories } from "#fs/writers"
+
 import { streamToDisk } from "./stream-to-disk.ts"
 
 const execFileAsync = promisify(execFile)
@@ -70,17 +71,17 @@ export async function downloadZippedGeodatabase(options: DownloadZippedGeodataba
 	const vintageDir = join(options.cacheRoot, options.revisionDate)
 	const geodatabasePath = join(vintageDir, options.directory)
 
-	if (await pathExists(geodatabasePath)) {
+	if (await tryStat(geodatabasePath)) {
 		options.onProgress?.(`geodatabase for ${options.revisionDate} already unzipped`)
 
 		return geodatabasePath
 	}
 
-	await mkdir(vintageDir, { recursive: true })
+	await makeDirectories(vintageDir)
 
 	const archivePath = join(vintageDir, options.resource)
 
-	if (await pathExists(archivePath)) {
+	if (await tryStat(archivePath)) {
 		options.onProgress?.(`archive for ${options.revisionDate} already downloaded`)
 	} else {
 		await streamToDisk({
@@ -93,7 +94,7 @@ export async function downloadZippedGeodatabase(options: DownloadZippedGeodataba
 
 	options.onProgress?.("unzipping")
 
-	await mkdir(geodatabasePath, { recursive: true })
+	await makeDirectories(geodatabasePath)
 	await execFileAsync("unzip", ["-o", "-q", archivePath, "-d", geodatabasePath])
 
 	return geodatabasePath

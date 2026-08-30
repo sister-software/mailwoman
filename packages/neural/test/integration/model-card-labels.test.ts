@@ -16,47 +16,44 @@
  *   hermetic: no model file required, just tmp model-card.json fixtures.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { readLabelsFromModelCard, resolveWeights } from "@mailwoman/neural/weights"
-import { mkdtempSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
-let dir: string
+let dir: TemporaryDirectory
 
-beforeEach(() => {
-	dir = mkdtempSync(join(tmpdir(), "mailwoman-mc-"))
+beforeEach(async () => {
+	dir = await temporaryDirectory("mailwoman-mc-")
 })
 
-afterEach(() => {
-	rmSync(dir, { recursive: true, force: true })
-})
+afterEach(() => dir[Symbol.asyncDispose]())
 
-function writeCard(payload: unknown): string {
-	const p = join(dir, "model-card.json")
-	writeFileSync(p, JSON.stringify(payload, null, 2), "utf8")
+async function writeCard(payload: unknown): Promise<string> {
+	const p = dir.resolve("model-card.json")
+	await writeLocalJSONFile(payload, p)
 
 	return p
 }
 
 describe("readLabelsFromModelCard", () => {
-	test("returns the labels array when the card carries one", () => {
+	test("returns the labels array when the card carries one", async () => {
 		const labels = ["O", "B-country", "I-country"]
-		const out = readLabelsFromModelCard(writeCard({ labels }))
+		const out = readLabelsFromModelCard(await writeCard({ labels }))
 		expect(out).toEqual(labels)
 	})
 
-	test("returns a frozen copy (mutating it does not change the on-disk semantics)", () => {
+	test("returns a frozen copy (mutating it does not change the on-disk semantics)", async () => {
 		const labels = ["O", "B-country", "I-country"]
-		const out = readLabelsFromModelCard(writeCard({ labels }))!
+		const out = readLabelsFromModelCard(await writeCard({ labels }))!
 		expect(Object.isFrozen(out)).toBe(true)
 	})
 
-	test("returns undefined when the card has no labels field (legacy v3.0.0 cards)", () => {
-		const out = readLabelsFromModelCard(writeCard({ components_supported: ["country"] }))
+	test("returns undefined when the card has no labels field (legacy v3.0.0 cards)", async () => {
+		const out = readLabelsFromModelCard(await writeCard({ components_supported: ["country"] }))
 		expect(out).toBeUndefined()
 	})
 
@@ -65,27 +62,27 @@ describe("readLabelsFromModelCard", () => {
 	})
 
 	test("returns undefined when the file does not exist", () => {
-		expect(readLabelsFromModelCard(join(dir, "missing.json"))).toBeUndefined()
+		expect(readLabelsFromModelCard(dir.resolve("missing.json"))).toBeUndefined()
 	})
 
-	test("returns undefined when the file is not valid JSON", () => {
-		const p = join(dir, "model-card.json")
-		writeFileSync(p, "{ not: json,", "utf8")
+	test("returns undefined when the file is not valid JSON", async () => {
+		const p = dir.resolve("model-card.json")
+		await writeLocalTextFile("{ not: json,", p)
 		expect(readLabelsFromModelCard(p)).toBeUndefined()
 	})
 
-	test("throws when labels is present but the wrong type (number instead of array)", () => {
-		const p = writeCard({ labels: 21 })
+	test("throws when labels is present but the wrong type (number instead of array)", async () => {
+		const p = await writeCard({ labels: 21 })
 		expect(() => readLabelsFromModelCard(p)).toThrow(/malformed `labels` field/)
 	})
 
-	test("throws when labels array contains non-strings", () => {
-		const p = writeCard({ labels: ["O", 1, "I-country"] })
+	test("throws when labels array contains non-strings", async () => {
+		const p = await writeCard({ labels: ["O", 1, "I-country"] })
 		expect(() => readLabelsFromModelCard(p)).toThrow(/malformed `labels` field/)
 	})
 
-	test("throws when labels array is empty", () => {
-		const p = writeCard({ labels: [] })
+	test("throws when labels array is empty", async () => {
+		const p = await writeCard({ labels: [] })
 		expect(() => readLabelsFromModelCard(p)).toThrow(/malformed `labels` field/)
 	})
 })

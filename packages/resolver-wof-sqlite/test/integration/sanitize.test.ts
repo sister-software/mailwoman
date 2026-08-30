@@ -15,7 +15,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 function buildFixtureDB(): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	db.exec(`
 		CREATE TABLE spr (
@@ -46,7 +46,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-	lookup.close()
+	lookup[Symbol.dispose]()
 })
 
 describe("sanitizeFTSQuery — trailing-* prefix support", () => {

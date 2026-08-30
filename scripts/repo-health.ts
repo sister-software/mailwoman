@@ -9,11 +9,11 @@
  * failure disappear.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
-import { readFile, writeFile } from "@mailwoman/platform/fs/promises"
 import { relative, resolve } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import ts from "typescript"
@@ -25,6 +25,7 @@ interface DebtCounters {
 	filterBoolean: number
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
+	synchronousFilesystemCalls: number
 }
 
 const root = String(repoRootPath())
@@ -38,6 +39,7 @@ function emptyCounters(): DebtCounters {
 		filterBoolean: 0,
 		productionFilesOver1000Lines: 0,
 		selfPackageImports: 0,
+		synchronousFilesystemCalls: 0,
 	}
 }
 
@@ -74,13 +76,81 @@ function isSelfPackageSpecifier(value: string, packageName: string | undefined):
 	return packageName !== undefined && (value === packageName || value.startsWith(`${packageName}/`))
 }
 
+/**
+ * The synchronous `node:fs` surface, by name.
+ *
+ * A `*Sync` suffix over-matches: `execSync`, `spawnSync`, `deflateSync` and `flushSync` are not filesystem calls, and
+ * `@mailwoman/core/fs/readers-sync` deliberately exports its own `*Sync` helpers, which ARE the sanctioned idiom and
+ * must not count against it. Only the builtin names belong here.
+ */
+const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
+	"accessSync",
+	"appendFileSync",
+	"chmodSync",
+	"closeSync",
+	"copyFileSync",
+	"cpSync",
+	"existsSync",
+	"globSync",
+	"lstatSync",
+	"mkdirSync",
+	"mkdtempSync",
+	"openSync",
+	"readFileSync",
+	"readSync",
+	"readdirSync",
+	"readlinkSync",
+	"realpathSync",
+	"renameSync",
+	"rmSync",
+	"rmdirSync",
+	"statSync",
+	"symlinkSync",
+	"unlinkSync",
+	"utimesSync",
+	"writeFileSync",
+	"writeSync",
+])
+
+/**
+ * Whether a call reaches the synchronous filesystem directly, bypassing `@mailwoman/core/fs`.
+ *
+ * The baseline is SEVEN, and every one is in a workspace that does not depend on `@mailwoman/core` — `api-kit`,
+ * `nuts-lookup`, `timezone-lookup`, `un-locode-lookup`, `variant-aliases`. Reaching the idiom would install core's ~9
+ * MB of data into a small alias table and three lookups, so they keep the mirror and `oxlint.config.ts` exempts them by
+ * name. They collapse to zero the day the fs helpers can be reached without that tarball; until then the number stays
+ * checkable, and an eighth call anywhere fails this check.
+ *
+ * A bare identifier is counted; a property access is counted only when the receiver is spelled `fs`. That receiver rule
+ * is what separates this population from two unrelated ones that share a method name: `node:sqlite`'s
+ * `DatabaseSync.closeSync()`, and an INJECTED dependency (`deps.existsSync`), which is a parameter a test substitutes
+ * rather than a filesystem call the module makes.
+ */
+function isSynchronousFilesystemCall(node: ts.Node): boolean {
+	if (!ts.isCallExpression(node)) return false
+
+	if (ts.isIdentifier(node.expression)) return SYNCHRONOUS_FILESYSTEM_CALLS.has(node.expression.text)
+
+	return (
+		ts.isPropertyAccessExpression(node.expression) &&
+		ts.isIdentifier(node.expression.expression) &&
+		node.expression.expression.text === "fs" &&
+		SYNCHRONOUS_FILESYSTEM_CALLS.has(node.expression.name.text)
+	)
+}
+
 function visit(
 	source: ts.SourceFile,
 	counters: DebtCounters,
 	packageName: string | undefined,
-	countSelfPackageImports: boolean
+	countSelfPackageImports: boolean,
+	countSynchronousFilesystemCalls: boolean
 ): void {
 	function walk(node: ts.Node): void {
+		if (countSynchronousFilesystemCalls && isSynchronousFilesystemCall(node)) {
+			counters.synchronousFilesystemCalls++
+		}
+
 		if (isNeverCast(node)) {
 			counters.asNever++
 		}
@@ -177,20 +247,20 @@ function trackedSourcePaths(): string[] {
 
 // A tracked path can be absent from the working tree (a deletion staged but not committed); skip it
 // rather than failing the whole gate on a file the next commit removes anyway.
-const paths = trackedSourcePaths().filter((path) => existsSync(path))
+const paths = trackedSourcePaths().filter((path) => pathExistsSync(path))
 
 const counters = emptyCounters()
-const rootManifest = parseJSONStrict<{ workspaces: string[] }>(await readFile(resolve(root, "package.json"), "utf8"))
+const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolve(root, "package.json"))
 
 const workspacePackages = await Promise.all(
 	rootManifest.workspaces.map(async (workspace) => ({
 		directory: resolve(root, workspace),
-		name: parseJSONStrict<{ name: string }>(await readFile(resolve(root, workspace, "package.json"), "utf8")).name,
+		name: (await readLocalJSONFile<{ name: string }>(resolve(root, workspace, "package.json"))).name,
 	}))
 )
 
 for (const path of paths) {
-	const text = await readFile(path, "utf8")
+	const text = await readLocalTextFile(path)
 
 	const source = ts.createSourceFile(
 		path,
@@ -206,7 +276,12 @@ for (const path of paths) {
 	// test layout verifies. Self-imports remain debt in production source, where `#imports` avoid cycles/noise.
 	const countSelfPackageImports = !path.includes("/test/")
 
-	visit(source, counters, workspacePackage?.name, countSelfPackageImports)
+	// `@mailwoman/platform/fs` is the runtime mirror and `@mailwoman/core/fs` is the idiom itself; both call the
+	// builtins on purpose, and counting them would make the number measure the implementation rather than its callers.
+	const countSynchronousFilesystemCalls =
+		!path.startsWith(`${root}/packages/platform/`) && !path.startsWith(`${root}/packages/core/fs/`)
+
+	visit(source, counters, workspacePackage?.name, countSelfPackageImports, countSynchronousFilesystemCalls)
 
 	const lineCount = (text.match(/\n/g)?.length ?? 0) + 1
 	const generated = /(?:@generated|This file was generated by:)/.test(text.slice(0, 1000))
@@ -225,10 +300,11 @@ const { values } = parseArgs({
 })
 
 if (values["write-baseline"]) {
-	await writeFile(baselinePath, `${JSON.stringify(counters, null, "\t")}\n`)
+	await writeLocalJSONFile(counters, baselinePath)
+
 	process.stdout.write(`Updated ${relative(root, baselinePath)}\n`)
 } else {
-	const baseline = parseJSONStrict<DebtCounters>(await readFile(baselinePath, "utf8"))
+	const baseline = await readLocalJSONFile<DebtCounters>(baselinePath)
 	const regressions = Object.entries(counters).filter(([name, count]) => count > baseline[name as keyof DebtCounters])
 
 	for (const [name, count] of Object.entries(counters)) {

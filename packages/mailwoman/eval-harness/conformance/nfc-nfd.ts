@@ -36,7 +36,7 @@
  *   first place to look is whichever stage received the two forms still distinct.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture } from "./fixture.ts"
@@ -97,7 +97,7 @@ export function canonicallyVariant(text: string): boolean {
  * The three states a query's own text can be in with respect to the canonical forms.
  *
  * `mixed` is a real state and not a bookkeeping leftover: a string assembled from two sources can carry a composed `é`
- * beside a decomposed one, and it is then neither form while being canonically equivalent to both. A text that is not
+ * beside a decomposed one and then neither form while being canonically equivalent to both. A text that is not
  * {@linkcode canonicallyVariant} reads `nfc`, because it is — both forms are the same bytes.
  */
 export const CANONICAL_FORM_STATES = ["nfc", "nfd", "mixed"] as const
@@ -201,7 +201,7 @@ export function canonicalApplicability(text: string, form: CanonicalFormName): C
 export const NFC_NFD_SUITE_PATH = ((): string => {
 	const sibling = fileURLToPath(new URL("nfc-nfd.jsonl", import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL("../../../eval-harness/conformance/nfc-nfd.jsonl", import.meta.url))
 })()

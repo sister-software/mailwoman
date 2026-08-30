@@ -9,6 +9,8 @@
  *   whose postcode placement nothing attests.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	applyCountryBudget,
 	applyLocalityQuota,
@@ -16,13 +18,12 @@ import {
 	type PostcodeTriple,
 	readTriplesFromGeonames,
 } from "@mailwoman/corpus/tools/postcode-triples"
-import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
 
 const TAB = String.fromCharCode(9)
-const root = mkdtempSync(join(tmpdir(), "mw-postcode-triples-"))
+const root = await temporaryDirectory("mw-postcode-triples-")
+
+afterAll(() => root[Symbol.asyncDispose]())
 
 /**
  * Write a GeoNames-shaped export as `[country, postcode, place, admin1, admin2]`.
@@ -31,13 +32,16 @@ const root = mkdtempSync(join(tmpdir(), "mw-postcode-triples-"))
  * is 3, admin2 is FIVE. Writing them in argument order and padding the gap keeps the fixture readable while still
  * exercising the real offsets; a fixture that packed them adjacently would pass against a reader with the wrong index.
  */
-function writeExport(name: string, rows: ReadonlyArray<readonly [string, string, string, string, string]>): string {
-	const path = join(root, name)
+async function writeExport(
+	name: string,
+	rows: ReadonlyArray<readonly [string, string, string, string, string]>
+): Promise<string> {
+	const path = root.resolve(name)
 
 	const line = ([country, postcode, place, admin1, admin2]: readonly string[]): string =>
 		[country, postcode, place, admin1, "code", admin2].join(TAB)
 
-	writeFileSync(path, rows.map((cells) => line(cells)).join("\n") + "\n")
+	await writeLocalTextFile(rows.map((cells) => line(cells)).join("\n") + "\n", path)
 
 	return path
 }
@@ -51,7 +55,7 @@ describe("readTriplesFromGeonames", () => {
 	it("keeps ONE row for a code published both hyphenated and bare", async () => {
 		// PT and PL publish every code twice — exactly 2.00× on both. Keeping both doubles the country's weight in the
 		// shard while adding no fact.
-		const path = writeExport("pt.txt", [
+		const path = await writeExport("pt.txt", [
 			["PT", "3750-000", "Borralha", "Aveiro", "Águeda"],
 			["PT", "3750000", "Borralha", "Aveiro", "Águeda"],
 			["PT", "3750-011", "Borralha", "Aveiro", "Águeda"],
@@ -69,7 +73,7 @@ describe("readTriplesFromGeonames", () => {
 
 	it("drops a row with NO region rather than emitting a blank one", async () => {
 		// ZA's export is 100% place and 0% admin1. A blank region would look like data and teach nothing.
-		const path = writeExport("blank.txt", [
+		const path = await writeExport("blank.txt", [
 			["PT", "1000-001", "Alvalade", "", "Lisboa"],
 			["PT", "1000-002", "Alvalade", "Lisboa", "Lisboa"],
 		])
@@ -80,7 +84,7 @@ describe("readTriplesFromGeonames", () => {
 	it("drops a place the gazetteer does not know as a locality", async () => {
 		// `Zona Centro` is a colonia and now correctly lands in `dependentLocality`; the gate applies to admin2, the
 		// locality, so a row whose CITY the gazetteer does not know is the one that drops.
-		const path = writeExport("mx.txt", [
+		const path = await writeExport("mx.txt", [
 			["MX", "20000", "Zona Centro", "Aguascalientes", "Unknownville"],
 			["MX", "20010", "Colonia Norte", "Aguascalientes", "Aguascalientes"],
 		])
@@ -94,7 +98,7 @@ describe("readTriplesFromGeonames", () => {
 	})
 
 	it("stamps the country's attested PLACEMENT onto every row", async () => {
-		const path = writeExport("in.txt", [["IN", "560038", "Mahatma Gandhi Road", "Karnataka", "Bengaluru"]])
+		const path = await writeExport("in.txt", [["IN", "560038", "Mahatma Gandhi Road", "Karnataka", "Bengaluru"]])
 
 		const [row] = await readTriplesFromGeonames("IN", path, "India", acceptAll)
 
@@ -108,7 +112,7 @@ describe("readTriplesFromGeonames", () => {
 
 	it("emits NOTHING for a country whose placement nothing attests", async () => {
 		// Not a failure — extracting AU with a guessed placement would teach a convention AU may not use.
-		const path = writeExport("au.txt", [["AU", "2000", "The Rocks", "New South Wales", "Sydney"]])
+		const path = await writeExport("au.txt", [["AU", "2000", "The Rocks", "New South Wales", "Sydney"]])
 
 		expect(await readTriplesFromGeonames("AU", path, "Australia", acceptAll)).toEqual([])
 	})

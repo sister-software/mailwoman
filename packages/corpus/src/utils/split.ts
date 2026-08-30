@@ -24,11 +24,11 @@
  *   (under `corpus/splits/<version>/`) so reruns are reproducible bit-for-bit.
  */
 
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { spawn } from "@mailwoman/platform/child_process"
 import { createHash } from "@mailwoman/platform/crypto"
-import { createWriteStream } from "@mailwoman/platform/fs"
-import { mkdir, unlink, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
@@ -174,11 +174,12 @@ export function hashBucket(id: string, n: number): number {
  * Reruns produce byte-identical files (the underlying `splitRows` is deterministic).
  */
 export async function writeSplitManifests(manifest: SplitManifest, outputDir: string): Promise<void> {
-	await mkdir(outputDir, { recursive: true })
+	await makeDirectories(outputDir)
 
 	for (const name of ["train", "val", "test"] as const) {
 		const sorted = [...manifest[name]].toSorted()
-		await writeFile(join(outputDir, `${name}.txt`), sorted.join("\n") + (sorted.length ? "\n" : ""), "utf8")
+
+		await writeLocalTextFile(sorted.join("\n") + (sorted.length ? "\n" : ""), outputDir, `${name}.txt`)
 	}
 
 	const summary = {
@@ -187,7 +188,7 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: st
 		counts: manifest.counts,
 	}
 
-	await writeFile(join(outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(summary, outputDir, "SPLIT_MANIFEST.json")
 }
 
 /**
@@ -210,7 +211,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 	counts: Record<SplitName, number>
 	holdouts?: Record<string, readonly string[]>
 }): Promise<SplitManifest["counts"]> {
-	await mkdir(opts.outputDir, { recursive: true })
+	await makeDirectories(opts.outputDir)
 	const holdouts = opts.holdouts ?? defaultHoldouts()
 
 	for (const split of ["train", "val", "test"] as const) {
@@ -227,7 +228,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 		counts: { ...opts.counts, total },
 	}
 
-	await writeFile(join(opts.outputDir, "SPLIT_MANIFEST.json"), `${JSON.stringify(summary, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(summary, opts.outputDir, "SPLIT_MANIFEST.json")
 
 	return summary.counts
 }
@@ -238,7 +239,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
  */
 async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string): Promise<void> {
 	const unsortedPath = `${outPath}.unsorted`
-	const out = createWriteStream(unsortedPath, { encoding: "utf8" })
+	const out = openWriteStream(unsortedPath, { encoding: "utf8" })
 
 	const outClosed = new Promise<void>((resolve, reject) => {
 		out.on("close", () => resolve())
@@ -274,5 +275,5 @@ async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string):
 		})
 	})
 
-	await unlink(unsortedPath).catch(() => {})
+	await removePath(unsortedPath).catch(() => {})
 }

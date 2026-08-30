@@ -31,7 +31,7 @@ const DevLintMDXAngles: ParsedCommandComponent<Record<string, never>> = ({ args 
 		async () => {
 			const { lintMDXAngles } = await import("#dev-tools/lint-mdx-angles")
 
-			return lintMDXAngles({ files: args }, report)
+			return await lintMDXAngles({ files: args }, report)
 		},
 		(summary) => (summary.errors > 0 ? 1 : 0)
 	)

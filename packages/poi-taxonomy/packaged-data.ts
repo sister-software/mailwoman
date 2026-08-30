@@ -7,7 +7,7 @@
  *   takes its table from the caller and never reaches the filesystem.
  */
 
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { pathExistsSync, readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
 import { resolve } from "@mailwoman/platform/path"
 
 const moduleDir = import.meta.dirname
@@ -24,7 +24,7 @@ const moduleDir = import.meta.dirname
  */
 function resolvePackagedDataPath(filename: string): string {
 	const candidates = [resolve(moduleDir, "data", filename), resolve(moduleDir, "..", "data", filename)]
-	const found = candidates.find((candidate) => existsSync(candidate))
+	const found = candidates.find((candidate) => pathExistsSync(candidate))
 
 	if (!found) {
 		throw new Error(`poi-taxonomy: could not find data/${filename} — looked in ${candidates.join(", ")}`)
@@ -42,5 +42,5 @@ export function readPackagedTable<T>(filename: string): T {
 	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. `poi-taxonomy` declares zero
 	// dependencies, so `@mailwoman/core`'s parse wrappers are deliberately out of reach.
 	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
-	return JSON.parse(readFileSync(path, "utf8")) as T
+	return readLocalJSONFileSync(path) as T
 }

@@ -18,9 +18,9 @@
  *   same binary consumers run).
  */
 
+import { makeDirectoriesSync, writeLocalFileSync } from "@mailwoman/core/fs/writers-sync"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { execFileSync } from "@mailwoman/platform/child_process"
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { dirname, resolve } from "@mailwoman/platform/path"
 
 const REPO_ROOT = resolve(import.meta.dirname, "..")
@@ -131,8 +131,8 @@ export function renderManPage(cliPath: string = CLI_PATH): string {
 runIfScript(import.meta, () => {
 	const page = renderManPage()
 
-	mkdirSync(dirname(MAN_PAGE_PATH), { recursive: true })
-	writeFileSync(MAN_PAGE_PATH, page)
+	makeDirectoriesSync(dirname(MAN_PAGE_PATH))
+	writeLocalFileSync(page, MAN_PAGE_PATH)
 
 	console.log(`wrote ${MAN_PAGE_PATH}`)
 })

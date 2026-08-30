@@ -27,6 +27,8 @@
  *   Boundary record: `docs/superpowers/specs/2026-08-26-geographic-model-boundaries.md` (#1917).
  */
 
+import { prettyJSON, isPlainObject } from "@mailwoman/core/objects"
+
 import type {
 	ConceptID,
 	ConceptRecord,
@@ -35,7 +37,6 @@ import type {
 	RelationRecord,
 	SourceObservationRecord,
 } from "./schema.ts"
-import { isPlainObject } from "./validation-issues.ts"
 
 /**
  * The artifact FORMAT version — incremented by hand when the compiled shape changes, so a reader meeting an artifact it
@@ -129,7 +130,7 @@ function canonicalize(value: unknown): unknown {
  * two compiles.
  */
 export function serializeCompiledModel(model: CompiledGeographicModel): string {
-	return `${JSON.stringify(canonicalize(model), null, "\t")}\n`
+	return prettyJSON(canonicalize(model))
 }
 
 /**

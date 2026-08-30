@@ -34,12 +34,7 @@
  *   spines agree without this module hardcoding a resolution of its own.
  */
 
-import {
-	readLayerCoverage,
-	type CoverageCell,
-	type LayerContractDatabase,
-	type LayerContractHandle,
-} from "@mailwoman/core/layers"
+import { readLayerCoverage, type CoverageCell, type LayerContractHandle } from "@mailwoman/core/layers"
 import { POI_H3_RESOLUTION, type POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
 import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"

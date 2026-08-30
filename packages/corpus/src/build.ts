@@ -48,9 +48,9 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { createWriteStream, existsSync, readFileSync, type WriteStream } from "@mailwoman/platform/fs"
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
+import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
@@ -157,9 +157,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
 	const built_at = new Date().toISOString()
 
-	await mkdir(opts.outputDir, { recursive: true })
+	await makeDirectories(opts.outputDir)
 	const intermediateDir = join(opts.outputDir, "intermediate")
-	await mkdir(intermediateDir, { recursive: true })
+	await makeDirectories(intermediateDir)
 
 	// 1. Adapter runs.
 	const adapterRuns: AdapterRunManifest[] = []
@@ -185,10 +185,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 		if (
 			$public.MAILWOMAN_RESUME === "1" &&
-			existsSync(cachedManifest) &&
-			existsSync(join(adapterDir, "canonical.jsonl"))
+			(await pathExists(cachedManifest)) &&
+			(await pathExists(join(adapterDir, "canonical.jsonl")))
 		) {
-			const cached = parseJSONStrict<AdapterRunManifest>(readFileSync(cachedManifest, "utf8"))
+			const cached = await readLocalJSONFile<AdapterRunManifest>(cachedManifest)
 			opts.onProgress?.("adapter-run", `resumed ${adapter.id} (reused ${cached.yielded} canonical rows)`)
 			adapterRuns.push(cached)
 
@@ -219,13 +219,13 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	}
 
 	const labeledStreams: Record<SplitName, WriteStream> = {
-		train: createWriteStream(labeledPaths.train, { encoding: "utf8" }),
-		val: createWriteStream(labeledPaths.val, { encoding: "utf8" }),
-		test: createWriteStream(labeledPaths.test, { encoding: "utf8" }),
+		train: openWriteStream(labeledPaths.train, { encoding: "utf8" }),
+		val: openWriteStream(labeledPaths.val, { encoding: "utf8" }),
+		test: openWriteStream(labeledPaths.test, { encoding: "utf8" }),
 	}
 
 	const quarantinePath = join(intermediateDir, "quarantine.jsonl")
-	const quarantineStream = createWriteStream(quarantinePath, { encoding: "utf8" })
+	const quarantineStream = openWriteStream(quarantinePath, { encoding: "utf8" })
 
 	let aligned = 0
 	let quarantined = 0
@@ -365,7 +365,7 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		excluded_by_license: excludedByLicense,
 	}
 
-	await writeFile(join(opts.outputDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(manifest, opts.outputDir, "MANIFEST.json")
 
 	return manifest
 }

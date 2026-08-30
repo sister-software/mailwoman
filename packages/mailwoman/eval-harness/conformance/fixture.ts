@@ -30,6 +30,7 @@
  *   taxonomy grows with the suites, and each suite owns the names it uses. Blank is still refused.
  */
 
+import { isPlainObject } from "@mailwoman/core/objects"
 import { JSONSpliterator } from "spliterator"
 
 import type { GauntletGeocodeOpts } from "../gauntlet/harness.ts"
@@ -206,18 +207,6 @@ const FIXTURE_KEYS = new Set<string>([
 	"toleranceM",
 	"note",
 ])
-
-/**
- * The four narrowings this loader performs, each in one named place.
- *
- * Every one widens the KNOWN-GOOD LIST and never the value: `readonly ["a", "b"]` refuses `.includes` on anything
- * outside its own element type, so a membership test has to widen one side, and widening the list is the direction that
- * cannot assert something false about the value under test. The alternative idiom — `list.includes(value as Member)` —
- * asserts the membership it is about to check, so the assertion stands whether or not the check passes.
- */
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null && !Array.isArray(value)
-}
 
 function isContextKey(key: string): key is ContextKey {
 	return (CONTEXT_KEYS as readonly string[]).includes(key)

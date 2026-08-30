@@ -260,7 +260,7 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}
 	} finally {
-		lookup.close()
+		lookup[Symbol.dispose]()
 	}
 }
 
@@ -326,51 +326,47 @@ export function sampleAgreementPoints(
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> {
 	const count = options.count ?? 48
-	const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+	using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
-	try {
-		const points: Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> = []
+	const points: Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> = []
 
-		const areaIDs = (
-			database.prepare("SELECT area_id FROM coastal_zone_area ORDER BY area_id").all() as Array<{ area_id: string }>
-		).map((row) => row.area_id)
+	const areaIDs = (
+		database.prepare("SELECT area_id FROM coastal_zone_area ORDER BY area_id").all() as Array<{ area_id: string }>
+	).map((row) => row.area_id)
 
-		if (!areaIDs.length) return points
+	if (!areaIDs.length) return points
 
-		const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, count)))
+	const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, count)))
 
-		const selectArea = database.prepare(
-			"SELECT area_id, scenario_key, min_lat, min_lon, max_lat, max_lon, rings FROM coastal_zone_area WHERE area_id = ?"
-		)
+	const selectArea = database.prepare(
+		"SELECT area_id, scenario_key, min_lat, min_lon, max_lat, max_lon, rings FROM coastal_zone_area WHERE area_id = ?"
+	)
 
-		for (let index = 0; index < areaIDs.length && points.length < count; index += stride) {
-			const area = selectArea.get(areaIDs[index]!) as
-				| {
-						area_id: string
-						scenario_key: string
-						min_lat: number
-						min_lon: number
-						max_lat: number
-						max_lon: number
-						rings: Uint8Array
-				  }
-				| undefined
+	for (let index = 0; index < areaIDs.length && points.length < count; index += stride) {
+		const area = selectArea.get(areaIDs[index]!) as
+			| {
+					area_id: string
+					scenario_key: string
+					min_lat: number
+					min_lon: number
+					max_lat: number
+					max_lon: number
+					rings: Uint8Array
+			  }
+			| undefined
 
-			if (!area) continue
+		if (!area) continue
 
-			const interior = interiorPointOfEncodedRings(area, 17)
+		const interior = interiorPointOfEncodedRings(area, 17)
 
-			if (!interior) continue
+		if (!interior) continue
 
-			points.push({
-				label: `${area.scenario_key} polygon ${area.area_id}`,
-				scenarioKey: area.scenario_key,
-				...interior,
-			})
-		}
-
-		return points
-	} finally {
-		database.destroy()
+		points.push({
+			label: `${area.scenario_key} polygon ${area.area_id}`,
+			scenarioKey: area.scenario_key,
+			...interior,
+		})
 	}
+
+	return points
 }

@@ -37,8 +37,9 @@
  *   close — cheap relative to writing it).
  */
 
+import { tryStat } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { mkdir, stat, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 
 import { ParquetWriter, type ParquetSchemaDefinition } from "#parquet-wrapper"
@@ -283,7 +284,7 @@ export function appendShape(row: ParquetRow): ParquetRow {
 export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptions): Promise<ShardManifest> {
 	const rowsPerShard = opts.rowsPerShard ?? 1_000_000
 	const corpusDir = join(opts.outputDir, `corpus-v${opts.corpusVersion}`)
-	await mkdir(corpusDir, { recursive: true })
+	await makeDirectories(corpusDir)
 
 	const shards: ShardDescriptor[] = []
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
@@ -303,7 +304,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 		const openShard = async (): Promise<void> => {
 			const splitDir = join(corpusDir, split)
-			await mkdir(splitDir, { recursive: true })
+			await makeDirectories(splitDir)
 			path = join(splitDir, `part-${String(shardIndex).padStart(4, "0")}.parquet`)
 
 			writer = await ParquetWriter.openFile<ParquetRow>(LABELED_ROW_SCHEMA, path, {
@@ -320,10 +321,10 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 
 		const closeShard = async (): Promise<void> => {
 			if (!writer) return
-			await writer.close()
+			await writer[Symbol.asyncDispose]()
 
 			if (shardRows > 0) {
-				const fileStat = await stat(path)
+				const fileStat = await tryStat(path)
 				const sha256 = await sha256File(path)
 
 				shards.push({
@@ -332,7 +333,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 					format: "parquet",
 					compression: SHARD_COMPRESSION,
 					rows: shardRows,
-					bytes: fileStat.size,
+					bytes: fileStat?.size ?? 0,
 					sha256,
 					first_source_id: firstSourceID,
 					last_source_id: lastSourceID,
@@ -384,7 +385,7 @@ export async function writeShards(perSplit: PerSplitRows, opts: WriteShardsOptio
 		total_rows: totalRows,
 	}
 
-	await writeFile(join(corpusDir, "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(manifest, corpusDir, "MANIFEST.json")
 
 	return manifest
 }

@@ -9,20 +9,16 @@
  *   thing — a comparison that must NOT produce a verdict, for two different reasons.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { runCompare } from "@mailwoman/dev-mcp/compare"
 import type { EngineRegistry } from "@mailwoman/dev-mcp/engine-registry"
 import { OracleMeter, OracleProviderName, type OracleGeocoderLike } from "@mailwoman/dev-mcp/oracle-arm"
 import { listRuns } from "@mailwoman/dev-mcp/run-store"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { afterAll, describe, expect, it } from "vitest"
 
-const RUN_STORE = mkdtempSync(join(tmpdir(), "mwdev-arms-runs-"))
+const RUN_STORE = await temporaryDirectory("mwdev-arms-runs-")
 
-afterAll(() => {
-	rmSync(RUN_STORE, { recursive: true, force: true })
-})
+afterAll(() => RUN_STORE[Symbol.asyncDispose]())
 
 const ANDORRA_LA_VELLA = { lat: 42.5063174, lon: 1.5218355 }
 
@@ -50,7 +46,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 				},
 				timing: { total: 1 },
 			}),
-			close: () => undefined,
+			[Symbol.dispose]: () => undefined,
 		},
 	}
 
@@ -69,7 +65,7 @@ function registryAt(point: { lat: number | null; lon: number | null }): EngineRe
 		acquire: async () => engine,
 		summaries: () => [],
 		evict: () => true,
-		closeAll: () => 0,
+		evictAll: () => 0,
 	} as unknown as EngineRegistry
 }
 
@@ -117,7 +113,7 @@ describe("mwdev_compare — an oracle arm", () => {
 				variable: ["engine"],
 				grade: "truth",
 			},
-			{ createOracleClient: () => oracle, runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracle, runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 
 		expect(result["grade_mode"]).toBe("diff-only")
@@ -140,7 +136,7 @@ describe("mwdev_compare — an oracle arm", () => {
 				variable: ["engine"],
 				grade: "truth",
 			},
-			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 
 		expect(String(result["verdict_withheld_reason"])).toContain("do not read a score")
@@ -157,7 +153,7 @@ describe("mwdev_compare — an oracle arm", () => {
 				arm_b: { kind: "oracle", provider: "census" },
 				variable: ["engine"],
 			},
-			{ createOracleClient: () => oracle, runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracle, runStoreDir: RUN_STORE.path }
 		)
 
 		expect(oracle.calls).toEqual(["Andorra la Vella"])
@@ -170,7 +166,7 @@ describe("mwdev_compare — an oracle arm", () => {
 			runCompare(
 				registryAt(ANDORRA_LA_VELLA),
 				{ inputs: BOARD_AD, arm_a: {}, arm_b: { kind: "oracle", provider: "google" }, variable: ["engine"] },
-				{ createOracleClient: () => oracle, oracleMeter: new OracleMeter({}), runStoreDir: RUN_STORE }
+				{ createOracleClient: () => oracle, oracleMeter: new OracleMeter({}), runStoreDir: RUN_STORE.path }
 			)
 		).rejects.toThrow(/BILLED and is not enabled/)
 
@@ -185,7 +181,7 @@ describe("mwdev_compare — an oracle arm", () => {
 			runCompare(
 				registryAt(ANDORRA_LA_VELLA),
 				{ inputs: BOARD_AD, arm_a: {}, arm_b: { kind: "oracle", provider: "google" }, variable: ["engine"] },
-				{ createOracleClient: () => oracle, oracleMeter: meter, runStoreDir: RUN_STORE }
+				{ createOracleClient: () => oracle, oracleMeter: meter, runStoreDir: RUN_STORE.path }
 			)
 		).rejects.toThrow(/Refusing before spending/)
 
@@ -204,7 +200,7 @@ describe("mwdev_compare — an oracle arm", () => {
 				arm_b: { kind: "oracle", provider: "google" },
 				variable: ["engine"],
 			},
-			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), oracleMeter: meter, runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), oracleMeter: meter, runStoreDir: RUN_STORE.path }
 		)
 
 		expect(meter.googleCallsUsed).toBe(2)
@@ -226,7 +222,7 @@ describe("mwdev_compare — a truthless comparison", () => {
 				variable: ["engine"],
 			},
 			// The oracle answers Paris; the mailwoman stub answers Andorra. ~800 km apart.
-			{ createOracleClient: () => oracleAt({ lat: 48.8566, lon: 2.3522 }), runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracleAt({ lat: 48.8566, lon: 2.3522 }), runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 
 		expect(result["differed_basis"]).toBe("arm-separation")
@@ -243,7 +239,7 @@ describe("mwdev_compare — a truthless comparison", () => {
 				arm_b: { kind: "oracle", provider: "census" },
 				variable: ["engine"],
 			},
-			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 
 		expect(result["arms_differed_on"]).toEqual({ n: 0, of: 1 })
@@ -260,7 +256,7 @@ describe("mwdev_compare — a recorded arm", () => {
 				arm_b: { kind: "oracle", provider: "census" },
 				variable: ["engine"],
 			},
-			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 
 		return result["run_id"] as string
@@ -270,7 +266,7 @@ describe("mwdev_compare — a recorded arm", () => {
 		const runID = await record()
 
 		expect(runID).toBeTruthy()
-		expect(listRuns(RUN_STORE).some((run) => run.run_id === runID)).toBe(true)
+		expect((await listRuns(RUN_STORE.path)).some((run) => run.run_id === runID)).toBe(true)
 	})
 
 	it("replays a stored arm without re-running it", async () => {
@@ -285,7 +281,7 @@ describe("mwdev_compare — a recorded arm", () => {
 				arm_b: {},
 				variable: ["tree_fingerprint"],
 			},
-			{ createOracleClient: () => oracle, runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracle, runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 
 		// The whole point: the oracle was not consulted a second time.
@@ -305,7 +301,7 @@ describe("mwdev_compare — a recorded arm", () => {
 				arm_b: {},
 				variable: ["tree_fingerprint"],
 			},
-			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 
 		expect((result["warnings"] as string[]).join(" ")).toContain("Declare tree_fingerprint as a variable")
@@ -323,7 +319,7 @@ describe("mwdev_compare — a recorded arm", () => {
 				arm_b: {},
 				variable: ["tree_fingerprint"],
 			},
-			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE }
+			{ createOracleClient: () => oracleAt(ANDORRA_LA_VELLA), runStoreDir: RUN_STORE.path }
 		)) as Record<string, unknown>
 
 		expect(result["n_no_result_a"]).toBe(1)
@@ -340,7 +336,7 @@ describe("mwdev_compare — a recorded arm", () => {
 					arm_b: {},
 					variable: ["tree_fingerprint"],
 				},
-				{ runStoreDir: RUN_STORE }
+				{ runStoreDir: RUN_STORE.path }
 			)
 		).rejects.toThrow(/pruned or never existed/)
 	})
@@ -357,7 +353,7 @@ describe("mwdev_compare — a recorded arm", () => {
 					arm_b: {},
 					variable: ["tree_fingerprint"],
 				},
-				{ runStoreDir: RUN_STORE }
+				{ runStoreDir: RUN_STORE.path }
 			)
 		).rejects.toThrow(/It recorded: mailwoman, oracle:census\./)
 	})

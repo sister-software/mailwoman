@@ -4,17 +4,21 @@
  * @author Teffen Ellis, et al.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	createUsgovNPPESAdapter,
 	USGOV_NPPES_ADAPTER_ID,
 	USGOV_NPPES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/usgov-nppes/adapter"
-import { mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 import { InMemoryAdapterRegistry } from "#adapters/utils"
+import { writeDelimitedFixture } from "#test-kit"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const CSV_HEADER = [
 	"NPI",
@@ -31,16 +35,12 @@ const CSV_HEADER = [
 
 let scratch: string
 
-beforeEach(() => {
-	scratch = mkdtempSync(join(tmpdir(), "mailwoman-nppes-"))
+beforeEach(async () => {
+	scratch = fixtures.use(await temporaryDirectory("mailwoman-nppes-")).path
 })
 
-function writeCSV(...lines: string[]): string {
-	const p = join(scratch, "test.csv")
-	const header = CSV_HEADER + "\n"
-	writeFileSync(p, header + lines.join("\n"), "utf8")
-
-	return p
+function writeCSV(...lines: string[]): Promise<string> {
+	return writeDelimitedFixture(join(scratch, "test.csv"), CSV_HEADER, lines)
 }
 
 describe("usgov-nppes adapter", () => {
@@ -51,7 +51,7 @@ describe("usgov-nppes adapter", () => {
 	})
 
 	it("emits a row for a provider organization with full address", async () => {
-		const p = writeCSV("1000000001,2,METRO HEALTH SYSTEM,,,1234 MAIN ST,SUITE 200,NASHVILLE,TN,37203")
+		const p = await writeCSV("1000000001,2,METRO HEALTH SYSTEM,,,1234 MAIN ST,SUITE 200,NASHVILLE,TN,37203")
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
@@ -72,7 +72,7 @@ describe("usgov-nppes adapter", () => {
 	})
 
 	it("emits a row for an individual provider", async () => {
-		const p = writeCSV("1000000002,1,,SMITH,JANE,5678 OAK AVE,,PORTLAND,OR,97201")
+		const p = await writeCSV("1000000002,1,,SMITH,JANE,5678 OAK AVE,,PORTLAND,OR,97201")
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
@@ -88,7 +88,7 @@ describe("usgov-nppes adapter", () => {
 	})
 
 	it("skips rows with missing city or postcode", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			"1000000003,1,,DOE,JOHN,999 NOWHERE LN,,,OR,",
 			"1000000004,2,ACME CORP,,,100 REAL ST,,REALTOWN,CA,90210"
 		)
@@ -105,7 +105,7 @@ describe("usgov-nppes adapter", () => {
 	})
 
 	it("skips rows with unrecognized state", async () => {
-		const p = writeCSV("1000000005,2,BAD CORP,,,1 FAKE ST,,NOWHERE,ZZ,00000")
+		const p = await writeCSV("1000000005,2,BAD CORP,,,1 FAKE ST,,NOWHERE,ZZ,00000")
 		const a = createUsgovNPPESAdapter()
 		const rows = []
 
@@ -133,7 +133,7 @@ describe("usgov-nppes adapter", () => {
 	})
 
 	it("honors limit", async () => {
-		const p = writeCSV(
+		const p = await writeCSV(
 			"1000000001,2,A CORP,,,1 A ST,,CITYA,CA,90001",
 			"1000000002,2,B CORP,,,2 B ST,,CITYB,CA,90002",
 			"1000000003,2,C CORP,,,3 C ST,,CITYC,CA,90003"

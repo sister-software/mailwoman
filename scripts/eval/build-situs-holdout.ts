@@ -1,4 +1,4 @@
-import { writeFileSync } from "@mailwoman/platform/fs"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 /**
@@ -31,7 +31,7 @@ const N = Number(a.n)
 const region = a.region!.toUpperCase()
 const out = a.out || `/tmp/${region.toLowerCase() || "x"}-situs-holdout.jsonl`
 
-const db = new DatabaseClient<AddressPointDatabase>(a.shard, { readOnly: true })
+using db = new DatabaseClient<AddressPointDatabase>(a.shard, { readOnly: true })
 // Even, deterministic spread across the shard (not the first N clustered rows): sample by rowid modulo.
 const total = (db.prepare("SELECT count(*) c FROM address_point").get() as { c: number }).c
 const stride = Math.max(1, Math.floor(total / (N * 1.4)))
@@ -68,8 +68,7 @@ for (const r of rows) {
 	lines.push(JSON.stringify({ input, lat: r.lat, lon: r.lon }))
 }
 
-db.destroy()
-writeFileSync(out, lines.join("\n") + "\n")
+await writeLocalTextFile(lines.join("\n") + "\n", out)
 
 console.log(
 	`${region || a.shard}: ${lines.length} holdout rows (of ${total.toLocaleString()} situs points, stride ${stride}) → ${out}`

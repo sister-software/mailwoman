@@ -27,6 +27,7 @@ import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core"
 import type { AddressNode, AddressTree, DroppedSpan } from "@mailwoman/core/decoder"
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	COARSE_PLACER_ANCHOR_WEIGHT,
 	deriveInputMode,
@@ -44,7 +45,6 @@ import { countriesFromPostcodeFormat, countryFromPostcodeFormat } from "@mailwom
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { normalize } from "@mailwoman/normalize"
-import { existsSync } from "@mailwoman/platform/fs"
 import { computeQueryShape, type QueryShape } from "@mailwoman/query-shape"
 import {
 	adminLadderForNodes,
@@ -727,34 +727,34 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 /**
  * Per-state situs shard path under `<dataRoot>/address-points/`, or null if the slug/file is absent.
  */
-export function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): string | null {
+export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
 
-	return existsSync(candidate) ? candidate : null
+	return (await pathExists(candidate)) ? candidate : null
 }
 
 /**
  * Per-state interpolation shard path under `<dataRoot>/interpolation/`, or null if absent.
  */
-export function selectInterpolationDB(dataRoot: string, stateSlug: string | null): string | null {
+export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
 	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
 
-	return existsSync(candidate) ? candidate : null
+	return (await pathExists(candidate)) ? candidate : null
 }
 
 /**
  * The lookup-class surface a {@link ShardProvider} needs from `@mailwoman/resolver-wof-sqlite`.
  */
 export interface ShardLookupFactory {
-	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & { close(): void }
-	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & { close(): void }
+	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & Disposable
+	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & Disposable
 }
 
 interface ShardCacheEntry extends StateShards {
-	_ap?: { close(): void }
-	_ip?: { close(): void }
+	_ap?: Disposable
+	_ip?: Disposable
 	/**
 	 * The resolved on-disk paths this entry was opened from — reload() diffs against these.
 	 */
@@ -775,7 +775,7 @@ export class ShardProvider implements Disposable {
 	/**
 	 * Previous-generation handles, retired by reload() and closed on the NEXT reload (one-gen grace).
 	 */
-	#retired: Array<{ close(): void }> = []
+	#retired: Disposable[] = []
 	#manifest: DataReleaseManifest | null
 
 	constructor(factory: ShardLookupFactory, dataRoot: string) {
@@ -820,7 +820,7 @@ export class ShardProvider implements Disposable {
 	 */
 	reload(): DataReleaseManifest | null {
 		for (const h of this.#retired) {
-			h.close()
+			h[Symbol.dispose]()
 		}
 
 		this.#retired = []
@@ -847,12 +847,12 @@ export class ShardProvider implements Disposable {
 
 	close(): void {
 		for (const e of this.#cache.values()) {
-			e._ap?.close()
-			e._ip?.close()
+			e._ap?.[Symbol.dispose]()
+			e._ip?.[Symbol.dispose]()
 		}
 
 		for (const h of this.#retired) {
-			h.close()
+			h[Symbol.dispose]()
 		}
 
 		this.#cache.clear()

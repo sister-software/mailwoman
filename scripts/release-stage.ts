@@ -18,8 +18,9 @@
  *   sibling version exactly as the publish path does.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync } from "@mailwoman/platform/fs"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { join, resolve } from "@mailwoman/platform/path"
 import { $ } from "zx"
 
@@ -61,9 +62,9 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
  * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from.
  */
 export function releaseWorkspaces(repoRoot: string): string[] {
-	const config = parseJSONStrict<{
+	const config = readLocalJSONFileSync<{
 		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-	}>(readFileSync(resolve(repoRoot, ".release-it.json"), "utf8"))
+	}>(resolve(repoRoot, ".release-it.json"))
 
 	return config.plugins["@release-it-plugins/workspaces"].workspaces
 }
@@ -90,10 +91,8 @@ export interface ReleaseListIdentity {
  * The named-absence identity: root `workspaces` minus the release list must equal the sanctioned set exactly. Every
  * discrepancy is reported by NAME, so the failure is actionable without counting.
  */
-export function checkReleaseListIdentity(repoRoot: string): ReleaseListIdentity {
-	const root = parseJSONStrict<{ workspaces: string[] }>(
-		readFileSync(resolve(repoRoot, "package.json"), "utf8")
-	).workspaces
+export async function checkReleaseListIdentity(repoRoot: string): Promise<ReleaseListIdentity> {
+	const root = (await readLocalJSONFile<{ workspaces: string[] }>(resolve(repoRoot, "package.json"))).workspaces
 
 	const release = new Set(releaseWorkspaces(repoRoot))
 	const rootSet = new Set(root)
@@ -118,20 +117,20 @@ export function checkReleaseListIdentity(repoRoot: string): ReleaseListIdentity 
  * The caller owns `stagingRoot`'s lifecycle; an existing tree at that path is replaced.
  */
 export async function stageReleaseTree(repoRoot: string, stagingRoot: string): Promise<void> {
-	rmSync(stagingRoot, { recursive: true, force: true })
-	mkdirSync(stagingRoot, { recursive: true })
+	await removePathIfPresent(stagingRoot)
+	await makeDirectories(stagingRoot)
 
 	await $({ cwd: repoRoot })`git archive HEAD`.pipe($`tar -x -C ${stagingRoot}`)
 
 	for (const workspace of releaseWorkspaces(repoRoot)) {
 		const compiled = resolve(repoRoot, workspace, "out")
 
-		if (existsSync(compiled)) {
-			cpSync(compiled, join(stagingRoot, workspace, "out"), { recursive: true })
+		if (await pathExists(compiled)) {
+			await copyPath(compiled, join(stagingRoot, workspace, "out"))
 		}
 	}
 
-	symlinkSync(resolve(repoRoot, "node_modules"), join(stagingRoot, "node_modules"))
+	await createSymbolicLink(resolve(repoRoot, "node_modules"), join(stagingRoot, "node_modules"))
 }
 
 /**
@@ -153,10 +152,13 @@ export interface WorkspaceAuditResult {
  * package instead of stopping at the first (the v9.2.0 tarball-guard failures surfaced one dispatch apart because the
  * publish loop's per-workspace isolation was the only sweep that existed).
  */
-export function auditStagedWorkspaces(stagingRoot: string, workspaces: readonly string[]): WorkspaceAuditResult[] {
+export async function auditStagedWorkspaces(
+	stagingRoot: string,
+	workspaces: readonly string[]
+): Promise<WorkspaceAuditResult[]> {
 	const tarballDir = join(stagingRoot, ".preflight-tarballs")
 
-	mkdirSync(tarballDir, { recursive: true })
+	await makeDirectories(tarballDir)
 
 	return workspaces.map((workspace) => {
 		const tarball = join(tarballDir, `${workspace.replaceAll("/", "__")}.tgz`)

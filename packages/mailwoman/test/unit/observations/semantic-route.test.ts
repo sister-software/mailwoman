@@ -43,7 +43,7 @@ const committedModel = await readCommittedModel()
 async function readCommittedModel(): Promise<CompiledGeographicModel> {
 	const { readCompiledGeographicModel } = await import("@mailwoman/geographic-model/scripts/build-artifact")
 
-	return readCompiledGeographicModel()
+	return await readCompiledGeographicModel()
 }
 
 /**
@@ -72,7 +72,7 @@ async function scratchRoute(
 
 	mutate(model, lexicon)
 
-	return createSemanticObservationRoute({ model, lexicon })
+	return await createSemanticObservationRoute({ model, lexicon })
 }
 
 /**
@@ -483,7 +483,7 @@ describe("the assertion's country scope", () => {
 	 * who widened or dropped it would move these tests rather than leave them agreeing with a clone.
 	 */
 	async function usScopedRoute(): Promise<ReturnType<typeof createSemanticObservationRoute>> {
-		return scratchRoute((model, lexicon) => {
+		return await scratchRoute((model, lexicon) => {
 			withoutPharmacyAffordance(model)
 
 			lexicon.phrases = [entry({ phrase: "prescription" })]

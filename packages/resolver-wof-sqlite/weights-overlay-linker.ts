@@ -6,20 +6,13 @@
  * placetype-pair index build.
  */
 
+import { pathExists, readLocalTextFile, statPath, readLocalBuffer, statLink } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { makeDirectories, writeLocalTextFile, removePath } from "@mailwoman/core/fs/writers"
+import { createSymbolicLinkSync, movePathSync, removePathSync } from "@mailwoman/core/fs/writers-sync"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import {
-	existsSync,
-	lstatSync,
-	mkdirSync,
-	readFileSync,
-	renameSync,
-	statSync,
-	symlinkSync,
-	unlinkSync,
-	writeFileSync,
-} from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import { fstFreshnessWarning } from "./fst-freshness.ts"
@@ -32,25 +25,25 @@ import { fstFreshnessWarning } from "./fst-freshness.ts"
 export function linkForce(src: string, dest: string): void {
 	const tmp = `${dest}.tmp-link`
 
-	if (existsSync(tmp)) {
-		unlinkSync(tmp)
+	if (pathExistsSync(tmp)) {
+		removePathSync(tmp)
 	}
 
-	symlinkSync(src, tmp)
-	renameSync(tmp, dest)
+	createSymbolicLinkSync(src, tmp)
+	movePathSync(tmp, dest)
 }
 
 /**
  * Remove a leftover local file/symlink so the #1179 base-weights fallback engages.
  */
-export function removeIfPresent(dest: string): void {
+export async function removeIfPresent(dest: string): Promise<void> {
 	try {
-		lstatSync(dest)
+		await statLink(dest)
 	} catch {
 		return
 	}
 
-	unlinkSync(dest)
+	await removePath(dest)
 
 	console.log(`removed stale local ${dest} (base fallback to en-us engages)`)
 }
@@ -62,8 +55,12 @@ export function removeIfPresent(dest: string): void {
  * has not built the gazetteer still geocodes. That is why the miss prints the consequence instead of throwing: the
  * operator needs to know which channel just resolved OFF, not to have the link step abort.
  */
-export function linkSoftFeedSibling(source: string, destination: string, consequenceIfMissing: string): boolean {
-	if (!existsSync(source)) {
+export async function linkSoftFeedSibling(
+	source: string,
+	destination: string,
+	consequenceIfMissing: string
+): Promise<boolean> {
+	if (!(await pathExists(source))) {
 		console.error(`WARNING: missing ${source} — ${consequenceIfMissing}`)
 
 		return false
@@ -121,8 +118,8 @@ export interface PairIndexHeaderFields {
  * before 2026-08-04 — the ×5 clone the taste audit named, and the reason three of them were schema-blind while this one
  * was not.
  */
-export function peekPairIndexHeaderFields(path: string): PairIndexHeaderFields {
-	const bytes = readFileSync(path)
+export async function peekPairIndexHeaderFields(path: string): Promise<PairIndexHeaderFields> {
+	const bytes = await readLocalBuffer(path)
 	const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 	// "PIX1" little-endian.
 	const MAGIC = 0x31_58_49_50
@@ -164,12 +161,12 @@ const MD5_HEX_LENGTH = 32
  */
 export async function md5FileWithSidecar(path: string): Promise<string> {
 	const sidecarPath = `${path}.md5`
-	const sourceStats = statSync(path)
+	const sourceStats = await statPath(path)
 
-	if (existsSync(sidecarPath)) {
+	if (await pathExists(sidecarPath)) {
 		try {
-			if (statSync(sidecarPath).mtime >= sourceStats.mtime) {
-				const [hash] = readFileSync(sidecarPath, "utf8").trim().split(/\s+/)
+			if ((await statPath(sidecarPath)).mtime >= sourceStats.mtime) {
+				const [hash] = (await readLocalTextFile(sidecarPath)).trim().split(/\s+/)
 
 				if (hash && hash.length === MD5_HEX_LENGTH) return hash
 			}
@@ -181,7 +178,7 @@ export async function md5FileWithSidecar(path: string): Promise<string> {
 	const hash = await md5File(path)
 	const filename = path.split(/[/\\]/).pop() || path
 
-	writeFileSync(sidecarPath, `${hash}  ${filename}\n`)
+	await writeLocalTextFile(`${hash}  ${filename}\n`, sidecarPath)
 
 	return hash
 }
@@ -254,8 +251,8 @@ export const REQUIRED_PAIR_INDEX_SCHEMA = 3
  * `pairIndexStaleReason` splits: only the caller knows which database it built against. All three FST-linking base
  * packages build against the same one, so they share this rather than each pinning it.
  */
-export function warnIfFSTStale(fstPath: string, locale: string): void {
-	const warning = fstFreshnessWarning({
+export async function warnIfFSTStale(fstPath: string, locale: string): Promise<void> {
+	const warning = await fstFreshnessWarning({
 		fstPath,
 		sourceDBPath: String(dataRootPath("wof", "admin-global-priority.db")),
 		rebuildCommand: `node packages/mailwoman/out/cli.js gazetteer build fst --locales ${locale}  (writes to a staging dir; swap is operator-gated)`,
@@ -296,31 +293,31 @@ export async function buildPairIndexOverlay({
 	const PKG_DIR = String(weightsOverlayPath(packageDir.replace(/^neural-weights-/, "")))
 	const DEST = resolve(PKG_DIR, ARTIFACT)
 
-	mkdirSync(PKG_DIR, { recursive: true })
+	await makeDirectories(PKG_DIR)
 	/**
 	 * Checked-in WOF-derived admin pairs — the same posture as the GB secondary sources.
 	 */
 	const WOF_ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
 
-	if (!existsSync(CLI)) {
+	if (!(await pathExists(CLI))) {
 		console.error(`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run for ${ARTIFACT}.`)
 
 		return
 	}
 
-	if (!existsSync(WOF_ADMIN_DB)) {
+	if (!(await pathExists(WOF_ADMIN_DB))) {
 		console.error(`WARNING: missing ${WOF_ADMIN_DB} — ${ARTIFACT} not built.`)
 
 		return
 	}
 
-	if (existsSync(DEST)) {
+	if (await pathExists(DEST)) {
 		try {
 			// No `parentDelta` in the expectation: the overlay locales (de/in/es/it) ship WITHOUT the whole-edge
 			// parent bias — unmeasured there, and the D-rule's answer to an unmeasured locale is a per-locale
 			// gate, not an inherited magnitude. `PairIndexOverlay` therefore has no `parentDelta` field to pass;
 			// adding one is a deliberate act that should arrive with a board.
-			const header = peekPairIndexHeaderFields(DEST)
+			const header = await peekPairIndexHeaderFields(DEST)
 			const reason = pairIndexStaleReason(header, { delta, transitionBeta })
 
 			if (reason) {
@@ -366,7 +363,7 @@ export async function buildPairIndexOverlay({
 		{ stdio: "inherit" }
 	)
 
-	if (result.status !== 0 || !existsSync(DEST)) {
+	if (result.status !== 0 || !(await pathExists(DEST))) {
 		console.error(`FAILED: gazetteer pair-index --country ${country} (exit ${result.status})`)
 
 		process.exit(1)

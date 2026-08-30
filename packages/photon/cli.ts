@@ -80,14 +80,14 @@ async function serve(): Promise<void> {
 	const host = values.host ?? "0.0.0.0"
 
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
-	const gazetteer = resolveGazetteerOrExit(values["candidate-db"])
+	const gazetteer = await resolveGazetteerOrExit(values["candidate-db"])
 	const { adminDBPath, candidateDB, wofPaths } = gazetteer
 	const classifier = await loadClassifierOrExit()
 
 	const backend = createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
 	const shards = new ShardProvider(resolverMod, mailwomanDataRoot())
-	const postcodeOfLocality = createLocalityPostcodeLookup()
+	const postcodeOfLocality = await createLocalityPostcodeLookup()
 	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
 	// when the shard isn't on disk (existsSync-gated inside the provider), so the endpoint degrades cleanly.
 	const { BANShardProvider } = await import("@mailwoman/ban/sdk")

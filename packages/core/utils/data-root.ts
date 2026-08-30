@@ -6,7 +6,7 @@
  *   Path builders for Mailwoman's platform-native application directories.
  */
 
-import { resolvePath } from "path-ts"
+import { resolvePath, resolvePathBuilder, type PathBuilder } from "path-ts"
 
 import { $public } from "../env/index.ts"
 
@@ -44,19 +44,43 @@ export function weightsOverlayPath(locale: string, ...segments: string[]): strin
 /**
  * The Mailwoman temporary-file root from the typed public environment.
  */
-export function mailwomanTempRoot(): string {
-	return $public.MAILWOMAN_TEMP_ROOT
+export function mailwomanTempRoot(): PathBuilder {
+	return resolvePathBuilder($public.MAILWOMAN_TEMP_ROOT)
 }
 
 /**
- * Build an absolute path under Mailwoman's temporary-file root.
+ * Path builder under Mailwoman's temporary-file root, e.g. `tempRootPathBuilder("reg", "fr-communes.tsv")`. Reads the
+ * env on each call, so a late environment change (or a test stub) is honored.
+ */
+export function tempRootPathBuilder(...segments: string[]): PathBuilder {
+	return resolvePathBuilder($public.MAILWOMAN_TEMP_ROOT, ...segments)
+}
+
+/**
+ * Absolute-path-string resolver under the temporary-file root — the string-returning sibling of
+ * {@link tempRootPathBuilder}, for handing paths straight to `node:fs` and other string APIs without a `.toString()`.
  */
 export function tempRootPath(...segments: string[]): string {
-	return resolvePath(mailwomanTempRoot(), ...segments)
+	return resolvePath($public.MAILWOMAN_TEMP_ROOT, ...segments)
 }
 
 /**
- * Build an absolute path under Mailwoman's application cache directory.
+ * The Mailwoman cache root from the typed public environment.
+ */
+export function mailwomanCacheRoot(): PathBuilder {
+	return resolvePathBuilder($public.MAILWOMAN_CACHE_ROOT)
+}
+
+/**
+ * Path builder under Mailwoman's application cache directory.
+ */
+export function cacheRootPathBuilder(...segments: string[]): PathBuilder {
+	return resolvePathBuilder($public.MAILWOMAN_CACHE_ROOT, ...segments)
+}
+
+/**
+ * Absolute-path-string resolver under the cache directory — the string-returning sibling of
+ * {@link cacheRootPathBuilder}.
  */
 export function cacheRootPath(...segments: string[]): string {
 	return resolvePath($public.MAILWOMAN_CACHE_ROOT, ...segments)

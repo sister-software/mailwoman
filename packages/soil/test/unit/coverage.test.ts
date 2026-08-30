@@ -18,9 +18,8 @@
  *   share an edge, because the per-area version passes every other test in this package.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { SoilCapabilityLookup, SoilReadingKind } from "@mailwoman/soil"
 import { buildSoilDatabase, type SurveyAreaInput } from "@mailwoman/soil/sdk/build-soil"
@@ -35,6 +34,10 @@ import {
 } from "@mailwoman/soil/test-kit"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const { lat, lon } = FIXTURE_ORIGIN
 
@@ -105,12 +108,8 @@ function eastCounty(): SurveyAreaInput {
 	])
 }
 
-const scratches: string[] = []
-
 async function build(areas: SurveyAreaInput[]): Promise<string> {
-	const scratch = mkdtempSync(join(tmpdir(), "mw-soil-coverage-"))
-
-	scratches.push(scratch)
+	const scratch = fixtures.use(await temporaryDirectory("mw-soil-coverage-")).path
 
 	const databasePath = join(scratch, "soil.db")
 
@@ -131,20 +130,10 @@ async function build(areas: SurveyAreaInput[]): Promise<string> {
 }
 
 function coverageCellCount(databasePath: string): number {
-	const database = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
+	using database = new DatabaseClient<LayerContractDatabase>(databasePath, { readOnly: true })
 
-	try {
-		return (database.prepare("SELECT count(*) AS n FROM layer_coverage").get() as { n: number }).n
-	} finally {
-		database.destroy()
-	}
+	return (database.prepare("SELECT count(*) AS n FROM layer_coverage").get() as { n: number }).n
 }
-
-afterAll(() => {
-	for (const scratch of scratches) {
-		rmSync(scratch, { recursive: true, force: true })
-	}
-})
 
 describe("the coverage footprint over adjacent survey areas", () => {
 	it("covers the shared border, which a per-area interior test drops", async () => {
@@ -176,7 +165,7 @@ describe("the coverage footprint over adjacent survey areas", () => {
 			expect(reading.kind).toBe(SoilReadingKind.Unknown)
 			expect(reading.coverage).toBeUndefined()
 		} finally {
-			lookup.close()
+			lookup[Symbol.dispose]()
 		}
 	})
 })

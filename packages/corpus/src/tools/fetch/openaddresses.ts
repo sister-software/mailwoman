@@ -56,18 +56,12 @@
 
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 import { $private } from "@mailwoman/core/env"
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { openReadStream, openWriteStream } from "@mailwoman/core/fs/streams"
+import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
 import { execFile, spawn } from "@mailwoman/platform/child_process"
-import {
-	createReadStream,
-	createWriteStream,
-	existsSync,
-	mkdirSync,
-	renameSync,
-	rmSync,
-	statSync,
-} from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { Readable } from "@mailwoman/platform/stream"
 import { pipeline } from "@mailwoman/platform/stream/promises"
@@ -128,7 +122,7 @@ interface OaCollection {
 async function countLines(path: string): Promise<number> {
 	let count = 0
 
-	for await (const chunk of createReadStream(path) as AsyncIterable<Buffer>) {
+	for await (const chunk of openReadStream(path) as AsyncIterable<Buffer>) {
 		for (const byte of chunk) {
 			if (byte === 0x0a) {
 				count++
@@ -164,7 +158,7 @@ async function streamDownload(url: string, dest: string, opts: StreamDownloadOpt
 			})
 
 			if (res.ok && res.body) {
-				await pipeline(Readable.fromWeb(res.body), createWriteStream(dest))
+				await pipeline(Readable.fromWeb(res.body), openWriteStream(dest))
 
 				return res.status
 			}
@@ -198,7 +192,7 @@ async function gunzipToFile(src: string, dest: string): Promise<void> {
 		stdio: ["ignore", "pipe", "inherit"],
 	})
 
-	await pipeline(child.stdout!, createWriteStream(dest))
+	await pipeline(child.stdout!, openWriteStream(dest))
 
 	await new Promise<void>((resolve, reject) => {
 		child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`gunzip exited with code ${code}`))))
@@ -222,7 +216,7 @@ export async function fetchOpenAddresses(
 	report?.(`=== fetch openaddresses: country=${country}`)
 	report?.(`    dest: ${destDir}`)
 
-	mkdirSync(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	// MARK: Authentication check
 
@@ -322,7 +316,7 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	}
 
 	if (httpStatus !== HTTP_OK) {
-		rmSync(tmpGz, { force: true })
+		await removePathIfPresent(tmpGz)
 
 		report?.(`
 ERROR: Download returned HTTP ${httpStatus}.
@@ -351,27 +345,27 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 	if (/gzip|compressed/i.test(fileMagic)) {
 		report?.(`  Decompressing gzip archive...`)
 		await gunzipToFile(tmpGz, tmpRaw)
-		rmSync(tmpGz, { force: true })
-		renameSync(tmpRaw, outputFile)
+		await removePathIfPresent(tmpGz)
+		await movePath(tmpRaw, outputFile)
 	} else if (/JSON|ASCII|UTF-8/i.test(fileMagic)) {
 		// Already line-delimited GeoJSON.
-		renameSync(tmpGz, outputFile)
-		rmSync(tmpRaw, { force: true })
+		await movePath(tmpGz, outputFile)
+		await removePathIfPresent(tmpRaw)
 	} else {
 		// Unknown type — keep as-is and let the operator inspect.
-		renameSync(tmpGz, outputFile)
+		await movePath(tmpGz, outputFile)
 		report?.(`  WARNING: Downloaded file type is '${fileMagic.trim()}' — may need manual decompression.`)
 	}
 
 	// MARK: Verify + write MANIFEST
 
-	if (!existsSync(outputFile)) {
+	if (!(await pathExists(outputFile))) {
 		report?.(`ERROR: Output file not found at ${outputFile} after download.`)
 
 		return fail(country)
 	}
 
-	const size = statSync(outputFile).size
+	const size = (await statPath(outputFile)).size
 
 	if (size < MIN_PLAUSIBLE_SHARD_BYTES) {
 		report?.(`ERROR: File is suspiciously small (${size} bytes) — likely an error response.`)

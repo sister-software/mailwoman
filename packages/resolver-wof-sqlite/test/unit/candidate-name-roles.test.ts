@@ -66,8 +66,8 @@ interface NameSpec {
  * the stamps back.
  */
 async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
-	const src = new DatabaseClient<WOFDatabase>(":memory:")
-	const kdb = new DatabaseClient<CandidateDatabase>(":memory:")
+	using src = DatabaseClient.temp<WOFDatabase>()
+	using kdb = DatabaseClient.temp<CandidateDatabase>()
 
 	await createCandidateStagingTables(kdb)
 
@@ -155,9 +155,6 @@ async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
 		is_primary: number
 		name_role: string | null
 	}>(kdb.prepare("SELECT spr_id, name_key, is_primary, name_role FROM cand_stage"))
-
-	await src.destroy()
-	await kdb.destroy()
 
 	const roleOf = new Map(rows.map((r) => [`${r.spr_id}:${r.name_key}`, r.name_role]))
 

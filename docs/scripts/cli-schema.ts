@@ -2,7 +2,7 @@
  * Read compiled command modules and assemble their native command specifications.
  */
 
-import { readdir, stat } from "@mailwoman/platform/fs/promises"
+import { isDirectory, readDirectory } from "@mailwoman/core/fs/readers"
 import { join } from "@mailwoman/platform/path"
 import { pathToFileURL } from "@mailwoman/platform/url"
 
@@ -43,11 +43,11 @@ export async function readCommands(
 ): Promise<Map<string, CommandNode>> {
 	const commands = new Map<string, CommandNode>()
 
-	for (const entry of await readdir(directory)) {
+	for (const entry of await readDirectory(directory)) {
 		if (ignoredEntries.has(entry.replace(/\.[cm]?js$/u, ""))) continue
 		const path = join(directory, entry)
 
-		if ((await stat(path)).isDirectory()) {
+		if (await isDirectory(path)) {
 			const children = await readCommands(path)
 			const index = children.get("index")
 

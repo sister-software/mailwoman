@@ -236,7 +236,7 @@ export async function verifyZoningDatabase(options: VerifyZoningOptions): Promis
 			outsidePassed: outside.filter((row) => row.passed).length,
 		}
 	} finally {
-		lookup.close()
+		lookup[Symbol.dispose]()
 	}
 }
 
@@ -321,57 +321,53 @@ export function sampleAgreementPoints(
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number; localCode: string }> {
 	const count = options.count ?? 48
-	const database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
+	using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-	try {
-		const points: Array<{ label: string; latitude: number; longitude: number; localCode: string }> = []
+	const points: Array<{ label: string; latitude: number; longitude: number; localCode: string }> = []
 
-		// ORDERED BY THE AUTHORITY FIRST, so a stride walks across the 30 of them rather than down one. A stride over
-		// `area_id` alone would follow the publisher's own feature numbering, which is grouped by authority — and would draw
-		// every sample from whichever authorities happen to sit on the stride.
-		const areaIDs = (
-			database.prepare("SELECT area_id FROM zoning_area ORDER BY jurisdiction_id, area_id").all() as Array<{
-				area_id: string
-			}>
-		).map((row) => row.area_id)
+	// ORDERED BY THE AUTHORITY FIRST, so a stride walks across the 30 of them rather than down one. A stride over
+	// `area_id` alone would follow the publisher's own feature numbering, which is grouped by authority — and would draw
+	// every sample from whichever authorities happen to sit on the stride.
+	const areaIDs = (
+		database.prepare("SELECT area_id FROM zoning_area ORDER BY jurisdiction_id, area_id").all() as Array<{
+			area_id: string
+		}>
+	).map((row) => row.area_id)
 
-		if (!areaIDs.length) return points
+	if (!areaIDs.length) return points
 
-		const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, count)))
+	const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, count)))
 
-		const selectArea = database.prepare(
-			"SELECT area_id, jurisdiction_id, local_code, min_lat, min_lon, max_lat, max_lon, rings FROM zoning_area WHERE area_id = ?"
-		)
+	const selectArea = database.prepare(
+		"SELECT area_id, jurisdiction_id, local_code, min_lat, min_lon, max_lat, max_lon, rings FROM zoning_area WHERE area_id = ?"
+	)
 
-		for (let index = 0; index < areaIDs.length && points.length < count; index += stride) {
-			const area = selectArea.get(areaIDs[index]!) as
-				| {
-						area_id: string
-						jurisdiction_id: string
-						local_code: string
-						min_lat: number
-						min_lon: number
-						max_lat: number
-						max_lon: number
-						rings: Uint8Array
-				  }
-				| undefined
+	for (let index = 0; index < areaIDs.length && points.length < count; index += stride) {
+		const area = selectArea.get(areaIDs[index]!) as
+			| {
+					area_id: string
+					jurisdiction_id: string
+					local_code: string
+					min_lat: number
+					min_lon: number
+					max_lat: number
+					max_lon: number
+					rings: Uint8Array
+			  }
+			| undefined
 
-			if (!area) continue
+		if (!area) continue
 
-			const interior = interiorPointOfEncodedRings(area, 17)
+		const interior = interiorPointOfEncodedRings(area, 17)
 
-			if (!interior) continue
+		if (!interior) continue
 
-			points.push({
-				label: `${area.jurisdiction_id} ${JSON.stringify(area.local_code)} polygon ${area.area_id}`,
-				localCode: area.local_code,
-				...interior,
-			})
-		}
-
-		return points
-	} finally {
-		database.destroy()
+		points.push({
+			label: `${area.jurisdiction_id} ${JSON.stringify(area.local_code)} polygon ${area.area_id}`,
+			localCode: area.local_code,
+			...interior,
+		})
 	}
+
+	return points
 }

@@ -30,11 +30,9 @@
  *   /tmp/part-po-box.parquet
  */
 
+import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { randomUUID } from "@mailwoman/platform/crypto"
-import { createWriteStream } from "@mailwoman/platform/fs"
-import { unlink } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { TextSpliterator } from "spliterator"
 
@@ -159,62 +157,59 @@ export async function jsonlToParquet(
 
 	// Stage the validated rows to a temp NDJSON, then let DuckDB type + write them. Streaming keeps
 	// memory O(1) on the Node side (the Python original buffered every column into memory first). The
-	// `finally` covers the validation pass too, so a mid-stream span-triple failure leaves no orphan.
-	const stagePath = join(tmpdir(), `mw-jsonl-to-parquet-${randomUUID()}.ndjson`)
-	const stage = createWriteStream(stagePath, { encoding: "utf8" })
+	// staging directory owns the write stream, so it is closed before the directory is removed — and a
+	// mid-stream span-triple failure leaves no orphan.
+	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
+	const stagePath = join(staging.path, "rows.ndjson")
+	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))
 
-	try {
-		let rows = 0
-		let lineNo = 0
+	let rows = 0
+	let lineNo = 0
 
-		// TextSpliterator, not JSONSpliterator: the staging write below streams the RAW line bytes to
-		// DuckDB verbatim (the parse here only validates), so a re-serialized JSONSpliterator row would
-		// defeat the point. CRLF is handled by the existing `rawLine.trim()` (strips a trailing \r),
-		// same as readline's crlfDelay:Infinity did.
-		for await (const rawLine of TextSpliterator.fromAsync(options.input)) {
-			lineNo++
-			const line = rawLine.trim()
+	// TextSpliterator, not JSONSpliterator: the staging write below streams the RAW line bytes to
+	// DuckDB verbatim (the parse here only validates), so a re-serialized JSONSpliterator row would
+	// defeat the point. CRLF is handled by the existing `rawLine.trim()` (strips a trailing \r),
+	// same as readline's crlfDelay:Infinity did.
+	for await (const rawLine of TextSpliterator.fromAsync(options.input)) {
+		lineNo++
+		const line = rawLine.trim()
 
-			if (!line) continue
-			const row = parseJSONStrict<Record<string, unknown>>(line)
-			assertSpanTriple(row, lineNo)
-			// Write the validated line verbatim; DuckDB's `read_json` projects to the explicit `columns`
-			// map below (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
-			stage.write(line + "\n")
+		if (!line) continue
+		const row = parseJSONStrict<Record<string, unknown>>(line)
+		assertSpanTriple(row, lineNo)
+		// Write the validated line verbatim; DuckDB's `read_json` projects to the explicit `columns`
+		// map below (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
+		stage.write(line + "\n")
 
-			rows++
-		}
-
-		await new Promise<void>((resolve, reject) => {
-			stage.end((err?: Error | null) => (err ? reject(err) : resolve()))
-		})
-
-		report?.(`Read ${rows} rows from ${options.input}`)
-
-		const columnsLiteral = "{" + REQUIRED_COLUMNS.map((c) => `'${c}': '${COLUMN_TYPES[c]}'`).join(", ") + "}"
-		const selectList = REQUIRED_COLUMNS.join(", ")
-
-		// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
-		const { DuckDBInstance } = await import("@duckdb/node-api")
-		const instance = await DuckDBInstance.create()
-		const db = await instance.connect()
-		// Row order is required: the overlay-manifest assembler records first/last source_id from
-		// shard order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
-		await db.run("SET preserve_insertion_order=true")
-
-		await db.run(
-			`COPY (SELECT ${selectList} FROM read_json('${sqlString(stagePath)}', ` +
-				`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
-				`TO '${sqlString(options.output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
-		)
-
-		const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${sqlString(options.output)}')`)
-		const written = Number(counted.getRowObjects()[0]!.n)
-		report?.(`Wrote ${written} rows to ${options.output}`)
-
-		return { read: rows, written, outPath: options.output }
-	} finally {
-		await stage.destroy()
-		await unlink(stagePath).catch(() => {})
+		rows++
 	}
+
+	await new Promise<void>((resolve, reject) => {
+		stage.end((err?: Error | null) => (err ? reject(err) : resolve()))
+	})
+
+	report?.(`Read ${rows} rows from ${options.input}`)
+
+	const columnsLiteral = "{" + REQUIRED_COLUMNS.map((c) => `'${c}': '${COLUMN_TYPES[c]}'`).join(", ") + "}"
+	const selectList = REQUIRED_COLUMNS.join(", ")
+
+	// @duckdb/node-api is an optional peer — lazy import (the pipeline convention).
+	const { DuckDBInstance } = await import("@duckdb/node-api")
+	const instance = await DuckDBInstance.create()
+	const db = await instance.connect()
+	// Row order is required: the overlay-manifest assembler records first/last source_id from
+	// shard order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
+	await db.run("SET preserve_insertion_order=true")
+
+	await db.run(
+		`COPY (SELECT ${selectList} FROM read_json('${sqlString(stagePath)}', ` +
+			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
+			`TO '${sqlString(options.output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
+	)
+
+	const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${sqlString(options.output)}')`)
+	const written = Number(counted.getRowObjects()[0]!.n)
+	report?.(`Wrote ${written} rows to ${options.output}`)
+
+	return { read: rows, written, outPath: options.output }
 }

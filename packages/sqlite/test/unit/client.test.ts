@@ -28,7 +28,7 @@ async function createFixtureTable(db: DatabaseClient<FixtureDatabase>): Promise<
 
 describe("DatabaseClient construction", () => {
 	it("opens from a path with no options", async () => {
-		using db = new DatabaseClient<FixtureDatabase>(":memory:")
+		using db = DatabaseClient.temp<FixtureDatabase>()
 
 		await createFixtureTable(db)
 		await db.insertInto("fixture").values({ id: 1 }).execute()

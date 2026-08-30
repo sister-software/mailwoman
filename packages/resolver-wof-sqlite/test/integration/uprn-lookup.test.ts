@@ -8,6 +8,7 @@
  *   never disagree on which cell a coordinate keys to.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	CoverageBasis,
 	createLayerCoverageTable,
@@ -20,8 +21,6 @@ import {
 	writeLayerManifest,
 	type LayerContractDatabase,
 } from "@mailwoman/core/layers"
-import { mkdtempSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { UPRN_MAX_NEAREST_RADIUS_M, UPRNLookup } from "@mailwoman/resolver-wof-sqlite/uprn-lookup"
 import {
@@ -32,7 +31,11 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { beforeAll, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 /**
  * Westminster pair ~160 m apart, plus an Edinburgh outlier — enough to exercise nearest-of-several, the radius bound,
@@ -48,11 +51,11 @@ let databasePath: string
 let lookup: UPRNLookup
 
 beforeAll(async () => {
-	const dir = mkdtempSync(join(tmpdir(), "uprn-lookup-"))
+	const dir = fixtures.use(await temporaryDirectory("uprn-lookup-")).path
 
 	databasePath = join(dir, "uprn.db")
 
-	const kdb = new DatabaseClient<UPRNDatabase>(databasePath)
+	using kdb = new DatabaseClient<UPRNDatabase>(databasePath)
 	const contract = kdb
 
 	await createUPRNTable(kdb)
@@ -86,8 +89,6 @@ beforeAll(async () => {
 	await writeLayerCoverage(contract, [
 		{ h3Cell: 1, completeness: 1, basis: CoverageBasis.Designated, observedRows: FIXTURE_POINTS.length },
 	])
-
-	await kdb.destroy()
 
 	lookup = new UPRNLookup({ databasePath })
 })

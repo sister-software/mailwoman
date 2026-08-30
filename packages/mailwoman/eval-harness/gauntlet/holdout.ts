@@ -263,7 +263,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	)
 
 	const prod = await score(prodDeps, sample)
-	prodDeps.close()
+	prodDeps[Symbol.dispose]()
 
 	const candDeps = await buildGauntletDeps(
 		CAND_CACHE
@@ -274,7 +274,7 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	)
 
 	const cand = await score(candDeps, sample)
-	candDeps.close()
+	candDeps[Symbol.dispose]()
 
 	const n = sample.length
 	const gateIdx = TOLS.indexOf(GATE_TOL as (typeof TOLS)[number])

@@ -27,8 +27,8 @@
  *   steps run later, consuming the JSONL shards this writes.
  */
 
-import { createWriteStream, type WriteStream } from "@mailwoman/platform/fs"
-import { mkdir, writeFile } from "@mailwoman/platform/fs/promises"
+import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
+import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dirname, join } from "@mailwoman/platform/path"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
@@ -132,7 +132,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	const progressEvery = opts.progressEvery ?? 1000
 
 	const adapterDir = join(outputDir, adapter.id)
-	await mkdir(adapterDir, { recursive: true })
+	await makeDirectories(adapterDir)
 
 	const jsonlPath = join(adapterDir, "canonical.jsonl")
 	const manifestPath = join(adapterDir, "MANIFEST.json")
@@ -140,7 +140,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	const startedAt = new Date()
 	const t0 = performance.now()
 
-	const stream = createWriteStream(jsonlPath, { encoding: "utf8" })
+	const stream = openWriteStream(jsonlPath, { encoding: "utf8" })
 	const hasher: StreamingHasher = streamingSha256()
 	const seen = new Set<string>()
 	const DEDUP_MAX_SIZE = 10_000_000
@@ -231,7 +231,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		elapsed_ms,
 	}
 
-	await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(manifest, manifestPath)
 
 	return manifest
 }
@@ -313,5 +313,5 @@ function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
  * Convenience: ensure the parent directory of `filePath` exists.
  */
 export async function ensureParentDir(filePath: string): Promise<void> {
-	await mkdir(dirname(filePath), { recursive: true })
+	await makeDirectories(dirname(filePath))
 }

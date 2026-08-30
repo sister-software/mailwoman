@@ -48,8 +48,8 @@ function collapsedComponents(labels: readonly string[]): string[] {
 }
 
 describe("reviewed Venezuela postcode tuples", () => {
-	it("loads four provenance-bearing, unique after-locality facts", () => {
-		const tuples = readReviewedPostcodeTuples()
+	it("loads four provenance-bearing, unique after-locality facts", async () => {
+		const tuples = await readReviewedPostcodeTuples()
 
 		expect(tuples).toHaveLength(4)
 		expect(new Set(tuples.map((tuple) => tuple.id))).toHaveLength(4)
@@ -58,8 +58,8 @@ describe("reviewed Venezuela postcode tuples", () => {
 		expect(tuples.every((tuple) => URL.canParse(tuple.provenance.url))).toBe(true)
 	})
 
-	it("generates five bounded variants per tuple and two additional accent folds", () => {
-		const variants = readReviewedPostcodeTuples().map(reviewedPostcodeTailVariants)
+	it("generates five bounded variants per tuple and two additional accent folds", async () => {
+		const variants = (await readReviewedPostcodeTuples()).map(reviewedPostcodeTailVariants)
 
 		expect(variants.map((rows) => rows.length)).toEqual([6, 5, 5, 6])
 		expect(variants.flat()).toHaveLength(22)
@@ -88,8 +88,8 @@ describe("reviewed Venezuela postcode tuples", () => {
 		)
 	})
 
-	it("pins the canonical, punctuation, case, accent, and named-context surfaces", () => {
-		const [barcelona] = readReviewedPostcodeTuples()
+	it("pins the canonical, punctuation, case, accent, and named-context surfaces", async () => {
+		const [barcelona] = await readReviewedPostcodeTuples()
 		const rows = reviewedPostcodeTailVariants(barcelona!)
 
 		expect(rows.map((row) => row.raw)).toEqual([

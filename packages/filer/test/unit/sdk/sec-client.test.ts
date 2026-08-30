@@ -25,9 +25,8 @@ import { type StubOutcome, stubTransport, type StubTransport } from "@mailwoman/
 // via the post-reset dynamic import below; a `const` carries no type side, so the type position needs its own static
 // import. Type-only, so it never evaluates the mocked module chain.
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
-import { mkdtempSync, readdirSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { readDirectory } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // NOTE: `./sec-client.ts` is imported DYNAMICALLY below, after `vi.resetModules()` — see the
@@ -71,14 +70,14 @@ const {
 
 const TEST_USER_AGENT = "Test Harness test@example.com"
 
-let cacheDir: string
+let cacheDir: TemporaryDirectory
 
-beforeEach(() => {
-	cacheDir = mkdtempSync(join(tmpdir(), "sec-client-test-"))
+beforeEach(async () => {
+	cacheDir = await temporaryDirectory("sec-client-test-")
 })
 
 afterEach(() => {
-	rmSync(cacheDir, { recursive: true, force: true })
+	cacheDir[Symbol.asyncDispose]()
 	vi.useRealTimers()
 })
 
@@ -92,7 +91,7 @@ describe("createSECClient: User-Agent fail-fast", () => {
 	it("does not throw when userAgent is passed explicitly", () => {
 		const transport = stubTransport([{}])
 
-		expect(() => createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, ...transport })).not.toThrow()
+		expect(() => createSECClient({ userAgent: TEST_USER_AGENT, cacheDir: cacheDir.path, ...transport })).not.toThrow()
 	})
 })
 
@@ -100,7 +99,12 @@ describe("createSECClient: request headers", () => {
 	it("sends the configured User-Agent and the documented Accept-Encoding on every request, across hosts", async () => {
 		const transport = stubTransport([{ body: { a: 1 } }, { body: { b: 2 } }])
 
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		await client.get("https://data.sec.gov/submissions/CIK0000320193.json")
 		await client.get("https://www.sec.gov/files/company_tickers.json")
@@ -123,7 +127,7 @@ describe("createSECClient: request headers", () => {
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			requestTimeoutMs: 12_345,
 			...transport,
@@ -137,7 +141,12 @@ describe("createSECClient: request headers", () => {
 
 describe("createSECClient: host allowlist", () => {
 	function clientFor(transport: StubTransport) {
-		return createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+		return createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 	}
 
 	it("refuses a non-SEC host before touching the network, as a non-transient ResourceError", async () => {
@@ -226,21 +235,37 @@ describe("createSECClient: on-disk cache", () => {
 
 	it("caches a successful response and does not re-fetch on a second get() for the same URL", async () => {
 		const transport = stubTransport([{ body: { cik: "0000320193" } }])
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		expect(await client.get(url)).toEqual({ cik: "0000320193" })
 		expect(await client.get(url)).toEqual({ cik: "0000320193" })
 		expect(transport.calls).toHaveLength(1)
 	})
 
-	it("persists to disk, so a SEPARATE client instance over the same cacheDir hits it too", async () => {
+	it("persists to disk, so a SEPARATE client instance over the same cacheDir.path hits it too", async () => {
 		const first = stubTransport([{ body: { cik: "0000320193" } }])
 
-		await createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...first }).get(url)
+		await createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...first,
+		}).get(url)
 
 		const second = stubTransport([{ body: { cik: "SHOULD-NOT-BE-FETCHED" } }])
 
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...second })
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...second,
+		})
 
 		expect(await client.get(url)).toEqual({ cik: "0000320193" })
 		expect(second.calls).toHaveLength(0)
@@ -256,7 +281,7 @@ describe("createSECClient: on-disk cache", () => {
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			cacheTTLMs: 1000,
 			...transport,
@@ -279,7 +304,7 @@ describe("createSECClient: on-disk cache", () => {
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			cacheTTLMs: 1000,
 			...transport,
@@ -306,7 +331,12 @@ describe("createSECClient: on-disk cache", () => {
 			{ body: { v: 2 }, headers: { "cache-control": "max-age=1" } },
 		])
 
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		expect(await client.get(archiveURL)).toEqual({ v: 1 })
 		expect(transport.calls).toHaveLength(1)
@@ -323,7 +353,13 @@ describe("createSECClient: on-disk cache", () => {
 		// browse-edgar's entire identity IS its query string — collapsing `origin + pathname` into the
 		// cache key would silently merge every distinct CIK lookup into one entry.
 		const transport = stubTransport([{ body: { cik: "0000320193" } }, { body: { cik: "0000789019" } }])
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		expect(await client.get("https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193")).toEqual({
 			cik: "0000320193",
@@ -342,20 +378,20 @@ describe("createSECClient: on-disk cache", () => {
 
 		const failingClient = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			maxAttempts: 1,
 			...failing,
 		})
 
 		await expect(failingClient.get(errorURL)).rejects.toThrow(/500/)
-		expect(readdirSync(cacheDir)).toHaveLength(0)
+		expect(await readDirectory(cacheDir.path)).toHaveLength(0)
 
 		const succeeding = stubTransport([{ body: { ok: true } }])
 
 		const succeedingClient = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			...succeeding,
 		})
@@ -369,7 +405,7 @@ describe("createSECClient: on-disk cache", () => {
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			maxAttempts: 1,
 			...bad,
@@ -381,12 +417,17 @@ describe("createSECClient: on-disk cache", () => {
 		expect((caught as Error).message).toContain(archiveURL)
 		// An unchanged bad body cannot be fixed by retrying, so it must not be requeued either.
 		expect(isTransientResourceError(caught)).toBe(false)
-		expect(readdirSync(cacheDir)).toHaveLength(0)
+		expect(await readDirectory(cacheDir.path)).toHaveLength(0)
 
 		// Nothing was poisoned, so a later attempt against the same (archive!) URL still fetches.
 		const fixed = stubTransport([{ body: { ok: true } }])
 
-		const fixedClient = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...fixed })
+		const fixedClient = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...fixed,
+		})
 
 		expect(await fixedClient.get(archiveURL)).toEqual({ ok: true })
 		expect(fixed.calls).toHaveLength(1)
@@ -398,14 +439,26 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 
 	it("returns the raw HTML body as text, not JSON-parsed", async () => {
 		const transport = stubTransport([{ body: "<html><body>Exhibit 21</body></html>" }])
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		expect(await client.getDocument(archiveURL)).toBe("<html><body>Exhibit 21</body></html>")
 	})
 
 	it("shares the host allowlist with get() — refuses a non-SEC host before touching the network", async () => {
 		const transport = stubTransport([{}])
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		const caught = await client.getDocument("https://attacker.example.invalid/collect").catch((error: unknown) => error)
 
@@ -416,7 +469,13 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 
 	it("explains a 403 the same way get() does — this client did not identify itself", async () => {
 		const transport = stubTransport([{ status: 403, statusText: "Forbidden" }])
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		const caught = await client.getDocument(archiveURL).catch((error: unknown) => error)
 
@@ -427,7 +486,13 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 
 	it("caches a fetched document under the permanent archive TTL — a second call never re-fetches", async () => {
 		const transport = stubTransport([{ body: "<html>filing text</html>" }])
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
 		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
@@ -439,14 +504,14 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			maxAttempts: 1,
 			...bad,
 		})
 
 		expect(await client.getDocument(archiveURL)).toBe("")
-		expect(readdirSync(cacheDir)).toHaveLength(0)
+		expect(await readDirectory(cacheDir.path)).toHaveLength(0)
 
 		expect(await client.getDocument(archiveURL)).toBe("<html>filing text</html>")
 		expect(bad.calls).toHaveLength(2)
@@ -455,12 +520,21 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 	it("shares the on-disk cache with get() by URL — a document fetched via getDocument reads back as text on a fresh client instance", async () => {
 		const first = stubTransport([{ body: "<html>persisted</html>" }])
 
-		await createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...first }).getDocument(
-			archiveURL
-		)
+		await createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...first,
+		}).getDocument(archiveURL)
 
 		const second = stubTransport([{ body: "SHOULD-NOT-BE-FETCHED" }])
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...second })
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...second,
+		})
 
 		expect(await client.getDocument(archiveURL)).toBe("<html>persisted</html>")
 		expect(second.calls).toHaveLength(0)
@@ -470,7 +544,14 @@ describe("createSECClient: getDocument — the raw-text path get() cannot provid
 describe("createSECClient: stampede guard", () => {
 	it("de-dupes concurrent misses for the SAME url onto a single in-flight request", async () => {
 		const transport = stubTransport([{ body: { v: 1 } }])
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
+
 		const url = "https://data.sec.gov/stampede-test.json"
 
 		const results = await Promise.all([client.get(url), client.get(url), client.get(url)])
@@ -487,7 +568,7 @@ describe("createSECClient: rate limiting", () => {
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock,
 			requestsPerSecond: 100, // attempts to exceed the policy ceiling
 			...transport,
@@ -518,7 +599,7 @@ describe("createSECClient: rate limiting", () => {
 		const clock = new VirtualClock()
 		const transport = stubTransport([{ body: { ok: true } }], { clock })
 
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock, ...transport })
+		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir: cacheDir.path, clock, ...transport })
 
 		// ARRIVALS, timestamped inside the adapter — not `clock.sleepCalls`. The grant schedule is not what a
 		// rate limiter sees, and asserting it hid exactly this bug: the sleeps were 111ms apart and passed,
@@ -556,7 +637,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock,
 			maxAttempts: 3,
 			baseRetryDelayMs: 500,
@@ -573,7 +654,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			maxAttempts: 2,
 			baseRetryDelayMs: 1,
@@ -592,7 +673,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			maxAttempts: 5,
 			...transport,
@@ -612,7 +693,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			maxAttempts: 5,
 			...transport,
@@ -636,7 +717,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock,
 			maxAttempts: 3,
 			baseRetryDelayMs: 500,
@@ -666,7 +747,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock,
 			maxAttempts: 2,
 			baseRetryDelayMs: 500, // must NOT be what gets slept
@@ -689,7 +770,7 @@ describe("createSECClient: bounded retry with backoff on 429/5xx and network-cla
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock,
 			maxAttempts: 2,
 			baseRetryDelayMs: 500,
@@ -713,7 +794,7 @@ describe("createSECClient: the caller's failure taxonomy, decided without readin
 
 		const client = createSECClient({
 			userAgent: TEST_USER_AGENT,
-			cacheDir,
+			cacheDir: cacheDir.path,
 			clock: createFakeClock(),
 			maxAttempts,
 			baseRetryDelayMs: 1,
@@ -770,7 +851,12 @@ describe("createSECClient: the caller's failure taxonomy, decided without readin
 	it("a disallowed host → a programmer bug, never requeued", async () => {
 		const transport = stubTransport([{}])
 
-		const client = createSECClient({ userAgent: TEST_USER_AGENT, cacheDir, clock: createFakeClock(), ...transport })
+		const client = createSECClient({
+			userAgent: TEST_USER_AGENT,
+			cacheDir: cacheDir.path,
+			clock: createFakeClock(),
+			...transport,
+		})
 
 		const error = await client.get("https://attacker.example/x").catch((caught: unknown) => caught)
 

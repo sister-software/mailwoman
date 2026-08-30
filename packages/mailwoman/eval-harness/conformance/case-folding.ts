@@ -27,7 +27,7 @@
  *   something else under its own name.
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import type { ConformanceFixture } from "./fixture.ts"
@@ -204,7 +204,7 @@ export function caseApplicability(
 export const CASE_FOLDING_SUITE_PATH = ((): string => {
 	const sibling = fileURLToPath(new URL("case-folding.jsonl", import.meta.url))
 
-	if (existsSync(sibling)) return sibling
+	if (pathExistsSync(sibling)) return sibling
 
 	return fileURLToPath(new URL("../../../eval-harness/conformance/case-folding.jsonl", import.meta.url))
 })()

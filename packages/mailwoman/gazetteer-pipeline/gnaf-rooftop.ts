@@ -29,6 +29,8 @@
  *   0-geocode failure).
  */
 
+import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import {
@@ -38,7 +40,6 @@ import {
 	OSM_ADDRESS_POINT_COLUMNS,
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk"
-import { existsSync, readdirSync, rmSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import {
@@ -169,7 +170,7 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 
 	const only = options.states ? new Set(options.states.map((s) => s.toUpperCase())) : null
 
-	const states = readdirSync(standardDir)
+	const states = (await readDirectory(standardDir))
 		.filter((f) => f.endsWith("_ADDRESS_DETAIL_psv.psv"))
 		.map((f) => f.replace("_ADDRESS_DETAIL_psv.psv", ""))
 		.filter((s) => !only || only.has(s))
@@ -181,179 +182,181 @@ export async function buildGNAFRooftopShard(options: GNAFRooftopOptions): Promis
 
 	const tmp = `${out}.tmp-${process.pid}`
 
-	if (existsSync(tmp)) {
-		rmSync(tmp)
+	if (await pathExists(tmp)) {
+		await removePath(tmp)
 	}
-
-	const kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)
-
-	kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
-
-	await createOSMAddressPointTables(kdb)
-
-	const insert = kdb.prepare(
-		`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
-	)
 
 	const counts: GNAFRooftopResult = { out, written: 0, retired: 0, alias: 0, noNumber: 0, noGeocode: 0, noStreet: 0 }
-	const BATCH = 50_000
 
-	for (const state of states) {
-		const p = (family: string) => join(standardDir, `${state}_${family}_psv.psv`)
+	{
+		using kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)
 
-		const localities = await loadMap(p("LOCALITY"), (r) =>
-			r["LOCALITY_PID"] && r["LOCALITY_NAME"] ? [r["LOCALITY_PID"], r["LOCALITY_NAME"]] : null
+		kdb.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
+
+		await createOSMAddressPointTables(kdb)
+
+		const insert = kdb.prepare(
+			`INSERT INTO address_point VALUES (${OSM_ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`
 		)
 
-		const streets = await loadMap(p("STREET_LOCALITY"), (r) => {
-			if (!r["STREET_LOCALITY_PID"] || !r["STREET_NAME"]) return null
+		const BATCH = 50_000
 
-			const type = r["STREET_TYPE_CODE"] ? ` ${r["STREET_TYPE_CODE"]}` : ""
+		for (const state of states) {
+			const p = (family: string) => join(standardDir, `${state}_${family}_psv.psv`)
 
-			const suffix = r["STREET_SUFFIX_CODE"]
-				? ` ${SUFFIX_WORDS.get(r["STREET_SUFFIX_CODE"]) ?? r["STREET_SUFFIX_CODE"]}`
-				: ""
-
-			return [r["STREET_LOCALITY_PID"], titleCase(`${r["STREET_NAME"]}${type}${suffix}`)]
-		})
-
-		const geocodes = await loadGeocodes(p("ADDRESS_DEFAULT_GEOCODE"))
-
-		log(
-			`[gnaf] ${state}: ${localities.size.toLocaleString()} localities, ${streets.size.toLocaleString()} streets, ${geocodes.size.toLocaleString()} geocodes`
-		)
-
-		let read: ((line: string) => Record<string, string>) | null = null
-
-		kdb.exec("BEGIN")
-
-		for await (const line of TextSpliterator.fromAsync(p("ADDRESS_DETAIL"))) {
-			if (!line) continue
-
-			if (!read) {
-				read = rowReader(line)
-
-				continue
-			}
-
-			const r = read(line)
-
-			if (r["DATE_RETIRED"]) {
-				counts.retired++
-
-				continue
-			}
-
-			if (r["ALIAS_PRINCIPAL"] && r["ALIAS_PRINCIPAL"] !== "P") {
-				counts.alias++
-
-				continue
-			}
-
-			const streetRaw = streets.get(r["STREET_LOCALITY_PID"] ?? "")
-
-			if (!streetRaw) {
-				counts.noStreet++
-
-				continue
-			}
-
-			const number = (
-				r["NUMBER_FIRST"]
-					? `${r["NUMBER_FIRST_PREFIX"] ?? ""}${r["NUMBER_FIRST"]}${r["NUMBER_FIRST_SUFFIX"] ?? ""}`
-					: `${r["LOT_NUMBER_PREFIX"] ?? ""}${r["LOT_NUMBER"] ?? ""}${r["LOT_NUMBER_SUFFIX"] ?? ""}`
-			)
-				.trim()
-				.toLowerCase()
-
-			if (!number) {
-				counts.noNumber++
-
-				continue
-			}
-
-			const geo = geocodes.get(r["ADDRESS_DETAIL_PID"] ?? "")
-
-			if (!geo) {
-				counts.noGeocode++
-
-				continue
-			}
-
-			const streetNorm = normalizeStreetForKeyLocale(streetRaw, "en")
-
-			if (!streetNorm) {
-				counts.noStreet++
-
-				continue
-			}
-
-			const unit = (
-				r["FLAT_NUMBER"] ? `${r["FLAT_NUMBER_PREFIX"] ?? ""}${r["FLAT_NUMBER"]}${r["FLAT_NUMBER_SUFFIX"] ?? ""}` : ""
-			)
-				.trim()
-				.toLowerCase()
-
-			const locality = localities.get(r["LOCALITY_PID"] ?? "")
-			const [lon, lat] = geo
-			const h3Cell = shortCellToInt(latLngToCell(lat, lon, OSM_ADDRESS_H3_RESOLUTION) as H3Cell)
-
-			insert.run(
-				streetNorm,
-				canonicalizeRouteKey(streetNorm),
-				number,
-				unit || null,
-				r["POSTCODE"]?.trim() || null,
-				locality ? normalizeLocalityForKey(locality) : null,
-				streetRaw,
-				lat,
-				lon,
-				"gnaf:au",
-				release,
-				h3Cell
+			const localities = await loadMap(p("LOCALITY"), (r) =>
+				r["LOCALITY_PID"] && r["LOCALITY_NAME"] ? [r["LOCALITY_PID"], r["LOCALITY_NAME"]] : null
 			)
 
-			counts.written++
+			const streets = await loadMap(p("STREET_LOCALITY"), (r) => {
+				if (!r["STREET_LOCALITY_PID"] || !r["STREET_NAME"]) return null
 
-			if (counts.written % BATCH === 0) {
-				kdb.exec("COMMIT")
-				kdb.exec("BEGIN")
+				const type = r["STREET_TYPE_CODE"] ? ` ${r["STREET_TYPE_CODE"]}` : ""
 
-				if (counts.written % 1_000_000 === 0) {
-					log(`[gnaf]   ${counts.written.toLocaleString()} written…`)
+				const suffix = r["STREET_SUFFIX_CODE"]
+					? ` ${SUFFIX_WORDS.get(r["STREET_SUFFIX_CODE"]) ?? r["STREET_SUFFIX_CODE"]}`
+					: ""
+
+				return [r["STREET_LOCALITY_PID"], titleCase(`${r["STREET_NAME"]}${type}${suffix}`)]
+			})
+
+			const geocodes = await loadGeocodes(p("ADDRESS_DEFAULT_GEOCODE"))
+
+			log(
+				`[gnaf] ${state}: ${localities.size.toLocaleString()} localities, ${streets.size.toLocaleString()} streets, ${geocodes.size.toLocaleString()} geocodes`
+			)
+
+			let read: ((line: string) => Record<string, string>) | null = null
+
+			kdb.exec("BEGIN")
+
+			for await (const line of TextSpliterator.fromAsync(p("ADDRESS_DETAIL"))) {
+				if (!line) continue
+
+				if (!read) {
+					read = rowReader(line)
+
+					continue
+				}
+
+				const r = read(line)
+
+				if (r["DATE_RETIRED"]) {
+					counts.retired++
+
+					continue
+				}
+
+				if (r["ALIAS_PRINCIPAL"] && r["ALIAS_PRINCIPAL"] !== "P") {
+					counts.alias++
+
+					continue
+				}
+
+				const streetRaw = streets.get(r["STREET_LOCALITY_PID"] ?? "")
+
+				if (!streetRaw) {
+					counts.noStreet++
+
+					continue
+				}
+
+				const number = (
+					r["NUMBER_FIRST"]
+						? `${r["NUMBER_FIRST_PREFIX"] ?? ""}${r["NUMBER_FIRST"]}${r["NUMBER_FIRST_SUFFIX"] ?? ""}`
+						: `${r["LOT_NUMBER_PREFIX"] ?? ""}${r["LOT_NUMBER"] ?? ""}${r["LOT_NUMBER_SUFFIX"] ?? ""}`
+				)
+					.trim()
+					.toLowerCase()
+
+				if (!number) {
+					counts.noNumber++
+
+					continue
+				}
+
+				const geo = geocodes.get(r["ADDRESS_DETAIL_PID"] ?? "")
+
+				if (!geo) {
+					counts.noGeocode++
+
+					continue
+				}
+
+				const streetNorm = normalizeStreetForKeyLocale(streetRaw, "en")
+
+				if (!streetNorm) {
+					counts.noStreet++
+
+					continue
+				}
+
+				const unit = (
+					r["FLAT_NUMBER"] ? `${r["FLAT_NUMBER_PREFIX"] ?? ""}${r["FLAT_NUMBER"]}${r["FLAT_NUMBER_SUFFIX"] ?? ""}` : ""
+				)
+					.trim()
+					.toLowerCase()
+
+				const locality = localities.get(r["LOCALITY_PID"] ?? "")
+				const [lon, lat] = geo
+				const h3Cell = shortCellToInt(latLngToCell(lat, lon, OSM_ADDRESS_H3_RESOLUTION) as H3Cell)
+
+				insert.run(
+					streetNorm,
+					canonicalizeRouteKey(streetNorm),
+					number,
+					unit || null,
+					r["POSTCODE"]?.trim() || null,
+					locality ? normalizeLocalityForKey(locality) : null,
+					streetRaw,
+					lat,
+					lon,
+					"gnaf:au",
+					release,
+					h3Cell
+				)
+
+				counts.written++
+
+				if (counts.written % BATCH === 0) {
+					kdb.exec("COMMIT")
+					kdb.exec("BEGIN")
+
+					if (counts.written % 1_000_000 === 0) {
+						log(`[gnaf]   ${counts.written.toLocaleString()} written…`)
+					}
 				}
 			}
+
+			kdb.exec("COMMIT")
 		}
 
-		kdb.exec("COMMIT")
+		log(`[gnaf] indexing…`)
+
+		await createAddressPointIndexes(kdb)
+		await createOSMAddressPointIndexes(kdb)
+
+		await writeLayerManifest(kdb, {
+			name: "gnaf-address-points-au-au",
+			version: release,
+			schemaVersion: 1,
+			tier: LayerTier.BuildLocal,
+			license: "CC-BY-4.0",
+			attribution: "© Geoscape Australia — G-NAF, CC BY 4.0",
+			source: "gnaf:au",
+			sourceVintage: release,
+			buildCmd: "mailwoman gazetteer build gnaf-rooftop",
+			buildSHA: options.buildSHA,
+			freshnessPolicy: LayerFreshnessPolicy.Sealed,
+			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
+			createdAt: options.createdAt,
+		})
+
+		kdb.exec("ANALYZE")
 	}
 
-	log(`[gnaf] indexing…`)
-
-	await createAddressPointIndexes(kdb)
-	await createOSMAddressPointIndexes(kdb)
-
-	await writeLayerManifest(kdb, {
-		name: "gnaf-address-points-au-au",
-		version: release,
-		schemaVersion: 1,
-		tier: LayerTier.BuildLocal,
-		license: "CC-BY-4.0",
-		attribution: "© Geoscape Australia — G-NAF, CC BY 4.0",
-		source: "gnaf:au",
-		sourceVintage: release,
-		buildCmd: "mailwoman gazetteer build gnaf-rooftop",
-		buildSHA: options.buildSHA,
-		freshnessPolicy: LayerFreshnessPolicy.Sealed,
-		spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },
-		createdAt: options.createdAt,
-	})
-
-	kdb.exec("ANALYZE")
-	await kdb.destroy()
-
 	swapDatabaseIntoPlace(tmp, out)
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	return counts
 }

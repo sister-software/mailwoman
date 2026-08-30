@@ -13,8 +13,8 @@
 
 import { Spinner } from "@inkjs/ui"
 import type { PlacetypeRole } from "@mailwoman/core"
+import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { PlacetypeRoles } from "@mailwoman/core/placetypes"
-import * as fs from "@mailwoman/platform/fs/promises"
 import { availableParallelism } from "@mailwoman/platform/os"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
@@ -70,7 +70,7 @@ const WOFTree: ParsedCommandComponent<Options, [string, string]> = ({ args, opti
 		const serialized = options.compact ? JSON.stringify(tree) : JSON.stringify(tree, null, 2)
 
 		if (options.output) {
-			await fs.writeFile(options.output, serialized + "\n", "utf8")
+			await writeLocalFile(serialized + "\n", options.output)
 		} else {
 			// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
 			// lines (compact mode is one very long line; pretty mode is fine either way).

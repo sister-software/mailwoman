@@ -1,4 +1,7 @@
-import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { readLocalJSONFileSync } from "@mailwoman/core/fs/readers-sync"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { tryParsingJSON } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
@@ -24,8 +27,6 @@ import { repoRootPath } from "@mailwoman/core/utils"
  *   Run AFTER `yarn compile`. Usage: node scripts/smoke-clean-install.ts
  */
 import { execFileSync, spawn } from "@mailwoman/platform/child_process"
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join, resolve } from "@mailwoman/platform/path"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -357,9 +358,9 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 	}
 }
 
-const tmp = mkdtempSync(join(tmpdir(), "mw-smoke-"))
-const tarDir = join(tmp, "tarballs")
-const proj = join(tmp, "proj")
+await using tmp = await temporaryDirectory("mw-smoke-")
+const tarDir = tmp.resolve("tarballs")
+const proj = tmp.resolve("proj")
 execFileSync("mkdir", ["-p", tarDir, proj])
 
 const run = (cmd: string, args: string[], cwd: string) =>
@@ -375,8 +376,8 @@ function assertClosureComplete() {
 	const missing = new Map<string, string[]>()
 
 	for (const [name, dir] of Object.entries(WORKSPACES)) {
-		const manifest = parseJSONStrict<Record<string, Record<string, string>>>(
-			readFileSync(resolve(repoRoot, dir, "package.json"), "utf8")
+		const manifest = readLocalJSONFileSync<Record<string, Record<string, string>>>(
+			resolve(repoRoot, dir, "package.json")
 		)
 
 		for (const depType of ["dependencies", "optionalDependencies", "peerDependencies"] as const) {
@@ -413,10 +414,7 @@ try {
 		deps[name] = `file:${tgz}`
 	}
 
-	writeFileSync(
-		join(proj, "package.json"),
-		JSON.stringify({ name: "mw-smoke", private: true, dependencies: deps }, null, 2)
-	)
+	await writeLocalJSONFile({ name: "mw-smoke", private: true, dependencies: deps }, join(proj, "package.json"))
 
 	console.log("[smoke] npm install (tarballs only — no hoisting)…")
 
@@ -463,27 +461,23 @@ try {
 
 		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
 
-		const solo = join(tmp, `solo-${leafDir}`)
+		const solo = tmp.resolve(`solo-${leafDir}`)
 		execFileSync("mkdir", ["-p", solo])
 
-		writeFileSync(
-			join(solo, "package.json"),
-			JSON.stringify(
-				{
-					name: `mw-solo-${leafDir}`,
-					private: true,
-					type: "module",
-					dependencies: Object.fromEntries(
-						[leaf, ...firstPartyDependencies].map((name) => {
-							const workspaceDir = WORKSPACES[name]!
+		await writeLocalJSONFile(
+			{
+				name: `mw-solo-${leafDir}`,
+				private: true,
+				type: "module",
+				dependencies: Object.fromEntries(
+					[leaf, ...firstPartyDependencies].map((name) => {
+						const workspaceDir = WORKSPACES[name]!
 
-							return [name, `file:${join(tarDir, `${workspaceDir}.tgz`)}`]
-						})
-					),
-				},
-				null,
-				2
-			)
+						return [name, `file:${join(tarDir, `${workspaceDir}.tgz`)}`]
+					})
+				),
+			},
+			join(solo, "package.json")
 		)
 
 		run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], solo)
@@ -500,6 +494,4 @@ try {
 	)
 
 	process.exitCode = 1
-} finally {
-	rmSync(tmp, { recursive: true, force: true })
 }

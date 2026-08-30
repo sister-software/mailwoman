@@ -35,7 +35,7 @@ import { summarizeJob, type DevTool } from "./tool-kit.ts"
  */
 const gateOutDirs = new Map<string, string>()
 
-export function buildSpawnTools(registry: EngineRegistry, jobs: JobRegistry): DevTool[] {
+export async function buildSpawnTools(registry: EngineRegistry, jobs: JobRegistry): Promise<DevTool[]> {
 	return [
 		{
 			name: "mwdev_gauntlet",
@@ -143,7 +143,7 @@ export function buildSpawnTools(registry: EngineRegistry, jobs: JobRegistry): De
 
 				if (!gate) {
 					return {
-						registered_gate_specs: listGateSpecs(),
+						registered_gate_specs: await listGateSpecs(),
 						note: "Pass one of these as `gate`, or an absolute path to a spec JSON.",
 					}
 				}
@@ -325,7 +325,7 @@ export function buildSpawnTools(registry: EngineRegistry, jobs: JobRegistry): De
 
 				// A gate job's numbers come from its own artifacts; only a gauntlet job needs its log parsed.
 				const report = gateOutDir
-					? readGateReport(gateOutDir, job.stdout, job.stderr)
+					? await readGateReport(gateOutDir, job.stdout, job.stderr)
 					: parseGauntletReport(job.stdout, job.stderr)
 
 				const tail = args["tail_lines"] as number | undefined

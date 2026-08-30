@@ -12,6 +12,8 @@
  *   and it refuses differently for a wrong-shaped root than for a correctly-shaped one that is under-staged.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import {
 	assertWeightsCacheStaged,
 	EFFECTIVE_KEY_FOR,
@@ -23,10 +25,12 @@ import {
 import { ENGINE_CONFIG_SCHEMA } from "@mailwoman/dev-mcp/tool-kit"
 import { computeTreeFingerprint } from "@mailwoman/dev-mcp/tree-fingerprint"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { mkdirSync, mkdtempSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 /**
  * Lay out a cache root the way `weightsCachePackageDir` expects, staged to the requested depth.
@@ -34,26 +38,29 @@ import { describe, expect, it } from "vitest"
  * `declared` becomes the card's `files_md5`, which is what separates an under-staged cache from a complete one — the
  * card is the only thing that knows which siblings this bundle is supposed to carry.
  */
-function stageCache(stage: "wrong-shape" | "under-staged" | "ok", declared: string[] = ["fst-en-us.bin"]): string {
-	const root = mkdtempSync(join(tmpdir(), "mwdev-weights-cache-"))
+async function stageCache(
+	stage: "wrong-shape" | "under-staged" | "ok",
+	declared: string[] = ["fst-en-us.bin"]
+): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("mwdev-weights-cache-")).path
 	const packageDir = weightsCachePackageDir(root, "en-us")
 
-	mkdirSync(packageDir, { recursive: true })
+	await makeDirectories(packageDir)
 
 	if (stage === "wrong-shape") return root
 
-	writeFileSync(join(packageDir, "model.onnx"), "not a real model")
-	writeFileSync(join(packageDir, "tokenizer.model"), "not a real tokenizer")
+	await writeLocalTextFile("not a real model", join(packageDir, "model.onnx"))
+	await writeLocalTextFile("not a real tokenizer", join(packageDir, "tokenizer.model"))
 
-	writeFileSync(
-		join(packageDir, "model-card.json"),
-		JSON.stringify({ files_md5: Object.fromEntries(declared.map((name) => [name, "0"])) })
+	await writeLocalJSONFile(
+		{ files_md5: Object.fromEntries(declared.map((name) => [name, "0"])) },
+		join(packageDir, "model-card.json")
 	)
 
 	if (stage === "under-staged") return root
 
 	for (const name of declared) {
-		writeFileSync(join(packageDir, name), "")
+		await writeLocalTextFile("", join(packageDir, name))
 	}
 
 	return root
@@ -93,31 +100,33 @@ describe("weights_cache — the lever", () => {
 })
 
 describe("weights_cache — the guard", () => {
-	it("accepts a fully staged cache", () => {
-		expect(() => assertWeightsCacheStaged(stageCache("ok"))).not.toThrow()
+	it("accepts a fully staged cache", async () => {
+		const staged = await stageCache("ok")
+
+		expect(() => assertWeightsCacheStaged(staged)).not.toThrow()
 	})
 
-	it("names the missing binaries on a wrong-shaped root", () => {
-		const root = stageCache("wrong-shape")
+	it("names the missing binaries on a wrong-shaped root", async () => {
+		const root = await stageCache("wrong-shape")
 
 		expect(() => assertWeightsCacheStaged(root)).toThrow(/model\.onnx/)
 		expect(() => assertWeightsCacheStaged(root)).toThrow(/tokenizer\.model/)
 	})
 
-	it("separates under-staged from wrong-shape", () => {
+	it("separates under-staged from wrong-shape", async () => {
 		// The two need different fixes — restage the bundle vs copy the siblings the card declares — and the #1516
 		// failure they prevent looks like a model regression, not a missing file. One message for both sends the
 		// reader to the wrong place.
-		const root = stageCache("under-staged", ["fst-en-us.bin", "postcode-en-us.bin"])
+		const root = await stageCache("under-staged", ["fst-en-us.bin", "postcode-en-us.bin"])
 
 		expect(() => assertWeightsCacheStaged(root)).toThrow(/declares/)
 		expect(() => assertWeightsCacheStaged(root)).toThrow(/postcode-en-us\.bin/)
 	})
 
-	it("checks the locale the engine will actually load", () => {
+	it("checks the locale the engine will actually load", async () => {
 		// A cache staged for en-us is not a cache for fr-fr, and the resolver would silently fall through to the
 		// installed fr-fr package rather than report that.
-		const root = stageCache("ok")
+		const root = await stageCache("ok")
 
 		expect(() => assertWeightsCacheStaged(root, "fr-fr")).toThrow(/fr-fr/)
 	})

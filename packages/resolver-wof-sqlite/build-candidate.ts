@@ -40,7 +40,8 @@
  */
 
 import { COUNTRY_POPULATION } from "@mailwoman/codex/country"
-import { existsSync, rmSync } from "@mailwoman/platform/fs"
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { removePath } from "@mailwoman/core/fs/writers"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { createCandidateFTS } from "./candidate-fts.ts"
@@ -201,11 +202,11 @@ export interface BuildCandidateResult {
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
 	const progress = opts.onProgress ?? (() => {})
 
-	if (existsSync(opts.output)) {
-		rmSync(opts.output)
+	if (await pathExists(opts.output)) {
+		await removePath(opts.output)
 	}
 
-	const src = new DatabaseClient<WOFDatabase>(opts.input, { readOnly: true })
+	using src = new DatabaseClient<WOFDatabase>(opts.input, { readOnly: true })
 	await using kdb = new DatabaseClient<CandidateDatabase>(opts.output)
 	// Build-tuning pragmas (raw — Kysely doesn't model PRAGMA). The code dictionaries + the transient
 	// staging table come from the SHARED schema DDL, so they can't drift from {@link CandidateDatabase}.
@@ -589,8 +590,6 @@ export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<
 		.selectFrom("candidate")
 		.select((eb) => eb.fn.countAll<number>().as("n"))
 		.executeTakeFirstOrThrow()
-
-	await src.destroy()
 
 	// closes the underlying `out` connection
 	return {

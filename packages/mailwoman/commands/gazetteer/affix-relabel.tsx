@@ -16,7 +16,7 @@
  *   Output: data/gazetteer/affix-relabel-lexicon-v2.json
  */
 
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirname } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
 
@@ -81,8 +81,8 @@ const GazetteerAffixRelabel: ParsedCommandComponent<Options> = ({ options }) => 
 			name_prone: [...NAME_PRONE_US_SUFFIXES].toSorted(),
 		}
 
-		mkdirSync(dirname(output), { recursive: true })
-		writeFileSync(output, JSON.stringify(lexicon, null, "\t") + "\n")
+		await makeDirectories(dirname(output))
+		await writeLocalJSONFile(lexicon, output)
 
 		return [
 			`${output}`,

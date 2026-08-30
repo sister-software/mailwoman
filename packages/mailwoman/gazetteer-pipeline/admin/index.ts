@@ -14,9 +14,9 @@
  *   a recipe; the recipe is `../defaults.ts`).
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
+import { removePath, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { md5File, repoRootPath } from "@mailwoman/core/utils"
-import { existsSync, readFileSync, statSync, unlinkSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -30,15 +30,15 @@ import {
 	DEFAULT_OVERTURE_RELEASE,
 	geonamesAdminGapCountries,
 } from "../defaults.ts"
-import { buildFTS } from "../fts.ts"
+import { buildFTS, type BuildFTSResult } from "../fts.ts"
 import { checkOvertureRelease } from "../overture-release.ts"
 import { buildSHA, stampLayerManifest } from "../stamp-manifest.ts"
 import { loadDefaultBaseline, verifyAdmin, verifyReversePanel, type VerifyResult } from "../verify.ts"
 import { enrichAdmin } from "./enrich.ts"
-import { foldGeonames } from "./fold-geonames.ts"
+import { foldGeonames, type FoldGeonamesResult } from "./fold-geonames.ts"
 import { ingestOvertureDivisions } from "./fold-overture.ts"
 import { freezeAdmin } from "./freeze.ts"
-import { ingestWOF } from "./ingest-wof.ts"
+import { ingestWOF, type IngestWOFResult } from "./ingest-wof.ts"
 import { createGeoNamesAnchorLookup } from "./label-point-adjudicator.ts"
 import { adminLayerManifest } from "./manifest.ts"
 
@@ -98,8 +98,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	const ingestPath = out + ".ingest"
 
-	if (existsSync(ingestPath)) {
-		unlinkSync(ingestPath)
+	if (await pathExists(ingestPath)) {
+		await removePath(ingestPath)
 	}
 
 	// BEFORE the WOF ingest, not at `fold-overture` where the release is first read: a pruned pin is a one-request
@@ -111,88 +111,101 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	if (!releaseCheck.present) throw new Error(releaseCheck.message)
 
 	phase("staging", ingestPath)
-	const db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-	db.exec(`
-		PRAGMA page_size = 8192;
-		PRAGMA journal_mode = WAL;
-		PRAGMA synchronous = NORMAL;
-		PRAGMA busy_timeout = 30000;
-		PRAGMA temp_store = MEMORY;
-		PRAGMA cache_size = -200000;
-	`)
+	let ingest: IngestWOFResult
 
-	await createUnifiedSchema(db)
+	let overtureIngested: number
 
-	phase("ingest-wof", dataDir)
+	let folded: FoldGeonamesResult
 
-	const ingest = await ingestWOF(db, {
-		dataDir,
-		concurrency: opts.concurrency,
-		batchCommitSize: opts.batchCommitSize,
-		// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames
-		// consumes; a data root without them degrades to the plain label preference.
-		anchorLookup: createGeoNamesAnchorLookup(String(dataRootPath("geonames"))),
-		onProgress: (processed, skipped, total) =>
-			phase(
-				"ingest-wof",
-				`${processed.toLocaleString()}/${total.toLocaleString()} (+${skipped.toLocaleString()} skipped)`
-			),
-	})
+	{
+		using db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-	phase(
-		"ingest-wof",
-		`${ingest.placesIngested.toLocaleString()} places (${ingest.labelPointOverrides} label points overridden by anchor)`
-	)
+		db.exec(`
+			PRAGMA page_size = 8192;
+			PRAGMA journal_mode = WAL;
+			PRAGMA synchronous = NORMAL;
+			PRAGMA busy_timeout = 30000;
+			PRAGMA temp_store = MEMORY;
+			PRAGMA cache_size = -200000;
+		`)
 
-	phase("fold-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
-	const overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
-	phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
+		await createUnifiedSchema(db)
 
-	// #1026: the A-class admin fold for the zero-coverage locales — country + region NODES + locality
-	// ancestry. Scoped to the countries actually in this run's geonames set.
-	const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
-	phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
-	const folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })
-	phase("fold-geonames", `${folded.placesIngested.toLocaleString()} places`)
+		phase("ingest-wof", dataDir)
 
-	phase("freeze")
-	await freezeAdmin(db, { dataDir, onPhase: phase })
+		ingest = await ingestWOF(db, {
+			dataDir,
+			concurrency: opts.concurrency,
+			batchCommitSize: opts.batchCommitSize,
+			// #1905: GeoNames-anchored label-point adjudication. Reads the same per-country extracts fold-geonames
+			// consumes; a data root without them degrades to the plain label preference.
+			anchorLookup: await createGeoNamesAnchorLookup(String(dataRootPath("geonames"))),
+			onProgress: (processed, skipped, total) =>
+				phase(
+					"ingest-wof",
+					`${processed.toLocaleString()}/${total.toLocaleString()} (+${skipped.toLocaleString()} skipped)`
+				),
+		})
 
-	phase("enrich")
-	const enriched = enrichAdmin(db)
-	phase("enrich", `${enriched.abbrevNamesAdded} abbrevs / ${enriched.placeAbbrRows} place_abbr rows`)
+		phase(
+			"ingest-wof",
+			`${ingest.placesIngested.toLocaleString()} places (${ingest.labelPointOverrides} label points overridden by anchor)`
+		)
 
-	phase("vacuum", out)
+		phase("fold-overture", `${overtureCountries.length} countries @ ${overtureRelease}`)
+		overtureIngested = await ingestOvertureDivisions(db, overtureCountries, overtureRelease)
+		phase("fold-overture", `${overtureIngested.toLocaleString()} divisions`)
 
-	if (existsSync(out)) {
-		// A prior sealed staging artifact can't be unlinked-through-write — remove it explicitly.
-		unlinkSync(out)
+		// #1026: the A-class admin fold for the zero-coverage locales — country + region NODES + locality
+		// ancestry. Scoped to the countries actually in this run's geonames set.
+		const gapSet = new Set(geonamesAdminGapCountries().filter((cc) => geonamesCountries.includes(cc)))
+		phase("fold-geonames", `${geonamesCountries.length} countries (${gapSet.size} with admin fold)`)
+		folded = await foldGeonames(db, { countries: geonamesCountries, adminForCountries: gapSet })
+		phase("fold-geonames", `${folded.placesIngested.toLocaleString()} places`)
+
+		phase("freeze")
+		await freezeAdmin(db, { dataDir, onPhase: phase })
+
+		phase("enrich")
+		const enriched = await enrichAdmin(db)
+		phase("enrich", `${enriched.abbrevNamesAdded} abbrevs / ${enriched.placeAbbrRows} place_abbr rows`)
+
+		phase("vacuum", out)
+
+		if (await pathExists(out)) {
+			// A prior sealed staging artifact can't be unlinked-through-write — remove it explicitly.
+			await removePath(out)
+		}
+
+		db.prepare("VACUUM INTO ?").run(out)
 	}
 
-	db.prepare("VACUUM INTO ?").run(out)
-	await db.destroy()
-	unlinkSync(ingestPath)
+	await removePath(ingestPath)
 
 	for (const sidecar of [ingestPath + "-wal", ingestPath + "-shm"]) {
-		if (existsSync(sidecar)) {
-			unlinkSync(sidecar)
+		if (await pathExists(sidecar)) {
+			await removePath(sidecar)
 		}
 	}
 
 	phase("fts")
-	const outDB = new DatabaseClient<WOFDatabase>(out)
-	const fts = await buildFTS(outDB, { onProgress: phase })
-	await outDB.destroy()
+
+	let fts: BuildFTSResult
+
+	{
+		using outDB = new DatabaseClient<WOFDatabase>(out)
+		fts = await buildFTS(outDB, { onProgress: phase })
+	}
+
 	phase("fts", `${fts.ftsRows.toLocaleString()} FTS rows / ${fts.bboxRows.toLocaleString()} bbox rows`)
 
 	let verify: VerifyResult | null = null
 
 	if (!opts.skipVerify) {
 		phase("verify", "structural checks")
-		const verifyDB = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
+		using verifyDB = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 		const structural = verifyAdmin(verifyDB, loadDefaultBaseline())
-		await verifyDB.destroy()
 
 		phase("verify", "reverse panel")
 		const reverse = await verifyReversePanel(out)
@@ -230,15 +243,15 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	phase("manifest", "layer_manifest written")
 
 	phase("seal")
-	sealDatabase(out)
+	await sealDatabase(out)
 
 	// Build log — an auto-appended record (what ran, when, fingerprint), so the manifest can't lag the
 	// artifact again (#1015's reconstruct-from-artifact). The recipe itself lives in defaults.ts.
 	const buildLogPath = opts.buildLogPath ?? repoRootPath("scripts", "wof-build-manifest.json")
 
-	if (existsSync(buildLogPath)) {
+	if (await pathExists(buildLogPath)) {
 		phase("build-log", buildLogPath)
-		const log = parseJSONStrict<{ notes?: string[] }>(readFileSync(buildLogPath, "utf8"))
+		const log = await readLocalJSONFile<{ notes?: string[] }>(buildLogPath)
 		const md5 = (await md5File(out)).slice(0, 8)
 		const stamp = new Date().toISOString().slice(0, 10)
 		log.notes ??= []
@@ -247,7 +260,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			`${stamp}: gazetteer build admin — ${ingest.placesIngested.toLocaleString()} WOF + ${overtureIngested.toLocaleString()} overture@${overtureRelease} + ${folded.placesIngested.toLocaleString()} geonames; verify ${opts.skipVerify ? "SKIPPED" : "PASS"}; sealed; md5 ${md5}; ${out}`
 		)
 
-		writeFileSync(buildLogPath, JSON.stringify(log, null, "\t") + "\n")
+		await writeLocalJSONFile(log, buildLogPath)
 	} else {
 		phase("build-log", `skipped (${buildLogPath} not present)`)
 	}
@@ -272,7 +285,14 @@ export * from "./ingest-wof.ts"
 
 /**
  * Byte-size of the built artifact — a convenience for command summaries.
+ *
+ * TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND
+ * REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
+ *
+ * THIS LIKELY NEEDS SOMETHNIG like a `readFileSize(pathLike, formatter = ByteFormatter.shared)` in core/fs.
+ *
+ * @deprecated use `ByteFormatter.formatIEC` from `@mailwoman/core/fs/formatters` instead.
  */
-export function artifactSizeMB(path: string): number {
-	return Math.round((statSync(path).size / 1024 / 1024) * 10) / 10
+export async function artifactSizeMB(path: string): Promise<number> {
+	return Math.round(((await statPath(path)).size / 1024 / 1024) * 10) / 10
 }

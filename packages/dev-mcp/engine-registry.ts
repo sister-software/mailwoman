@@ -380,30 +380,20 @@ export class EngineRegistry {
 
 		if (!engine) return false
 
-		engine.session.close()
+		engine.session[Symbol.dispose]()
 		this.#engines.delete(id)
 
 		return true
 	}
 
-	/**
-	 * Close every engine so the next call rebuilds them.
-	 *
-	 * This frees MEMORY and re-reads ARTIFACTS. It cannot re-import source, so the tool surface refuses to call it a
-	 * reload once the tree has moved — see {@link sourceMoved} and the class docstring.
-	 */
-	closeAll(): number {
-		const count = this.#engines.size
+	evictAll(): number {
+		const ids = [...this.#engines.keys()]
 
-		// Close then clear, rather than evicting key by key: deleting from a Map mid-iteration is well defined but
-		// subtle, and a shutdown path is the wrong place to make a reader verify that.
-		for (const engine of this.#engines.values()) {
-			engine.session.close()
+		for (const id of ids) {
+			this.evict(id)
 		}
 
-		this.#engines.clear()
-
-		return count
+		return ids.length
 	}
 
 	summaries(): EngineSummary[] {

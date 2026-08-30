@@ -23,9 +23,9 @@
  *   Usage: node packages/mailwoman/dev-tools/probe-fst-bias.run.ts [--locale en-us] [--raw] <surface>...
  */
 
+import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
@@ -56,13 +56,13 @@ const matchers = new Map<string, unknown>()
 for (const [arm, dir] of Object.entries(ARMS)) {
 	const path = `${dir}/fst-${values.locale}.bin`
 
-	if (!existsSync(path)) {
+	if (!(await pathExists(path))) {
 		console.error(`[${arm}] no fst-${values.locale}.bin in ${dir} — skipping this arm`)
 
 		continue
 	}
 
-	matchers.set(arm, deserializeFST(readFileSync(path)))
+	matchers.set(arm, deserializeFST(await readLocalBuffer(path)))
 }
 
 if (!positionals.length) throw new Error("no surfaces given — pass one or more place-name surfaces to probe")

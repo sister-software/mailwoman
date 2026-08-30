@@ -10,9 +10,7 @@
  *   reproduces all four.
  */
 
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import type { PolygonDatabase } from "@mailwoman/resolver-wof-sqlite/polygon-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -44,17 +42,17 @@ const square = (minLon: number): string =>
 		],
 	})
 
-let dir: string
+let dir: TemporaryDirectory
 let built: ReturnType<typeof buildPostcodePrefixIndex>
 
-beforeAll(() => {
-	dir = mkdtempSync(join(tmpdir(), "pfx1-us-"))
+beforeAll(async () => {
+	dir = await temporaryDirectory("pfx1-us-")
 
-	const sourcePath = join(dir, "postalcode.db")
-	const adminPath = join(dir, "admin.db")
-	const polygonPath = join(dir, "polygons.db")
+	const sourcePath = dir.resolve("postalcode.db")
+	const adminPath = dir.resolve("admin.db")
+	const polygonPath = dir.resolve("polygons.db")
 
-	const source = new DatabaseClient<WOFDatabase>(sourcePath)
+	using source = new DatabaseClient<WOFDatabase>(sourcePath)
 
 	// Deliberately NO `meta` table — the real shard has none, and the coordinate-tier rule must not read a declaration
 	// out of its absence.
@@ -83,9 +81,7 @@ beforeAll(() => {
 			(11, 'Lea County-Zip Franklin Memorial Airport', 'postalcode', 1.0, 0.5);
 	`)
 
-	source.destroy()
-
-	const admin = new DatabaseClient<WOFDatabase>(adminPath)
+	using admin = new DatabaseClient<WOFDatabase>(adminPath)
 
 	admin.exec(`
 		CREATE TABLE spr (
@@ -98,9 +94,7 @@ beforeAll(() => {
 			(${BETA_ID}, 'Beta', 'region', 'US', 1);
 	`)
 
-	admin.destroy()
-
-	const polygons = new DatabaseClient<PolygonDatabase>(polygonPath)
+	using polygons = new DatabaseClient<PolygonDatabase>(polygonPath)
 
 	polygons.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT)`)
 
@@ -108,14 +102,11 @@ beforeAll(() => {
 
 	insert.run(ALPHA_ID, square(0))
 	insert.run(BETA_ID, square(2))
-	polygons.destroy()
 
 	built = buildPostcodePrefixIndex({ sourcePath, adminPath, polygonPath, country: "us", level: "3" })
 })
 
-afterAll(() => {
-	rmSync(dir, { recursive: true, force: true })
-})
+afterAll(() => dir[Symbol.asyncDispose]())
 
 const nodeFor = (prefix: string) => built.nodes.find((n) => n.prefix === prefix)
 
@@ -200,9 +191,9 @@ describe("the level guard", () => {
 	it("refuses a level the US arm does not index", () => {
 		expect(() =>
 			buildPostcodePrefixIndex({
-				sourcePath: join(dir, "postalcode.db"),
-				adminPath: join(dir, "admin.db"),
-				polygonPath: join(dir, "polygons.db"),
+				sourcePath: dir.resolve("postalcode.db"),
+				adminPath: dir.resolve("admin.db"),
+				polygonPath: dir.resolve("polygons.db"),
 				country: "us",
 				level: "outward",
 			})
@@ -212,8 +203,8 @@ describe("the level guard", () => {
 	it("refuses to substitute a gazetteer join for the polygons", () => {
 		expect(() =>
 			buildPostcodePrefixIndex({
-				sourcePath: join(dir, "postalcode.db"),
-				adminPath: join(dir, "admin.db"),
+				sourcePath: dir.resolve("postalcode.db"),
+				adminPath: dir.resolve("admin.db"),
 				country: "us",
 				level: "3",
 			})

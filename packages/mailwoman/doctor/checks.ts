@@ -14,7 +14,7 @@
  *   runtime) drive the process exit code — parse works without a data root, gazetteer, or POI layer.
  */
 
-import { ByteFormatter } from "@mailwoman/core/fs/utils"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 
 /**
  * A check's outcome. `ok` = works; `missing` = absent but fixable; `degraded` = present but impaired.

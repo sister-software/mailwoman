@@ -103,17 +103,17 @@ export function nutsFromID(id: string): NUTS {
 export class NUTSLookup implements Disposable {
 	#db: DatabaseClient<NUTSDatabase>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
+	 * The connection this instance opened. A connection handed in by a caller is not retained here, so disposal cannot
+	 * reach it.
 	 */
-	readonly #resources = new DisposableStack()
+	readonly #ownedDatabase?: DatabaseClient<NUTSDatabase>
 	#byLevelBox: ReturnType<DatabaseClient["prepare"]>
 
 	constructor(opts: { databasePath: string } | { database: DatabaseClient<NUTSDatabase> }) {
-		this.#db =
-			"database" in opts
-				? opts.database
-				: this.#resources.use(new DatabaseClient<NUTSDatabase>(opts.databasePath, { readOnly: true }))
+		this.#ownedDatabase =
+			"database" in opts ? undefined : new DatabaseClient<NUTSDatabase>(opts.databasePath, { readOnly: true })
+
+		this.#db = "database" in opts ? opts.database : this.#ownedDatabase!
 
 		this.#byLevelBox = this.#db.prepare(
 			// The explicit alias pins the JS key: for a bare column ref, sqlite3_column_name returns the
@@ -140,12 +140,8 @@ export class NUTSLookup implements Disposable {
 		return null
 	}
 
-	close(): void {
-		this.#resources.dispose()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#ownedDatabase?.[Symbol.dispose]()
 	}
 }
 

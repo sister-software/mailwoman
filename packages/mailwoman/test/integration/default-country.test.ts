@@ -1,4 +1,5 @@
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 /**
@@ -22,7 +23,6 @@ import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
  *   end-to-end resolution check needs the GLOBAL admin DB, so it skips when that DB is absent.
  */
 import { execFile } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { localeToCountry, resolverDefaultCountry, spec as parseSpec } from "mailwoman/commands/parse"
@@ -128,7 +128,7 @@ describe("--default-country schema validation", () => {
 
 // End-to-end: needs the GLOBAL admin DB (the US-only DB can't reproduce the foreign homonym).
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
-const describeIfGlobal = describe.skipIf(!existsSync(GLOBAL_WOF))
+const describeIfGlobal = describe.skipIf(!(await pathExists(GLOBAL_WOF)))
 
 describeIfGlobal(`parse --resolve against the global WOF (${GLOBAL_WOF})`, () => {
 	const run = (address: string, extra: string[] = []) =>

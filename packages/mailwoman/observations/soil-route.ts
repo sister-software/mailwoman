@@ -138,7 +138,7 @@ export type SoilDesignationDecision =
 	| { fired: true; observation: SoilCapabilityObservation }
 	| { fired: false; refusal: SoilDesignationRefusal }
 
-export interface SoilCapabilityRoute {
+export interface SoilCapabilityRoute extends Disposable {
 	identity: SoilLayerIdentity
 	/**
 	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
@@ -148,7 +148,6 @@ export interface SoilCapabilityRoute {
 	 * here rather than a caller's problem.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => SoilDesignationDecision
-	close: () => void
 }
 
 export interface SoilCapabilityRouteOptions {
@@ -227,7 +226,7 @@ export function createSoilCapabilityRoute(options: SoilCapabilityRouteOptions): 
 				},
 			}
 		},
-		close: () => lookup.close(),
+		[Symbol.dispose]: () => lookup[Symbol.dispose](),
 	}
 }
 

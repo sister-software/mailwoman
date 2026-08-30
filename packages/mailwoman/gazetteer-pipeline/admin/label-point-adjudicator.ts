@@ -27,7 +27,7 @@
  *   existing label-first behavior byte-identically.
  */
 
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { pathExistsSync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
 import { TSVSpliterator } from "spliterator"
@@ -109,7 +109,7 @@ const GN_COLUMN_LON = 5
  * happens inside the ingest's per-feature parse, and it fires only for the rare wide-disagreement records, so the cost
  * is one file read per country that HAS such a record.
  */
-export function createGeoNamesAnchorLookup(geonamesDir: string): GeoNamesAnchorLookup {
+export async function createGeoNamesAnchorLookup(geonamesDir: string): Promise<GeoNamesAnchorLookup> {
 	const byCountry = new Map<string, Map<string, PointPair>>()
 
 	const load = (country: string): Map<string, PointPair> => {
@@ -123,8 +123,8 @@ export function createGeoNamesAnchorLookup(geonamesDir: string): GeoNamesAnchorL
 		// Missing country extract → empty map, cached: absence of anchors, never an error. `from` parses CONTENT
 		// (a path argument would be parsed as one row of itself), so the file is read once and streamed through the
 		// TSV parser — the sync shape this in-parse consult needs.
-		if (existsSync(path)) {
-			for (const cols of TSVSpliterator.from(readFileSync(path, "utf8"), { header: false })) {
+		if (pathExistsSync(path)) {
+			for (const cols of TSVSpliterator.from(readLocalTextFileSync(path), { header: false })) {
 				const latitude = Number(cols[GN_COLUMN_LAT])
 				const longitude = Number(cols[GN_COLUMN_LON])
 

@@ -7,6 +7,10 @@
  *   mailwoman-specific guidance live here; anything general enough for other repos graduates to
  *   `@sister.software/oxlint-config`.
  *
+ *   `no-sync-fs-in-async`: a synchronous `node:fs` call standing inside an `async` function blocks the event loop
+ *   where an `await` is already legal on the same line. The rule fires ONLY in that position — a sync call inside a
+ *   sync function is a cascade, not a defect, and the rule stays silent there.
+ *
  *   `prefer-spliterator`: `text.split("\n")` (or `"\t"`) materializes every segment into one array
  *   before the first is read — the whole-buffer parse the spliterator library exists to avoid (the
  *   quadratic-CSV episode in AGENTS.md started exactly there). The rule warns on those two literal
@@ -19,6 +23,8 @@
 
 interface AstNode {
 	type: string
+	async?: boolean
+	body?: unknown
 	range: [number, number]
 	value?: unknown
 	name?: string
@@ -294,11 +300,118 @@ const requireDisableReasonRule: Rule = {
 	},
 }
 
+/**
+ * Each synchronous `node:fs` name, mapped to the asynchronous helper that replaces it. The three removal helpers and
+ * the two stat helpers differ in what they treat as an error, so the suggestion names the builtin's own contract rather
+ * than the nearest-looking helper.
+ */
+const ASYNC_FILESYSTEM_HELPERS = new Map<string, string>([
+	["appendFileSync", "`appendLocalTextFile(content, path)` (@mailwoman/core/fs/writers)"],
+	["chmodSync", "`changeMode(path, mode)` (@mailwoman/core/fs/writers)"],
+	["copyFileSync", "`copyFileTo(source, destination)` (@mailwoman/core/fs/writers)"],
+	["cpSync", "`copyPath(source, destination)` (@mailwoman/core/fs/writers)"],
+	["existsSync", "`pathExists(path)` (@mailwoman/core/fs/readers)"],
+	["lstatSync", "`statLink(path)` (@mailwoman/core/fs/readers)"],
+	[
+		"mkdirSync",
+		"`makeDirectories(...paths)` when the call passes `{ recursive: true }`, and `makeDirectoryExclusive(path)` " +
+			"when it does not — bare `mkdir` raises EEXIST, which is how a lock is held (@mailwoman/core/fs/writers)",
+	],
+	["mkdtempSync", "`temporaryDirectory(prefix)` (@mailwoman/core/fs/temporary), bound with `await using`"],
+	["readFileSync", "`readLocalTextFile(path)` or `readLocalBuffer(path)` (@mailwoman/core/fs/readers)"],
+	["readdirSync", "`readDirectory(path)` or `readDirectoryEntries(path)` (@mailwoman/core/fs/readers)"],
+	["realpathSync", "`realPath(path)`, or `tryRealPath(path)` for null-on-absent (@mailwoman/core/fs/readers)"],
+	["renameSync", "`movePath(source, destination)` (@mailwoman/core/fs/writers)"],
+	[
+		"rmSync",
+		"`removePathIfPresent(path)` for `rm -rf`, or `removePath(path)` where absence should raise " +
+			"(@mailwoman/core/fs/writers)",
+	],
+	["statSync", "`statPath(path)`, or `tryStat(path)` for null-on-absent (@mailwoman/core/fs/readers)"],
+	["symlinkSync", "`createSymbolicLink(target, linkPath)` (@mailwoman/core/fs/writers)"],
+	["unlinkSync", "`removePath(path)` (@mailwoman/core/fs/writers)"],
+	["utimesSync", "`setTimestamps(path, accessedAt, modifiedAt)` (@mailwoman/core/fs/writers)"],
+	[
+		"writeFileSync",
+		"`writeLocalTextFile(content, path)` or `writeLocalBuffer(bytes, path)` (@mailwoman/core/fs/writers)",
+	],
+])
+
+const FUNCTION_NODE_TYPES = new Set([
+	"ArrowFunctionExpression",
+	"FunctionDeclaration",
+	"FunctionExpression",
+	"TSDeclareFunction",
+])
+
+/**
+ * Node types that end an `async` scope without being a function: whatever they contain runs synchronously however the
+ * surrounding function was declared.
+ */
+const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
+
+const noSyncFSInAsyncRule: Rule = {
+	meta: {
+		name: "no-sync-fs-in-async",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		/**
+		 * Walked here rather than tracked with `:exit` visitors, so the rule owns the traversal and the enclosing-function
+		 * state cannot desynchronize from it.
+		 */
+		function walk(node: AstNode, insideAsync: boolean): void {
+			let asyncHere = insideAsync
+
+			if (FUNCTION_NODE_TYPES.has(node.type)) {
+				asyncHere = node.async === true
+			} else if (SYNC_SCOPE_NODE_TYPES.has(node.type)) {
+				asyncHere = false
+			}
+
+			if (asyncHere && node.type === "CallExpression" && node.callee?.type === "Identifier") {
+				const helper = ASYNC_FILESYSTEM_HELPERS.get(node.callee.name ?? "")
+
+				if (helper) {
+					context.report({
+						node,
+						message:
+							`\`${node.callee.name}\` blocks the event loop, and this function is already \`async\` — an ` +
+							`\`await\` is legal on this line. Use ${helper}.`,
+					})
+				}
+			}
+
+			for (const [key, value] of Object.entries(node)) {
+				if (key === "parent" || key === "range" || key === "loc") continue
+
+				if (Array.isArray(value)) {
+					for (const child of value) {
+						if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
+							walk(child as AstNode, asyncHere)
+						}
+					}
+				} else if (value && typeof value === "object" && typeof (value as AstNode).type === "string") {
+					walk(value as AstNode, asyncHere)
+				}
+			}
+		}
+
+		return {
+			Program(node: AstNode) {
+				walk(node, false)
+			},
+		}
+	},
+}
+
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
 		"no-database-handle-cast": noDatabaseHandleCastRule,
+		"no-sync-fs-in-async": noSyncFSInAsyncRule,
 		"prefer-spliterator": preferSpliteratorRule,
 		"require-database-schema-argument": requireDatabaseSchemaArgumentRule,
 		"require-disable-reason": requireDisableReasonRule,

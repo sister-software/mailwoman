@@ -123,12 +123,8 @@ export class TimezoneLookup implements Disposable {
 		return null
 	}
 
-	close(): void {
-		this.#resources.dispose()
-	}
-
 	[Symbol.dispose](): void {
-		this.close()
+		this.#resources[Symbol.dispose]()
 	}
 }
 

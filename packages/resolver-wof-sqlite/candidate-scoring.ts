@@ -10,7 +10,6 @@
 import { haversineKm } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { CandidateDatabase } from "./candidate-schema.ts"
 import { exactMatchIDs, officialNameIDs } from "./exact-match.ts"
 import { compareReferential, referentialFromPopulation } from "./place-importance-schema.ts"
 import type { RankingWeights } from "./ranking-weights.ts"

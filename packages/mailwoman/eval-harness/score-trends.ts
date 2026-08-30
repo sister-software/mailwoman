@@ -17,9 +17,9 @@
  *   diff noise across a table spanning every release.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { pyRound, repoRootPath } from "@mailwoman/core/utils"
-import { readFileSync, writeFileSync } from "@mailwoman/platform/fs"
 
 /**
  * Tags in report order. Anything the ledger carries that is absent here still appears, sorted, after the listed ones —
@@ -185,10 +185,10 @@ export interface ScoreTrendsResult {
 /**
  * Render the ledger to the trend page.
  */
-export function buildScoreTrends(options: ScoreTrendsOptions = {}): ScoreTrendsResult {
+export async function buildScoreTrends(options: ScoreTrendsOptions = {}): Promise<ScoreTrendsResult> {
 	const ledgerPath = options.ledger ?? repoRootPath("evals", "scores-by-version.json")
 	const outPath = options.out ?? repoRootPath("docs", "records", "evals", "score-trends.md")
-	const ledger = parseJSONStrict<{ runs: Array<Record<string, unknown>> }>(readFileSync(ledgerPath, "utf8"))
+	const ledger = await readLocalJSONFile<{ runs: Array<Record<string, unknown>> }>(ledgerPath)
 
 	let rows: Array<[version: string, scores: LocaleScores]> = []
 	const seenVersions = new Set<string>()
@@ -250,7 +250,7 @@ export function buildScoreTrends(options: ScoreTrendsOptions = {}): ScoreTrendsR
 		lines.push("")
 	}
 
-	writeFileSync(outPath, lines.join("\n") + "\n")
+	await writeLocalTextFile(lines.join("\n") + "\n", outPath)
 
 	return { outPath, versions: rows.length, runs: ledger.runs.length }
 }

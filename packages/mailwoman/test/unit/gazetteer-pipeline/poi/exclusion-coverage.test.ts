@@ -133,7 +133,7 @@ describe("buildExclusionCoverage", () => {
 
 describe("the layer contract's read of these cells", () => {
 	async function openCoverageDB() {
-		const db = new DatabaseClient<LayerContractDatabase>(":memory:")
+		const db = DatabaseClient.temp<LayerContractDatabase>()
 		await createLayerCoverageTable(db)
 
 		return db

@@ -28,6 +28,7 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-verify.ts [--countries us,fr] [--db <path>] [--dir <dir>]`
  */
 
+import { readLocalBufferSync } from "@mailwoman/core/fs/readers-sync"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
@@ -37,7 +38,6 @@ import {
 	PairIndexResolver,
 	peekPairIndexHeader,
 } from "@mailwoman/neural/pair-index-resolver"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -171,7 +171,7 @@ function main(): void {
 	const dbPath = values.db ?? dataRootPath("wof", "admin-global-priority.db")
 	const dir = values.dir ?? dataRootPath("wof", "pair-index-hierarchy-probe")
 
-	const db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 	let failures = 0
 
 	const fail = (msg: string): void => {
@@ -182,7 +182,7 @@ function main(): void {
 
 	for (const country of countries) {
 		const artifactPath = join(dir, `pair-index-locality-region-${country}.bin`)
-		const bytes = new Uint8Array(readFileSync(artifactPath))
+		const bytes = new Uint8Array(readLocalBufferSync(artifactPath))
 		const header = peekPairIndexHeader(bytes)
 		const parentPlacetypes = PARENT_PLACETYPES_BY_COUNTRY[country]
 		const namedProbes = NAMED_PROBES_BY_COUNTRY[country]
@@ -296,8 +296,6 @@ function main(): void {
 			}
 		}
 	}
-
-	db.destroy()
 
 	if (failures > 0) {
 		throw new Error(`pair-index-hierarchy-verify: ${failures} failure(s)`)

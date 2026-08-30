@@ -38,7 +38,7 @@ const RegistryConvertTXHHSC: ParsedCommandComponent<Options> = ({ options }) => 
 	const state = useCommandTask(async () => {
 		const { convertTXHHSC } = await import("@mailwoman/registry/tools")
 
-		return convertTXHHSC({ src: options.src, out: options.out }, (line) => console.error(line))
+		return await convertTXHHSC({ src: options.src, out: options.out }, (line) => console.error(line))
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

@@ -17,6 +17,7 @@
  *   entities decoded, and whitespace collapsed.
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import {
 	decodeEntities,
 	fetchExhibit21,
@@ -25,17 +26,16 @@ import {
 	type SECDocumentClient,
 	stripTags,
 } from "@mailwoman/filer/sdk/exhibit21"
-import { readFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
-function fixture(name: string): string {
-	return readFileSync(join(import.meta.dirname, "../../../test-fixtures", name), "utf8")
+async function fixture(name: string): Promise<string> {
+	return await readLocalTextFile(join(import.meta.dirname, "../../../test-fixtures", name))
 }
 
 describe("parseExhibit21 — gate 3 (decision 6: abstain, never guess)", () => {
-	it("a deliberately mangled fixture yields ZERO subsidiaries, a NON-ZERO unparseable count, and throws nothing", () => {
-		const html = fixture("exhibit21-mangled.html")
+	it("a deliberately mangled fixture yields ZERO subsidiaries, a NON-ZERO unparseable count, and throws nothing", async () => {
+		const html = await fixture("exhibit21-mangled.html")
 
 		expect(() => parseExhibit21(html)).not.toThrow()
 
@@ -104,8 +104,8 @@ describe("parseExhibit21 — fabrication audit: ambiguous/decorative content abs
 		expect(parseExhibit21(text)).toEqual({ subsidiaries: [], unparseable: 1 })
 	})
 
-	it("I2: <td>-tagged header/decoration rows abstain instead of becoming subsidiaries, real row still recovered", () => {
-		const html = fixture("exhibit21-mangled-headers.html")
+	it("I2: <td>-tagged header/decoration rows abstain instead of becoming subsidiaries, real row still recovered", async () => {
+		const html = await fixture("exhibit21-mangled-headers.html")
 
 		expect(parseExhibit21(html)).toEqual({
 			subsidiaries: [{ name: "Cascade Fiber Holdings, LLC", jurisdiction: "Delaware" }],
@@ -134,8 +134,8 @@ describe("parseExhibit21 — fabrication audit: nested layout table (I1)", () =>
 })
 
 describe("parseExhibit21 — clean HTML table", () => {
-	it("yields exactly the expected subsidiary list, skipping the header row", () => {
-		const html = fixture("exhibit21-clean-table.html")
+	it("yields exactly the expected subsidiary list, skipping the header row", async () => {
+		const html = await fixture("exhibit21-clean-table.html")
 
 		expect(parseExhibit21(html)).toEqual({
 			subsidiaries: [
@@ -215,8 +215,8 @@ describe("parseExhibit21 — header-mapped columns and the indented corporate tr
 })
 
 describe("parseExhibit21 — nested-list variant", () => {
-	it("flattens a nested subsidiary <ul>/<li> tree, each carrying its own name + jurisdiction", () => {
-		const html = fixture("exhibit21-nested-list.html")
+	it("flattens a nested subsidiary <ul>/<li> tree, each carrying its own name + jurisdiction", async () => {
+		const html = await fixture("exhibit21-nested-list.html")
 
 		expect(parseExhibit21(html)).toEqual({
 			subsidiaries: [
@@ -236,8 +236,8 @@ describe("parseExhibit21 — nested-list variant", () => {
 })
 
 describe("parseExhibit21 — plain-text variant", () => {
-	it("splits fixed-width columns on the 2+-space gap", () => {
-		const text = fixture("exhibit21-plain-text.txt")
+	it("splits fixed-width columns on the 2+-space gap", async () => {
+		const text = await fixture("exhibit21-plain-text.txt")
 
 		expect(parseExhibit21(text)).toEqual({
 			subsidiaries: [
@@ -349,19 +349,22 @@ const NAME_ONLY_PROBES: Record<string, string> = {
 }
 
 describe("parseExhibit21 — substring invariant (decision 6, gate 3): a name is only emitted if the input contains it", () => {
-	it.each(FIXTURE_FILES)("every emitted name/jurisdiction is a substring of the normalized document: %s", (name) => {
-		const html = fixture(name)
-		const normalized = normalizedDocument(html)
-		const result = parseExhibit21(html)
+	it.each(FIXTURE_FILES)(
+		"every emitted name/jurisdiction is a substring of the normalized document: %s",
+		async (name) => {
+			const html = await fixture(name)
+			const normalized = normalizedDocument(html)
+			const result = parseExhibit21(html)
 
-		for (const subsidiary of result.subsidiaries) {
-			expect(normalized).toContain(subsidiary.name)
+			for (const subsidiary of result.subsidiaries) {
+				expect(normalized).toContain(subsidiary.name)
 
-			if (subsidiary.jurisdiction) {
-				expect(normalized).toContain(subsidiary.jurisdiction)
+				if (subsidiary.jurisdiction) {
+					expect(normalized).toContain(subsidiary.jurisdiction)
+				}
 			}
 		}
-	})
+	)
 
 	it.each(Object.entries(FABRICATION_AUDIT_CASES))(
 		"every emitted name/jurisdiction is a substring of the normalized document: %s",

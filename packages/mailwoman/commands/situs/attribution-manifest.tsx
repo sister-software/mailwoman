@@ -16,7 +16,8 @@
  *   streams to stderr; the summary lands on stdout.
  */
 
-import { readdirSync, writeFileSync } from "@mailwoman/platform/fs"
+import { readDirectory } from "@mailwoman/core/fs/readers"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import * as path from "@mailwoman/platform/path"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -60,7 +61,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 		// Canonical per-state shards only: address-points-us-<2-letter-slug>.db. Excludes county-scoped
 		// dev artifacts (e.g. address-points-us-il-cook.db) that overlap a state shard and the CLI never
 		// selects.
-		const shardFiles = readdirSync(outDir)
+		const shardFiles = (await readDirectory(outDir))
 			.filter((f) => /^address-points-us-[a-z]{2}\.db$/.test(f))
 			.toSorted()
 
@@ -119,7 +120,7 @@ const SitusAttributionManifest: ParsedCommandComponent<Options> = ({ options }) 
 		manifest.datasetTotals = Object.fromEntries(Object.entries(manifest.datasetTotals).toSorted((a, b) => b[1] - a[1]))
 
 		const attributionPath = path.join(outDir, "ATTRIBUTION.json")
-		writeFileSync(attributionPath, JSON.stringify(manifest, null, 2))
+		await writeLocalJSONFile(manifest, attributionPath)
 
 		const lines = [
 			`attribution: ${attributionPath}`,

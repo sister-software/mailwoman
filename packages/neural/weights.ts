@@ -22,9 +22,10 @@
  *   naming all the paths it tried.
  */
 
+import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readDirectorySync, readLocalTextFileSync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
-import { existsSync, readdirSync, readFileSync } from "@mailwoman/platform/fs"
 import { homedir } from "@mailwoman/platform/os"
 import { basename, dirname, resolve } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
@@ -36,9 +37,9 @@ import { PlacetypeCensusResolver } from "./placetype-census.ts"
  * A weights package's own directory, located with Node's native ESM resolver.
  *
  * WHY THE `package.json` SUBPATH AND NOT `findPackageJSON`. `node:module`'s `findPackageJSON` reads like the obvious
- * tool for "give me a package's root", and it is the one that keeps working if a weights package ever grows an
- * `exports` map that omits `./package.json` (none has one today — they are data-only packages with no `exports` at all,
- * which is why the subpath resolves). But measured in this yarn workspace it returns the node_modules SYMLINK path
+ * tool for "give me a package's root" and the one that keeps working if a weights package ever grows an `exports` map
+ * that omits `./package.json` (none has one today — they are data-only packages with no `exports` at all, which is why
+ * the subpath resolves). But measured in this yarn workspace it returns the node_modules SYMLINK path
  * (`node_modules/@mailwoman/neural-weights-en-us`) where `import.meta.resolve` — like the `require.resolve` this
  * replaced — realpaths through to the workspace directory (`neural-weights-en-us`). That string is not internal: it
  * lands in {@link ResolvedWeights.modelPath}, in the "missing model files" error, and (via the caller) in `mailwoman
@@ -360,14 +361,16 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	const tried: string[] = []
 
 	if (opts.modelPath && opts.tokenizerPath) {
-		if (!existsSync(opts.modelPath)) throw new Error(`Explicit modelPath does not exist: ${opts.modelPath}`)
+		if (!pathExistsSync(opts.modelPath)) throw new Error(`Explicit modelPath does not exist: ${opts.modelPath}`)
 
-		if (!existsSync(opts.tokenizerPath)) throw new Error(`Explicit tokenizerPath does not exist: ${opts.tokenizerPath}`)
+		if (!pathExistsSync(opts.tokenizerPath))
+			throw new Error(`Explicit tokenizerPath does not exist: ${opts.tokenizerPath}`)
+
 		// Resolve a model-card for the label vocab: explicit opt first, else one co-located with the
 		// model. Omitting it makes the classifier fall back to STAGE2_BIO_LABELS, which mis-decodes a
 		// STAGE3 (33-label) checkpoint into empty parses — the trap that broke eval-matrix --model-path.
 		const coLocatedCard = resolve(dirname(opts.modelPath), "model-card.json")
-		const modelCardPath = opts.modelCardPath ?? (existsSync(coLocatedCard) ? coLocatedCard : undefined)
+		const modelCardPath = opts.modelCardPath ?? (pathExistsSync(coLocatedCard) ? coLocatedCard : undefined)
 
 		return {
 			modelPath: opts.modelPath,
@@ -397,7 +400,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	const cacheDir = weightsCachePackageDir(opts.cacheRoot ?? weightsCacheDir(), locale)
 
 	const cacheHasBinaries = () =>
-		existsSync(resolve(cacheDir, "model.onnx")) && existsSync(resolve(cacheDir, "tokenizer.model"))
+		pathExistsSync(resolve(cacheDir, "model.onnx")) && pathExistsSync(resolve(cacheDir, "tokenizer.model"))
 
 	// 0. An EXPLICIT cacheRoot is authoritative — it names a candidate/package dir the caller wants
 	// graded (eval harnesses laying out a candidate bundle). In-repo the workspace weights package
@@ -412,7 +415,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 		// "resolved at … but is missing model files" is written for a real-but-bare package dir (the
 		// ordinary dev-checkout state), and is a false claim about a directory that does not exist.
 		// The refusal itself is the point — an explicit cache never falls back — so say that.
-		if (!existsSync(cacheDir)) {
+		if (!pathExistsSync(cacheDir)) {
 			tried.push(cacheDir)
 
 			throw new Error(
@@ -455,7 +458,7 @@ export function resolveWeights(opts: ResolveWeightsOpts): ResolvedWeights {
 	// prove the fallback engages — so a precondition demanding the binaries skips exactly the locales the
 	// base mechanism exists for. `resolveFromPackageDir` resolves the base itself; a genuinely empty overlay
 	// still throws "missing model files", which falls through to the cache below.
-	if (existsSync(overlayDir)) {
+	if (pathExistsSync(overlayDir)) {
 		try {
 			return resolveFromPackageDir(overlayDir, locale, opts, `overlay:${locale}`, tried)
 		} catch (error) {
@@ -509,7 +512,7 @@ function resolveFromPackageDir(
 	if (!opts.modelPath) {
 		const baseModel = baseDir ? resolve(baseDir, "model.onnx") : undefined
 
-		if (baseDir && baseModel && existsSync(baseModel)) {
+		if (baseDir && baseModel && pathExistsSync(baseModel)) {
 			modelPath = baseModel
 
 			if (!opts.tokenizerPath) {
@@ -522,7 +525,7 @@ function resolveFromPackageDir(
 
 	tried.push(modelPath, tokenizerPath)
 
-	if (!existsSync(modelPath) || !existsSync(tokenizerPath)) {
+	if (!pathExistsSync(modelPath) || !pathExistsSync(tokenizerPath)) {
 		throw new Error(
 			`Weights package resolved at ${packageDir} but is missing model files.\n` +
 				`Tried:\n  ${tried.join("\n  ")}\n` +
@@ -540,13 +543,13 @@ function resolveFromPackageDir(
 	const modelCardCandidate = resolve(packageDir, "model-card.json")
 	const baseModelCardCandidate = baseDir ? resolve(baseDir, "model-card.json") : undefined
 
-	const modelCardPath = existsSync(modelCardCandidate)
+	const modelCardPath = pathExistsSync(modelCardCandidate)
 		? modelCardCandidate
-		: baseModelCardCandidate && existsSync(baseModelCardCandidate)
+		: baseModelCardCandidate && pathExistsSync(baseModelCardCandidate)
 			? baseModelCardCandidate
 			: undefined
 
-	if (!existsSync(modelCardCandidate) && modelCardPath && !source.endsWith("+base")) {
+	if (!pathExistsSync(modelCardCandidate) && modelCardPath && !source.endsWith("+base")) {
 		source = `${source}+base`
 	}
 
@@ -554,15 +557,15 @@ function resolveFromPackageDir(
 	// presence is not the same question as completeness. The label vocabulary is the case that bites — a card without
 	// `labels` silently yields STAGE2_BIO_LABELS (21) against a 33-logit base model, and the first parse throws.
 	const resolvedBaseModelCardPath =
-		baseModelCardCandidate && existsSync(baseModelCardCandidate) && baseModelCardCandidate !== modelCardPath
+		baseModelCardCandidate && pathExistsSync(baseModelCardCandidate) && baseModelCardCandidate !== modelCardPath
 			? baseModelCardCandidate
 			: undefined
 
 	const crfCandidate = resolve(packageDir, "crf-transitions.json")
-	const crfTransitionsPath = existsSync(crfCandidate) ? crfCandidate : undefined
+	const crfTransitionsPath = pathExistsSync(crfCandidate) ? crfCandidate : undefined
 
 	const semiCrfCandidate = resolve(packageDir, "semi-crf-transitions.json")
-	const semiCRFTransitionsPath = existsSync(semiCrfCandidate) ? semiCrfCandidate : undefined
+	const semiCRFTransitionsPath = pathExistsSync(semiCrfCandidate) ? semiCrfCandidate : undefined
 
 	// Soft-feature sibling artifacts (#718 D1): the anchor + gazetteer sources the package ships so
 	// `loadFromWeights` can feed the channels the model was trained against — without a callsite
@@ -574,13 +577,13 @@ function resolveFromPackageDir(
 	const gazetteerCandidate = resolve(packageDir, "anchor-lexicon-v1.json")
 
 	const gazetteerLexiconPath =
-		opts.tier === "pocket" ? undefined : existsSync(gazetteerCandidate) ? gazetteerCandidate : undefined
+		opts.tier === "pocket" ? undefined : pathExistsSync(gazetteerCandidate) ? gazetteerCandidate : undefined
 
 	// Country-lexicon sibling (#1104): ships with the server tier alongside the gazetteer; pocket is anchor-only.
 	const countryCandidate = resolve(packageDir, "country-surface-lexicon-v1.json")
 
 	const countryLexiconPath =
-		opts.tier === "pocket" ? undefined : existsSync(countryCandidate) ? countryCandidate : undefined
+		opts.tier === "pocket" ? undefined : pathExistsSync(countryCandidate) ? countryCandidate : undefined
 
 	// Evidence-bundle lexicon siblings (Option-A, Phase 2): same posture as the gazetteer/country
 	// lexicons — server tier only, degrade-absent (pre-bundle packages simply don't carry them) —
@@ -599,7 +602,7 @@ function resolveFromPackageDir(
 	// (neural carries no resolver-wof-sqlite dependency). Country-scoped by construction: a locale model
 	// parsing foreign addresses simply gets no gazetteer bias for those places (the pair-index posture).
 	const fstCandidate = resolve(packageDir, `fst-${locale}.bin`)
-	const fstPath = existsSync(fstCandidate) ? fstCandidate : undefined
+	const fstPath = pathExistsSync(fstCandidate) ? fstCandidate : undefined
 
 	// Street-morphology FST sibling (`fst-street-morphology.bin`) — locale-GENERAL (built from the libpostal
 	// street_types dictionaries, all locales), so unlike `fst-<locale>.bin` it also resolves from the base weights
@@ -607,9 +610,9 @@ function resolveFromPackageDir(
 	const morphologyCandidate = resolve(packageDir, "fst-street-morphology.bin")
 	const baseMorphologyCandidate = baseDir ? resolve(baseDir, "fst-street-morphology.bin") : undefined
 
-	const streetMorphologyPath = existsSync(morphologyCandidate)
+	const streetMorphologyPath = pathExistsSync(morphologyCandidate)
 		? morphologyCandidate
-		: baseMorphologyCandidate && existsSync(baseMorphologyCandidate)
+		: baseMorphologyCandidate && pathExistsSync(baseMorphologyCandidate)
 			? baseMorphologyCandidate
 			: undefined
 
@@ -677,12 +680,12 @@ function resolveAnchorLookupSibling(
 	if (country) {
 		const binary = resolve(packageDir, `postcode-${country}.bin`)
 
-		if (existsSync(binary)) return { path: binary, binary: true }
+		if (pathExistsSync(binary)) return { path: binary, binary: true }
 	}
 
 	const json = resolve(packageDir, "anchor-lookup.json")
 
-	if (existsSync(json)) return { path: json, binary: false }
+	if (pathExistsSync(json)) return { path: json, binary: false }
 
 	return undefined
 }
@@ -732,7 +735,7 @@ const warnedUndeclaredLexicon = new Set<string>()
  */
 function shippedLexiconGenerations(dir: string, prefix: string): string[] {
 	try {
-		return readdirSync(dir)
+		return readDirectorySync(dir)
 			.filter((name) => name.startsWith(prefix) && name.endsWith(".json"))
 			.toSorted()
 	} catch {
@@ -769,7 +772,7 @@ function resolveEvidenceLexicon(
 
 	if (!declared) {
 		const candidate = resolve(packageDir, legacy)
-		const found = existsSync(candidate) ? candidate : undefined
+		const found = pathExistsSync(candidate) ? candidate : undefined
 
 		const warnKey = `${channel}:${modelCardPath ?? "(no card)"}`
 
@@ -789,7 +792,7 @@ function resolveEvidenceLexicon(
 
 	const declaredPath = resolve(packageDir, declared)
 
-	if (existsSync(declaredPath)) return declaredPath
+	if (pathExistsSync(declaredPath)) return declaredPath
 	const shipped = shippedLexiconGenerations(packageDir, prefix)
 
 	// Nothing of this family anywhere → plain absence, not a mismatch (rung 2).
@@ -816,7 +819,7 @@ function resolvePairIndexSibling(packageDir: string, country: string): string | 
 	if (!country) return undefined
 	const candidate = resolve(packageDir, `pair-index-${country}.bin`)
 
-	return existsSync(candidate) ? candidate : undefined
+	return pathExistsSync(candidate) ? candidate : undefined
 }
 
 /**
@@ -848,12 +851,12 @@ function resolvePairIndexSibling(packageDir: string, country: string): string | 
  * `undefined` when the file is absent — the caller then wires no census and the feature is entirely inert, with no
  * warning: an absent build-local artifact is the NORMAL state for every consumer who never ran the build command.
  */
-export function resolvePlacetypeCensusPath(country: string): string | undefined {
+export async function resolvePlacetypeCensusPath(country: string): Promise<string | undefined> {
 	if (!country) return undefined
 
 	const candidate = String(dataRootPath("wof", `placetype-census-${country.toLowerCase()}.bin`))
 
-	return existsSync(candidate) ? candidate : undefined
+	return (await pathExists(candidate)) ? candidate : undefined
 }
 
 /**
@@ -867,13 +870,16 @@ export function resolvePlacetypeCensusPath(country: string): string | undefined 
  * is LOUD — those are build mistakes, and the country one in particular would otherwise have a census describing the
  * wrong country's hierarchy quietly riding the trace a calibration rung reads.
  */
-export function loadPlacetypeCensus(country: string, explicitPath?: string): PlacetypeCensusResolver | undefined {
-	const path = explicitPath ?? resolvePlacetypeCensusPath(country)
+export async function loadPlacetypeCensus(
+	country: string,
+	explicitPath?: string
+): Promise<PlacetypeCensusResolver | undefined> {
+	const path = explicitPath ?? (await resolvePlacetypeCensusPath(country))
 
 	if (!path) return undefined
 
 	try {
-		const census = new PlacetypeCensusResolver(new Uint8Array(readFileSync(path)))
+		const census = new PlacetypeCensusResolver(new Uint8Array(await readLocalBuffer(path)))
 
 		if (census.country === country) return census
 
@@ -903,7 +909,7 @@ function resolveBaseWeightsDir(packageDir: string, locale?: string, cacheRootIsE
 		// stops working the moment the dev linkers write outside the package: an overlay locale that
 		// deliberately removes its own model (en-nz does exactly that, to prove the fallback engages) would
 		// resolve nothing at all.
-		const declarationDir = existsSync(resolve(packageDir, "package.json"))
+		const declarationDir = pathExistsSync(resolve(packageDir, "package.json"))
 			? packageDir
 			: locale
 				? tryResolvePackageDirectory(weightsPackageName(locale))
@@ -912,7 +918,7 @@ function resolveBaseWeightsDir(packageDir: string, locale?: string, cacheRootIsE
 		if (!declarationDir) return undefined
 
 		const pkg = tryParsingJSON<{ mailwoman?: { baseWeights?: string } }>(
-			readFileSync(resolve(declarationDir, "package.json"), "utf8")
+			readLocalTextFileSync(resolve(declarationDir, "package.json"))
 		)
 
 		const base = pkg?.mailwoman?.baseWeights
@@ -924,7 +930,7 @@ function resolveBaseWeightsDir(packageDir: string, locale?: string, cacheRootIsE
 		// cache, never the installed/workspace base that happens to be visible to this process.
 		const siblingBaseDir = resolve(dirname(packageDir), base.split("/").at(-1)!)
 
-		if (existsSync(resolve(siblingBaseDir, "package.json"))) return siblingBaseDir
+		if (pathExistsSync(resolve(siblingBaseDir, "package.json"))) return siblingBaseDir
 
 		if (cacheRootIsExplicit) return undefined
 
@@ -935,7 +941,7 @@ function resolveBaseWeightsDir(packageDir: string, locale?: string, cacheRootIsE
 		const baseLocale = base.replace("@mailwoman/neural-weights-", "")
 		const baseOverlay = weightsOverlayDir(baseLocale)
 
-		if (packageDir !== declarationDir && existsSync(resolve(baseOverlay, "model.onnx"))) return baseOverlay
+		if (packageDir !== declarationDir && pathExistsSync(resolve(baseOverlay, "model.onnx"))) return baseOverlay
 
 		return basePackageDir
 	} catch {
@@ -965,11 +971,11 @@ function tryResolvePackageDirectory(packageName: string): string | undefined {
  * re-defaulted.
  */
 export function readLabelsFromModelCard(modelCardPath: string | undefined): readonly string[] | undefined {
-	if (!modelCardPath || !existsSync(modelCardPath)) return undefined
+	if (!modelCardPath || !pathExistsSync(modelCardPath)) return undefined
 	let raw: string
 
 	try {
-		raw = readFileSync(modelCardPath, "utf8")
+		raw = readLocalTextFileSync(modelCardPath)
 	} catch {
 		return undefined
 	}
@@ -1065,19 +1071,19 @@ export interface DeclaredArtifact {
 /**
  * What a weights package's OWN `model-card.json` declares it ships under `files`, for one family of keys.
  *
- * The card's `files` block is the package's manifest of intent, and it is the only per-package statement of what SHOULD
- * be on disk — `requires` describes the trained ENCODER, which is a different claim and is shared across every overlay
- * that inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares
- * `requires.anchor.required: true` (a true statement about the encoder) while deliberately shipping no
- * `postcode-gb.bin` under the #1476 mitigation, so a guard keyed on `requires` alone calls a supported configuration
- * broken, and — because the old warning fired once per PROCESS and named no package — the operator reads that as the
- * PRIMARY locale's bin being missing.
+ * The card's `files` block is the package's manifest of intent and the only per-package statement of what SHOULD be on
+ * disk — `requires` describes the trained ENCODER, which is a different claim and is shared across every overlay that
+ * inherits the base model. Conflating the two is the #1516 defect: en-gb's card declares `requires.anchor.required:
+ * true` (a true statement about the encoder) while deliberately shipping no `postcode-gb.bin` under the #1476
+ * mitigation, so a guard keyed on `requires` alone calls a supported configuration broken, and — because the old
+ * warning fired once per PROCESS and named no package — the operator reads that as the PRIMARY locale's bin being
+ * missing.
  *
  * Reads the package's own card only, never the `baseWeights` fallback: an overlay that ships no card of its own is
  * making no claim about its files, and inheriting the base's manifest would attribute `postcode-us.bin` to it.
  *
  * @returns `undefined` when the package has no card, the card has no `files` block, or none of `keys` appears there —
- *   all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
+ * all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
  */
 export function readDeclaredArtifactFile(
 	packageDir: string | undefined,
@@ -1087,12 +1093,12 @@ export function readDeclaredArtifactFile(
 
 	const cardPath = resolve(packageDir, "model-card.json")
 
-	if (!existsSync(cardPath)) return undefined
+	if (!pathExistsSync(cardPath)) return undefined
 
 	let parsed: unknown
 
 	try {
-		parsed = tryParsingJSON(readFileSync(cardPath, "utf8"))
+		parsed = tryParsingJSON(readLocalTextFileSync(cardPath))
 	} catch {
 		return undefined
 	}
@@ -1110,7 +1116,7 @@ export function readDeclaredArtifactFile(
 
 		const path = resolve(packageDir, file)
 
-		return { key, file, path, present: existsSync(path) }
+		return { key, file, path, present: pathExistsSync(path) }
 	}
 
 	return undefined
@@ -1187,11 +1193,11 @@ export function unfedAnchorDetail(packageDir: string | undefined): string | unde
  * re-default.
  */
 export function readRequiredChannels(modelCardPath: string | undefined): RequiredChannels | undefined {
-	if (!modelCardPath || !existsSync(modelCardPath)) return undefined
+	if (!modelCardPath || !pathExistsSync(modelCardPath)) return undefined
 	let raw: string
 
 	try {
-		raw = readFileSync(modelCardPath, "utf8")
+		raw = readLocalTextFileSync(modelCardPath)
 	} catch {
 		return undefined
 	}
@@ -1328,12 +1334,14 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * declared contract is a loud artifact bug, not a silent skip. Tier/system/tag sub-shapes are read leniently (a
  * malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
  */
-export function readCapabilityManifest(modelCardPath: string | undefined): CapabilityManifest | undefined {
-	if (!modelCardPath || !existsSync(modelCardPath)) return undefined
+export async function readCapabilityManifest(
+	modelCardPath: string | undefined
+): Promise<CapabilityManifest | undefined> {
+	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
 	let raw: string
 
 	try {
-		raw = readFileSync(modelCardPath, "utf8")
+		raw = await readLocalTextFile(modelCardPath)
 	} catch {
 		return undefined
 	}
@@ -1389,12 +1397,12 @@ export interface CRFTransitions {
  * Read learned CRF transition parameters from `crf-transitions.json`. Returns `undefined` when the file is missing or
  * malformed — callers fall back to the structural BIO mask only.
  */
-export function readCRFTransitions(crfPath: string | undefined): CRFTransitions | undefined {
-	if (!crfPath || !existsSync(crfPath)) return undefined
+export async function readCRFTransitions(crfPath: string | undefined): Promise<CRFTransitions | undefined> {
+	if (!crfPath || !(await pathExists(crfPath))) return undefined
 	let raw: string
 
 	try {
-		raw = readFileSync(crfPath, "utf8")
+		raw = await readLocalTextFile(crfPath)
 	} catch {
 		return undefined
 	}

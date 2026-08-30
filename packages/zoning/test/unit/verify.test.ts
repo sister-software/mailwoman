@@ -21,9 +21,7 @@
  *   Zone-1-by-absence rule.
  */
 
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
 import {
 	OUTSIDE_PUBLICATION_POINTS,
@@ -42,7 +40,7 @@ import {
 } from "@mailwoman/zoning/test-kit"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 
 /**
@@ -87,8 +85,8 @@ const alwaysHoledZone: ServiceFeatureReader = async () => [holedZoneFeature()]
 const alwaysEmpty: ServiceFeatureReader = async () => []
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-zoning-verify-"))
-	databasePath = join(scratch, "zoning-ireland.db")
+	scratch = await temporaryDirectory("mw-zoning-verify-")
+	databasePath = scratch.resolve("zoning-ireland.db")
 
 	await buildZoningDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -102,9 +100,7 @@ beforeAll(async () => {
 	})
 }, 120_000)
 
-afterAll(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterAll(() => scratch[Symbol.asyncDispose]())
 
 const INSIDE_ZONE_A = {
 	label: "inside zone A",

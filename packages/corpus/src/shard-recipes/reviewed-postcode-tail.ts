@@ -8,8 +8,7 @@
  *   only transformations that do not create another postcode-to-place join.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { fileURLToPath } from "@mailwoman/platform/url"
 
 import { alignAndWrite, type ShardRecipe, shardSourceID } from "./scaffold.ts"
@@ -70,8 +69,10 @@ export function defaultReviewedPostcodeTuplePath(): string {
 	return fileURLToPath(import.meta.resolve("@mailwoman/corpus/data/reviewed-ve-postcode-tuples.json"))
 }
 
-export function readReviewedPostcodeTuples(path = defaultReviewedPostcodeTuplePath()): ReviewedPostcodeTuple[] {
-	const document = parseJSONStrict<ReviewedPostcodeTupleFile>(readFileSync(path, "utf8"))
+export async function readReviewedPostcodeTuples(
+	path = defaultReviewedPostcodeTuplePath()
+): Promise<ReviewedPostcodeTuple[]> {
+	const document = await readLocalJSONFile<ReviewedPostcodeTupleFile>(path)
 
 	if (!document.version || !ISO_DATE.test(document.reviewedAt) || document.tuples.length !== REVIEWED_TUPLE_COUNT) {
 		throw new Error("reviewed postcode tuple file must declare a version, review date, and exactly four tuples")
@@ -156,7 +157,7 @@ export const reviewedPostcodeTailRecipe: ShardRecipe = {
 	description: "Reviewed Venezuela locality-postcode-region tails with bounded surface variants",
 	mode: "generate",
 	async run(opts, write) {
-		const tuples = readReviewedPostcodeTuples(opts.input)
+		const tuples = await readReviewedPostcodeTuples(opts.input)
 		let emitted = 0
 		let skipped = 0
 

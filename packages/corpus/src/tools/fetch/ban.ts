@@ -18,10 +18,11 @@
  *   Python.
  */
 
-import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/utils"
-import { pathExists, sha256File } from "@mailwoman/core/utils"
+import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
+import { isFile, readLocalBuffer, tryStat } from "@mailwoman/core/fs/readers"
+import { makeDirectories, removePath, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { sha256File } from "@mailwoman/core/utils"
 import { gunzip } from "@mailwoman/platform/compression"
-import { mkdir, readFile, stat, unlink, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "@mailwoman/platform/path"
 import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
 
@@ -157,7 +158,7 @@ export type FetchBanOptions = BaseFetchOptions
 export async function fetchBan(options: FetchBanOptions, report?: (line: string) => void): Promise<FetchSummary> {
 	const banDir = join(options.outRoot, "ban")
 	const manifestPath = join(banDir, "MANIFEST.json")
-	await mkdir(banDir, { recursive: true })
+	await makeDirectories(banDir)
 
 	// Load existing entries (code -> entry): skip detection + preservation of untouched codes.
 	const entries = await loadManifestEntries<BanManifestEntry>(manifestPath, (entry) => entry.dept_code)
@@ -176,7 +177,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		report?.(`=== dept ${code}`)
 
 		// If the CSV already exists, compare its sha256 against the manifest.
-		if (await pathExists(csvFile)) {
+		if (await isFile(csvFile)) {
 			const existingSha = await sha256File(csvFile)
 			const recordedSha = entries.get(code)?.sha256
 
@@ -189,7 +190,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			}
 
 			report?.(`  → present but sha mismatch or no manifest entry — re-fetching`)
-			await unlink(csvFile)
+			await removePath(csvFile)
 		}
 
 		// Download the gzipped CSV.
@@ -211,11 +212,11 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 		}
 
 		// Guard against truncated 404/error pages.
-		const gzSize = (await stat(gzFile)).size
+		const gzSize = (await tryStat(gzFile))?.size ?? 0
 
 		if (gzSize < BYTES_PER_KIB) {
 			report?.(`  ✗ response too small (${gzSize} bytes) — probable 404 / error page`)
-			await unlink(gzFile)
+			await removePath(gzFile)
 
 			failed++
 			failedCodes.push(code)
@@ -225,10 +226,10 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 
 		// Decompress in-place; delete the .gz.
 		try {
-			await writeFile(csvFile, await gunzip(await readFile(gzFile)))
+			await writeLocalFile(await gunzip(await readLocalBuffer(gzFile)), csvFile)
 		} catch (error) {
 			report?.(`  ✗ decompress failed: ${(error as Error).message}`)
-			await unlink(gzFile)
+			await removePath(gzFile)
 
 			failed++
 			failedCodes.push(code)
@@ -236,9 +237,9 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			continue
 		}
 
-		await unlink(gzFile)
+		await removePath(gzFile)
 
-		if (!(await pathExists(csvFile))) {
+		if (!(await isFile(csvFile))) {
 			report?.(`  ✗ decompressed file not found at ${csvFile}`)
 
 			failed++
@@ -247,7 +248,7 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			continue
 		}
 
-		const bytes = (await stat(csvFile)).size
+		const bytes = (await tryStat(csvFile))?.size ?? 0
 		const sha = await sha256File(csvFile)
 
 		entries.set(code, {

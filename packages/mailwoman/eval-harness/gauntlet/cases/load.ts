@@ -22,10 +22,10 @@
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
 
+import { readDirectory, readDirectoryEntries } from "@mailwoman/core/fs/readers"
+import { pathExistsSync, readDirectorySync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { existsSync, readdirSync } from "@mailwoman/platform/fs"
-import { readdir } from "@mailwoman/platform/fs/promises"
 import { basename, join } from "@mailwoman/platform/path"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { TextSpliterator } from "spliterator"
@@ -54,7 +54,7 @@ const MALFORMED_EXCERPT_CHARS = 60
 export const CASES_DIR = ((): string => {
 	const sibling = fileURLToPath(new URL(".", import.meta.url))
 
-	if (existsSync(sibling) && readdirSync(sibling).some((name) => COUNTRY_DIR.test(name))) return sibling
+	if (pathExistsSync(sibling) && readDirectorySync(sibling).some((name) => COUNTRY_DIR.test(name))) return sibling
 
 	return fileURLToPath(new URL("../../../../eval-harness/gauntlet/cases/", import.meta.url))
 })()
@@ -130,7 +130,7 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
  * @throws {CorpusRowError} On a malformed or off-schema row, naming the file and line.
  */
 export async function loadRegressionCases(dir: string = CASES_DIR): Promise<SeedCase[]> {
-	const entries = await readdir(dir, { withFileTypes: true })
+	const entries = await readDirectoryEntries(dir)
 
 	const ccDirs = entries
 		.filter((e) => e.isDirectory() && COUNTRY_DIR.test(e.name))
@@ -142,7 +142,7 @@ export async function loadRegressionCases(dir: string = CASES_DIR): Promise<Seed
 
 	for (const cc of ccDirs) {
 		const ccPath = join(dir, cc)
-		const files = (await readdir(ccPath)).filter((f) => f.endsWith(".jsonl")).toSorted()
+		const files = (await readDirectory(ccPath)).filter((f) => f.endsWith(".jsonl")).toSorted()
 		const ccCases: SeedCase[] = []
 
 		for (const file of files) {

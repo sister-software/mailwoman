@@ -12,16 +12,16 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync } from "@mailwoman/platform/fs"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession } from "mailwoman/geocode-session"
 import { describe, expect, test } from "vitest"
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
-const hasWOFDB = existsSync(wofPath)
+const hasWOFDB = await pathExists(wofPath)
 
 const hasWeights = (() => {
 	try {
@@ -82,8 +82,8 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(withTrace.timing.trace).toBeGreaterThan(0)
 				expect(without.timing.trace).toBeUndefined()
 			} finally {
-				traced.close()
-				plain.close()
+				traced[Symbol.dispose]()
+				plain[Symbol.dispose]()
 			}
 		},
 		TEST_TIMEOUT_MS

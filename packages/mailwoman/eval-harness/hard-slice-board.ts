@@ -49,7 +49,7 @@
  *   graded through `createRuntimePipeline`, the only path an FST prior actually reaches (see the runner).
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { JSONSpliterator } from "spliterator"
 import zod from "zod"
@@ -264,7 +264,7 @@ export const HARD_SLICE_BOARD_PATH = ((): string => {
 	// discriminator between source and compiled trees.
 	const sibling = fileURLToPath(new URL("fixtures/", import.meta.url))
 
-	if (existsSync(sibling)) return `${sibling}hard-slice-board.jsonl`
+	if (pathExistsSync(sibling)) return `${sibling}hard-slice-board.jsonl`
 
 	return fileURLToPath(new URL("../../eval-harness/fixtures/hard-slice-board.jsonl", import.meta.url))
 })()

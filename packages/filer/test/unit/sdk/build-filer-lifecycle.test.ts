@@ -9,26 +9,22 @@
  *   below pins that a TSV-shaped row still produces byte-identical output.
  */
 
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { type FilerDatabase, FilerIdentifierType, FilerRelationship } from "@mailwoman/filer/schema"
 import { buildFilerDatabase } from "@mailwoman/filer/sdk/build-filer"
 import type { Form499Row } from "@mailwoman/filer/sdk/form499"
 import { parseForm499Notes } from "@mailwoman/filer/sdk/form499-notes"
 import { toFRN } from "@mailwoman/filer/sdk/frn"
-import { mkdtempSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
-beforeEach(() => {
-	scratch = mkdtempSync(join(tmpdir(), "filer-lifecycle-"))
+beforeEach(async () => {
+	scratch = await temporaryDirectory("filer-lifecycle-")
 })
 
-afterEach(() => {
-	rmSync(scratch, { recursive: true, force: true })
-})
+afterEach(() => scratch[Symbol.asyncDispose]())
 
 const FRN_CEASED = toFRN("0000000101")!
 const FRN_LIVE = toFRN("0000000102")!
@@ -56,7 +52,7 @@ function filerRow(overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID">
 }
 
 async function build(rows: Form499Row[]) {
-	const out = join(scratch, "filer.db")
+	const out = scratch.resolve("filer.db")
 
 	const result = await buildFilerDatabase({
 		form499Rows: rows,

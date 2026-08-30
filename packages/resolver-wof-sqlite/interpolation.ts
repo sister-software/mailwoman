@@ -327,7 +327,7 @@ export class StreetInterpolator<
 		}
 	}
 
-	close(): void {
-		this.#resources.dispose()
+	[Symbol.dispose](): void {
+		this.#resources[Symbol.dispose]()
 	}
 }

@@ -1948,6 +1948,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@bcoe/v8-coverage@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@bcoe/v8-coverage@npm:1.0.2"
+  checksum: 10/46600b2dde460269b07a8e4f12b72e418eae1337b85c979f43af3336c9a1c65b04e42508ab6b245f1e0e3c64328e1c38d8cd733e4a7cebc4fbf9cf65c6e59937
+  languageName: node
+  linkType: hard
+
 "@blazediff/core@npm:1.9.1":
   version: 1.9.1
   resolution: "@blazediff/core@npm:1.9.1"
@@ -4234,7 +4241,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jridgewell/trace-mapping@npm:^0.3.18, @jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.25, @jridgewell/trace-mapping@npm:^0.3.28":
+"@jridgewell/trace-mapping@npm:^0.3.18, @jridgewell/trace-mapping@npm:^0.3.24, @jridgewell/trace-mapping@npm:^0.3.25, @jridgewell/trace-mapping@npm:^0.3.28, @jridgewell/trace-mapping@npm:^0.3.31":
   version: 0.3.31
   resolution: "@jridgewell/trace-mapping@npm:0.3.31"
   dependencies:
@@ -4495,6 +4502,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/activity-lexicon@workspace:packages/activity-lexicon"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/platform": "workspace:*"
   languageName: unknown
   linkType: soft
@@ -4574,6 +4582,7 @@ __metadata:
     "@mailwoman/sqlite": "workspace:*"
     h3-js: "npm:^4.5.0"
     kysely: "npm:^0.29.4"
+    path-ts: "npm:^2.1.0"
     spliterator: "npm:^6.2.0"
     type-fest: "npm:^5.8.0"
   languageName: unknown
@@ -4889,6 +4898,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/map-tui@workspace:packages/map-tui"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/platform": "workspace:*"
     "@mapbox/vector-tile": "npm:^2.0.3"
     "@sister.software/asciify": "npm:^4.1.0"
@@ -5080,6 +5090,7 @@ __metadata:
     "@mailwoman/api-kit": "workspace:*"
     "@mailwoman/ban": "workspace:*"
     "@mailwoman/codex": "workspace:*"
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/neural": "workspace:*"
     "@mailwoman/neural-weights-en-us": "workspace:*"
     "@mailwoman/nuts-lookup": "workspace:*"
@@ -5282,7 +5293,6 @@ __metadata:
   dependencies:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
-    "@mailwoman/platform": "workspace:*"
     "@mailwoman/resolver": "workspace:*"
     "@mailwoman/resolver-wof-sqlite": "workspace:*"
     "@mailwoman/sqlite": "workspace:*"
@@ -5348,6 +5358,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/sqlite@workspace:packages/sqlite"
   dependencies:
+    "@mailwoman/core": "workspace:*"
     "@mailwoman/platform": "workspace:*"
     kysely: "npm:^0.29.4"
   languageName: unknown
@@ -5421,6 +5432,7 @@ __metadata:
     "@types/react": "npm:^19.2.17"
     "@types/regenerate": "npm:^1.4.3"
     "@types/semver": "npm:^7.7.1"
+    "@vitest/coverage-v8": "npm:4.1.10"
     dependency-cruiser: "npm:^18.2.0"
     husky: "npm:^9.1.7"
     jscpd: "npm:^5.0.16"
@@ -5433,6 +5445,7 @@ __metadata:
     semver: "npm:^7.8.5"
     sherif: "npm:^1.13.0"
     spliterator: "npm:^6.2.0"
+    ts-morph: "npm:^28.0.0"
     typescript: "npm:^6.0.3"
     vitest: "npm:4.1.10"
     zx: "npm:^8.8.5"
@@ -8437,6 +8450,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ts-morph/common@npm:~0.29.0":
+  version: 0.29.0
+  resolution: "@ts-morph/common@npm:0.29.0"
+  dependencies:
+    minimatch: "npm:^10.0.1"
+    path-browserify: "npm:^1.0.1"
+    tinyglobby: "npm:^0.2.14"
+  checksum: 10/d23cfb6c81110235a79cf5fbeb7efed04f4c8d560391a45184470b2363661f8da42f76572808be213f1e30d148117cb6dd57cac84a1c2a236839de986d2c27b8
+  languageName: node
+  linkType: hard
+
 "@turf/bbox@npm:7.3.5":
   version: 7.3.5
   resolution: "@turf/bbox@npm:7.3.5"
@@ -9670,6 +9694,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vitest/coverage-v8@npm:4.1.10":
+  version: 4.1.10
+  resolution: "@vitest/coverage-v8@npm:4.1.10"
+  dependencies:
+    "@bcoe/v8-coverage": "npm:^1.0.2"
+    "@vitest/utils": "npm:4.1.10"
+    ast-v8-to-istanbul: "npm:^1.0.0"
+    istanbul-lib-coverage: "npm:^3.2.2"
+    istanbul-lib-report: "npm:^3.0.1"
+    istanbul-reports: "npm:^3.2.0"
+    magicast: "npm:^0.5.2"
+    obug: "npm:^2.1.1"
+    std-env: "npm:^4.0.0-rc.1"
+    tinyrainbow: "npm:^3.1.0"
+  peerDependencies:
+    "@vitest/browser": 4.1.10
+    vitest: 4.1.10
+  peerDependenciesMeta:
+    "@vitest/browser":
+      optional: true
+  checksum: 10/e593f5205a65d10f200e68a99e720d7a9f5e9be65d8160e4f0b6b5f1a7a87f0453c03e79fd1c022dbd7fb26a22657ca4d9410ae27b36da90d41d7ca04f681ab1
+  languageName: node
+  linkType: hard
+
 "@vitest/expect@npm:3.2.4":
   version: 3.2.4
   resolution: "@vitest/expect@npm:3.2.4"
@@ -10485,6 +10533,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ast-v8-to-istanbul@npm:^1.0.0":
+  version: 1.0.5
+  resolution: "ast-v8-to-istanbul@npm:1.0.5"
+  dependencies:
+    "@jridgewell/trace-mapping": "npm:^0.3.31"
+    estree-walker: "npm:^3.0.3"
+    js-tokens: "npm:^10.0.0"
+  checksum: 10/da404c933beb1d3db94158e07c8d87aa86103775e0fb6f9a85f930d5c8327320b5a2099db4cc9d4448c421285a614fe9f73ef7d76dbae589ce815e636a0f1542
+  languageName: node
+  linkType: hard
+
 "astring@npm:^1.8.0":
   version: 1.9.0
   resolution: "astring@npm:1.9.0"
@@ -10878,6 +10937,15 @@ __metadata:
   dependencies:
     balanced-match: "npm:^4.0.2"
   checksum: 10/a7acf120fefa79e9d7c9c92898114f57c07596a3920197f3c5917e6a628b04220a5f7f9618c30bdd973a6576a32113b99f9c3f1c8245ccc399dd2a9a718d81d8
+  languageName: node
+  linkType: hard
+
+"brace-expansion@npm:^5.0.8":
+  version: 5.0.9
+  resolution: "brace-expansion@npm:5.0.9"
+  dependencies:
+    balanced-match: "npm:^4.0.2"
+  checksum: 10/d8683d612919212c7cf298861acd1c15101e7e2ad186e7ae9747390e5b3fc9e9b55ce71107570d32985784d9d88fbbe438d725863aed7b0f3d08d5f080535eec
   languageName: node
   linkType: hard
 
@@ -11474,6 +11542,13 @@ __metadata:
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
   checksum: 10/cdfb57fa6c7649bbff98d9028c2f0de2f91c86f551179541cf784b1cfdc1562dcb951955f46d54d930a3879931a980e32a46b598acaea274728dbe068deca919
+  languageName: node
+  linkType: hard
+
+"code-block-writer@npm:^13.0.3":
+  version: 13.0.3
+  resolution: "code-block-writer@npm:13.0.3"
+  checksum: 10/771546224f38610eecee0598e83c9e0f86dcd600ea316dbf27c2cfebaab4fed51b042325aa460b8e0f131fac5c1de208f6610a1ddbffe4b22e76f9b5256707cb
   languageName: node
   linkType: hard
 
@@ -15106,7 +15181,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html-escaper@npm:^2.0.2":
+"html-escaper@npm:^2.0.0, html-escaper@npm:^2.0.2":
   version: 2.0.2
   resolution: "html-escaper@npm:2.0.2"
   checksum: 10/034d74029dcca544a34fb6135e98d427acd73019796ffc17383eaa3ec2fe1c0471dcbbc8f8ed39e46e86d43ccd753a160631615e4048285e313569609b66d5b7
@@ -16215,6 +16290,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"istanbul-lib-coverage@npm:^3.0.0, istanbul-lib-coverage@npm:^3.2.2":
+  version: 3.2.2
+  resolution: "istanbul-lib-coverage@npm:3.2.2"
+  checksum: 10/40bbdd1e937dfd8c830fa286d0f665e81b7a78bdabcd4565f6d5667c99828bda3db7fb7ac6b96a3e2e8a2461ddbc5452d9f8bc7d00cb00075fa6a3e99f5b6a81
+  languageName: node
+  linkType: hard
+
+"istanbul-lib-report@npm:^3.0.0, istanbul-lib-report@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "istanbul-lib-report@npm:3.0.1"
+  dependencies:
+    istanbul-lib-coverage: "npm:^3.0.0"
+    make-dir: "npm:^4.0.0"
+    supports-color: "npm:^7.1.0"
+  checksum: 10/86a83421ca1cf2109a9f6d193c06c31ef04a45e72a74579b11060b1e7bb9b6337a4e6f04abfb8857e2d569c271273c65e855ee429376a0d7c91ad91db42accd1
+  languageName: node
+  linkType: hard
+
+"istanbul-reports@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "istanbul-reports@npm:3.2.0"
+  dependencies:
+    html-escaper: "npm:^2.0.0"
+    istanbul-lib-report: "npm:^3.0.0"
+  checksum: 10/6773a1d5c7d47eeec75b317144fe2a3b1da84a44b6282bebdc856e09667865e58c9b025b75b3d87f5bc62939126cbba4c871ee84254537d934ba5da5d4c4ec4e
+  languageName: node
+  linkType: hard
+
 "jest-util@npm:^29.7.0":
   version: 29.7.0
   resolution: "jest-util@npm:29.7.0"
@@ -16287,6 +16390,13 @@ __metadata:
   version: 6.2.3
   resolution: "jose@npm:6.2.3"
   checksum: 10/876974613c5ee988d43b65a34c96ce440dbf7706a2f07f465b8874af16ee532102e224459a7068d2c6ef044affe49690667d23ca12770c279804baec95a09608
+  languageName: node
+  linkType: hard
+
+"js-tokens@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "js-tokens@npm:10.0.0"
+  checksum: 10/88f536ec89f076fc230d29df255b3c55531237669d746d1868fca716b1e3f5f2e4abf8e5b8701903216e3f00d2dc3918d078b35da87772d433ab6a513c3bf76d
   languageName: node
   linkType: hard
 
@@ -17122,6 +17232,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"magicast@npm:^0.5.2":
+  version: 0.5.4
+  resolution: "magicast@npm:0.5.4"
+  dependencies:
+    "@babel/parser": "npm:^7.29.7"
+    "@babel/types": "npm:^7.29.7"
+    source-map-js: "npm:^1.2.1"
+  checksum: 10/174a26b566ff6b92b0f3522711c139ad03b3ffd6eae045fe230672a674066937eb8232bf6ad755459324eda03f6e6258226566fe2b505c5983670439859c6c39
+  languageName: node
+  linkType: hard
+
 "mailwoman@workspace:*, mailwoman@workspace:^, mailwoman@workspace:packages/mailwoman":
   version: 0.0.0-use.local
   resolution: "mailwoman@workspace:packages/mailwoman"
@@ -17164,7 +17285,6 @@ __metadata:
     "@mailwoman/tiger": "workspace:*"
     "@mailwoman/variant-aliases": "workspace:*"
     "@mailwoman/zoning": "workspace:*"
-    "@types/yauzl-promise": "npm:^4.0.1"
     chalk: "npm:^6.0.0"
     change-case: "npm:^5.4.4"
     d3-scale-chromatic: "npm:^3.1.0"
@@ -17176,7 +17296,6 @@ __metadata:
     path-ts: "npm:^2.1.0"
     react: "npm:^19.2.8"
     spliterator: "npm:^6.2.0"
-    yauzl-promise: "npm:^4.0.0"
     zod: "npm:^4.4.3"
     zx: "npm:^8.8.5"
   peerDependencies:
@@ -17201,6 +17320,15 @@ __metadata:
     mw: ./out/cli.js
   languageName: unknown
   linkType: soft
+
+"make-dir@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "make-dir@npm:4.0.0"
+  dependencies:
+    semver: "npm:^7.5.3"
+  checksum: 10/bf0731a2dd3aab4db6f3de1585cea0b746bb73eb5a02e3d8d72757e376e64e6ada190b1eddcde5b2f24a81b688a9897efd5018737d05e02e2a671dda9cff8a8a
+  languageName: node
+  linkType: hard
 
 "maplibre-gl@npm:^6.5.0":
   version: 6.5.0
@@ -18295,6 +18423,15 @@ __metadata:
   dependencies:
     brace-expansion: "npm:^1.1.7"
   checksum: 10/b11a7ee5773cd34c1a0c8436cdbe910901018fb4b6cb47aa508a18d567f6efd2148507959e35fba798389b161b8604a2d704ccef751ea36bd4582f9852b7d63f
+  languageName: node
+  linkType: hard
+
+"minimatch@npm:^10.0.1":
+  version: 10.2.6
+  resolution: "minimatch@npm:10.2.6"
+  dependencies:
+    brace-expansion: "npm:^5.0.8"
+  checksum: 10/a5e43f7c57d6061a77da320b42aa35ffff826030cf67c83c0eee47a26ede4d66486935881492b968c609bf27a7d48cc4b9f54b2806643cd8fb792fcf9240cc1b
   languageName: node
   linkType: hard
 
@@ -19588,6 +19725,13 @@ __metadata:
   version: 2.0.0
   resolution: "patch-console@npm:2.0.0"
   checksum: 10/10e7d382cc1cf930a2114a822cdc816109a1147bcbc4881ca4fa2ad0228a60cf14d53f815fce3164f25851fea71db4026ae8271e4026b42b0a6e92ddc074d4c2
+  languageName: node
+  linkType: hard
+
+"path-browserify@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "path-browserify@npm:1.0.1"
+  checksum: 10/7e7368a5207e7c6b9051ef045711d0dc3c2b6203e96057e408e6e74d09f383061010d2be95cb8593fe6258a767c3e9fc6b2bfc7ce8d48ae8c3d9f6994cca9ad8
   languageName: node
   linkType: hard
 
@@ -22421,7 +22565,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.8.5, semver@npm:^7.6.0, semver@npm:^7.8.5":
+"semver@npm:7.8.5, semver@npm:^7.5.3, semver@npm:^7.6.0, semver@npm:^7.8.5":
   version: 7.8.5
   resolution: "semver@npm:7.8.5"
   bin:
@@ -23810,7 +23954,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.17":
+"tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.14, tinyglobby@npm:^0.2.17":
   version: 0.2.17
   resolution: "tinyglobby@npm:0.2.17"
   dependencies:
@@ -23957,6 +24101,16 @@ __metadata:
   version: 2.2.0
   resolution: "ts-dedent@npm:2.2.0"
   checksum: 10/93ed8f7878b6d5ed3c08d99b740010eede6bccfe64bce61c5a4da06a2c17d6ddbb80a8c49c2d15251de7594a4f93ffa21dd10e7be75ef66a4dc9951b4a94e2af
+  languageName: node
+  linkType: hard
+
+"ts-morph@npm:^28.0.0":
+  version: 28.0.0
+  resolution: "ts-morph@npm:28.0.0"
+  dependencies:
+    "@ts-morph/common": "npm:~0.29.0"
+    code-block-writer: "npm:^13.0.3"
+  checksum: 10/fb5541c2c5b25386ae85346203046cc136d4afa2821a9b7b5ea9ffdbcff6d8867eccf98a3d7d50dd86f64428f80cf4ae9e609bd8f02f99cef902ba2760ecd5d9
   languageName: node
   linkType: hard
 

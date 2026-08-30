@@ -13,7 +13,7 @@ import { renderArc, runArc, summarizeArc } from "../arc.ts"
 import type { DevTool, DevToolDeps } from "../tool-kit.ts"
 import { INPUT_SET_SCHEMA } from "../tool-kit.ts"
 
-export const arcTool = ({ registry }: DevToolDeps): DevTool => ({
+export const arcTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_arc",
 	description:
 		"Grade a candidate model the way a candidate model has to be graded: self-control, then null, then candidate, " +

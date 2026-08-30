@@ -22,9 +22,9 @@
 
 import { ADDRESS_SYSTEM_CONVENTIONS, type AddressSystemConventions } from "@mailwoman/codex"
 import { $public } from "@mailwoman/core/env"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { workspacePath, dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { existsSync } from "@mailwoman/platform/fs"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const MODEL =
@@ -39,7 +39,7 @@ const MODEL_CARD = workspacePath("neural-weights-en-us", "model-card.json")
 // All channels must be feedable: createScorer runs the gate in `strict` mode, and the v1.5.0 card
 // declares anchor+gazetteer required — a missing channel would throw an UnfedChannelError that masks
 // the capability-gate behavior we're testing. Skip the whole suite unless the full feed is present.
-const haveAll = [MODEL, TOKENIZER, ANCHOR, GAZETTEER, MODEL_CARD].every((p) => existsSync(p))
+const haveAll = [MODEL, TOKENIZER, ANCHOR, GAZETTEER, MODEL_CARD].every((p) => pathExistsSync(p))
 
 const baseOpts = {
 	modelPath: MODEL,

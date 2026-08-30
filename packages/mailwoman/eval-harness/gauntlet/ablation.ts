@@ -57,9 +57,9 @@
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
 
+import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, percentile, sha256Hex } from "@mailwoman/core/utils"
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -707,14 +707,14 @@ export async function runAblationLayer(
 			}
 		}
 	} finally {
-		deps.close()
-		gazetteer.close()
+		deps[Symbol.dispose]()
+		gazetteer[Symbol.dispose]()
 	}
 
 	const cells = aggregateCells(rows, { boardID, measuredAt })
 	const leverLine = describeLevers(options)
 
-	mkdirSync(outDir, { recursive: true })
+	await makeDirectories(outDir)
 
 	const artifact = {
 		boardID,
@@ -737,10 +737,9 @@ export async function runAblationLayer(
 		skips,
 	}
 
-	writeFileSync(join(outDir, "ablation-map.json"), JSON.stringify(artifact, null, "\t"))
+	await writeLocalJSONFile(artifact, join(outDir, "ablation-map.json"))
 
-	writeFileSync(
-		join(outDir, "ablation-map.md"),
+	await writeLocalFile(
 		renderAblationMarkdown(cells, rows, {
 			boardID,
 			measuredAt,
@@ -748,7 +747,8 @@ export async function runAblationLayer(
 			variantCount: rows.length,
 			skips,
 			levers: leverLine,
-		})
+		}),
+		join(outDir, "ablation-map.md")
 	)
 
 	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, leverLine, skips })

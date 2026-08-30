@@ -28,9 +28,10 @@
  *       this caused.
  */
 
+import { pathExists, statPath } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
 import { spawnSync } from "@mailwoman/platform/child_process"
-import { existsSync, mkdirSync, statSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
@@ -48,10 +49,10 @@ import {
  */
 const DEST_DIR = String(weightsOverlayPath("fr-fr"))
 
-mkdirSync(DEST_DIR, { recursive: true })
+await makeDirectories(DEST_DIR)
 
-removeIfPresent(resolve(DEST_DIR, "model.onnx"))
-removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
+await removeIfPresent(resolve(DEST_DIR, "model.onnx"))
+await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree anchor-OFF gap) ----------------.
@@ -62,7 +63,7 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
  */
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
-if (existsSync(SRC_GAZETTEER_LEXICON)) {
+if (await pathExists(SRC_GAZETTEER_LEXICON)) {
 	linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
@@ -70,7 +71,7 @@ if (existsSync(SRC_GAZETTEER_LEXICON)) {
 	console.error(`WARNING: missing ${SRC_GAZETTEER_LEXICON} — gazetteer channel will resolve OFF in this worktree.`)
 }
 
-if (existsSync(SRC_COUNTRY_LEXICON)) {
+if (await pathExists(SRC_COUNTRY_LEXICON)) {
 	linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
@@ -91,13 +92,13 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
  */
 const POSTCODE_BIN_DEST = resolve(DEST_DIR, "postcode-fr.bin")
 
-if (existsSync(POSTCODE_BIN_DEST)) {
+if (await pathExists(POSTCODE_BIN_DEST)) {
 	console.log(`skipped postcode-fr.bin build — ${POSTCODE_BIN_DEST} already present`)
-} else if (!existsSync(CLI)) {
+} else if (!(await pathExists(CLI))) {
 	console.error(
 		`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run this script to build postcode-fr.bin.`
 	)
-} else if (!existsSync(FR_WOF_DB)) {
+} else if (!(await pathExists(FR_WOF_DB))) {
 	console.error(
 		`WARNING: missing ${FR_WOF_DB} — postcode-fr.bin not built; the anchor channel will resolve OFF for FR.`
 	)
@@ -108,7 +109,7 @@ if (existsSync(POSTCODE_BIN_DEST)) {
 		{ stdio: "inherit" }
 	)
 
-	if (result.status !== 0 || !existsSync(POSTCODE_BIN_DEST)) {
+	if (result.status !== 0 || !(await pathExists(POSTCODE_BIN_DEST))) {
 		console.error(`ERROR: failed to build ${POSTCODE_BIN_DEST} (exit ${result.status})`)
 
 		process.exit(1)
@@ -129,12 +130,12 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-fr-fr.bin")
  */
 const FST_DEST = resolve(DEST_DIR, "fst-fr-fr.bin")
 
-if (existsSync(FST_SRC)) {
+if (await pathExists(FST_SRC)) {
 	linkForce(FST_SRC, FST_DEST)
 
 	console.log(`linked fst-fr-fr.bin ← ${FST_SRC}`)
 
-	warnIfFSTStale(FST_SRC, "fr-fr")
+	await warnIfFSTStale(FST_SRC, "fr-fr")
 } else {
 	console.error(`WARNING: missing ${FST_SRC} — the FST gazetteer default will resolve OFF for this locale.`)
 }
@@ -152,7 +153,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
  */
 const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
 
-if (existsSync(MORPHOLOGY_SRC)) {
+if (await pathExists(MORPHOLOGY_SRC)) {
 	linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
 
 	console.log(`linked fst-street-morphology.bin ← ${MORPHOLOGY_SRC}`)
@@ -191,19 +192,19 @@ const PAIR_INDEX_TRANSITION_BETA = 5
 const PAIR_INDEX_PARENT_DELTA = 5
 const BAN_DIR = dataRootPath("corpus", "sources", "ban")
 
-if (!existsSync(CLI)) {
+if (!(await pathExists(CLI))) {
 	console.error(`WARNING: ${CLI} not built — run \`yarn compile\` first, then re-run for pair-index-fr.bin.`)
-} else if (!existsSync(String(BAN_DIR))) {
+} else if (!(await pathExists(String(BAN_DIR)))) {
 	console.error(
 		`WARNING: missing ${BAN_DIR} — pair-index-fr.bin not built; the placetype-pair prior stays inert for FR.`
 	)
 } else {
 	let needsRebuild = true
 
-	if (existsSync(PAIR_INDEX_BIN_DEST)) {
+	if (await pathExists(PAIR_INDEX_BIN_DEST)) {
 		try {
 			// Format + every calibrated magnitude, through the shared check (`@mailwoman/resolver-wof-sqlite/weights-overlay-linker`).
-			const staleReason = pairIndexStaleReason(peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST), {
+			const staleReason = pairIndexStaleReason(await peekPairIndexHeaderFields(PAIR_INDEX_BIN_DEST), {
 				delta: PAIR_INDEX_DELTA,
 				transitionBeta: PAIR_INDEX_TRANSITION_BETA,
 				parentDelta: PAIR_INDEX_PARENT_DELTA,
@@ -213,7 +214,7 @@ if (!existsSync(CLI)) {
 			// recipe, whose FR neighbourhood tier is Paris quartiers) is ~1.9 kB and can carry matching magnitudes,
 			// which the header check then reads as current. Size is the one signal the header cannot fake.
 			const MINIMUM_PLAUSIBLE_BYTES = 1_000_000
-			const bytes = statSync(PAIR_INDEX_BIN_DEST).size
+			const bytes = (await statPath(PAIR_INDEX_BIN_DEST)).size
 
 			if (staleReason) {
 				console.log(`rebuilding pair-index-fr.bin — ${staleReason}`)
@@ -254,7 +255,7 @@ if (!existsSync(CLI)) {
 			{ stdio: "inherit" }
 		)
 
-		if (result.status !== 0 || !existsSync(PAIR_INDEX_BIN_DEST)) {
+		if (result.status !== 0 || !(await pathExists(PAIR_INDEX_BIN_DEST))) {
 			console.error(`FAILED: gazetteer pair-index --country fr (exit ${result.status})`)
 
 			process.exit(1)

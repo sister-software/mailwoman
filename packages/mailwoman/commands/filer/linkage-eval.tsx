@@ -42,7 +42,7 @@ const FilerLinkageEval: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { filerLinkageEval } = await import("@mailwoman/filer/tools")
 
-		return filerLinkageEval({ outMd: options.outMd, date: options.date }, (line) => console.error(line))
+		return await filerLinkageEval({ outMd: options.outMd, date: options.date }, (line) => console.error(line))
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

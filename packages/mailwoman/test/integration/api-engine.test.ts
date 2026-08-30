@@ -27,39 +27,39 @@
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
-import { metricsSnapshot, resetMetricsForTest, serveNode, type ServerHandle } from "@mailwoman/api-kit"
+import { metricsSnapshot, resetMetricsForTest, serveNode } from "@mailwoman/api-kit"
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { existsSync } from "@mailwoman/platform/fs"
 import { fileURLToPath } from "@mailwoman/platform/url"
 import { createServeEngine } from "mailwoman/api-engine"
 import { beforeAll, beforeEach, describe, expect, test } from "vitest"
 
 const wofPath = $public.MAILWOMAN_WOF_DB ?? String(dataRootPath("wof", "admin-global-priority.db"))
 const txSitus = String(dataRootPath("address-points", "address-points-us-tx.db"))
-const hasStack = existsSync(wofPath) && existsSync(txSitus)
+const hasStack = (await pathExists(wofPath)) && (await pathExists(txSitus))
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfStack = describe.skipIf(!hasStack)
 
 /**
  * `/v1/parse` needs only the model weights — gate its own tests independently of the WOF/TX stack above.
  */
-function weightsPresent(): boolean {
+async function weightsPresent(): Promise<boolean> {
 	try {
 		// ASK THE RESOLVER. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
 		// while the dev linker materializes binaries into that package — and a skip-guard that stops matching
 		// does not fail, it SKIPS, so the suite disappears from the run reporting success. The repo has already
 		// paid for this once: the workspace regroup left this literal behind and both this suite and
 		// `api-engine.test.ts` went quiet until someone counted the skips.
-		return existsSync(resolveWeights({ locale: "en-us" }).modelPath)
+		return await pathExists(resolveWeights({ locale: "en-us" }).modelPath)
 	} catch {
 		return false
 	}
 }
 
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
-const describeIfWeights = describe.skipIf(!weightsPresent())
+const describeIfWeights = describe.skipIf(!(await weightsPresent()))
 
 let app: ReturnType<typeof createMailwomanAPI>
 
@@ -233,39 +233,32 @@ describeIfStack("api-engine — success path against real WOF + TX shards", () =
 	})
 
 	test("RemoteResolver round-trips a parsed tree → street-level via /v1/resolve", async () => {
-		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
-		const { RemoteResolver } = await import("@mailwoman/resolver")
+		const [{ NeuralAddressClassifier }, { RemoteResolver }] = await Promise.all([
+			import("@mailwoman/neural"),
+			import("@mailwoman/resolver"),
+		])
 
-		let handle!: ServerHandle
-
-		const port = await new Promise<number>((resolve) => {
-			handle = serveNode({
-				fetch: app.fetch,
-				port: 0,
-				hostname: "127.0.0.1",
-				onListen: (info) => resolve(info.port),
-			})
+		await using handle = await serveNode({
+			fetch: app.fetch,
+			port: 0,
+			hostname: "127.0.0.1",
 		})
 
-		try {
-			const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-			const tree = await classifier.parse("3075 Hill Street, Round Rock, TX 78664", { postcodeRepair: true })
-			const remote = new RemoteResolver({ endpoint: `http://127.0.0.1:${port}/v1/resolve` })
-			const resolved = await remote.resolveTree(tree, { defaultCountry: "US" })
+		const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
+		const tree = await classifier.parse("3075 Hill Street, Round Rock, TX 78664", { postcodeRepair: true })
+		const remote = new RemoteResolver({ endpoint: `http://127.0.0.1:${handle.port}/v1/resolve` })
+		const resolved = await remote.resolveTree(tree, { defaultCountry: "US" })
 
-			const flat: Array<(typeof resolved.roots)[number]> = []
+		const flat: Array<(typeof resolved.roots)[number]> = []
 
-			const walk = (n: (typeof resolved.roots)[number]) => {
-				flat.push(n)
-				n.children.forEach(walk)
-			}
-
-			resolved.roots.forEach(walk)
-			const street = flat.find((n) => n.tag === "street")
-			// The resolver service wired its own shards → the street node carries a coordinate tier.
-			expect(street?.metadata?.["resolution_tier"]).toBeDefined()
-		} finally {
-			await handle.close()
+		const walk = (n: (typeof resolved.roots)[number]) => {
+			flat.push(n)
+			n.children.forEach(walk)
 		}
+
+		resolved.roots.forEach(walk)
+		const street = flat.find((n) => n.tag === "street")
+		// The resolver service wired its own shards → the street node carries a coordinate tier.
+		expect(street?.metadata?.["resolution_tier"]).toBeDefined()
 	}, 60_000)
 })

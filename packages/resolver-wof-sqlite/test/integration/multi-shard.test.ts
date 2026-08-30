@@ -10,16 +10,14 @@
  *   doesn't gate on the real WOF being present.
  */
 
-import { mkdtemp, rm } from "@mailwoman/platform/fs/promises"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { buildPlaceSearchFTS } from "@mailwoman/resolver-wof-sqlite/fts"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-let scratch: string
+let scratch: TemporaryDirectory
 
 function buildAdminShard(path: string): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -41,7 +39,7 @@ function buildAdminShard(path: string): void {
 	buildPlaceSearchFTS(db)
 }
 
-function buildPostcodeShard(path: string): void {
+async function buildPostcodeShard(path: string): Promise<void> {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -62,16 +60,16 @@ function buildPostcodeShard(path: string): void {
 }
 
 beforeEach(async () => {
-	scratch = await mkdtemp(join(tmpdir(), "mailwoman-multi-shard-"))
+	scratch = await temporaryDirectory("mailwoman-multi-shard-")
 })
 
 afterEach(async () => {
-	await rm(scratch, { recursive: true, force: true }).catch(() => {})
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 	test("opens a single shard via string path (backwards compatible)", async () => {
-		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
+		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
 		buildAdminShard(adminPath)
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: adminPath })
 
@@ -81,10 +79,10 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 	})
 
 	test("opens admin + postcode shards via array, auto-routes by placetype", async () => {
-		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
-		const pcPath = join(scratch, "whosonfirst-data-postalcode-us-latest.db")
+		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.resolve("whosonfirst-data-postalcode-us-latest.db")
 		buildAdminShard(adminPath)
-		buildPostcodeShard(pcPath)
+		await buildPostcodeShard(pcPath)
 
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
@@ -101,10 +99,10 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 	})
 
 	test("ShardConfig.schemaName override + explicit placetypes hint", async () => {
-		const adminPath = join(scratch, "admin.db")
-		const oddlyNamed = join(scratch, "wherever-they-put-postcodes.db")
+		const adminPath = scratch.resolve("admin.db")
+		const oddlyNamed = scratch.resolve("wherever-they-put-postcodes.db")
 		buildAdminShard(adminPath)
-		buildPostcodeShard(oddlyNamed)
+		await buildPostcodeShard(oddlyNamed)
 
 		using lookup = new WOFSQLitePlaceLookup({
 			databasePath: [adminPath, { path: oddlyNamed, schemaName: "pc", placetypes: ["postalcode"] }],
@@ -116,10 +114,10 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 	})
 
 	test("postcode bbox + proximity work via R*Tree on the attached shard", async () => {
-		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
-		const pcPath = join(scratch, "whosonfirst-data-postalcode-us-latest.db")
+		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.resolve("whosonfirst-data-postalcode-us-latest.db")
 		buildAdminShard(adminPath)
-		buildPostcodeShard(pcPath)
+		await buildPostcodeShard(pcPath)
 
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
@@ -135,10 +133,10 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 	})
 
 	test("query without placetype routes to main (admin) regardless of shards", async () => {
-		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
-		const pcPath = join(scratch, "whosonfirst-data-postalcode-us-latest.db")
+		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
+		const pcPath = scratch.resolve("whosonfirst-data-postalcode-us-latest.db")
 		buildAdminShard(adminPath)
-		buildPostcodeShard(pcPath)
+		await buildPostcodeShard(pcPath)
 
 		using lookup = new WOFSQLitePlaceLookup({ databasePath: [adminPath, pcPath] })
 
@@ -148,7 +146,7 @@ describe("WOFSQLitePlaceLookup — multi-shard ATTACH", () => {
 	})
 
 	test("placetype with no matching shard falls back to main", async () => {
-		const adminPath = join(scratch, "whosonfirst-data-admin-us-latest.db")
+		const adminPath = scratch.resolve("whosonfirst-data-admin-us-latest.db")
 		buildAdminShard(adminPath)
 		// Only admin shard — no postcode shard. A postalcode query falls back to main, returns
 		// nothing because admin has no postalcodes.

@@ -45,7 +45,7 @@ const GazetteerInspectFST: ParsedCommandComponent<Options> = ({ args, options })
 
 		const start = performance.now()
 
-		const { matcher, result } = buildFSTFromWOF({
+		const { matcher, result } = await buildFSTFromWOF({
 			dbPath,
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],

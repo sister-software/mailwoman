@@ -16,10 +16,10 @@
  *   2500]`
  */
 
-import { appendFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
+import { appendLocalTextFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import { hashFNV1a } from "./fnv-hash.ts"
@@ -164,7 +164,7 @@ export async function buildOutlierExposure(
 	const wofPath = options.wof || dataRootPath("wof", "admin-global-priority.db")
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const db = new DatabaseClient<WOFNameRead>(wofPath, { readOnly: true })
+	using db = new DatabaseClient<WOFNameRead>(wofPath, { readOnly: true })
 	const pool: string[] = []
 	const seen = new Set<string>()
 
@@ -191,8 +191,6 @@ export async function buildOutlierExposure(
 		report?.(`  ${lang}: ${kept}`)
 	}
 
-	await db.destroy()
-
 	// Deterministic shuffle (FNV hash sort) + split 80/10/10, append as OTHER.
 	pool.sort((a, b) => hashFNV1a(a) - hashFNV1a(b))
 	const nVal = Math.floor(pool.length * 0.1)
@@ -206,7 +204,7 @@ export async function buildOutlierExposure(
 
 	for (const [split, names] of Object.entries(splits)) {
 		const lines = names.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-		appendFileSync(path.join(dataDir, `${split}.jsonl`), lines)
+		await appendLocalTextFile(lines, path.join(dataDir, `${split}.jsonl`))
 		report?.(`appended ${names.length} OTHER → ${split}.jsonl`)
 	}
 

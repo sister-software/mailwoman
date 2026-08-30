@@ -13,7 +13,7 @@
  *   generalises to any other national open register (the coverage story, one country at a time).
  */
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { join } from "path-ts"
 
@@ -34,7 +34,7 @@ export interface BANShards {
  * Opens + caches per-country BAN rooftop lookups. A non-US geocode consults `for(country)`; the first hit for a country
  * opens its shard (with the matching street locale) once, subsequent calls reuse it.
  */
-export class BANShardProvider {
+export class BANShardProvider implements Disposable {
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, BANShards>()
 
@@ -66,14 +66,14 @@ export class BANShardProvider {
 			const locale = streetLocaleForBANCountry(cc)
 			const path = this.#shardPath(cc)
 
-			if (existsSync(path)) {
+			if (pathExistsSync(path)) {
 				entry.addressPoints = new AddressPointSqliteLookup(path, { streetLocale: locale })
 			}
 
 			// The #1042 derived street tier — purely additive, opened only when its artifact is on disk.
 			const streetPath = this.#streetCentroidPath(cc)
 
-			if (existsSync(streetPath)) {
+			if (pathExistsSync(streetPath)) {
 				entry.streetCentroids = new StreetCentroidSqliteLookup(streetPath, { streetLocale: locale })
 			}
 		}
@@ -81,12 +81,12 @@ export class BANShardProvider {
 		this.#cache.set(cc, entry)
 
 		return entry
-	}
+	};
 
-	close(): void {
+	[Symbol.dispose](): void {
 		for (const entry of this.#cache.values()) {
-			entry.addressPoints?.close()
-			entry.streetCentroids?.close()
+			entry.addressPoints?.[Symbol.dispose]()
+			entry.streetCentroids?.[Symbol.dispose]()
 		}
 
 		this.#cache.clear()

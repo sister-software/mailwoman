@@ -15,8 +15,9 @@
  *   Run: mailwoman eval gauntlet-build regression-db
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
+import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync, mkdirSync, rmSync } from "@mailwoman/platform/fs"
 import { dirname } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -49,50 +50,50 @@ export async function buildRegressionDB(options: BuildRegressionDBOptions = {}):
 	const output = options.output ?? dataRootPath("gauntlet", "regression.db")
 	const tmp = `${output}.tmp-${process.pid}`
 
-	mkdirSync(dirname(output), { recursive: true })
+	await makeDirectories(dirname(output))
 
-	if (existsSync(tmp)) {
-		rmSync(tmp)
+	if (await pathExists(tmp)) {
+		await removePath(tmp)
 	}
 
-	const kdb = new DatabaseClient<GauntletDatabase>(tmp)
-	await createGauntletTable(kdb)
-	await createGauntletMetaTable(kdb)
+	{
+		using kdb = new DatabaseClient<GauntletDatabase>(tmp)
+		await createGauntletTable(kdb)
+		await createGauntletMetaTable(kdb)
 
-	const insert = kdb.prepare(`INSERT INTO gauntlet_case VALUES (${GAUNTLET_CASE_COLUMNS.map(() => "?").join(", ")})`)
+		const insert = kdb.prepare(`INSERT INTO gauntlet_case VALUES (${GAUNTLET_CASE_COLUMNS.map(() => "?").join(", ")})`)
 
-	for (const c of cases) {
-		// Positional, in GAUNTLET_CASE_COLUMNS order.
-		insert.run(
-			c.id,
-			c.input,
-			c.source,
-			c.addressKind,
-			c.country,
-			c.status,
-			c.expectComponents ? JSON.stringify(c.expectComponents) : null,
-			c.expectPlaceID ?? null,
-			c.expectPlaceName ?? null,
-			c.expectLat ?? null,
-			c.expectLon ?? null,
-			c.expectToleranceM ?? null,
-			c.expectTier ?? null,
-			c.defaultCountry ?? null,
-			c.addedAt,
-			c.bugRef ?? null,
-			c.note ?? null,
-			c.ablationExpect ? JSON.stringify(c.ablationExpect) : null,
-			c.expectComponentRenderings ? JSON.stringify(c.expectComponentRenderings) : null,
-			c.locale ?? null,
-			c.expectAbstain ? 1 : null
-		)
+		for (const c of cases) {
+			// Positional, in GAUNTLET_CASE_COLUMNS order.
+			insert.run(
+				c.id,
+				c.input,
+				c.source,
+				c.addressKind,
+				c.country,
+				c.status,
+				c.expectComponents ? JSON.stringify(c.expectComponents) : null,
+				c.expectPlaceID ?? null,
+				c.expectPlaceName ?? null,
+				c.expectLat ?? null,
+				c.expectLon ?? null,
+				c.expectToleranceM ?? null,
+				c.expectTier ?? null,
+				c.defaultCountry ?? null,
+				c.addedAt,
+				c.bugRef ?? null,
+				c.note ?? null,
+				c.ablationExpect ? JSON.stringify(c.ablationExpect) : null,
+				c.expectComponentRenderings ? JSON.stringify(c.expectComponentRenderings) : null,
+				c.locale ?? null,
+				c.expectAbstain ? 1 : null
+			)
+		}
+
+		// The stamp goes in LAST and inside the same handle: an artifact that reached the swap without one would be
+		// exactly the unattributable DB this guard exists to abolish.
+		await writeCorpusStamp(kdb, cases)
 	}
-
-	// The stamp goes in LAST and inside the same handle: an artifact that reached the swap without one would be
-	// exactly the unattributable DB this guard exists to abolish.
-	await writeCorpusStamp(kdb, cases)
-
-	await kdb.destroy()
 
 	swapDatabaseIntoPlace(tmp, output)
 

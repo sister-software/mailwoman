@@ -11,11 +11,10 @@
  *   Run: `mailwoman placer eval in-distribution [--model <dir>] [--abstain 0.5]`
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
 import * as path from "@mailwoman/platform/path"
 import { JSONSpliterator } from "spliterator"
 
-import { parseJSONStrict } from "#objects"
+import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { dataRootPath, repoRootPath } from "#utils"
 
 import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
@@ -82,8 +81,8 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const abstain = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const meta = parseJSONStrict<CoarsePlacerMeta>(readFileSync(path.join(modelDir, "meta.json"), "utf8"))
-	const weightBytes = readFileSync(path.join(modelDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(modelDir, "meta.json"))
+	const weightBytes = await readLocalBuffer(path.join(modelDir, "weights.bin"))
 
 	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
 	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.

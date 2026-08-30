@@ -18,7 +18,7 @@ import { sql } from "kysely"
 import { describe, expect, it } from "vitest"
 
 function openMemory(): { raw: DatabaseClient<POIDatabase>; kdb: DatabaseClient<POIDatabase> } {
-	const raw = new DatabaseClient<POIDatabase>(":memory:")
+	const raw = DatabaseClient.temp<POIDatabase>()
 
 	return { raw, kdb: raw }
 }

@@ -22,10 +22,8 @@
  *   is on file, releases run from CI over OIDC with no second factor at all.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
-import { readFile } from "@mailwoman/platform/fs/promises"
 import * as path from "@mailwoman/platform/path"
 import { parseArgs } from "@mailwoman/platform/util"
 import { $, type ProcessPromise } from "zx"
@@ -123,12 +121,12 @@ async function runNPMWrite(proc: ProcessPromise): Promise<void> {
  * last cheap moment to catch that: once the config is on file it must be read and revoked, and each of those steps
  * costs its own interactive 2FA approval.
  */
-function assertWorkflowExists(file: string): void {
+async function assertWorkflowExists(file: string): Promise<void> {
 	if (flags.provider !== "github") return
 
 	const workflowPath = repoRootPath(".github", "workflows", file)
 
-	if (existsSync(workflowPath)) return
+	if (await pathExists(workflowPath)) return
 
 	throw new Error(`--file ${file}: no such workflow — ${workflowPath} does not exist`)
 }
@@ -140,7 +138,7 @@ interface Pkg {
 }
 
 async function readPkg(dir: string): Promise<Pkg> {
-	return parseJSONStrict<Pkg>(await readFile(path.join(dir, "package.json"), "utf8"))
+	return await readLocalJSONFile<Pkg>(path.join(dir, "package.json"))
 }
 
 function parseRepo(repository: Pkg["repository"]): string | undefined {
@@ -273,7 +271,7 @@ async function trust(dir: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
-	assertWorkflowExists(flags.file!)
+	await assertWorkflowExists(flags.file!)
 
 	for (const dir of dirs) {
 		const d = path.resolve(dir)

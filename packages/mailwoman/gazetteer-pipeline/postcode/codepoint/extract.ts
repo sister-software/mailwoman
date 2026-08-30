@@ -33,11 +33,10 @@
  *   `grep` the same bytes the builder saw.
  */
 
-import { createWriteStream } from "@mailwoman/platform/fs"
-import { mkdir, readFile } from "@mailwoman/platform/fs/promises"
-import { pipeline } from "@mailwoman/platform/stream/promises"
+import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
 import { join } from "path-ts"
-import { open as openZip } from "yauzl-promise"
 
 /**
  * Archive-internal prefix of the per-area CSVs.
@@ -160,45 +159,34 @@ export interface ExtractCodePointResult {
  */
 export async function extractCodePointOpen(options: ExtractCodePointOptions): Promise<ExtractCodePointResult> {
 	const phase = options.onPhase ?? (() => {})
-	const csvDir = String(join(options.destDir, "Data", "CSV"))
-	const docDir = String(join(options.destDir, "Doc"))
+	const csvDir = join(options.destDir, "Data", "CSV")
+	const docDir = join(options.destDir, "Doc")
 
-	await mkdir(csvDir, { recursive: true })
-	await mkdir(docDir, { recursive: true })
-
-	const zip = await openZip(options.archivePath)
-	const csvPaths: string[] = []
-	let totalBytes = 0
+	await makeDirectories(csvDir, docDir)
 
 	phase("extract", options.archivePath)
 
-	try {
-		for await (const entry of zip) {
-			const name = entry.filename
+	const entries = await listZipEntries(options.archivePath)
 
-			if (name.endsWith("/")) continue
+	const csvEntries = entries.filter(
+		(entry) => entry.name.startsWith(CSV_ENTRY_PREFIX) && entry.name.toLowerCase().endsWith(".csv")
+	)
 
-			const isCSV = name.startsWith(CSV_ENTRY_PREFIX) && name.toLowerCase().endsWith(".csv")
-			const isDoc = name.startsWith(DOC_ENTRY_PREFIX)
+	const docEntries = entries.filter((entry) => entry.name.startsWith(DOC_ENTRY_PREFIX) && !entry.name.endsWith("/"))
+	const totalBytes = [...csvEntries, ...docEntries].reduce((sum, entry) => sum + entry.uncompressedSize, 0)
 
-			if (!isCSV && !isDoc) continue
+	await extractZipEntries(options.archivePath, csvDir, {
+		selector: /^Data\/CSV\/.*\.csv$/i,
+		flatten: true,
+	})
 
-			const dest = String(join(isCSV ? csvDir : docDir, name.slice(name.lastIndexOf("/") + 1)))
-			const readStream = await entry.openReadStream()
+	await extractZipEntries(options.archivePath, docDir, { selector: /^Doc\/.+/i, flatten: true })
 
-			await pipeline(readStream, createWriteStream(dest))
-
-			totalBytes += entry.uncompressedSize
-
-			if (isCSV) {
-				csvPaths.push(dest)
-			}
-		}
-	} finally {
-		await zip.close()
-	}
-
-	csvPaths.sort()
+	const csvPaths = csvEntries
+		.map((entry) => {
+			return join(csvDir, entry.name.slice(entry.name.lastIndexOf("/") + 1))
+		})
+		.toSorted()
 
 	if (!csvPaths.length) {
 		throw new Error(`extractCodePointOpen: no ${CSV_ENTRY_PREFIX}*.csv entries in ${options.archivePath}`)
@@ -206,10 +194,13 @@ export async function extractCodePointOpen(options: ExtractCodePointOptions): Pr
 
 	phase("extract", `${csvPaths.length} area CSVs, ${(totalBytes / 1_000_000).toFixed(1)} MB`)
 
-	const metadataPath = String(join(docDir, "metadata.txt"))
-	const metadata = parseCodePointMetadata(await readFile(metadataPath, "utf8"))
+	const metadataPath = join(docDir, "metadata.txt")
+	const metadata = parseCodePointMetadata(await readLocalTextFile(metadataPath))
+
 	// Latin-1, deliberately — see `ExtractCodePointResult.licenseText`.
-	const licenseText = await readFile(String(join(docDir, "licence.txt")), "latin1").catch(() => "")
+	const licenseText = await readLocalBuffer(join(docDir, "licence.txt"))
+		.then((bytes) => bytes.toString("latin1"))
+		.catch(() => "")
 
 	return { csvPaths, docDir, metadata, licenseText, totalBytes }
 }

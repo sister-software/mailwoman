@@ -1,22 +1,6 @@
+import { openReadStream, openWriteStream } from "@mailwoman/core/fs/streams"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
-/**
- * @copyright Sister Software
- * @license AGPL-3.0
- * @author Teffen Ellis, et al.
- *
- *   HM Land Registry Price Paid Data → OA-shaped GB tuples CSV for the `locale` shard recipe.
- *
- *   PPD is E&W-only, ALL-CAPS, and column-structured (no header row). We emit the exact OA header
- *   `readTuples` (`shard-recipes/locale.ts`) indexes by name, mapped for `districtAsLocality: true`:
- *   CITY = PPD locality (dependent locality; blank when it merely repeats the town — 1995-era rows
- *   pad locality=town), DISTRICT = PPD post town, REGION = county. SAON (flat/unit) rows and
- *   building-name PAONs are skipped in v1 and counted — `LocaleBaseTuple` has no unit field yet.
- *
- *   Snapshot provenance: `$MAILWOMAN_DATA_ROOT/ppd/<date>/pp-complete.csv` (md5 sibling).
- *   License: OGL v3 (attribution: HM Land Registry).
- */
-import { createReadStream, createWriteStream } from "@mailwoman/platform/fs"
 import { parseArgs } from "@mailwoman/platform/util"
 import { CSVSpliterator } from "spliterator"
 
@@ -106,13 +90,13 @@ export async function extractPPDTuples(
 async function runPPDExtract(inputPath: string, outputPath: string): Promise<PPDExtractStats> {
 	// No `encoding` — CSVSpliterator delimits raw bytes and decodes utf-8 itself (see readTuples in
 	// shard-recipes/locale.ts). `header: false` yields every row as data — PPD ships no header row.
-	const rows = CSVSpliterator.fromAsync<string[]>(createReadStream(inputPath), {
+	const rows = CSVSpliterator.fromAsync<string[]>(openReadStream(inputPath), {
 		mode: "array",
 		header: false,
 		enableQuoteHandling: true,
 	})
 
-	const out = createWriteStream(outputPath, { encoding: "utf8" })
+	const out = openWriteStream(outputPath, { encoding: "utf8" })
 	const stats = await extractPPDTuples(rows, (line) => out.write(line + "\n"))
 
 	await new Promise<void>((res) => {

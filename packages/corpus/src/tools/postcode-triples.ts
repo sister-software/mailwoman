@@ -41,8 +41,8 @@
  *   recipe's header for the measurement.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { existsSync } from "@mailwoman/platform/fs"
 import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -178,58 +178,54 @@ export function applyCountryBudget(
  * a blank — the recipe already skips a tuple with no region, and a blank here would hide how much of the source is
  * actually reachable.
  */
-export function readTriplesFromParentJoin(
+export async function readTriplesFromParentJoin(
 	countries: readonly string[],
 	options: { postcodeDB?: string; adminDB?: string } = {}
-): PostcodeTriple[] {
+): Promise<PostcodeTriple[]> {
 	const postcodeDB = options.postcodeDB ?? String(dataRootPath("wof", "postalcode-intl.db"))
 	const adminDB = options.adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
 
-	if (!existsSync(postcodeDB) || !existsSync(adminDB)) return []
+	if (!(await pathExists(postcodeDB)) || !(await pathExists(adminDB))) return []
 
-	const db = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(adminDB, { readOnly: true })
 
-	try {
-		db.exec(`ATTACH DATABASE '${postcodeDB.replaceAll("'", "''")}' AS pc`)
+	db.exec(`ATTACH DATABASE '${postcodeDB.replaceAll("'", "''")}' AS pc`)
 
-		const statement = db.prepare(`
-			SELECT p.name AS postcode, a.name AS locality, r.name AS region, c.name AS country, p.country AS cc
-			FROM pc.spr p
-			JOIN spr a ON a.id = p.parent_id AND a.placetype IN ('locality', 'localadmin')
-			JOIN ancestors anc ON anc.id = a.id AND anc.ancestor_placetype = 'region'
-			JOIN spr r ON r.id = anc.ancestor_id
-			JOIN ancestors cnc ON cnc.id = a.id AND cnc.ancestor_placetype = 'country'
-			JOIN spr c ON c.id = cnc.ancestor_id
-			WHERE p.country = ? AND p.parent_id > 0
-			ORDER BY p.id
-		`)
+	const statement = db.prepare(`
+		SELECT p.name AS postcode, a.name AS locality, r.name AS region, c.name AS country, p.country AS cc
+		FROM pc.spr p
+		JOIN spr a ON a.id = p.parent_id AND a.placetype IN ('locality', 'localadmin')
+		JOIN ancestors anc ON anc.id = a.id AND anc.ancestor_placetype = 'region'
+		JOIN spr r ON r.id = anc.ancestor_id
+		JOIN ancestors cnc ON cnc.id = a.id AND cnc.ancestor_placetype = 'country'
+		JOIN spr c ON c.id = cnc.ancestor_id
+		WHERE p.country = ? AND p.parent_id > 0
+		ORDER BY p.id
+	`)
 
-		const out: PostcodeTriple[] = []
+	const out: PostcodeTriple[] = []
 
-		for (const cc of countries) {
-			const convention = POSTCODE_CONVENTIONS.get(cc)
+	for (const cc of countries) {
+		const convention = POSTCODE_CONVENTIONS.get(cc)
 
-			if (!convention) continue
+		if (!convention) continue
 
-			for (const row of statement.all(cc) as Array<Record<string, string>>) {
-				if (!row["postcode"] || !row["locality"] || !row["region"]) continue
+		for (const row of statement.all(cc) as Array<Record<string, string>>) {
+			if (!row["postcode"] || !row["locality"] || !row["region"]) continue
 
-				out.push({
-					postcode: row["postcode"],
-					locality: row["locality"],
-					region: row["region"],
-					country: row["country"] ?? "",
-					cc,
-					locale: convention.locale,
-					postcodePlacement: convention.placement,
-				})
-			}
+			out.push({
+				postcode: row["postcode"],
+				locality: row["locality"],
+				region: row["region"],
+				country: row["country"] ?? "",
+				cc,
+				locale: convention.locale,
+				postcodePlacement: convention.placement,
+			})
 		}
-
-		return out
-	} finally {
-		db.destroy()
 	}
+
+	return out
 }
 
 /**
@@ -250,32 +246,28 @@ const GEONAMES_COL = { country: 0, postcode: 1, place: 2, admin1: 3, admin2: 5 }
  * Returns a predicate that answers `true` for everything when the gazetteer is not on disk, so a checkout without it
  * builds the same rows it did before rather than silently emitting none.
  */
-export function createKnownLocalityGate(country: string, adminDB?: string): (name: string) => boolean {
+export async function createKnownLocalityGate(country: string, adminDB?: string): Promise<(name: string) => boolean> {
 	const path = adminDB ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
 
-	if (!existsSync(path)) return () => true
+	if (!(await pathExists(path))) return () => true
 
-	const db = new DatabaseClient<WOFDatabase>(path, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(path, { readOnly: true })
 
-	try {
-		const names = new Set<string>()
+	const names = new Set<string>()
 
-		for (const row of db
-			.prepare("SELECT name FROM spr WHERE country = ? AND placetype IN ('locality', 'localadmin')")
-			.all(country) as Array<{ name: string | null }>) {
-			if (row.name) {
-				names.add(row.name.toLowerCase())
-			}
+	for (const row of db
+		.prepare("SELECT name FROM spr WHERE country = ? AND placetype IN ('locality', 'localadmin')")
+		.all(country) as Array<{ name: string | null }>) {
+		if (row.name) {
+			names.add(row.name.toLowerCase())
 		}
-
-		// An empty set means the gazetteer has no localities for this country at all, which is a coverage fact about the
-		// gazetteer rather than a verdict on the source — so gate nothing rather than drop everything.
-		if (!names.size) return () => true
-
-		return (name: string) => names.has(name.toLowerCase())
-	} finally {
-		db.destroy()
 	}
+
+	// An empty set means the gazetteer has no localities for this country at all, which is a coverage fact about the
+	// gazetteer rather than a verdict on the source — so gate nothing rather than drop everything.
+	if (!names.size) return () => true
+
+	return (name: string) => names.has(name.toLowerCase())
 }
 
 /**
@@ -321,9 +313,9 @@ export async function readTriplesFromGeonames(
 ): Promise<PostcodeTriple[]> {
 	const convention = POSTCODE_CONVENTIONS.get(country)
 
-	if (!convention || !existsSync(path)) return []
+	if (!convention || !(await pathExists(path))) return []
 
-	const isKnownLocality = options.isKnownLocality ?? createKnownLocalityGate(country)
+	const isKnownLocality = options.isKnownLocality ?? (await createKnownLocalityGate(country))
 	const out: PostcodeTriple[] = []
 	const seen = new Set<string>()
 

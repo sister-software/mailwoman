@@ -9,6 +9,8 @@
  *   paid for once (#566 / reconcile-retirement).
  */
 
+import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
@@ -17,7 +19,6 @@ import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@m
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { readDeclaredArtifactFile, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { createHash } from "@mailwoman/platform/crypto"
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 import { createWOFResolver } from "@mailwoman/resolver"
 
@@ -39,7 +40,7 @@ import {
 } from "../../resolver-backend.ts"
 import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
 
-export interface GauntletDeps {
+export interface GauntletDeps extends Disposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
 	/**
 	 * The same geocode, with the resolver's interior recorded (#1721): one {@linkcode ResolveNodeTrace} per backend lookup
@@ -62,7 +63,6 @@ export interface GauntletDeps {
 	 * performs no resolution and does not alter the gate's geocode path.
 	 */
 	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
-	close(): void
 }
 
 /**
@@ -230,13 +230,16 @@ export interface GauntletGeocodeOpts {
  * The md5 it receives is of the model `resolveWeights` returned, NOT of a path spelled out here: the guard must check
  * the artifact the run will actually grade, or it checks nothing the run depends on.
  */
-function assertShippedModelMatchesCard(materializedMd5: string): void {
+async function assertShippedModelMatchesCard(materializedMd5: string): Promise<void> {
 	const cardPath = resolve("packages/neural-weights-en-us/model-card.json")
 
-	if (!existsSync(cardPath)) return
+	if (!(await pathExists(cardPath))) return
+
 	// Soft-return on an UNPARSEABLE card too — the docstring's contract is that a card-format problem is
 	// not this guard's job (the model file itself is always existsSync-gated by the caller).
-	const card = tryParsingJSON<{ version?: string; files_md5?: Record<string, string> }>(readFileSync(cardPath, "utf8"))
+	const card = tryParsingJSON<{ version?: string; files_md5?: Record<string, string> }>(
+		await readLocalTextFile(cardPath)
+	)
 
 	if (!card) {
 		console.error(`[gauntlet] model-card ${cardPath} is not valid JSON — skipping the #1024 md5 guard`)
@@ -346,8 +349,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	const resolvedModel = opts.modelPath ? undefined : resolveWeights({ locale: "en-us" }).modelPath
 	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolvedModel!)
 
-	if (existsSync(effModel)) {
-		const md5 = createHash("md5").update(readFileSync(effModel)).digest("hex")
+	if (await pathExists(effModel)) {
+		const md5 = createHash("md5")
+			.update(await readLocalBuffer(effModel))
+			.digest("hex")
 
 		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5.slice(0, 8)})`)
 
@@ -358,7 +363,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		// run intentionally grades a different artifact, so it is exempt. This gate is wired as the release
 		// before:release step (RELEASING.md), so failing here guards BOTH the gate and the ship.
 		if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot) {
-			assertShippedModelMatchesCard(md5)
+			await assertShippedModelMatchesCard(md5)
 		}
 	}
 
@@ -443,7 +448,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 	const resolver = createWOFResolver(
 		createResolverBackend(resolverMod, {
-			wofPaths: wofShardPaths().filter(existsSync),
+			wofPaths: wofShardPaths().filter(pathExistsSync),
 			...(opts.candidateDB ? { candidateDB: opts.candidateDB } : {}),
 			...(opts.levers?.variantAliasExemption === false ? { variantAliasExemption: false } : {}),
 		})
@@ -531,7 +536,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		let deps: Pick<GeocodeDeps, "fst" | "streetMorphology"> = {}
 
 		try {
-			deps = { fst: deserializeFST(readFileSync(fstPath)), streetMorphology: loadMorph().matcher }
+			deps = { fst: deserializeFST(await readLocalBuffer(fstPath)), streetMorphology: loadMorph().matcher }
 		} catch (error) {
 			// A missing or unreadable artifact degrades to no prior, which is the incumbent behaviour — but it is named,
 			// because a silently absent prior scores lower and reads as a model difference.
@@ -554,7 +559,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	let forkEntityDeps: Pick<GeocodeDeps, "poiLookup" | "isStreetGeneric"> = {}
 	const poiDBPath = String(dataRootPath("poi", "poi.db"))
 
-	if (existsSync(poiDBPath)) {
+	if (await pathExists(poiDBPath)) {
 		const [{ POILookup }, { loadStreetMorphologyFST }] = await Promise.all([
 			import("@mailwoman/resolver-wof-sqlite/poi-lookup"),
 			import("@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"),
@@ -620,10 +625,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 
 			return { result, resolver: resolverTrace }
 		},
-		close: () => {
-			shardProvider.close()
-			banProvider.close()
-			osmProvider.close()
+		[Symbol.dispose]: () => {
+			shardProvider[Symbol.dispose]()
+			banProvider[Symbol.dispose]()
+			osmProvider[Symbol.dispose]()
 		},
 	}
 }

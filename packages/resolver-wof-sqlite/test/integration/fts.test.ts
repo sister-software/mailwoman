@@ -19,7 +19,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
 function buildBaseSchema(): DatabaseClient<WOFDatabase> {
-	const db = new DatabaseClient<WOFDatabase>(":memory:")
+	const db = DatabaseClient.temp<WOFDatabase>()
 
 	// Mirror the real WOF SQLite schema subset that fts.ts queries. Includes the bbox columns
 	// (min_latitude/max_latitude/min_longitude/max_longitude) the R*Tree builder reads.

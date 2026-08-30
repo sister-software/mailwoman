@@ -74,7 +74,7 @@ describe("MapRenderer", async () => {
 	const source = await TileSource.open(FIXTURE)
 	const renderer = new MapRenderer(source)
 
-	afterAll(() => source.close())
+	afterAll(() => source[Symbol.asyncDispose]())
 
 	it("renders the Clinton St viewport at z14 (golden frame)", async () => {
 		const frame = await renderer.renderFrame({

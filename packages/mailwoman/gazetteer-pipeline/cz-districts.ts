@@ -21,9 +21,10 @@
  *   Run: mailwoman gazetteer build cz-districts [--source <CZ.txt>] [--out <localities-cz-districts.db>]
  */
 
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createHash } from "@mailwoman/platform/crypto"
-import { readFileSync, rmSync } from "@mailwoman/platform/fs"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
@@ -58,7 +59,7 @@ export async function buildCZDistrictsShard(
 	const outPath = opts.out ?? String(dataRootPath("wof", "localities-cz-districts.db"))
 	const tmpPath = `${outPath}.tmp`
 
-	const raw = readFileSync(sourcePath, "utf8")
+	const raw = await readLocalTextFile(sourcePath)
 	const sourceMD5 = createHash("md5").update(raw).digest("hex")
 
 	// GeoNames places format: 0=geonameid 1=name 2=asciiname … 4=lat 5=lon 6=featureClass 7=featureCode.
@@ -83,46 +84,49 @@ export async function buildCZDistrictsShard(
 		}
 	}
 
-	rmSync(tmpPath, { force: true })
-	const db = new DatabaseClient<WOFDatabase>(tmpPath)
-	db.exec("PRAGMA journal_mode = OFF")
-	db.exec("PRAGMA synchronous = OFF")
-	await createUnifiedSchema(db)
-
-	db.exec(`CREATE TABLE shard_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
-	const meta = db.prepare(`INSERT INTO shard_meta VALUES (?, ?)`)
-	meta.run("source", "GeoNames CZ places file (Praha district rows)")
-	meta.run("license", "CC-BY-4.0, attribution GeoNames")
-	meta.run("source_md5", sourceMD5)
-	meta.run("selection", String.raw`name ~ ^Praha \d+$, A-feature preferred per name`)
-
-	const sprInsert = db.prepare(
-		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'locality', 'CZ', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
-	)
-
-	const namesInsert = db.prepare(
-		`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'locality', 'CZ', '', 0)`
-	)
+	await removePathIfPresent(tmpPath)
 
 	let inserted = 0
-	db.exec("BEGIN")
 
-	for (const r of [...byName.values()].toSorted((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }))) {
-		const id = CZ_DISTRICT_ID_BASE + inserted
-		sprInsert.run(id, r.name, r.lat, r.lon, r.lat, r.lon, r.lat, r.lon)
-		namesInsert.run(id, r.name)
+	{
+		using db = new DatabaseClient<WOFDatabase>(tmpPath)
+		db.exec("PRAGMA journal_mode = OFF")
+		db.exec("PRAGMA synchronous = OFF")
+		await createUnifiedSchema(db)
 
-		inserted++
+		db.exec(`CREATE TABLE shard_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
+		const meta = db.prepare(`INSERT INTO shard_meta VALUES (?, ?)`)
+		meta.run("source", "GeoNames CZ places file (Praha district rows)")
+		meta.run("license", "CC-BY-4.0, attribution GeoNames")
+		meta.run("source_md5", sourceMD5)
+		meta.run("selection", String.raw`name ~ ^Praha \d+$, A-feature preferred per name`)
+
+		const sprInsert = db.prepare(
+			`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'locality', 'CZ', ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`
+		)
+
+		const namesInsert = db.prepare(
+			`INSERT INTO names (id, name, placetype, country, language, lastmodified) VALUES (?, ?, 'locality', 'CZ', '', 0)`
+		)
+
+		db.exec("BEGIN")
+
+		for (const r of [...byName.values()].toSorted((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }))) {
+			const id = CZ_DISTRICT_ID_BASE + inserted
+			sprInsert.run(id, r.name, r.lat, r.lon, r.lat, r.lon, r.lat, r.lon)
+			namesInsert.run(id, r.name)
+
+			inserted++
+		}
+
+		db.exec("COMMIT")
+		await createUnifiedIndexes(db)
+		buildPlaceSearchFTS(db, { drop: true })
+		db.exec("ANALYZE")
 	}
 
-	db.exec("COMMIT")
-	await createUnifiedIndexes(db)
-	buildPlaceSearchFTS(db, { drop: true })
-	db.exec("ANALYZE")
-	await db.destroy()
-
 	swapDatabaseIntoPlace(tmpPath, outPath)
-	sealDatabase(outPath)
+	await sealDatabase(outPath)
 
 	return { out: outPath, inserted, sourceMD5 }
 }

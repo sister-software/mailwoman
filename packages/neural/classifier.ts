@@ -23,7 +23,7 @@ import {
 	type SerializeTuplesOpts,
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
-import { parseJSONStrict } from "@mailwoman/core/objects"
+import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { proposeSpans, type ProposedSpan, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 
 // SELF-REFERENCE, not a relative path: export conditions do not apply to relative specifiers, so
@@ -219,11 +219,9 @@ export class NeuralAddressClassifier {
 				unfedChannelWarner,
 				loadPlacetypeCensus,
 			},
-			fs,
 		] = await Promise.all([
 			import(/* webpackIgnore: true */ "@mailwoman/core/env"),
 			import(/* webpackIgnore: true */ "./weights.ts"),
-			import(/* webpackIgnore: true */ "@mailwoman/platform/fs"),
 		])
 
 		/* oxlint-enable typescript/no-restricted-imports */
@@ -236,7 +234,7 @@ export class NeuralAddressClassifier {
 		const labels =
 			readLabelsFromModelCard(resolved.modelCardPath) ?? readLabelsFromModelCard(resolved.baseModelCardPath)
 
-		const crf = readCRFTransitions(resolved.crfTransitionsPath)
+		const crf = await readCRFTransitions(resolved.crfTransitionsPath)
 		// #727 stage-2: parse the span head's segment-transition grammar when the bundle ships it (v3+). Failure to parse
 		// is non-fatal — the model still classifies; only the phase-4c k-best rerank goes unavailable (spanGrammar stays
 		// undefined).
@@ -244,9 +242,7 @@ export class NeuralAddressClassifier {
 
 		if (resolved.semiCRFTransitionsPath) {
 			try {
-				semiCRFGrammar = parseSemiCRFTransitions(
-					parseJSONStrict(fs.readFileSync(resolved.semiCRFTransitionsPath, "utf8"))
-				)
+				semiCRFGrammar = parseSemiCRFTransitions(await readLocalJSONFile(resolved.semiCRFTransitionsPath))
 			} catch (error) {
 				console.error(
 					`[mailwoman/neural] loadFromWeights: failed to parse ${resolved.semiCRFTransitionsPath} — ` +
@@ -292,8 +288,10 @@ export class NeuralAddressClassifier {
 		if (!postcodeAnchorLookup && resolved.anchorLookupPath) {
 			try {
 				postcodeAnchorLookup = resolved.anchorLookupPath.binary
-					? new PostcodeBinaryResolver(new Uint8Array(fs.readFileSync(resolved.anchorLookupPath.path))).toAnchorLookup()
-					: parseAnchorLookup(parseJSONStrict(fs.readFileSync(resolved.anchorLookupPath.path, "utf8")))
+					? new PostcodeBinaryResolver(
+							new Uint8Array(await readLocalBuffer(resolved.anchorLookupPath.path))
+						).toAnchorLookup()
+					: parseAnchorLookup(await readLocalJSONFile(resolved.anchorLookupPath.path))
 			} catch (error) {
 				warnUnfedChannel("anchor", `failed to parse ${resolved.anchorLookupPath.path}: ${(error as Error).message}`)
 			}
@@ -315,9 +313,7 @@ export class NeuralAddressClassifier {
 
 		if (resolved.gazetteerLexiconPath) {
 			try {
-				gazetteerLexicon = parseGazetteerLexicon(
-					parseJSONStrict(fs.readFileSync(resolved.gazetteerLexiconPath, "utf8"))
-				)
+				gazetteerLexicon = parseGazetteerLexicon(await readLocalJSONFile(resolved.gazetteerLexiconPath))
 			} catch (error) {
 				warnUnfedChannel("gazetteer", `failed to parse ${resolved.gazetteerLexiconPath}: ${(error as Error).message}`)
 			}
@@ -339,7 +335,7 @@ export class NeuralAddressClassifier {
 
 		if (resolved.countryLexiconPath) {
 			try {
-				countryLexicon = parseCountryLexicon(parseJSONStrict(fs.readFileSync(resolved.countryLexiconPath, "utf8")))
+				countryLexicon = parseCountryLexicon(await readLocalJSONFile(resolved.countryLexiconPath))
 			} catch (error) {
 				warnUnfedChannel("country", `failed to parse ${resolved.countryLexiconPath}: ${(error as Error).message}`)
 			}
@@ -360,9 +356,7 @@ export class NeuralAddressClassifier {
 
 		if (resolved.streetTypeLexiconPath) {
 			try {
-				streetTypeLexicon = parseGazetteerLexicon(
-					parseJSONStrict(fs.readFileSync(resolved.streetTypeLexiconPath, "utf8"))
-				)
+				streetTypeLexicon = parseGazetteerLexicon(await readLocalJSONFile(resolved.streetTypeLexiconPath))
 			} catch (error) {
 				warnUnfedChannel(
 					"street_type",
@@ -375,9 +369,7 @@ export class NeuralAddressClassifier {
 
 		if (resolved.localitySurfaceLexiconPath) {
 			try {
-				localitySurfaceLexicon = parseGazetteerLexicon(
-					parseJSONStrict(fs.readFileSync(resolved.localitySurfaceLexiconPath, "utf8"))
-				)
+				localitySurfaceLexicon = parseGazetteerLexicon(await readLocalJSONFile(resolved.localitySurfaceLexiconPath))
 			} catch (error) {
 				warnUnfedChannel(
 					"locality_surface",
@@ -403,7 +395,7 @@ export class NeuralAddressClassifier {
 
 		if (resolved.pairIndexPath) {
 			try {
-				const pairIndexBytes = new Uint8Array(fs.readFileSync(resolved.pairIndexPath))
+				const pairIndexBytes = new Uint8Array(await readLocalBuffer(resolved.pairIndexPath))
 				const peekedHeader = peekPairIndexHeader(pairIndexBytes)
 				const localeCountry = (opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? ""
 
@@ -436,7 +428,7 @@ export class NeuralAddressClassifier {
 		// PCN1 placetype census (observability rung, 2026-08-05): BUILD-LOCAL, not a weights-package sibling — the
 		// loader and the reasons live together in `loadPlacetypeCensus`. Absent artifact → `undefined` → the feature is
 		// entirely inert, silently, because not having built it is the normal state for every consumer.
-		const placetypeCensus = loadPlacetypeCensus(
+		const placetypeCensus = await loadPlacetypeCensus(
 			(opts.locale ?? "en-us").toLowerCase().split("-")[1] ?? "",
 			opts.placetypeCensusPath
 		)

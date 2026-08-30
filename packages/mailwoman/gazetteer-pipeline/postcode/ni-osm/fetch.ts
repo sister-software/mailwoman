@@ -33,8 +33,9 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { tryStat } from "@mailwoman/core/fs/readers"
+import { writeLocalBuffer, writeLocalJSONFile, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File, md5Hex } from "@mailwoman/core/utils"
-import { mkdir, stat, writeFile } from "@mailwoman/platform/fs/promises"
 import { join } from "path-ts"
 
 /**
@@ -199,7 +200,7 @@ export interface AcquireNIPostcodesOptions {
 	 */
 	destDir: string
 	/**
-	 * Reuse an existing `response.json` instead of re-querying. The DEFAULT, and it is the point: Overpass is a volunteer
+	 * Reuse an existing `response.json` instead of re-querying. The DEFAULT and the point: Overpass is a volunteer
 	 * endpoint and the saved response is the reproducibility artifact. Set `false` only to take a deliberate new cut into
 	 * a NEW dated directory.
 	 */
@@ -268,14 +269,15 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 	const acquisitionPath = String(join(destDir, "acquisition.json"))
 	const queryMD5 = niPostcodeQueryMD5()
 
-	await mkdir(destDir, { recursive: true })
+	await makeDirectories(destDir)
 
 	if (reuseExisting) {
-		const existing = await md5File(responsePath).catch(() => null)
+		const stats = await tryStat(responsePath)
 
-		if (existing) {
-			phase("reuse", `${responsePath} already present (md5 ${existing})`)
-			const stats = await stat(responsePath)
+		if (stats) {
+			const md5 = await md5File(responsePath)
+
+			phase("reuse", `${responsePath} already present (md5 ${md5})`)
 
 			// A response with no sidecar beside it is provenance-less, and an operator who copied only the
 			// bytes into place should not get a shard that says "unknown". Reconstruct what is recoverable
@@ -283,7 +285,7 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 			// when those bytes were written, and the flag keeps that distinguishable from a first-hand
 			// stamp. (The meaning-of-zero rule in its provenance form — a recovered value and a recorded
 			// one are different claims and must not read alike.)
-			if (!(await stat(acquisitionPath).catch(() => null))) {
+			if (!(await tryStat(acquisitionPath))) {
 				phase("sidecar", "acquisition.json missing — reconstructing from the response file's mtime")
 
 				await writeAcquisitionSidecar(acquisitionPath, {
@@ -291,12 +293,12 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 					queryMD5,
 					retrievedAt: stats.mtime.toISOString(),
 					bytes: stats.size,
-					md5: existing,
+					md5,
 					reconstructed: true,
 				})
 			}
 
-			return { responsePath, acquisitionPath, bytes: stats.size, md5: existing, queryMD5, endpoint, reused: true }
+			return { responsePath, acquisitionPath, bytes: stats.size, md5, queryMD5, endpoint, reused: true }
 		}
 	}
 
@@ -317,12 +319,12 @@ export async function acquireNIPostcodes(options: AcquireNIPostcodesOptions): Pr
 	} as Parameters<APIClient["fetch"]>[0])
 
 	const body = Buffer.from(response.data)
-	await writeFile(responsePath, body)
+	await writeLocalBuffer(body, responsePath)
 	const md5 = await md5File(responsePath)
 
 	phase("saved", `${body.byteLength.toLocaleString()} bytes → ${responsePath} (md5 ${md5})`)
 
-	await writeFile(`${responsePath}.md5`, `${md5}  response.json\n`, "utf8")
+	await writeLocalTextFile(`${md5}  response.json\n`, `${responsePath}.md5`)
 
 	await writeAcquisitionSidecar(acquisitionPath, {
 		endpoint,
@@ -386,5 +388,5 @@ async function writeAcquisitionSidecar(
 		...(input.reconstructed ? { reconstructed: true } : {}),
 	}
 
-	await writeFile(path, `${JSON.stringify(sidecar, null, 2)}\n`, "utf8")
+	await writeLocalJSONFile(sidecar, path)
 }

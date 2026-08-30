@@ -18,8 +18,9 @@
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
 import { stubTransport } from "@mailwoman/core/api/test-transport"
 import type { ResourceError as ResourceErrorShape } from "@mailwoman/core/errors"
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { makeDirectoryExclusive } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -90,19 +91,19 @@ async function captureError(promise: Promise<unknown>): Promise<ResourceErrorSha
 }
 
 let cacheDir: string
-let dataRoot: string
+let dataRoot: TemporaryDirectory
 
-beforeEach(() => {
-	dataRoot = mkdtempSync(join(tmpdir(), "geocode-oracle-google-"))
-	cacheDir = join(dataRoot, "http-cache")
+beforeEach(async () => {
+	dataRoot = await temporaryDirectory("geocode-oracle-google-")
+	cacheDir = dataRoot.resolve("http-cache")
 
-	mkdirSync(cacheDir)
-	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot)
+	await makeDirectoryExclusive(cacheDir)
+	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path)
 })
 
 afterEach(() => {
 	vi.unstubAllEnvs()
-	rmSync(dataRoot, { recursive: true, force: true })
+	dataRoot[Symbol.asyncDispose]()
 })
 
 describe("createGoogleGeocoderClient", () => {
@@ -233,7 +234,7 @@ describe("the response cache", () => {
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
 		expect(transport.calls).toHaveLength(1)
-		expect(readdirSync(cacheDir).filter((name) => name.endsWith(".json"))).toHaveLength(1)
+		expect((await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))).toHaveLength(1)
 	})
 
 	it("never writes the API key to disk, nor into a filename", async () => {
@@ -243,13 +244,13 @@ describe("the response cache", () => {
 
 		await client.geocodeAddress("1600 Amphitheatre Parkway")
 
-		const entries = readdirSync(cacheDir).filter((name) => name.endsWith(".json"))
+		const entries = (await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))
 
 		expect(entries).toHaveLength(1)
 
 		for (const entry of entries) {
 			expect(entry).not.toContain(API_KEY)
-			expect(readFileSync(join(cacheDir, entry), "utf8")).not.toContain(API_KEY)
+			expect(await readLocalTextFile(join(cacheDir, entry))).not.toContain(API_KEY)
 		}
 	})
 
@@ -262,7 +263,7 @@ describe("the response cache", () => {
 
 		// A REQUEST_DENIED cached under a 30-day TTL would make an unbilled key look like a permanently
 		// broken address, self-healing only by hand-deleting a hash-named file.
-		expect(readdirSync(cacheDir).filter((name) => name.endsWith(".json"))).toHaveLength(0)
+		expect((await readDirectory(cacheDir)).filter((name) => name.endsWith(".json"))).toHaveLength(0)
 	})
 
 	it("does persist ZERO_RESULTS, which is a real and stable answer", async () => {

@@ -11,11 +11,11 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { execFile } from "@mailwoman/platform/child_process"
-import { existsSync } from "@mailwoman/platform/fs"
 import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
@@ -26,7 +26,7 @@ const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
-const hasWOFDB = existsSync(wofPath)
+const hasWOFDB = await pathExists(wofPath)
 // oxlint-disable-next-line vitest/valid-title, vitest/valid-describe-callback -- an aliased describe; the title and callback arrive where it is invoked
 const describeIfWOF = describe.skipIf(!hasWOFDB)
 

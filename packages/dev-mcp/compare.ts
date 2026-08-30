@@ -181,10 +181,10 @@ export async function runCompare(
 	const set = await resolveInputSet(options.inputs ?? { kind: "board" })
 
 	if (armA.kind === "mailwoman" && armB.kind === "mailwoman") {
-		return compareMailwomanArms(registry, set, armA.config, armB.config, options, deps)
+		return await compareMailwomanArms(registry, set, armA.config, armB.config, options, deps)
 	}
 
-	return compareAcrossEngines(registry, set, armA, armB, options, deps)
+	return await compareAcrossEngines(registry, set, armA, armB, options, deps)
 }
 
 /**
@@ -198,8 +198,17 @@ async function compareMailwomanArms(
 	options: CompareOptions,
 	deps: CompareDeps
 ): Promise<unknown> {
-	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds, close } =
-		await prepareMailwomanArms(registry, set, configA, configB, options.declared, options.executionPath, deps)
+	using arms = await prepareMailwomanArms(
+		registry,
+		set,
+		configA,
+		configB,
+		options.declared,
+		options.executionPath,
+		deps
+	)
+
+	const { geocodeA, geocodeB, provenanceA, provenanceB, comparisonEngineID, confounds } = arms
 
 	const fingerprint = registry.fingerprint()
 
@@ -315,7 +324,7 @@ async function compareMailwomanArms(
 		payload: null,
 	}
 
-	const storeWarning = tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
+	const storeWarning = await tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
 
 	if (storeWarning) {
 		confounds.warnings.push(storeWarning)
@@ -357,8 +366,6 @@ async function compareMailwomanArms(
 		rows_changed: differed,
 		warnings: confounds.warnings,
 	}
-
-	close()
 
 	return result
 }
@@ -462,8 +469,8 @@ function oracleRunner(
  * rows is still readable on the rest. How many were missing is counted BEFORE the run and warned about, not discovered
  * from the miss rate afterwards.
  */
-function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: string): ArmRunner {
-	const run = getRun(spec.runID, dir)
+async function recordedRunner(spec: RecordedArm, set: ResolvedInputSet, dir: string): Promise<ArmRunner> {
+	const run = await getRun(spec.runID, dir)
 
 	if (!run) {
 		throw new Error(
@@ -568,7 +575,7 @@ async function compareAcrossEngines(
 	const build = async (arm: ArmSpec, side: "a" | "b"): Promise<ArmRunner> => {
 		if (arm.kind === "mailwoman") return mailwomanRunner(registry, arm.config, set)
 
-		if (arm.kind === "recorded") return recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
+		if (arm.kind === "recorded") return await recordedRunner(arm, set, deps.runStoreDir ?? RUN_STORE_DIR)
 
 		if (arm.kind === "worktree") return worktreeArmRunner(registry, arm, set)
 
@@ -787,7 +794,7 @@ async function scoreGeoRows(context: GeoScoringContext): Promise<unknown> {
 		payload: null,
 	}
 
-	const storeWarning = tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
+	const storeWarning = await tryPutRun(run, deps.runStoreDir ?? RUN_STORE_DIR, now(deps))
 
 	if (storeWarning) {
 		warnings.push(storeWarning)

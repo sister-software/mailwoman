@@ -9,9 +9,9 @@
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
  */
 
+import { pathExists } from "@mailwoman/core/fs/readers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { existsSync } from "@mailwoman/platform/fs"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
 import { AsyncSequence, CSVSpliterator } from "spliterator"
@@ -161,8 +161,11 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with NO tuples at all
  * still throws; that is the case where the cache, not the recipe, is the problem.
  */
-export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
-	if (!existsSync(String(archivePath))) {
+export async function readZippedCSVRecords(
+	archivePath: PathBuilderLike,
+	entryName: string
+): Promise<AsyncSequence<CSVRecord>> {
+	if (!(await pathExists(String(archivePath)))) {
 		console.error(`  WARN: ${archivePath} is not cached — skipping ${entryName}`)
 
 		return AsyncSequence.from<CSVRecord>([])

@@ -38,16 +38,21 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
 import { execFile, spawn, type ChildProcess } from "@mailwoman/platform/child_process"
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
 import { join } from "@mailwoman/platform/path"
 import { promisify } from "@mailwoman/platform/util"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
-import { afterEach, describe, expect, test } from "vitest"
+import { afterAll, afterEach, describe, expect, test } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 const execFileAsync = promisify(execFile)
 
@@ -60,11 +65,11 @@ const MAILWOMAN_CLI = workspacePath("mailwoman", "out", "cli.js")
 const MCP_CLI = workspacePath("mcp", "out", "cli.js")
 const MCP_PACKAGE_JSON = workspacePath("mcp", "package.json")
 
-const hasPhotonCLI = existsSync(PHOTON_CLI)
-const hasNominatimCLI = existsSync(NOMINATIM_CLI)
-const hasMCPCLI = existsSync(MCP_CLI)
-const hasLibpostalCLI = existsSync(LIBPOSTAL_CLI)
-const hasMailwomanCLI = existsSync(MAILWOMAN_CLI)
+const hasPhotonCLI = await pathExists(PHOTON_CLI)
+const hasNominatimCLI = await pathExists(NOMINATIM_CLI)
+const hasMCPCLI = await pathExists(MCP_CLI)
+const hasLibpostalCLI = await pathExists(LIBPOSTAL_CLI)
+const hasMailwomanCLI = await pathExists(MAILWOMAN_CLI)
 
 // Dedicated test-only ports, clear of the documented defaults (2322/8080/8081) and of the ports a manual cold-start
 // check might already be using. One named constant per server so the string arg (CLI `--port`) and the numeric arg
@@ -280,20 +285,15 @@ async function mcpRoundTrip(
 /**
  * Fresh, empty data root — never populated, so the "missing data" + "libpostal needs none" tests download nothing.
  */
-function freshDataRoot(): string {
-	return mkdtempSync(join(tmpdir(), "mw-cold-start-"))
+async function freshDataRoot(): Promise<string> {
+	return fixtures.use(await temporaryDirectory("mw-cold-start-")).path
 }
 
-const cleanupRoots: string[] = []
 const cleanupServers: SpawnedServer[] = []
 
 afterEach(async () => {
 	for (const server of cleanupServers.splice(0)) {
 		await stopServer(server)
-	}
-
-	for (const root of cleanupRoots.splice(0)) {
-		rmSync(root, { recursive: true, force: true })
 	}
 })
 
@@ -301,9 +301,7 @@ describe.skipIf(!hasPhotonCLI)("mailwoman-photon serve — cold start, no data",
 	test(
 		"exits non-zero within 30s and stderr names the mailwoman data pull fix",
 		async () => {
-			const dataRoot = freshDataRoot()
-
-			cleanupRoots.push(dataRoot)
+			const dataRoot = await freshDataRoot()
 
 			await expect(
 				withCLISpawnLockAsync(() =>
@@ -325,9 +323,7 @@ describe.skipIf(!hasNominatimCLI)("mailwoman-nominatim serve — cold start, no 
 	test(
 		"exits non-zero within 30s and stderr names the mailwoman data pull fix",
 		async () => {
-			const dataRoot = freshDataRoot()
-
-			cleanupRoots.push(dataRoot)
+			const dataRoot = await freshDataRoot()
 
 			await expect(
 				withCLISpawnLockAsync(() =>
@@ -349,9 +345,7 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 	test(
 		"binds and answers GET / with 200 from a bare data root, then shuts down clean on SIGTERM",
 		async (ctx) => {
-			const dataRoot = freshDataRoot()
-
-			cleanupRoots.push(dataRoot)
+			const dataRoot = await freshDataRoot()
 
 			// The claim under test is "weights ONLY, zero data artifacts" — not "the workspace package carries
 			// weights". A CONSUMER install satisfies the weights half natively (the published package ships the
@@ -374,12 +368,12 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 
 			const overlay = join(dataRoot, "weights", "en-us")
 
-			mkdirSync(overlay, { recursive: true })
-			symlinkSync(seed.modelPath, join(overlay, "model.onnx"))
-			symlinkSync(seed.tokenizerPath, join(overlay, "tokenizer.model"))
+			await makeDirectories(overlay)
+			await createSymbolicLink(seed.modelPath, join(overlay, "model.onnx"))
+			await createSymbolicLink(seed.tokenizerPath, join(overlay, "tokenizer.model"))
 
 			if (seed.modelCardPath) {
-				symlinkSync(seed.modelCardPath, join(overlay, "model-card.json"))
+				await createSymbolicLink(seed.modelCardPath, join(overlay, "model-card.json"))
 			}
 
 			await withCLISpawnLockAsync(async () => {
@@ -411,8 +405,8 @@ describe.skipIf(!hasLibpostalCLI)("mailwoman-libpostal serve — cold start, zer
 })
 
 describe("mailwoman-mcp — cold start over stdio, no data", () => {
-	test("declares @mailwoman/neural-weights-en-us, so a standalone npm install can load the model", () => {
-		const manifest = parseJSONStrict<{ dependencies: Record<string, string> }>(readFileSync(MCP_PACKAGE_JSON, "utf8"))
+	test("declares @mailwoman/neural-weights-en-us, so a standalone npm install can load the model", async () => {
+		const manifest = await readLocalJSONFile<{ dependencies: Record<string, string> }>(MCP_PACKAGE_JSON)
 
 		// The regression this pins: `@mailwoman/mcp@8.6.0` shipped without it (checked against the registry
 		// 2026-08-03), so `npm install @mailwoman/mcp` in a clean directory installed no weights package and
@@ -424,9 +418,7 @@ describe("mailwoman-mcp — cold start over stdio, no data", () => {
 	test.skipIf(!hasMCPCLI)(
 		"connects and lists its tools with no data, and mailwoman_parse answers with the data-pull fix",
 		async () => {
-			const dataRoot = freshDataRoot()
-
-			cleanupRoots.push(dataRoot)
+			const dataRoot = await freshDataRoot()
 
 			await withCLISpawnLockAsync(async () => {
 				const { results } = await mcpRoundTrip(
@@ -471,11 +463,9 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 			"mailwoman data pull candidate + photon/nominatim serve bind and answer 200; Paris routes to France not Texas",
 			async () => {
 				const reuseRoot = $public.MAILWOMAN_COLD_START_DATA_ROOT
-				const dataRoot = reuseRoot ?? freshDataRoot()
-
-				if (!reuseRoot) {
-					cleanupRoots.push(dataRoot)
-				}
+				// A `--data-root` supplied through the environment is the CALLER's and is never removed; the one this
+				// test makes is registered on the file's fixture stack by `freshDataRoot`.
+				const dataRoot = reuseRoot ?? (await freshDataRoot())
 
 				await withCLISpawnLockAsync(() =>
 					execFileAsync("node", [MAILWOMAN_CLI, "data", "pull", "candidate"], {

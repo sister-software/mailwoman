@@ -17,7 +17,6 @@ export {
 	mkdirSync,
 	mkdtempSync,
 	openSync,
-	promises,
 	readFileSync,
 	readSync,
 	readdirSync,
@@ -34,4 +33,4 @@ export {
 	writeSync,
 } from "node:fs"
 
-export type { PathLike } from "node:fs"
+export type { PathLike, ReadStream } from "node:fs"

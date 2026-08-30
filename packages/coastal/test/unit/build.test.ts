@@ -36,10 +36,9 @@ import {
 	rectangleRing,
 } from "@mailwoman/coastal/test-kit"
 import { NCERM_LAYER_NAME } from "@mailwoman/coastal/vocabulary"
+import { statPath } from "@mailwoman/core/fs/readers"
+import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, supportsExclusion } from "@mailwoman/core/layers"
-import { mkdtempSync, rmSync, statSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
@@ -49,7 +48,7 @@ const COVERAGE_RESOLUTION = 6
 const NFI = FIXTURE_SCENARIOS.noIntervention.key
 const SMP = FIXTURE_SCENARIOS.withPlan.key
 
-let scratch: string
+let scratch: TemporaryDirectory
 let databasePath: string
 let result: BuildCoastalResult
 let lookup: CoastalErosionLookup
@@ -77,7 +76,7 @@ async function build(
 	features: CoastalSourceFeature[] = fixtureFeatures(),
 	out = "coastal-england.db"
 ): Promise<{ path: string; result: BuildCoastalResult }> {
-	const path = join(scratch, out)
+	const path = scratch.resolve(out)
 
 	const built = await buildCoastalDatabase({
 		source: fixtureSource(features),
@@ -94,7 +93,7 @@ async function build(
 }
 
 beforeAll(async () => {
-	scratch = mkdtempSync(join(tmpdir(), "mw-coastal-"))
+	scratch = await temporaryDirectory("mw-coastal-")
 
 	const built = await build()
 
@@ -104,19 +103,19 @@ beforeAll(async () => {
 }, 120_000)
 
 afterAll(() => {
-	lookup?.close()
-	rmSync(scratch, { recursive: true, force: true })
+	lookup[Symbol.dispose]()
+	scratch[Symbol.asyncDispose]()
 })
 
 describe("the sealed artifact", () => {
-	it("writes every fixture feature and seals the file read-only", () => {
+	it("writes every fixture feature and seals the file read-only", async () => {
 		expect(result.erosionFeatures).toBe(5)
 		expect(result.instabilityFeatures).toBe(1)
 		expect(result.scenarioCounts[NFI]).toBe(4)
 		expect(result.scenarioCounts[SMP]).toBe(1)
 
 		// 0o444 — sealed, per the layer contract's build-then-swap discipline.
-		expect(statSync(databasePath).mode & 0o777).toBe(0o444)
+		expect((await statPath(databasePath)).mode & 0o777).toBe(0o444)
 	})
 
 	it("declares the layer, its index resolution and its licence in the manifest", () => {
@@ -129,40 +128,32 @@ describe("the sealed artifact", () => {
 	})
 
 	it("keys the truth table by scenario and by the authority's feature id, never by the frontage", () => {
-		const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const rows = database.prepare("SELECT area_id, scenario_key, frontage_id FROM coastal_zone_area").all() as Array<{
-				area_id: string
-				scenario_key: string
-				frontage_id: number
-			}>
+		const rows = database.prepare("SELECT area_id, scenario_key, frontage_id FROM coastal_zone_area").all() as Array<{
+			area_id: string
+			scenario_key: string
+			frontage_id: number
+		}>
 
-			// Every fixture feature carries frontage 1000 — the real product repeats a frontage id within one layer, and a
-			// build keyed on it would have collapsed five rows into one.
-			expect(new Set(rows.map((row) => row.frontage_id))).toEqual(new Set([1000]))
-			expect(rows).toHaveLength(5)
-			expect(new Set(rows.map((row) => row.area_id)).size).toBe(5)
-			expect(rows.filter((row) => row.scenario_key === NFI)).toHaveLength(4)
-		} finally {
-			database.destroy()
-		}
+		// Every fixture feature carries frontage 1000 — the real product repeats a frontage id within one layer, and a
+		// build keyed on it would have collapsed five rows into one.
+		expect(new Set(rows.map((row) => row.frontage_id))).toEqual(new Set([1000]))
+		expect(rows).toHaveLength(5)
+		expect(new Set(rows.map((row) => row.area_id)).size).toBe(5)
+		expect(rows.filter((row) => row.scenario_key === NFI)).toHaveLength(4)
 	})
 
 	it("indexes a polygon narrower than a cell rather than dropping it", () => {
-		const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const sliver = database
-				.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
-				.get(`${NFI}:4`) as { n: number }
+		const sliver = database
+			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
+			.get(`${NFI}:4`) as { n: number }
 
-			// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to nothing reads
-			// downstream as an absence — the failure the per-part zero-cell guard exists to make impossible.
-			expect(sliver.n).toBeGreaterThan(0)
-		} finally {
-			database.destroy()
-		}
+		// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to nothing reads
+		// downstream as an absence — the failure the per-part zero-cell guard exists to make impossible.
+		expect(sliver.n).toBeGreaterThan(0)
 	})
 })
 
@@ -220,26 +211,22 @@ describe("the meaning-of-zero inversion", () => {
 	})
 
 	it("writes every coverage row on source_present, so none of them supports an exclusion", () => {
-		const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const rows = database
-				.prepare("SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage")
-				.all() as Array<{ h3_cell: number; completeness: number; basis: string | null; observed_rows: number }>
+		const rows = database
+			.prepare("SELECT h3_cell, completeness, basis, observed_rows FROM layer_coverage")
+			.all() as Array<{ h3_cell: number; completeness: number; basis: string | null; observed_rows: number }>
 
-			expect(rows.length).toBeGreaterThan(0)
-			expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
+		expect(rows.length).toBeGreaterThan(0)
+		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-			// THE FAILING TEST THE ISSUE ASKS FOR: not one assertion on one row, but the whole table read back and every row
-			// checked through the contract's own predicate. A code path that read `supportsExclusion` as true for this layer
-			// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
-			for (const row of rows) {
-				expect(row.basis).toBe(CoverageBasis.SourcePresent)
-				expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
-				expect(row.observed_rows).toBeGreaterThan(0)
-			}
-		} finally {
-			database.destroy()
+		// THE FAILING TEST THE ISSUE ASKS FOR: not one assertion on one row, but the whole table read back and every row
+		// checked through the contract's own predicate. A code path that read `supportsExclusion` as true for this layer
+		// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
+		for (const row of rows) {
+			expect(row.basis).toBe(CoverageBasis.SourcePresent)
+			expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
+			expect(row.observed_rows).toBeGreaterThan(0)
 		}
 	})
 
@@ -258,29 +245,21 @@ describe("the meaning-of-zero inversion", () => {
 	})
 
 	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
-		const path = join(scratch, "tampered.db")
+		const path = scratch.resolve("tampered.db")
 
 		// The sealed artifact is copied and one coverage row is promoted to `designated`, which is exactly what a builder
 		// generalizing the flood layer's rule would have produced. The reader must refuse rather than answer confidently.
-		const source = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+		using source = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
-		try {
-			source.exec(`VACUUM INTO '${path}'`)
-		} finally {
-			source.destroy()
-		}
+		source.exec(`VACUUM INTO '${path}'`)
 
-		const tampered = new DatabaseClient<CoastalDatabase>(path)
+		using tampered = new DatabaseClient<CoastalDatabase>(path)
 
-		try {
-			// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `WITHOUT ROWID` and has none.
-			tampered.exec(
-				`UPDATE layer_coverage SET basis = '${CoverageBasis.Designated}' ` +
-					"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
-			)
-		} finally {
-			tampered.destroy()
-		}
+		// Keyed on `h3_cell` rather than on `rowid`, because `layer_coverage` is `WITHOUT ROWID` and has none.
+		tampered.exec(
+			`UPDATE layer_coverage SET basis = '${CoverageBasis.Designated}' ` +
+				"WHERE h3_cell = (SELECT min(h3_cell) FROM layer_coverage)"
+		)
 
 		expect(() => new CoastalErosionLookup({ databasePath: path })).toThrow(/supports an EXCLUSION/u)
 	})
@@ -306,19 +285,13 @@ describe("ground instability", () => {
 	})
 
 	it("keeps ground-instability polygons out of the erosion cell index entirely", () => {
-		const database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
+		using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
-		try {
-			const rows = database
-				.prepare(
-					"SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id LIKE 'zone:%' OR area_id LIKE 'recession:%'"
-				)
-				.get() as { n: number }
+		const rows = database
+			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id LIKE 'zone:%' OR area_id LIKE 'recession:%'")
+			.get() as { n: number }
 
-			expect(rows.n).toBe(0)
-		} finally {
-			database.destroy()
-		}
+		expect(rows.n).toBe(0)
 	})
 })
 
@@ -344,15 +317,11 @@ describe("the declared domains", () => {
 		const features = fixtureFeatures()
 		const built = await build([{ ...features[0]!, defenceType: "Sheet piles" }], "folded-defence.db")
 
-		const database = new DatabaseClient<CoastalDatabase>(built.path, { readOnly: true })
+		using database = new DatabaseClient<CoastalDatabase>(built.path, { readOnly: true })
 
-		try {
-			const row = database.prepare("SELECT defence_type FROM coastal_zone_area").get() as { defence_type: string }
+		const row = database.prepare("SELECT defence_type FROM coastal_zone_area").get() as { defence_type: string }
 
-			expect(row.defence_type).toBe("Sheet piles")
-		} finally {
-			await database.destroy()
-		}
+		expect(row.defence_type).toBe("Sheet piles")
 	})
 
 	it("carries the anomalous rows as published rather than coercing them", async () => {
@@ -374,20 +343,16 @@ describe("the declared domains", () => {
 			"anomalous.db"
 		)
 
-		const database = new DatabaseClient<CoastalDatabase>(built.path, { readOnly: true })
+		using database = new DatabaseClient<CoastalDatabase>(built.path, { readOnly: true })
 
-		try {
-			const row = database.prepare("SELECT mt_policy, published_year FROM coastal_zone_area").get() as {
-				mt_policy: string
-				published_year: number
-			}
-
-			// A single space, not an empty string — a reader testing `=== ""` finds nothing and reports these as ordinary.
-			expect(row.mt_policy).toBe(" ")
-			expect(row.published_year).toBe(0)
-		} finally {
-			await database.destroy()
+		const row = database.prepare("SELECT mt_policy, published_year FROM coastal_zone_area").get() as {
+			mt_policy: string
+			published_year: number
 		}
+
+		// A single space, not an empty string — a reader testing `=== ""` finds nothing and reports these as ordinary.
+		expect(row.mt_policy).toBe(" ")
+		expect(row.published_year).toBe(0)
 	})
 })
 

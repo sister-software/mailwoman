@@ -21,13 +21,17 @@
  *   if a bad row says WHICH file and WHICH line; a bare `SyntaxError` over 306 rows is a scavenger hunt.
  */
 
-import { mkdtempSync, mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
-import { tmpdir } from "@mailwoman/platform/os"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { join } from "@mailwoman/platform/path"
 import { ablationBoardID } from "mailwoman/eval-harness/gauntlet/ablation"
 import { CorpusRowError, loadRegressionCases, regressionCorpusHash } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { canonicalizeSeedCase, SeedCaseSchema } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
-import { describe, expect, it } from "vitest"
+import { afterAll, describe, expect, it } from "vitest"
+
+const fixtures = new AsyncDisposableStack()
+
+afterAll(() => fixtures.disposeAsync())
 
 /**
  * The corpus today — 651 curated regressions.
@@ -251,14 +255,14 @@ const SAMPLE = {
 /**
  * Write a throwaway corpus tree and return its root.
  */
-function scratchCorpus(files: Record<string, string>): string {
-	const root = mkdtempSync(join(tmpdir(), "gauntlet-cases-"))
+async function scratchCorpus(files: Record<string, string>): Promise<string> {
+	const root = fixtures.use(await temporaryDirectory("gauntlet-cases-")).path
 
 	for (const [relative, body] of Object.entries(files)) {
 		const path = join(root, relative)
 
-		mkdirSync(join(path, ".."), { recursive: true })
-		writeFileSync(path, body, "utf8")
+		await makeDirectories(join(path, ".."))
+		await writeLocalFile(body, path)
 	}
 
 	return root
@@ -342,7 +346,7 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify(SAMPLE)}\n{ not json\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:2 — not valid JSON/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:2 — not valid JSON/)
 	})
 
 	it("on a schema violation, naming the field", async () => {
@@ -350,7 +354,7 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, expectLat: "48.8" })}\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:1 — .*expectLat/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:1 — .*expectLat/)
 	})
 
 	it("on a malformed rendering contract, naming the field", async () => {
@@ -358,7 +362,7 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, expectComponentRenderings: { venue: "хийд" } })}\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:1 — .*expectComponentRenderings/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:1 — .*expectComponentRenderings/)
 	})
 
 	it("counts blank lines, so the number matches the editor's", async () => {
@@ -366,8 +370,8 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify(SAMPLE)}\n\n\n{ not json\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(CorpusRowError)
-		await expect(loadRegressionCases(root)).rejects.toThrow(/regression\.jsonl:4/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(CorpusRowError)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/regression\.jsonl:4/)
 	})
 
 	it("on a country that disagrees with its directory", async () => {
@@ -375,7 +379,7 @@ describe("a malformed row names its file and line", () => {
 			"xx/regression.jsonl": `${JSON.stringify({ ...SAMPLE, country: "FR" })}\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/does not match its directory "xx"/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/does not match its directory "xx"/)
 	})
 
 	it("on a duplicate id across two files in the same dir", async () => {
@@ -384,6 +388,6 @@ describe("a malformed row names its file and line", () => {
 			"xx/extra.jsonl": `${JSON.stringify(SAMPLE)}\n`,
 		})
 
-		await expect(loadRegressionCases(root)).rejects.toThrow(/duplicate case id "xx-sample"/)
+		await expect(loadRegressionCases(await root)).rejects.toThrow(/duplicate case id "xx-sample"/)
 	})
 })

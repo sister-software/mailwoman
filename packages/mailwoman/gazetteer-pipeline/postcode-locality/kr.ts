@@ -92,7 +92,7 @@ export interface PostcodeLocalityKROptions {
 }
 
 export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): Promise<void> {
-	const admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
+	using admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
 
 	// Locality point index + id->name (romanized spr.name, for the human-readable row label).
 	const loc = admin
@@ -155,8 +155,6 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		}
 	}
 
-	await admin.destroy()
-
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first. Korean place names repeat heavily across the country
 	 * (homonymous villages), so a Hangul name-match MUST be constrained to nearby candidates — matching globally then
@@ -203,108 +201,110 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		}
 	}
 
-	const kdb = new DatabaseClient<PostcodeLocalityDatabase>(args.output)
-
-	await kdb.schema.dropTable("postcode_locality").ifExists().execute()
-
-	await createPostcodeLocalityTable(kdb, { ifNotExists: false })
-
-	const rows: PostcodeLocalityInsertValues[] = []
-	let resolved = 0
 	let nameConfirmed = 0
 	let provinceOk = 0
+	let resolved = 0
+	const rows: PostcodeLocalityInsertValues[] = []
+	const total = postal.size
 	const dists: number[] = []
+	const p = (q: number): number => (dists.length ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0)
 
-	for (const [pc, [place, admin1, lat, lon]] of postal) {
-		const nb = nearby(lat, lon)
+	{
+		using kdb = new DatabaseClient<PostcodeLocalityDatabase>(args.output)
 
-		if (!nb.length) continue
+		await kdb.schema.dropTable("postcode_locality").ifExists().execute()
 
-		resolved++
-		const { d: d0, pid: pid0 } = nb[0]! // point-nearest
-		dists.push(d0)
+		await createPostcodeLocalityTable(kdb, { ifNotExists: false })
 
-		if (regionIdx.has(norm(admin1)) || regionIdx.has(bare(admin1))) {
-			provinceOk++
-		}
+		for (const [pc, [place, admin1, lat, lon]] of postal) {
+			const nb = nearby(lat, lon)
 
-		// Hangul name confirmation: a name-matched locality that is ALSO nearby (two signals agreeing —
-		// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
-		const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
-		const named = nb.find(({ pid }) => nameIDs.has(pid))
+			if (!nb.length) continue
 
-		if (named) {
-			nameConfirmed++
-			rows.push([pc, "KR", named.pid, sprName.get(named.pid) ?? "", place, pyRound(named.d, 3), 1])
+			resolved++
+			const { d: d0, pid: pid0 } = nb[0]! // point-nearest
+			dists.push(d0)
 
-			if (named.pid !== pid0) {
-				// keep the point-nearest as a weak alternate
+			if (regionIdx.has(norm(admin1)) || regionIdx.has(bare(admin1))) {
+				provinceOk++
+			}
+
+			// Hangul name confirmation: a name-matched locality that is ALSO nearby (two signals agreeing —
+			// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
+			const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
+			const named = nb.find(({ pid }) => nameIDs.has(pid))
+
+			if (named) {
+				nameConfirmed++
+				rows.push([pc, "KR", named.pid, sprName.get(named.pid) ?? "", place, pyRound(named.d, 3), 1])
+
+				if (named.pid !== pid0) {
+					// keep the point-nearest as a weak alternate
+					rows.push([pc, "KR", pid0, sprName.get(pid0) ?? "", place, pyRound(d0, 3), 0])
+				}
+			} else {
 				rows.push([pc, "KR", pid0, sprName.get(pid0) ?? "", place, pyRound(d0, 3), 0])
 			}
-		} else {
-			rows.push([pc, "KR", pid0, sprName.get(pid0) ?? "", place, pyRound(d0, 3), 0])
 		}
+
+		const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
+		kdb.exec("BEGIN")
+
+		for (const r of rows) {
+			insert.run(...r)
+		}
+
+		kdb.exec("COMMIT")
+
+		await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
+
+		dists.sort((a, b) => a - b)
+
+		await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
+
+		const meta: Array<[string, string]> = [
+			["name", "mailwoman-postcode-locality-kr"],
+			[
+				"description",
+				"KR postcode -> WOF locality via point-primary match (GeoNames postal point + Hangul name confirm)",
+			],
+			[
+				"method",
+				"point-primary: nearest WOF locality by GeoNames postal coordinate; Hangul (kor+und) name confirms the precise tier",
+			],
+			["source", "KR: GeoNames postal KR.txt + custom WOF admin-kr.db (whosonfirst-data-admin-kr); built from source"],
+			["country", "KR"],
+			["postcodes_total", String(total)],
+			["postcodes_resolved", String(resolved)],
+			["resolve_rate", `${((100 * resolved) / total).toFixed(1)}%`],
+			["name_confirmed", String(nameConfirmed)],
+			["name_confirm_rate", `${((100 * nameConfirmed) / total).toFixed(1)}%`],
+			["province_match", `${((100 * provinceOk) / total).toFixed(1)}%`],
+			["dist_km_p50", pyStrFloat(p(0.5))],
+			["dist_km_p90", pyStrFloat(p(0.9))],
+			["dist_km_p99", pyStrFloat(p(0.99))],
+			[
+				"ceiling_note",
+				"name tier capped by WOF KR Hangul-name coverage; dominant miss = 구 urban districts (Juso source walled, #293 follow-up)",
+			],
+			["built_at", isoSeconds()],
+		]
+
+		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+
+		for (const [k, v] of meta) {
+			insMeta.run(k, v)
+		}
+
+		kdb.exec("PRAGMA journal_mode=DELETE")
+		kdb.exec("ANALYZE")
+		assertDatabaseIntegrity(kdb, args.output)
+
+		kdb.exec("VACUUM")
 	}
 
-	const insert = kdb.prepare(POSTCODE_LOCALITY_INSERT_SQL)
-	kdb.exec("BEGIN")
-
-	for (const r of rows) {
-		insert.run(...r)
-	}
-
-	kdb.exec("COMMIT")
-
-	await createPostcodeLocalityIndex(kdb, { ifNotExists: false })
-
-	dists.sort((a, b) => a - b)
-	const p = (q: number): number => (dists.length ? pyRound(dists[Math.trunc(dists.length * q)]!, 3) : 0)
-	const total = postal.size
-
-	await createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })
-
-	const meta: Array<[string, string]> = [
-		["name", "mailwoman-postcode-locality-kr"],
-		[
-			"description",
-			"KR postcode -> WOF locality via point-primary match (GeoNames postal point + Hangul name confirm)",
-		],
-		[
-			"method",
-			"point-primary: nearest WOF locality by GeoNames postal coordinate; Hangul (kor+und) name confirms the precise tier",
-		],
-		["source", "KR: GeoNames postal KR.txt + custom WOF admin-kr.db (whosonfirst-data-admin-kr); built from source"],
-		["country", "KR"],
-		["postcodes_total", String(total)],
-		["postcodes_resolved", String(resolved)],
-		["resolve_rate", `${((100 * resolved) / total).toFixed(1)}%`],
-		["name_confirmed", String(nameConfirmed)],
-		["name_confirm_rate", `${((100 * nameConfirmed) / total).toFixed(1)}%`],
-		["province_match", `${((100 * provinceOk) / total).toFixed(1)}%`],
-		["dist_km_p50", pyStrFloat(p(0.5))],
-		["dist_km_p90", pyStrFloat(p(0.9))],
-		["dist_km_p99", pyStrFloat(p(0.99))],
-		[
-			"ceiling_note",
-			"name tier capped by WOF KR Hangul-name coverage; dominant miss = 구 urban districts (Juso source walled, #293 follow-up)",
-		],
-		["built_at", isoSeconds()],
-	]
-
-	const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
-
-	for (const [k, v] of meta) {
-		insMeta.run(k, v)
-	}
-
-	kdb.exec("PRAGMA journal_mode=DELETE")
-	kdb.exec("ANALYZE")
-	assertDatabaseIntegrity(kdb, args.output)
-
-	kdb.exec("VACUUM")
-	await kdb.destroy()
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
-	sealDatabase(args.output)
+	await sealDatabase(args.output)
 
 	console.log(
 		`KR: ${total.toLocaleString("en-US")} postcodes, ${resolved.toLocaleString("en-US")} resolved ` +
