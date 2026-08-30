@@ -302,16 +302,13 @@ describe("physicalCategoriesForTechnology / PLAUSIBILITY_TECH_PHYSICAL_CATEGORIE
 describe("plausibilityCheck — claim resolution", () => {
 	it("throws when the claim has none of geoid/point/address", async () => {
 		await expect(
-			await plausibilityCheck(
-				{ technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber, claimedDownloadMbps: 100 },
-				{}
-			)
+			plausibilityCheck({ technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber, claimedDownloadMbps: 100 }, {})
 		).rejects.toThrow(/geoid.*point.*address/i)
 	})
 
 	it("throws when claim.address is given without deps.geocode", async () => {
 		await expect(
-			await plausibilityCheck(
+			plausibilityCheck(
 				{
 					address: "123 Main St, Springfield, IL",
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
@@ -326,7 +323,7 @@ describe("plausibilityCheck — claim resolution", () => {
 		const geocode = async (): Promise<GeocodeLike> => ({ lat: null, lon: null })
 
 		await expect(
-			await plausibilityCheck(
+			plausibilityCheck(
 				{
 					address: "nowhere",
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
@@ -677,7 +674,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 		using poiLookup = new POILookup({ databasePath: poi.path })
 
 		await expect(
-			await plausibilityCheck(
+			plausibilityCheck(
 				{
 					point: SPRINGFIELD_POINT,
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
@@ -697,7 +694,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 		using poiLookup = new POILookup({ databasePath: poi.path })
 
 		await expect(
-			await plausibilityCheck(
+			plausibilityCheck(
 				{
 					point: SPRINGFIELD_POINT,
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
@@ -712,7 +709,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 		await using bdc = await buildBDCFixture()
 
 		await expect(
-			await plausibilityCheck(
+			plausibilityCheck(
 				{
 					point: SPRINGFIELD_POINT,
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,
@@ -729,7 +726,7 @@ describe("plausibilityCheck — per-layer coverage-spine resolution assertion", 
 		using poiLookup = new POILookup({ databasePath: poi.path })
 
 		await expect(
-			await plausibilityCheck(
+			plausibilityCheck(
 				{
 					point: SPRINGFIELD_POINT,
 					technologyCode: BroadbandTechnologyCode.OpticalCarrierFiber,

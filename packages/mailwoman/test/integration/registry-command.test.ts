@@ -53,8 +53,8 @@ describe("registry command — loadMapping", () => {
 		expect(m.source).toBe("clinics-2026")
 	})
 
-	test("invalid JSON (and not a file) throws a clear error", () => {
-		expect(() => loadMapping("{ not json", undefined)).toThrow(/mapping/)
+	test("invalid JSON (and not a file) throws a clear error", async () => {
+		await expect(loadMapping("{ not json", undefined)).rejects.toThrow(/mapping/)
 	})
 })
 
@@ -77,15 +77,15 @@ describe("registry command — loadSources (--sources)", () => {
 		expect(specs[0]).toMatchObject({ path: "x.tsv", limit: 100 })
 	})
 
-	test("a non-array throws", () => {
-		expect(() => loadSources('{ "path": "a.tsv" }')).toThrow(/array/)
+	test("a non-array throws", async () => {
+		await expect(loadSources('{ "path": "a.tsv" }')).rejects.toThrow(/array/)
 	})
 
-	test("an entry missing `path` throws", () => {
-		expect(() => loadSources('[{ "mapping": {} }]')).toThrow(/path/)
+	test("an entry missing `path` throws", async () => {
+		await expect(loadSources('[{ "mapping": {} }]')).rejects.toThrow(/path/)
 	})
 
-	test("invalid JSON (and not a file) throws a clear error", () => {
-		expect(() => loadSources("[ not json")).toThrow(/sources/)
+	test("invalid JSON (and not a file) throws a clear error", async () => {
+		await expect(loadSources("[ not json")).rejects.toThrow(/sources/)
 	})
 })

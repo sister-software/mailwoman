@@ -30,7 +30,6 @@ export const lstatSync = createNotImplementedFunction<typeof Native.lstatSync>("
 export const mkdirSync = createNotImplementedFunction<typeof Native.mkdirSync>("node:fs")
 export const mkdtempSync = createNotImplementedFunction<typeof Native.mkdtempSync>("node:fs")
 export const openSync = createNotImplementedFunction<typeof Native.openSync>("node:fs")
-export const promises = createNotImplementedFunction<typeof Native.promises>("node:fs")
 export const readFileSync = createNotImplementedFunction<typeof Native.readFileSync>("node:fs")
 export const readSync = createNotImplementedFunction<typeof Native.readSync>("node:fs")
 export const readdirSync = createNotImplementedFunction<typeof Native.readdirSync>("node:fs")

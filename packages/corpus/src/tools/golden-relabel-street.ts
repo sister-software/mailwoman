@@ -478,7 +478,7 @@ export async function relabelGoldenDirectory(
 			const to = join(dirOut, name.name)
 
 			if (name.isDirectory()) {
-				walk(from, to, `${prefix}${name.name}/`)
+				await walk(from, to, `${prefix}${name.name}/`)
 
 				continue
 			}

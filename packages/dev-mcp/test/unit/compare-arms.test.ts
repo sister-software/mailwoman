@@ -163,7 +163,7 @@ describe("mwdev_compare — an oracle arm", () => {
 		const oracle = oracleAt(ANDORRA_LA_VELLA)
 
 		await expect(
-			await runCompare(
+			runCompare(
 				registryAt(ANDORRA_LA_VELLA),
 				{ inputs: BOARD_AD, arm_a: {}, arm_b: { kind: "oracle", provider: "google" }, variable: ["engine"] },
 				{ createOracleClient: () => oracle, oracleMeter: new OracleMeter({}), runStoreDir: RUN_STORE.path }
@@ -178,7 +178,7 @@ describe("mwdev_compare — an oracle arm", () => {
 		const meter = new OracleMeter({ google: { enabled: true, maxCallsPerDaemonLifetime: 1 } })
 
 		await expect(
-			await runCompare(
+			runCompare(
 				registryAt(ANDORRA_LA_VELLA),
 				{ inputs: BOARD_AD, arm_a: {}, arm_b: { kind: "oracle", provider: "google" }, variable: ["engine"] },
 				{ createOracleClient: () => oracle, oracleMeter: meter, runStoreDir: RUN_STORE.path }
@@ -328,7 +328,7 @@ describe("mwdev_compare — a recorded arm", () => {
 
 	it("refuses a run_id that is not in the store rather than measuring an empty arm", async () => {
 		await expect(
-			await runCompare(
+			runCompare(
 				registryAt(ANDORRA_LA_VELLA),
 				{
 					inputs: BOARD_AD,
@@ -345,7 +345,7 @@ describe("mwdev_compare — a recorded arm", () => {
 		const runID = await record()
 
 		await expect(
-			await runCompare(
+			runCompare(
 				registryAt(ANDORRA_LA_VELLA),
 				{
 					inputs: BOARD_AD,

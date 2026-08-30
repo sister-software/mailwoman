@@ -225,7 +225,7 @@ describe("mwdev_compare — external arm", () => {
 
 	it("refuses to grade a set with no truth when grading was explicitly asked for", async () => {
 		await expect(
-			await comparison(registryAt(ANDORRA_LA_VELLA), [{ body: peliasBody(ANDORRA_LA_VELLA) }], {
+			comparison(registryAt(ANDORRA_LA_VELLA), [{ body: peliasBody(ANDORRA_LA_VELLA) }], {
 				inputs: { kind: "literal", inputs: ["Andorra la Vella"], why: "a set with no truth" },
 				grade: "truth",
 			})
@@ -261,7 +261,7 @@ describe("mwdev_compare — an external arm that stops answering", () => {
 		const transport = stubTransport([{ status: 200, body: "status: ok" }, { body: peliasBody(ANDORRA_LA_VELLA) }, dead])
 
 		await expect(
-			await runCompare(
+			runCompare(
 				registryAt(ANDORRA_LA_VELLA),
 				{
 					inputs: {

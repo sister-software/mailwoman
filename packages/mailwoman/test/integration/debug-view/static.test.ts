@@ -114,7 +114,7 @@ describe("runStaticDebug --debug-size floor", () => {
 		// Regression for the raw `RangeError: Invalid typed array length: -4608` `new RGBAGrid` threw at this size
 		// (mapPaneCellSize's row math goes negative before map-tui's allocation does) — assertDebugSizeFloor now
 		// catches it before any DB/weights work, so this rejects even without a resolvable session.
-		await expect(await runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
+		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			/--debug-size below the 60x20 minimum: 100x5/
 		)
 	})
@@ -127,7 +127,7 @@ describe("runStaticDebug --debug-size floor", () => {
 		expect(mapPaneCellSize(60, 19).rows).toBe(5)
 
 		await expect(
-			await runStaticDebug("3215 SE Clinton St, Portland OR", createGeocodeCommandOptions({ debugSize: "60x19" }))
+			runStaticDebug("3215 SE Clinton St, Portland OR", createGeocodeCommandOptions({ debugSize: "60x19" }))
 		).rejects.toThrow(/--debug-size below the 60x20 minimum: 60x19/)
 	})
 })
@@ -139,7 +139,7 @@ describe("runStaticDebug empty input", () => {
 		// `runStaticDebug`'s empty-input guard runs before assertDebugFormatSanity/assertDebugSizeFloor and before
 		// createGeocodeSession, so this rejects even without a resolvable session — same unconditional posture as
 		// the --debug-size floor test above.
-		await expect(await runStaticDebug("", createGeocodeCommandOptions())).rejects.toThrow(
+		await expect(runStaticDebug("", createGeocodeCommandOptions())).rejects.toThrow(
 			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 		)
 	})
@@ -151,7 +151,7 @@ describe("runStaticDebug --debug format guard", () => {
 	test("a --format shorthand alongside --debug rejects, not a silent pick", async () => {
 		const options = createGeocodeCommandOptions({ text: true })
 
-		await expect(await runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
+		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			"--debug is its own output surface; drop --text."
 		)
 	})
@@ -159,7 +159,7 @@ describe("runStaticDebug --debug format guard", () => {
 	test("an explicit non-default --format alongside --debug rejects the same way", async () => {
 		const options = createGeocodeCommandOptions({ format: "text" })
 
-		await expect(await runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
+		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			"--debug is its own output surface; drop --format text."
 		)
 	})

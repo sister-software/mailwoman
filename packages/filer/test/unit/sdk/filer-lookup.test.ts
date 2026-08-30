@@ -263,7 +263,7 @@ describe("§7-3a gates", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				await buildFilerDatabase({
+				buildFilerDatabase({
 					form499Rows: [minimalForm499Row({ lastFiledAt: "   " })],
 					out,
 					sourceVintage: "2026-Q1",
@@ -279,7 +279,7 @@ describe("§7-3a gates", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				await buildFilerDatabase({
+				buildFilerDatabase({
 					form499Rows: [minimalForm499Row({ lastFiledAt: "" })],
 					out,
 					sourceVintage: "2026-Q1",
@@ -295,7 +295,7 @@ describe("§7-3a gates", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				await buildFilerDatabase({
+				buildFilerDatabase({
 					form499Rows: [minimalForm499Row({ form499ID: "   " })],
 					out,
 					sourceVintage: "2026-Q1",
@@ -315,7 +315,7 @@ describe("§7-3a gates", () => {
 			]
 
 			await expect(
-				await buildFilerDatabase({
+				buildFilerDatabase({
 					providerRows: malformedRows,
 					out,
 					sourceVintage: "2026-Q1",
@@ -1865,7 +1865,7 @@ describe("filerLookup — general reader contract", () => {
 		await createAllTables(db)
 		await seedManifest(db)
 
-		await expect(await filerLookup(db, {})).rejects.toThrow(/exactly one of `frn`, `form499ID`, `bdcProviderID`/)
+		await expect(filerLookup(db, {})).rejects.toThrow(/exactly one of `frn`, `form499ID`, `bdcProviderID`/)
 	})
 
 	it("throws when more than one identifier is supplied", async () => {
@@ -1873,13 +1873,13 @@ describe("filerLookup — general reader contract", () => {
 		await createAllTables(db)
 		await seedManifest(db)
 
-		await expect(await filerLookup(db, { frn: toFRN("0001111111")!, form499ID: "100" })).rejects.toThrow(
+		await expect(filerLookup(db, { frn: toFRN("0001111111")!, form499ID: "100" })).rejects.toThrow(
 			/exactly one of `frn`, `form499ID`, `bdcProviderID`/
 		)
 
-		await expect(
-			await filerLookup(db, { frn: toFRN("0001111111")!, form499ID: "100", bdcProviderID: 1 })
-		).rejects.toThrow(/exactly one of `frn`, `form499ID`, `bdcProviderID`/)
+		await expect(filerLookup(db, { frn: toFRN("0001111111")!, form499ID: "100", bdcProviderID: 1 })).rejects.toThrow(
+			/exactly one of `frn`, `form499ID`, `bdcProviderID`/
+		)
 	})
 
 	it("reads the manifest FIRST — throws rather than answering unstamped when it is missing", async () => {
@@ -1887,7 +1887,7 @@ describe("filerLookup — general reader contract", () => {
 		await createAllTables(db)
 		// Deliberately no manifest row.
 
-		await expect(await filerLookup(db, { form499ID: "100" })).rejects.toThrow(/expected exactly 1/)
+		await expect(filerLookup(db, { form499ID: "100" })).rejects.toThrow(/expected exactly 1/)
 	})
 
 	it("throws a descriptive error when the queried identifier has no matching node", async () => {
@@ -1895,7 +1895,7 @@ describe("filerLookup — general reader contract", () => {
 		await createAllTables(db)
 		await seedManifest(db)
 
-		await expect(await filerLookup(db, { form499ID: "does-not-exist" })).rejects.toThrow(
+		await expect(filerLookup(db, { form499ID: "does-not-exist" })).rejects.toThrow(
 			/no form499_id node found for value "does-not-exist"/
 		)
 	})

@@ -69,7 +69,7 @@ async function testFilesUnder(directory: string, found: string[] = []): Promise<
 		const full = join(directory, entry)
 
 		if ((await statPath(full)).isDirectory()) {
-			testFilesUnder(full, found)
+			await testFilesUnder(full, found)
 		} else if (/\.test\.tsx?$/.test(entry)) {
 			found.push(full)
 		}

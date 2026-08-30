@@ -361,7 +361,7 @@ describe("buildFilerDatabase", () => {
 		]
 
 		await expect(
-			await buildFilerDatabase({
+			buildFilerDatabase({
 				form499Rows: malformedRows,
 				out,
 				sourceVintage: "2026-Q1",
@@ -384,7 +384,7 @@ describe("buildFilerDatabase", () => {
 		]
 
 		await expect(
-			await buildFilerDatabase({
+			buildFilerDatabase({
 				form499Rows: malformedRows,
 				out,
 				sourceVintage: "2026-Q1",
@@ -407,7 +407,7 @@ describe("buildFilerDatabase", () => {
 		]
 
 		await expect(
-			await buildFilerDatabase({
+			buildFilerDatabase({
 				providerRows: malformedRows,
 				out,
 				sourceVintage: "2026-Q1",
@@ -424,7 +424,7 @@ describe("buildFilerDatabase", () => {
 		const out = scratch.resolve("filer.db")
 
 		await expect(
-			await buildFilerDatabase({
+			buildFilerDatabase({
 				out,
 				sourceVintage: "2026-Q1",
 				buildSHA: "deadbeef",
@@ -930,7 +930,7 @@ describe("buildFilerDatabase", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				await buildFilerDatabase({
+				buildFilerDatabase({
 					edgarRows: [edgarFixtureRow({ subsidiaryName: "Standalone Sub LLC" })],
 					out,
 					sourceVintage: EDGAR_SOURCE_VINTAGE,
@@ -1163,7 +1163,7 @@ describe("buildFilerDatabase", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				await buildFilerDatabase({
+				buildFilerDatabase({
 					edgarRows: [{ cik: "123", subsidiaryName: "Bad CIK Sub LLC", filingDate: "2026-04-01" }],
 					out,
 					sourceVintage: EDGAR_SOURCE_VINTAGE,
@@ -1177,7 +1177,7 @@ describe("buildFilerDatabase", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				await buildFilerDatabase({
+				buildFilerDatabase({
 					edgarRows: [edgarFixtureRow({ subsidiaryName: "" })],
 					out,
 					sourceVintage: EDGAR_SOURCE_VINTAGE,
@@ -1191,7 +1191,7 @@ describe("buildFilerDatabase", () => {
 			const out = scratch.resolve("filer.db")
 
 			await expect(
-				await buildFilerDatabase({
+				buildFilerDatabase({
 					edgarRows: [edgarFixtureRow({ subsidiaryName: "Bad Date Sub LLC", filingDate: "2026-Q1" })],
 					out,
 					sourceVintage: EDGAR_SOURCE_VINTAGE,

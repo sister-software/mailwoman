@@ -94,7 +94,7 @@ describe("mwdev_compare — production board routing", () => {
 		let builds = 0
 
 		await expect(
-			await runCompare(
+			runCompare(
 				registry(),
 				{
 					inputs: { kind: "literal", inputs: ["Paris"], why: "exercise the route guard" },

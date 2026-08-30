@@ -158,7 +158,7 @@ function withoutPharmacyAffordance(model: CompiledGeographicModel): void {
 
 describe("the committed lexicon against the committed artifact", () => {
 	it("resolves — every declared phrase reaches a mapped entity kind", async () => {
-		await expect(await createSemanticObservationRoute()).resolves.toBeDefined()
+		await expect(createSemanticObservationRoute()).resolves.toBeDefined()
 	})
 
 	// Both wave-1 kinds, in code-point order. The identity enumerates what the declared activities CAN reach through
@@ -599,7 +599,7 @@ describe("the assertion's country scope", () => {
 describe("construction refusals", () => {
 	it("refuses an activity the artifact does not carry", async () => {
 		await expect(
-			await scratchRoute((_model, lexicon) => {
+			scratchRoute((_model, lexicon) => {
 				lexicon.phrases = [entry({ phrase: "get a haircut", activity: "get_haircut" })]
 			})
 		).rejects.toThrow(/which the compiled model does not carry/)
@@ -607,7 +607,7 @@ describe("construction refusals", () => {
 
 	it("refuses a concept that is not an activity", async () => {
 		await expect(
-			await scratchRoute((_model, lexicon) => {
+			scratchRoute((_model, lexicon) => {
 				lexicon.phrases = [entry({ phrase: "prescription", activity: "pharmacy" })]
 			})
 		).rejects.toThrow(/concept kind is "establishment" rather than `activity`/)
@@ -615,7 +615,7 @@ describe("construction refusals", () => {
 
 	it("refuses an activity nothing affords — the phrase would match and answer nothing", async () => {
 		await expect(
-			await scratchRoute((model) => {
+			scratchRoute((model) => {
 				for (const concept of model.concepts) {
 					concept.assertions = []
 				}
@@ -625,7 +625,7 @@ describe("construction refusals", () => {
 
 	it("refuses an activity whose affording kind maps into no POI category", async () => {
 		await expect(
-			await scratchRoute((model) => {
+			scratchRoute((model) => {
 				model.mappings = []
 			})
 		).rejects.toThrow(/no concept both affords and maps into/)
@@ -633,7 +633,7 @@ describe("construction refusals", () => {
 
 	it("refuses an artifact that defines no `affords` relation", async () => {
 		await expect(
-			await scratchRoute((model) => {
+			scratchRoute((model) => {
 				model.relations = []
 			})
 		).rejects.toThrow(/defines no `affords` relation/)
@@ -641,7 +641,7 @@ describe("construction refusals", () => {
 
 	it("refuses a phrase declared twice", async () => {
 		await expect(
-			await scratchRoute((_model, lexicon) => {
+			scratchRoute((_model, lexicon) => {
 				lexicon.phrases = [entry({ phrase: "prescription" }), entry({ phrase: "  Prescription " })]
 			})
 		).rejects.toThrow(/is declared twice/)
@@ -649,7 +649,7 @@ describe("construction refusals", () => {
 
 	it("refuses an empty lexicon", async () => {
 		await expect(
-			await scratchRoute((_model, lexicon) => {
+			scratchRoute((_model, lexicon) => {
 				lexicon.phrases = []
 			})
 		).rejects.toThrow(/a vocabulary with no surface form can never fire/)
@@ -657,7 +657,7 @@ describe("construction refusals", () => {
 
 	it("refuses a phrase that normalizes to nothing", async () => {
 		await expect(
-			await scratchRoute((_model, lexicon) => {
+			scratchRoute((_model, lexicon) => {
 				lexicon.phrases = [entry({ phrase: "   " })]
 			})
 		).rejects.toThrow(/normalizes to nothing/)
@@ -665,7 +665,7 @@ describe("construction refusals", () => {
 
 	it("refuses a phrase scoped to no locale at all", async () => {
 		await expect(
-			await scratchRoute((_model, lexicon) => {
+			scratchRoute((_model, lexicon) => {
 				lexicon.phrases = [entry({ phrase: "prescription", locales: [] })]
 			})
 		).rejects.toThrow(/scoped to nowhere/)
@@ -673,7 +673,7 @@ describe("construction refusals", () => {
 
 	it("refuses a derived form whose base the lexicon does not declare", async () => {
 		await expect(
-			await scratchRoute((_model, lexicon) => {
+			scratchRoute((_model, lexicon) => {
 				lexicon.phrases = [
 					entry({
 						phrase: "prescriptions",

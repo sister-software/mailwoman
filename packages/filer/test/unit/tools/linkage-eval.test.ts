@@ -500,7 +500,7 @@ describe("the standing guarantee: this baseline CAN be beaten", () => {
 	it("keeps the leakage gate armed while the probe runs — the gate sees the untouched build", async () => {
 		// The injection adds exactly the ownership rows the gate refuses. It does not throw, because the gate reads the
 		// census BEFORE the probe writes; break that ordering and this test starts throwing instead of scoring.
-		await expect(await runInjected()).resolves.toBeDefined()
+		await expect(runInjected()).resolves.toBeDefined()
 	})
 
 	/**

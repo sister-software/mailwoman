@@ -188,7 +188,7 @@ describe("buildUPRNLayer (fixture)", () => {
 		const out = join(sourceDir, "uprn.db")
 
 		await expect(
-			await buildUPRNLayer({ sourceDir, out, extracted, buildSHA: "fixture", minimumPlausibleRows: 1 })
+			buildUPRNLayer({ sourceDir, out, extracted, buildSHA: "fixture", minimumPlausibleRows: 1 })
 		).rejects.toThrow(/header drift/)
 	})
 

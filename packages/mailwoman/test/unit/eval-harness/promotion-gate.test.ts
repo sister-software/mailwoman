@@ -141,7 +141,7 @@ describe("resolveGateSpecPath", () => {
 	it("throws a USEFUL error naming the known specs, not a bare ENOENT", async () => {
 		// The old behaviour returned the string and let readFileSync throw, which told the operator
 		// nothing about what they could have typed instead.
-		await expect(await resolveGateSpecPath("v9.9.9-nope")).rejects.toThrow(
+		await expect(resolveGateSpecPath("v9.9.9-nope")).rejects.toThrow(
 			/Gate spec not found.*Known specs.*v5\.3\.0-family/s
 		)
 	})
