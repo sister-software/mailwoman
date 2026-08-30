@@ -210,7 +210,7 @@ export interface DropInCLI {
 	 */
 	usage: string[]
 	serve: () => Promise<void>
-	openapi: () => void
+	openapi: () => void | Promise<void>
 }
 
 /**
@@ -227,7 +227,7 @@ export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropIn
 			await serve()
 			break
 		case "openapi":
-			openapi()
+			await openapi()
 			break
 		default:
 			console.error([`Usage: ${binaryName} <command>`, ...usage].join("\n"))

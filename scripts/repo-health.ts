@@ -9,8 +9,7 @@
  * failure disappear.
  */
 
-import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { execFileSync } from "@mailwoman/platform/child_process"
@@ -79,9 +78,9 @@ function isSelfPackageSpecifier(value: string, packageName: string | undefined):
 /**
  * The synchronous `node:fs` surface, by name.
  *
- * A `*Sync` suffix over-matches: `execSync`, `spawnSync`, `deflateSync` and `flushSync` are not filesystem calls, and
- * `@mailwoman/core/fs/readers-sync` deliberately exports its own `*Sync` helpers, which ARE the sanctioned idiom and
- * must not count against it. Only the builtin names belong here.
+ * A `*Sync` suffix over-matches: `execSync`, `spawnSync`, `deflateSync` and `flushSync` are not filesystem calls. The
+ * synchronous helper modules (`@mailwoman/core/fs/readers-sync` / `writers-sync`) no longer exist — importing either is
+ * itself a finding and is counted separately. Only the builtin names belong here.
  */
 const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 	"accessSync",
@@ -115,12 +114,10 @@ const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 /**
  * Whether a call reaches the synchronous filesystem directly, bypassing `@mailwoman/core/fs`.
  *
- * The baseline is EIGHT, and each is named. Seven sit in workspaces that do not depend on `@mailwoman/core` — `api-kit`
- * (2), `nuts-lookup`, `timezone-lookup`, `un-locode-lookup`, `variant-aliases` (2) — where reaching the idiom would
- * install core's ~9 MB of data to replace a `mkdir` or a `readFileSync`. The eighth is
- * `corpus-python/scripts/train_with_resume.ts`'s `openSync(LOG, "a")`: a log DESCRIPTOR opened in append mode for a
- * child's stdio, which no path helper accepts. `oxlint.config.ts` exempts all eight files by name. They collapse the
- * day the fs helpers can be reached without core's tarball; until then a NINTH call anywhere fails this check.
+ * The baseline is ZERO and the policy is absolute: no executable repository code may make a blocking filesystem call.
+ * The direct mirror call sites that once survived this check (`api-kit`'s document emit, `variant-aliases`' table
+ * probe, `train_with_resume`'s log descriptor) all await the async surface now, and the platform mirror no longer
+ * re-exports the `*Sync` names at all.
  *
  * A bare identifier is counted; a property access is counted only when the receiver is spelled `fs`. That receiver rule
  * is what separates this population from two unrelated ones that share a method name: `node:sqlite`'s
@@ -157,6 +154,15 @@ function visit(
 
 		if (ts.isAsExpression(node) && isUnknownCast(node.expression)) {
 			counters.doubleCast++
+		}
+
+		if (
+			(ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
+			node.moduleSpecifier &&
+			ts.isStringLiteral(node.moduleSpecifier) &&
+			/(?:readers-sync|writers-sync)(?:[/"]|$)/.test(node.moduleSpecifier.text)
+		) {
+			counters.synchronousFilesystemCalls++
 		}
 
 		if (
@@ -262,7 +268,9 @@ function trackedSourcePaths(): string[] {
 
 // A tracked path can be absent from the working tree (a deletion staged but not committed); skip it
 // rather than failing the whole gate on a file the next commit removes anyway.
-const paths = trackedSourcePaths().filter((path) => pathExistsSync(path))
+const paths = (
+	await Promise.all(trackedSourcePaths().map(async (path) => ((await pathExists(path)) ? path : undefined)))
+).filter((path): path is string => path !== undefined)
 
 const counters = emptyCounters()
 const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolve(root, "package.json"))

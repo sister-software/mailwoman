@@ -10,8 +10,7 @@
  *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { existsSync } from "@mailwoman/platform/fs"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolve } from "@mailwoman/platform/path"
 
 import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.ts"
@@ -30,15 +29,16 @@ const moduleDir = import.meta.dirname
  * packages declare ZERO dependencies and publish independently, so sharing one would mean one taking a dependency on
  * the other for eight lines.
  */
-function loadTable(): Promise<VariantAliasTable> {
+async function loadTable(): Promise<VariantAliasTable> {
 	const candidates = [resolve(moduleDir, "data", "aliases.json"), resolve(moduleDir, "..", "data", "aliases.json")]
-	const found = candidates.find((candidate) => existsSync(candidate))
 
-	if (!found) {
-		throw new Error(`variant-aliases: could not find data/aliases.json — looked in ${candidates.join(", ")}`)
+	for (const candidate of candidates) {
+		if (await pathExists(candidate)) {
+			return readLocalJSONFile<VariantAliasTable>(candidate)
+		}
 	}
 
-	return readLocalJSONFile<VariantAliasTable>(found)
+	throw new Error(`variant-aliases: could not find data/aliases.json — looked in ${candidates.join(", ")}`)
 }
 
 const TABLE = await loadTable()

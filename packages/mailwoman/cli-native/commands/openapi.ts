@@ -44,7 +44,7 @@ export async function run(args: readonly string[]): Promise<number> {
 	const flavor = parsed.values.flavor as "3.1" | "3.0"
 	const out = typeof parsed.values.out === "string" ? parsed.values.out : undefined
 
-	printOpenAPIDocument(app, MAILWOMAN_API_DOC_INFO, { flavor, out })
+	await printOpenAPIDocument(app, MAILWOMAN_API_DOC_INFO, { flavor, out })
 
 	return 0
 }

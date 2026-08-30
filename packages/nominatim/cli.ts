@@ -335,10 +335,10 @@ async function serve(): Promise<void> {
  * DB: pure route-table introspection, fast regardless of data-root state. `--flavor 3.0` prints the 3.0.3 diet instead
  * of the default 3.1.0.
  */
-function openapi(): void {
+async function openapi(): Promise<void> {
 	const app = createNominatimApp({})
 
-	printOpenAPIDocument(app, NOMINATIM_DOC_INFO, parseOpenAPIFlags(BINARY_NAME))
+	await printOpenAPIDocument(app, NOMINATIM_DOC_INFO, parseOpenAPIFlags(BINARY_NAME))
 }
 
 await runDropInCLI({

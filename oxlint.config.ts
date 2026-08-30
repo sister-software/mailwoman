@@ -251,7 +251,6 @@ export default {
 				"packages/nuts-lookup/build.ts",
 				"packages/timezone-lookup/build.ts",
 				"packages/un-locode-lookup/build.ts",
-				"packages/variant-aliases/lookup.ts",
 			],
 			rules: {
 				"typescript/no-restricted-imports": "off",

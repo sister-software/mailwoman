@@ -13,8 +13,7 @@
 
 import { resolvePath } from "path-ts"
 
-import { statPath } from "#fs/readers"
-import { pathExistsSync, readLocalTextFileSync } from "#fs/readers-sync"
+import { pathExists, readLocalTextFile, statPath } from "#fs/readers"
 import { tryParsingJSON } from "#objects"
 
 import type { WOFFeature } from "./placetypes/admin.ts"
@@ -41,8 +40,6 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
  * admin ingest's depth-agnostic GeoJSON glob reads. The shipped postcode shards were built from repositories cloned by
  * hand as `<root>/<name>`. A reader that knows one layout reports a repository that is present as MISSING, and every
  * reader here treats missing as "no evidence" and continues — so the wrong layout is silent, not loud.
- *
- * Synchronous to match {@link readWOFFeature}: these readers run inside sync loops over database rows.
  */
 export async function resolveWOFRepo(reposRoot: string, name: string, owner = WOF_DATA_OWNER): Promise<string | null> {
 	for (const candidate of [resolvePath(reposRoot, owner, name), resolvePath(reposRoot, name)]) {
@@ -102,18 +99,18 @@ export function wofIDPathSegments(id: number): string[] {
  * `null` conflates "absent" with "unparseable" on purpose: every caller so far treats both as "no evidence for this
  * place" and continues. A caller that needs to tell them apart should read the file itself.
  */
-export function readWOFFeature(id: number, roots: readonly string[]): WOFFeature | null {
+export async function readWOFFeature(id: number, roots: readonly string[]): Promise<WOFFeature | null> {
 	const segments = wofIDPathSegments(id)
 
 	for (const root of roots) {
 		const path = resolvePath(root, ...segments)
 
-		if (!pathExistsSync(path)) continue
+		if (!(await pathExists(path))) continue
 
 		try {
-			return tryParsingJSON<WOFFeature>(readLocalTextFileSync(path))
+			return tryParsingJSON<WOFFeature>(await readLocalTextFile(path))
 		} catch {
-			// The file vanished or turned unreadable between existsSync and the read — same "no evidence" verdict.
+			// The file vanished or turned unreadable between the existence check and the read — same "no evidence" verdict.
 			return null
 		}
 	}

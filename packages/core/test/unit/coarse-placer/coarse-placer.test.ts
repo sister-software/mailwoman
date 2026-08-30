@@ -17,11 +17,10 @@ import {
 	inMapPosterior,
 } from "@mailwoman/core/coarse-placer"
 import { join } from "@mailwoman/platform/path"
-import { afterAll, describe, expect, test } from "vitest"
+import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 import { temporaryDirectory } from "#fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "#fs/writers"
-import { makeDirectoriesSync, writeLocalBufferSync, writeLocalJSONFileSync } from "#fs/writers-sync"
 
 const tmpRoot = await temporaryDirectory("coarse-placer-test-")
 afterAll(() => tmpRoot[Symbol.asyncDispose]())
@@ -70,23 +69,23 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 /**
  * Write an fp32 and an int8 artifact dir for the same weights; return both paths.
  */
-function writeArtifacts(classes: string[], dim: number, weights: Float32Array, bias: number[], temperature = 1) {
+async function writeArtifacts(classes: string[], dim: number, weights: Float32Array, bias: number[], temperature = 1) {
 	const fp32Dir = tmpRoot.resolve(`fp32-${classes.join("")}-${dim}`)
 	const int8Dir = tmpRoot.resolve(`int8-${classes.join("")}-${dim}`)
-	makeDirectoriesSync(fp32Dir)
-	makeDirectoriesSync(int8Dir)
+	await makeDirectories(fp32Dir)
+	await makeDirectories(int8Dir)
 
 	const baseMeta = { classes, featureDim: dim, temperature, bias }
-	writeLocalJSONFileSync(baseMeta, join(fp32Dir, "meta.json"))
+	await writeLocalJSONFile(baseMeta, join(fp32Dir, "meta.json"))
 
-	writeLocalBufferSync(
+	await writeLocalBuffer(
 		Buffer.from(weights.buffer, weights.byteOffset, weights.byteLength),
 		join(fp32Dir, "weights.bin")
 	)
 
 	const { int8, scales } = quantize(weights, classes.length, dim)
-	writeLocalJSONFileSync({ ...baseMeta, quantization: "int8-per-row", scales }, join(int8Dir, "meta.json"))
-	writeLocalBufferSync(Buffer.from(int8.buffer), join(int8Dir, "weights.bin"))
+	await writeLocalJSONFile({ ...baseMeta, quantization: "int8-per-row", scales }, join(int8Dir, "meta.json"))
+	await writeLocalBuffer(Buffer.from(int8.buffer), join(int8Dir, "weights.bin"))
 
 	return { fp32Dir, int8Dir }
 }
@@ -142,7 +141,15 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 	const classes = ["AA", "BB", "CC"]
 	const bias = [0.1, -0.2, 0.05]
 	const weights = seededWeights(classes.length, FEATURE_DIM, 12_345)
-	const { fp32Dir, int8Dir } = writeArtifacts(classes, FEATURE_DIM, weights, bias)
+	let fp32Dir: string
+	let int8Dir: string
+
+	beforeAll(async () => {
+		const dirs = await writeArtifacts(classes, FEATURE_DIM, weights, bias)
+		fp32Dir = dirs.fp32Dir
+		int8Dir = dirs.int8Dir
+	})
+
 	const samples = ["123 Main St", "10 Rue de la Paix", "1-2-3 Chiyoda Tokyo", "Calle Mayor 7"]
 
 	test("loads the fp32 artifact and predicts", async () => {

@@ -18,7 +18,7 @@
  *   same binary consumers run).
  */
 
-import { makeDirectoriesSync, writeLocalFileSync } from "@mailwoman/core/fs/writers-sync"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { execFileSync } from "@mailwoman/platform/child_process"
 import { dirname, resolve } from "@mailwoman/platform/path"
@@ -128,11 +128,11 @@ export function renderManPage(cliPath: string = CLI_PATH): string {
 	return sections.join("\n") + "\n"
 }
 
-runIfScript(import.meta, () => {
+runIfScript(import.meta, async () => {
 	const page = renderManPage()
 
-	makeDirectoriesSync(dirname(MAN_PAGE_PATH))
-	writeLocalFileSync(page, MAN_PAGE_PATH)
+	await makeDirectories(dirname(MAN_PAGE_PATH))
+	await writeLocalFile(page, MAN_PAGE_PATH)
 
 	console.log(`wrote ${MAN_PAGE_PATH}`)
 })

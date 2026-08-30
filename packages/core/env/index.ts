@@ -7,23 +7,17 @@ import { PrivateEnvSchema, PublicEnvSchema } from "./schema.ts"
 export { DefaultMailwomanPaths } from "./paths.ts"
 
 /**
- * The `.env` layer, resolved the first time a property is read rather than when this module is evaluated.
+ * The `.env` layer, resolved when this module is evaluated — process-startup semantics.
  *
- * Reading `process.cwd()` at module scope froze the layer to whichever directory the process started in, so the two
- * halves of the view below disagreed about when they were sampled: the `process.env` half re-parses on every get, the
- * `.env` half never did. A CLI invoked from a subdirectory therefore read no `.env` at all while still reporting itself
- * as a live view. Resolving per directory keeps both halves answering about the same moment; the memo means a property
- * get costs a map lookup rather than a file read.
+ * The load is asynchronous, so it cannot be deferred to the first property read: the views below expose synchronous
+ * getters. Reading `process.cwd()` once, at module evaluation, keeps the `.env` half answering about the same moment as
+ * the `process.env` half (which still re-parses on every get), and a property get costs a map lookup rather than a file
+ * read.
  */
-const dotEnvByDirectory = new Map<string, object>()
+const dotEnvByDirectory = new Map<string, object>([[process.cwd(), await loadEnvFile(join(process.cwd(), ".env"))]])
 
 function dotEnv(): object {
-	const directory = process.cwd()
-	const loaded = dotEnvByDirectory.get(directory) ?? loadEnvFile(join(directory, ".env"))
-
-	dotEnvByDirectory.set(directory, loaded)
-
-	return loaded
+	return dotEnvByDirectory.get(process.cwd()) ?? {}
 }
 
 function liveEnv<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.infer<z.ZodObject<Shape>> {

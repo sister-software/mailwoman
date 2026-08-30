@@ -55,10 +55,10 @@ type Geometry = { type?: string; coordinates?: unknown } | null
 
 const geomCache = new Map<number, Geometry>()
 
-function geomForID(wofID: number): Geometry {
+async function geomForID(wofID: number): Promise<Geometry> {
 	if (geomCache.has(wofID)) return geomCache.get(wofID)!
 
-	const geom = (readWOFFeature(Math.trunc(wofID), ADMIN_ROOTS)?.geometry as Geometry) ?? null
+	const geom = ((await readWOFFeature(Math.trunc(wofID), ADMIN_ROOTS))?.geometry as Geometry) ?? null
 
 	geomCache.set(wofID, geom)
 
@@ -205,7 +205,7 @@ async function main(): Promise<number> {
 		}
 
 		const lid = r.neuralLocID
-		const contained = lid ? contains(geomForID(lid), r.lon, r.lat) : null
+		const contained = lid ? contains(await geomForID(lid), r.lon, r.lat) : null
 
 		if (contained !== null) {
 			// a polygon existed and was tested (True or False)

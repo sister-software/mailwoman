@@ -326,7 +326,7 @@ async function ancestorFallback(db: DatabaseClient<WOFDatabase>, reposDir: strin
 		let hierarchy: Record<string, number> | undefined
 
 		try {
-			hierarchy = readWOFFeature(row.id, [dataDir])?.properties?.["wof:hierarchy"]?.[0]
+			hierarchy = (await readWOFFeature(row.id, [dataDir]))?.properties?.["wof:hierarchy"]?.[0]
 		} catch {
 			continue // file missing or unreadable — leave unplaced
 		}

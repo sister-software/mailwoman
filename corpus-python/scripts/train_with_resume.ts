@@ -18,7 +18,7 @@
 import { $public } from "@mailwoman/core/env"
 import { passThroughCLIArguments } from "@mailwoman/core/scripting/utils"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { openSync } from "@mailwoman/platform/fs"
+import { open } from "@mailwoman/platform/fs/promises"
 import { $, sleep } from "zx"
 
 const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)
@@ -31,7 +31,7 @@ const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml
 const ADDITIONAL_COMMAND_LINE_ARGS = passThroughCLIArguments()
 
 // Open the log once in append mode; every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
-const logFd = openSync(LOG, "a")
+const handle = await open(LOG, "a")
 
 // zx prints the command to stderr by default; the bash wrapper kept python output in $LOG only, so stay quiet.
 $.verbose = false
@@ -53,7 +53,7 @@ process.on("SIGTERM", onSignal)
  * @param resume - Whether to pass `--resume auto` (the resume loop) or start fresh.
  */
 async function runTraining(resume: boolean): Promise<number> {
-	const shell = $({ stdio: ["ignore", logFd, logFd], nothrow: true })
+	const shell = $({ stdio: ["ignore", handle.fd, handle.fd], nothrow: true })
 
 	const output = resume
 		? await shell`python -u -m mailwoman_train train --config ${CONFIG} --resume auto ${ADDITIONAL_COMMAND_LINE_ARGS}`
@@ -62,42 +62,48 @@ async function runTraining(resume: boolean): Promise<number> {
 	return output.exitCode ?? 1
 }
 
-let attempt = 0
+try {
+	let attempt = 0
 
-// First attempt — fresh start unless --resume is already in the passed args.
-if (!ADDITIONAL_COMMAND_LINE_ARGS.includes("--resume")) {
-	console.log("[wrapper] attempt 1: fresh start")
+	// First attempt — fresh start unless --resume is already in the passed args.
+	if (!ADDITIONAL_COMMAND_LINE_ARGS.includes("--resume")) {
+		console.log("[wrapper] attempt 1: fresh start")
 
-	const exit = await runTraining(false)
-	attempt = 1
+		const exit = await runTraining(false)
+		attempt = 1
 
-	if (exit === 0) {
-		console.log("[wrapper] training completed successfully on attempt 1")
+		if (exit === 0) {
+			console.log("[wrapper] training completed successfully on attempt 1")
 
-		process.exit(0)
+			process.exit(0)
+		}
+
+		console.log(`[wrapper] attempt 1 exited with ${exit} — resuming`)
 	}
 
-	console.log(`[wrapper] attempt 1 exited with ${exit} — resuming`)
-}
+	while (attempt < MAX_ATTEMPTS) {
+		attempt += 1
 
-while (attempt < MAX_ATTEMPTS) {
-	attempt += 1
+		console.log(`[wrapper] attempt ${attempt}: resume=auto`)
 
-	console.log(`[wrapper] attempt ${attempt}: resume=auto`)
+		const exit = await runTraining(true)
 
-	const exit = await runTraining(true)
+		if (exit === 0) {
+			console.log(`[wrapper] training completed successfully on attempt ${attempt}`)
 
-	if (exit === 0) {
-		console.log(`[wrapper] training completed successfully on attempt ${attempt}`)
+			process.exit(0)
+		}
 
-		process.exit(0)
+		console.log(`[wrapper] attempt ${attempt} exited with ${exit}; sleeping 15s then resuming`)
+
+		await sleep("15s")
 	}
 
-	console.log(`[wrapper] attempt ${attempt} exited with ${exit}; sleeping 15s then resuming`)
+	console.log(`[wrapper] MAX_ATTEMPTS=${MAX_ATTEMPTS} reached, giving up`)
 
-	await sleep("15s")
+	process.exit(1)
+} finally {
+	// Dispose the log handle after the final attempt. A `process.exit` above ends the process before this
+	// runs; the OS reclaims the descriptor in that case.
+	await handle.close()
 }
-
-console.log(`[wrapper] MAX_ATTEMPTS=${MAX_ATTEMPTS} reached, giving up`)
-
-process.exit(1)

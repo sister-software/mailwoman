@@ -193,7 +193,7 @@ export async function backfillAncestorsFromHierarchy(
 
 	for (const { id, placetype } of candidates) {
 		if (placetype && TOP_PLACETYPES.has(placetype)) continue
-		const gj = readWOFFeature(id, geojsonRoots)
+		const gj = await readWOFFeature(id, geojsonRoots)
 		const hierarchy = gj?.properties?.["wof:hierarchy"]
 
 		if (!hierarchy || !hierarchy.length) {
