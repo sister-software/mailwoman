@@ -7,8 +7,6 @@
  *   `build-*-shard.mjs` scripts each re-implemented: the seeded LCG PRNG, the tuple reader, and the
  *   canonical → `alignRow` → `LabeledRow` JSONL emit step. A recipe ({@link ShardRecipe}) supplies
  *   only its synthesis + filter; the `mailwoman corpus shard <recipe>` command supplies the I/O.
- *
- *   TODO: So much of this file looks like a misunderstanding of spliterator's API.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -16,7 +14,7 @@ import { readZipEntry } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { PathBuilderLike } from "path-ts"
 import type { AsyncChunkIterator, AsyncDataResource } from "spliterator"
-import { AsyncSequence, CSVSpliterator } from "spliterator"
+import { AsyncSequence, CSVSpliterator, TextSpliterator } from "spliterator"
 
 import { stableSourceIDFromParts } from "#adapters/utils"
 import { alignRow } from "#utils"
@@ -163,38 +161,31 @@ export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): 
  * the same way by accident — a non-zero exit warned and returned no rows. A recipe that ends up with NO tuples at all
  * still throws; that is the case where the cache, not the recipe, is the problem.
  */
-export async function readZippedCSVRecords(
-	archivePath: PathBuilderLike,
-	entryName: string
-): Promise<AsyncSequence<CSVRecord>> {
-	if (!(await pathExists(String(archivePath)))) {
-		console.error(`  WARN: ${archivePath} is not cached — skipping ${entryName}`)
+export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
+	return AsyncSequence.from<CSVRecord>(async () => {
+		if (!(await pathExists(String(archivePath)))) {
+			console.error(`  WARN: ${archivePath} is not cached — skipping ${entryName}`)
 
-		return AsyncSequence.from<CSVRecord>([])
-	}
+			return []
+		}
 
-	return readCSVRecords(readZipEntry(archivePath, entryName))
+		return readCSVRecords(readZipEntry(archivePath, entryName))
+	})
 }
 
 /**
  * Stream-parse a tuples JSONL file, yielding each parsed object (blank/invalid lines skipped).
  */
-export async function* readTuples(input: string): AsyncGenerator<ShardTuple> {
-	// TextSpliterator (not JSONSpliterator) so a malformed line is SKIPPED, not thrown — the
-	// per-line tryParsingJSON below is the tolerance this reader has always had.
-	const { TextSpliterator } = await import("spliterator")
-
-	for await (const line of TextSpliterator.fromAsync(input)) {
-		const trimmed = line.trim()
-
-		if (!trimmed) continue
-
-		const tuple = tryParsingJSON<ShardTuple>(trimmed)
-
-		if (tuple !== null) {
-			yield tuple
-		}
-	}
+export function readTuples(input: string): AsyncSequence<ShardTuple> {
+	// TextSpliterator (not JSONSpliterator) keeps the reader's established tolerance: malformed lines are skipped rather
+	// than rejecting the sequence. These operators fuse into the source's pull loop instead of adding an async-generator
+	// frame per tuple.
+	return TextSpliterator.fromAsync(input)
+		.map((line) => line.trim())
+		.filter((line) => Boolean(line))
+		.map((line) => tryParsingJSON<ShardTuple>(line))
+		.filter((tuple) => tuple !== null)
+		.map((tuple) => tuple!)
 }
 
 /**

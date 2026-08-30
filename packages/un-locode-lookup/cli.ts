@@ -18,8 +18,8 @@
 
 import { parseArgs } from "@mailwoman/platform/util"
 
-import { buildUnLocodeDB } from "./build.ts"
-import { UnLocodeLookup } from "./index.ts"
+import { buildUNLocodeDB } from "./build.ts"
+import { UNLocodeLookup } from "./index.ts"
 
 const { values, positionals } = parseArgs({
 	options: {
@@ -39,7 +39,7 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 
-	const { rows, withCoords } = buildUnLocodeDB(values.csv, values.out)
+	const { rows, withCoords } = await buildUNLocodeDB(values.csv, values.out)
 
 	console.error(`built ${values.out} (${rows} rows, ${withCoords} with coordinates)`)
 } else {
@@ -54,7 +54,7 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 
-	using lookup = new UnLocodeLookup({ databasePath: values.db })
+	using lookup = new UNLocodeLookup({ databasePath: values.db })
 	const code = byName ? lookup.byName(values.country!, values.name!) : lookup.nearest(lat, lon)
 
 	console.log(JSON.stringify({ unLocode: code }))

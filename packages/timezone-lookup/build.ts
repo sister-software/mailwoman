@@ -9,24 +9,25 @@
  *   prefilter), and the geometry normalized to MultiPolygon coordinates as JSON.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { MultiPolygonCoords } from "./index.ts"
 import type { TimezoneDatabase } from "./schema.ts"
 
-interface TimezoneFeature {
-	properties: { tzid: string }
-	geometry: { type: "Polygon" | "MultiPolygon"; coordinates: number[][][] | number[][][][] }
-}
+export type TimezoneFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, { tzid: string }>
 
 /**
  * Read the GeoJSON at `geojsonPath` and write the polygon DB to `dbPath` (overwriting its table).
+ *
+ * @returns The number of features written to the DB.
  */
-export function buildTimezoneDB(geojsonPath: string, dbPath: string): { features: number } {
-	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/timezone-lookup` does not depend on @mailwoman/core.
-	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: TimezoneFeature[] }
+export async function buildTimezoneDB(geojsonPath: string, dbPath: string): Promise<{ features: number }> {
+	const data = await readLocalJSONFile<InferGeoFeatureCollection<TimezoneFeature>>(geojsonPath)
+
 	using db = new DatabaseClient<TimezoneDatabase>(dbPath)
+
 	db.exec("DROP TABLE IF EXISTS timezone_polygons")
 
 	db.exec(

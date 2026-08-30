@@ -8,11 +8,10 @@
  *   IATA, Coordinates, Remarks). One row per assigned location; coordinates parsed where present.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CSVSpliterator } from "spliterator"
 
-import { foldName, parseUnLocodeCoords } from "./index.ts"
+import { foldName, parseUNLocodeCoords } from "./index.ts"
 import type { UNLocodeDatabase } from "./schema.ts"
 
 interface CSVRow {
@@ -26,15 +25,15 @@ interface CSVRow {
 /**
  * Read the code-list CSV at `csvPath` and write the lookup DB to `dbPath`.
  */
-export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number; withCoords: number } {
+export async function buildUNLocodeDB(csvPath: string, dbPath: string): Promise<{ rows: number; withCoords: number }> {
 	// `normalizeKeys: false` keeps the UNECE header casing the row shape above is written against
 	// (`NameWoDiacritics`, not `name_wo_diacritics`). Location names carry commas, so quote handling
 	// is on — it is off by default.
-	const records = CSVSpliterator.from(readFileSync(csvPath), {
+	const records = CSVSpliterator.fromAsync<CSVRow>(csvPath, {
 		mode: "object",
 		normalizeKeys: false,
 		enableQuoteHandling: true,
-	}) as Iterable<CSVRow>
+	})
 
 	using db = new DatabaseClient<UNLocodeDatabase>(dbPath)
 	db.exec("DROP TABLE IF EXISTS un_locode")
@@ -49,11 +48,11 @@ export function buildUnLocodeDB(csvPath: string, dbPath: string): { rows: number
 	let rows = 0
 	db.exec("BEGIN")
 
-	for (const r of records) {
+	for await (const r of records) {
 		rows++
 
 		if (!r.Country || !r.Location) continue // header/country rows carry no Location
-		const coords = r.Coordinates ? parseUnLocodeCoords(r.Coordinates) : null
+		const coords = r.Coordinates ? parseUNLocodeCoords(r.Coordinates) : null
 
 		if (coords) {
 			withCoords++

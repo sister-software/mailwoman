@@ -3,88 +3,41 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Re-fetch the Hawaii State DOE school directory and convert the XLSX workbook to a flat CSV the
- *   `state-hi-schools` adapter can consume.
+ *   Re-fetch the Hawaii State DOE school directory as its original XLSX workbook. The
+ *   `state-hi-schools` adapter reads both worksheets directly.
  *
  *   Upstream is a single XLSX (~64 KB) with two sheets — `HIDOE` (~258 district schools) and `PCS`
- *   (~38 public charter schools). Both sheets share the same header. This module concatenates them
- *   under one shared header so the adapter can stream a single CSV.
+ *   (~38 public charter schools). Both sheets are validated against the adapter's required columns
+ *   before the workbook is recorded as fetched.
  *
  *   License: Hawaii state government open data (Tier A — state PD-equivalent).
  *
- *   Built-in `fetch` (gzip/brotli) replaces curl for the download; the XLSX → CSV step still rides
- *   `python3` + `openpyxl` via `node:child_process` — there is no clean node equivalent without
- *   adding a workbook-parsing dependency.
- *
  *   Invoke via `mailwoman corpus fetch state-hi-schools --out-root <path>`. Idempotent: if the dest
- *   CSV exists and sha matches MANIFEST, skips download.
+ *   workbook exists and its sha matches MANIFEST, skips download.
  */
 
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
+import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { spawn, spawnSync } from "@mailwoman/platform/child_process"
 import { join } from "@mailwoman/platform/path"
+import { XLSXSpliterator, type XLSXCellValue } from "spliterator"
+
+import { STATE_HI_SCHOOL_REQUIRED_COLUMNS, STATE_HI_SCHOOL_SHEETS } from "#adapters/state-hi-schools/workbook"
 
 import type { BaseFetchOptions, FetchSummary } from "./download.ts"
 import { downloadToFile, readManifest, writeManifest } from "./download.ts"
 
-/**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
- * than data.
- */
-
 const SOURCE_URL = "https://www.hawaiipublicschools.org/DOE%20Forms/SchoolList.xlsx"
 const SLUG = "state-hi-schools"
-const CSV_FILENAME = "HI_Public_Schools_List.csv"
 const XLSX_FILENAME = "HI_Public_Schools_List.xlsx"
 
-export type FetchStateHISchoolsOptions = BaseFetchOptions
-
-/**
- * The XLSX → CSV converter: concatenate every sheet under one shared header (the first sheet's). Runs as `python3 -c
- * <script> <xlsx-path> <csv-path>`, so `sys.argv[1]`/`sys.argv[2]` are the I/O paths. TODO: Get rid of this.
- */
-const PY_CONVERT = `
-import csv
-import sys
-from openpyxl import load_workbook
-
-xlsx_path, csv_path = sys.argv[1], sys.argv[2]
-wb = load_workbook(xlsx_path, data_only=True, read_only=True)
-
-with open(csv_path, "w", newline="", encoding="utf-8") as out:
-    writer = csv.writer(out)
-    shared_header = None
-    total_data_rows = 0
-    for sheet_name in wb.sheetnames:
-        ws = wb[sheet_name]
-        rows = ws.iter_rows(values_only=True)
-        try:
-            header = next(rows)
-        except StopIteration:
-            continue
-        norm_header = ["" if v is None else str(v).strip() for v in header]
-        if shared_header is None:
-            shared_header = norm_header
-            writer.writerow(shared_header)
-        elif norm_header != shared_header:
-            print(
-                f"  ! sheet '{sheet_name}' header diverges from shared header; concatenating anyway",
-                file=sys.stderr,
-            )
-        for row in rows:
-            if row is None:
-                continue
-            # Skip fully-empty rows (XLSX iter_rows can yield phantom trailing rows).
-            if all(v is None or (isinstance(v, str) and not v.strip()) for v in row):
-                continue
-            writer.writerow(["" if v is None else str(v).strip() for v in row])
-            total_data_rows += 1
-
-print(f"  converted {total_data_rows} data rows from {len(wb.sheetnames)} sheets", file=sys.stderr)
-`
+export interface FetchStateHISchoolsOptions extends BaseFetchOptions {
+	/**
+	 * Workbook URL. Defaults to the Hawaii DOE source; overridable for an isolated fetch test.
+	 */
+	sourceURL?: string
+}
 
 interface Manifest {
 	source_url: string
@@ -95,19 +48,30 @@ interface Manifest {
 	notes: string
 }
 
-/**
- * Run the openpyxl converter. Its stderr narration streams straight through to the process stderr (matching the old
- * `stdio: inherit` behavior) rather than routing through `report` — the python child owns those lines.
- */
-async function convertXLSXToCSV(xlsxPath: string, csvPath: string): Promise<void> {
-	const child = spawn("python3", ["-c", PY_CONVERT, xlsxPath, csvPath], {
-		stdio: ["ignore", "inherit", "inherit"],
-	})
+async function validateWorkbook(path: string): Promise<void> {
+	for (const sheet of STATE_HI_SCHOOL_SHEETS) {
+		const rows = await XLSXSpliterator.fromAsync<XLSXCellValue[]>(path, {
+			sheet,
+			header: false,
+			take: 2,
+		}).toArray()
 
-	await new Promise<void>((resolve, reject) => {
-		child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`python3 converter exited with ${code}`))))
-		child.on("error", reject)
-	})
+		const header = rows[0]
+
+		if (!header || rows.length < 2) {
+			throw new Error(`sheet ${sheet} must contain a header and at least one school row`)
+		}
+
+		// Exact casing is part of the adapter contract: object mode preserves the workbook's header names, so accepting
+		// `Code` here while the reader asks for `record.code` would validate a workbook whose every row is later skipped.
+		const columns = new Set(header.map((cell) => String(cell ?? "").trim()))
+
+		const missing = STATE_HI_SCHOOL_REQUIRED_COLUMNS.filter((column) => !columns.has(column))
+
+		if (missing.length) {
+			throw new Error(`sheet ${sheet} is missing required columns: ${missing.join(", ")}`)
+		}
+	}
 }
 
 export async function fetchStateHISchools(
@@ -118,17 +82,17 @@ export async function fetchStateHISchools(
 	await makeDirectories(destDir)
 
 	const xlsxDest = join(destDir, XLSX_FILENAME)
-	const csvDest = join(destDir, CSV_FILENAME)
 	const manifestPath = join(destDir, "MANIFEST.json")
+	const sourceURL = options.sourceURL ?? SOURCE_URL
 
 	report?.(`=== ${SLUG}`)
 
-	// Idempotency: skip if CSV exists and sha matches recorded MANIFEST.
-	if (await pathExists(csvDest)) {
+	// Idempotency: skip if the source workbook exists and sha matches the recorded manifest.
+	if (await pathExists(xlsxDest)) {
 		const recorded = await readManifest<Partial<Manifest>>(manifestPath)
 
-		if (recorded?.sha256 && recorded.filename === CSV_FILENAME) {
-			const actualSha = await sha256File(csvDest)
+		if (recorded?.sha256 && recorded.filename === XLSX_FILENAME) {
+			const actualSha = await sha256File(xlsxDest)
 
 			if (actualSha === recorded.sha256) {
 				report?.(`  ✓ Already current (sha256 matches MANIFEST) — skipping download.`)
@@ -138,25 +102,12 @@ export async function fetchStateHISchools(
 		}
 	}
 
-	// Preflight: openpyxl must be importable.
-	const preflight = spawnSync("python3", ["-c", "import openpyxl"], { stdio: "ignore" })
-
-	if (preflight.status !== 0) {
-		report?.(
-			`  ✗ python3 with the \`openpyxl\` package is required to convert the HIDOE XLSX.\n` +
-				`    Debian/Ubuntu:  sudo apt-get install -y python3-openpyxl\n` +
-				`    macOS Homebrew: brew install python && pip3 install openpyxl`
-		)
-
-		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
-	}
-
 	// Download XLSX.
-	report?.(`  Downloading ${SOURCE_URL} ...`)
+	report?.(`  Downloading ${sourceURL} ...`)
 
 	try {
 		await downloadToFile({
-			url: SOURCE_URL,
+			url: sourceURL,
 			dest: xlsxDest,
 			timeoutMs: 600_000,
 			headers: { "Accept-Encoding": "gzip, br" },
@@ -173,34 +124,38 @@ export async function fetchStateHISchools(
 
 	if (xlsxSize < BYTES_PER_KIB) {
 		report?.(`  ✗ Response too small (${xlsxSize} bytes) — probable error page`)
+		await removePathIfPresent(xlsxDest)
 
 		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
 	}
 
-	// Convert XLSX → CSV (concatenate both sheets under one shared header).
-	report?.(`  Converting XLSX → CSV (concatenating sheets) ...`)
-	await convertXLSXToCSV(xlsxDest, csvDest)
+	try {
+		await validateWorkbook(xlsxDest)
+	} catch (error) {
+		report?.(`  ✗ Workbook validation failed (${(error as Error).message})`)
+		await removePathIfPresent(xlsxDest)
 
-	const csvSize = (await statPath(csvDest)).size
-	const csvSha = await sha256File(csvDest)
+		return { fetched: 0, skipped: 0, failed: 1, failedCodes: [SLUG] }
+	}
 
-	// Remove XLSX (CSV is the canonical artifact the adapter consumes).
-	await removePath(xlsxDest)
-	report?.(`  Removed XLSX (CSV kept)`)
+	const xlsxSha = await sha256File(xlsxDest)
 
 	// Write MANIFEST.
 	const manifest: Manifest = {
-		source_url: SOURCE_URL,
+		source_url: sourceURL,
 		downloaded_at: new Date().toISOString(),
-		filename: CSV_FILENAME,
-		sha256: csvSha,
-		bytes: csvSize,
-		notes: "Converted from XLSX (sheets HIDOE + PCS concatenated under shared header).",
+		filename: XLSX_FILENAME,
+		sha256: xlsxSha,
+		bytes: xlsxSize,
+		notes: "Original XLSX; the adapter reads the HIDOE and PCS sheets directly.",
 	}
 
 	await writeManifest(manifestPath, manifest)
 
-	report?.(`  ✓ ${ByteFormatter.formatIEC(csvSize)}  sha256=${csvSha}`)
+	report?.(
+		`  ✓ ${STATE_HI_SCHOOL_SHEETS.join(" + ")} validated · ${ByteFormatter.formatIEC(xlsxSize)}  sha256=${xlsxSha}`
+	)
+
 	report?.(`  MANIFEST written to ${manifestPath}`)
 
 	return { fetched: 1, skipped: 0, failed: 0, failedCodes: [] }

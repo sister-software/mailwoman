@@ -54,8 +54,8 @@
  *       family built on `APIClient` — see its docstring for why.
  *   - `state-sources` — NY/TX/DE/OR notaries, IA contractors, WA health providers, HI lobbyists.
  *       Tier A (state PD-equivalent).
- *   - `state-hi-schools` — Hawaii DOE school directory (XLSX → CSV via openpyxl). Tier A (state
- *       PD-equivalent).
+ *   - `state-hi-schools` — Hawaii DOE school directory (original XLSX; HIDOE + PCS sheets). Tier A
+ *       (state PD-equivalent).
  *   - `tiger-full` — US Census TIGER 2024 ADDRFEAT, all US counties. Tier A (US PD).
  *
  *   License tiers per `docs/licensing-strategy.md` (or the playpen knowledge base mirror at

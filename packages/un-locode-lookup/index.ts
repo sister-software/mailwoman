@@ -30,7 +30,7 @@ export function foldName(name: string): string {
 /**
  * Parse a UN/LOCODE coordinate (`"4923N 01522E"`) to decimal degrees, or null if absent/malformed.
  */
-export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } | null {
+export function parseUNLocodeCoords(raw: string): { lat: number; lon: number } | null {
 	const m = raw.trim().match(/^(\d{2})(\d{2})([NS])\s+(\d{3})(\d{2})([EW])$/)
 
 	if (!m) return null
@@ -43,7 +43,7 @@ export function parseUnLocodeCoords(raw: string): { lat: number; lon: number } |
 /**
  * A UN/LOCODE lookup over a built `node:sqlite` table.
  */
-export class UnLocodeLookup implements Disposable {
+export class UNLocodeLookup implements Disposable {
 	#db: DatabaseClient<UNLocodeDatabase>
 	/**
 	 * Resources this instance opened. A connection handed in by a caller is NOT in here, so disposal cannot reach it —
@@ -53,10 +53,10 @@ export class UnLocodeLookup implements Disposable {
 	#byName: ReturnType<DatabaseClient["prepare"]>
 	#byBox: ReturnType<DatabaseClient["prepare"]>
 
-	constructor(opts: { databasePath: string } | { database: DatabaseClient<UNLocodeDatabase> }) {
+	constructor(opts: { databasePath: string } | { db: DatabaseClient<UNLocodeDatabase> }) {
 		this.#db =
-			"database" in opts
-				? opts.database
+			"db" in opts
+				? opts.db
 				: this.#resources.use(new DatabaseClient<UNLocodeDatabase>(opts.databasePath, { readOnly: true }))
 
 		this.#byName = this.#db.prepare(
@@ -115,7 +115,7 @@ export class UnLocodeLookup implements Disposable {
  * Build an `Annotator` filling `AnnotationSet.unLocode`. Prefers a country + place-name match (when the resolver
  * supplies them via `countryCode` / `placeName`), and falls back to the nearest coordinate.
  */
-export function makeUnLocodeAnnotator(lookup: UnLocodeLookup, opts: { maxKm?: number } = {}): Annotator {
+export function makeUNLocodeAnnotator(lookup: UNLocodeLookup, opts: { maxKm?: number } = {}): Annotator {
 	return ({ lat, lon, countryCode, placeName }): Partial<AnnotationSet> => {
 		const byName = countryCode && placeName ? lookup.byName(countryCode, placeName) : null
 		const code = byName ?? lookup.nearest(lat, lon, opts.maxKm)

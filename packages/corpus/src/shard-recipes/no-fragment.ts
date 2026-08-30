@@ -151,7 +151,7 @@ export const noFragmentRecipe: ShardRecipe = {
 			}
 		}
 
-		for await (const tuple of await readTuples(opts.input!)) {
+		for await (const tuple of readTuples(opts.input!)) {
 			read++
 			const street = String(tuple.street ?? "").trim()
 			const locality = titleNO(String(tuple.locality ?? "").trim())

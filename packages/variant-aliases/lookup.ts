@@ -10,7 +10,8 @@
  *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { existsSync } from "@mailwoman/platform/fs"
 import { resolve } from "@mailwoman/platform/path"
 
 import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.ts"
@@ -29,7 +30,7 @@ const moduleDir = import.meta.dirname
  * packages declare ZERO dependencies and publish independently, so sharing one would mean one taking a dependency on
  * the other for eight lines.
  */
-function loadTable(): VariantAliasTable {
+function loadTable(): Promise<VariantAliasTable> {
 	const candidates = [resolve(moduleDir, "data", "aliases.json"), resolve(moduleDir, "..", "data", "aliases.json")]
 	const found = candidates.find((candidate) => existsSync(candidate))
 
@@ -37,13 +38,10 @@ function loadTable(): VariantAliasTable {
 		throw new Error(`variant-aliases: could not find data/aliases.json — looked in ${candidates.join(", ")}`)
 	}
 
-	// A corrupt shipped table is a broken build, and the SyntaxError names the offset. Zero dependencies here, so
-	// `@mailwoman/core`'s parse wrappers are deliberately out of reach.
-	// oxlint-disable-next-line no-restricted-properties -- zero-dependency leaf; corrupt shipped data must throw with its offset
-	return JSON.parse(readFileSync(found, "utf8")) as VariantAliasTable
+	return readLocalJSONFile<VariantAliasTable>(found)
 }
 
-const TABLE = loadTable()
+const TABLE = await loadTable()
 
 /**
  * Indexed by lowercased variant string for O(1) lookup. Multiple entries can share the same variant key (e.g. ambiguous

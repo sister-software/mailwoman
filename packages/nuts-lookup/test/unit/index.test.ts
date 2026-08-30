@@ -61,8 +61,8 @@ async function fixtureDB(): Promise<DatabaseClient<NUTSDatabase>> {
 test("NUTSLookup.find: deepest containing region → nested codes", async () => {
 	using db = await fixtureDB()
 	using lookup = new NUTSLookup({ database: db })
-	expect(lookup.find(5, 5)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
-	expect(lookup.find(50, 50)).toBeNull()
+	expect(lookup.explore(5, 5)).toEqual({ level1: "XX3", level2: "XX30", level3: "XX300" })
+	expect(lookup.explore(50, 50)).toBeNull()
 })
 
 test("makeNUTSAnnotator: fills nuts inside, abstains outside", async () => {

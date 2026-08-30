@@ -29,7 +29,7 @@ export const streetRecipe: ShardRecipe = {
 		let emitted = 0
 		let skipped = 0
 
-		for await (const tuple of await readTuples(opts.input)) {
+		for await (const tuple of readTuples(opts.input)) {
 			read++
 
 			if (!tuple.locality || !tuple.region || !tuple.postcode || !tuple.country) {

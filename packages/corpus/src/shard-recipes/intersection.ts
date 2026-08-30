@@ -255,7 +255,7 @@ async function buildZipCityMap(): Promise<Map<string, string>> {
 	const counts = new Map<string, Map<string, number>>()
 
 	// zip → Map(city → n)
-	for await (const row of await readZippedCSVRecords(OA_COOK.zip, OA_COOK.csv)) {
+	for await (const row of readZippedCSVRecords(OA_COOK.zip, OA_COOK.csv)) {
 		const city = row.city ?? ""
 		const zip = row.postcode ?? ""
 

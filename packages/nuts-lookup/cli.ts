@@ -14,6 +14,7 @@
  *   The `--` separates flags from coordinates so negative coordinates parse as positionals.
  */
 
+import { prettyJSON } from "@mailwoman/core/objects"
 import { parseArgs } from "@mailwoman/platform/util"
 
 import { buildNUTSDB } from "./build.ts"
@@ -35,7 +36,7 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 
-	const { regions } = buildNUTSDB(values.geojson, values.out)
+	const { regions } = await buildNUTSDB(values.geojson, values.out)
 
 	console.error(`built ${values.out} (${regions} regions)`)
 } else {
@@ -50,6 +51,5 @@ if (positionals[0] === "build") {
 
 	using lookup = new NUTSLookup({ databasePath: values.db })
 
-	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
-	console.log(JSON.stringify({ nuts: lookup.find(lat, lon) }))
+	console.log(prettyJSON({ nuts: lookup.explore(lat, lon) }))
 }

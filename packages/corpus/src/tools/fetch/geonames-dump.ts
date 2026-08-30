@@ -98,7 +98,9 @@ const GAZETTEER_DUMP_COLUMNS = 19
  * True when the first non-empty line carries the gazetteer dump's 19 tab-separated columns. Accepts a partial head read
  * — the first line is the whole question, so callers need not hand it a resident 350 MB dump.
  *
- * TODO: Use a TextSpliterator
+ * Walk the string directly rather than constructing a spliterator: the capitals builder already holds whole country
+ * dumps as strings, and a byte-oriented spliterator would UTF-8 encode that input — allocating up to another 350 MB —
+ * merely to inspect its first non-empty line.
  */
 export function looksLikeGazetteerDump(text: string): boolean {
 	let start = 0

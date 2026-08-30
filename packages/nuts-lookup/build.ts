@@ -8,8 +8,8 @@
  *   region, with its level and bounding box for the lookup's prefilter.
  */
 
-import { readFileSync } from "@mailwoman/platform/fs"
-import type { GeoFeature, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { MultiPolygonCoords } from "./index.ts"
@@ -25,10 +25,11 @@ export type NUTSFeature = GeoFeature<PolygonLiteral | MultiPolygonLiteral, NUTSP
 /**
  * Read the NUTS GeoJSON at `geojsonPath` and write the polygon DB to `dbPath`.
  */
-export function buildNUTSDB(geojsonPath: string, dbPath: string): { regions: number } {
-	// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/nuts-lookup` does not depend on @mailwoman/core.
-	const data = JSON.parse(readFileSync(geojsonPath, "utf8")) as { features: NUTSFeature[] }
+export async function buildNUTSDB(geojsonPath: string, dbPath: string): Promise<{ regions: number }> {
+	const data = await readLocalJSONFile<InferGeoFeatureCollection<NUTSFeature>>(geojsonPath)
+
 	using db = new DatabaseClient<NUTSDatabase>(dbPath)
+
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
 
 	// `nutsId` is a string contract with every shipped nuts.db — the acronym-casing convention applies
@@ -45,9 +46,7 @@ export function buildNUTSDB(geojsonPath: string, dbPath: string): { regions: num
 
 	for (const feature of data.features) {
 		const polygons: MultiPolygonCoords =
-			feature.geometry.type === "Polygon"
-				? [feature.geometry.coordinates as number[][][]]
-				: (feature.geometry.coordinates as number[][][][])
+			feature.geometry.type === "Polygon" ? [feature.geometry.coordinates] : feature.geometry.coordinates
 
 		let minLat = 90
 		let maxLat = -90

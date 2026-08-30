@@ -12,6 +12,7 @@ import {
 } from "@mailwoman/corpus/adapters/state-hi-schools/adapter"
 import { join } from "@mailwoman/platform/path"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
+import writeXlsxFile, { type SheetData } from "write-excel-file/node"
 
 import { InMemoryAdapterRegistry } from "#adapters/utils"
 import { writeDelimitedFixture } from "#test-kit"
@@ -20,7 +21,7 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-const CSV_HEADER = [
+const SCHOOL_HEADER = [
 	"code",
 	"name",
 	"address",
@@ -38,7 +39,9 @@ const CSV_HEADER = [
 	"district",
 	"island",
 	"charter",
-].join(",")
+]
+
+const CSV_HEADER = SCHOOL_HEADER.join(",")
 
 let scratch: string
 
@@ -48,6 +51,24 @@ beforeEach(async () => {
 
 function writeCSV(...lines: string[]): Promise<string> {
 	return writeDelimitedFixture(join(scratch, "test.csv"), CSV_HEADER, lines)
+}
+
+async function writeWorkbook(): Promise<string> {
+	const path = join(scratch, "test.xlsx")
+	const sheet = (rows: Array<Array<string | number | boolean | null>>): SheetData => rows as SheetData
+
+	await writeXlsxFile([
+		{
+			sheet: "HIDOE",
+			data: sheet([SCHOOL_HEADER, [335, "Ahuimanu Elem School", "47-470 Hui Aeko Place", "Kaneohe", 96_744]]),
+		},
+		{
+			sheet: "PCS",
+			data: sheet([SCHOOL_HEADER, [901, "Voyager Public Charter School", "2428 Wilder Avenue", "Honolulu", 96_822]]),
+		},
+	]).toFile(path)
+
+	return path
 }
 
 describe("state-hi-schools adapter", () => {
@@ -82,6 +103,24 @@ describe("state-hi-schools adapter", () => {
 		expect(r.components.locality).toBe("Kaneohe")
 		expect(r.components.region).toBe("HI")
 		expect(r.components.postcode).toBe("96744")
+	})
+
+	it("reads HIDOE and PCS directly from the typed XLSX workbook", async () => {
+		const p = await writeWorkbook()
+		const rows = []
+
+		for await (const row of createStateHiSchoolsAdapter().rows({ inputPath: p })) {
+			rows.push(row)
+		}
+
+		expect(rows).toHaveLength(2)
+
+		expect(rows.map((row) => row.source_id)).toEqual([
+			`${STATE_HI_SCHOOLS_ADAPTER_ID}-335`,
+			`${STATE_HI_SCHOOLS_ADAPTER_ID}-901`,
+		])
+
+		expect(rows.map((row) => row.components.venue)).toEqual(["Ahuimanu Elem School", "Voyager Public Charter School"])
 	})
 
 	it("emits a row for a charter (PCS) school with a non-hyphenated address", async () => {

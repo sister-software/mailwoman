@@ -26,27 +26,14 @@
  *      drop them by. Distribution across all 1,747,841 rows: PQI 10 → 1,742,328 · 20 → 253 · 30 → 26 ·
  *      50 → 4,166 · 60 → 203 · 90 → 865. So 99.69 % of the file is PQI 10, OS's best grade (within the
  *      building of the address nearest the postcode's mean position).
- *   2. **`CSVSpliterator` cannot read this file, and that is an upstream bug — not a reason to give up
- *      on quoting.** The obvious move is the repo's shared CSV reader. It returns fields with their
- *      double quotes STILL ATTACHED (`"\"SW10 0AA\""`), and it splits on every comma regardless of
- *      quoting. Reproducer, run against spliterator 6.0.1 in all three modes (`header: false`,
- *      `header: true`, and default):
- *
- *        '"AB1 1AA",10,1,2,"X, Y","b"'  →  ['"AB1 1AA"','10','1','2','"X',' Y"','"b"']   // 7 fields, want 6
- *
- *      Writing a quote-BLIND splitter would also have worked today: all 1,747,841 lines split to
- *      exactly ten fields on a bare comma, so no field currently contains an embedded comma or
- *      newline. That is a claim about this release, not about the format, and it is precisely the
- *      reasoning that has burned this repo before. Correct is cheap here; we take correct.
- *
- *      REMAINING LIMITATION, stated because it is not covered: line-based streaming cannot survive a
- *      NEWLINE inside a quoted field. The same measurement rules that out today (a row with an
- *      embedded newline would present as a short line, and there are none). If OS ever ships one,
- *      {@link readCodePointCSV} will report it as malformed rather than mis-parse it silently.
+ *   2. **Quoting applies to record boundaries as well as columns.** The current cut carries no embedded
+ *      comma or newline, but both are legal inside a quoted CSV field. Parsing the byte stream with quote
+ *      handling enabled keeps such a field intact even when its newline or closing quote crosses a read
+ *      boundary; a line-first parser cannot repair the record after splitting it.
  */
 
 import { osgb36ToWGS84 } from "@mailwoman/spatial"
-import { TextSpliterator } from "spliterator"
+import { CSVSpliterator } from "spliterator"
 
 /**
  * Positional quality indicator meaning "no coordinate available". Such rows carry eastings/northings of zero.
@@ -156,70 +143,36 @@ export function postcodeArea(postcode: string): string {
  * Split one CSV line into fields, honouring RFC-4180 double quoting: quotes wrap a field, a doubled `""` inside a
  * quoted field is a literal quote, and a comma inside quotes is data rather than a separator.
  *
- * Exists because the repo's shared `CSVSpliterator` does neither the unquoting nor the quote-aware splitting — see the
- * module docstring for the reproducer. Kept deliberately small and total: it never throws, and a malformed line simply
- * yields whatever fields it can, which the caller then rejects on arity and on the postcode pattern.
+ * Retained as a compatibility helper for callers parsing one resident record. Streaming callers should use
+ * {@linkcode readCodePointCSV}, which preserves quoted newlines across read boundaries.
  *
- * TODO: the rationalization above looks outdated. Duplicated too.
- *
- * @deprecated use spliterator
+ * @deprecated Use `CSVSpliterator` directly.
  */
 export function splitCSVLine(line: string): string[] {
-	const fields: string[] = []
-	let field = ""
-	let quoted = false
-
-	for (let i = 0; i < line.length; i++) {
-		const char = line[i]
-
-		if (quoted) {
-			if (char === '"') {
-				// A doubled quote inside a quoted field is one literal quote; a lone one closes the field.
-				if (line[i + 1] === '"') {
-					field += '"'
-
-					i++
-				} else {
-					quoted = false
-				}
-			} else {
-				field += char
-			}
-		} else if (char === '"') {
-			quoted = true
-		} else if (char === ",") {
-			fields.push(field)
-			field = ""
-		} else {
-			field += char
-		}
-	}
-
-	fields.push(field)
-
-	return fields
+	return (
+		CSVSpliterator.from<string[]>(line, {
+			header: false,
+			enableQuoteHandling: true,
+		}).next().value ?? []
+	)
 }
 
 /**
  * Stream every usable record from one extracted area CSV, mutating `stats` as it goes.
  *
  * Yields rather than collecting: the whole of GB is 1.75 M rows, and the shard builder inserts as it reads rather than
- * materializing an array it would only iterate once. TODO: Needs a deeper look, and to utilities.
+ * materializing an array it would only iterate once.
  */
 export async function* readCodePointCSV(csvPath: string, stats: CodePointParseStats): AsyncGenerator<CodePointRecord> {
-	// Lines, not fields — see the module docstring. These files have no header row (the column names ship
-	// separately in `Doc/Code-Point_Open_Column_Headers.csv`), so every line is data. They are CRLF, hence
-	// the trailing-\r trim.
-	for await (const rawLine of TextSpliterator.fromAsync(csvPath)) {
-		const line = String(rawLine).trim()
-
-		if (!line) continue
-
+	// These files have no header row; the column names ship separately in
+	// `Doc/Code-Point_Open_Column_Headers.csv`.
+	for await (const row of CSVSpliterator.fromAsync<string[]>(csvPath, {
+		header: false,
+		enableQuoteHandling: true,
+	})) {
 		stats.read++
 
-		const row = splitCSVLine(line)
-
-		if (row.length < CODEPOINT_COLUMNS) {
+		if (row.length !== CODEPOINT_COLUMNS) {
 			stats.skippedMalformed++
 
 			continue

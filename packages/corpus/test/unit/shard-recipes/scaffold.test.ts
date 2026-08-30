@@ -12,7 +12,10 @@
  *   and the case where a scanner that loses quote state across a chunk boundary splits a record in two.
  */
 
-import { type CSVRecord, readCSVRecords } from "@mailwoman/corpus/shard-recipes/scaffold"
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { type CSVRecord, readCSVRecords, readTuples } from "@mailwoman/corpus/shard-recipes/scaffold"
+import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 async function* byteAtATime(csv: string): AsyncGenerator<Uint8Array> {
@@ -84,5 +87,18 @@ describe("readCSVRecords", () => {
 
 		expect(held).toHaveLength(3)
 		expect(held.map((row) => row.number)).toEqual(["0", "1", "2"])
+	})
+})
+
+describe("readTuples", () => {
+	it("returns a chainable sequence and skips blank or malformed JSONL records", async () => {
+		await using scratch = await temporaryDirectory("mailwoman-shard-tuples-")
+		const path = join(scratch.path, "tuples.jsonl")
+
+		await writeLocalTextFile('{"locality":"Paris"}\n\nnot-json\n{"postcode":"75001"}\n', path)
+
+		const tuples = readTuples(path)
+
+		expect(await tuples.take(2).toArray()).toEqual([{ locality: "Paris" }, { postcode: "75001" }])
 	})
 })

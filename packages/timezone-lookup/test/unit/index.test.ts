@@ -60,8 +60,8 @@ async function fixtureDB(): Promise<DatabaseClient<TimezoneDatabase>> {
 test("TimezoneLookup.find: bbox-prefilter + PIP returns the containing zone", async () => {
 	using db = await fixtureDB()
 	using lookup = new TimezoneLookup({ database: db })
-	expect(lookup.find(5, 5)).toBe("Test/Zone")
-	expect(lookup.find(50, 50)).toBeNull()
+	expect(lookup.explore(5, 5)).toBe("Test/Zone")
+	expect(lookup.explore(50, 50)).toBeNull()
 })
 
 test("makeTimezoneAnnotator: fills AnnotationSet.timezone", async () => {

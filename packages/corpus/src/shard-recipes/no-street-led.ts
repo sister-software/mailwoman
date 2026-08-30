@@ -79,7 +79,7 @@ export const noStreetLedRecipe: ShardRecipe = {
 		let skipped = 0
 		let contaminated = 0
 
-		for await (const t of await readTuples(opts.input!)) {
+		for await (const t of readTuples(opts.input!)) {
 			read++
 			const street = String(t.street ?? "").trim()
 			const city = String(t.locality ?? "").trim()

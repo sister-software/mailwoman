@@ -3,23 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The CSV reader and the metadata manifest parser. {@link splitCSVLine} exists only because the shared
- *   `CSVSpliterator` is quote-blind (see `parse.ts`), so the quoting cases are tested directly rather
- *   than trusted — a silently mis-split row is the exact failure this module was written to avoid, and
- *   the first build attempt shipped a zero-row shard because of it.
+ *   The CSV reader and the metadata manifest parser. Quoting cases are pinned at both the resident-line compatibility
+ *   helper and the streaming reader, because a newline crossing a chunk boundary is where line-first parsing fails.
  */
 
+import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { join } from "@mailwoman/platform/path"
 import { parseCodePointMetadata } from "mailwoman/gazetteer-pipeline/postcode/codepoint/extract"
 import {
+	createCodePointParseStats,
 	normalizeCodePointSpacing,
 	postcodeArea,
+	readCodePointCSV,
 	splitCSVLine,
 } from "mailwoman/gazetteer-pipeline/postcode/codepoint/parse"
 import { expect, test } from "vitest"
 
 test("splitCSVLine strips the wrapping quotes Code-Point puts on every text field", () => {
-	// The real shape of a Code-Point row. CSVSpliterator returns these with the quotes attached, which is
-	// what made every row look malformed.
 	const row = splitCSVLine('"SW10 0AA",10,526506,176966,"E92000001","E19000003","E18000007","","E09000013","E05013747"')
 
 	expect(row).toHaveLength(10)
@@ -44,6 +45,37 @@ test("splitCSVLine keeps empty trailing and interior fields", () => {
 	// Arity is how the reader rejects a bad row, so a dropped trailing empty would turn a valid 10-column
 	// row into a rejected 9-column one.
 	expect(splitCSVLine("a,,c,")).toEqual(["a", "", "c", ""])
+})
+
+test("readCodePointCSV keeps a quoted multiline field in one logical record and accounts for every skip", async () => {
+	await using scratch = await temporaryDirectory("mailwoman-codepoint-parse-")
+	const csvPath = join(scratch.path, "rows.csv")
+	// Exceeds the adaptive bulk threshold so the quoted field and its newline cross filesystem read boundaries.
+	const multilineHealthAuthority = `"health,${"x".repeat(140_000)}\r\nauthority"`
+
+	await writeLocalTextFile(
+		[
+			`"SW10 0AA",10,526506,176966,"E92000001",${multilineHealthAuthority},"","","",""`,
+			'"AB1 1AA",90,0,0,"S92000003","","","","",""',
+			'"B1 1AA",10,1,2,"E92000001","","","",""',
+			'"EC1A 1BB",10,1,2,"E92000001","","","","","","extra"',
+		].join("\r\n") + "\r\n",
+		csvPath
+	)
+
+	const stats = createCodePointParseStats()
+	const rows = await Array.fromAsync(readCodePointCSV(csvPath, stats))
+
+	expect(rows).toHaveLength(1)
+	expect(rows[0]).toMatchObject({ postcode: "SW10 0AA", quality: 10, countryCode: "E92000001", country: "ENG" })
+
+	expect(stats).toEqual({
+		read: 4,
+		yielded: 1,
+		skippedNoCoordinate: 1,
+		skippedMalformed: 2,
+		yieldedByArea: { SW: 1 },
+	})
 })
 
 test("normalizeCodePointSpacing collapses the fixed-width padded form", () => {

@@ -40,7 +40,7 @@ export const siBareVillageRecipe: ShardRecipe = {
 		let emitted = 0
 		let skipped = 0
 
-		for await (const t of await readTuples(opts.input!)) {
+		for await (const t of readTuples(opts.input!)) {
 			read++
 			const village = String(t.locality ?? "").trim()
 			const number = String(t.number ?? "").trim()

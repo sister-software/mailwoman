@@ -245,7 +245,7 @@ async function readUsTuples(source: { zip: string; csv: string; region: string }
 	const tuples: USTuple[] = []
 	const seen = new Set<string>()
 
-	for await (const row of await readZippedCSVRecords(source.zip, source.csv)) {
+	for await (const row of readZippedCSVRecords(source.zip, source.csv)) {
 		const locality = row.city ?? ""
 
 		if (!cleanLocality(locality)) continue

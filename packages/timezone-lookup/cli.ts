@@ -35,7 +35,7 @@ if (positionals[0] === "build") {
 		process.exit(1)
 	}
 
-	const { features } = buildTimezoneDB(values.geojson, values.out)
+	const { features } = await buildTimezoneDB(values.geojson, values.out)
 
 	console.error(`built ${values.out} (${features} features)`)
 } else {
@@ -50,7 +50,7 @@ if (positionals[0] === "build") {
 
 	using lookup = new TimezoneLookup({ databasePath: values.db })
 	// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
-	const tzid = lookup.find(lat, lon)
+	const tzid = lookup.explore(lat, lon)
 
 	console.log(JSON.stringify({ timezone: tzid, offsetSec: tzid ? offsetSecForTimezone(tzid) : null }))
 }

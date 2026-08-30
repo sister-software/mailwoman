@@ -252,7 +252,7 @@
 		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
-		"spliterator": "^6.2.0"
+		"spliterator": "^6.3.1"
 	},
 	"devDependencies": {
 		"esbuild": "0.28.1",

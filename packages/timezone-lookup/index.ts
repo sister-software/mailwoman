@@ -10,6 +10,7 @@
  */
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
+import { parseJSONStrict } from "@mailwoman/core/objects"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { TimezoneDatabase } from "./schema.ts"
@@ -112,12 +113,15 @@ export class TimezoneLookup implements Disposable {
 	/**
 	 * The IANA timezone id containing `(lat, lon)`, or `null` if none (shouldn't happen with oceans).
 	 */
-	find(lat: number, lon: number): string | null {
+	explore(lat: number, lon: number): string | null {
 		const rows = this.#stmt.all(lat, lat, lon, lon) as Array<{ tzid: string; geom: string }>
 
 		for (const row of rows) {
-			// oxlint-disable-next-line no-restricted-properties -- `@mailwoman/timezone-lookup` does not depend on @mailwoman/core.
-			if (pointInMultiPolygon(lon, lat, JSON.parse(row.geom) as MultiPolygonCoords)) return row.tzid
+			const multiPolygonCoords = parseJSONStrict<MultiPolygonCoords>(row.geom)
+
+			if (pointInMultiPolygon(lon, lat, multiPolygonCoords)) {
+				return row.tzid
+			}
 		}
 
 		return null
@@ -134,7 +138,7 @@ export class TimezoneLookup implements Disposable {
 export function makeTimezoneAnnotator(lookup: TimezoneLookup): Annotator {
 	return ({ lat, lon, date }): Partial<AnnotationSet> => {
 		// oxlint-disable-next-line unicorn/no-array-method-this-argument -- `lookup.find(lat, lon)` is a two-argument gazetteer probe, not Array#find
-		const name = lookup.find(lat, lon)
+		const name = lookup.explore(lat, lon)
 
 		if (!name) return {}
 		const offsetSec = offsetSecForTimezone(name, date)

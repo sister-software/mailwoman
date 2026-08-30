@@ -89,7 +89,7 @@ export const trailingRegionRecipe: ShardRecipe = {
 		let emitted = 0
 		let skipped = 0
 
-		for await (const t of await readTuples(opts.input!)) {
+		for await (const t of readTuples(opts.input!)) {
 			read++
 			const locality = String(t.locality ?? "").trim()
 			const region = String(t.region ?? "").trim()
