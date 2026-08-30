@@ -59,7 +59,10 @@ function callArguments(call: SgNode<Lang>): SgNode<Lang>[] {
 
 	if (!list) return []
 
-	return list.children().filter((child) => child.isNamed())
+	// A COMMENT is a named node, so `import(/* webpackIgnore: true */ "…")` reports the comment as argument zero. That
+	// hid eight `fs.readFileSync` calls in `packages/neural/classifier.ts`, whose module alias is bound from exactly
+	// that shape — and anywhere else it would have handed a mapping the comment's text where a path belongs.
+	return list.children().filter((child) => child.isNamed() && child.kind() !== "comment")
 }
 
 /**
