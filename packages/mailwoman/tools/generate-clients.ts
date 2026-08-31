@@ -33,7 +33,7 @@
  *   rotting silently in a file nobody compiles.
  */
 
-import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 import {
 	copyFileTo,
 	makeDirectories,
@@ -41,12 +41,12 @@ import {
 	writeLocalFile,
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
-import { spawnProcessSync } from "@mailwoman/core/process"
-import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, repoRootPath } from "@mailwoman/core/utils"
 import { join } from "path-ts"
 
 import type { Check } from "#cli-kit"
+import { readMailwomanVersion } from "#cli-kit/metadata"
+import { runProcessOrFail } from "#cli-kit/shared"
 
 /**
  * The four surfaces every emitter + generated client covers. Order matches the salvaged README's table, mailwoman last
@@ -144,27 +144,7 @@ function fail(message: string): never {
  * log) and throw on nonzero exit or a launch failure (e.g. the binary isn't installed).
  */
 function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {
-	console.error(`  $ ${cmd} ${args.join(" ")}${options.cwd ? `  (in ${options.cwd})` : ""}`)
-
-	const r = spawnProcessSync(cmd, args, { stdio: "inherit", env: childEnv(), cwd: options.cwd })
-
-	if (r.error) {
-		fail(`${cmd} ${args.join(" ")} → failed to launch: ${r.error.message}`)
-	}
-
-	if (r.status !== 0) {
-		fail(`${cmd} ${args.join(" ")} → exit ${r.status}`)
-	}
-}
-
-/**
- * The version every generated client syncs to — `mailwoman/package.json`, the same version the four surface packages
- * (`api`, `libpostal`, `photon`, `nominatim`) already release at in lockstep.
- */
-async function readMailwomanVersion(): Promise<string> {
-	const pkg = await readLocalJSONFile<{ version: string }>(workspacePath("mailwoman", "package.json"))
-
-	return pkg.version
+	runProcessOrFail(cmd, args, { ...options, echo: true })
 }
 
 /**

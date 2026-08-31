@@ -7,6 +7,7 @@
  */
 
 import { GeoPoint, type GeoPointInput } from "#geometries/point"
+import { arealPolygons } from "#geometries/polygon"
 
 /**
  * Conversion factors for converting between degrees and radians.
@@ -84,9 +85,15 @@ export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: numb
 }
 
 /**
- * Metres per degree of latitude — the scale {@link segmentDistanceMetres} reports in.
+ * Metres per degree of latitude — the scale {@link segmentDistanceMetres} reports in, and the constant the bounding-box
+ * estimates in `#h3/polygon-cells` are built on.
  */
-const METRES_PER_DEGREE = 111_320
+export const METRES_PER_DEGREE = 111_320
+
+/**
+ * Square metres in a square kilometre — the conversion every polygon layer's area receipt reports through.
+ */
+export const M2_PER_KM2 = 1_000_000
 
 /**
  * Metres from a point to a line SEGMENT, with longitude scaled for the latitude so the two axes are comparable.
@@ -118,4 +125,41 @@ export function segmentDistanceMetres(
 	const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, (px * vx + py * vy) / lengthSquared))
 
 	return Math.hypot(px - t * vx, py - t * vy) * METRES_PER_DEGREE
+}
+
+/**
+ * Metres from a point to the nearest ring EDGE of an areal geometry — `Infinity` when the geometry bounds no area or
+ * carries no segment.
+ *
+ * To the edge, not to the nearest vertex: a point a centimetre from a long edge can be metres from every vertex of it,
+ * so a vertex distance overstates the gap without bound — measured on the flood layer's verification, one near-miss
+ * read 1.58 m to vertices and 0.009 m to edges, a 9 mm difference overstated 175-fold. Every polygon layer's two-path
+ * verification measures its boundary tolerance with this.
+ *
+ * @category Position
+ */
+export function nearestRingEdgeMetres(
+	geometry: { type: string; coordinates: unknown },
+	longitude: number,
+	latitude: number
+): number {
+	const polygons = arealPolygons(geometry)
+
+	let nearest = Infinity
+
+	if (!polygons) return nearest
+
+	for (const rings of polygons) {
+		for (const ring of rings) {
+			for (let index = 1; index < ring.length; index++) {
+				const distance = segmentDistanceMetres(longitude, latitude, ring[index - 1]!, ring[index]!)
+
+				if (distance < nearest) {
+					nearest = distance
+				}
+			}
+		}
+	}
+
+	return nearest
 }

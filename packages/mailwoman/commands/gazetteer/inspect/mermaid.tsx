@@ -19,7 +19,14 @@ import { availableParallelism } from "@mailwoman/core/utils/system"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import { CommandError, type CommandSpec, parseRoles, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	parseRoles,
+	useCommandTask,
+} from "#cli-kit"
 
 const BATCH_SIZE = availableParallelism()
 
@@ -123,13 +130,7 @@ const WOFMermaid: ParsedCommandComponent<Options, [string, string]> = ({ args, o
 		return chart
 	})
 
-	if (state.status === "error") {
-		return <Text color="red">{state.message}</Text>
-	}
-
-	if (state.status === "running") {
-		return <Spinner />
-	}
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
 	if (options.output) {
 		return (

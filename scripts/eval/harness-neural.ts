@@ -51,6 +51,8 @@ import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import ts from "typescript"
 
+import { normLoose } from "./value-match.ts"
+
 //#region Args
 
 interface Args {
@@ -417,10 +419,6 @@ function neuralTreeToVisibleRecord(flat: Partial<Record<ComponentTag, string>>):
 
 //#region Comparison — case-insensitive superset match
 
-function normalize(s: string): string {
-	return s.toLowerCase().trim()
-}
-
 /**
  * Pass if every tag in `expected` is present in `actual` AND the actual value (string-equality, case-folded, trimmed)
  * contains the expected value. We accept `actual` being a superset because the neural parser may emit extra components
@@ -437,12 +435,12 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 		if (expectedValues.length !== actualValues.length) return false
 
 		for (let i = 0; i < expectedValues.length; i++) {
-			if (normalize(expectedValues[i]!) !== normalize(actualValues[i]!)) {
+			if (normLoose(expectedValues[i]!) !== normLoose(actualValues[i]!)) {
 				// Allow substring containment in either direction — the neural parser sometimes
 				// over- or under-spans (e.g. "5th Avenue" vs "Avenue"). The fixture suite is the
 				// authority on the EXPECTED span; we count a substring match as a partial pass.
-				const exp = normalize(expectedValues[i]!)
-				const act = normalize(actualValues[i]!)
+				const exp = normLoose(expectedValues[i]!)
+				const act = normLoose(actualValues[i]!)
 
 				if (!exp.includes(act) && !act.includes(exp)) return false
 			}

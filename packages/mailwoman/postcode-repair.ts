@@ -20,6 +20,7 @@
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { collectNodes, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder"
 import type { QueryShape } from "@mailwoman/query-shape"
 
 /**
@@ -80,7 +81,7 @@ export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape
 
 		// Gate 2: every value-bearing node touching the span is a misread-family node sitting WHOLLY
 		// inside it. A node of any other tag, or one extending beyond the span, vetoes the repair.
-		const touching = collectNodes(tree, (n) => overlaps(n, start, end))
+		const touching = collectNodes(tree.roots, (n) => overlaps(n, start, end))
 
 		if (!touching.length) continue
 
@@ -105,35 +106,13 @@ export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape
 }
 
 function anyNode(tree: AddressTree, predicate: (node: AddressNode) => boolean): boolean {
-	return collectNodes(tree, predicate).length > 0
-}
-
-function collectNodes(tree: AddressTree, predicate: (node: AddressNode) => boolean): AddressNode[] {
-	const out: AddressNode[] = []
-	const stack: AddressNode[] = [...tree.roots]
-
-	while (stack.length) {
-		const node = stack.pop()!
-
-		if (predicate(node)) {
-			out.push(node)
-		}
-
-		stack.push(...node.children)
-	}
-
-	return out
+	return firstNodeWhere(tree.roots, predicate) !== undefined
 }
 
 function removeNodes(tree: AddressTree, doomed: ReadonlySet<AddressNode>): void {
 	tree.roots = tree.roots.filter((n) => !doomed.has(n))
 
-	const stack: AddressNode[] = [...tree.roots]
-
-	while (stack.length) {
-		const node = stack.pop()!
-
+	for (const node of walkNodes(tree.roots)) {
 		node.children = node.children.filter((n) => !doomed.has(n))
-		stack.push(...node.children)
 	}
 }

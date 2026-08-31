@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
+import { type CommandSpec, runNativeCommand, stringValue } from "#cli-native/spec"
 
 /**
  * Native OpenAPI command contract.
@@ -27,24 +27,18 @@ export const spec = {
  * Run `mw openapi` without loading React, Ink, or the parser/resolver stack.
  */
 export async function run(args: readonly string[]): Promise<number> {
-	const parsed = parseCommand(spec, args)
+	return await runNativeCommand(spec, args, async (parsed) => {
+		const [{ createMailwomanAPI, MAILWOMAN_API_DOC_INFO }, { printOpenAPIDocument }] = await Promise.all([
+			import("@mailwoman/api"),
+			import("@mailwoman/api-kit"),
+		])
 
-	if (parsed.values.help) {
-		process.stdout.write(`${await renderCommandHelp(spec)}\n`)
+		const app = createMailwomanAPI({})
+		const flavor = stringValue(parsed.values, "flavor") === "3.0" ? "3.0" : "3.1"
+		const out = stringValue(parsed.values, "out")
+
+		printOpenAPIDocument(app, MAILWOMAN_API_DOC_INFO, { flavor, out })
 
 		return 0
-	}
-
-	const [{ createMailwomanAPI, MAILWOMAN_API_DOC_INFO }, { printOpenAPIDocument }] = await Promise.all([
-		import("@mailwoman/api"),
-		import("@mailwoman/api-kit"),
-	])
-
-	const app = createMailwomanAPI({})
-	const flavor = parsed.values.flavor as "3.1" | "3.0"
-	const out = typeof parsed.values.out === "string" ? parsed.values.out : undefined
-
-	printOpenAPIDocument(app, MAILWOMAN_API_DOC_INFO, { flavor, out })
-
-	return 0
+	})
 }

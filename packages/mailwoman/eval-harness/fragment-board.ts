@@ -30,13 +30,17 @@
  *   Row-disjoint leaks the surface across the boundary and measures memorization.
  */
 
-import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
-import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
-import { computeQueryShape } from "@mailwoman/query-shape"
-import { JSONSpliterator } from "spliterator"
 
-import { flattenNodes } from "#eval-harness/flatten-nodes"
+import {
+	runSpanBoard,
+	type SpanBoardFixture,
+	type SpanBoardOptions,
+	type SpanBoardOutcome,
+} from "#eval-harness/span-board"
+
+export { wilson } from "#eval-harness/span-board"
 
 /**
  * Fixture set backing the fragment board — bare-street and partial-address probes.
@@ -46,135 +50,46 @@ export const FRAGMENT_BOARD_FIXTURES = "packages/mailwoman/eval-harness/fixtures
 /**
  * Tags that together form the street phrase under the board's label policy.
  */
-const STREET_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
+const STREET_TAGS: ReadonlySet<string> = new Set(STREET_FAMILY_TAGS)
 
-export interface FragmentFixture {
-	id: string
-	klass: string
-	input: string
-	expect: Record<string, string[]>
+export interface FragmentFixture extends SpanBoardFixture {
 	/**
 	 * Present on the negative class: the parser must emit NO street.
 	 */
 	expect_no_street?: boolean
-	surface: string | null
-	source: string
 }
 
-export interface FragmentBoardOptions {
-	locale?: string
-	weightsCacheRoot?: string
-	fixturesPath?: string
-	/**
-	 * Restrict to one class (e.g. `bare-street`) for a fast iteration loop.
-	 */
-	klass?: string
-}
+export type FragmentBoardOptions = SpanBoardOptions
 
-export interface FragmentBoardOutcome {
-	exitCode: number
-}
-
-/**
- * Wilson score interval — the reason this board exists. The normal approximation collapses at the extremes (it *
- * reports a negative lower bound on 0/400, and a zero-width interval on 400/400); Wilson stays inside [0,1] and stays
- * sane on the small, skewed cells that fragment classes actually produce.
- */
-export function wilson(successes: number, total: number, z = 1.96): { low: number; high: number } {
-	if (total === 0) return { low: 0, high: 0 }
-	const p = successes / total
-	const z2 = z * z
-	const denom = 1 + z2 / total
-	const centre = p + z2 / (2 * total)
-	const spread = z * Math.sqrt((p * (1 - p)) / total + z2 / (4 * total * total))
-
-	return { low: Math.max(0, (centre - spread) / denom), high: Math.min(1, (centre + spread) / denom) }
-}
+export type FragmentBoardOutcome = SpanBoardOutcome
 
 export async function runFragmentBoard(options: FragmentBoardOptions = {}): Promise<FragmentBoardOutcome> {
-	const fixtures = (
-		await Array.fromAsync(JSONSpliterator.fromAsync<FragmentFixture>(options.fixturesPath ?? FRAGMENT_BOARD_FIXTURES))
-	).filter((fixture) => !options.klass || fixture.klass === options.klass)
+	return runSpanBoard<FragmentFixture>(
+		{
+			name: "fragment board",
+			defaultFixturesPath: FRAGMENT_BOARD_FIXTURES,
+			headerLines: (fixtureCount) => [
+				`\nFR locale fragment board — ${fixtureCount} fixtures, BAN (Tier A), production config`,
+				`95% Wilson intervals. bare-locality scores the ABSENCE of a street (the hallucination class).\n`,
+			],
+			// hit = the scored assertion held. For positive classes that is street exact-match; for the
+			// negative class it is the ABSENCE of a street.
+			grade: (fixture, nodes) => {
+				const street = nodes
+					.filter((node) => STREET_TAGS.has(node.tag))
+					.toSorted((a, b) => a.start - b.start)
+					.map((node) => node.value)
+					.join(" ")
 
-	if (!fixtures.length) throw new Error(`fragment board: no fixtures matched (klass=${options.klass ?? "*"})`)
+				const ok = fixture.expect_no_street
+					? foldCaseWhitespace(street) === ""
+					: foldCaseWhitespace(street) === foldCaseWhitespace((fixture.expect.street ?? []).join(" "))
 
-	const classifier = await NeuralAddressClassifier.loadFromWeights({
-		locale: options.locale ?? "en-US",
-		cacheRoot: options.weightsCacheRoot,
-	})
-
-	// hit = the scored assertion held. For positive classes that is street exact-match; for the
-	// negative class it is the ABSENCE of a street.
-	const tally = new Map<string, { hit: number; total: number; misses: Array<FragmentFixture & { got: string }> }>()
-
-	for (const fixture of fixtures) {
-		// Production config — the query-shape prior is fed on every path production parses on
-		// (safeClassify, and geocode-core since #981). See baselines.json $config.
-		const tree = await classifier.parse(fixture.input, {
-			postcodeRepair: true,
-			queryShape: computeQueryShape(fixture.input),
-			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-		})
-
-		const street = flattenNodes(tree.roots)
-			.filter((node) => STREET_TAGS.has(node.tag))
-			.toSorted((a, b) => a.start - b.start)
-			.map((node) => node.value)
-			.join(" ")
-
-		const bucket = tally.get(fixture.klass) ?? { hit: 0, total: 0, misses: [] }
-
-		bucket.total++
-
-		const ok = fixture.expect_no_street
-			? foldCaseWhitespace(street) === ""
-			: foldCaseWhitespace(street) === foldCaseWhitespace((fixture.expect.street ?? []).join(" "))
-
-		if (ok) {
-			bucket.hit++
-		} else {
-			bucket.misses.push({ ...fixture, got: street })
-		}
-
-		tally.set(fixture.klass, bucket)
-	}
-
-	console.log(`\nFR locale fragment board — ${fixtures.length} fixtures, BAN (Tier A), production config`)
-	console.log(`95% Wilson intervals. bare-locality scores the ABSENCE of a street (the hallucination class).\n`)
-	console.log(`  class                     n     rate    95% CI`)
-
-	let totalHit = 0
-	let totalN = 0
-
-	for (const [klass, bucket] of [...tally].toSorted()) {
-		totalHit += bucket.hit
-		totalN += bucket.total
-		const rate = bucket.hit / bucket.total
-		const ci = wilson(bucket.hit, bucket.total)
-
-		console.log(
-			`  ${klass.padEnd(22)} ${String(bucket.total).padStart(4)}   ${rate.toFixed(3)}   [${ci.low.toFixed(3)}, ${ci.high.toFixed(3)}]`
-		)
-	}
-
-	const overall = wilson(totalHit, totalN)
-
-	console.log(
-		`  ${"OVERALL".padEnd(22)} ${String(totalN).padStart(4)}   ${(totalHit / totalN).toFixed(3)}   [${overall.low.toFixed(3)}, ${overall.high.toFixed(3)}]`
+				return { ok, got: street }
+			},
+			describeWant: (miss) => (miss.expect_no_street ? "(no street)" : (miss.expect.street ?? []).join(" ")),
+			missSampleSize: 6,
+		},
+		options
 	)
-
-	for (const [klass, bucket] of [...tally].toSorted()) {
-		if (!bucket.misses.length) continue
-
-		console.log(`\n  --- ${klass}: ${bucket.misses.length} misses (first 6) ---`)
-
-		for (const miss of bucket.misses.slice(0, 6)) {
-			const want = miss.expect_no_street ? "(no street)" : (miss.expect.street ?? []).join(" ")
-
-			console.log(`    ${JSON.stringify(miss.input)}`)
-			console.log(`        want=${JSON.stringify(want)}  got=${JSON.stringify(miss.got)}`)
-		}
-	}
-
-	return { exitCode: 0 }
 }

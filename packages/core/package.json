@@ -190,6 +190,11 @@
 			"default": "./out/scripting/index.js",
 			"types": "./out/scripting/index.d.ts"
 		},
+		"./scripting/ingest-chunk-script": {
+			"node": "./scripting/ingest-chunk-script.ts",
+			"default": "./out/scripting/ingest-chunk-script.js",
+			"types": "./out/scripting/ingest-chunk-script.d.ts"
+		},
 		"./scripting/arguments": {
 			"node": "./scripting/arguments.ts",
 			"default": "./out/scripting/arguments.js",
@@ -224,6 +229,11 @@
 			"node": "./api/disk-storage.ts",
 			"default": "./out/api/disk-storage.js",
 			"types": "./out/api/disk-storage.d.ts"
+		},
+		"./api/paced-client": {
+			"node": "./api/paced-client.ts",
+			"default": "./out/api/paced-client.js",
+			"types": "./out/api/paced-client.d.ts"
 		},
 		"./api/test-clocks": {
 			"node": "./api/test-clocks.ts",

@@ -39,7 +39,7 @@
  *   --out data/eval/calibration/confidences.jsonl
  */
 
-import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
+import { type AddressTree, flattenTreeNodes } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
@@ -101,27 +101,6 @@ const OA_GRADABLE = new Set(["locality", "region", "postcode"])
  */
 function tagClass(tag: string): string {
 	return STREET_FAMILY.has(tag) ? "street" : tag
-}
-
-/**
- * Flatten the decoded tree to a list of (tag, value, confidence) spans.
- */
-function flattenSpans(tree: AddressTree): { tag: string; value: string; conf: number }[] {
-	const out: { tag: string; value: string; conf: number }[] = []
-
-	const walk = (n: AddressNode): void => {
-		out.push({ tag: n.tag, value: n.value, conf: n.confidence })
-
-		for (const c of n.children) {
-			walk(c)
-		}
-	}
-
-	for (const r of tree.roots) {
-		walk(r)
-	}
-
-	return out
 }
 
 /**
@@ -216,7 +195,7 @@ async function main(): Promise<void> {
 			continue
 		}
 
-		for (const span of flattenSpans(tree)) {
+		for (const span of flattenTreeNodes(tree)) {
 			const correct = gradeSpan(span.tag, span.value, row)
 
 			if (correct === null) {
@@ -225,7 +204,7 @@ async function main(): Promise<void> {
 				continue
 			}
 
-			records.push({ conf: span.conf, correct, tag: span.tag, country: row.country, source: row.source })
+			records.push({ conf: span.confidence, correct, tag: span.tag, country: row.country, source: row.source })
 		}
 	}
 

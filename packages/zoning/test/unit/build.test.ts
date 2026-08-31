@@ -470,9 +470,8 @@ describe("the area cross-check", () => {
 
 	it("leaves the publisher's figure ABSENT where it was not read, rather than defaulting it to its own", () => {
 		// A receipt printing "publisher 205.4 km², 0.000% apart" for a check that never ran is the one shape a reader cannot
-		// tell from a pass. The fixture build supplies no publisher figure, so both fields are absent.
-		expect(result.area.sourceKM2).toBeUndefined()
-		expect(result.area.relativeGap).toBeUndefined()
+		// tell from a pass. The fixture build supplies no publisher figure, so the reading's witness is absent.
+		expect(result.area.witness).toBe("absent")
 	})
 
 	it("refuses a build whose rings do not add up to the publisher's own area", async () => {
@@ -525,7 +524,10 @@ describe("the area cross-check", () => {
 			expectedSourceAreaM2: holed.rings.signedAreaM2,
 		})
 
-		expect(built.area.relativeGap!).toBeLessThan(0.0001)
+		if (built.area.witness !== "source")
+			throw new Error("the publisher's figure was supplied, so the witness is the source")
+
+		expect(built.area.relativeGap).toBeLessThan(0.0001)
 		expect(built.rings.holes).toBe(1)
 		expect(built.rings.nestedHoles).toBe(1)
 	})

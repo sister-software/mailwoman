@@ -38,15 +38,20 @@
  *   omit it for a dry run that only prints the block.
  */
 
-import { ADDRESS_SYSTEM_CONVENTIONS, type SystemCode } from "@mailwoman/codex"
-import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, prettyJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
+import type { ScorerOverrides } from "@mailwoman/neural/scorer"
 
-import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "#eval-harness/per-tag-f1"
+import {
+	loadPerTagEvalRows,
+	MASK_EVAL_LOCALES,
+	rowsHaveTag,
+	scoreConventionsMaskOffOn,
+	UNFOLDED_ADDRESS_TAGS,
+} from "#eval-harness/per-tag-f1"
 
 /**
  * Options for {@linkcode generateCapabilityManifest}.
@@ -91,32 +96,6 @@ const TIERS: Record<string, ScorerOverrides> = {
 	pocket: { gazetteer: false },
 }
 
-interface LocaleEvalSpec {
-	/**
-	 * The codex address-system this locale maps to (`us`, `fr`, …).
-	 */
-	system: SystemCode
-	/**
-	 * Eval JSONL files (raw + components). Multiple files are concatenated.
-	 */
-	files: string[]
-}
-
-/**
- * One eval spec per locale that has an eval set. The eval rows carry split street parts so the affix capability
- * (`street_prefix`/`street_suffix`) is measurable — the whole point of the manifest (the folded `per-locale-f1.ts`
- * joins the three street parts and cannot see it). FR uses the dedicated street-prefix slice
- * (`fr-street-prefix-real.jsonl`, the #719 reproduction), NOT the broad golden dev set, for the essential tags: golden
- * FR carries only ~7 `street_prefix` rows against ~1535 without it, so the unfolded `street_prefix` F1 there is
- * dominated by absent-gold rows (measured 5.3) — it would UNDER-certify the very capability the gate exists to protect.
- * On the purpose-built slice the model emits FR `street_prefix` at F1 80.0 (the figure the #719 fix cites), which is
- * the honest capability number the loader must guard.
- */
-const LOCALES: LocaleEvalSpec[] = [
-	{ system: "us", files: ["data/eval/golden/v0.1.2/dev/us.jsonl"] },
-	{ system: "fr", files: ["data/eval/external/fr-street-prefix-real.jsonl"] },
-]
-
 /**
  * The per-tag vocabulary scored, UNFOLDED (street parts split — mirrors score-affix.ts).
  */
@@ -159,47 +138,29 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 	for (const [tier, tierOverrides] of Object.entries(TIERS)) {
 		capabilities[tier] = {}
 
-		for (const spec of LOCALES) {
+		for (const spec of MASK_EVAL_LOCALES) {
 			const rows = await loadPerTagEvalRows(spec.files)
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-			// mask-OFF: conventions disabled. createScorer warns (declared-required override) — expected.
-			const offScorer = await createScorer({
-				modelPath: paths.model,
-				tokenizerPath: paths.tokenizer,
-				modelCardPath: paths.modelCard,
-				anchorLookupPath: paths.anchorLookup,
-				gazetteerLexiconPath: paths.gazetteerLexicon,
-				strict: true,
-				// The generator must construct the scorer WHILE the card's `capabilities` block may not
-				// yet exist; the loader's delta-gate is a no-op until the block is written. After a
-				// `--write`, regenerating uses the already-written block, but mask-OFF construction never
-				// trips the gate (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
-				overrides: { ...tierOverrides, conventions: false },
-			})
-
-			const off = await scorePerTagF1(rows, TAGS, async (raw) => {
-				// Certification probes are formatted postal addresses, whose production path disables
-				// evidence-bundle channels.
-				return decodeAsJSON(await offScorer.parse(raw, { inputMode: "formatted" })) as Record<string, string>
-			})
-
-			// mask-ON: conventions in `auto` mode (reads the model's locale head → applies the detected
-			// system's forbiddenTags). This is the SHIP behavior whose damage we measure.
-			const onScorer = await createScorer({
-				modelPath: paths.model,
-				tokenizerPath: paths.tokenizer,
-				modelCardPath: paths.modelCard,
-				anchorLookupPath: paths.anchorLookup,
-				gazetteerLexiconPath: paths.gazetteerLexicon,
-				strict: true,
-				overrides: { ...tierOverrides, conventions: "auto" },
-			})
-
-			const on = await scorePerTagF1(rows, TAGS, async (raw) => {
-				return decodeAsJSON(await onScorer.parse(raw, { inputMode: "formatted" })) as Record<string, string>
-			})
+			// The generator constructs its scorers WHILE the card's `capabilities` block may not yet
+			// exist; the loader's delta-gate is a no-op until the block is written. After a `--write`,
+			// regenerating uses the already-written block, but mask-OFF construction never trips the
+			// gate (it only fires for a forbidden CERTIFIED tag, and mask-off forbids none).
+			// `inputMode: "formatted"` is deliberate and score-relevant: certification probes are
+			// formatted postal addresses, whose production path disables evidence-bundle channels.
+			const { off, on } = await scoreConventionsMaskOffOn(
+				rows,
+				TAGS,
+				{
+					modelPath: paths.model,
+					tokenizerPath: paths.tokenizer,
+					modelCardPath: paths.modelCard,
+					anchorLookupPath: paths.anchorLookup,
+					gazetteerLexiconPath: paths.gazetteerLexicon,
+				},
+				{ tierOverrides, inputMode: "formatted" }
+			)
 
 			const perTag: Record<string, TagCapability> = {}
 

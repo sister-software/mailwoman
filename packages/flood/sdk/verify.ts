@@ -32,11 +32,12 @@
  *   `assessDatumTransformation` in `ingest.ts` for the guard that now refuses the build instead.
  */
 
+import { createOGCFeaturesBBoxReader } from "@mailwoman/core/api"
 import {
 	expandH3Cell,
-	interiorPointOfEncodedRings,
-	pointInPolygon,
-	segmentDistanceMetres,
+	geometryContains,
+	nearestRingEdgeMetres,
+	strideSampleInteriorPoints,
 	type H3CellShort,
 } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -167,24 +168,12 @@ export type ServiceFeatureReader = (latitude: number, longitude: number) => Prom
  * returned something here" would pass on any polygon within eleven metres.
  */
 export function createEAServiceReader(client: Pick<EAFloodClient, "fetch">): ServiceFeatureReader {
-	return async (latitude, longitude) => {
-		const { data } = await client.fetch<{ features?: ServiceFeature[] }>({
-			method: "GET",
-			url: `${EA_SPATIAL_BASE_URL}/ogc/features/v1/collections/${EA_FLOOD_LAYER}/items`,
-			params: {
-				bbox: [
-					longitude - PROBE_HALF_WIDTH_DEGREES,
-					latitude - PROBE_HALF_WIDTH_DEGREES,
-					longitude + PROBE_HALF_WIDTH_DEGREES,
-					latitude + PROBE_HALF_WIDTH_DEGREES,
-				].join(","),
-				limit: SERVICE_FEATURE_LIMIT,
-				f: "application/json",
-			},
-		})
-
-		return data.features ?? []
-	}
+	return createOGCFeaturesBBoxReader<ServiceFeature>({
+		client,
+		collectionURL: `${EA_SPATIAL_BASE_URL}/ogc/features/v1/collections/${EA_FLOOD_LAYER}`,
+		halfWidthDegrees: PROBE_HALF_WIDTH_DEGREES,
+		limit: SERVICE_FEATURE_LIMIT,
+	})
 }
 
 export interface VerifyFloodOptions {
@@ -268,25 +257,14 @@ async function readServiceZone(
 
 		if (!geometry) continue
 
-		const polygons =
-			geometry.type === "MultiPolygon"
-				? (geometry.coordinates as number[][][][])
-				: [geometry.coordinates as number[][][]]
+		const distance = nearestRingEdgeMetres(geometry, longitude, latitude)
 
-		for (const rings of polygons) {
-			for (const ring of rings) {
-				for (let i = 1; i < ring.length; i++) {
-					const distance = segmentDistanceMetres(longitude, latitude, ring[i - 1]!, ring[i]!)
+		if (distance < nearest) {
+			nearest = distance
+		}
 
-					if (distance < nearest) {
-						nearest = distance
-					}
-				}
-			}
-
-			if (zone === null && pointInPolygon(longitude, latitude, rings)) {
-				zone = feature.properties?.flood_zone ?? null
-			}
+		if (zone === null && geometryContains(geometry, longitude, latitude)) {
+			zone = feature.properties?.flood_zone ?? null
 		}
 	}
 
@@ -299,14 +277,8 @@ async function readServiceZone(
  *
  * BOTH KINDS ARE REQUIRED. A sample drawn only from inside polygons never exercises the designated-absence reading,
  * which is the reading this product's Zone-1-as-absence design turns on — and an artifact that answered `unknown`
- * everywhere except inside a polygon would pass a polygon-only sample.
- *
- * The draw is a deterministic stride over the primary key and over the coverage cells, not a random one, so a re-run
- * compares the same points and a disagreement can be looked at rather than re-rolled.
- *
- * THE KEYS ARE CHOSEN BEFORE ANY GEOMETRY IS READ. A `WHERE rowid % stride = 0` scan looks like the same thing and is
- * not: it walks the table itself, which at national scale means reading gigabytes of ring blobs to keep forty of them.
- * Selecting `area_id` alone is an index-only walk over the primary key, and the rows it names are then fetched by key.
+ * everywhere except inside a polygon would pass a polygon-only sample. The stride discipline — keys chosen before any
+ * geometry is read, deterministic rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
 	databasePath: string,
@@ -316,39 +288,34 @@ export function sampleAgreementPoints(
 	const absenceCount = options.absenceCount ?? 20
 	using database = new DatabaseClient<FloodDatabase>(databasePath, { readOnly: true })
 
-	const points: Array<{ label: string; latitude: number; longitude: number }> = []
-
 	const areaIDs = (
 		database.prepare("SELECT area_id FROM flood_zone_area ORDER BY area_id").all() as Array<{ area_id: string }>
 	).map((row) => row.area_id)
-
-	const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, insideCount)))
 
 	const selectArea = database.prepare(
 		"SELECT area_id, zone_code, min_lat, min_lon, max_lat, max_lon, rings FROM flood_zone_area WHERE area_id = ?"
 	)
 
-	for (let index = 0; index < areaIDs.length && points.length < insideCount; index += stride) {
-		const area = selectArea.get(areaIDs[index]!) as
-			| {
-					area_id: string
-					zone_code: string
-					min_lat: number
-					min_lon: number
-					max_lat: number
-					max_lon: number
-					rings: Uint8Array
-			  }
-			| undefined
-
-		if (!area) continue
-
-		const interior = interiorPointOfEncodedRings(area, 7)
-
-		if (!interior) continue
-
-		points.push({ label: `${area.zone_code} polygon ${area.area_id}`, ...interior })
-	}
+	const points: Array<{ label: string; latitude: number; longitude: number }> = strideSampleInteriorPoints(
+		areaIDs,
+		insideCount,
+		{
+			fetch: (key) =>
+				selectArea.get(key) as
+					| {
+							area_id: string
+							zone_code: string
+							min_lat: number
+							min_lon: number
+							max_lat: number
+							max_lon: number
+							rings: Uint8Array
+					  }
+					| undefined,
+			gridSteps: 7,
+			toPoint: (area, interior) => ({ label: `${area.zone_code} polygon ${area.area_id}`, ...interior }),
+		}
+	)
 
 	// A designated absence is a coverage cell the authority determined and no polygon reaches — exactly the cells whose
 	// `observed_rows` is zero, which is the storable form of a Zone 1 designation.

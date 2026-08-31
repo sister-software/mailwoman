@@ -10,9 +10,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peers.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -56,7 +54,7 @@ const GazetteerBuildGNAFRooftop: ParsedCommandComponent<Options> = ({ options })
 		const r = await buildGNAFRooftopShard({
 			standardDir: options.standardDir,
 			out: options.out,
-			states: options.states?.split(","),
+			states: options.states === undefined ? undefined : splitList(options.states),
 			release: options.release,
 			buildSHA: options.buildSha,
 			createdAt: options.createdAt,
@@ -70,11 +68,7 @@ const GazetteerBuildGNAFRooftop: ParsedCommandComponent<Options> = ({ options })
 		)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default GazetteerBuildGNAFRooftop

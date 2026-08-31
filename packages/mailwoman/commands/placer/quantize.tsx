@@ -10,7 +10,13 @@
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Int8-quantize the coarse placer (#244) weights (4× smaller)"
 
@@ -31,16 +37,14 @@ interface Options {
 	out?: string
 }
 
-const report = (line: string): void => console.error(line)
-
 const PlacerQuantize: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { quantizeCoarsePlacer } = await import("@mailwoman/core/coarse-placer/tools")
 
-		return quantizeCoarsePlacer({ in: options.in, out: options.out }, report)
+		return quantizeCoarsePlacer({ in: options.in, out: options.out }, reportToStderr)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const { outDir, fp32Bytes, int8Bytes } = state.result

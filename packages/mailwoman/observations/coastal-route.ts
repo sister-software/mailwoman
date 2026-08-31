@@ -50,6 +50,9 @@ import {
 } from "@mailwoman/coastal"
 
 import {
+	createDesignationRoute,
+	describeCoverage,
+	describeLayerProvenance,
 	observationCoverageRecord,
 	observationLayerRecord,
 	type ObservationCoverageRecord,
@@ -167,86 +170,68 @@ export function createCoastalErosionRoute(options: CoastalErosionRouteOptions): 
 	const scenarioKey = options.scenarioKey ?? DEFAULT_NCERM_SCENARIO
 
 	return {
-		identity: lookup.identity,
+		...createDesignationRoute(lookup, {
+			read: (latitude, longitude) => lookup.lookup(latitude, longitude, scenarioKey),
+			refusalFor: (reading) => (reading.kind !== CoastalReadingKind.Designated ? "no_designation_here" : undefined),
+			toObservation: (reading, latitude, longitude) =>
+				toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+		}),
 		scenarioKey,
-		observe: (latitude, longitude) => {
-			if (typeof latitude !== "number" || typeof longitude !== "number") {
-				return { fired: false, refusal: "no_coordinate" }
-			}
-
-			return decide(
-				lookup.lookup(latitude, longitude, scenarioKey),
-				lookup.identity,
-				latitude,
-				longitude,
-				options.databasePath
-			)
-		},
-		[Symbol.dispose]() {
-			lookup[Symbol.dispose]()
-		},
 	}
 }
 
 /**
- * Turn one reading into a decision.
+ * Build the observation for a reading the refusal check let through.
  */
-function decide(
+function toObservation(
 	reading: CoastalErosionReading,
 	identity: CoastalLayerIdentity,
 	latitude: number,
 	longitude: number,
 	databasePath: string
-): CoastalDecision {
-	if (reading.kind !== CoastalReadingKind.Designated) {
-		return { fired: false, refusal: "no_designation_here" }
-	}
-
+): CoastalErosionObservation {
 	const { manifest } = identity
 
 	return {
-		fired: true,
-		observation: {
-			reading: reading.kind,
-			scenario: {
-				key: reading.scenario.key,
-				management: reading.scenario.management,
-				horizon: reading.scenario.horizon,
-				climateAllowance: reading.scenario.climateAllowance,
-				label: reading.scenario.label,
-			},
-			designations: reading.designations,
-			containment: reading.containment,
-			...observationCoverageRecord(reading.coverage),
-			indexCellIndex: reading.indexCellIndex,
-			limits: reading.limits,
-			coverageLimit: reading.coverageLimit,
-			layer: observationLayerRecord(manifest),
-			databasePath,
-			coordinate: { latitude, longitude },
+		reading: reading.kind,
+		scenario: {
+			key: reading.scenario.key,
+			management: reading.scenario.management,
+			horizon: reading.scenario.horizon,
+			climateAllowance: reading.scenario.climateAllowance,
+			label: reading.scenario.label,
 		},
+		designations: reading.designations,
+		containment: reading.containment,
+		...observationCoverageRecord(reading.coverage),
+		indexCellIndex: reading.indexCellIndex,
+		limits: reading.limits,
+		coverageLimit: reading.coverageLimit,
+		layer: observationLayerRecord(manifest),
+		databasePath,
+		coordinate: { latitude, longitude },
 	}
+}
+
+/**
+ * What the authority's mapping assigns, in ONE wording — shared by the one-line description and the marker message.
+ */
+export function coastalErosionAssignmentClause(observation: CoastalErosionObservation): string {
+	const first = observation.designations[0]
+
+	return first
+		? `places the location inside a coastal-erosion zone at ${first.distanceM} m of cumulative erosion` +
+				(observation.designations.length > 1 ? ` (and ${observation.designations.length - 1} more overlapping)` : "")
+		: "places the location inside a coastal-erosion zone"
 }
 
 /**
  * One line a reader can check the claim from, with the scenario and the vintage on it.
  */
 export function describeCoastalErosion(observation: CoastalErosionObservation): string {
-	const first = observation.designations[0]
-
-	const assigned = first
-		? `places the location inside a coastal-erosion zone at ${first.distanceM} m of cumulative erosion` +
-			(observation.designations.length > 1 ? ` (and ${observation.designations.length - 1} more overlapping)` : "")
-		: "places the location inside a coastal-erosion zone"
-
-	const coverage = observation.coverage
-		? `coverage cell ${observation.coverage.h3CellIndex} (res ${observation.coverage.resolution}) on basis "${observation.coverage.basis}"`
-		: "no coverage row"
-
 	return (
-		`Environment Agency NCERM ${assigned} under scenario ${observation.scenario.key} (${observation.scenario.label}) ` +
-		`at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} (${observation.containment}); ${coverage}; ` +
-		`from ${observation.layer.name} ${observation.layer.version} (${observation.layer.source} ${observation.layer.sourceVintage}, ` +
-		`${observation.layer.license}, build ${observation.layer.buildSHA})`
+		`Environment Agency NCERM ${coastalErosionAssignmentClause(observation)} under scenario ${observation.scenario.key} (${observation.scenario.label}) ` +
+		`at ${observation.coordinate.latitude}, ${observation.coordinate.longitude} (${observation.containment}); ${describeCoverage(observation.coverage)}; ` +
+		`${describeLayerProvenance(observation.layer)}`
 	)
 }

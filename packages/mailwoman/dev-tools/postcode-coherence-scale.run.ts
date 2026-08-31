@@ -43,12 +43,11 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { wofShardPaths } from "@mailwoman/core/utils"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { JSONSpliterator } from "spliterator"
 
-import { conventionCandidateDBPath } from "#resolver-backend"
+import { conventionCandidateDBPath, existingWOFShardPaths } from "#resolver-backend"
 
 /**
  * A panel row reduced to the only two fields the pass reads.
@@ -137,13 +136,7 @@ async function makeBackend(): Promise<ResolverBackend> {
 
 	// The PRODUCTION shard set, exactly as `wofShardPaths()` orders it — the point of the FTS leg is to measure what a
 	// default-on mechanism would see in production, not what a hand-picked shard list can be made to show.
-	const paths: string[] = []
-
-	for (const shardPath of wofShardPaths()) {
-		if (await pathExists(shardPath)) {
-			paths.push(shardPath)
-		}
-	}
+	const paths = await existingWOFShardPaths()
 
 	console.error(`[probe] FTS backend over ${paths.length} shards: ${paths.join(", ")}`)
 

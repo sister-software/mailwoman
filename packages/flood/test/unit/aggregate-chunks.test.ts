@@ -67,13 +67,17 @@ describe("aggregateChunks", () => {
 			chunk({ area: { sourceM2: 1_000_000, nestedM2: 990_000, allExteriorM2: 1_100_000 } }),
 		])
 
-		expect(result.area.sourceKM2).toBeCloseTo(2, 6)
-		expect(result.area.nestedKM2).toBeCloseTo(2, 6)
-		expect(result.area.relativeGap).toBeCloseTo(0, 6)
-		expect(result.area.allExteriorKM2).toBeCloseTo(2.2, 6)
+		const { area } = result
+
+		if (area.witness !== "source") throw new Error("the summed area reading carries no source witness")
+
+		expect(area.sourceKM2).toBeCloseTo(2, 6)
+		expect(area.nestedKM2).toBeCloseTo(2, 6)
+		expect(area.relativeGap).toBeCloseTo(0, 6)
+		expect(area.allExteriorKM2).toBeCloseTo(2.2, 6)
 	})
 
-	it("reports a zero gap for an empty run rather than dividing by zero", () => {
-		expect(aggregateChunks([]).area.relativeGap).toBe(0)
+	it("reports an ABSENT witness for an empty run rather than a zero gap", () => {
+		expect(aggregateChunks([]).area.witness).toBe("absent")
 	})
 })

@@ -25,6 +25,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { escapeHTML } from "@mailwoman/core/strings/escape"
 
 /**
  * Options for {@linkcode yardstickFigure}.
@@ -93,7 +94,7 @@ const MODELS = [
 	{ key: "FS", label: "FS full stack", color: "#9ca3af", width: 2, dash: "5 4" },
 ]
 
-const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+const esc = escapeHTML
 
 /**
  * Emit the dedup-yardstick slope chart as a self-contained SVG — see the module doc.

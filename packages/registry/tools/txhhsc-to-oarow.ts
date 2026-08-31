@@ -19,25 +19,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
 import { TSVSpliterator } from "spliterator"
 
-/**
- * Texas bounding box, used to reject rows whose coordinates landed in the wrong state.
- */
-const TX_MIN_LATITUDE = 25
-
-/**
- * See {@link TX_MIN_LATITUDE}.
- */
-const TX_MAX_LATITUDE = 37
-
-/**
- * See {@link TX_MIN_LATITUDE}.
- */
-const TX_MIN_LONGITUDE = -107
-
-/**
- * See {@link TX_MIN_LATITUDE}.
- */
-const TX_MAX_LONGITUDE = -93
+import { inTXBBOX } from "#tools/shared"
 
 /**
  * Options for {@linkcode convertTXHHSC}.
@@ -105,7 +87,7 @@ export async function convertTXHHSC(
 		const lon = Number(m[2])
 
 		// Sanity: TX bounding box (rejects swapped/garbage coords).
-		if (lat < TX_MIN_LATITUDE || lat > TX_MAX_LATITUDE || lon > TX_MAX_LONGITUDE || lon < TX_MIN_LONGITUDE) {
+		if (!inTXBBOX(lat, lon)) {
 			skipped++
 
 			continue

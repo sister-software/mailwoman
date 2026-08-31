@@ -9,6 +9,8 @@
 
 import { parseArgs, type ParseArgsConfig } from "node:util"
 
+export type { ParseArgsConfig } from "node:util"
+
 export type UnsafeCLIArgument = string & { __unsafeCLIArgumentBrand: never }
 
 export type UnsafeCLIArguments = ReadonlyArray<UnsafeCLIArgument>

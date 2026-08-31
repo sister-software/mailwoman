@@ -32,7 +32,14 @@ import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwo
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	splitUpperList,
+	useCommandTask,
+} from "#cli-kit"
 
 // Overture prunes old releases from the bucket (the 2026-08-19 listing held exactly one), so a stale
 // pin fails the default ingest outright. Moves together with `gazetteer-pipeline/poi/defaults.ts`'s
@@ -124,7 +131,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		}
 
 		const release = options.release ?? DEFAULT_RELEASE
-		const countries = options.countries.split(",").map((c) => c.trim().toUpperCase())
+		const countries = splitUpperList(options.countries)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const outRoot = options.out ?? dataRootPath("overture")
 		const outDir = join(outRoot, release)
@@ -311,7 +318,7 @@ const GazetteerOvertureIngest: ParsedCommandComponent<Options> = ({ options }) =
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

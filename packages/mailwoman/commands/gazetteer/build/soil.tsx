@@ -26,10 +26,18 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
-import { runFileSync } from "@mailwoman/core/process"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	formatLayerVerification,
+	type ParsedCommandComponent,
+	splitNumberList,
+	useCommandTask,
+} from "#cli-kit"
+import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
  * Coverage resolution. Res 6 matches what the POI and flood layers write, so a reader already keyed to another layer's
@@ -102,26 +110,14 @@ async function runVerification(
 		onProgress: (message) => console.error(`  [verify] ${message}`),
 	})
 
-	// A disagreement count is not actionable on its own — the rows are. Printed to stderr with the progress stream,
-	// because the first thing anyone does with a non-zero count is ask which points.
-	for (const row of verified.agreement.filter((entry) => entry.outcome === "disagree")) {
-		console.error(
+	return formatLayerVerification(verified, {
+		serviceLabel: "Soil Data Access",
+		outsideLabel: "outside the built survey areas",
+		outsideNoneLabel: "none read a map unit",
+		describeRow: (row) =>
 			`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.localMukey ?? "no map unit"}, ` +
-				`service ${row.serviceMukey ?? "no map unit"}, ${row.nearestEdgeMetres?.toFixed(3) ?? "?"} m to the nearest edge`
-		)
-	}
-
-	return [
-		`verify: ${verified.agreed}/${verified.agreement.length} agree with Soil Data Access · ` +
-			`${verified.boundaryTolerance} within boundary tolerance · ${verified.disagreed} disagree`,
-		`verify (outside the built survey areas): ${verified.outsidePassed}/${verified.outside.length} read unknown` +
-			(verified.outside.some((row) => !row.passed)
-				? `, ${verified.outside
-						.filter((row) => !row.passed)
-						.map((row) => row.label)
-						.join(", ")} did not`
-				: ""),
-	]
+			`service ${row.serviceMukey ?? "no map unit"}, ${row.nearestEdgeMetres?.toFixed(3) ?? "?"} m to the nearest edge`,
+	})
 }
 
 const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
@@ -170,7 +166,7 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		console.error(`▸ product vintage: ${acquired.sourceVintage} (${acquired.areas.length} survey area(s))`)
 
 		if (options.measureResolutions) {
-			const resolutions = options.measureResolutions.split(",").map((value) => Number(value.trim()))
+			const resolutions = splitNumberList(options.measureResolutions)
 			const lines: string[] = []
 
 			for (const area of acquired.areas) {
@@ -198,7 +194,7 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
 		const out = options.out ?? String(dataRootPath("soil", "soil.db"))
-		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		const buildCmd =
 			`mailwoman gazetteer build soil ${options.area ? `--area ${options.area}` : `--region ${prefix}`} ` +
@@ -232,8 +228,10 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 				`· ${result.unsampledCells.toLocaleString()} touched cells no lattice point landed inside`,
 			`coverage: ${result.coverageCells.toLocaleString()} cells at res ${result.coverageResolution} · ` +
 				`${result.coverageCellsWithoutMapping.toLocaleString()} interior cells with no mapped soil, which get NO row`,
-			`area: authority ${result.area.publishedKM2.toFixed(1)} km² · rings with holes ${result.area.nestedKM2.toFixed(1)} km² ` +
-				`(${(result.area.relativeGap * 100).toFixed(3)}% apart) · rings without holes ${result.area.allExteriorKM2.toFixed(1)} km²`,
+			`area: authority ${result.area.witness === "source" ? `${result.area.sourceKM2.toFixed(1)} km²` : "not published (no witness)"} · ` +
+				`rings with holes ${result.area.nestedKM2.toFixed(1)} km²` +
+				`${result.area.witness === "source" ? ` (${(result.area.relativeGap * 100).toFixed(3)}% apart)` : ""} · ` +
+				`rings without holes ${result.area.allExteriorKM2.toFixed(1)} km²`,
 			`manifest: name=${soilLayerName(region)} tier=shipped license=${SSURGO_LICENSE} ` +
 				`attribution="${SSURGO_ATTRIBUTION}" sourceVintage=${acquired.sourceVintage} buildSHA=${buildSHA}`,
 		]
@@ -247,7 +245,7 @@ const GazetteerBuildSoil: ParsedCommandComponent<Options> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

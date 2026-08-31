@@ -9,6 +9,7 @@
 
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import type * as React from "react"
 
 type OptionValue = boolean | number | string | boolean[] | number[] | string[]
 
@@ -297,4 +298,104 @@ export async function renderCommandHelp(spec: CommandSpec): Promise<string> {
 	}
 
 	return ui.toString()
+}
+
+/**
+ * Validator for count-shaped number options.
+ */
+export const positiveInteger = (value: number): boolean => Number.isInteger(value) && value > 0
+
+/**
+ * Option-descriptor shorthand: a plain string option.
+ */
+export const stringOption = (description: string) => ({ type: "string", description }) as const
+
+/**
+ * Option-descriptor shorthand: a plain number option.
+ */
+export const numberOption = (description: string) => ({ type: "number", description }) as const
+
+/**
+ * Option-descriptor shorthand: a boolean flag defaulting off.
+ */
+export const booleanOption = (description: string) => ({ type: "boolean", default: false, description }) as const
+
+/**
+ * Option-descriptor shorthand: a number option refusing zero, negatives, and fractions.
+ */
+export const positiveIntegerOption = (description: string, defaultValue?: number) =>
+	({
+		type: "number",
+		...(defaultValue === undefined ? {} : { default: defaultValue }),
+		validate: positiveInteger,
+		validationMessage: `${description} must be a positive integer.`,
+		description,
+	}) as const
+
+/**
+ * Typed string read over {@link ParsedCommand.values} — `undefined` for anything but a string.
+ */
+export function stringValue(values: Record<string, unknown>, name: string): string | undefined {
+	const value = values[name]
+
+	return typeof value === "string" ? value : undefined
+}
+
+/**
+ * Typed boolean read over {@link ParsedCommand.values} — strictly `=== true`.
+ */
+export function booleanValue(values: Record<string, unknown>, name: string): boolean {
+	return values[name] === true
+}
+
+/**
+ * A boolean flag with NO schema default: unstated stays `undefined` so the library default applies downstream, and only
+ * a stated `--flag` / `--no-flag` reaches the consumer as an explicit value.
+ */
+export function triStateValue(values: Record<string, unknown>, name: string): boolean | undefined {
+	const value = values[name]
+
+	return typeof value === "boolean" ? value : undefined
+}
+
+/**
+ * Typed number read over {@link ParsedCommand.values} — `undefined` for anything but a number.
+ */
+export function numberValue(values: Record<string, unknown>, name: string): number | undefined {
+	const value = values[name]
+
+	return typeof value === "number" ? value : undefined
+}
+
+/**
+ * The shared preamble of every native command: parse against `spec`, answer `--help`, then hand the parsed command to
+ * `handler`.
+ */
+export async function runNativeCommand(
+	spec: CommandSpec,
+	args: readonly string[],
+	handler: (parsed: ParsedCommand) => number | Promise<number>
+): Promise<number> {
+	const parsed = parseCommand(spec, args)
+
+	if (parsed.values.help === true) {
+		process.stdout.write(`${await renderCommandHelp(spec)}\n`)
+
+		return 0
+	}
+
+	return handler(parsed)
+}
+
+/**
+ * Render one Ink element and answer the process exit code — the tail shared by the debug view and the filesystem
+ * command router. Ink loads lazily, so the ordinary data path never pays for it.
+ */
+export async function renderInkCommand(element: React.ReactElement): Promise<number> {
+	const { render } = await import("ink")
+	const instance = render(element)
+
+	await instance.waitUntilExit()
+
+	return typeof process.exitCode === "number" ? process.exitCode : 0
 }

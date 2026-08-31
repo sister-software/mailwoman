@@ -137,6 +137,22 @@ export type AblationGrade =
 	| "ungraded"
 
 /**
+ * Every {@linkcode AblationGrade}, as data — the histogram-iteration order the reports print in.
+ */
+export const ABLATION_GRADES = [
+	"held",
+	"degraded",
+	"correctlyAbstained",
+	"lost",
+	"overconfident",
+	"homonymTakeover",
+	"coarser",
+	"wrong",
+	"substituted",
+	"ungraded",
+] as const satisfies readonly AblationGrade[]
+
+/**
  * The grades that count as the pipeline behaving correctly.
  */
 export const PASSING_GRADES: ReadonlySet<AblationGrade> = new Set<AblationGrade>([

@@ -7,8 +7,12 @@
  */
 
 export * from "#api/APIClient"
+export * from "#api/ckan"
 export * from "#api/clock"
+export * from "#api/defaults"
 export * from "#api/headless"
+export * from "#api/host"
+export * from "#api/ogc"
 export * from "#api/pacer"
 export * from "#api/responses"
 export * from "#api/retry"

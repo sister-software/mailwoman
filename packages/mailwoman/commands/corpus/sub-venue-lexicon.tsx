@@ -24,7 +24,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -53,17 +53,13 @@ interface Options {
 function parseExtracts(extractSpec: string | undefined): Array<{ path: string; region: string }> {
 	if (!extractSpec) return []
 
-	return extractSpec
-		.split(",")
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0)
-		.map((entry) => {
-			const split = entry.indexOf("=")
+	return splitList(extractSpec).map((entry) => {
+		const split = entry.indexOf("=")
 
-			return split === -1
-				? { path: entry, region: "" }
-				: { region: entry.slice(0, split).trim(), path: entry.slice(split + 1).trim() }
-		})
+		return split === -1
+			? { path: entry, region: "" }
+			: { region: entry.slice(0, split).trim(), path: entry.slice(split + 1).trim() }
+	})
 }
 
 const CorpusSubVenueLexicon: ParsedCommandComponent<Options> = ({ options }) => {
@@ -84,7 +80,7 @@ const CorpusSubVenueLexicon: ParsedCommandComponent<Options> = ({ options }) => 
 		})
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const { designators, modifiers, surfaces, identifierShapes, promotions } = state.result

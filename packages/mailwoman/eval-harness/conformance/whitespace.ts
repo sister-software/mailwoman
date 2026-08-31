@@ -49,7 +49,13 @@
 import { candidateSystemsForPostcode, UNIT_GRADE_POSTCODE } from "@mailwoman/codex"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
-import type { ConformanceFixture } from "#eval-harness/conformance/fixture"
+import {
+	auditCommonFixtureFields,
+	type ConformanceFixture,
+	invarianceExpectProblem,
+	MISSING_CASE_COUNTRY_PROBLEM,
+	MISSING_ROW_REF_PROBLEM,
+} from "#eval-harness/conformance/fixture"
 
 /**
  * The law name every row in this suite carries.
@@ -324,33 +330,19 @@ export const WHITESPACE_SUITE_PATH: string = resolvePackagePath(
  * COMPLETENESS test reads them: an arm absent from a committed row must name the rule that refuses it.
  */
 export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): string[] {
-	const problems: string[] = []
+	return auditCommonFixtureFields(fixtures, WHITESPACE_LAW, (fixture, label, problems) => {
+		const expectation = invarianceExpectProblem(fixture, "whitespace")
 
-	for (const fixture of fixtures) {
-		const label = `fixture "${fixture.id}"`
-
-		if (fixture.law !== WHITESPACE_LAW) {
-			problems.push(`${label}: law is "${fixture.law}", not "${WHITESPACE_LAW}"`)
-
-			continue
-		}
-
-		if (fixture.expect !== "equivalent") {
-			problems.push(
-				`${label}: expects "${fixture.expect}" — a whitespace row states an INVARIANCE, so the only relation it can state is "equivalent"`
-			)
+		if (expectation) {
+			problems.push(`${label}: ${expectation}`)
 		}
 
 		if (!fixture.rowRef) {
-			problems.push(
-				`${label}: no rowRef — every base query is drawn from a committed row, so a row without one names no population`
-			)
+			problems.push(`${label}: ${MISSING_ROW_REF_PROBLEM}`)
 		}
 
 		if (!fixture.context?.caseCountry) {
-			problems.push(
-				`${label}: no context.caseCountry — it selects the weights overlay the row grades through, and without it the row is graded base-only against a locale that is not its own`
-			)
+			problems.push(`${label}: ${MISSING_CASE_COUNTRY_PROBLEM}`)
 		}
 
 		if (!classifyWhitespaceTransformation(fixture.base, fixture.variant)) {
@@ -361,9 +353,7 @@ export function auditWhitespaceSuite(fixtures: readonly ConformanceFixture[]): s
 						: `the pair differs by more than whitespace (blind keys ${JSON.stringify(whitespaceBlindKey(fixture.base))} ≠ ${JSON.stringify(whitespaceBlindKey(fixture.variant))}), which is a different law`)
 			)
 		}
-	}
-
-	return problems
+	})
 }
 
 /**

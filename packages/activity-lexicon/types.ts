@@ -19,7 +19,7 @@
 /**
  * Where a record came from. Field-for-field the shape `@mailwoman/geographic-model` uses for its own provenance, so a
  * consumer carrying both never has to translate between two spellings of the same idea. It is restated rather than
- * imported because this package declares zero dependencies.
+ * imported because this package does not depend on `@mailwoman/geographic-model`.
  */
 export interface ActivityLexiconProvenance {
 	/**

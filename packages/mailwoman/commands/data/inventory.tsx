@@ -16,9 +16,14 @@
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
-import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+	writeRawStdout,
+} from "#cli-kit"
 import {
 	buildCommandGaps,
 	inventorySentence,
@@ -164,7 +169,7 @@ const InventoryCommand: ParsedCommandComponent<Options> = ({ options }) => {
 		return { ok: true }
 	})
 
-	if (state.status === "error") return <Text color="red">{state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return null
 }

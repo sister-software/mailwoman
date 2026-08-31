@@ -19,7 +19,14 @@ import { availableParallelism } from "@mailwoman/core/utils/system"
 import { Box, Text } from "ink"
 import { PathBuilder } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, CommandError, parseRoles, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	parseRoles,
+	useCommandTask,
+} from "#cli-kit"
 
 const BATCH_SIZE = availableParallelism()
 
@@ -78,13 +85,7 @@ const WOFTree: ParsedCommandComponent<Options, [string, string]> = ({ args, opti
 		}
 	})
 
-	if (state.status === "error") {
-		return <Text color="red">{state.message}</Text>
-	}
-
-	if (state.status === "running") {
-		return <Spinner />
-	}
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
 	if (options.output) {
 		return (

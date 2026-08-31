@@ -14,7 +14,13 @@ import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -43,7 +49,7 @@ const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		const admin = await buildAdmin({
 			dataDir: options.data,
 			skipVerify: options.skipVerify,
-			onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+			onPhase: phaseReporter(),
 		})
 
 		const candidateOut = join(wofDir(), DEFAULT_CANDIDATE_OUT)
@@ -66,7 +72,7 @@ const GazetteerBuild: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

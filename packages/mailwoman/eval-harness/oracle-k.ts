@@ -25,15 +25,13 @@
  *   the rerank ceiling tracker.
  */
 
-import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
-import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
-import type { ParityFixture } from "#dev-tools/convert-parity-fixtures.run"
 import { assertProfile, BaselineDeviationError, formatVerdict } from "#eval-harness/baseline-assert"
-import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "#eval-harness/parity-corpus"
+import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#eval-harness/parity-corpus"
+import { productionParseOptions } from "#eval-harness/span-board"
 
 /**
  * Maximum typed-segment length in words.
@@ -352,11 +350,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		// emission prior — `safeClassify` in the runtime pipeline, and `geocode-core` since #981 (which
 		// fixed this same divergence for the drop-in servers). This harness was the last surface still
 		// grading a starved parse. A no-op on inputs carrying no known format and no region abbrev.
-		const tree = await classifier.parse(fixture.input, {
-			postcodeRepair: true,
-			queryShape: computeQueryShape(fixture.input),
-			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-		})
+		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 
 		const baseByTag = new Map<string, string[]>()
 		const stack = [...tree.roots]
@@ -370,11 +364,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		// The trace MUST carry the same priors as the parse above: the segment decode scores spans out
 		// of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions while token@1
 		// saw primed ones — comparing two different models and calling it a decode delta.
-		const trace = await classifier.traceParse(fixture.input, {
-			postcodeRepair: true,
-			queryShape: computeQueryShape(fixture.input),
-			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-		})
+		const trace = await classifier.traceParse(fixture.input, productionParseOptions(fixture.input))
 
 		const { hypotheses, words } = segmentDecodeKBest(trace, k, logTransition)
 

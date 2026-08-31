@@ -104,13 +104,26 @@ function codeSetOverlap(a: string, b: string): number {
 }
 
 /**
- * Last-10-digits normalization for phone agreement (drops country code, punctuation, extensions).
+ * Last-10-digits normalization for phone agreement (drops country code, punctuation, extensions). A shorter digit
+ * string is kept as-is — partial agreement still carries weight in the comparison model; `null` means no digits at
+ * all.
  */
-function normalizePhone(raw: string | null | undefined): string | null {
+export function normalizePhone(raw: string | null | undefined): string | null {
 	if (!raw) return null
 	const digits = raw.replaceAll(/\D+/g, "")
 
 	return digits.length >= 10 ? digits.slice(-10) : digits || null
+}
+
+/**
+ * {@link normalizePhone} under the probes' stricter contract: only a FULL line counts — the last 10 digits when the
+ * input carries at least 10, `""` otherwise (never a partial digit string). Callers guard on truthiness, so `""` reads
+ * as "no comparable phone" rather than a weaker key.
+ */
+export function normalizePhoneStrict(raw: string | null | undefined): string {
+	const digits = normalizePhone(raw)
+
+	return digits && digits.length === 10 ? digits : ""
 }
 
 /**

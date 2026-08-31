@@ -24,7 +24,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -60,7 +60,7 @@ const CorpusSubVenueExtract: ParsedCommandComponent<Options> = ({ options }) => 
 		return writeSubVenueJSONL({ pbfPath: options.pbf, outPath: options.out, country: options.country })
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

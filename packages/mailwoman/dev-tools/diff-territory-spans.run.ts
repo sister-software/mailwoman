@@ -17,14 +17,15 @@
  *   `--rows` is a plain text file of `id<TAB>input` lines (blank lines and `#` comments skipped).
  */
 
-import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { TextSpliterator } from "spliterator"
 
+import { REGISTERS as BASE_REGISTERS, register } from "#dev-tools/register-board"
 import { createRuntimePipeline } from "#index"
 
-const REGISTERS = ["asis", "lower", "upper", "comma-drop"] as const
+const REGISTERS = [...BASE_REGISTERS, "comma-drop"] as const
 
 type Register = (typeof REGISTERS)[number]
 
@@ -49,17 +50,12 @@ const locale = values.locale!
 const selected = new Set(values.registers!.split(",")) as Set<Register>
 
 function applyRegister(text: string, reg: Register): string {
-	switch (reg) {
-		case "lower":
-			return text.toLowerCase()
-		case "upper":
-			return text.toUpperCase()
-		case "comma-drop":
-			// Verbatim `mailwoman/eval-harness/invariance/transforms.ts::commaDrop` — the whitespace collapse matters.
-			return text.replaceAll(",", "").replaceAll(/\s+/gu, " ").trim()
-		default:
-			return text
+	if (reg === "comma-drop") {
+		// Verbatim `mailwoman/eval-harness/invariance/transforms.ts::commaDrop` — the whitespace collapse matters.
+		return text.replaceAll(",", "").replaceAll(/\s+/gu, " ").trim()
 	}
+
+	return register(text, reg)
 }
 
 const rows = await TextSpliterator.fromAsync(values.rows!)
@@ -85,11 +81,7 @@ for (const row of rows) {
 
 		const text = applyRegister(row.input, reg)
 		const tree = values.raw ? await classifier.parse(text) : (await pipeline(text, { locale })).tree
-		const byTag = new Map<string, string[]>()
-
-		for (const [tag, value] of decodeAsTuples(tree)) {
-			byTag.set(tag, [...(byTag.get(tag) ?? []), value])
-		}
+		const byTag = groupTuplesByTag(tree)
 
 		const serialized = [...byTag.entries()]
 			.map(([tag, vals]) => `${tag}=${vals.join("|")}`)

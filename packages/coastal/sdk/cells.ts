@@ -25,8 +25,7 @@
  *   probe reads.
  */
 
-import { groupCellsByResolution, type FeatureCells } from "@mailwoman/spatial"
-import { compactCells } from "h3-js"
+import { compactAcrossResolutions, type FeatureCells } from "@mailwoman/spatial"
 
 export {
 	addCoverageCells,
@@ -168,14 +167,7 @@ export class CoastalCellIndex {
 		let partialTotal = 0
 
 		for (const [scenarioKey, scenario] of [...this.#scenarios].toSorted(([left], [right]) => (left < right ? -1 : 1))) {
-			// `compactCells` takes one resolution at a time, and a coarsened feature's cells are at another — so the whole
-			// set is grouped before compaction rather than pooled. Pooling would throw; compacting the target-resolution
-			// group alone would silently drop every coarsened feature's interior.
-			let compacted = 0
-
-			for (const group of groupCellsByResolution(scenario.whole)) {
-				compacted += compactCells(group).length
-			}
+			const compacted = compactAcrossResolutions(scenario.whole).length
 
 			let partial = 0
 

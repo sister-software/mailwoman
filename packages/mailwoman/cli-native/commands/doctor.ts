@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
+import { booleanValue, type CommandSpec, runNativeCommand } from "#cli-native/spec"
 
 /**
  * Native installation diagnostic contract.
@@ -33,24 +33,18 @@ export const spec = {
  * Run `mw doctor` without loading its former React/Ink adapter.
  */
 export async function run(args: readonly string[]): Promise<number> {
-	const parsed = parseCommand(spec, args)
+	return await runNativeCommand(spec, args, async (parsed) => {
+		const { runDoctor, describeEnvironment, renderDoctorReport } = await import("#doctor")
 
-	if (parsed.values.help) {
-		process.stdout.write(`${await renderCommandHelp(spec)}\n`)
+		const report = await runDoctor()
+		const environment = booleanValue(parsed.values, "verbose") ? await describeEnvironment() : undefined
 
-		return 0
-	}
+		process.stdout.write(
+			booleanValue(parsed.values, "json")
+				? `${JSON.stringify(environment ? { ...report, environment } : report, null, 2)}\n`
+				: `${renderDoctorReport(report, environment)}\n`
+		)
 
-	const { runDoctor, describeEnvironment, renderDoctorReport } = await import("#doctor")
-
-	const report = await runDoctor()
-	const environment = parsed.values.verbose ? await describeEnvironment() : undefined
-
-	process.stdout.write(
-		parsed.values.json
-			? `${JSON.stringify(environment ? { ...report, environment } : report, null, 2)}\n`
-			: `${renderDoctorReport(report, environment)}\n`
-	)
-
-	return report.exitCode
+		return report.exitCode
+	})
 }

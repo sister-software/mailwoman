@@ -21,7 +21,7 @@ import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, describe, expect, test } from "vitest"
 
-import { stubWorker } from "./stub-worker.ts"
+import { stubWorker } from "#unit/src/shared/stub-worker"
 
 const CANDIDATE_DB = dataRootPath("wof", "candidate.db")
 const present = await pathExists(CANDIDATE_DB)

@@ -35,12 +35,7 @@
  *   the definition's `recordingNote` says so on the receipt.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { sha256Hex } from "@mailwoman/core/utils"
-
-// The canonical-JSON encoder is IMPORTED rather than re-typed, for the reason the absence probe imports it.
-import { canonicalJSON } from "#eval-harness/semantic-utility/probe"
+import { definitionContentHash, loadFrozenDefinition, preregistrationPath } from "#eval-harness/preregistration"
 
 /**
  * The closed set of instruments a check may read. Adding one is a reviewed change to this file and to the runner that
@@ -358,20 +353,15 @@ export interface Phase2FreezeRecord {
 	note: string
 }
 
-function sourceRelative(name: string): string {
-	// `tsc` emits no `.json` into `out/`, so the file is named from the package root rather than from this module.
-	return resolvePackagePath("mailwoman", "eval-harness", "phase-2-decision", name)
-}
-
 /**
  * The committed pre-registration.
  */
-export const PHASE2_DEFINITION_PATH = sourceRelative("decision-definition.json")
+export const PHASE2_DEFINITION_PATH = preregistrationPath("phase-2-decision", "decision-definition.json")
 
 /**
  * The committed freeze record for it.
  */
-export const PHASE2_FREEZE_PATH = sourceRelative("decision-freeze.json")
+export const PHASE2_FREEZE_PATH = preregistrationPath("phase-2-decision", "decision-freeze.json")
 
 /**
  * The committed receipt — the measured run the decision package on #1967 lays its arithmetic out of.
@@ -379,13 +369,13 @@ export const PHASE2_FREEZE_PATH = sourceRelative("decision-freeze.json")
  * Committed rather than left in a PR body for the reason this whole ruler exists: the numbers a decision rests on have
  * to be readable next to the definition that registered them, by someone who was not there.
  */
-export const PHASE2_RECEIPT_PATH = sourceRelative("decision-receipt.json")
+export const PHASE2_RECEIPT_PATH = preregistrationPath("phase-2-decision", "decision-receipt.json")
 
 /**
  * The content hash of one definition.
  */
 export function phase2DefinitionHash(definition: Phase2DecisionDefinition): string {
-	return sha256Hex(canonicalJSON(definition))
+	return definitionContentHash(definition)
 }
 
 function auditLanes(definition: Phase2DecisionDefinition): string[] {
@@ -684,38 +674,13 @@ export async function loadPhase2Definition(
 	definitionPath: string = PHASE2_DEFINITION_PATH,
 	freezePath: string = PHASE2_FREEZE_PATH
 ): Promise<Phase2DecisionDefinition> {
-	const definition = await readLocalJSONFile<Phase2DecisionDefinition>(definitionPath)
-	const freeze = await readLocalJSONFile<Phase2FreezeRecord>(freezePath)
-
-	if (freeze.decisionID !== definition.decisionID) {
-		throw new Error(
-			`phase-2 decision: freeze record names ${JSON.stringify(freeze.decisionID)}, definition is ${JSON.stringify(definition.decisionID)}`
-		)
-	}
-
-	if (freeze.version !== definition.version) {
-		throw new Error(
-			`phase-2 decision: freeze record pins version ${freeze.version}, definition is ${definition.version} — a definition change bumps BOTH the version and the hash`
-		)
-	}
-
-	const observed = phase2DefinitionHash(definition)
-
-	if (observed !== freeze.sha256) {
-		throw new Error(
-			`phase-2 decision: definition content hash ${observed} !== frozen ${freeze.sha256} — the ruler moved. Restore it, or record a new version and hash in ${freeze.definition}`
-		)
-	}
-
-	const problems = auditPhase2Definition(definition)
-
-	if (problems.length) {
-		throw new Error(
-			["phase-2 decision: the pre-registration is not executable:", ...problems.map((p) => `  - ${p}`)].join("\n")
-		)
-	}
-
-	return definition
+	return loadFrozenDefinition({
+		definitionPath,
+		freezePath,
+		label: "phase-2 decision",
+		idField: "decisionID",
+		audit: auditPhase2Definition,
+	})
 }
 
 /**

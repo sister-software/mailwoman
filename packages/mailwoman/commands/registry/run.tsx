@@ -20,6 +20,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { errorMessage } from "@mailwoman/core/errors/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
@@ -30,7 +31,13 @@ import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tool
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import { resolverDefaultCountry } from "#country-scope"
 import type { ShardResolver } from "#geocode-shards"
 
@@ -134,14 +141,13 @@ export async function loadMapping(
 }
 
 async function resolveWOFPath(options: Options): Promise<string> {
-	const { $public } = await import("@mailwoman/core/env")
-	const path = options.resolveDB ?? $public.MAILWOMAN_WOF_DB
+	const { requireWOFPath } = await import("#resolver-backend")
 
-	if (!path) {
-		throw new CommandError("registry needs a WOF admin SQLite path. Set $MAILWOMAN_WOF_DB or pass --resolve-db <path>.")
+	try {
+		return await requireWOFPath(options.resolveDB)
+	} catch (error) {
+		throw new CommandError(errorMessage(error), { cause: error })
 	}
-
-	return path
 }
 
 /**
@@ -544,13 +550,7 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 		return await runRegistry(csv.trim(), options)
 	})
 
-	if (state.status === "error") {
-		return <Text color="red">{state.message}</Text>
-	}
-
-	if (state.status !== "done") {
-		return <Spinner />
-	}
+	if (state.status !== "done") return <CommandTaskResult state={state} running={<Spinner />} />
 
 	return <Text>{state.result}</Text>
 }

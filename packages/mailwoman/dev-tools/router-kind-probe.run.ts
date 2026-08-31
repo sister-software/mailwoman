@@ -12,18 +12,10 @@ import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
-interface Fixture {
-	id: string
-	input: string
-	country: string
-	expect?: Record<string, string[]>
-	dropped?: string
-}
+import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#eval-harness/parity-corpus"
 
-const fixtures: Fixture[] = (
-	await Array.fromAsync(
-		JSONSpliterator.fromAsync<Fixture>("packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl")
-	)
+const fixtures: ParityFixture[] = (
+	await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_V1_PATH))
 ).filter((f) => !f.dropped && f.expect)
 
 function classOf(expect: Record<string, string[]>): string {

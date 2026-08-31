@@ -118,7 +118,13 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 
 //#endregion
 
-//#region Seeded deterministic shuffle (LCG, no external deps)
+//#region Seeded deterministic shuffle — a reproducibility PIN
+
+/**
+ * Keep this exact glibc-constant LCG stream: the published conformal thresholds were selected under it, and
+ * `@mailwoman/core/utils`' `makeLcg` uses different constants — swapping streams re-splits calibration/test and
+ * silently moves Q̂.
+ */
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
@@ -153,6 +159,11 @@ interface StreetHit {
 	claimedRadiusM: number
 }
 
+/**
+ * Kept local rather than tree-hits' `findAddressPointHit` / `findInterpolatedHit`: those answer only a coordinate, and
+ * this walk also needs the stamped `resolution_tier` and the interpolation `uncertainty_m` to price the claimed radius
+ * — neither of which the shared readers carry.
+ */
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	const stack = [...tree.roots]
 

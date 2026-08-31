@@ -21,7 +21,7 @@
  *   `$MAILWOMAN_TEMP_ROOT/failure-report.json`.
  */
 
-import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -31,8 +31,7 @@ import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import type { ParityFixture } from "#dev-tools/convert-parity-fixtures.run"
-import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "#eval-harness/parity-corpus"
+import { PARITY_FIXTURES_PATH, PARITY_FLOORS, type ParityFixture } from "#eval-harness/parity-corpus"
 
 /**
  * Token count at or below which a query is bucketed as short.
@@ -158,13 +157,7 @@ if (!specs.length)
 const { fixtures, kind: corpusKind, name: corpusName } = await loadCorpus(flags.corpus)
 
 async function parseTags(cls: NeuralAddressClassifier, raw: string): Promise<Map<string, string[]>> {
-	const byTag = new Map<string, string[]>()
-
-	for (const [tag, value] of decodeAsTuples(await cls.parse(raw, { postcodeRepair: true }))) {
-		byTag.set(tag, [...(byTag.get(tag) ?? []), value])
-	}
-
-	return byTag
+	return groupTuplesByTag(await cls.parse(raw, { postcodeRepair: true }))
 }
 
 const records = new Map<string, FixtureFailures>()
@@ -272,6 +265,8 @@ const outPath = flags.out || "docs/articles/evals/competitive-parity/failure-rep
 const stamp = flags.date || new Date().toISOString().slice(0, 10)
 
 const cell = (s: string): string => "`" + (s || "∅").replaceAll("`", "ˋ").replaceAll("|", "\\|") + "`"
+// NOT `formatPercent`: this rounds `(n / d) * 100` where core computes `(100 * n) / d`, and the two can differ in the
+// last bit at a .5 rounding boundary — the report's zero-decimal cells stay byte-stable under their own arithmetic.
 const pct2 = (n: number, d: number): string => (d ? `${((n / d) * 100).toFixed(0)}%` : "—")
 const mdRow = (cells: (string | number)[]): string => `| ${cells.join(" | ")} |`
 

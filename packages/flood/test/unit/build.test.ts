@@ -114,8 +114,12 @@ describe("buildFloodDatabase", () => {
 	})
 
 	it("agrees with the source's own area figure, and reports what a hole-blind read would have claimed", () => {
-		expect(result.area.relativeGap).toBeLessThan(0.01)
-		expect(result.area.allExteriorKM2).toBeGreaterThan(result.area.nestedKM2)
+		const { area } = result
+
+		if (area.witness !== "source") throw new Error("the fixture supplies source areas, so the witness is the source")
+
+		expect(area.relativeGap).toBeLessThan(0.01)
+		expect(area.allExteriorKM2).toBeGreaterThan(area.nestedKM2)
 	})
 
 	it("refuses a zone code outside the authority's declared domain", async () => {

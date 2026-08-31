@@ -20,10 +20,19 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
-import { runFileSync } from "@mailwoman/core/process"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	formatLayerVerification,
+	type ParsedCommandComponent,
+	splitList,
+	splitNumberList,
+	useCommandTask,
+} from "#cli-kit"
+import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
  * Coverage resolution. Res 6 matches what the POI and flood pipelines write, so a reader already keyed to another
@@ -102,7 +111,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		}
 
 		const scenarioKeys = options.scenarios
-			? options.scenarios.split(",").map((value) => value.trim())
+			? splitList(options.scenarios)
 			: NCERM_SCENARIOS.map((scenario) => scenario.key)
 
 		const client = createEANCERMClient()
@@ -151,7 +160,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		if (options.measureResolutions) {
 			const report = await measureCoastalCellResolutions({
 				geodatabasePath,
-				resolutions: options.measureResolutions.split(",").map((value) => Number(value.trim())),
+				resolutions: splitNumberList(options.measureResolutions),
 				scenarioKeys,
 				...(options.limit ? { limit: Number(options.limit) } : {}),
 				onProgress: (message) => console.error(`  [measure] ${message}`),
@@ -168,7 +177,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
 		const out = options.out ?? String(dataRootPath("coastal", "coastal-england.db"))
-		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		// The declared count comes from the source's own per-layer totals, so a short read throws rather than building a
 		// shorter coastline. A `--limit` run declares the limited total for the same reason.
@@ -231,8 +240,10 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 				`${result.coarsenedFeatures.toLocaleString()} feature(s) coarsened`,
 			`coverage: ${result.coverageCells.toLocaleString()} cells at res ${result.coverageResolution}, basis ${result.coverageBasis} — ` +
 				"presence only, and NO negative claim: an absent polygon may be inland or coast outside the mapped risk area, and NCERM cannot tell those apart",
-			`area: source ${result.area.sourceKM2.toFixed(1)} km² · rings with holes ${result.area.nestedKM2.toFixed(1)} km² ` +
-				`(${(result.area.relativeGap * 100).toFixed(3)}% apart) · rings without holes ${result.area.allExteriorKM2.toFixed(1)} km²`,
+			`area: source ${result.area.witness === "source" ? `${result.area.sourceKM2.toFixed(1)} km²` : "not published (no witness)"} · ` +
+				`rings with holes ${result.area.nestedKM2.toFixed(1)} km²` +
+				`${result.area.witness === "source" ? ` (${(result.area.relativeGap * 100).toFixed(3)}% apart)` : ""} · ` +
+				`rings without holes ${result.area.allExteriorKM2.toFixed(1)} km²`,
 			`defence types seen: ${result.defenceTypeCounts.length} distinct`,
 			`manifest: name=coastal-erosion-ea-england tier=shipped license=OGL-UK-3.0 sourceVintage=${sourceVintage} buildSHA=${buildSHA}`,
 		]
@@ -250,33 +261,22 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 				onProgress: (message) => console.error(`  [verify] ${message}`),
 			})
 
-			// A disagreement count is not actionable on its own — the rows are. Printed to stderr with the progress stream,
-			// because the first thing anyone does with a non-zero count is ask which points.
-			for (const row of verified.agreement.filter((entry) => entry.outcome === "disagree")) {
-				console.error(
-					`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind} via ` +
-						`${row.local.containment}, service ${row.serviceInside ? "inside" : "outside"}, ` +
-						`${row.nearestEdgeMetres === undefined ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`
-				)
-			}
-
 			lines.push(
-				`verify: ${verified.agreed}/${verified.agreement.length} agree with the live service · ` +
-					`${verified.boundaryTolerance} within boundary tolerance · ${verified.disagreed} disagree`,
-				`verify (outside the mapping): ${verified.outsidePassed}/${verified.outside.length} read unknown with no designation, ` +
-					`${
-						verified.outside
-							.filter((row) => !row.passed)
-							.map((row) => row.label)
-							.join(", ") || "none read a designation"
-					}`
+				...formatLayerVerification(verified, {
+					serviceLabel: "the live service",
+					outsideLabel: "outside the mapping",
+					describeRow: (row) =>
+						`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind} via ` +
+						`${row.local.containment}, service ${row.serviceInside ? "inside" : "outside"}, ` +
+						`${row.nearestEdgeMetres === undefined ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`,
+				})
 			)
 		}
 
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

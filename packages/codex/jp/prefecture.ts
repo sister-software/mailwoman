@@ -26,6 +26,8 @@
  *   `postal-code.ts` for why the postcode is nonetheless the single most reliable anchor.
  */
 
+import { foldToken } from "#normalize"
+
 /**
  * A to/dō/fu/ken classification of the top-level admin unit.
  */
@@ -133,10 +135,7 @@ export function isJapanesePrefectureCode(input: unknown): input is JapanesePrefe
  * them. We never strip from an unseparated bare name, so `kyoto` stays `kyoto`.
  */
 function foldRomaji(s: string): string {
-	const lowered = s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[\u0300-\u036F]/g, "")
+	const lowered = foldToken(s)
 
 	// Strip an appended type-suffix only when a separator (hyphen / space / middle dot) precedes it.
 	const desuffixed = lowered.replace(/[-\s·][\s]*(to|do|fu|ken)$/, "")

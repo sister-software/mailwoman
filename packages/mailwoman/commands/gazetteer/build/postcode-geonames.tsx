@@ -17,7 +17,14 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	splitUpperList,
+	useCommandTask,
+} from "#cli-kit"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
@@ -49,18 +56,13 @@ const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ optio
 	const state = useCommandTask(async () => {
 		const { buildPostcodeGeonamesTail } = await import("#gazetteer-pipeline")
 
-		const countries = options.countries
-			? options.countries
-					.split(",")
-					.map((s) => s.trim().toUpperCase())
-					.filter((cc) => cc.length > 0)
-			: undefined
+		const countries = options.countries ? splitUpperList(options.countries) : undefined
 
 		const result = await buildPostcodeGeonamesTail({
 			countries,
 			out: options.out,
 			postalDir: options.geonamesPostal,
-			onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+			onPhase: phaseReporter(),
 		})
 
 		const perCountry = result.countries.map((cc) => `${cc} ${(result.byCountry[cc] ?? 0).toLocaleString()}`).join(" · ")
@@ -76,7 +78,7 @@ const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ optio
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

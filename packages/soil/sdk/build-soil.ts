@@ -29,30 +29,30 @@
  *   well-formed and simply answers "inside" for ground the authority did not map.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { readFileSize } from "@mailwoman/core/fs/readers"
 import {
-	CoverageBasis,
+	areaAgreementFrom,
 	createLayerCoverageTable,
 	createLayerManifestTable,
-	LayerFreshnessPolicy,
-	LayerTier,
+	designatedCoverageCells,
+	polygonLayerManifest,
 	writeLayerCoverage,
 	writeLayerManifest,
+	type AreaAgreementReading,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { runChunkProcess } from "@mailwoman/core/utils"
+import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwoman/core/utils"
 import {
+	arealPolygons,
 	geometryContains,
 	interiorCoverageCells,
 	shortCellToInt,
-	arealPolygons,
 	type MultiPolygonRings,
 	type ParsedGeometry,
 } from "@mailwoman/spatial"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 import { cellToLatLng } from "h3-js"
 
 import { createSoilTables, type SoilDatabase, type SoilSurveyAreaTable } from "#schema"
@@ -86,11 +86,6 @@ export const SOIL_SCHEMA_VERSION = 1
  * on this build the bound costs one process per area — which is what makes an area's failure nameable.
  */
 export const DEFAULT_CHUNK_SIZE = 100_000
-
-/**
- * Square metres in a square kilometre.
- */
-const M2_PER_KM2 = 1_000_000
 
 /**
  * Square metres in an acre — the unit `legend.areaacres` publishes in.
@@ -223,9 +218,10 @@ export interface BuildSoilResult {
 	 */
 	coverageCellsWithoutMapping: number
 	/**
-	 * The two area readings in square kilometres, and the authority's own published figure.
+	 * The area readings in square kilometres against the authority's own published figure, with the witness stated. The
+	 * `known` count of areas that publish an acreage is what a receipt reads the absence against.
 	 */
-	area: { publishedKM2: number; nestedKM2: number; allExteriorKM2: number; relativeGap: number }
+	area: AreaAgreementReading
 	sizeBytes: number
 }
 
@@ -249,20 +245,9 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 		)
 	}
 
-	const tmpPath = `${options.out}.tmp-${process.pid}`
-
-	let streamed: StreamResult
-
-	// THE INGEST AND THE RESOLVE PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path, which does not need
-	// them separated. The batched path DOES: its children open the same file, so the parent's handle has to be closed
-	// across them, and a single shared handle silently becomes a closed one by the time the cell tiers are resolved.
-	{
-		await using kdb = new DatabaseClient<SoilDatabase>(tmpPath)
-
-		try {
-			kdb.exec("PRAGMA journal_mode = OFF")
-			kdb.exec("PRAGMA synchronous = OFF")
-
+	const built = await buildSealedArtifact<SoilDatabase, StreamResult, Omit<BuildSoilResult, "sizeBytes">>({
+		out: options.out,
+		createTables: async (kdb) => {
 			await createSoilTables(kdb)
 			await createLayerManifestTable(kdb)
 			await createLayerCoverageTable(kdb)
@@ -273,125 +258,90 @@ export async function buildSoilDatabase(options: BuildSoilOptions): Promise<Buil
 			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
-
+		},
+		ingest: async (kdb) => {
+			// Attributes FIRST because the ingest needs one thing out of them — which map units have no soil mapping behind
+			// them — and because a delineation whose map unit is missing must fail while the artifact is still empty rather
+			// than after millions of geometry rows are written.
 			writeAttributes(kdb, options.areas)
 
-			if (options.inProcess) {
-				streamed = aggregateChunks(await ingestInProcess(kdb, options))
-			}
-		} catch (error) {
-			await kdb.destroy().catch(() => undefined)
-			await removePathIfPresent(tmpPath)
+			if (!options.inProcess) return undefined
 
-			throw error
-		}
-	}
+			return aggregateChunks(await ingestInProcess(kdb, options))
+		},
+		...(options.inProcess
+			? {}
+			: { batched: async (tmpPath: string) => aggregateChunks(await runBatchedIngest(tmpPath, options)) }),
+		finish: async (kdb, ingested) => {
+			assertDelineationCounts(options.areas, ingested)
+			const area = assertAreaAgreement(options.areas, ingested)
 
-	if (!options.inProcess) {
-		try {
-			streamed = aggregateChunks(await runBatchedIngest(tmpPath, options))
-		} catch (error) {
-			await removePathIfPresent(tmpPath)
+			options.onProgress?.(`${ingested.delineations.toLocaleString()} delineations written · resolving cells`)
 
-			throw error
-		}
-	}
+			const cells = resolveCells(kdb, options.indexResolution)
 
-	const kdb = new DatabaseClient<SoilDatabase>(tmpPath)
+			options.onProgress?.(
+				`${cells.wholeRows.toLocaleString()} whole (compacted) · ${cells.partialRows.toLocaleString()} partial · reducing`
+			)
 
-	try {
-		kdb.exec("PRAGMA journal_mode = OFF")
-		kdb.exec("PRAGMA synchronous = OFF")
+			const reduced = reduceCells(kdb, options.indexResolution, options.onProgress)
 
-		const ingested = streamed!
+			const coverage = buildCoverageCells(options, ingested)
 
-		assertDelineationCounts(options.areas, ingested)
-		const area = assertAreaAgreement(options.areas, ingested)
+			await writeLayerCoverage(kdb, coverage.cells)
 
-		options.onProgress?.(`${ingested.delineations.toLocaleString()} delineations written · resolving cells`)
+			writeSurveyAreaRows(kdb, options, coverage.cellsByArea)
+			writeVocabularyRows(kdb, options.areas)
 
-		const cells = resolveCells(kdb, options.indexResolution)
-
-		options.onProgress?.(
-			`${cells.wholeRows.toLocaleString()} whole (compacted) · ${cells.partialRows.toLocaleString()} partial · reducing`
-		)
-
-		const reduced = reduceCells(kdb, options.indexResolution, options.onProgress)
-
-		const coverage = buildCoverageCells(options, ingested)
-
-		await writeLayerCoverage(kdb, coverage.cells)
-
-		writeSurveyAreaRows(kdb, options, coverage.cellsByArea)
-		writeVocabularyRows(kdb, options.areas)
-
-		await writeLayerManifest(kdb, {
-			name: soilLayerName(options.region),
-			version: options.sourceVintage,
-			schemaVersion: SOIL_SCHEMA_VERSION,
-			tier: LayerTier.Shipped,
-			license: SSURGO_LICENSE,
-			attribution: SSURGO_ATTRIBUTION,
-			source: SSURGO_SOURCE,
-			sourceVintage: options.sourceVintage,
-			buildCmd: options.buildCmd,
-			buildSHA: options.buildSHA,
-			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
 			// THE SPINE KEY NAMES THE TABLE A CONSUMER JOINS ON, table-qualified, per the layer contract. For this layer
 			// that is the REDUCTION rather than the containment index: `soil_capability_cell` holds one row per cell at one
 			// resolution, which `soil_map_unit_cell` does not — it is keyed `(cell, delineation)` and is mixed-resolution by
 			// construction, so it is a tier the reader walks rather than a key a consumer joins.
-			spineKeys: {
-				h3: { column: "soil_capability_cell.h3_cell", resolution: options.indexResolution },
-			},
-			createdAt: options.createdAt,
-		})
+			await writeLayerManifest(
+				kdb,
+				polygonLayerManifest(options, {
+					name: soilLayerName(options.region),
+					schemaVersion: SOIL_SCHEMA_VERSION,
+					license: SSURGO_LICENSE,
+					attribution: SSURGO_ATTRIBUTION,
+					source: SSURGO_SOURCE,
+					cellColumn: "soil_capability_cell.h3_cell",
+				})
+			)
 
-		kdb.exec("DROP TABLE build_cell_touch")
-		kdb.exec("VACUUM")
+			kdb.exec("DROP TABLE build_cell_touch")
 
-		await kdb.destroy()
+			const totalCellRows = cells.wholeRows + cells.partialRows
 
-		await sealDatabase(tmpPath)
-		await swapDatabaseIntoPlace(tmpPath, options.out)
+			return {
+				out: options.out,
+				region: options.region,
+				surveyAreas: options.areas.length,
+				delineations: ingested.delineations,
+				mapUnits: options.areas.reduce((sum, input) => sum + input.attributes.mapUnits.length, 0),
+				components: options.areas.reduce((sum, input) => sum + input.attributes.components.length, 0),
+				indexResolution: options.indexResolution,
+				coverageResolution: options.coverageResolution,
+				wholeCellRows: cells.wholeRows,
+				partialCellRows: cells.partialRows,
+				storedPartialShare: totalCellRows ? cells.partialRows / totalCellRows : 0,
+				capabilityCells: reduced.cells,
+				sampledCells: reduced.sampled,
+				topClassUnderHalfCells: reduced.topClassUnderHalf,
+				topClassUnderHalfShare: reduced.cells ? reduced.topClassUnderHalf / reduced.cells : 0,
+				classlessCells: reduced.classless,
+				unsampledCells: reduced.unsampled,
+				meanDelineationsPerCell: reduced.cells ? reduced.candidatePairs / reduced.cells : 0,
+				coarsenedFeatures: ingested.coarsened,
+				storedResolutions: cells.resolutions,
+				coverageCells: coverage.cells.length,
+				coverageCellsWithoutMapping: coverage.withoutMapping,
+				area,
+			}
+		},
+	})
 
-		const totalCellRows = cells.wholeRows + cells.partialRows
-
-		return {
-			out: options.out,
-			region: options.region,
-			surveyAreas: options.areas.length,
-			delineations: ingested.delineations,
-			mapUnits: options.areas.reduce((sum, input) => sum + input.attributes.mapUnits.length, 0),
-			components: options.areas.reduce((sum, input) => sum + input.attributes.components.length, 0),
-			indexResolution: options.indexResolution,
-			coverageResolution: options.coverageResolution,
-			wholeCellRows: cells.wholeRows,
-			partialCellRows: cells.partialRows,
-			storedPartialShare: totalCellRows ? cells.partialRows / totalCellRows : 0,
-			capabilityCells: reduced.cells,
-			sampledCells: reduced.sampled,
-			topClassUnderHalfCells: reduced.topClassUnderHalf,
-			topClassUnderHalfShare: reduced.cells ? reduced.topClassUnderHalf / reduced.cells : 0,
-			classlessCells: reduced.classless,
-			unsampledCells: reduced.unsampled,
-			meanDelineationsPerCell: reduced.cells ? reduced.candidatePairs / reduced.cells : 0,
-			coarsenedFeatures: ingested.coarsened,
-			storedResolutions: cells.resolutions,
-			coverageCells: coverage.cells.length,
-			coverageCellsWithoutMapping: coverage.withoutMapping,
-			area,
-			sizeBytes: await sizeOf(options.out),
-		}
-	} catch (error) {
-		await kdb.destroy().catch(() => undefined)
-
-		// A failed build leaves a partial file whose name carries this process's pid, so nothing will ever pick it up
-		// again. Removing it is the difference between a retry loop that fails and one that fills a disk.
-		await removePathIfPresent(tmpPath)
-
-		throw error
-	}
+	return { ...built, sizeBytes: await readFileSize(options.out) }
 }
 
 /**
@@ -433,13 +383,8 @@ export function aggregateChunks(chunks: ReadonlyArray<SoilChunkResult>): StreamR
 
 		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region, and a coverage cell can
 		// straddle two survey areas — so the counts ADD rather than replace.
-		for (const [cell, count] of chunk.observedByCoverageCell) {
-			observedByCoverageCell.set(cell, (observedByCoverageCell.get(cell) ?? 0) + count)
-		}
-
-		for (const [cell, count] of chunk.mappedByCoverageCell) {
-			mappedByCoverageCell.set(cell, (mappedByCoverageCell.get(cell) ?? 0) + count)
-		}
+		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
+		mergeCountsInto(mappedByCoverageCell, chunk.mappedByCoverageCell)
 	}
 
 	return { delineations, coarsened, byArea, observedByCoverageCell, mappedByCoverageCell, nestedM2, allExteriorM2 }
@@ -470,9 +415,10 @@ function assertDelineationCounts(areas: ReadonlyArray<SurveyAreaInput>, streamed
  * Refuse an artifact whose rings do not add up to the acreage the authority publishes.
  *
  * The message carries the hole-blind total beside the nested one, because the gap between them is the diagnosis: a hole
- * read as an exterior ring answers "inside" for every point in it.
+ * read as an exterior ring answers "inside" for every point in it. A build over survey areas that publish no acreage
+ * has no witness — the reading's own type says so, and the `known` count is what a receipt names.
  */
-function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: StreamResult): BuildSoilResult["area"] {
+function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: StreamResult): AreaAgreementReading {
 	let publishedAcres = 0
 	let known = 0
 
@@ -484,31 +430,24 @@ function assertAreaAgreement(areas: ReadonlyArray<SurveyAreaInput>, streamed: St
 		}
 	}
 
-	const publishedKM2 = (publishedAcres * M2_PER_ACRE) / M2_PER_KM2
-	const nestedKM2 = streamed.nestedM2 / M2_PER_KM2
-	const allExteriorKM2 = streamed.allExteriorM2 / M2_PER_KM2
+	const area = areaAgreementFrom(
+		{ nestedM2: streamed.nestedM2, allExteriorM2: streamed.allExteriorM2 },
+		known ? publishedAcres * M2_PER_ACRE : undefined
+	)
 
-	// A build over survey areas that publish no acreage has no witness. That is a real absence — reported as a zero gap
-	// rather than as agreement, and the `known` count above is what tells the two apart on a receipt.
-	const relativeGap = publishedKM2 > 0 ? Math.abs(nestedKM2 - publishedKM2) / publishedKM2 : 0
-
-	if (known && relativeGap > AREA_TOLERANCE) {
+	if (area.witness === "source" && area.relativeGap > AREA_TOLERANCE) {
 		throw new Error(
-			`soil build: the encoded rings total ${nestedKM2.toFixed(1)} km² against the ${publishedKM2.toFixed(1)} km² the authority publishes for these ${known} survey areas ` +
-				`(${(relativeGap * 100).toFixed(2)}% apart, tolerance ${(AREA_TOLERANCE * 100).toFixed(0)}%). Read without their holes the same rings total ` +
-				`${allExteriorKM2.toFixed(1)} km², so compare the two: a hole-blind read answers "inside" for every point in a hole`
+			`soil build: the encoded rings total ${area.nestedKM2.toFixed(1)} km² against the ${area.sourceKM2.toFixed(1)} km² the authority publishes for these ${known} survey areas ` +
+				`(${(area.relativeGap * 100).toFixed(2)}% apart, tolerance ${(AREA_TOLERANCE * 100).toFixed(0)}%). Read without their holes the same rings total ` +
+				`${area.allExteriorKM2.toFixed(1)} km², so compare the two: a hole-blind read answers "inside" for every point in a hole`
 		)
 	}
 
-	return { publishedKM2, nestedKM2, allExteriorKM2, relativeGap }
+	return area
 }
 
 /**
  * Write every survey area's map units, components and vocabulary before any geometry is streamed.
- *
- * Attributes FIRST because the ingest needs one thing out of them — which map units have no soil mapping behind them —
- * and because a delineation whose map unit is missing must fail while the artifact is still empty rather than after
- * millions of geometry rows are written.
  */
 function writeAttributes(database: DatabaseClient<SoilDatabase>, areas: ReadonlyArray<SurveyAreaInput>): void {
 	const insertMapUnit = database.prepare(
@@ -608,14 +547,9 @@ async function ingestInProcess(
 }
 
 /**
- * Run the ingest as a sequence of bounded child processes, one per range of one survey area's FIDs.
- *
- * THE PARENT HOLDS NO HANDLE WHILE THEY RUN — its caller closed one before this and opens another after. Each child
- * opens the same file and appends; chunks run one at a time, so there is exactly one writer at every instant and no
- * locking to reason about.
- *
- * @throws {Error} When a chunk exits non-zero, or prints no result line — a chunk that died mid-range has written a
- *   partial set of rows, and continuing would seal an artifact missing delineations nobody could name.
+ * Run the ingest as a sequence of bounded child processes, one per range of one survey area's FIDs. The shared chunk
+ * contract — the parent's no-handle rule, and the fail-loud handling of a chunk that dies or prints nothing — lives
+ * with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Promise<SoilChunkResult[]> {
 	const chunkSize = options.chunkSize ?? DEFAULT_CHUNK_SIZE
@@ -642,24 +576,23 @@ async function runBatchedIngest(tmpPath: string, options: BuildSoilOptions): Pro
 					script,
 					context: "soil build",
 					subject: `chunk ${area.attributes.areasymbol} FID ${from}–${to}`,
-					args: [
-						"--database",
-						tmpPath,
-						"--shapefile",
-						area.shapefilePath,
-						"--area-symbol",
-						area.attributes.areasymbol,
-						"--fid-from",
-						String(from),
-						"--fid-to",
-						String(to),
-						"--index-resolution",
-						String(options.indexResolution),
-						"--coverage-resolution",
-						String(options.coverageResolution),
-						"--no-mapping-mukeys",
-						noMapping.join(","),
-					],
+					args: ingestChunkArguments({
+						database: tmpPath,
+						args: [
+							"--shapefile",
+							area.shapefilePath,
+							"--area-symbol",
+							area.attributes.areasymbol,
+							"--fid-from",
+							String(from),
+							"--fid-to",
+							String(to),
+							"--no-mapping-mukeys",
+							noMapping.join(","),
+						],
+						indexResolution: options.indexResolution,
+						coverageResolution: options.coverageResolution,
+					}),
 				})
 			)
 		}
@@ -703,27 +636,24 @@ function buildCoverageCells(
 		)
 	}
 
-	const cells: CoverageCell[] = []
+	const mapped = (h3Cell: number): boolean => (streamed.mappedByCoverageCell.get(h3Cell) ?? 0) > 0
+
+	const cells = designatedCoverageCells(
+		interior.map((cell) => shortCellToInt(cell)),
+		streamed.observedByCoverageCell,
+		{ include: mapped }
+	)
+
 	const cellsByArea = new Map<string, number>()
 
 	let withoutMapping = 0
 
 	for (const cell of interior) {
-		const h3Cell = shortCellToInt(cell)
-		const mapped = streamed.mappedByCoverageCell.get(h3Cell) ?? 0
-
-		if (!mapped) {
+		if (!mapped(shortCellToInt(cell))) {
 			withoutMapping++
 
 			continue
 		}
-
-		cells.push({
-			h3Cell,
-			completeness: 1,
-			basis: CoverageBasis.Designated,
-			observedRows: streamed.observedByCoverageCell.get(h3Cell) ?? 0,
-		})
 
 		// Attributed by the cell's CENTRE, so each row is counted for exactly one survey area even where the cell straddles
 		// two. The count is a per-area receipt, not part of the coverage claim — the claim is the row set itself.
@@ -737,7 +667,7 @@ function buildCoverageCells(
 		}
 	}
 
-	return { cells: cells.toSorted((left, right) => left.h3Cell - right.h3Cell), cellsByArea, withoutMapping }
+	return { cells, cellsByArea, withoutMapping }
 }
 
 /**
@@ -845,11 +775,4 @@ function writeVocabularyRows(database: DatabaseClient<SoilDatabase>, areas: Read
 	insert.run("share_weighting", SOIL_SHARE_WEIGHTING, SOIL_SHARE_WEIGHTING_DESCRIPTION, WEIGHT_LATTICE_DEPTH)
 
 	database.exec("COMMIT")
-}
-
-/**
- * The artifact's size on disk, read once for the receipt.
- */
-async function sizeOf(path: string): Promise<number> {
-	return (await statPath(path)).size
 }

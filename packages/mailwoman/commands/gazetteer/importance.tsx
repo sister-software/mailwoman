@@ -32,29 +32,32 @@
  *   which is what they had before Wikipedia importance existed.
  */
 
-import { get as httpsGet } from "node:https"
-
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
 import { tryStat } from "@mailwoman/core/fs/readers"
-import { makeDirectories, writeLocalBuffer } from "@mailwoman/core/fs/writers"
-import { allRows, cacheRootPath, getRow } from "@mailwoman/core/utils"
+import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { allRows, cacheRootPath, streamToDisk } from "@mailwoman/core/utils"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
+import { countRows } from "@mailwoman/sqlite/introspection"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 import { createReadStream } from "spliterator/node/fs"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 import type { FanoutCandidate } from "#gazetteer-pipeline/importance-fanout"
 
 /**
  * Permanent redirect.
  */
-const HTTP_MOVED_PERMANENTLY = 301
 
 /**
  * Temporary redirect.
  */
-const HTTP_FOUND = 302
 
 /**
  * Columns a Wikidata concordance row needs before it carries a usable mapping.
@@ -83,40 +86,6 @@ export const spec = {
 interface Options {
 	db: string
 	tsv?: string
-}
-
-function downloadToFile(url: string, dest: string): Promise<void> {
-	return new Promise((resolve, reject) => {
-		httpsGet(url, (res) => {
-			if (res.statusCode === HTTP_MOVED_PERMANENTLY || res.statusCode === HTTP_FOUND) {
-				const location = res.headers.location
-
-				if (location) {
-					httpsGet(location, (res2) => {
-						const chunks: Buffer[] = []
-						res2.on("data", (chunk) => chunks.push(chunk))
-
-						res2.on("end", () => {
-							void writeLocalBuffer(Buffer.concat(chunks), dest).then(() => resolve(), reject)
-						})
-
-						res2.on("error", reject)
-					}).on("error", reject)
-
-					return
-				}
-			}
-
-			const chunks: Buffer[] = []
-			res.on("data", (chunk) => chunks.push(chunk))
-
-			res.on("end", () => {
-				void writeLocalBuffer(Buffer.concat(chunks), dest).then(() => resolve(), reject)
-			})
-
-			res.on("error", reject)
-		}).on("error", reject)
-	})
 }
 
 const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
@@ -214,7 +183,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 
 				await makeDirectories(dirname(gzPath))
 
-				await downloadToFile(IMPORTANCE_URL, gzPath)
+				await streamToDisk({ url: IMPORTANCE_URL, destination: gzPath, context: "gazetteer importance" })
 
 				console.error(`  Downloaded to ${gzPath}`)
 			}
@@ -339,7 +308,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		// The total is READ BACK, never derived by adding the two counters. The counters describe what
 		// this run tried to do; the table is what it did, and when those disagreed nobody noticed
 		// because the derived number looked plausible. `SELECT count(*)` cannot drift.
-		const total = getRow<{ c: number }>(kdb.prepare("SELECT count(*) AS c FROM place_importance"))!.c
+		const total = countRows(kdb, "place_importance")
 
 		await kdb.destroy() // closes the underlying `db` handle
 
@@ -354,7 +323,7 @@ const GazetteerImportance: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

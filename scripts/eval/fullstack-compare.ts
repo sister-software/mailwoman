@@ -27,6 +27,8 @@ import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
+import { normLoose } from "./value-match.ts"
+
 interface Args {
 	harnessPath: string
 	outMd?: string
@@ -87,16 +89,14 @@ const sleep = (ms: number) =>
 		setTimeout(r, ms)
 	})
 
-const norm = (s: string | undefined) => (s ?? "").toLowerCase().trim()
-
 /**
  * Lenient: did the stack produce a value matching expected (substring either way), per tag?
  */
 function tagHit(expected: string, actual: string | undefined): boolean {
 	if (!actual) return false
 
-	const e = norm(expected),
-		x = norm(actual)
+	const e = normLoose(expected),
+		x = normLoose(actual)
 
 	return e === x || e.includes(x) || x.includes(e)
 }

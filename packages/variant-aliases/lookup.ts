@@ -10,36 +10,19 @@
  *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolvePath } from "path-ts"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagedDataPath } from "@mailwoman/core/module/packaged-data"
 
-import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "#types"
+import type { AliasLookupResult, LocaleScopeMatch, VariantAlias, VariantAliasTable } from "#types"
 
 const moduleDir = import.meta.dirname
 
 /**
- * Read the shipped alias table.
- *
- * `data/` sits at the package root (it is a `files` entry), and this module sits either at that root — running from
- * source — or under `out/` when compiled, so there are exactly two places to look. The probe tests for the FILE:
- * probing by attempting a parse folds a corrupt table into "not this candidate", and the package then reports a missing
- * table it is looking straight at.
- *
- * `@mailwoman/poi-taxonomy` carries the same loader against its own tables. The duplication is deliberate — both
- * packages declare ZERO dependencies and publish independently, so sharing one would mean one taking a dependency on
- * the other for eight lines.
+ * Read the shipped alias table, located by the shared source-tree/`out/` probe in
+ * `@mailwoman/core/module/packaged-data`.
  */
 async function loadTable(): Promise<VariantAliasTable> {
-	const candidates = [
-		resolvePath(moduleDir, "data", "aliases.json"),
-		resolvePath(moduleDir, "..", "data", "aliases.json"),
-	]
-
-	for (const candidate of candidates) {
-		if (await pathExists(candidate)) return readLocalJSONFile<VariantAliasTable>(candidate)
-	}
-
-	throw new Error(`variant-aliases: could not find data/aliases.json — looked in ${candidates.join(", ")}`)
+	return readLocalJSONFile<VariantAliasTable>(await resolvePackagedDataPath(moduleDir, "aliases.json"))
 }
 
 const TABLE = await loadTable()
@@ -63,6 +46,34 @@ const INDEX: ReadonlyMap<string, ReadonlyArray<VariantAlias>> = (() => {
 })()
 
 /**
+ * Decide how a locale-scoped record answers under a detected locale — the rule every locale-gated vocabulary in the
+ * pipeline follows.
+ *
+ * - `unscoped` (confidence 1) when the record declares no locales at all.
+ * - `exact` (confidence 1) when the detected locale is one the record declares.
+ * - `language` (confidence 0.5) when only the language subtag agrees — weaker on purpose, because regional variants are
+ *   by definition regional.
+ * - `null` otherwise, and for any scoped record when the locale is unknown: a phrasing declared regional cannot be
+ *   reached without knowing the region.
+ */
+export function resolveLocaleScope(
+	locales: ReadonlyArray<string> | undefined,
+	locale: string | undefined
+): LocaleScopeMatch | null {
+	if (!locales) return { scope: "unscoped", confidence: 1 }
+
+	if (!locale) return null
+
+	if (locales.includes(locale)) return { scope: "exact", confidence: 1 }
+
+	const language = locale.split(/[-_]/)[0]
+
+	if (locales.some((tag) => tag.split(/[-_]/)[0] === language)) return { scope: "language", confidence: 0.5 }
+
+	return null
+}
+
+/**
  * Match a query token against the variant alias table, gated by detected locale.
  *
  * Confidence:
@@ -84,21 +95,13 @@ export function lookupVariantAliases(text: string, locale: string): AliasLookupR
 
 	if (!candidates || !candidates.length) return []
 
-	const language = locale.split(/[-_]/)[0]
 	const results: AliasLookupResult[] = []
 
 	for (const alias of candidates) {
-		if (alias.locales.includes(locale)) {
-			results.push({ alias, confidence: 1 })
+		const match = resolveLocaleScope(alias.locales, locale)
 
-			continue
-		}
-
-		// Relaxed match: any locale in `locales` that shares the same language part.
-		const langMatch = alias.locales.some((l) => l.split(/[-_]/)[0] === language)
-
-		if (langMatch) {
-			results.push({ alias, confidence: 0.5 })
+		if (match) {
+			results.push({ alias, confidence: match.confidence })
 		}
 	}
 

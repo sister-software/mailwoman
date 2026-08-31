@@ -10,9 +10,7 @@
  *   (#582). `eval gate` runs it automatically when the spec declares `requires_conventions`.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Mask-regression gate (#718) — mask-off vs mask-on per-tag F1, 2pp lock"
 
@@ -59,7 +57,7 @@ const EvalMaskRegression: ParsedCommandComponent<Options> = ({ options }) => {
 		(pass) => (pass ? 0 : 1)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// The gate narrates its own ✓ PASS / ✗ FAIL lines on stderr.
 	return null

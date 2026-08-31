@@ -9,9 +9,7 @@
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -38,11 +36,7 @@ const GazetteerBuildCZDistricts: ParsedCommandComponent<Options> = ({ options })
 		return `cz-districts: ${r.inserted} district rows (source md5 ${r.sourceMD5.slice(0, 8)}) → ${r.out} — sealed 0444`
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default GazetteerBuildCZDistricts

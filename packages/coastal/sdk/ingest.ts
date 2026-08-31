@@ -34,11 +34,9 @@
  *   renamed fails as a SQL error naming the column rather than as a stream of null distances.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { runFile, spawnProcess } from "@mailwoman/core/process"
-import { arealPolygons, assertRingsInsideExtent, type MultiPolygonRings } from "@mailwoman/spatial"
-import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
-import { JSONSpliterator } from "spliterator"
+import { ogr2ogrGeoJSONSeq } from "@mailwoman/core/utils"
+import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
+import { readOGRLayerIdentity } from "@mailwoman/spatial/sdk/ogr"
 
 import {
 	NCERM_DECLARED_BBOX,
@@ -171,59 +169,20 @@ export async function readCoastalSourceIdentity(
 	layer: string,
 	options: CoastalIngestOptions
 ): Promise<CoastalLayerIdentity> {
-	const expectEPSG = options.expectEPSG ?? NCERM_SOURCE_EPSG
+	const identity = await readOGRLayerIdentity({
+		path: options.geodatabasePath,
+		layer,
+		expectEPSG: options.expectEPSG ?? NCERM_SOURCE_EPSG,
+		context: "coastal ingest",
+		areaOfUse: "United Kingdom",
+		requireFields: true,
+		messages: {
+			emptyFields:
+				"an empty field list would make every optional column read as absent, which is a projection failure wearing a schema's clothes",
+		},
+	})
 
-	const { stdout } = await runFile(
-		"ogrinfo",
-		["-json", "-so", options.geodatabasePath, layer],
-		// A file geodatabase's summary is small; the ceiling only guards against a pathological driver.
-		{ maxBuffer: 32 * 1024 * 1024 }
-	)
-
-	const info = parseJSONStrict<{
-		layers?: Array<{
-			name?: string
-			featureCount?: number
-			fields?: Array<{ name?: string }>
-			geometryFields?: Array<{ coordinateSystem?: { projjson?: { id?: { code?: number } } } }>
-		}>
-	}>(stdout)
-
-	const described = info.layers?.[0]
-
-	if (!described || described.name !== layer) {
-		throw new Error(`coastal ingest: ${options.geodatabasePath} does not carry a layer named ${JSON.stringify(layer)}`)
-	}
-
-	const code = described.geometryFields?.[0]?.coordinateSystem?.projjson?.id?.code
-
-	if (typeof code !== "number") {
-		throw new TypeError(
-			`coastal ingest: ${layer} declares no EPSG authority code — the projection cannot be checked, and reading its metres as degrees is silent`
-		)
-	}
-
-	if (code !== expectEPSG) {
-		throw new Error(
-			`coastal ingest: ${layer} declares EPSG:${code}, expected EPSG:${expectEPSG} — the source's projection changed, which is a product change rather than a variation to absorb`
-		)
-	}
-
-	if (typeof described.featureCount !== "number") {
-		throw new TypeError(`coastal ingest: ${layer} reports no feature count`)
-	}
-
-	await assertDatumTransformation(code, { context: "coastal ingest", areaOfUse: "United Kingdom" })
-
-	const fields = new Set((described.fields ?? []).map((field) => field.name).filter((name) => name !== undefined))
-
-	if (!fields.size) {
-		throw new TypeError(
-			`coastal ingest: ${layer} reports no attribute fields — an empty field list would make every optional column read as absent, which is a projection failure wearing a schema's clothes`
-		)
-	}
-
-	return { epsg: code, featureCount: described.featureCount, layer, fields }
+	return { epsg: identity.epsg, featureCount: identity.featureCount, layer: identity.layer, fields: identity.fields }
 }
 
 /**
@@ -377,71 +336,31 @@ async function* streamLayer(
 		options.geodatabasePath,
 	]
 
-	const child = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	const stderr: string[] = []
+	for await (const raw of ogr2ogrGeoJSONSeq<RawFeature>(args, `coastal ingest (${label})`)) {
+		const id = String(raw.properties.object_id)
 
-	child.stderr.setEncoding("utf8")
-
-	child.stderr.on("data", (chunk: string) => {
-		stderr.push(chunk)
-	})
-
-	let exitError: Error | undefined
-
-	const exited = new Promise<void>((resolve) => {
-		child.on("error", (error) => {
-			exitError = error
-			resolve()
-		})
-
-		child.on("close", (code) => {
-			if (code !== 0) {
-				exitError = new Error(
-					`coastal ingest: ogr2ogr exited ${code} on ${label}${stderr.length ? ` — ${stderr.join("").trim()}` : ""}`
-				)
-			}
-
-			resolve()
-		})
-	})
-
-	try {
-		for await (const raw of JSONSpliterator.fromAsync<RawFeature>(child.stdout)) {
-			const id = String(raw.properties.object_id)
-
-			if (!raw.geometry) {
-				throw new Error(`coastal ingest: ${label} feature ${id} carries no geometry`)
-			}
-
-			const polygons = normalizePolygons(raw.geometry, `${label} feature ${id}`)
-
-			assertRingsInsideExtent(
-				polygons,
-				`${label} feature ${id}`,
-				{ minLon, minLat, maxLon, maxLat },
-				BBOX_MARGIN_DEGREES,
-				"coastal ingest"
-			)
-
-			yield { raw, polygons }
+		if (!raw.geometry) {
+			throw new Error(`coastal ingest: ${label} feature ${id} carries no geometry`)
 		}
-	} finally {
-		if (child.exitCode === null && child.signalCode === null) {
-			child.kill()
-		}
+
+		const polygons = requireArealPolygons(raw.geometry, `${label} feature ${id}`, "coastal ingest")
+
+		assertRingsInsideExtent(
+			polygons,
+			`${label} feature ${id}`,
+			{ minLon, minLat, maxLon, maxLat },
+			BBOX_MARGIN_DEGREES,
+			"coastal ingest"
+		)
+
+		yield { raw, polygons }
 	}
-
-	await exited
-
-	// A truncated stream reads as a short but well-formed feature list, which is exactly the partial result that must
-	// throw rather than be reported as a smaller coastline.
-	if (exitError) throw exitError
 }
 
 /**
  * A published value, as a string or null. `" "` is a real value in this product and is never folded to null.
  */
-function textOf(value: number | string | null | undefined): string | null {
+function verbatimText(value: number | string | null | undefined): string | null {
 	return value === null || value === undefined ? null : String(value)
 }
 
@@ -474,13 +393,13 @@ export async function* readCoastalScenarioFeatures(
 			// null, and a zero written in place of one reads as "no erosion projected here".
 			distanceM: assertFiniteDistance(properties.distance_m, scenario, String(properties.object_id)),
 			smpNo: numberOf(properties.smp_no),
-			smpName: textOf(properties.smp_name),
-			smpPolicyUnit: textOf(properties.smp_pu),
-			mtPolicy: textOf(properties.mt_smp),
-			mtPolicyInterpretation: textOf(properties.mt_smp_int),
-			ltPolicy: textOf(properties.lt_smp),
-			ltPolicyInterpretation: textOf(properties.lt_smp_int),
-			defenceType: textOf(properties.def_type),
+			smpName: verbatimText(properties.smp_name),
+			smpPolicyUnit: verbatimText(properties.smp_pu),
+			mtPolicy: verbatimText(properties.mt_smp),
+			mtPolicyInterpretation: verbatimText(properties.mt_smp_int),
+			ltPolicy: verbatimText(properties.lt_smp),
+			ltPolicyInterpretation: verbatimText(properties.lt_smp_int),
+			defenceType: verbatimText(properties.def_type),
 			publishedYear: numberOf(properties.published),
 			maxOverlap: numberOf(properties.maxoverlap),
 			sourceAreaM2: Number(properties.source_area_m2 ?? 0),
@@ -524,18 +443,18 @@ export async function* readCoastalInstabilityFeatures(
 		const properties = raw.properties
 
 		const units = [properties.smp_pu1, properties.smp_pu2, properties.smp_pu3, properties.smp_pu4, properties.smp_pu5]
-			.map((unit) => textOf(unit)?.trim() ?? "")
+			.map((unit) => verbatimText(unit)?.trim() ?? "")
 			.filter((unit) => unit.length > 0)
 
 		yield {
 			areaID: `${kind}:${String(properties.object_id)}`,
 			kind,
-			location: textOf(properties.location),
-			localAuthority: textOf(properties.local_auth),
+			location: verbatimText(properties.location),
+			localAuthority: verbatimText(properties.local_auth),
 			smpNo: numberOf(properties.smp_no),
-			smpName: textOf(properties.smp_name),
+			smpName: verbatimText(properties.smp_name),
 			smpPolicyUnits: units.length ? units.join(", ") : null,
-			rearScarpProbability: textOf(properties.rearscarpr),
+			rearScarpProbability: verbatimText(properties.rearscarpr),
 			sourceAreaM2: Number(properties.source_area_m2 ?? 0),
 			polygons,
 		}
@@ -639,17 +558,4 @@ export async function createGeodatabaseFeatureSource(options: GeodatabaseSourceO
 			}
 		},
 	}
-}
-
-/**
- * Lift a `Polygon` to the `MultiPolygon` shape the rest of this package works in.
- *
- * @throws {Error} When the geometry is neither.
- */
-function normalizePolygons(geometry: { type: string; coordinates: unknown }, label: string): MultiPolygonRings {
-	const polygons = arealPolygons(geometry)
-
-	if (polygons) return polygons
-
-	throw new Error(`coastal ingest: ${label} is a ${geometry.type}, expected Polygon or MultiPolygon`)
 }

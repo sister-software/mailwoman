@@ -28,8 +28,9 @@
  */
 
 import { isPresent } from "@mailwoman/core/objects"
-import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
+import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
+import { toFeature } from "#geojson"
 import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "#types"
 
 /**
@@ -124,9 +125,10 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 }
 
 /**
- * A display name for a reconciled entity's representative record.
+ * A display name for a reconciled entity's representative record — the organization's canonical form, else the person
+ * name, else the record id.
  */
-function repName(entity: ResolvedEntity): string {
+export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
 	const person = [rep.name?.given, rep.name?.family].filter(isPresent).join(" ")
 
@@ -142,25 +144,7 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 		type: "FeatureCollection",
 		features: result.reconciled
 			.filter((c) => c.entity.coordinate)
-			.map((c) => {
-				const foo: GeoFeature<PointLiteral, EntityGeoData> = {
-					type: "Feature" as const,
-					id: undefined,
-					geometry: {
-						type: "Point" as const,
-						coordinates: [c.entity.coordinate!.longitude, c.entity.coordinate!.latitude] as [number, number],
-					},
-					properties: {
-						entityID: c.entity.id,
-						bucket: c.bucket,
-						sources: c.sources,
-						name: repName(c.entity),
-						recordCount: c.entity.records.length,
-					},
-				}
-
-				return foo
-			}),
+			.map((c) => toFeature(c.entity, { bucket: c.bucket, name: repName(c.entity) })),
 	}
 }
 

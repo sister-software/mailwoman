@@ -15,7 +15,6 @@
  *   if it reaches React, pins the development build.
  */
 
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { enableCompileCache } from "@mailwoman/core/module/runtime"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
@@ -65,24 +64,9 @@ if (interactiveGeocode) {
 }
 
 async function printVersion(): Promise<number> {
-	const packageJSONPath = resolvePackagePath("mailwoman", "package.json")
+	const { readMailwomanVersion } = await import("#cli-kit/metadata")
 
-	if (!packageJSONPath) throw new Error("Could not find package.json for mailwoman/cli")
-
-	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
-
-	const packageJSON: unknown = await readLocalJSONFile(packageJSONPath)
-
-	if (
-		typeof packageJSON !== "object" ||
-		packageJSON === null ||
-		!("version" in packageJSON) ||
-		typeof packageJSON.version !== "string"
-	) {
-		throw new TypeError(`Missing string version in ${packageJSONPath}`)
-	}
-
-	process.stdout.write(`${packageJSON.version}\n`)
+	process.stdout.write(`${await readMailwomanVersion()}\n`)
 
 	return 0
 }

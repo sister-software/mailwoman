@@ -40,16 +40,13 @@
  *   Baked into `meta` verbatim, alongside the source md5 and OS's own `Doc/licence.txt`.
  */
 
-import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { removePath } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
-import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
+import type { BuildFTSResult } from "#gazetteer-pipeline/fts"
 import {
 	CODEPOINT_COVERAGE_NOTE,
 	CODEPOINT_LICENSE,
@@ -63,7 +60,16 @@ import {
 	extractCodePointOpen,
 	readCodePointCSV,
 } from "#gazetteer-pipeline/postcode/codepoint/index"
-import { createShardMetaTable } from "#gazetteer-pipeline/postcode/geonames-tail"
+import { createShardMetaTable, writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
+import {
+	applyStagingPragmas,
+	buildShardFTS,
+	freezeStagingDatabase,
+	readAcquisitionSidecar,
+	removeStagingArtifacts,
+	UNKNOWN_PROVENANCE,
+	vacuumShardInto,
+} from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * Synthetic id base for Code-Point Open rows — its own namespace above GeoNames-postal (9.5e12) and NL PC6 (9.6e12), so
@@ -129,28 +135,11 @@ export interface BuildPostcodeCodePointResult {
 }
 
 /**
- * What the shard records when an offline rebuild cannot recover a provenance field. A sentinel STRING rather than an
- * empty one: a consumer reading `source_release: ""` cannot tell "no release label exists" from "nobody looked", and
- * the meaning-of-zero rule says those are different claims.
- */
-const UNKNOWN_PROVENANCE = "unknown (offline rebuild, no acquisition.json)"
-
-/**
  * The sidecar {@link downloadCodePointOpen} writes beside the archive.
  */
 interface AcquisitionSidecar {
 	product?: { version?: string }
 	md5?: string
-}
-
-/**
- * Recover acquisition provenance from `acquisition.json`. Absent is not fatal — the caller substitutes
- * {@link UNKNOWN_PROVENANCE} and says so in the shard.
- */
-async function readAcquisitionSidecar(sourceDir: string): Promise<AcquisitionSidecar | null> {
-	const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
-
-	return raw ? tryParsingJSON<AcquisitionSidecar>(raw) : null
 }
 
 /**
@@ -176,7 +165,7 @@ export async function buildPostcodeCodePoint(
 	let osVersion: string
 
 	if (options.offline) {
-		const sidecar = await readAcquisitionSidecar(sourceDir)
+		const sidecar = await readAcquisitionSidecar<AcquisitionSidecar>(sourceDir)
 
 		archiveMD5 = sidecar?.md5 ?? UNKNOWN_PROVENANCE
 		osVersion = sidecar?.product?.version ?? UNKNOWN_PROVENANCE
@@ -207,12 +196,7 @@ export async function buildPostcodeCodePoint(
 	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames-postal")
 
 	const ingestPath = `${out}.ingest`
-
-	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (await pathExists(stale)) {
-			await removePath(stale)
-		}
-	}
+	await removeStagingArtifacts(ingestPath)
 
 	phase("staging", ingestPath)
 
@@ -225,14 +209,7 @@ export async function buildPostcodeCodePoint(
 	{
 		using db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-		db.exec(`
-			PRAGMA page_size = 8192;
-			PRAGMA journal_mode = WAL;
-			PRAGMA synchronous = NORMAL;
-			PRAGMA busy_timeout = 30000;
-			PRAGMA temp_store = MEMORY;
-			PRAGMA cache_size = -200000;
-		`)
+		applyStagingPragmas(db)
 
 		await createUnifiedSchema(db)
 
@@ -295,33 +272,17 @@ export async function buildPostcodeCodePoint(
 		await writeShardMeta(db, { now, stats, metadata: extracted.metadata, inserted, archiveMD5, osVersion, extracted })
 
 		phase("freeze")
-		db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
-		db.exec("PRAGMA journal_mode = DELETE")
-		db.exec("ANALYZE")
+		freezeStagingDatabase(db)
 
 		phase("vacuum", out)
-
-		if (await pathExists(out)) {
-			await removePath(out)
-		}
-
-		db.prepare("VACUUM INTO ?").run(out)
+		await vacuumShardInto(db, out)
 	}
 
-	for (const sidecar of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (await pathExists(sidecar)) {
-			await removePath(sidecar)
-		}
-	}
+	await removeStagingArtifacts(ingestPath)
 
 	phase("fts")
 
-	let fts: BuildFTSResult
-
-	{
-		using outDB = new DatabaseClient<WOFDatabase>(out)
-		fts = await buildFTS(outDB, { onProgress: phase })
-	}
+	const fts: BuildFTSResult = await buildShardFTS(out, (path) => new DatabaseClient<WOFDatabase>(path), phase)
 
 	phase("seal")
 	await sealDatabase(out)
@@ -467,9 +428,5 @@ async function writeShardMeta(db: DatabaseClient<WOFDatabase>, input: ShardMetaI
 		],
 	]
 
-	const insert = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
-
-	for (const [key, value] of rows) {
-		insert.run(key, value)
-	}
+	writeMetaRows(db, rows)
 }

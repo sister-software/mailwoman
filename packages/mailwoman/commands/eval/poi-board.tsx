@@ -21,7 +21,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "POI query board (spec §3.6) — graded on the assembled answer, v1 report-only"
 
@@ -82,7 +82,7 @@ const EvalPoiBoard: ParsedCommandComponent<Options> = ({ options }) => {
 		({ exitCode }) => exitCode
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (options.json && state.status === "done") {
 		return <Text>{JSON.stringify(state.result.report, null, 2)}</Text>

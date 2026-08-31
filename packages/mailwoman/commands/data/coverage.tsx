@@ -21,10 +21,16 @@
  */
 
 import { statPath, pathExists, readDirectory } from "@mailwoman/core/fs/readers"
-import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-import type { CoverageReport } from "#coverage-census"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	splitUpperList,
+	useCommandTask,
+	writeRawStdout,
+} from "#cli-kit"
+import { trains, type CoverageReport } from "#coverage-census"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -109,17 +115,14 @@ const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 			return { ok: true }
 		}
 
-		const wanted = options.countries
-			?.split(",")
-			.map((c) => c.trim().toUpperCase())
-			.filter((c) => c.length > 0)
+		const wanted = options.countries === undefined ? undefined : splitUpperList(options.countries)
 
 		writeRawStdout(render(report, wanted))
 
 		return { ok: true }
 	})
 
-	if (state.status === "error") return <Text color="red">{state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return null
 }
@@ -139,8 +142,6 @@ export default CoverageCommand
 const EMPTY_CODES_SHOWN = 24
 
 function render(report: CoverageReport, wanted?: string[]): string {
-	const trains = (c: CoverageReport["countries"][number]): boolean => c.admitted && c.corpusRows > 0
-
 	const shown = wanted
 		? report.countries.filter((c) => wanted.includes(c.country))
 		: report.countries.filter(trains).toSorted((a, b) => b.corpusRows - a.corpusRows)

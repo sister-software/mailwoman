@@ -44,7 +44,7 @@ import {
 	type SourceRecord,
 } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
-import { buildSpecs } from "#tools/shared"
+import { buildSpecs, stateOption } from "#tools/shared"
 
 /**
  * Options for {@linkcode coverageReconciliation}.
@@ -91,7 +91,7 @@ export async function coverageReconciliation(
 ): Promise<{ markdown: string }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
 	const CAP = options.cap ?? 2000
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const OUT_MD = options.outMd || ""
 	const OUT_GEOJSON = options.outGeojson || ""
 	const SPECS = buildSpecs(`${SOURCES}`, STATE)

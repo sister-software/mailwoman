@@ -12,10 +12,10 @@
  *   per-state training (a finding either way).
  *
  *   One registry pass builds the global address-frequency table + a TRAIN-state sample + an
- *   EVAL-state sample; both are geocoded; the GBT + LR are trained on the train state's pairs and
- *   used to cluster the eval state's records through the same `resolveEntities` pipeline (FS
- *   baseline / GBT scorer / LR scorer), best F1 over a fine per-scorer threshold sweep. The metric
- *   is the dedup benchmark's clustering F1.
+ *   EVAL-state sample (the SHARED multi-state sample builder); both are geocoded; the GBT + LR are
+ *   trained on the train state's pairs and used to cluster the eval state's records through the
+ *   same `resolveEntities` pipeline (FS baseline / GBT scorer / LR scorer), best F1 over a fine
+ *   per-scorer threshold sweep. The metric is the dedup benchmark's clustering F1.
  *
  *   Run: `mailwoman registry scorer-eval cross-state [--train-state TX] [--eval-state CA]
  *   [--npis 2000] [--out-md <md>]`
@@ -26,7 +26,6 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 
 import {
-	addressFrequencyKey,
 	buildDefaultModel,
 	createGBTScorer,
 	createMatchFeaturizer,
@@ -34,26 +33,22 @@ import {
 	defaultBlockingKeys,
 	ingestRows,
 	resolveEntities,
-	streamRows,
 	type ColumnMapping,
-	type ResolvedEntity,
 	type SourceRecord,
 } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { buildNPPESStateSamples } from "#tools/nppes/sample"
+import { scoreEntities } from "#tools/nppes/scoring"
 import {
-	addr,
-	MIN_GROUP_SIZE,
+	bestOver,
 	MIN_MEANINGFUL_F1_DELTA,
-	norm,
-	NPPES_COLUMNS as C,
-	sigmoid,
-	TRAINING_EPOCHS,
+	pct,
+	quantileThresholds,
+	sgn,
+	toArmScore,
+	trainLogisticRegression,
+	type ArmScore,
 } from "#tools/shared"
-
-/**
- * Highest k swept when scanning cluster counts.
- */
-const MAX_K = 32
 
 /**
  * Options for {@linkcode scorerCrossStateEval}.
@@ -85,62 +80,6 @@ export interface ScorerCrossStateEvalOptions {
 	outMd?: string
 }
 
-const choose2 = (n: number) => (n * (n - 1)) / 2
-
-interface MessyRow extends Record<string, string> {
-	npi: string
-	name: string
-	org: string
-	address: string
-}
-
-/**
- * The dedup benchmark's pairwise clustering metric vs the NPI grouping (record.id = NPI).
- */
-function scoreClusters(entities: ResolvedEntity[]): {
-	precision: number
-	recall: number
-	f1: number
-	overMerged: number
-} {
-	const npiTotals = new Map<string, number>()
-	let sumCK = 0
-	let sumCluster = 0
-	let overMerged = 0
-
-	for (const e of entities) {
-		const byNPI = new Map<string, number>()
-
-		for (const rec of e.records) {
-			byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
-		}
-
-		sumCluster += choose2(e.records.length)
-
-		if (byNPI.size > 1) {
-			overMerged++
-		}
-
-		for (const [npi, c] of byNPI) {
-			sumCK += choose2(c)
-			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
-		}
-	}
-
-	let sumClass = 0
-
-	for (const total of npiTotals.values()) {
-		sumClass += choose2(total)
-	}
-
-	const tp = sumCK
-	const precision = sumCluster > 0 ? tp / sumCluster : 0
-	const recall = sumClass > 0 ? tp / sumClass : 0
-	const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
-
-	return { precision, recall, f1, overMerged }
-}
-
 /**
  * Learned-scorer cross-state generalization (#603 Tier 2) — see the module doc. Emits the report to stdout.
  */
@@ -157,94 +96,37 @@ export async function scorerCrossStateEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	report?.("[A] streaming other-names…")
-	const altNames = new Map<string, string[]>()
-
-	for await (const r of streamRows(OTHER_NAMES)) {
-		const npi = norm(r[C.npi])
-		const alt = norm(r[C.otherOrg])
-
-		if (!npi || !alt) continue
-		const list = altNames.get(npi) ?? []
-
-		if (list.length < MIN_GROUP_SIZE) {
-			list.push(alt)
-		}
-
-		altNames.set(npi, list)
-	}
-
-	// ONE registry pass: global address-frequency + a TRAIN-state sample + an EVAL-state sample.
-	report?.(`[B] registry pass: address-frequency + ${NPIS} ${TRAIN_STATE} (train) + ${NPIS} ${EVAL_STATE} (eval)…`)
-
-	const samples: Record<string, { rows: MessyRow[]; kept: Set<string> }> = {
-		[TRAIN_STATE]: { rows: [], kept: new Set() },
-		[EVAL_STATE]: { rows: [], kept: new Set() },
-	}
-
-	const addrCounts = new Map<string, number>()
-	let addrTotal = 0
-	let scanned = 0
-
-	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) {
-			report?.(`    scanned ${scanned / 1e6}M`)
-		}
-
-		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
-
-		if (practice) {
-			const k = addressFrequencyKey(practice)
-			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
-
-			addrTotal++
-		}
-
-		const npi = norm(r[C.npi])
-		const st = norm(r[C.pState]).toUpperCase()
-		const bucket = samples[st]
-
-		if (bucket && bucket.kept.size < NPIS && npi && !bucket.kept.has(npi) && altNames.has(npi) && practice) {
-			const isOrg = norm(r[C.entityType]) === "2"
-			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
-
-			if (primaryName) {
-				const org = isOrg ? norm(r[C.orgLegal]) : ""
-				bucket.kept.add(npi)
-				bucket.rows.push({ npi, name: primaryName, org, address: practice })
-
-				for (const alt of altNames.get(npi)!) {
-					bucket.rows.push({ npi, name: alt, org: alt, address: practice })
-				}
-
-				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
-
-				if (mailing && mailing !== practice) {
-					bucket.rows.push({ npi, name: primaryName, org, address: mailing })
-				}
-			}
-		}
-	}
-
-	const addressFrequency = {
-		total: addrTotal,
-		distinct: addrCounts.size,
-		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
-	}
-
-	report?.(
-		`    ${TRAIN_STATE}: ${samples[TRAIN_STATE]!.kept.size} NPIs → ${samples[TRAIN_STATE]!.rows.length} records · ` +
-			`${EVAL_STATE}: ${samples[EVAL_STATE]!.kept.size} NPIs → ${samples[EVAL_STATE]!.rows.length} records`
+	// ONE registry pass fills BOTH state buckets (the SHARED multi-state sample builder): the global
+	// address-frequency table + a TRAIN-state sample + an EVAL-state sample.
+	const { byState, addressFrequency } = await buildNPPESStateSamples(
+		{
+			registryPath: REGISTRY,
+			otherNamesPath: OTHER_NAMES,
+			states: [TRAIN_STATE, EVAL_STATE],
+			maxNpisPerState: NPIS,
+		},
+		report
 	)
+
+	const trainSample = byState.get(TRAIN_STATE)!
+	const evalSample = byState.get(EVAL_STATE)!
 
 	report?.("[C] geocoding both states…")
 	const geocoder = await options.createGeocoder()
-	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
 
-	const geocodeRows = (rows: MessyRow[]) => ingestRows(rows, mapping, { geocodeAddress: geocoder.seam })
+	// `auth`/`taxonomy` ride as attributes so the SHARED featurizer's #625 roll-up features can read the
+	// authorized official; the FS arm ignores them (no discriminators configured).
+	const mapping: ColumnMapping = {
+		id: "npi",
+		name: "name",
+		organization: "org",
+		address: "address",
+		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy" },
+		source: "nppes",
+	}
 
-	const trainRecords = await geocodeRows(samples[TRAIN_STATE]!.rows)
-	const evalRecords = await geocodeRows(samples[EVAL_STATE]!.rows)
+	const trainRecords = await ingestRows(trainSample.rows, mapping, { geocodeAddress: geocoder.seam })
+	const evalRecords = await ingestRows(evalSample.rows, mapping, { geocodeAddress: geocoder.seam })
 	geocoder[Symbol.dispose]()
 
 	// Feature basis: the SHARED production featurizer (train ≡ eval ≡ inference, one definition) over the
@@ -260,100 +142,42 @@ export async function scorerCrossStateEval(
 	const trainW = trainY.map((y) => (y === 1 ? 1 - posRate : posRate))
 	const dim = trainX[0]?.length ?? 0
 	const gbt = trainGBT(trainX, trainY, trainW, { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 })
-	const w = new Array<number>(dim).fill(0)
-	let bias = 0
 
-	for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
-		const gw = new Array<number>(dim).fill(0)
-		let gb = 0
-
-		for (let i = 0; i < trainX.length; i++) {
-			let z = bias
-
-			for (let j = 0; j < dim; j++) {
-				z += w[j]! * trainX[i]![j]!
-			}
-
-			const err = (sigmoid(z) - trainY[i]!) * trainW[i]!
-
-			for (let j = 0; j < dim; j++) {
-				gw[j]! += err * trainX[i]![j]!
-			}
-
-			gb += err
-		}
-
-		for (let j = 0; j < dim; j++) {
-			w[j]! -= 0.1 * (gw[j]! / trainX.length + 1e-3 * w[j]!)
-		}
-
-		bias -= 0.1 * (gb / trainX.length)
-	}
-
-	const lrSc = (x: number[]) => {
-		let z = bias
-
-		for (let j = 0; j < x.length; j++) {
-			z += w[j]! * x[j]!
-		}
-
-		return z
-	}
+	// LR (batch GD, class-balanced) — the SHARED trainer.
+	const lrSc = trainLogisticRegression(trainX, trainY, trainW, dim)
 
 	const gbtScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(gbt, featurize(a, b))
 	const lrScorer = (a: SourceRecord, b: SourceRecord) => lrSc(featurize(a, b))
 
 	report?.(`[E] clustering ${EVAL_STATE} records (FS baseline vs GBT vs LR, trained on ${TRAIN_STATE})…`)
 
-	interface ArmScore {
-		precision: number
-		recall: number
-		f1: number
-		overMerged: number
-	}
+	const npiLabel = (rec: SourceRecord) => rec.id
 
-	const bestOver = (thresholds: number[], cfg: (t: number) => Parameters<typeof resolveEntities>[1]): ArmScore => {
-		let best: ArmScore = { precision: 0, recall: 0, f1: -1, overMerged: 0 }
-
-		for (const t of thresholds) {
-			const s = scoreClusters(resolveEntities(evalRecords, cfg(t)).entities)
-
-			if (s.f1 > best.f1) {
-				best = s
-			}
-		}
-
-		return best
-	}
+	const armOver = (
+		thresholds: readonly number[],
+		cfg: (t: number) => Parameters<typeof resolveEntities>[1]
+	): ArmScore =>
+		bestOver(thresholds, (t) =>
+			toArmScore(scoreEntities(resolveEntities(evalRecords, cfg(t)).entities, npiLabel, evalRecords.length))
+		)
 
 	const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
 
-	const quantileThresholds = (scores: number[]): number[] => {
-		const sorted = [...scores].toSorted((p, q) => p - q)
-		const ts = new Set<number>()
-
-		for (let k = 0; k <= MAX_K; k++) {
-			ts.add(sorted[Math.floor((0.2 + (0.999 - 0.2) * (k / 32)) * (sorted.length - 1))]!)
-		}
-
-		return [...ts]
-	}
-
-	const fs = bestOver(
+	const fs = armOver(
 		Array.from({ length: 26 }, (_, i) => i),
 		// learnedScorer:false — the FS baseline is the baseline (the learned scorer is now default-on, so
 		// without this the "FS arm" would silently BE the GBT).
 		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 	)
 
-	const gbtArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => gbtScorer(a, b))), (t) => ({
+	const gbtArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => gbtScorer(a, b))), (t) => ({
 		addressFrequency,
 		collapseSpatial: true,
 		scorer: gbtScorer,
 		threshold: t,
 	}))
 
-	const lrArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => lrScorer(a, b))), (t) => ({
+	const lrArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => lrScorer(a, b))), (t) => ({
 		addressFrequency,
 		collapseSpatial: true,
 		scorer: lrScorer,
@@ -365,7 +189,7 @@ export async function scorerCrossStateEval(
 	// caller would get, evaluated on a state it never trained on.
 	const bundledScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
-	const bundledArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({
+	const bundledArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({
 		addressFrequency,
 		collapseSpatial: true,
 		scorer: bundledScorer,
@@ -373,11 +197,6 @@ export async function scorerCrossStateEval(
 	}))
 
 	const dBundled = bundledArm.f1 - fs.f1
-
-	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
-	// numerator/denominator contract (call sites append their own "%").
-	const pct = (x: number) => (100 * x).toFixed(1)
-	const sgn = (x: number) => (x >= 0 ? "+" : "")
 	const dGbt = gbtArm.f1 - fs.f1
 	const dLr = lrArm.f1 - fs.f1
 
@@ -397,8 +216,8 @@ export async function scorerCrossStateEval(
 		`# Learned-scorer CROSS-STATE generalization (#603 Tier 2) — train ${TRAIN_STATE}, evaluate ${EVAL_STATE}`,
 		"",
 		`_Generated by \`mailwoman registry scorer-eval cross-state\`. The GBT + LR are trained on ` +
-			`${samples[TRAIN_STATE]!.kept.size} ${TRAIN_STATE} NPIs (${trainRecords.length} records) and used to cluster ` +
-			`${samples[EVAL_STATE]!.kept.size} held-out ${EVAL_STATE} NPIs (${evalRecords.length} records) — a state the model ` +
+			`${trainSample.keptNpis.size} ${TRAIN_STATE} NPIs (${trainRecords.length} records) and used to cluster ` +
+			`${evalSample.keptNpis.size} held-out ${EVAL_STATE} NPIs (${evalRecords.length} records) — a state the model ` +
 			`never saw — through the same \`resolveEntities\` pipeline (FS baseline / GBT scorer / LR scorer), best F1 over a fine ` +
 			`per-scorer threshold sweep. This is the generalization axis the within-state held-out-NPI A/B couldn't cover._`,
 		"",

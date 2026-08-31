@@ -42,18 +42,16 @@
  *   is `codepoint-shard.ts` with an Overpass-JSON reader in place of a CSV one.
  */
 
-import { pathExists, readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { removePath } from "@mailwoman/core/fs/writers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
-import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
+import type { BuildFTSResult } from "#gazetteer-pipeline/fts"
 import type { ShardMetaDatabase } from "#gazetteer-pipeline/postcode/geonames-tail"
-import { createShardMetaTable } from "#gazetteer-pipeline/postcode/geonames-tail"
+import { createShardMetaTable, writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
 import {
 	acquireNIPostcodes,
 	createNIOSMParseStats,
@@ -69,6 +67,15 @@ import {
 	type OverpassResponse,
 	parseNIPostcodes,
 } from "#gazetteer-pipeline/postcode/ni-osm/index"
+import {
+	applyStagingPragmas,
+	buildShardFTS,
+	freezeStagingDatabase,
+	readAcquisitionSidecar,
+	removeStagingArtifacts,
+	UNKNOWN_PROVENANCE,
+	vacuumShardInto,
+} from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * Synthetic id base for the NI OSM rows — its own namespace above Code-Point Open (9.7e12), so every postcode source
@@ -179,12 +186,6 @@ export interface BuildPostcodeNIOSMResult {
 }
 
 /**
- * What the shard records when a rebuild cannot recover a provenance field. A sentinel STRING rather than an empty one:
- * a consumer reading `retrieved_at: ""` cannot tell "no retrieval time exists" from "nobody looked".
- */
-const UNKNOWN_PROVENANCE = "unknown (no acquisition.json beside the response)"
-
-/**
  * Build the sealed NI OSM postcode shard.
  */
 export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}): Promise<BuildPostcodeNIOSMResult> {
@@ -208,7 +209,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	}
 
 	const responseMD5 = await md5File(responsePath)
-	const sidecar = await readAcquisitionSidecar(sourceDir)
+	const sidecar = await readAcquisitionSidecar<NIAcquisitionSidecar>(sourceDir)
 
 	// The saved query is authoritative over the module constant: the shard must record the query that
 	// produced ITS bytes, not the query the code would issue today. They diverge the moment the constant
@@ -248,12 +249,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = `${out}.ingest`
-
-	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (await pathExists(stale)) {
-			await removePath(stale)
-		}
-	}
+	await removeStagingArtifacts(ingestPath)
 
 	phase("staging", ingestPath)
 
@@ -264,14 +260,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	{
 		using db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-		db.exec(`
-			PRAGMA page_size = 8192;
-			PRAGMA journal_mode = WAL;
-			PRAGMA synchronous = NORMAL;
-			PRAGMA busy_timeout = 30000;
-			PRAGMA temp_store = MEMORY;
-			PRAGMA cache_size = -200000;
-		`)
+		applyStagingPragmas(db)
 
 		await createUnifiedSchema(db)
 
@@ -342,33 +331,17 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 		})
 
 		phase("freeze")
-		db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
-		db.exec("PRAGMA journal_mode = DELETE")
-		db.exec("ANALYZE")
+		freezeStagingDatabase(db)
 
 		phase("vacuum", out)
-
-		if (await pathExists(out)) {
-			await removePath(out)
-		}
-
-		db.prepare("VACUUM INTO ?").run(out)
+		await vacuumShardInto(db, out)
 	}
 
-	for (const stale of [ingestPath, `${ingestPath}-wal`, `${ingestPath}-shm`]) {
-		if (await pathExists(stale)) {
-			await removePath(stale)
-		}
-	}
+	await removeStagingArtifacts(ingestPath)
 
 	phase("fts")
 
-	let fts: BuildFTSResult
-
-	{
-		using outDB = new DatabaseClient<WOFDatabase>(out)
-		fts = await buildFTS(outDB, { onProgress: phase })
-	}
+	const fts: BuildFTSResult = await buildShardFTS(out, (path) => new DatabaseClient<WOFDatabase>(path), phase)
 
 	phase("seal")
 	await sealDatabase(out)
@@ -389,16 +362,6 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 		bboxRows: fts.bboxRows,
 		sealed: true,
 	}
-}
-
-/**
- * Recover the acquisition sidecar. Absent is not fatal — the caller substitutes {@link UNKNOWN_PROVENANCE} and says so
- * in the shard.
- */
-async function readAcquisitionSidecar(sourceDir: string): Promise<NIAcquisitionSidecar | null> {
-	const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
-
-	return raw ? tryParsingJSON<NIAcquisitionSidecar>(raw) : null
 }
 
 /**
@@ -556,9 +519,5 @@ async function writeShardMeta<DB extends ShardMetaDatabase>(
 		])
 	}
 
-	const insert = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
-
-	for (const [key, value] of rows) {
-		insert.run(key, value)
-	}
+	writeMetaRows(db, rows)
 }

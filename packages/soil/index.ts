@@ -40,17 +40,17 @@
  */
 
 import {
+	assertCoverageNotEmpty,
 	singleManifestRow,
-	toCoverageCell,
 	toLayerManifest,
-	type CoverageRow,
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent, latLngToCell } from "h3-js"
+import { latLngToCell } from "h3-js"
 
 import type { SoilDatabase } from "#schema"
 import { SOIL_LAYER_NAME_PREFIX, SSURGO_PRODUCT_LIMITS } from "#vocabulary"
@@ -319,15 +319,7 @@ export class SoilCapabilityLookup implements Disposable {
 	 * The coverage row for the index cell's parent at the coverage resolution.
 	 */
 	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
-		const coverageCell = cellToParent(indexCell, this.identity.coverageResolution) as H3Cell
-
-		// The NULL-basis rule lives in the shared mapping: a NULL column is an artifact built before `basis` existed, and
-		// it was recording source presence — never a stronger basis than the builder actually had.
-		return toCoverageCell(
-			this.#selectCoverage.get(shortCellToInt(coverageCell)) as CoverageRow | undefined,
-			coverageCell,
-			this.identity.coverageResolution
-		)
+		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 
 	/**
@@ -394,11 +386,7 @@ function readIdentity(
 
 	const coverageCount = (database.prepare("SELECT count(*) AS n FROM layer_coverage").get() as { n: number }).n
 
-	if (!coverageCount) {
-		throw new Error(
-			`soil reader: ${databasePath} holds no coverage rows — every location would read as unknown, which is indistinguishable from a region the authority has not surveyed`
-		)
-	}
+	assertCoverageNotEmpty(coverageCount, `soil reader: ${databasePath}`, "a region the authority has not surveyed")
 
 	const areaRows = database
 		.prepare(

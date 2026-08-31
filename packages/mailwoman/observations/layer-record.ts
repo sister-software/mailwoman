@@ -95,3 +95,83 @@ export function observationCoverageRecord(
 		},
 	}
 }
+
+/**
+ * The coverage sentence a designation's one-line description carries — one wording for every layer, with the
+ * completeness term added only where the layer's basis makes a completeness magnitude meaningful.
+ */
+export function describeCoverage(
+	coverage: ObservationCoverageRecord | undefined,
+	options: { completeness?: boolean } = {}
+): string {
+	if (!coverage) return "no coverage row"
+
+	const base = `coverage cell ${coverage.h3CellIndex} (res ${coverage.resolution}) on basis "${coverage.basis}"`
+
+	return options.completeness ? `${base} at completeness ${coverage.completeness.toFixed(4)}` : base
+}
+
+/**
+ * The provenance sentence: which artifact answered, in one wording. `tier` widens it for a layer whose tier is part of
+ * the claim (zoning ships `build-local`, and a reader must see that on the line).
+ */
+export function describeLayerProvenance(layer: ObservationLayerRecord, options: { tier?: boolean } = {}): string {
+	const terms = options.tier ? `tier ${layer.tier}, license ${layer.license}` : layer.license
+
+	return `from ${layer.name} ${layer.version} (${layer.source} ${layer.sourceVintage}, ${terms}, build ${layer.buildSHA})`
+}
+
+/**
+ * What a designation route decided about one coordinate: an observation, or a named silence.
+ */
+export type LayerDesignationDecision<Observation, Refusal extends string> =
+	| { fired: true; observation: Observation }
+	| { fired: false; refusal: Refusal | "no_coordinate" }
+
+export interface CreateDesignationRouteOptions<Reading, Observation, Refusal extends string> {
+	/**
+	 * Read the layer at one coordinate.
+	 */
+	read: (latitude: number, longitude: number) => Reading
+	/**
+	 * The named silence a reading maps to, or `undefined` where the reading fires.
+	 */
+	refusalFor: (reading: Reading) => Refusal | undefined
+	/**
+	 * Build the observation for a reading {@link CreateDesignationRouteOptions.refusalFor} let through.
+	 */
+	toObservation: (reading: Reading, latitude: number, longitude: number) => Observation
+}
+
+/**
+ * The factory frame every designation route shares: the nullable-coordinate refusal (a geocode result carries
+ * `lat`/`lon` as nullable, and a coordinate-less answer is a named refusal here rather than a caller's problem), the
+ * reading-shaped refusal, and the disposal that closes the lookup.
+ */
+export function createDesignationRoute<Identity, Reading, Observation, Refusal extends string>(
+	lookup: { identity: Identity } & Disposable,
+	options: CreateDesignationRouteOptions<Reading, Observation, Refusal>
+): {
+	identity: Identity
+	observe: (
+		latitude: number | null | undefined,
+		longitude: number | null | undefined
+	) => LayerDesignationDecision<Observation, Refusal>
+} & Disposable {
+	return {
+		identity: lookup.identity,
+		observe: (latitude, longitude) => {
+			if (typeof latitude !== "number" || typeof longitude !== "number") {
+				return { fired: false, refusal: "no_coordinate" }
+			}
+
+			const reading = options.read(latitude, longitude)
+			const refusal = options.refusalFor(reading)
+
+			if (refusal) return { fired: false, refusal }
+
+			return { fired: true, observation: options.toObservation(reading, latitude, longitude) }
+		},
+		[Symbol.dispose]: () => lookup[Symbol.dispose](),
+	}
+}

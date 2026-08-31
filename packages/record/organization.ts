@@ -38,6 +38,8 @@
  *   epic).
  */
 
+import { foldForKey } from "@mailwoman/formatter"
+
 /**
  * A canonicalized organization name.
  */
@@ -215,19 +217,7 @@ function canonicalizeFragment(
 	fragment: string,
 	designationSet: ReadonlySet<string>
 ): { canonical: string; designations: string[] } {
-	const normalized = fragment
-		.normalize("NFKD")
-		.replaceAll(/[̀-ͯ]/g, "")
-		.toLowerCase()
-		// connective punctuation joins words rather than vanishing: "AT&T" → "at and t"
-		.replaceAll("&", " and ")
-		.replaceAll("+", " and ")
-		// periods + apostrophes are intra-token, so remove (not space): "S.A." → "sa", "Macy's" → "macys"
-		.replaceAll(/[.'’]/g, "")
-		.replaceAll(/[^a-z0-9\s]/g, " ")
-		.replaceAll(/\s+/g, " ")
-		.trim()
-		.replace(/^the\s+/, "")
+	const normalized = foldForKey(fragment, { ampersand: "and", dropPeriods: true }).replace(/^the\s+/, "")
 
 	const designations: string[] = []
 	const kept: string[] = []

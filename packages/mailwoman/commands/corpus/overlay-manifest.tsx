@@ -6,9 +6,7 @@
  *   Generate a corpus overlay manifest.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -58,11 +56,7 @@ const Cmd: ParsedCommandComponent<Options> = ({ options }) => {
 		return "done"
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default Cmd

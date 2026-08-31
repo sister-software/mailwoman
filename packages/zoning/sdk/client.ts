@@ -32,9 +32,9 @@
  *      rather than filled with a plausible one.
  */
 
-import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
-import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
-import { htmlToText, dataRootPath } from "@mailwoman/core/utils"
+import { APIClient, type APIClientConfig } from "@mailwoman/core/api"
+import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
+import { htmlToText } from "@mailwoman/core/utils"
 
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
 
@@ -71,11 +71,7 @@ export const GZT_MIN_REQUEST_INTERVAL_MS = 500
  */
 const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
-export interface CreateZoningClientOptions {
-	clock?: ClockLike
-	cacheDirectory?: string
-	minRequestIntervalMs?: number
-}
+export type CreateZoningClientOptions = CreatePacedCachedClientOptions
 
 /**
  * What the item says about the product.
@@ -326,16 +322,14 @@ export function assertAttributionUnchanged(record: Pick<ZoningItemRecord, "acces
  * Build a {@link GZTClient} with the disk cache and pacing this package's acquisition path expects.
  */
 export function createGZTClient(options: CreateZoningClientOptions = {}): GZTClient {
-	return new GZTClient({
-		displayName: "GZT",
-		minRequestIntervalMs: options.minRequestIntervalMs ?? GZT_MIN_REQUEST_INTERVAL_MS,
-		retry: true,
-		...(options.clock ? { clock: options.clock } : {}),
-		caching: {
-			ttl: GZT_CACHE_TTL_MS,
-			storage: buildDiskStorage({
-				directory: options.cacheDirectory ?? String(dataRootPath("zoning", "cache", "http")),
-			}),
+	return createPacedCachedClient(
+		GZTClient,
+		{
+			displayName: "GZT",
+			minRequestIntervalMs: GZT_MIN_REQUEST_INTERVAL_MS,
+			cacheTTLMs: GZT_CACHE_TTL_MS,
+			cacheDirectory: ["zoning", "cache", "http"],
 		},
-	})
+		options
+	)
 }

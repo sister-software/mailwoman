@@ -33,7 +33,6 @@
  */
 
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { removePath } from "@mailwoman/core/fs/writers"
 import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
 import type { ShardMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
@@ -42,7 +41,14 @@ import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { join } from "path-ts"
 
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
-import { buildFTS, type BuildFTSResult } from "#gazetteer-pipeline/fts"
+import type { BuildFTSResult } from "#gazetteer-pipeline/fts"
+import {
+	applyStagingPragmas,
+	buildShardFTS,
+	freezeStagingDatabase,
+	removeStagingArtifacts,
+	vacuumShardInto,
+} from "#gazetteer-pipeline/shard-lifecycle"
 
 export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
@@ -73,6 +79,19 @@ export async function createShardMetaTable<DB extends ShardMetaDatabase>(db: Dat
 		.addColumn("key", "text", (c) => c.primaryKey())
 		.addColumn("value", "text")
 		.execute()
+}
+
+/**
+ * Upsert provenance rows into a `meta` table the caller has already created. One implementation for every shard and
+ * postcode-locality builder — the column-list form, which is byte-equivalent to the bare `VALUES (?,?)` some builders
+ * used against the same two-column table.
+ */
+export function writeMetaRows<DB>(db: DatabaseClient<DB>, rows: ReadonlyArray<readonly [string, string]>): void {
+	const insert = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
+
+	for (const [key, value] of rows) {
+		insert.run(key, value)
+	}
 }
 
 /**
@@ -157,12 +176,7 @@ export async function buildPostcodeGeonamesTail(
 	const { ingestGeonamesPostal } = await import("@mailwoman/resolver-wof-sqlite/geonames-postal")
 
 	const ingestPath = out + ".ingest"
-
-	for (const stale of [ingestPath, ingestPath + "-wal", ingestPath + "-shm"]) {
-		if (await pathExists(stale)) {
-			await removePath(stale)
-		}
-	}
+	await removeStagingArtifacts(ingestPath)
 
 	phase("staging", ingestPath)
 
@@ -175,14 +189,7 @@ export async function buildPostcodeGeonamesTail(
 	{
 		using db = new DatabaseClient<WOFDatabase>(ingestPath)
 
-		db.exec(`
-			PRAGMA page_size = 8192;
-			PRAGMA journal_mode = WAL;
-			PRAGMA synchronous = NORMAL;
-			PRAGMA busy_timeout = 30000;
-			PRAGMA temp_store = MEMORY;
-			PRAGMA cache_size = -200000;
-		`)
+		applyStagingPragmas(db)
 
 		await createUnifiedSchema(db)
 
@@ -206,33 +213,17 @@ export async function buildPostcodeGeonamesTail(
 		await writeShardMeta(db, { now, countries, sources, inserted: ingest.inserted })
 
 		phase("freeze")
-		db.exec("PRAGMA wal_checkpoint(TRUNCATE)")
-		db.exec("PRAGMA journal_mode = DELETE")
-		db.exec("ANALYZE")
+		freezeStagingDatabase(db)
 
 		phase("vacuum", out)
-
-		if (await pathExists(out)) {
-			await removePath(out)
-		}
-
-		db.prepare("VACUUM INTO ?").run(out)
+		await vacuumShardInto(db, out)
 	}
 
-	for (const sidecar of [ingestPath, ingestPath + "-wal", ingestPath + "-shm"]) {
-		if (await pathExists(sidecar)) {
-			await removePath(sidecar)
-		}
-	}
+	await removeStagingArtifacts(ingestPath)
 
 	phase("fts")
 
-	let fts: BuildFTSResult
-
-	{
-		using outDB = new DatabaseClient<ShardMetaDatabase>(out)
-		fts = await buildFTS(outDB, { onProgress: phase })
-	}
+	const fts: BuildFTSResult = await buildShardFTS(out, (path) => new DatabaseClient<ShardMetaDatabase>(path), phase)
 
 	phase("seal")
 	await sealDatabase(out)
@@ -353,9 +344,5 @@ async function writeShardMeta<DB extends ShardMetaDatabase>(
 		["source_files", JSON.stringify(input.sources)],
 	]
 
-	const insert = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
-
-	for (const [key, value] of rows) {
-		insert.run(key, value)
-	}
+	writeMetaRows(db, rows)
 }

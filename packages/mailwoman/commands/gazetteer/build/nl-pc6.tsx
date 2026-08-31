@@ -8,9 +8,7 @@
  *   never faults without the optional `@mailwoman/resolver-wof-sqlite` peer.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -37,11 +35,7 @@ const GazetteerBuildNLPC6: ParsedCommandComponent<Options> = ({ options }) => {
 		return `nl-pc6: ${r.inserted.toLocaleString()} PC6 rows (skipped ${r.skipped}) → ${r.out} — sealed 0444`
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default GazetteerBuildNLPC6

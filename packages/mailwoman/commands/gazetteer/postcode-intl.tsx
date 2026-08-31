@@ -39,12 +39,20 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
+import { getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { GeoPoint } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 import type { PathBuilderLike } from "path-ts"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	splitUpperList,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -284,9 +292,7 @@ async function foldIntoCandidate(
 	await using out = new DatabaseClient<WOFDatabase>(dstPath)
 	using shard = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 
-	const ptRow = out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'").get() as
-		| { id: number }
-		| undefined
+	const ptRow = getRow<{ id: number }>(out.prepare("SELECT id FROM placetype_codes WHERE placetype='postalcode'"))
 
 	if (!ptRow) throw new Error("candidate DB has no 'postalcode' placetype_code")
 	const pcPtid = ptRow.id
@@ -294,7 +300,7 @@ async function foldIntoCandidate(
 	// country code → id, inserting any code the candidate DB doesn't already carry.
 	const ccCache = new Map<string, number>()
 	const getCc = out.prepare("SELECT id FROM country_codes WHERE code=?")
-	const maxCc = out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes").get() as { m: number }
+	const maxCc = getRow<{ m: number }>(out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes"))!
 	let nextCc = maxCc.m + 1
 	const insCc = out.prepare("INSERT INTO country_codes (id, code) VALUES (?, ?)")
 
@@ -302,7 +308,7 @@ async function foldIntoCandidate(
 		let id = ccCache.get(code)
 
 		if (id !== undefined) return id
-		const r = getCc.get(code) as { id: number } | undefined
+		const r = getRow<{ id: number }>(getCc, code)
 
 		if (r) {
 			ccCache.set(code, r.id)
@@ -373,12 +379,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 		const geonames = options.geonames ?? dataRootPath("geonames", "allCountries-postal.txt")
 		const out = options.out ?? dataRootPath("wof", "postalcode-geonames-intl.db")
 
-		const countries = options.countries
-			? options.countries
-					.split(",")
-					.map((s) => s.trim().toUpperCase())
-					.filter((cc) => cc.length > 0)
-			: ["PL", "CZ"]
+		const countries = options.countries ? splitUpperList(options.countries) : ["PL", "CZ"]
 
 		const foldInto = options.foldInto
 		const foldOut = options.foldOut
@@ -435,9 +436,7 @@ const GazetteerPostcodeIntl: ParsedCommandComponent<Options> = ({ options }) => 
 		return lines
 	})
 
-	if (state.status === "error") {
-		return <Text color="red">✗ {state.message}</Text>
-	}
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

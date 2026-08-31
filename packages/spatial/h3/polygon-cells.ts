@@ -71,6 +71,7 @@ import {
 	POLYGON_TO_CELLS_FLAGS,
 } from "h3-js"
 
+import { METRES_PER_DEGREE } from "#distance"
 import type { MultiPolygonRings } from "#geometries/polygon"
 import { ringsBoundingBox } from "#geometries/ring-blob"
 import { shortCellToInt, type H3Cell } from "#h3/cell"
@@ -92,11 +93,6 @@ export const CELL_ESTIMATE_BUDGET = 2_000_000
 export const MIN_INDEX_RESOLUTION = 4
 
 /**
- * Metres per degree of latitude — the constant the bounding-box estimates below are built on.
- */
-const METRES_PER_DEGREE = 111_320
-
-/**
  * A rectangle in degrees, the shape every helper here prefilters on.
  */
 export interface DegreeBox {
@@ -104,6 +100,18 @@ export interface DegreeBox {
 	minLon: number
 	maxLat: number
 	maxLon: number
+}
+
+/**
+ * A degree box's height and width in metres, longitude scaled at the box's mid-latitude so the two are comparable.
+ */
+function boxExtentMetres(box: DegreeBox): { heightM: number; widthM: number } {
+	const midLat = ((box.minLat + box.maxLat) / 2) * (Math.PI / 180)
+
+	return {
+		heightM: (box.maxLat - box.minLat) * METRES_PER_DEGREE,
+		widthM: (box.maxLon - box.minLon) * METRES_PER_DEGREE * Math.cos(midLat),
+	}
 }
 
 /**
@@ -142,9 +150,7 @@ function canContainCell(box: DegreeBox, resolution: number): boolean {
 	if (!Number.isFinite(box.minLat)) return false
 
 	const minimumWidthM = getHexagonEdgeLengthAvg(resolution, "m") * Math.sqrt(3)
-	const midLat = ((box.minLat + box.maxLat) / 2) * (Math.PI / 180)
-	const heightM = (box.maxLat - box.minLat) * METRES_PER_DEGREE
-	const widthM = (box.maxLon - box.minLon) * METRES_PER_DEGREE * Math.cos(midLat)
+	const { heightM, widthM } = boxExtentMetres(box)
 
 	return heightM >= minimumWidthM && widthM >= minimumWidthM
 }
@@ -178,9 +184,9 @@ export function estimateCellCount(polygons: MultiPolygonRings, resolution: numbe
 
 	if (!Number.isFinite(box.minLat)) return 0
 
-	const midLat = ((box.minLat + box.maxLat) / 2) * (Math.PI / 180)
-	const heightKM = ((box.maxLat - box.minLat) * METRES_PER_DEGREE) / 1000
-	const widthKM = ((box.maxLon - box.minLon) * METRES_PER_DEGREE * Math.cos(midLat)) / 1000
+	const { heightM, widthM } = boxExtentMetres(box)
+	const heightKM = heightM / 1000
+	const widthKM = widthM / 1000
 
 	return (Math.max(widthKM, 0.001) * Math.max(heightKM, 0.001)) / getHexagonAreaAvg(resolution, "km2")
 }
@@ -338,6 +344,42 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 }
 
 /**
+ * Compact a cell set that may span several resolutions.
+ *
+ * `compactCells` takes one resolution at a time, and an adaptively-indexed layer's coarsened features sit at another —
+ * so the set is grouped before compaction rather than pooled. Pooling would throw; compacting only the
+ * target-resolution group would silently drop every coarsened feature's interior, which is the shape of failure that
+ * still produces an artifact.
+ */
+export function compactAcrossResolutions(cells: Iterable<string>): string[] {
+	const compacted: string[] = []
+
+	for (const group of groupCellsByResolution(cells)) {
+		compacted.push(...compactCells(group))
+	}
+
+	return compacted
+}
+
+/**
+ * The cells a probe walks for one index cell: the cell itself at the index resolution, and its parent at every other
+ * resolution the layer stores.
+ *
+ * The stored rows sit at SEVERAL resolutions — each feature's whole tier is compacted parent-ward, and a polygon too
+ * large for h3's allocator at the index resolution was indexed coarser — so a point is answered by walking its own
+ * ancestor chain over every resolution the layer stores.
+ */
+export function ancestorChainCells(
+	indexCell: H3Cell,
+	indexResolution: number,
+	resolutions: readonly number[]
+): H3Cell[] {
+	return resolutions.map((resolution) =>
+		resolution === indexResolution ? indexCell : (cellToParent(indexCell, resolution) as H3Cell)
+	)
+}
+
+/**
  * One classified feature's cell rows, ready for insertion — the whole set compacted, the partial set left at its own
  * resolution.
  *
@@ -357,14 +399,12 @@ export function featureCellRows(cells: FeatureCells): Array<{
 	const rows: Array<{ h3Cell: number; resolution: number; containment: "whole" | "partial" }> = []
 	const wholeShort = new Set<number>()
 
-	for (const group of groupCellsByResolution(cells.whole)) {
-		for (const cell of compactCells(group)) {
-			const resolution = getResolution(cell)
-			const short = shortCellToInt(cell as H3Cell)
+	for (const cell of compactAcrossResolutions(cells.whole)) {
+		const resolution = getResolution(cell)
+		const short = shortCellToInt(cell as H3Cell)
 
-			wholeShort.add(short)
-			rows.push({ h3Cell: short, resolution, containment: "whole" })
-		}
+		wholeShort.add(short)
+		rows.push({ h3Cell: short, resolution, containment: "whole" })
 	}
 
 	for (const cell of cells.partial) {

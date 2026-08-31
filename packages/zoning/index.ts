@@ -51,16 +51,22 @@
 
 import {
 	assertCoverageLicensesNoExclusion,
+	assertNoCellsFinerThanIndex,
 	CoverageBasis,
 	parseManifestRows,
-	toCoverageCell,
 	type CoverageCell,
-	type CoverageRow,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
-import { recoverShortCellResolution, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import {
+	ancestorChainCells,
+	bboxContains,
+	recoverShortCellResolution,
+	shortCellToInt,
+	type H3Cell,
+} from "@mailwoman/spatial"
+import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent, latLngToCell } from "h3-js"
+import { latLngToCell } from "h3-js"
 
 import { pointInEncodedRings } from "#rings"
 import type { ZoningDatabase } from "#schema"
@@ -371,15 +377,7 @@ export class ZoningLookup implements Disposable {
 	 * The coverage row for the index cell's parent at the coverage resolution.
 	 */
 	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
-		const coverageCell = cellToParent(indexCell, this.identity.coverageResolution) as H3Cell
-
-		// The NULL-basis rule lives in the shared mapping: a NULL column is an artifact built before `basis` existed, and
-		// it was recording source presence — never a stronger basis than the builder actually had.
-		return toCoverageCell(
-			this.#selectCoverage.get(shortCellToInt(coverageCell)) as CoverageRow | undefined,
-			coverageCell,
-			this.identity.coverageResolution
-		)
+		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 
 	/**
@@ -390,16 +388,10 @@ export class ZoningLookup implements Disposable {
 		latitude: number,
 		longitude: number
 	): { designations: ZoningDesignation[]; containment: ZoningContainmentPath } {
-		// The stored rows sit at SEVERAL resolutions: each feature's whole tier is compacted parent-ward, and a polygon
-		// whose bounding box would not fit h3's allocator at the index resolution was indexed coarser (see `sdk/cells.ts`).
-		// So a point is answered by walking its own ancestor chain over every resolution the layer stores.
 		const whole = new Set<string>()
 		const partial = new Set<string>()
 
-		for (const resolution of this.identity.cellResolutions) {
-			const cell =
-				resolution === this.identity.indexResolution ? indexCell : (cellToParent(indexCell, resolution) as H3Cell)
-
+		for (const cell of ancestorChainCells(indexCell, this.identity.indexResolution, this.identity.cellResolutions)) {
 			const rows = this.#selectCell.all(shortCellToInt(cell)) as Array<{ area_id: string; containment: string }>
 
 			for (const row of rows) {
@@ -435,7 +427,7 @@ export class ZoningLookup implements Disposable {
 
 			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the few polygons that
 			// could contain the point rather than on every polygon reaching the cell.
-			if (longitude < area.min_lon || longitude > area.max_lon || latitude < area.min_lat || latitude > area.max_lat) {
+			if (!bboxContains(area, longitude, latitude)) {
 				continue
 			}
 
@@ -565,16 +557,8 @@ function readIdentity(database: DatabaseClient<ZoningDatabase>, databasePath: st
 	).map((entry) => entry.resolution)
 
 	const indexResolution = spineKeys.h3.resolution
-	const finerThanIndex = cellResolutions.filter((resolution) => resolution > indexResolution)
 
-	// A stored cell finer than the manifest's declared index resolution has no ancestor chain from the probe's own cell, so
-	// `cellToParent` would throw mid-query on some coordinates and not others. Refused here instead: it means the manifest
-	// and the rows disagree about what the layer is, which is a build defect rather than a runtime condition.
-	if (finerThanIndex.length) {
-		throw new Error(
-			`zoning reader: ${databasePath} stores cells at resolution(s) ${finerThanIndex.join(", ")}, finer than the manifest's declared index resolution ${indexResolution} — the manifest and the rows disagree`
-		)
-	}
+	assertNoCellsFinerThanIndex(cellResolutions, indexResolution, `zoning reader: ${databasePath}`)
 
 	const jurisdictionRows = database
 		.prepare("SELECT jurisdiction_id, name, source_code, country FROM zoning_jurisdiction ORDER BY jurisdiction_id")

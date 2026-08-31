@@ -12,7 +12,7 @@
 
 import { Box, Text } from "ink"
 
-import { type CommandSpec, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -30,9 +30,7 @@ const CorpusList = () => {
 		return defaultAdapterRegistry.list()
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status !== "done") return null
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (!state.result.length) {
 		return <Text dimColor>No adapters registered.</Text>

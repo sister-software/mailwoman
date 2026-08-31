@@ -22,12 +22,20 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
-import { runFileSync } from "@mailwoman/core/process"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	splitUpperList,
+	useCommandTask,
+} from "#cli-kit"
 import type { BBox, POISourceRow } from "#gazetteer-pipeline/poi/build-poi"
 import { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
+import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 const DEFAULT_COUNTRIES = "US,CA,MX,FR"
 
@@ -92,7 +100,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } = await import("#gazetteer-pipeline/poi/build-poi")
 
-		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		if (options.source === "osm") {
 			const { pbf, country: rawCountry, release, bbox: bboxFlag } = options
@@ -153,7 +161,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 
 		const release = options.release ?? DEFAULT_RELEASE
-		const countries = (options.countries ?? DEFAULT_COUNTRIES).split(",").map((c) => c.trim().toUpperCase())
+		const countries = splitUpperList(options.countries ?? DEFAULT_COUNTRIES)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
 		const out = options.out ?? dataRootPath("poi", "poi.db")
 
@@ -171,7 +179,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 				release,
 				countries,
 				limit,
-				onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+				onPhase: phaseReporter(),
 			})
 
 			parquetPaths = countries.map((cc) => ingest.countryParquet[cc]).filter((p): p is string => Boolean(p))
@@ -201,7 +209,7 @@ const GazetteerBuildPOI: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

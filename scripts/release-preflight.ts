@@ -32,6 +32,7 @@ import {
 	releaseWorkspaces,
 	stageReleaseTree,
 } from "./release-stage.ts"
+import { formatTarballAudit } from "./verify-tarball.ts"
 
 /**
  * Where the staged weights artifacts come from. `repo` reads this machine's data root, `hf` reads the public bucket CI
@@ -132,10 +133,7 @@ async function releasePreflight(): Promise<void> {
 		if (result.ok) {
 			const counts = result.counts!
 
-			process.stderr.write(
-				`✓ ${result.workspace}  (${counts.literalFiles} files, ${counts.exportTargets} export targets, ` +
-					`${counts.binTargets} bin targets)\n`
-			)
+			process.stderr.write(`✓ ${result.workspace}  (${formatTarballAudit(counts)})\n`)
 		} else {
 			process.stderr.write(`✗ ${result.workspace}\n`)
 

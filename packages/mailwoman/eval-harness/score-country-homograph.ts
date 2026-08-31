@@ -17,13 +17,16 @@
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { dataRootPath } from "@mailwoman/core/utils"
-import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } from "@mailwoman/neural"
-import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
-import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { JSONSpliterator } from "spliterator"
+
+import {
+	createUnfoldedEvalClassifier,
+	normalizeComponent,
+	type PerTagEvalRow,
+	perTagRates,
+	scorePerTagCounts,
+} from "#eval-harness/per-tag-f1"
 
 /**
  * Options for {@linkcode scoreCountryHomograph} — one field per flag the gate used to serialize into argv.
@@ -110,43 +113,20 @@ export async function scoreCountryHomograph(
 	options: ScoreCountryHomographOptions = {},
 	report: (line: string) => void = console.log
 ): Promise<ScoreCountryHomographResult> {
-	const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
-	const LK = dataRootPath("anchor", "pilot-anchor-lookup.json")
-	const GAZ = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
 	const file = options.file || "data/eval/external/country-homograph-real.jsonl"
 	const model = options.model || ""
-	const WEIGHTS_CACHE = options.weightsCache || ""
 
-	const neural = WEIGHTS_CACHE
-		? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: WEIGHTS_CACHE })
-		: await (async () => {
-				const card = await readLocalJSONFile<{ labels: string[] }>("packages/neural-weights-en-us/model-card.json")
+	const neural = await createUnfoldedEvalClassifier({
+		model,
+		weightsCache: options.weightsCache || "",
+		gazetteerLexicon: options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json",
+		gazetteerLexiconWhenPresent: true,
+		suppressGazNearPostcode: options.suppressGazNearPostcode ?? false,
+		...(options.conventions ? { conventions: options.conventions } : {}),
+		...(options.bridgeGaps ? { bridgeGaps: true } : {}),
+	})
 
-				const [tokenizer, runner] = await Promise.all([MailwomanTokenizer.loadFromFile(TOK), ONNXRunner.create(model)])
-
-				return new NeuralAddressClassifier({
-					tokenizer,
-					runner,
-					labels: card.labels,
-					postcodeAnchorLookup: parseAnchorLookup(await readLocalJSONFile(LK)),
-					...((await pathExists(GAZ)) ? { gazetteerLexicon: parseGazetteerLexicon(await readLocalJSONFile(GAZ)) } : {}),
-					suppressGazetteerNearPostcode: options.suppressGazNearPostcode ?? false,
-					// #511 Tier A: `conventions` auto|<system> enables the address-system conventions mask.
-					...(options.conventions ? { addressSystemConventions: options.conventions as "auto" } : {}),
-					...(options.bridgeGaps ? { bridgePunctuationGaps: true } : {}),
-				})
-			})()
-
-	const rows = await Array.fromAsync(
-		JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(file)
-	)
-
-	const norm = (s?: string): string => (s ?? "").trim().toLowerCase()
-	const stat: Record<string, { tp: number; fp: number; fn: number }> = {}
-
-	for (const t of TAGS) {
-		stat[t] = { tp: 0, fp: 0, fn: 0 }
-	}
+	const rows = await Array.fromAsync(JSONSpliterator.fromAsync<PerTagEvalRow>(file))
 
 	// over-fire diagnostics
 	let overfire = 0 // gold region/locality token tagged as country
@@ -154,43 +134,34 @@ export async function scoreCountryHomograph(
 	const overfireCases: string[] = []
 	const missedCases: string[] = []
 
-	for (const row of rows) {
-		const got = decodeAsJSON(await neural.parse(row.raw)) as Record<string, string>
-		const exp = row.components as Record<string, string>
+	const stat = await scorePerTagCounts(
+		rows,
+		TAGS,
+		async (raw) => decodeAsJSON(await neural.parse(raw)) as Record<string, string>,
+		(row, got) => {
+			const exp = row.components
 
-		for (const t of TAGS) {
-			const e = norm(exp[t]),
-				g = norm(got[t])
+			// over-fire: model emitted a country that is actually the gold region or locality
+			const gc = normalizeComponent(got.country)
 
-			if (e && g && e === g) {
-				stat[t]!.tp++
-			} else {
-				if (g) {
-					stat[t]!.fp++
-				}
+			if (
+				gc &&
+				!normalizeComponent(exp.country) &&
+				(gc === normalizeComponent(exp.region) || gc === normalizeComponent(exp.locality))
+			) {
+				overfire++
 
-				if (e) {
-					stat[t]!.fn++
-				}
+				overfireCases.push(
+					`  ${row.raw}  → country="${got.country}" (gold ${normalizeComponent(exp.region) === gc ? "region" : "locality"})`
+				)
+			}
+
+			if (normalizeComponent(exp.country) && !gc) {
+				missedCountry++
+				missedCases.push(`  ${row.raw}  → no country emitted (gold "${exp.country}")`)
 			}
 		}
-
-		// over-fire: model emitted a country that is actually the gold region or locality
-		const gc = norm(got.country)
-
-		if (gc && !norm(exp.country) && (gc === norm(exp.region) || gc === norm(exp.locality))) {
-			overfire++
-
-			overfireCases.push(
-				`  ${row.raw}  → country="${got.country}" (gold ${norm(exp.region) === gc ? "region" : "locality"})`
-			)
-		}
-
-		if (norm(exp.country) && !gc) {
-			missedCountry++
-			missedCases.push(`  ${row.raw}  → no country emitted (gold "${exp.country}")`)
-		}
-	}
+	)
 
 	report(`# country homograph baseline — ${model.split("/").at(-1)} · n=${rows.length}`)
 
@@ -200,9 +171,7 @@ export async function scoreCountryHomograph(
 
 	for (const t of TAGS) {
 		const { tp, fp, fn } = stat[t]!
-		const p = tp + fp ? tp / (tp + fp) : 0
-		const r = tp + fn ? tp / (tp + fn) : 0
-		const f1 = p + r ? (2 * p * r) / (p + r) : 0
+		const { p, r, f1 } = perTagRates(stat[t]!)
 		sidecar[t] = { p: +(100 * p).toFixed(1), r: +(100 * r).toFixed(1), f1: +(100 * f1).toFixed(1), tp, fp, fn }
 
 		report(

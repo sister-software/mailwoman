@@ -39,7 +39,7 @@ import type { PairIndexHeaderInput } from "@mailwoman/neural/pair-index-resolver
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * The GB source's adjudicated production distinct-pair count — the cross-check this build must reproduce. It sits BELOW
@@ -150,10 +150,7 @@ const SOURCE_PARENT_TAGS = {
  * what lets a freshness guard notice that exactly one of them changed.
  */
 function splitPathList(value: string | undefined): string[] {
-	return (value ?? "")
-		.split(",")
-		.map((path) => path.trim())
-		.filter((path) => path.length > 0)
+	return splitList(value)
 }
 
 /**
@@ -436,7 +433,7 @@ const GazetteerPairIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

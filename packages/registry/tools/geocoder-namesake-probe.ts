@@ -16,6 +16,7 @@
 import { haversineKm } from "@mailwoman/spatial"
 
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { inTXBBOX } from "#tools/shared"
 
 /**
  * Options for {@linkcode geocoderNamesakeProbe}.
@@ -40,14 +41,6 @@ const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: 
 	{ city: "Nazareth", zip: "79063", tx: [34.54, -102.1], namesake: "Nazareth, Israel (32.7, 35.3)" },
 	{ city: "Odessa", zip: "79761", tx: [31.85, -102.37], namesake: "Odessa, Ukraine (46.48, 30.72)" },
 ]
-
-/**
- * Texas bounding box (generous).
- */
-const TX_BBOX = { latMin: 25.8, latMax: 36.6, lonMin: -106.7, lonMax: -93.4 }
-
-const inTexas = (lat: number, lon: number) =>
-	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax
 
 /**
  * Admin-tier wrong-region probe (#619 tail) — see the module doc. Prints one line per variant to stdout.
@@ -75,7 +68,7 @@ export async function geocoderNamesakeProbe(
 				continue
 			}
 
-			const ok = inTexas(g.lat, g.lon)
+			const ok = inTXBBOX(g.lat, g.lon)
 			const km = haversineKm(c.tx[0], c.tx[1], g.lat, g.lon)
 
 			if (!ok) {

@@ -30,11 +30,28 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * Build inputs for one country's placetype-pair index. Shape mirrored from `release.config.json`; only `db` is read
- * here, the rest is the build's own record.
+ * Build inputs for one country's placetype-pair index, mirrored from `release.config.json`.
+ *
+ * Every field the `gazetteer pair-index` command accepts is represented: the release path builds the SHIPPED artifact,
+ * and any flag a reader silently drops produces a materially different binary from the one the model card's md5
+ * records. `source` is optional — it is the GB postal register (PPD), and countries whose pairs come entirely from the
+ * WOF admin DB have no equivalent; the command itself refuses a build with no source of any kind. Unknown keys pass
+ * through the index signature.
  */
 export interface PairIndexInputs {
-	db?: string
+	source?: string
+	delta: number
+	transitionBeta?: number
+	/**
+	 * The whole-edge parent-bias magnitude (#46). Present only on the locales whose parent side has a board — absence
+	 * means the shipped artifact carries no header key and the parent bias is OFF for that locale, which is the D-rule's
+	 * per-locale gate rather than an oversight.
+	 */
+	parentDelta?: number
+	boroughDB?: string
+	// oxlint-disable-next-line sister-software/no-title-case-acronym -- mirrors release.config.json's literal `pairsJsonl` wire key; renaming the member would stop it typing the parsed JSON
+	pairsJsonl?: string
+	banDir?: string
 	[key: string]: unknown
 }
 

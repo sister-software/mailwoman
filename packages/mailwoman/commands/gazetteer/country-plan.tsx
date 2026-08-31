@@ -20,10 +20,15 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
-import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+	writeRawStdout,
+} from "#cli-kit"
 import {
 	adminDBAvailable,
 	censusForCountry,
@@ -278,7 +283,7 @@ const CountryPlanCommand: ParsedCommandComponent<Options, [string?]> = ({ option
 		(result) => (result.conflicts > 0 ? 1 : 0)
 	)
 
-	if (state.status === "error") return <Text color="red">{state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return null
 }

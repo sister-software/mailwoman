@@ -38,6 +38,7 @@ import { resolvePath } from "path-ts"
 import semver from "semver"
 
 import { bumpReleaseConfigVersion } from "./release-config-version.ts"
+import { releaseWorkspaces } from "./release-stage.ts"
 
 const { values } = parseArguments({
 	options: {
@@ -83,15 +84,8 @@ if (values.version === "major" || values.version === "minor" || values.version =
 }
 
 // The SAME workspace list the publish loop uses (#756) — root + these is the full bump surface.
-const releaseItConfig = await readLocalJSONFile<{
-	plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-}>(resolvePath(repoRoot, ".release-it.json"))
-
-const workspaces = releaseItConfig.plugins["@release-it-plugins/workspaces"].workspaces
-
-if (!Array.isArray(workspaces) || !workspaces.length) {
-	fail(".release-it.json workspace list is empty")
-}
+// The canonical reader (release-stage.ts) refuses an empty or malformed list.
+const workspaces = await releaseWorkspaces(repoRoot)
 
 const manifestPaths = [rootManifestPath, ...workspaces.map((ws) => resolvePath(repoRoot, ws, "package.json"))]
 

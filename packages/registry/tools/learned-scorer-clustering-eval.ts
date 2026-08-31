@@ -33,32 +33,30 @@ import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 
 import {
-	addressFrequencyKey,
 	buildDefaultModel,
 	createMatchFeaturizer,
 	defaultBlockingKeys,
 	ingestRows,
 	resolveEntities,
-	streamRows,
 	type ColumnMapping,
-	type ResolvedEntity,
 	type SourceRecord,
 } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { buildNPPESSample } from "#tools/nppes/sample"
+import { scoreEntities } from "#tools/nppes/scoring"
 import {
-	addr,
-	MIN_GROUP_SIZE,
+	bestOver,
+	mean,
 	MIN_MEANINGFUL_F1_DELTA,
-	norm,
-	NPPES_COLUMNS as C,
-	sigmoid,
-	TRAINING_EPOCHS,
+	pct,
+	quantileThresholds,
+	sgn,
+	stateOption,
+	std,
+	toArmScore,
+	trainLogisticRegression,
+	type ArmScore,
 } from "#tools/shared"
-
-/**
- * Highest k swept when scanning cluster counts.
- */
-const MAX_K = 32
 
 /**
  * Options for {@linkcode scorerClusteringEval}.
@@ -98,61 +96,6 @@ export interface ScorerClusteringEvalOptions {
 	outMd?: string
 }
 
-interface MessyRow extends Record<string, string> {
-	npi: string
-	name: string
-	org: string
-	address: string
-}
-
-const choose2 = (n: number) => (n * (n - 1)) / 2
-
-/**
- * The dedup benchmark's pairwise clustering metric vs the NPI grouping (record.id = NPI).
- */
-function scoreClusters(
-	entities: ResolvedEntity[],
-	n: number
-): { precision: number; recall: number; f1: number; overMerged: number } {
-	const npiTotals = new Map<string, number>()
-	let sumCK = 0
-	let sumCluster = 0
-	let overMerged = 0
-
-	for (const e of entities) {
-		const byNPI = new Map<string, number>()
-
-		for (const rec of e.records) {
-			byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
-		}
-
-		sumCluster += choose2(e.records.length)
-
-		if (byNPI.size > 1) {
-			overMerged++
-		}
-
-		for (const [npi, c] of byNPI) {
-			sumCK += choose2(c)
-			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
-		}
-	}
-
-	let sumClass = 0
-
-	for (const total of npiTotals.values()) {
-		sumClass += choose2(total)
-	}
-
-	void n
-	const tp = sumCK
-	const precision = sumCluster > 0 ? tp / sumCluster : 0
-	const recall = sumClass > 0 ? tp / sumClass : 0
-	const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
-
-	return { precision, recall, f1, overMerged }
-}
-
 /**
  * Learned-scorer clustering A/B (#603 Tier 2) — see the module doc. Emits the markdown report to stdout.
  */
@@ -161,7 +104,7 @@ export async function scorerClusteringEval(
 	report?: (line: string) => void
 ): Promise<{ markdown: string }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 2000
 	const SPLIT = options.split ?? 0.67
 	const SEED = options.seed ?? 1
@@ -170,87 +113,30 @@ export async function scorerClusteringEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// --- Data-gen: the same NPI-keyed records as the dedup benchmark + the pairwise probe. ---
-	report?.("[A] streaming other-names…")
-	const altNames = new Map<string, string[]>()
-
-	for await (const r of streamRows(OTHER_NAMES)) {
-		const npi = norm(r[C.npi])
-		const alt = norm(r[C.otherOrg])
-
-		if (!npi || !alt) continue
-		const list = altNames.get(npi) ?? []
-
-		if (list.length < MIN_GROUP_SIZE) {
-			list.push(alt)
-		}
-
-		altNames.set(npi, list)
-	}
-
-	report?.(`[B] full registry pass: address-frequency table + ${NPIS} ${STATE} sample…`)
-	const rows: MessyRow[] = []
-	const kept = new Set<string>()
-	const addrCounts = new Map<string, number>()
-	let addrTotal = 0
-	let scanned = 0
-
-	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) {
-			report?.(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
-		}
-
-		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
-
-		if (practice) {
-			const k = addressFrequencyKey(practice)
-			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
-
-			addrTotal++
-		}
-
-		const npi = norm(r[C.npi])
-
-		if (
-			kept.size < NPIS &&
-			npi &&
-			!kept.has(npi) &&
-			altNames.has(npi) &&
-			practice &&
-			norm(r[C.pState]).toUpperCase() === STATE
-		) {
-			const isOrg = norm(r[C.entityType]) === "2"
-			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
-
-			if (primaryName) {
-				const org = isOrg ? norm(r[C.orgLegal]) : ""
-				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice })
-
-				for (const alt of altNames.get(npi)!) {
-					rows.push({ npi, name: alt, org: alt, address: practice })
-				}
-
-				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
-
-				if (mailing && mailing !== practice) {
-					rows.push({ npi, name: primaryName, org, address: mailing })
-				}
-			}
-		}
-	}
-
-	const addressFrequency = {
-		total: addrTotal,
-		distinct: addrCounts.size,
-		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
-	}
-
-	report?.(`    ${kept.size} NPIs → ${rows.length} records`)
+	// --- Data-gen: the same NPI-keyed records as the dedup benchmark + the pairwise probe (the SHARED
+	// sample builder). ---
+	const {
+		rows,
+		keptNpis: kept,
+		addressFrequency,
+	} = await buildNPPESSample(
+		{ registryPath: REGISTRY, otherNamesPath: OTHER_NAMES, state: STATE, maxNpis: NPIS },
+		report
+	)
 
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
-	const mapping: ColumnMapping = { id: "npi", name: "name", organization: "org", address: "address", source: "nppes" }
+
+	// `auth`/`taxonomy` ride as attributes so the SHARED featurizer's #625 roll-up features can read the
+	// authorized official; the FS arm ignores them (no discriminators configured).
+	const mapping: ColumnMapping = {
+		id: "npi",
+		name: "name",
+		organization: "org",
+		address: "address",
+		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy" },
+		source: "nppes",
+	}
 
 	const records = await ingestRows(rows, mapping, {
 		geocodeAddress: geocoder.seam,
@@ -265,12 +151,7 @@ export async function scorerClusteringEval(
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
-	interface ArmScore {
-		precision: number
-		recall: number
-		f1: number
-		overMerged: number
-	}
+	const npiLabel = (rec: SourceRecord) => rec.id
 
 	interface SeedResult {
 		seed: number
@@ -307,94 +188,37 @@ export async function scorerClusteringEval(
 		const dim = trainX[0]?.length ?? 0
 		const gbt = trainGBT(trainX, trainY, trainW, { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 })
 
-		// LR (batch GD, class-balanced) — same as the pairwise probe.
-		const w = new Array<number>(dim).fill(0)
-		let bias = 0
-
-		for (let epoch = 0; epoch < TRAINING_EPOCHS; epoch++) {
-			const gw = new Array<number>(dim).fill(0)
-			let gb = 0
-
-			for (let i = 0; i < trainX.length; i++) {
-				let z = bias
-
-				for (let j = 0; j < dim; j++) {
-					z += w[j]! * trainX[i]![j]!
-				}
-
-				const err = (sigmoid(z) - trainY[i]!) * trainW[i]!
-
-				for (let j = 0; j < dim; j++) {
-					gw[j]! += err * trainX[i]![j]!
-				}
-
-				gb += err
-			}
-
-			for (let j = 0; j < dim; j++) {
-				w[j]! -= 0.1 * (gw[j]! / trainX.length + 1e-3 * w[j]!)
-			}
-
-			bias -= 0.1 * (gb / trainX.length)
-		}
-
-		const lrSc = (x: number[]) => {
-			let z = bias
-
-			for (let j = 0; j < x.length; j++) {
-				z += w[j]! * x[j]!
-			}
-
-			return z
-		}
+		// LR (batch GD, class-balanced) — the SHARED trainer, same as the pairwise probe.
+		const lrSc = trainLogisticRegression(trainX, trainY, trainW, dim)
 
 		const gbtScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(gbt, featurize(a, b))
 		const lrScorer = (a: SourceRecord, b: SourceRecord) => lrSc(featurize(a, b))
 
-		const bestOver = (thresholds: number[], cfg: (t: number) => Parameters<typeof resolveEntities>[1]): ArmScore => {
-			let best: ArmScore = { precision: 0, recall: 0, f1: -1, overMerged: 0 }
+		const armOver = (
+			thresholds: readonly number[],
+			cfg: (t: number) => Parameters<typeof resolveEntities>[1]
+		): ArmScore =>
+			bestOver(thresholds, (t) => toArmScore(scoreEntities(resolveEntities(evalRecords, cfg(t)).entities, npiLabel, N)))
 
-			for (const t of thresholds) {
-				const s = scoreClusters(resolveEntities(evalRecords, cfg(t)).entities, N)
-
-				if (s.f1 > best.f1) {
-					best = s
-				}
-			}
-
-			return best
-		}
-
-		// FS baseline: EM-fit weights in bits, fine grid [0..25]. Learned scorers: a FINE sweep (33 points)
-		// from each scorer's own eval-pair score distribution, so a coarse grid can't understate them.
+		// FS baseline: EM-fit weights in bits, fine grid [0..25]. Learned scorers: a FINE sweep from each
+		// scorer's own eval-pair score distribution, so a coarse grid can't understate them.
 		const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
 
-		const quantileThresholds = (scores: number[]): number[] => {
-			const sorted = [...scores].toSorted((p, q) => p - q)
-			const ts = new Set<number>()
-
-			for (let k = 0; k <= MAX_K; k++) {
-				ts.add(sorted[Math.floor((0.2 + (0.999 - 0.2) * (k / 32)) * (sorted.length - 1))]!)
-			}
-
-			return [...ts]
-		}
-
-		const fs = bestOver(
+		const fs = armOver(
 			Array.from({ length: 26 }, (_, i) => i),
 			// learnedScorer:false — the FS baseline is the baseline this A/B measures against (the learned scorer
 			// is now default-on, so without this the "FS arm" would silently BE the GBT).
 			(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 		)
 
-		const gbtArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => gbtScorer(a, b))), (t) => ({
+		const gbtArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => gbtScorer(a, b))), (t) => ({
 			addressFrequency,
 			collapseSpatial: true,
 			scorer: gbtScorer,
 			threshold: t,
 		}))
 
-		const lrArm = bestOver(quantileThresholds(evalPairs.map(([a, b]) => lrScorer(a, b))), (t) => ({
+		const lrArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => lrScorer(a, b))), (t) => ({
 			addressFrequency,
 			collapseSpatial: true,
 			scorer: lrScorer,
@@ -402,18 +226,6 @@ export async function scorerClusteringEval(
 		}))
 
 		return { seed, trainN: trainRecords.length, evalN: N, fs, lr: lrArm, gbt: gbtArm }
-	}
-
-	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
-	// numerator/denominator contract (call sites append their own "%").
-	const pct = (x: number) => (100 * x).toFixed(1)
-	const sgn = (x: number) => (x >= 0 ? "+" : "")
-	const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
-
-	const std = (xs: number[]) => {
-		const m = mean(xs)
-
-		return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)))
 	}
 
 	const SEEDS = options.seeds ?? 4
@@ -435,22 +247,22 @@ export async function scorerClusteringEval(
 	const dGbt = results.map((r) => r.gbt.f1 - r.fs.f1)
 	const dLr = results.map((r) => r.lr.f1 - r.fs.f1)
 	const gbtWins = dGbt.filter((d) => d > 0).length
-	const meanDGbt = mean(dGbt)
+	const meanDGbt = mean(dGbt)!
 
 	const armRow = (label: string, pick: (r: SeedResult) => ArmScore, dArr: number[] | null, bold: boolean) => {
 		const f1s = results.map((r) => pick(r).f1)
-		const P = mean(results.map((r) => pick(r).precision))
-		const R = mean(results.map((r) => pick(r).recall))
-		const om = mean(results.map((r) => pick(r).overMerged))
-		const d = dArr ? `${sgn(mean(dArr) * 100)}${(mean(dArr) * 100).toFixed(1)}pp` : "—"
-		const f1cell = `${pct(mean(f1s))}% ± ${pct(std(f1s))}`
+		const P = mean(results.map((r) => pick(r).precision))!
+		const R = mean(results.map((r) => pick(r).recall))!
+		const om = mean(results.map((r) => pick(r).overMerged))!
+		const d = dArr ? `${sgn(mean(dArr)! * 100)}${(mean(dArr)! * 100).toFixed(1)}pp` : "—"
+		const f1cell = `${pct(mean(f1s)!)}% ± ${pct(std(f1s))}`
 		const cells = `${pct(P)}% | ${pct(R)}% | ${bold ? `**${f1cell}**` : f1cell} | ${bold ? `**${d}**` : d} | ${om.toFixed(0)}`
 
 		return `| ${bold ? `**${label}**` : label} | ${cells} |`
 	}
 
-	const avgEval = Math.round(mean(results.map((r) => r.evalN)))
-	const avgTrain = Math.round(mean(results.map((r) => r.trainN)))
+	const avgEval = Math.round(mean(results.map((r) => r.evalN))!)
+	const avgTrain = Math.round(mean(results.map((r) => r.trainN))!)
 
 	const lines: string[] = [
 		`# Learned-scorer CLUSTERING A/B (#603 Tier 2) — does a learned scorer beat the FS baseline on the assembled output?`,
@@ -478,16 +290,16 @@ export async function scorerClusteringEval(
 	const verdict =
 		meanDGbt > MIN_MEANINGFUL_F1_DELTA && gbtWins >= SEEDS - 1
 			? `**The learned scorer beats the FS baseline on the assembled clustering output** — GBT clustering F1 ` +
-				`${pct(mean(gbtF1))}% vs FS ${pct(mean(fsF1))}% (${sgn(meanDGbt * 100)}${(meanDGbt * 100).toFixed(1)}pp mean, ${gbtWins}/${SEEDS} ` +
+				`${pct(mean(gbtF1)!)}% vs FS ${pct(mean(fsF1)!)}% (${sgn(meanDGbt * 100)}${(meanDGbt * 100).toFixed(1)}pp mean, ${gbtWins}/${SEEDS} ` +
 				`seeds), driven by a large PRECISION gain that cuts the over-merge — the #625 problem. The pairwise gain (#640) ` +
 				`DOES translate to the entity-resolution metric. This confirms the #603 GBM as a real dedup lever and justifies the ` +
 				`production build (offline XGBoost/LightGBM → tree JSON, the \`scorer\` hook for inference). The honest next axis is ` +
 				`cross-STATE generalization (train-TX / eval-other-state) and a tuned GBM on more features.`
 			: meanDGbt < -MIN_MEANINGFUL_F1_DELTA
-				? `**The learned scorer does NOT beat the FS baseline on clustering** (GBT ${pct(mean(gbtF1))}% vs FS ${pct(mean(fsF1))}%, ` +
+				? `**The learned scorer does NOT beat the FS baseline on clustering** (GBT ${pct(mean(gbtF1)!)}% vs FS ${pct(mean(fsF1)!)}%, ` +
 					`${(meanDGbt * 100).toFixed(1)}pp). The pairwise ranking gain (#640) does not survive the threshold + ` +
 					`connected-components assembly — clustering, not ranking, is the binding constraint. FS stays the baseline.`
-				: `**The learned scorer roughly TIES the FS baseline on clustering** (GBT ${pct(mean(gbtF1))}% vs FS ${pct(mean(fsF1))}%, ` +
+				: `**The learned scorer roughly TIES the FS baseline on clustering** (GBT ${pct(mean(gbtF1)!)}% vs FS ${pct(mean(fsF1)!)}%, ` +
 					`${sgn(meanDGbt * 100)}${(meanDGbt * 100).toFixed(1)}pp, ${gbtWins}/${SEEDS} seeds). The pairwise ranking gain (#640) is ` +
 					`real but largely washes out through the threshold + connected-components assembly. A learned scorer is not a free ` +
 					`dedup win; pairing it with a clustering change or a more distinctive identifier (#625) is the path.`

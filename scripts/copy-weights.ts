@@ -35,7 +35,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
+import { pathExists, tryStat } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { runIfScript } from "@mailwoman/core/scripting"
@@ -43,6 +43,12 @@ import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { derivedStoreServeViolation, derivedWeightsDir, derivedWeightsKey } from "./derived-weights-key.ts"
+import {
+	type PairIndexInputs,
+	readReleaseConfig,
+	repoCommittedSoftFeedSources,
+	type SoftFeedRecipe,
+} from "./weights-recipe.ts"
 
 const repoRoot = repoRootPath()
 
@@ -118,51 +124,7 @@ async function stashDerived(dir: string, filename: string): Promise<void> {
 	}
 }
 
-/**
- * Per-country pair-index build inputs. Every field the `gazetteer pair-index` command accepts is represented — see the
- * docstring on {@link PAIR_INDEX_BY_COUNTRY} for why a silently-dropped flag is a shipping defect.
- */
-interface PairIndexBuildInputs {
-	source?: string
-	delta: number
-	transitionBeta?: number
-	/**
-	 * The whole-edge parent-bias magnitude (#46). Present only on the locales whose parent side has a board — absence
-	 * means the shipped artifact carries no header key and the parent bias is OFF for that locale, which is the D-rule's
-	 * per-locale gate rather than an oversight.
-	 */
-	parentDelta?: number
-	boroughDB?: string
-	pairsJsonl?: string
-	banDir?: string
-}
-
-/**
- * The soft-feed slice of `release.config.json`, typed to exactly the fields this script consumes. The pre-2026-08-04
- * `Record<string, unknown>` only compiled because `JSON.parse` returned `any`; `parseJSONStrict` surfaces every use
- * site, so the honest options are a typed slice here or casts scattered at each read — this is the single place. Fields
- * a locale hasn't earned stay absent; keys this script doesn't read pass through the index signature.
- */
-interface SoftFeedConfig {
-	gazetteerLexicon?: string
-	countryLexicon?: string
-	streetTypeLexicon?: string
-	localitySurfaceLexicon?: string
-	pairIndexByCountry?: Record<string, PairIndexBuildInputs>
-	postcodeDBByCountry?: Record<string, string>
-	[key: string]: unknown
-}
-
-/**
- * The slice of `release.config.json` this script reads.
- */
-interface ReleaseConfig {
-	locales: string[]
-	weights: { model: string; tokenizer: string }
-	softFeed?: SoftFeedConfig
-}
-
-const config = await readLocalJSONFile<ReleaseConfig>(resolvePath(repoRoot, "release.config.json"))
+const config = await readReleaseConfig(repoRoot)
 const dataRoot = String(mailwomanDataRoot())
 /**
  * Model binary to copy into each weights workspace before packing.
@@ -177,37 +139,23 @@ const SOURCE_TOKENIZER = $public.MAILWOMAN_PUBLISH_TOKENIZER ?? resolvePath(data
  * Soft-feed artifact paths from the release config. Absent entries simply mean the locale ships without that sibling,
  * which is a supported (lean) install rather than an error.
  */
-const SOFT_FEED = config.softFeed ?? {}
+const SOFT_FEED: SoftFeedRecipe = config.softFeed ?? {}
 /**
- * Anchor lexicon source, or null when this release ships without one.
+ * The repo-committed soft-feed lexicons (gazetteer #464, country #1104, street-type Option-A), shipped-name → absolute
+ * source. The per-key base-directory rule lives in `weights-recipe.ts`; only the BUILT locality-surface lexicon below
+ * resolves against the data root instead.
  */
-const SOURCE_GAZETTEER = SOFT_FEED.gazetteerLexicon ? resolvePath(repoRoot, SOFT_FEED.gazetteerLexicon) : null
-/**
- * Country-surface lexicon source, or null when this release ships without one.
- */
-const SOURCE_COUNTRY = SOFT_FEED.countryLexicon ? resolvePath(repoRoot, SOFT_FEED.countryLexicon) : null
-// Option-A evidence bundle (v3.23): street-type is a small repo-committed file; locality-surface is a
-// ~7 MB data-root artifact (never in git) — note the DIFFERENT base dirs.
-const SOURCE_STREET_TYPE = SOFT_FEED.streetTypeLexicon ? resolvePath(repoRoot, SOFT_FEED.streetTypeLexicon) : null
+const REPO_COMMITTED_SOURCES = repoCommittedSoftFeedSources(repoRoot, SOFT_FEED)
 
 const SOURCE_LOCALITY_SURFACE = SOFT_FEED.localitySurfaceLexicon
 	? resolvePath(dataRoot, SOFT_FEED.localitySurfaceLexicon)
 	: null
 
 /**
- * Per-country pair-index build inputs, keyed by country code.
- *
- * Every field the `gazetteer pair-index` command accepts is represented, because this path builds the SHIPPED artifact
- * and any flag it silently drops produces a materially different binary from the one the model card's md5 records. That
- * bug was live until 2026-08-01: the type declared only `{ source, delta }`, so the release build rebuilt
- * `pair-index-gb.bin` WITHOUT the calibrated `transitionBeta` and WITHOUT the R2/R3/R4b borough + London pair sources —
- * a quietly degraded index. It never shipped because CI sets `MAILWOMAN_SKIP_WEIGHTS_COPY` and the operator publishes
- * the dev-linked binary, but a local `yarn release` would have produced it.
- *
- * `source` is OPTIONAL: it is the GB postal register (PPD), and countries whose pairs come entirely from the WOF admin
- * DB (US) have no equivalent — the command itself refuses a build with no source of any kind.
+ * Per-country pair-index build inputs, keyed by country code — the fully-typed `PairIndexInputs` shape from
+ * `weights-recipe.ts`, whose docstring records why a silently-dropped flag is a shipping defect.
  */
-const PAIR_INDEX_BY_COUNTRY: Record<string, PairIndexBuildInputs> = SOFT_FEED.pairIndexByCountry ?? {}
+const PAIR_INDEX_BY_COUNTRY: Record<string, PairIndexInputs> = SOFT_FEED.pairIndexByCountry ?? {}
 
 /**
  * Weights workspaces to materialize, derived from the release config's locale list.
@@ -315,50 +263,34 @@ async function materializeStreetMorphology(workspace: string, dir: string) {
  * symlink-in-tarball trap the model/tokenizer copy guards against.
  */
 async function materializeSoftFeed(workspace: string, dir: string) {
-	// Gazetteer-anchor lexicon (#464) — a small JSON, copied verbatim from the repo source.
-	if (SOURCE_GAZETTEER) {
-		if (!(await tryStat(SOURCE_GAZETTEER))) {
-			throw new Error(
-				`Missing gazetteer lexicon: ${SOURCE_GAZETTEER}\nSet softFeed.gazetteerLexicon in release.config.json.`
-			)
-		}
-
-		const dest = resolvePath(dir, "anchor-lexicon-v1.json")
-		await removePathIfPresent(dest)
-		await copyFileTo(SOURCE_GAZETTEER, dest)
-		process.stderr.write(`copied soft-feed → ${workspace}/anchor-lexicon-v1.json\n`)
-	}
-
-	// Country-surface lexicon (#1104) — the dedicated country soft-feed vocabulary, copied verbatim from
-	// the repo source. Ships alongside the gazetteer lexicon for models whose card carries requires.country.
-	if (SOURCE_COUNTRY) {
-		if (!(await tryStat(SOURCE_COUNTRY))) {
-			throw new Error(`Missing country lexicon: ${SOURCE_COUNTRY}\nSet softFeed.countryLexicon in release.config.json.`)
-		}
-
-		const dest = resolvePath(dir, "country-surface-lexicon-v1.json")
-		await removePathIfPresent(dest)
-		await copyFileTo(SOURCE_COUNTRY, dest)
-		process.stderr.write(`copied soft-feed → ${workspace}/country-surface-lexicon-v1.json\n`)
-	}
-
-	// Evidence-bundle lexicons (Option-A, v3.23): copied verbatim like the gazetteer/country lexicons —
-	// every locale package ships them because every locale ships the same bundle-trained base model
-	// (the card carries requires.street_type/locality_surface; withholding a sibling would fail closed).
-	for (const [source, basename, label] of [
-		[SOURCE_STREET_TYPE, "street-type-lexicon-v3.json", "softFeed.streetTypeLexicon"],
-		[SOURCE_LOCALITY_SURFACE, "locality-surface-lexicon-v7.json", "softFeed.localitySurfaceLexicon"],
-	] as const) {
-		if (!source) continue
-
+	// Repo-committed lexicons (gazetteer #464, country #1104, street-type Option-A) — verbatim copies,
+	// shipped-name → source from the shared recipe reader (weights-recipe.ts owns the base-dir rule).
+	for (const [basename, source] of REPO_COMMITTED_SOURCES) {
 		if (!(await tryStat(source))) {
-			throw new Error(`Missing evidence lexicon: ${source}\nSet ${label} in release.config.json.`)
+			throw new Error(
+				`Missing soft-feed lexicon ${basename}: ${source}\nSet the matching softFeed entry in release.config.json.`
+			)
 		}
 
 		const dest = resolvePath(dir, basename)
 		await removePathIfPresent(dest)
 		await copyFileTo(source, dest)
 		process.stderr.write(`copied soft-feed → ${workspace}/${basename}\n`)
+	}
+
+	// The BUILT locality-surface lexicon (~7 MB, data-root, never in git) — the one that breaks its
+	// three neighbours' base-directory pattern.
+	if (SOURCE_LOCALITY_SURFACE) {
+		if (!(await tryStat(SOURCE_LOCALITY_SURFACE))) {
+			throw new Error(
+				`Missing evidence lexicon: ${SOURCE_LOCALITY_SURFACE}\nSet softFeed.localitySurfaceLexicon in release.config.json.`
+			)
+		}
+
+		const dest = resolvePath(dir, "locality-surface-lexicon-v7.json")
+		await removePathIfPresent(dest)
+		await copyFileTo(SOURCE_LOCALITY_SURFACE, dest)
+		process.stderr.write(`copied soft-feed → ${workspace}/locality-surface-lexicon-v7.json\n`)
 	}
 
 	// PCB1 postcode-anchor binary (#240) — built from the locale's WOF postcode shard. The locale's
@@ -422,20 +354,20 @@ async function materializePairIndex(workspace: string, dir: string) {
 
 	// Inputs resolve against DIFFERENT roots, and conflating them is a real failure mode (it broke CI once):
 	// `source` and `boroughDB` are large acquired datasets under the data root, while `pairsJsonl` is a curated file
-	// CHECKED INTO THE REPO (`data/gazetteer/london-pairs-v2.jsonl`). Absolute paths pass through untouched either way.
-	const resolveFrom = (root: string, value: string) => (value.startsWith("/") ? value : resolvePath(root, value))
-	const source = entry.source ? resolveFrom(dataRoot, entry.source) : undefined
-	const boroughDB = entry.boroughDB ? resolveFrom(dataRoot, entry.boroughDB) : undefined
+	// CHECKED INTO THE REPO (`data/gazetteer/london-pairs-v2.jsonl`). `resolvePath` lets an absolute entry pass
+	// through untouched either way.
+	const source = entry.source ? resolvePath(dataRoot, entry.source) : undefined
+	const boroughDB = entry.boroughDB ? resolvePath(dataRoot, entry.boroughDB) : undefined
 
 	// A COMMA-SEPARATED list since R7 (London + NI): resolve each entry, then rejoin.
 	const pairsJsonl = entry.pairsJsonl
 		? entry.pairsJsonl
 				.split(",")
-				.map((path) => resolveFrom(repoRoot, path.trim()))
+				.map((path) => resolvePath(repoRoot, path.trim()))
 				.join(",")
 		: undefined
 
-	const banDir = entry.banDir ? resolveFrom(dataRoot, entry.banDir) : undefined
+	const banDir = entry.banDir ? resolvePath(dataRoot, entry.banDir) : undefined
 
 	for (const path of pairsJsonl ? pairsJsonl.split(",") : []) {
 		if (!(await pathExists(path))) {

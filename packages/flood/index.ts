@@ -39,15 +39,16 @@
  */
 
 import {
+	assertCoverageNotEmpty,
+	assertNoCellsFinerThanIndex,
 	parseManifestRows,
-	toCoverageCell,
-	type CoverageRow,
 	type CoverageCell,
 	type LayerManifest,
 } from "@mailwoman/core/layers"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { ancestorChainCells, bboxContains, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { readCoverageAt } from "@mailwoman/spatial/h3/coverage"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { cellToParent, latLngToCell } from "h3-js"
+import { latLngToCell } from "h3-js"
 
 import { pointInEncodedRings } from "#rings"
 import type { FloodDatabase } from "#schema"
@@ -279,15 +280,7 @@ export class FloodZoneLookup implements Disposable {
 	 * The coverage row for the index cell's parent at the coverage resolution.
 	 */
 	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
-		const coverageCell = cellToParent(indexCell, this.identity.coverageResolution) as H3Cell
-
-		// The NULL-basis rule lives in the shared mapping: a NULL column is an artifact built before `basis` existed, and
-		// it was recording source presence — never a stronger basis than the builder actually had.
-		return toCoverageCell(
-			this.#selectCoverage.get(shortCellToInt(coverageCell)) as CoverageRow | undefined,
-			coverageCell,
-			this.identity.coverageResolution
-		)
+		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 
 	/**
@@ -298,17 +291,11 @@ export class FloodZoneLookup implements Disposable {
 		latitude: number,
 		longitude: number
 	): { zoneCode?: string; areaID?: string; containment: FloodContainmentPath } {
-		// The stored rows sit at SEVERAL resolutions: the whole tier is compacted parent-ward, and a polygon whose bounding
-		// box would not fit h3's allocator at the index resolution was indexed coarser (see `sdk/cells.ts`). So a point is
-		// answered by walking its own ancestor chain over every resolution the layer stores. Coarsest first: a whole hit
-		// high in the chain is the cheapest answer and cannot be contradicted lower down, because compaction only ever
-		// replaces a full set of children with their parent.
+		// Coarsest first: a whole hit high in the ancestor chain is the cheapest answer and cannot be contradicted lower
+		// down, because compaction only ever replaces a full set of children with their parent.
 		const partialCells: number[] = []
 
-		for (const resolution of this.identity.cellResolutions) {
-			const cell =
-				resolution === this.identity.indexResolution ? indexCell : (cellToParent(indexCell, resolution) as H3Cell)
-
+		for (const cell of ancestorChainCells(indexCell, this.identity.indexResolution, this.identity.cellResolutions)) {
 			const short = shortCellToInt(cell)
 			const rows = this.#selectCell.all(short) as Array<{ zone_code: string; containment: string }>
 
@@ -336,7 +323,7 @@ export class FloodZoneLookup implements Disposable {
 
 			// The bbox is the prefilter the geometry table stores precisely so the ray cast runs on the few polygons that
 			// could contain the point rather than on every polygon reaching the cell.
-			if (longitude < area.min_lon || longitude > area.max_lon || latitude < area.min_lat || latitude > area.max_lat) {
+			if (!bboxContains(area, longitude, latitude)) {
 				continue
 			}
 
@@ -380,11 +367,7 @@ function readIdentity(database: DatabaseClient<FloodDatabase>, databasePath: str
 
 	const coverageCount = (database.prepare("SELECT count(*) AS n FROM layer_coverage").get() as { n: number }).n
 
-	if (!coverageCount) {
-		throw new Error(
-			`flood reader: ${databasePath} holds no coverage rows — every location would read as unknown, which is indistinguishable from a region the authority has not mapped`
-		)
-	}
+	assertCoverageNotEmpty(coverageCount, `flood reader: ${databasePath}`, "a region the authority has not mapped")
 
 	const cellResolutions = (
 		database.prepare("SELECT DISTINCT resolution FROM flood_zone_cell ORDER BY resolution").all() as Array<{
@@ -393,16 +376,8 @@ function readIdentity(database: DatabaseClient<FloodDatabase>, databasePath: str
 	).map((r) => r.resolution)
 
 	const indexResolution = spineKeys.h3.resolution
-	const finerThanIndex = cellResolutions.filter((resolution) => resolution > indexResolution)
 
-	// A stored cell finer than the manifest's declared index resolution has no ancestor chain from the probe's own cell,
-	// so `cellToParent` would throw mid-query on some coordinates and not others. Refused here instead: it means the
-	// manifest and the rows disagree about what the layer is, which is a build defect rather than a runtime condition.
-	if (finerThanIndex.length) {
-		throw new Error(
-			`flood reader: ${databasePath} stores cells at resolution(s) ${finerThanIndex.join(", ")}, finer than the manifest's declared index resolution ${indexResolution} — the manifest and the rows disagree`
-		)
-	}
+	assertNoCellsFinerThanIndex(cellResolutions, indexResolution, `flood reader: ${databasePath}`)
 
 	const zoneCodes = (
 		database.prepare("SELECT zone_code FROM flood_zone_vocabulary ORDER BY zone_code").all() as Array<{

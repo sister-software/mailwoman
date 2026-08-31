@@ -39,21 +39,12 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
+import { serializePostcodeBinary } from "@mailwoman/neural/postcode-binary-resolver"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
 
-/**
- * A GB unit postcode in the space-stripped key form the train painter writes. Verbatim from
- * `mailwoman/gazetteer-pipeline/anchor-lookup.ts`.
- */
-const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
-
-/**
- * A GB unit's inward code is ALWAYS the last three characters; the outward district is the rest.
- */
-const GB_INWARD_LENGTH = 3
+import { buildPostcodeBinaryEntries } from "#gazetteer-pipeline/postcode/binary"
 
 const { values } = parseArguments({
 	options: {
@@ -68,46 +59,10 @@ const shardPath = values.shard!.startsWith("/") ? values.shard! : String(dataRoo
 using con = new DatabaseClient<WOFDatabase>(shardPath, { readOnly: true })
 
 const rows = con
-	.prepare("SELECT name, latitude, longitude FROM spr WHERE placetype='postalcode' AND is_current!=0")
-	.all() as Array<{ name: string; latitude: number; longitude: number }>
+	.prepare("SELECT name, latitude AS lat, longitude AS lon FROM spr WHERE placetype='postalcode' AND is_current!=0")
+	.all() as Array<{ name: string; lat: number; lon: number }>
 
-const entries: PostcodeBinaryEntry[] = []
-const outward = new Map<string, { lat: number; lon: number; n: number }>()
-let skipped = 0
-
-for (const row of rows) {
-	const pc = (row.name || "").trim().toUpperCase()
-
-	if (!GB_UNIT_KEY.test(pc)) {
-		skipped++
-
-		continue
-	}
-
-	const lat = Number(row.latitude)
-	const lon = Number(row.longitude)
-
-	entries.push({ postcode: pc, country: "GB", lat, lon })
-
-	// The outward mean is over PLACED units only — `addGBOutwardKeys` skips `source === null` rows,
-	// which is exactly the unplaced ones.
-	if (lat === 0 && lon === 0) continue
-	const district = pc.slice(0, -GB_INWARD_LENGTH)
-	const bucket = outward.get(district)
-
-	if (bucket) {
-		bucket.lat += lat
-		bucket.lon += lon
-
-		bucket.n++
-	} else {
-		outward.set(district, { lat, lon, n: 1 })
-	}
-}
-
-for (const [district, { lat, lon, n }] of outward) {
-	entries.push({ postcode: district, country: "GB", lat: lat / n, lon: lon / n })
-}
+const { entries, skipped, outwardKeys } = buildPostcodeBinaryEntries("GB", rows, { gbGranularity: "unit" })
 
 const bytes = serializePostcodeBinary(entries)
 const outPath = join(values.out, "postcode-gb.bin")
@@ -115,7 +70,7 @@ await writeLocalFile(bytes, outPath)
 
 console.log(
 	`GB: ${entries.length.toLocaleString()} keys ` +
-		`(${(entries.length - outward.size).toLocaleString()} units + ${outward.size.toLocaleString()} outward districts, ` +
+		`(${(entries.length - outwardKeys).toLocaleString()} units + ${outwardKeys.toLocaleString()} outward districts, ` +
 		`${skipped.toLocaleString()} rows skipped as non-unit-shaped) → ${outPath} ` +
 		`(${ByteFormatter.formatIEC(bytes.length)})`
 )

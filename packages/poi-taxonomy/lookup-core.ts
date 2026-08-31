@@ -8,6 +8,7 @@
  *   node imports, so it stays bundler-safe. Not exported via a subpath of its own.
  */
 
+import { createPhraseIndex } from "#phrase-index"
 import type { CategoryRecord, POITaxonomyTable, SynonymEntry } from "#types"
 
 export interface CategoryMatch {
@@ -54,16 +55,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 * Lowercased phrase index. Sources, in insertion order: each category's id (underscores as spaces), its label, then
 	 * the synonym table. Multiple entries may share a phrase.
 	 */
-	const byPhrase: ReadonlyMap<string, ReadonlyArray<PhraseEntry>> = (() => {
-		const map = new Map<string, PhraseEntry[]>()
-
-		const add = (phrase: string, entry: PhraseEntry) => {
-			const key = phrase.toLowerCase()
-			const existing = map.get(key) ?? []
-			existing.push(entry)
-			map.set(key, existing)
-		}
-
+	const byPhrase: ReadonlyMap<string, ReadonlyArray<PhraseEntry>> = createPhraseIndex<PhraseEntry>((add) => {
 		for (const category of table.categories) {
 			add(category.id.replaceAll("_", " "), { category, phrase: category.id.replaceAll("_", " ") })
 			add(category.label, { category, phrase: category.label.toLowerCase() })
@@ -84,14 +76,13 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 				...(synonym.locales ? { locales: synonym.locales } : {}),
 			})
 		}
-
-		return map
-	})()
+	})
 
 	/**
-	 * Exact-phrase category lookup. `locale` gates locale-restricted synonyms with the variant-aliases semantics: exact
-	 * locale 1.0, language-only 0.5, otherwise no match. Ungated phrases always match at 1.0. Deduplicated by category
-	 * (best confidence wins), sorted by confidence descending.
+	 * Exact-phrase category lookup. `locale` gates locale-restricted synonyms with the variant-aliases semantics
+	 * (`@mailwoman/variant-aliases`' `resolveLocaleScope` owns that rule; the copies here stay local to keep this package
+	 * dependency-free): exact locale 1.0, language-only 0.5, otherwise no match. Ungated phrases always match at 1.0.
+	 * Deduplicated by category (best confidence wins), sorted by confidence descending.
 	 */
 	function lookupPOICategory(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()

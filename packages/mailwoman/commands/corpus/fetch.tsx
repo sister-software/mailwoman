@@ -12,7 +12,14 @@
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	splitList,
+	useCommandTask,
+} from "#cli-kit"
 
 const sources = [
 	"ban",
@@ -72,8 +79,6 @@ interface Options {
 	dryRun: boolean
 }
 
-const report = (line: string): void => console.error(line)
-
 async function runSource(source: FetchSourceID, options: Options): Promise<FetchSummary> {
 	const {
 		fetchBan,
@@ -95,7 +100,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 
 	switch (source) {
 		case "ban":
-			return fetchBan(base, report)
+			return fetchBan(base, reportToStderr)
 		case "nad":
 			return fetchNAD(
 				{
@@ -108,19 +113,16 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					startOID: options.startOid,
 					endOID: options.endOid,
 				},
-				report
+				reportToStderr
 			)
 		case "geonames-dump":
 			return fetchGeonamesDumps(
 				{
 					...base,
 					// Undefined = every country the source's own countryInfo.txt catalogs; present dumps are skipped.
-					countries: options.countries
-						?.split(",")
-						.map((code) => code.trim())
-						.filter((code) => code.length > 0),
+					countries: options.countries === undefined ? undefined : splitList(options.countries),
 				},
-				report
+				reportToStderr
 			)
 		case "geonames-postal":
 			return fetchGeonamesPostal(
@@ -128,29 +130,26 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					...base,
 					// Undefined, not an empty list, when the flag is absent — the module's own default set is the answer for
 					// 'fetch what the corpus wants', and an empty array would fetch nothing while looking deliberate.
-					countries: options.countries
-						?.split(",")
-						.map((code) => code.trim())
-						.filter((code) => code.length > 0),
+					countries: options.countries === undefined ? undefined : splitList(options.countries),
 				},
-				report
+				reportToStderr
 			)
 		case "hrsa":
-			return fetchHRSA(base, report)
+			return fetchHRSA(base, reportToStderr)
 		case "imls-pls":
-			return fetchIMLSPLS(base, report)
+			return fetchIMLSPLS(base, reportToStderr)
 		case "nppes":
-			return fetchNPPES(base, report)
+			return fetchNPPES(base, reportToStderr)
 		case "openaddresses":
-			return fetchOpenAddresses({ ...base, country: options.country }, report)
+			return fetchOpenAddresses({ ...base, country: options.country }, reportToStderr)
 		case "ourairports":
-			return fetchOurAirports(base, report)
+			return fetchOurAirports(base, reportToStderr)
 		case "wikidata-subvenue":
-			return fetchWikidataSubVenue(base, report)
+			return fetchWikidataSubVenue(base, reportToStderr)
 		case "state-sources":
-			return fetchStateSources(base, report)
+			return fetchStateSources(base, reportToStderr)
 		case "state-hi-schools":
-			return fetchStateHISchools(base, report)
+			return fetchStateHISchools(base, reportToStderr)
 		case "tiger-full":
 			return fetchTigerFull(
 				{
@@ -160,7 +159,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 					maxParallel: options.maxParallel,
 					dryRun: options.dryRun,
 				},
-				report
+				reportToStderr
 			)
 	}
 }
@@ -171,7 +170,7 @@ const CorpusFetch: ParsedCommandComponent<Options, [FetchSourceID]> = ({ options
 		(summary) => (summary.failed > 0 ? 1 : 0)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const { fetched, skipped, failed, failedCodes } = state.result

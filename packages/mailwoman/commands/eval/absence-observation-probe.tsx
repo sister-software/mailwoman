@@ -26,7 +26,7 @@
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Pre-registered coverage-qualified absence-observation probe (#1965)"
 
@@ -87,7 +87,7 @@ const EvalAbsenceObservationProbe: ParsedCommandComponent<Options> = ({ options 
 		() => 0
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (options.json && state.status === "done") {
 		return <Text>{JSON.stringify(state.result.receipt, null, 2)}</Text>

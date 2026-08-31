@@ -9,9 +9,7 @@
  *   weights-package sibling at the model promote that requires it.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -42,8 +40,8 @@ const GazetteerBuildLocalitySurfaceLexicon: ParsedCommandComponent<Options> = ({
 		const { buildLocalitySurfaceLexicon } = await import("#gazetteer/evidence-lexicons")
 
 		const built = await buildLocalitySurfaceLexicon({
-			countries: options.countries?.split(",").map((s) => s.trim()),
-			placetypes: options.placetypes?.split(",").map((s) => s.trim()),
+			countries: options.countries === undefined ? undefined : splitList(options.countries),
+			placetypes: options.placetypes === undefined ? undefined : splitList(options.placetypes),
 			dbPath: options.db,
 			output: options.output,
 			onProgress: (line) => console.error(line),
@@ -52,11 +50,7 @@ const GazetteerBuildLocalitySurfaceLexicon: ParsedCommandComponent<Options> = ({
 		return `${built.path} — ${built.entries} entries (${built.homographs} homograph-flagged; ${built.skippedDegenerate} degenerate + ${built.skippedRegionVocabulary} region-vocab + ${built.skippedSubPhrase} alt-subphrase + ${built.skippedProminence} sub-prominence skipped), max_ngram=${built.maxNgram}`
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">✓ {state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default GazetteerBuildLocalitySurfaceLexicon

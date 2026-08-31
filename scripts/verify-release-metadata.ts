@@ -79,7 +79,7 @@ function versionMatcher(version: string): RegExp {
 /**
  * One parsed data row of the releases.mdx version matrix, in file order (newest-first).
  */
-interface MatrixRow {
+export interface MatrixRow {
 	/**
 	 * First column (the npm-version cell), with markdown bold stripped.
 	 */
@@ -156,7 +156,7 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
  * cell carries a version-like token; the header and `---` separator rows are skipped. The "## The matrix" table is the
  * only one whose rows look like this, so a global scan is safe.
  */
-function parseMatrixRows(markdown: string): MatrixRow[] {
+export function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []
 
 	for (const line of TextSpliterator.from(markdown)) {
@@ -182,6 +182,16 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 	}
 
 	return rows
+}
+
+/**
+ * The version on the matrix row carrying the `(current)` marker, or null when no row does. Shared with
+ * `check-release-parity.ts`, which compares this surface against npm latest.
+ */
+export function currentMatrixVersion(markdown: string): string | null {
+	const row = parseMatrixRows(markdown).find((candidate) => candidate.versionCell.includes("(current)"))
+
+	return row?.versionCell.match(/\d[\d.]*/)?.[0] ?? null
 }
 
 /**

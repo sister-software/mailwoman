@@ -4,63 +4,44 @@
  * @author Teffen Ellis, et al.
  *
  *   One chunk of the soil ingest, as its own process — spawned by `buildSoilDatabase`, never run by hand.
- *
- *   THE PROCESS BOUNDARY IS THE POINT. h3's WASM heap cannot be reset from JavaScript and does not survive
- *   an unbounded number of polyfill calls, so each chunk gets a heap that starts empty by getting an
- *   interpreter that starts empty. Everything else here is plumbing: parse a FID range, append to the
- *   database the parent created, and report counts on stdout as one JSON line.
- *
- *   STDOUT IS THE RESULT CHANNEL AND CARRIES NOTHING ELSE. Progress goes to stderr, so the parent can parse
- *   the last stdout line without a framing convention.
+ *   The process boundary and the stdout contract live with `runIngestChunkScript`; what stays here is only
+ *   this product's flags and its feature-source constructor.
  */
 
-import { parseArguments, requiredArgument } from "@mailwoman/core/scripting/arguments"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { requiredArgument } from "@mailwoman/core/scripting/arguments"
+import { INGEST_CHUNK_FLAGS, runIngestChunkScript } from "@mailwoman/core/scripting/ingest-chunk-script"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { SoilDatabase } from "#schema"
 import { createShapefileFeatureSource } from "#sdk/ingest"
 import { ingestSoilChunk } from "#sdk/ingest-chunk"
 
-const { values } = parseArguments({
+await runIngestChunkScript({
+	context: "soil ingest-chunk",
 	options: {
-		database: { type: "string" },
+		...INGEST_CHUNK_FLAGS,
 		shapefile: { type: "string" },
 		"area-symbol": { type: "string" },
 		"fid-from": { type: "string" },
 		"fid-to": { type: "string" },
-		"index-resolution": { type: "string" },
-		"coverage-resolution": { type: "string" },
 		"no-mapping-mukeys": { type: "string" },
 	},
+	run: async (database: DatabaseClient<SoilDatabase>, values, chunk) =>
+		ingestSoilChunk(database, {
+			source: await createShapefileFeatureSource({
+				shapefilePath: requiredArgument("soil ingest-chunk", "shapefile", values.shapefile),
+				areaSymbol: requiredArgument("soil ingest-chunk", "area-symbol", values["area-symbol"]),
+				fidFrom: Number(requiredArgument("soil ingest-chunk", "fid-from", values["fid-from"])),
+				fidTo: Number(requiredArgument("soil ingest-chunk", "fid-to", values["fid-to"])),
+				// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower — so
+				// the chunk asserts nothing about its size and the PARENT checks the per-area sum against the shapefile's.
+				declaredFeatureCount: 0,
+			}),
+			indexResolution: chunk.indexResolution,
+			coverageResolution: chunk.coverageResolution,
+			// An empty string is an empty set, not "every map unit": a build where nothing lacks soil mapping passes one, and
+			// `"".split(",")` yields one empty element that has to be dropped rather than joined against as a mukey.
+			noMappingMukeys: new Set((values["no-mapping-mukeys"] ?? "").split(",").filter((mukey) => mukey.length > 0)),
+			onProgress: chunk.onProgress,
+		}),
 })
-
-using database = new DatabaseClient<SoilDatabase>(requiredArgument("soil ingest-chunk", "database", values.database))
-
-database.exec("PRAGMA journal_mode = OFF")
-database.exec("PRAGMA synchronous = OFF")
-
-const areaSymbol = requiredArgument("soil ingest-chunk", "area-symbol", values["area-symbol"])
-const fidFrom = Number(requiredArgument("soil ingest-chunk", "fid-from", values["fid-from"]))
-const fidTo = Number(requiredArgument("soil ingest-chunk", "fid-to", values["fid-to"]))
-
-const result = await ingestSoilChunk(database, {
-	source: await createShapefileFeatureSource({
-		shapefilePath: requiredArgument("soil ingest-chunk", "shapefile", values.shapefile),
-		areaSymbol,
-		fidFrom,
-		fidTo,
-		// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower — so
-		// the chunk asserts nothing about its size and the PARENT checks the per-area sum against the shapefile's.
-		declaredFeatureCount: 0,
-	}),
-	indexResolution: Number(requiredArgument("soil ingest-chunk", "index-resolution", values["index-resolution"])),
-	coverageResolution: Number(
-		requiredArgument("soil ingest-chunk", "coverage-resolution", values["coverage-resolution"])
-	),
-	// An empty string is an empty set, not "every map unit": a build where nothing lacks soil mapping passes one, and
-	// `"".split(",")` yields one empty element that has to be dropped rather than joined against as a mukey.
-	noMappingMukeys: new Set((values["no-mapping-mukeys"] ?? "").split(",").filter((mukey) => mukey.length > 0)),
-	onProgress: (message) => console.error(`  [chunk] ${message}`),
-})
-
-console.log(JSON.stringify(result))

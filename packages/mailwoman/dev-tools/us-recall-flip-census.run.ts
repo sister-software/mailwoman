@@ -9,7 +9,7 @@
  *   Run from the repo root: `node packages/mailwoman/dev-tools/us-recall-flip-census.run.ts <candidateCacheRoot> [sampleN]`
  */
 
-import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
@@ -47,13 +47,7 @@ const baseline = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US"
 const candidate = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: candidateRoot })
 
 async function extract(classifier: NeuralAddressClassifier, raw: string): Promise<Map<string, string[]>> {
-	const byTag = new Map<string, string[]>()
-
-	for (const [tag, value] of decodeAsTuples(await classifier.parse(raw, { postcodeRepair: true }))) {
-		byTag.set(tag, [...(byTag.get(tag) ?? []), value])
-	}
-
-	return byTag
+	return groupTuplesByTag(await classifier.parse(raw, { postcodeRepair: true }))
 }
 
 interface FlipEntry {

@@ -32,13 +32,13 @@
 
 import {
 	classifyFeatureCells,
-	groupCellsByResolution,
+	compactAcrossResolutions,
 	shortCellToInt,
 	type FeatureCells,
 	type H3Cell,
 	type MultiPolygonRings,
 } from "@mailwoman/spatial"
-import { compactCells, getResolution } from "h3-js"
+import { getResolution } from "h3-js"
 
 /**
  * The label this layer's classifier failures carry.
@@ -163,14 +163,7 @@ export class SoilCellIndex {
 	 * compacting it would claim the fringe covers ground it does not.
 	 */
 	finish(): SoilCellIndexMeasurement {
-		const compacted: string[] = []
-
-		// `compactCells` takes one resolution at a time, and a coarsened delineation's cells are at another — so the whole
-		// set is grouped before compaction rather than pooled. Pooling would throw; compacting the target-resolution group
-		// alone would silently drop every coarsened delineation's interior.
-		for (const group of groupCellsByResolution(this.#whole)) {
-			compacted.push(...compactCells(group))
-		}
+		const compacted = compactAcrossResolutions(this.#whole)
 
 		const resolutions = new Set<number>()
 

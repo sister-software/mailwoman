@@ -8,7 +8,17 @@
 
 import type { PipelineTiming } from "@mailwoman/core/pipeline"
 
-import { CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
+import {
+	booleanValue,
+	CLIUsageError,
+	type CommandSpec,
+	numberValue,
+	renderCommandHelp,
+	renderInkCommand,
+	runNativeCommand,
+	stringValue,
+	triStateValue,
+} from "#cli-native/spec"
 import type { GeocodeCommandOptions } from "#geocode-command-options"
 import type { GeocodeResult } from "#geocode-result"
 
@@ -165,32 +175,6 @@ export const spec = {
 type Format = "json" | "text" | "jsonld"
 
 type GeocodeOptions = GeocodeCommandOptions
-
-function stringValue(values: Record<string, unknown>, name: string): string | undefined {
-	const value = values[name]
-
-	return typeof value === "string" ? value : undefined
-}
-
-function booleanValue(values: Record<string, unknown>, name: string): boolean {
-	return values[name] === true
-}
-
-/**
- * A boolean flag with NO schema default: unstated stays `undefined` so the library default applies downstream, and only
- * a stated `--flag` / `--no-flag` reaches the session as an explicit value.
- */
-function triStateValue(values: Record<string, unknown>, name: string): boolean | undefined {
-	const value = values[name]
-
-	return typeof value === "boolean" ? value : undefined
-}
-
-function numberValue(values: Record<string, unknown>, name: string): number | undefined {
-	const value = values[name]
-
-	return typeof value === "number" ? value : undefined
-}
 
 async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOptions> {
 	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/utils")).mailwomanDataRoot()
@@ -402,48 +386,34 @@ async function runStdin(options: GeocodeOptions): Promise<void> {
 }
 
 export async function run(args: readonly string[]): Promise<number> {
-	const parsed = parseCommand(spec, args)
-
-	if (parsed.values.help) {
-		process.stdout.write(`${await renderCommandHelp(spec)}\n`)
-
-		return 0
-	}
-
-	const options = await optionsOf(parsed.values)
-
-	if (options.debug) {
+	return await runNativeCommand(spec, args, async (parsed) => {
+		const options = await optionsOf(parsed.values)
 		const input = parsed.positionals.join(" ").trim()
 
-		const [{ render }, { createElement }, { GeocodeDebugCommand }] = await Promise.all([
-			import("ink"),
-			import("react"),
-			import("#debug-view/command"),
-		])
+		if (options.debug) {
+			const [{ createElement }, { GeocodeDebugCommand }] = await Promise.all([
+				import("react"),
+				import("#debug-view/command"),
+			])
 
-		const instance = render(createElement(GeocodeDebugCommand, { input, options }))
+			return await renderInkCommand(createElement(GeocodeDebugCommand, { input, options }))
+		}
 
-		await instance.waitUntilExit()
+		if (options.stdin) {
+			if (input) throw new CLIUsageError("Pass either a positional address or --stdin, not both.")
+			await runStdin(options)
 
-		return typeof process.exitCode === "number" ? process.exitCode : 0
-	}
+			return 0
+		}
 
-	const input = parsed.positionals.join(" ").trim()
+		if (!input) {
+			process.stderr.write(`${await renderCommandHelp(spec)}\n`)
 
-	if (options.stdin) {
-		if (input) throw new CLIUsageError("Pass either a positional address or --stdin, not both.")
-		await runStdin(options)
+			return 1
+		}
+
+		await runOne(input, options)
 
 		return 0
-	}
-
-	if (!input) {
-		process.stderr.write(`${await renderCommandHelp(spec)}\n`)
-
-		return 1
-	}
-
-	await runOne(input, options)
-
-	return 0
+	})
 }

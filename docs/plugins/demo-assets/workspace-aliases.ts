@@ -95,7 +95,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 			console.warn(`[demo-assets] ${specifier} resolved to compiled output (${target}) — dev exports drift?`)
 		}
 
-		aliases[subpath ? specifier : "@mailwoman/codex$"] = target
+		aliases[`${specifier}$`] = target
 	}
 
 	return aliases

@@ -42,7 +42,9 @@ const escapeRegExp = (input: string): string => input.replaceAll(/[.*+?^${}()|[\
  * Read a workspace manifest.
  *
  * `parseJSONStrict` lives behind the very aliases {@link workspaceAliases} generates, so importing it here would make
- * the config depend on its own output. A malformed manifest should abort the run, which is what a bare throw does.
+ * the config depend on its own output. A malformed manifest should abort the run, which is what a bare throw does. The
+ * local `escapeRegExp` above is inlined for the same reason: `@mailwoman/core/strings/regexp` sits behind the very
+ * aliases this file exists to generate.
  */
 async function readManifest<T>(path: string): Promise<T> {
 	// oxlint-disable-next-line no-restricted-properties -- see above.

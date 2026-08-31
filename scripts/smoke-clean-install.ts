@@ -1,8 +1,8 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { runFileSync, spawnProcess } from "@mailwoman/core/process"
+import { spawnProcess } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
 /**
  * @copyright Sister Software
@@ -30,6 +30,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { join, resolvePath as resolve } from "path-ts"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
+import { runCaptured } from "./process-util.ts"
 
 const repoRoot = repoRootPath()
 
@@ -360,10 +361,9 @@ async function checkMCPBin(projDir: string, timeoutMs = 30_000): Promise<number>
 await using tmp = await temporaryDirectory("mw-smoke-")
 const tarDir = tmp.resolve("tarballs")
 const proj = tmp.resolve("proj")
-runFileSync("mkdir", ["-p", tarDir, proj])
+await makeDirectories(tarDir, proj)
 
-const run = (cmd: string, args: string[], cwd: string) =>
-	runFileSync(cmd, args, { cwd, stdio: ["ignore", "pipe", "pipe"], encoding: "utf8" })
+const run = (cmd: string, args: string[], cwd: string) => runCaptured(cmd, args, cwd)
 
 /**
  * Closure-completeness guard: every `workspace:*` @mailwoman dep of a packed workspace must itself be in WORKSPACES. An
@@ -461,7 +461,7 @@ try {
 		console.log(`[smoke] standalone-leaf import: ${leaf} alone (no umbrella, no hoisting)…`)
 
 		const solo = tmp.resolve(`solo-${leafDir}`)
-		runFileSync("mkdir", ["-p", solo])
+		await makeDirectories(solo)
 
 		await writeLocalJSONFile(
 			{

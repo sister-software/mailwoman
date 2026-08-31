@@ -134,6 +134,10 @@ export function fillPlaceholderCentroids(
  *
  * Source: download.geonames.org/export/zip/<CC>.zip → `<CC>.txt`. License: CC-BY 4.0. Attribution required in any DB
  * that ships the resulting coordinates.
+ *
+ * DELIBERATELY NOT `geonames-postal.ts`'s `geonamesPostalRows`: this reader is synchronous over an in-memory string
+ * (its tests call it directly), and its `Number` + `(0, 0)`-skip validity rules differ from that iterator's `pyFloat`
+ * port — swapping either would move the shard's mean centroids.
  */
 export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()

@@ -15,14 +15,19 @@ import { openWriteStream } from "@mailwoman/core/fs/streams"
 import type { ShardRecipeOpts } from "@mailwoman/corpus"
 import { Box, Text } from "ink"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	stringOption,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Bare `mailwoman corpus shard` stays the recipe runner now that `shard/` hosts subcommands.
  */
 export const isDefault = true
-
-const stringOption = (description: string) => ({ type: "string" as const, description })
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -176,7 +181,7 @@ const CorpusShard: ParsedCommandComponent<Options> = ({ options, args }) => {
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

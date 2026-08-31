@@ -28,19 +28,17 @@
  *   Usage: node packages/mailwoman/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
  */
 
-import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
+import { type Board, emptyBoard, fold, REGISTERS, register, reportBoard } from "#dev-tools/register-board"
 import { deriveGeocodeRegister } from "#geocode-core"
 import { createRuntimePipeline } from "#index"
-
-const REGISTERS = ["asis", "lower", "upper"] as const
-
-type Register = (typeof REGISTERS)[number]
 
 const { values } = parseArguments({
 	options: {
@@ -54,15 +52,6 @@ const { values } = parseArguments({
 
 const locale = values.locale!
 
-/**
- * The grading fold, verbatim from `score-anchor-v2-boards.run.ts`: uppercase, all whitespace removed.
- */
-const fold = (value: string): string => value.toUpperCase().replaceAll(/\s+/gu, "")
-
-function register(text: string, reg: Register): string {
-	return reg === "lower" ? text.toLowerCase() : reg === "upper" ? text.toUpperCase() : text
-}
-
 const classifier = await NeuralAddressClassifier.loadFromWeights({
 	locale,
 	...(values["cache-root"] ? { cacheRoot: values["cache-root"] } : {}),
@@ -73,16 +62,6 @@ const pipeline = createRuntimePipeline({ classifier })
 const rows = await Array.fromAsync(
 	JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(values.fixtures!)
 )
-
-interface Board {
-	hit: Record<Register, number>
-	total: Record<Register, number>
-	skipped: number
-}
-
-function emptyBoard(): Board {
-	return { hit: { asis: 0, lower: 0, upper: 0 }, total: { asis: 0, lower: 0, upper: 0 }, skipped: 0 }
-}
 
 /**
  * The fragment shapes, each with the text it builds and the tag it is graded on.
@@ -95,7 +74,7 @@ const SHAPES = [
 			c.street ? [c.house_number, c.street].filter((part) => part != null && part.length > 0).join(" ") : undefined,
 		// The model emits the street as a FAMILY (prefix/name/particle/suffix); assemble it the way
 		// `score-anchor-v2-boards.run.ts` does before comparing to the whole-name gold.
-		emit: ["street_prefix", "street", "street_prefix_particle", "street_suffix"],
+		emit: STREET_FAMILY_TAGS,
 	},
 	{
 		name: "place-pair fragment",
@@ -107,6 +86,7 @@ const SHAPES = [
 ] as const
 
 const boards = new Map<string, Board>(SHAPES.map((shape) => [shape.name, emptyBoard()]))
+const skippedByShape = new Map<string, number>()
 const spans: string[] = []
 
 for (const shape of SHAPES) {
@@ -122,18 +102,14 @@ for (const shape of SHAPES) {
 			// The register is the whole point — grade only where the channels are actually live.
 			if (deriveGeocodeRegister(text) !== "fragmented") {
 				if (reg === "asis") {
-					board.skipped++
+					skippedByShape.set(shape.name, (skippedByShape.get(shape.name) ?? 0) + 1)
 				}
 
 				continue
 			}
 
 			const result = await pipeline(text, { locale })
-			const byTag = new Map<string, string[]>()
-
-			for (const [tag, value] of decodeAsTuples(result.tree)) {
-				byTag.set(tag, [...(byTag.get(tag) ?? []), value])
-			}
+			const byTag = groupTuplesByTag(result.tree)
 
 			spans.push(
 				`${shape.name}\t${reg}\t${base}\t${[...byTag.entries()]
@@ -142,12 +118,12 @@ for (const shape of SHAPES) {
 					.join(";")}`
 			)
 
-			board.total[reg]++
+			board.perRegister[reg].total++
 			const got = shape.emit.flatMap((tag) => byTag.get(tag) ?? []).join(" ")
 			const gold = shape.tag === "street" ? row.components.street! : row.components[shape.tag]!
 
 			if (fold(got) === fold(gold)) {
-				board.hit[reg]++
+				board.perRegister[reg].hit++
 			}
 		}
 	}
@@ -157,14 +133,12 @@ console.log(`\n=== gb-golden FRAGMENT register · ${values.label} · locale ${lo
 console.log("board                                   hit/total   per register")
 
 for (const shape of SHAPES) {
-	const board = boards.get(shape.name)!
-	const hit = REGISTERS.reduce((sum, r) => sum + board.hit[r], 0)
-	const total = REGISTERS.reduce((sum, r) => sum + board.total[r], 0)
+	const skipped = skippedByShape.get(shape.name) ?? 0
 
-	console.log(
-		`${shape.name.padEnd(34)} ${`${hit}/${total}`.padStart(9)}   ` +
-			REGISTERS.map((r) => `${r} ${board.hit[r]}/${board.total[r]}`).join(" · ") +
-			(board.skipped ? `  · ${board.skipped} rows skipped (register was not fragmented)` : "")
+	reportBoard(
+		shape.name,
+		boards.get(shape.name)!,
+		skipped ? `  · ${skipped} rows skipped (register was not fragmented)` : ""
 	)
 }
 

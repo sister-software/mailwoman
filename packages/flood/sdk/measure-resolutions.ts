@@ -17,20 +17,12 @@
  *   A caller that runs out of headroom runs the candidates in separate invocations.
  */
 
+import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
+
 import { classifyFeatureCells, FloodCellIndex, type CellIndexMeasurement } from "#sdk/cells"
 import { readFloodSourceFeatures, readFloodSourceIdentity, type FloodIngestOptions } from "#sdk/ingest"
 
-export interface MeasureResolutionsOptions extends FloodIngestOptions {
-	/**
-	 * The candidate resolutions to report.
-	 */
-	resolutions: readonly number[]
-	onProgress?: (message: string) => void
-	/**
-	 * How often to report progress, in features.
-	 */
-	progressEvery?: number
-}
+export interface MeasureResolutionsOptions extends FloodIngestOptions, ResolutionMeasurementOptions {}
 
 export interface ResolutionMeasurementReport {
 	features: number

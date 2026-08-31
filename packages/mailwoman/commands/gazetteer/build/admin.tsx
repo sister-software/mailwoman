@@ -13,7 +13,14 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	splitUpperList,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -40,13 +47,7 @@ interface Options {
 	skipVerify: boolean
 }
 
-const csv = (raw: string | undefined): string[] | undefined =>
-	raw
-		? raw
-				.split(",")
-				.map((s) => s.trim().toUpperCase())
-				.filter((entry) => entry.length > 0)
-		: undefined
+const csv = (raw: string | undefined): string[] | undefined => (raw ? splitUpperList(raw) : undefined)
 
 const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
@@ -59,7 +60,7 @@ const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
 			geonamesCountries: csv(options.geonamesCountries),
 			overtureRelease: options.overtureRelease,
 			skipVerify: options.skipVerify,
-			onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+			onPhase: phaseReporter(),
 		})
 
 		return [
@@ -71,7 +72,7 @@ const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

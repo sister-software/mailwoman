@@ -68,6 +68,19 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { basename, join, resolvePath } from "path-ts"
 
 /**
+ * The argument tail both hierarchy runners share: the country list, lower-cased, and the admin DB they read.
+ */
+export function resolveHierarchyRunInputs(values: { countries?: string; db?: string }): {
+	countries: string[]
+	dbPath: string
+} {
+	return {
+		countries: (values.countries ?? "us,fr").split(",").map((c) => c.trim().toLowerCase()),
+		dbPath: String(resolvePath(values.db ?? dataRootPath("wof", "admin-global-priority.db"))),
+	}
+}
+
+/**
  * The (locality, region) edge spec per country — ComponentTag space on the artifact side, WOF placetype space on the
  * extraction side. FR's `region` ComponentTag covers BOTH WOF `region` (départements: "Ille-et-Vilaine") and WOF
  * `macroregion` (régions: "Bretagne") — either surface is a region-tagged parent in a French address.
@@ -183,8 +196,7 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const countries = values.countries!.split(",").map((c) => c.trim().toLowerCase())
-	const dbPath = resolvePath(values.db ?? dataRootPath("wof", "admin-global-priority.db"))
+	const { countries, dbPath } = resolveHierarchyRunInputs(values)
 	const outDir = resolvePath(values.out ?? dataRootPath("wof", "pair-index-hierarchy-probe"))
 
 	if (!(await pathExists(dbPath))) {

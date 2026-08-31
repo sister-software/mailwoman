@@ -26,9 +26,14 @@
 
 import { Spinner } from "@inkjs/ui"
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
-import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, CommandError, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -93,11 +98,9 @@ async function publishTiles(options: Options): Promise<string> {
 const TilesPublish: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => publishTiles(options))
 
-	if (state.status === "error") return <Text color="red">{state.message}</Text>
-
-	if (state.status === "done") return <Text>{state.result}</Text>
-
-	return <Spinner label={`publishing ${options.tileset}.pmtiles to R2…`} />
+	return (
+		<CommandTaskResult state={state} running={<Spinner label={`publishing ${options.tileset}.pmtiles to R2…`} />} />
+	)
 }
 
 export default TilesPublish

@@ -19,9 +19,7 @@
  *   substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 
 export const description = "The Gauntlet gate — regression + metamorphic + held-out, one verdict"
 
@@ -94,14 +92,7 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 					// ablation only. An absent flag must stay absent (→ every ablatable tag), so an empty string
 					// never becomes an empty filter — which would silently measure nothing and print a map of one
 					// header row.
-					...(components
-						? {
-								components: components
-									.split(",")
-									.map((c) => c.trim())
-									.filter((component) => component.length > 0),
-							}
-						: {}),
+					...(components ? { components: splitList(components) } : {}),
 					// An UNSET flag must stay unset, not become an explicit pin either way. The schema supplies its
 					// `false` default for BOTH halves, and forwarding one verbatim would pin the lever forever — which is
 					// exactly how the 2026-08-05 default-on flip could have gone unnoticed by the standard gate. Neither
@@ -123,7 +114,7 @@ const EvalGauntlet: ParsedCommandComponent<Options> = ({ options }) => {
 		(exitCode) => exitCode
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// The layers narrate their own verdict lines on stdout.
 	return null

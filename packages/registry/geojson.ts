@@ -32,9 +32,13 @@ function displayName(record: SourceRecord): string | null {
 }
 
 /**
- * One entity → one GeoJSON Point feature.
+ * One entity → one GeoJSON Point feature. `extra` merges over (and may override) the standard properties — the
+ * reconciliation flow adds its `bucket` and swaps the display name for the representative's org-or-person form.
  */
-function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoData> {
+export function toFeature(
+	entity: ResolvedEntity,
+	extra?: Partial<EntityGeoData>
+): GeoFeature<PointLiteral, EntityGeoData> {
 	const rep = entity.representative
 
 	return {
@@ -55,6 +59,7 @@ function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoDa
 			organization: rep.organization?.canonical ?? null,
 			address: rep.address?.formatted ?? null,
 			geocodeTier: rep.address?.geocode?.tier ?? null,
+			...extra,
 		},
 	}
 }
@@ -66,6 +71,6 @@ function toFeature(entity: ResolvedEntity): GeoFeature<PointLiteral, EntityGeoDa
 export function toGeoJSON(entities: readonly ResolvedEntity[]): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
 		type: "FeatureCollection",
-		features: entities.filter((entity) => entity.coordinate).map(toFeature),
+		features: entities.filter((entity) => entity.coordinate).map((entity) => toFeature(entity)),
 	}
 }

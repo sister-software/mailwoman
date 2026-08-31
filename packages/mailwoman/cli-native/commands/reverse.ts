@@ -6,7 +6,14 @@
 
 import { isValidLatitude, isValidLongitude } from "@mailwoman/spatial/coordinate-bounds"
 
-import { CLIError, CLIUsageError, type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
+import {
+	CLIError,
+	CLIUsageError,
+	type CommandSpec,
+	type ParsedCommand,
+	runNativeCommand,
+	stringValue,
+} from "#cli-native/spec"
 
 /**
  * Native reverse-geocode command contract.
@@ -55,10 +62,8 @@ function coordinate(raw: string, kind: "latitude" | "longitude"): number {
  * Run `mw reverse` without loading React, Ink, or Zod.
  */
 export async function run(args: readonly string[]): Promise<number> {
-	let parsed
-
 	try {
-		parsed = parseCommand(spec, args)
+		return await runNativeCommand(spec, args, (parsed) => reverseGeocodeCommand(parsed))
 	} catch (error) {
 		if (error instanceof CLIUsageError && error.message.startsWith("Missing required argument")) {
 			throw new CLIUsageError(
@@ -68,22 +73,16 @@ export async function run(args: readonly string[]): Promise<number> {
 
 		throw error
 	}
+}
 
-	if (parsed.values.help) {
-		process.stdout.write(`${await renderCommandHelp(spec)}\n`)
-
-		return 0
-	}
-
+async function reverseGeocodeCommand(parsed: ParsedCommand): Promise<number> {
 	const lat = coordinate(parsed.positionals[0]!, "latitude")
 	const lon = coordinate(parsed.positionals[1]!, "longitude")
 	const { $public } = await import("@mailwoman/core/env")
 
-	const adminDBPath =
-		typeof parsed.values["admin-db"] === "string" ? parsed.values["admin-db"] : $public.MAILWOMAN_WOF_ADMIN_DB
+	const adminDBPath = stringValue(parsed.values, "admin-db") ?? $public.MAILWOMAN_WOF_ADMIN_DB
 
-	const polygonDBPath =
-		typeof parsed.values["polygons-db"] === "string" ? parsed.values["polygons-db"] : $public.MAILWOMAN_WOF_POLYGONS_DB
+	const polygonDBPath = stringValue(parsed.values, "polygons-db") ?? $public.MAILWOMAN_WOF_POLYGONS_DB
 
 	if (!adminDBPath) {
 		throw new CLIError(

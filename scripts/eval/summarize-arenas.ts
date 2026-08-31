@@ -31,6 +31,8 @@ interface Result {
 }
 
 function pct(x: number, n: number): string {
+	// Local rather than `formatPercent`: this port renders with `pyFixed` (Python's round-half-even),
+	// and `toFixed` rounds half-away — the bytes must match the retired .py report.
 	return n ? `${pyFixed((100 * x) / n, 0)}%` : "—"
 }
 

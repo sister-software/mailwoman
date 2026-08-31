@@ -73,6 +73,21 @@
 			"node": "./database-schema.ts",
 			"default": "./out/database-schema.js",
 			"types": "./out/database-schema.d.ts"
+		},
+		"./batched": {
+			"node": "./batched.ts",
+			"default": "./out/batched.js",
+			"types": "./out/batched.d.ts"
+		},
+		"./schema-columns": {
+			"node": "./schema-columns.ts",
+			"default": "./out/schema-columns.js",
+			"types": "./out/schema-columns.d.ts"
+		},
+		"./sealed-build": {
+			"node": "./sealed-build.ts",
+			"default": "./out/sealed-build.js",
+			"types": "./out/sealed-build.d.ts"
 		}
 	},
 	"publishConfig": {

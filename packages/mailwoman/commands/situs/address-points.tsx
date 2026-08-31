@@ -32,7 +32,14 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
 import { Box, Text } from "ink"
 import { basename, dirname, resolvePath } from "path-ts"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	splitList,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -123,14 +130,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// Build the dataset allow-list (normalised to lower-case for a case-insensitive match).
 		// Empty = no filter (keep everything).
-		const allowedDatasets: Set<string> = new Set(
-			options.licenseFilter
-				? options.licenseFilter
-						.split(",")
-						.map((d) => d.trim().toLowerCase())
-						.filter((dataset) => dataset.length > 0)
-				: []
-		)
+		const allowedDatasets: Set<string> = new Set(splitList(options.licenseFilter).map((d) => d.toLowerCase()))
 
 		await makeDirectories(dirname(finalOut))
 		// Build into a temp path; atomically swap on success (scripts/AGENTS.md).
@@ -191,9 +191,8 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		// stream()+fetchChunk() keeps JS memory bounded to one chunk; the growing data lives in the
 		// on-disk SQLite WAL inside a single transaction.
 		const oaCSVList = OA_MODE
-			? options
-					.oaCSV!.split(",")
-					.map((p) => `'${p.trim()}'`)
+			? splitList(options.oaCSV)
+					.map((p) => `'${p}'`)
 					.join(", ")
 			: ""
 
@@ -340,7 +339,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

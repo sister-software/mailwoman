@@ -16,7 +16,7 @@ import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { describe, expect, test } from "vitest"
 
-import { registerOpenDatabases, stubWorker, trackDatabase } from "./stub-worker.ts"
+import { registerOpenDatabases, stubWorker, trackDatabase } from "#unit/src/shared/stub-worker"
 
 registerOpenDatabases()
 

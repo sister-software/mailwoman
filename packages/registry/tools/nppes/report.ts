@@ -12,6 +12,7 @@ import type { ResolveResult } from "#index"
 import { ORG_TAU } from "#tools/nppes/org-name"
 import type { Score } from "#tools/nppes/scoring"
 import { COLOCATION_KM } from "#tools/nppes/truth-grains"
+import { pct } from "#tools/shared"
 
 /**
  * F1 gap within which two blocking strategies are treated as equivalent.
@@ -135,9 +136,6 @@ export function renderNPPESDedupReport(input: NPPESReportInput): string {
 	const fullStack = progression.at(-1)!
 	const base = sweep[0]! // threshold 0, full lever stack
 
-	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
-	// numerator/denominator contract (call sites append their own "%").
-	const pct = (x: number) => (100 * x).toFixed(1)
 	const signed = (x: number) => `${x >= 0 ? "+" : ""}${x.toFixed(1)}pp`
 
 	const lines: string[] = [

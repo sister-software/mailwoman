@@ -16,7 +16,8 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath } from "path-ts"
-import { JSONSpliterator } from "spliterator"
+
+import { loadGoldenRows } from "./two-model-probe.ts"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
@@ -42,11 +43,7 @@ async function main() {
 	const n = Number(values["n"] || "30")
 	const cc = values["default-country"] || "PT"
 
-	const rows = (
-		await Array.fromAsync(
-			JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(values["golden"] || "")
-		)
-	).slice(0, n)
+	const rows = await loadGoldenRows(values["golden"] || "", n)
 
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")

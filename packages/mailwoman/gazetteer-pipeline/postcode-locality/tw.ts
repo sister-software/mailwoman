@@ -56,9 +56,10 @@ import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { JSONSpliterator } from "spliterator"
 
+import { ProximityGrid } from "#gazetteer-pipeline/postcode-locality/base"
 import {
 	createPostcodeLocalityIndex,
 	createPostcodeLocalityMetaTable,
@@ -67,6 +68,8 @@ import {
 	type PostcodeLocalityDatabase,
 	type PostcodeLocalityInsertValues,
 } from "#gazetteer-pipeline/postcode-locality/schema"
+import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
+import { finalizeSealedBuild } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * Shortest romanised stem still specific enough to match a Taiwanese place name.
@@ -396,40 +399,18 @@ function loadAdminIndexes(args: { adminDB: string }) {
 
 	// Proximity grid (0.5° cells, same shape as the JP/KR builders) — used by both the polygon
 	// candidate scan (bbox-scoped) and the no-polygon fallback.
-	const grid = new Map<string, AdminPlace[]>()
+	const grid = new ProximityGrid<AdminPlace>({
+		cellOf: (lon, lat) => [Math.round(lon * 2), Math.round(lat * 2)],
+		positionOf: (place) => [place.la, place.lo],
+		compare: (a, b) => a.pid - b.pid,
+	})
 
 	for (const p of places.values()) {
-		const key = `${Math.round(p.lo * 2)}|${Math.round(p.la * 2)}`
-		const bucket = grid.get(key)
-
-		if (bucket) {
-			bucket.push(p)
-		} else {
-			grid.set(key, [p])
-		}
+		grid.add(p)
 	}
 
-	const nearby = (lat: number, lon: number, radiusKM: number): Array<{ d: number; place: AdminPlace }> => {
-		const cx = Math.round(lon * 2)
-		const cy = Math.round(lat * 2)
-		const out: Array<{ d: number; place: AdminPlace }> = []
-
-		for (const dx of [-1, 0, 1]) {
-			for (const dy of [-1, 0, 1]) {
-				for (const place of grid.get(`${cx + dx}|${cy + dy}`) ?? []) {
-					const d = haversineKm(lat, lon, place.la, place.lo)
-
-					if (d <= radiusKM) {
-						out.push({ d, place })
-					}
-				}
-			}
-		}
-
-		out.sort((a, b) => a.d - b.d || a.place.pid - b.place.pid)
-
-		return out
-	}
+	const nearby = (lat: number, lon: number, radiusKM: number): Array<{ d: number; place: AdminPlace }> =>
+		grid.nearby(lat, lon, radiusKM).map(({ d, entry }) => ({ d, place: entry }))
 
 	return { places, regionsByHan, placesByQID, nearby }
 }
@@ -655,17 +636,9 @@ export async function buildPostcodeLocalityTW(args: PostcodeLocalityTWOptions): 
 			["built_at", isoSecondsUTC()],
 		]
 
-		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+		writeMetaRows(kdb, meta)
 
-		for (const [k, v] of meta) {
-			insMeta.run(k, v)
-		}
-
-		kdb.exec("PRAGMA journal_mode=DELETE")
-		kdb.exec("ANALYZE")
-		assertDatabaseIntegrity(kdb, buildPath)
-
-		kdb.exec("VACUUM")
+		finalizeSealedBuild(kdb, buildPath)
 	}
 
 	// Build-then-move: the destination only ever sees a fully-built, integrity-checked artifact.

@@ -30,7 +30,8 @@
  *   it reads, which is how a rendering difference gets reported as a conversion defect.
  */
 
-import { interiorPointOfEncodedRings, pointInPolygon, segmentDistanceMetres } from "@mailwoman/spatial"
+import { createOGCFeaturesBBoxReader } from "@mailwoman/core/api"
+import { geometryContains, nearestRingEdgeMetres, strideSampleInteriorPoints } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "#index"
@@ -169,22 +170,12 @@ export function createEAServiceReader(client: Pick<EANCERMClient, "fetch">): Ser
 			throw new Error(`coastal verify: ${JSON.stringify(scenarioKey)} is not one of the twelve published scenarios`)
 		}
 
-		const { data } = await client.fetch<{ features?: ServiceFeature[] }>({
-			method: "GET",
-			url: `${EA_NCERM_SPATIAL_BASE_URL}/ogc/features/v1/collections/${scenario.layer}/items`,
-			params: {
-				bbox: [
-					longitude - PROBE_HALF_WIDTH_DEGREES,
-					latitude - PROBE_HALF_WIDTH_DEGREES,
-					longitude + PROBE_HALF_WIDTH_DEGREES,
-					latitude + PROBE_HALF_WIDTH_DEGREES,
-				].join(","),
-				limit: SERVICE_FEATURE_LIMIT,
-				f: "application/json",
-			},
-		})
-
-		return data.features ?? []
+		return createOGCFeaturesBBoxReader<ServiceFeature>({
+			client,
+			collectionURL: `${EA_NCERM_SPATIAL_BASE_URL}/ogc/features/v1/collections/${scenario.layer}`,
+			halfWidthDegrees: PROBE_HALF_WIDTH_DEGREES,
+			limit: SERVICE_FEATURE_LIMIT,
+		})(latitude, longitude)
 	}
 }
 
@@ -284,25 +275,14 @@ async function readServiceContainment(
 
 		if (!geometry) continue
 
-		const polygons =
-			geometry.type === "MultiPolygon"
-				? (geometry.coordinates as number[][][][])
-				: [geometry.coordinates as number[][][]]
+		const distance = nearestRingEdgeMetres(geometry, longitude, latitude)
 
-		for (const rings of polygons) {
-			for (const ring of rings) {
-				for (let index = 1; index < ring.length; index++) {
-					const distance = segmentDistanceMetres(longitude, latitude, ring[index - 1]!, ring[index]!)
+		if (distance < nearest) {
+			nearest = distance
+		}
 
-					if (distance < nearest) {
-						nearest = distance
-					}
-				}
-			}
-
-			if (!inside && pointInPolygon(longitude, latitude, rings)) {
-				inside = true
-			}
+		if (!inside && geometryContains(geometry, longitude, latitude)) {
+			inside = true
 		}
 	}
 
@@ -313,13 +293,8 @@ async function readServiceContainment(
  * Draw a reproducible sample of points from the artifact — interior points of stored polygons, across scenarios.
  *
  * SPREAD ACROSS SCENARIOS RATHER THAN DRAWN FROM ONE, because the twelve scenarios are twelve claims and a sample from
- * one would verify one twelfth of the artifact while reporting on all of it. The draw is a deterministic stride over
- * the primary key, not a random one, so a re-run compares the same points and a disagreement can be looked at rather
- * than re-rolled.
- *
- * THE KEYS ARE CHOSEN BEFORE ANY GEOMETRY IS READ. A `WHERE rowid % stride = 0` scan looks like the same thing and is
- * not: it walks the table itself, which means reading ring blobs to keep a few dozen of them. Selecting `area_id` alone
- * is an index-only walk over the primary key, and the rows it names are then fetched by key.
+ * one would verify one twelfth of the artifact while reporting on all of it. The stride discipline — keys chosen before
+ * any geometry is read, deterministic rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
 	databasePath: string,
@@ -328,45 +303,32 @@ export function sampleAgreementPoints(
 	const count = options.count ?? 48
 	using database = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
-	const points: Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> = []
-
 	const areaIDs = (
 		database.prepare("SELECT area_id FROM coastal_zone_area ORDER BY area_id").all() as Array<{ area_id: string }>
 	).map((row) => row.area_id)
-
-	if (!areaIDs.length) return points
-
-	const stride = Math.max(1, Math.floor(areaIDs.length / Math.max(1, count)))
 
 	const selectArea = database.prepare(
 		"SELECT area_id, scenario_key, min_lat, min_lon, max_lat, max_lon, rings FROM coastal_zone_area WHERE area_id = ?"
 	)
 
-	for (let index = 0; index < areaIDs.length && points.length < count; index += stride) {
-		const area = selectArea.get(areaIDs[index]!) as
-			| {
-					area_id: string
-					scenario_key: string
-					min_lat: number
-					min_lon: number
-					max_lat: number
-					max_lon: number
-					rings: Uint8Array
-			  }
-			| undefined
-
-		if (!area) continue
-
-		const interior = interiorPointOfEncodedRings(area, 17)
-
-		if (!interior) continue
-
-		points.push({
+	return strideSampleInteriorPoints(areaIDs, count, {
+		fetch: (key) =>
+			selectArea.get(key) as
+				| {
+						area_id: string
+						scenario_key: string
+						min_lat: number
+						min_lon: number
+						max_lat: number
+						max_lon: number
+						rings: Uint8Array
+				  }
+				| undefined,
+		gridSteps: 17,
+		toPoint: (area, interior) => ({
 			label: `${area.scenario_key} polygon ${area.area_id}`,
 			scenarioKey: area.scenario_key,
 			...interior,
-		})
-	}
-
-	return points
+		}),
+	})
 }

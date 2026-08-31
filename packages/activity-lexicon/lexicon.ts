@@ -17,11 +17,13 @@
  *   produces a lexicon that looks complete and is short, and a consumer measuring recognition breadth would read the
  *   shortfall as the world rather than as the file. So {@linkcode readActivityLexicon} throws.
  *
- *   ZERO DEPENDENCIES, deliberately: a vocabulary any package may read must not drag a graph behind it.
+ *   A LIGHT GRAPH, deliberately: a vocabulary any package may read must not drag one behind it — only
+ *   `@mailwoman/core`'s file plumbing and `@mailwoman/variant-aliases`' locale-scope rule come along.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolvePath } from "path-ts"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagedDataPath } from "@mailwoman/core/module/packaged-data"
+import { resolveLocaleScope } from "@mailwoman/variant-aliases"
 
 import type {
 	ActivityPhraseEntry,
@@ -38,34 +40,9 @@ const moduleDir = import.meta.dirname
 const DERIVATIONS: ReadonlyArray<ActivityPhraseDerivation> = ["plural", "nominalization", "verb-phrase", "possessive"]
 
 /**
- * The committed lexicon.
- *
- * `data/` sits at the package root (it is a `files` entry), and this module sits either at that root — running from
- * source — or under `out/` when compiled, so there are exactly two places to look. Probing for the FILE rather than
- * attempting a parse keeps a corrupt lexicon from reading as an absent one.
+ * The committed lexicon, located by the shared source-tree/`out/` probe in `@mailwoman/core/module/packaged-data`.
  */
-export const ACTIVITY_LEXICON_PATH: string = await (async () => {
-	const candidates = [
-		resolvePath(moduleDir, "data", "activity-lexicon.json"),
-		resolvePath(moduleDir, "..", "data", "activity-lexicon.json"),
-	]
-
-	let found: string | null = null
-
-	for (const candidate of candidates) {
-		if (await pathExists(candidate)) {
-			found = candidate
-
-			break
-		}
-	}
-
-	if (!found) {
-		throw new Error(`activity-lexicon: could not find data/activity-lexicon.json — looked in ${candidates.join(", ")}`)
-	}
-
-	return found
-})()
+export const ACTIVITY_LEXICON_PATH: string = await resolvePackagedDataPath(moduleDir, "activity-lexicon.json")
 
 /**
  * Normalize a phrase for comparison: NFKC, trimmed, whitespace collapsed, lowercased.
@@ -79,7 +56,8 @@ export function normalizeActivityPhrase(phrase: string): string {
 }
 
 /**
- * Decide whether an entry answers under a locale, following the `@mailwoman/variant-aliases` semantics.
+ * Decide whether an entry answers under a locale, delegating to `@mailwoman/variant-aliases`'
+ * {@linkcode resolveLocaleScope} — the owner of these semantics.
  *
  * A scoped entry does not match when the locale is unknown. That is the containment: a phrasing declared regional
  * cannot be reached without knowing the region, or the record means something different from what it says.
@@ -88,17 +66,7 @@ export function resolveActivityPhraseLocale(
 	entry: ActivityPhraseEntry,
 	locale: string | undefined
 ): ActivityPhraseLocaleMatch | null {
-	if (!entry.locales) return { scope: "unscoped", confidence: 1 }
-
-	if (!locale) return null
-
-	if (entry.locales.includes(locale)) return { scope: "exact", confidence: 1 }
-
-	const language = locale.split(/[-_]/)[0]
-
-	if (entry.locales.some((tag) => tag.split(/[-_]/)[0] === language)) return { scope: "language", confidence: 0.5 }
-
-	return null
+	return resolveLocaleScope(entry.locales, locale)
 }
 
 /**

@@ -34,7 +34,7 @@ import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural
 import { Box, Text } from "ink"
 import { dirname, join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode-prefix"
 
 /**
@@ -278,7 +278,7 @@ const GazetteerBuildPostcodePrefix: ParsedCommandComponent<Options, [ShardName]>
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

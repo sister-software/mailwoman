@@ -58,14 +58,28 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 }
 
 /**
- * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from.
+ * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from. Throws on a missing, empty,
+ * or non-string list: every caller treats this as the full bump/publish surface, and an empty read must never be
+ * mistaken for zero workspaces.
  */
 export async function releaseWorkspaces(repoRoot: PathBuilderLike): Promise<string[]> {
 	const config = await readLocalJSONFile<{
-		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
+		plugins?: { "@release-it-plugins/workspaces"?: { workspaces?: unknown } }
 	}>(resolvePath(repoRoot, ".release-it.json"))
 
-	return config.plugins["@release-it-plugins/workspaces"].workspaces
+	const workspaces = config.plugins?.["@release-it-plugins/workspaces"]?.workspaces
+
+	if (!Array.isArray(workspaces) || !workspaces.length) {
+		throw new Error("could not read a non-empty workspaces array from .release-it.json")
+	}
+
+	const list = workspaces.filter((entry): entry is string => typeof entry === "string")
+
+	if (list.length !== workspaces.length) {
+		throw new Error(".release-it.json workspaces array carries a non-string entry")
+	}
+
+	return list
 }
 
 export interface ReleaseListIdentity {

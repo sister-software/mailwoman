@@ -14,9 +14,12 @@
 // each selected command's import graph.
 import { prettyJSON } from "@mailwoman/core/objects"
 import { type PlacetypeRole, PlacetypeRoles } from "@mailwoman/core/placetypes"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { CommandError, formatCommandError } from "@mailwoman/core/scripting/command"
+import { childEnv } from "@mailwoman/core/scripting/utils"
+import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { Box, Text } from "ink"
-import { createElement as h, useEffect, useState } from "react"
+import { createElement as h, Fragment, useEffect, useState } from "react"
 import type * as React from "react"
 
 /**
@@ -213,10 +216,7 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 
 	const valid = new Set<string>(PlacetypeRoles)
 
-	const parsed = raw
-		.split(",")
-		.map((s) => s.trim())
-		.filter((role) => role.length > 0)
+	const parsed = splitList(raw)
 
 	for (const role of parsed) {
 		if (!valid.has(role)) {
@@ -225,4 +225,224 @@ export function parseRoles(raw: string | undefined): PlacetypeRole[] | undefined
 	}
 
 	return parsed as PlacetypeRole[]
+}
+
+/**
+ * Write one progress line to stderr — the `report` callback every long-running command threads through its pipeline.
+ * Stderr, so stdout stays machine-readable.
+ */
+export function reportToStderr(line: string): void {
+	console.error(line)
+}
+
+/**
+ * Props for {@linkcode CommandTaskResult}.
+ */
+export interface CommandTaskResultProps<T> {
+	state: CommandTaskState<T>
+	/**
+	 * Rendered while the task runs. A string is wrapped in `<Text>`; omit it to render nothing.
+	 */
+	running?: React.ReactNode
+	/**
+	 * The done line's body, rendered after the `✓ `. Defaults to `String(result)` — the plain-string result shape.
+	 */
+	done?: (result: T) => React.ReactNode
+}
+
+/**
+ * The standard ✓/✗ tail of a one-shot command: red `✗ message` on error, green `✓ …` on completion, and the `running`
+ * node (or nothing) in between. A command with a custom done frame guards with `if (state.status !== "done") return
+ * <CommandTaskResult state={state} … />` and renders its own done branch below.
+ */
+export function CommandTaskResult<T>({ state, running, done }: CommandTaskResultProps<T>): React.ReactElement | null {
+	if (state.status === "running") {
+		if (running === undefined || running === null) return null
+
+		return typeof running === "string" ? h(Text, null, running) : h(Fragment, null, running)
+	}
+
+	if (state.status === "error") {
+		return h(Text, { color: "red" }, `✗ ${state.message}`)
+	}
+
+	return h(Text, { color: "green" }, "✓ ", done ? done(state.result) : String(state.result))
+}
+
+/**
+ * The `onPhase` reporter the gazetteer builds thread through their pipelines: ` [phase] detail` on stderr.
+ */
+export function phaseReporter(prefix = "  "): (phase: string, detail?: string) => void {
+	return (phase, detail) => console.error(`${prefix}[${phase}]${detail ? ` ${detail}` : ""}`)
+}
+
+/**
+ * Split a comma-separated flag into trimmed, non-empty entries. `undefined` and the empty string answer `[]`, and a
+ * trailing comma contributes nothing rather than an empty entry.
+ */
+export function splitList(raw: string | undefined): string[] {
+	return (raw ?? "")
+		.split(",")
+		.map((entry) => entry.trim())
+		.filter((entry) => entry.length > 0)
+}
+
+/**
+ * {@linkcode splitList}, upper-cased — country and state-code flags.
+ */
+export function splitUpperList(raw: string | undefined): string[] {
+	return splitList(raw).map((entry) => entry.toUpperCase())
+}
+
+/**
+ * {@linkcode splitList} as numbers — resolution and size flags. Blank entries are dropped BEFORE conversion, so a
+ * trailing comma is not a NaN.
+ */
+export function splitNumberList(raw: string | undefined): number[] {
+	return splitList(raw).map(Number)
+}
+
+const ANSI_PATTERN = new RegExp(`${String.fromCharCode(27)}\\[[0-9;?]*[A-Za-z]`, "gu")
+
+/**
+ * Drop ANSI escape sequences from captured child-process output.
+ */
+export function stripAnsi(value: string): string {
+	return value.replace(ANSI_PATTERN, "")
+}
+
+/**
+ * The shape every polygon-layer verification result shares — see `@mailwoman/flood`, `soil`, `coastal`, `zoning`.
+ */
+export interface LayerVerificationLike<Row extends { outcome: string; label: string }> {
+	agreement: readonly Row[]
+	agreed: number
+	disagreed: number
+	boundaryTolerance: number
+	outside: ReadonlyArray<{ passed: boolean; label: string }>
+	outsidePassed: number
+}
+
+/**
+ * Options for {@linkcode formatLayerVerification}.
+ */
+export interface FormatLayerVerificationOptions<Row> {
+	/**
+	 * Who the artifact was checked against — "the live service", "Soil Data Access".
+	 */
+	serviceLabel: string
+	/**
+	 * The out-of-coverage line's scope — "outside England", "outside the built survey areas".
+	 */
+	outsideLabel: string
+	/**
+	 * One disagreement row as the stderr line naming its point.
+	 */
+	describeRow: (row: Row) => string
+	/**
+	 * Appended to the agreement summary — zoning's local-code mismatch count.
+	 */
+	extraSummary?: string
+	/**
+	 * The out-of-coverage line's all-clear tail. Default "none read a designation".
+	 */
+	outsideNoneLabel?: string
+}
+
+/**
+ * The two verification summary lines every polygon-layer build prints, plus the per-row disagreement dump to stderr — a
+ * disagreement count is not actionable on its own; the rows are, and the first thing anyone does with a non-zero count
+ * is ask which points.
+ */
+export function formatLayerVerification<Row extends { outcome: string; label: string }>(
+	verified: LayerVerificationLike<Row>,
+	options: FormatLayerVerificationOptions<Row>
+): string[] {
+	for (const row of verified.agreement) {
+		if (row.outcome === "disagree") {
+			console.error(options.describeRow(row))
+		}
+	}
+
+	const failedOutside = verified.outside.filter((row) => !row.passed).map((row) => row.label)
+
+	return [
+		`verify: ${verified.agreed}/${verified.agreement.length} agree with ${options.serviceLabel} · ` +
+			`${verified.boundaryTolerance} within boundary tolerance · ${verified.disagreed} disagree` +
+			(options.extraSummary ? ` · ${options.extraSummary}` : ""),
+		`verify (${options.outsideLabel}): ${verified.outsidePassed}/${verified.outside.length} read unknown, ` +
+			`${failedOutside.join(", ") || (options.outsideNoneLabel ?? "none read a designation")}`,
+	]
+}
+
+/**
+ * Run a child process with inherited stdio — the child's own output IS the progress log — and throw
+ * {@linkcode CommandError} on a launch failure or nonzero exit. `echo` prints the invocation first; `cwd` runs the child
+ * elsewhere.
+ */
+export function runProcessOrFail(
+	cmd: string,
+	args: readonly string[],
+	options: { cwd?: string; echo?: boolean } = {}
+): void {
+	if (options.echo) {
+		console.error(`  $ ${cmd} ${args.join(" ")}${options.cwd ? `  (in ${options.cwd})` : ""}`)
+	}
+
+	const result = spawnProcessSync(cmd, [...args], { stdio: "inherit", env: childEnv(), cwd: options.cwd })
+
+	if (result.error) {
+		throw new CommandError(`${cmd} ${args.join(" ")} → failed to launch: ${result.error.message}`, {
+			cause: result.error,
+		})
+	}
+
+	if (result.status !== 0) {
+		throw new CommandError(`${cmd} ${args.join(" ")} → exit ${result.status}`)
+	}
+}
+
+/**
+ * Load the neural classifier, degrading to `undefined` with a precise warning (#1108) so a consumer can't attribute
+ * silently-degraded output to the neural parser. Two failure modes are distinguished:
+ *
+ * - Weights ABSENT (package not installed / carries no binaries) → an install hint, no scary error text.
+ * - Weights present but the encoder FAILED to load (corrupt / partial bundle, a bad explicit path) → the underlying error
+ *   is surfaced, not swallowed.
+ *
+ * `onDegrade` receives the warning line; callers send it to stderr so piped stdout parsing is unaffected.
+ */
+export async function loadClassifierTolerant(
+	locale: string,
+	options: {
+		modelPath?: string
+		tokenizerPath?: string
+		onDegrade: (message: string) => void
+	}
+): Promise<NeuralAddressClassifier | undefined> {
+	try {
+		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
+
+		return await NeuralAddressClassifier.loadFromWeights({
+			locale,
+			modelPath: options.modelPath,
+			tokenizerPath: options.tokenizerPath,
+		})
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error)
+		// "Absent" = the weights package simply isn't installed (the resolver's not-found signal). Every OTHER
+		// failure means the weights DID resolve but the encoder couldn't load them — a partial/metadata-only
+		// bundle ("missing model files"), a bad explicit --model/--tokenizer path, or a corrupt artifact — so we
+		// surface the underlying error verbatim rather than mislabel it "not installed" and swallow the cause.
+		const absent = /Could not resolve/iu.test(message)
+		const { weightsPackageName } = await import("@mailwoman/neural/weights")
+
+		options.onDegrade(
+			absent
+				? `⚠ neural weights not found — running a degraded structural parse; install ${weightsPackageName(locale)} for full accuracy.`
+				: `⚠ neural weights failed to load — running a degraded structural parse. Encoder error: ${message}`
+		)
+
+		return undefined
+	}
 }

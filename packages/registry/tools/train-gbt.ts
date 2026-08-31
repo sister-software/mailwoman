@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   Train the production learned-scorer model (#603). Builds the SAME NPI-keyed record set the dedup
- *   benchmark + the clustering A/B use (real registry + name-drift + address-variation), geocodes
- *   it, blocks → candidate pairs, featurizes each pair with the SHARED `createMatchFeaturizer` (so
- *   train ≡ inference), labels by held-out NPI, and fits the gradient-boosted-tree model. Writes
- *   the model as a committed TS module (`registry/models/dedup-gbt-en-us.ts`) that ships in the
- *   package.
+ *   benchmark + the clustering A/B use (the SHARED `buildNPPESSample`: real registry + name-drift +
+ *   address-variation), geocodes it, blocks → candidate pairs, featurizes each pair with the SHARED
+ *   `createMatchFeaturizer` (so train ≡ inference), labels by held-out NPI, and fits the
+ *   gradient-boosted-tree model. Writes the model as a committed TS module
+ *   (`registry/models/dedup-gbt-en-us.ts`) that ships in the package.
  *
  *   Unlike the eval, this trains on ALL sampled NPIs (no held-out split) — the held-out F1 is the
  *   eval's job; this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
@@ -18,24 +18,24 @@
  *   [--data-root <dir>] [--out registry/models/dedup-gbt-en-us.ts]`
  */
 
-import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
 import { block, gbtScore, trainGBT } from "@mailwoman/match"
 import { dirname } from "path-ts"
 
 import {
-	addressFrequencyKey,
 	buildDefaultModel,
 	createMatchFeaturizer,
 	defaultBlockingKeys,
 	ingestRows,
 	resolveEntities,
-	streamRows,
 	type ColumnMapping,
 	type SourceRecord,
 } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
-import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C, uniqueQuantiles } from "#tools/shared"
+import { buildNPPESSample } from "#tools/nppes/sample"
+import { scoreEntities } from "#tools/nppes/scoring"
+import { stateOption, uniqueQuantiles } from "#tools/shared"
 
 /**
  * Share of entities assigned to fit; the rest are held out.
@@ -82,53 +82,6 @@ export interface TrainDedupGBTOptions {
 	date?: string
 }
 
-interface MessyRow extends Record<string, string> {
-	npi: string
-	name: string
-	org: string
-	address: string
-	/**
-	 * Authorized official — feeds the #625 roll-up-signature features (officialAgree × orgDisagree).
-	 */
-	auth: string
-}
-
-/**
- * Pairwise clustering F1 of resolved entities vs the NPI grouping (record.id = the NPI).
- */
-function clusterF1(entities: { records: readonly SourceRecord[] }[]): number {
-	const choose2 = (k: number) => (k * (k - 1)) / 2
-	const npiTotals = new Map<string, number>()
-	let tp = 0
-	let sumCluster = 0
-
-	for (const e of entities) {
-		const byNPI = new Map<string, number>()
-
-		for (const rec of e.records) {
-			byNPI.set(rec.id, (byNPI.get(rec.id) ?? 0) + 1)
-		}
-
-		sumCluster += choose2(e.records.length)
-
-		for (const [npi, c] of byNPI) {
-			tp += choose2(c)
-			npiTotals.set(npi, (npiTotals.get(npi) ?? 0) + c)
-		}
-	}
-
-	let sumClass = 0
-
-	for (const total of npiTotals.values()) {
-		sumClass += choose2(total)
-	}
-
-	const precision = sumCluster > 0 ? tp / sumCluster : 0
-	const recall = sumClass > 0 ? tp / sumClass : 0
-
-	return precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
-}
-
 /**
  * Train + emit the production dedup GBT — see the module doc.
  */
@@ -137,7 +90,7 @@ export async function trainDedupGBT(
 	report?: (line: string) => void
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number; heldOutF1: number }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 3000
 	const OUT = options.out || "packages/registry/models/dedup-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
@@ -147,85 +100,12 @@ export async function trainDedupGBT(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// --- Phase A: NPIs with ≥1 alternate organization name (the variation set). ---
-	report?.("[A] streaming other-names…")
-	const altNames = new Map<string, string[]>()
-
-	for await (const r of streamRows(OTHER_NAMES)) {
-		const npi = norm(r[C.npi])
-		const alt = norm(r[C.otherOrg])
-
-		if (!npi || !alt) continue
-		const list = altNames.get(npi) ?? []
-
-		if (list.length < MIN_GROUP_SIZE) {
-			list.push(alt)
-		}
-
-		altNames.set(npi, list)
-	}
-
-	// --- Phase B: one full registry pass — corpus-wide address-frequency table + the sample. ---
-	report?.(`[B] full registry pass: address-frequency table + ${NPIS} ${STATE} sample…`)
-	const rows: MessyRow[] = []
-	const kept = new Set<string>()
-	const addrCounts = new Map<string, number>()
-	let addrTotal = 0
-	let scanned = 0
-
-	for await (const r of streamRows(REGISTRY)) {
-		if (++scanned % 1_000_000 === 0) {
-			report?.(`    scanned ${scanned / 1e6}M, kept ${kept.size}`)
-		}
-
-		const practice = addr(r[C.pAddr]!, r[C.pCity]!, r[C.pState]!, r[C.pZip]!)
-
-		if (practice) {
-			const k = addressFrequencyKey(practice)
-			addrCounts.set(k, (addrCounts.get(k) ?? 0) + 1)
-
-			addrTotal++
-		}
-
-		const npi = norm(r[C.npi])
-
-		if (
-			kept.size < NPIS &&
-			npi &&
-			!kept.has(npi) &&
-			altNames.has(npi) &&
-			practice &&
-			norm(r[C.pState]).toUpperCase() === STATE
-		) {
-			const isOrg = norm(r[C.entityType]) === "2"
-			const primaryName = isOrg ? norm(r[C.orgLegal]) : `${norm(r[C.first])} ${norm(r[C.last])}`.trim()
-
-			if (primaryName) {
-				const org = isOrg ? norm(r[C.orgLegal]) : ""
-				const auth = `${norm(r[C.authFirst])} ${norm(r[C.authLast])}`.trim()
-				kept.add(npi)
-				rows.push({ npi, name: primaryName, org, address: practice, auth })
-
-				for (const alt of altNames.get(npi)!) {
-					rows.push({ npi, name: alt, org: alt, address: practice, auth })
-				}
-
-				const mailing = addr(r[C.mAddr]!, r[C.mCity]!, r[C.mState]!, r[C.mZip]!)
-
-				if (mailing && mailing !== practice) {
-					rows.push({ npi, name: primaryName, org, address: mailing, auth })
-				}
-			}
-		}
-	}
-
-	const addressFrequency = {
-		total: addrTotal,
-		distinct: addrCounts.size,
-		frequency: (v: string) => (v ? (addrCounts.get(addressFrequencyKey(v)) ?? 0) / addrTotal : 0),
-	}
-
-	report?.(`    ${kept.size} NPIs → ${rows.length} records; freq table ${addrCounts.size} distinct over ${addrTotal}`)
+	// --- Phases A + B: the variation-rich sample + the corpus-wide address-frequency table (the SHARED
+	// sample builder — the same records the dedup benchmark and the learned-scorer evals see). ---
+	const { rows, keptNpis, addressFrequency } = await buildNPPESSample(
+		{ registryPath: REGISTRY, otherNamesPath: OTHER_NAMES, state: STATE, maxNpis: NPIS },
+		report
+	)
 
 	// --- Phase C: geocode + ingest (NPI rides on record.id as the label). The heavy geocoder is
 	// injected (see ./eval-geocoder.ts) — the registry package never imports the runtime. ---
@@ -273,7 +153,7 @@ export async function trainDedupGBT(
 	const rnd = makeLcg(20_260_615)
 	const split = new Map<string, "fit" | "holdout">()
 
-	for (const npi of kept) {
+	for (const npi of keptNpis) {
 		split.set(npi, rnd() < FIT_SPLIT_FRACTION ? "fit" : "holdout")
 	}
 
@@ -290,6 +170,7 @@ export async function trainDedupGBT(
 	const holdoutRecords = records.filter((r) => split.get(r.id) === "holdout")
 	const { pairs: holdoutPairs } = block(holdoutRecords, defaultBlockingKeys())
 	const holdoutScores = holdoutPairs.map(([a, b]) => calibScorer(a, b)).toSorted((p, q) => p - q)
+	const npiLabel = (rec: SourceRecord) => rec.id
 	let recommendedThreshold = 0
 	let bestF1 = -1
 
@@ -301,7 +182,7 @@ export async function trainDedupGBT(
 			threshold: t,
 		})
 
-		const f1 = clusterF1(entities)
+		const f1 = scoreEntities(entities, npiLabel, holdoutRecords.length).f1
 
 		if (f1 > bestF1) {
 			bestF1 = f1
@@ -325,7 +206,7 @@ export async function trainDedupGBT(
 		locale: LOCALE,
 		trainedOn: TRAIN_DATE,
 		state: STATE,
-		npis: kept.size,
+		npis: keptNpis.size,
 		records: records.length,
 		pairs: pairs.length,
 		posRate: Number(posRate.toFixed(4)),
@@ -333,8 +214,8 @@ export async function trainDedupGBT(
 		hyperparams,
 		recommendedThreshold: Number(recommendedThreshold.toFixed(4)), // F1-max link threshold (held-out); resolveEntities' default when learnedScorer is active
 		features: X[0]?.length ?? 0,
-		addressFrequencyDistinct: addrCounts.size,
-		addressFrequencyTotal: addrTotal,
+		addressFrequencyDistinct: addressFrequency.distinct,
+		addressFrequencyTotal: addressFrequency.total,
 	}
 
 	const moduleSource =
@@ -346,7 +227,7 @@ export async function trainDedupGBT(
 		` *   GENERATED by \`mailwoman registry train-scorer gbt\` (registry/tools/train-gbt.ts) — DO NOT edit by hand; retrain to update.\n` +
 		` *\n` +
 		` *   The default learned-scorer model (#603): a gradient-boosted-tree dedup scorer trained on the\n` +
-		` *   NPPES NPI-truth set (${STATE}, ${kept.size} NPIs → ${pairs.length} candidate pairs). Validated to\n` +
+		` *   NPPES NPI-truth set (${STATE}, ${keptNpis.size} NPIs → ${pairs.length} candidate pairs). Validated to\n` +
 		` *   generalize across states by learned-scorer-crossstate-eval.ts. Used by resolveEntities'\n` +
 		` *   opt-in learnedScorer hook via createGBTScorer. The trained {@link GBT} is plain data.\n` +
 		` */\n\n` +

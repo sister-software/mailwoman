@@ -412,3 +412,51 @@ export async function loadConformanceFixtures(path: string): Promise<Conformance
 
 	return fixtures
 }
+
+/**
+ * The population clause the invariance suites share: a base query that names no committed row names no population.
+ */
+export const MISSING_ROW_REF_PROBLEM =
+	"no rowRef — every base query is drawn from a committed row, so a row without one names no population"
+
+/**
+ * The locale clause every suite shares: `context.caseCountry` selects the weights overlay the row grades through.
+ */
+export const MISSING_CASE_COUNTRY_PROBLEM =
+	"no context.caseCountry — it selects the weights overlay the row grades through, and without it the row is graded base-only against a locale that is not its own"
+
+/**
+ * The invariance suites' shared relation clause, or `null` where the row states the one relation it may.
+ */
+export function invarianceExpectProblem(fixture: ConformanceFixture, lawNoun: string): string | null {
+	return fixture.expect === "equivalent"
+		? null
+		: `expects "${fixture.expect}" — a ${lawNoun} row states an INVARIANCE, so the only relation it can state is "equivalent"`
+}
+
+/**
+ * The per-fixture frame every law-suite audit opens with: the label a problem line names the row by, and the refusal of
+ * a row filed under another suite's law. Suite-specific clauses run in `auditFixture`, in the order the suite states
+ * them; a clause that disqualifies the rest of a row's checks returns early.
+ */
+export function auditCommonFixtureFields(
+	fixtures: readonly ConformanceFixture[],
+	law: string,
+	auditFixture: (fixture: ConformanceFixture, label: string, problems: string[]) => void
+): string[] {
+	const problems: string[] = []
+
+	for (const fixture of fixtures) {
+		const label = `fixture "${fixture.id}"`
+
+		if (fixture.law !== law) {
+			problems.push(`${label}: law is "${fixture.law}", not "${law}"`)
+
+			continue
+		}
+
+		auditFixture(fixture, label, problems)
+	}
+
+	return problems
+}

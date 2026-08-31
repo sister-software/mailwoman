@@ -30,10 +30,28 @@ export type CAP = Tagged<string, "CAP">
 export const CAP_PATTERN = /^\d{5}$/
 
 /**
- * Narrow a string to a {@link CAP}, or `null` when it is not one.
+ * Normalize a CAP surface form to the bare five digits: trim surrounding whitespace (`" 00184 "` → `"00184"`). Returns
+ * null when the result is not a five-digit code.
  */
-export function parseCAP(input: string): CAP | null {
-	const s = input.trim()
+export function normalizeCAP(raw: unknown): CAP | null {
+	if (typeof raw !== "string") return null
+	const s = raw.trim()
 
 	return CAP_PATTERN.test(s) ? (s as CAP) : null
+}
+
+/**
+ * Type-predicate for a (normalized) Italian CAP.
+ */
+export function isCAP(input: unknown): input is CAP {
+	return typeof input === "string" && CAP_PATTERN.test(input)
+}
+
+/**
+ * Narrow a string to a {@link CAP}, or `null` when it is not one.
+ *
+ * @deprecated Use {@link normalizeCAP}.
+ */
+export function parseCAP(input: string): CAP | null {
+	return normalizeCAP(input)
 }

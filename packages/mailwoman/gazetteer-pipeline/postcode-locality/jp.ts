@@ -37,12 +37,12 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { isoSecondsUTC, pyFloat, pyRound } from "@mailwoman/core/utils"
-import { haversineKm } from "@mailwoman/spatial"
+import { isoSecondsUTC, pyRound } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { TSVSpliterator, TextSpliterator } from "spliterator"
+import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
+import { TextSpliterator } from "spliterator"
 
+import { ProximityGrid } from "#gazetteer-pipeline/postcode-locality/base"
 import {
 	createPostcodeLocalityIndex,
 	createPostcodeLocalityMetaTable,
@@ -51,6 +51,9 @@ import {
 	type PostcodeLocalityDatabase,
 	type PostcodeLocalityInsertValues,
 } from "#gazetteer-pipeline/postcode-locality/schema"
+import { geonamesPostalRows } from "#gazetteer-pipeline/postcode/geonames-postal"
+import { writeMetaRows } from "#gazetteer-pipeline/postcode/geonames-tail"
+import { finalizeSealedBuild } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward
@@ -115,16 +118,9 @@ async function loadKenall(path: string): Promise<Map<string, string>> {
 async function loadGeonamesPoints(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()
 
-	// Streamed — `path` is a caller-supplied national dump (JP's is 12 MB). `header: false` is
-	// required: the GeoNames postal dump is headerless, so row 1 would be read as column names.
-	for await (const f of TSVSpliterator.fromAsync(path, { header: false })) {
-		if (f.length > 10 && f[1]) {
-			const lat = pyFloat(f[9])
-			const lon = pyFloat(f[10])
-
-			if (lat === null || lon === null) continue
-			out.set(f[1]!, [lat, lon])
-		}
+	// Streamed — `path` is a caller-supplied national dump (JP's is 12 MB).
+	for await (const row of geonamesPostalRows(path)) {
+		out.set(row.postcode, [row.latitude, row.longitude])
 	}
 
 	return out
@@ -159,41 +155,18 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 		)
 		.all(args.country, ...PLACETYPES) as Array<{ id: number; name: string; latitude: number; longitude: number }>
 
-	const grid = new Map<string, Array<{ pid: number; nm: string; la: number; lo: number }>>()
+	const grid = new ProximityGrid<{ pid: number; nm: string; la: number; lo: number }>({
+		cellOf: (lon, lat) => [pyRound(lon * 2), pyRound(lat * 2)],
+		positionOf: (entry) => [entry.la, entry.lo],
+		compare: (a, b) => a.pid - b.pid || (a.nm < b.nm ? -1 : a.nm > b.nm ? 1 : 0),
+	})
 
 	for (const { id, name, latitude, longitude } of places) {
-		const key = `${pyRound(longitude * 2)}|${pyRound(latitude * 2)}`
-		const bucket = grid.get(key)
-		const entry = { pid: id, nm: name, la: latitude, lo: longitude }
-
-		if (bucket) {
-			bucket.push(entry)
-		} else {
-			grid.set(key, [entry])
-		}
+		grid.add({ pid: id, nm: name, la: latitude, lo: longitude })
 	}
 
-	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number; nm: string }> => {
-		const cx = pyRound(lon * 2)
-		const cy = pyRound(lat * 2)
-		const out: Array<{ d: number; pid: number; nm: string }> = []
-
-		for (const dx of [-1, 0, 1]) {
-			for (const dy of [-1, 0, 1]) {
-				for (const { pid, nm, la, lo } of grid.get(`${cx + dx}|${cy + dy}`) ?? []) {
-					const d = haversineKm(lat, lon, la, lo)
-
-					if (d <= MATCH_RADIUS_KM) {
-						out.push({ d, pid, nm })
-					}
-				}
-			}
-		}
-
-		out.sort((a, b) => a.d - b.d || a.pid - b.pid || (a.nm < b.nm ? -1 : a.nm > b.nm ? 1 : 0))
-
-		return out
-	}
+	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number; nm: string }> =>
+		grid.nearby(lat, lon, MATCH_RADIUS_KM).map(({ d, entry }) => ({ d, pid: entry.pid, nm: entry.nm }))
 
 	const keys = [...postal.keys()].filter((k) => points.has(k))
 	let matched = 0
@@ -256,17 +229,9 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 			["built_at", isoSecondsUTC()],
 		]
 
-		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")
+		writeMetaRows(kdb, meta)
 
-		for (const [k, v] of meta) {
-			insMeta.run(k, v)
-		}
-
-		kdb.exec("PRAGMA journal_mode=DELETE")
-		kdb.exec("ANALYZE")
-		assertDatabaseIntegrity(kdb, args.output)
-
-		kdb.exec("VACUUM")
+		finalizeSealedBuild(kdb, args.output)
 	}
 
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.

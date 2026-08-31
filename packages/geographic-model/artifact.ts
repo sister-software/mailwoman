@@ -28,6 +28,7 @@
  */
 
 import { prettyJSON, isPlainObject } from "@mailwoman/core/objects"
+import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 
 import type {
 	ConceptID,
@@ -91,13 +92,7 @@ export interface CompiledGeographicModel {
  * `String.prototype.localeCompare` is the trap this exists to avoid — its answer depends on the machine's collation, so
  * an artifact ordered with it is reproducible only on the machine that built it.
  */
-export function compareIdentifiers(left: string, right: string): number {
-	if (left < right) return -1
-
-	if (left > right) return 1
-
-	return 0
-}
+export { compareByCodePoint as compareIdentifiers } from "@mailwoman/core/strings/compare"
 
 /**
  * Rebuild `value` with every object's keys in code-point order, at every depth. Arrays keep their order — ordering
@@ -110,7 +105,7 @@ function canonicalize(value: unknown): unknown {
 
 	const canonical: Record<string, unknown> = {}
 
-	for (const key of Object.keys(value).toSorted(compareIdentifiers)) {
+	for (const key of Object.keys(value).toSorted(compareByCodePoint)) {
 		const entry = value[key]
 
 		if (entry === undefined) continue

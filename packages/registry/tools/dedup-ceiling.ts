@@ -34,8 +34,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, formatPercent } from "@mailwoman/core/utils"
 import { jaccard } from "@mailwoman/match"
 
-import { addressFrequencyKey, streamRows } from "#index"
-import { norm, orgTokens } from "#tools/shared"
+import { colocatedDistinctPairs, scanColocatedProviders, stateOption, type ColocatedProvider } from "#tools/shared"
 
 /**
  * Similarity at or above which a pair is a near-miss worth inspecting rather than unrelated.
@@ -69,30 +68,6 @@ export interface DedupCeilingOptions {
 }
 
 /**
- * Strip only corporate-form tokens + articles — KEEP domain words (health, medical, center…), which carry the
- * distinguishing signal between two co-located providers.
- */
-const normPhone = (p?: string): string => {
-	const d = (p ?? "").replaceAll(/\D/g, "")
-
-	return d.length >= 10 ? d.slice(-10) : ""
-}
-
-interface Provider {
-	npi: string
-	tokens: Set<string>
-	phone: string
-	/**
-	 * Authorized official (last + first), lowercased — same official ⇒ almost certainly one org.
-	 */
-	auth: string
-	/**
-	 * Primary taxonomy (specialty) code — different specialty ⇒ likely a genuinely different provider.
-	 */
-	taxonomy: string
-}
-
-/**
  * #625 ceiling measurement — see the module doc. Emits the markdown report to stdout.
  */
 export async function dedupCeiling(
@@ -101,59 +76,14 @@ export async function dedupCeiling(
 ): Promise<{ markdown: string; pairs: number; collide: number }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
 	const CAP = options.cap ?? 50_000
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const TAU = options.tau ?? 0.7
 	const OUT_MD = options.outMd || ""
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
 	// --- Stream TX type-2 (org) providers; one primary record per NPI at its practice address. ---
 	report?.(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
-	const byAddr = new Map<string, Provider[]>()
-	let kept = 0
-	let scanned = 0
-
-	for await (const r of streamRows(REGISTRY)) {
-		scanned++
-
-		if (norm(r["Entity Type Code"]) !== "2") continue
-
-		if (norm(r["Provider Business Practice Location Address State Name"]).toUpperCase() !== STATE) continue
-		const org = norm(r["Provider Organization Name (Legal Business Name)"])
-
-		if (!org) continue
-		const line1 = norm(r["Provider First Line Business Practice Location Address"])
-		const city = norm(r["Provider Business Practice Location Address City Name"])
-		const zip = norm(r["Provider Business Practice Location Address Postcode"])
-
-		if (!line1) continue
-		const addrKey = addressFrequencyKey(`${line1}, ${city}, ${STATE} ${zip}`)
-
-		if (!addrKey) continue
-		const npi = norm(r["NPI"])
-
-		const auth = `${norm(r["Authorized Official Last Name"])} ${norm(r["Authorized Official First Name"])}`
-			.toLowerCase()
-			.trim()
-
-		const p: Provider = {
-			npi,
-			tokens: orgTokens(org),
-			phone: normPhone(r["Provider Business Practice Location Address Telephone Number"]),
-			auth: auth === "" ? "" : auth,
-			taxonomy: norm(r["Healthcare Provider Taxonomy Code_1"]),
-		}
-
-		if (!byAddr.has(addrKey)) {
-			byAddr.set(addrKey, [])
-		}
-
-		byAddr.get(addrKey)!.push(p)
-
-		kept++
-
-		if (kept >= CAP) break
-	}
-
+	const { byAddr, kept, scanned } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
 
 	// --- Over co-located distinct-NPI pairs: the org-similarity distribution + collision rate. ---
@@ -172,52 +102,40 @@ export async function dedupCeiling(
 
 	// guard against a pathological mega-address (PO-box farms)
 
-	for (const provs of byAddr.values()) {
-		// distinct NPIs at this address
-		const distinct = new Map<string, Provider>()
+	let lastGroup: readonly ColocatedProvider[] | null = null
 
-		for (const p of provs)
-			if (!distinct.has(p.npi)) {
-				distinct.set(p.npi, p)
+	for (const { a, b, group } of colocatedDistinctPairs(byAddr)) {
+		if (group !== lastGroup) {
+			lastGroup = group
+
+			sharedAddresses++
+			providersAtSharedAddr += group.length
+		}
+
+		if (pairs >= PAIR_BUDGET) continue
+
+		pairs++
+		const sim = jaccard(a.tokens, b.tokens)
+
+		if (sim >= TAU) {
+			collide++
+
+			if (a.phone && a.phone === b.phone) {
+				collideSharePhone++
 			}
 
-		const list = [...distinct.values()]
+			const sameAuth = a.auth !== "" && a.auth === b.auth
+			const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
 
-		if (list.length < 2) continue
-
-		sharedAddresses++
-		providersAtSharedAddr += list.length
-
-		for (let i = 0; i < list.length; i++) {
-			for (let j = i + 1; j < list.length; j++) {
-				if (pairs >= PAIR_BUDGET) break
-
-				pairs++
-				const a = list[i]!
-				const b = list[j]!
-				const sim = jaccard(a.tokens, b.tokens)
-
-				if (sim >= TAU) {
-					collide++
-
-					if (a.phone && a.phone === b.phone) {
-						collideSharePhone++
-					}
-
-					const sameAuth = a.auth !== "" && a.auth === b.auth
-					const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
-
-					if (sameAuth) {
-						collideSameAuth++
-					} else if (!sameTax) {
-						collideDistinct++
-					}
-				} else if (sim >= WEAK_SIMILARITY_MIN) {
-					mid++
-				} else {
-					separable++
-				}
+			if (sameAuth) {
+				collideSameAuth++
+			} else if (!sameTax) {
+				collideDistinct++
 			}
+		} else if (sim >= WEAK_SIMILARITY_MIN) {
+			mid++
+		} else {
+			separable++
 		}
 	}
 

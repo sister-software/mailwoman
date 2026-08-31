@@ -13,8 +13,9 @@
  */
 
 import type { ComponentTag } from "@mailwoman/core/types"
+import { percentile } from "@mailwoman/core/utils"
 
-import type { AblationGrade } from "#eval-harness/gauntlet/ablation-expectation"
+import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#eval-harness/gauntlet/ablation-expectation"
 import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 
 /**
@@ -249,4 +250,73 @@ export interface AblationVariant {
 	component: AblatableComponent
 	deleted: string
 	input: string
+}
+
+/**
+ * One component's roll-up across every locale — the shared source for the console summary and the markdown report,
+ * which had drifted apart by re-deriving these sums independently.
+ *
+ * Sums come from the CELLS; the displacement percentiles come from the pooled ROWS, because percentiles do not
+ * aggregate — a global p90 has to be taken over the pooled displacements, never over the per-cell p90s.
+ */
+export interface AblationComponentAggregate {
+	component: AblatableComponent
+	support: number
+	brokenCount: number
+	displacementKmP50: number | null
+	displacementKmP90: number | null
+	tierDropCount: number
+	unresolvedCount: number
+	substitutedCount: number
+	ladderGradedCount: number
+	trueFailCount: number
+	grades: Record<AblationGrade, number>
+	unconstrainedCount: number
+}
+
+/**
+ * Aggregate the deletion map per component, in {@linkcode ABLATABLE_COMPONENTS} order, omitting components with no cell
+ * — a component nobody measured must never render as a row of zeros.
+ */
+export function aggregateAblationComponents(
+	cells: readonly AblationCell[],
+	rows: readonly AblationRowOutcome[]
+): AblationComponentAggregate[] {
+	const aggregates: AblationComponentAggregate[] = []
+
+	for (const component of ABLATABLE_COMPONENTS) {
+		const own = cells.filter((cell) => cell.component === component)
+
+		if (!own.length) continue
+
+		const pooled = rows
+			.filter((row) => row.component === component && row.displacementKm != null)
+			.map((row) => row.displacementKm!)
+
+		const sum = (pick: (cell: AblationCell) => number): number => own.reduce((total, cell) => total + pick(cell), 0)
+		const grades = emptyGrades()
+
+		for (const cell of own) {
+			for (const grade of ABLATION_GRADES) {
+				grades[grade] += cell.grades[grade]
+			}
+		}
+
+		aggregates.push({
+			component,
+			support: sum((cell) => cell.support),
+			brokenCount: sum((cell) => cell.brokenCount),
+			displacementKmP50: percentile(pooled, 50),
+			displacementKmP90: percentile(pooled, 90),
+			tierDropCount: sum((cell) => cell.tierDropCount),
+			unresolvedCount: sum((cell) => cell.unresolvedCount),
+			substitutedCount: sum((cell) => cell.substitutedCount),
+			ladderGradedCount: sum((cell) => cell.ladderGradedCount),
+			trueFailCount: sum((cell) => cell.trueFailCount),
+			grades,
+			unconstrainedCount: sum((cell) => cell.unconstrainedCount),
+		})
+	}
+
+	return aggregates
 }

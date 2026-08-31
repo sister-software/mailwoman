@@ -17,6 +17,7 @@
  */
 
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { beginBatched } from "@mailwoman/sqlite/batched"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { compactCells, getResolution } from "h3-js"
 
@@ -175,7 +176,7 @@ export function reduceCells(
 	// refills with the delineations the next run of cells actually names.
 	const geometry = new Map<string, StoredDelineation>()
 
-	database.exec("BEGIN")
+	const batch = beginBatched(database, { rowsPerCommit: REDUCE_PROGRESS_STRIDE })
 
 	const flush = (): void => {
 		if (currentCell === undefined || !candidates.length) return
@@ -208,10 +209,7 @@ export function reduceCells(
 
 		insertRow(insert, reducedCell.row)
 
-		if (cells % REDUCE_PROGRESS_STRIDE === 0) {
-			database.exec("COMMIT")
-			database.exec("BEGIN")
-
+		if (batch.rowWritten()) {
 			onProgress?.(`${cells.toLocaleString()} cells reduced`)
 		}
 	}
@@ -257,7 +255,7 @@ export function reduceCells(
 
 	flush()
 
-	database.exec("COMMIT")
+	batch.commit()
 
 	return { cells, sampled, topClassUnderHalf, classless, unsampled, candidatePairs }
 }

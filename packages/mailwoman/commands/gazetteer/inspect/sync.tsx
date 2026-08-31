@@ -20,7 +20,6 @@
 import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { runFile } from "@mailwoman/core/process"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
@@ -32,6 +31,7 @@ import {
 	CheckList,
 	CommandError,
 	type CommandSpec,
+	CommandTaskResult,
 	type ParsedCommandComponent,
 	useCommandTask,
 } from "#cli-kit"
@@ -42,7 +42,6 @@ import {
 	type DiscoveredRepo,
 	type RepoSelection,
 } from "#commands/gazetteer/inspect/sync-plan"
-import type { ForkState } from "#gazetteer/wof-repo-origin"
 
 /**
  * Concurrency for the clone fan-out.
@@ -141,46 +140,11 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
 			// clones are NOT re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
 			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
-			const { resolveWOFRepoOrigin, UPSTREAM_ORG } = await import("#gazetteer/wof-repo-origin")
-
-			/**
-			 * Ask GitHub what our fork IS, not merely whether it exists. `compare` answers `ahead_by` — commits the fork
-			 * holds that upstream does not — which is the only thing that makes a fork worth preferring. A 404 on the fork is
-			 * "absent"; a 404 on the comparison means the fork exists with no shared history to compare, which is not a
-			 * correction either, so it reads "clean".
-			 */
-			const forkProbe = async (org: string, repo: string): Promise<ForkState> => {
-				try {
-					await runFile("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
-				} catch (error) {
-					if (/HTTP 404|Not Found/i.test(`${(error as Error).message}${(error as { stderr?: string }).stderr ?? ""}`)) {
-						return "absent"
-					}
-
-					// Anything else (no auth, no network, rate limit) is a FAILED lookup and must throw, so the
-					// resolver records upstream-with-a-caveat rather than upstream-as-established-fact.
-					throw error
-				}
-
-				try {
-					const { stdout } = await runFile("gh", [
-						"api",
-						`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
-						"--jq",
-						".ahead_by",
-					])
-
-					return Number(stdout.trim()) > 0 ? "diverged" : "clean"
-				} catch {
-					// The fork is known to exist; only the comparison failed. Treating that as "diverged" would
-					// prefer a possibly-stale snapshot on no evidence, so it degrades to clean.
-					return "clean"
-				}
-			}
+			const { githubForkProbe, resolveWOFRepoOrigin } = await import("#gazetteer/wof-repo-origin")
 
 			const resolved = await Promise.all(
 				selection.selected.map(async ({ name }) => {
-					const origin = await resolveWOFRepoOrigin(name, forkProbe)
+					const origin = await resolveWOFRepoOrigin(name, githubForkProbe)
 
 					if (origin.source === "fork") {
 						console.error(`▸ ${name}: ${origin.reason}`)
@@ -283,7 +247,7 @@ const WOFSync: ParsedCommandComponent<Options, [string?]> = ({ options, args }) 
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") return <CheckList checks={state.result.checks} verdict={state.result.ok} />
 

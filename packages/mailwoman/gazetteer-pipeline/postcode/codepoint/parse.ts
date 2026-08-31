@@ -35,6 +35,8 @@
 import { osgb36ToWGS84 } from "@mailwoman/spatial"
 import { CSVSpliterator } from "spliterator"
 
+import { normalizePostcodeDisplay } from "#gazetteer-pipeline/postcode/display-form"
+
 /**
  * Positional quality indicator meaning "no coordinate available". Such rows carry eastings/northings of zero.
  */
@@ -225,7 +227,7 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
  * regex and closes that.
  */
 export function normalizeCodePointSpacing(raw: string): string {
-	return raw.trim().toUpperCase().replaceAll(/\s+/g, " ")
+	return normalizePostcodeDisplay(raw)
 }
 
 /**

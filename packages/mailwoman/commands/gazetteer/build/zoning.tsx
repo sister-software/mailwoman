@@ -25,9 +25,18 @@
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	formatLayerVerification,
+	type ParsedCommandComponent,
+	splitNumberList,
+	useCommandTask,
+} from "#cli-kit"
+import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
  * Coverage resolution. Res 6 matches what the POI, flood, soil and coastal pipelines write, so a reader already keyed
@@ -86,7 +95,6 @@ interface Options {
 const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [
-			{ runFileSync },
 			{ dataRootPath },
 			{
 				assertAttributionUnchanged,
@@ -102,7 +110,6 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 			},
 			{ GZT_LICENSE_CONTRADICTION },
 		] = await Promise.all([
-			import("@mailwoman/core/process"),
 			import("@mailwoman/core/utils"),
 			import("@mailwoman/zoning/sdk"),
 			import("@mailwoman/zoning/vocabulary"),
@@ -157,7 +164,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 		if (options.measureResolutions) {
 			const report = await measureZoningCellResolutions({
 				exportPath,
-				resolutions: options.measureResolutions.split(",").map((value) => Number(value.trim())),
+				resolutions: splitNumberList(options.measureResolutions),
 				...(options.authority ? { authorityCode: options.authority } : {}),
 				...(options.limit ? { limit: Number(options.limit) } : {}),
 				onProgress: (message) => console.error(`  [measure] ${message}`),
@@ -182,7 +189,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
 		const out = options.out ?? String(dataRootPath("zoning", "zoning-ireland.db"))
-		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		// A narrowed run reads a SUBSET on purpose, so its declared count is the subset's own and the build asserts the sum
 		// against that rather than against the whole product.
@@ -264,11 +271,11 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 			`coverage: ${result.coverageCells.toLocaleString()} cells at res ${result.coverageResolution}, basis ${result.coverageBasis} — ` +
 				"presence only, and NO negative claim: an absent polygon may be outside any plan area, unzoned land inside one, or a jurisdiction nobody has published",
 			`area: publisher ${
-				result.area.sourceKM2 === undefined
-					? "not read (narrowed or offline run)"
-					: `${result.area.sourceKM2.toFixed(1)} km²`
+				result.area.witness === "source"
+					? `${result.area.sourceKM2.toFixed(1)} km²`
+					: "not read (narrowed or offline run)"
 			} · rings with holes ${result.area.nestedKM2.toFixed(1)} km²` +
-				`${result.area.relativeGap === undefined ? "" : ` (${(result.area.relativeGap * 100).toFixed(3)}% apart)`}` +
+				`${result.area.witness === "source" ? ` (${(result.area.relativeGap * 100).toFixed(3)}% apart)` : ""}` +
 				` · rings without holes ${result.area.allExteriorKM2.toFixed(1)} km²`,
 			`vocabulary: ${result.vocabulary
 				.map(
@@ -300,34 +307,23 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 				onProgress: (message) => console.error(`  [verify] ${message}`),
 			})
 
-			// A disagreement count is not actionable on its own — the rows are. Printed to stderr with the progress stream,
-			// because the first thing anyone does with a non-zero count is ask which points.
-			for (const row of verified.agreement.filter((entry) => entry.outcome === "disagree")) {
-				console.error(
-					`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind}, ` +
-						`service ${row.serviceInside ? "inside" : "outside"}, ` +
-						`${row.nearestEdgeMetres === undefined ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`
-				)
-			}
-
 			lines.push(
-				`verify: ${verified.agreed}/${verified.agreement.length} agree with the live service · ` +
-					`${verified.boundaryTolerance} within boundary tolerance · ${verified.disagreed} disagree · ` +
-					`${verified.codeMismatches} local-code mismatch(es)`,
-				`verify (outside the publication): ${verified.outsidePassed}/${verified.outside.length} read unknown with no designation, ` +
-					`${
-						verified.outside
-							.filter((row) => !row.passed)
-							.map((row) => row.label)
-							.join(", ") || "none read a designation"
-					}`
+				...formatLayerVerification(verified, {
+					serviceLabel: "the live service",
+					outsideLabel: "outside the publication",
+					extraSummary: `${verified.codeMismatches} local-code mismatch(es)`,
+					describeRow: (row) =>
+						`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind}, ` +
+						`service ${row.serviceInside ? "inside" : "outside"}, ` +
+						`${row.nearestEdgeMetres === undefined ? "no nearby polygon" : `${row.nearestEdgeMetres.toFixed(3)} m to nearest edge`}`,
+				})
 			)
 		}
 
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

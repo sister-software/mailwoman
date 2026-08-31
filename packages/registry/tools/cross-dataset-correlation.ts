@@ -26,16 +26,15 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import {
 	addressFrequencyKey,
 	ingestRows,
+	repName,
 	resolveEntities,
 	streamRows,
 	toGeoJSON,
-	type ColumnMapping,
 	type GeocodeAddress,
-	type ResolvedEntity,
 	type SourceRecord,
 } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
-import { norm } from "#tools/shared"
+import { buildSpecs, norm, pct, stateOption, type SourceSpec } from "#tools/shared"
 
 /**
  * Distinct sources an entity needs to count toward the triple-corroborated tally.
@@ -81,8 +80,9 @@ export interface CrossDatasetCorrelationOptions {
 }
 
 /**
- * Compose a row's address the SAME way {@link ingestRows} does (`pick`: join the mapped columns with a space, drop
- * empties), so a frequency key built here matches the geocoded record's `address.raw`.
+ * Compose a row's address for the corpus-wide frequency table. {@link ingestRows} joins the mapped address columns with
+ * `", "` (the #694 flip) while this join uses a space — the two agree once `addressFrequencyKey` folds punctuation to
+ * spaces, so a frequency key built here matches the geocoded record's `address.raw`.
  */
 function composeAddress(row: Record<string, string>, columns: string | string[] | undefined): string {
 	if (!columns) return ""
@@ -96,112 +96,46 @@ function composeAddress(row: Record<string, string>, columns: string | string[] 
 }
 
 /**
- * One source to ingest: where it lives, the column mapping, a TX filter, and an optional row "explode" for files that
- * carry two addressable entities per row (the FCC commitments Filing + Participating HCP).
+ * FCC RHC funding commitments — TWO addressable entities per row (a Filing HCP and a Participating HCP), each exploded
+ * into its own record (the #618 B1 two-entity-per-row case). Composed after the shared {@link buildSpecs} trio, which
+ * this probe correlates against.
  */
-interface SourceSpec {
-	source: string
-	path: string
-	mapping: ColumnMapping
-	/**
-	 * Keep only rows in-state (reads the row's state column).
-	 */
-	inState: (row: Record<string, string>) => boolean
-	/**
-	 * Optional: a row carries ≥1 addressable entity — yield each as its own row. Default identity.
-	 */
-	explode?: (row: Record<string, string>) => Record<string, string>[]
-}
-
-const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
-	{
-		// TX HHSC nursing facilities — facility name + physical address + a real coordinate.
-		source: "txhhsc-nursing",
-		path: `${S}/txhhsc_nursing-facilities_20260611.tsv`,
-		mapping: {
-			id: "Facility ID",
-			organization: "Facility Name",
-			address: ["Physical Address", "Physical Address CITY", "Physical Address State", "Physical Address Zipcode"],
-			phone: "Facility Phone Number",
-			source: "txhhsc-nursing",
-		},
-		inState: (r) => norm(r["Physical Address State"]).toUpperCase() === STATE,
-	},
-	{
-		// FCC Rural Health Care posted services — the funding/enrollment side; HCP name + site address.
-		source: "fcc-rhc",
-		path: `${S}/fcc-rhc_posted-services_form461-465_20260615.tsv`,
-		mapping: {
-			id: "HCP Number",
-			organization: "HCP Name",
-			address: ["Site Address Line 1", "Site City", "Site State", "Site ZIP Code"],
-			phone: "Contact Phone",
-			email: "Contact E-mail",
-			source: "fcc-rhc",
-		},
-		inState: (r) => norm(r["Site State"]).toUpperCase() === STATE,
-	},
-	{
-		// NPPES — organization NPIs (the eligibility side); legal business name + practice address.
-		source: "nppes",
-		path: `${S}/nppes_npi-registry_20260607.tsv`,
-		mapping: {
-			id: "NPI",
-			organization: "Provider Organization Name (Legal Business Name)",
-			address: [
-				"Provider First Line Business Practice Location Address",
-				"Provider Business Practice Location Address City Name",
-				"Provider Business Practice Location Address State Name",
-				"Provider Business Practice Location Address Postcode",
-			],
-			phone: "Provider Business Practice Location Address Telephone Number",
-			source: "nppes",
-		},
-		// Org-type NPIs in TX with a business name — the entities most likely to co-occur with facilities.
-		inState: (r) =>
-			norm(r["Provider Business Practice Location Address State Name"]).toUpperCase() === STATE &&
-			norm(r["Entity Type Code"]) === "2" &&
-			!!norm(r["Provider Organization Name (Legal Business Name)"]),
-	},
-	{
-		// FCC RHC funding commitments — TWO addressable entities per row (a Filing HCP and a Participating
-		// HCP). Explode each in-state HCP into its own record (the #618 B1 two-entity-per-row case).
+const commitmentsSpec = (S: string, STATE: string): SourceSpec => ({
+	source: "fcc-rhc-commitments",
+	path: `${S}/fcc-rhc_commitments-disbursements_form462-466-466a_20260615.tsv`,
+	mapping: {
+		id: "hcpID",
+		organization: "hcpName",
+		address: ["hcpStreet", "hcpCity", "hcpState", "hcpZip"],
 		source: "fcc-rhc-commitments",
-		path: `${S}/fcc-rhc_commitments-disbursements_form462-466-466a_20260615.tsv`,
-		mapping: {
-			id: "hcpID",
-			organization: "hcpName",
-			address: ["hcpStreet", "hcpCity", "hcpState", "hcpZip"],
-			source: "fcc-rhc-commitments",
-		},
-		inState: (r) =>
-			norm(r["Filing HCP State"]).toUpperCase() === STATE || norm(r["Participating HCP State"]).toUpperCase() === STATE,
-		explode: (r) => {
-			const out: Record<string, string>[] = []
-
-			const add = (prefix: string, role: string): void => {
-				const id = norm(r[`${prefix} HCP`])
-				const state = norm(r[`${prefix} HCP State`]).toUpperCase()
-
-				if (id && state === STATE) {
-					out.push({
-						hcpID: `${role}-${id}`,
-						hcpName: norm(r[`${prefix} HCP Name`]),
-						hcpStreet: norm(r[`${prefix} HCP Street`]),
-						hcpCity: norm(r[`${prefix} HCP City`]),
-						hcpState: state,
-						hcpZip: norm(r[`${prefix} HCP Zip Code`]),
-					})
-				}
-			}
-
-			add("Filing", "filing")
-			add("Participating", "participating")
-
-			return out
-		},
 	},
-]
+	inState: (r) =>
+		norm(r["Filing HCP State"]).toUpperCase() === STATE || norm(r["Participating HCP State"]).toUpperCase() === STATE,
+	explode: (r) => {
+		const out: Record<string, string>[] = []
+
+		const add = (prefix: string, role: string): void => {
+			const id = norm(r[`${prefix} HCP`])
+			const state = norm(r[`${prefix} HCP State`]).toUpperCase()
+
+			if (id && state === STATE) {
+				out.push({
+					hcpID: `${role}-${id}`,
+					hcpName: norm(r[`${prefix} HCP Name`]),
+					hcpStreet: norm(r[`${prefix} HCP Street`]),
+					hcpCity: norm(r[`${prefix} HCP City`]),
+					hcpState: state,
+					hcpZip: norm(r[`${prefix} HCP Zip Code`]),
+				})
+			}
+		}
+
+		add("Filing", "filing")
+		add("Participating", "participating")
+
+		return out
+	},
+})
 
 /**
  * Cross-dataset correlation (#618) — see the module doc. Emits the markdown report to stdout.
@@ -212,11 +146,11 @@ export async function crossDatasetCorrelation(
 ): Promise<{ markdown: string }> {
 	const SOURCES = options.sources || dataRootPath("record-matcher", "sources")
 	const CAP = options.cap ?? 300 // rows kept per source for geocoding (state-scoped)
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const OUT_MD = options.outMd || ""
 	const OUT_GEOJSON = options.outGeojson || "" // the reconciliation artifact (FeatureCollection, QGIS-ready)
 	const CORPUS_FREQ = options.corpusFrequency ?? true
-	const SPECS = buildSpecs(`${SOURCES}`, STATE)
+	const SPECS = [...buildSpecs(`${SOURCES}`, STATE), commitmentsSpec(`${SOURCES}`, STATE)]
 
 	// --- Phase A: stream each source, TX-filter, explode → keep the first CAP rows for geocoding AND
 	// (when --corpus-frequency, the default) count EVERY in-state address into a corpus-wide table. The
@@ -358,16 +292,7 @@ export async function crossDatasetCorrelation(
 		}
 	}
 
-	const repName = (e: ResolvedEntity) =>
-		e.representative.organization?.canonical ??
-		[e.representative.name?.given, e.representative.name?.family].filter(isPresent).join(" ") ??
-		e.representative.id
-
 	// --- Report. ---
-	// NOTE(phase4): local pct keeps the fraction-in/no-%-suffix shape — not core formatPercent's
-	// numerator/denominator contract (call sites append their own "%").
-	const pct = (x: number) => (100 * x).toFixed(1)
-
 	const lines: string[] = [
 		`# Cross-dataset correlation (#618 / #87 real-data run)`,
 		"",

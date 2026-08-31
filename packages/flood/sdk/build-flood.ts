@@ -35,24 +35,24 @@
  *   every point in it.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { readFileSize } from "@mailwoman/core/fs/readers"
 import {
 	assertAreaAgreement,
-	CoverageBasis,
+	areaAgreementFrom,
 	createLayerCoverageTable,
 	createLayerManifestTable,
-	LayerFreshnessPolicy,
-	LayerTier,
+	designatedCoverageCells,
+	polygonLayerManifest,
 	writeLayerCoverage,
 	writeLayerManifest,
+	type AreaAgreementReading,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { runChunkProcess } from "@mailwoman/core/utils"
+import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwoman/core/utils"
 import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 import { compactCells, getResolution } from "h3-js"
 
 import { createFloodTables, FloodCellContainment, type FloodDatabase } from "#schema"
@@ -170,10 +170,10 @@ export interface BuildFloodResult {
 	coverageCells: number
 	coverageCellsWithRows: number
 	/**
-	 * The three area totals, in square kilometres: what the source says, what the encoded rings say read with their
-	 * holes, and what they would say read without.
+	 * The area totals in square kilometres — what the source says, what the encoded rings say read with their holes, and
+	 * what they would say read without — with the witness stated.
 	 */
-	area: { sourceKM2: number; nestedKM2: number; allExteriorKM2: number; relativeGap: number }
+	area: AreaAgreementReading
 	sizeBytes: number
 }
 
@@ -190,13 +190,14 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 		)
 	}
 
-	const declaredFeatureCount =
-		"batched" in options ? options.batched.declaredFeatureCount : options.source.declaredFeatureCount
+	const batched = "batched" in options ? options.batched : undefined
+	const source = "batched" in options ? undefined : options.source
+	const declaredFeatureCount = batched ? batched.declaredFeatureCount : source!.declaredFeatureCount
 
 	options.onProgress?.(
-		"batched" in options
-			? `source: ${options.batched.geodatabasePath} · OBJECTID ${options.batched.objectIDFrom}–${options.batched.objectIDTo} · ${declaredFeatureCount.toLocaleString()} features`
-			: `source: ${options.source.layer} · EPSG:${options.source.epsg} · ${declaredFeatureCount.toLocaleString()} features · ${options.source.origin}`
+		batched
+			? `source: ${batched.geodatabasePath} · OBJECTID ${batched.objectIDFrom}–${batched.objectIDTo} · ${declaredFeatureCount.toLocaleString()} features`
+			: `source: ${source!.layer} · EPSG:${source!.epsg} · ${declaredFeatureCount.toLocaleString()} features · ${source!.origin}`
 	)
 
 	if (options.expectedFeatureCount !== undefined && options.expectedFeatureCount !== declaredFeatureCount) {
@@ -205,21 +206,9 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 		)
 	}
 
-	const tmpPath = `${options.out}.tmp-${process.pid}`
-
-	// THE INGEST AND THE RESOLVE PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path, which does not need
-	// them separated. The batched path DOES: its children open the same file, so the parent's handle has to be closed
-	// across them, and a single shared handle silently becomes a closed one by the time the cell tiers are resolved. Doing
-	// it one way in both paths is what puts the fixture suites on the same sequence a national build takes.
-	let streamed: StreamResult
-
-	{
-		await using kdb = new DatabaseClient<FloodDatabase>(tmpPath)
-
-		try {
-			kdb.exec("PRAGMA journal_mode = OFF")
-			kdb.exec("PRAGMA synchronous = OFF")
-
+	const built = await buildSealedArtifact<FloodDatabase, StreamResult, Omit<BuildFloodResult, "sizeBytes">>({
+		out: options.out,
+		createTables: async (kdb) => {
 			await createFloodTables(kdb)
 			await createLayerManifestTable(kdb)
 			await createLayerCoverageTable(kdb)
@@ -230,120 +219,80 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			kdb.exec(
 				"CREATE TABLE build_cell_touch (h3_cell INTEGER NOT NULL, resolution INTEGER NOT NULL, zone_code TEXT NOT NULL, area_id TEXT NOT NULL, is_full INTEGER NOT NULL)"
 			)
+		},
+		ingest: async (kdb) => {
+			if (!source) return undefined
 
-			if (!("batched" in options)) {
-				streamed = aggregateChunks([
-					await ingestFloodChunk(kdb, {
-						source: options.source,
-						indexResolution: options.indexResolution,
-						coverageResolution: options.coverageResolution,
-						...(options.onProgress ? { onProgress: options.onProgress } : {}),
-					}),
-				])
+			return aggregateChunks([
+				await ingestFloodChunk(kdb, {
+					source,
+					indexResolution: options.indexResolution,
+					coverageResolution: options.coverageResolution,
+					...(options.onProgress ? { onProgress: options.onProgress } : {}),
+				}),
+			])
+		},
+		...(batched ? { batched: (tmpPath: string) => runBatchedIngest(tmpPath, options, batched) } : {}),
+		finish: async (kdb, ingested) => {
+			if (ingested.features !== declaredFeatureCount) {
+				throw new Error(
+					`flood build: streamed ${ingested.features} features, the source declares ${declaredFeatureCount} — a short read builds a smaller England and reports success`
+				)
 			}
-		} catch (error) {
-			await kdb.destroy().catch(() => undefined)
-			await removePathIfPresent(tmpPath)
 
-			throw error
-		}
-	}
+			assertAreaAgreement("flood build", ingested.area, AREA_TOLERANCE)
 
-	if ("batched" in options) {
-		try {
-			streamed = await runBatchedIngest(tmpPath, options)
-		} catch (error) {
-			await removePathIfPresent(tmpPath)
+			options.onProgress?.(`${ingested.features.toLocaleString()} features written · resolving cells`)
 
-			throw error
-		}
-	}
+			const cells = resolveCells(kdb)
 
-	const kdb = new DatabaseClient<FloodDatabase>(tmpPath)
-
-	try {
-		kdb.exec("PRAGMA journal_mode = OFF")
-		kdb.exec("PRAGMA synchronous = OFF")
-
-		if (streamed!.features !== declaredFeatureCount) {
-			throw new Error(
-				`flood build: streamed ${streamed!.features} features, the source declares ${declaredFeatureCount} — a short read builds a smaller England and reports success`
+			options.onProgress?.(
+				`${cells.wholeRows.toLocaleString()} whole (compacted) · ${cells.partialRows.toLocaleString()} partial · ${cells.candidateRows.toLocaleString()} candidate pairs`
 			)
-		}
 
-		const ingested = streamed!
+			const coverage = buildCoverageCells(options.extent, ingested.observedByCoverageCell)
 
-		assertAreaAgreement("flood build", ingested.area, AREA_TOLERANCE)
+			await writeLayerCoverage(kdb, coverage)
 
-		options.onProgress?.(`${ingested.features.toLocaleString()} features written · resolving cells`)
+			writeExtentRow(kdb, options, coverage.length)
+			writeVocabularyRows(kdb)
 
-		const cells = resolveCells(kdb)
+			await writeLayerManifest(
+				kdb,
+				polygonLayerManifest(options, {
+					name: EA_FLOOD_LAYER_NAME,
+					schemaVersion: FLOOD_SCHEMA_VERSION,
+					license: EA_FLOOD_LICENSE,
+					attribution: EA_FLOOD_ATTRIBUTION,
+					source: `environment.data.gov.uk/dataset/${EA_FLOOD_DATASET_ID}`,
+					cellColumn: "flood_zone_cell.h3_cell",
+				})
+			)
 
-		options.onProgress?.(
-			`${cells.wholeRows.toLocaleString()} whole (compacted) · ${cells.partialRows.toLocaleString()} partial · ${cells.candidateRows.toLocaleString()} candidate pairs`
-		)
+			kdb.exec("DROP TABLE build_cell_touch")
 
-		const coverage = buildCoverageCells(options.extent, ingested.observedByCoverageCell)
+			const totalCellRows = cells.wholeRows + cells.partialRows
 
-		await writeLayerCoverage(kdb, coverage)
+			return {
+				out: options.out,
+				features: ingested.features,
+				zoneCounts: ingested.zoneCounts,
+				indexResolution: options.indexResolution,
+				coverageResolution: options.coverageResolution,
+				wholeCellRows: cells.wholeRows,
+				partialCellRows: cells.partialRows,
+				candidateRows: cells.candidateRows,
+				storedPartialShare: totalCellRows ? cells.partialRows / totalCellRows : 0,
+				coarsenedFeatures: ingested.coarsened,
+				storedResolutions: cells.resolutions,
+				coverageCells: coverage.length,
+				coverageCellsWithRows: coverage.filter((cell) => cell.observedRows > 0).length,
+				area: ingested.area,
+			}
+		},
+	})
 
-		writeExtentRow(kdb, options, coverage.length)
-		writeVocabularyRows(kdb)
-
-		await writeLayerManifest(kdb, {
-			name: EA_FLOOD_LAYER_NAME,
-			version: options.sourceVintage,
-			schemaVersion: FLOOD_SCHEMA_VERSION,
-			tier: LayerTier.Shipped,
-			license: EA_FLOOD_LICENSE,
-			attribution: EA_FLOOD_ATTRIBUTION,
-			source: `environment.data.gov.uk/dataset/${EA_FLOOD_DATASET_ID}`,
-			sourceVintage: options.sourceVintage,
-			buildCmd: options.buildCmd,
-			buildSHA: options.buildSHA,
-			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
-			spineKeys: {
-				h3: { column: "flood_zone_cell.h3_cell", resolution: options.indexResolution },
-			},
-			createdAt: options.createdAt,
-		})
-
-		kdb.exec("DROP TABLE build_cell_touch")
-		kdb.exec("VACUUM")
-
-		await kdb.destroy()
-
-		await sealDatabase(tmpPath)
-		await swapDatabaseIntoPlace(tmpPath, options.out)
-
-		const totalCellRows = cells.wholeRows + cells.partialRows
-
-		return {
-			out: options.out,
-			features: ingested.features,
-			zoneCounts: ingested.zoneCounts,
-			indexResolution: options.indexResolution,
-			coverageResolution: options.coverageResolution,
-			wholeCellRows: cells.wholeRows,
-			partialCellRows: cells.partialRows,
-			candidateRows: cells.candidateRows,
-			storedPartialShare: totalCellRows ? cells.partialRows / totalCellRows : 0,
-			coarsenedFeatures: ingested.coarsened,
-			storedResolutions: cells.resolutions,
-			coverageCells: coverage.length,
-			coverageCellsWithRows: coverage.filter((cell) => cell.observedRows > 0).length,
-			area: ingested.area,
-			sizeBytes: await sizeOf(options.out),
-		}
-	} catch (error) {
-		await kdb.destroy().catch(() => undefined)
-
-		// A failed build leaves a partial multi-gigabyte file whose name carries this process's pid, so nothing will ever
-		// pick it up again. Removing it is the difference between a retry loop that fails and one that fills a disk.
-		await removePathIfPresent(tmpPath)
-
-		throw error
-	}
+	return { ...built, sizeBytes: await readFileSize(options.out) }
 }
 
 /**
@@ -354,13 +303,8 @@ interface StreamResult {
 	coarsened: number
 	zoneCounts: Record<string, number>
 	observedByCoverageCell: Map<number, number>
-	area: BuildFloodResult["area"]
+	area: AreaAgreementReading
 }
-
-/**
- * Square metres in a square kilometre.
- */
-const M2_PER_KM2 = 1_000_000
 
 /**
  * The relative gap between the two area readings that fails the build.
@@ -414,9 +358,7 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 		// A coverage cell straddles chunk boundaries — a range of feature ids is not a region — so the counts ADD rather
 		// than replace. Taking the last chunk's value would report a busy floodplain as holding only its final few
 		// polygons.
-		for (const [cell, count] of chunk.observedByCoverageCell) {
-			observedByCoverageCell.set(cell, (observedByCoverageCell.get(cell) ?? 0) + count)
-		}
+		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 	}
 
 	return {
@@ -424,30 +366,20 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 		coarsened,
 		zoneCounts,
 		observedByCoverageCell,
-		area: {
-			sourceKM2: sourceArea / M2_PER_KM2,
-			nestedKM2: nestedArea / M2_PER_KM2,
-			allExteriorKM2: allExteriorArea / M2_PER_KM2,
-			relativeGap: sourceArea ? Math.abs(nestedArea - sourceArea) / sourceArea : 0,
-		},
+		area: areaAgreementFrom({ nestedM2: nestedArea, allExteriorM2: allExteriorArea }, sourceArea),
 	}
 }
 
 /**
- * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids.
- *
- * THE PARENT HOLDS NO HANDLE WHILE THEY RUN — its caller closed one before this and opens another after. Each child
- * opens the same file and appends; chunks run one at a time, so there is exactly one writer at every instant and no
- * locking to reason about.
- *
- * @throws {Error} When a chunk exits non-zero, or prints no result line — a chunk that died mid-range has written a
- *   partial set of rows, and continuing would seal an artifact missing features nobody could name.
+ * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids. The shared
+ * chunk contract — the parent's no-handle rule, and the fail-loud handling of a chunk that dies or prints nothing —
+ * lives with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(
 	tmpPath: string,
-	options: BuildFloodOptions & { batched: Extract<BuildFloodInput, { batched: unknown }>["batched"] }
+	options: BuildFloodOptions,
+	batched: Extract<BuildFloodInput, { batched: unknown }>["batched"]
 ): Promise<StreamResult> {
-	const { batched } = options
 	const chunkSize = batched.chunkSize ?? DEFAULT_CHUNK_SIZE
 	const script = resolveModulePath("@mailwoman/flood/scripts/ingest-chunk")
 	const chunks: FloodChunkResult[] = []
@@ -462,25 +394,24 @@ async function runBatchedIngest(
 				script,
 				context: "flood build",
 				subject: `chunk OBJECTID ${from}–${to}`,
-				args: [
-					"--database",
-					tmpPath,
-					"--gdb",
-					batched.geodatabasePath,
-					...(batched.layer ? ["--layer", batched.layer] : []),
-					"--object-id-from",
-					String(from),
-					"--object-id-to",
-					String(to),
-					// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower —
-					// so the chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
-					"--declared-feature-count",
-					String(0),
-					"--index-resolution",
-					String(options.indexResolution),
-					"--coverage-resolution",
-					String(options.coverageResolution),
-				],
+				args: ingestChunkArguments({
+					database: tmpPath,
+					args: [
+						"--gdb",
+						batched.geodatabasePath,
+						...(batched.layer ? ["--layer", batched.layer] : []),
+						"--object-id-from",
+						String(from),
+						"--object-id-to",
+						String(to),
+						// A range's own count is not knowable up front — `ogrinfo` reports the layer's total and nothing narrower —
+						// so the chunk asserts nothing about its size and the PARENT checks the sum against the whole file.
+						"--declared-feature-count",
+						String(0),
+					],
+					indexResolution: options.indexResolution,
+					coverageResolution: options.coverageResolution,
+				}),
 			})
 		)
 	}
@@ -584,18 +515,7 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
  * reader must not confuse with the absent row a cell outside England has.
  */
 function buildCoverageCells(extent: FloodMapExtent, observed: Map<number, number>): CoverageCell[] {
-	const cells: CoverageCell[] = []
-
-	for (const h3Cell of extent.coverageCells) {
-		cells.push({
-			h3Cell,
-			completeness: 1,
-			basis: CoverageBasis.Designated,
-			observedRows: observed.get(h3Cell) ?? 0,
-		})
-	}
-
-	return cells.toSorted((left, right) => left.h3Cell - right.h3Cell)
+	return designatedCoverageCells(extent.coverageCells, observed)
 }
 
 /**
@@ -644,11 +564,4 @@ function writeVocabularyRows(database: DatabaseClient<FloodDatabase>): void {
 	for (const zone of EA_FLOOD_ZONE_DEFINITIONS) {
 		insert.run(zone.code, zone.label, zone.definition, zone.definitionURL)
 	}
-}
-
-/**
- * The artifact's size on disk, read once for the receipt.
- */
-async function sizeOf(path: string): Promise<number> {
-	return (await statPath(path)).size
 }

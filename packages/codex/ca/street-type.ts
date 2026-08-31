@@ -23,6 +23,8 @@
  *   Ouest = West is recognized.
  */
 
+import { foldToken } from "#normalize"
+
 /**
  * English Canadian street-type words (Canada Post's recognized set, lowercase). Appear as the TRAILING token of an
  * English street name (`Maple Avenue`, `Sunset Crescent`).
@@ -86,14 +88,10 @@ export const CA_STREET_TYPES_FR: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Strip diacritics + lowercase so `Côte`/`cote`, `Allée`/`allee`, `Crescent`/`crescent` key alike.
+ * {@link foldToken}, letters only, so `Côte`/`cote`, `Allée`/`allee`, `Crescent`/`crescent` key alike.
  */
-function foldToken(s: string): string {
-	return s
-		.toLowerCase()
-		.normalize("NFD")
-		.replaceAll(/[\u0300-\u036F]/g, "")
-		.replaceAll(/[^a-z]/g, "")
+function foldLetters(s: string): string {
+	return foldToken(s).replaceAll(/[^a-z]/g, "")
 }
 
 /**
@@ -103,11 +101,11 @@ const STREET_WORD_SET: ReadonlySet<string> = (() => {
 	const out = new Set<string>()
 
 	for (const w of CA_STREET_TYPES_EN) {
-		out.add(foldToken(w))
+		out.add(foldLetters(w))
 	}
 
 	for (const w of CA_STREET_TYPES_FR) {
-		out.add(foldToken(w))
+		out.add(foldLetters(w))
 	}
 
 	return out
@@ -120,7 +118,7 @@ const STREET_WORD_SET: ReadonlySet<string> = (() => {
  */
 export function isCanadianStreetWord(token: unknown): boolean {
 	if (typeof token !== "string") return false
-	const t = foldToken(token)
+	const t = foldLetters(token)
 
 	return t.length > 0 && STREET_WORD_SET.has(t)
 }
@@ -154,7 +152,7 @@ export const CA_DIRECTIONALS: Record<string, "N" | "S" | "E" | "W"> = {
  */
 export function isCanadianDirectional(token: unknown): boolean {
 	if (typeof token !== "string") return false
-	const t = foldToken(token)
+	const t = foldLetters(token)
 
 	if (!t.length) return false
 

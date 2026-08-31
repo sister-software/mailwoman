@@ -40,10 +40,9 @@
  *   two-path check rather than the archive agreeing with itself. See `sdk/client.ts`.
  */
 
-import { parseJSONStrict } from "@mailwoman/core/objects"
-import { runFile, spawnProcess } from "@mailwoman/core/process"
-import { arealPolygons, assertRingsInsideExtent } from "@mailwoman/spatial"
-import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
+import { spawnOGR2OGR } from "@mailwoman/core/utils"
+import { assertRingsInsideExtent, requireArealPolygons } from "@mailwoman/spatial"
+import { readOGRLayerIdentity } from "@mailwoman/spatial/sdk/ogr"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/sdk/well-known-text"
 import { CSVSpliterator } from "spliterator"
 
@@ -195,52 +194,14 @@ export const ZONING_SOURCE_FIELDS: ReadonlyArray<string> = [
  *   ingest reads.
  */
 export async function readZoningSourceIdentity(options: ZoningIngestOptions): Promise<ZoningSourceIdentity> {
-	const expectEPSG = options.expectEPSG ?? GZT_SOURCE_EPSG
+	const identity = await readOGRLayerIdentity({
+		path: options.exportPath,
+		expectEPSG: options.expectEPSG ?? GZT_SOURCE_EPSG,
+		context: "zoning ingest",
+		areaOfUse: "Ireland",
+	})
 
-	const { stdout } = await runFile(
-		"ogrinfo",
-		["-json", "-so", options.exportPath],
-		// The summary is small; the ceiling only guards against a pathological driver.
-		{ maxBuffer: 32 * 1024 * 1024 }
-	)
-
-	const info = parseJSONStrict<{
-		layers?: Array<{
-			name?: string
-			featureCount?: number
-			fields?: Array<{ name?: string }>
-			geometryFields?: Array<{ coordinateSystem?: { projjson?: { id?: { code?: number } } } }>
-		}>
-	}>(stdout)
-
-	const described = info.layers?.[0]
-
-	if (!described?.name) {
-		throw new Error(`zoning ingest: ${options.exportPath} carries no readable layer`)
-	}
-
-	const code = described.geometryFields?.[0]?.coordinateSystem?.projjson?.id?.code
-
-	if (typeof code !== "number") {
-		throw new TypeError(
-			`zoning ingest: ${options.exportPath} declares no EPSG authority code — the projection cannot be checked, and reading its metres as degrees is silent`
-		)
-	}
-
-	if (code !== expectEPSG) {
-		throw new Error(
-			`zoning ingest: ${options.exportPath} declares EPSG:${code}, expected EPSG:${expectEPSG} — the source's projection changed, which is a product change rather than a variation to absorb`
-		)
-	}
-
-	if (typeof described.featureCount !== "number") {
-		throw new TypeError(`zoning ingest: ${options.exportPath} reports no feature count`)
-	}
-
-	await assertDatumTransformation(code, { context: "zoning ingest", areaOfUse: "Ireland" })
-
-	const fields = new Set((described.fields ?? []).map((field) => field.name).filter((name) => name !== undefined))
-	const missing = ZONING_SOURCE_FIELDS.filter((field) => field !== "OBJECTID" && !fields.has(field))
+	const missing = ZONING_SOURCE_FIELDS.filter((field) => field !== "OBJECTID" && !identity.fields.has(field))
 
 	// `-select` on a missing column makes ogr2ogr write an EMPTY column rather than refuse, so a schema change would
 	// arrive as a stream of nulls: every local code blank, every plan unnamed, and a well-formed artifact describing
@@ -251,7 +212,7 @@ export async function readZoningSourceIdentity(options: ZoningIngestOptions): Pr
 		)
 	}
 
-	return { epsg: code, featureCount: described.featureCount, layer: described.name, fields }
+	return { epsg: identity.epsg, featureCount: identity.featureCount, layer: identity.layer, fields: identity.fields }
 }
 
 /**
@@ -279,7 +240,7 @@ function whereClause(options: ZoningIngestOptions): string[] {
  * A published value, as a string or null. An EMPTY STRING IS NOT NULL HERE for the local code, which is the one column
  * this layer exists to repeat: a blank one is refused by the ingest rather than stored.
  */
-function textOf(value: string | undefined): string | null {
+function blankToNull(value: string | undefined): string | null {
 	if (value === undefined) return null
 
 	return value.length ? value : null
@@ -316,36 +277,10 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 		options.exportPath,
 	]
 
-	const child = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
-	const stderr: string[] = []
-
-	child.stderr.setEncoding("utf8")
-
-	child.stderr.on("data", (chunk: string) => {
-		stderr.push(chunk)
-	})
-
-	let exitError: Error | undefined
-
-	const exited = new Promise<void>((resolve) => {
-		child.on("error", (error) => {
-			exitError = error
-			resolve()
-		})
-
-		child.on("close", (code) => {
-			if (code !== 0) {
-				exitError = new Error(
-					`zoning ingest: ogr2ogr exited ${code}${stderr.length ? ` — ${stderr.join("").trim()}` : ""}`
-				)
-			}
-
-			resolve()
-		})
-	})
+	const proc = spawnOGR2OGR(args, "zoning ingest")
 
 	try {
-		for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(child.stdout, {
+		for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(proc.stdout, {
 			mode: "object",
 			// Opt-in end-to-end quoting: the WKT column carries commas and spaces on every row, so a reader without it
 			// mis-splits every feature into hundreds of columns.
@@ -390,31 +325,25 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 				planID: row.PLAN_ID ?? "",
 				planName: row.PLAN_NAME ?? "",
 				planLevel: row.PLAN_LEVEL ?? "",
-				planFrom: textOf(row.PLAN_FROM),
-				planTo: textOf(row.PLAN_TO),
+				planFrom: blankToNull(row.PLAN_FROM),
+				planTo: blankToNull(row.PLAN_TO),
 				currentPlan: Number(row.CURRENT_PLAN ?? 0),
 				// VERBATIM, and deliberately un-trimmed: `Proposed Residential ` carries a trailing space in the source, and
 				// five of the 581 distinct strings collide with another only on case or that space.
 				localCode,
-				localDescription: textOf(row.ZONE_DESC),
-				localCodeURL: textOf(row.ZONE_LINK),
-				crosswalkCode: textOf(row.ZONE_GZT),
-				crosswalkDescription: textOf(row.GZT_DESC),
-				crosswalkRollup: textOf(row.SZO),
+				localDescription: blankToNull(row.ZONE_DESC),
+				localCodeURL: blankToNull(row.ZONE_LINK),
+				crosswalkCode: blankToNull(row.ZONE_GZT),
+				crosswalkDescription: blankToNull(row.GZT_DESC),
+				crosswalkRollup: blankToNull(row.SZO),
 				rings: resolveRingRoles(polygons, areaID),
 			}
 		}
 	} finally {
-		if (child.exitCode === null && child.signalCode === null) {
-			child.kill()
-		}
+		proc.kill()
 	}
 
-	await exited
-
-	// A truncated stream reads as a short but well-formed feature list, which is exactly the partial result that must throw
-	// rather than be reported as a smaller country.
-	if (exitError) throw exitError
+	await proc.settled
 }
 
 /**
@@ -424,11 +353,8 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
  */
 function normalizePolygons(wkt: string, label: string): MultiPolygonRings {
 	const geometry = wellKnownGeometryToGeoJSON<{ type: string; coordinates: unknown }>(wkt)
-	const polygons = arealPolygons(geometry)
 
-	if (polygons) return polygons
-
-	throw new Error(`zoning ingest: ${label} is a ${geometry.type}, expected Polygon or MultiPolygon`)
+	return requireArealPolygons(geometry, label, "zoning ingest")
 }
 
 /**

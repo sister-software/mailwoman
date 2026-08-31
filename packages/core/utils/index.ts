@@ -5,6 +5,7 @@
  */
 
 export * from "#utils/chunk-process"
+export * from "#utils/collections"
 export * from "#utils/data-root"
 export * from "#utils/geodatabase-archive"
 export * from "#utils/hash"

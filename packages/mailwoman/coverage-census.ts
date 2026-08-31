@@ -39,7 +39,7 @@ import {
 } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { join } from "path-ts"
@@ -85,6 +85,14 @@ export interface CountryCoverage {
 	 */
 	boardRows: number
 	boardGatedRows: number
+}
+
+/**
+ * Whether a country actually TRAINS: admitted by `country_weights` AND holding corpus rows. The Norway-bug predicate,
+ * shared with `mailwoman data coverage`'s renderer so the two reports cannot disagree about what "trained" means.
+ */
+export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boolean {
+	return c.admitted && c.corpusRows > 0
 }
 
 /**
@@ -401,7 +409,7 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 	try {
 		using db = new DatabaseClient<CandidateDatabase>(dbPath, { readOnly: true })
 
-		const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as Array<{ name: string }>
+		const tables = allRows<{ name: string }>(db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'"))
 		const names = new Set(tables.map((t) => t.name))
 
 		// The serving DB is the candidate table; the older admin build exposes `spr`. Support both rather than
@@ -410,7 +418,7 @@ export async function readGazetteerCoverage(dbPath: string): Promise<Map<string,
 			? "SELECT c.code AS cc, COUNT(*) AS n FROM candidate x JOIN country_codes c ON c.id = x.country_id GROUP BY c.code"
 			: "SELECT country AS cc, COUNT(*) AS n FROM spr GROUP BY country"
 
-		for (const row of db.prepare(sql).all() as Array<{ cc: string | null; n: number }>) {
+		for (const row of allRows<{ cc: string | null; n: number }>(db.prepare(sql))) {
 			if (row.cc) {
 				out.set(row.cc.toUpperCase(), row.n)
 			}
@@ -518,8 +526,6 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 			boardGatedRows: boardEntry?.gated ?? 0,
 		}
 	})
-
-	const trains = (c: CountryCoverage): boolean => c.admitted && c.corpusRows > 0
 
 	const configuredCorpusVersion = await readConfiguredCorpusVersion(options.configPath)
 

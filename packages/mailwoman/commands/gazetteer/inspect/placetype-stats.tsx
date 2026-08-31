@@ -18,7 +18,13 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * Row count below which a trained placetype is flagged as thin relative to its peers.
@@ -170,9 +176,7 @@ const GazetteerPlacetypeStats: ParsedCommandComponent<Options> = ({ options }) =
 		return { dbPath, country: country ?? "ALL", stats }
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status !== "done") return null
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (options.json) return <Text>{JSON.stringify(state.result, null, 2)}</Text>
 

@@ -32,18 +32,25 @@
  *   Usage: node packages/mailwoman/dev-tools/score-anchor-v2-boards.run.ts --board gb --locale en-gb --cache-root <dir>
  */
 
-import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { STREET_FAMILY_TAGS } from "@mailwoman/core/types"
 import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { JSONSpliterator } from "spliterator"
 
+import {
+	type Board,
+	emptyBoard,
+	fold,
+	REGISTERS,
+	register,
+	type Register,
+	reportBoard,
+} from "#dev-tools/register-board"
+import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#eval-harness/parity-corpus"
 import { createRuntimePipeline } from "#index"
-
-const REGISTERS = ["asis", "lower", "upper"] as const
-
-type Register = (typeof REGISTERS)[number]
 
 const { values } = parseArguments({
 	options: {
@@ -69,15 +76,6 @@ const { values } = parseArguments({
 
 const board = values.board!
 const locale = values.locale ?? (board === "gb" ? "en-gb" : board === "fr" ? "fr-fr" : "en-us")
-
-/**
- * The grading fold: uppercase, all whitespace removed.
- */
-const fold = (value: string): string => value.toUpperCase().replaceAll(/\s+/gu, "")
-
-function register(text: string, reg: Register): string {
-	return reg === "lower" ? text.toLowerCase() : reg === "upper" ? text.toUpperCase() : text
-}
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({
 	locale,
@@ -110,40 +108,8 @@ function serializeTags(key: string, byTag: Map<string, string[]>): string {
 
 async function tagsFor(text: string): Promise<Map<string, string[]>> {
 	const result = await pipeline(text, { locale })
-	const byTag = new Map<string, string[]>()
 
-	for (const [tag, value] of decodeAsTuples(result.tree)) {
-		byTag.set(tag, [...(byTag.get(tag) ?? []), value])
-	}
-
-	return byTag
-}
-
-/**
- * One tag's board over a row set × the three registers.
- */
-interface Board {
-	perRegister: Record<Register, { hit: number; total: number }>
-}
-
-function emptyBoard(): Board {
-	return {
-		perRegister: {
-			asis: { hit: 0, total: 0 },
-			lower: { hit: 0, total: 0 },
-			upper: { hit: 0, total: 0 },
-		},
-	}
-}
-
-function reportBoard(name: string, b: Board): void {
-	const hit = REGISTERS.reduce((sum, r) => sum + b.perRegister[r].hit, 0)
-	const total = REGISTERS.reduce((sum, r) => sum + b.perRegister[r].total, 0)
-
-	console.log(
-		`${name.padEnd(34)} ${`${hit}/${total}`.padStart(9)}   ` +
-			REGISTERS.map((r) => `${r} ${b.perRegister[r].hit}/${b.perRegister[r].total}`).join(" · ")
-	)
+	return groupTuplesByTag(result.tree)
 }
 
 if (board === "gb") {
@@ -209,13 +175,9 @@ if (board === "gb") {
 } else {
 	const country = board.toUpperCase()
 
-	const rows = (
-		await Array.fromAsync(
-			JSONSpliterator.fromAsync<{ id: string; input: string; country: string; expect?: Record<string, string[]> }>(
-				"packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
-			)
-		)
-	).filter((row) => row.country === country)
+	const rows = (await Array.fromAsync(JSONSpliterator.fromAsync<ParityFixture>(PARITY_FIXTURES_V1_PATH))).filter(
+		(row) => row.country === country
+	)
 
 	const boards = new Map<string, Board>()
 	const serialization: string[] = []
@@ -235,9 +197,7 @@ if (board === "gb") {
 				// (prefix/name/particle/suffix). `parity-corpus.ts`'s floor compares the assembled family, so a
 				// bare tag-vs-tag read of `street` scores a correct parse as a miss. Assemble the same family.
 				const emitted =
-					tag === "street"
-						? ["street_prefix", "street", "street_prefix_particle", "street_suffix"].flatMap((t) => byTag.get(t) ?? [])
-						: (byTag.get(tag) ?? [])
+					tag === "street" ? STREET_FAMILY_TAGS.flatMap((t) => byTag.get(t) ?? []) : (byTag.get(tag) ?? [])
 
 				const b = boards.get(tag) ?? emptyBoard()
 				boards.set(tag, b)

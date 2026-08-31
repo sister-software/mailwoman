@@ -13,7 +13,7 @@
  *   compares the assembled neural street-name family against the gold `street` values.
  */
 
-import { decodeAsTuples } from "@mailwoman/core/decoder"
+import { groupTuplesByTag } from "@mailwoman/core/decoder"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -21,8 +21,6 @@ import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import type { FSTMatcher } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { JSONSpliterator } from "spliterator"
-
-import type { ParityFixture } from "#dev-tools/convert-parity-fixtures.run"
 
 /**
  * Default gate corpus. RATIFIED 2026-07-13 to the triaged set (321 live / 55 tombstones): the 22 rules-era no-solution
@@ -46,6 +44,35 @@ export const PARITY_FIXTURES_PATH = "packages/mailwoman/eval-harness/fixtures/pa
  * The pre-triage v1 corpus — kept for reproducing the original denominator via `--fixtures`.
  */
 export const PARITY_FIXTURES_V1_PATH = "packages/mailwoman/eval-harness/fixtures/parity-corpus.jsonl"
+
+export interface ParityFixture {
+	/**
+	 * Stable id: `v1-<basename>-<index-within-file>`.
+	 */
+	id: string
+	input: string
+	country: string
+	/**
+	 * Provenance: the v1 parity file this assertion came from.
+	 */
+	source: string
+	/**
+	 * ComponentTag-keyed gold (top rules solution's hand-written expectation). Absent on tombstones.
+	 */
+	expect?: Record<string, string[]>
+	/**
+	 * Tombstone reason; the runner skips these rows but the provenance survives.
+	 */
+	dropped?: string
+	/**
+	 * Count of positional alternative records the v1 assertion carried beyond the gold.
+	 */
+	alternatives?: number
+	/**
+	 * Legacy tags in the gold that have no ComponentTag equivalent — dropped from `expect`, recorded here.
+	 */
+	droppedTags?: string[]
+}
 
 /**
  * Pre-registered floors (plan 2, 2026-07-13). Shared verbatim with the held swap gates.
@@ -176,7 +203,7 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 		// (which fixed this same divergence for the drop-in servers). Without it this gate graded a
 		// starved parse. A no-op on inputs carrying no known format and no region abbrev, so the bare
 		// `street, city` class is byte-stable; it earns its keep on the digit-span / region-abbrev rows.
-		const tuples = decodeAsTuples(
+		const byTag = groupTuplesByTag(
 			await classifier.parse(fixture.input, {
 				postcodeRepair: true,
 				queryShape: computeQueryShape(fixture.input),
@@ -185,12 +212,6 @@ export async function runParityEval(options: ParityEvalOptions = {}): Promise<Pa
 				enforceWordConsistency: options.wordConsistency === false ? false : WORD_CONSISTENCY_SHIP_DEFAULT,
 			})
 		)
-
-		const byTag = new Map<string, string[]>()
-
-		for (const [tag, value] of tuples) {
-			byTag.set(tag, [...(byTag.get(tag) ?? []), value])
-		}
 
 		let caseAgrees = true
 

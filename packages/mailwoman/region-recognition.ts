@@ -24,6 +24,7 @@
  */
 
 import type { AddressNode, AddressTree, ComponentTag } from "@mailwoman/core/decoder"
+import { walkNodes } from "@mailwoman/core/decoder"
 
 /**
  * Canonical 2-letter slug for a US state/territory NAME or 2-letter abbreviation, else null.
@@ -216,13 +217,11 @@ function correctNode(node: AddressNode): AddressNode {
  * full NAME is genuinely ambiguous — "Tbilisi, Georgia" is the country, "Atlanta, Georgia" the state — so full names
  * are left to resolve on their own name-match evidence, never pinned.
  */
-function annotateUSRegions(node: AddressNode): void {
-	if (node.tag === "region" && /^[A-Za-z]{2}$/.test(node.value.trim()) && usStateSlug(node.value)) {
-		node.metadata = { ...node.metadata, country_hint: "US" }
-	}
-
-	for (const child of node.children) {
-		annotateUSRegions(child)
+function annotateUSRegions(roots: readonly AddressNode[]): void {
+	for (const node of walkNodes(roots)) {
+		if (node.tag === "region" && /^[A-Za-z]{2}$/.test(node.value.trim()) && usStateSlug(node.value)) {
+			node.metadata = { ...node.metadata, country_hint: "US" }
+		}
 	}
 }
 
@@ -234,9 +233,7 @@ function annotateUSRegions(node: AddressNode): void {
 export function recognizeUSRegions(tree: AddressTree): AddressTree {
 	tree.roots = correctSiblings(tree.roots).map(correctNode)
 
-	for (const root of tree.roots) {
-		annotateUSRegions(root)
-	}
+	annotateUSRegions(tree.roots)
 
 	return tree
 }

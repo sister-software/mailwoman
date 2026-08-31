@@ -32,12 +32,30 @@ export type CodigoPostal = Tagged<string, "CodigoPostal">
 export const CODIGO_POSTAL_PATTERN = /^\d{5}$/
 
 /**
- * Narrow a string to a {@link CodigoPostal}, or `null` when it is not one.
+ * Normalize a código-postal surface form to the bare five digits: trim surrounding whitespace (`" 28001 "` →
+ * `"28001"`). Returns null when the result is not a five-digit code.
  */
-export function parseCodigoPostal(input: string): CodigoPostal | null {
-	const s = input.trim()
+export function normalizeCodigoPostal(raw: unknown): CodigoPostal | null {
+	if (typeof raw !== "string") return null
+	const s = raw.trim()
 
 	return CODIGO_POSTAL_PATTERN.test(s) ? (s as CodigoPostal) : null
+}
+
+/**
+ * Type-predicate for a (normalized) Spanish código postal.
+ */
+export function isCodigoPostal(input: unknown): input is CodigoPostal {
+	return typeof input === "string" && CODIGO_POSTAL_PATTERN.test(input)
+}
+
+/**
+ * Narrow a string to a {@link CodigoPostal}, or `null` when it is not one.
+ *
+ * @deprecated Use {@link normalizeCodigoPostal}.
+ */
+export function parseCodigoPostal(input: string): CodigoPostal | null {
+	return normalizeCodigoPostal(input)
 }
 
 /**
@@ -45,7 +63,7 @@ export function parseCodigoPostal(input: string): CodigoPostal | null {
  * province table; this module deliberately does not ship one, since the campaign that needed it only needs the shape.
  */
 export function codigoPostalProvincePrefix(input: string): string | null {
-	const code = parseCodigoPostal(input)
+	const code = normalizeCodigoPostal(input)
 
 	return code ? code.slice(0, 2) : null
 }

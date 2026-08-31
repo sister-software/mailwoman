@@ -10,6 +10,7 @@
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
+import { collectNodes } from "@mailwoman/core/decoder"
 
 /**
  * Street-name component tags — the name-bearing subtree of a `street` node (`street.value` alone is the bare base:
@@ -22,18 +23,7 @@ const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_part
  * Reassemble the full parsed street name from a street node's name-bearing subtree, ordered by span offset. #1041.
  */
 export function assembleStreetName(streetNode: AddressNode): string {
-	const parts: AddressNode[] = []
-	const stack = [streetNode]
-
-	while (stack.length) {
-		const n = stack.pop()!
-
-		if (STREET_NAME_TAGS.has(n.tag) && n.value.trim()) {
-			parts.push(n)
-		}
-
-		stack.push(...n.children)
-	}
+	const parts = collectNodes([streetNode], (n) => STREET_NAME_TAGS.has(n.tag) && n.value.trim().length > 0)
 
 	parts.sort((a, b) => a.start - b.start)
 

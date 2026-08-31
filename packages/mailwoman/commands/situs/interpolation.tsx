@@ -25,34 +25,38 @@
  *   lands on stdout.
  */
 
-import * as https from "node:https"
-
 import { pathExists, readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { spawnProcessSync } from "@mailwoman/core/process"
 import { scriptEntryPath } from "@mailwoman/core/scripting/utils"
-import { dataRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
+import { dataRootPath, repoRootPathBuilder, streamToDisk } from "@mailwoman/core/utils"
+import { sleep } from "@mailwoman/core/utils/sleep"
 import { Box, Text } from "ink"
 import { basename, dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CommandError,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	positiveInteger,
+	splitUpperList,
+	stripAnsi,
+	useCommandTask,
+} from "#cli-kit"
 
 /**
  * A successful response; anything else is an error page or an unfollowed redirect.
  */
-const HTTP_OK = 200
 
 /**
  * Lowest 3xx status.
  */
-const HTTP_REDIRECT_MIN = 300
 
 /**
  * Lowest 4xx status — the end of the redirect range.
  */
-const HTTP_CLIENT_ERROR_MIN = 400
 
 /**
  * Lowest 5xx status. Server-side failures are worth retrying; client errors are not.
@@ -63,8 +67,6 @@ const HTTP_SERVER_ERROR_MIN = 500
  * Failed GEOIDs printed before the list is truncated.
  */
 const MAX_LISTED_FAILURES = 20
-
-const positiveInteger = (v: number): boolean => Number.isInteger(v) && v > 0
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -169,8 +171,6 @@ const RANKED_FILE = String(repoRootPathBuilder("mailwoman", "data", "county-popu
  * started from, so dev + published installs both resolve correctly.
  */
 const CLI_ENTRY = scriptEntryPath()
-const ANSI_PATTERN = new RegExp(String.fromCharCode(27) + "\\[[0-9;?]*[A-Za-z]", "g")
-const stripAnsi = (s: string): string => s.replace(ANSI_PATTERN, "")
 
 //#endregion
 
@@ -250,41 +250,25 @@ async function loadRankedCounties(): Promise<CountyRecord[]> {
 //#region HTTP utilities
 
 /**
- * Simple GET-to-text over HTTPS with redirect following (≤3 hops).
+ * Simple GET-to-text with redirect following.
  */
-function fetchText(url: string, redirectsLeft = 3): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const req = https.get(url, (res) => {
-			const status = res.statusCode ?? 0
+async function fetchText(url: string): Promise<string> {
+	const response = await fetch(url, { redirect: "follow" })
 
-			if (status >= HTTP_REDIRECT_MIN && status < HTTP_CLIENT_ERROR_MIN && res.headers.location) {
-				if (redirectsLeft <= 0) return reject(new Error(`Too many redirects: ${url}`))
-				resolve(fetchText(res.headers.location, redirectsLeft - 1))
+	if (!response.ok) throw new Error(`HTTP ${response.status} for ${url}`)
 
-				return
-			}
-
-			if (status !== HTTP_OK) {
-				return reject(new Error(`HTTP ${status} for ${url}`))
-			}
-
-			const chunks: Buffer[] = []
-			res.on("data", (c) => chunks.push(c))
-			res.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")))
-		})
-
-		req.on("error", reject)
-	})
+	return await response.text()
 }
 
 /**
- * Download a URL to a local file path, with retry on 5xx / network errors.
+ * Download a URL to a local file path via the shared `streamToDisk` (`.part` + rename, so an interrupted transfer never
+ * presents as a complete archive), with retry on 5xx / network errors.
  */
 async function downloadFile(url: string, dest: string, retries = 3): Promise<void> {
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- the catch falls through to the next attempt when the error is retryable
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		try {
-			await _downloadOnce(url, dest)
+			await streamToDisk({ url, destination: dest, context: "situs interpolation" })
 
 			return
 		} catch (error) {
@@ -297,43 +281,9 @@ async function downloadFile(url: string, dest: string, retries = 3): Promise<voi
 
 			console.error(`  [retry ${attempt}/${retries}] ${basename(dest)}: ${message} — waiting ${delay}ms`)
 
-			await new Promise((r) => {
-				setTimeout(r, delay)
-			})
+			await sleep(delay)
 		}
 	}
-}
-
-function _downloadOnce(url: string, dest: string): Promise<void> {
-	return new Promise((resolve, reject) => {
-		const follow = (u: string, hopsLeft: number) => {
-			if (hopsLeft <= 0) return reject(new Error(`Too many redirects: ${url}`))
-
-			const req = https.get(u, (res) => {
-				const status = res.statusCode ?? 0
-
-				if (status >= HTTP_REDIRECT_MIN && status < HTTP_CLIENT_ERROR_MIN && res.headers.location) {
-					res.resume()
-					follow(res.headers.location, hopsLeft - 1)
-
-					return
-				}
-
-				if (status !== HTTP_OK) {
-					res.resume()
-
-					return reject(new Error(`HTTP ${status} for ${u}`))
-				}
-
-				const out = openWriteStream(dest)
-				pipeline(res, out).then(resolve).catch(reject)
-			})
-
-			req.on("error", reject)
-		}
-
-		follow(url, 5)
-	})
 }
 
 //#endregion
@@ -535,11 +485,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// States to process — filtered by --states flag if provided.
 		const TARGET_STATES = options.states
-			? options.states
-					.toUpperCase()
-					.split(",")
-					.map((s) => s.trim())
-					.filter((s) => s in STATE_FIPS)
+			? splitUpperList(options.states).filter((s) => s in STATE_FIPS)
 			: Object.keys(STATE_FIPS)
 
 		if (!TARGET_STATES.length) {
@@ -705,7 +651,7 @@ const SitusInterpolation: ParsedCommandComponent<Options> = ({ options }) => {
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

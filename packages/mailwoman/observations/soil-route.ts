@@ -46,9 +46,20 @@ import {
 	SoilCapabilityLookup,
 	SoilReadingKind,
 	type SoilCapabilityDistribution,
+	type SoilCapabilityReading,
 	type SoilLayerIdentity,
 	type SoilSurveyAreaRecord,
 } from "@mailwoman/soil"
+
+import {
+	createDesignationRoute,
+	describeCoverage,
+	describeLayerProvenance,
+	observationCoverageRecord,
+	observationLayerRecord,
+	type ObservationCoverageRecord,
+	type ObservationLayerRecord,
+} from "#observations/layer-record"
 
 /**
  * One soil-capability reading, recorded beside an answer.
@@ -84,31 +95,13 @@ export interface SoilCapabilityObservation {
 	/**
 	 * The coverage side of the claim.
 	 */
-	coverage?: {
-		h3Cell: number
-		h3CellIndex: string
-		resolution: number
-		basis: string
-		completeness: number
-		observedRows: number
-	}
+	coverage?: ObservationCoverageRecord
 	indexCellIndex: string
 	/**
 	 * What the product excludes, in the authority's own words.
 	 */
 	limits: ReadonlyArray<string>
-	layer: {
-		name: string
-		version: string
-		tier: string
-		license: string
-		attribution?: string
-		source: string
-		sourceVintage: string
-		buildCmd: string
-		buildSHA: string
-		createdAt: string
-	}
+	layer: ObservationLayerRecord
 	databasePath: string
 	coordinate: { latitude: number; longitude: number }
 }
@@ -169,86 +162,67 @@ export interface SoilCapabilityRouteOptions {
 export function createSoilCapabilityRoute(options: SoilCapabilityRouteOptions): SoilCapabilityRoute {
 	const lookup = new SoilCapabilityLookup({ databasePath: options.databasePath })
 
-	return {
-		identity: lookup.identity,
-		observe: (latitude, longitude) => {
-			if (typeof latitude !== "number" || typeof longitude !== "number") {
-				return { fired: false, refusal: "no_coordinate" }
-			}
+	return createDesignationRoute(lookup, {
+		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
+		refusalFor: (reading) =>
+			reading.kind === SoilReadingKind.Unknown || !reading.distribution ? "outside_surveyed_area" : undefined,
+		toObservation: (reading, latitude, longitude) =>
+			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+	})
+}
 
-			const reading = lookup.lookup(latitude, longitude)
+/**
+ * Build the observation for a reading the refusal check let through.
+ */
+function toObservation(
+	reading: SoilCapabilityReading,
+	identity: SoilLayerIdentity,
+	latitude: number,
+	longitude: number,
+	databasePath: string
+): SoilCapabilityObservation {
+	const { distribution } = reading
 
-			if (reading.kind === SoilReadingKind.Unknown || !reading.distribution) {
-				return { fired: false, refusal: "outside_surveyed_area" }
-			}
-
-			const { manifest } = lookup.identity
-
-			return {
-				fired: true,
-				observation: {
-					reading: reading.kind,
-					...(reading.distribution.topClass ? { topClass: reading.distribution.topClass } : {}),
-					...(reading.distribution.topClassShare === undefined
-						? {}
-						: { topClassShare: reading.distribution.topClassShare }),
-					...(reading.topClassDefinition ? { topClassDefinition: reading.topClassDefinition } : {}),
-					distribution: reading.distribution,
-					...(reading.surveyArea ? { surveyArea: reading.surveyArea } : {}),
-					...(reading.coverage
-						? {
-								coverage: {
-									h3Cell: reading.coverage.h3Cell,
-									h3CellIndex: reading.coverage.h3CellIndex,
-									resolution: reading.coverage.resolution,
-									basis: String(reading.coverage.basis),
-									completeness: reading.coverage.completeness,
-									observedRows: reading.coverage.observedRows,
-								},
-							}
-						: {}),
-					indexCellIndex: reading.indexCellIndex,
-					limits: reading.limits,
-					layer: {
-						name: manifest.name,
-						version: manifest.version,
-						tier: manifest.tier,
-						license: manifest.license,
-						...(manifest.attribution ? { attribution: manifest.attribution } : {}),
-						source: manifest.source,
-						sourceVintage: manifest.sourceVintage,
-						buildCmd: manifest.buildCmd,
-						buildSHA: manifest.buildSHA,
-						createdAt: manifest.createdAt,
-					},
-					databasePath: options.databasePath,
-					coordinate: { latitude, longitude },
-				},
-			}
-		},
-		[Symbol.dispose]: () => lookup[Symbol.dispose](),
+	if (!distribution) {
+		throw new Error("soil route: a designated reading carries no distribution — refused before observation")
 	}
+
+	return {
+		reading: reading.kind,
+		...(distribution.topClass ? { topClass: distribution.topClass } : {}),
+		...(distribution.topClassShare === undefined ? {} : { topClassShare: distribution.topClassShare }),
+		...(reading.topClassDefinition ? { topClassDefinition: reading.topClassDefinition } : {}),
+		distribution,
+		...(reading.surveyArea ? { surveyArea: reading.surveyArea } : {}),
+		...observationCoverageRecord(reading.coverage),
+		indexCellIndex: reading.indexCellIndex,
+		limits: reading.limits,
+		layer: observationLayerRecord(identity.manifest),
+		databasePath,
+		coordinate: { latitude, longitude },
+	}
+}
+
+/**
+ * What the survey assigns, in ONE wording — the class never travels without the share it rests on — shared by the
+ * one-line description and the marker message.
+ */
+export function soilCapabilityAssignmentClause(observation: SoilCapabilityObservation): string {
+	return observation.topClass
+		? `assigns land capability class ${observation.topClass} over ${((observation.topClassShare ?? 0) * 100).toFixed(1)}% of the cell`
+		: "mapped this ground and rated no capability class here"
 }
 
 /**
  * One line a reader can check the claim from, with the authority, both dates, and the share the class rests on.
  */
 export function describeSoilCapability(observation: SoilCapabilityObservation): string {
-	const assigned = observation.topClass
-		? `assigns land capability class ${observation.topClass} over ${((observation.topClassShare ?? 0) * 100).toFixed(1)}% of the cell`
-		: "mapped this ground and rated no capability class here"
-
 	const vintage = observation.surveyArea
 		? `survey area ${observation.surveyArea.areaSymbol}, refreshed ${observation.surveyArea.saverest}, field survey ${observation.surveyArea.surveySourceDate ?? "unstated"}`
 		: "survey area unnamed"
 
-	const coverage = observation.coverage
-		? `coverage cell ${observation.coverage.h3CellIndex} (res ${observation.coverage.resolution}) on basis "${observation.coverage.basis}" at completeness ${observation.coverage.completeness.toFixed(4)}`
-		: "no coverage row"
-
 	return (
-		`The soil survey ${assigned} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude}; ` +
-		`${vintage}; ${coverage}; weighting ${observation.distribution.weighting}; from ${observation.layer.name} ` +
-		`${observation.layer.version} (${observation.layer.source} ${observation.layer.sourceVintage}, ${observation.layer.license}, build ${observation.layer.buildSHA})`
+		`The soil survey ${soilCapabilityAssignmentClause(observation)} at ${observation.coordinate.latitude}, ${observation.coordinate.longitude}; ` +
+		`${vintage}; ${describeCoverage(observation.coverage, { completeness: true })}; weighting ${observation.distribution.weighting}; ${describeLayerProvenance(observation.layer)}`
 	)
 }

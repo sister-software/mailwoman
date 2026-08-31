@@ -34,25 +34,25 @@
  *   that at 4.1% over a national layer.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
-import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import { readFileSize } from "@mailwoman/core/fs/readers"
 import {
+	areaAgreementFrom,
 	assertAreaAgreement,
+	assertNoNegativeClaim as assertCoverageNoNegativeClaim,
 	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
-	LayerFreshnessPolicy,
-	LayerTier,
-	supportsExclusion,
+	polygonLayerManifest,
 	sourcePresentCoverageCells,
 	writeLayerCoverage,
 	writeLayerManifest,
+	type AreaAgreementReading,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
-import { runChunkProcess } from "@mailwoman/core/utils"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import { ingestChunkArguments, mergeCountsInto, runChunkProcess } from "@mailwoman/core/utils"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { buildSealedArtifact } from "@mailwoman/sqlite/sealed-build"
 
 import { createCoastalTables, type CoastalDatabase } from "#schema"
 import type { CoastalFeatureSource } from "#sdk/ingest"
@@ -186,17 +186,12 @@ export interface BuildCoastalResult {
 	 */
 	defenceTypeCounts: Array<[string, number]>
 	/**
-	 * The three area totals, in square kilometres: what the source says, what the encoded rings say read with their
-	 * holes, and what they would say read without.
+	 * The area totals in square kilometres — what the source says, what the encoded rings say read with their holes, and
+	 * what they would say read without — with the witness stated.
 	 */
-	area: { sourceKM2: number; nestedKM2: number; allExteriorKM2: number; relativeGap: number }
+	area: AreaAgreementReading
 	sizeBytes: number
 }
-
-/**
- * Square metres in a square kilometre.
- */
-const M2_PER_KM2 = 1_000_000
 
 /**
  * The relative gap between the two area readings that fails the build.
@@ -223,158 +218,107 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 		)
 	}
 
-	const declaredFeatureCount =
-		"batched" in options ? options.batched.declaredFeatureCount : options.source.declaredFeatureCount
+	const batched = "batched" in options ? options.batched : undefined
+	const source = "batched" in options ? undefined : options.source
+	const declaredFeatureCount = batched ? batched.declaredFeatureCount : source!.declaredFeatureCount
 
 	options.onProgress?.(
-		"batched" in options
-			? `source: ${options.batched.geodatabasePath} · ${declaredFeatureCount.toLocaleString()} features`
-			: `source: EPSG:${options.source.epsg} · ${declaredFeatureCount.toLocaleString()} features · ${options.source.origin}`
+		batched
+			? `source: ${batched.geodatabasePath} · ${declaredFeatureCount.toLocaleString()} features`
+			: `source: EPSG:${source!.epsg} · ${declaredFeatureCount.toLocaleString()} features · ${source!.origin}`
 	)
 
-	const tmpPath = `${options.out}.tmp-${process.pid}`
-
-	// THE INGEST AND THE WRITE-OUT PHASES USE SEPARATE HANDLES, ALWAYS — including the in-process path, which does not
-	// need them separated. The batched path DOES: its children open the same file, so the parent's handle has to be
-	// closed across them, and a single shared handle silently becomes a closed one afterwards. Doing it one way in both
-	// paths is what puts the fixture suites on the same sequence a national build takes.
-	let streamed: StreamResult
-
-	{
-		await using kdb = new DatabaseClient<CoastalDatabase>(tmpPath)
-
-		try {
-			kdb.exec("PRAGMA journal_mode = OFF")
-			kdb.exec("PRAGMA synchronous = OFF")
-
+	const built = await buildSealedArtifact<CoastalDatabase, StreamResult, Omit<BuildCoastalResult, "sizeBytes">>({
+		out: options.out,
+		createTables: async (kdb) => {
 			await createCoastalTables(kdb)
 			await createLayerManifestTable(kdb)
 			await createLayerCoverageTable(kdb)
+		},
+		ingest: async (kdb) => {
+			if (!source) return undefined
 
-			if (!("batched" in options)) {
-				streamed = aggregateChunks([
-					await ingestCoastalChunk(kdb, {
-						source: options.source,
-						indexResolution: options.indexResolution,
-						coverageResolution: options.coverageResolution,
-						...(options.onProgress ? { onProgress: options.onProgress } : {}),
-					}),
-				])
+			return aggregateChunks([
+				await ingestCoastalChunk(kdb, {
+					source,
+					indexResolution: options.indexResolution,
+					coverageResolution: options.coverageResolution,
+					...(options.onProgress ? { onProgress: options.onProgress } : {}),
+				}),
+			])
+		},
+		...(batched ? { batched: (tmpPath: string) => runBatchedIngest(tmpPath, options, batched) } : {}),
+		finish: async (kdb, ingested) => {
+			const totalFeatures = ingested.erosionFeatures + ingested.instabilityFeatures
+
+			if (totalFeatures !== declaredFeatureCount) {
+				throw new Error(
+					`coastal build: streamed ${totalFeatures} features, the source declares ${declaredFeatureCount} — a short read builds a shorter coastline and reports success`
+				)
 			}
-		} catch (error) {
-			await kdb.destroy().catch(() => undefined)
-			await removePathIfPresent(tmpPath)
 
-			throw error
-		}
-	}
+			assertScenarioCounts(ingested.scenarioCounts, options.expectedFeatureCounts)
+			assertAreaAgreement("coastal build", ingested.area, AREA_TOLERANCE)
 
-	if ("batched" in options) {
-		try {
-			streamed = await runBatchedIngest(tmpPath, options)
-		} catch (error) {
-			await removePathIfPresent(tmpPath)
-
-			throw error
-		}
-	}
-
-	const kdb = new DatabaseClient<CoastalDatabase>(tmpPath)
-
-	try {
-		kdb.exec("PRAGMA journal_mode = OFF")
-		kdb.exec("PRAGMA synchronous = OFF")
-
-		const ingested = streamed!
-		const totalFeatures = ingested.erosionFeatures + ingested.instabilityFeatures
-
-		if (totalFeatures !== declaredFeatureCount) {
-			throw new Error(
-				`coastal build: streamed ${totalFeatures} features, the source declares ${declaredFeatureCount} — a short read builds a shorter coastline and reports success`
+			options.onProgress?.(
+				`${ingested.erosionFeatures.toLocaleString()} erosion features · ${ingested.instabilityFeatures.toLocaleString()} ground-instability features written`
 			)
-		}
 
-		assertScenarioCounts(ingested.scenarioCounts, options.expectedFeatureCounts)
-		assertAreaAgreement("coastal build", ingested.area, AREA_TOLERANCE)
+			const coverage = sourcePresentCoverageCells(ingested.observedByCoverageCell)
 
-		options.onProgress?.(
-			`${ingested.erosionFeatures.toLocaleString()} erosion features · ${ingested.instabilityFeatures.toLocaleString()} ground-instability features written`
-		)
+			assertNoNegativeClaim(coverage)
 
-		const coverage = sourcePresentCoverageCells(ingested.observedByCoverageCell)
+			await writeLayerCoverage(kdb, coverage)
 
-		assertNoNegativeClaim(coverage)
+			writeVocabularyRows(kdb)
 
-		await writeLayerCoverage(kdb, coverage)
+			await writeLayerManifest(
+				kdb,
+				polygonLayerManifest(options, {
+					name: NCERM_LAYER_NAME,
+					schemaVersion: COASTAL_SCHEMA_VERSION,
+					license: NCERM_LICENSE,
+					attribution: NCERM_ATTRIBUTION,
+					source: `environment.data.gov.uk/dataset/${NCERM_DATASET_ID}`,
+					cellColumn: "coastal_zone_cell.h3_cell",
+				})
+			)
 
-		writeVocabularyRows(kdb)
+			const storedResolutions = (
+				kdb.prepare("SELECT DISTINCT resolution FROM coastal_zone_cell ORDER BY resolution").all() as Array<{
+					resolution: number
+				}>
+			).map((row) => row.resolution)
 
-		await writeLayerManifest(kdb, {
-			name: NCERM_LAYER_NAME,
-			version: options.sourceVintage,
-			schemaVersion: COASTAL_SCHEMA_VERSION,
-			tier: LayerTier.Shipped,
-			license: NCERM_LICENSE,
-			attribution: NCERM_ATTRIBUTION,
-			source: `environment.data.gov.uk/dataset/${NCERM_DATASET_ID}`,
-			sourceVintage: options.sourceVintage,
-			buildCmd: options.buildCmd,
-			buildSHA: options.buildSHA,
-			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
-			spineKeys: {
-				h3: { column: "coastal_zone_cell.h3_cell", resolution: options.indexResolution },
-			},
-			createdAt: options.createdAt,
-		})
+			// NO SECONDARY INDEXES, AND THAT IS A DECISION RATHER THAN AN OMISSION. Both probes this artifact serves are
+			// already primary-key probes: the cell table's `(h3_cell, area_id)` key answers `WHERE h3_cell = ?` as a range
+			// scan of a handful of rows, and a scenario filter over those few rows costs nothing; the geometry table is
+			// probed by `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `WITHOUT ROWID` table carries the
+			// primary key in every entry, so it would roughly double the cell tier to serve a scan that is already short —
+			// size for a reader that does not exist.
+			const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
 
-		const storedResolutions = (
-			kdb.prepare("SELECT DISTINCT resolution FROM coastal_zone_cell ORDER BY resolution").all() as Array<{
-				resolution: number
-			}>
-		).map((row) => row.resolution)
+			return {
+				out: options.out,
+				erosionFeatures: ingested.erosionFeatures,
+				instabilityFeatures: ingested.instabilityFeatures,
+				scenarioCounts: ingested.scenarioCounts,
+				indexResolution: options.indexResolution,
+				coverageResolution: options.coverageResolution,
+				wholeCellRows: ingested.wholeCellRows,
+				partialCellRows: ingested.partialCellRows,
+				storedPartialShare: totalCellRows ? ingested.partialCellRows / totalCellRows : 0,
+				coarsenedFeatures: ingested.coarsened,
+				storedResolutions,
+				coverageCells: coverage.length,
+				coverageBasis: CoverageBasis.SourcePresent,
+				defenceTypeCounts: ingested.defenceTypeCounts,
+				area: ingested.area,
+			}
+		},
+	})
 
-		// NO SECONDARY INDEXES, AND THAT IS A DECISION RATHER THAN AN OMISSION. Both probes this artifact serves are already
-		// primary-key probes: the cell table's `(h3_cell, area_id)` key answers `WHERE h3_cell = ?` as a range scan of a
-		// handful of rows, and a scenario filter over those few rows costs nothing; the geometry table is probed by
-		// `area_id`, its own key. A `(scenario_key, h3_cell)` index over a `WITHOUT ROWID` table carries the primary key in
-		// every entry, so it would roughly double the cell tier to serve a scan that is already short — size for a reader
-		// that does not exist.
-		kdb.exec("VACUUM")
-
-		await kdb.destroy()
-
-		await sealDatabase(tmpPath)
-		await swapDatabaseIntoPlace(tmpPath, options.out)
-
-		const totalCellRows = ingested.wholeCellRows + ingested.partialCellRows
-
-		return {
-			out: options.out,
-			erosionFeatures: ingested.erosionFeatures,
-			instabilityFeatures: ingested.instabilityFeatures,
-			scenarioCounts: ingested.scenarioCounts,
-			indexResolution: options.indexResolution,
-			coverageResolution: options.coverageResolution,
-			wholeCellRows: ingested.wholeCellRows,
-			partialCellRows: ingested.partialCellRows,
-			storedPartialShare: totalCellRows ? ingested.partialCellRows / totalCellRows : 0,
-			coarsenedFeatures: ingested.coarsened,
-			storedResolutions,
-			coverageCells: coverage.length,
-			coverageBasis: CoverageBasis.SourcePresent,
-			defenceTypeCounts: ingested.defenceTypeCounts,
-			area: ingested.area,
-			sizeBytes: await sizeOf(options.out),
-		}
-	} catch (error) {
-		await kdb.destroy().catch(() => undefined)
-
-		// A failed build leaves a partial file whose name carries this process's pid, so nothing will ever pick it up
-		// again. Removing it is the difference between a retry loop that fails and one that fills a disk.
-		await removePathIfPresent(tmpPath)
-
-		throw error
-	}
+	return { ...built, sizeBytes: await readFileSize(options.out) }
 }
 
 /**
@@ -389,7 +333,7 @@ interface StreamResult {
 	partialCellRows: number
 	observedByCoverageCell: Map<number, number>
 	defenceTypeCounts: Array<[string, number]>
-	area: BuildCoastalResult["area"]
+	area: AreaAgreementReading
 }
 
 /**
@@ -426,16 +370,12 @@ export function aggregateChunks(chunks: ReadonlyArray<CoastalChunkResult>): Stre
 			scenarioCounts[scenario] = (scenarioCounts[scenario] ?? 0) + count
 		}
 
-		for (const [defence, count] of chunk.defenceTypeCounts) {
-			defenceTypeCounts.set(defence, (defenceTypeCounts.get(defence) ?? 0) + count)
-		}
+		mergeCountsInto(defenceTypeCounts, chunk.defenceTypeCounts)
 
 		// A coverage cell straddles chunk boundaries — one chunk is one SCENARIO, and every scenario covers the same coast
 		// — so the counts ADD rather than replace. Taking the last chunk's value would report a cell as holding only the
 		// last scenario's polygons, which is a twelfth of what is there.
-		for (const [cell, count] of chunk.observedByCoverageCell) {
-			observedByCoverageCell.set(cell, (observedByCoverageCell.get(cell) ?? 0) + count)
-		}
+		mergeCountsInto(observedByCoverageCell, chunk.observedByCoverageCell)
 	}
 
 	return {
@@ -447,12 +387,7 @@ export function aggregateChunks(chunks: ReadonlyArray<CoastalChunkResult>): Stre
 		partialCellRows,
 		observedByCoverageCell,
 		defenceTypeCounts: [...defenceTypeCounts].toSorted((left, right) => right[1] - left[1]),
-		area: {
-			sourceKM2: sourceArea / M2_PER_KM2,
-			nestedKM2: nestedArea / M2_PER_KM2,
-			allExteriorKM2: allExteriorArea / M2_PER_KM2,
-			relativeGap: sourceArea ? Math.abs(nestedArea - sourceArea) / sourceArea : 0,
-		},
+		area: areaAgreementFrom({ nestedM2: nestedArea, allExteriorM2: allExteriorArea }, sourceArea),
 	}
 }
 
@@ -485,38 +420,25 @@ function assertScenarioCounts(
 /**
  * Refuse a coverage row that would license a negative claim.
  *
- * THIS IS THE CHECK THE MEANING-OF-ZERO INVERSION TURNS ON, and it is a condition rather than a convention. NCERM
- * publishes no coverage statement, so no row of this layer may support an exclusion — a `designated` or `surveyed`
- * basis here would let an absent polygon be read as a designation of safety over the whole of inland England. The
- * reader checks the same thing at open time, so an artifact built by some other path cannot get past it either.
+ * THIS IS THE CHECK THE MEANING-OF-ZERO INVERSION TURNS ON. NCERM publishes no coverage statement, so no row of this
+ * layer may support an exclusion — a `designated` or `surveyed` basis here would let an absent polygon be read as a
+ * designation of safety over the whole of inland England. The reader checks the same thing at open time, so an artifact
+ * built by some other path cannot get past it either.
  */
 export function assertNoNegativeClaim(cells: ReadonlyArray<CoverageCell>): void {
-	for (const cell of cells) {
-		if (supportsExclusion(cell)) {
-			throw new Error(
-				`coastal build: coverage cell ${cell.h3Cell} carries basis ${JSON.stringify(cell.basis)}, which supports an EXCLUSION. ` +
-					`${NCERM_COVERAGE_LIMIT} Until a mapped-footprint source is settled, every row must read ${CoverageBasis.SourcePresent}`
-			)
-		}
-	}
+	assertCoverageNoNegativeClaim("coastal build", cells, NCERM_COVERAGE_LIMIT)
 }
 
 /**
  * Run the ingest as a sequence of bounded child processes — one per scenario layer, then one for the two
- * ground-instability layers.
- *
- * THE PARENT HOLDS NO HANDLE WHILE THEY RUN — its caller closed one before this and opens another after. Each child
- * opens the same file and appends; chunks run one at a time, so there is exactly one writer at every instant and no
- * locking to reason about.
- *
- * @throws {Error} When a chunk exits non-zero, or prints no result line — a chunk that died mid-range has written a
- *   partial set of rows, and continuing would seal an artifact missing features nobody could name.
+ * ground-instability layers. The shared chunk contract — the parent's no-handle rule, and the fail-loud handling of a
+ * chunk that dies or prints nothing — lives with `ingestChunkArguments` and `runChunkProcess`.
  */
 async function runBatchedIngest(
 	tmpPath: string,
-	options: BuildCoastalOptions & { batched: Extract<BuildCoastalInput, { batched: unknown }>["batched"] }
+	options: BuildCoastalOptions,
+	batched: Extract<BuildCoastalInput, { batched: unknown }>["batched"]
 ): Promise<StreamResult> {
-	const { batched } = options
 	const chunkSize = batched.chunkSize ?? DEFAULT_CHUNK_SIZE
 	const script = resolveModulePath("@mailwoman/coastal/scripts/ingest-chunk")
 	const chunks: CoastalChunkResult[] = []
@@ -540,22 +462,25 @@ async function runBatchedIngest(
 
 			options.onProgress?.(`chunk ${scenario.layer} OBJECTID ${from}–${to}`)
 
-			const result = await runChunk(script, [
-				"--database",
-				tmpPath,
-				"--gdb",
-				batched.geodatabasePath,
-				"--scenario",
-				scenarioKey,
-				"--object-id-from",
-				String(from),
-				"--object-id-to",
-				String(to),
-				"--index-resolution",
-				String(options.indexResolution),
-				"--coverage-resolution",
-				String(options.coverageResolution),
-			])
+			const result = await runChunkProcess<CoastalChunkResult>({
+				script,
+				context: "coastal build",
+				args: ingestChunkArguments({
+					database: tmpPath,
+					args: [
+						"--gdb",
+						batched.geodatabasePath,
+						"--scenario",
+						scenarioKey,
+						"--object-id-from",
+						String(from),
+						"--object-id-to",
+						String(to),
+					],
+					indexResolution: options.indexResolution,
+					coverageResolution: options.coverageResolution,
+				}),
+			})
 
 			chunks.push(result)
 
@@ -568,27 +493,19 @@ async function runBatchedIngest(
 	options.onProgress?.("chunk ground instability")
 
 	chunks.push(
-		await runChunk(script, [
-			"--database",
-			tmpPath,
-			"--gdb",
-			batched.geodatabasePath,
-			"--instability",
-			"--index-resolution",
-			String(options.indexResolution),
-			"--coverage-resolution",
-			String(options.coverageResolution),
-		])
+		await runChunkProcess<CoastalChunkResult>({
+			script,
+			context: "coastal build",
+			args: ingestChunkArguments({
+				database: tmpPath,
+				args: ["--gdb", batched.geodatabasePath, "--instability"],
+				indexResolution: options.indexResolution,
+				coverageResolution: options.coverageResolution,
+			}),
+		})
 	)
 
 	return aggregateChunks(chunks)
-}
-
-/**
- * Run one chunk process and parse its result line.
- */
-async function runChunk(script: string, args: readonly string[]): Promise<CoastalChunkResult> {
-	return runChunkProcess<CoastalChunkResult>({ script, args, context: "coastal build" })
 }
 
 /**
@@ -626,11 +543,4 @@ function writeVocabularyRows(database: DatabaseClient<CoastalDatabase>): void {
 			NCERM_DATASET_URL
 		)
 	}
-}
-
-/**
- * The artifact's size on disk, read once for the receipt.
- */
-async function sizeOf(path: string): Promise<number> {
-	return (await statPath(path)).size
 }

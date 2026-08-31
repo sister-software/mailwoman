@@ -25,9 +25,8 @@ import { runFile } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 import { dirname } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, splitList, useCommandTask } from "#cli-kit"
 import type { RepoSyncPlan } from "#gazetteer-pipeline/repos-sync"
-import type { ForkState } from "#gazetteer-pipeline/wof-repo-origin"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -68,54 +67,14 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { auditReposRoot } = await import("#gazetteer-pipeline/repos-audit")
 		const { planReposSync, SyncAction, syncSentence } = await import("#gazetteer-pipeline/repos-sync")
-		const { UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof-repo-origin")
+		const { githubForkProbe, UPSTREAM_ORG } = await import("#gazetteer-pipeline/wof-repo-origin")
 
 		const root = options.root ?? String(dataRootPath("wof", "repos"))
 
-		const requested = (options.countries ?? "")
-			.split(",")
-			.map((cc) => cc.trim().toLowerCase())
-			.filter((cc) => cc.length > 0)
-			.map((cc) => `whosonfirst-data-admin-${cc}`)
+		const requested = splitList(options.countries).map((cc) => `whosonfirst-data-admin-${cc.toLowerCase()}`)
 
 		const audit = await auditReposRoot(root, { readCommits: false })
 		const repos = [...new Set([...audit.repos.map((r) => r.name), ...requested])].toSorted()
-
-		/**
-		 * What our fork IS, not merely whether it exists. `compare` answers `ahead_by` — commits the fork holds that
-		 * upstream does not — and that is the only thing that makes a fork worth preferring, since the fork org holds a
-		 * fork of every WOF repo whether or not we have corrected it.
-		 *
-		 * A THROW is not "no fork": `resolveWOFRepoOrigin` keeps that distinction and the summary line reports it.
-		 */
-		const forkProbe = async (org: string, repo: string): Promise<ForkState> => {
-			try {
-				await runFile("gh", ["api", `/repos/${org}/${repo}`, "--jq", ".name"])
-			} catch (error) {
-				// A 404 is a real answer: the fork does not exist. Anything else (no auth, no network, rate limit) is a
-				// failed lookup, and must reach the resolver as a throw so it is not recorded as absence.
-				if (/HTTP 404|Not Found/i.test(`${(error as Error).message}${(error as { stderr?: string }).stderr ?? ""}`)) {
-					return "absent"
-				}
-
-				throw error
-			}
-
-			try {
-				const { stdout } = await runFile("gh", [
-					"api",
-					`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
-					"--jq",
-					".ahead_by",
-				])
-
-				return Number(stdout.trim()) > 0 ? "diverged" : "clean"
-			} catch {
-				// The fork exists; only the comparison failed. Calling that "diverged" would prefer a possibly-stale
-				// snapshot on no evidence.
-				return "clean"
-			}
-		}
 
 		// Existing clones live under `<root>/<owner>/<name>` when nested; prefer wherever the repo already is. The
 		// existence probes are materialized up front because `planReposSync`'s `directoryFor` is a synchronous callback.
@@ -137,7 +96,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 		const plans = await planReposSync({
 			root,
 			repos,
-			probe: forkProbe,
+			probe: githubForkProbe,
 			directoryFor: (repo) => directories.get(repo)!,
 			fetchFirst: !options.offline,
 		})
@@ -206,9 +165,7 @@ const GazetteerReposSync: ParsedCommandComponent<Options> = ({ options }) => {
 		return { plans, sentence: syncSentence(plans), performed, vintagePath, applied: options.apply }
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status !== "done") return <Text>Resolving WOF repo origins…</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} running="Resolving WOF repo origins…" />
 
 	const { plans, sentence, performed, vintagePath, applied } = state.result
 

@@ -16,7 +16,7 @@
  *
  *   Run: node scripts/eval/rescore-ceiling-probe.ts [--model out/v191/model.onnx] [--n 150]
  */
-import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { decodeAsJSON, firstNodeWhere } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
@@ -50,13 +50,6 @@ const LOCALES: [string, string][] = [
 	["FR", "data/eval/external/oa-fr-coord-150.jsonl"],
 	["AU", "data/eval/external/oa-au-coord-150.jsonl"],
 ]
-
-interface N9 {
-	placeID?: string
-	children?: unknown[]
-}
-
-const hasWOF = (n: N9): boolean => !!n.placeID?.startsWith("wof:") || ((n.children as N9[]) ?? []).some(hasWOF)
 
 async function main() {
 	const { createScorer } = await import("@mailwoman/neural/scorer")
@@ -109,7 +102,7 @@ async function main() {
 			const tree = await model.parse(row.raw, { postcodeRepair: true })
 			const r = await resolver.resolveTree(tree, { defaultCountry: cc })
 
-			if ((r.roots as N9[]).some(hasWOF)) {
+			if (firstNodeWhere(r.roots, (n) => Boolean(n.placeID?.startsWith("wof:")))) {
 				s.res++
 
 				continue

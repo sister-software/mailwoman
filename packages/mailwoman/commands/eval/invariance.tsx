@@ -17,9 +17,7 @@
  *   residuals (a row whose critical components the baseline never parsed at all).
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description =
 	"Metamorphic invariance mini-suite (comma-drop/abbrev/case/idempotence) — standing probe guard"
@@ -72,7 +70,7 @@ const EvalInvariance: ParsedCommandComponent<Options> = ({ options }) => {
 		(exitCode) => exitCode
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	// The runner narrates its own report + verdict lines — rendering anything here would duplicate it.
 	return null

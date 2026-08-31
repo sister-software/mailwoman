@@ -12,12 +12,12 @@
  *   each with independently human-entered name + address. Same-NPI cross-source pairs are
  *   ground-truth positives labeled by a key the matcher's features never see.
  *
- *   Pipeline (mirrors train-gbt.ts): assemble NPPES + Open Payments TX records for the same NPI
- *   population → geocode both through the standard ingest → block over the UNION, keep only
- *   CROSS-source candidate pairs → featurize with the SHARED `createMatchFeaturizer` (train ≡
- *   inference) → label by NPI → held-out-NPI calibration (the #655 threshold rule: max recall
- *   subject to a pairwise-precision bar, reported alongside F1-max) → train the shipped model on
- *   all pairs → emit `registry/models/crosssource-gbt-en-us.ts`.
+ *   Pipeline: assemble NPPES + Open Payments TX records for the same NPI population (Phases A/B
+ *   here), then the SHARED `trainCrossSourceModel` runs Phases C–F — geocode through the standard
+ *   ingest → block the UNION, keep only CROSS-source candidate pairs → the SHARED
+ *   `createMatchFeaturizer` (train ≡ inference) → label by NPI → held-out-NPI calibration (the #655
+ *   threshold rule: max recall subject to a pairwise-precision bar, reported alongside F1-max) →
+ *   train the shipped model on all pairs → emit `registry/models/crosssource-gbt-en-us.ts`.
  *
  *   Sources (both public domain, `.notes/data-sources.md`):
  *
@@ -30,28 +30,11 @@
  *   [--out registry/models/crosssource-gbt-en-us.ts]`
  */
 
-import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dataRootPath, makeLcg } from "@mailwoman/core/utils"
-import { block, gbtScore, trainGBT } from "@mailwoman/match"
-import { dirname } from "path-ts"
+import { dataRootPath } from "@mailwoman/core/utils"
 
-import {
-	addressFrequencyKey,
-	buildDefaultModel,
-	createMatchFeaturizer,
-	defaultBlockingKeys,
-	ingestRows,
-	streamRows,
-	type ColumnMapping,
-	type SourceRecord,
-} from "#index"
+import { addressFrequencyKey, streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
-import { addr, norm, NPPES_COLUMNS as N, uniqueQuantiles } from "#tools/shared"
-
-/**
- * Share of entities assigned to fit; the rest are held out.
- */
-const FIT_SPLIT_FRACTION = 0.8
+import { addr, norm, NPPES_COLUMNS as N, stateOption, trainCrossSourceModel, type CrossSourceRow } from "#tools/shared"
 
 /**
  * Options for {@linkcode trainCrossSourceGBT}.
@@ -91,14 +74,6 @@ export interface TrainCrossSourceGBTOptions {
 	date?: string
 }
 
-interface MessyRow extends Record<string, string> {
-	npi: string
-	name: string
-	org: string
-	address: string
-	source: string
-}
-
 /**
  * Train + emit the cross-source link GBT — see the module doc.
  */
@@ -107,7 +82,7 @@ export async function trainCrossSourceGBT(
 	report?: (line: string) => void
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
 	const SOURCES = options.sources || String(dataRootPath("record-matcher", "sources"))
-	const STATE = (options.state || "TX").toUpperCase()
+	const STATE = stateOption(options)
 	const NPIS = options.npis ?? 2000
 	const OUT = options.out || "packages/registry/models/crosssource-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
@@ -120,7 +95,7 @@ export async function trainCrossSourceGBT(
 
 	// --- Phase A: Open Payments TX practitioners (NPI + profile name + profile address). ---
 	report?.(`[A] streaming the OP profile supplement (${STATE})…`)
-	const opByNPI = new Map<string, MessyRow>()
+	const opByNPI = new Map<string, CrossSourceRow>()
 
 	for await (const r of streamRows(OP_PROFILE)) {
 		if (opByNPI.size >= NPIS) break
@@ -148,7 +123,7 @@ export async function trainCrossSourceGBT(
 	// --- Phase B: the SAME NPIs from NPPES (practice address + legal name) + the corpus-wide
 	// address-frequency table (one full registry pass, identical to train-gbt). ---
 	report?.("[B] full registry pass: address-frequency table + the NPI-joined NPPES rows…")
-	const rows: MessyRow[] = []
+	const rows: CrossSourceRow[] = []
 	const joined = new Set<string>()
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
@@ -194,164 +169,40 @@ export async function trainCrossSourceGBT(
 
 	report?.(`    ${joined.size} NPI-joined pairs → ${rows.length} records`)
 
-	// --- Phase C: geocode + ingest (record.id = the NPI label; `source` rides the record). The heavy
-	// geocoder is injected (see ./eval-geocoder.ts). ---
-	report?.("[C] geocoding…")
-	const geocoder = await options.createGeocoder()
-
-	// `ColumnMapping.source` is a LITERAL provenance label — ingest each source separately so every
-	// record carries its registry of origin (the cross-source filter + the sweep harness key on it).
-	const mappingFor = (source: string): ColumnMapping => ({
-		id: "npi",
-		name: "name",
-		organization: "org",
-		address: "address",
-		source,
-	})
-
-	const nppesRows = rows.filter((r) => r.source === "nppes")
-	const opRows = rows.filter((r) => r.source === "openpayments")
-
-	const records: SourceRecord[] = [
-		...(await ingestRows(nppesRows, mappingFor("nppes"), {
-			geocodeAddress: geocoder.seam,
-		})),
-		...(await ingestRows(opRows, mappingFor("openpayments"), {
-			geocodeAddress: geocoder.seam,
-		})),
-	]
-
-	geocoder[Symbol.dispose]()
-	report?.(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
-
-	// --- Phase D: block over the UNION; keep only CROSS-source pairs; featurize; label by NPI. ---
-	report?.("[D] blocking + featurizing (cross-source pairs only)…")
-	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
-	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
-	const { pairs: allPairs } = block(records, defaultBlockingKeys())
-	const pairs = allPairs.filter(([a, b]) => a.source !== b.source)
-	const X = pairs.map(([a, b]) => featurize(a, b))
-	const Y: number[] = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
-	const posRate = Y.reduce((s, y) => s + y, 0) / Math.max(1, Y.length)
-	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate))
-
-	report?.(
-		`    ${allPairs.length} blocked pairs → ${pairs.length} cross-source (${(100 * posRate).toFixed(1)}% positive)`
-	)
-
-	// --- Phase E: held-out-NPI calibration — the #655 threshold rule. ---
-	report?.("[E] held-out calibration…")
-	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
-	const rnd = makeLcg(655)
-	const split = new Map<string, "fit" | "holdout">()
-
-	for (const npi of joined) {
-		split.set(npi, rnd() < FIT_SPLIT_FRACTION ? "fit" : "holdout")
-	}
-
-	const fitIdx = pairs
-		.map((_, i) => i)
-		.filter((i) => split.get(pairs[i]![0].id) === "fit" && split.get(pairs[i]![1].id) === "fit")
-
-	const holdIdx = pairs
-		.map((_, i) => i)
-		.filter((i) => split.get(pairs[i]![0].id) === "holdout" && split.get(pairs[i]![1].id) === "holdout")
-
-	const calib = trainGBT(
-		fitIdx.map((i) => X[i]!),
-		fitIdx.map((i) => Y[i]!),
-		fitIdx.map((i) => W[i]!),
-		hyperparams
-	)
-
-	const holdScores = holdIdx.map((i) => ({ s: gbtScore(calib, X[i]!), y: Y[i]! }))
-	const sorted = holdScores.map((h) => h.s).toSorted((a, b) => a - b)
-	const totalPos = holdScores.reduce((s, h) => s + h.y, 0)
-	let recommendedThreshold = Number.POSITIVE_INFINITY
-	let barRecall = 0
-	let f1MaxThreshold = 0
-	let bestF1 = -1
-
-	for (const t of uniqueQuantiles(sorted, 60)) {
-		let tp = 0
-		let fp = 0
-
-		for (const h of holdScores) {
-			if (h.s < t) continue
-
-			if (h.y) {
-				tp++
-			} else {
-				fp++
-			}
-		}
-
-		const precision = tp + fp > 0 ? tp / (tp + fp) : 1
-		const recall = totalPos > 0 ? tp / totalPos : 0
-		const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
-
-		// The #655 rule: the LOWEST threshold whose precision clears the bar (maximizes recall under it).
-		if (precision >= PRECISION_BAR && recall > barRecall) {
-			barRecall = recall
-			recommendedThreshold = t
-		}
-
-		if (f1 > bestF1) {
-			bestF1 = f1
-			f1MaxThreshold = t
-		}
-	}
-
-	if (!Number.isFinite(recommendedThreshold)) {
-		recommendedThreshold = f1MaxThreshold
-	}
-
-	report?.(
-		`    held-out (${holdIdx.length} pairs, ${totalPos} pos): precision-bar ${PRECISION_BAR} → threshold ${recommendedThreshold.toFixed(3)} (recall ${(100 * barRecall).toFixed(1)}%); F1-max ${(100 * bestF1).toFixed(1)}% @ ${f1MaxThreshold.toFixed(3)}`
-	)
-
-	// --- Phase F: train the SHIPPED model on ALL cross-source pairs; emit the committed module. ---
-	report?.("[F] training the shipped model on all pairs…")
-	const model = trainGBT(X, Y, W, hyperparams)
-
-	const meta = {
-		version: "1.0.0",
-		objective: "cross-source-link" as const,
-		locale: LOCALE,
-		trainedOn: TRAIN_DATE,
-		state: STATE,
-		npis: joined.size,
-		records: records.length,
-		pairs: pairs.length,
-		posRate: Number(posRate.toFixed(4)),
-		precisionBar: PRECISION_BAR,
-		holdoutBarRecall: Number(barRecall.toFixed(4)),
-		holdoutF1Max: Number(bestF1.toFixed(4)),
-		hyperparams,
-		recommendedThreshold: Number(recommendedThreshold.toFixed(4)),
-		features: X[0]?.length ?? 0,
+	// --- Phases C–F: the SHARED cross-source trainer (geocode → cross-source pairs → #655 calibration
+	// → shipped model → committed module). ---
+	return trainCrossSourceModel({
+		createGeocoder: options.createGeocoder,
+		rows,
+		joined,
+		addressFrequency,
 		sources: ["nppes", "openpayments"],
-	}
-
-	const moduleSource =
-		`/**\n` +
-		` * @copyright Sister Software\n` +
-		` * @license AGPL-3.0\n` +
-		` * @author Teffen Ellis, et al.\n` +
-		` *\n` +
-		` *   The CROSS-SOURCE link scorer (#655 option 2) — trained on NPI-joined NPPES ↔ Open Payments\n` +
-		` *   pairs (the non-circular cross-registry anchor; both public domain). Scores "same provider,\n` +
-		` *   different registry text" links the dedup GBT rejects by construction. Generated by\n` +
-		` *   scripts/eval/record-matcher/train-cross-gbt.ts — retrain + re-run rather than editing.\n` +
-		` */\n\n` +
-		`import type { GBT } from "@mailwoman/match"\n\n` +
-		`export const CROSS_SOURCE_GBT_META = ${JSON.stringify(meta)} as const\n\n` +
-		`// prettier-ignore\n` +
-		`export const CROSS_SOURCE_GBT_MODEL: GBT = ${JSON.stringify(model)}\n`
-
-	await makeDirectories(dirname(OUT))
-	await writeLocalFile(moduleSource, OUT)
-	report?.(`    ${model.trees.length} trees, ${meta.features} features -> ${OUT}`)
-
-	return { out: OUT, pairs: pairs.length, recommendedThreshold }
+		precisionBar: PRECISION_BAR,
+		out: OUT,
+		exportPrefix: "CROSS_SOURCE_GBT",
+		moduleDoc:
+			` *   The CROSS-SOURCE link scorer (#655 option 2) — trained on NPI-joined NPPES ↔ Open Payments\n` +
+			` *   pairs (the non-circular cross-registry anchor; both public domain). Scores "same provider,\n` +
+			` *   different registry text" links the dedup GBT rejects by construction. Generated by\n` +
+			` *   \`mailwoman registry train-scorer cross-gbt\` (registry/tools/train-cross-gbt.ts) — retrain + re-run rather than editing.\n`,
+		meta: (figures) => ({
+			version: "1.0.0",
+			objective: "cross-source-link",
+			locale: LOCALE,
+			trainedOn: TRAIN_DATE,
+			state: STATE,
+			npis: joined.size,
+			records: figures.records,
+			pairs: figures.pairs,
+			posRate: figures.posRate,
+			precisionBar: PRECISION_BAR,
+			holdoutBarRecall: figures.barRecall,
+			holdoutF1Max: figures.f1Max,
+			hyperparams: figures.hyperparams,
+			recommendedThreshold: figures.recommendedThreshold,
+			features: figures.features,
+			sources: ["nppes", "openpayments"],
+		}),
+		report,
+	})
 }

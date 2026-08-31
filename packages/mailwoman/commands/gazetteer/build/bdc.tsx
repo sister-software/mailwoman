@@ -29,13 +29,14 @@
  */
 
 import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
-import { runFileSync } from "@mailwoman/core/process"
+import { repoRootPath } from "@mailwoman/core/utils"
 import type { FilerDatabase } from "@mailwoman/filer"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -152,7 +153,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		console.error(`▸ ${formatBDCThrottleStats(client.throttleStats())}`)
 
 		const out = resolvePath(options.out ?? dataRootPath("bdc", "bdc.db"))
-		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 		const tigerDBPath = resolvePath(dataRootPath("tiger", "tiger.db"))
 
 		console.error(`▸ build: ${out}`)
@@ -193,7 +194,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		}
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

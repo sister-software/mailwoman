@@ -50,7 +50,7 @@ export function initialZoomForTier(result: GeocodeResult): number {
  * explicit non-default `--format` value, has no defensible reading. Thrown with {@link CommandError} so it reports
  * through the standard error state (exit code 1) on the static path; the interactive session runs the same guard as the
  * FIRST statement of its mount effect, before it takes the alternate screen, matching `resolveFormat`'s
- * two-shorthands-at-once check in `geocode.tsx`.
+ * two-shorthands-at-once check in `cli-native/commands/geocode.ts`.
  */
 export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
 	const shorthands = (["json", "text", "jsonld"] as const).filter((name) => options[name])
@@ -62,7 +62,7 @@ export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
 	}
 
 	// `--format json` stays indistinguishable from the default (unset) here — same documented blind spot as
-	// `resolveFormat` in `geocode.tsx`. Only an explicit non-default value is a usage error.
+	// `resolveFormat` in `cli-native/commands/geocode.ts`. Only an explicit non-default value is a usage error.
 	if (options.format && options.format !== "json") {
 		throw new CommandError(`--debug is its own output surface; drop --format ${options.format}.`)
 	}

@@ -15,10 +15,15 @@
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
-import { Text } from "ink"
 import { resolvePath } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	useCommandTask,
+	writeRawStdout,
+} from "#cli-kit"
 import { BUNDLES, PUBLIC_BUCKET_BASE_URL } from "#data-bundles"
 
 /**
@@ -113,9 +118,7 @@ const DataIndex: ParsedCommandComponent<Options> = ({ options }) => {
 		return options.list ? listBundles(dataRoot) : overview(dataRoot)
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status !== "done") return null
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	return writeRawStdout(state.result)
 }

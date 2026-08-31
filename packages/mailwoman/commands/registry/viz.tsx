@@ -12,7 +12,13 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 const figures = ["cross-dataset-map", "geocode-first-surface", "source-provenance-map", "yardstick-figure"] as const
 
@@ -52,8 +58,6 @@ interface Options {
 
 type Figure = (typeof figures)[number]
 
-const report = (line: string): void => console.error(line)
-
 async function runFigure(figure: Figure, options: Options): Promise<string> {
 	const { crossDatasetMap, geocodeFirstSurface, sourceProvenanceMap, yardstickFigure } =
 		await import("@mailwoman/registry/tools")
@@ -63,11 +67,11 @@ async function runFigure(figure: Figure, options: Options): Promise<string> {
 			return (
 				await crossDatasetMap(
 					{ in: options.in, outHTML: options.outHTML, crossAgencyOnly: options.crossAgencyOnly },
-					report
+					reportToStderr
 				)
 			).outHTML
 		case "geocode-first-surface":
-			return (await geocodeFirstSurface({ lambda: options.lambda, outHTML: options.outHTML }, report)).outHTML
+			return (await geocodeFirstSurface({ lambda: options.lambda, outHTML: options.outHTML }, reportToStderr)).outHTML
 		case "source-provenance-map":
 			return (
 				await sourceProvenanceMap(
@@ -79,18 +83,18 @@ async function runFigure(figure: Figure, options: Options): Promise<string> {
 						oaMod: options.oaMod,
 						cap: options.cap,
 					},
-					report
+					reportToStderr
 				)
 			).outHTML
 		case "yardstick-figure":
-			return (await yardstickFigure({ outSVG: options.outSVG }, report)).outSVG
+			return (await yardstickFigure({ outSVG: options.outSVG }, reportToStderr)).outSVG
 	}
 }
 
 const RegistryViz: ParsedCommandComponent<Options, [Figure]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runFigure(args[0], options))
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

@@ -16,7 +16,14 @@
 
 import { Box, Text } from "ink"
 
-import { CheckList, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	CheckList,
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	phaseReporter,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Generate + verify the Python and Rust API clients from the emitted OpenAPI specs"
 
@@ -49,13 +56,13 @@ const ClientsGenerate: ParsedCommandComponent<Options> = ({ options }) => {
 			return await generateClients({
 				outDir: options.outDir,
 				skipVerify: options.skipVerify,
-				onPhase: (phase, detail) => console.error(`  [${phase}]${detail ? ` ${detail}` : ""}`),
+				onPhase: phaseReporter(),
 			})
 		},
 		(result) => (result.ok ? 0 : 1)
 	)
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		const { ok, checks, receipt } = state.result

@@ -26,6 +26,8 @@ import { dirname, join, relative, resolvePath } from "path-ts"
 import ts from "typescript"
 import { describe, expect, test } from "vitest"
 
+import { moduleSpecifiers } from "./ts-ast.ts"
+
 const REPO_ROOT = repoRootPath()
 
 /**
@@ -37,54 +39,6 @@ const PRE_INSTALL_ENTRY_POINTS: Record<string, string> = {
 		".github/workflows/docs-build.yml — 'Docs structure checks', which runs before the 'Install dependencies' step",
 	"docs/scripts/list-stale-docs.ts":
 		".github/workflows/docs-freshness.yml — 'List pages past review-by'; that workflow has no install step at all",
-}
-
-/**
- * Every module specifier a source file imports, re-exports, or dynamically imports AT RUNTIME.
- *
- * Declaration-level `import type` / `export type` is skipped: Node's type stripping erases it, so the specifier is
- * never resolved and a package name there costs nothing. `docs/sidebars.ts` relies on this — it takes `SidebarsConfig`
- * from `@docusaurus/plugin-content-docs` as a type and runs fine with no install. A specifier-level `{ type Foo }`
- * still emits the declaration, so it is deliberately NOT skipped.
- */
-function collectSpecifiers(filePath: string, source: string): string[] {
-	const sourceFile = ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true)
-	const specifiers: string[] = []
-
-	const walk = (node: ts.Node): void => {
-		// `phaseModifier` rather than the deprecated `isTypeOnly`: it also distinguishes `import defer`, which runs.
-		if (
-			ts.isImportDeclaration(node) &&
-			ts.isStringLiteral(node.moduleSpecifier) &&
-			node.importClause?.phaseModifier !== ts.SyntaxKind.TypeKeyword
-		) {
-			specifiers.push(node.moduleSpecifier.text)
-		}
-
-		if (
-			ts.isExportDeclaration(node) &&
-			node.moduleSpecifier &&
-			ts.isStringLiteral(node.moduleSpecifier) &&
-			!node.isTypeOnly
-		) {
-			specifiers.push(node.moduleSpecifier.text)
-		}
-
-		if (
-			ts.isCallExpression(node) &&
-			node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-			node.arguments[0] &&
-			ts.isStringLiteral(node.arguments[0])
-		) {
-			specifiers.push(node.arguments[0].text)
-		}
-
-		ts.forEachChild(node, walk)
-	}
-
-	walk(sourceFile)
-
-	return specifiers
 }
 
 /**
@@ -104,7 +58,10 @@ async function collectReachableExternals(entryPoint: string): Promise<Array<{ fi
 
 		const source = await readLocalTextFile(filePath)
 
-		for (const specifier of collectSpecifiers(filePath, source)) {
+		// Runtime specifiers only: type-only imports are erased by Node's type stripping (see ts-ast.ts).
+		// The shared walk reads string-literal-LIKE specifiers, so a no-substitution template literal now
+		// counts too — the old local `isStringLiteral` walk missed it.
+		for (const specifier of moduleSpecifiers(ts.createSourceFile(filePath, source, ts.ScriptTarget.Latest, true))) {
 			if (!specifier.startsWith(".")) {
 				externals.push({ file: relative(REPO_ROOT, filePath), specifier })
 

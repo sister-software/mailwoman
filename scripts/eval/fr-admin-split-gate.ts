@@ -20,14 +20,16 @@
  *   --golden /tmp/reg/fr-admin-split-golden.jsonl --label v1.5.0 --out /tmp/reg/gate-v150.json
  */
 
-import { type AddressNode, type AddressTree, decodeAsJSON } from "@mailwoman/core/decoder"
+import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { HARD_PLACE_COUNTRY_SAFELIST, hardCountryFor, isBareLocalityTree } from "@mailwoman/core/pipeline"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { dataRootPath, percentile, tempRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, mean, percentile, tempRootPath } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
+import { stripCombiningMarks } from "@mailwoman/normalize"
 import { haversineKm } from "@mailwoman/spatial"
+import { collectResolved, type Resolved } from "mailwoman/eval-harness/oa-resolver/tree-hits"
 import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
@@ -103,44 +105,11 @@ const PLACETYPE_RANK: Record<string, number> = {
  */
 const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
 
-interface Resolved {
-	id: number
-	name: string
-	placetype: string
-	lat: number
-	lon: number
-}
-
-function collectResolved(tree: AddressTree): Resolved[] {
-	const out: Resolved[] = []
-
-	const visit = (n: AddressNode): void => {
-		const meta = n.metadata as Record<string, unknown> | undefined
-
-		if (n.placeID?.startsWith("wof:") && n.lat !== undefined && n.lon !== undefined) {
-			const placetype = String(n.sourceID ?? "").split(":")[0] ?? ""
-
-			out.push({
-				id: Number(n.placeID.slice(4)),
-				name: String(meta?.["resolver_name"] ?? n.value ?? ""),
-				placetype,
-				lat: n.lat,
-				lon: n.lon,
-			})
-		}
-
-		for (const c of n.children) {
-			visit(c)
-		}
-	}
-
-	for (const r of tree.roots) {
-		visit(r)
-	}
-
-	return out
-}
-
+/**
+ * Deliberately LOCAL rather than tree-hits' `mostSpecific`, which delegates to the production conditional ladder
+ * (`mostSpecificResolved`): this gate grades on the flat #945 convention tables above — see the `PLACETYPE_RANK`
+ * docstring for why migrating needs a panel count first.
+ */
 function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_RANK): Resolved | null {
 	let best: Resolved | null = null
 
@@ -152,12 +121,8 @@ function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_R
 	return best
 }
 
-const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : Number.NaN)
-
 const norm = (s: string | undefined): string =>
-	(s ?? "")
-		.normalize("NFKD")
-		.replaceAll(/[̀-ͯ]/g, "")
+	stripCombiningMarks(s ?? "")
 		.toLowerCase()
 		.trim()
 
@@ -374,7 +339,7 @@ async function main() {
 	const summary = {
 		label,
 		n,
-		coord_mean_km: +mean(errs).toFixed(2),
+		coord_mean_km: +(mean(errs) ?? Number.NaN).toFixed(2),
 		coord_p50_km: +(percentile(errs, 50) ?? Number.NaN).toFixed(2),
 		coord_p90_km: +(percentile(errs, 90) ?? Number.NaN).toFixed(2),
 		// RESOLVED-ONLY coordinate: the quality WHERE the address resolves, separated from the

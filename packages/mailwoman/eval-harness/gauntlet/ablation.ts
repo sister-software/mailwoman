@@ -82,6 +82,7 @@ import { AblationGazetteer } from "#eval-harness/gauntlet/ablation-gazetteer"
 // are re-exported below, from their historical home, so every importer and every test keeps its path.
 import { renderAblationMarkdown } from "#eval-harness/gauntlet/ablation-report"
 import {
+	aggregateAblationComponents,
 	ABLATABLE_COMPONENTS,
 	type AblatableComponent,
 	type AblationCell,
@@ -790,25 +791,19 @@ function printSummary(
 	console.log(`  cells            ${cells.length} (a (component, locale) pair with no row emits NO cell)`)
 	console.log(`  artifacts        ${meta.outDir}/ablation-map.{json,md}`)
 
+	const aggregates = aggregateAblationComponents(cells, rows)
+
 	console.log(`\nper component (all locales):`)
 	console.log(
 		`  ${"component".padEnd(20)}${"support".padStart(8)}${"broken".padStart(8)}${"p50 km".padStart(11)}${"p90 km".padStart(11)}${"tier↓".padStart(7)}${"unres".padStart(7)}${"subst".padStart(7)}`
 	)
 
-	for (const tag of ABLATABLE_COMPONENTS) {
-		const own = rows.filter((r) => r.component === tag)
-
-		if (!own.length) continue
-
-		const graded = own.filter((r) => r.displacementKm != null).map((r) => r.displacementKm!)
-		const p50 = percentile(graded, 50)
-		const p90 = percentile(graded, 90)
-
+	for (const aggregate of aggregates) {
 		console.log(
-			`  ${tag.padEnd(20)}${String(own.length).padStart(8)}${String(own.filter((r) => r.broken === true).length).padStart(8)}` +
-				`${(p50 == null ? ABLATION_ABSENT : p50.toFixed(2)).padStart(11)}${(p90 == null ? ABLATION_ABSENT : p90.toFixed(2)).padStart(11)}` +
-				`${String(own.filter((r) => r.tierDrop).length).padStart(7)}${String(own.filter((r) => r.unresolved).length).padStart(7)}` +
-				`${String(own.filter((r) => r.slot === "substituted").length).padStart(7)}`
+			`  ${aggregate.component.padEnd(20)}${String(aggregate.support).padStart(8)}${String(aggregate.brokenCount).padStart(8)}` +
+				`${(aggregate.displacementKmP50 == null ? ABLATION_ABSENT : aggregate.displacementKmP50.toFixed(2)).padStart(11)}${(aggregate.displacementKmP90 == null ? ABLATION_ABSENT : aggregate.displacementKmP90.toFixed(2)).padStart(11)}` +
+				`${String(aggregate.tierDropCount).padStart(7)}${String(aggregate.unresolvedCount).padStart(7)}` +
+				`${String(aggregate.substitutedCount).padStart(7)}`
 		)
 	}
 
@@ -820,17 +815,15 @@ function printSummary(
 			`${"abst".padStart(7)}${"lost".padStart(7)}${"overc".padStart(7)}${"homon".padStart(7)}${"coars".padStart(7)}${"wrong".padStart(7)}${"subst".padStart(7)}${"unconstr".padStart(10)}`
 	)
 
-	for (const tag of ABLATABLE_COMPONENTS) {
-		const own = ladderGraded.filter((r) => r.component === tag)
+	for (const aggregate of aggregates) {
+		if (!aggregate.ladderGradedCount) continue
 
-		if (!own.length) continue
-
-		const n = (grade: AblationGrade): string => String(own.filter((r) => r.grade === grade).length).padStart(7)
+		const n = (grade: AblationGrade): string => String(aggregate.grades[grade]).padStart(7)
 
 		console.log(
-			`  ${tag.padEnd(20)}${String(own.length).padStart(8)}${String(own.filter((r) => !PASSING_GRADES.has(r.grade)).length).padStart(7)}` +
+			`  ${aggregate.component.padEnd(20)}${String(aggregate.ladderGradedCount).padStart(8)}${String(aggregate.trueFailCount).padStart(7)}` +
 				`${n("held")}${n("degraded")}${n("correctlyAbstained")}${n("lost")}${n("overconfident")}${n("homonymTakeover")}${n("coarser")}${n("wrong")}${n("substituted")}` +
-				`${String(own.filter((r) => r.expectedRung === UNCONSTRAINED_RUNG).length).padStart(10)}`
+				`${String(aggregate.unconstrainedCount).padStart(10)}`
 		)
 	}
 

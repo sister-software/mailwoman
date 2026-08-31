@@ -42,6 +42,11 @@ export interface StreamToDiskOptions {
 	 * Names the caller in the refusal, so a log says which acquisition stopped.
 	 */
 	context: string
+	/**
+	 * Extra request headers. The public data bucket's WAF refuses an unranged GET, so its consumer sends `range:
+	 * bytes=0-`; most transfers need none.
+	 */
+	headers?: Record<string, string>
 	onProgress?: (message: string) => void
 	/**
 	 * Bytes between progress reports. Scale it to the transfer: the default suits a several-hundred-megabyte archive, and
@@ -71,7 +76,10 @@ export async function streamToDisk(options: StreamToDiskOptions): Promise<number
 
 	options.onProgress?.(`downloading ${options.url}`)
 
-	const response = await fetch(options.url, { redirect: "follow" })
+	const response = await fetch(options.url, {
+		redirect: "follow",
+		...(options.headers ? { headers: options.headers } : {}),
+	})
 
 	if (!response.ok || !response.body) {
 		const explanation = options.describeStatus?.(response.status)

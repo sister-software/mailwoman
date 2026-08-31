@@ -38,6 +38,7 @@ export interface TermFrequencyTable {
 	readonly distinct: number
 }
 
+// Local by design: `@mailwoman/record`'s per-field normalizers are the shared home; match takes no record dependency.
 const defaultNormalize = (value: string): string => value.trim().toLowerCase().replaceAll(/\s+/g, " ")
 
 /**

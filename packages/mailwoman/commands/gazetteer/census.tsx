@@ -29,7 +29,7 @@ import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neur
 import { Box, Text } from "ink"
 import { join } from "path-ts"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Known parents probed after write, PER COUNTRY. Probing another country's names against a freshly built census prints
@@ -171,7 +171,7 @@ const GazetteerCensus: ParsedCommandComponent<Options> = ({ options }) => {
 		]
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

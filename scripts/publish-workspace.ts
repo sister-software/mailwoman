@@ -43,7 +43,7 @@ import { repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 
 import { dereferenceWorkspaceSymlinks, packWorkspaceForPublish } from "./pack-workspace.ts"
-import { verifyTarball } from "./verify-tarball.ts"
+import { formatTarballAudit, verifyTarball } from "./verify-tarball.ts"
 
 const repoRoot = repoRootPath()
 
@@ -91,9 +91,7 @@ await packWorkspaceForPublish(cwd, tarballPath)
 try {
 	const audit = verifyTarball(tarballPath)
 
-	console.error(
-		`publish-workspace: verified ${audit.name} (${audit.exportTargets} exports targets, ${audit.literalFiles} literal files, ${audit.binTargets} bin targets)`
-	)
+	console.error(`publish-workspace: verified ${audit.name} (${formatTarballAudit(audit)})`)
 } catch (error) {
 	console.error(error instanceof Error ? error.message : error)
 

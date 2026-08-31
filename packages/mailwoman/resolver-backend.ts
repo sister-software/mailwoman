@@ -105,8 +105,8 @@ export { dataRootPath, mailwomanDataRoot, wofShardPaths } from "@mailwoman/core/
  * The #1009 "no gazetteer data found" preflight message, shared by every caller that gates on a candidate/WOF resolver
  * being present before it will boot (`photon/cli.ts`, `nominatim/cli.ts`, `mailwoman/api-engine.ts`'s `mailwoman
  * serve`). Originally a bare `curl -fSL https://public.mailwoman.ai/...` line; measured 2026-08-03
- * (`mailwoman/data-bundles.ts`'s `downloadToDisk` docstring) that an UNRANGED GET against that bucket 403s — the hint
- * was broken for every stranger who copy-pasted it. `mailwoman data pull candidate` (Task 6) is the fix: it carries the
+ * (`commands/data/pull.tsx`'s `downloadToDisk` docstring) that an UNRANGED GET against that bucket 403s — the hint was
+ * broken for every stranger who copy-pasted it. `mailwoman data pull candidate` (Task 6) is the fix: it carries the
  * `Range: bytes=0-` header the WAF requires, verifies the download, and atomically seals it into place.
  *
  * A bare `data pull candidate` is the whole fix everywhere: {@link resolveCandidateDBPath} reaches the convention path
@@ -274,6 +274,29 @@ export async function existingWOFShardPaths(explicit?: readonly string[]): Promi
 	}
 
 	return existing
+}
+
+/**
+ * Resolver artifact selection for the POI probe path: the candidate gazetteer when one resolves (worldwide, no WOF
+ * shard needed), else the WOF shard set that exists on disk — an explicit comma-separated `--resolve-db` list first,
+ * then the convention set. The empty answer is the caller's to interpret: `mailwoman poi` degrades with a stderr note.
+ */
+export async function resolvePOIResolverPaths(options: {
+	candidateDB?: string
+	resolveDB?: string
+}): Promise<{ candidateDB: string | undefined; wofPaths: string[] }> {
+	const candidateDB = await resolveCandidateDBPath(options.candidateDB)
+
+	if (candidateDB) return { candidateDB, wofPaths: [] }
+
+	const explicit = options.resolveDB
+		? options.resolveDB
+				.split(",")
+				.map((path) => path.trim())
+				.filter((path) => path.length > 0)
+		: undefined
+
+	return { candidateDB, wofPaths: await existingWOFShardPaths(explicit) }
 }
 
 /**

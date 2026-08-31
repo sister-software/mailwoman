@@ -13,9 +13,16 @@
  */
 
 import type { EvalGeocodeStream } from "@mailwoman/registry/tools"
-import { Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	numberOption,
+	type ParsedCommandComponent,
+	reportToStderr,
+	stringOption,
+	useCommandTask,
+} from "#cli-kit"
 
 const kinds = [
 	"pairwise",
@@ -31,8 +38,6 @@ const kinds = [
 ] as const
 
 type Kind = (typeof kinds)[number]
-const stringOption = (description: string) => ({ type: "string" as const, description })
-const numberOption = (description: string) => ({ type: "number" as const, description })
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -107,8 +112,6 @@ interface Options {
 	outGeojson?: string
 }
 
-const report = (line: string): void => console.error(line)
-
 async function runKind(kind: Kind, options: Options): Promise<string> {
 	const {
 		coverageReconciliation,
@@ -139,7 +142,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		case "pairwise": {
 			await scorerPairwiseEval(
 				{ ...base, state: options.state, npis: options.npis, seed: options.seed, seeds: options.seeds },
-				report
+				reportToStderr
 			)
 
 			return "pairwise: report emitted"
@@ -154,7 +157,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 					seed: options.seed,
 					seeds: options.seeds,
 				},
-				report
+				reportToStderr
 			)
 
 			return "clustering: report emitted"
@@ -162,7 +165,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		case "cross-state": {
 			await scorerCrossStateEval(
 				{ ...base, trainState: options.trainState, evalState: options.evalState, npis: options.npis },
-				report
+				reportToStderr
 			)
 
 			return "cross-state: report emitted"
@@ -172,7 +175,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 			// record-matcher eval suite is reachable from one command.
 			const res = await dedupCeiling(
 				{ sources: options.sources, cap: options.cap, state: options.state, tau: options.tau, outMd: options.outMd },
-				report
+				reportToStderr
 			)
 
 			return `dedup-ceiling: ${res.collide} collisions over ${res.pairs} co-located pairs`
@@ -211,7 +214,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 					parallelGeocode: options.parallelGeocode,
 					geoConcurrency: options.geoConcurrency,
 				},
-				report
+				reportToStderr
 			)
 
 			return "nppes-benchmark: report emitted"
@@ -219,7 +222,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		case "coverage-reconciliation": {
 			await coverageReconciliation(
 				{ ...base, cap: options.cap, state: options.state, outGeojson: options.outGeojson },
-				report
+				reportToStderr
 			)
 
 			return "coverage-reconciliation: report emitted"
@@ -233,7 +236,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 					corpusFrequency: options.corpusFrequency,
 					outGeojson: options.outGeojson,
 				},
-				report
+				reportToStderr
 			)
 
 			return "cross-dataset: report emitted"
@@ -241,18 +244,18 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		case "threshold-sweep": {
 			await crossSourceThresholdSweep(
 				{ ...base, cap: options.cap, state: options.state, candidate: options.candidate },
-				report
+				reportToStderr
 			)
 
 			return "threshold-sweep: report emitted"
 		}
 		case "namesake-probe": {
-			const res = await geocoderNamesakeProbe({ createGeocoder }, report)
+			const res = await geocoderNamesakeProbe({ createGeocoder }, reportToStderr)
 
 			return `namesake-probe: ${res.wrongRegion}/${res.total} variants wrong-region`
 		}
 		case "vs-provided-coords": {
-			await geocoderVsProvidedCoords({ ...base, max: options.max }, report)
+			await geocoderVsProvidedCoords({ ...base, max: options.max }, reportToStderr)
 
 			return "vs-provided-coords: report emitted"
 		}
@@ -262,11 +265,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 const RegistryScorerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runKind(args[0], options))
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">{state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default RegistryScorerEval

@@ -6,22 +6,18 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { runShellSync } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { dirname, relative, resolvePath } from "path-ts"
-import { TextSpliterator } from "spliterator"
+
+import { trackedSourcePaths } from "./tracked-sources.ts"
 
 const repoRoot = repoRootPath()
 
 /**
- * Files to rewrite: everything under packages/, recursively, .ts/.tsx.
+ * Files to rewrite: every tracked .ts/.tsx under packages/, declarations included.
  */
 function listFiles() {
-	const out = runShellSync("git ls-files packages/", { cwd: repoRoot, encoding: "utf8" })
-
-	return [...TextSpliterator.from(out)]
-		.filter((p) => p.endsWith(".ts") || p.endsWith(".tsx"))
-		.map((p) => resolvePath(repoRoot, p))
+	return trackedSourcePaths(String(repoRoot), { prefix: "packages/", includeDeclarations: true })
 }
 
 /**
@@ -80,7 +76,7 @@ const importRe = /(from\s+|require\(\s*)(["'])([^"'\n]+)\2/g
 
 let changed = 0
 
-for (const file of listFiles()) {
+for (const file of await listFiles()) {
 	const src = await readLocalTextFile(file)
 	let touched = false
 

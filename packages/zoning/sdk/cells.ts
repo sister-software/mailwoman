@@ -27,8 +27,8 @@
  *   downstream as an absence of zoning.
  */
 
-import { groupCellsByResolution, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
-import { compactCells, polygonToCells } from "h3-js"
+import { compactAcrossResolutions, shortCellToInt, type FeatureCells, type H3Cell } from "@mailwoman/spatial"
+import { polygonToCells } from "h3-js"
 
 import type { MultiPolygonRings } from "#rings"
 
@@ -186,14 +186,7 @@ export class ZoningCellIndex {
 	 * reports the real number.
 	 */
 	finish(): CellIndexMeasurement {
-		// `compactCells` takes one resolution at a time, and a coarsened feature's cells are at another — so the whole set is
-		// grouped before compaction rather than pooled. Pooling would throw; compacting the target-resolution group alone
-		// would silently drop every coarsened feature's interior.
-		let compacted = 0
-
-		for (const group of groupCellsByResolution(this.#whole)) {
-			compacted += compactCells(group).length
-		}
+		const compacted = compactAcrossResolutions(this.#whole).length
 
 		const counts: number[] = []
 		let total = 0

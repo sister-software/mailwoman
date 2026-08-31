@@ -27,10 +27,15 @@
  *      reader that falls back to the abstract cannot take the wrong one.
  */
 
-import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
-import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
-import { parseJSONArray } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
+import {
+	APIClient,
+	readCKANPackageRecord,
+	readOGCCollectionBBox,
+	readWFSFeatureCount,
+	type APIClientConfig,
+	type CKANPackageRecord,
+} from "@mailwoman/core/api"
+import { createPacedCachedClient, type CreatePacedCachedClientOptions } from "@mailwoman/core/api/paced-client"
 
 import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_SERVICE_SLUG } from "#vocabulary"
 
@@ -52,7 +57,7 @@ export const EA_CSW_URL = "https://environment.data.gov.uk/discover/ea/csw"
 /**
  * The catalogue API the data.gov.uk entry is read from.
  */
-export const CATALOGUE_API_BASE_URL = "https://ckan.publishing.service.gov.uk/api/3/action"
+export { CKAN_CATALOGUE_API_BASE_URL as CATALOGUE_API_BASE_URL } from "@mailwoman/core/api"
 
 /**
  * Minimum spacing between EA requests, in milliseconds.
@@ -79,41 +84,12 @@ const EA_CACHE_TTL_MS = 6 * 60 * 60 * 1000
  */
 export const EA_EXPECTED_CATALOGUE_LICENCE = "Open Government Licence"
 
-export interface CreateCoastalClientOptions {
-	clock?: ClockLike
-	cacheDirectory?: string
-	minRequestIntervalMs?: number
-}
+export type CreateCoastalClientOptions = CreatePacedCachedClientOptions
 
 /**
  * What the catalogue says about the product.
  */
-export interface CoastalCatalogueRecord {
-	/**
-	 * The dataset's own identifier, which must equal {@link NCERM_DATASET_ID}.
-	 */
-	datasetID: string
-	/**
-	 * The ISO `revision` reference date — the product vintage, and the freshness signal.
-	 */
-	revisionDate: string
-	publicationDate: string | null
-	creationDate: string | null
-	/**
-	 * The licence the catalogue names.
-	 */
-	licence: string
-	/**
-	 * Direct file URLs by resource name.
-	 */
-	files: Record<string, string>
-}
-
-/**
- * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D extent this reader does
- * not understand, not a 2D one with something missing.
- */
-const BBOX_ORDINATES = 4
+export type CoastalCatalogueRecord = CKANPackageRecord
 
 /**
  * The marker the published record puts before each copy of its attribution statement.
@@ -200,70 +176,12 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	 *   other than {@link EA_EXPECTED_CATALOGUE_LICENCE}.
 	 */
 	public async readCatalogueRecord(): Promise<CoastalCatalogueRecord> {
-		const { data } = await this.fetch<{
-			success?: boolean
-			result?: {
-				extras?: Array<{ key: string; value: string }>
-				resources?: Array<{ name?: string; url?: string }>
-			}
-		}>({
-			method: "GET",
-			url: `${CATALOGUE_API_BASE_URL}/package_show`,
-			params: { id: NCERM_CATALOGUE_PACKAGE_ID },
+		return readCKANPackageRecord(this, {
+			packageID: NCERM_CATALOGUE_PACKAGE_ID,
+			expectDatasetID: NCERM_DATASET_ID,
+			expectLicence: EA_EXPECTED_CATALOGUE_LICENCE,
+			context: "coastal client",
 		})
-
-		const result = data.result
-
-		if (!data.success || !result) {
-			throw new Error(`coastal client: the catalogue returned no record for ${NCERM_CATALOGUE_PACKAGE_ID}`)
-		}
-
-		const extras = new Map((result.extras ?? []).map((extra) => [extra.key, extra.value]))
-		const datasetID = extras.get("guid") ?? ""
-
-		if (datasetID !== NCERM_DATASET_ID) {
-			throw new Error(
-				`coastal client: catalogue entry ${NCERM_CATALOGUE_PACKAGE_ID} names dataset ${JSON.stringify(datasetID)}, expected ${NCERM_DATASET_ID}`
-			)
-		}
-
-		const dates = parseJSONArray<{ type: string; value: string }>(
-			extras.get("dataset-reference-date"),
-			"coastal client"
-		)
-
-		const revision = dates.find((date) => date.type === "revision")?.value
-
-		if (!revision) {
-			throw new Error(
-				"coastal client: the catalogue entry carries no `revision` reference date — the product vintage cannot be read, and guessing it would stamp an artifact with a version that means nothing"
-			)
-		}
-
-		const licences = parseJSONArray<string>(extras.get("licence"), "coastal client")
-
-		if (!licences.includes(EA_EXPECTED_CATALOGUE_LICENCE)) {
-			throw new Error(
-				`coastal client: the catalogue entry names licence ${JSON.stringify(licences)}, expected ${JSON.stringify(EA_EXPECTED_CATALOGUE_LICENCE)} — a licence change decides whether this layer may be redistributed at all`
-			)
-		}
-
-		const files: Record<string, string> = {}
-
-		for (const resource of result.resources ?? []) {
-			if (resource.name && resource.url) {
-				files[resource.name] = resource.url
-			}
-		}
-
-		return {
-			datasetID,
-			revisionDate: revision,
-			publicationDate: dates.find((date) => date.type === "publication")?.value ?? null,
-			creationDate: dates.find((date) => date.type === "creation")?.value ?? null,
-			licence: EA_EXPECTED_CATALOGUE_LICENCE,
-			files,
-		}
 	}
 
 	/**
@@ -300,26 +218,12 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	 * writing into a sealed artifact.
 	 */
 	public async readFeatureCount(layer: string): Promise<number> {
-		const { data } = await this.fetch<string>({
-			method: "GET",
-			url: `${EA_NCERM_SPATIAL_BASE_URL}/wfs`,
-			responseType: "text",
-			params: {
-				service: "WFS",
-				version: "2.0.0",
-				request: "GetFeature",
-				typeNames: `dataset-${NCERM_DATASET_ID}:${layer}`,
-				resultType: "hits",
-			},
+		return readWFSFeatureCount(this, {
+			wfsURL: `${EA_NCERM_SPATIAL_BASE_URL}/wfs`,
+			typeNames: `dataset-${NCERM_DATASET_ID}:${layer}`,
+			context: "coastal client",
+			subject: layer,
 		})
-
-		const matched = /numberMatched="(?<count>\d+)"/u.exec(data)
-
-		if (!matched?.groups?.count) {
-			throw new Error(`coastal client: the WFS hits response for ${layer} carried no numberMatched attribute`)
-		}
-
-		return Number(matched.groups.count)
 	}
 
 	/**
@@ -329,21 +233,11 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
 	 * asserts against offline, and this is the live value it is reconciled with when the network is available.
 	 */
 	public async readDeclaredBBox(layer: string): Promise<[number, number, number, number]> {
-		const { data } = await this.fetch<{
-			extent?: { spatial?: { bbox?: number[][] } }
-		}>({
-			method: "GET",
-			url: `${EA_NCERM_SPATIAL_BASE_URL}/ogc/features/v1/collections/${layer}`,
-			params: { f: "application/json" },
+		return readOGCCollectionBBox(this, {
+			collectionURL: `${EA_NCERM_SPATIAL_BASE_URL}/ogc/features/v1/collections/${layer}`,
+			context: "coastal client",
+			subject: layer,
 		})
-
-		const bbox = data.extent?.spatial?.bbox?.[0]
-
-		if (!bbox || bbox.length < BBOX_ORDINATES) {
-			throw new TypeError(`coastal client: the OGC collection ${layer} carried no spatial extent`)
-		}
-
-		return [bbox[0]!, bbox[1]!, bbox[2]!, bbox[3]!]
 	}
 }
 
@@ -365,16 +259,14 @@ export function assertAttributionUnchanged(live: string): void {
  * Build an {@link EANCERMClient} with the disk cache and pacing this package's acquisition path expects.
  */
 export function createEANCERMClient(options: CreateCoastalClientOptions = {}): EANCERMClient {
-	return new EANCERMClient({
-		displayName: "EANCERM",
-		minRequestIntervalMs: options.minRequestIntervalMs ?? EA_MIN_REQUEST_INTERVAL_MS,
-		retry: true,
-		...(options.clock ? { clock: options.clock } : {}),
-		caching: {
-			ttl: EA_CACHE_TTL_MS,
-			storage: buildDiskStorage({
-				directory: options.cacheDirectory ?? String(dataRootPath("coastal", "cache", "http")),
-			}),
+	return createPacedCachedClient(
+		EANCERMClient,
+		{
+			displayName: "EANCERM",
+			minRequestIntervalMs: EA_MIN_REQUEST_INTERVAL_MS,
+			cacheTTLMs: EA_CACHE_TTL_MS,
+			cacheDirectory: ["coastal", "cache", "http"],
 		},
-	})
+		options
+	)
 }

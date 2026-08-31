@@ -10,9 +10,13 @@
  *   dataset + model artifacts locally — operator-run, not CI.
  */
 
-import { Text } from "ink"
-
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	type ParsedCommandComponent,
+	reportToStderr,
+	useCommandTask,
+} from "#cli-kit"
 
 export const description = "Evaluate the coarse placer (#244): in-distribution | openset | latin-offmap | quant-compare"
 
@@ -48,8 +52,6 @@ interface Options {
 
 type Kind = (typeof kinds)[number]
 
-const report = (line: string): void => console.error(line)
-
 async function runKind(kind: Kind, options: Options): Promise<string> {
 	const { evalCoarsePlacer, evalLatinOffmap, evalOpenSet, evalQuantCompare } =
 		await import("@mailwoman/core/coarse-placer/tools")
@@ -63,7 +65,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 		case "openset": {
 			const res = await evalOpenSet(
 				{ model: options.model, data: options.data, fitPerClass: options.fitPerClass, outMd: options.outMd },
-				report
+				reportToStderr
 			)
 
 			return `openset: best score \`${res.winner}\` at honest min ${res.honestMin.toFixed(1)} — ${res.clears90 ? "clears" : "below"} 90/90`
@@ -89,11 +91,7 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 const PlacerEval: ParsedCommandComponent<Options, [Kind]> = ({ options, args }) => {
 	const state = useCommandTask(async () => await runKind(args[0], options))
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
-
-	if (state.status === "done") return <Text color="green">{state.result}</Text>
-
-	return null
+	return <CommandTaskResult state={state} />
 }
 
 export default PlacerEval

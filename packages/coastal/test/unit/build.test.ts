@@ -358,7 +358,11 @@ describe("the declared domains", () => {
 
 describe("the area cross-check", () => {
 	it("agrees with the source's own area on rings whose holes nest properly", () => {
-		expect(result.area.relativeGap).toBeLessThan(0.01)
+		const { area } = result
+
+		if (area.witness !== "source") throw new Error("the fixture supplies source areas, so the witness is the source")
+
+		expect(area.relativeGap).toBeLessThan(0.01)
 	})
 
 	it("refuses a build whose rings do not add up to the source's own area", async () => {

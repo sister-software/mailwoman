@@ -19,10 +19,18 @@
  */
 
 import { formatFileSize, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { runFileSync } from "@mailwoman/core/process"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import {
+	type CommandSpec,
+	CommandTaskResult,
+	formatLayerVerification,
+	type ParsedCommandComponent,
+	splitNumberList,
+	useCommandTask,
+} from "#cli-kit"
+import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
  * Coverage resolution. Res 6 matches what the POI pipeline writes, so a reader already keyed to another layer's
@@ -143,7 +151,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		if (options.measureResolutions) {
 			const report = await measureFloodCellResolutions({
 				geodatabasePath,
-				resolutions: options.measureResolutions.split(",").map((value) => Number(value.trim())),
+				resolutions: splitNumberList(options.measureResolutions),
 				...(options.limit ? { limit: Number(options.limit) } : {}),
 				onProgress: (message) => console.error(`  [measure] ${message}`),
 			})
@@ -182,7 +190,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		const identity = await readFloodSourceIdentity({ geodatabasePath })
 
 		const out = options.out ?? String(dataRootPath("flood", "flood.db"))
-		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = resolveBuildSHA(String(repoRootPath()))
 
 		const result = await buildFloodDatabase({
 			// A `--limit` run is the smoke rung and reads a PREFIX in one process; a full build is BATCHED, one child
@@ -227,8 +235,10 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 			`coverage: ${result.coverageCells.toLocaleString()} cells at res ${result.coverageResolution}, ` +
 				`${result.coverageCellsWithRows.toLocaleString()} holding a polygon, ` +
 				`${(result.coverageCells - result.coverageCellsWithRows).toLocaleString()} designated-absence (Zone 1)`,
-			`area: source ${result.area.sourceKM2.toFixed(1)} km² · rings with holes ${result.area.nestedKM2.toFixed(1)} km² ` +
-				`(${(result.area.relativeGap * 100).toFixed(3)}% apart) · rings without holes ${result.area.allExteriorKM2.toFixed(1)} km²`,
+			`area: source ${result.area.witness === "source" ? `${result.area.sourceKM2.toFixed(1)} km²` : "not published (no witness)"} · ` +
+				`rings with holes ${result.area.nestedKM2.toFixed(1)} km²` +
+				`${result.area.witness === "source" ? ` (${(result.area.relativeGap * 100).toFixed(3)}% apart)` : ""} · ` +
+				`rings without holes ${result.area.allExteriorKM2.toFixed(1)} km²`,
 			`manifest: name=flood-zones-ea-england tier=shipped license=OGL-UK-3.0 sourceVintage=${sourceVintage} buildSHA=${buildSHA}`,
 		]
 
@@ -242,32 +252,22 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 				onProgress: (message) => console.error(`  [verify] ${message}`),
 			})
 
-			// A disagreement count is not actionable on its own — the rows are. Printed to stderr with the progress stream,
-			// because the first thing anyone does with a non-zero count is ask which points.
-			for (const row of verified.agreement.filter((entry) => entry.outcome === "disagree")) {
-				console.error(
-					`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind}` +
-						`${row.local.zoneCode ? ` ${row.local.zoneCode}` : ""} via ${row.local.containment}, service ${row.service ?? "no zone"}`
-				)
-			}
-
 			lines.push(
-				`verify: ${verified.agreed}/${verified.agreement.length} agree with the live service · ` +
-					`${verified.boundaryTolerance} within boundary tolerance · ${verified.disagreed} disagree`,
-				`verify (outside England): ${verified.outsidePassed}/${verified.outside.length} read unknown, ` +
-					`${
-						verified.outside
-							.filter((row) => !row.passed)
-							.map((row) => row.label)
-							.join(", ") || "none read a zone"
-					}`
+				...formatLayerVerification(verified, {
+					serviceLabel: "the live service",
+					outsideLabel: "outside England",
+					outsideNoneLabel: "none read a zone",
+					describeRow: (row) =>
+						`  [verify] disagree at ${row.latitude}, ${row.longitude} (${row.label}): artifact ${row.local.kind}` +
+						`${row.local.zoneCode ? ` ${row.local.zoneCode}` : ""} via ${row.local.containment}, service ${row.service ?? "no zone"}`,
+				})
 			)
 		}
 
 		return lines
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done") return <CommandTaskResult state={state} />
 
 	if (state.status === "done") {
 		return (

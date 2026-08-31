@@ -13,7 +13,7 @@
 
 import { Box, Text } from "ink"
 
-import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
+import { type CommandSpec, CommandTaskResult, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
 export const description = "Measure, check, or update the regression board's pins (row count, corpus hash, board id)."
 
@@ -77,7 +77,8 @@ const EvalPins: ParsedCommandComponent<Options> = ({ options }) => {
 		return { mode: "print" as const, pins: await measureBoardPins(), testPath: PIN_TEST_PATH, stale: [] }
 	})
 
-	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>
+	if (state.status !== "done")
+		return <CommandTaskResult state={state} running={<Text dimColor>Loading the regression corpus…</Text>} />
 
 	if (state.status === "done") {
 		return (
@@ -93,7 +94,7 @@ const EvalPins: ParsedCommandComponent<Options> = ({ options }) => {
 		)
 	}
 
-	return <Text dimColor>Loading the regression corpus…</Text>
+	return null
 }
 
 export default EvalPins

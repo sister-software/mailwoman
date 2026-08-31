@@ -29,7 +29,7 @@ import { join, resolvePath } from "path-ts"
 import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
-import { verifyTarball } from "./verify-tarball.ts"
+import { formatTarballAudit, verifyTarball } from "./verify-tarball.ts"
 
 /**
  * The npm CLI approval URL, printed when a write op needs a second factor.
@@ -195,9 +195,7 @@ async function packAndPublish(dir: string): Promise<void> {
 	// that was not in the tarball, and npm accepted it. Published versions are immutable.
 	const audit = verifyTarball(tgz)
 
-	console.log(
-		`• ${pkg.name}: tarball verified — ${audit.literalFiles} literal files, ${audit.exportTargets} exports targets, ${audit.binTargets} bin targets`
-	)
+	console.log(`• ${pkg.name}: tarball verified — ${formatTarballAudit(audit)}`)
 
 	if (flags["dry-run"]) {
 		console.log(`• dry-run, would publish ${tgz}`)

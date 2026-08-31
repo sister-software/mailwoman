@@ -35,12 +35,13 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
+import { allRows, dataRootPath, getRow } from "@mailwoman/core/utils"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { loadHardSliceBoard } from "#eval-harness/hard-slice-board"
+import { existingWOFShardPaths } from "#resolver-backend"
 
 const { values } = parseArguments({ options: { board: { type: "string" } } })
 
@@ -112,13 +113,7 @@ const preSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number =>
  */
 const postSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number => compareReferential(a, b) || b.score - a.score
 
-const wofPaths: string[] = []
-
-for (const shardPath of wofShardPaths()) {
-	if (await pathExists(shardPath)) {
-		wofPaths.push(shardPath)
-	}
-}
+const wofPaths = await existingWOFShardPaths()
 
 console.log(`### 2. Live query replay\n`)
 

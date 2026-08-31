@@ -47,7 +47,7 @@
  *   not in any OS OpenData product.
  */
 
-import { tryStat, pathExists, readDirectory, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { tryStat, pathExists, readDirectory, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { removePath, makeDirectories, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
@@ -60,7 +60,6 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import {
@@ -78,6 +77,7 @@ import { dirname, join, resolvePath, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { createOSDownloadsClient, OS_DOWNLOADS_API_BASE } from "#gazetteer-pipeline/postcode/codepoint/fetch"
+import { readAcquisitionSidecar, UNKNOWN_PROVENANCE } from "#gazetteer-pipeline/shard-lifecycle"
 
 /**
  * The OS Data Hub product id for Open UPRN.
@@ -124,12 +124,6 @@ export const OPEN_UPRN_COVERAGE_NOTE =
 	"OS Open UPRN covers Great Britain only (England, Scotland, Wales — the product's single Downloads-API area is GB). " +
 	"Northern Ireland, the Isle of Man and the Channel Islands are NOT included; NI property identifiers are " +
 	"administered by Land & Property Services (Pointer) and are outside OS OpenData."
-
-/**
- * What the layer records when an offline rebuild cannot recover a provenance field — a sentinel STRING, because `""`
- * reads as "no release" to anyone grepping it (the meaning-of-zero rule, applied to provenance).
- */
-const UPRN_UNKNOWN_PROVENANCE = "unknown (offline rebuild, no acquisition.json)"
 
 /**
  * Row floor for {@link buildUPRNLayer}'s truncation guard. The 2026-08 cut holds 41,629,393 rows and the register only
@@ -556,19 +550,16 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	let archiveMD5: string
 	let osVersion: string
 
-	const readSidecarProvenance = async (): Promise<UPRNAcquisitionSidecar | null> => {
-		const raw = await readLocalTextFile(String(join(sourceDir, "acquisition.json"))).catch(() => null)
-
-		return raw ? tryParsingJSON<UPRNAcquisitionSidecar>(raw) : null
-	}
+	const readSidecarProvenance = (): Promise<UPRNAcquisitionSidecar | null> =>
+		readAcquisitionSidecar<UPRNAcquisitionSidecar>(sourceDir)
 
 	let extracted: ExtractOpenUPRNResult
 
 	if (options.extracted) {
 		const sidecar = await readSidecarProvenance()
 
-		archiveMD5 = sidecar?.md5 ?? UPRN_UNKNOWN_PROVENANCE
-		osVersion = sidecar?.product?.version ?? UPRN_UNKNOWN_PROVENANCE
+		archiveMD5 = sidecar?.md5 ?? UNKNOWN_PROVENANCE
+		osVersion = sidecar?.product?.version ?? UNKNOWN_PROVENANCE
 		extracted = options.extracted
 
 		phase("fixture", extracted.csvPath)
@@ -576,8 +567,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		const archivePath = await resolveOfflineArchive(sourceDir)
 		const sidecar = await readSidecarProvenance()
 
-		archiveMD5 = sidecar?.md5 ?? UPRN_UNKNOWN_PROVENANCE
-		osVersion = sidecar?.product?.version ?? UPRN_UNKNOWN_PROVENANCE
+		archiveMD5 = sidecar?.md5 ?? UNKNOWN_PROVENANCE
+		osVersion = sidecar?.product?.version ?? UNKNOWN_PROVENANCE
 
 		phase(
 			"offline",
@@ -771,8 +762,8 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 		["source", "Ordnance Survey OS Open UPRN — https://osdatahub.os.uk/downloads/open/OpenUPRN"],
 		["source_api", `${OS_DOWNLOADS_API_BASE}/products/${OPEN_UPRN_PRODUCT_ID}/downloads (open, unauthenticated)`],
 		["source_release", osVersion],
-		["source_file", extracted.versions.fileName || UPRN_UNKNOWN_PROVENANCE],
-		["source_extraction_date", extracted.versions.extractionDate || UPRN_UNKNOWN_PROVENANCE],
+		["source_file", extracted.versions.fileName || UNKNOWN_PROVENANCE],
+		["source_extraction_date", extracted.versions.extractionDate || UNKNOWN_PROVENANCE],
 		["source_archive_md5", archiveMD5],
 		["header_as_found", OPEN_UPRN_HEADER],
 		["quality_drops", JSON.stringify({ read, inserted, skippedMalformed, skippedDuplicate })],

@@ -53,6 +53,11 @@ export function spawnOGR2OGR(args: readonly string[], context: string): OGRProce
 		})
 	})
 
+	// A failed spawn rejects `settled` BEFORE any consumer awaits it — the consumer is still draining the stream on a
+	// later tick, and a consumer that abandons the stream never awaits it at all — so an unobserved rejection would trip
+	// the process's unhandled-rejection hook. Observed at birth instead; every consumer still awaits the real verdict.
+	settled.catch(() => undefined)
+
 	return {
 		stdout: child.stdout,
 		settled,
