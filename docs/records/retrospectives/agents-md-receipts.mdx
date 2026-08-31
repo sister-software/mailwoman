@@ -1,0 +1,169 @@
+---
+title: AGENTS.md receipts
+description: The incidents that produced AGENTS.md's rules, moved out of the living document on 2026-08-31 so each rule stands without its story.
+---
+
+AGENTS.md carries durable rules only. Each section below is the passage that used to sit beside a rule there — the incident, the census, the worked example — kept verbatim as a dated record. The rule itself stays in AGENTS.md and links here.
+
+## The overlay `link-dev-weights.ts` copy-paste template
+
+The locale overlay packages (`neural-weights-de-de`, `-es-es`, `-it-it`, `-en-in`, …) each carry their
+own `scripts/link-dev-weights.ts`. The small ones are ~117 lines and were cloned from one another, so
+a new locale is added by copying a sibling. That reliably localizes the CODE and leaves the PROSE
+behind: `es-es` and `it-it` both shipped `de-de`'s docstring, telling the reader the script exists so
+`resolveWeights({locale: "de-de"})` resolves and that the index is inert without the `de` entries
+because "German addresses write 50733 Köln". The code was right in both; everything a reader would
+use to verify it pointed at the wrong country. Nothing catches this — the script works.
+
+If you add a locale overlay, rewrite the docstring for the locale you are adding, not just the paths.
+If you are adding several, extract the shared implementation first (the freshness guard, the md5-with-
+sidecar compare, the force-link, the index spawn) so a new overlay is a manifest plus a call — at the
+number of locales this is heading toward, the template is a defect generator.
+
+Related, and easy to "fix" wrongly: `LEADING_POSTCODE_COUNTRIES` in `packages/neural/placetype-pair-prior.ts`
+lists `fr, de, es, it`. A country's ABSENCE there is not always a gap. `en-IN` is absent on purpose —
+the PIN goes last, so the trailing-postcode strip already folds its parent segment correctly, and its
+docstring says so. Membership is earned by a codex postcode shape plus a confound board.
+
+## `publishConfig.exports` — the hand-maintained duplicate
+
+publishConfig.exports: the hand-maintained duplicate was retired 2026-07-19 after its removal-without-replacement shipped a fully-broken v7.2.0; the pack-time guard's first runs caught two dead `core` subpaths and mailwoman's never-shipped `.d.ts`.
+
+## A workspace missing from the release list — `neural-weights-en-au` at 9.0.0
+
+`.release-it.json`'s workspaces list is the publish set AND the bump set. A workspace outside it is not
+merely unpublished: release-it never rewrites its `version` either, so it holds whatever number it had
+when it dropped out — in the repo and on npm — while every sibling moves on. Nothing fails. `yarn
+release` reports success, because from its side there was nothing to do.
+
+`@mailwoman/neural-weights-en-au` was the worked example, and it is now IN the list — so read this for
+the mechanism, not for a live defect. It sat outside the list while public and already on npm: siblings
+reached 9.1.0, en-au held 9.0.0 in `package.json` and on npm, and nothing failed. The cost was not the
+one it looks like, and the difference was worth measuring rather than reasoning out — `npm view
+@mailwoman/neural-weights-en-au@9.0.0 dependencies` answered `{"@mailwoman/neural-weights-en-us":
+"9.1.0"}`, the CORRECT base, because `yarn pack` freezes `workspace:*` to whatever the sibling reads AT
+PACK TIME and the hand-publish happened after the 9.1.0 bump. So what it actually cost was a version
+number that no longer meant anything (9.0.0 shipping against a 9.1.0 base) and a workspace that shipped
+only when someone remembered it by hand. The latent hazard is ordering, and it outlives this instance:
+pack a package BEFORE a release bump and that same mechanism pins a base the overlay is genuinely
+behind.
+
+A `private: true` flag is checkable; membership in a JSON array is not, so check the arithmetic
+whenever you add or move a workspace:
+
+```bash
+node -e "const w=require('./package.json').workspaces,r=require('./.release-it.json').plugins['@release-it-plugins/workspaces'].workspaces;console.log(w.filter(x=>!r.includes(x)))"
+```
+
+Every name it prints needs a reason you can state. `scripts/scaffold-weights-overlay.ts` registers a
+new overlay in both lists for exactly this reason — a locale added by hand skips that step.
+
+A new workspace joins SIX registers, and only the first one fails loudly. The root `workspaces` array is
+what `yarn install` reads, so missing it breaks immediately. The other five do not: the release list
+above, or — when the workspace is held out — `SANCTIONED_RELEASE_ABSENCES` in
+`scripts/release-stage.ts`, which is where "a reason you can state" stops being prose and starts being
+data (`checkReleaseListIdentity` refuses an absence that is in neither, and names it rather than
+reporting a count — its `publishCount` pin in `scripts/release-stage.test.ts` moves with either edit);
+BOTH root `tsconfig.json` reference entries — `./packages/<name>`
+and `./packages/<name>/tsconfig.test.json`; and `scripts/smoke-clean-install.ts`'s pack set, which
+enumerates the workspaces the clean-install smoke packs and silently skips one it does not name.
+A brand-new npm name has a seventh obligation before it may enter the release list at all: the
+`bless-package` first publish (see the pitfall below — an unblessed name fails the whole release
+at that workspace with a bare `E404`). Skip the tsconfig pair and `tsc -b` never builds the
+workspace at all, so `out/` stays empty and every test-project reference to it fails with `TS6305:
+Output file has not been built from source file` — which reads as a broken test rather than an
+unregistered project, and which a local run hides completely if you happened to build that workspace
+by hand.
+
+## Moving a workspace — the 2026-08-14 regroup
+
+`tsc -b`, `yarn lint` and `yarn typecheck:tests` all pass over a half-moved tree. The paths that break
+are STRINGS, and the compiler never reads them. Regrouping the workspaces under `packages/` left ~40
+cwd-relative literals behind, and the reason none of them failed a build is the reason they matter:
+each is read at runtime by something that treats absence as a NEGATIVE ANSWER rather than an error.
+
+- `.husky/pre-commit` matched staged files against `^mailwoman/(commands|cli-kit)/`, so the
+  CLI-reference freshness guard stopped firing entirely — the guard that exists because the docs CI
+  check fired four times in one day.
+- `promotion-gate.ts`'s recompile-before-eval guard probed `existsSync("core/out")`: false, so a stale
+  core would have graded silently.
+- `api-engine.test.ts` and `v1-parse-gate.test.ts` run only when
+  `realpathSync("neural-weights-en-us/model.onnx")` resolves; it throws, so both suites skipped. Repairing
+  the path took the slow leg from 109 to 110 files and 60 to 57 skips, all passing.
+- `publish.yml` read the model card inside two `node -e` strings and ran the pair-index parity test
+  from `neural/test/`. The prose and the `::error::` remediation string beside them had already been
+  updated by eye; the executable one-liners had not.
+
+So after a move, sweep for QUOTED literals whose first path segment is a workspace name — not for
+imports, which the compiler already checks. `.husky/`, `run:` blocks, CLI flag defaults and test
+skip-guards are where they hide. Two shapes look stale and are not: a data-root-relative path (
+`data-bundles.ts`'s `localPath`, paired with a `remotePath`), and a package specifier —
+`import("mailwoman/gazetteer-pipeline")` is the `mailwoman` package's subpath export, not a directory,
+and prefixing it with `packages/` breaks it.
+
+CodeQL reacts to a bulk rename by re-raising every existing alert at its new path, and dismissals do
+NOT follow the file: the regroup PR reported "17 new alerts, 17 high severity", which were 13 already
+open on `main` and 4 previously dismissed as false positives, at identical rules and line numbers. The
+check's own caveat says the changes were too large to attribute. Re-dismiss after merge; do not read
+the count as a regression, and do not let it block the merge — the ruleset requires the `test` context.
+
+## Shared constants are not a shared function — #861
+
+**When two copies must agree, share the FUNCTION — sharing the constants proves nothing.** The
+#861 server↔demo parity contract was held by four matching literals and a "keep them in lockstep"
+comment in both files. The literals stayed matched for the contract's whole life. The code diverged
+anyway, at the two points a constant cannot express: which field the population term reads
+(`prominence ?? score` on the server, raw `score` in the browser, so the demo let a demoted
+cross-country alias ride population back over a primary), and whether the combined value is written
+back into `prominence` (the server did, the browser did not, so the resolver walk's own
+`prominence ?? score` sort discarded the demo's ordering). A reviewer comparing the constants — the
+thing the comments told them to check — would have found them identical every time. Extract the
+function into a platform-free module and have both sides call it; `primary-preference.ts` and
+`proximity-rerank.ts` are the two that now are.
+
+## Seven CSV splitters in `shard-recipes/`
+
+**A duplicate is often a bug report about the shared tool.** The seven copies of a hand-rolled CSV splitter in `packages/corpus/src/shard-recipes/` were the worked example: `CSVSpliterator` was ALREADY a dependency of every one of those workspaces, so nobody had failed to find it. They found it, hit 207 seconds on a whole-buffer parse, and wrote something fast that could not see quotes. The duplication was a rational local response to a real upstream defect (a quadratic `searchMatches`, fixed in spliterator 5.0.0), and seven independent authors routed around the same pothole without filing it. So when you meet a duplicate, the useful question is not "why didn't they know" — it's **"what was wrong with the shared thing?"** Sometimes nothing. Often: too slow, async against a sync caller, or shaped for a different call site. Fix that and the duplicates collapse on their own; delete them without fixing it and they grow back.
+
+## Partial-result readers — the 2026-08-23 model arc
+
+**A reader that can return a PARTIAL result must say what it got, or throw.** The 2026-08-23 model arc
+produced seven bugs of one shape, and every one returned a well-formed wrong answer that nobody would
+have questioned:
+
+- `Array.isArray` on a nested Arrow column. Corpus `labels` arrives as `{list:[{element:…}]}` in some
+  corpus files and as a plain array in others, so the check is false for the first and every label count
+  reads ZERO. Produced "GB has no street data".
+- `getCursor(["country","labels"])` silently DROPPING `labels` in the corpus files one writer era produced —
+  no error, the column is simply absent. Measured on one GB corpus file: unprojected 1,519/2,000 street rows,
+  projected 0/2,000. Produced "only 4 countries have street data"; the real figure is 29.
+- `flattenTreeNodes` projecting away `source`, and later the whole resolver payload. Both times the
+  affected spans reported as `unchanged`.
+- An `EngineConfig` key typo (`weightsCacheRoot` for `weights_cache`). A plain object drops the unknown
+  key in silence, both arms ran the same weights, and the comparison reported "0 of 6 differ" — which
+  reads as "the candidate is identical" and means "the lever never ran".
+- Two artifact resolvers sorting by NAME. `v0.9.9` beats `v0.26.0` lexically and `v8-jp-full` beats both
+  numerically, so a coverage report silently described a corpus nine versions old.
+
+The common shape is that each failure is indistinguishable from a real absence, and absence is usually
+what the question was about — so the wrong answer arrives looking like a discovery. Three rules follow.
+Prefer a reader that ERRORS on a requested-but-missing column over one that omits it. When a projection
+drops a field, the consumer that needed it gets `unchanged`, not a type error, so carry the whole payload
+or name what you dropped. And `?? 0`, optional chaining and a bare `.filter()` all convert _"I could not
+read this"_ into _"there is none of it"_ — at a measurement boundary that is a lie, and the cheap
+insurance is to re-measure a surprising ABSENCE by a second path before reporting it. One corpus file read
+two ways caught two of the seven in sixty seconds.
+
+## The `node_modules` reach-around census — 2026-08-06
+
+**The rule is NOT "don't use `node:path`."** The 2026-08-06 triage counted **1,095 `join`/`resolve` call sites across 244 files**, and the split is the useful part: 20 node_modules reach-arounds, 48 data-root assembly, 25 module-relative, and **1,002 legitimate** — `mkdtemp` scratch dirs (127), test fixtures (420), and genuinely dynamic filesystem work (455): CLI `--out` flags, walking a user-supplied tree, composing under a root a caller threaded in. Banning the import would flag 1,075 correct lines to catch 20. Two shapes that look like violations and are not: a LOCAL root alias derived once from `mailwomanDataRoot()` and composed from thereafter (`scripts/copy-weights.ts` — the concern is re-deriving the root, not composing from it, and its `resolve(repoRoot, …)`-vs-`resolve(dataRoot, …)` contrast is required), and a probe that reads a FOREIGN project's install layout on purpose (`scripts/smoke-clean-install.ts` — `import.meta.resolve` would answer from the monorepo's graph, which is the exact thing a clean-install smoke must not consult).
+
+## Defects in the input tail — the 2026-08-02 audit
+
+**The defects that survive review live in the input tail.** Every correctness bug the 2026-08-02 audit found was in code that worked on every input anyone had tried: a ReDoS that needs tab characters, an `expandH3Cell` that drops a leading zero only for base cells 0–7 (7 of 122), a quote-blind CSV splitter against sources where 6 of 8 carry no embedded newline, a quadratic scan whose every existing caller happened to be chunk-bounded, a freshness guard that compared zero checksums. Reading the code tells you what it does on the inputs you are imagining, which is exactly the set that already works. So when a change rests on a claim about data or scale — _this source has no quoted newlines_, _this path is fast enough now_, _this artifact is stale_ — spend the one command that determines the result. Measuring found all five of those; each of the four audit findings that turned out WRONG had been reasoned to instead, and was disproved by someone implementing it.
+
+## Acronym casing — the #875 deferral list, closed 2026-08-03
+
+**Known gaps (#875) — CLOSED 2026-08-03.** The eighteen public renames the old checker was holding behind a `DEFERRED` map — `@mailwoman/codex/nz`'s `NZ*` family, `@mailwoman/nuts-lookup`'s `NUTS*`, `@mailwoman/neural/weights`'s `CRFTransitions`/`readCRFTransitions`, `@mailwoman/annotations`'s `NUTS`, and `@mailwoman/registry`'s `createGBTScorer` — landed in the v9 major (#1432), and the same commit deleted `scripts/lint-acronym-casing.ts` along with the map. **There is no deferral list any more, and no script to add one to.** Enforcement is entirely the `acronymCasing` block in `oxlint.config.ts` driving `sister-software/no-title-case-acronym`, run by `yarn lint:oxlint` — which is what CI requires. That makes the check stricter than any sweep was: a fresh violation gets renamed in the commit that introduced it, and the only escape hatches are the two the paragraph above names (a scoped disable comment, or an `ignoreNames` entry when the casing is not ours to choose). Local (non-exported) identifiers stay out of scope — renaming one is free at any time, and flagging them is noise. **Correction to the pre-2026-08-03 text:** `outJsonl`/`outJson` were listed here as "residual internal cosmetic, no caller/def split". They are MEMBERS of exported options interfaces (`packages/registry/tools/gold-set-sample.ts`'s `outJsonl?: string`), so a consumer constructing the options object types the name — caller-visible, and renamed with the rest. `ID` is enforced too: the house form is `ID`, never `Id`.
+
+The overlay-template extraction is tracked in https://github.com/sister-software/mailwoman/issues/2035.

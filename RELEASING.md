@@ -860,3 +860,23 @@ never be used to validate a real change — the verify step is the entire point.
   PyPI (`mailwoman-client` 6.0.0 live via Trusted Publishing); crates.io publishes via
   `publish-clients.yml` (the `cargo` job) once the account email is verified.
 - **Changelog generation** — release-it can emit one via the `@release-it/conventional-changelog` plugin. Not configured yet because commit messages haven't standardized on Conventional Commits.
+
+## Recovering from a partial release
+
+If a release fails partway through publishing:
+
+- The git commit + tag are already created by release-it.
+- `yarn npm publish --tolerate-republish` (used by `scripts/publish-workspace.ts`) makes re-publishing already-published versions a no-op.
+- Fix the underlying issue, then resume by invoking the publish script directly for each remaining workspace:
+
+  ```bash
+  for ws in <remaining workspaces>; do
+    RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE=./$ws \
+    RELEASE_IT_WORKSPACES_TAG=latest \
+    RELEASE_IT_WORKSPACES_ACCESS=public \
+    RELEASE_IT_WORKSPACES_OTP=<otp-if-needed> \
+    node scripts/publish-workspace.ts || break
+  done
+  ```
+
+  npm 2FA OTPs expire in ~30s, so do this in quick succession; a single OTP usually covers all remaining workspaces.
