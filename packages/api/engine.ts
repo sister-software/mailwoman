@@ -10,7 +10,7 @@
 
 import type { AddressTree } from "@mailwoman/core"
 
-import type { GeocodeOutcomeLike } from "./schema.ts"
+import type { GeocodeOutcomeLike } from "#schema"
 
 /**
  * One parsed component in reading order (a `ComponentTag` + the covered text).

@@ -35,11 +35,9 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
-import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/utils"
-import { Readable } from "@mailwoman/platform/stream"
-import { pipeline } from "@mailwoman/platform/stream/promises"
 import { join } from "path-ts"
 
 /**

@@ -25,9 +25,9 @@
  *   `arbitrate` shape — not to grade the quality of the coverage it finds.
  */
 
-import { pathExists, readDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { isDirectory, pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 const REGISTER = String(repoRootPath("docs", "engineering", "reference", "runtime-flags.mdx"))
@@ -67,7 +67,7 @@ async function testFilesUnder(directory: string, found: string[] = []): Promise<
 
 		const full = join(directory, entry)
 
-		if ((await statPath(full)).isDirectory()) {
+		if (await isDirectory(full)) {
 			await testFilesUnder(full, found)
 		} else if (/\.test\.tsx?$/.test(entry)) {
 			found.push(full)

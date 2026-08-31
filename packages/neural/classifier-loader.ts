@@ -11,20 +11,19 @@
 import type { SystemCode } from "@mailwoman/codex"
 import { readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 
+import { parseAnchorLookup, type AnchorLookup } from "#anchor-inference"
+import { NeuralAddressClassifier } from "#classifier"
+import { parseCountryLexicon } from "#country-inference"
+import type { CountryLexicon } from "#country-inference"
+import { parseGazetteerLexicon } from "#gazetteer-inference"
+import type { GazetteerLexicon } from "#gazetteer-inference"
 import { DEFAULT_INTRA_OP_THREADS, ONNXRunner } from "#onnx-runner"
-
-import { parseAnchorLookup, type AnchorLookup } from "./anchor-inference.ts"
-import { NeuralAddressClassifier } from "./classifier.ts"
-import { parseCountryLexicon } from "./country-inference.ts"
-import type { CountryLexicon } from "./country-inference.ts"
-import { parseGazetteerLexicon } from "./gazetteer-inference.ts"
-import type { GazetteerLexicon } from "./gazetteer-inference.ts"
-import { peekPairIndexHeader, PairIndexResolver } from "./pair-index-resolver.ts"
-import type { PlacetypePairPriorOpts } from "./placetype-pair-prior.ts"
-import { PostcodeBinaryResolver } from "./postcode-binary-resolver.ts"
-import { parseSemiCRFTransitions, type SemiCRFTransitions } from "./semi-markov-decode.ts"
-import { MailwomanTokenizer } from "./tokenizer.ts"
-import type { ResolvedWeights, ResolveWeightsOpts } from "./weights.ts"
+import { peekPairIndexHeader, PairIndexResolver } from "#pair-index-resolver"
+import type { PlacetypePairPriorOpts } from "#placetype-pair-prior"
+import { PostcodeBinaryResolver } from "#postcode-binary-resolver"
+import { parseSemiCRFTransitions, type SemiCRFTransitions } from "#semi-markov-decode"
+import { MailwomanTokenizer } from "#tokenizer"
+import type { ResolvedWeights, ResolveWeightsOpts } from "#weights"
 
 /**
  * One-call factory that resolves the weights package (or explicit paths), loads the tokenizer and ONNX runner, and
@@ -63,8 +62,8 @@ export async function loadClassifierFromWeights(
 		{ readLabelsFromModelCard, readCRFTransitions, readRequiredChannels, unfedAnchorDetail, unfedChannelWarner },
 	] = await Promise.all([
 		import(/* webpackIgnore: true */ "@mailwoman/core/env"),
-		import(/* webpackIgnore: true */ "./weights.ts"),
-		import(/* webpackIgnore: true */ "./weights-channels.ts"),
+		import(/* webpackIgnore: true */ "#weights"),
+		import(/* webpackIgnore: true */ "#weights-channels"),
 	])
 
 	/* oxlint-enable typescript/no-restricted-imports */

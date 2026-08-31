@@ -1,4 +1,4 @@
-import { gunzip, gunzipChunks, gzip } from "@mailwoman/platform/compression"
+import { gunzip, gunzipChunks, gzip } from "@mailwoman/core/fs/compression"
 import { describe, expect, it } from "vitest"
 
 function joinChunks(chunks: readonly Uint8Array[]): Uint8Array {

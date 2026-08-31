@@ -6,14 +6,14 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, setTimestamps, makeDirectories } from "@mailwoman/core/fs/writers"
+import { runFileSync } from "@mailwoman/core/process"
 import { repoRootPath } from "@mailwoman/core/utils"
 import {
 	computeTreeFingerprint,
 	FINGERPRINTED_WORKSPACES,
 	staleEngineMessage,
 } from "@mailwoman/dev-mcp/tree-fingerprint"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -25,7 +25,7 @@ afterAll(() => fixtures.disposeAsync())
  * touching the real tree.
  */
 async function fakeCheckout(): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mwdev-fingerprint-")).path
+	const root = String(fixtures.use(await temporaryDirectory("mwdev-fingerprint-")).path)
 
 	const workspace = join(root, FINGERPRINTED_WORKSPACES[0])
 
@@ -116,10 +116,10 @@ describe("computeTreeFingerprint — dirty files", () => {
 		const root = await fakeCheckout()
 		const relative = join(FINGERPRINTED_WORKSPACES[0]!, "thing.ts")
 
-		execFileSync("git", ["init", "--quiet"], { cwd: root })
-		execFileSync("git", ["add", "."], { cwd: root })
+		runFileSync("git", ["init", "--quiet"], { cwd: root })
+		runFileSync("git", ["add", "."], { cwd: root })
 
-		execFileSync("git", ["-c", "user.email=t@e.st", "-c", "user.name=t", "commit", "--quiet", "-m", "seed"], {
+		runFileSync("git", ["-c", "user.email=t@e.st", "-c", "user.name=t", "commit", "--quiet", "-m", "seed"], {
 			cwd: root,
 		})
 

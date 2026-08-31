@@ -45,7 +45,7 @@ import {
 	createResolverBackend,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
-	wofShardPaths,
+	resolveWOFShardPaths,
 } from "mailwoman/resolver-backend"
 import { AsyncSequence } from "spliterator"
 
@@ -54,26 +54,16 @@ const HOST = "0.0.0.0"
 const DATA_ROOT = mailwomanDataRoot()
 
 /**
- * Same WOF-path resolution as `mailwoman/api-engine.ts`: the `$MAILWOMAN_WOF_DB` comma-separated override, else the
- * conventional per-shard `wof/` paths that actually exist on disk.
- *
- * TODO: pull this in directly from a shared module.
+ * The WOF shard set to attach: {@link resolveWOFShardPaths} selects it (the `$MAILWOMAN_WOF_DB` comma-separated
+ * override, else the conventional per-shard `wof/` paths). An explicit list is the operator's statement and passes
+ * through unfiltered; the conventional set is probed, so a deployment missing a shard degrades to what is present.
  */
 function wofPaths(): Promise<string[]> {
-	const env = $public.MAILWOMAN_WOF_DB
+	const paths = resolveWOFShardPaths()
 
-	if (env) {
-		return Promise.resolve(
-			env
-				.split(",")
-				.map((p) => p.trim())
-				.filter((p) => p.length)
-		)
-	}
+	if ($public.MAILWOMAN_WOF_DB) return Promise.resolve(paths)
 
-	const paths = wofShardPaths()
-
-	return new AsyncSequence<string>(paths).filter((p) => pathExists(p)).toArray()
+	return AsyncSequence.from(paths).parallelFilter(pathExists).toArray()
 }
 
 /**

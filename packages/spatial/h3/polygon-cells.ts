@@ -71,8 +71,9 @@ import {
 	POLYGON_TO_CELLS_FLAGS,
 } from "h3-js"
 
-import { ringsBoundingBox, type MultiPolygonRings } from "../geometries/ring-blob.ts"
-import { shortCellToInt, type H3Cell } from "./cell.ts"
+import type { MultiPolygonRings } from "#geometries/polygon"
+import { ringsBoundingBox } from "#geometries/ring-blob"
+import { shortCellToInt, type H3Cell } from "#h3/cell"
 
 /**
  * The largest bounding-box cell estimate a single polyfill may reserve.

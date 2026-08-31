@@ -9,9 +9,8 @@
  *   §LocaleProfile validation rule).
  */
 
+import type { LocaleProfile, LocaleRegistry } from "#locale/locale"
 import { COMPONENT_TAGS, type ComponentTag } from "#types"
-
-import type { LocaleProfile, LocaleRegistry } from "./locale.ts"
 
 const COMPONENT_TAG_SET = new Set<ComponentTag>(COMPONENT_TAGS)
 

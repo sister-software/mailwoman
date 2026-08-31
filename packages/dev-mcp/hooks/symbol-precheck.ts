@@ -20,7 +20,7 @@
  */
 
 import { readStandardInputJSON } from "@mailwoman/core/fs/readers"
-import { relative } from "@mailwoman/platform/path"
+import { relative } from "path-ts"
 
 import {
 	extractDeclaredSymbols,
@@ -28,7 +28,7 @@ import {
 	formatFindings,
 	readWriteIntent,
 	selectReportable,
-} from "../symbol-index.ts"
+} from "#symbol-index"
 
 async function main(): Promise<void> {
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)

@@ -27,9 +27,8 @@ import {
 	removePathIfPresent,
 	writeLocalFile,
 } from "@mailwoman/core/fs/writers"
+import { runFileSync } from "@mailwoman/core/process"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/utils"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
 // resolver-wof-sqlite is an OPTIONAL peer dep of mailwoman (geocoding is opt-in) — import it
 // DYNAMICALLY inside the functions (the geocode.tsx convention), NOT at module load, so that merely
 // loading these commands (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault
@@ -40,18 +39,18 @@ import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { resolvePath } from "path-ts"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
-import { mailwomanDataRoot } from "../resolver-backend.ts"
-import { candidateLayerManifest } from "./candidate-manifest.ts"
-import { emitCoverageManifest } from "./coverage-manifest.ts"
+import { candidateLayerManifest } from "#gazetteer-pipeline/candidate-manifest"
+import { emitCoverageManifest } from "#gazetteer-pipeline/coverage-manifest"
 import {
 	DEFAULT_FOLD_COUNTRIES,
 	DEFAULT_IMPORTANCE_DB,
 	DEFAULT_WOF_PRIORITY_COUNTRIES,
 	geonamesAdminGapCountries,
-} from "./defaults.ts"
-import { buildSHA, stampLayerManifest } from "./stamp-manifest.ts"
+} from "#gazetteer-pipeline/defaults"
+import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+import { mailwomanDataRoot } from "#resolver-backend"
 
 /**
  * The canonical postcode-shard set (filenames under `<data-root>/wof/`): US + the WOF intl shard (NL/FR/DE/ES/IT) + the
@@ -489,7 +488,7 @@ export interface PublishOptions {
 	/**
 	 * A staging dir; the candidate is symlinked under `<stageDir>/gazetteer/<version>/candidate.db`.
 	 */
-	stageDir: string
+	stageDir: PathBuilderLike
 	/**
 	 * `docs/src/shared/resources/index.ts` to bump `ADMIN_GAZETTEER_VERSION`; omit to skip the demo bump.
 	 */
@@ -536,7 +535,7 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 
 	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
-	const args = [opts.uploadScript, "--src", opts.stageDir, "--prefix", prefix]
+	const args = [opts.uploadScript, "--src", resolvePath(opts.stageDir), "--prefix", prefix]
 
 	if (opts.bucket) {
 		args.push("--bucket", opts.bucket)
@@ -546,7 +545,7 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 		args.push("--dry-run")
 	}
 
-	execFileSync("python3", args, { stdio: "inherit" })
+	runFileSync("python3", args, { stdio: "inherit" })
 
 	let bumped = false
 
@@ -576,9 +575,9 @@ export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 	return `${y}-${m}-${d}${suffix}`
 }
 
-export * from "./coverage-manifest.ts"
-export * from "./defaults.ts"
-export * from "./fts.ts"
-export * from "./verify.ts"
-export * from "./admin/index.ts"
-export * from "./postcode/index.ts"
+export * from "#gazetteer-pipeline/coverage-manifest"
+export * from "#gazetteer-pipeline/defaults"
+export * from "#gazetteer-pipeline/fts"
+export * from "#gazetteer-pipeline/verify"
+export * from "#gazetteer-pipeline/admin/index"
+export * from "#gazetteer-pipeline/postcode/index"

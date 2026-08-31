@@ -28,15 +28,15 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { tryParsingJSON } from "@mailwoman/core/objects"
+import { spawnProcess } from "@mailwoman/core/process"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
-import { spawn } from "@mailwoman/platform/child_process"
-import { dirname, join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { dirname, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { downloadIfNeeded } from "./download.ts"
-import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "./schema.ts"
-import { initializeTIGERSchema, TIGER_PRAGMAS } from "./schema.ts"
+import { downloadIfNeeded } from "#sdk/download"
+import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "#sdk/schema"
+import { initializeTIGERSchema, TIGER_PRAGMAS } from "#sdk/schema"
 
 const CENSUS_HOST = "https://www2.census.gov"
 const DEFAULT_DATA_ROOT = mailwomanDataRoot()
@@ -277,7 +277,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 			const shpPath = join(cacheDir, layer + ".shp")
 			yield { phase: "extract", file: layer + ".shp" }
 
-			const child = spawn(
+			const child = spawnProcess(
 				"ogr2ogr",
 				[
 					"-f",

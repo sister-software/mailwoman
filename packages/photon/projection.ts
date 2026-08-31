@@ -17,7 +17,7 @@ import {
 	photonCollection,
 	photonFeature,
 	type PhotonProperties,
-} from "./engine.ts"
+} from "#engine"
 
 /**
  * The resolved-place info a forward `/api` result carries: the admin ladder (MOST-SPECIFIC first) with GAZETTEER names,

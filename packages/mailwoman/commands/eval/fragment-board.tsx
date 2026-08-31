@@ -44,7 +44,7 @@ interface Options {
 const EvalFragmentBoard: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runFragmentBoard } = await import("../../eval-harness/fragment-board.ts")
+			const { runFragmentBoard } = await import("#eval-harness/fragment-board")
 
 			return (
 				await runFragmentBoard({

@@ -21,8 +21,8 @@
  */
 
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { spawn } from "@mailwoman/platform/child_process"
-import type { GeojsonGeometry } from "@mailwoman/spatial"
+import { spawnProcess } from "@mailwoman/core/process"
+import type { ParsedGeometry } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -57,7 +57,7 @@ export interface OSMBoundary extends OSMBoundaryQuery {
 	/**
 	 * GeoJSON `Polygon` or `MultiPolygon`, lon/lat, holes included.
 	 */
-	geometry: GeojsonGeometry
+	geometry: ParsedGeometry
 	/**
 	 * The matched feature's OSM id, so a build can record WHICH boundary it keyed its claim to.
 	 */
@@ -98,7 +98,7 @@ export function buildBoundarySQL(query: OSMBoundaryQuery): string {
 export async function extractOSMBoundary(pbfPath: string, query: OSMBoundaryQuery): Promise<OSMBoundary> {
 	const sql = buildBoundarySQL(query)
 	const args = ["-f", "GeoJSONSeq", "/vsistdout/", "-dialect", "OGRSQL", "-sql", sql, pbfPath]
-	const proc = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
+	const proc = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
 	proc.stderr.on("data", (d: Buffer) => {
@@ -119,7 +119,7 @@ export async function extractOSMBoundary(pbfPath: string, query: OSMBoundaryQuer
 
 		const feature = tryParsingJSON<{
 			properties?: Record<string, unknown>
-			geometry?: GeojsonGeometry
+			geometry?: ParsedGeometry
 		}>(line)
 
 		if (!feature?.geometry) continue

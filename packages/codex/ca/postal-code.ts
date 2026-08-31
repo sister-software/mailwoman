@@ -27,7 +27,7 @@
 
 import type { Tagged } from "type-fest"
 
-import type { CanadianProvinceCode } from "./province.ts"
+import type { CanadianProvinceCode } from "#ca/province"
 
 /**
  * Characters in a Canadian postcode once spaces are stripped: `A1A1A1`.

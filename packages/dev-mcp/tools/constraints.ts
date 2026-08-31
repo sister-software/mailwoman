@@ -9,11 +9,11 @@
 
 import { z } from "zod"
 
-import { runConstraintCensus } from "../constraint-census.ts"
-import type { EngineConfig } from "../engine-registry.ts"
-import type { InputSetRef } from "../input-sets.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
+import { runConstraintCensus } from "#constraint-census"
+import type { EngineConfig } from "#engine-registry"
+import type { InputSetRef } from "#input-sets"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 
 export const constraintsTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_constraints",

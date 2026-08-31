@@ -11,13 +11,12 @@
  *   Run: `mailwoman placer eval in-distribution [--model <dir>] [--abstain 0.5]`
  */
 
-import * as path from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "#coarse-placer/coarse-placer"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { dataRootPath, repoRootPath } from "#utils"
-
-import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 
 /**
  * Confusions below this count are individually uninteresting and are summarised instead.
@@ -47,7 +46,7 @@ export interface EvalCoarsePlacerOptions {
 	/**
 	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
-	model?: string
+	model?: PathBuilderLike
 	/**
 	 * Abstention threshold. Default 0.5.
 	 */
@@ -55,7 +54,7 @@ export interface EvalCoarsePlacerOptions {
 	/**
 	 * Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 }
 
 /**
@@ -77,12 +76,12 @@ export interface EvalCoarsePlacerResult {
  * Coarse-placer in-distribution eval — see the module doc. Emits the report to stdout.
  */
 export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): Promise<EvalCoarsePlacerResult> {
-	const modelDir = options.model || dataRootPath("coarse-placer", "model")
+	const modelDir = resolvePathBuilder(options.model || dataRootPath("coarse-placer", "model"))
 	const abstain = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(modelDir, "meta.json"))
-	const weightBytes = await readLocalBuffer(path.join(modelDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(modelDir, "meta.json"))
+	const weightBytes = await readLocalBuffer(resolvePath(modelDir, "weights.bin"))
 
 	// Read through the Buffer's own window: `readFileSync` serves files under 4 KiB out of a shared 8 KiB pool, so
 	// `.buffer` alone would start at the pool's origin and run its full length — the wrong floats, and 2048 of them.
@@ -102,7 +101,7 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const buckets = Array.from({ length: 10 }, () => ({ n: 0, ok: 0 }))
 
 	// ECE deciles. The split streams: every figure below is an accumulator, so the rows never all need to be resident.
-	for await (const r of JSONSpliterator.fromAsync<TestRow>(path.join(dataDir, "test.jsonl"))) {
+	for await (const r of JSONSpliterator.fromAsync<TestRow>(resolvePath(dataDir, "test.jsonl"))) {
 		testN++
 
 		const p = placer.predict(r.raw)

@@ -13,9 +13,9 @@
  *   See `docs/engineering/reference/STAGES.md` for the full contract this implements.
  */
 
-import type { AddressTree } from "../decoder/types.ts"
-import type { ResolveOpts, Resolver, ResolverBackend } from "../resolver/types.ts"
-import type { Section } from "../types/classifier.ts"
+import type { AddressTree } from "#decoder/types"
+import type { ResolveOpts, Resolver, ResolverBackend } from "#resolver/types"
+import type { Section } from "#types/classifier"
 
 export type LocaleTag = string
 

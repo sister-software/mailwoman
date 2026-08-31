@@ -18,7 +18,7 @@
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { join } from "@mailwoman/platform/path"
+import { join, resolvePath } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach } from "vitest"
 
@@ -44,7 +44,7 @@ export function useScratchDir(slug: string): ScratchDir {
 
 	beforeEach(async () => {
 		owned = await temporaryDirectory(`mailwoman-${slug}-`)
-		dir.path = owned.path
+		dir.path = resolvePath(owned.path)
 	})
 
 	// The directory is owned by the TEST, never by a module-scoped stack. Under `isolate: false` this module is shared

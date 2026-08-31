@@ -179,7 +179,11 @@ describe("triageWOFCurrency", () => {
 
 		buildFixtureAdmin(adminDB)
 
-		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch.path })
+		const { rows, summary } = await triageWOFCurrency({
+			adminDB,
+			countries: ["GB"],
+			geonamesDir: scratch.path.toString(),
+		})
 
 		expect(rows.every((r) => r.attestation.state === "unmeasured")).toBe(true)
 		// And the summary refuses to publish an attested count it could not measure.
@@ -200,7 +204,12 @@ describe("triageWOFCurrency", () => {
 			scratch.resolve("GB.txt")
 		)
 
-		const { rows, summary } = await triageWOFCurrency({ adminDB, countries: ["GB"], geonamesDir: scratch.path })
+		const { rows, summary } = await triageWOFCurrency({
+			adminDB,
+			countries: ["GB"],
+			geonamesDir: scratch.path.toString(),
+		})
+
 		const byName = new Map(rows.map((r) => [r.name, r]))
 
 		expect(byName.get("Rochester")?.attestation).toMatchObject({ state: "attested", population: 28_671 })

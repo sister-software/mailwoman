@@ -7,7 +7,7 @@
  *   at 0.8 / 0.5. Presentational.
  */
 
-import { cx } from "../common/cx.ts"
+import { cx } from "#common/cx"
 
 /**
  * At or above this the cell is drawn as high-confidence. Presentation only — see docs/src/shared/confidence-tiers.ts.

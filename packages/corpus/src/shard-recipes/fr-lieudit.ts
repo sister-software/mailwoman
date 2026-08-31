@@ -30,14 +30,13 @@ import { readDirectory } from "@mailwoman/core/fs/readers"
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilderLike } from "path-ts"
 
+import { decomposeFrStreet } from "#adapters/ban/street-decompose"
 import { stableSourceID } from "#adapters/utils"
+import { makeMulberry32, type ShardRecipe } from "#shard-recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
-
-import { decomposeFrStreet } from "../adapters/ban/street-decompose.ts"
-import { makeMulberry32, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * Matches the `ban` adapter's Tier-B election for BAN data.
@@ -63,7 +62,7 @@ interface LieuDitTuple {
  * `ban/scripts/build-address-point-shard.ts`'s `departementFiles`, which hit and fixed this exact double-count trap
  * first.
  */
-async function departementFiles(banDir: string): Promise<string[]> {
+async function departementFiles(banDir: PathBuilderLike): Promise<string[]> {
 	const byDept = new Map<string, string>()
 
 	for (const name of (await readDirectory(banDir)).toSorted()) {
@@ -88,7 +87,7 @@ async function departementFiles(banDir: string): Promise<string[]> {
 /**
  * Stream every département file, keeping only rows with a clean `lieuDit` (junk/dup filtering lives in `ban/sdk`).
  */
-async function readLieuDitPool(banDir: string): Promise<LieuDitTuple[]> {
+async function readLieuDitPool(banDir: PathBuilderLike): Promise<LieuDitTuple[]> {
 	const files = await departementFiles(banDir)
 
 	if (!files.length) {

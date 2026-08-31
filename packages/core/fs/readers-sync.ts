@@ -4,17 +4,16 @@
  * @author Teffen Ellis, et al.
  * @file The synchronous read surface — the same contracts as `./readers.ts`, blocking.
  *
- *   Prefer `./readers.ts`. A synchronous read blocks the event loop, and after the 2026-08-30 migration the positions
- *   where one is still correct are few and specific: a React state initializer, a Docusaurus plugin method, a class
- *   constructor, a `.filter()` predicate, the `ShardResolver` on the geocode hot path. Each is a slot whose caller is
- *   synchronous and not ours to change.
+ *   A synchronous read blocks the event loop, so `./readers.ts` is the surface a call site reaches for. This one is
+ *   for a slot whose caller is synchronous and not ours to change — a React state initializer, a Docusaurus plugin
+ *   method, a class constructor, a `.filter()` predicate, the `ShardResolver` on the geocode hot path.
  *
  *   This module exists so those positions still reach a HELPER rather than the builtin. The names carry the same
  *   contracts as their asynchronous siblings — `statPathSync` raises ENOENT where `tryStatSync` answers null,
  *   `removePathSync` raises where `removePathIfPresentSync` forgives — so moving a call site between the two surfaces
  *   is a rename, and no reader has to re-derive what a builtin's options meant.
  *
- *   `@mailwoman/platform/fs` is the `node:fs` mirror, and `packages/core/fs/*` is the only place that reaches it.
+ *   `packages/core/fs/*` is the only place that reaches `node:fs`.
  */
 
 import {
@@ -27,8 +26,10 @@ import {
 	readlinkSync,
 	realpathSync,
 	statSync,
-} from "@mailwoman/platform/fs"
-import type { Dirent, Stats } from "@mailwoman/platform/fs"
+	type Dirent,
+	type Stats,
+} from "node:fs"
+
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { parseJSONStrict } from "#objects"
@@ -86,6 +87,10 @@ export function tryStatLinkSync(path: PathBuilderLike | URL): Stats | null {
  * Unlike the builtin `existsSync`, a path that cannot be READ raises rather than reporting absence: EACCES on a parent
  * directory is not the same answer as "there is nothing here", and conflating them is how a reader reports a gap it
  * never measured.
+ *
+ * Prefer the asynchronous {@linkcode pathExists} in almost all cases.
+ *
+ * @deprecated Use {@linkcode pathExists} instead.
  */
 export function pathExistsSync(path: PathBuilderLike | URL): boolean {
 	return tryStatSync(path) !== null

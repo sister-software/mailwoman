@@ -4,13 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { runFileSync } from "@mailwoman/core/process"
+import { repoRootPath } from "@mailwoman/core/utils"
 import { describe, expect, it } from "vitest"
 
-const HOOK = fileURLToPath(import.meta.resolve("../../hooks/symbol-precheck.ts"))
-const REPO_ROOT = fileURLToPath(import.meta.resolve("../../../../"))
+const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "hooks", "symbol-precheck.ts")
+const REPO_ROOT = repoRootPath()
 
 interface HookOutput {
 	hookSpecificOutput?: {
@@ -23,7 +24,7 @@ interface HookOutput {
  * Drive the hook exactly as the harness does: one JSON payload on stdin, one JSON document on stdout.
  */
 function runHook(payload: unknown): HookOutput {
-	const stdout = execFileSync("node", [HOOK], {
+	const stdout = runFileSync("node", [HOOK], {
 		cwd: REPO_ROOT,
 		input: JSON.stringify(payload),
 		encoding: "utf8",

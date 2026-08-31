@@ -19,6 +19,8 @@
  *   projection and the seal — which is what fixtures structurally cannot.
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -76,9 +78,6 @@ interface Options {
 
 const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { execFileSync } = await import("@mailwoman/platform/child_process")
-
-		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const {
@@ -169,7 +168,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
 		const out = options.out ?? String(dataRootPath("coastal", "coastal-england.db"))
-		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		// The declared count comes from the source's own per-layer totals, so a short read throws rather than building a
 		// shorter coastline. A `--limit` run declares the limited total for the same reason.
@@ -221,7 +220,7 @@ const GazetteerBuildCoastal: ParsedCommandComponent<Options> = ({ options }) => 
 		})
 
 		const lines = [
-			`coastal-england.db: ${out} (${await artifactSizeMB(out)} MB)`,
+			`coastal-england.db: ${out} (${await formatFileSize(out)})`,
 			`${result.erosionFeatures.toLocaleString()} erosion polygons across ${Object.keys(result.scenarioCounts).length} scenario(s) · ` +
 				`${result.instabilityFeatures.toLocaleString()} ground-instability polygons (their own table, never an erosion answer)`,
 			`scenarios: ${Object.entries(result.scenarioCounts)

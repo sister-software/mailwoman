@@ -24,7 +24,8 @@
  *   `gazetteer build poi`.
  */
 
-import { execFileSync } from "@mailwoman/platform/child_process"
+import { formatFileSize } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
 import { H3_MAX_RESOLUTION } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 
@@ -102,7 +103,6 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 			)
 		}
 
-		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { LayerTier } = await import("@mailwoman/core/layers")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy/lookup")
@@ -130,7 +130,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 
 		const referencePath = options.reference ?? dataRootPath("poi", "poi.db")
 		const out = options.out ?? dataRootPath("poi", `poi-coverage-${options.category}-${slugify(region)}.db`)
-		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		// DYNAMIC import, required: @mailwoman/osm is UNPUBLISHED (ODbL counsel sign-off pending —
 		// see osm/README.md), so a top-level import breaks the published CLI on a clean install. Same
@@ -194,7 +194,7 @@ const GazetteerBuildPOICoverage: ParsedCommandComponent<Options> = ({ options })
 		const { completeness } = coverage
 
 		return [
-			`poi coverage layer (${options.category}/${region}): ${out} (${await artifactSizeMB(out)} MB)`,
+			`poi coverage layer (${options.category}/${region}): ${out} (${await formatFileSize(out)})`,
 			`${result.rows.toLocaleString()} rows · ${result.coverageCells.toLocaleString()} surveyed cells ` +
 				`· ${coverage.emptyCells.toLocaleString()} of them observed-empty`,
 			`inventories: reference ${completeness.firstCount.toLocaleString()} · subject ${completeness.secondCount.toLocaleString()}` +

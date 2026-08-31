@@ -33,9 +33,10 @@ import { pathExists, readFileRange, readLocalTextFile, statPath } from "@mailwom
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { md5File } from "@mailwoman/core/utils/hash"
+import { basename, resolvePath, type PathBuilderLike } from "path-ts"
 
-import { FST_FORMAT_VERSION } from "./fst-serialize.ts"
-import type { FSTProvenance } from "./fst-types.ts"
+import { FST_FORMAT_VERSION } from "#fst-serialize"
+import type { FSTProvenance } from "#fst-types"
 
 /**
  * Fixed header size in bytes — mirrors `fst-serialize.ts`'s `HEADER_SIZE`. Duplicated rather than exported across
@@ -159,7 +160,11 @@ export { md5File } from "@mailwoman/core/utils/hash"
  * write and the caller still gets its answer, because refusing to check freshness on a read-only tree would be the
  * wrong trade.
  */
-export async function readWOFSourceIdentity(path: string, { refreshSidecar = true } = {}): Promise<FSTSourceIdentity> {
+export async function readWOFSourceIdentity(
+	source: PathBuilderLike,
+	{ refreshSidecar = true } = {}
+): Promise<FSTSourceIdentity> {
+	const path = resolvePath(source)
 	const stats = await statPath(path)
 	const memoKey = `${path}\0${stats.mtimeMs}\0${stats.size}`
 	const hit = sourceIdentityMemo.get(memoKey)
@@ -185,7 +190,7 @@ export async function readWOFSourceIdentity(path: string, { refreshSidecar = tru
 
 		if (refreshSidecar) {
 			try {
-				await writeLocalTextFile(`${md5}  ${path.split("/").pop()}\n`, sidecarPath)
+				await writeLocalTextFile(`${md5}  ${basename(path)}\n`, sidecarPath)
 			} catch {
 				// Read-only data root — the digest is still correct, it just isn't cached.
 			}

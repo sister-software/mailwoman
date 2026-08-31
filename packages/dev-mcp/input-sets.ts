@@ -23,7 +23,7 @@ import type { SeedCase } from "mailwoman/eval-harness/gauntlet/cases/seed-case"
 import { drawHoldoutSample, holdoutSources } from "mailwoman/eval-harness/gauntlet/holdout"
 import { routeCountry } from "mailwoman/eval-harness/gauntlet/routing"
 
-import type { Selection } from "./power.ts"
+import type { Selection } from "#power"
 
 /**
  * Repo-relative home of the triaged parity fixtures — the same literal `parity-corpus.ts` exports as

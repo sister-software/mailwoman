@@ -15,7 +15,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/utils"
 import { readDeclaredArtifactFile, unfedAnchorDetail } from "@mailwoman/neural/weights-channels"
-import { join } from "@mailwoman/platform/path"
+import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -23,7 +23,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function packageDir(card?: unknown, siblings: string[] = []): Promise<string> {
-	const dir = fixtures.use(await temporaryDirectory("weights-card-")).path
+	const dir = resolvePath(fixtures.use(await temporaryDirectory("weights-card-")).path)
 
 	await makeDirectories(dir)
 

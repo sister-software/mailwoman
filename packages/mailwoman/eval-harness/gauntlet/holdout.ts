@@ -18,7 +18,7 @@ import { resolveWeights } from "@mailwoman/neural"
 import { haversineKm } from "@mailwoman/spatial"
 import { TextSpliterator } from "spliterator"
 
-import { buildGauntletDeps, type GauntletDeps, type GauntletResolverLevers } from "./harness.ts"
+import { buildGauntletDeps, type GauntletDeps, type GauntletResolverLevers } from "#eval-harness/gauntlet/harness"
 
 /**
  * Two-sided 95% critical value of the standard normal. The gate blocks only on a SIGNIFICANT regression, so a candidate

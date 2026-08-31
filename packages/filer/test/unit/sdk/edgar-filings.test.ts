@@ -14,6 +14,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
 	accessionArchiveURL,
 	fetchCompanyTickers,
@@ -32,7 +33,6 @@ import {
 	type SECGetClient,
 } from "@mailwoman/filer/sdk/edgar-filings"
 import type { SECDocumentClient } from "@mailwoman/filer/sdk/exhibit21"
-import { join } from "@mailwoman/platform/path"
 import { describe, expect, it } from "vitest"
 
 describe("isCIK / toCIK", () => {
@@ -318,7 +318,7 @@ describe("fetchTenKFilings", () => {
 })
 
 const headerHTML = await readLocalTextFile(
-	join(import.meta.dirname, "../../../test-fixtures/edgar/lumen-2025-index-headers.html")
+	resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar", "lumen-2025-index-headers.html")
 )
 
 describe("Exhibit 21 document discovery", () => {

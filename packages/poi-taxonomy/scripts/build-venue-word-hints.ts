@@ -38,13 +38,13 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { createHash } from "@mailwoman/platform/crypto"
-import { resolve } from "@mailwoman/platform/path"
+import { md5Hex } from "@mailwoman/core/utils/hash"
 
-import type { VenueWordHint, VenueWordHintTable } from "../venue-word-hints.ts"
+import type { VenueWordHint, VenueWordHintTable } from "#venue-word-hints"
 
 /**
  * Minimum share of the token's venue-vs-place per-million rate mass (`poi_rate / (poi_rate + place_rate)`).
@@ -138,10 +138,10 @@ async function main(): Promise<void> {
 	const sourcePath = String(dataRootPath("derived", "venue-word-lexicon-f6.json"))
 	const raw = await readLocalTextFile(sourcePath)
 	const source = parseJSONStrict<SourceLexicon>(raw)
-	const sourceMD5 = createHash("md5").update(raw).digest("hex")
+	const sourceMD5 = md5Hex(raw)
 
 	const table = buildVenueWordHintTable(source, sourceMD5)
-	const outPath = resolve(import.meta.dirname, "../data/venue-word-hints.json")
+	const outPath = resolvePackagePath("@mailwoman/poi-taxonomy", "data", "venue-word-hints.json")
 
 	await writeLocalJSONFile(table, outPath)
 

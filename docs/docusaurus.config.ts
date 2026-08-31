@@ -1,6 +1,6 @@
 import type * as Preset from "@docusaurus/preset-classic"
 import type { Config } from "@docusaurus/types"
-import { execSync } from "@mailwoman/platform/child_process"
+import { runShellSync } from "@mailwoman/core/process"
 import { themes as prismThemes } from "prism-react-renderer"
 
 import type { GlossaryPluginOptions } from "./plugins/glossary/plugin.ts"
@@ -27,7 +27,7 @@ const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
 const gitHash = (() => {
 	try {
-		return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+		return runShellSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
 	} catch {
 		return "unknown"
 	}

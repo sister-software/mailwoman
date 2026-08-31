@@ -14,11 +14,11 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier } from "@mailwoman/core/layers"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { ManifestState, readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -26,7 +26,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function scratch(): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mw-freshness-")).path
+	const root = fixtures.use(await temporaryDirectory("mw-freshness-")).path.toString()
 
 	return root
 }

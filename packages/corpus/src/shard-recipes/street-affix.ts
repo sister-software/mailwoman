@@ -38,23 +38,24 @@ import {
 } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
+import { NAME_PRONE_US_SUFFIXES } from "#name-prone-us-suffixes"
+import {
+	makeMulberry32,
+	readCSVRecords,
+	readZippedCSVRecords,
+	shardSourceID,
+	type ShardRecipe,
+} from "#shard-recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
-import { NAME_PRONE_US_SUFFIXES } from "../name-prone-us-suffixes.ts"
-import { makeMulberry32, readCSVRecords, readZippedCSVRecords, shardSourceID, type ShardRecipe } from "./scaffold.ts"
-
 // Same OA cache as the unit shard. Train = every NON-Vermont state; eval = Vermont (the holdout).
-/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
 
 interface USSource {
-	zip: string
+	zip: PathBuilderLike
 	csv: string
 	region: string
 }
@@ -80,7 +81,7 @@ const EVAL_SOURCE: USSource = {
 // build-country-shard-balanced.mjs: FR = number-street, postcode-city; DE/IT/NL = street-number,
 // postcode-city. `order` drives the body.
 interface BalanceSource {
-	zip: string
+	zip: PathBuilderLike
 	csv: string
 	iso2: string
 	region: string
@@ -242,6 +243,9 @@ function parseStreet(
 
 export type SuffixBoundaryClass = "terminal-only" | "terminal-contrast"
 
+// A terminal-only surface needs a name word before the penultimate suffix (`Blue Hill Rd`): three words at least.
+const TERMINAL_ONLY_MIN_WORDS = 3
+
 /**
  * Classify a real street surface for #1569. `terminal-only` has an ambiguous suffix-eligible name word immediately
  * before a different terminal type (`Blue Hill Rd`); `terminal-contrast` ends at the ambiguous word itself (`Sutton
@@ -258,7 +262,7 @@ export function classifySuffixBoundaryStreet(street: string): SuffixBoundaryClas
 
 	if (NAME_PRONE_US_SUFFIXES.has(terminal.canonical)) return "terminal-contrast"
 
-	if (words.length < 3) return null
+	if (words.length < TERMINAL_ONLY_MIN_WORDS) return null
 
 	const penultimate = matchTrailingSuffix(words.at(-2)!)
 
@@ -329,14 +333,25 @@ const VENUE_POOL_CSV = dataRootPath(
 	"Health_Center_Service_Delivery_and_LookAlike_Sites.csv"
 )
 
-async function readVenuePool(csvPath: string): Promise<string[]> {
+// Facility-name length window: shorter reads as an initialism, longer as a sentence.
+const VENUE_NAME_MIN_LENGTH = 3
+const VENUE_NAME_MAX_LENGTH = 60
+
+async function readVenuePool(csvPath: PathBuilderLike): Promise<string[]> {
 	const seen = new Set<string>()
 	const pool: string[] = []
 
 	for await (const record of readCSVRecords(csvPath)) {
 		const name = (record["site name"] ?? record["Site Name"] ?? "").trim().replaceAll(/\s+/gu, " ")
 
-		if (name.length < 3 || name.length > 60 || name.includes(",") || !/\p{L}/u.test(name)) continue
+		if (
+			name.length < VENUE_NAME_MIN_LENGTH ||
+			name.length > VENUE_NAME_MAX_LENGTH ||
+			name.includes(",") ||
+			!/\p{L}/u.test(name)
+		)
+			continue
+
 		const key = name.toLowerCase()
 
 		if (seen.has(key)) continue
@@ -655,6 +670,11 @@ export const streetAffixRecipe: ShardRecipe = {
 	},
 }
 
+// The venue shell needs a real register: fewer names than this and the rows read as templates again.
+const VENUE_POOL_MIN_SIZE = 500
+// While both classes are open: 80% terminal-only, 20% terminal-contrast.
+const TERMINAL_ONLY_SHARE = 0.8
+
 /**
  * #1569 root-fix shard. Both classes come from real non-Vermont OA streets and use the affix recipe's existing layout
  * diversity. v4.3.1 makes terminal-only 80% of the mix: the first 40/60 run moved a 100-row TRAIN sample only 4→11
@@ -682,7 +702,7 @@ export const suffixBoundaryRecipe: ShardRecipe = {
 		// v2 venue shell: real facility names, loud when the source file is missing or thin.
 		const venuePool = await readVenuePool(VENUE_POOL_CSV)
 
-		if (venuePool.length < 500) {
+		if (venuePool.length < VENUE_POOL_MIN_SIZE) {
 			throw new Error(
 				`suffix-boundary v2 venue pool too thin: ${venuePool.length} names from ${VENUE_POOL_CSV} — ` +
 					"is the usgov-hrsa-fqhc source present?"
@@ -772,7 +792,7 @@ export const suffixBoundaryRecipe: ShardRecipe = {
 
 			const rowClass: SuffixBoundaryClass =
 				terminalOnlyOpen && terminalContrastOpen
-					? random() < 0.8
+					? random() < TERMINAL_ONLY_SHARE
 						? "terminal-only"
 						: "terminal-contrast"
 					: terminalContrastOpen

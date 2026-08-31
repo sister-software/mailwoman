@@ -39,10 +39,10 @@
 import { APIClient } from "@mailwoman/core/api"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { downloadToFile, writeManifest } from "./download.ts"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "ourairports"
 

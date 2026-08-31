@@ -34,7 +34,7 @@
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import * as path from "@mailwoman/platform/path"
+import { dirname, join } from "path-ts"
 import { $ } from "zx"
 
 /**
@@ -173,11 +173,11 @@ async function resolveStates(opts: CoverageBuildOptions): Promise<StateShard[]> 
 		const file = bySlug.get(slug)
 
 		if (!file) throw new Error(`no address-point shard for state '${slug}' under ${opts.dataRoot}`)
-		const interpFile = opts.interpRoot ? path.join(opts.interpRoot, `interpolation-us-${slug}.db`) : ""
+		const interpFile = opts.interpRoot ? join(opts.interpRoot, `interpolation-us-${slug}.db`) : ""
 
 		out.push({
 			slug,
-			file: path.join(opts.dataRoot, file),
+			file: join(opts.dataRoot, file),
 			interp: opts.interpRoot && (await pathExists(interpFile)) ? interpFile : null,
 		})
 	}
@@ -346,7 +346,7 @@ export async function buildCoverageTiles(
 	)
 
 	// --- Stream features to NDJSON ---
-	await makeDirectories(path.dirname(opts.out))
+	await makeDirectories(dirname(opts.out))
 	const ndjsonPath = opts.out.replace(/\.pmtiles$/, "") + ".ndjson"
 	const sink = openWriteStream(ndjsonPath)
 	let featureCount = 0

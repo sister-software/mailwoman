@@ -24,6 +24,13 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -48,7 +55,7 @@
 	"dependencies": {
 		"@fragaria/address-formatter": "^7.0.0",
 		"@mailwoman/core": "workspace:*",
-		"spliterator": "^6.3.1"
+		"spliterator": "^6.4.1"
 	},
 	"devDependencies": {
 		"@types/node": ">=26.1.2"

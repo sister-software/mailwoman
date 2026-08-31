@@ -11,7 +11,7 @@
  *   ascending by revision (`compareRevisionAsc`) rather than in API order.
  */
 
-import type { BDCClient } from "./client.ts"
+import type { BDCClient } from "#sdk/client"
 import {
 	compareRevisionAsc,
 	parseRawBDCFile,
@@ -21,7 +21,7 @@ import {
 	type BDCStateSubCategory,
 	type BDCSummarySubCategory,
 	type RawBDCFile,
-} from "./common.ts"
+} from "#sdk/common"
 
 export interface RetrieveProviderAvailabilityFilesParams {
 	/**

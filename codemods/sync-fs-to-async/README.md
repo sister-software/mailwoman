@@ -95,7 +95,7 @@ the cause.
 
 ## What it edits, and what it refuses to
 
-- A call is a candidate only when its callee is an identifier bound from `@mailwoman/platform/fs`, `node:fs` or `fs` —
+- A call is a candidate only when its callee is an identifier bound from `node:fs` or `fs` —
   by a static `import`, **or** by the `await import("…")` destructuring the Ink commands use to keep a Node builtin out
   of a bundle. Missing that second form is what left 43 call sites behind on a first pass.
 - Parentheses are added only where `await` would bind wrong: a member access, a call callee, a unary operand, a
@@ -114,10 +114,9 @@ All opt-in. Without them the codemod does the mechanical half and nothing else.
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `topLevelAwait=<path fragments>` | a module-scope call may become a top-level `await` in a file matching one of these. Pass only ENTRIES — `.test.ts`, `/scripts/`, `/dev-tools/`, `.run.ts` — because top-level await in an IMPORTED module makes its evaluation asynchronous, which this repository has already had to undo once for cause (`packages/core/resources/libpostal.ts`, #481). |
 | `promote=<names>`                | function names this run is making `async` across the whole repository, so a call to one gets its `await` in every file. Computed as a repo-wide fixpoint by `scratchpad/codemod/promotion-set.ts`, which is where the cross-file question is answered.                                                                                                    |
-| `syncFallback=true`              | where the call cannot become asynchronous at all, rewrite to the `Sync`-suffixed helper rather than leaving the builtin. This is the second pass: after everything that could move has moved, what remains still reaches a HELPER, which is what leaves `@mailwoman/platform/fs` to `packages/core/fs/*` alone.                                           |
+| `syncFallback=true`              | where the call cannot become asynchronous at all, rewrite to the `Sync`-suffixed helper rather than leaving the builtin. This is the second pass: after everything that could move has moved, what remains still reaches a HELPER, which is what leaves `node:fs` to `packages/core/fs/*` alone.                                                          |
 
-The promises mirror needs no parameter. `@mailwoman/platform/fs/promises` and
-`node:fs/promises` map onto the same helpers by the same rules, and the rewrite
+The promises surface needs no parameter. `node:fs/promises` maps onto the same helpers by the same rules, and the rewrite
 adds no `await` — those names already answer a promise, so the call site's
 existing handling is correct as it stands.
 

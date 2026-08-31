@@ -7,14 +7,12 @@
  *   and rejects bad input, and that a model-independent fast-path input runs through the compiled CLI.
  */
 
+import { runFile } from "@mailwoman/core/process"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { parseCommand } from "mailwoman/cli-native/spec"
 import { spec as parseSpec } from "mailwoman/commands/parse"
 import { describe, expect, test } from "vitest"
 
-const exec = promisify(execFile)
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 describe("--locale validation", () => {
@@ -37,7 +35,7 @@ describe("--locale validation", () => {
 
 describe("npx mailwoman parse '<input>' (default — runtime pipeline)", () => {
 	test("exits 0 on a bare US ZIP+4 via fast-path (postcode_only)", async () => {
-		const { stdout } = await exec(process.execPath, [cliBin, "parse", "10118-1234"])
+		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "10118-1234"])
 		// Fast-path for unambiguous US ZIP+4 emits a postcode root from QueryShape; no model needed.
 		expect(stdout).toContain("postcode")
 		expect(stdout).toContain("10118-1234")

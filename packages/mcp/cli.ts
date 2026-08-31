@@ -51,9 +51,9 @@
 import { filingLandscape, plausibilityCheck, type BDCDatabase } from "@mailwoman/bdc"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { familyRollup, filerLookup, toFRN, type FRN } from "@mailwoman/filer/sdk"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { getPOICategory } from "@mailwoman/poi-taxonomy"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -75,11 +75,11 @@ import {
 	openBDCDatabaseIfPresent,
 	openFilerDatabaseIfPresent,
 	openPlausibilityPOIDeps,
-} from "./layer-guards.ts"
-import { createMCPServer } from "./server.ts"
-import type { MCPToolDeps } from "./tools.ts"
+} from "#layer-guards"
+import { createMCPServer } from "#server"
+import type { MCPToolDeps } from "#tools"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		"poi-db": { type: "string" },
 	},

@@ -9,16 +9,17 @@
  * seam the CLI builds. Each dispatched record is geocoded by `makeGeocodeHandler`.
  */
 
+import { workerData } from "node:worker_threads"
+
 import { decodeAsJSON } from "@mailwoman/core/decoder"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { workerData } from "@mailwoman/platform/worker_threads"
 import { type ColumnMapping, geocodeAddressVia, makeGeocodeHandler } from "@mailwoman/registry"
 import { createWOFResolver } from "@mailwoman/resolver"
 
-import { geocodeAddress, parseForGeocode } from "./geocode-core.ts"
-import { ShardProvider } from "./geocode-shards.ts"
-import type { GeocodeStreamConfig } from "./geocode-stream.ts"
-import { createResolverBackend } from "./resolver-backend.ts"
+import { geocodeAddress, parseForGeocode } from "#geocode-core"
+import { ShardProvider } from "#geocode-shards"
+import type { GeocodeStreamConfig } from "#geocode-stream"
+import { createResolverBackend } from "#resolver-backend"
 
 const { mapping, geocode: cfg } = (workerData?.userData ?? {}) as {
 	mapping: ColumnMapping

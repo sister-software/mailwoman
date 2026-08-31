@@ -25,7 +25,7 @@ import {
 	resolveLocaleParts,
 } from "@mailwoman/corpus/shard-recipes/locale"
 import { makeMulberry32 } from "@mailwoman/corpus/shard-recipes/scaffold"
-import { join } from "@mailwoman/platform/path"
+import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 import type { SynthesizedLocaleRow } from "#synthesizers/german"
@@ -78,7 +78,7 @@ describe("readTuples (OA CSV parse)", () => {
 	const dirs: string[] = []
 
 	const tmp = async (): Promise<string> => {
-		const d = fixtures.use(await temporaryDirectory("mw-locale-")).path
+		const d = resolvePath(fixtures.use(await temporaryDirectory("mw-locale-")).path)
 		dirs.push(d)
 
 		return d

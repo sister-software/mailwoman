@@ -8,8 +8,9 @@
 
 import type { ReactNode } from "react"
 
+import type { ParsedComponent } from "#pipeline/types"
+
 import { ConfidenceCell } from "./ConfidenceCell.tsx"
-import type { ParsedComponent } from "./types.ts"
 
 export interface ComponentTableProps {
 	nodes: ParsedComponent[]

@@ -24,8 +24,7 @@ nodes:
             - "**/build/**"
             # The platform package IS the `node:fs` mirror. Its synchronous re-exports are the thing being redirected
             # away from, not a call site to redirect.
-            - "packages/platform/**"
-            # This package's own fixtures assert the before-and-after, so rewriting them would make the tests pass by
+                      # This package's own fixtures assert the before-and-after, so rewriting them would make the tests pass by
             # deleting what they measure.
             - "codemods/**"
 

@@ -1,10 +1,10 @@
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import type { z } from "zod"
 
-import { loadEnvFile } from "./load.ts"
-import { PrivateEnvSchema, PublicEnvSchema } from "./schema.ts"
+import { loadEnvFile } from "#env/load"
+import { PrivateEnvSchema, PublicEnvSchema } from "#env/schema"
 
-export { DefaultMailwomanPaths } from "./paths.ts"
+export { DefaultMailwomanPaths } from "#env/paths"
 
 /**
  * The `.env` layer, resolved the first time a property is read rather than when this module is evaluated.

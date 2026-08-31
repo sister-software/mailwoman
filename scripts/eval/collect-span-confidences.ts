@@ -43,12 +43,12 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { JSONSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
+const { values: rawValues } = parseArguments({
 	options: {
 		"anchor-lookup": { type: "string" },
 		"gazetteer-lexicon": { type: "string" },

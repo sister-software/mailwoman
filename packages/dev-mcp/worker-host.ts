@@ -25,8 +25,8 @@
  *   state: it is the operator-intent signal.
  */
 
-import { type ChildProcess, fork } from "@mailwoman/platform/child_process"
-import { once } from "@mailwoman/platform/events"
+import { type ChildProcess, forkProcess } from "@mailwoman/core/process"
+import { once } from "@mailwoman/core/utils/events"
 
 export interface WorkerToolMeta {
 	name: string
@@ -136,7 +136,7 @@ export class WorkerHost implements AsyncDisposable {
 	}
 
 	async start(): Promise<void> {
-		const child = fork(this.#options.workerPath, this.#options.workerArgs, {
+		const child = forkProcess(this.#options.workerPath, this.#options.workerArgs, {
 			stdio: ["ignore", "pipe", "pipe", "ipc"],
 			// A clean argv: inherited inspector/debug flags would collide on ports across respawns.
 			execArgv: [],

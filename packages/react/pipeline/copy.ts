@@ -7,7 +7,7 @@
  *   pretty-printed. Pure; shared by the explorer's copy button.
  */
 
-import type { ParseResult, ResolvedPlaceView } from "./types.ts"
+import type { ParseResult, ResolvedPlaceView } from "#pipeline/types"
 
 export function buildParsePayload(result: ParseResult, selected: ResolvedPlaceView | null): string {
 	return JSON.stringify(

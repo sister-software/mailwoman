@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { existsSync, readFileSync } from "node:fs"
 import { beforeAll, describe, it } from "vitest"
 
 describe("suite", () => {

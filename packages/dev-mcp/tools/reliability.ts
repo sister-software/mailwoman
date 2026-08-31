@@ -9,10 +9,10 @@
 
 import { z } from "zod"
 
-import { ReliabilitySurface, runReliability } from "../reliability-report.ts"
-import { ComponentAggregate, UnassertedPolicy } from "../reliability-surfaces.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
+import { ReliabilitySurface, runReliability } from "#reliability-report"
+import { ComponentAggregate, UnassertedPolicy } from "#reliability-surfaces"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 
 export const reliabilityTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_reliability",

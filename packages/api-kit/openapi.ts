@@ -9,8 +9,7 @@
  */
 
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import { mkdirSync, writeFileSync } from "@mailwoman/platform/fs"
-import { dirname } from "@mailwoman/platform/path"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 
 type OpenAPISecurityRequirements = Parameters<OpenAPIHono["getOpenAPI31Document"]>[0]["security"]
 
@@ -89,17 +88,16 @@ export function emitOpenAPIDocuments(app: OpenAPIHono, info: OpenAPIDocInfo): { 
  * gitignored, not-yet-existing `docs/static/openapi/`). One place owns this so the four emitters can't drift out of
  * lockstep with each other.
  */
-export function printOpenAPIDocument(
+export async function printOpenAPIDocument(
 	app: OpenAPIHono,
 	info: OpenAPIDocInfo,
 	opts: { flavor?: string; out?: string } = {}
-): void {
+): Promise<void> {
 	const { v31, v30 } = emitOpenAPIDocuments(app, info)
-	const json = JSON.stringify(opts.flavor === "3.0" ? v30 : v31)
+	const json = opts.flavor === "3.0" ? v30 : v31
 
 	if (opts.out) {
-		mkdirSync(dirname(opts.out), { recursive: true })
-		writeFileSync(opts.out, `${json}\n`)
+		await writeLocalJSONFile(json, opts.out)
 	} else {
 		console.log(json)
 	}

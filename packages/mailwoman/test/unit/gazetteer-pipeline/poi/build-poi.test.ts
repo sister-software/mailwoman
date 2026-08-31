@@ -15,7 +15,7 @@
  *   coordinates the loader must skip (and count) rather than insert.
  */
 
-import { statPath } from "@mailwoman/core/fs/readers"
+import { isFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { CoverageBasis, LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
 import { POILookup } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
@@ -204,7 +204,7 @@ describe("buildPOIDatabase", () => {
 		})
 
 		expect(result.rows).toBe(30)
-		expect((await statPath(nestedOut)).isFile()).toBe(true)
+		await expect(isFile(nestedOut)).resolves.toBe(true)
 	})
 })
 

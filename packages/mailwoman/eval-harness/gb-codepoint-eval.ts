@@ -31,13 +31,13 @@
 
 import { readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, mulberry32 } from "@mailwoman/core/utils"
-import { basename, join } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
+import { basename, join } from "path-ts"
 
-import { createGeocodeCommandOptions } from "../geocode-command-options.ts"
-import { createGeocodeSession } from "../geocode-session.ts"
+import { createGeocodeCommandOptions } from "#geocode-command-options"
+import { createGeocodeSession } from "#geocode-session"
 
 interface SampledPostcode {
 	area: string
@@ -148,7 +148,7 @@ function mutateFinalLetter(postcode: string): string {
 	return postcode.slice(0, -1) + next
 }
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		stamp: { type: "string", default: "2026-08-05" },
 		"per-area": { type: "string", default: "5" },

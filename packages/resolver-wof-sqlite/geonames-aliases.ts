@@ -27,11 +27,11 @@
 import { isOfficialLanguage } from "@mailwoman/codex/country"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import { GEONAMES_POSTAL_ID_BASE } from "./geonames-postal.ts"
-import type { WOFDatabase } from "./schema.ts"
+import { GEONAMES_POSTAL_ID_BASE } from "#geonames-postal"
+import type { WOFDatabase } from "#schema"
 
 /**
  * Synthetic id base for GeoNames-sourced rows (#743/#193) — above Overture's 8e12 so the three sources (WOF real ids,
@@ -192,7 +192,7 @@ async function parseAlternateNamesV2(
 export async function ingestGeonamesAliases(
 	db: DatabaseClient<WOFDatabase>,
 	countries: string[],
-	geonamesDir: string,
+	geonamesDir: PathBuilderLike,
 	onProgress?: (event: GeonamesIngestProgress) => void,
 	opts?: {
 		/**
@@ -211,7 +211,7 @@ export async function ingestGeonamesAliases(
 		 * at 7 new name-exact collisions globally). The main dump's bare `alternatenames` list still decides WHICH rows
 		 * exist; V2 only decorates them. Missing file = the pre-#936 untagged behavior, not an error.
 		 */
-		alternateDir?: string
+		alternateDir?: PathBuilderLike
 	}
 ): Promise<number> {
 	// Latin-only, no bracket/paren noise GeoNames packs into `alternatenames` ("(( Karis Landskommun ))",

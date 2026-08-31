@@ -36,10 +36,10 @@
 import { addCoverageCells, encodeRings, ringAreaReadings, ringsBoundingBox } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { ZoningDatabase } from "../schema.ts"
-import { GZT_CROSSWALK_SCHEME, GZT_PROVENANCE_GRADE, GZT_ROLLUP_SCHEME, localSchemeFor } from "../vocabulary.ts"
-import { classifyFeatureCells, featureCellRows } from "./cells.ts"
-import type { ZoningFeatureSource, ZoningSourceFeature } from "./ingest.ts"
+import type { ZoningDatabase } from "#schema"
+import { classifyFeatureCells, featureCellRows } from "#sdk/cells"
+import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest"
+import { GZT_CROSSWALK_SCHEME, GZT_PROVENANCE_GRADE, GZT_ROLLUP_SCHEME, localSchemeFor } from "#vocabulary"
 
 /**
  * Rows per bulk-insert transaction. Chosen for the geometry table, whose rows carry a blob: a larger transaction grows

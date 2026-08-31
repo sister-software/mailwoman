@@ -51,7 +51,7 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { defaultAdapterRegistry } from "#adapters/utils"

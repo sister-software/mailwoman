@@ -16,18 +16,18 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
 import { synthesizeGermanRow, type LocaleBaseTuple } from "#synthesizers/german"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A German OA source (cached zip) + the Bundesland the file covers (OA's REGION column is empty for DE).
  */
 interface GermanSource {
-	zip: string
+	zip: PathBuilderLike
 	csv: string
 	region: string
 }

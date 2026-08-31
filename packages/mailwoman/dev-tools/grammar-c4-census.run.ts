@@ -6,23 +6,23 @@
 /* oxlint-disable sister-software/multiline-statement-padding -- each row's evidence assembly reads as one operation */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
 import { groupPhrasesSync } from "@mailwoman/phrase-grouper/group"
-import { parseArgs } from "@mailwoman/platform/util"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { loadStreetMorphologyFST } from "@mailwoman/resolver-wof-sqlite/street-morphology-fst-loader"
 
-import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
-import { buildGauntletDeps } from "../eval-harness/gauntlet/harness.ts"
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
+import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
+import { gradeBoundaryTruth, locateUniqueComponentTruth, spansFromBIO } from "#eval-harness/grammar-census"
 import {
 	type ClassifiedC4BoundaryReceipt,
 	type C4TruthPosition,
 	observeC4Boundaries,
 	summarizeC4FeatureVectors,
-} from "../eval-harness/grammar-census-c4.ts"
-import { gradeBoundaryTruth, locateUniqueComponentTruth, spansFromBIO } from "../eval-harness/grammar-census.ts"
+} from "#eval-harness/grammar-census-c4"
 
-const { values } = parseArgs({ options: { "out-json": { type: "string" } } })
+const { values } = parseArguments({ options: { "out-json": { type: "string" } } })
 const cases = await loadRegressionCases()
 const deps = await buildGauntletDeps()
 const rows: Array<{

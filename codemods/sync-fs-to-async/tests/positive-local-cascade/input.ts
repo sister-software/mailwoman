@@ -1,4 +1,6 @@
-import { readFileSync } from "@mailwoman/platform/fs"
+/// <reference types="node" />
+
+import { readFileSync } from "node:fs"
 
 function readConfig(path: string): string {
 	return readFileSync(path, "utf8")

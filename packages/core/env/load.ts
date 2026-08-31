@@ -1,4 +1,5 @@
-import { parseEnv } from "@mailwoman/platform/util"
+import { parseEnv } from "node:util"
+
 import type { PathBuilderLike } from "path-ts"
 
 import { pathExistsSync, readLocalTextFileSync } from "#fs/readers-sync"

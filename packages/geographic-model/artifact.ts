@@ -36,7 +36,7 @@ import type {
 	ExternalMappingRecord,
 	RelationRecord,
 	SourceObservationRecord,
-} from "./schema.ts"
+} from "#schema"
 
 /**
  * The artifact FORMAT version — incremented by hand when the compiled shape changes, so a reader meeting an artifact it

@@ -44,7 +44,7 @@ interface Options {
 const ClientsGenerate: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { generateClients } = await import("../../tools/generate-clients.ts")
+			const { generateClients } = await import("#tools/generate-clients")
 
 			return await generateClients({
 				outDir: options.outDir,

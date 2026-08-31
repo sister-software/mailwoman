@@ -36,10 +36,9 @@
  *   first place to look is whichever stage received the two forms still distinct.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
-import type { ConformanceFixture } from "./fixture.ts"
+import type { ConformanceFixture } from "#eval-harness/conformance/fixture"
 
 /**
  * The law name every row in this suite carries.
@@ -195,16 +194,15 @@ export function canonicalApplicability(text: string, form: CanonicalFormName): C
 /**
  * The committed suite.
  *
- * `new URL`-relative with a compiled-tree fallback: `tsc` emits no `.jsonl` into `out/`, so a compiled caller reads the
- * source-tree copy. Same bridge as `gauntlet/cases/load.ts`'s `CASES_DIR`.
+ * Anchored at the package root: `tsc` emits no `.jsonl` into `out/`, so the file is named from where the package starts
+ * rather than from where this module runs.
  */
-export const NFC_NFD_SUITE_PATH: string = await (async (): Promise<string> => {
-	const sibling = fileURLToPath(new URL("nfc-nfd.jsonl", import.meta.url))
-
-	if (await pathExists(sibling)) return sibling
-
-	return fileURLToPath(new URL("../../../eval-harness/conformance/nfc-nfd.jsonl", import.meta.url))
-})()
+export const NFC_NFD_SUITE_PATH: string = resolvePackagePath(
+	"mailwoman",
+	"eval-harness",
+	"conformance",
+	"nfc-nfd.jsonl"
+)
 
 /**
  * How much of the population this law actually transformed.

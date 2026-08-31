@@ -28,10 +28,10 @@
  *   false` for the same reason an empty suite does.
  */
 
-import type { GauntletDeps } from "../gauntlet/harness.ts"
-import { toGauntletResult } from "../gauntlet/harness.ts"
-import { type ComparatorReading, compareOutcomes, type ConformanceOutcome } from "./comparators.ts"
-import type { ConformanceContext, ConformanceFixture } from "./fixture.ts"
+import { type ComparatorReading, compareOutcomes, type ConformanceOutcome } from "#eval-harness/conformance/comparators"
+import type { ConformanceContext, ConformanceFixture } from "#eval-harness/conformance/fixture"
+import type { GauntletDeps } from "#eval-harness/gauntlet/harness"
+import { toGauntletResult } from "#eval-harness/gauntlet/harness"
 
 /**
  * Produce one side of a law: run `query` under `context` and return what the comparators read.

@@ -35,13 +35,14 @@
  *   Usage: node packages/mailwoman/dev-tools/build-gb-anchor-bin.run.ts --out <dir>
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { serializePostcodeBinary, type PostcodeBinaryEntry } from "@mailwoman/neural/postcode-binary-resolver"
-import { join } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 
 /**
  * A GB unit postcode in the space-stripped key form the train painter writes. Verbatim from
@@ -54,7 +55,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
  */
 const GB_INWARD_LENGTH = 3
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		out: { type: "string" },
 		shard: { type: "string", default: "postalcode-gb-codepoint.db" },
@@ -116,5 +117,5 @@ console.log(
 	`GB: ${entries.length.toLocaleString()} keys ` +
 		`(${(entries.length - outward.size).toLocaleString()} units + ${outward.size.toLocaleString()} outward districts, ` +
 		`${skipped.toLocaleString()} rows skipped as non-unit-shaped) → ${outPath} ` +
-		`(${(bytes.length / 1024 / 1024).toFixed(2)} MB)`
+		`(${ByteFormatter.formatIEC(bytes.length)})`
 )

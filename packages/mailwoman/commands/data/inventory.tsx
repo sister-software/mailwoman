@@ -19,7 +19,6 @@ import { mailwomanDataRoot, repoRootPath } from "@mailwoman/core/utils"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-
 import {
 	buildCommandGaps,
 	inventorySentence,
@@ -27,7 +26,7 @@ import {
 	Provenance,
 	rebuildHint,
 	takeInventory,
-} from "../../data-inventory.ts"
+} from "#data-inventory"
 
 export const description =
 	"Report every database in the data root and whether it records how it was built. `layer_manifest` is " +

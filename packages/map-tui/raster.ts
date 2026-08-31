@@ -13,7 +13,7 @@
  * {@link fillPolygon} does not — its scanline edge math keeps ring vertices as given, see its own docstring.
  */
 
-import type { RGB } from "./style.ts"
+import type { RGB } from "#style"
 
 /**
  * A row-major RGBA pixel buffer. Alpha starts at 0 (unlit/transparent) everywhere; drawing a pixel sets it to 255,

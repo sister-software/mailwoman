@@ -25,7 +25,7 @@ import {
 import { ENGINE_CONFIG_SCHEMA } from "@mailwoman/dev-mcp/tool-kit"
 import { computeTreeFingerprint } from "@mailwoman/dev-mcp/tree-fingerprint"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -42,7 +42,7 @@ async function stageCache(
 	stage: "wrong-shape" | "under-staged" | "ok",
 	declared: string[] = ["fst-en-us.bin"]
 ): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mwdev-weights-cache-")).path
+	const root = String(fixtures.use(await temporaryDirectory("mwdev-weights-cache-")).path)
 	const packageDir = weightsCachePackageDir(root, "en-us")
 
 	await makeDirectories(packageDir)

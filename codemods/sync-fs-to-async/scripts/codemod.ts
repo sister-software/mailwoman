@@ -122,8 +122,8 @@ let topLevelAwaitPaths: string[] = []
  *
  * The second pass of the campaign. After everything that could move has moved, what remains sits in a slot whose caller
  * is synchronous and not ours to change — a React state initializer, a Docusaurus plugin method, a class constructor, a
- * `.filter()` predicate. Those still reach a HELPER rather than the builtin, which is what leaves
- * `@mailwoman/platform/fs` to `packages/core/fs/*` alone.
+ * `.filter()` predicate. Those still reach a HELPER rather than the builtin, which is what leaves `node:fs` to
+ * `packages/core/fs/*` alone.
  */
 let syncFallback = false
 
@@ -803,7 +803,7 @@ const codemod: Codemod<Lang> = async (root, options) => {
 	syncFallback = String(params?.syncFallback ?? "") === "true"
 
 	// `packages/core/fs/*` IS the destination. Rewriting it would point the helpers at themselves, and the synchronous
-	// pair exists precisely so this directory is the only reader of `@mailwoman/platform/fs`.
+	// pair exists precisely so this directory is the only reader of `node:fs`.
 	if (/packages\/core\/fs\//.test(root.filename())) return null
 
 	// PRE-INSTALL entry points and what they reach. The Docs workflow runs these before `yarn install`, so every module

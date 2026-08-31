@@ -22,14 +22,14 @@
  *   determined a location it never looked at.
  */
 
-import { interiorCoverageCellSet, type GeojsonGeometry } from "@mailwoman/spatial"
+import { interiorCoverageCellSet, type ParsedGeometry } from "@mailwoman/spatial"
 
 import {
 	ONS_BOUNDARY_ATTRIBUTION,
 	ONS_BOUNDARY_BASE_URL,
 	ONS_BOUNDARY_LICENSE,
 	ONS_BOUNDARY_PRODUCT,
-} from "./client.ts"
+} from "#sdk/client"
 
 /**
  * The country the EA's coverage statement names.
@@ -82,7 +82,7 @@ export interface FloodMapExtent {
 	statement: string
 	statementURL: string
 	boundary: BoundaryProvenance
-	geometry: GeojsonGeometry
+	geometry: ParsedGeometry
 	bbox: { minLat: number; minLon: number; maxLat: number; maxLon: number }
 	/**
 	 * Short-cell integers at {@link FloodMapExtent.coverageResolution}, every one wholly inside the outline.
@@ -92,7 +92,7 @@ export interface FloodMapExtent {
 }
 
 export interface RealizeExtentOptions {
-	geometry: GeojsonGeometry
+	geometry: ParsedGeometry
 	coverageResolution: number
 	authority: string
 	statement: string
@@ -112,7 +112,7 @@ export interface RealizeExtentOptions {
  *
  * @throws {TypeError} When the document holds no geometry, or a collection holds anything other than one feature.
  */
-export function outlineFromGeoJSON(document: unknown, origin: string): GeojsonGeometry {
+export function outlineFromGeoJSON(document: unknown, origin: string): ParsedGeometry {
 	const node = document as {
 		type?: string
 		geometry?: unknown
@@ -132,9 +132,9 @@ export function outlineFromGeoJSON(document: unknown, origin: string): GeojsonGe
 		return outlineFromGeoJSON(features[0], origin)
 	}
 
-	if (node.geometry) return node.geometry as GeojsonGeometry
+	if (node.geometry) return node.geometry as ParsedGeometry
 
-	if (node.coordinates) return node as GeojsonGeometry
+	if (node.coordinates) return node as ParsedGeometry
 
 	throw new TypeError(`flood extent: ${origin} carries no geometry`)
 }
@@ -172,7 +172,7 @@ export function realizeFloodMapExtent(options: RealizeExtentOptions): FloodMapEx
 /**
  * The outline's bounding rectangle, holes included — a coarse descriptor for the receipt, never the footprint itself.
  */
-function geometryBounds(geometry: GeojsonGeometry): {
+function geometryBounds(geometry: ParsedGeometry): {
 	minLat: number
 	minLon: number
 	maxLat: number

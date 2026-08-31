@@ -40,7 +40,6 @@ import {
 	OSM_ADDRESS_POINT_COLUMNS,
 	type OSMAddressPointDatabase,
 } from "@mailwoman/osm/sdk"
-import { join } from "@mailwoman/platform/path"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import {
 	canonicalizeRouteKey,
@@ -51,6 +50,7 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { latLngToCell } from "h3-js"
+import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**

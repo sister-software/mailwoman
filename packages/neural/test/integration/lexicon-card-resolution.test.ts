@@ -20,11 +20,11 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { LexiconVersionMismatchError, resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 let cacheRoot: TemporaryDirectory
-let packageDir: string
+let packageDir: PathBuilder
 
 /**
  * A package-shaped directory the `cache:` resolution rung finds:

@@ -18,8 +18,8 @@
 import type { AddressPointHit, AddressPointLookup } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { AddressPointDatabase, AddressPointTable } from "./address-point-schema.ts"
-import { hasTable, prepareGet, type PreparedGet } from "./sqlite-utils.ts"
+import type { AddressPointDatabase, AddressPointTable } from "#address-point-schema"
+import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
 import {
 	normalizeLocalityForKey,
 	type NameKey,
@@ -28,7 +28,7 @@ import {
 	streetLocaleForSurface,
 	stripArrondissement,
 	type StreetLocale,
-} from "./street-normalize.ts"
+} from "#street-normalize"
 
 /**
  * The columns this lookup projects — a typed slice of the SHARED {@link AddressPointTable}, so a column rename in

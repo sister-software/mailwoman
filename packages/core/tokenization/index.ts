@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./Graph.ts"
-export * from "./normalizer.ts"
-export * from "./Span.ts"
+export * from "#tokenization/Graph"
+export * from "#tokenization/normalizer"
+export * from "#tokenization/Span"

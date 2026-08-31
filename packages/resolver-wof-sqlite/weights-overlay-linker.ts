@@ -15,11 +15,11 @@ import {
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { dataRootPath, md5File, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 
-import { fstFreshnessWarning } from "./fst-freshness.ts"
+import { fstFreshnessWarning } from "#fst-freshness"
 
 /**
  * Replicate `ln -sf SRC DEST` ATOMICALLY: symlink under a temp name, then rename over the destination. A plain
@@ -295,7 +295,7 @@ export async function buildPairIndexOverlay({
 	// already had; the alternative was a second parameter every caller would have to keep in step with the
 	// first, which is the drift this whole rollout is removing.
 	const PKG_DIR = String(weightsOverlayPath(packageDir.replace(/^neural-weights-/, "")))
-	const DEST = resolve(PKG_DIR, ARTIFACT)
+	const DEST = resolvePath(PKG_DIR, ARTIFACT)
 
 	await makeDirectories(PKG_DIR)
 	/**
@@ -347,7 +347,7 @@ export async function buildPairIndexOverlay({
 		}
 	}
 
-	const result = spawnSync(
+	const result = spawnProcessSync(
 		process.execPath,
 		[
 			CLI,

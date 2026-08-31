@@ -30,9 +30,9 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { JSONSpliterator } from "spliterator"
 
-import type { ParityFixture } from "../dev-tools/convert-parity-fixtures.run.ts"
-import { assertProfile, BaselineDeviationError, formatVerdict } from "./baseline-assert.ts"
-import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "./parity-corpus.ts"
+import type { ParityFixture } from "#dev-tools/convert-parity-fixtures.run"
+import { assertProfile, BaselineDeviationError, formatVerdict } from "#eval-harness/baseline-assert"
+import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "#eval-harness/parity-corpus"
 
 /**
  * Maximum typed-segment length in words.

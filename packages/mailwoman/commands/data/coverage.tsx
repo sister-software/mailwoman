@@ -24,8 +24,7 @@ import { statPath, pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
-
-import type { CoverageReport } from "../../coverage-census.ts"
+import type { CoverageReport } from "#coverage-census"
 
 /**
  * Native command-line contract consumed by the filesystem command router.
@@ -54,7 +53,7 @@ interface Options {
 
 const CoverageCommand: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { censusCoverage } = await import("../../coverage-census.ts")
+		const { censusCoverage } = await import("#coverage-census")
 		const { dataRootPath, repoRootPath } = await import("@mailwoman/core/utils")
 
 		const repoRoot = String(repoRootPath())

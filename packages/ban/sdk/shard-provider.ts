@@ -17,7 +17,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup, StreetCentroidSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { join } from "path-ts"
 
-import { streetLocaleForBANCountry, supportedBANCountries } from "./street-locale.ts"
+import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-locale"
 
 /**
  * What the cascade needs from a BAN shard — structurally a subset of mailwoman's `StateShards`.

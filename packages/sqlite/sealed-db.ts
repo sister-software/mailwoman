@@ -16,10 +16,11 @@
  *   once in code should be a function.
  */
 
+import type { DatabaseSync } from "node:sqlite"
+
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { changeMode, movePath, removePath, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { basename } from "@mailwoman/platform/path"
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import { basename } from "path-ts"
 
 /**
  * The one capability {@link assertDatabaseIntegrity} needs. Narrowing to it rather than naming a handle type lets a
@@ -33,7 +34,7 @@ type IntegrityProbe = Pick<DatabaseSync, "prepare">
  * imports) can't resolve `node:sqlite` (CI: "Cannot find module 'sqlite'"). The builtin accessor keeps `node:sqlite`
  * out of the static import graph with zero resolve surface.
  */
-function sqlite(): typeof import("@mailwoman/platform/sqlite") {
+function sqlite(): typeof import("node:sqlite") {
 	return process.getBuiltinModule("node:sqlite")
 }
 

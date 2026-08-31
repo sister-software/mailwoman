@@ -80,7 +80,7 @@ beforeEach(async () => {
 	cacheDir = dataRoot.resolve("http-cache")
 
 	await makeDirectoryExclusive(cacheDir)
-	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path)
+	vi.stubEnv("MAILWOMAN_DATA_ROOT", dataRoot.path.toString())
 })
 
 afterEach(() => {

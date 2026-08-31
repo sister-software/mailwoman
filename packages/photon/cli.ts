@@ -17,7 +17,7 @@
 import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
 import { pyTitle } from "@mailwoman/core"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	corsBannerLine,
@@ -41,8 +41,8 @@ import {
 	photonOSMTags,
 	type PhotonEngine,
 	type PhotonProperties,
-} from "./index.ts"
-import { createLocalityPostcodeLookup } from "./locality-postcode.ts"
+} from "#index"
+import { createLocalityPostcodeLookup } from "#locality-postcode"
 
 /**
  * WOF placetype → Photon property key.
@@ -64,7 +64,7 @@ const MAX_QUERY_LEN = 512
 const BINARY_NAME = "mailwoman-photon"
 
 async function serve(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			port: { type: "string", default: "2322" },
 			host: { type: "string", default: "0.0.0.0" },

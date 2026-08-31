@@ -16,7 +16,7 @@ import {
 	featurize,
 	inMapPosterior,
 } from "@mailwoman/core/coarse-placer"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 import { temporaryDirectory } from "#fs/temporary"

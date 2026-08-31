@@ -27,8 +27,8 @@ import { readDirectory, readLocalTextFile, pathExists } from "@mailwoman/core/fs
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
 import { parseForGeocode } from "mailwoman/geocode-core"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 async function weightsPresent(): Promise<boolean> {

@@ -8,6 +8,6 @@
  *   workspace.
  */
 
-export * from "./extract.ts"
-export * from "./fetch.ts"
-export * from "./parse.ts"
+export * from "#gazetteer-pipeline/postcode/codepoint/extract"
+export * from "#gazetteer-pipeline/postcode/codepoint/fetch"
+export * from "#gazetteer-pipeline/postcode/codepoint/parse"

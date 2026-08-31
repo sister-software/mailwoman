@@ -13,7 +13,7 @@
  *   which would otherwise resolve them to a non-existent `index.ts` (mirrors the root config).
  */
 
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 // `defineConfig` from "vitest/config" (not "vite"): vitest's overload carries the `test` field.
 // vite 8 (pulled in by docs/ Storybook) no longer applies the `vitest/config` type augmentation to
 // vite's own `defineConfig`, so importing from "vite" makes `test` a type error under vite 8.
@@ -26,22 +26,22 @@ export default defineConfig({
 		alias: [
 			// Order matters — more specific entries first. Single-file subpaths (no directory index)
 			// must beat the generic `<subpath>/index.ts` rule below.
-			{ find: /^@mailwoman\/core\/kysley\/(.+)$/, replacement: resolve(here, "kysley/$1.ts") },
-			{ find: /^@mailwoman\/core\/coarse-placer$/, replacement: resolve(here, "coarse-placer/coarse-placer.ts") },
-			{ find: /^@mailwoman\/core\/objects$/, replacement: resolve(here, "objects.ts") },
-			{ find: /^@mailwoman\/core\/fs$/, replacement: resolve(here, "fs/node.ts") },
-			{ find: /^@mailwoman\/core\/api\/disk-storage$/, replacement: resolve(here, "api/disk-storage.ts") },
-			{ find: /^@mailwoman\/core\/api\/test-clocks$/, replacement: resolve(here, "api/test-clocks.ts") },
+			{ find: /^@mailwoman\/core\/kysley\/(.+)$/, replacement: resolvePath(here, "kysley/$1.ts") },
+			{ find: /^@mailwoman\/core\/coarse-placer$/, replacement: resolvePath(here, "coarse-placer/coarse-placer.ts") },
+			{ find: /^@mailwoman\/core\/objects$/, replacement: resolvePath(here, "objects.ts") },
+			{ find: /^@mailwoman\/core\/fs$/, replacement: resolvePath(here, "fs/node.ts") },
+			{ find: /^@mailwoman\/core\/api\/disk-storage$/, replacement: resolvePath(here, "api/disk-storage.ts") },
+			{ find: /^@mailwoman\/core\/api\/test-clocks$/, replacement: resolvePath(here, "api/test-clocks.ts") },
 			// Every other @mailwoman/core/<subpath> resolves to the index.ts of the matching subdir.
-			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolve(here, "$1/index.ts") },
-			{ find: /^@mailwoman\/core$/, replacement: resolve(here, "index.ts") },
+			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolvePath(here, "$1/index.ts") },
+			{ find: /^@mailwoman\/core$/, replacement: resolvePath(here, "index.ts") },
 			// Sibling workspaces.
-			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolve(here, "../corpus/src/$1.ts") },
-			{ find: /^@mailwoman\/corpus$/, replacement: resolve(here, "../corpus/src/index.ts") },
+			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolvePath(here, "../corpus/src/$1.ts") },
+			{ find: /^@mailwoman\/corpus$/, replacement: resolvePath(here, "../corpus/src/index.ts") },
 			// The root `mailwoman` package — test-kit imports it (transitively re-exports core +
 			// classifiers). Tests across workspaces also import `mailwoman/test-kit` directly.
-			{ find: "mailwoman/test-kit", replacement: resolve(here, "../mailwoman/test-kit/index.ts") },
-			{ find: /^mailwoman$/, replacement: resolve(here, "../mailwoman/index.ts") },
+			{ find: "mailwoman/test-kit", replacement: resolvePath(here, "../mailwoman/test-kit/index.ts") },
+			{ find: /^mailwoman$/, replacement: resolvePath(here, "../mailwoman/index.ts") },
 		],
 	},
 	test: {

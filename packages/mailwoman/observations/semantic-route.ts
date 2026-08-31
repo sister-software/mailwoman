@@ -80,7 +80,7 @@ import type {
 } from "@mailwoman/geographic-model"
 import type { POIPhraseLookup, POIPhraseMatch } from "@mailwoman/kind-classifier"
 
-import { localeToCountry } from "../country-scope.ts"
+import { localeToCountry } from "#country-scope"
 
 /**
  * The relation the frozen vertical slice defines, and the only one this route reads. An assertion under any other

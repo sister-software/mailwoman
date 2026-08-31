@@ -36,10 +36,10 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { join, type PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
-import type { WOFDatabase } from "./schema.ts"
+import type { WOFDatabase } from "#schema"
 
 /**
  * Column count of a GeoNames postal-code TSV row. Short rows are truncated or blank and are skipped. See the
@@ -141,7 +141,7 @@ export interface GeonamesPostalIngestResult {
 export async function ingestGeonamesPostal(
 	db: DatabaseClient<WOFDatabase>,
 	countries: readonly string[],
-	postalDir: string
+	postalDir: PathBuilderLike
 ): Promise<GeonamesPostalIngestResult> {
 	const sprInsert = db.prepare(
 		`INSERT OR REPLACE INTO spr (id, parent_id, name, placetype, country, latitude, longitude, min_latitude, min_longitude, max_latitude, max_longitude, is_current, is_deprecated, is_ceased, is_superseded, is_superseding, lastmodified) VALUES (?, -1, ?, 'postalcode', ?, ?, ?, ?, ?, ?, ?, 1, 0, 0, 0, 0, 0)`

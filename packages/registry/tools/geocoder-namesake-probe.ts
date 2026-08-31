@@ -15,7 +15,7 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
 
 /**
  * Options for {@linkcode geocoderNamesakeProbe}.

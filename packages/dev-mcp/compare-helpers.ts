@@ -7,12 +7,12 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { GradeRequest } from "./compare.ts"
-import type { ConfoundReading } from "./confound.ts"
-import type { ExternalAnswer } from "./external-arm.ts"
-import { DISTANCE_THRESHOLDS_KM, hitAt } from "./geo-grade.ts"
-import type { RecordedAnswer } from "./run-store.ts"
-import { assertStratumKey, type ComparedRow, type StratumKey } from "./tool-kit.ts"
+import type { GradeRequest } from "#compare"
+import type { ConfoundReading } from "#confound"
+import type { ExternalAnswer } from "#external-arm"
+import { DISTANCE_THRESHOLDS_KM, hitAt } from "#geo-grade"
+import type { RecordedAnswer } from "#run-store"
+import { assertStratumKey, type ComparedRow, type StratumKey } from "#tool-kit"
 
 /**
  * One row of a cross-engine comparison.

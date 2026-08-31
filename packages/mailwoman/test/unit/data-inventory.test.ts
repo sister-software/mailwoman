@@ -14,7 +14,6 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { LayerContractDatabase } from "@mailwoman/core/layers/schema"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
 	buildCommandGaps,
@@ -25,6 +24,7 @@ import {
 	rebuildHint,
 	takeInventory,
 } from "mailwoman/data-inventory"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -32,7 +32,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function dataRoot(): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mw-inventory-")).path
+	const root = fixtures.use(await temporaryDirectory("mw-inventory-")).path.toString()
 
 	return root
 }

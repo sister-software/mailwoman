@@ -21,7 +21,7 @@
  *   Every entry's `note` is the row's justification and ends up verbatim in the emitted board.
  */
 
-import type { HardSliceClass } from "../eval-harness/hard-slice-board.ts"
+import type { HardSliceClass } from "#eval-harness/hard-slice-board"
 
 /**
  * A curated row before its numbers are filled in. `expectID` is a WOF place id; the builder reads the point.

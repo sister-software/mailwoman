@@ -29,13 +29,14 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-n
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { StatementSync } from "@mailwoman/sqlite/client"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import {
 	type AblationGazetteerProbe,
 	type AblationPlace,
 	COINCIDENT_PLACE_KM,
 	containmentDepth,
-} from "./ablation-expectation.ts"
+} from "#eval-harness/gauntlet/ablation-expectation"
 
 interface SprRow {
 	id: number
@@ -154,17 +155,19 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 *
 	 * The availability check lives here, not in the constructor: it reads the filesystem, and a constructor cannot await.
 	 */
-	static async create(opts: { ancestryPath?: string; candidatePath?: string } = {}): Promise<AblationGazetteer> {
+	static async create(
+		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike } = {}
+	): Promise<AblationGazetteer> {
 		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
 		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
 		const missing: string[] = []
 
 		if (!(await pathExists(ancestryPath))) {
-			missing.push(ancestryPath)
+			missing.push(resolvePath(ancestryPath))
 		}
 
 		if (!(await pathExists(candidatePath))) {
-			missing.push(candidatePath)
+			missing.push(resolvePath(candidatePath))
 		}
 
 		const gazetteer = new AblationGazetteer({ ancestryPath, candidatePath, missingPaths: missing })
@@ -183,7 +186,9 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 * {@linkcode AblationGazetteer.create} computed with `pathExists`, and the constructor opens nothing while any path is
 	 * named there.
 	 */
-	constructor(opts: { ancestryPath?: string; candidatePath?: string; missingPaths?: readonly string[] } = {}) {
+	constructor(
+		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike; missingPaths?: readonly string[] } = {}
+	) {
 		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
 		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
 		const missing = opts.missingPaths ?? []

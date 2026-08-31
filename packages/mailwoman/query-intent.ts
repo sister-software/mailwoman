@@ -55,7 +55,7 @@ import {
 	COINCIDENT_PLACE_KM,
 	DECISIVE_MARGIN_LOG10,
 	dominanceMarginLog10,
-} from "./eval-harness/gauntlet/ablation-expectation.ts"
+} from "#eval-harness/gauntlet/ablation-expectation"
 
 /**
  * The subset of a resolver `ResolvedPlace` this module reads. Structural on purpose — `AddressNode.alternatives` is

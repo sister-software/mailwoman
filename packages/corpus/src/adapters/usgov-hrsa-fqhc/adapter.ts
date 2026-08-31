@@ -53,7 +53,7 @@ export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
  * match the canonical HRSA Data Warehouse export header. Operators substituting a closely-related extract should rename
  * columns to match; the README has the mapping cheatsheet.
  */
-interface HrsaSiteRow {
+interface HRSASiteRow {
 	"Site Name": string
 	"Site Address": string
 	"Site City": string
@@ -97,7 +97,7 @@ function composeRaw(
 	return [venue.trim(), streetPart, cityPart].filter(isPresent).join(", ")
 }
 
-export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
+export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_HRSA_FQHC_ADAPTER_ID,
 		defaultLicense: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
@@ -117,7 +117,7 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 
 			let emitted = 0
 
-			for await (const record of rows as AsyncIterable<HrsaSiteRow>) {
+			for await (const record of rows as AsyncIterable<HRSASiteRow>) {
 				if (opts.signal?.aborted) break
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
@@ -180,4 +180,4 @@ export function createUsgovHrsaFqhcAdapter(): CorpusAdapter {
 /**
  * The configured adapter instance registered with the corpus builder.
  */
-export const usgovHrsaFqhcAdapter = createUsgovHrsaFqhcAdapter()
+export const usgovHrsaFqhcAdapter = createUSGovHRSAFQHCAdapter()

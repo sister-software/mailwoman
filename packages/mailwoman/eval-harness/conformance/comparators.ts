@@ -34,11 +34,11 @@
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import { componentMatches, DEFAULT_TOL_M } from "../gauntlet/check-case.ts"
-import type { GauntletResult } from "../gauntlet/harness.ts"
-import { compareComponents } from "../invariance/compare.ts"
-import { accountRefinement } from "./candidate-admissibility.ts"
-import type { ConformanceFixture, ConformanceRelation, OutcomeComparatorName } from "./fixture.ts"
+import { accountRefinement } from "#eval-harness/conformance/candidate-admissibility"
+import type { ConformanceFixture, ConformanceRelation, OutcomeComparatorName } from "#eval-harness/conformance/fixture"
+import { componentMatches, DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
+import type { GauntletResult } from "#eval-harness/gauntlet/harness"
+import { compareComponents } from "#eval-harness/invariance/compare"
 
 /**
  * One side of a law: the assembled result, plus whatever mechanism account the observer was able to attach.

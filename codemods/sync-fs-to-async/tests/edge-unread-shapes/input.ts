@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 
 export async function edges(path: string): Promise<string> {
 	// The created path is read, and the two directory helpers do not answer it the same way.

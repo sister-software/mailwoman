@@ -17,11 +17,11 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { frParseRecall } from "mailwoman/eval-harness/fr-parse-recall"
 
 async function main(): Promise<void> {
-	const { values: args } = parseArgs({
+	const { values: args } = parseArguments({
 		options: {
 			model: { type: "string" },
 			tokenizer: { type: "string" },

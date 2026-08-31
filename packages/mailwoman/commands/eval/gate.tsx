@@ -52,7 +52,7 @@ interface Options {
 const EvalGate: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { runPromotionGate } = await import("../../eval-harness/promotion-gate.ts")
+			const { runPromotionGate } = await import("#eval-harness/promotion-gate")
 
 			return await runPromotionGate(options)
 		},

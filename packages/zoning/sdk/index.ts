@@ -5,11 +5,11 @@
  * @file The acquisition + build surface for the Irish zoning layer. The READER is the package root.
  */
 
-export * from "./build-zoning.ts"
-export * from "./cells.ts"
-export * from "./client.ts"
-export * from "./download.ts"
-export * from "./ingest.ts"
-export * from "./ingest-chunk.ts"
-export * from "./measure-resolutions.ts"
-export * from "./verify.ts"
+export * from "#sdk/build-zoning"
+export * from "#sdk/cells"
+export * from "#sdk/client"
+export * from "#sdk/download"
+export * from "#sdk/ingest"
+export * from "#sdk/ingest-chunk"
+export * from "#sdk/measure-resolutions"
+export * from "#sdk/verify"

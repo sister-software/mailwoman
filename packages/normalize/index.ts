@@ -13,11 +13,11 @@
  *   See `docs/engineering/reference/STAGES.md` § Stage 1 for the contract.
  */
 
-export { type AbbreviationEntry, abbreviationDictionary, expandAbbreviations } from "./abbreviations.ts"
-export { applyCjkNormalization, type CjkResult } from "./cjk.ts"
-export { normalize } from "./compute.ts"
-export { applyNFC } from "./nfc.ts"
-export { composeMaps, identityMap } from "./offset-map.ts"
-export { applyPunctuation } from "./punctuation.ts"
-export type { NormalizationTransform, NormalizeOpts, NormalizedInput, SpanRange } from "./types.ts"
-export { collapseWhitespace } from "./whitespace.ts"
+export { type AbbreviationEntry, abbreviationDictionary, expandAbbreviations } from "#abbreviations"
+export { applyCjkNormalization, type CjkResult } from "#cjk"
+export { normalize } from "#compute"
+export { applyNFC } from "#nfc"
+export { composeMaps, identityMap } from "#offset-map"
+export { applyPunctuation } from "#punctuation"
+export type { NormalizationTransform, NormalizeOpts, NormalizedInput, SpanRange } from "#types"
+export { collapseWhitespace } from "#whitespace"

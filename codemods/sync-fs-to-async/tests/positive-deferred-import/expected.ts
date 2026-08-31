@@ -1,7 +1,7 @@
 import { pathExists, readDirectory } from "@mailwoman/core/fs/readers"
 
 export async function newestConfig(dir: string): Promise<string | undefined> {
-	const { statSync } = await import("@mailwoman/platform/fs")
+	const { statSync } = await import("node:fs")
 
 	if (!(await pathExists(dir))) return undefined
 

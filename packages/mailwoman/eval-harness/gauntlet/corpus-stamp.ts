@@ -25,10 +25,16 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sql } from "kysely"
+import type { PathBuilderLike } from "path-ts"
 
-import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "./cases/load.ts"
-import type { SeedCase } from "./cases/seed-case.ts"
-import { GAUNTLET_META_ROW_ID, GAUNTLET_META_TABLE, type GauntletDatabase, type GauntletMetaTable } from "./schema.ts"
+import { CASES_DIR, loadRegressionCases, regressionCorpusHash } from "#eval-harness/gauntlet/cases/load"
+import type { SeedCase } from "#eval-harness/gauntlet/cases/seed-case"
+import {
+	GAUNTLET_META_ROW_ID,
+	GAUNTLET_META_TABLE,
+	type GauntletDatabase,
+	type GauntletMetaTable,
+} from "#eval-harness/gauntlet/schema"
 
 /**
  * The stamp a built `regression.db` carries, or `null` when the DB predates the stamp entirely.
@@ -42,7 +48,7 @@ export type CorpusStamp = Pick<GauntletMetaTable, "corpus_hash" | "case_count" |
  * no country dirs loads cleanly, returns `[]`, and builds a perfectly valid empty DB — which then grades 0/0 and
  * PASSES.
  */
-export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: string = CASES_DIR): void {
+export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: PathBuilderLike = CASES_DIR): void {
 	if (rows.length) return
 
 	throw new Error(

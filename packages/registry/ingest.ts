@@ -25,9 +25,9 @@
 import { isPresent } from "@mailwoman/core/objects"
 import type { AddressGeocode, PostalAddress } from "@mailwoman/record"
 import { canonicalizeOrganizationName, parsePersonName, toPostalAddress, withGeocode } from "@mailwoman/record"
-import { CSVSpliterator, Delimiters } from "spliterator"
+import { type AsyncSequence, CSVSpliterator, Delimiters } from "spliterator"
 
-import type { SourceRecord } from "./types.ts"
+import type { SourceRecord } from "#types"
 
 /**
  * Resolve a raw address string into a {@link PostalAddress}. The seam to mailwoman's geocoder.
@@ -35,9 +35,20 @@ import type { SourceRecord } from "./types.ts"
 export type GeocodeAddress = (raw: string) => Promise<PostalAddress | null> | PostalAddress | null
 
 /**
+ * The column delimiters a tabular source may declare, by name, each the spliterator's own byte.
+ *
+ * The `satisfies` clause keys every name to a member of spliterator's `Delimiters` const, so a delimiter this map names
+ * that spliterator no longer ships is a compile error rather than a silently parallel vocabulary.
+ */
+const COLUMN_DELIMITERS = {
+	comma: Delimiters.Comma,
+	tab: Delimiters.Tab,
+} as const satisfies Partial<Record<Lowercase<keyof typeof Delimiters>, (typeof Delimiters)[keyof typeof Delimiters]>>
+
+/**
  * Column delimiter of a delimited source.
  */
-export type Delimiter = "comma" | "tab"
+export type Delimiter = keyof typeof COLUMN_DELIMITERS
 
 /**
  * Infer the delimiter from a path's extension (`.tsv` → tab, else comma).
@@ -48,16 +59,19 @@ export function delimiterFor(path: string): Delimiter {
 
 /**
  * Stream a delimited file's rows lazily as header-keyed objects.
+ *
+ * Returns the spliterator's own {@linkcode AsyncSequence}: nothing is opened until something iterates, a `take` that is
+ * satisfied (or a `break` out of `for await`) closes the file handle, and any `map`/`filter` a caller composes fuses
+ * into the same pull loop. Wrapping this in an `async function*` would cost an async frame per row and take those
+ * operators away.
  */
-export async function* streamRows(
+export function streamRows(
 	source: string,
 	opts: { delimiter?: Delimiter } = {}
-): AsyncGenerator<Record<string, string>> {
-	const columnDelimiter = (opts.delimiter ?? delimiterFor(source)) === "tab" ? Delimiters.Tab : Delimiters.Comma
-
-	yield* CSVSpliterator.fromAsync<Record<string, string>>(source, {
+): AsyncSequence<Record<string, string>> {
+	return CSVSpliterator.fromAsync<Record<string, string>>(source, {
 		mode: "object",
-		columnDelimiter,
+		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(source)],
 		normalizeKeys: false,
 		enableQuoteHandling: true,
 	})
@@ -258,18 +272,15 @@ export async function ingestRows(
  * This is the single-threaded, "fast enough" ergonomic core: column mapping, name parsing, and org canonicalization for
  * a multi-GB file, line by line. Geocode separately by piping the output through `geocodeStream` (the only heavy step
  * worth threading); for a light file (e.g. one that already carries geo cells) just consume this and stop.
+ *
+ * Records come out in file order: the sequence's `map` settles each row before pulling the next, and its counter is the
+ * row's index — the id a row without a mapped `id` column falls back to.
  */
-export async function* normalizeCSV(
+export function normalizeCSV(
 	source: string,
 	opts: { mapping: ColumnMapping; delimiter?: Delimiter }
-): AsyncGenerator<SourceRecord> {
-	let index = 0
-
-	for await (const row of streamRows(source, { delimiter: opts.delimiter })) {
-		yield await ingestRow(row, opts.mapping, index)
-
-		index++
-	}
+): AsyncSequence<SourceRecord> {
+	return streamRows(source, { delimiter: opts.delimiter }).map((row, index) => ingestRow(row, opts.mapping, index))
 }
 
 /**
@@ -289,28 +300,46 @@ export interface RawGeocode {
  */
 type GeocodeComponents = Parameters<typeof toPostalAddress>[0]
 
-// TODO: Make this sane.
-export type GeocodeAddressViaDeps = { country?: string } & (
-	| {
-			parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
-			geocode: (raw: string) => Promise<RawGeocode | null> | RawGeocode | null
-	  }
-	| { parseAndGeocode: (raw: string) => Promise<{ components: GeocodeComponents; geo: RawGeocode | null }> }
-)
+/**
+ * What every shape of {@link geocodeAddressVia}'s dependencies carries.
+ */
+export interface GeocodeDepsBase {
+	/**
+	 * Country (ISO-2 or name) the address is formatted under. When omitted, {@link toPostalAddress} reads the parsed
+	 * `country` component instead.
+	 */
+	country?: string
+}
+
+/**
+ * Two independent calls: parse the address, then geocode it. mailwoman's `geocodeAddress` re-parses internally, so this
+ * shape parses the address twice — fine when the two callbacks don't share a parser.
+ */
+export interface TwoStepGeocodeDeps extends GeocodeDepsBase {
+	parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
+	geocode: (raw: string) => Promise<RawGeocode | null> | RawGeocode | null
+}
+
+/**
+ * Parse the address ONCE and answer both the components and the geocode. Use this when the parse is the expensive step
+ * you'd rather not pay for twice (e.g. share `parseForGeocode`'s tree between the PostalAddress and `geocodeAddress`'s
+ * `parsedTree`). ~1.3× over the two-call shape on a real geocode pipeline.
+ */
+export interface OneStepGeocodeDeps extends GeocodeDepsBase {
+	parseAndGeocode: (raw: string) => Promise<{ components: GeocodeComponents; geo: RawGeocode | null }>
+}
+
+/**
+ * The dependencies {@link geocodeAddressVia} builds a {@link GeocodeAddress} from; `"parseAndGeocode" in deps` tells the
+ * two shapes apart.
+ */
+export type GeocodeAddressViaDeps = TwoStepGeocodeDeps | OneStepGeocodeDeps
 
 /**
  * Build a {@link GeocodeAddress} from mailwoman's real parse + geocode primitives (injected — the CLI constructs the
- * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills
- * the canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
+ * neural parser, resolver, and shards and passes them in). Parse → components → {@link toPostalAddress} (which fills the
+ * canonical key + formatted form) → attach the resolved coordinate. When geocoding can't place the address, the
  * parsed-but-unlocated address is still returned.
- *
- * Two shapes:
- *
- * - `{ parse, geocode }` — the original: two independent calls. mailwoman's `geocodeAddress` re-parses internally, so
- *   this parses the address twice (fine when the two callbacks don't share a parser).
- * - `{ parseAndGeocode }` — parse the address ONCE and return both the components and the geocode. Use this when the
- *   parse is the expensive step you'd rather not pay for twice (e.g. share `parseForGeocode`'s tree between the
- *   PostalAddress and `geocodeAddress`'s `parsedTree`). ~1.3× over the two-call shape on a real geocode pipeline.
  */
 export function geocodeAddressVia(deps: GeocodeAddressViaDeps): GeocodeAddress {
 	return async (raw: string): Promise<PostalAddress | null> => {

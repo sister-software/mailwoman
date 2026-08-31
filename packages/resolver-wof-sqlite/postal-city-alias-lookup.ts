@@ -18,7 +18,7 @@
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { PostalCityAliasDatabase } from "./postal-city-alias-schema.ts"
+import type { PostalCityAliasDatabase } from "#postal-city-alias-schema"
 
 export interface WOFPostalCityAliasLookupOpts {
 	/**

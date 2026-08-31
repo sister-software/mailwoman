@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "@mailwoman/platform/fs"
+import { readdirSync, readFileSync } from "node:fs"
 
 interface Engine {
 	read(): string

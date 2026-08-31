@@ -24,11 +24,12 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePath } from "path-ts"
 
-import { type CompiledGeographicModel, parseCompiledGeographicModel } from "../artifact.ts"
-import { compileGeographicModel } from "../compile.ts"
-import { loadGeographicModelDirectory } from "../load.ts"
+import { type CompiledGeographicModel, parseCompiledGeographicModel } from "#artifact"
+import { compileGeographicModel } from "#compile"
+import { loadGeographicModelDirectory } from "#load"
 
 /**
  * The command that rewrites the committed artifact. Stated once, and quoted by the freshness test's failure message, so
@@ -45,11 +46,11 @@ export const REGENERATE_ARTIFACT_COMMAND =
  * genuinely missing `data/`, which throws with both paths named.
  */
 export async function packagedModelPaths(): Promise<{ source: string; artifact: string }> {
-	const candidates = [resolve(import.meta.dirname, "../data"), resolve(import.meta.dirname, "../../data")]
+	const candidates = [resolvePackagePath("@mailwoman/geographic-model", "data")]
 	const probes: Array<[string, boolean]> = []
 
 	for (const candidate of candidates) {
-		probes.push([candidate, await pathExists(resolve(candidate, "model/model.json"))])
+		probes.push([candidate, await pathExists(resolvePath(candidate, "model/model.json"))])
 	}
 
 	const found = probes.find(([, exists]) => exists)?.[0]
@@ -58,7 +59,7 @@ export async function packagedModelPaths(): Promise<{ source: string; artifact: 
 		throw new Error(`geographic-model: could not find data/model — looked in ${candidates.join(", ")}`)
 	}
 
-	return { source: resolve(found, "model"), artifact: resolve(found, "geographic-model.json") }
+	return { source: resolvePath(found, "model"), artifact: resolvePath(found, "geographic-model.json") }
 }
 
 /**

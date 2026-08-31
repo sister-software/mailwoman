@@ -12,14 +12,15 @@
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { resolvePath } from "path-ts"
 
-import { readWOFSourceIdentity } from "./fst-freshness.ts"
-import type { FSTNode } from "./fst-matcher.ts"
-import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
-import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "./fst-types.ts"
-import { loadImportanceSplit } from "./place-importance-schema.ts"
-import type { WOFDatabase } from "./schema.ts"
-import { allRows, getRow } from "./sqlite-utils.ts"
+import { readWOFSourceIdentity } from "#fst-freshness"
+import type { FSTNode } from "#fst-matcher"
+import { FSTMatcher, normalizeTokens } from "#fst-matcher"
+import type { BuildFSTOpts, BuildFSTResult, FSTProvenance, PlaceEntry, PlacetypeID } from "#fst-types"
+import { loadImportanceSplit } from "#place-importance-schema"
+import type { WOFDatabase } from "#schema"
+import { allRows, getRow } from "#sqlite-utils"
 
 const DEFAULT_PLACETYPES: PlacetypeID[] = [
 	"country",
@@ -64,9 +65,10 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const placetypes = opts.placetypes ?? DEFAULT_PLACETYPES
 	const languages = opts.languages ?? DEFAULT_LANGUAGES
 	const progress = opts.onProgress ?? (() => {})
+	const dbPath = resolvePath(opts.dbPath)
 
-	progress("open", opts.dbPath)
-	using db = new DatabaseClient<WOFDatabase>(opts.dbPath, { open: true })
+	progress("open", dbPath)
+	using db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
 
 	// Phase 1: Load all matching SPR rows.
 	progress("spr", `Loading places for countries=[${countries}], placetypes=[${placetypes}]`)
@@ -340,8 +342,8 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	// and is free whenever the `.md5` sidecar is current, which the admin build already writes.
 	// `sourceIdentity` lets a caller that already knows the digest (or is building from something that
 	// is not a file at all) supply it instead.
-	progress("stamp", `Reading source identity for ${opts.dbPath}`)
-	const source = opts.sourceIdentity ?? (await readWOFSourceIdentity(opts.dbPath))
+	progress("stamp", `Reading source identity for ${dbPath}`)
+	const source = opts.sourceIdentity ?? (await readWOFSourceIdentity(dbPath))
 
 	const provenance: FSTProvenance = {
 		builtAt: new Date().toISOString(),
@@ -353,7 +355,7 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		importanceMatches: split.referential.size,
 		encyclopedicMatches: split.encyclopedic.size,
 		importanceSource: split.source,
-		sourceDB: opts.dbPath,
+		sourceDB: dbPath,
 		sourceDBMD5: source.md5,
 		sourceDBBytes: source.bytes,
 		...(excludeSurfaces !== undefined || excludeAllTokensOf !== undefined

@@ -35,7 +35,7 @@
  * bandwidth at a concurrency of ~2, not task-dispatch implementation.
  */
 
-import { availableParallelism } from "@mailwoman/platform/os"
+import { availableParallelism } from "@mailwoman/core/utils/system"
 import type { ColumnMapping, SourceRecord } from "@mailwoman/registry"
 import { parallelMapWorkers } from "spliterator"
 

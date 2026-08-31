@@ -23,9 +23,10 @@
  */
 
 import { Spinner } from "@inkjs/ui"
+import { spawnProcess } from "@mailwoman/core/process"
 import { resolveWeights, weightsCacheDir, weightsPackageName } from "@mailwoman/neural/weights"
-import { spawn } from "@mailwoman/platform/child_process"
 import { Box, Text, useInput, useStdin } from "ink"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 import React, { useEffect, useState } from "react"
 
 /**
@@ -36,7 +37,10 @@ export type WeightsOutcome = "neural" | "declined" | "unavailable"
 /**
  * Probe whether weights resolve for a locale without loading the model. Cheap (fs checks only).
  */
-export async function probeWeights(locale?: string, cacheRoot?: string): Promise<{ ok: boolean; detail?: string }> {
+export async function probeWeights(
+	locale?: string,
+	cacheRoot?: PathBuilderLike
+): Promise<{ ok: boolean; detail?: string }> {
 	try {
 		await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })
 
@@ -49,11 +53,15 @@ export async function probeWeights(locale?: string, cacheRoot?: string): Promise
 /**
  * The npm invocation that populates the weights cache. Pure — unit-tested; `spec` defaults to `latest`.
  */
-export function buildWeightsInstallArgs(locale: string | undefined, cacheRoot: string, spec = "latest"): string[] {
+export function buildWeightsInstallArgs(
+	locale: string | undefined,
+	cacheRoot: PathBuilderLike,
+	spec = "latest"
+): string[] {
 	return [
 		"install",
 		"--prefix",
-		cacheRoot,
+		resolvePath(cacheRoot),
 		"--no-audit",
 		"--no-fund",
 		"--loglevel",
@@ -82,7 +90,10 @@ export function downloadWeights(
 	onStatus?.(`Installing ${packageName} into ${cacheRoot} …`)
 
 	return new Promise((resolvePromise) => {
-		const child = spawn("npm", buildWeightsInstallArgs(opts.locale, cacheRoot), { stdio: ["ignore", "pipe", "pipe"] })
+		const child = spawnProcess("npm", buildWeightsInstallArgs(opts.locale, cacheRoot), {
+			stdio: ["ignore", "pipe", "pipe"],
+		})
+
 		const stderrChunks: string[] = []
 
 		child.stdout.on("data", (chunk: Buffer) => onStatus?.(chunk.toString().trim()))
@@ -252,7 +263,7 @@ export function WeightsGuard({
 					</Text>
 					<Text>
 						Download <Text bold>{weightsPackageName(locale)}</Text> to{" "}
-						<Text dimColor>{cacheRoot ?? weightsCacheDir()}</Text>? <Text bold>[Y/n]</Text>
+						<Text dimColor>{String(cacheRoot ?? weightsCacheDir())}</Text>? <Text bold>[Y/n]</Text>
 					</Text>
 				</Box>
 			)

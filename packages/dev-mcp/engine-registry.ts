@@ -27,12 +27,12 @@
  *   matter; it is not needed to test whether a warm engine changes which panel gets measured.
  */
 
-import { createHash } from "@mailwoman/platform/crypto"
+import { sha256Hex } from "@mailwoman/core/utils/hash"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession, type GeocodeSession, type GeocodeSessionOptions } from "mailwoman/geocode-session"
 
-import { missingWeightsCacheArtifacts } from "./gate-report.ts"
-import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "./tree-fingerprint.ts"
+import { missingWeightsCacheArtifacts } from "#gate-report"
+import { computeTreeFingerprint, staleEngineMessage, type TreeFingerprint } from "#tree-fingerprint"
 
 /**
  * Every lever a caller can set, in the CLI's own vocabulary.
@@ -233,7 +233,7 @@ export function engineID(effective: EffectiveConfig, fingerprint: TreeFingerprin
 		Object.fromEntries(Object.entries(effective).toSorted(([a], [b]) => a.localeCompare(b)))
 	)
 
-	return createHash("sha256").update(`${canonical}\n${fingerprint.digest}`).digest("hex").slice(0, 16)
+	return sha256Hex(`${canonical}\n${fingerprint.digest}`).slice(0, 16)
 }
 
 export interface Engine {

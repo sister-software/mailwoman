@@ -22,7 +22,7 @@ import {
 	type LayerManifest,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { execFileSync } from "@mailwoman/platform/child_process"
+import { runFileSync } from "@mailwoman/core/process"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
@@ -50,7 +50,7 @@ export async function stampLayerManifest(path: string, manifest: LayerManifest):
  */
 export function buildSHA(repoRoot: string): string {
 	try {
-		return execFileSync("git", ["rev-parse", "--short", "HEAD"], {
+		return runFileSync("git", ["rev-parse", "--short", "HEAD"], {
 			cwd: repoRoot,
 			encoding: "utf8",
 			stdio: "pipe",

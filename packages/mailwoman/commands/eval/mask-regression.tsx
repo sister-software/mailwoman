@@ -52,7 +52,7 @@ interface Options {
 const EvalMaskRegression: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(
 		async () => {
-			const { maskRegressionGate } = await import("../../eval-harness/mask-regression.ts")
+			const { maskRegressionGate } = await import("#eval-harness/mask-regression")
 
 			return (await maskRegressionGate(options)).pass
 		},

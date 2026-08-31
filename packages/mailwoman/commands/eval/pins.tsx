@@ -45,7 +45,7 @@ interface Options {
 const EvalPins: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { checkBoardPins, measureBoardPins, updateBoardPins, PIN_TEST_PATH } =
-			await import("../../eval-harness/gauntlet/cases/pins.ts")
+			await import("#eval-harness/gauntlet/cases/pins")
 
 		if (options.update) {
 			const verified = await updateBoardPins()

@@ -35,12 +35,12 @@
  *   the definition's `recordingNote` says so on the receipt.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 
 // The canonical-JSON encoder is IMPORTED rather than re-typed, for the reason the absence probe imports it.
-import { canonicalJSON } from "../semantic-utility/probe.ts"
+import { canonicalJSON } from "#eval-harness/semantic-utility/probe"
 
 /**
  * The closed set of instruments a check may read. Adding one is a reviewed change to this file and to the runner that
@@ -358,25 +358,20 @@ export interface Phase2FreezeRecord {
 	note: string
 }
 
-async function sourceRelative(name: string): Promise<string> {
-	// `tsc` emits no `.json` into `out/`, so a compiled caller reads the source-tree copy — the same bridge the two
-	// earlier pre-registrations use.
-	const sibling = fileURLToPath(new URL(name, import.meta.url))
-
-	if (await pathExists(sibling)) return sibling
-
-	return fileURLToPath(new URL(`../../../eval-harness/phase-2-decision/${name}`, import.meta.url))
+function sourceRelative(name: string): string {
+	// `tsc` emits no `.json` into `out/`, so the file is named from the package root rather than from this module.
+	return resolvePackagePath("mailwoman", "eval-harness", "phase-2-decision", name)
 }
 
 /**
  * The committed pre-registration.
  */
-export const PHASE2_DEFINITION_PATH = await sourceRelative("decision-definition.json")
+export const PHASE2_DEFINITION_PATH = sourceRelative("decision-definition.json")
 
 /**
  * The committed freeze record for it.
  */
-export const PHASE2_FREEZE_PATH = await sourceRelative("decision-freeze.json")
+export const PHASE2_FREEZE_PATH = sourceRelative("decision-freeze.json")
 
 /**
  * The committed receipt — the measured run the decision package on #1967 lays its arithmetic out of.
@@ -384,7 +379,7 @@ export const PHASE2_FREEZE_PATH = await sourceRelative("decision-freeze.json")
  * Committed rather than left in a PR body for the reason this whole ruler exists: the numbers a decision rests on have
  * to be readable next to the definition that registered them, by someone who was not there.
  */
-export const PHASE2_RECEIPT_PATH = await sourceRelative("decision-receipt.json")
+export const PHASE2_RECEIPT_PATH = sourceRelative("decision-receipt.json")
 
 /**
  * The content hash of one definition.

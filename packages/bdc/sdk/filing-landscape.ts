@@ -39,7 +39,7 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent } from "h3-js"
 import { sql } from "kysely"
 
-import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "../schema.ts"
+import { BDC_COVERAGE_H3_RESOLUTION, BDC_H3_RESOLUTION, type BDCDatabase } from "#schema"
 
 /**
  * Exactly one of `geoids` or `h3Cells` is required — `filingLandscape` throws otherwise.

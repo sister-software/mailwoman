@@ -24,11 +24,11 @@
  *   Usage: mailwoman dev generate language-types
  */
 
-import { open } from "@mailwoman/platform/fs/promises"
 import { pascalCase } from "change-case"
 import { CSVSpliterator } from "spliterator"
 
-import { resourceDictionaryPath, workspacePath } from "../utils/index.ts"
+import { open } from "#fs/readers"
+import { resourceDictionaryPath, workspacePath } from "#utils/index"
 
 /**
  * Options for {@linkcode generateLanguageTypes}.

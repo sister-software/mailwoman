@@ -14,18 +14,15 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { runFile } from "@mailwoman/core/process"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
+import { join } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
-
-const execFileAsync = promisify(execFile)
 
 const CLI_PATH = workspacePath("mailwoman", "out", "cli.js")
 const hasCLICompiled = await pathExists(CLI_PATH)
@@ -55,7 +52,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 	const tempDirs: string[] = []
 
 	async function makeTempDir(prefix: string): Promise<string> {
-		const dir = fixtures.use(await temporaryDirectory(prefix)).path
+		const dir = fixtures.use(await temporaryDirectory(prefix)).path.toString()
 
 		tempDirs.push(dir)
 
@@ -66,7 +63,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		const cwd = await makeTempDir("mw-skill-install-")
 
 		await withCLISpawnLockAsync(() =>
-			execFileAsync(process.execPath, [CLI_PATH, "skill", "install"], {
+			runFile(process.execPath, [CLI_PATH, "skill", "install"], {
 				cwd,
 				encoding: "utf8",
 				timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -84,7 +81,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 
 		const spawn = () =>
 			withCLISpawnLockAsync(() =>
-				execFileAsync(process.execPath, [CLI_PATH, "skill", "install"], {
+				runFile(process.execPath, [CLI_PATH, "skill", "install"], {
 					cwd,
 					encoding: "utf8",
 					timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -107,7 +104,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		const dest = await makeTempDir("mw-skill-install-dest-")
 
 		await withCLISpawnLockAsync(() =>
-			execFileAsync(process.execPath, [CLI_PATH, "skill", "install", "--dest", dest], {
+			runFile(process.execPath, [CLI_PATH, "skill", "install", "--dest", dest], {
 				cwd,
 				encoding: "utf8",
 				timeout: CLI_SPAWN_TIMEOUT_MS,
@@ -129,7 +126,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		await writeLocalTextFile("belongs to an older skill version; must not survive a reinstall", staleFile)
 
 		await withCLISpawnLockAsync(() =>
-			execFileAsync(process.execPath, [CLI_PATH, "skill", "install"], {
+			runFile(process.execPath, [CLI_PATH, "skill", "install"], {
 				cwd,
 				encoding: "utf8",
 				timeout: CLI_SPAWN_TIMEOUT_MS,

@@ -52,7 +52,7 @@
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 interface ShardEntry {
 	path: string
@@ -76,7 +76,7 @@ function parseArgs(): Args {
 	const out: Partial<Args> = { verbose: false }
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
-	const { values } = parseNodeArgs({
+	const { values } = parseArguments({
 		options: { manifest: { type: "string" }, verbose: { type: "boolean", short: "v" } },
 		strict: false,
 		allowPositionals: true,

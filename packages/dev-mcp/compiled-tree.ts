@@ -17,9 +17,9 @@
  */
 
 import { readDirectoryEntries, statPath } from "@mailwoman/core/fs/readers"
-import { basename, join, relative, sep } from "@mailwoman/platform/path"
+import { basename, join, relative, sep } from "path-ts"
 
-import { FINGERPRINTED_WORKSPACES } from "./tree-fingerprint.ts"
+import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
 
 const SKIP_DIRECTORIES = new Set(["node_modules", ".git", "__pycache__"])
 

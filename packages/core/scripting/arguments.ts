@@ -7,6 +7,8 @@
  * dispatchers can read argv without loading the ResourceError, ConsoleLogger, and async-init graphs.
  */
 
+import { parseArgs, type ParseArgsConfig } from "node:util"
+
 export type UnsafeCLIArgument = string & { __unsafeCLIArgumentBrand: never }
 
 export type UnsafeCLIArguments = ReadonlyArray<UnsafeCLIArgument>
@@ -37,4 +39,16 @@ export function passThroughCLIArguments(): readonly unknown[] {
 export function scriptEntryPath(): string {
 	// oxlint-disable-next-line sister-software/no-process-globals -- this function is the blessed argv entry-path accessor
 	return process.argv[1]!
+}
+
+/**
+ * Parse CLI arguments against a `node:util` `parseArgs` config — the same `options`, `allowPositionals`, `strict` and
+ * `tokens` fields. `args` defaults to {@linkcode cliArguments}, so a script never reads `process.argv` itself; a caller
+ * that has already taken a command name off the front passes the remainder as `args` and it is used as given. The
+ * result is typed from the config exactly as the builtin types it.
+ */
+export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
+	// The builtin types its result from the whole config object, so supplying `args` moves the type; the parsed shape
+	// depends on `options`/`allowPositionals` alone, which `T` carries.
+	return parseArgs({ args: [...cliArguments()], ...config }) as ReturnType<typeof parseArgs<T>>
 }

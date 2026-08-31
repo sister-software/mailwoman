@@ -27,7 +27,11 @@
 	],
 	"type": "module",
 	"imports": {
-		"#package.json": "./package.json"
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
@@ -49,7 +53,6 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/neural-weights-en-us": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",

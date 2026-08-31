@@ -21,7 +21,7 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { DEFAULT_VERIFY_BASELINE } from "./verify-baseline.ts"
+import { DEFAULT_VERIFY_BASELINE } from "#gazetteer-pipeline/verify-baseline"
 
 export interface VerifyCheckResult {
 	check: string

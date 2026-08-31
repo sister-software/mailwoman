@@ -24,10 +24,10 @@
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { dataRootPath, resourceDictionaryPath } from "@mailwoman/core/utils"
 
-import type { FSTMatcher } from "./fst-matcher.ts"
-import { deserializeFST, readFSTProvenance } from "./fst-serialize.ts"
-import type { FSTProvenance } from "./fst-types.ts"
-import { buildStreetMorphologyFST } from "./street-morphology-fst-builder.ts"
+import type { FSTMatcher } from "#fst-matcher"
+import { deserializeFST, readFSTProvenance } from "#fst-serialize"
+import type { FSTProvenance } from "#fst-types"
+import { buildStreetMorphologyFST } from "#street-morphology-fst-builder"
 
 /**
  * The sealed artifact's canonical filename — identical in the data-root staging dir and as a weights-package sibling.

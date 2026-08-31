@@ -8,7 +8,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { missingWeightsCacheArtifacts, readGateReport, summarizeGateReport } from "@mailwoman/dev-mcp/gate-report"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -16,7 +16,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function outDir(verdict?: unknown, provenance?: string): Promise<string> {
-	const dir = fixtures.use(await temporaryDirectory("mwdev-gate-report-")).path
+	const dir = String(fixtures.use(await temporaryDirectory("mwdev-gate-report-")).path)
 
 	if (verdict !== undefined) {
 		await writeLocalJSONFile(verdict, join(dir, "verdict.json"))

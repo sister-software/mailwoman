@@ -45,11 +45,11 @@ import { frameToANSILines, type MapFrame } from "@mailwoman/map-tui"
 import { Box, Text } from "ink"
 import React, { memo, useMemo } from "react"
 
-import type { GeocodeResult } from "../geocode-result.ts"
-import type { GeocodeTrace } from "../geocode-session.ts"
-import { outputLines, type OutputLine } from "./output-lines.ts"
-import { tagColor } from "./tag-colors.ts"
-import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "./trace-rows.ts"
+import { outputLines, type OutputLine } from "#debug-view/output-lines"
+import { tagColor } from "#debug-view/tag-colors"
+import { channelsRow, decodeRow, localeHeadRow, systemRow, tokensRow } from "#debug-view/trace-rows"
+import type { GeocodeResult } from "#geocode-result"
+import type { GeocodeTrace } from "#geocode-session"
 
 //#region Contract
 

@@ -34,15 +34,15 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, dataRootPath, getRow, wofShardPaths } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
+import { loadHardSliceBoard } from "#eval-harness/hard-slice-board"
 
-const { values } = parseArgs({ options: { board: { type: "string" } } })
+const { values } = parseArguments({ options: { board: { type: "string" } } })
 
 //#region 1 — Gazetteer census of the saturated tail
 

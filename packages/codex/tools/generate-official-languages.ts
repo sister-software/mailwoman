@@ -22,15 +22,14 @@
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
-
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { join } from "path-ts"
 /**
  * The committed output path, resolved relative to this module (codex/tools/ → codex/country/). The codegen is
  * repo-only, and in the repo `@mailwoman/codex/tools` always loads from source via the `node` exports condition, so
  * `import.meta.url` points at the source tree.
  */
-const DEFAULT_OUT = fileURLToPath(new URL("../country/official-languages.ts", import.meta.url))
+const DEFAULT_OUT = resolvePackagePath("@mailwoman/codex", "country", "official-languages.ts")
 
 /**
  * Options for {@linkcode generateOfficialLanguages}.

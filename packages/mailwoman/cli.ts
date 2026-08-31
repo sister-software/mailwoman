@@ -15,8 +15,9 @@
  *   if it reaches React, pins the development build.
  */
 
-import { enableCompileCache, findPackageJSON } from "@mailwoman/platform/module"
-import { parseArgs } from "@mailwoman/platform/util"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { enableCompileCache } from "@mailwoman/core/module/runtime"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
 // The CLI compiles ~16 MB of source per invocation, and the loader/compiler/GC are ~85% of a `--help` run. V8's
 // on-disk code cache removes most of it: `--help` 1.34 s → 0.99 s, `parse` 2.95 s → 2.63 s. The cache is
@@ -41,7 +42,7 @@ globalThis.__mailwomanCLIStartedAt = performance.now()
 // `strict: false` is required, not a relaxation: the launcher cannot enumerate the union of every command's flags, and
 // a strict parse rejects the first one it has not heard of — `--json`, `--locale`, `--debug` — before dispatch, which
 // is the whole CLI rather than one command. Unknown options stay in the vector for the command router to interpret.
-const { values, positionals } = parseArgs({
+const { values, positionals } = parseArguments({
 	options: {
 		help: { type: "boolean", short: "h" },
 		timing: { type: "boolean", short: "t" },
@@ -64,7 +65,7 @@ if (interactiveGeocode) {
 }
 
 async function printVersion(): Promise<number> {
-	const packageJSONPath = findPackageJSON(import.meta.url)
+	const packageJSONPath = resolvePackagePath("mailwoman", "package.json")
 
 	if (!packageJSONPath) throw new Error("Could not find package.json for mailwoman/cli")
 
@@ -88,8 +89,8 @@ async function printVersion(): Promise<number> {
 
 function dispatchCommand(): Promise<number> {
 	const runnerModule = import("@mailwoman/core/scripting/command")
-	const routerModule = import("./cli-native/router.ts")
-	const commandRouterModule = import("./cli-native/command-router.ts")
+	const routerModule = import("#cli-native/router")
+	const commandRouterModule = import("#cli-native/command-router")
 	const argumentsModule = import("@mailwoman/core/scripting/arguments")
 
 	return Promise.all([runnerModule, routerModule, commandRouterModule, argumentsModule]).then(

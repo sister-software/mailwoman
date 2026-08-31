@@ -6,9 +6,16 @@
  *   Path builders for Mailwoman's platform-native application directories.
  */
 
-import { resolvePath, resolvePathBuilder, type PathBuilder } from "path-ts"
+import {
+	createPathBuilderResolver,
+	type PathBuilder,
+	type PathBuilderLike,
+	type PathBuilderResolver,
+	resolvePath,
+	resolvePathBuilder,
+} from "path-ts"
 
-import { $public } from "../env/index.ts"
+import { $public } from "#env/index"
 
 /**
  * The Mailwoman data root from the typed public environment.
@@ -18,12 +25,17 @@ export function mailwomanDataRoot(): string {
 }
 
 /**
- * Build an absolute path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`. Reads the env on
- * each call, so a late environment change (or a test stub) is honored.
+ * Build a path under the data root, e.g. `dataRootPath("wof", "admin-global-priority.db")`.
+ *
+ * Reads the env on each call, so a late environment change (or a test stub) is honored — a resolver bound once at
+ * module evaluation would freeze the root to whatever the first importer's environment held. The result is a
+ * {@link PathBuilder}: call it to descend, `resolvePath(...)` or `.toString()` it at a string boundary.
  */
-export function dataRootPath(...segments: string[]): string {
-	return resolvePath(mailwomanDataRoot(), ...segments)
-}
+export const dataRootPath: PathBuilderResolver = ((...segments: PathBuilderLike[]) => {
+	const resolver = createPathBuilderResolver(mailwomanDataRoot())
+
+	return segments.length ? resolver(...(segments as [PathBuilderLike, ...string[]])) : resolver()
+}) as PathBuilderResolver
 
 /**
  * The dev-weights overlay for a locale: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
@@ -37,7 +49,7 @@ export function dataRootPath(...segments: string[]): string {
  * effect, and put a symlink in a publish tarball (`YN0035`). The data root is shared across every checkout on the
  * machine and is not packed by anything.
  */
-export function weightsOverlayPath(locale: string, ...segments: string[]): string {
+export function weightsOverlayPath(locale: string, ...segments: string[]): PathBuilder {
 	return dataRootPath("weights", locale.toLowerCase(), ...segments)
 }
 
@@ -108,22 +120,56 @@ export function cacheRootPath(...segments: string[]): string {
  *   listed rather than special-cased because that filter IS the tier's enforcement. It is also the only GB-claiming
  *   shard in this list — the Code-Point Open shard is not here — so nothing competes with it for `BT` routing.
  */
-export function wofShardPaths(
-	dataRoot: string = mailwomanDataRoot()
-): [string, string, string, string, string, string] {
-	// TODO: Redo this as an object.
-	return [
-		resolvePath(dataRoot, "wof", "admin-global-priority.db"),
-		resolvePath(dataRoot, "wof", "postalcode-us.db"),
-		resolvePath(dataRoot, "wof", "postalcode-geonames-tail.db"),
-		resolvePath(dataRoot, "wof", "postalcode-intl.db"),
-		// #977: the NL PC6 full-postcode shard (CBS via PDOK; scripts/build-postalcode-nl-pc6.ts) — the
-		// data the lookup's NL PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against.
-		resolvePath(dataRoot, "wof", "postalcode-nl-pc6.db"),
-		// Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %), the only
-		// coverage that exists for the hole Code-Point Open leaves. ODbL, build-local, 2.5 MB. A miss on a
-		// BT code means NOT ATTESTED IN OSM; since #1480 an unknown postcode abstains, so the shard is
-		// strictly additive. Rebuild: `mailwoman gazetteer build postcode-ni-osm`.
-		resolvePath(dataRoot, "wof", "postalcode-ni-osm.db"),
-	]
+export function wofShardPaths(dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
+	return Object.values(wofShardPathsByName(dataRoot))
+}
+
+/**
+ * The shard set {@link wofShardPaths} lists, keyed by role so a caller can name one without indexing a tuple.
+ */
+export interface WOFShardPaths {
+	/**
+	 * The global admin-priority shard — every admin lookup starts here.
+	 */
+	adminGlobalPriority: string
+	/**
+	 * US ZIP codes.
+	 */
+	postalcodeUS: string
+	/**
+	 * The nine-country namesake set FI/CZ/SK/SI/DK/NO/HR/PL/SE (see {@link wofShardPaths}).
+	 */
+	postalcodeGeonamesTail: string
+	/**
+	 * The international postcode shard (FR/DE/ES/IT/NL, and the others `pickShardForPlacetype` routes here).
+	 */
+	postalcodeIntl: string
+	/**
+	 * The NL PC6 full-postcode shard (CBS via PDOK; `scripts/build-postalcode-nl-pc6.ts`) — the data the lookup's NL PC6
+	 * ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
+	 */
+	postalcodeNLPC6: string
+	/**
+	 * Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %), the only coverage that exists
+	 * for the hole Code-Point Open leaves. ODbL, build-local, 2.5 MB. A miss on a BT code means NOT ATTESTED IN OSM; an
+	 * unknown postcode abstains (#1480), so the shard is strictly additive. Rebuild: `mailwoman gazetteer build
+	 * postcode-ni-osm`.
+	 */
+	postalcodeNIOSM: string
+}
+
+/**
+ * {@link wofShardPaths} as a named record, in the same order the runtime attaches them.
+ */
+export function wofShardPathsByName(dataRoot: PathBuilderLike = mailwomanDataRoot()): WOFShardPaths {
+	const wof = resolvePathBuilder(dataRoot, "wof")
+
+	return {
+		adminGlobalPriority: wof("admin-global-priority.db").toString(),
+		postalcodeUS: wof("postalcode-us.db").toString(),
+		postalcodeGeonamesTail: wof("postalcode-geonames-tail.db").toString(),
+		postalcodeIntl: wof("postalcode-intl.db").toString(),
+		postalcodeNLPC6: wof("postalcode-nl-pc6.db").toString(),
+		postalcodeNIOSM: wof("postalcode-ni-osm.db").toString(),
+	}
 }

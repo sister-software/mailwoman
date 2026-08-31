@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { frameToANSILines } from "@mailwoman/map-tui/frame"
 import { TILE_SIZE, worldPxToLonLat } from "@mailwoman/map-tui/mercator"
 import { MapRenderer } from "@mailwoman/map-tui/renderer"
 import { type DecodedTile, type TileProvider, TileSource } from "@mailwoman/map-tui/tile-source"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { afterAll, describe, expect, it } from "vitest"
 
-const FIXTURE = fileURLToPath(new URL("../fixtures/portland.pmtiles", import.meta.url))
+const FIXTURE = resolvePackagePath("@mailwoman/map-tui", "test", "fixtures", "portland.pmtiles")
 
 const BLANK_BRAILLE = 0x28_00
 const SPACE = 0x20

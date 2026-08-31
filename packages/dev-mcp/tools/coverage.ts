@@ -12,7 +12,7 @@ import { dataRootPath, repoRootPath } from "@mailwoman/core/utils"
 import { censusCoverage, type CountryCoverage, type CoverageReport } from "mailwoman/coverage-census"
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
  * The training config whose `country_weights` decides admission, chosen by MODIFICATION TIME.

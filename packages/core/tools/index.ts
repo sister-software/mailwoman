@@ -7,6 +7,6 @@
  *   argv, no `process.exit`: commands own parsing, rendering, and exit codes.
  */
 
-export * from "./download-libpostal-resources.ts"
-export * from "./download-ssl-address.ts"
-export * from "./generate-language-types.ts"
+export * from "#tools/download-libpostal-resources"
+export * from "#tools/download-ssl-address"
+export * from "#tools/generate-language-types"

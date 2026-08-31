@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+import { existsSync, readFileSync } from "node:fs"
 
 // A sync function: converting it changes its signature, and every caller's.
 export function readConfig(path: string): string | null {

@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./collections.ts"
-export * from "./decoder/index.ts"
-export * from "./identifiers.ts"
-export * from "./pipeline/index.ts"
-export * from "./resources/index.ts"
-export * from "./tokenization/index.ts"
-export * from "./types/index.ts"
+export * from "#collections"
+export * from "#decoder/index"
+export * from "#identifiers"
+export * from "#pipeline/index"
+export * from "#resources/index"
+export * from "#tokenization/index"
+export * from "#types/index"

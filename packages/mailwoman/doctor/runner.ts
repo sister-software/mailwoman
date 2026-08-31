@@ -16,13 +16,12 @@
 import { $public, DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { isWritable, pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { readLayerManifest, type LayerContractDatabase } from "@mailwoman/core/layers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { resolveWeights, weightsPackageName } from "@mailwoman/neural/weights"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolvePath } from "path-ts"
 
-import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFShardPaths } from "../resolver-backend.ts"
 import {
 	assembleReport,
 	checkPOI,
@@ -37,7 +36,8 @@ import {
 	type GazetteerObservation,
 	type POIObservation,
 	type WeightsObservation,
-} from "./checks.ts"
+} from "#doctor/checks"
+import { conventionCandidateDBPath, resolveCandidateDBPath, resolveWOFShardPaths } from "#resolver-backend"
 
 /**
  * The resolved-weights shape the runner needs — a structural subset of `@mailwoman/neural`'s `ResolvedWeights`.
@@ -128,7 +128,7 @@ export interface DoctorDeps {
 async function readEnginesFloor(): Promise<string> {
 	try {
 		const pkg = await readLocalJSONFile<{ engines?: { node?: string } }>(
-			fileURLToPath(import.meta.resolve("mailwoman/package.json"))
+			resolvePackageDirectory("mailwoman")("package.json")
 		)
 
 		return pkg.engines?.node ?? ">=0"

@@ -25,6 +25,13 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -67,8 +74,8 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/platform": "workspace:*",
-		"kysely": "^0.29.4"
+		"kysely": "^0.29.4",
+		"path-ts": "^2.3.0"
 	},
 	"devDependencies": {
 		"@mailwoman/core": "workspace:*"

@@ -25,7 +25,12 @@
 	],
 	"type": "module",
 	"imports": {
-		"#test/backend-name-key": "./test/helpers/backend-name-key.ts"
+		"#test/backend-name-key": "./test/helpers/backend-name-key.ts",
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
 	},
 	"exports": {
 		"./package.json": "./package.json",
@@ -116,7 +121,9 @@
 	"dependencies": {
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/spatial": "workspace:*"
+	},
+	"devDependencies": {
+		"path-ts": "^2.3.0"
 	}
 }

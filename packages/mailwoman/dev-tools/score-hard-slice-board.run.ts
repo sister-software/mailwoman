@@ -51,19 +51,18 @@
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 import { createWOFResolver, mostSpecificResolved } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import { haversineKm } from "@mailwoman/spatial"
 
+import { type HardSliceCase, loadHardSliceBoard } from "#eval-harness/hard-slice-board"
 import { createRuntimePipeline } from "#index"
+import { createResolverBackend } from "#resolver-backend"
 
-import { type HardSliceCase, loadHardSliceBoard } from "../eval-harness/hard-slice-board.ts"
-import { createResolverBackend } from "../resolver-backend.ts"
-
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		arms: { type: "string", default: "none,pop,imp" },
 		board: { type: "string" },

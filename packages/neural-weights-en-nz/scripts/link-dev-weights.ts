@@ -46,15 +46,15 @@
 
 import { readLocalTextFile, statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { dataRootPath, md5File, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
 	pairIndexStaleReason,
 	peekPairIndexHeaderFields,
 	removeIfPresent,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { resolvePath } from "path-ts"
 
 /**
  * Hex characters in an md5 digest.
@@ -110,8 +110,8 @@ async function md5FileWithSidecar(path: string): Promise<string> {
 	return hash
 }
 
-await removeIfPresent(resolve(DEST_DIR, "model.onnx"))
-await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
+await removeIfPresent(resolvePath(DEST_DIR, "model.onnx"))
+await removeIfPresent(resolvePath(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree gazetteer/country-OFF gap) -----.
@@ -123,7 +123,7 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (await pathExists(SRC_GAZETTEER_LEXICON)) {
-	await linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
+	await linkForce(SRC_GAZETTEER_LEXICON, resolvePath(DEST_DIR, "anchor-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
@@ -131,7 +131,7 @@ if (await pathExists(SRC_GAZETTEER_LEXICON)) {
 }
 
 if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	await linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
+	await linkForce(SRC_COUNTRY_LEXICON, resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
@@ -153,7 +153,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 /**
  * Where the placetype pair index is written — a soft-feed sibling, absent in a lean install.
  */
-const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-nz.bin")
+const PAIR_INDEX_BIN_DEST = resolvePath(DEST_DIR, "pair-index-nz.bin")
 /**
  * Decoder pair-index bonus baked into this artifact. Held in lockstep with the shipped binary's header — a mismatch
  * forces a loud rebuild rather than silently shipping a stale index.
@@ -238,7 +238,7 @@ if (pairIndexIsFresh) {
 		`WARNING: missing ${NZ_SOURCE_CSV} — pair-index-nz.bin not built; the placetype-pair prior default will resolve OFF for NZ.`
 	)
 } else {
-	const result = spawnSync(
+	const result = spawnProcessSync(
 		process.execPath,
 		[
 			CLI,
@@ -278,7 +278,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 /**
  * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
  */
-const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolvePath(DEST_DIR, "fst-street-morphology.bin")
 
 if (await pathExists(MORPHOLOGY_SRC)) {
 	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)

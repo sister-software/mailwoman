@@ -43,10 +43,10 @@
 	],
 	"type": "module",
 	"imports": {
-		"#sdk/build/*": {
-			"node": "./sdk/build/*.ts",
-			"default": "./out/sdk/build/*.js",
-			"types": "./out/sdk/build/*.d.ts"
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {
@@ -181,13 +181,13 @@
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/record": "workspace:*",
 		"@mailwoman/registry": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"kysely": "^0.29.4",
+		"path-ts": "^2.3.0",
 		"read-excel-file": "^9.3.5",
-		"spliterator": "^6.3.1",
+		"spliterator": "^6.4.1",
 		"type-fest": "^5.8.0"
 	},
 	"devDependencies": {

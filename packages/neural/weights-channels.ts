@@ -9,9 +9,9 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { resolve } from "@mailwoman/platform/path"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
-import type { AnchorSpanMode } from "./anchor-inference.ts"
+import type { AnchorSpanMode } from "#anchor-inference"
 
 /**
  * The structured `requires` block of a `model-card.json` (#718) — the declared SHIP-CONFIG the model was trained
@@ -102,12 +102,12 @@ export interface DeclaredArtifact {
  * all three meaning "this package declares no such artifact", which is a legal posture, not a fault.
  */
 export async function readDeclaredArtifactFile(
-	packageDir: string | undefined,
+	packageDir: PathBuilderLike | undefined,
 	keys: readonly string[] = ANCHOR_ARTIFACT_CARD_KEYS
 ): Promise<DeclaredArtifact | undefined> {
 	if (!packageDir) return undefined
 
-	const cardPath = resolve(packageDir, "model-card.json")
+	const cardPath = resolvePath(packageDir, "model-card.json")
 
 	if (!(await pathExists(cardPath))) return undefined
 
@@ -130,7 +130,7 @@ export async function readDeclaredArtifactFile(
 		// `$comment_postcode_anchor`), so only a plain filename counts as a declaration.
 		if (typeof file !== "string" || !file || file.startsWith("$")) continue
 
-		const path = resolve(packageDir, file)
+		const path = resolvePath(packageDir, file)
 
 		return { key, file, path, present: await pathExists(path) }
 	}
@@ -191,7 +191,7 @@ export function unfedChannelWarner(weightsPackage: string): (channel: UnfedChann
  * `buildGauntletDeps` asserts the presence a GRADING run needs, which is the only place that knows whether this
  * particular run needs GB anchors.
  */
-export async function unfedAnchorDetail(packageDir: string | undefined): Promise<string | undefined> {
+export async function unfedAnchorDetail(packageDir: PathBuilderLike | undefined): Promise<string | undefined> {
 	const declared = await readDeclaredArtifactFile(packageDir)
 
 	if (!declared) return undefined
@@ -208,7 +208,9 @@ export async function unfedAnchorDetail(packageDir: string | undefined): Promise
  * entry with a non-boolean `required`) — a malformed declared contract is a loud artifact bug, not a silent
  * re-default.
  */
-export async function readRequiredChannels(modelCardPath: string | undefined): Promise<RequiredChannels | undefined> {
+export async function readRequiredChannels(
+	modelCardPath: PathBuilderLike | undefined
+): Promise<RequiredChannels | undefined> {
 	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
 	let raw: string
 
@@ -351,7 +353,7 @@ export type CapabilityManifest = Record<string, Record<string, Record<string, Ta
  * malformed cell simply yields no capability claim — `undefined` from `lookupTagCapability`).
  */
 export async function readCapabilityManifest(
-	modelCardPath: string | undefined
+	modelCardPath: PathBuilderLike | undefined
 ): Promise<CapabilityManifest | undefined> {
 	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
 	let raw: string
@@ -413,7 +415,7 @@ export interface CRFTransitions {
  * Read learned CRF transition parameters from `crf-transitions.json`. Returns `undefined` when the file is missing or
  * malformed — callers fall back to the structural BIO mask only.
  */
-export async function readCRFTransitions(crfPath: string | undefined): Promise<CRFTransitions | undefined> {
+export async function readCRFTransitions(crfPath: PathBuilderLike | undefined): Promise<CRFTransitions | undefined> {
 	if (!crfPath || !(await pathExists(crfPath))) return undefined
 	let raw: string
 
@@ -453,7 +455,7 @@ export async function readCRFTransitions(crfPath: string | undefined): Promise<C
  * re-defaulted.
  */
 export async function readLabelsFromModelCard(
-	modelCardPath: string | undefined
+	modelCardPath: PathBuilderLike | undefined
 ): Promise<readonly string[] | undefined> {
 	if (!modelCardPath || !(await pathExists(modelCardPath))) return undefined
 	let raw: string

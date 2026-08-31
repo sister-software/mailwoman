@@ -28,8 +28,8 @@
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { join } from "@mailwoman/platform/path"
 import { haversineKm } from "@mailwoman/spatial"
+import { join, type PathBuilderLike } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 
 /**
@@ -109,7 +109,7 @@ const GN_COLUMN_LON = 5
  * for the rare wide-disagreement records, so the cost is one asynchronous file read per country that HAS such a
  * record.
  */
-export async function createGeoNamesAnchorLookup(geonamesDir: string): Promise<GeoNamesAnchorLookup> {
+export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): Promise<GeoNamesAnchorLookup> {
 	const byCountry = new Map<string, Promise<Map<string, PointPair>>>()
 
 	const load = (country: string): Promise<Map<string, PointPair>> => {

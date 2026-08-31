@@ -16,7 +16,6 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { QueryIntentCode } from "@mailwoman/core/pipeline"
-import { join } from "@mailwoman/platform/path"
 import {
 	ABSENCE_PROBE_FREEZE_PATH,
 	type AbsenceProbeFreezeRecord,
@@ -45,6 +44,7 @@ import {
 import { MARKER_PROBE_EXPECTED_CODE } from "mailwoman/eval-harness/phase-2-decision/run"
 import { PROBE_FREEZE_PATH, type ProbeFreezeRecord } from "mailwoman/eval-harness/semantic-utility/probe"
 import { SEMANTIC_AFFORDS_MECHANISM } from "mailwoman/observations"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

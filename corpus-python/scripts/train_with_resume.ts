@@ -16,9 +16,9 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { open } from "@mailwoman/core/fs/readers"
 import { passThroughCLIArguments } from "@mailwoman/core/scripting/utils"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { openSync } from "@mailwoman/platform/fs"
 import { $, sleep } from "zx"
 
 const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)
@@ -31,7 +31,7 @@ const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml
 const ADDITIONAL_COMMAND_LINE_ARGS = passThroughCLIArguments()
 
 // Open the log once in append mode; every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
-const logFd = openSync(LOG, "a")
+const logFd = await open(LOG, "a")
 
 // zx prints the command to stderr by default; the bash wrapper kept python output in $LOG only, so stay quiet.
 $.verbose = false
@@ -53,7 +53,7 @@ process.on("SIGTERM", onSignal)
  * @param resume - Whether to pass `--resume auto` (the resume loop) or start fresh.
  */
 async function runTraining(resume: boolean): Promise<number> {
-	const shell = $({ stdio: ["ignore", logFd, logFd], nothrow: true })
+	const shell = $({ stdio: ["ignore", logFd.fd, logFd.fd], nothrow: true })
 
 	const output = resume
 		? await shell`python -u -m mailwoman_train train --config ${CONFIG} --resume auto ${ADDITIONAL_COMMAND_LINE_ARGS}`

@@ -37,8 +37,8 @@ const EvalGauntletBuild: ParsedCommandComponent<Record<string, never>, ["fdic-ho
 	args,
 }) => {
 	const state = useCommandTask(async () => {
-		const { buildFDICHoldout } = await import("../../eval-harness/gauntlet/build-fdic-holdout.ts")
-		const { buildRegressionDB } = await import("../../eval-harness/gauntlet/build-regression-db.ts")
+		const { buildFDICHoldout } = await import("#eval-harness/gauntlet/build-fdic-holdout")
+		const { buildRegressionDB } = await import("#eval-harness/gauntlet/build-regression-db")
 
 		switch (args[0]) {
 			case "fdic-holdout":

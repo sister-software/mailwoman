@@ -4,7 +4,7 @@
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
-import { mkdirSync, rmSync } from "@mailwoman/platform/fs"
+import { mkdirSync, rmSync } from "node:fs"
 
 export async function claim(lock: string, out: string): Promise<void> {
 	await makeDirectories(out)

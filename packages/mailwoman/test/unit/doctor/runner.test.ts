@@ -171,7 +171,7 @@ describe("runDoctor (injected seams)", () => {
 })
 
 // The one seam that is NOT injected in the suite above: `defaultDoctorDeps` reads `engines.node` from mailwoman's own
-// manifest, located by self-reference (`import.meta.resolve("mailwoman/package.json")`). It touches the filesystem by
+// manifest, located by self-reference (`resolvePackageDirectory("mailwoman")("package.json")`). It touches the filesystem by
 // construction — that is the thing under test — and it degrades to ">=0" on any failure, so a broken resolution would
 // otherwise show up only as a doctor report that silently stops enforcing the Node floor.
 describe("defaultDoctorDeps — engines floor via package self-reference", () => {

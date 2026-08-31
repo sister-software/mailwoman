@@ -30,6 +30,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, dataRootPath } from "@mailwoman/core/utils"
 import { normalizeFSTToken } from "@mailwoman/neural/fst-prior"
 import {
@@ -38,10 +39,9 @@ import {
 	PairIndexResolver,
 	peekPairIndexHeader,
 } from "@mailwoman/neural/pair-index-resolver"
-import { join } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 
 /**
  * Mirror of the builder's per-country WOF parent-placetype sets — restated here on purpose (see file header).
@@ -159,7 +159,7 @@ function expectedPairSet(
 }
 
 async function main(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			countries: { type: "string", default: "us,fr" },
 			db: { type: "string" },

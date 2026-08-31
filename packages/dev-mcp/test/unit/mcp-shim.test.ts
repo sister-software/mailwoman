@@ -9,12 +9,12 @@
  *   and worker is precisely the failure this file must catch.
  */
 
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
-const CLI_PATH = fileURLToPath(import.meta.resolve("@mailwoman/dev-mcp/cli"))
+const CLI_PATH = resolveModulePath("@mailwoman/dev-mcp/cli")
 
 /**
  * Worker boot imports the whole mailwoman graph; under vitest concurrency that is seconds, not milliseconds.

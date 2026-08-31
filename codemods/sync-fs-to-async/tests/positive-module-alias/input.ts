@@ -11,7 +11,7 @@ export async function present(p: string): Promise<boolean> {
 export async function load(a: string, b: string): Promise<string> {
 	const [{ resolveWeights }, node] = await Promise.all([
 		import("./weights.ts"),
-		import("@mailwoman/platform/fs"),
+		import("node:fs"),
 	])
 
 	void resolveWeights

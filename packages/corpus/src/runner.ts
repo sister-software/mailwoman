@@ -29,7 +29,7 @@
 
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dirname, join } from "@mailwoman/platform/path"
+import { dirname, join, type PathBuilderLike } from "path-ts"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -81,7 +81,7 @@ export interface RunAdapterOptions {
 	/**
 	 * Root output directory; the runner creates `<outputDir>/<adapter.id>/` under it.
 	 */
-	outputDir: string
+	outputDir: PathBuilderLike
 
 	/**
 	 * Corpus version stamped onto every row. Locked together with the tokenizer version.

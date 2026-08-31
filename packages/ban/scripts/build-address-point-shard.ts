@@ -30,9 +30,8 @@
 
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, md5File } from "@mailwoman/core/utils"
-import { dirname } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
 import {
 	ADDRESS_POINT_COLUMNS,
 	type AddressPointDatabase,
@@ -47,10 +46,11 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import { dirname, resolvePath } from "path-ts"
 
-import { extractBANAddrPoints } from "../sdk/extract.ts"
-import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "../sdk/fetch.ts"
-import { streetLocaleForBANCountry } from "../sdk/street-locale.ts"
+import { extractBANAddrPoints } from "#sdk/extract"
+import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "#sdk/fetch"
+import { streetLocaleForBANCountry } from "#sdk/street-locale"
 
 interface BuildArgs {
 	country: string
@@ -61,7 +61,7 @@ interface BuildArgs {
 }
 
 async function parse(): Promise<BuildArgs> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			country: { type: "string" },
 			"csv-dir": { type: "string" },
@@ -74,11 +74,11 @@ async function parse(): Promise<BuildArgs> {
 	const country = (values.country ?? "fr").toLowerCase()
 	// Throws for an unsupported country — fail loud, never key with the wrong normalizer.
 	streetLocaleForBANCountry(country)
-	const csvDir = values["csv-dir"] ?? dataRootPath("corpus", "sources", "ban")
+	const csvDir = resolvePath(values["csv-dir"] ?? dataRootPath("corpus", "sources", "ban"))
 
 	if (!(await pathExists(csvDir))) throw new Error(`BAN CSV dir not found: ${csvDir}`)
 	const release = values.release ?? "2026-05-18"
-	const output = values.out ?? dataRootPath("ban", `address-points-${country}.db`)
+	const output = resolvePath(values.out ?? dataRootPath("ban", `address-points-${country}.db`))
 
 	const depts = values.depts
 		? values.depts

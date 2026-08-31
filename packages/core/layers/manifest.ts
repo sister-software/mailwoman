@@ -8,8 +8,8 @@
  *   corrupted layer fails loudly at open time rather than misbehaving downstream.
  */
 
-import { parseJSONStrict } from "../objects.ts"
-import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "./schema.ts"
+import { CoverageBasis, LayerFreshnessPolicy, LayerTier, type LayerContractHandle } from "#layers/schema"
+import { parseJSONStrict } from "#objects"
 
 /**
  * Which spine columns a layer carries. At least one key is required.

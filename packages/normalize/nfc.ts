@@ -12,7 +12,7 @@
  *   variant selectors may produce off-by-one offsets — acceptable for v1.
  */
 
-import { identityMap } from "./offset-map.ts"
+import { identityMap } from "#offset-map"
 
 export interface NFCResult {
 	text: string

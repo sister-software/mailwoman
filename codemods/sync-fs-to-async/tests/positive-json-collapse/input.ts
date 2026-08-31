@@ -1,7 +1,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "node:fs"
 
 interface Manifest {
 	version: string

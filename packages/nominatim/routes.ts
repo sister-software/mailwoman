@@ -18,8 +18,8 @@ import type {
 	NominatimReverseParams,
 	NominatimSearchParams,
 	NominatimStatus,
-} from "./engine.ts"
-import { nominatimResultToSchemaOrg, toFeatureCollection } from "./format.ts"
+} from "#engine"
+import { nominatimResultToSchemaOrg, toFeatureCollection } from "#format"
 import {
 	ErrorSchema,
 	lookupQueryParams,
@@ -29,7 +29,7 @@ import {
 	NominatimStatusSchema,
 	reverseQueryParams,
 	searchQueryParams,
-} from "./schema.ts"
+} from "#schema"
 
 /**
  * Southern limit of latitude in WGS-84 degrees.

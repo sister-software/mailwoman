@@ -26,9 +26,8 @@ import { dataRootPath, percentile } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/match"
 
 import { streamRows } from "#index"
-
-import type { EvalGeocoderFactory } from "./eval-geocoder.ts"
-import { norm } from "./shared.ts"
+import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
+import { norm } from "#tools/shared"
 
 /**
  * Largest absolute latitude in WGS-84 degrees.

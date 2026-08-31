@@ -6,7 +6,7 @@
 
 import type { Tagged } from "type-fest"
 
-import type { AdminLevel1Code, FIPSStateCode } from "./state.ts"
+import type { AdminLevel1Code, FIPSStateCode } from "#state"
 
 //#region Tagged FIPS types
 

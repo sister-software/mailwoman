@@ -41,13 +41,12 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createScorer } from "@mailwoman/neural/scorer"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
+import { compareComponents, CRITICAL_TAGS, VERDICT_SEVERITY, type Verdict } from "#eval-harness/invariance/compare"
+import { canonicalizeAbbreviations, getTransform } from "#eval-harness/invariance/transforms"
 import { createRuntimePipeline } from "#index"
-
-import { compareComponents, CRITICAL_TAGS, VERDICT_SEVERITY, type Verdict } from "./compare.ts"
-import { canonicalizeAbbreviations, getTransform } from "./transforms.ts"
 
 // Repo-root-relative (mirrors `FRAGMENT_BOARD_FIXTURES` / `POI_BOARD_FIXTURES`): the compiled tree
 // (`out/`) never gets a copy of the `.jsonl` fixture — only `.ts` sources are transpiled — so this
@@ -157,9 +156,9 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
 		}
 
 		return createScorer({
-			modelPath: resolve(opts.model),
-			tokenizerPath: resolve(opts.tokenizer),
-			modelCardPath: resolve(opts.modelCard),
+			modelPath: resolvePath(opts.model),
+			tokenizerPath: resolvePath(opts.tokenizer),
+			modelCardPath: resolvePath(opts.modelCard),
 			locale: locale.toLowerCase(),
 		})
 	}

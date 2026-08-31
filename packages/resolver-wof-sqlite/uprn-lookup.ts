@@ -29,9 +29,9 @@ import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk } from "h3-js"
 
-import { allRows } from "./sqlite-utils.ts"
-import type { UPRNDatabase } from "./uprn-schema.ts"
-import { uprnFullCell } from "./uprn-schema.ts"
+import { allRows } from "#sqlite-utils"
+import type { UPRNDatabase } from "#uprn-schema"
+import { uprnFullCell } from "#uprn-schema"
 
 /**
  * Conservative FLOOR on how much CENTRE distance one unit of res-9 GRID distance buys, metres. Adjacent centres sit √3

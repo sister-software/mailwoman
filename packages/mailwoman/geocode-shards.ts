@@ -11,8 +11,9 @@ import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/resolver"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
-import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "./data-release.ts"
+import { readReleaseManifest, resolveShardPath, type DataReleaseManifest } from "#data-release"
 
 /**
  * The per-state shards to wire into a single geocode resolve. Either/both may be absent (admin-only).
@@ -188,8 +189,9 @@ export class ShardProvider implements Disposable {
 	 * Construct a provider and warm its path map before answering. The constructor cannot await the #2029-async manifest
 	 * read + shard-path probes, so this static factory does.
 	 */
-	static async create(factory: ShardLookupFactory, dataRoot: string): Promise<ShardProvider> {
-		const provider = new ShardProvider(factory, dataRoot, await readReleaseManifest(dataRoot))
+	static async create(factory: ShardLookupFactory, dataRoot: PathBuilderLike): Promise<ShardProvider> {
+		const root = resolvePath(dataRoot)
+		const provider = new ShardProvider(factory, root, await readReleaseManifest(root))
 
 		await provider.warm()
 

@@ -11,8 +11,8 @@
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
 import { buildWeightsInstallArgs, probeWeights } from "mailwoman/cli-kit/weights-guard"
+import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 // A locale with NO weights package, which is the whole point: these cases assert the not-resolvable
@@ -53,11 +53,11 @@ describe("buildWeightsInstallArgs", () => {
 
 describe("probeWeights", () => {
 	test("ok=false with an actionable detail when nothing resolves", async () => {
-		const probe = await probeWeights(LOCALE, cacheRoot.path)
+		const probe = await probeWeights(LOCALE, cacheRoot.path.toString())
 
 		expect(probe.ok).toBe(false)
 		expect(probe.detail).toMatch(/Could not resolve/)
-		expect(probe.detail).toContain(weightsCachePackageDir(cacheRoot.path, LOCALE))
+		expect(probe.detail).toContain(weightsCachePackageDir(cacheRoot.path, LOCALE).toString())
 	})
 
 	test("ok=true against a binary-carrying cache install", async () => {
@@ -67,7 +67,7 @@ describe("probeWeights", () => {
 		await writeLocalTextFile("stub", join(packageDir, "model.onnx"))
 		await writeLocalTextFile("stub", join(packageDir, "tokenizer.model"))
 
-		expect(await probeWeights(LOCALE, cacheRoot.path)).toEqual({ ok: true })
+		expect(await probeWeights(LOCALE, cacheRoot.path.toString())).toEqual({ ok: true })
 	})
 
 	test("ok=false against a metadata-only cache install (the code-only-release tarball)", async () => {
@@ -76,6 +76,6 @@ describe("probeWeights", () => {
 		await makeDirectories(packageDir)
 		await writeLocalTextFile("{}", join(packageDir, "model-card.json"))
 
-		expect((await probeWeights(LOCALE, cacheRoot.path)).ok).toBe(false)
+		expect((await probeWeights(LOCALE, cacheRoot.path.toString())).ok).toBe(false)
 	})
 })

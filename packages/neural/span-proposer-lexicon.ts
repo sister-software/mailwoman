@@ -24,7 +24,7 @@ import {
 	MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS,
 	VENUE_STRUCTURE_DESIGNATORS,
 	VENUE_STRUCTURE_MODIFIERS,
-} from "./venue-structure.ts"
+} from "#venue-structure"
 
 /**
  * USPS Pub-28 C2 canonicals whose designator is DESCRIPTIVE rather than addressing ("Building A" describes the

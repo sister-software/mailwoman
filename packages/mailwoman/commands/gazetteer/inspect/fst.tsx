@@ -8,8 +8,8 @@
  *   optional continuations).
  */
 
-import { join } from "@mailwoman/platform/path"
 import { Text } from "ink"
+import { join } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 

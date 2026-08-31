@@ -22,7 +22,6 @@
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { mailwomanDataRoot, repoRootPathBuilder, wofShardPaths } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type {
 	PlaceLookup,
 	WOFCandidateTableLookup,
@@ -33,13 +32,13 @@ import { readCapitalPoints } from "@mailwoman/resolver-wof-sqlite/capital-schema
 import { CapitalIndex, type CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { resolvePath } from "path-ts"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
  * The candidate gazetteer's conventional home — where `mailwoman data pull candidate` writes it, and where every caller
  * looks when nothing points somewhere else.
  */
-export function conventionCandidateDBPath(dataRoot: string = mailwomanDataRoot()): string {
+export function conventionCandidateDBPath(dataRoot: PathBuilderLike = mailwomanDataRoot()): string {
 	return resolvePath(dataRoot, "wof", "candidate.db")
 }
 
@@ -53,7 +52,7 @@ export function conventionCandidateDBPath(dataRoot: string = mailwomanDataRoot()
  */
 export async function resolveCandidateDBPath(
 	explicit?: string,
-	dataRoot: string = mailwomanDataRoot()
+	dataRoot: PathBuilderLike = mailwomanDataRoot()
 ): Promise<string | undefined> {
 	const pinned = explicit ?? $public.MAILWOMAN_CANDIDATE_DB
 
@@ -76,7 +75,7 @@ export async function resolveCandidateDBPath(
  * caller that reads only `wofShardPaths` silently probes different shards than the runtime on any box where the env is
  * set, which is the exact class of wrong answer a data-source probe exists to rule out.
  */
-export function resolveWOFShardPaths(explicit?: string, dataRoot: string = mailwomanDataRoot()): string[] {
+export function resolveWOFShardPaths(explicit?: string, dataRoot: PathBuilderLike = mailwomanDataRoot()): string[] {
 	const raw = explicit ?? $public.MAILWOMAN_WOF_DB
 
 	if (raw) {
@@ -153,7 +152,7 @@ export async function createResolverBackend(
 	mod: ResolverLookupModule,
 	opts: {
 		candidateDB?: string
-		dataRoot?: string
+		dataRoot?: PathBuilderLike
 		wofPaths: string | string[]
 		postalCityAliasDB?: string
 		/**

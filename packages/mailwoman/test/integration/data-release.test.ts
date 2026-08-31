@@ -10,9 +10,9 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import { readReleaseManifest, resolveShardPath } from "mailwoman/data-release"
 import { ShardProvider } from "mailwoman/geocode-shards"
+import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -20,7 +20,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function tmp(): Promise<string> {
-	const d = fixtures.use(await temporaryDirectory("mw-data-release-")).path
+	const d = fixtures.use(await temporaryDirectory("mw-data-release-")).path.toString()
 
 	return d
 }

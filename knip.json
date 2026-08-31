@@ -14,7 +14,7 @@
 		"codemods/**"
 	],
 	"ignoreBinaries": ["ogr2ogr", "rg", "script", "uvx"],
-	"ignoreDependencies": ["@duckdb/node-api", "ts-morph"],
+	"ignoreDependencies": ["@duckdb/node-api", "ts-morph", "onnxruntime-web"],
 	"workspaces": {
 		"packages/*": {
 			"entry": ["index.ts", "cli.ts", "cli.tsx", "scripts/**/*.ts", "tools/**/*.ts", "dev-tools/**/*.ts"]
@@ -27,7 +27,8 @@
 				"dev-tools/**/*.ts",
 				"geocode-worker.ts",
 				"test-fixtures/**/*"
-			]
+			],
+			"ignoreDependencies": ["@mailwoman/neural-weights-en-us"]
 		},
 		"packages/dev-mcp": {
 			"entry": ["index.ts", "cli.ts", "worker.ts", "hooks/*.ts"]

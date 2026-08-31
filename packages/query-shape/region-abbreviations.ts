@@ -7,7 +7,7 @@
  *   Only fires after a comma-space boundary in en-us — the canonical "City, ST ZIP" pattern.
  */
 
-import type { RegionAbbreviationHit, Segment, TokenClass } from "./types.ts"
+import type { RegionAbbreviationHit, Segment, TokenClass } from "#types"
 
 const REGION_ABBREV_RE = /^[A-Z]{2}$/
 

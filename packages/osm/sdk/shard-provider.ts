@@ -16,7 +16,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
 import { join } from "path-ts"
 
-import { streetLocaleForCountry, supportedOSMCountries } from "./street-locale.ts"
+import { streetLocaleForCountry, supportedOSMCountries } from "#sdk/street-locale"
 
 /**
  * What the cascade needs from an OSM shard — structurally a subset of mailwoman's `StateShards`.

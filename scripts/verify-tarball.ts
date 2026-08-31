@@ -28,7 +28,7 @@
  */
 
 import { isPresent, parseJSONStrict } from "@mailwoman/core/objects"
-import { spawnSync } from "@mailwoman/platform/child_process"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 
 import { collectExportTargets } from "./publish-exports.ts"
@@ -146,13 +146,15 @@ export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): st
  * on a truncated or non-tarball input, so a pack failure upstream reads as a pack failure here.
  */
 export function readTarball(tarballPath: string): TarballContents {
-	const listing = spawnSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
+	const listing = spawnProcessSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
 
 	if (listing.status !== 0) {
 		throw new Error(`verify-tarball: tar -tzf failed for ${tarballPath} (exit ${listing.status}): ${listing.stderr}`)
 	}
 
-	const manifestRead = spawnSync("tar", ["-xzf", tarballPath, "-O", "package/package.json"], { encoding: "utf8" })
+	const manifestRead = spawnProcessSync("tar", ["-xzf", tarballPath, "-O", "package/package.json"], {
+		encoding: "utf8",
+	})
 
 	if (manifestRead.status !== 0) {
 		throw new Error(

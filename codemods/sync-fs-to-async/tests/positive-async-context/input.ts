@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "@mailwoman/platform/fs"
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs"
 
 export async function build(root: string, bytes: Uint8Array): Promise<number> {
 	if (!existsSync(root)) mkdirSync(root, { recursive: true })

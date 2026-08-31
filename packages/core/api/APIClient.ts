@@ -15,19 +15,19 @@ import {
 	setupCache,
 } from "axios-cache-interceptor"
 
-import { ConsoleLogger, type IRuntimeLogger } from "../logging/index.ts"
-import { type ClockLike, systemClock } from "./clock.ts"
-import { RequestPacer } from "./pacer.ts"
-import { delegateAxiosError } from "./responses.ts"
+import { type ClockLike, systemClock } from "#api/clock"
+import { RequestPacer } from "#api/pacer"
+import { delegateAxiosError } from "#api/responses"
 import {
 	classifyAxiosFailure,
 	type ResolvedRetryPolicy,
 	resolveRetryPolicy,
 	retryDelayMs,
 	type RetryOptions,
-} from "./retry.ts"
+} from "#api/retry"
+import { ConsoleLogger, type IRuntimeLogger } from "#logging/index"
 
-export { type IRuntimeLogger } from "../logging/index.ts"
+export { type IRuntimeLogger } from "#logging/index"
 
 /**
  * Milliseconds in a minute — the numerator when turning {@linkcode APIClientConfig.requestsPerMinute} into an interval.

@@ -27,7 +27,7 @@ import type { ComponentTag } from "@mailwoman/core/types"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { PLACETYPE_PROJECTION } from "./placetype-census.ts"
+import { PLACETYPE_PROJECTION } from "#gazetteer-pipeline/placetype-census"
 
 /**
  * One borough pair in the pair-index entry shape (`normalizeFSTToken`-folded keys are the BUILDER's job — this module

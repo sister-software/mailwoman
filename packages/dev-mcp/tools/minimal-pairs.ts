@@ -9,10 +9,10 @@
 
 import { z } from "zod"
 
-import type { EngineConfig } from "../engine-registry.ts"
-import { runMinimalPairs, type Ladder } from "../minimal-pairs.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA } from "../tool-kit.ts"
+import type { EngineConfig } from "#engine-registry"
+import { runMinimalPairs, type Ladder } from "#minimal-pairs"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA } from "#tool-kit"
 
 const RUNGS_SCHEMA = z
 	.array(z.string())

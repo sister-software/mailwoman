@@ -11,20 +11,21 @@
 import type { SystemCode } from "@mailwoman/codex"
 import type { AddressTree, Calibrator } from "@mailwoman/core/decoder"
 import type { SpanProposerLexicon } from "@mailwoman/core/pipeline"
+import type { PathBuilderLike } from "path-ts"
 
-import type { AnchorLookup, AnchorSpanMode } from "./anchor-inference.ts"
-import type { NeuralRunner } from "./classifier.ts"
-import type { CountryLexicon } from "./country-inference.ts"
-import type { FSTMatcherLike, ImportanceLengthScaleMode } from "./fst-prior.ts"
-import type { GazetteerLexicon } from "./gazetteer-inference.ts"
-import type { PlacetypeCensusLike } from "./placetype-census.ts"
-import type { PlacetypePairPriorOpts } from "./placetype-pair-prior.ts"
-import type { QueryShapeLike } from "./query-shape-prior.ts"
-import type { SemiCRFTransitions } from "./semi-markov-decode.ts"
-import type { SpanProposalPriorOpts } from "./span-proposal-prior.ts"
-import type { StreetMorphologyPriorOpts } from "./street-morphology-prior.ts"
-import type { MailwomanTokenizer } from "./tokenizer.ts"
-import type { WordConsistencyOpts } from "./word-consistency.ts"
+import type { AnchorLookup, AnchorSpanMode } from "#anchor-inference"
+import type { NeuralRunner } from "#classifier"
+import type { CountryLexicon } from "#country-inference"
+import type { FSTMatcherLike, ImportanceLengthScaleMode } from "#fst-prior"
+import type { GazetteerLexicon } from "#gazetteer-inference"
+import type { PlacetypeCensusLike } from "#placetype-census"
+import type { PlacetypePairPriorOpts } from "#placetype-pair-prior"
+import type { QueryShapeLike } from "#query-shape-prior"
+import type { SemiCRFTransitions } from "#semi-markov-decode"
+import type { SpanProposalPriorOpts } from "#span-proposal-prior"
+import type { StreetMorphologyPriorOpts } from "#street-morphology-prior"
+import type { MailwomanTokenizer } from "#tokenizer"
+import type { WordConsistencyOpts } from "#word-consistency"
 
 export interface NeuralAddressClassifierConfig {
 	tokenizer: MailwomanTokenizer
@@ -70,7 +71,7 @@ export interface NeuralAddressClassifierConfig {
 	 * deserializes). Exposed via {@link NeuralAddressClassifier.fstPath} so the mailwoman runtime pipeline can auto-load
 	 * the gazetteer into `opts.fst` at pipeline construction.
 	 */
-	fstPath?: string
+	fstPath?: PathBuilderLike
 	/**
 	 * Path to the locale-general street-morphology FST binary shipped beside the resolved weights
 	 * (`fst-street-morphology.bin`), surfaced verbatim from {@link resolveWeights} — PATH ONLY, same posture as

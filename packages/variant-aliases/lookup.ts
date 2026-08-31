@@ -10,11 +10,12 @@
  *   The runtime integration into the kind classifier is v0.6.0+ work.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { existsSync } from "@mailwoman/platform/fs"
-import { resolve } from "@mailwoman/platform/path"
+import { existsSync } from "node:fs"
 
-import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "./types.ts"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePath } from "path-ts"
+
+import type { AliasLookupResult, VariantAlias, VariantAliasTable } from "#types"
 
 const moduleDir = import.meta.dirname
 
@@ -31,7 +32,11 @@ const moduleDir = import.meta.dirname
  * the other for eight lines.
  */
 function loadTable(): Promise<VariantAliasTable> {
-	const candidates = [resolve(moduleDir, "data", "aliases.json"), resolve(moduleDir, "..", "data", "aliases.json")]
+	const candidates = [
+		resolvePath(moduleDir, "data", "aliases.json"),
+		resolvePath(moduleDir, "..", "data", "aliases.json"),
+	]
+
 	const found = candidates.find((candidate) => existsSync(candidate))
 
 	if (!found) {

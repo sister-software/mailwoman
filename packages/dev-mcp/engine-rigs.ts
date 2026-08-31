@@ -22,14 +22,11 @@
  */
 
 import { APIClient } from "@mailwoman/core/api"
+import { runFile } from "@mailwoman/core/process"
 import { tempRootPath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { TextSpliterator } from "spliterator"
 
-import { assertScorableEndpoint } from "./external-arm.ts"
-
-const exec = promisify(execFile)
+import { assertScorableEndpoint } from "#external-arm"
 
 /**
  * Pacing for rig traffic, ms between dispatches. These are our own containers on our own host, so the interval is not
@@ -174,7 +171,7 @@ export interface RigQueryRow {
 }
 
 async function runtime(args: string[]): Promise<string> {
-	const { stdout } = await exec(CONTAINER_RUNTIME, args, { maxBuffer: 8 * 1024 * 1024 })
+	const { stdout } = await runFile(CONTAINER_RUNTIME, args, { maxBuffer: 8 * 1024 * 1024 })
 
 	return stdout.trim()
 }

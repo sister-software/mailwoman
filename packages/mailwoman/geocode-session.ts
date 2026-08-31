@@ -42,32 +42,31 @@ import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
-import { resolvePath } from "path-ts"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { CommandError } from "#cli-kit"
-
-import { resolverDefaultCountry } from "./country-scope.ts"
+import { resolverDefaultCountry } from "#country-scope"
 import {
 	countriesFromPostcodeFormat,
 	geocodeAddress,
 	geocodeParseInputs,
 	parseForGeocode,
 	type GeocodeDeps,
-} from "./geocode-core.ts"
-import type { GeocodeResult } from "./geocode-result.ts"
-import { ShardProvider, type ShardResolver, type StateShards } from "./geocode-shards.ts"
-import { INTERP_RADIUS_CALIBRATION } from "./interp-calibration.ts"
-import type { CoastalErosionRoute } from "./observations/coastal-route.ts"
-import type { AuthorityDesignationRoute } from "./observations/flood-route.ts"
-import type { SoilCapabilityRoute } from "./observations/soil-route.ts"
-import type { ZoningDesignationRoute } from "./observations/zoning-route.ts"
-import { poiTaxonomyLookup } from "./poi-intent.ts"
+} from "#geocode-core"
+import type { GeocodeResult } from "#geocode-result"
+import { ShardProvider, type ShardResolver, type StateShards } from "#geocode-shards"
+import { INTERP_RADIUS_CALIBRATION } from "#interp-calibration"
+import type { CoastalErosionRoute } from "#observations/coastal-route"
+import type { AuthorityDesignationRoute } from "#observations/flood-route"
+import type { SoilCapabilityRoute } from "#observations/soil-route"
+import type { ZoningDesignationRoute } from "#observations/zoning-route"
+import { poiTaxonomyLookup } from "#poi-intent"
 import {
 	createResolverBackend,
 	loadCapitalIndex,
 	resolveCandidateDBPath,
 	resolveWOFShardPaths,
-} from "./resolver-backend.ts"
+} from "#resolver-backend"
 
 //#region Contract
 
@@ -114,7 +113,7 @@ export interface GeocodeSessionOptions {
 	countryScope: "auto" | "locale" | "none"
 	resolveDB?: string
 	candidateDB?: string
-	dataRoot: string
+	dataRoot: PathBuilderLike
 	addressPointsDB?: string
 	interpolationDB?: string
 	interpCalibration?: number
@@ -257,7 +256,7 @@ export interface GeocodeSession extends Disposable {
 	 * which is absence and not an empty artifact.
 	 */
 	artifacts: {
-		fstPath?: string
+		fstPath?: PathBuilderLike
 		streetMorphologyPath?: string
 		/**
 		 * The `model.onnx` the classifier loaded, and which rung of the resolution ladder produced it (`package:…`,
@@ -342,7 +341,7 @@ export async function loadAuthorityDesignationRoute(
 	if (!(await pathExists(floodDBPath))) return undefined
 
 	try {
-		const { createAuthorityDesignationRoute } = await import("./observations/flood-route.ts")
+		const { createAuthorityDesignationRoute } = await import("#observations/flood-route")
 
 		return createAuthorityDesignationRoute({ databasePath: String(floodDBPath) })
 	} catch {
@@ -369,7 +368,7 @@ export async function loadSoilCapabilityRoute(
 	if (!(await pathExists(soilDBPath))) return undefined
 
 	try {
-		const { createSoilCapabilityRoute } = await import("./observations/soil-route.ts")
+		const { createSoilCapabilityRoute } = await import("#observations/soil-route")
 
 		return createSoilCapabilityRoute({ databasePath: String(soilDBPath) })
 	} catch {
@@ -402,7 +401,7 @@ export async function loadCoastalErosionRoute(
 	if (!(await pathExists(coastalDBPath))) return undefined
 
 	try {
-		const { createCoastalErosionRoute } = await import("./observations/coastal-route.ts")
+		const { createCoastalErosionRoute } = await import("#observations/coastal-route")
 
 		return createCoastalErosionRoute({ databasePath: String(coastalDBPath) })
 	} catch {
@@ -435,7 +434,7 @@ export async function loadZoningDesignationRoute(
 	if (!(await pathExists(zoningDBPath))) return undefined
 
 	try {
-		const { createZoningDesignationRoute } = await import("./observations/zoning-route.ts")
+		const { createZoningDesignationRoute } = await import("#observations/zoning-route")
 
 		return createZoningDesignationRoute({ databasePath: String(zoningDBPath) })
 	} catch {
@@ -633,7 +632,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	try {
 		const { BANShardProvider } = await import("@mailwoman/ban/sdk")
-		nationalShards = (await BANShardProvider.create(options.dataRoot)).for
+		nationalShards = (await BANShardProvider.create(resolvePath(options.dataRoot))).for
 	} catch {
 		nationalShards = undefined
 	}
@@ -645,7 +644,7 @@ export async function createGeocodeSession(options: GeocodeSessionOptions): Prom
 
 	try {
 		const { OSMShardProvider } = await import("@mailwoman/osm/sdk")
-		osmProvider = await OSMShardProvider.create(options.dataRoot)
+		osmProvider = await OSMShardProvider.create(resolvePath(options.dataRoot))
 	} catch {
 		osmProvider = undefined
 	}

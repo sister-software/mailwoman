@@ -11,7 +11,7 @@
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { percentile } from "@mailwoman/core/utils"
 
-import type { Agg, AggPair, OAResolverEvalOptions } from "./oa-resolver-eval.ts"
+import type { Agg, AggPair, OAResolverEvalOptions } from "#eval-harness/oa-resolver-eval"
 
 /**
  * Everything the report reads: the per-arm aggregates, the tier hit counts, and the run's flags.

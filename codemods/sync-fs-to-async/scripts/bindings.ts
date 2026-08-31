@@ -17,13 +17,13 @@ import { callArguments, type Lang } from "./mappings.ts"
  * The modules a synchronous `node:fs` name may arrive from. A binding from anywhere else is left alone: this codemod
  * cannot verify that some other module's `existsSync` is the builtin.
  */
-export const SOURCE_MODULES = new Set(["@mailwoman/platform/fs", "node:fs", "fs"])
+export const SOURCE_MODULES = new Set(["node:fs", "fs"])
 
 /**
  * The PROMISES mirror. Its names already answer a promise, so a rewrite here adds no `await` — the call site already
  * has whatever handling it needs, whether that is an `await`, a `.then`, or a slot in `Promise.all`.
  */
-export const PROMISE_MODULES = new Set(["@mailwoman/platform/fs/promises", "node:fs/promises"])
+export const PROMISE_MODULES = new Set(["node:fs/promises"])
 
 export interface Binding {
 	/**
@@ -169,7 +169,7 @@ export function importSource(node: SgNode<Lang>): string | undefined {
 export function promiseBindings(rootNode: SgNode<Lang>): Set<string> {
 	const names = new Set<string>()
 
-	// The deferred form too — `const { readFile } = await import("@mailwoman/platform/fs/promises")` is how a
+	// The deferred form too — `const { readFile } = await import("node:fs/promises")` is how a
 	// Node-only module reaches a file the bundler also reads, and it is invisible to an import-statement query.
 	for (const declarator of rootNode.findAll({ rule: { kind: "variable_declarator" } })) {
 		const name = declarator.field("name")

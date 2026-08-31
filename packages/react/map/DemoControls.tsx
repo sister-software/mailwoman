@@ -16,6 +16,11 @@
 
 import type { ReactNode } from "react"
 
+import type { DemoPanels, DemoRuntime } from "#map/types"
+import type { UseCompareState } from "#map/useCompareState"
+import type { UseDemoGeocode } from "#map/useDemoGeocode"
+import type { UsePlaceAutocomplete } from "#map/usePlaceAutocomplete"
+
 import { LoadingIndicator } from "../common/LoadingIndicator.tsx"
 import { PresetChips, type Preset } from "../common/PresetChips.tsx"
 import { QueryForm } from "../pipeline/QueryForm.tsx"
@@ -23,10 +28,6 @@ import { BackendControl } from "./BackendControl.tsx"
 import { CompareToggle } from "./CompareToggle.tsx"
 import { PlaceAutocomplete } from "./PlaceAutocomplete.tsx"
 import { ResultPanel } from "./ResultPanel.tsx"
-import type { DemoPanels, DemoRuntime } from "./types.ts"
-import type { UseCompareState } from "./useCompareState.ts"
-import type { UseDemoGeocode } from "./useDemoGeocode.ts"
-import type { UsePlaceAutocomplete } from "./usePlaceAutocomplete.ts"
 import { VersionPicker } from "./VersionPicker.tsx"
 
 export interface DemoControlsProps {

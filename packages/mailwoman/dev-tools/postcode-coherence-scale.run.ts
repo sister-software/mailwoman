@@ -42,13 +42,13 @@
 import type { AddressNode } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { wofShardPaths } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { JSONSpliterator } from "spliterator"
 
-import { conventionCandidateDBPath } from "../resolver-backend.ts"
+import { conventionCandidateDBPath } from "#resolver-backend"
 
 /**
  * A panel row reduced to the only two fields the pass reads.
@@ -99,7 +99,7 @@ const PANELS: Record<string, { path: string; country: string; misScope: string; 
  */
 const IMPOSSIBLE_DEFAULT = "ZZ"
 
-const { positionals } = parseArgs({
+const { positionals } = parseArguments({
 	allowPositionals: true,
 })
 

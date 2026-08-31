@@ -22,9 +22,9 @@
 // product's geometry, and a second copy of it is a second place for a hole to stop being one.
 import { rectangleRing } from "@mailwoman/spatial"
 
-import type { SoilComponentTable, SoilMapUnitTable } from "./schema.ts"
-import type { SoilDelineation, SoilFeatureSource } from "./sdk/ingest.ts"
-import type { SurveyAreaAttributes } from "./sdk/survey-area.ts"
+import type { SoilComponentTable, SoilMapUnitTable } from "#schema"
+import type { SoilDelineation, SoilFeatureSource } from "#sdk/ingest"
+import type { SurveyAreaAttributes } from "#sdk/survey-area"
 
 /**
  * Re-exported so a fixture in another workspace builds its rings the same way this one does.

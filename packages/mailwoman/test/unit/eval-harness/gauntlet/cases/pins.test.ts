@@ -9,16 +9,16 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
 import {
 	checkBoardPins,
 	PIN_TEST_PATH,
 	readCommittedPins,
 	writeCommittedPins,
 } from "mailwoman/eval-harness/gauntlet/cases/pins"
+import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const realTestText = await readLocalTextFile(resolve(String(repoRootPath()), PIN_TEST_PATH))
+const realTestText = await readLocalTextFile(resolvePath(String(repoRootPath()), PIN_TEST_PATH))
 
 describe("the committed-pin read/write contract", () => {
 	it("reads the three constants out of the real pin test", () => {

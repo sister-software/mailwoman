@@ -26,16 +26,11 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { parseArgs } from "@mailwoman/platform/util"
 
-import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "../freshness.ts"
-import {
-	buildNoGazetteerMessage,
-	mailwomanDataRoot,
-	resolveCandidateDBPath,
-	wofShardPaths,
-} from "../resolver-backend.ts"
+import { type FreshnessArtifact, type FreshnessReport, readFreshness } from "#freshness"
+import { buildNoGazetteerMessage, mailwomanDataRoot, resolveCandidateDBPath, wofShardPaths } from "#resolver-backend"
 
 /**
  * The docs page every drop-in's missing-gazetteer message points a stranger at (#1009). One constant so the three
@@ -60,7 +55,7 @@ function fail(message: string): never {
  * or opens a gazetteer.
  */
 export function parseOpenAPIFlags(binaryName: string): { flavor?: string; out?: string } {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			flavor: { type: "string", default: "3.1" },
 			out: { type: "string" },
@@ -220,7 +215,7 @@ export interface DropInCLI {
  * command exits 1; a bare invocation prints usage and exits 0.
  */
 export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropInCLI): Promise<void> {
-	const command = parseArgs({ strict: false, allowPositionals: true }).positionals[0]
+	const command = parseArguments({ strict: false, allowPositionals: true }).positionals[0]
 
 	switch (command) {
 		case "serve":

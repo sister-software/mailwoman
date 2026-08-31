@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { DefaultMailwomanPaths } from "./paths.ts"
+import { DefaultMailwomanPaths } from "#env/paths"
 
 /**
  * Wrap a coerced schema so a BLANK value means the same as an absent one.

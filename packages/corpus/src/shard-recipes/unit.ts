@@ -24,12 +24,12 @@
 import { US_UNIT_DESIGNATOR_PREFERRED_ABBR, type USUnitDesignator } from "@mailwoman/codex/us"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
+import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "#shard-recipes/scaffold"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
-
-import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffold.ts"
 
 /**
  * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
@@ -41,14 +41,8 @@ import { makeMulberry32, readZippedCSVRecords, type ShardRecipe } from "./scaffo
  */
 const MAX_REAL_UNIT_ID_LENGTH = 6
 
-/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
-   cutoffs, not thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches IS the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
-
 interface UnitSource {
-	zip: string
+	zip: PathBuilderLike
 	csv: string
 	region: string
 }
@@ -193,6 +187,12 @@ const VENUES: readonly string[] = [
  */
 const tail = (loc: string, reg: string, pc: string): string => (pc ? `${loc}, ${reg} ${pc}` : `${loc}, ${reg}`)
 
+// Layouts: 34% full-after, 18% full-first, 16% bare-after, 16% bare-first, 16% venue.
+const FULL_AFTER_CUTOFF = 0.34
+const FULL_FIRST_CUTOFF = 0.52
+const BARE_AFTER_CUTOFF = 0.68
+const BARE_FIRST_CUTOFF = 0.84
+
 /**
  * Render a unit row in a RANDOM layout — units spread across positions, the city/state tail dropped on bare rows, a
  * recipient/venue prefixed on the venue format — so the model learns to RECOGNIZE the designator wherever it sits.
@@ -222,13 +222,18 @@ function renderUnit(
 
 	const r = random()
 
-	if (r < 0.34) return { fmt: "full-after", raw: `${road} ${unit}, ${tail(loc, reg, pc)}`, components: full }
+	if (r < FULL_AFTER_CUTOFF)
+		return { fmt: "full-after", raw: `${road} ${unit}, ${tail(loc, reg, pc)}`, components: full }
 
-	if (r < 0.52) return { fmt: "full-first", raw: `${unit}, ${road}, ${tail(loc, reg, pc)}`, components: full }
+	if (r < FULL_FIRST_CUTOFF)
+		return { fmt: "full-first", raw: `${unit}, ${road}, ${tail(loc, reg, pc)}`, components: full }
 
-	if (r < 0.68) return { fmt: "bare-after", raw: `${road} ${unit}`, components: { house_number: hn, street, unit } }
+	if (r < BARE_AFTER_CUTOFF)
+		return { fmt: "bare-after", raw: `${road} ${unit}`, components: { house_number: hn, street, unit } }
 
-	if (r < 0.84) return { fmt: "bare-first", raw: `${unit} ${road}`, components: { house_number: hn, street, unit } }
+	if (r < BARE_FIRST_CUTOFF)
+		return { fmt: "bare-first", raw: `${unit} ${road}`, components: { house_number: hn, street, unit } }
+
 	const v = VENUES[Math.floor(random() * VENUES.length)]!
 
 	return { fmt: "venue", raw: `${v}, ${road} ${unit}, ${tail(loc, reg, pc)}`, components: { venue: v, ...full } }

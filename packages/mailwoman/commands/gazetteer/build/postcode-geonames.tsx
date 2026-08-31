@@ -14,6 +14,7 @@
  *   obligation from Ordnance Survey Code-Point Open — both ride in the artifact's `meta` table.
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -46,7 +47,7 @@ interface Options {
 
 const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB, buildPostcodeGeonamesTail } = await import("#gazetteer-pipeline")
+		const { buildPostcodeGeonamesTail } = await import("#gazetteer-pipeline")
 
 		const countries = options.countries
 			? options.countries
@@ -65,7 +66,7 @@ const GazetteerBuildPostcodeGeonames: ParsedCommandComponent<Options> = ({ optio
 		const perCountry = result.countries.map((cc) => `${cc} ${(result.byCountry[cc] ?? 0).toLocaleString()}`).join(" · ")
 
 		return [
-			`postcode geonames tail: ${result.out} (${await artifactSizeMB(result.out)} MB)`,
+			`postcode geonames tail: ${result.out} (${await formatFileSize(result.out)})`,
 			`${result.inserted.toLocaleString()} distinct postcodes — ${perCountry}`,
 			`fts ${result.ftsRows.toLocaleString()} · bbox ${result.bboxRows.toLocaleString()} · ancestors ${result.ancestorRows.toLocaleString()}`,
 			result.missing.length ? `MISSING dumps (skipped): ${result.missing.join(",")}` : "all requested dumps present",

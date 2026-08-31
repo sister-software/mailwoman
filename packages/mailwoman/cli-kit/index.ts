@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./shared.ts"
-export * from "./metadata.ts"
-export * from "../cli-native/spec.ts"
+export * from "#cli-kit/shared"
+export * from "#cli-kit/metadata"
+export * from "#cli-native/spec"
 export { CommandError } from "@mailwoman/core/scripting/command"

@@ -22,8 +22,8 @@
 import type { StreetCentroidHit, StreetCentroidLookup } from "@mailwoman/resolver"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { hasTable, prepareGet, type PreparedGet } from "./sqlite-utils.ts"
-import type { StreetCentroidDatabase } from "./street-centroid-schema.ts"
+import { hasTable, prepareGet, type PreparedGet } from "#sqlite-utils"
+import type { StreetCentroidDatabase } from "#street-centroid-schema"
 import {
 	normalizeLocalityForKey,
 	normalizeStreetForKeyLocale,
@@ -32,7 +32,7 @@ import {
 	streetLocaleForSurface,
 	type StreetLocale,
 	stripArrondissement,
-} from "./street-normalize.ts"
+} from "#street-normalize"
 
 /**
  * The weighted-centroid + extent + provenance an aggregate probe projects. `lat` is null when nothing matched.

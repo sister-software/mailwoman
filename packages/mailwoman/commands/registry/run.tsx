@@ -31,9 +31,8 @@ import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
-
-import { resolverDefaultCountry } from "../../country-scope.ts"
-import type { ShardResolver } from "../../geocode-shards.ts"
+import { resolverDefaultCountry } from "#country-scope"
+import type { ShardResolver } from "#geocode-shards"
 
 /**
  * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
@@ -157,12 +156,12 @@ async function buildGeocoder(options: Options): Promise<{ seam: GeocodeAddress }
 	const { createWOFResolver } = await import("@mailwoman/resolver")
 
 	const [{ geocodeAddress }, { ShardProvider }] = await Promise.all([
-		import("../../geocode-core.ts"),
-		import("../../geocode-shards.ts"),
+		import("#geocode-core"),
+		import("#geocode-shards"),
 	])
 
-	const { INTERP_RADIUS_CALIBRATION } = await import("../../interp-calibration.ts")
-	const { createResolverBackend, resolveCandidateDBPath } = await import("../../resolver-backend.ts")
+	const { INTERP_RADIUS_CALIBRATION } = await import("#interp-calibration")
+	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
 
 	const wofPath = await resolveWOFPath(options)
 
@@ -254,8 +253,8 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 
 		const [{ geocodeAddress }, { ShardProvider }] = await Promise.all([
-			import("../../geocode-core.ts"),
-			import("../../geocode-shards.ts"),
+			import("#geocode-core"),
+			import("#geocode-shards"),
 		])
 
 		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))

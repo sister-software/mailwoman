@@ -32,16 +32,15 @@
  *   native sessions are actually released on restart.
  */
 
-import { dirname, resolve } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolResult } from "@modelcontextprotocol/sdk/types.js"
+import { resolvePath } from "path-ts"
 
-import { WorkerHost } from "./worker-host.ts"
+import { WorkerHost } from "#worker-host"
 
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		"repo-root": { type: "string" },
 		"max-resident": { type: "string" },
@@ -50,11 +49,11 @@ const { values } = parseArgs({
 
 // This file lives at <repo>/packages/dev-mcp/cli.ts, so the root is two levels up. Derived from `import.meta.url`
 // rather than `cwd`, because an MCP client spawns the server from wherever it happens to be.
-const shimDir = dirname(fileURLToPath(import.meta.url))
-const repoRoot = values["repo-root"] ? resolve(values["repo-root"]) : resolve(shimDir, "..", "..")
+const shimDir = import.meta.dirname
+const repoRoot = values["repo-root"] ? resolvePath(values["repo-root"]) : resolvePath(shimDir, "..", "..")
 
 const host = new WorkerHost({
-	workerPath: resolve(shimDir, "worker.ts"),
+	workerPath: resolvePath(shimDir, "worker.ts"),
 	workerArgs: ["--repo-root", repoRoot, ...(values["max-resident"] ? ["--max-resident", values["max-resident"]] : [])],
 })
 

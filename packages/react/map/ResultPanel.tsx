@@ -16,13 +16,14 @@
 
 import type { ReactNode } from "react"
 
+import { buildParsePayload } from "#pipeline/copy"
+import type { ParseResult, ResolvedPlaceView } from "#pipeline/types"
+
 import { CopyButton } from "../common/CopyButton.tsx"
 import { KindBadge } from "../common/KindBadge.tsx"
 import { CandidatePicker } from "../pipeline/CandidatePicker.tsx"
 import { ComponentTable } from "../pipeline/ComponentTable.tsx"
-import { buildParsePayload } from "../pipeline/copy.ts"
 import { ResolvedPlace } from "../pipeline/ResolvedPlace.tsx"
-import type { ParseResult, ResolvedPlaceView } from "../pipeline/types.ts"
 
 export interface ResultPanelProps {
 	/**

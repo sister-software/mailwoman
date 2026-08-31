@@ -30,9 +30,8 @@
 
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { spawnProcessSync } from "@mailwoman/core/process"
 import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@mailwoman/core/utils"
-import { spawnSync } from "@mailwoman/platform/child_process"
-import { resolve } from "@mailwoman/platform/path"
 import {
 	linkForce,
 	pairIndexStaleReason,
@@ -40,6 +39,7 @@ import {
 	removeIfPresent,
 	warnIfFSTStale,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { resolvePath } from "path-ts"
 
 /**
  * Where the artifacts LAND — the data-root overlay, never this tracked package.
@@ -51,8 +51,8 @@ const DEST_DIR = String(weightsOverlayPath("fr-fr"))
 
 await makeDirectories(DEST_DIR)
 
-await removeIfPresent(resolve(DEST_DIR, "model.onnx"))
-await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
+await removeIfPresent(resolvePath(DEST_DIR, "model.onnx"))
+await removeIfPresent(resolvePath(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree anchor-OFF gap) ----------------.
@@ -64,7 +64,7 @@ const SRC_GAZETTEER_LEXICON = repoRootPath("data", "gazetteer", "anchor-lexicon-
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (await pathExists(SRC_GAZETTEER_LEXICON)) {
-	await linkForce(SRC_GAZETTEER_LEXICON, resolve(DEST_DIR, "anchor-lexicon-v1.json"))
+	await linkForce(SRC_GAZETTEER_LEXICON, resolvePath(DEST_DIR, "anchor-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/anchor-lexicon-v1.json`)
 } else {
@@ -72,7 +72,7 @@ if (await pathExists(SRC_GAZETTEER_LEXICON)) {
 }
 
 if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	await linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
+	await linkForce(SRC_COUNTRY_LEXICON, resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
@@ -90,7 +90,7 @@ const CLI = workspacePath("mailwoman", "out", "cli.js")
 /**
  * Where the postcode binary is written — a soft-feed sibling, absent in a lean install.
  */
-const POSTCODE_BIN_DEST = resolve(DEST_DIR, "postcode-fr.bin")
+const POSTCODE_BIN_DEST = resolvePath(DEST_DIR, "postcode-fr.bin")
 
 if (await pathExists(POSTCODE_BIN_DEST)) {
 	console.log(`skipped postcode-fr.bin build — ${POSTCODE_BIN_DEST} already present`)
@@ -103,7 +103,7 @@ if (await pathExists(POSTCODE_BIN_DEST)) {
 		`WARNING: missing ${FR_WOF_DB} — postcode-fr.bin not built; the anchor channel will resolve OFF for FR.`
 	)
 } else {
-	const result = spawnSync(
+	const result = spawnProcessSync(
 		process.execPath,
 		[CLI, "gazetteer", "postcode-binary", "--out", DEST_DIR, "--locale", `FR:${FR_WOF_DB}`],
 		{ stdio: "inherit" }
@@ -128,7 +128,7 @@ const FST_SRC = dataRootPath("wof", "fst-per-locale", "fst-fr-fr.bin")
 /**
  * Where the locale FST is written — a soft-feed sibling, absent in a lean install.
  */
-const FST_DEST = resolve(DEST_DIR, "fst-fr-fr.bin")
+const FST_DEST = resolvePath(DEST_DIR, "fst-fr-fr.bin")
 
 if (await pathExists(FST_SRC)) {
 	await linkForce(FST_SRC, FST_DEST)
@@ -151,7 +151,7 @@ const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
 /**
  * Where the street-morphology FST is written — a soft-feed sibling, absent in a lean install.
  */
-const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolvePath(DEST_DIR, "fst-street-morphology.bin")
 
 if (await pathExists(MORPHOLOGY_SRC)) {
 	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)
@@ -176,7 +176,7 @@ if (await pathExists(MORPHOLOGY_SRC)) {
  * Unlike en-gb this does NOT md5 its source — BAN is a directory of 101 files, and hashing all of them costs more than
  * the guard saves; a BAN refresh is a deliberate act, so re-run with the artifact deleted after one.
  */
-const PAIR_INDEX_BIN_DEST = resolve(DEST_DIR, "pair-index-fr.bin")
+const PAIR_INDEX_BIN_DEST = resolvePath(DEST_DIR, "pair-index-fr.bin")
 /**
  * Calibrated soft-prior magnitudes — the pair the R6 bars were measured at (board 0/80 → 76/80, 0/60 confound FPs).
  */
@@ -233,7 +233,7 @@ if (!(await pathExists(CLI))) {
 	if (!needsRebuild) {
 		console.log(`skipped pair-index-fr.bin build — ${PAIR_INDEX_BIN_DEST} is current`)
 	} else {
-		const result = spawnSync(
+		const result = spawnProcessSync(
 			process.execPath,
 			[
 				CLI,

@@ -6,7 +6,7 @@
  *   TIGER Census data utilities.
  */
 
-import type { AdminLevel1Code } from "./state.ts"
+import type { AdminLevel1Code } from "#state"
 
 //#region Constants
 

@@ -57,7 +57,7 @@ const report = (line: string): void => console.error(line)
 
 async function runVariant(variant: Variant, options: Options): Promise<{ out: string; pairs: number }> {
 	const { trainCrossSourceGBT, trainDedupGBT, trainOrgCrossSourceGBT } = await import("@mailwoman/registry/tools")
-	const { evalGeocoderFactory } = await import("./run.tsx")
+	const { evalGeocoderFactory } = await import("#commands/registry/run")
 
 	const createGeocoder = evalGeocoderFactory({
 		wof: options.wof,

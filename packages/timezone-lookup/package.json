@@ -26,6 +26,13 @@
 		"!test/**"
 	],
 	"type": "module",
+	"imports": {
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
+		}
+	},
 	"exports": {
 		"./package.json": "./package.json",
 		".": {
@@ -49,7 +56,10 @@
 	},
 	"dependencies": {
 		"@mailwoman/annotations": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
+		"@mailwoman/core": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*"
+	},
+	"devDependencies": {
+		"@mailwoman/spatial": "workspace:*"
 	}
 }

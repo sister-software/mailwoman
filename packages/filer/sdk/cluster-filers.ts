@@ -165,8 +165,8 @@ import {
 	FilerRelationship,
 	type FilerClusterTable,
 	type FilerDatabase,
-} from "../schema.ts"
-import { assertISODate } from "./guards.ts"
+} from "#schema"
+import { assertISODate } from "#sdk/guards"
 
 /**
  * `filer_edge.source` for every row {@linkcode clusterInferredLinks} writes — distinguishes this module's own

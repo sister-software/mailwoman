@@ -29,7 +29,7 @@ import { $public } from "@mailwoman/core/env"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { WOFReverseGeocoder as WOFReverseGeocoderType } from "@mailwoman/resolver-wof-sqlite"
 
-import { wofShardPaths } from "./resolver-backend.ts"
+import { wofShardPaths } from "#resolver-backend"
 
 let cached: Promise<WOFReverseGeocoderType | null> | null = null
 

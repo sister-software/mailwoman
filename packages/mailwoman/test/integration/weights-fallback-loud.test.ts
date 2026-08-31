@@ -27,13 +27,11 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-const exec = promisify(execFile)
 const cliBin = workspacePath("mailwoman", "out", "cli.js")
 
 /**
@@ -73,7 +71,7 @@ afterAll(() => {
  * Child env with weights forced absent: empty $HOME + quiet node.
  */
 function absentEnv(extra: Record<string, string | undefined> = {}): NodeJS.ProcessEnv {
-	return childEnv({ HOME: homeStub.path, NODE_NO_WARNINGS: "1", ...extra })
+	return childEnv({ HOME: homeStub.path.toString(), NODE_NO_WARNINGS: "1", ...extra })
 }
 
 /**
@@ -84,7 +82,7 @@ async function runCLI(
 	env: NodeJS.ProcessEnv
 ): Promise<{ stdout: string; stderr: string; code: number }> {
 	try {
-		const { stdout, stderr } = await exec("node", [cliBin, ...args], { env, maxBuffer: 8 * 1024 * 1024 })
+		const { stdout, stderr } = await runFile("node", [cliBin, ...args], { env, maxBuffer: 8 * 1024 * 1024 })
 
 		return { stdout, stderr, code: 0 }
 	} catch (error) {

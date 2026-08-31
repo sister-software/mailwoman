@@ -28,7 +28,7 @@
 
 import { CoverageBasis } from "@mailwoman/core/layers"
 import { POI_H3_RESOLUTION } from "@mailwoman/resolver-wof-sqlite/poi-lookup"
-import { shortCellToInt, type GeojsonGeometry, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt, type ParsedGeometry, type H3Cell } from "@mailwoman/spatial"
 import { cellToParent, latLngToCell } from "h3-js"
 
 import {
@@ -37,8 +37,8 @@ import {
 	type CaptureRow,
 	type CoverageCompleteness,
 	type MatchProtocol,
-} from "./capture-recapture.ts"
-import { interiorCoverageCells } from "./coverage-region.ts"
+} from "#gazetteer-pipeline/poi/capture-recapture"
+import { interiorCoverageCells } from "#gazetteer-pipeline/poi/coverage-region"
 
 export interface ExclusionCoverageCell {
 	h3Cell: number
@@ -51,7 +51,7 @@ export interface ExclusionCoverageInput {
 	/**
 	 * The region outline the claim is keyed to.
 	 */
-	geometry: GeojsonGeometry
+	geometry: ParsedGeometry
 	/**
 	 * Resolution of the coverage cells. Match the layer being written, or a reader keyed to the other resolution finds
 	 * nothing and reads that as unsurveyed.

@@ -28,11 +28,12 @@
  *   list to resolve FRNs FOR.
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
+import { formatFileSize, pathExists } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
 import type { FilerDatabase } from "@mailwoman/filer"
-import { execFileSync } from "@mailwoman/platform/child_process"
 import type { DatabaseClient as DatabaseClientHandle } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -68,8 +69,6 @@ interface Options {
 
 const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
-
 		const {
 			BDCFileCategory,
 			BDCFilingDataType,
@@ -100,7 +99,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 			)
 		}
 
-		let filerDBPath: string | undefined
+		let filerDBPath: PathBuilderLike | undefined
 
 		if (options.providerListPath) {
 			if (!(await pathExists(options.providerListPath))) {
@@ -152,9 +151,9 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 		// of the progress stream, so a rate change can be assessed against a measurement.
 		console.error(`▸ ${formatBDCThrottleStats(client.throttleStats())}`)
 
-		const out = options.out ?? dataRootPath("bdc", "bdc.db")
-		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
-		const tigerDBPath = dataRootPath("tiger", "tiger.db")
+		const out = resolvePath(options.out ?? dataRootPath("bdc", "bdc.db"))
+		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const tigerDBPath = resolvePath(dataRootPath("tiger", "tiger.db"))
 
 		console.error(`▸ build: ${out}`)
 
@@ -183,7 +182,7 @@ const GazetteerBuildBDC: ParsedCommandComponent<Options> = ({ options }) => {
 			})
 
 			return [
-				`bdc.db: ${out} (${await artifactSizeMB(out)} MB)`,
+				`bdc.db: ${out} (${await formatFileSize(out)})`,
 				`${result.rows.toLocaleString()} rows · ${result.providers} provider(s) · ${result.deduped.toLocaleString()} deduped` +
 					` · ${result.unknownGeoids.toLocaleString()} unknown geoid(s) · ${result.coverageCells.toLocaleString()} coverage cells` +
 					(options.providerListPath ? ` · ${result.providersPopulated.toLocaleString()} bdc_provider row(s)` : ""),

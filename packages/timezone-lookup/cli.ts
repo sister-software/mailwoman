@@ -14,12 +14,12 @@
  *   The `--` separates flags from coordinates so negative longitudes parse as positionals.
  */
 
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 
-import { buildTimezoneDB } from "./build.ts"
-import { offsetSecForTimezone, TimezoneLookup } from "./index.ts"
+import { buildTimezoneDB } from "#build"
+import { offsetSecForTimezone, TimezoneLookup } from "#index"
 
-const { values, positionals } = parseArgs({
+const { values, positionals } = parseArguments({
 	options: {
 		geojson: { type: "string" },
 		out: { type: "string" },

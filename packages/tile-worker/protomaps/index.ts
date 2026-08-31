@@ -8,9 +8,9 @@ import type { TileCoords, TileJSON } from "@mailwoman/cartographer"
 import { ResourceError } from "@mailwoman/core/errors"
 import { type TileType, PMTiles, type RangeResponse, ResolvedValueCache } from "pmtiles"
 
-import { decompressPMTileBuffer } from "./compression.ts"
-import { TileTypeFileExtensionMap, TileTypeToContentType } from "./files.ts"
-import { R2Source, type R2SourceConfig } from "./R2Source.ts"
+import { decompressPMTileBuffer } from "#protomaps/compression"
+import { TileTypeFileExtensionMap, TileTypeToContentType } from "#protomaps/files"
+import { R2Source, type R2SourceConfig } from "#protomaps/R2Source"
 
 export interface ReadTileParams {
 	tileCoords: TileCoords

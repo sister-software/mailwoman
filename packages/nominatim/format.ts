@@ -11,7 +11,7 @@
 
 import { composeStreetAddress, type SchemaOrgPlace, toSchemaOrg } from "@mailwoman/annotations"
 
-import type { NominatimAddressDetails, NominatimResult } from "./engine.ts"
+import type { NominatimAddressDetails, NominatimResult } from "#engine"
 
 /**
  * Arity of a 2D bounding box, as Nominatim reports it.

@@ -19,12 +19,11 @@ import type React from "react"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask, writeRawStdout } from "#cli-kit"
 import { WeightsGuard, type WeightsOutcome } from "#cli-kit/weights-guard"
+import { resolverDefaultCountry } from "#country-scope"
 import type { createRuntimePipeline } from "#index"
 
-import { resolverDefaultCountry } from "../country-scope.ts"
-
-export { localeToCountry, resolverDefaultCountry } from "../country-scope.ts"
-export type { CountryScope } from "../country-scope.ts"
+export { localeToCountry, resolverDefaultCountry } from "#country-scope"
+export type { CountryScope } from "#country-scope"
 
 /**
  * Bytes per KiB, for human-readable sizes.
@@ -304,7 +303,7 @@ async function resolveWithCandidates(
 		opts.postcodeContainmentCoherence = true
 	}
 
-	const { resolveCandidateDBPath } = await import("../resolver-backend.ts")
+	const { resolveCandidateDBPath } = await import("#resolver-backend")
 	const dc = resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 	if (dc) {
@@ -321,7 +320,7 @@ async function resolveWithCandidates(
 
 async function withResolver<T>(options: ParseOptions, fn: (resolver: Resolver) => Promise<T>): Promise<T> {
 	const { createWOFResolver } = await import("@mailwoman/resolver")
-	const { createResolverBackend, resolveCandidateDBPath } = await import("../resolver-backend.ts")
+	const { createResolverBackend, resolveCandidateDBPath } = await import("#resolver-backend")
 
 	// Dynamic import so `@mailwoman/resolver-wof-sqlite` stays a true optional peer dep — users who
 	// never set --resolve don't pay for kysely + the resolver bundle.
@@ -483,7 +482,7 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 	// rather than a higher-priority foreign homonym. Inferred from --locale unless --default-country
 	// overrides (or is `none`). Only meaningful on the --resolve path; harmless otherwise.
 	if (options.resolve) {
-		const { resolveCandidateDBPath } = await import("../resolver-backend.ts")
+		const { resolveCandidateDBPath } = await import("#resolver-backend")
 		const dc = resolverDefaultCountry(options, !!(await resolveCandidateDBPath()))
 
 		if (dc) {

@@ -40,10 +40,10 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { downloadToFile, readManifest, writeManifest } from "./download.ts"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download"
 
 const SLUG = "usgov-nad"
 

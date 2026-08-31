@@ -18,7 +18,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resolveWeights, WeightsOrigin } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
+import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -28,7 +28,7 @@ afterAll(() => fixtures.disposeAsync())
 async function scratch(): Promise<string> {
 	const root = fixtures.use(await temporaryDirectory("mw-weights-overlay-")).path
 
-	return root
+	return resolvePath(root)
 }
 
 /**

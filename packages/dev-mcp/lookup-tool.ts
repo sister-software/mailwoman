@@ -22,16 +22,25 @@ import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
 import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode-binary-resolver"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readRequiredChannels } from "@mailwoman/neural/weights-channels"
-import { basename } from "@mailwoman/platform/path"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolveCandidateDBPath, resolveWOFShardPaths } from "mailwoman/resolver-backend"
-import { resolvePath } from "path-ts"
+import { basename, resolvePath } from "path-ts"
 
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import {
+	loadFSTArtifact,
+	LookupSource,
+	lookupFST,
+	lookupNormalize,
+	lookupStreetMorphology,
+	openSealedArtifact,
+	type LookupResult,
+	type LookupRow,
+} from "#lookup"
 import {
 	type CandidateDelta,
 	diffCandidateRows,
@@ -42,18 +51,8 @@ import {
 	lookupWOF,
 	type PostcodeAnchorResolver,
 	type WOFShard,
-} from "./lookup-sources.ts"
-import {
-	loadFSTArtifact,
-	LookupSource,
-	lookupFST,
-	lookupNormalize,
-	lookupStreetMorphology,
-	openSealedArtifact,
-	type LookupResult,
-	type LookupRow,
-} from "./lookup.ts"
-import { syntheticIDNote } from "./place-id-provenance.ts"
+} from "#lookup-sources"
+import { syntheticIDNote } from "#place-id-provenance"
 
 /**
  * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare artifact's rows for the SAME
@@ -518,7 +517,7 @@ async function probeLocaleFST(
 	if ("unavailable" in loaded) return { rows: [], unavailable_reason: loaded.unavailable }
 
 	return {
-		...(path ? { artifact: path } : {}),
+		...(path ? { artifact: resolvePath(path) } : {}),
 		engine_id: engine.engineID,
 		rows:
 			args.source === LookupSource.FST

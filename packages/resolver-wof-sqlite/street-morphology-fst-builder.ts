@@ -23,13 +23,13 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { readDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
-import { join } from "@mailwoman/platform/path"
+import { isDirectory, readDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import type { FSTNode } from "./fst-matcher.ts"
-import { FSTMatcher, normalizeTokens } from "./fst-matcher.ts"
-import type { FSTProvenance, PlaceEntry } from "./fst-types.ts"
+import type { FSTNode } from "#fst-matcher"
+import { FSTMatcher, normalizeTokens } from "#fst-matcher"
+import type { FSTProvenance, PlaceEntry } from "#fst-types"
 
 /**
  * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned, well above any realistic WOF
@@ -114,7 +114,7 @@ export async function buildStreetMorphologyFST(
 		for (const entry of entries) {
 			const localePath = join(opts.dictionariesDir, entry)
 
-			if (!(await statPath(localePath)).isDirectory()) {
+			if (!(await isDirectory(localePath))) {
 				localeProbes.push([entry, false])
 
 				continue

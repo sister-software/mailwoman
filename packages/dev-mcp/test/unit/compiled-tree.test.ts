@@ -8,7 +8,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, setTimestamps, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { assertCompiledFresh, checkCompiledFreshness } from "@mailwoman/dev-mcp/compiled-tree"
 import { FINGERPRINTED_WORKSPACES } from "@mailwoman/dev-mcp/tree-fingerprint"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -16,7 +16,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function checkout(): Promise<{ root: string; workspace: string }> {
-	const root = fixtures.use(await temporaryDirectory("mwdev-compiled-")).path
+	const root = String(fixtures.use(await temporaryDirectory("mwdev-compiled-")).path)
 
 	const workspace = join(root, FINGERPRINTED_WORKSPACES[0])
 

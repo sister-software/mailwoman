@@ -9,8 +9,8 @@
 
 import { z } from "zod"
 
-import { censusArtifact, gazetteerArtifacts, type SourceCensusRow } from "../source-census.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import { censusArtifact, gazetteerArtifacts, type SourceCensusRow } from "#source-census"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
  * Render one row as a line a reader can act on without re-querying.

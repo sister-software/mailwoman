@@ -49,8 +49,7 @@
  *   graded through `createRuntimePipeline`, the only path an FST prior actually reaches (see the runner).
  */
 
-import { pathExists } from "@mailwoman/core/fs/readers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { JSONSpliterator } from "spliterator"
 import zod from "zod"
 
@@ -255,17 +254,15 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 // before the file exists, and a file-existence probe would send the first build to the compiled-tree
 // fallback (which resolves outside the workspace). The fixtures dir is committed, so it is the stable
 // discriminator between source and compiled trees.
-const HARD_SLICE_FIXTURES_DIR = fileURLToPath(new URL("fixtures/", import.meta.url))
-
 /**
- * The committed board.
- *
- * `new URL`-relative for the source tree with a compiled-tree fallback — tsc emits no `.jsonl` into `out/`, so a
- * compiled runner reads the source-tree copy. Same bridge as `gauntlet/cases/load.ts`'s `CASES_DIR`.
+ * The committed board, named from the package root — tsc emits no `.jsonl` into `out/`.
  */
-export const HARD_SLICE_BOARD_PATH = (await pathExists(HARD_SLICE_FIXTURES_DIR))
-	? `${HARD_SLICE_FIXTURES_DIR}hard-slice-board.jsonl`
-	: fileURLToPath(new URL("../../eval-harness/fixtures/hard-slice-board.jsonl", import.meta.url))
+export const HARD_SLICE_BOARD_PATH: string = resolvePackagePath(
+	"mailwoman",
+	"eval-harness",
+	"fixtures",
+	"hard-slice-board.jsonl"
+)
 
 /**
  * Re-key a case into {@linkcode HARD_SLICE_KEY_ORDER}, dropping absent optionals — used by any emitter so the board's

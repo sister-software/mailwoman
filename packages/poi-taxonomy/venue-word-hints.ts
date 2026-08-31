@@ -17,7 +17,7 @@
  *   dominate venue names); see the generator header for the bars and their measured families.
  */
 
-import { readPackagedTable } from "./packaged-data.ts"
+import { readPackagedTable } from "#packaged-data"
 
 /**
  * One mined hint row. Rates are per-million tokens of the respective name corpus; shares are of the token's poi

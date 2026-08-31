@@ -14,10 +14,10 @@
 
 import { formatPercent, percentile } from "@mailwoman/core/utils"
 
-import { ABLATION_ABSENT } from "./ablation-expectation.ts"
-import { ABLATABLE_COMPONENTS, type AblationCell, type AblationRowOutcome } from "./ablation-types.ts"
+import { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation-expectation"
+import { ABLATABLE_COMPONENTS, type AblationCell, type AblationRowOutcome } from "#eval-harness/gauntlet/ablation-types"
 
-export { ABLATION_ABSENT } from "./ablation-expectation.ts"
+export { ABLATION_ABSENT } from "#eval-harness/gauntlet/ablation-expectation"
 
 /**
  * Render one cell for the matrix: `broken/support` plus the p90 displacement. A missing cell or a zero-support one

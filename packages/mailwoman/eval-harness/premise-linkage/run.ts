@@ -30,11 +30,9 @@
 import type { AuthoritativeProvider } from "@mailwoman/core/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { AuthoritativeAssertion } from "../../authoritative.ts"
-import { geocodeAddress, type GeocodeDeps } from "../../geocode-core.ts"
-import type { GeocodeResult } from "../../geocode-result.ts"
-import type { PremiseLinkageAdapter } from "./adapter.ts"
-import { assertUsableSalt, caseIDFor } from "./case-id.ts"
+import type { AuthoritativeAssertion } from "#authoritative"
+import type { PremiseLinkageAdapter } from "#eval-harness/premise-linkage/adapter"
+import { assertUsableSalt, caseIDFor } from "#eval-harness/premise-linkage/case-id"
 import {
 	type PremiseLinkageArmReport,
 	type PremiseLinkageComparison,
@@ -51,7 +49,9 @@ import {
 	type PremiseLinkageReport,
 	type PremiseLinkageResultRow,
 	PREMISE_LINKAGE_SHAPE_CLASSES,
-} from "./schema.ts"
+} from "#eval-harness/premise-linkage/schema"
+import { geocodeAddress, type GeocodeDeps } from "#geocode-core"
+import type { GeocodeResult } from "#geocode-result"
 
 /**
  * Mailwoman with open artifacts only — the product as it ships.

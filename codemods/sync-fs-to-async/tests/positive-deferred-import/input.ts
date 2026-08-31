@@ -1,5 +1,5 @@
 export async function newestConfig(dir: string): Promise<string | undefined> {
-	const { existsSync, readdirSync, statSync } = await import("@mailwoman/platform/fs")
+	const { existsSync, readdirSync, statSync } = await import("node:fs")
 
 	if (!existsSync(dir)) return undefined
 

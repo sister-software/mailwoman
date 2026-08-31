@@ -8,8 +8,8 @@ import { dataRootPath, repoRootPath, weightsOverlayPath, workspacePath } from "@
  * packages, but ships only the shared model + tokenizer + calibration + lexicons; locale-specific data stays in each
  * overlay).
  */
-import { resolve } from "@mailwoman/platform/path"
 import { linkForce } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { resolvePath } from "path-ts"
 
 /**
  * Where the artifacts LAND — the data-root overlay, never this tracked package.
@@ -37,11 +37,11 @@ const SRC_TOKENIZER =
 /**
  * Where `model.onnx` is linked. `@mailwoman/neural` auto-resolves this path.
  */
-const MODEL_DEST = resolve(DEST_DIR, "model.onnx")
+const MODEL_DEST = resolvePath(DEST_DIR, "model.onnx")
 /**
  * Where `tokenizer.model` is linked. `@mailwoman/neural` auto-resolves this path.
  */
-const TOKENIZER_DEST = resolve(DEST_DIR, "tokenizer.model")
+const TOKENIZER_DEST = resolvePath(DEST_DIR, "tokenizer.model")
 
 await linkForce(SRC_MODEL, MODEL_DEST)
 
@@ -85,7 +85,7 @@ for (const [src, name] of [
 		continue
 	}
 
-	const dest = resolve(DEST_DIR, name)
+	const dest = resolvePath(DEST_DIR, name)
 	await linkForce(src, dest)
 
 	console.log(`linked ${name} ← ${src}`)

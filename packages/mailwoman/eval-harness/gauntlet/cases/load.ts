@@ -22,14 +22,14 @@
  *   That is the real price of this layout and the reason `source` must stay a curated, batch-shaped value.
  */
 
-import { pathExists, readDirectory, readDirectoryEntries } from "@mailwoman/core/fs/readers"
+import { readDirectory, readDirectoryEntries } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { basename, join } from "@mailwoman/platform/path"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { basename, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "./seed-case.ts"
+import { canonicalizeSeedCase, type SeedCase, SeedCaseSchema } from "#eval-harness/gauntlet/cases/seed-case"
 
 /**
  * An ISO-3166 alpha-2 country directory, lowercase — the layout key. Matches `postalcode-<cc>-overture.db` in
@@ -50,14 +50,7 @@ const MALFORMED_EXCERPT_CHARS = 60
  * `mailwoman/out/eval-harness/gauntlet/cases/` reads the source-tree copy. Same bridge as `baseline-assert.ts`'s
  * `resolveBaselineFilePath` and `promotion-gate.ts`'s `resolveGateSpecPath`.
  */
-export const CASES_DIR = await (async (): Promise<string> => {
-	const sibling = fileURLToPath(new URL(".", import.meta.url))
-
-	if ((await pathExists(sibling)) && (await readDirectory(sibling)).some((name) => COUNTRY_DIR.test(name)))
-		return sibling
-
-	return fileURLToPath(new URL("../../../../eval-harness/gauntlet/cases/", import.meta.url))
-})()
+export const CASES_DIR: string = resolvePackagePath("mailwoman", "eval-harness", "gauntlet", "cases")
 
 /**
  * A malformed corpus row, named by file and line.
@@ -129,7 +122,7 @@ async function loadCorpusFile(path: string, expectedCC: string): Promise<SeedCas
  *
  * @throws {CorpusRowError} On a malformed or off-schema row, naming the file and line.
  */
-export async function loadRegressionCases(dir: string = CASES_DIR): Promise<SeedCase[]> {
+export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Promise<SeedCase[]> {
 	const entries = await readDirectoryEntries(dir)
 
 	const ccDirs = entries

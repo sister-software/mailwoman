@@ -46,7 +46,7 @@ import { parseJSONStrict, prettyJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 
-import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "./per-tag-f1.ts"
+import { loadPerTagEvalRows, rowsHaveTag, scorePerTagF1, UNFOLDED_ADDRESS_TAGS } from "#eval-harness/per-tag-f1"
 
 /**
  * Options for {@linkcode generateCapabilityManifest}.

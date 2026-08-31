@@ -42,19 +42,16 @@ import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
+import { type ChildProcess, runFile, spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
 import { workspacePath } from "@mailwoman/core/utils"
-import { execFile, spawn, type ChildProcess } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
+import { join } from "path-ts"
 import { afterAll, afterEach, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
-
-const execFileAsync = promisify(execFile)
 
 //#region Paths + budgets
 
@@ -133,7 +130,7 @@ function spawnServer(
 	// JSON-RPC transport runs over it — so the MCP round-trip below opens it.
 	stdin: "ignore" | "pipe" = "ignore"
 ): SpawnedServer {
-	const child = spawn("node", [cliPath, ...args], { env, stdio: [stdin, "pipe", "pipe"] })
+	const child = spawnProcess("node", [cliPath, ...args], { env, stdio: [stdin, "pipe", "pipe"] })
 	const server: SpawnedServer = { child, stdout: "", stderr: "" }
 
 	child.stdout?.on("data", (chunk: Buffer) => {
@@ -286,7 +283,7 @@ async function mcpRoundTrip(
  * Fresh, empty data root — never populated, so the "missing data" + "libpostal needs none" tests download nothing.
  */
 async function freshDataRoot(): Promise<string> {
-	return fixtures.use(await temporaryDirectory("mw-cold-start-")).path
+	return fixtures.use(await temporaryDirectory("mw-cold-start-")).path.toString()
 }
 
 const cleanupServers: SpawnedServer[] = []
@@ -305,7 +302,7 @@ describe.skipIf(!hasPhotonCLI)("mailwoman-photon serve — cold start, no data",
 
 			await expect(
 				withCLISpawnLockAsync(() =>
-					execFileAsync("node", [PHOTON_CLI, "serve", "--port", String(PHOTON_TEST_PORT)], {
+					runFile("node", [PHOTON_CLI, "serve", "--port", String(PHOTON_TEST_PORT)], {
 						timeout: PREFLIGHT_TIMEOUT_MS,
 						env: childEnv({ MAILWOMAN_DATA_ROOT: dataRoot, NODE_NO_WARNINGS: "1" }),
 					})
@@ -327,7 +324,7 @@ describe.skipIf(!hasNominatimCLI)("mailwoman-nominatim serve — cold start, no 
 
 			await expect(
 				withCLISpawnLockAsync(() =>
-					execFileAsync("node", [NOMINATIM_CLI, "serve", "--port", String(NOMINATIM_TEST_PORT)], {
+					runFile("node", [NOMINATIM_CLI, "serve", "--port", String(NOMINATIM_TEST_PORT)], {
 						timeout: PREFLIGHT_TIMEOUT_MS,
 						env: childEnv({ MAILWOMAN_DATA_ROOT: dataRoot, NODE_NO_WARNINGS: "1" }),
 					})
@@ -468,7 +465,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 				const dataRoot = reuseRoot ?? (await freshDataRoot())
 
 				await withCLISpawnLockAsync(() =>
-					execFileAsync("node", [MAILWOMAN_CLI, "data", "pull", "candidate"], {
+					runFile("node", [MAILWOMAN_CLI, "data", "pull", "candidate"], {
 						timeout: PULL_TIMEOUT_MS,
 						env: childEnv({ MAILWOMAN_DATA_ROOT: dataRoot }),
 					})
@@ -506,7 +503,7 @@ describe.skipIf(!isFull || !hasMailwomanCLI || !hasPhotonCLI || !hasNominatimCLI
 				// The ledgered Paris/Texas finding: `mailwoman geocode` (unlike the drop-ins) resolves the candidate
 				// gazetteer ONLY via $MAILWOMAN_CANDIDATE_DB — the export step `buildNoGazetteerMessage` prints for it.
 				const { stdout } = await withCLISpawnLockAsync(() =>
-					execFileAsync("node", [MAILWOMAN_CLI, "geocode", "12 Rue de Rivoli, 75001 Paris"], {
+					runFile("node", [MAILWOMAN_CLI, "geocode", "12 Rue de Rivoli, 75001 Paris"], {
 						timeout: PREFLIGHT_TIMEOUT_MS,
 						env: childEnv({
 							MAILWOMAN_DATA_ROOT: dataRoot,

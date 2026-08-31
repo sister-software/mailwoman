@@ -22,10 +22,10 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectoryExclusive, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { tmpdir } from "@mailwoman/platform/os"
-import { join } from "@mailwoman/platform/path"
+import { tempRootPath } from "@mailwoman/core/utils"
+import { join } from "path-ts"
 
-const LOCK_DIR = join(tmpdir(), "mailwoman-cli-spawn.lock")
+const LOCK_DIR = tempRootPath("mailwoman-cli-spawn.lock")
 const PID_FILE = join(LOCK_DIR, "pid")
 
 /**

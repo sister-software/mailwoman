@@ -19,9 +19,9 @@
  *     5. bare point                       → no outline, fly to zoom 12
  */
 
-import type { ResolvedPlaceView } from "../pipeline/types.ts"
-import { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "./geometry.ts"
-import type { BoundsTuple, PlaceBBox, PlaceGeometry } from "./geometry.ts"
+import { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "#map/geometry"
+import type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
+import type { ResolvedPlaceView } from "#pipeline/types"
 
 /**
  * `[longitude, latitude]`.

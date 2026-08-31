@@ -28,15 +28,12 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { execFile, spawn } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
-import { assertRingsInsideExtent, type MultiPolygonRings, type PolygonRings } from "@mailwoman/spatial"
+import { runFile, spawnProcess } from "@mailwoman/core/process"
+import { arealPolygons, assertRingsInsideExtent, type MultiPolygonRings } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
 import { JSONSpliterator } from "spliterator"
 
-import { EA_DECLARED_BBOX, EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "../vocabulary.ts"
-
-const execFileAsync = promisify(execFile)
+import { EA_DECLARED_BBOX, EA_FLOOD_LAYER, EA_SOURCE_EPSG } from "#vocabulary"
 
 /**
  * The ring types, and the PROJ guard, both re-exported from `@mailwoman/spatial`: neither is flood-specific, and a
@@ -122,7 +119,7 @@ export async function readFloodSourceIdentity(
 	const layer = options.layer ?? EA_FLOOD_LAYER
 	const expectEPSG = options.expectEPSG ?? EA_SOURCE_EPSG
 
-	const { stdout } = await execFileAsync(
+	const { stdout } = await runFile(
 		"ogrinfo",
 		["-json", "-so", options.geodatabasePath, layer],
 		// A file geodatabase's summary is small; the ceiling only guards against a pathological driver.
@@ -223,7 +220,7 @@ export async function* readFloodSourceFeatures(options: FloodIngestOptions): Asy
 		options.geodatabasePath,
 	]
 
-	const child = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
+	const child = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	const stderr: string[] = []
 
 	child.stderr.setEncoding("utf8")
@@ -347,9 +344,9 @@ export async function createGeodatabaseFeatureSource(
  * @throws {Error} When the geometry is neither.
  */
 function normalizePolygons(geometry: { type: string; coordinates: unknown }, areaID: string): MultiPolygonRings {
-	if (geometry.type === "MultiPolygon") return geometry.coordinates as MultiPolygonRings
+	const polygons = arealPolygons(geometry)
 
-	if (geometry.type === "Polygon") return [geometry.coordinates as PolygonRings]
+	if (polygons) return polygons
 
 	throw new Error(`flood ingest: feature ${areaID} is a ${geometry.type}, expected Polygon or MultiPolygon`)
 }

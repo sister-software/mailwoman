@@ -10,8 +10,8 @@
 
 import { z } from "zod"
 
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { staleEngineMessage } from "../tree-fingerprint.ts"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { staleEngineMessage } from "#tree-fingerprint"
 
 export const daemonTool = (deps: DevToolDeps): DevTool => {
 	const { registry } = deps

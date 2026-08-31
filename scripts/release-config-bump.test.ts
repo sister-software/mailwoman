@@ -12,13 +12,13 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { bumpReleaseConfigVersion } from "./release-config-version.ts"
 
 describe("release.config.json under the prepare bump", () => {
-	const path = resolve(String(repoRootPath()), "release.config.json")
+	const path = resolvePath(String(repoRootPath()), "release.config.json")
 	let original: string
 	let currentVersion: string
 
@@ -47,7 +47,7 @@ describe("release.config.json under the prepare bump", () => {
 	})
 
 	it("carries the current release number, not a lagged one", async () => {
-		const rootManifestPath = resolve(String(repoRootPath()), "package.json")
+		const rootManifestPath = resolvePath(String(repoRootPath()), "package.json")
 		const root = await readLocalJSONFile<{ version: string }>(rootManifestPath)
 
 		// The v9.2.0 incident: the root moved and this file did not. The prepare bump now writes both,

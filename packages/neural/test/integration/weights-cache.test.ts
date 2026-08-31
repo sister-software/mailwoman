@@ -14,7 +14,8 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
+import { cacheRootPath } from "@mailwoman/core/utils"
+import { join } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 import { resolveWeights, weightsCacheDir, weightsCachePackageDir, weightsPackageName } from "#weights"
@@ -158,7 +159,7 @@ describe("resolveWeights cache fallback", () => {
 	})
 
 	test("helpers: cache dir + package-name builder", () => {
-		expect(weightsCacheDir()).toMatch(/\.cache[/\\]mailwoman[/\\]weights$/)
+		expect(String(weightsCacheDir())).toBe(cacheRootPath("weights"))
 		expect(weightsPackageName("en-US")).toBe("@mailwoman/neural-weights-en-us")
 		expect(weightsPackageName()).toBe("@mailwoman/neural-weights-en-us")
 	})
@@ -167,10 +168,10 @@ describe("resolveWeights cache fallback", () => {
 	// the tree now builds the directory with `weightsCachePackageDir`; if it and the hand-spelled path ever disagree,
 	// they disagree HERE and not in a gate run that silently graded the wrong bundle.
 	test("weightsCachePackageDir builds exactly the layout this file pins", () => {
-		expect(weightsCachePackageDir(cacheRoot.path, LOCALE)).toBe(cacheRoot.resolve("node_modules", PACKAGE_NAME))
+		expect(String(weightsCachePackageDir(cacheRoot.path, LOCALE))).toBe(cacheRoot.resolve("node_modules", PACKAGE_NAME))
 
 		// Locale casing is normalized the same way the package name is.
-		expect(weightsCachePackageDir(cacheRoot.path)).toBe(
+		expect(String(weightsCachePackageDir(cacheRoot.path))).toBe(
 			cacheRoot.resolve("node_modules", "@mailwoman/neural-weights-en-us")
 		)
 	})

@@ -4,12 +4,15 @@
  * @author Teffen Ellis, et al.
  * @file The synchronous write surface — the same contracts as `./writers.ts`, blocking.
  *
- *   Prefer `./writers.ts`. The reasoning, and the positions where a synchronous call is still correct, are in
- *   `./readers-sync.ts`'s header.
+ *   A synchronous write blocks the event loop, so `./writers.ts` is the surface a call site reaches for. This one is
+ *   for a slot whose caller is synchronous and not ours to change — a React state initializer, a Docusaurus plugin
+ *   method, a class constructor — so that slot still reaches a helper rather than the builtin.
  *
- *   The two ceremonies carry over unchanged: every file writer creates the parent directory first, and
- *   {@linkcode copyFileToSync} / {@linkcode createSymbolicLinkSync} clear the destination first, because `copyFile`
- *   onto a symlink writes THROUGH it.
+ *   The names carry the same contracts as their asynchronous siblings, so moving a call site between the two surfaces
+ *   is a rename: every file writer creates the parent directory first; `removePathSync` raises ENOENT where
+ *   `removePathIfPresentSync` forgives; `makeDirectoriesSync` is recursive and idempotent where
+ *   `makeDirectoryExclusiveSync` raises EEXIST; and {@linkcode copyFileToSync} / {@linkcode createSymbolicLinkSync}
+ *   clear the destination first, because `copyFile` onto a symlink writes THROUGH it.
  */
 
 import {
@@ -23,7 +26,8 @@ import {
 	symlinkSync,
 	utimesSync,
 	writeFileSync,
-} from "@mailwoman/platform/fs"
+} from "node:fs"
+
 import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
 
 /**

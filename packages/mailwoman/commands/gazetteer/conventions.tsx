@@ -33,6 +33,7 @@ import {
 	type ConventionDatabase,
 } from "@mailwoman/resolver-wof-sqlite/convention-schema"
 import { Box, Text } from "ink"
+import { resolvePath } from "path-ts"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -115,7 +116,7 @@ const GazetteerConventions: ParsedCommandComponent<Options> = ({ options }) => {
 		const KNOWN = new Set<string>(BUILTIN_STRATEGY_NAMES)
 
 		const src = options.src
-		const output = options.output ?? dataRootPath("wof", "conventions.db")
+		const output = resolvePath(options.output ?? dataRootPath("wof", "conventions.db"))
 
 		const rows = await readLocalJSONFile<AuthoredConvention[]>(src)
 

@@ -10,12 +10,12 @@
  *   lifetime `using` can end. `new DatabaseSync` appears once in this package and nowhere else in the repository.
  *
  *   It lives outside `@mailwoman/core` because it needs none of core's 11 MB of parser reference data — its whole
- *   dependency set is `kysely` and `@mailwoman/platform`. That is what lets the leaf lookups use it.
+ *   dependency set is `kysely`. That is what lets the leaf lookups use it.
  */
 
-export * from "./client.ts"
-export * from "./database-schema.ts"
-export * from "./dialect.ts"
-export * from "./dialect-config.ts"
-export * from "./sealed.ts"
-export * from "./sealed-db.ts"
+export * from "#client"
+export * from "#database-schema"
+export * from "#dialect"
+export * from "#dialect-config"
+export * from "#sealed"
+export * from "#sealed-db"

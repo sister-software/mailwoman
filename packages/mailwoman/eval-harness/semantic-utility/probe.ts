@@ -32,9 +32,9 @@
  *   green. A control set that cannot fail is not a control set.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 
 import {
 	type CaseGrade,
@@ -42,7 +42,7 @@ import {
 	type POIBoardExpect,
 	type POIBoardFixture,
 	type POIBoardOutcome,
-} from "../poi-board.ts"
+} from "#eval-harness/poi-board"
 
 /**
  * The closed set of outcome shapes this probe reads, derived from `PipelineResult["path"]` and
@@ -263,30 +263,25 @@ export interface ProbeFreezeRecord {
 	note: string
 }
 
-async function sourceRelative(name: string): Promise<string> {
-	// `tsc` emits no `.json` into `out/`, so a compiled caller reads the source-tree copy — the same bridge
-	// `conformance/case-folding.ts` uses for its `.jsonl`.
-	const sibling = fileURLToPath(new URL(name, import.meta.url))
-
-	if (await pathExists(sibling)) return sibling
-
-	return fileURLToPath(new URL(`../../../eval-harness/semantic-utility/${name}`, import.meta.url))
+function sourceRelative(name: string): string {
+	// `tsc` emits no `.json` into `out/`, so the file is named from the package root rather than from this module.
+	return resolvePackagePath("mailwoman", "eval-harness", "semantic-utility", name)
 }
 
 /**
  * The committed pre-registration.
  */
-export const PROBE_DEFINITION_PATH = await sourceRelative("probe-definition.json")
+export const PROBE_DEFINITION_PATH = sourceRelative("probe-definition.json")
 
 /**
  * The committed freeze record for it.
  */
-export const PROBE_FREEZE_PATH = await sourceRelative("probe-freeze.json")
+export const PROBE_FREEZE_PATH = sourceRelative("probe-freeze.json")
 
 /**
  * The committed baseline receipt — the pre-injection measurement the #1930 decision compares against.
  */
-export const PROBE_BASELINE_RECEIPT_PATH = await sourceRelative("baseline-receipt.json")
+export const PROBE_BASELINE_RECEIPT_PATH = sourceRelative("baseline-receipt.json")
 
 /**
  * Canonical JSON for hashing: keys sorted at every depth, array order preserved, no insignificant whitespace.

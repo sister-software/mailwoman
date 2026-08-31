@@ -41,9 +41,9 @@ import {
 	withTermFrequency,
 } from "@mailwoman/match"
 
-import { createGBTScorer } from "./learned-scorer.ts"
-import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "./models/dedup-gbt-en-us.ts"
-import type { ResolvedEntity, SourceRecord } from "./types.ts"
+import { createGBTScorer } from "#learned-scorer"
+import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "#models/dedup-gbt-en-us"
+import type { ResolvedEntity, SourceRecord } from "#types"
 
 /**
  * Cheap, parse-free normalization for the address-frequency key — uppercase, collapse whitespace, drop punctuation.

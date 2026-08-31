@@ -17,9 +17,9 @@
  */
 
 import { readDirectoryEntries, statPath } from "@mailwoman/core/fs/readers"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { createHash } from "@mailwoman/platform/crypto"
-import { join } from "@mailwoman/platform/path"
+import { runFileSync } from "@mailwoman/core/process"
+import { sha256Hex } from "@mailwoman/core/utils/hash"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
  * Workspaces whose source an engine's module graph reaches. Editing anything here can change a parse or a resolve, so
@@ -127,9 +127,9 @@ async function newestSourceMtime(root: string): Promise<{ mtimeMs: number; path:
  * fixed-width `slice(3)` takes the first character of the path with it. Callers that want a bare token trim their own
  * result.
  */
-function git(repoRoot: string, args: string[]): string {
+function git(repoRoot: PathBuilderLike, args: string[]): string {
 	try {
-		return execFileSync("git", args, { cwd: repoRoot, encoding: "utf8" }).replace(/\n+$/, "")
+		return runFileSync("git", args, { cwd: resolvePath(repoRoot), encoding: "utf8" }).replace(/\n+$/, "")
 	} catch {
 		return ""
 	}
@@ -140,7 +140,7 @@ function git(repoRoot: string, args: string[]): string {
  *
  * @throws If the walk found no source files at all — see {@link TreeFingerprint.filesWalked}.
  */
-export async function computeTreeFingerprint(repoRoot: string): Promise<TreeFingerprint> {
+export async function computeTreeFingerprint(repoRoot: PathBuilderLike): Promise<TreeFingerprint> {
 	let newestMtimeMs = 0
 	let newestPath: string | null = null
 	let filesWalked = 0
@@ -171,10 +171,7 @@ export async function computeTreeFingerprint(repoRoot: string): Promise<TreeFing
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, already in memory
 	const dirtyFiles = status ? status.split("\n").map((line) => line.slice(3).trim()) : []
 
-	const digest = createHash("sha256")
-		.update(`${gitHead}\n${newestMtimeMs}\n${filesWalked}\n${dirtyFiles.join("\n")}`)
-		.digest("hex")
-		.slice(0, 16)
+	const digest = sha256Hex(`${gitHead}\n${newestMtimeMs}\n${filesWalked}\n${dirtyFiles.join("\n")}`).slice(0, 16)
 
 	return { digest, gitHead, dirtyFiles, newestMtimeMs, newestPath, filesWalked }
 }

@@ -3,15 +3,15 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
-import { parseArgs } from "@mailwoman/platform/util"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street-normalize"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { loadRegressionCases } from "../eval-harness/gauntlet/cases/load.ts"
-import { buildGauntletDeps } from "../eval-harness/gauntlet/harness.ts"
+import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
+import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 import {
 	type C6RowReport,
 	completeSpanRegistryReceipt,
@@ -20,8 +20,8 @@ import {
 	locateUniqueComponentTruth,
 	spansFromBIO,
 	summarizeC6,
-} from "../eval-harness/grammar-census.ts"
-import { resolveCandidateDBPath } from "../resolver-backend.ts"
+} from "#eval-harness/grammar-census"
+import { resolveCandidateDBPath } from "#resolver-backend"
 
 const TARGET_IDS = [
 	"tt-cs-port-of-spain",
@@ -30,7 +30,7 @@ const TARGET_IDS = [
 	"my-cs-petaling-jaya",
 ] as const
 
-const { values } = parseArgs({ options: { "out-json": { type: "string" } } })
+const { values } = parseArguments({ options: { "out-json": { type: "string" } } })
 const cases = await loadRegressionCases()
 const deps = await buildGauntletDeps()
 const reports: C6RowReport[] = []

@@ -13,13 +13,12 @@
  *   Run: `mailwoman placer eval latin-offmap --model <dir> [--abstain 0.5]`
  */
 
-import * as path from "@mailwoman/platform/path"
+import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "#coarse-placer/coarse-placer"
 import { readLocalBuffer, readLocalJSONFile } from "#fs/readers"
 import { dataRootPath, repoRootPath, formatPercent } from "#utils"
-
-import { CoarsePlacer, type CoarsePlacerMeta, type CoarsePrediction } from "../coarse-placer.ts"
 
 /**
  * Samples a bucket needs before its off-map rate is reported rather than folded into the tail.
@@ -40,7 +39,7 @@ export interface EvalLatinOffmapOptions {
 	/**
 	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
-	model?: string
+	model?: PathBuilderLike
 	/**
 	 * Abstention threshold. Default 0.5.
 	 */
@@ -48,7 +47,7 @@ export interface EvalLatinOffmapOptions {
 	/**
 	 * Dataset dir (`test-latin-offmap.jsonl`). Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 }
 
 /**
@@ -63,12 +62,12 @@ export interface EvalLatinOffmapResult {
  * Coarse-placer Latin off-map handling eval — see the module doc. Emits the report to stdout.
  */
 export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Promise<EvalLatinOffmapResult> {
-	const modelDir = options.model || dataRootPath("coarse-placer", "model")
+	const modelDir = resolvePathBuilder(options.model || dataRootPath("coarse-placer", "model"))
 	const abstain = options.abstain ?? 0.5
 	const dataDir = options.data || repoRootPath("data", "coarse-placer")
 
-	const meta = await readLocalJSONFile<CoarsePlacerMeta>(path.join(modelDir, "meta.json"))
-	const buf = await readLocalBuffer(path.join(modelDir, "weights.bin"))
+	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(modelDir, "meta.json"))
+	const buf = await readLocalBuffer(resolvePath(modelDir, "weights.bin"))
 	const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
 	let weights: Float32Array
 
@@ -94,7 +93,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 	const placer = new CoarsePlacer({ ...meta, weights }, { abstainBelow: abstain })
 
 	const rows = await Array.fromAsync(
-		JSONSpliterator.fromAsync<OffMapRow>(path.join(dataDir, "test-latin-offmap.jsonl"))
+		JSONSpliterator.fromAsync<OffMapRow>(resolvePath(dataDir, "test-latin-offmap.jsonl"))
 	)
 
 	const handled = (p: CoarsePrediction): boolean => p.abstained || p.country === "OTHER"
@@ -132,7 +131,7 @@ export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Pro
 		}
 	}
 
-	console.log(`Latin off-map handling — model ${path.basename(modelDir)} (abstain ${abstain}, n=${n})`)
+	console.log(`Latin off-map handling — model ${basename(modelDir)} (abstain ${abstain}, n=${n})`)
 	console.log(`  OVERALL handled (OTHER-or-abstain): ${ok}/${n} (${formatPercent(ok, n)})  ← want ≥90%`)
 	console.log(`  by group:`)
 

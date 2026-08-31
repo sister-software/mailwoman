@@ -15,7 +15,7 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { type CSVRecord, readCSVRecords, readTuples } from "@mailwoman/corpus/shard-recipes/scaffold"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 async function* byteAtATime(csv: string): AsyncGenerator<Uint8Array> {

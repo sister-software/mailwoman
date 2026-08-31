@@ -13,7 +13,7 @@ import { dataRootPath } from "@mailwoman/core/utils"
 import { audit } from "@mailwoman/corpus/tools/audit"
 // Lightweight integration smoke against the actual corpus on this host. Skipped when the data
 // isn't present (CI / fresh clones); only the file-format-parsing tests run unconditionally.
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const CORPUS_PATH = dataRootPath("corpus", "versioned", "v0.3.0", "corpus-v0.3.0")

@@ -31,10 +31,10 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, tempRootPath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { oaResolverEval } from "./oa-resolver-eval.ts"
+import { oaResolverEval } from "#eval-harness/oa-resolver-eval"
 
 /**
  * Options for {@linkcode deOrderEval} — one field per flag the gate used to serialize into argv.

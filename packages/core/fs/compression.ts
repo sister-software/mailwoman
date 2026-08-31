@@ -57,3 +57,9 @@ export async function gunzip(input: CompressionInput): Promise<Uint8Array> {
 export function gunzipChunks(source: AsyncIterable<Uint8Array | string>): ReadableStream<Uint8Array> {
 	return ReadableStream.from(byteChunks(source)).pipeThrough(byteTransform(new DecompressionStream("gzip")))
 }
+
+/**
+ * The CRC-32 and synchronous gzip `node:zlib` offers, for a checksum over a buffer already in memory and for a response
+ * body compressed inside a request handler. Everything streamed goes through {@linkcode gunzipChunks}.
+ */
+export { crc32, gzipSync } from "node:zlib"

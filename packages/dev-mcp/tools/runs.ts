@@ -10,8 +10,8 @@
 
 import { z } from "zod"
 
-import { RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR, getRun, listRuns } from "../run-store.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
+import { RETENTION_DAYS, RETENTION_MAX_RUNS, RUN_STORE_DIR, getRun, listRuns } from "#run-store"
+import type { DevTool, DevToolDeps } from "#tool-kit"
 
 export const runsTool = async ({ registry }: DevToolDeps): Promise<DevTool> => ({
 	name: "mwdev_runs",

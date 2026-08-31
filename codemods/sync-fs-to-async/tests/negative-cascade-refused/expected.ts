@@ -1,4 +1,6 @@
-import { existsSync, readFileSync } from "@mailwoman/platform/fs"
+/// <reference types="node" />
+
+import { existsSync, readFileSync } from "node:fs"
 
 function readBanner(path: string): string {
 	return readFileSync(path, "utf8")

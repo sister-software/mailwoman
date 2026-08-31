@@ -19,7 +19,7 @@
 
 import { COUNTRY_SURFACE_FORMS, CountryNames, matchCountry } from "@mailwoman/codex/country"
 
-import { alignAndWrite, makeMulberry32, type ShardRecipe, shardSourceID } from "./scaffold.ts"
+import { alignAndWrite, makeMulberry32, type ShardRecipe, shardSourceID } from "#shard-recipes/scaffold"
 
 /**
  * Surfaces shorter than this are the code register (`JP`, `GER`), not a name — excluded (see the module doc).

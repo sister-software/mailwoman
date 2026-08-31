@@ -44,8 +44,8 @@
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { CandidateDatabase } from "./candidate-schema.ts"
-import { normalizeLocalityForKey } from "./street-normalize.ts"
+import type { CandidateDatabase } from "#candidate-schema"
+import { normalizeLocalityForKey } from "#street-normalize"
 
 /**
  * How far apart two artifacts may put the same place's centroid and still be read as the same place.

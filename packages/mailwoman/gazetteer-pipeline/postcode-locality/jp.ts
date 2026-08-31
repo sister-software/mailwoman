@@ -50,7 +50,7 @@ import {
 	POSTCODE_LOCALITY_INSERT_SQL,
 	type PostcodeLocalityDatabase,
 	type PostcodeLocalityInsertValues,
-} from "./schema.ts"
+} from "#gazetteer-pipeline/postcode-locality/schema"
 
 /**
  * Digit at which a fractional remainder is exactly half. Above it the value rounds up; at it the tie is broken toward

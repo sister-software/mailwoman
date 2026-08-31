@@ -4,12 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
+import { DatabaseSync } from "node:sqlite"
+
 import { pathExists, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { dirname, join } from "@mailwoman/platform/path"
-import { DatabaseSync } from "@mailwoman/platform/sqlite"
 import { openBuiltClient } from "@mailwoman/sqlite/sealed"
 import { isSealed, SealedArtifactError, sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+import { dirname, join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

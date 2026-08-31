@@ -9,13 +9,13 @@
  * failure disappear.
  */
 
-import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { pathExistsSync } from "@mailwoman/core/fs/readers-sync"
+import { readLocalTextFile, readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { runFileSync } from "@mailwoman/core/process"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { relative, resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { relative, resolvePath } from "path-ts"
+import { AsyncSequence } from "spliterator"
 import ts from "typescript"
 
 interface DebtCounters {
@@ -29,7 +29,7 @@ interface DebtCounters {
 }
 
 const root = String(repoRootPath())
-const baselinePath = resolve(root, "scripts/repo-health-baseline.json")
+const baselinePath = resolvePath(root, "scripts/repo-health-baseline.json")
 
 function emptyCounters(): DebtCounters {
 	return {
@@ -79,9 +79,7 @@ function isSelfPackageSpecifier(value: string, packageName: string | undefined):
 /**
  * The synchronous `node:fs` surface, by name.
  *
- * A `*Sync` suffix over-matches: `execSync`, `spawnSync`, `deflateSync` and `flushSync` are not filesystem calls, and
- * `@mailwoman/core/fs/readers-sync` deliberately exports its own `*Sync` helpers, which ARE the sanctioned idiom and
- * must not count against it. Only the builtin names belong here.
+ * A `*Sync` suffix over-matches: `execSync`, `spawnSync`, `deflateSync` and `flushSync` are not filesystem calls
  */
 const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 	"accessSync",
@@ -228,7 +226,6 @@ function visit(
 const UNCOUNTED = [
 	// The runtime mirror and the idiom over it call the builtins on purpose; counting them would measure the
 	// implementation rather than its callers.
-	"packages/platform/",
 	"packages/core/fs/",
 	// A codemod fixture is an INPUT. `tests/*/input.ts` holds the synchronous shapes the transform consumes and
 	// `expected.ts` holds the ones it deliberately refuses to touch, so both must keep calls this check dislikes.
@@ -245,7 +242,7 @@ const UNCOUNTED = [
  * failed on files no commit contains. Two readers of this number must be able to reproduce each other.
  */
 function trackedSourcePaths(): string[] {
-	const listed = execFileSync("git", ["ls-files", "-z", "--", "*.ts", "*.tsx"], {
+	const listed = runFileSync("git", ["ls-files", "-z", "--", "*.ts", "*.tsx"], {
 		cwd: root,
 		encoding: "utf8",
 		maxBuffer: 64 * 1024 * 1024,
@@ -257,20 +254,20 @@ function trackedSourcePaths(): string[] {
 		.filter((relativePath) => !UNCOUNTED.some((prefix) => relativePath.startsWith(prefix)))
 		.filter((relativePath) => !/(?:^|\/)(?:out|node_modules)\//.test(relativePath))
 		.filter((relativePath) => !relativePath.endsWith(".d.ts"))
-		.map((relativePath) => resolve(root, relativePath))
+		.map((relativePath) => resolvePath(root, relativePath))
 }
 
 // A tracked path can be absent from the working tree (a deletion staged but not committed); skip it
 // rather than failing the whole gate on a file the next commit removes anyway.
-const paths = trackedSourcePaths().filter((path) => pathExistsSync(path))
+const paths = await AsyncSequence.from(trackedSourcePaths()).parallelFilter(pathExists).toArray()
 
 const counters = emptyCounters()
-const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolve(root, "package.json"))
+const rootManifest = await readLocalJSONFile<{ workspaces: string[] }>(resolvePath(root, "package.json"))
 
 const workspacePackages = await Promise.all(
 	rootManifest.workspaces.map(async (workspace) => ({
-		directory: resolve(root, workspace),
-		name: (await readLocalJSONFile<{ name: string }>(resolve(root, workspace, "package.json"))).name,
+		directory: resolvePath(root, workspace),
+		name: (await readLocalJSONFile<{ name: string }>(resolvePath(root, workspace, "package.json"))).name,
 	}))
 )
 
@@ -303,7 +300,7 @@ for (const path of paths) {
 
 // The key IS the flag text parseArgs matches, so it must stay kebab-case: `package.json`'s `health:debt:update`
 // invokes this with `--write-baseline`, and a camelCase key rejects that as an unknown option.
-const { values } = parseArgs({
+const { values } = parseArguments({
 	options: {
 		"write-baseline": { type: "boolean", default: false },
 	},

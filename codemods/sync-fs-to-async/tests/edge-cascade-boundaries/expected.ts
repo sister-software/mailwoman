@@ -1,6 +1,6 @@
 import { readDirectory } from "@mailwoman/core/fs/readers"
 
-import { readFileSync } from "@mailwoman/platform/fs"
+import { readFileSync } from "node:fs"
 
 interface Engine {
 	read(): string

@@ -30,6 +30,7 @@
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { mulberry32 } from "@mailwoman/core/utils"
 import {
 	type BoundaryStressTemplate,
@@ -37,9 +38,8 @@ import {
 } from "@mailwoman/corpus/synthesizers/boundary-stress"
 import { createScorer } from "@mailwoman/neural/scorer"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { parseArgs } from "@mailwoman/platform/util"
 
-const { values: args } = parseArgs({
+const { values: args } = parseArguments({
 	options: {
 		model: { type: "string" },
 		tokenizer: { type: "string" },

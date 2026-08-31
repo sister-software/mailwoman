@@ -22,11 +22,11 @@
 
 import { AsciifyTerminal, cursorTo, SGR_RESET } from "@sister.software/asciify/tui"
 
-import { blitFrame } from "./frame.ts"
-import { decodeInputChunk, type MapTUIInput, MOUSE_DISABLE, MOUSE_ENABLE } from "./input.ts"
-import { lonLatToWorldPx, worldPxToLonLat } from "./mercator.ts"
-import { MapRenderer } from "./renderer.ts"
-import type { TileSource } from "./tile-source.ts"
+import { blitFrame } from "#frame"
+import { decodeInputChunk, type MapTUIInput, MOUSE_DISABLE, MOUSE_ENABLE } from "#input"
+import { lonLatToWorldPx, worldPxToLonLat } from "#mercator"
+import { MapRenderer } from "#renderer"
+import type { TileSource } from "#tile-source"
 
 const ALT_SCREEN_ENTER = "\u001B[?1049h"
 const ALT_SCREEN_EXIT = "\u001B[?1049l"

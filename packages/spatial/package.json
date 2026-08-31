@@ -33,10 +33,10 @@
 	],
 	"type": "module",
 	"imports": {
-		"#index": {
-			"node": "./index.ts",
-			"default": "./out/index.js",
-			"types": "./out/index.d.ts"
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {
@@ -91,6 +91,11 @@
 			"default": "./out/projection-transform.js",
 			"types": "./out/projection-transform.d.ts"
 		},
+		"./osm/*": {
+			"node": "./osm/*.ts",
+			"default": "./out/osm/*.js",
+			"types": "./out/osm/*.d.ts"
+		},
 		"./sdk/well-known-text": {
 			"node": "./sdk/well-known-text.ts",
 			"default": "./out/sdk/well-known-text.js",
@@ -102,7 +107,6 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"geo-coordinates-parser": "^1.7.4",
 		"h3-js": "^4.5.0",
 		"wkx": "^0.5.0"

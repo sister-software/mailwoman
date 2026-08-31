@@ -24,6 +24,7 @@
  *   and the seal — which is what fixtures structurally cannot.
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -85,8 +86,7 @@ interface Options {
 const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const [
-			{ execFileSync },
-			{ artifactSizeMB },
+			{ runFileSync },
 			{ dataRootPath },
 			{
 				assertAttributionUnchanged,
@@ -102,8 +102,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 			},
 			{ GZT_LICENSE_CONTRADICTION },
 		] = await Promise.all([
-			import("@mailwoman/platform/child_process"),
-			import("#gazetteer-pipeline/admin/index"),
+			import("@mailwoman/core/process"),
 			import("@mailwoman/core/utils"),
 			import("@mailwoman/zoning/sdk"),
 			import("@mailwoman/zoning/vocabulary"),
@@ -183,7 +182,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
 		const out = options.out ?? String(dataRootPath("zoning", "zoning-ireland.db"))
-		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		// A narrowed run reads a SUBSET on purpose, so its declared count is the subset's own and the build asserts the sum
 		// against that rather than against the whole product.
@@ -253,7 +252,7 @@ const GazetteerBuildZoning: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		const lines = [
-			`zoning-ireland.db: ${out} (${await artifactSizeMB(out)} MB)`,
+			`zoning-ireland.db: ${out} (${await formatFileSize(out)})`,
 			`${result.features.toLocaleString()} zoning polygons across ${result.jurisdictions} local authorities and ${result.plans} plans`,
 			`rings: ${result.rings.total.toLocaleString()} total · ${result.rings.exteriors.toLocaleString()} exterior (clockwise) · ` +
 				`${result.rings.holes.toLocaleString()} hole (counter-clockwise) · ${result.rings.exteriorByMagnitude.toLocaleString()} exterior(s) chosen by magnitude · ` +

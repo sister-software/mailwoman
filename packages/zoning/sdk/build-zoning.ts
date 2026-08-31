@@ -49,12 +49,15 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { runChunkProcess } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
-import { createZoningTables, type ZoningDatabase } from "../schema.ts"
+import { createZoningTables, type ZoningDatabase } from "#schema"
+import type { ZoningFeatureSource } from "#sdk/ingest"
+import type { CrosswalkPair, ObservedTerm, ZoningChunkResult } from "#sdk/ingest-chunk"
+import { ingestZoningChunk } from "#sdk/ingest-chunk"
 import {
 	assertTierMatchesLicense,
 	GZT_ATTRIBUTION,
@@ -66,10 +69,7 @@ import {
 	GZT_LAYER_NAME,
 	GZT_LICENSE,
 	GZT_PLAN_LEVELS,
-} from "../vocabulary.ts"
-import type { CrosswalkPair, ObservedTerm, ZoningChunkResult } from "./ingest-chunk.ts"
-import { ingestZoningChunk } from "./ingest-chunk.ts"
-import type { ZoningFeatureSource } from "./ingest.ts"
+} from "#vocabulary"
 
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
@@ -689,7 +689,7 @@ async function runBatchedIngest(
 ): Promise<StreamResult> {
 	const { batched } = options
 	const chunkSize = batched.chunkSize ?? DEFAULT_CHUNK_SIZE
-	const script = fileURLToPath(import.meta.resolve("@mailwoman/zoning/scripts/ingest-chunk"))
+	const script = resolveModulePath("@mailwoman/zoning/scripts/ingest-chunk")
 	const chunks: ZoningChunkResult[] = []
 
 	// The upper bound is deliberately open — the source reports a count, not a maximum id, and a range that stopped at the

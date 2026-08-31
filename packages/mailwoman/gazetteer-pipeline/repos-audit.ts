@@ -28,9 +28,9 @@
  *   the two as one number would either overstate the risk or hide it.
  */
 
-import { pathExists, readDirectoryEntries, realPath, statPath, type Dirent } from "@mailwoman/core/fs/readers"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
+import { entryLeadsToDirectory, pathExists, readDirectoryEntries, realPath } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
+import { join } from "path-ts"
 
 /**
  * Where a clone sits relative to the repos root.
@@ -101,27 +101,6 @@ export function parseRepoName(name: string): { theme?: string; country?: string 
 }
 
 /**
- * Whether a directory entry leads to a directory, symlink included.
- *
- * `Dirent.isDirectory()` is FALSE for a symlink to a directory, and that is not a detail: the lab's nested
- * `whosonfirst-data-admin-us` is exactly such a link, so a walk keyed on `isDirectory()` alone skips it and reports the
- * repo as single-layout. Fast-glob does not skip it — `ingest-wof` passes no `followSymbolicLinks` and the default is
- * `true` — so the audit would be describing a tree the ingest does not see.
- */
-async function leadsToDirectory(entry: Dirent, full: string): Promise<boolean> {
-	if (entry.isDirectory()) return true
-
-	if (!entry.isSymbolicLink()) return false
-
-	try {
-		return (await statPath(full)).isDirectory()
-	} catch {
-		// A broken link leads nowhere, which is the correct answer rather than an error.
-		return false
-	}
-}
-
-/**
  * `HEAD` for a checkout, or `undefined` when the directory is not one.
  *
  * A clone with no git metadata is not an error here — it is a directory someone extracted from an archive, and
@@ -129,7 +108,7 @@ async function leadsToDirectory(entry: Dirent, full: string): Promise<boolean> {
  */
 function headOf(dir: string): string | undefined {
 	try {
-		return execFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: dir, encoding: "utf8", stdio: "pipe" }).trim()
+		return runFileSync("git", ["rev-parse", "--short", "HEAD"], { cwd: dir, encoding: "utf8", stdio: "pipe" }).trim()
 	} catch {
 		return undefined
 	}
@@ -175,7 +154,7 @@ export async function auditReposRoot(root: string, options: { readCommits?: bool
 	for (const entry of await readDirectoryEntries(root)) {
 		const full = join(root, entry.name)
 
-		if (!(await leadsToDirectory(entry, full))) continue
+		if (!(await entryLeadsToDirectory(entry))) continue
 
 		if (entry.name.startsWith("whosonfirst-data-") || entry.name.startsWith("whosonfirst-external-")) {
 			await record(entry.name, CloneLayout.Flat, full)
@@ -187,7 +166,7 @@ export async function auditReposRoot(root: string, options: { readCommits?: bool
 		for (const child of await readDirectoryEntries(full)) {
 			const childPath = join(full, child.name)
 
-			if (child.name.startsWith("whosonfirst-") && (await leadsToDirectory(child, childPath))) {
+			if (child.name.startsWith("whosonfirst-") && (await entryLeadsToDirectory(child))) {
 				await record(child.name, CloneLayout.Nested, childPath)
 			}
 		}

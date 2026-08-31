@@ -10,9 +10,9 @@ import { tryParsingJSON } from "@mailwoman/core/objects"
 import { convert as convertCoords } from "geo-coordinates-parser"
 import { latLngToCell } from "h3-js"
 
-import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "../bbox.ts"
-import { type H3Cell, shortenH3Cell } from "../h3/cell.ts"
-import { type GeoObjectLiteral, GeometryType } from "../objects.ts"
+import { type BBox2DLiteral, type BBox3DLiteral, GeoBoundingBox, isBBox } from "#bbox"
+import { type H3Cell, shortenH3Cell } from "#h3/cell"
+import { type GeoObjectLiteral, GeometryType } from "#objects"
 import {
 	type InternalPointCoordinates,
 	type Coordinates2D as Point2DCoordinates,
@@ -24,7 +24,7 @@ import {
 	isValidLatitude,
 	isValidLongitude,
 	wrapLongitude,
-} from "../position.ts"
+} from "#position"
 
 /**
  * A JSON-serializeable single point geometry, such as a specific location, address, or longitude, latitude pair.

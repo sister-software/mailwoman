@@ -7,12 +7,12 @@
  */
 
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { scoreAffix } from "mailwoman/eval-harness/score-affix"
 
 async function main(): Promise<void> {
 	// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
-	const { values: rawValues } = parseArgs({
+	const { values: rawValues } = parseArguments({
 		options: {
 			conventions: { type: "string" },
 			file: { type: "string" },

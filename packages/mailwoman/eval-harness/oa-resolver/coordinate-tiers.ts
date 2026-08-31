@@ -9,8 +9,8 @@
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
 import type { AddressPointLookup, InterpolationLookup } from "@mailwoman/resolver"
 
-import type { ShardProvider } from "../../geocode-shards.ts"
-import type { OAResolverEvalOptions } from "./options.ts"
+import type { OAResolverEvalOptions } from "#eval-harness/oa-resolver/options"
+import type { ShardProvider } from "#geocode-shards"
 
 /**
  * The postcode shard reader the anchor extractor probes — the WOF postcode lookup's structural contract, named here so

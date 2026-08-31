@@ -31,15 +31,15 @@
  */
 
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
-import { pathExists, readDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
+import { pathExists, readDirectoryRecursive, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
-import { join } from "@mailwoman/platform/path"
+import { resolvePath, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { type LayerManifest, probeManifest } from "../../data-inventory.ts"
-import { poiTaxonomyLookup } from "../../poi-intent.ts"
+import { type LayerManifest, probeManifest } from "#data-inventory"
+import { poiTaxonomyLookup } from "#poi-intent"
 
 /**
  * The committed input trees the census reads carrier queries out of, repository-relative.
@@ -262,7 +262,7 @@ export interface PhraseCollisionCensusOptions {
 	/**
 	 * Repository root the committed input trees are read from. Defaults to the checkout this module was loaded from.
 	 */
-	repositoryRoot?: string
+	repositoryRoot?: PathBuilderLike
 }
 
 /**
@@ -334,39 +334,23 @@ export function candidateSubjects(input: string): string[] {
 }
 
 /**
- * Every `.jsonl` under a committed input tree, recursively.
- */
-async function jsonlFiles(root: string): Promise<string[]> {
-	if (!(await pathExists(root))) return []
-
-	const found: string[] = []
-
-	for (const name of await readDirectory(root)) {
-		const path = join(root, name)
-
-		if ((await statPath(path)).isDirectory()) {
-			found.push(...(await jsonlFiles(path)))
-
-			continue
-		}
-
-		if (path.endsWith(".jsonl")) {
-			found.push(path)
-		}
-	}
-
-	return found.toSorted()
-}
-
-/**
  * Read every committed input string out of the named trees.
  */
-async function committedInputs(repositoryRoot: string): Promise<{ inputs: Set<string>; files: number }> {
+async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ inputs: Set<string>; files: number }> {
 	const inputs = new Set<string>()
 	let files = 0
 
 	for (const relative of COMMITTED_INPUT_ROOTS) {
-		for (const path of await jsonlFiles(join(repositoryRoot, relative))) {
+		const root = join(repositoryRoot, relative)
+
+		if (!(await pathExists(root))) continue
+
+		const paths = (await readDirectoryRecursive(root))
+			.filter((entry) => entry.endsWith(".jsonl"))
+			.map((entry) => resolvePath(root, entry))
+			.toSorted()
+
+		for (const path of paths) {
 			files++
 
 			for (const line of TextSpliterator.from(await readLocalTextFile(path))) {

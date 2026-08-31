@@ -13,7 +13,7 @@ import {
 	ORACLE_GRADE_MODE,
 	readOracleConfig,
 } from "@mailwoman/dev-mcp/oracle-arm"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

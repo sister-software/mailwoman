@@ -34,7 +34,7 @@ import {
 } from "@mailwoman/neural/placetype-census"
 import { buildPlacetypePairPriors, type PlacetypePairProbeTrace } from "@mailwoman/neural/placetype-pair-prior"
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()

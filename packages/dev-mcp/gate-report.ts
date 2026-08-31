@@ -16,7 +16,7 @@
 
 import { pathExists, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join, resolve } from "@mailwoman/platform/path"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 
 /**
  * One floor and what the run read against it.
@@ -226,8 +226,8 @@ export function summarizeGateReport(report: GateReport): string {
  * Read from `files_md5` rather than from a list here, so a card that starts declaring a new sibling is checked without
  * anyone remembering to update this file. `$comment` is a documentation key, not an artifact.
  */
-async function declaredArtifacts(packageDir: string): Promise<string[]> {
-	const cardPath = resolve(packageDir, "model-card.json")
+async function declaredArtifacts(packageDir: PathBuilderLike): Promise<string[]> {
+	const cardPath = resolvePath(packageDir, "model-card.json")
 
 	if (!(await pathExists(cardPath))) return []
 
@@ -256,7 +256,7 @@ async function declaredArtifacts(packageDir: string): Promise<string[]> {
  *   different fixes and one message for both sends the reader to the wrong place. `paths` is empty when well-formed.
  */
 export async function missingWeightsCacheArtifacts(
-	cacheRoot: string,
+	cacheRoot: PathBuilderLike,
 	locale = "en-us"
 ): Promise<{ kind: "ok" | "wrong-shape" | "under-staged"; paths: string[] }> {
 	const packageDir = weightsCachePackageDir(cacheRoot, locale)
@@ -265,7 +265,7 @@ export async function missingWeightsCacheArtifacts(
 	const missingRequired: string[] = []
 
 	for (const artifact of required) {
-		const path = resolve(packageDir, artifact)
+		const path = resolvePath(packageDir, artifact)
 
 		if (!(await pathExists(path))) {
 			missingRequired.push(path)
@@ -282,7 +282,7 @@ export async function missingWeightsCacheArtifacts(
 	const undeclared: string[] = []
 
 	for (const artifact of await declaredArtifacts(packageDir)) {
-		const path = resolve(packageDir, artifact)
+		const path = resolvePath(packageDir, artifact)
 
 		if (!(await pathExists(path))) {
 			undeclared.push(path)

@@ -1,3 +1,4 @@
+import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -18,23 +19,18 @@
  *   Invoke via `mailwoman corpus fetch tiger-full --out-root <path>`. Native `fetch` streams each
  *   county ZIP to disk (no curl subprocess).
  */
-
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure, not sections of declarations. A region there folds nothing a reader wants folded. */
-
-import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
-import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
-import { basename, join } from "@mailwoman/platform/path"
-import { Readable } from "@mailwoman/platform/stream"
-import { pipeline } from "@mailwoman/platform/stream/promises"
-import { setTimeout as sleep } from "@mailwoman/platform/timers/promises"
+import { sleep } from "@mailwoman/core/utils/sleep"
+import { basename, join } from "path-ts"
 
-import type { BaseFetchOptions, FetchSummary } from "./download.ts"
-import { isTransientStatus, readManifest, writeManifest } from "./download.ts"
+import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download"
+import { isTransientStatus, readManifest, writeManifest } from "#tools/fetch/download"
 
 /**
  * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather

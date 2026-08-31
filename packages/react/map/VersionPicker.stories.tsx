@@ -10,7 +10,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useState } from "react"
 
-import type { DemoVersionOption } from "./types.ts"
+import type { DemoVersionOption } from "#map/types"
+
 import { VersionPicker } from "./VersionPicker.tsx"
 
 const VERSIONS: DemoVersionOption[] = [

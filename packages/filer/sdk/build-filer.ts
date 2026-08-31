@@ -184,9 +184,9 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, movePath, makeDirectories } from "@mailwoman/core/fs/writers"
-import { dirname } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
+import { dirname } from "path-ts"
 
 import {
 	createFilerAttributeNodeIndex,
@@ -198,15 +198,15 @@ import {
 	FilerIdentifierType,
 	FilerRelationship,
 	type FilerDatabase,
-} from "../schema.ts"
-import { groupFRNsByCanonicalLegalName } from "./build/edgar-match.ts"
-import { processEdgarSubsidiaryRow, type EdgarSubsidiaryRow } from "./build/edgar-rows.ts"
-import { insertFamilyMembership } from "./build/family-membership.ts"
+} from "#schema"
+import { groupFRNsByCanonicalLegalName } from "#sdk/build/edgar-match"
+import { processEdgarSubsidiaryRow, type EdgarSubsidiaryRow } from "#sdk/build/edgar-rows"
+import { insertFamilyMembership } from "#sdk/build/family-membership"
 import {
 	processForm499FRNRelationships,
 	processForm499Lifecycle,
 	type Form499LifecycleTotals,
-} from "./build/form499-rows.ts"
+} from "#sdk/build/form499-rows"
 import {
 	assertLastFiledAt,
 	assertProviderValidFrom,
@@ -214,16 +214,16 @@ import {
 	mintFRNNodeID,
 	mintHoldingCompanyNodeID,
 	mintProviderNodeID,
-} from "./build/node-ids.ts"
-import { createFilerBuildTables } from "./build/tables.ts"
-import { classifyFiler, parseForm499, type Form499Row } from "./form499.ts"
-import { assertISODate } from "./guards.ts"
-import { parseProviderList, type ProviderListRow } from "./provider-list.ts"
+} from "#sdk/build/node-ids"
+import { createFilerBuildTables } from "#sdk/build/tables"
+import { classifyFiler, parseForm499, type Form499Row } from "#sdk/form499"
+import { assertISODate } from "#sdk/guards"
+import { parseProviderList, type ProviderListRow } from "#sdk/provider-list"
 
 // `@mailwoman/filer/sdk/build-filer` is EdgarSubsidiaryRow's published home — `edgar-ingest.ts` and every consumer
 // building rows for the `edgarRows` seam import it from here, so it stays exported from this module even though its
 // declaration sits with the writer that validates it.
-export type { EdgarSubsidiaryRow } from "./build/edgar-rows.ts"
+export type { EdgarSubsidiaryRow } from "#sdk/build/edgar-rows"
 
 /**
  * Rows committed per `BEGIN`/`COMMIT` batch — matches `build-bdc.ts`'s `STAGE_BATCH_SIZE` discipline. Counted per

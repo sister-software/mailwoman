@@ -67,6 +67,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { $private } from "@mailwoman/core/env"
 import { ResourceError } from "@mailwoman/core/errors"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"
@@ -249,7 +250,7 @@ export interface CreateSECClientOptions {
 	 * On-disk cache root. Defaults to `dataRootPath("sec", "cache")`, resolved once at construction (the standalone
 	 * client re-resolved it per request; construct the client after setting `$MAILWOMAN_DATA_ROOT` instead).
 	 */
-	cacheDir?: string
+	cacheDir?: PathBuilderLike
 	/**
 	 * How long a cached entry for a MUTABLE endpoint (anything {@linkcode isImmutableArchiveURL} returns `false` for)
 	 * stays fresh, in milliseconds. Archive documents ignore this entirely.

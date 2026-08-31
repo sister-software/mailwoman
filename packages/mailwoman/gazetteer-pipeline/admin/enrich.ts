@@ -18,8 +18,8 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { corePackagePath } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 
 export interface EnrichAdminOptions {
 	/**

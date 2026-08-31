@@ -9,7 +9,6 @@
 
 import { realPath } from "@mailwoman/core/fs/readers"
 import { resolveWeights, type ResolvedWeights } from "@mailwoman/neural/weights"
-import { relative, resolve, sep } from "@mailwoman/platform/path"
 import {
 	buildGauntletDeps,
 	runOne,
@@ -18,9 +17,10 @@ import {
 	type GauntletResult,
 } from "mailwoman/eval-harness/gauntlet/harness"
 import { overlayLocale } from "mailwoman/eval-harness/gauntlet/routing"
+import { type PathBuilderLike, relative, resolvePath, sep } from "path-ts"
 
-import type { EngineConfig } from "./engine-registry.ts"
-import type { ResolvedInput } from "./input-sets.ts"
+import type { EngineConfig } from "#engine-registry"
+import type { ResolvedInput } from "#input-sets"
 
 const SUPPORTED_CONFIG_KEYS = new Set<keyof EngineConfig>([
 	"weights_cache",
@@ -58,7 +58,7 @@ export interface RoutedMailwomanArm extends Disposable {
 export interface RoutedMailwomanArmDeps {
 	buildDeps(options: GauntletDepsOptions): Promise<GauntletDeps>
 	resolveWeights(options: { locale: string; cacheRoot?: string }): Promise<ResolvedWeights>
-	realpath(path: string): Promise<string>
+	realpath(path: PathBuilderLike): Promise<string>
 	runOne(
 		input: string,
 		deps: GauntletDeps,
@@ -85,15 +85,15 @@ function assertSupportedConfig(config: EngineConfig): void {
 }
 
 async function assertInsideCache(
-	path: string,
+	path: PathBuilderLike,
 	cacheRoot: string,
-	realpath: (path: string) => Promise<string>
+	realpath: (path: PathBuilderLike) => Promise<string>
 ): Promise<string> {
 	const root = await realpath(cacheRoot)
 	const target = await realpath(path)
 	const fromRoot = relative(root, target)
 
-	if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`) || resolve(root, fromRoot) !== target) {
+	if (fromRoot === ".." || fromRoot.startsWith(`..${sep}`) || resolvePath(root, fromRoot) !== target) {
 		throw new Error(`Candidate artifact resolved outside weights_cache: ${path} -> ${target}; cache is ${root}.`)
 	}
 

@@ -17,14 +17,14 @@
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { checkBoardPins, PIN_TEST_PATH } from "mailwoman/eval-harness/gauntlet/cases/pins"
 import { $ } from "zx"
 
 const ISSUE_TITLE = "board pins are stale on main"
 
 async function checkBoardPinsCLI(): Promise<void> {
-	const { values } = parseArgs({
+	const { values } = parseArguments({
 		options: {
 			"report-issue": { type: "boolean", default: false },
 		},

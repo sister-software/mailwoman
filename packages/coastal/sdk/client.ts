@@ -32,7 +32,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
 
-import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_SERVICE_SLUG } from "../vocabulary.ts"
+import { NCERM_ATTRIBUTION, NCERM_CATALOGUE_PACKAGE_ID, NCERM_DATASET_ID, NCERM_SERVICE_SLUG } from "#vocabulary"
 
 // Re-exported so a caller branching on this client's failures needs exactly one import.
 export { isTransientResourceError } from "@mailwoman/core/api"
@@ -349,6 +349,8 @@ export class EANCERMClient extends APIClient<APIClientConfig> {
  * These fields arrive as JSON-in-a-string, so a value that is not an array is a catalogue-schema change rather than
  * something to coerce: an empty array here would read as "the entry names no licence", which is not what a
  * differently-shaped value means.
+ *
+ * TODO: Remove. Pointless. MAYBE turn into a generic `parseJSONArray` in `objects.ts` if it is needed elsewhere.
  */
 function parseJSONArray<T>(raw: string | undefined): T[] {
 	if (raw === undefined) return []

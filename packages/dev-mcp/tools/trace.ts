@@ -10,11 +10,11 @@
 
 import { z } from "zod"
 
-import type { EngineConfig } from "../engine-registry.ts"
-import { evidenceCensus } from "../evidence.ts"
-import { resolveInputSet } from "../input-sets.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA, componentsOf, provenanceFor, renderTrace, slimParseTrace } from "../tool-kit.ts"
+import type { EngineConfig } from "#engine-registry"
+import { evidenceCensus } from "#evidence"
+import { resolveInputSet } from "#input-sets"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA, componentsOf, provenanceFor, renderTrace, slimParseTrace } from "#tool-kit"
 
 export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_trace",

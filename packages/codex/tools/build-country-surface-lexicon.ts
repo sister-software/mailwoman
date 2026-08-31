@@ -41,11 +41,12 @@
  */
 
 import { makeDirectoriesSync, writeLocalTextFileSync } from "@mailwoman/core/fs/writers-sync"
-import { dirname, resolve } from "@mailwoman/platform/path"
+import { repoRootPath } from "@mailwoman/core/utils"
+import { dirname } from "path-ts"
 
-import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "../country/country.ts"
-import { wordNorm, wordNormLower } from "../normalize.ts"
-import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "../us/state.ts"
+import { COUNTRY_SURFACE_FORMS, ISO2_TO_NAME } from "#country/country"
+import { wordNorm, wordNormLower } from "#normalize"
+import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "#us/state"
 
 /**
  * Ambiguous entries printed before the list is truncated.
@@ -64,7 +65,7 @@ const SLOTS = ["country_surface", "country_ambiguous"]
  * Committed output path (a codex-derived artifact, like export-country-surfaces.ts — no argv, so the no-process-globals
  * lint policy holds; codex stays zero-runtime-dep).
  */
-const OUTPUT = resolve(import.meta.dirname, "../../../data/gazetteer/country-surface-lexicon-v1.json")
+const OUTPUT = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 /**
  * THE shared word-normalization rule (identical to build-gazetteer-anchor-lexicon.mjs and mirrored in

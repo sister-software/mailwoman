@@ -38,24 +38,24 @@ import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { $public } from "@mailwoman/core/env"
 import { pathExists, readDirectory, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, type Resolver, type ResolveOpts } from "@mailwoman/resolver"
 
-import { readReleaseManifest } from "./data-release.ts"
-import { geocodeAddress, type GeocodeClassifier } from "./geocode-core.ts"
-import { regionSlugFromTree, ShardProvider } from "./geocode-shards.ts"
-import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "./interp-calibration.ts"
+import { readReleaseManifest } from "#data-release"
+import { geocodeAddress, type GeocodeClassifier } from "#geocode-core"
+import { regionSlugFromTree, ShardProvider } from "#geocode-shards"
+import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import {
 	buildNoGazetteerMessage,
 	createResolverBackend,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
 	wofShardPaths,
-} from "./resolver-backend.ts"
+} from "#resolver-backend"
 
 /**
  * Default per-state shard root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
@@ -124,7 +124,7 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 		// `require.resolve` this replaced returned. It does NOT throw for a missing FILE inside a resolvable package,
 		// only for an unresolvable package; the `pathExists` below already gates every candidate, so that is a no-op
 		// here.
-		candidates.push(fileURLToPath(import.meta.resolve("@mailwoman/neural-weights-en-us/model-card.json")))
+		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
 		/* package not resolvable from here — fall through */
 	}

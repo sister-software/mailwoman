@@ -24,7 +24,7 @@
 
 import type { ComponentTag } from "@mailwoman/core/types"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { createHash, type Hash } from "@mailwoman/platform/crypto"
+import { createHash, type Hash } from "@mailwoman/core/utils/hash"
 
 import type { CanonicalRow, CorpusAdapter } from "#types"
 

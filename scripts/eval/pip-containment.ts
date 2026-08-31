@@ -23,8 +23,9 @@ import { globPaths, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, pyFixed } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
+import { geometryContains, type GeometryLiteral } from "@mailwoman/spatial"
 
 /**
  * Artifact examples collected before the list is truncated.
@@ -49,65 +50,17 @@ async function adminRoots(): Promise<string[]> {
 
 const ADMIN_ROOTS = await adminRoots()
 
-type Ring = number[][]
+const geomCache = new Map<number, GeometryLiteral | null>()
 
-type Geometry = { type?: string; coordinates?: unknown } | null
-
-const geomCache = new Map<number, Geometry>()
-
-function geomForID(wofID: number): Geometry {
+async function geomForID(wofID: number): Promise<GeometryLiteral | null> {
 	if (geomCache.has(wofID)) return geomCache.get(wofID)!
 
-	const geom = (readWOFFeature(Math.trunc(wofID), ADMIN_ROOTS)?.geometry as Geometry) ?? null
+	const feature = await readWOFFeature(Math.trunc(wofID), ADMIN_ROOTS)
+	const geom = feature?.geometry ?? null
 
 	geomCache.set(wofID, geom)
 
 	return geom
-}
-
-function inRing(x: number, y: number, ring: Ring): boolean {
-	let inside = false
-	const n = ring.length
-	let j = n - 1
-
-	for (let i = 0; i < n; i++) {
-		const xi = ring[i]![0]!
-		const yi = ring[i]![1]!
-		const xj = ring[j]![0]!
-		const yj = ring[j]![1]!
-
-		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) {
-			inside = !inside
-		}
-
-		j = i
-	}
-
-	return inside
-}
-
-function inPolygon(x: number, y: number, poly: Ring[]): boolean {
-	// poly = [outer, hole1, ...] — even-odd handles holes
-	let c = false
-
-	for (const ring of poly) {
-		if (inRing(x, y, ring)) {
-			c = !c
-		}
-	}
-
-	return c
-}
-
-function contains(geom: Geometry, lon: number, lat: number): boolean | null {
-	if (!geom) return null // no polygon available
-	const t = geom.type
-
-	if (t === "Polygon") return inPolygon(lon, lat, geom.coordinates as Ring[])
-
-	if (t === "MultiPolygon") return (geom.coordinates as Ring[][]).some((p) => inPolygon(lon, lat, p))
-
-	return null // Point geometry etc. — can't contain
 }
 
 type Counter = Record<string, number>
@@ -168,9 +121,7 @@ interface ResolvedRow {
 }
 
 async function main(): Promise<number> {
-	// --- arg parsing: <resolved.json> [--label NAME] [--json OUT] ---------------
-	// node:util parseArgs — flags + one positional source path (old scan parity: unknown flags tolerated).
-	const { values, positionals } = parseArgs({
+	const { values, positionals } = parseArguments({
 		options: { label: { type: "string" }, json: { type: "string" } },
 		strict: false,
 		allowPositionals: true,
@@ -205,7 +156,7 @@ async function main(): Promise<number> {
 		}
 
 		const lid = r.neuralLocID
-		const contained = lid ? contains(geomForID(lid), r.lon, r.lat) : null
+		const contained = lid ? geometryContains(await geomForID(lid), r.lon, r.lat) : null
 
 		if (contained !== null) {
 			// a polygon existed and was tested (True or False)

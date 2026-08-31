@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { RegionName } from "./names.ts"
+import type { RegionName } from "#regions/names"
 
 /**
  * M.49 region codes for continents.

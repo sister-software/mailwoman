@@ -9,10 +9,10 @@
  *   `format.ts` for the bytes.
  */
 
-export { autocomplete } from "./autocomplete.ts"
-export { AncestrieBuilder } from "./builder.ts"
-export { ANCESTRIE_FORMAT_VERSION, ANCESTRIE_MAGIC } from "./format.ts"
-export { Ancestrie } from "./reader.ts"
+export { autocomplete } from "#autocomplete"
+export { AncestrieBuilder } from "#builder"
+export { ANCESTRIE_FORMAT_VERSION, ANCESTRIE_MAGIC } from "#format"
+export { Ancestrie } from "#reader"
 
 export type {
 	AncestrieBuilderOptions,
@@ -27,4 +27,4 @@ export type {
 	JSONValue,
 	SealOptions,
 	TokenNormalizer,
-} from "./types.ts"
+} from "#types"

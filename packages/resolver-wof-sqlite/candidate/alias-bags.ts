@@ -7,11 +7,11 @@
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { CandidateDatabase } from "../candidate-schema.ts"
-import { ALIAS_SEPARATOR } from "../fts.ts"
-import type { WOFDatabase } from "../schema.ts"
-import { normalizeLocalityForKey } from "../street-normalize.ts"
-import type { PlaceAttrs, StageRow } from "./place-attrs.ts"
+import type { CandidateDatabase } from "#candidate-schema"
+import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
+import { ALIAS_SEPARATOR } from "#fts"
+import type { WOFDatabase } from "#schema"
+import { normalizeLocalityForKey } from "#street-normalize"
 
 /**
  * Pass 2 — explode each place's `place_search.alt_names` bag into distinct-key alias rows (`is_primary = 0`), and count

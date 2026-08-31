@@ -11,12 +11,12 @@
 import { haversineKm } from "@mailwoman/spatial"
 import { z } from "zod"
 
-import type { EngineConfig } from "../engine-registry.ts"
-import { resolveInputSet, type InputSetRef } from "../input-sets.ts"
-import { describeObservedRate } from "../power.ts"
-import { tallyPaths } from "../tally.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, componentsOf, provenanceFor } from "../tool-kit.ts"
+import type { EngineConfig } from "#engine-registry"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
+import { describeObservedRate } from "#power"
+import { tallyPaths } from "#tally"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA, componentsOf, provenanceFor } from "#tool-kit"
 
 /**
  * The per-row fields `mwdev_run` can emit, in emission order.

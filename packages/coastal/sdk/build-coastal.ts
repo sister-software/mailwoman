@@ -47,12 +47,15 @@ import {
 	writeLayerManifest,
 	type CoverageCell,
 } from "@mailwoman/core/layers"
+import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { runChunkProcess } from "@mailwoman/core/utils"
-import { fileURLToPath } from "@mailwoman/platform/url"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 
-import { createCoastalTables, type CoastalDatabase } from "../schema.ts"
+import { createCoastalTables, type CoastalDatabase } from "#schema"
+import type { CoastalFeatureSource } from "#sdk/ingest"
+import type { CoastalChunkResult } from "#sdk/ingest-chunk"
+import { ingestCoastalChunk } from "#sdk/ingest-chunk"
 import {
 	NCERM_ATTRIBUTION,
 	NCERM_COVERAGE_LIMIT,
@@ -66,10 +69,7 @@ import {
 	NCERM_SCENARIOS,
 	NCERM_SCENARIOS_BY_KEY,
 	NCERM_DATASET_URL,
-} from "../vocabulary.ts"
-import type { CoastalChunkResult } from "./ingest-chunk.ts"
-import { ingestCoastalChunk } from "./ingest-chunk.ts"
-import type { CoastalFeatureSource } from "./ingest.ts"
+} from "#vocabulary"
 
 /**
  * Schema version of the domain tables. Bumped when a column changes meaning, never for an added column a reader can
@@ -532,7 +532,7 @@ async function runBatchedIngest(
 ): Promise<StreamResult> {
 	const { batched } = options
 	const chunkSize = batched.chunkSize ?? DEFAULT_CHUNK_SIZE
-	const script = fileURLToPath(import.meta.resolve("@mailwoman/coastal/scripts/ingest-chunk"))
+	const script = resolveModulePath("@mailwoman/coastal/scripts/ingest-chunk")
 	const chunks: CoastalChunkResult[] = []
 
 	const scenarioKeys = batched.scenarioKeys ?? NCERM_SCENARIOS.map((scenario) => scenario.key)

@@ -63,12 +63,9 @@
 import { isPresent } from "@mailwoman/core/objects"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { dataRootPath } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
-import type { LocaleBaseTuple } from "#synthesizers/german"
-import type { SubVenueLexiconTable } from "#tools"
-import { alignRow } from "#utils"
-
-import { makeMulberry32, shardSourceID, type ShardRecipe } from "./scaffold.ts"
+import { makeMulberry32, shardSourceID, type ShardRecipe } from "#shard-recipes/scaffold"
 import {
 	buildIdentifierModel,
 	buildStreetNegatives,
@@ -88,14 +85,12 @@ import {
 	sampleIdentifier,
 	type StreetNegatives,
 	titleCase,
-} from "./sub-venue-sources.ts"
+} from "#shard-recipes/sub-venue-sources"
+import type { LocaleBaseTuple } from "#synthesizers/german"
+import type { SubVenueLexiconTable } from "#tools"
+import { alignRow } from "#utils"
 
-export * from "./sub-venue-sources.ts"
-
-/* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals in the register and
-   template samplers are weighted-sampler cutoffs, not thresholds: a `const r = random()` followed by
-   a cascade of `r < 0.45` branches IS the output distribution, and reading the cascade top-to-bottom
-   is how you see it. Genuine thresholds are named constants above. */
+export * from "#shard-recipes/sub-venue-sources"
 
 //#region Plan
 
@@ -345,14 +340,19 @@ const Register = {
 
 type Register = (typeof Register)[keyof typeof Register]
 
+// Registers: 45% canonical, 20% comma-free, 25% lower, 10% upper.
+const CANONICAL_REGISTER_CUTOFF = 0.45
+const COMMA_FREE_REGISTER_CUTOFF = 0.65
+const LOWER_REGISTER_CUTOFF = 0.9
+
 function sampleRegister(random: () => number): Register {
 	const r = random()
 
-	if (r < 0.45) return Register.Canonical
+	if (r < CANONICAL_REGISTER_CUTOFF) return Register.Canonical
 
-	if (r < 0.65) return Register.CommaFree
+	if (r < COMMA_FREE_REGISTER_CUTOFF) return Register.CommaFree
 
-	if (r < 0.9) return Register.Lower
+	if (r < LOWER_REGISTER_CUTOFF) return Register.Lower
 
 	return Register.Upper
 }
@@ -676,6 +676,10 @@ function emitRow(
 	return true
 }
 
+// One draw per row: 25% carry no street; 55% put the sub-venue before the venue, the rest the venue first.
+const NO_STREET_SHARE = 0.25
+const SUBVENUE_FIRST_CUTOFF = 0.55
+
 /**
  * Emit one leg's POSITIVE rows: `<sub-venue> unit`, a real `venue`, and the leg's own address skeleton.
  */
@@ -718,9 +722,9 @@ function emitPositives(
 		const venueGroup: Group = [{ text: venue, tag: "venue" }]
 		const r = random()
 		// A quarter of rows carry no street: an airport terminal's address usually does not have one.
-		const body = addressGroups(leg.country, tuple, r >= 0.25)
+		const body = addressGroups(leg.country, tuple, r >= NO_STREET_SHARE)
 		// Both orders occur on real signage and mail — "Terminal 5, Heathrow" and "Heathrow, Terminal 5".
-		const groups = r < 0.55 ? [subGroup, venueGroup, ...body] : [venueGroup, subGroup, ...body]
+		const groups = r < SUBVENUE_FIRST_CUTOFF ? [subGroup, venueGroup, ...body] : [venueGroup, subGroup, ...body]
 
 		const ok = emitRow(context, leg, stats, groups, register, `sub-venue:${form.form}`, {
 			leg: leg.locale,
@@ -737,6 +741,9 @@ function emitPositives(
 		bump(stats.byDesignator, form.designatorID)
 	}
 }
+
+// Name-pool negatives: 75% carry a street line.
+const NEGATIVE_WITH_STREET_SHARE = 0.75
 
 /**
  * Emit one leg's NEGATIVE rows — the confound classes, none of which carries a `unit`.
@@ -777,7 +784,10 @@ function emitNegatives(
 			const name = pool[Math.floor(random() * pool.length)]!
 			const tuple = pools.context[Math.floor(random() * pools.context.length)]!
 
-			groups = [[{ text: name, tag: "venue" }], ...addressGroups(leg.country, tuple, random() < 0.75)]
+			groups = [
+				[{ text: name, tag: "venue" }],
+				...addressGroups(leg.country, tuple, random() < NEGATIVE_WITH_STREET_SHARE),
+			]
 		}
 
 		const ok = emitRow(context, leg, stats, groups, register, `sub-venue-negative:${negativeClass}`, {
@@ -828,7 +838,7 @@ async function buildLegPools(
 	leg: SubVenueLeg,
 	query: PoolQuery,
 	contextByCountry: ReadonlyMap<string, LocaleBaseTuple[]>,
-	paths: { extractsDir: string; poiDB: string }
+	paths: { extractsDir: PathBuilderLike; poiDB: PathBuilderLike }
 ): Promise<LegPools> {
 	const extractPools = leg.extract
 		? await readExtractPools(`${paths.extractsDir}/${leg.extract}`, query)

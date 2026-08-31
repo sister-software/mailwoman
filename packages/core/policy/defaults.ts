@@ -8,9 +8,8 @@
  *   edits one entry here with a commit-message rationale.
  */
 
+import type { ClassifierPolicy, PolicyMode } from "#policy/policy"
 import { COMPONENT_TAGS, type ComponentTag } from "#types"
-
-import type { ClassifierPolicy, PolicyMode } from "./policy.ts"
 
 /**
  * Build a fresh array of policies — one per `ComponentTag`, all in `mode`. Returns a new array on each call; callers

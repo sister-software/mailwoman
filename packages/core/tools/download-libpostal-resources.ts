@@ -24,7 +24,7 @@
  *   - `--force` — delete an existing `./dictionaries` directory instead of erroring out
  */
 
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 
 import { isDirectory, readDirectoryEntries, readLocalTextFile } from "#fs/readers"
 import { temporaryDirectory } from "#fs/temporary"

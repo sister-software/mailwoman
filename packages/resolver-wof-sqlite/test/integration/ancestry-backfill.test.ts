@@ -6,13 +6,13 @@
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { join } from "@mailwoman/platform/path"
 import {
 	backfillAncestorsFromHierarchy,
 	discoverAdminDataRoots,
 } from "@mailwoman/resolver-wof-sqlite/ancestry-backfill"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: TemporaryDirectory

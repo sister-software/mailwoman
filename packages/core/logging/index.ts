@@ -4,5 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./shared.ts"
-export * from "./utils.ts"
+export * from "#logging/shared"
+export * from "#logging/utils"

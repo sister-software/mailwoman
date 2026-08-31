@@ -19,9 +19,9 @@
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
 
-import type { GeocodeResult } from "../geocode-result.ts"
-import type { GeocodeTrace } from "../geocode-session.ts"
-import { ABSENT } from "./trace-rows.ts"
+import { ABSENT } from "#debug-view/trace-rows"
+import type { GeocodeResult } from "#geocode-result"
+import type { GeocodeTrace } from "#geocode-session"
 
 //#region Contract
 

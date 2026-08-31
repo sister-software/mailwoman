@@ -11,8 +11,8 @@ import { extractSingleFileZip } from "@mailwoman/core/fs/zip"
 import type { PathBuilderLike } from "path-ts"
 import { resolvePath } from "path-ts/resolve"
 
-import type { BDCClient } from "./client.ts"
-import { BDCFilingDataType, type BDCFile } from "./common.ts"
+import type { BDCClient } from "#sdk/client"
+import { BDCFilingDataType, type BDCFile } from "#sdk/common"
 
 /**
  * Download and cache an FCC BDC availability file, extracting its zip-wrapped CSV to `destinationDir`.

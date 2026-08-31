@@ -18,8 +18,8 @@
 
 import { haversineKm } from "@mailwoman/spatial"
 
-import { normalCDF, type RowGrade } from "./grade.ts"
-import { wilsonInterval } from "./power.ts"
+import { normalCDF, type RowGrade } from "#grade"
+import { wilsonInterval } from "#power"
 
 /**
  * The pre-registered distance thresholds, in kilometres. Fixed by

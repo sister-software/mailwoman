@@ -18,7 +18,8 @@
  *   because the footprint comes from the authority's statement rather than from the polygons.
  */
 
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { formatFileSize, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { runFileSync } from "@mailwoman/core/process"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -76,9 +77,6 @@ interface Options {
 
 const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { execFileSync } = await import("@mailwoman/platform/child_process")
-
-		const { artifactSizeMB } = await import("#gazetteer-pipeline/admin/index")
 		const { dataRootPath } = await import("@mailwoman/core/utils")
 
 		const {
@@ -184,7 +182,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		const identity = await readFloodSourceIdentity({ geodatabasePath })
 
 		const out = options.out ?? String(dataRootPath("flood", "flood.db"))
-		const buildSHA = execFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
+		const buildSHA = runFileSync("git", ["rev-parse", "--short", "HEAD"]).toString().trim()
 
 		const result = await buildFloodDatabase({
 			// A `--limit` run is the smoke rung and reads a PREFIX in one process; a full build is BATCHED, one child
@@ -219,7 +217,7 @@ const GazetteerBuildFlood: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		const lines = [
-			`flood.db: ${out} (${await artifactSizeMB(out)} MB)`,
+			`flood.db: ${out} (${await formatFileSize(out)})`,
 			`${result.features.toLocaleString()} polygons · ${Object.entries(result.zoneCounts)
 				.map(([zone, count]) => `${zone} ${count.toLocaleString()}`)
 				.join(" · ")}`,

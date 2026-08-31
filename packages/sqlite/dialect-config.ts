@@ -4,7 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { DatabaseSync } from "@mailwoman/platform/sqlite"
+import type { DatabaseSync } from "node:sqlite"
+
 import type { DatabaseConnection } from "kysely"
 
 /**

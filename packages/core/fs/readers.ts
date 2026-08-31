@@ -4,17 +4,15 @@
  * @author Teffen Ellis, et al.
  * @file The asynchronous read surface. Every reader here takes a {@linkcode PathBuilderLike} and answers a promise.
  *
- *   `@mailwoman/platform/fs` mirrors `node:fs` one name for one name, synchronous surface included, because a mirror
- *   that omitted a builtin would be lying about the runtime. That makes it the correct FIRST hop and the wrong LAST
- *   one: a 2026-08-30 census counted 1,943 synchronous `node:fs` calls, 961 of them inside a function that was already
- *   `async` — a blocked event loop with an `await` legal on the same line.
+ *   `node:fs` is reached from this directory alone; the synchronous surface stays because a caller that is synchronous
+ *   and not ours to change still needs one.
  *
  *   So the sync mirror stays, and this module is where a caller lands instead.
  */
 
-import type { Dirent, Stats } from "@mailwoman/platform/fs"
+import type { Dirent, Mode, Stats } from "node:fs"
 import {
-	open,
+	open as openNative,
 	access,
 	constants,
 	glob,
@@ -24,16 +22,16 @@ import {
 	readlink,
 	realpath,
 	stat,
-} from "@mailwoman/platform/fs/promises"
+	type FileHandle,
+} from "node:fs/promises"
+
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { ByteFormatter, type ByteFormatterOptions } from "#fs/formatters"
 import { parseJSONStrict } from "#objects"
 
-/**
- * The runtime's own filesystem types, re-exported so a consumer reaches `@mailwoman/core/fs` for the type as well as
- * the function. `@mailwoman/platform/fs` stays the mirror `packages/core/fs/*` alone imports.
- */
-export type { Dirent, PathLike, Stats } from "@mailwoman/platform/fs"
+export type { Dirent, PathLike, Stats } from "node:fs"
+export type { FileHandle } from "node:fs/promises"
 
 // #region Stat utils
 
@@ -113,6 +111,46 @@ export function isFile(path: PathBuilderLike | URL): Promise<boolean> {
 }
 
 /**
+ * Whether a path exists and is a symbolic link.
+ */
+export function isSymbolicLink(path: PathBuilderLike | URL): Promise<boolean> {
+	return tryStatLink(path).then((stats) => stats?.isSymbolicLink() ?? false)
+}
+
+/**
+ * Whether a directory entry leads to a directory, symbolic links included.
+ *
+ * `Dirent.isDirectory()` is FALSE for a symbolic link to a directory, so a walk keyed on it alone skips every linked
+ * tree — while a glob with `followSymbolicLinks` (the default) descends into them, and the two then describe different
+ * trees. A link is resolved through `stat`, which also answers `false` for a dangling one.
+ */
+export function entryLeadsToDirectory(entry: Dirent): Promise<boolean> {
+	if (entry.isDirectory()) return Promise.resolve(true)
+
+	if (!entry.isSymbolicLink()) return Promise.resolve(false)
+
+	return isDirectory(resolvePath(entry.parentPath, entry.name))
+}
+
+/**
+ * The size of a file in bytes.
+ *
+ * @throws ENOENT when the file does not exist.
+ */
+export function readFileSize(path: PathBuilderLike | URL): Promise<number> {
+	return statPath(path).then((stats) => stats.size)
+}
+
+/**
+ * The size of a file, rendered in IEC units (`12.3 MiB`) — the unit for anything a machine measured.
+ *
+ * @throws ENOENT when the file does not exist.
+ */
+export async function formatFileSize(path: PathBuilderLike | URL, options?: ByteFormatterOptions): Promise<string> {
+	return ByteFormatter.formatIEC(await readFileSize(path), options)
+}
+
+/**
  * Resolve a path to its canonical location, following every symbolic link.
  *
  * @throws ENOENT when nothing is there. {@linkcode tryRealPath} answers `null` instead.
@@ -132,6 +170,10 @@ export function tryRealPath(path: PathBuilderLike): Promise<string | null> {
 
 		throw error
 	})
+}
+
+export function open(path: PathBuilderLike | URL, flags?: string | number, mode?: Mode): Promise<FileHandle> {
+	return openNative(path instanceof URL ? path : path.toString(), flags, mode)
 }
 
 /**
@@ -197,7 +239,7 @@ function asTarget(path: PathBuilderLike | URL): URL | string {
  * @returns The bytes read, as a UTF-8 string.
  * @throws ENOENT when the file does not exist.
  */
-export async function readFileHead(path: string, byteSize: number): Promise<string> {
+export async function readFileHead(path: PathBuilderLike, byteSize: number): Promise<string> {
 	await using handle = await open(path, "r")
 
 	const buffer = Buffer.alloc(byteSize)

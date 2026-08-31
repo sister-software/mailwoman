@@ -9,9 +9,9 @@
 
 import { z } from "zod"
 
-import { runContractCensus } from "../contract-report.ts"
-import type { DevTool, DevToolDeps } from "../tool-kit.ts"
-import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "../tool-kit.ts"
+import { runContractCensus } from "#contract-report"
+import type { DevTool, DevToolDeps } from "#tool-kit"
+import { ENGINE_CONFIG_SCHEMA, INPUT_SET_SCHEMA } from "#tool-kit"
 
 export const contractTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_contract",

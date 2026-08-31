@@ -61,18 +61,18 @@ import { recoverShortCellResolution, shortCellToInt, type H3Cell } from "@mailwo
 import { DatabaseClient, type StatementSync } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
 
-import { pointInEncodedRings } from "./rings.ts"
-import type { CoastalDatabase } from "./schema.ts"
-import { CoastalCellContainment } from "./schema.ts"
+import { pointInEncodedRings } from "#rings"
+import type { CoastalDatabase } from "#schema"
+import { CoastalCellContainment } from "#schema"
 import {
 	NCERM_COVERAGE_LIMIT,
 	NCERM_LAYER_NAME,
 	NCERM_PRODUCT_LIMITS,
 	NCERM_SCENARIOS_BY_KEY,
 	type CoastalScenario,
-} from "./vocabulary.ts"
+} from "#vocabulary"
 
-export { DEFAULT_NCERM_SCENARIO, NCERM_SCENARIOS, NCERM_SCENARIOS_BY_KEY, type CoastalScenario } from "./vocabulary.ts"
+export { DEFAULT_NCERM_SCENARIO, NCERM_SCENARIOS, NCERM_SCENARIOS_BY_KEY, type CoastalScenario } from "#vocabulary"
 
 /**
  * What the layer can say about a coordinate under one scenario.

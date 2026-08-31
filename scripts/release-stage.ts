@@ -20,7 +20,7 @@
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, copyPath, makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { join, resolve } from "@mailwoman/platform/path"
+import { join, resolvePath, type PathBuilderLike } from "path-ts"
 import { $ } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -60,10 +60,10 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 /**
  * The publish set, verbatim from `.release-it.json` — the list both CI phases derive from.
  */
-export async function releaseWorkspaces(repoRoot: string): Promise<string[]> {
+export async function releaseWorkspaces(repoRoot: PathBuilderLike): Promise<string[]> {
 	const config = await readLocalJSONFile<{
 		plugins: { "@release-it-plugins/workspaces": { workspaces: string[] } }
-	}>(resolve(repoRoot, ".release-it.json"))
+	}>(resolvePath(repoRoot, ".release-it.json"))
 
 	return config.plugins["@release-it-plugins/workspaces"].workspaces
 }
@@ -90,8 +90,8 @@ export interface ReleaseListIdentity {
  * The named-absence identity: root `workspaces` minus the release list must equal the sanctioned set exactly. Every
  * discrepancy is reported by NAME, so the failure is actionable without counting.
  */
-export async function checkReleaseListIdentity(repoRoot: string): Promise<ReleaseListIdentity> {
-	const root = (await readLocalJSONFile<{ workspaces: string[] }>(resolve(repoRoot, "package.json"))).workspaces
+export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promise<ReleaseListIdentity> {
+	const root = (await readLocalJSONFile<{ workspaces: string[] }>(resolvePath(repoRoot, "package.json"))).workspaces
 
 	const release = new Set(await releaseWorkspaces(repoRoot))
 	const rootSet = new Set(root)
@@ -122,14 +122,14 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: string): P
 	await $({ cwd: repoRoot })`git archive HEAD`.pipe($`tar -x -C ${stagingRoot}`)
 
 	for (const workspace of await releaseWorkspaces(repoRoot)) {
-		const compiled = resolve(repoRoot, workspace, "out")
+		const compiled = resolvePath(repoRoot, workspace, "out")
 
 		if (await pathExists(compiled)) {
 			await copyPath(compiled, join(stagingRoot, workspace, "out"))
 		}
 	}
 
-	await createSymbolicLink(resolve(repoRoot, "node_modules"), join(stagingRoot, "node_modules"))
+	await createSymbolicLink(resolvePath(repoRoot, "node_modules"), join(stagingRoot, "node_modules"))
 }
 
 /**

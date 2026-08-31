@@ -31,12 +31,12 @@
 
 import { type QueryIntentMarker, QueryIntentCode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
 
-import type { AbsenceObservation } from "./absence-route.ts"
-import type { CoastalErosionObservation, CoastalErosionRoute } from "./coastal-route.ts"
-import type { AuthorityDesignationObservation, AuthorityDesignationRoute } from "./flood-route.ts"
-import type { SemanticObservation } from "./semantic-route.ts"
-import type { SoilCapabilityObservation, SoilCapabilityRoute } from "./soil-route.ts"
-import type { ZoningDesignationObservation, ZoningDesignationRoute } from "./zoning-route.ts"
+import type { AbsenceObservation } from "#observations/absence-route"
+import type { CoastalErosionObservation, CoastalErosionRoute } from "#observations/coastal-route"
+import type { AuthorityDesignationObservation, AuthorityDesignationRoute } from "#observations/flood-route"
+import type { SemanticObservation } from "#observations/semantic-route"
+import type { SoilCapabilityObservation, SoilCapabilityRoute } from "#observations/soil-route"
+import type { ZoningDesignationObservation, ZoningDesignationRoute } from "#observations/zoning-route"
 
 /**
  * `family:rule` for a category chosen from an affordance assertion.

@@ -16,9 +16,14 @@ import type { WOFFeature, WOFProperties } from "@mailwoman/core/resources/whoson
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import FastGlob from "fast-glob"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 import { parallelMap } from "spliterator"
 
-import { choosePoint, type GeoNamesAnchorLookup, type PointChoice } from "./label-point-adjudicator.ts"
+import {
+	choosePoint,
+	type GeoNamesAnchorLookup,
+	type PointChoice,
+} from "#gazetteer-pipeline/admin/label-point-adjudicator"
 
 /**
  * Arity of a 2D bounding box: `[west, south, east, north]`.
@@ -205,7 +210,7 @@ export interface IngestWOFOptions {
 	/**
 	 * WOF repos root (a parent of `whosonfirst-data*` subrepos, or a single repo directory).
 	 */
-	dataDir: string
+	dataDir: PathBuilderLike
 	/**
 	 * Placetype allowlist. Default {@link ADMIN_PLACETYPES}.
 	 */
@@ -259,7 +264,7 @@ export async function ingestWOF(db: DatabaseClient<WOFDatabase>, opts: IngestWOF
 	}
 
 	const filePaths = await FastGlob("**/data/**/*.geojson", {
-		cwd: opts.dataDir,
+		cwd: resolvePath(opts.dataDir),
 		absolute: true,
 		ignore,
 	})

@@ -1,9 +1,9 @@
 {
-	"asNever": 15,
-	"doubleCast": 65,
+	"asNever": 0,
+	"doubleCast": 5,
 	"deepRelativeImports": 0,
-	"filterBoolean": 10,
-	"productionFilesOver1000Lines": 5,
+	"filterBoolean": 0,
+	"productionFilesOver1000Lines": 0,
 	"selfPackageImports": 0,
-	"synchronousFilesystemCalls": 8
+	"synchronousFilesystemCalls": 1
 }

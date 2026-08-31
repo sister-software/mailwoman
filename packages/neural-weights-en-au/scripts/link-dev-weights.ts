@@ -33,8 +33,8 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPath, weightsOverlayPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
 import { linkForce, removeIfPresent } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
+import { resolvePath } from "path-ts"
 
 /**
  * Where the artifacts LAND — the data-root overlay, never this tracked package.
@@ -46,8 +46,8 @@ const DEST_DIR = String(weightsOverlayPath("en-au"))
 
 await makeDirectories(DEST_DIR)
 
-await removeIfPresent(resolve(DEST_DIR, "model.onnx"))
-await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
+await removeIfPresent(resolvePath(DEST_DIR, "model.onnx"))
+await removeIfPresent(resolvePath(DEST_DIR, "tokenizer.model"))
 
 /**
  * --- soft-feed siblings (locale-owned; the fresh-worktree country-OFF gap) -----.
@@ -56,7 +56,7 @@ await removeIfPresent(resolve(DEST_DIR, "tokenizer.model"))
 const SRC_COUNTRY_LEXICON = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
 if (await pathExists(SRC_COUNTRY_LEXICON)) {
-	await linkForce(SRC_COUNTRY_LEXICON, resolve(DEST_DIR, "country-surface-lexicon-v1.json"))
+	await linkForce(SRC_COUNTRY_LEXICON, resolvePath(DEST_DIR, "country-surface-lexicon-v1.json"))
 
 	console.log(`linked ${DEST_DIR}/country-surface-lexicon-v1.json`)
 } else {
@@ -72,7 +72,7 @@ if (await pathExists(SRC_COUNTRY_LEXICON)) {
  */
 
 const MORPHOLOGY_SRC = dataRootPath("wof", "fst-street-morphology.bin")
-const MORPHOLOGY_DEST = resolve(DEST_DIR, "fst-street-morphology.bin")
+const MORPHOLOGY_DEST = resolvePath(DEST_DIR, "fst-street-morphology.bin")
 
 if (await pathExists(MORPHOLOGY_SRC)) {
 	await linkForce(MORPHOLOGY_SRC, MORPHOLOGY_DEST)

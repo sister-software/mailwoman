@@ -14,7 +14,7 @@
 import { readLocalBuffer, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { setTimestamps, writeLocalBuffer, writeLocalFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { createHash } from "@mailwoman/platform/crypto"
+import { md5Hex } from "@mailwoman/core/utils/hash"
 import {
 	fstFreshnessWarning,
 	fstStaleReason,
@@ -83,7 +83,7 @@ const SOURCE_IDENTITY = { md5: await md5File(SOURCE), bytes: (await statPath(SOU
 
 describe("md5File", () => {
 	it("matches the digest of the same bytes hashed in one pass", async () => {
-		expect(await md5File(SOURCE)).toBe(createHash("md5").update("source bytes").digest("hex"))
+		expect(await md5File(SOURCE)).toBe(md5Hex("source bytes"))
 	})
 
 	it("hashes a file LARGER than one read chunk identically", async () => {
@@ -94,7 +94,7 @@ describe("md5File", () => {
 		const big = TMP.resolve("big.bin")
 		await writeLocalFile(bytes, big)
 
-		expect(await md5File(big)).toBe(createHash("md5").update(bytes).digest("hex"))
+		expect(await md5File(big)).toBe(md5Hex(bytes))
 	})
 })
 

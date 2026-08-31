@@ -32,12 +32,9 @@
 
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
+import { runFile } from "@mailwoman/core/process"
 import { streamToDisk } from "@mailwoman/core/utils"
-import { execFile } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
-import { promisify } from "@mailwoman/platform/util"
-
-const execFileAsync = promisify(execFile)
+import { join } from "path-ts"
 
 /**
  * The download service's survey-area cache. Documented at `https://websoilsurvey.sc.egov.usda.gov/DSD/Download/help`,
@@ -137,7 +134,7 @@ export async function downloadSurveyArea(options: DownloadSurveyAreaOptions): Pr
 
 		// The archive holds its files under an `<AREASYMBOL>/` root already, so it unzips into the vintage directory
 		// rather than into a directory named for itself.
-		await execFileAsync("unzip", ["-o", "-q", archivePath, "-d", vintageDirectory])
+		await runFile("unzip", ["-o", "-q", archivePath, "-d", vintageDirectory])
 	} else {
 		options.onProgress?.(`${options.areaSymbol}: already extracted for ${options.versionDate}`)
 	}

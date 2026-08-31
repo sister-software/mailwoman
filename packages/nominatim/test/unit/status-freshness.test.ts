@@ -14,10 +14,10 @@
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createNominatimApp, type NominatimStatus, nominatimStatus } from "@mailwoman/nominatim"
-import { join } from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { readFreshness } from "mailwoman/freshness"
 import { stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
+import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, expect, test } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -31,7 +31,7 @@ interface FreshnessFixtureDatabase {
 	rows: { id: number }
 }
 
-async function scratch(): Promise<string> {
+async function scratch(): Promise<PathBuilderLike> {
 	const root = fixtures.use(await temporaryDirectory("mw-nominatim-status-")).path
 
 	return root

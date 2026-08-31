@@ -86,7 +86,7 @@ async function tryLoadNeural(locale: string): Promise<NeuralAddressClassifier | 
  * backend lookup.
  */
 async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
-	const { resolveCandidateDBPath, wofShardPaths } = await import("../resolver-backend.ts")
+	const { resolveCandidateDBPath, wofShardPaths } = await import("#resolver-backend")
 	const candidateDB = await resolveCandidateDBPath(options.candidateDB)
 
 	const wofPathCandidates = candidateDB
@@ -117,7 +117,7 @@ async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver 
 
 	try {
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
-		const { createResolverBackend } = await import("../resolver-backend.ts")
+		const { createResolverBackend } = await import("#resolver-backend")
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 		const lookup = await createResolverBackend(mod, { candidateDB: options.candidateDB, wofPaths })
 
@@ -147,7 +147,7 @@ function formatSubject(subject: POIIntent["subject"]): string {
  * Resolve the OverpassQL block, or a clear message when a category subject has no osmTag mapping.
  */
 async function formatOverpassBlock(intent: POIIntent): Promise<string> {
-	const { emitOverpassQL } = await import("../poi-overpass.ts")
+	const { emitOverpassQL } = await import("#poi-overpass")
 
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")

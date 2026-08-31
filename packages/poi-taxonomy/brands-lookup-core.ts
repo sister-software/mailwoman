@@ -8,7 +8,7 @@
  *   Zero node imports, so it stays bundler-safe. Not exported via a subpath of its own.
  */
 
-import type { BrandRecord, POIBrandTable } from "./types.ts"
+import type { BrandRecord, POIBrandTable } from "#types"
 
 export interface BrandMatch {
 	brand: BrandRecord

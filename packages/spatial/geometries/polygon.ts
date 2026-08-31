@@ -4,11 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { ResourceError } from "@mailwoman/core/errors"
-
-import type { GeoObjectLiteral } from "../objects.ts"
-import type { LineStringPath } from "./line-string.ts"
+import type { GeometryLiteral } from "#geometries/collection"
+import type { LineStringPath } from "#geometries/line-string"
+import type { GeoObjectLiteral } from "#objects"
 
 /**
  * An array of positions forming a closed shape, such as a country or a lake.
@@ -91,7 +89,7 @@ export type PolygonPath = SolidPolygonPath | NestedPolygonPath
 /**
  * An array of positions forming a closed shape, such as a country or a lake.
  */
-export interface PolygonLiteral<P extends PolygonPath = SolidPolygonPath> extends GeoObjectLiteral {
+export interface PolygonLiteral<P extends PolygonPath = PolygonPath> extends GeoObjectLiteral {
 	/**
 	 * Declares the type of GeoJSON object as a `Polygon` geometry.
 	 */
@@ -135,6 +133,18 @@ export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean 
 export type ContainmentRing = readonly (readonly number[])[]
 
 /**
+ * One polygon's rings: `[exterior, ...holes]` — a `Polygon`'s `coordinates`, read loosely (see
+ * {@linkcode ContainmentRing}).
+ */
+export type PolygonRings = readonly ContainmentRing[]
+
+/**
+ * A feature's polygons — `MultiPolygon` coordinates, with a bare `Polygon` lifted into the same shape by
+ * {@linkcode arealPolygons}.
+ */
+export type MultiPolygonRings = readonly PolygonRings[]
+
+/**
  * Ray-cast a point against ONE linear ring — the even-odd crossing count. Shoot a ray along +lon and toggle on every
  * edge crossing.
  *
@@ -166,7 +176,7 @@ export function pointInRing(lon: number, lat: number, ring: ContainmentRing): bo
  * without depending on ring winding order. GeoJSON nominally specifies orientation, but the gazetteer sources do not
  * reliably honour it, so the orientation-free rule is the one that survives real data.
  */
-export function pointInPolygon(lon: number, lat: number, rings: readonly ContainmentRing[]): boolean {
+export function pointInPolygon(lon: number, lat: number, rings: PolygonRings): boolean {
 	let inside = false
 
 	for (const ring of rings) {
@@ -192,7 +202,7 @@ export function pointInMultiPolygon(
 /**
  * A collection of polygons, such as a country with islands or a lake with islands.
  */
-export interface MultiPolygonLiteral<P extends PolygonPath = SolidPolygonPath> extends GeoObjectLiteral {
+export interface MultiPolygonLiteral<P extends PolygonPath = PolygonPath> extends GeoObjectLiteral {
 	type: "MultiPolygon"
 
 	/**
@@ -225,143 +235,30 @@ export function polygonToOSMFilter(input: unknown): string {
 	return `poly:'${filter}'`
 }
 
-/**
- * Tags returned by the Overpass API for a node.
- *
- * @category OSM
- */
-export const OSMNodeTag = {
-	HouseNumber: "addr:housenumber",
-	PostCode: "addr:postcode",
-	Street: "addr:street",
-	State: "addr:state",
-	City: "addr:city",
-	Website: "website",
-	Email: "email",
-	Phone: "phone",
-	Shop: "shop",
-	Brand: "brand",
-	Cuisine: "cuisine",
-	Name: "name",
-	Healthcare: "healthcare",
-	Office: "office",
-	Amenity: "amenity",
-} as const
-
-export type OSMNodeTag = (typeof OSMNodeTag)[keyof typeof OSMNodeTag]
-
-/**
- * OSM node tags that disqualify a node from being treated as residential — a node carrying one of these is
- * infrastructure or commercial, whatever else it claims.
- */
-export const ForbiddenResidentialOSMNodeTags: ReadonlySet<OSMNodeTag> = new Set<OSMNodeTag>([
-	OSMNodeTag.Shop,
-	OSMNodeTag.Brand,
-	OSMNodeTag.Cuisine,
-	OSMNodeTag.Office,
-	OSMNodeTag.Healthcare,
-])
-
-export type OSMNodeTagRecord = Record<OSMNodeTag, string | undefined>
-
-export interface OSMOverpassElement {
-	type: "node"
-	id: number
-	lat: number
-	lon: number
-	tags: OSMNodeTagRecord
-}
-
-export interface OSMOverpassResponseBody {
-	version: string
-	generator: string
-	osm3s: {
-		timestamp_osm_base: string
-		copyright: string
-	}
-	elements: OSMOverpassElement[]
-}
-
-/**
- * Given an OSM element, attempts to infer if the result is a residential address.
- */
-export function isResidentialElement(element: OSMOverpassElement): boolean {
-	for (const key in element.tags) {
-		if (ForbiddenResidentialOSMNodeTags.has(key as OSMNodeTag)) return false
-	}
-
-	if (element.tags[OSMNodeTag.Amenity] === "restaurant") return false
-
-	return true
-}
-
-const overpassClient = new APIClient({ displayName: "overpass", retry: true })
-
-export function fetchOSMElementViaOverpassAPI(input: PolygonLiteral): Promise<OSMOverpassElement[]> {
-	const filter = polygonToOSMFilter(input)
-
-	const url = new URL("http://overpass-api.de/api/interpreter")
-	url.searchParams.set("data", `[out:json];(node['addr:housenumber'](${filter}););out body;>;out skel qt;`)
-
-	// Overpass is a free shared endpoint that answers a throttle with 429 + `Retry-After`. `retry: true` is what
-	// reads that header, which is the server stating its own limit rather than this file guessing one. `ResourceError`
-	// now arrives from the client instead of being assembled here.
-	return overpassClient
-		.fetch<OSMOverpassResponseBody>({ url: url.toString() })
-		.then(pluckResponseData)
-		.then((body) => body.elements)
-		.catch((error) => {
-			throw ResourceError.wrap(error, "osm", "overpass-api", "fetch")
-		})
-}
-
 //#region Ring-list geometry — the parsed-GeoJSON shape
 
 /**
- * A GeoJSON position — `[lon, lat]`, possibly carrying extra dimensions this module ignores.
- *
- * Deliberately looser than {@linkcode Coordinates2D}: a gazetteer geometry arrives from `JSON.parse`, where nothing has
- * checked the arity, and a tuple type there would be a claim about data rather than a description of it.
+ * A geometry as it arrives from `JSON.parse`, or a typed literal. Nothing has checked the arity of a position and
+ * `type` is whatever the source wrote, so a reader narrows on `type` and casts `coordinates` — {@linkcode arealPolygons}
+ * is the one place that happens for the areal types.
  */
-export type GeojsonPosition = [number, number, ...number[]]
+export type ParsedGeometry = GeometryLiteral | { type: string; coordinates?: unknown }
 
 /**
- * A GeoJSON `Polygon` as a RING LIST — `[outerRing, hole1, hole2, …]`.
+ * A geometry's polygons in the `MultiPolygon` coordinate shape, whichever areal type it arrived as — `null` when the
+ * geometry is not areal (a Point or a LineString bounds no area).
  *
- * This coexists with {@linkcode PolygonLiteral} on purpose, and the difference is required. `PolygonLiteral` defaults to
- * {@linkcode SolidPolygonPath}, a one-element tuple that cannot express a hole; a real administrative boundary routinely
- * has them (a country with a lake, a locality with an enclave). Use this type for geometry read off a gazetteer, and
- * `PolygonLiteral` where the solid/nested distinction is one you are asserting rather than discovering.
+ * The one place a `Polygon` is lifted to `[rings]`; a caller that must refuse a non-areal geometry does so on the
+ * `null`, with its own message.
  */
-export interface GeojsonPolygon {
-	type: "Polygon"
-	coordinates: GeojsonPosition[][]
-}
+export function arealPolygons(geometry: ParsedGeometry | null | undefined): MultiPolygonRings | null {
+	if (!geometry) return null
 
-/**
- * A GeoJSON `MultiPolygon` — one ring list per polygon.
- */
-export interface GeojsonMultiPolygon {
-	type: "MultiPolygon"
-	coordinates: GeojsonPosition[][][]
-}
+	if (geometry.type === "Polygon") return [geometry.coordinates as PolygonRings]
 
-/**
- * Either areal geometry, or an open fallback for the types containment cannot answer (Point, LineString, …).
- */
-export type GeojsonGeometry = GeojsonPolygon | GeojsonMultiPolygon | { type: string; coordinates?: unknown }
+	if (geometry.type === "MultiPolygon") return geometry.coordinates as MultiPolygonRings
 
-/**
- * Even-odd containment over a polygon's ring list (`[outer, hole1, …]`).
- *
- * A named alias for {@linkcode pointInPolygon}: the "rings" spelling is what makes the ring-list argument obvious at a
- * call site that has just pulled `coordinates` off a parsed geometry.
- *
- * `scripts/eval/pip-containment.py` grades the same containment truth against its own ray cast and has to be matched BY
- * HAND if this one changes — it is the one copy no import can reach.
- */
-export function pointInPolygonRings(lon: number, lat: number, rings: readonly GeojsonPosition[][]): boolean {
-	return pointInPolygon(lon, lat, rings)
+	return null
 }
 
 /**
@@ -371,23 +268,20 @@ export function pointInPolygonRings(lon: number, lat: number, rings: readonly Ge
  * LineString cannot contain anything — and a caller must read that as "no polygon on record", the same as a missing
  * geometry, never as a rejection. Collapsing it to `false` is how a place with a point-only record gets excluded from a
  * containment pass instead of falling through to the approximate path.
+ *
+ * `scripts/eval/pip-containment.py` grades the same containment truth against its own ray cast and has to be matched BY
+ * HAND if this one changes — it is the one copy no import can reach.
  */
 export function geometryContains(
-	geometry: GeojsonGeometry | null | undefined,
+	geometry: ParsedGeometry | null | undefined,
 	lon: number,
 	lat: number
 ): boolean | null {
-	if (!geometry) return null
+	const polygons = arealPolygons(geometry)
 
-	if (geometry.type === "Polygon") {
-		return pointInPolygonRings(lon, lat, (geometry as GeojsonPolygon).coordinates)
-	}
+	if (!polygons) return null
 
-	if (geometry.type === "MultiPolygon") {
-		return (geometry as GeojsonMultiPolygon).coordinates.some((rings) => pointInPolygonRings(lon, lat, rings))
-	}
-
-	return null
+	return polygons.some((rings) => pointInPolygon(lon, lat, rings))
 }
 
 /**

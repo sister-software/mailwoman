@@ -10,6 +10,7 @@
  *   deliberate step (RELEASING.md). The coverage recipe lives in `gazetteer-pipeline/defaults.ts`.
  */
 
+import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { Box, Text } from "ink"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
@@ -49,7 +50,7 @@ const csv = (raw: string | undefined): string[] | undefined =>
 
 const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { artifactSizeMB, buildAdmin } = await import("#gazetteer-pipeline")
+		const { buildAdmin } = await import("#gazetteer-pipeline")
 
 		const result = await buildAdmin({
 			dataDir: options.data,
@@ -62,7 +63,7 @@ const GazetteerBuildAdmin: ParsedCommandComponent<Options> = ({ options }) => {
 		})
 
 		return [
-			`admin gazetteer: ${result.out} (${await artifactSizeMB(result.out)} MB, ${result.elapsedSeconds}s)`,
+			`admin gazetteer: ${result.out} (${await formatFileSize(result.out)}, ${result.elapsedSeconds}s)`,
 			`${result.placesIngested.toLocaleString()} WOF + ${result.overtureIngested.toLocaleString()} overture + ${result.geonamesIngested.toLocaleString()} geonames`,
 			result.verify ? `verify: PASS (${result.verify.checks.length} checks)` : "verify: SKIPPED (--skip-verify)",
 			"sealed 0444",

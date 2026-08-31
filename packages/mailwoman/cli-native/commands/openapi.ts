@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type CommandSpec, parseCommand, renderCommandHelp } from "../spec.ts"
+import { type CommandSpec, parseCommand, renderCommandHelp } from "#cli-native/spec"
 
 /**
  * Native OpenAPI command contract.

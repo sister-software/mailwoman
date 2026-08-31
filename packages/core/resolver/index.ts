@@ -17,13 +17,17 @@ export {
 	REFERENTIAL_POPULATION_DIVISOR,
 	REFERENTIAL_SATURATION_POPULATION,
 	referentialFromPopulation,
-} from "./referential.ts"
+} from "#resolver/referential"
 
-export type { ReferentiallyRankable } from "./referential.ts"
+export type { ReferentiallyRankable } from "#resolver/referential"
 
-export { countriesFromPostcodeFormat, countryFromPostcodeFormat, POSTCODE_FORMAT_COUNTRY } from "./postcode-format.ts"
+export {
+	countriesFromPostcodeFormat,
+	countryFromPostcodeFormat,
+	POSTCODE_FORMAT_COUNTRY,
+} from "#resolver/postcode-format"
 
-export { AuthoritativeMatchStatus, AuthoritativeResponseStatus } from "./authoritative-provider.ts"
+export { AuthoritativeMatchStatus, AuthoritativeResponseStatus } from "#resolver/authoritative-provider"
 
 export type {
 	AuthoritativeMatch,
@@ -31,14 +35,14 @@ export type {
 	AuthoritativeQuery,
 	AuthoritativeQueryComponent,
 	AuthoritativeResponse,
-} from "./authoritative-provider.ts"
+} from "#resolver/authoritative-provider"
 
 export {
 	createFixtureAuthoritativeProvider,
 	fixtureExactMatch,
 	type FixtureAuthoritativeProviderOptions,
 	type FixtureAuthoritativeRule,
-} from "./fixture-authoritative-provider.ts"
+} from "#resolver/fixture-authoritative-provider"
 
 export {
 	DEFAULT_PLACETYPE_MAP,
@@ -46,7 +50,7 @@ export {
 	expandPlacetypeFilter,
 	hardCountrySafelistFromCoverage,
 	isPlacetypeFallback,
-} from "./types.ts"
+} from "#resolver/types"
 
 export type {
 	AddressPointHit,
@@ -71,4 +75,4 @@ export type {
 	ResolverBackend,
 	StreetCentroidHit,
 	StreetCentroidLookup,
-} from "./types.ts"
+} from "#resolver/types"

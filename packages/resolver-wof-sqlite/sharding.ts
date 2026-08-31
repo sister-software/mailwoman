@@ -1,3 +1,5 @@
+import { basename } from "path-ts"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -22,8 +24,6 @@
  *   `place_search` + `place_bbox`) are fine because the bare-name MATCH resolves against FROM
  *   scope.
  */
-
-import { basename } from "@mailwoman/platform/path"
 
 /**
  * Derive a SQL-safe schema name from a WOF distribution filename. Used by `ATTACH DATABASE … AS <name>` so each shard

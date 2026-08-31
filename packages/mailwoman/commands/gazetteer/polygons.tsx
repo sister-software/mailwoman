@@ -27,6 +27,7 @@
  *   actually live (VT: 255/255 localadmin have real polygons, 0 reached the demo sidecar).
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { wofIDPathSegments, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
@@ -64,7 +65,7 @@ export const spec = {
 		tol: { type: "number", default: 0.004, description: "Simplification tolerance in degrees" },
 		repos: {
 			type: "string",
-			default: dataRootPath("wof", "repos", "whosonfirst-data"),
+			default: resolvePath(dataRootPath("wof", "repos", "whosonfirst-data")),
 			description: "WOF GeoJSON repository root",
 		},
 	},
@@ -290,9 +291,10 @@ const GazetteerPolygons: ParsedCommandComponent<Options> = ({ options }) => {
 
 		await swapDatabaseIntoPlace(tmpOut, out)
 
-		const mb = Math.round((bytes.b || 0) / 1024 / 1024)
-
-		return [`${out}: ${done} polygons`, `${missing} no-geometry, ${dropped} dropped, ~${mb} MB geom`]
+		return [
+			`${out}: ${done} polygons`,
+			`${missing} no-geometry, ${dropped} dropped, ~${ByteFormatter.formatIEC(bytes.b || 0)} geom`,
+		]
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

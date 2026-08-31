@@ -31,9 +31,10 @@
 import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { mailwomanDataRoot, sha256File } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { ParquetWriter } from "#parquet-wrapper/index"
 import type { CanonicalRow, LabeledRow } from "#types"
 import {
 	alignRow,
@@ -45,8 +46,6 @@ import {
 	SHARD_COMPRESSION,
 } from "#utils"
 import type { ParquetRow, ShardDescriptor, ShardManifest } from "#utils"
-
-import { ParquetWriter } from "../parquet-wrapper/index.ts"
 
 export interface ShardTranslitOptions {
 	jsonl: string

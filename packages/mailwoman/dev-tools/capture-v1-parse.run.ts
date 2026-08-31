@@ -12,8 +12,8 @@
 
 import { createNewlineWriter, JSONSpliterator, TextSpliterator } from "spliterator"
 
-import { createServeEngine } from "../api-engine.ts"
-import type { ParityCase } from "./parity-extract.ts"
+import { createServeEngine } from "#api-engine"
+import type { ParityCase } from "#dev-tools/parity-extract"
 
 const PARITY_PATH = "packages/mailwoman/test-fixtures/legacy-golden/parity-inputs.jsonl"
 const SYNTHETIC_PATH = "packages/mailwoman/test-fixtures/legacy-golden/synthetic-inputs.txt"

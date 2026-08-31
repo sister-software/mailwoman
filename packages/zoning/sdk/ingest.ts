@@ -41,24 +41,21 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { execFile, spawn } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
-import { assertRingsInsideExtent } from "@mailwoman/spatial"
+import { runFile, spawnProcess } from "@mailwoman/core/process"
+import { arealPolygons, assertRingsInsideExtent } from "@mailwoman/spatial"
 import { assertDatumTransformationAvailable as assertDatumTransformation } from "@mailwoman/spatial/projection-transform"
 import { wellKnownGeometryToGeoJSON } from "@mailwoman/spatial/sdk/well-known-text"
 import { CSVSpliterator } from "spliterator"
 
-import { resolveRingRoles, type MultiPolygonRings, type PolygonRings, type ResolvedRingRoles } from "../rings.ts"
-import { GZT_DECLARED_BBOX, GZT_SOURCE_EPSG } from "../vocabulary.ts"
-
-const execFileAsync = promisify(execFile)
+import { resolveRingRoles, type MultiPolygonRings, type ResolvedRingRoles } from "#rings"
+import { GZT_DECLARED_BBOX, GZT_SOURCE_EPSG } from "#vocabulary"
 
 /**
  * The ring types and the PROJ guard, both re-exported from `@mailwoman/spatial`: neither is zoning-specific, and a
  * second copy of the `projinfo` parse would be a second place for the ballpark check to stop refusing.
  */
 export { assessDatumTransformation, type DatumTransformationVerdict } from "@mailwoman/spatial/projection-transform"
-export type { MultiPolygonRings, PolygonRings } from "../rings.ts"
+export type { MultiPolygonRings, PolygonRings } from "#rings"
 
 /**
  * One zoning feature, reprojected to WGS84 with its hole roles resolved.
@@ -200,7 +197,7 @@ export const ZONING_SOURCE_FIELDS: ReadonlyArray<string> = [
 export async function readZoningSourceIdentity(options: ZoningIngestOptions): Promise<ZoningSourceIdentity> {
 	const expectEPSG = options.expectEPSG ?? GZT_SOURCE_EPSG
 
-	const { stdout } = await execFileAsync(
+	const { stdout } = await runFile(
 		"ogrinfo",
 		["-json", "-so", options.exportPath],
 		// The summary is small; the ceiling only guards against a pathological driver.
@@ -319,7 +316,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 		options.exportPath,
 	]
 
-	const child = spawn("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
+	const child = spawnProcess("ogr2ogr", args, { stdio: ["ignore", "pipe", "pipe"] })
 	const stderr: string[] = []
 
 	child.stderr.setEncoding("utf8")
@@ -427,10 +424,9 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
  */
 function normalizePolygons(wkt: string, label: string): MultiPolygonRings {
 	const geometry = wellKnownGeometryToGeoJSON<{ type: string; coordinates: unknown }>(wkt)
+	const polygons = arealPolygons(geometry)
 
-	if (geometry.type === "MultiPolygon") return geometry.coordinates as MultiPolygonRings
-
-	if (geometry.type === "Polygon") return [geometry.coordinates as PolygonRings]
+	if (polygons) return polygons
 
 	throw new Error(`zoning ingest: ${label} is a ${geometry.type}, expected Polygon or MultiPolygon`)
 }

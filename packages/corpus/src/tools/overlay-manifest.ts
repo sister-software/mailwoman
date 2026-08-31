@@ -26,7 +26,7 @@
 import { readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/utils"
-import { basename, dirname, join } from "@mailwoman/platform/path"
+import { basename, dirname, join } from "path-ts"
 
 interface ShardDescriptor {
 	split: string

@@ -1,6 +1,6 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 
-import { existsSync } from "@mailwoman/platform/fs"
+import { existsSync } from "node:fs"
 import { beforeAll, describe, it } from "vitest"
 
 describe("suite", () => {

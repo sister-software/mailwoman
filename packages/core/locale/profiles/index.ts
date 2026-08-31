@@ -4,6 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./en-us.ts"
-export * from "./fr-fr.ts"
-export * from "./ja-jp.ts"
+export * from "#locale/profiles/en-us"
+export * from "#locale/profiles/fr-fr"
+export * from "#locale/profiles/ja-jp"

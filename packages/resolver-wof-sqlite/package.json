@@ -45,6 +45,11 @@
 			"node": "./sqlite-utils.ts",
 			"default": "./out/sqlite-utils.js",
 			"types": "./out/sqlite-utils.d.ts"
+		},
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {
@@ -353,14 +358,13 @@
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/resolver": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"h3-js": "^4.5.0",
 		"kysely": "^0.29.4",
-		"path-ts": "^2.1.0",
-		"spliterator": "^6.3.1",
+		"path-ts": "^2.3.0",
+		"spliterator": "^6.4.1",
 		"type-fest": "^5.8.0"
 	}
 }

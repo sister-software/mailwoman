@@ -56,13 +56,13 @@ import { US_STATE_ABBREVIATIONS, US_STATE_NAMES } from "@mailwoman/codex/us"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { dataRootPath, repoRootPathBuilder, resourceDictionaryPath } from "@mailwoman/core/utils"
-import { dirname, join } from "@mailwoman/platform/path"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { dirname, join, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "./fst.ts"
+import { computeSurfaceCountryCounts, CURATION_LANGUAGES, loadDegenerateSurfaces } from "#gazetteer-pipeline/fst"
 
 /**
  * Letters at or below which a token reads as an abbreviation rather than a word.
@@ -257,7 +257,11 @@ let personNameSurfacesMemo: Set<string> | undefined
 
 async function scanPersonNameSurfaces(): Promise<Set<string>> {
 	const dictionariesDir = resourceDictionaryPath("libpostal")
-	const files = [join(dictionariesDir, "all", "given_names.txt"), join(dictionariesDir, "all", "surnames.txt")]
+
+	const files: string[] = [
+		join(dictionariesDir, "all", "given_names.txt"),
+		join(dictionariesDir, "all", "surnames.txt"),
+	]
 
 	for (const lang of CURATION_LANGUAGES) {
 		files.push(join(dictionariesDir, lang, "personal_titles.txt"))
@@ -344,7 +348,7 @@ export async function buildLocalitySurfaceLexicon(opts: BuildLocalitySurfaceLexi
 	const countries = opts.countries ?? ["US", "FR"]
 	const placetypes = opts.placetypes ?? ["locality", "localadmin", "neighbourhood"]
 	const dbPath = opts.dbPath ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const output = opts.output ?? dataRootPath("gazetteer", "locality-surface-lexicon-v6.json")
+	const output = resolvePath(opts.output ?? dataRootPath("gazetteer", "locality-surface-lexicon-v6.json"))
 	const progress = opts.onProgress ?? (() => {})
 
 	progress("loading curation + ambiguity + person-name inputs…")

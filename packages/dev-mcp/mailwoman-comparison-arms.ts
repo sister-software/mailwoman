@@ -1,17 +1,17 @@
 import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { toGauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 
-import { checkConfounds, type ConfoundReading } from "./confound.ts"
+import { checkConfounds, type ConfoundReading } from "#confound"
 import {
 	EFFECTIVE_KEY_FOR,
 	engineID,
 	resolveConfig,
 	type EngineConfig,
 	type EngineRegistryLike,
-} from "./engine-registry.ts"
-import type { ResolvedInput, ResolvedInputSet } from "./input-sets.ts"
-import { buildRoutedMailwomanArm } from "./routed-mailwoman-arm.ts"
-import { inputSetProvenance, provenanceFor } from "./tool-kit.ts"
+} from "#engine-registry"
+import type { ResolvedInput, ResolvedInputSet } from "#input-sets"
+import { buildRoutedMailwomanArm } from "#routed-mailwoman-arm"
+import { inputSetProvenance, provenanceFor } from "#tool-kit"
 
 export interface PreparedMailwomanArms extends Disposable {
 	geocodeA(input: ResolvedInput): Promise<GauntletResult>

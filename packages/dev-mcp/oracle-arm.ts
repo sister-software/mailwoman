@@ -29,7 +29,7 @@ import {
 	type OracleGeocodeResult,
 } from "@mailwoman/geocode-oracle"
 
-import type { ExternalAnswer } from "./external-arm.ts"
+import type { ExternalAnswer } from "#external-arm"
 
 /**
  * Reference geocoders this arm can address.

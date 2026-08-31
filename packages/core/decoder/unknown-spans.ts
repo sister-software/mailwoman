@@ -12,7 +12,7 @@
  *   It mutates nothing and changes no serializer — wiring `unknown` into the JSON/XML/tuple contracts + the
  *   demo is the focused follow-up (#493). Byte-stable by construction, so it ships ahead of that work.
  */
-import type { AddressNode, AddressTree } from "./types.ts"
+import type { AddressNode, AddressTree } from "#decoder/types"
 
 export interface UnknownSpan {
 	kind: "unknown"

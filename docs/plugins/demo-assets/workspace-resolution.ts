@@ -6,7 +6,7 @@
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { createRequire } from "@mailwoman/platform/module"
+import { createRequire } from "@mailwoman/core/module/resolvers"
 import { dirname, join } from "path-ts"
 
 const requireFromPlugin = createRequire(import.meta.url)

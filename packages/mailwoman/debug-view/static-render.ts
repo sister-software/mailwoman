@@ -15,7 +15,7 @@
  *   that is the one sanctioned adjustment (see the Task 11 brief).
  */
 
-import { Duplex } from "@mailwoman/platform/stream"
+import { Duplex } from "@mailwoman/core/fs/streams"
 import { render } from "ink"
 import type React from "react"
 

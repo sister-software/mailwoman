@@ -6,8 +6,8 @@
  *   GeoJSON Geometry Entry Point
  */
 
-export * from "./collection.ts"
-export * from "./line-string.ts"
-export * from "./point.ts"
-export * from "./polygon.ts"
-export * from "./ring-blob.ts"
+export * from "#geometries/collection"
+export * from "#geometries/line-string"
+export * from "#geometries/point"
+export * from "#geometries/polygon"
+export * from "#geometries/ring-blob"

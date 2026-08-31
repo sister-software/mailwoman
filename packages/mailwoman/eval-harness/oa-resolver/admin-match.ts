@@ -16,7 +16,7 @@ import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { Resolved } from "./tree-hits.ts"
+import type { Resolved } from "#eval-harness/oa-resolver/tree-hits"
 
 /**
  * Shortest token distinctive enough to carry matching weight; shorter ones are articles and directionals.

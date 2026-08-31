@@ -18,9 +18,9 @@
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import { createGeocodeCommandOptions } from "mailwoman/geocode-command-options"
 import { createGeocodeSession } from "mailwoman/geocode-session"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const REAL_CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
@@ -43,7 +43,7 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 			// registry derives from, so this pin cannot drift from the shipped configuration.
 			createGeocodeCommandOptions({
 				locale: "en-US",
-				dataRoot: BOGUS_ROOT.path,
+				dataRoot: BOGUS_ROOT.path.toString(),
 				// A real candidate.db keeps the gazetteer check (resolved first, by contract) from masking the weights
 				// step — the whole point is to reach weights resolution with the bogus root still in force.
 				candidateDB: REAL_CANDIDATE_DB,

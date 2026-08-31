@@ -22,11 +22,12 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { repoRootPath } from "@mailwoman/core/utils"
+import { resolvePath } from "path-ts"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
-const { values: rawValues } = parseArgs({
+const { values: rawValues } = parseArguments({
 	options: { "warn-only": { type: "boolean" } },
 	strict: false,
 	allowPositionals: true,
@@ -47,9 +48,9 @@ const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.
  * while local runs silently resolved via repo node_modules, which is how the 2026-07-2x dailies were red without anyone
  * seeing a version comparison at all).
  */
-const REPO_ROOT = resolve(import.meta.dirname, "..")
-const RELEASES_MDX_PATH = resolve(REPO_ROOT, "docs", "records", "site-2026-08", "releases.mdx")
-const MODEL_CARD_PATH = resolve(REPO_ROOT, "packages", "neural-weights-en-us", "model-card.json")
+const REPO_ROOT = repoRootPath()
+const RELEASES_MDX_PATH = resolvePath(REPO_ROOT, "docs", "records", "site-2026-08", "releases.mdx")
+const MODEL_CARD_PATH = resolvePath(REPO_ROOT, "packages", "neural-weights-en-us", "model-card.json")
 
 interface ParityCheck {
 	name: string

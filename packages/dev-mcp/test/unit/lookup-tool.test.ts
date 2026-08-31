@@ -44,7 +44,7 @@ describe("runLookup", () => {
 		const result = await runLookup(noRegistry, {
 			source: "poi",
 			queries: ["Eiffel Tower", "Sultan Qaboos Grand Mosque"],
-			config: { data_root: emptyRoot.path },
+			config: { data_root: String(emptyRoot.path) },
 		})
 
 		expect(result.rows).toEqual([])

@@ -11,7 +11,7 @@
  *   Only type imports and arithmetic live here: anything with a `node:` import stays out.
  */
 
-import type { CandidateTable } from "./candidate-schema.ts"
+import type { CandidateTable } from "#candidate-schema"
 
 /**
  * The row shape the re-rank needs. `is_primary` is optional: a reader over an artifact vintage that predates the column

@@ -16,13 +16,13 @@
 
 import type { GeocodeSession } from "mailwoman/geocode-session"
 
-import type { EffectiveConfig, Engine, EngineRegistryLike } from "../engine-registry.ts"
-import type { TreeFingerprint } from "../tree-fingerprint.ts"
+import type { EffectiveConfig, Engine, EngineRegistryLike } from "#engine-registry"
+import type { TreeFingerprint } from "#tree-fingerprint"
 
 /**
  * A fingerprint that never changes, so a test asserting on staleness controls it rather than the clock.
  */
-export const STUB_FINGERPRINT: TreeFingerprint = {
+const STUB_FINGERPRINT: TreeFingerprint = {
 	digest: "tree0",
 	gitHead: "head0",
 	dirtyFiles: [],

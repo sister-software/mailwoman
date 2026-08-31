@@ -35,17 +35,17 @@
 import {
 	expandH3Cell,
 	interiorPointOfEncodedRings,
-	pointInPolygonRings,
+	pointInPolygon,
 	segmentDistanceMetres,
 	type H3CellShort,
 } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng } from "h3-js"
 
-import { FloodReadingKind, FloodZoneLookup, type FloodZoneReading } from "../index.ts"
-import type { FloodDatabase } from "../schema.ts"
-import { EA_FLOOD_LAYER } from "../vocabulary.ts"
-import { EA_SPATIAL_BASE_URL, type EAFloodClient } from "./client.ts"
+import { FloodReadingKind, FloodZoneLookup, type FloodZoneReading } from "#index"
+import type { FloodDatabase } from "#schema"
+import { EA_SPATIAL_BASE_URL, type EAFloodClient } from "#sdk/client"
+import { EA_FLOOD_LAYER } from "#vocabulary"
 
 /**
  * One point, both verdicts, and whether they agree.
@@ -284,7 +284,7 @@ async function readServiceZone(
 				}
 			}
 
-			if (zone === null && pointInPolygonRings(longitude, latitude, rings as [number, number][][])) {
+			if (zone === null && pointInPolygon(longitude, latitude, rings)) {
 				zone = feature.properties?.flood_zone ?? null
 			}
 		}

@@ -10,12 +10,12 @@
  *   shard (a Derived Database), never on this code. See `osm/README.md` for the licensing boundary.
  */
 
-export * from "./fetch.ts"
-export * from "./address-point-schema.ts"
-export * from "./extract.ts"
-export * from "./extract-boundary.ts"
-export * from "./extract-poi.ts"
-export * from "./extract-subvenue.ts"
-export * from "./street-locale.ts"
-export * from "./shard-provider.ts"
-export * from "./street-recovery.ts"
+export * from "#sdk/fetch"
+export * from "#sdk/address-point-schema"
+export * from "#sdk/extract"
+export * from "#sdk/extract-boundary"
+export * from "#sdk/extract-poi"
+export * from "#sdk/extract-subvenue"
+export * from "#sdk/street-locale"
+export * from "#sdk/shard-provider"
+export * from "#sdk/street-recovery"

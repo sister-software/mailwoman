@@ -10,7 +10,7 @@
  *   mid-refill, idle-then-burst, and a 60-call run at 50/s — under an injected clock.
  */
 
-import { type ClockLike, systemClock } from "./clock.ts"
+import { type ClockLike, systemClock } from "#api/clock"
 
 /**
  * A strict-interval request pacer: grants are spaced AT LEAST `intervalMs` apart, with NO burst allowance beyond the

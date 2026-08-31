@@ -33,7 +33,7 @@ interface Options {
 
 const EvalPresetCompare: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { presetCompare } = await import("../../eval-harness/preset-compare.ts")
+		const { presetCompare } = await import("#eval-harness/preset-compare")
 
 		return presetCompare(options)
 	})

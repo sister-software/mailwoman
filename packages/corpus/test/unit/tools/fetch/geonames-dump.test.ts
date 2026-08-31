@@ -8,14 +8,15 @@
  *   paths reading as coverage until the capitals build found them capital-less).
  */
 
+import { createServer, type Server } from "node:http"
+import type { AddressInfo } from "node:net"
+
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { fetchGeonamesDumps, looksLikeGazetteerDump, parseCountryInfo } from "@mailwoman/corpus/tools"
-import { createServer, type Server } from "@mailwoman/platform/http"
-import type { AddressInfo } from "@mailwoman/platform/net"
-import { join } from "@mailwoman/platform/path"
 import ADMZip from "adm-zip"
+import { join, type PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let server: Server
@@ -96,7 +97,7 @@ interface DumpManifest {
 	[key: string]: unknown
 }
 
-async function readManifest(outRoot: string): Promise<DumpManifest> {
+async function readManifest(outRoot: PathBuilderLike): Promise<DumpManifest> {
 	return await readLocalJSONFile(join(outRoot, "MANIFEST.json"))
 }
 

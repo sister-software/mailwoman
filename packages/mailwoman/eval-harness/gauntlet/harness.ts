@@ -13,28 +13,28 @@ import { pathExists, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/
 import { tryParsingJSON } from "@mailwoman/core/objects"
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { md5Hex } from "@mailwoman/core/utils/hash"
 import { createKindClassifier } from "@mailwoman/kind-classifier"
 import { createScorer, NeuralAddressClassifier, type NeuralParseTrace } from "@mailwoman/neural"
 import type { FSTMatcherLike } from "@mailwoman/neural/fst-prior"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { readDeclaredArtifactFile } from "@mailwoman/neural/weights-channels"
-import { createHash } from "@mailwoman/platform/crypto"
-import { resolve } from "@mailwoman/platform/path"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
-import type { AdminCoherenceReport } from "../../admin-coherence.ts"
-import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "../../geocode-core.ts"
-import type { GeocodeResult } from "../../geocode-result.ts"
-import { ShardProvider } from "../../geocode-shards.ts"
-import { poiTaxonomyLookup } from "../../poi-intent.ts"
+import type { AdminCoherenceReport } from "#admin-coherence"
+import { OVERLAY_LOCALE_BY_COUNTRY } from "#eval-harness/gauntlet/routing"
+import { geocodeAddress, geocodeParseInputs, type GeocodeDeps } from "#geocode-core"
+import type { GeocodeResult } from "#geocode-result"
+import { ShardProvider } from "#geocode-shards"
+import { poiTaxonomyLookup } from "#poi-intent"
 import {
 	createResolverBackend,
 	loadCapitalIndex,
 	mailwomanDataRoot,
 	resolveCandidateDBPath,
 	wofShardPaths,
-} from "../../resolver-backend.ts"
-import { OVERLAY_LOCALE_BY_COUNTRY } from "./routing.ts"
+} from "#resolver-backend"
 
 export interface GauntletDeps extends Disposable {
 	geocode(input: string, opts?: GauntletGeocodeOpts): Promise<GeocodeResult>
@@ -227,7 +227,7 @@ export interface GauntletGeocodeOpts {
  * the artifact the run will actually grade, or it checks nothing the run depends on.
  */
 async function assertShippedModelMatchesCard(materializedMd5: string): Promise<void> {
-	const cardPath = resolve("packages/neural-weights-en-us/model-card.json")
+	const cardPath = resolvePath("packages/neural-weights-en-us/model-card.json")
 
 	if (!(await pathExists(cardPath))) return
 
@@ -276,11 +276,11 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
  * Exported for `anchor-presence.test.ts`, which poses both postures against fixture packages — the real ones cannot
  * express "declared and missing" without mutating the workspace.
  */
-export async function assertDeclaredAnchorBins(locales: readonly string[], cacheRoot?: string): Promise<void> {
+export async function assertDeclaredAnchorBins(locales: readonly string[], cacheRoot?: PathBuilderLike): Promise<void> {
 	const missing: string[] = []
 
 	for (const locale of locales) {
-		let packageDir: string | undefined
+		let packageDir: PathBuilder | undefined
 
 		try {
 			packageDir = (await resolveWeights({ locale, ...(cacheRoot ? { cacheRoot } : {}) })).packageDir
@@ -329,7 +329,7 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// #718-safe path, identical to `eval parity --weights-cache`. A bare `modelPath` swap feeds NO soft channels (the
 	// zero-fill trap) AND keeps the shipped tokenizer, so a multisplice candidate would score byte-identical to prod.
 	const cacheModel = opts.weightsCacheRoot
-		? resolve(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
+		? resolvePath(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
 		: undefined
 
 	// Transparency: stamp the model under test so a stale dev symlink (the d6812bc7 trap — the default
@@ -343,12 +343,10 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 	// never verified. That is #1024 exactly, re-created by a path literal: a guard that fails OPEN when its
 	// assumption stops holding. `resolveWeights` answers with the file `loadFromWeights` will actually open.
 	const resolvedModel = opts.modelPath ? undefined : (await resolveWeights({ locale: "en-us" })).modelPath
-	const effModel = cacheModel ?? (opts.modelPath ? resolve(opts.modelPath) : resolvedModel!)
+	const effModel = cacheModel ?? (opts.modelPath ? resolvePath(opts.modelPath) : resolvedModel!)
 
 	if (await pathExists(effModel)) {
-		const md5 = createHash("md5")
-			.update(await readLocalBuffer(effModel))
-			.digest("hex")
+		const md5 = md5Hex(await readLocalBuffer(effModel))
 
 		console.error(`[gauntlet] model under test: ${effModel.split("/").slice(-2).join("/")} (md5 ${md5.slice(0, 8)})`)
 
@@ -370,13 +368,15 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 					// Same rule as the stamp above: when the caller overrides only the TOKENIZER, the model still comes
 					// from the resolver rather than a package literal. This branch would fail loudly rather than
 					// silently, but a second spelling of the same assumption is a second thing to move.
-					modelPath: opts.modelPath ? resolve(opts.modelPath) : (await resolveWeights({ locale: "en-us" })).modelPath,
-					tokenizerPath: resolve(opts.tokenizerPath),
-					modelCardPath: resolve(opts.modelCardPath ?? "packages/neural-weights-en-us/model-card.json"),
+					modelPath: opts.modelPath
+						? resolvePath(opts.modelPath)
+						: (await resolveWeights({ locale: "en-us" })).modelPath,
+					tokenizerPath: resolvePath(opts.tokenizerPath),
+					modelCardPath: resolvePath(opts.modelCardPath ?? "packages/neural-weights-en-us/model-card.json"),
 					locale: "en-us",
 				})
 			: opts.modelPath
-				? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolve(opts.modelPath) })
+				? await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", modelPath: resolvePath(opts.modelPath) })
 				: await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 	// Per-country overlay classifiers (2026-08-01): a case's country selects the weights OVERLAY so

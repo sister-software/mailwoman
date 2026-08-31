@@ -27,7 +27,7 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { join } from "@mailwoman/platform/path"
+import { join, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 /**
@@ -41,7 +41,7 @@ export type TabularRow = ReadonlyArray<string>
  * `enableQuoteHandling` is what makes the embedded newlines above survive; `header: false` is what keeps the first
  * record from being eaten, since these files carry none.
  */
-async function readPipeDelimited(path: string): Promise<TabularRow[]> {
+async function readPipeDelimited(path: PathBuilderLike): Promise<TabularRow[]> {
 	const rows: TabularRow[] = []
 
 	for (const row of CSVSpliterator.from(await readLocalBuffer(path), {
@@ -100,7 +100,7 @@ const MSTABCOL_WIDTH = 14
  *
  * @throws {Error} When either bootstrap file is missing or is not the declared width.
  */
-export async function readTabularDictionary(tabularDirectory: string): Promise<TabularDictionary> {
+export async function readTabularDictionary(tabularDirectory: PathBuilderLike): Promise<TabularDictionary> {
 	const mstab = await readPipeDelimited(join(tabularDirectory, "mstab.txt"))
 	const mstabcol = await readPipeDelimited(join(tabularDirectory, "mstabcol.txt"))
 
@@ -167,7 +167,7 @@ export interface TabularTable {
  *   dictionary, or when a record is narrower than the position a requested column sits at.
  */
 export async function readTable(
-	tabularDirectory: string,
+	tabularDirectory: PathBuilderLike,
 	dictionary: TabularDictionary,
 	table: string,
 	wanted: ReadonlyArray<string>
@@ -242,7 +242,7 @@ const MSDOMDET_WIDTH = 5
  *
  * @throws {Error} When the file is not the declared width.
  */
-export async function readDeclaredDomains(tabularDirectory: string): Promise<DomainMember[]> {
+export async function readDeclaredDomains(tabularDirectory: PathBuilderLike): Promise<DomainMember[]> {
 	const rows = await readPipeDelimited(join(tabularDirectory, "msdomdet.txt"))
 
 	assertWidth(rows, MSDOMDET_WIDTH, "msdomdet.txt")

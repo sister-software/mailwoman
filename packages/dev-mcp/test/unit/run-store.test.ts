@@ -9,7 +9,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { getRun, listRuns, pruneRuns, putRun, RETENTION_DAYS } from "@mailwoman/dev-mcp/run-store"
 import type { StoredRun } from "@mailwoman/dev-mcp/run-store"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -17,7 +17,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 async function store(): Promise<string> {
-	const dir = fixtures.use(await temporaryDirectory("mwdev-runs-")).path
+	const dir = String(fixtures.use(await temporaryDirectory("mwdev-runs-")).path)
 
 	return dir
 }

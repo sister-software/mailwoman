@@ -23,9 +23,9 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { repoRootPath } from "@mailwoman/core/utils"
-import * as path from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { join, resolvePath } from "path-ts"
 import { $, type ProcessPromise } from "zx"
 
 import { packWorkspaceForPublish } from "./pack-workspace.ts"
@@ -36,7 +36,7 @@ import { verifyTarball } from "./verify-tarball.ts"
  */
 const AUTH_URL_PATTERN = /https:\/\/www\.npmjs\.com\/auth\/cli\/[\w-]+/
 
-const { values: flags, positionals: dirs } = parseArgs({
+const { values: flags, positionals: dirs } = parseArguments({
 	options: {
 		version: { type: "string" }, // optional semver bump
 		file: { type: "string", default: "publish.yml" }, // workflow that runs npm publish (case-sensitive, .yml)
@@ -138,7 +138,7 @@ interface Pkg {
 }
 
 async function readPkg(dir: string): Promise<Pkg> {
-	return await readLocalJSONFile<Pkg>(path.join(dir, "package.json"))
+	return await readLocalJSONFile<Pkg>(join(dir, "package.json"))
 }
 
 function parseRepo(repository: Pkg["repository"]): string | undefined {
@@ -274,7 +274,7 @@ async function main(): Promise<void> {
 	await assertWorkflowExists(flags.file!)
 
 	for (const dir of dirs) {
-		const d = path.resolve(dir)
+		const d = resolvePath(dir)
 
 		console.log(`\n=== ${dir} ===`)
 

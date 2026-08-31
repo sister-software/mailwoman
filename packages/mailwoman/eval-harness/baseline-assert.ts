@@ -48,8 +48,8 @@
  *   a deviation quiet. That's the silent-gate-drift failure wearing a different hat.
  */
 
-import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { fileURLToPath } from "@mailwoman/platform/url"
+import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 
 /**
  * A registered baseline row, as stored in `baselines.json`.
@@ -160,21 +160,16 @@ export interface BaselineVerdict {
 let cachedFile: BaselineFile | undefined
 
 /**
- * `new URL`-relative for the source tree, with a compiled-tree fallback — tsc does not emit `baselines.json` into
- * `out/`, so `mailwoman/out/eval-harness/` reads the source-tree copy at `mailwoman/eval-harness/baselines.json`. Same
- * bridge as `resolveGateSpecPath`.
+ * Anchored at the package root — tsc does not emit `baselines.json` into `out/`, so the file is named from where the
+ * package starts rather than from where this module runs.
  */
-async function resolveBaselineFilePath(): Promise<string> {
-	const sibling = new URL("./baselines.json", import.meta.url)
-
-	if (await pathExists(sibling)) return fileURLToPath(sibling)
-
-	return fileURLToPath(new URL("../../eval-harness/baselines.json", import.meta.url))
+function resolveBaselineFilePath(): string {
+	return resolvePackagePath("mailwoman", "eval-harness", "baselines.json")
 }
 
 async function loadBaselineFile(): Promise<BaselineFile> {
 	if (!cachedFile) {
-		cachedFile = await readLocalJSONFile<BaselineFile>(await resolveBaselineFilePath())
+		cachedFile = await readLocalJSONFile<BaselineFile>(resolveBaselineFilePath())
 	}
 
 	return cachedFile

@@ -24,13 +24,13 @@
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
-import { parseArgs } from "@mailwoman/platform/util"
 import { normalizeTokens } from "@mailwoman/resolver-wof-sqlite/fst-matcher"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
 
-const { values, positionals } = parseArgs({
+const { values, positionals } = parseArguments({
 	allowPositionals: true,
 	options: {
 		locale: { type: "string", default: "en-us" },

@@ -7,10 +7,10 @@
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { CandidateDatabase } from "../candidate-schema.ts"
-import type { WOFDatabase } from "../schema.ts"
-import { normalizeLocalityForKey } from "../street-normalize.ts"
-import type { PlaceAttrs, StageRow } from "./place-attrs.ts"
+import type { CandidateDatabase } from "#candidate-schema"
+import type { PlaceAttrs, StageRow } from "#candidate/place-attrs"
+import type { WOFDatabase } from "#schema"
+import { normalizeLocalityForKey } from "#street-normalize"
 
 /**
  * Fold ONE shard (`spr` rows at `shardPlacetype` carrying real coordinates) in, then pass 4b: the alias names hanging

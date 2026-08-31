@@ -7,5 +7,5 @@
  *   `./fetch.ts` for the ODbL obligation, the build-local tier, and why the query is a bbox.
  */
 
-export * from "./fetch.ts"
-export * from "./parse.ts"
+export * from "#gazetteer-pipeline/postcode/ni-osm/fetch"
+export * from "#gazetteer-pipeline/postcode/ni-osm/parse"

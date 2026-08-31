@@ -25,14 +25,14 @@
 import { candidateSystemsForPostcode } from "@mailwoman/codex"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { ResolverBackend } from "@mailwoman/core/resolver"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, wofShardPaths } from "@mailwoman/core/utils"
-import { parseArgs } from "@mailwoman/platform/util"
 import { findPostcodeCountryScope } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup, WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { conventionCandidateDBPath } from "../resolver-backend.ts"
+import { conventionCandidateDBPath } from "#resolver-backend"
 
 /**
  * One real pair per codex system — a postcode that exists and the locality it belongs to. The pass needs BOTH halves,
@@ -50,7 +50,7 @@ const PROBES: ReadonlyArray<{ system: string; country: string; postcode: string;
 	{ system: "nz", country: "NZ", postcode: "6011", locality: "Wellington" },
 ]
 
-const { positionals } = parseArgs({
+const { positionals } = parseArguments({
 	options: {},
 	allowPositionals: true,
 })

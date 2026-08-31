@@ -14,18 +14,18 @@
 
 import { resolvePath } from "path-ts"
 
-import type { EngineConfig, EngineRegistryLike } from "./engine-registry.ts"
-import { resolveInputSet, type InputSetRef } from "./input-sets.ts"
-import { describeObservedRate, type Selection } from "./power.ts"
+import type { EngineConfig, EngineRegistryLike } from "#engine-registry"
+import { resolveInputSet, type InputSetRef } from "#input-sets"
+import { describeObservedRate, type Selection } from "#power"
+import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "#reliability"
 import {
 	coarsePlacerReliabilitySample,
 	ComponentAggregate,
 	decodeReliabilitySample,
 	UnassertedPolicy,
 	type SurfaceSample,
-} from "./reliability-surfaces.ts"
-import { curveByStratum, errorClasses, reliabilityCurve, thresholdTable } from "./reliability.ts"
-import { provenanceFor } from "./tool-kit.ts"
+} from "#reliability-surfaces"
+import { provenanceFor } from "#tool-kit"
 
 /**
  * The confidence surfaces this tool can grade. Each is a distinct head over distinct features — they share a

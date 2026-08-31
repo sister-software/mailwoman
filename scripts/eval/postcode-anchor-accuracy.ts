@@ -18,10 +18,11 @@
  *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
  */
 
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { dataRootPath, percentile } from "@mailwoman/core/utils"
-import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
 import { haversineKm } from "@mailwoman/spatial"
+import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 /**
@@ -38,10 +39,14 @@ interface Args {
 function parseArgs(): Args {
 	let evalPath = "data/eval/external/openaddresses-de-sample.jsonl"
 	let country = "DE"
-	const shards = [dataRootPath("wof", "postalcode-us.db"), dataRootPath("wof", "postalcode-intl.db")]
+
+	const shards: string[] = [
+		resolvePath(dataRootPath("wof", "postalcode-us.db")),
+		resolvePath(dataRootPath("wof", "postalcode-intl.db")),
+	]
 
 	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
-	const { values } = parseNodeArgs({
+	const { values } = parseArguments({
 		options: { country: { type: "string" }, eval: { type: "string" }, shard: { type: "string", multiple: true } },
 		strict: false,
 		allowPositionals: true,

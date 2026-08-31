@@ -8,12 +8,12 @@
 import { expandPlacetypeFilter } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
 
-import type { LocalityMatcher } from "./admin-match.ts"
-import { regionMatches } from "./admin-match.ts"
-import type { ArmOutcome } from "./aggregate.ts"
-import type { OARow } from "./rows.ts"
-import type { Resolved } from "./tree-hits.ts"
-import { mostSpecific } from "./tree-hits.ts"
+import type { LocalityMatcher } from "#eval-harness/oa-resolver/admin-match"
+import { regionMatches } from "#eval-harness/oa-resolver/admin-match"
+import type { ArmOutcome } from "#eval-harness/oa-resolver/aggregate"
+import type { OARow } from "#eval-harness/oa-resolver/rows"
+import type { Resolved } from "#eval-harness/oa-resolver/tree-hits"
+import { mostSpecific } from "#eval-harness/oa-resolver/tree-hits"
 
 /**
  * One row's outcome, plus the raw resolved names the `--errors-json` dump needs to bucket a miss offline: a

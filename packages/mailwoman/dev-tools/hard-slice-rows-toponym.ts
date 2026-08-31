@@ -17,7 +17,7 @@
  *   The shape-driven half lives in `hard-slice-rows.ts`; both are concatenated by the builder.
  */
 
-import { ADMIN_TOL, CITY_TOL, type Curated } from "./hard-slice-rows.ts"
+import { ADMIN_TOL, CITY_TOL, type Curated } from "#dev-tools/hard-slice-rows"
 
 /**
  * See the file header — the four toponym-ambiguity classes, grouped by what disambiguates them.

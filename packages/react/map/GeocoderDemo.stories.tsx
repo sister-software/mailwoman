@@ -14,9 +14,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import { useMemo, useState } from "react"
 
+import type { DemoPanels } from "#map/types"
+
 import { makeDemoRuntime } from "../test/mocks.tsx"
 import { GeocoderDemo } from "./GeocoderDemo.tsx"
-import type { DemoPanels } from "./types.ts"
 
 const PRESETS = [
 	{ label: "White House", value: "1600 Pennsylvania Ave NW, Washington, DC 20500" },

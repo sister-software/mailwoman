@@ -25,17 +25,17 @@ export {
 	ADDRESS_SYSTEM_CONVENTIONS,
 	conventionsForSystem,
 	type AddressSystemConventions,
-} from "./address-system-conventions.ts"
+} from "#address-system-conventions"
 
-export * from "./normalize.ts"
-export * as au from "./au/index.ts"
-export * as ca from "./ca/index.ts"
-export * as de from "./de/index.ts"
-export * as fr from "./fr/index.ts"
-export * as gb from "./gb/index.ts"
-export * as jp from "./jp/index.ts"
-export * as levels from "./level-semantics.ts"
-export * as nz from "./nz/index.ts"
+export * from "#normalize"
+export * as au from "#au/index"
+export * as ca from "#ca/index"
+export * as de from "#de/index"
+export * as fr from "#fr/index"
+export * as gb from "#gb/index"
+export * as jp from "#jp/index"
+export * as levels from "#level-semantics"
+export * as nz from "#nz/index"
 
 export {
 	AREA_POSTCODE_FINER_THAN_LOCALITY,
@@ -44,6 +44,6 @@ export {
 	isUnitGradePostcodeHit,
 	type SystemCode,
 	UNIT_GRADE_POSTCODE,
-} from "./postcode-systems.ts"
+} from "#postcode-systems"
 
-export * as us from "./us/index.ts"
+export * as us from "#us/index"

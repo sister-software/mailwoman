@@ -32,11 +32,6 @@
 			"default": "./out/utils/index.js",
 			"types": "./out/utils/index.d.ts"
 		},
-		"#objects": {
-			"node": "./objects.ts",
-			"default": "./out/objects.js",
-			"types": "./out/objects.d.ts"
-		},
 		"#tokenization": {
 			"node": "./tokenization/index.ts",
 			"default": "./out/tokenization/index.js",
@@ -51,11 +46,6 @@
 			"node": "./logging/index.ts",
 			"default": "./out/logging/index.js",
 			"types": "./out/logging/index.d.ts"
-		},
-		"#fs/*": {
-			"node": "./fs/*.ts",
-			"default": "./out/fs/*.js",
-			"types": "./out/fs/*.d.ts"
 		},
 		"#resources": {
 			"node": "./resources/index.ts",
@@ -77,15 +67,10 @@
 			"default": "./out/scripting/utils/index.js",
 			"types": "./out/scripting/utils/index.d.ts"
 		},
-		"#errors": {
-			"node": "./errors/index.ts",
-			"default": "./out/errors/index.js",
-			"types": "./out/errors/index.d.ts"
-		},
-		"#scripting/command": {
-			"node": "./scripting/command.ts",
-			"default": "./out/scripting/command.js",
-			"types": "./out/scripting/command.d.ts"
+		"#*": {
+			"node": "./*.ts",
+			"default": "./out/*.js",
+			"types": "./out/*.d.ts"
 		}
 	},
 	"exports": {
@@ -170,10 +155,35 @@
 			"default": "./out/utils/index.js",
 			"types": "./out/utils/index.d.ts"
 		},
+		"./utils/system": {
+			"node": "./utils/system.ts",
+			"default": "./out/utils/system.js",
+			"types": "./out/utils/system.d.ts"
+		},
+		"./utils/sleep": {
+			"node": "./utils/sleep.ts",
+			"default": "./out/utils/sleep.js",
+			"types": "./out/utils/sleep.d.ts"
+		},
+		"./utils/events": {
+			"node": "./utils/events.ts",
+			"default": "./out/utils/events.js",
+			"types": "./out/utils/events.d.ts"
+		},
 		"./fs/*": {
 			"node": "./fs/*.ts",
 			"default": "./out/fs/*.js",
 			"types": "./out/fs/*.d.ts"
+		},
+		"./module/*": {
+			"node": "./module/*.ts",
+			"default": "./out/module/*.js",
+			"types": "./out/module/*.d.ts"
+		},
+		"./process": {
+			"node": "./process.ts",
+			"default": "./out/process.js",
+			"types": "./out/process.d.ts"
 		},
 		"./scripting": {
 			"node": "./scripting/index.ts",
@@ -246,9 +256,9 @@
 			"types": "./out/resolver/index.d.ts"
 		},
 		"./errors": {
-			"node": "./errors/index.ts",
-			"default": "./out/errors/index.js",
-			"types": "./out/errors/index.d.ts"
+			"node": "./errors/schema.ts",
+			"default": "./out/errors/schema.js",
+			"types": "./out/errors/schema.d.ts"
 		},
 		"./routing": {
 			"node": "./routing/index.ts",
@@ -460,7 +470,6 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/platform": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"adm-zip": "^0.6.0",
 		"async-init": "^1.0.0",
@@ -474,10 +483,10 @@
 		"htmlparser2": "^10",
 		"http-status-codes": "^2.3.0",
 		"kysely": "^0.29.4",
-		"path-ts": "^2.1.0",
+		"path-ts": "^2.3.0",
 		"pino": "^10.3.1",
 		"regenerate": "^1.4.2",
-		"spliterator": "^6.3.1",
+		"spliterator": "^6.4.1",
 		"type-fest": "^5.8.0",
 		"yauzl-promise": "^4.0.0",
 		"zod": "^4.4.3"

@@ -19,21 +19,22 @@
  */
 
 import { makeDirectoriesSync, writeLocalFileSync } from "@mailwoman/core/fs/writers-sync"
+import { runFileSync } from "@mailwoman/core/process"
 import { runIfScript } from "@mailwoman/core/scripting"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { dirname, resolve } from "@mailwoman/platform/path"
+import { repoRootPath } from "@mailwoman/core/utils"
+import { dirname, resolvePath } from "path-ts"
 
-const REPO_ROOT = resolve(import.meta.dirname, "..")
+const REPO_ROOT = repoRootPath()
 
 /**
  * The committed artifact this script maintains — also read by the freshness test.
  */
-export const MAN_PAGE_PATH = resolve(REPO_ROOT, "packages/mailwoman/man/mailwoman.1")
+export const MAN_PAGE_PATH = resolvePath(REPO_ROOT, "packages/mailwoman/man/mailwoman.1")
 
 /**
  * The compiled CLI the page derives from — the same binary consumers run.
  */
-export const CLI_PATH = resolve(REPO_ROOT, "packages/mailwoman/out/cli.js")
+export const CLI_PATH = resolvePath(REPO_ROOT, "packages/mailwoman/out/cli.js")
 
 /**
  * The user-facing commands a man reader cares about. `dev`, `clients`, and the model-work groups (`corpus`, `eval`,
@@ -43,7 +44,7 @@ export const CLI_PATH = resolve(REPO_ROOT, "packages/mailwoman/out/cli.js")
 const USER_COMMANDS = ["parse", "geocode", "autocomplete", "doctor", "data", "serve"] as const
 
 function help(cliPath: string, args: string[]): string {
-	return execFileSync("node", [cliPath, ...args, "--help"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })
+	return runFileSync("node", [cliPath, ...args, "--help"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })
 }
 
 /**
@@ -75,7 +76,7 @@ function preformatted(text: string): string {
  * the script entrypoint below, so the freshness test can render and compare without touching the tree.
  */
 export function renderManPage(cliPath: string = CLI_PATH): string {
-	const version = execFileSync("node", [cliPath, "--version"], { encoding: "utf8" }).trim()
+	const version = runFileSync("node", [cliPath, "--version"], { encoding: "utf8" }).trim()
 
 	const sections: string[] = [
 		// No date field on purpose: the page regenerates from the help tree, and a wall-clock stamp

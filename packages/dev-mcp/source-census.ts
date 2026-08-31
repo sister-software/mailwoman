@@ -27,9 +27,9 @@
 
 import { pathExists, readDirectory, statPath } from "@mailwoman/core/fs/readers"
 import { mailwomanDataRoot } from "@mailwoman/core/utils"
-import { join } from "@mailwoman/platform/path"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { join, type PathBuilderLike } from "path-ts"
 
 /**
  * What a shard can be joined THROUGH, which decides what a corpus builder can extract from it.
@@ -160,8 +160,8 @@ export async function censusArtifact(path: string, countries?: readonly string[]
  * `.prev`, `.bak` and journal siblings are excluded: they are on disk on purpose and censusing them reports the same
  * country twice under names nobody can act on.
  */
-export async function gazetteerArtifacts(dataRoot?: string): Promise<string[]> {
-	const wof = join(dataRoot ?? String(mailwomanDataRoot()), "wof")
+export async function gazetteerArtifacts(dataRoot?: PathBuilderLike): Promise<string[]> {
+	const wof = join(dataRoot ?? mailwomanDataRoot(), "wof")
 
 	if (!(await pathExists(wof))) return []
 

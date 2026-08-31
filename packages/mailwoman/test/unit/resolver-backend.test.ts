@@ -7,7 +7,7 @@
 import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
-import { join, resolve } from "@mailwoman/platform/path"
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
 import {
 	conventionCandidateDBPath,
@@ -15,6 +15,7 @@ import {
 	resolveCandidateDBPath,
 	wofShardPaths,
 } from "mailwoman/resolver-backend"
+import { join } from "path-ts"
 import { afterEach, expect, test, vi } from "vitest"
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
@@ -67,7 +68,7 @@ test("resolveCandidateDBPath: returns an explicit/env path only when it exists o
 test("resolveCandidateDBPath: falls back to <data-root>/wof/candidate.db, and 'none' pins the FTS backend", async () => {
 	// The fallback is what makes the candidate table the default backend. Pointed at this file's own
 	// directory tree so the convention path is a real file: `<root>/wof/candidate.db`.
-	const root = resolve(import.meta.dirname, "../../test-fixtures/candidate-root")
+	const root = resolvePackagePath("mailwoman", "test-fixtures", "candidate-root")
 
 	setEnv("MAILWOMAN_DATA_ROOT", root)
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
@@ -85,7 +86,7 @@ test("resolveCandidateDBPath: falls back to <data-root>/wof/candidate.db, and 'n
 })
 
 test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN_DATA_ROOT", async () => {
-	const root = resolve(import.meta.dirname, "../../test-fixtures/candidate-root")
+	const root = resolvePackagePath("mailwoman", "test-fixtures", "candidate-root")
 
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)

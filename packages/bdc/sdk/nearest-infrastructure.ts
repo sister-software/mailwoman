@@ -40,7 +40,7 @@ import { shortCellToInt, type H3Cell, type PointLiteral } from "@mailwoman/spati
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { latLngToCell } from "h3-js"
 
-import { res9ShortCellToRes6Parent } from "./filing-landscape.ts"
+import { res9ShortCellToRes6Parent } from "#sdk/filing-landscape"
 
 /**
  * Ring budget default for {@link nearestInfrastructure} — wider than `POILookup`'s own internal `DEFAULT_MAX_RINGS`

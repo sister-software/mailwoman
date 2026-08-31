@@ -11,9 +11,9 @@
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
 import { legacyQuery } from "@mailwoman/api-kit"
 
-import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, PhotonSearchParams } from "./engine.ts"
-import { photonToSchemaOrg } from "./projection.ts"
-import { PhotonMessageCollectionSchema, PhotonResponseSchema, reverseQueryParams, searchQueryParams } from "./schema.ts"
+import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, PhotonSearchParams } from "#engine"
+import { photonToSchemaOrg } from "#projection"
+import { PhotonMessageCollectionSchema, PhotonResponseSchema, reverseQueryParams, searchQueryParams } from "#schema"
 
 /**
  * Southern limit of latitude in WGS-84 degrees.

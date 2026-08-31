@@ -31,8 +31,8 @@
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { changeMode, movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import type { PostcodePrefixHeader, PostcodePrefixTier } from "@mailwoman/neural/postcode-prefix-index"
-import { dirname, join } from "@mailwoman/platform/path"
 import { Box, Text } from "ink"
+import { dirname, join } from "path-ts"
 
 import { type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 import type { PostcodePrefixLevel } from "#gazetteer-pipeline/postcode-prefix"

@@ -13,8 +13,7 @@ import {
 	isAlpha2LanguageCode,
 	isAlpha3bLanguageCode,
 } from "#resources/languages"
-
-import type { WhosOnFirstPlacetype } from "./definition.ts"
+import type { WhosOnFirstPlacetype } from "#resources/whosonfirst/placetypes/definition"
 
 export interface WOFBaseProperties {
 	"wof:id": number

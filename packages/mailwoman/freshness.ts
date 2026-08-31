@@ -22,7 +22,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 
-import { probeManifest } from "./data-inventory.ts"
+import { probeManifest } from "#data-inventory"
 
 /**
  * Whether an artifact could state its own provenance.

@@ -4,16 +4,16 @@
  * @author Teffen Ellis, et al.
  */
 
+import cluster, { type Worker } from "node:cluster"
+
 import { Spinner, StatusMessage } from "@inkjs/ui"
 import type { ServerHandle } from "@mailwoman/api-kit"
 import { isPresent } from "@mailwoman/core/objects"
-import cluster, { type Worker } from "@mailwoman/platform/cluster"
-import { availableParallelism } from "@mailwoman/platform/os"
+import { availableParallelism } from "@mailwoman/core/utils/system"
 // Default import, not `* as process` — the ESM namespace object for `node:process` only reflects
 // the process object's OWN properties (`pid`, `exit`, `env`, …); EventEmitter methods (`on`, `once`,
 // `emit`) live on its prototype chain and are silently absent from `import *`. SIGINT/SIGTERM below
 // need `.once`, so this must be the real singleton.
-import process from "@mailwoman/platform/process"
 import { Box, Text } from "ink"
 import { useEffect, useState } from "react"
 
@@ -198,7 +198,7 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 			const { createMailwomanAPI } = await import("@mailwoman/api")
 			const { serveNode } = await import("@mailwoman/api-kit")
 			const { $public } = await import("@mailwoman/core/env")
-			const { createServeEngine } = await import("../api-engine.ts")
+			const { createServeEngine } = await import("#api-engine")
 
 			const { engine, preflight } = await createServeEngine()
 

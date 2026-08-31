@@ -8,7 +8,7 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 
 const moduleDir = import.meta.dirname
 
@@ -23,7 +23,7 @@ const moduleDir = import.meta.dirname
  * a missing table it is in fact looking straight at.
  */
 async function resolvePackagedDataPath(filename: string): Promise<string> {
-	const candidates = [resolve(moduleDir, "data", filename), resolve(moduleDir, "..", "data", filename)]
+	const candidates = [resolvePath(moduleDir, "data", filename), resolvePath(moduleDir, "..", "data", filename)]
 	const probes: Array<[string, boolean]> = []
 
 	for (const candidate of candidates) {

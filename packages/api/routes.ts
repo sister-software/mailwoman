@@ -25,7 +25,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import type { ComponentTag } from "@mailwoman/core/types"
 import { canonicalKey, type ComponentDict, formatAddress, type FormatAddressOptions } from "@mailwoman/formatter"
 
-import type { MailwomanAPIEngine } from "./engine.ts"
+import type { MailwomanAPIEngine } from "#engine"
 import {
 	APIErrorSchema,
 	BatchRequestSchema,
@@ -40,7 +40,7 @@ import {
 	ResolveRequestSchema,
 	ResolveResponseSchema,
 	type GeocodeOutcome,
-} from "./schema.ts"
+} from "#schema"
 
 /**
  * Default `POST /v1/batch` row cap when {@link RegisterMailwomanAPIRoutesOptions.batchMax} is omitted. This is the

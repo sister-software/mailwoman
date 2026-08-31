@@ -56,9 +56,9 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { runIfScript } from "@mailwoman/core/scripting"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { repoRootPath } from "@mailwoman/core/utils"
-import { resolve } from "@mailwoman/platform/path"
-import { parseArgs as parseNodeArgs } from "@mailwoman/platform/util"
+import { resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -302,7 +302,7 @@ async function checkStatus(version: string, statusPath: string): Promise<Surface
 }
 
 async function main() {
-	const { values } = parseNodeArgs({
+	const { values } = parseArguments({
 		options: {
 			card: { type: "string" },
 			ledger: { type: "string" },
@@ -312,10 +312,10 @@ async function main() {
 	})
 
 	const options: VerifyOptions = {
-		cardPath: resolve(repoRoot, values.card ?? "packages/neural-weights-en-us/model-card.json"),
-		ledgerPath: resolve(repoRoot, values.ledger ?? "evals/scores-by-version.json"),
-		releasesPath: resolve(repoRoot, values.releases ?? "docs/records/site-2026-08/releases.mdx"),
-		statusPath: resolve(repoRoot, values.status ?? "docs/records/site-2026-08/status.mdx"),
+		cardPath: resolvePath(repoRoot, values.card ?? "packages/neural-weights-en-us/model-card.json"),
+		ledgerPath: resolvePath(repoRoot, values.ledger ?? "evals/scores-by-version.json"),
+		releasesPath: resolvePath(repoRoot, values.releases ?? "docs/records/site-2026-08/releases.mdx"),
+		statusPath: resolvePath(repoRoot, values.status ?? "docs/records/site-2026-08/status.mdx"),
 	}
 
 	const version = await readModelVersion(options.cardPath)

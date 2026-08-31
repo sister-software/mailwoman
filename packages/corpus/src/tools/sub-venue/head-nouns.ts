@@ -18,7 +18,7 @@
 
 import { isPresent } from "@mailwoman/core/objects"
 
-import type { SubVenueSurface } from "./table.ts"
+import type { SubVenueSurface } from "#tools/sub-venue/table"
 
 /**
  * Diacritic-flattened ASCII fold, for comparing a Slavic or Turkish inflection against its Latin root.

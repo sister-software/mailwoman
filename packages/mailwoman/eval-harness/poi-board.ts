@@ -57,11 +57,11 @@ import type { POIPhraseLookup } from "@mailwoman/kind-classifier"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver, type Resolver } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import { resolvePath, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
-
-import { createResolverBackend, dataRootPath, wofShardPaths } from "../resolver-backend.ts"
+import { createResolverBackend, dataRootPath, wofShardPaths } from "#resolver-backend"
 
 /**
  * Fixture set backing the POI query board.
@@ -436,7 +436,7 @@ export interface POIBoardOptions {
 	/**
 	 * Sealed poi.db to query. Defaults to the standard data-root layer path — see `gazetteer build poi`'s own default.
 	 */
-	db?: string
+	db?: PathBuilderLike
 	/**
 	 * WOF admin shard path(s) for anchor resolution — same semantics as `mailwoman poi --resolve-db`.
 	 */
@@ -751,7 +751,7 @@ export interface POIBoardPipelineHandle extends Disposable {
  * what the probe measures while the grader stayed identical, and the difference would read as a pipeline result.
  */
 export async function createPOIBoardPipeline(options: POIBoardOptions = {}): Promise<POIBoardPipelineHandle> {
-	const db = options.db ?? dataRootPath("poi", "poi.db")
+	const db = resolvePath(options.db ?? dataRootPath("poi", "poi.db"))
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({
 		locale: options.locale ?? "en-US",

@@ -17,8 +17,8 @@
  *   the number that describes the artifact is the one taken from the artifact.
  */
 
-import { classifyDelineationCells, SoilCellIndex, type SoilCellIndexMeasurement } from "./cells.ts"
-import { readSoilDelineations, readSoilSourceIdentity, type SoilIngestOptions } from "./ingest.ts"
+import { classifyDelineationCells, SoilCellIndex, type SoilCellIndexMeasurement } from "#sdk/cells"
+import { readSoilDelineations, readSoilSourceIdentity, type SoilIngestOptions } from "#sdk/ingest"
 
 export interface MeasureSoilResolutionsOptions extends SoilIngestOptions {
 	/**

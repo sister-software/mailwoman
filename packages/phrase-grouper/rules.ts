@@ -18,7 +18,7 @@
 
 import { Span } from "@mailwoman/core/tokenization"
 
-import type { PhraseProposal, QueryShapeLike } from "./types.ts"
+import type { PhraseProposal, QueryShapeLike } from "#types"
 
 /**
  * One token within a segment — absolute offsets into the normalized input. Built by `tokenizeSegment` from a

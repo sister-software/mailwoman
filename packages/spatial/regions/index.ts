@@ -4,5 +4,5 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./codes.ts"
-export * from "./names.ts"
+export * from "#regions/codes"
+export * from "#regions/names"

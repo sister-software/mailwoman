@@ -16,18 +16,18 @@
  *   groups that moved to siblings are re-exported here rather than requiring every importer to move with them.
  */
 
-import type { AddressTree } from "../decoder/types.ts"
-import type { GazetteerArtifactCoverage } from "./coverage-facts.ts"
+import type { AddressTree } from "#decoder/types"
+import type { GazetteerArtifactCoverage } from "#resolver/coverage-facts"
 import type {
 	AddressPointLookup,
 	InterpolationLookup,
 	PostcodePrefixIndexLike,
 	StreetCentroidLookup,
-} from "./lookup-types.ts"
-import type { PlacetypeMap } from "./placetype-map.ts"
+} from "#resolver/lookup-types"
+import type { PlacetypeMap } from "#resolver/placetype-map"
 
-export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "./coverage-facts.ts"
-export { hardCountrySafelistFromCoverage } from "./coverage-facts.ts"
+export type { CountryBBoxFact, CountryCoverageFact, GazetteerArtifactCoverage } from "#resolver/coverage-facts"
+export { hardCountrySafelistFromCoverage } from "#resolver/coverage-facts"
 
 export type {
 	AddressPointHit,
@@ -39,7 +39,7 @@ export type {
 	PostcodePrefixNode,
 	StreetCentroidHit,
 	StreetCentroidLookup,
-} from "./lookup-types.ts"
+} from "#resolver/lookup-types"
 
 export {
 	DEFAULT_PLACETYPE_MAP,
@@ -47,7 +47,7 @@ export {
 	isPlacetypeFallback,
 	PLACETYPE_FILTER_GROUPS,
 	type PlacetypeMap,
-} from "./placetype-map.ts"
+} from "#resolver/placetype-map"
 
 /**
  * One candidate place returned by a resolver. Mirrors the shape used by `@mailwoman/core/resolver-wof-sqlite`'s

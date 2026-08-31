@@ -37,10 +37,10 @@ import { readDirectory, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, removePathIfPresent, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { join } from "@mailwoman/platform/path"
+import { runFileSync } from "@mailwoman/core/process"
+import { join } from "path-ts"
 
-import { FINGERPRINTED_WORKSPACES } from "./tree-fingerprint.ts"
+import { FINGERPRINTED_WORKSPACES } from "#tree-fingerprint"
 
 /**
  * The `ref` that means "the working tree as it stands", uncommitted edits included.
@@ -231,7 +231,7 @@ export async function runWorktreeArm(args: {
 	// reverse of that order is what states it — prune first, so prune runs last.
 	if (!live) {
 		resources.defer(() => {
-			execFileSync("git", ["worktree", "prune"], { cwd: repoRoot, stdio: "pipe" })
+			runFileSync("git", ["worktree", "prune"], { cwd: repoRoot, stdio: "pipe" })
 		})
 	}
 
@@ -239,13 +239,13 @@ export async function runWorktreeArm(args: {
 	const worktree = parent ? parent.resolve("checkout") : repoRoot
 
 	if (!live) {
-		execFileSync("git", ["worktree", "add", "--detach", worktree, ref], { cwd: repoRoot, stdio: "pipe" })
+		runFileSync("git", ["worktree", "add", "--detach", worktree, ref], { cwd: repoRoot, stdio: "pipe" })
 
 		// `git worktree remove` refuses on a dirty checkout, and this one always is — the runner script and the
 		// node_modules farm are both untracked. `--force` is the normal path here, not an override.
 		resources.defer(() => {
 			try {
-				execFileSync("git", ["worktree", "remove", "--force", worktree], { cwd: repoRoot, stdio: "pipe" })
+				runFileSync("git", ["worktree", "remove", "--force", worktree], { cwd: repoRoot, stdio: "pipe" })
 			} catch {
 				// A failed removal must not mask the arm's own error; removing the parent directory and pruning
 				// afterwards clean up regardless.
@@ -253,10 +253,10 @@ export async function runWorktreeArm(args: {
 		})
 	}
 
-	const head = execFileSync("git", ["rev-parse", "HEAD"], { cwd: worktree, encoding: "utf8" }).trim()
+	const head = runFileSync("git", ["rev-parse", "HEAD"], { cwd: worktree, encoding: "utf8" }).trim()
 
 	const dirty = live
-		? execFileSync("git", ["status", "--porcelain"], { cwd: repoRoot, encoding: "utf8" }).trim().length > 0
+		? runFileSync("git", ["status", "--porcelain"], { cwd: repoRoot, encoding: "utf8" }).trim().length > 0
 		: false
 
 	// A dirty working tree is NOT its HEAD, and reporting the sha alone would let a comparison claim it ran
@@ -275,7 +275,7 @@ export async function runWorktreeArm(args: {
 	const runStartedAt = Date.now()
 
 	try {
-		const stdout = execFileSync(process.execPath, [runnerPath], {
+		const stdout = runFileSync(process.execPath, [runnerPath], {
 			cwd: worktree,
 			input: JSON.stringify({ inputs, options }),
 			encoding: "utf8",

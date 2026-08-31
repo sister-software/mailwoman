@@ -21,14 +21,14 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { resolve } from "@mailwoman/platform/path"
+import { resolvePath } from "path-ts"
 
 import type {
 	ActivityPhraseEntry,
 	ActivityPhraseLexicon,
 	ActivityPhraseLocaleMatch,
 	ActivityPhraseDerivation,
-} from "./types.ts"
+} from "#types"
 
 const moduleDir = import.meta.dirname
 
@@ -46,8 +46,8 @@ const DERIVATIONS: ReadonlyArray<ActivityPhraseDerivation> = ["plural", "nominal
  */
 export const ACTIVITY_LEXICON_PATH: string = await (async () => {
 	const candidates = [
-		resolve(moduleDir, "data", "activity-lexicon.json"),
-		resolve(moduleDir, "..", "data", "activity-lexicon.json"),
+		resolvePath(moduleDir, "data", "activity-lexicon.json"),
+		resolvePath(moduleDir, "..", "data", "activity-lexicon.json"),
 	]
 
 	let found: string | null = null

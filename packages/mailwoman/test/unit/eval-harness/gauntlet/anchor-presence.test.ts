@@ -18,8 +18,8 @@
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "@mailwoman/platform/path"
 import { assertDeclaredAnchorBins } from "mailwoman/eval-harness/gauntlet/harness"
+import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -31,7 +31,7 @@ afterAll(() => fixtures.disposeAsync())
  * the given card, and whichever sibling artifacts the case wants present.
  */
 async function fixtureWeights(locale: string, card: Record<string, unknown>, siblings: string[] = []): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("gauntlet-weights-")).path
+	const root = fixtures.use(await temporaryDirectory("gauntlet-weights-")).path.toString()
 	const dir = weightsCachePackageDir(root, locale)
 
 	await makeDirectories(dir)
@@ -90,7 +90,7 @@ describe("the anchor-artifact presence assertion", () => {
 
 	it("stays silent for a package with no card at all", async () => {
 		await using rootDirectory = await temporaryDirectory("gauntlet-weights-")
-		const root = rootDirectory.path
+		const root = rootDirectory.path.toString()
 		const dir = weightsCachePackageDir(root, "zz-zz")
 
 		await makeDirectories(dir)
@@ -111,7 +111,7 @@ describe("the anchor-artifact presence assertion", () => {
 
 	it("skips a locale whose package does not resolve at all — a different failure with a different repair", async () => {
 		await using rootDirectory = await temporaryDirectory("gauntlet-weights-")
-		const root = rootDirectory.path
+		const root = rootDirectory.path.toString()
 
 		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).resolves.toBeUndefined()
 	})

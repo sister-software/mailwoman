@@ -29,11 +29,12 @@
  */
 
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import { execFile } from "@mailwoman/platform/child_process"
-import { promisify } from "@mailwoman/platform/util"
-import type { GeojsonGeometry } from "@mailwoman/spatial"
+import { runFile } from "@mailwoman/core/process"
+import type { ParsedGeometry } from "@mailwoman/spatial"
+import type { PathBuilderLike } from "path-ts"
 
-import type { SoilComponentTable, SoilMapUnitTable } from "../schema.ts"
+import type { SoilComponentTable, SoilMapUnitTable } from "#schema"
+import { domainCodes, readDeclaredDomains, readTable, readTabularDictionary, type DomainMember } from "#sdk/tabular"
 import {
 	COINTERP_OVERALL_RULE_DEPTH,
 	farmlandScope,
@@ -41,10 +42,7 @@ import {
 	SSURGO_NO_MAPPING_NAMES,
 	SSURGO_NO_MAPPING_SYMBOLS,
 	SSURGO_PUBLIC_INFORMATION_SENTENCE,
-} from "../vocabulary.ts"
-import { domainCodes, readDeclaredDomains, readTable, readTabularDictionary, type DomainMember } from "./tabular.ts"
-
-const execFileAsync = promisify(execFile)
+} from "#vocabulary"
 
 /**
  * The declared domains this layer validates against, and stores.
@@ -90,7 +88,7 @@ export interface SurveyAreaAttributes {
  *   column holds a value outside the authority's own declared domain, or when the export declares no legend row.
  */
 export async function readSurveyAreaAttributes(
-	tabularDirectory: string,
+	tabularDirectory: PathBuilderLike,
 	areaSymbol: string
 ): Promise<SurveyAreaAttributes> {
 	const dictionary = await readTabularDictionary(tabularDirectory)
@@ -272,7 +270,7 @@ function nullable(value: string | undefined): string | null {
  * not carry.
  */
 async function readNCCPI(
-	tabularDirectory: string,
+	tabularDirectory: PathBuilderLike,
 	dictionary: Awaited<ReturnType<typeof readTabularDictionary>>
 ): Promise<Map<string, number>> {
 	const rows = await readTable(tabularDirectory, dictionary, "cointerp", [
@@ -443,14 +441,12 @@ function normalizeFGDCDate(value: string): string {
  * @throws {Error} When the shapefile holds anything other than exactly one feature. Taking the first of several would
  *   silently choose which ground the coverage claim is about.
  */
-export async function readSurveyAreaOutline(shapefilePath: string): Promise<GeojsonGeometry> {
-	const { stdout } = await execFileAsync(
-		"ogr2ogr",
-		["-f", "GeoJSON", "/vsistdout/", "-t_srs", "EPSG:4326", shapefilePath],
-		{ maxBuffer: 256 * 1024 * 1024 }
-	)
+export async function readSurveyAreaOutline(shapefilePath: string): Promise<ParsedGeometry> {
+	const { stdout } = await runFile("ogr2ogr", ["-f", "GeoJSON", "/vsistdout/", "-t_srs", "EPSG:4326", shapefilePath], {
+		maxBuffer: 256 * 1024 * 1024,
+	})
 
-	const collection = parseJSONStrict<{ features?: Array<{ geometry?: GeojsonGeometry }> }>(stdout)
+	const collection = parseJSONStrict<{ features?: Array<{ geometry?: ParsedGeometry }> }>(stdout)
 	const features = collection.features ?? []
 
 	if (features.length !== 1) {

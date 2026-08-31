@@ -7,6 +7,7 @@
  *   `universal-service.ts`:164-176).
  */
 
+import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
 	classifyFiler,
 	FilerClassification,
@@ -14,10 +15,10 @@ import {
 	parseForm499,
 	type Form499Row,
 } from "@mailwoman/filer/sdk/form499"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const FIXTURES_DIR = join(import.meta.dirname, "../../../test-fixtures")
+const FIXTURES_DIR = resolvePackagePath("@mailwoman/filer", "test-fixtures")
 const SAMPLE_TSV = join(FIXTURES_DIR, "form499-sample.tsv")
 const MALFORMED_TSV = join(FIXTURES_DIR, "form499-malformed.tsv")
 

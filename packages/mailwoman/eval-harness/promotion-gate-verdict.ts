@@ -16,7 +16,7 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
-import * as path from "@mailwoman/platform/path"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -30,7 +30,7 @@ export interface PromotionVerdictOptions {
 	/**
 	 * The promotion-gate out-dir carrying the battery outputs.
 	 */
-	outDir: string
+	outDir: PathBuilderLike
 	/**
 	 * Also collect the int8 battery and enforce the fp32↔int8 delta cap.
 	 */
@@ -51,6 +51,16 @@ function scorerF1(md: string, tag: string): number | undefined {
 }
 
 /**
+ * The cells of one pipe-table line, outer pipes dropped and each cell trimmed.
+ */
+function tableCells(line: string): string[] {
+	return line
+		.split("|")
+		.slice(1, -1)
+		.map((c) => c.trim())
+}
+
+/**
  * Read a named column for a named arena row from the arena summary pipe-table, by HEADER — never a fixed offset.
  *
  * The table shape is not stable across the arena's own history: before the #1151 rules-parser deletion the summary
@@ -61,37 +71,45 @@ function scorerF1(md: string, tag: string): number | undefined {
  * addition).
  */
 export function arenaColumn(md: string, arena: string, column: string): number | undefined {
-	const lines = [...TextSpliterator.from(md)]
-
-	const cells = (line: string): string[] =>
-		line
-			.split("|")
-			.slice(1, -1)
-			.map((c) => c.trim())
-
-	const header = lines.find((l) => /^\|\s*arena\s*\|/.test(l))
-	const row = lines.find((l) => new RegExp(`^\\|\\s*${arena}\\s*\\|`).test(l))
-
-	if (!header || !row) return undefined
-
-	const idx = cells(header).indexOf(column)
-
-	if (idx === -1) return undefined
-
-	const m = cells(row)[idx]?.match(/([\d.]+)%/)
+	const m = tableCell(md, /^\|\s*arena\s*\|/, column, arena)?.match(/([\d.]+)%/)
 
 	return m ? Number(m[1]) : undefined
 }
 
 /**
- * Pull the per-locale table's per-tag percentage for a locale column (US first, FR second).
+ * Pull the per-locale table's per-tag percentage for one locale, by HEADER — the same discipline as
+ * {@linkcode arenaColumn}. `per-locale-f1` emits `| Tag | <locale> … | Δ |` with one column per answer-key file, so a
+ * locale is found by its column name; a reordered or added locale column then cannot swap one locale's number for
+ * another's. A missing table, tag or column reads `undefined`, and so does an empty (`—`) cell.
  */
-function perLocale(md: string, tag: string, locale: "us" | "fr"): number | undefined {
-	const m = md.match(new RegExp(`\\|\\s*${tag}\\s*\\|\\s*([\\d.]+)%\\s*\\|\\s*([\\d.—-]+)%?`))
+function perLocale(md: string, tag: string, locale: string): number | undefined {
+	return Number(tableCell(md, /^\|\s*Tag\s*\|/, locale, tag)?.replace("%", "")) || undefined
+}
 
-	if (!m) return undefined
+/**
+ * One cell of a markdown pipe-table, located by header COLUMN name and first-column ROW name in a single pull over the
+ * lines: the header must come first, and the row is searched only after it, so a row can only belong to the table its
+ * header opened. A missing table, column or row reads `undefined`; the caller parses the cell text.
+ */
+function tableCell(md: string, headerPattern: RegExp, column: string, row: string): string | undefined {
+	const rowPattern = new RegExp(`^\\|\\s*${row}\\s*\\|`)
+	let columnIndex = -1
 
-	return Number(locale === "us" ? m[1] : m[2]) || undefined
+	for (const line of TextSpliterator.from(md)) {
+		if (columnIndex === -1) {
+			if (!headerPattern.test(line)) continue
+
+			columnIndex = tableCells(line).indexOf(column)
+
+			if (columnIndex === -1) return undefined
+
+			continue
+		}
+
+		if (rowPattern.test(line)) return tableCells(line)[columnIndex]
+	}
+
+	return undefined
 }
 
 /**
@@ -123,7 +141,7 @@ export interface PromotionVerdict {
 	verdict: "PASS" | "FAIL"
 	results: Record<string, { floor: number; actual: number | undefined; pass: boolean }>
 	int8_vs_fp32_deltas: Record<string, number>
-	generated_at_dir: string
+	generated_at_dir: PathBuilderLike
 }
 
 /**
@@ -141,7 +159,7 @@ export async function assemblePromotionVerdict(
 	}>(options.gate)
 
 	const dir = options.outDir
-	const read = (f: string): Promise<string> => readLocalTextFile(path.join(dir, f))
+	const read = (f: string): Promise<string> => readLocalTextFile(dir, f)
 
 	async function maybeRead(f: string): Promise<string | undefined> {
 		try {
@@ -166,20 +184,39 @@ export async function assemblePromotionVerdict(
 	}
 
 	async function collect(tag: "fp32" | "int8"): Promise<Record<string, number | undefined>> {
-		const pl = await read(`${tag}-per-locale.md`)
-		const affix = await read(`${tag}-affix.md`)
-		const unit = await read(`${tag}-unit.md`)
-		const country = await read(`${tag}-country.md`)
-		const affixJ = await sidecar(`${tag}-affix.json`)
-		const unitJ = await sidecar(`${tag}-unit.json`)
-		const countryJ = await sidecar(`${tag}-country.json`)
-		const poboxJ = await sidecar(`${tag}-pobox.json`)
-		const intersectionJ = await sidecar(`${tag}-intersection.json`)
-		const pobox = await maybeRead(`${tag}-pobox.md`)
-		const intersection = await maybeRead(`${tag}-intersection.md`)
-		const deorder = await read(`${tag}-deorder.md`)
-		const arenas = await maybeRead("arenas.md")
-		const cascadeJ = await sidecar("cascade-smoke.json")
+		// Every battery output is an independent file, so the reads are issued together.
+		const [
+			pl,
+			affix,
+			unit,
+			country,
+			affixJ,
+			unitJ,
+			countryJ,
+			poboxJ,
+			intersectionJ,
+			pobox,
+			intersection,
+			deorder,
+			arenas,
+			cascadeJ,
+		] = await Promise.all([
+			read(`${tag}-per-locale.md`),
+			read(`${tag}-affix.md`),
+			read(`${tag}-unit.md`),
+			read(`${tag}-country.md`),
+			sidecar(`${tag}-affix.json`),
+			sidecar(`${tag}-unit.json`),
+			sidecar(`${tag}-country.json`),
+			sidecar(`${tag}-pobox.json`),
+			sidecar(`${tag}-intersection.json`),
+			maybeRead(`${tag}-pobox.md`),
+			maybeRead(`${tag}-intersection.md`),
+			read(`${tag}-deorder.md`),
+			maybeRead("arenas.md"),
+			sidecar("cascade-smoke.json"),
+		])
+
 		// Capture the anchor-ON native-DE locality (the gated value) regardless of the anchor-OFF cell —
 		// the OFF cell is a diagnostic and is empty when the zeroed-anchor run can't satisfy the card's
 		// `anchor.required` strict scorer (`[^|]*` tolerates that empty cell instead of false-failing).
@@ -294,7 +331,7 @@ export async function assemblePromotionVerdict(
 		generated_at_dir: dir,
 	}
 
-	await writeLocalJSONFile(verdict, path.join(dir, "verdict.json"))
+	await writeLocalJSONFile(verdict, dir, "verdict.json")
 
 	report(`\n== promotion gate [${gate.label}] — ${verdict.verdict} ==`)
 

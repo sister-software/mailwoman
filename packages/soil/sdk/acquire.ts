@@ -19,11 +19,11 @@
  *   field-survey date, which is the number a currency claim actually turns on.
  */
 
-import type { SurveyAreaInput } from "./build-soil.ts"
-import type { SoilDataAccessClient, SurveyAreaCatalogEntry } from "./client.ts"
-import { downloadSurveyArea, type SurveyAreaArchive } from "./download.ts"
-import { mapUnitShapefile, readSoilSourceIdentity, surveyAreaShapefile } from "./ingest.ts"
-import { readSurveyAreaAttributes, readSurveyAreaOutline } from "./survey-area.ts"
+import type { SurveyAreaInput } from "#sdk/build-soil"
+import type { SoilDataAccessClient, SurveyAreaCatalogEntry } from "#sdk/client"
+import { downloadSurveyArea, type SurveyAreaArchive } from "#sdk/download"
+import { mapUnitShapefile, readSoilSourceIdentity, surveyAreaShapefile } from "#sdk/ingest"
+import { readSurveyAreaAttributes, readSurveyAreaOutline } from "#sdk/survey-area"
 
 export interface AcquireRegionOptions {
 	client: SoilDataAccessClient

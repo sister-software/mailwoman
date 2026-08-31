@@ -57,13 +57,13 @@ import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver 
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
-import { join } from "@mailwoman/platform/path"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { join } from "path-ts"
 
-import { parseSmokeRows, type SmokeRow } from "./demo-cascade-rows.ts"
-import { resolveWOFHotDB, wofHotStageDir } from "./wof-hot-db.ts"
+import { parseSmokeRows, type SmokeRow } from "#eval-harness/demo-cascade-rows"
+import { resolveWOFHotDB, wofHotStageDir } from "#eval-harness/wof-hot-db"
 
 /**
  * Options for {@linkcode demoCascadeSmoke} — one field per flag the gate used to serialize into argv.

@@ -28,9 +28,9 @@
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
-import { basename, dirname } from "@mailwoman/platform/path"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address-point-schema"
 import { Box, Text } from "ink"
+import { basename, dirname, resolvePath } from "path-ts"
 
 import { CommandError, type CommandSpec, type ParsedCommandComponent, useCommandTask } from "#cli-kit"
 
@@ -88,7 +88,10 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 
 		const STATE = options.state.toUpperCase()
 		const PARQUET = dataRootPath("overture", options.release, "addresses-us.parquet")
-		const finalOut = options.out ?? dataRootPath("address-points", `address-points-us-${STATE.toLowerCase()}.db`)
+
+		const finalOut = resolvePath(
+			options.out ?? dataRootPath("address-points", `address-points-us-${STATE.toLowerCase()}.db`)
+		)
 
 		// Optional maintainer deps: the shared schema/normalizer (resolver-wof-sqlite, an optional peer)
 		// and the DuckDB parquet/CSV reader (@duckdb/node-api, a dev dep). Both dynamic + guarded so the
@@ -309,7 +312,7 @@ const SitusAddressPoints: ParsedCommandComponent<Options> = ({ options }) => {
 
 		// Stamped on the TEMP file, before the swap, for the same reason the interpolation shard is: the swap
 		// is the moment the artifact becomes live.
-		const { buildSHA, stampLayerManifest } = await import("../../gazetteer-pipeline/stamp-manifest.ts")
+		const { buildSHA, stampLayerManifest } = await import("#gazetteer-pipeline/stamp-manifest")
 		const { LayerFreshnessPolicy, LayerTier } = await import("@mailwoman/core/layers")
 		const { repoRootPath } = await import("@mailwoman/core/utils")
 

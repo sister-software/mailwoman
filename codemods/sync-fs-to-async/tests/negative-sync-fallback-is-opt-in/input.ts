@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, statSync } from "@mailwoman/platform/fs"
+import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs"
 
 /**
  * A `.filter()` predicate and a `.map()` transform. Neither callback is awaited, so neither call can move. The

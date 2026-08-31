@@ -26,7 +26,7 @@ import {
 	mergeGeographicModelFiles,
 	MODEL_MANIFEST_FILENAME,
 } from "@mailwoman/geographic-model/load"
-import { resolve } from "@mailwoman/platform/path"
+import { dirname, join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -130,13 +130,13 @@ async function writeModelDirectory(files: readonly GeographicModelSourceFile[]):
 	const root = fixtures.use(await temporaryDirectory("geographic-model-")).path
 
 	for (const entry of files) {
-		const path = resolve(root, entry.path)
+		const path = join(root, entry.path)
 
-		await makeDirectories(resolve(path, ".."))
+		await makeDirectories(dirname(path))
 		await writeLocalFile(entry.text, path)
 	}
 
-	return root
+	return resolvePath(root)
 }
 
 describe("the authoring layout carries no meaning", () => {

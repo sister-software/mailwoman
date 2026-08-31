@@ -88,14 +88,14 @@ afterAll(() => GN_ROOT[Symbol.asyncDispose]())
 
 describe("createGeoNamesAnchorLookup (#1905)", () => {
 	it("resolves an id from the country file, tolerating numeric and string ids", async () => {
-		const lookup = await createGeoNamesAnchorLookup(GN_ROOT.path)
+		const lookup = await createGeoNamesAnchorLookup(GN_ROOT.path.toString())
 
 		expect(await lookup("US", 4_140_963)).toEqual({ latitude: 38.89511, longitude: -77.03637 })
 		expect(await lookup("US", "999")).toEqual({ latitude: 10, longitude: 20 })
 	})
 
 	it("an unknown id and a missing country file are both ABSENCE, never a zero point", async () => {
-		const lookup = await createGeoNamesAnchorLookup(GN_ROOT.path)
+		const lookup = await createGeoNamesAnchorLookup(GN_ROOT.path.toString())
 
 		expect(await lookup("US", 123_456_789)).toBeUndefined()
 		expect(await lookup("FR", 4_140_963)).toBeUndefined()

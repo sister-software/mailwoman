@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export * from "./fetch.ts"
-export * from "./redistricting.ts"
-export * from "./schema.ts"
-export * from "./state/index.ts"
+export * from "#sdk/fetch"
+export * from "#sdk/redistricting"
+export * from "#sdk/schema"
+export * from "#sdk/state/index"

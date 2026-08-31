@@ -20,8 +20,8 @@
 
 import { haversineKm as greatCircleKm } from "@mailwoman/spatial"
 
-import type { LatLon } from "./blocking.ts"
-import type { Comparison, ComparisonLevel } from "./fellegi-sunter.ts"
+import type { LatLon } from "#blocking"
+import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
 
 /**
  * Great-circle (haversine) distance in km between two coordinates. The formula's one true home is `@mailwoman/spatial`;

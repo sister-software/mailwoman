@@ -73,7 +73,7 @@ import {
 	readTuples,
 	type ShardRecipe,
 	shardSourceID,
-} from "./scaffold.ts"
+} from "#shard-recipes/scaffold"
 
 /**
  * Shard recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise,

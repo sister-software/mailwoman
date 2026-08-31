@@ -16,7 +16,7 @@
  */
 
 import { pathExists, readDirectory, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { basename, join } from "@mailwoman/platform/path"
+import { basename, join, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -31,7 +31,7 @@ const DOMINANT_SOURCE_SHARE = 0.4
 const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
 
 export interface AuditOpts {
-	corpusDir: string
+	corpusDir: PathBuilderLike
 	configPath?: string
 	/**
 	 * Sample at most N shards per split when counting sources. Default 100 for speed; bump to read the full set on a slow
@@ -108,7 +108,7 @@ async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
  * Scan a corpus directory's shards (typically under <corpus_dir>/train, /val, /test) and count shards per source per
  * split.
  */
-async function scanShards(corpusDir: string, sampleCount: number): Promise<ShardStats> {
+async function scanShards(corpusDir: PathBuilderLike, sampleCount: number): Promise<ShardStats> {
 	const stats: ShardStats = { bySplit: {}, totalShards: 0, totalFiles: 0 }
 
 	for (const split of ["train", "val", "test"]) {
@@ -209,7 +209,7 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
  * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most shards
  * are >95% one source).
  */
-async function manifestScan(corpusDir: string, knownPrefixes: readonly string[]): Promise<ShardStats | null> {
+async function manifestScan(corpusDir: PathBuilderLike, knownPrefixes: readonly string[]): Promise<ShardStats | null> {
 	const manifestPath = join(corpusDir, "MANIFEST.json")
 
 	if (!(await pathExists(manifestPath))) return null
@@ -306,7 +306,12 @@ function formatPct(v: number | "—"): string {
 	return `${(v * 100).toFixed(1)}%`
 }
 
-function printReport(corpusDir: string, configPath: string | undefined, stats: ShardStats, rows: AuditRow[]): void {
+function printReport(
+	corpusDir: PathBuilderLike,
+	configPath: string | undefined,
+	stats: ShardStats,
+	rows: AuditRow[]
+): void {
 	console.log(`\nCorpus audit — ${corpusDir}`)
 
 	if (configPath) {

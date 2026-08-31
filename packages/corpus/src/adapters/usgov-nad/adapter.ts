@@ -33,7 +33,7 @@
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { reconcileComponents } from "@mailwoman/formatter"
-import { join } from "@mailwoman/platform/path"
+import { join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"

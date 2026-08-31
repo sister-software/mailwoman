@@ -16,13 +16,12 @@
  *   2500]`
  */
 
-import * as path from "@mailwoman/platform/path"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
+import { hashFNV1a } from "#coarse-placer/tools/fnv-hash"
 import { appendLocalTextFile } from "#fs/writers"
 import { dataRootPath, repoRootPath } from "#utils"
-
-import { hashFNV1a } from "./fnv-hash.ts"
 
 /**
  * Share of a bucket that must be off-map before it is treated as an exposure case rather than noise.
@@ -40,11 +39,11 @@ export interface BuildOutlierExposureOptions {
 	/**
 	 * WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
 	 */
-	wof?: string
+	wof?: PathBuilderLike
 	/**
 	 * Dataset dir the OTHER rows append to. Default `<repo>/data/coarse-placer`.
 	 */
-	data?: string
+	data?: PathBuilderLike
 }
 
 /**
@@ -204,7 +203,7 @@ export async function buildOutlierExposure(
 
 	for (const [split, names] of Object.entries(splits)) {
 		const lines = names.map((raw) => JSON.stringify({ raw, country: "OTHER" })).join("\n") + "\n"
-		await appendLocalTextFile(lines, path.join(dataDir, `${split}.jsonl`))
+		await appendLocalTextFile(lines, resolvePath(dataDir, `${split}.jsonl`))
 		report?.(`appended ${names.length} OTHER → ${split}.jsonl`)
 	}
 

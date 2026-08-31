@@ -6,4 +6,4 @@
  *   Italian (IT) address-system reference data.
  */
 
-export * from "./cap.ts"
+export * from "#it/cap"

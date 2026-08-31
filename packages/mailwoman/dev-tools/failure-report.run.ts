@@ -24,14 +24,14 @@
 import { decodeAsTuples } from "@mailwoman/core/decoder"
 import { readDirectory } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { basename, resolve } from "@mailwoman/platform/path"
-import { parseArgs } from "@mailwoman/platform/util"
+import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "../eval-harness/parity-corpus.ts"
-import type { ParityFixture } from "./convert-parity-fixtures.run.ts"
+import type { ParityFixture } from "#dev-tools/convert-parity-fixtures.run"
+import { PARITY_FIXTURES_PATH, PARITY_FLOORS } from "#eval-harness/parity-corpus"
 
 /**
  * Token count at or below which a query is bucketed as short.
@@ -68,7 +68,7 @@ async function loadCorpus(
 	if (spec?.startsWith("golden:")) {
 		const [, dir, sampleArg] = spec.split(":")
 		const sampleN = sampleArg ? Number(sampleArg) : Infinity
-		const files = (await readDirectory(resolve(dir!))).filter((f) => f.endsWith(".jsonl"))
+		const files = (await readDirectory(resolvePath(dir!))).filter((f) => f.endsWith(".jsonl"))
 		const fixtures: Fixture[] = []
 
 		for (const file of files) {
@@ -76,7 +76,7 @@ async function loadCorpus(
 			let i = -1
 
 			for await (const row of JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(
-				resolve(dir!, file)
+				resolvePath(dir!, file)
 			)) {
 				i++
 
@@ -134,7 +134,7 @@ interface FixtureFailures {
 	failsByModel: Record<string, { label: string; expected: string; got: string }[]>
 }
 
-const { values: flags, positionals } = parseArgs({
+const { values: flags, positionals } = parseArguments({
 	options: {
 		corpus: { type: "string", short: "c", description: "corpus=parity (default) or corpus=golden:<dir>[:<sampleN>]" },
 		out: { type: "string", short: "o", description: "output MDX path" },

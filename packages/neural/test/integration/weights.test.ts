@@ -47,15 +47,15 @@
  */
 
 import { $public } from "@mailwoman/core/env"
-import { readDirectory, readLocalBuffer, readLocalJSONFile, statPath, pathExists } from "@mailwoman/core/fs/readers"
+import { readDirectory, readLocalBuffer, readLocalJSONFile, pathExists, isFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { createSymbolicLink, makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
+import { runFileSync } from "@mailwoman/core/process"
 import { workspacePath, dataRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier, resolveWeights } from "@mailwoman/neural"
 import { PairIndexResolver, serializePairIndex, type PairIndexLike } from "@mailwoman/neural/pair-index-resolver"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { execFileSync } from "@mailwoman/platform/child_process"
-import { dirname, join } from "@mailwoman/platform/path"
+import { dirname, join } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -92,7 +92,7 @@ function ensureDevWeightsLinked(...locales: readonly string[]): void {
 	for (const locale of locales) {
 		if (linkedLocales.has(locale)) continue
 
-		execFileSync(process.execPath, [workspacePath(`neural-weights-${locale}`, "scripts", "link-dev-weights.ts")], {
+		runFileSync(process.execPath, [workspacePath(`neural-weights-${locale}`, "scripts", "link-dev-weights.ts")], {
 			stdio: "pipe",
 		})
 
@@ -600,7 +600,7 @@ describe("loadFromWeights — pair-index country gate (warn branch)", () => {
 				// clobbered the 49,033-pair production binary with the 1-entry stub below — silently, since the test
 				// still passes and every later test in the run would grade against the corrupted file. Same
 				// write-through-the-symlink hazard AGENTS.md documents for `fs.copyFile` in the publish path.
-				if ((await statPath(source)).isFile() && entry !== "pair-index-us.bin") {
+				if ((await isFile(source)) && entry !== "pair-index-us.bin") {
 					await createSymbolicLink(source, join(fakePackageDir, entry))
 				}
 			}

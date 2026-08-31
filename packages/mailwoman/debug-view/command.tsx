@@ -31,14 +31,14 @@ import { render, Text, useApp } from "ink"
 import React, { useEffect } from "react"
 
 import { CommandError, useCommandTask, writeRawStdout } from "#cli-kit"
+import { renderInkToString } from "#debug-view/static-render"
+import { resolveTilesPath } from "#debug-view/tiles"
+import { assertDebugFormatSanity, assertDebugSizeFloor, initialZoomForTier } from "#debug-view/view-policy"
+import type { GeocodeCommandOptions } from "#geocode-command-options"
+import { createGeocodeSession } from "#geocode-session"
 
-import type { GeocodeCommandOptions } from "../geocode-command-options.ts"
-import { createGeocodeSession } from "../geocode-session.ts"
 import { DebugFrame, mapPaneCellSize } from "./DebugFrame.tsx"
 import { DebugSessionApp } from "./DebugSessionApp.tsx"
-import { renderInkToString } from "./static-render.ts"
-import { resolveTilesPath } from "./tiles.ts"
-import { assertDebugFormatSanity, assertDebugSizeFloor, initialZoomForTier } from "./view-policy.ts"
 
 //#region Static (non-TTY) path
 

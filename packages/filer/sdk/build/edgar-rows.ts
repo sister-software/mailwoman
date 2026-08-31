@@ -18,10 +18,10 @@
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 import type { StatementSync } from "@mailwoman/sqlite/client"
 
-import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "../../schema.ts"
-import { assertISODate } from "../guards.ts"
-import { scoreEdgarSubsidiaryMatch, type CanonicalNameCandidate } from "./edgar-match.ts"
-import { mintCIKNodeID, mintFRNNodeID, mintSubsidiaryNameNodeID } from "./node-ids.ts"
+import { FilerEdgeAssertion, FilerIdentifierType, FilerRelationship } from "#schema"
+import { scoreEdgarSubsidiaryMatch, type CanonicalNameCandidate } from "#sdk/build/edgar-match"
+import { mintCIKNodeID, mintFRNNodeID, mintSubsidiaryNameNodeID } from "#sdk/build/node-ids"
+import { assertISODate } from "#sdk/guards"
 
 /**
  * One EDGAR Exhibit 21 subsidiary disclosure — the shape upstream CIK resolution + `parseExhibit21` produce somewhere
