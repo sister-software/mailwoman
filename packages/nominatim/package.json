@@ -59,7 +59,7 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@mailwoman/timezone-lookup": "workspace:*",
 		"@mailwoman/un-locode-lookup": "workspace:*",
-		"hono": "^4.13.0",
+		"hono": "^4.13.1",
 		"mailwoman": "workspace:*",
 		"path-ts": "^2.3.0",
 		"spliterator": "^6.4.1",
