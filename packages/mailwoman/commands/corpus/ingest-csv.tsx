@@ -25,10 +25,11 @@ export const spec = {
 		sample: { type: "number", default: 100, description: "Rows sampled for type inference" },
 		separator: { type: "string", default: ",", description: "Field separator" },
 		skip: { type: "number", default: 0, description: "Lines to skip before the header" },
-		"no-header": {
+		header: {
 			type: "boolean",
-			default: false,
-			description: "CSV has no header row — columns become col_0, col_1, …",
+			default: true,
+			description:
+				"The first row is the header; pass --no-header for a headerless CSV (columns become col_0, col_1, …)",
 		},
 		"dry-run": {
 			type: "boolean",
@@ -45,15 +46,16 @@ interface Options {
 	sample: number
 	separator: string
 	skip: number
-	noHeader: boolean
+	header: boolean
 	dryRun: boolean
 }
 
 const CorpusIngestCSV: ParsedCommandComponent<Options> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { ingestCSV } = await import("@mailwoman/corpus/tools")
+		const { header, ...rest } = options
 
-		return ingestCSV(options)
+		return ingestCSV({ ...rest, noHeader: !header })
 	})
 
 	if (state.status === "error") return <Text color="red">✗ {state.message}</Text>

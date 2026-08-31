@@ -25,64 +25,13 @@
  *   CREATE TABLE, but don't import
  */
 
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import type { Database } from "@mailwoman/sqlite/database-schema"
 import { basename, dirname, extname, join } from "path-ts"
-import { TextSpliterator } from "spliterator"
-
-//#region Core: quote-aware CSV field splitting
-
-const COMMA = 44
-const DOUBLE_QUOTE = 34
-
-// These stay hand-rolled on purpose — spliterator ≥ 3.2.0's CSVSpliterator does quote handling
-// correctly now, but it can't express this tool's CLI contract: `--skip N` drops N preamble lines
-// BEFORE the header (CSVSpliterator consumes row 1 as the header immediately, with no skip-first-N
-// hook), `--no-header` auto-generates `col_0…col_N` names from the first data row's width, and the
-// separator is any single caller-supplied byte. If a future edit removes those knobs, revisit;
-// until then, don't "finish the job" by swapping in CSVSpliterator.
-/**
- * TODO: the rationalization above looks outdated. Duplicated too.
- *
- * @deprecated use spliterator
- */
-function splitCSVLine(line: string, separator: number = COMMA): string[] {
-	const fields: string[] = []
-	let start = 0
-	let inQuotes = false
-
-	for (let i = 0; i < line.length; i++) {
-		const ch = line.charCodeAt(i)
-
-		if (ch === DOUBLE_QUOTE) {
-			inQuotes = !inQuotes
-		} else if (ch === separator && !inQuotes) {
-			fields.push(line.slice(start, i))
-			start = i + 1
-		}
-	}
-
-	fields.push(line.slice(start))
-
-	return fields
-}
-
-/**
- * @deprecated belongs in core, if really needed.
- */
-function stripQuotes(field: string): string {
-	const trimmed = field.trim()
-
-	if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
-		return trimmed.slice(1, -1).replaceAll('""', '"')
-	}
-
-	return trimmed
-}
-
-//#endregion
+import { CSVSpliterator } from "spliterator"
 
 //#region Column name normalization
 
@@ -182,48 +131,49 @@ interface IngestOptions {
 }
 
 async function runIngest(opts: IngestOptions): Promise<void> {
-	const sep = opts.separator.charCodeAt(0)
+	// `header: false` with `drop` is what expresses `--skip N`: the spliterator's own header handling consumes the
+	// FIRST row as the header, and `drop` counts from the row after it, so a preamble before the header has to be
+	// dropped here and the header row taken by hand. Quote handling is end-to-end (quoted delimiters, doubled quotes);
+	// `skipEmpty` drops blank lines that readline would have turned into all-null rows. The early `break` closes the
+	// file descriptor.
+	const rows = (): AsyncIterable<string[]> =>
+		CSVSpliterator.fromAsync<string[]>(opts.inputPath, {
+			mode: "array",
+			header: false,
+			columnDelimiter: opts.separator,
+			drop: opts.skipLines,
+			enableQuoteHandling: true,
+		})
 
 	// --- Pass 1: read header + sample rows for type inference ---
 	process.stderr.write(`Reading ${opts.inputPath} for schema inference...\n`)
 
-	// CRLF-safe by construction: every field below flows through stripQuotes/normalizeField, both of
-	// which `.trim()`, so a trailing CR on the last column of a CRLF file is stripped. TextSpliterator's
-	// default skipEmpty matches readline row-for-row on files with a trailing newline (the common case);
-	// it drops interior blank lines that readline would have turned into all-null rows. The early `break`
-	// closes the file descriptor.
-	let headerLine: string | null = null
+	let headerRow: string[] | null = null
 	const sampleRows: string[][] = []
-	let lineNum = 0
 
-	for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
-		lineNum++
-
-		// Skip lines before header
-		if (lineNum <= opts.skipLines) continue
-
-		if (!headerLine && opts.hasHeader) {
-			headerLine = line
+	for await (const row of rows()) {
+		if (!headerRow && opts.hasHeader) {
+			headerRow = row
 
 			continue
 		}
 
 		if (sampleRows.length < opts.sampleSize) {
-			sampleRows.push(splitCSVLine(line, sep).map(stripQuotes))
+			sampleRows.push(row)
 		} else {
 			break
 		}
 	}
 
-	if (!headerLine && opts.hasHeader) {
+	if (!headerRow && opts.hasHeader) {
 		throw new Error("No header line found in CSV")
 	}
 
 	// --- Determine column names ---
 	let rawHeaders: string[]
 
-	if (opts.hasHeader && headerLine) {
-		rawHeaders = splitCSVLine(headerLine, sep).map(stripQuotes)
+	if (opts.hasHeader && headerRow) {
+		rawHeaders = headerRow
 	} else {
 		// Auto-generate column names: col_0, col_1, ...
 		const numCols = sampleRows[0]?.length ?? 0
@@ -308,18 +258,12 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	const batch: SQLInputValue[][] = []
 	const BATCH_SIZE = 10_000
 
-	for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
-		lineNum++
-
-		if (lineNum <= opts.skipLines) continue
-
+	for await (const fields of rows()) {
 		if (opts.hasHeader && !headerSkipped) {
 			headerSkipped = true
 
 			continue
 		}
-
-		const fields = splitCSVLine(line, sep).map(stripQuotes)
 
 		const values = fields.map((f, i) => {
 			const v = normalizeField(f)
@@ -387,9 +331,8 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	const manifestPath = opts.outputPath.replace(/\.db$/, ".manifest.json")
 	await writeLocalJSONFile(manifest, manifestPath)
 
-	// TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
 	process.stderr.write(
-		`Done. ${imported.toLocaleString()} rows → ${opts.outputPath} (${(stat!.size / 1024 / 1024).toFixed(0)} MB)\n`
+		`Done. ${imported.toLocaleString()} rows → ${opts.outputPath} (${ByteFormatter.formatIEC(stat!.size)})\n`
 	)
 }
 

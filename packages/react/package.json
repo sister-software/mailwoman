@@ -61,11 +61,6 @@
 			"default": "./out/index.js",
 			"types": "./out/index.d.ts"
 		},
-		"./trust-policies": {
-			"node": "./trust-policies.ts",
-			"default": "./out/trust-policies.js",
-			"types": "./out/trust-policies.d.ts"
-		},
 		"./map": {
 			"node": "./map/index.ts",
 			"default": "./out/map/index.js",
@@ -224,16 +219,13 @@
 	"dependencies": {
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
-		"@mailwoman/query-shape": "workspace:*",
-		"dompurify": "^3.3.3",
-		"trusted-types": "^2"
+		"@mailwoman/query-shape": "workspace:*"
 	},
 	"devDependencies": {
 		"@storybook/addon-docs": "^10.5.5",
 		"@storybook/react-vite": "^10.5.5",
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
-		"@types/trusted-types": "^2",
 		"@vitejs/plugin-react": "^6.0.5",
 		"@vitest/browser-playwright": "4.1.10",
 		"maplibre-gl": "^6.5.0",

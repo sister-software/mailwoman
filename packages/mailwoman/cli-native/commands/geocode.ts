@@ -418,7 +418,6 @@ export async function run(args: readonly string[]): Promise<number> {
 		const [{ render }, { createElement }, { GeocodeDebugCommand }] = await Promise.all([
 			import("ink"),
 			import("react"),
-			// TODO: Do not use dynamic relative imports.
 			import("#debug-view/command"),
 		])
 

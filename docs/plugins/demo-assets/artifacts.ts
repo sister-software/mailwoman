@@ -34,6 +34,7 @@
  */
 
 import { $public } from "@mailwoman/core/env"
+import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLink, readLocalTextFile, statLink, statPath } from "@mailwoman/core/fs/readers"
 import { copyFileTo } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
@@ -105,10 +106,8 @@ export async function syncArtifact(sourcePath: string, destPath: string, label: 
 	}
 
 	await copyFileTo(sourcePath, destPath)
-	// TODO: IF YOU ARE SEEING THIS, IMMEDIATELY USE `ByteFormatter.formatIEC` FROM `@mailwoman/core/fs/formatters` AND REMOVE ANY SIMILAR CODE. THIS IS VERY COMMON.
-	const sizeMB = (sourceSize / 1024 / 1024).toFixed(1)
 
-	console.log(`[demo-assets] ${label}: synced (${sizeMB} MB)`)
+	console.log(`[demo-assets] ${label}: synced (${ByteFormatter.formatIEC(sourceSize)})`)
 
 	return true
 }
