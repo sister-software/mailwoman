@@ -53,7 +53,7 @@ export async function resolvePackageFile(packageName: string, subpath: string): 
 
 	if (source && (await pathExists(source))) return source
 
-	return resolvePackagePath(packageName, "out", `${subpath}.js`)
+	return existingCompiledFile(resolvePackagePath(packageName, "out", `${subpath}.js`))
 }
 
 /**
@@ -64,5 +64,17 @@ export async function resolvePackageDirectoryEntry(packageName: string, subpath:
 
 	if (source && (await pathExists(source))) return source
 
-	return resolvePackagePath(packageName, "out", subpath, "index.js")
+	return existingCompiledFile(resolvePackagePath(packageName, "out", subpath, "index.js"))
+}
+
+/**
+ * An alias that points at a missing file breaks the client bundle at the first import, while a skipped alias falls
+ * through to the package's own exports map, which is the correct answer for a subpath the alias list has outgrown.
+ */
+async function existingCompiledFile(target: string | null): Promise<string | null> {
+	if (target && (await pathExists(target))) return target
+
+	console.warn(`[demo-assets] ${target} does not exist — alias skipped`)
+
+	return null
 }

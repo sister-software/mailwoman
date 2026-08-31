@@ -118,9 +118,6 @@ export function configureDemoWebpack(
 			}),
 		],
 		resolve: {
-			// The alias map above puts every `@mailwoman/*` subpath on SOURCE; a package's own `#` imports must land on
-			// source too, and they carry that under the `node` condition, so it joins webpack's own list.
-			conditionNames: ["node", "..."],
 			alias,
 			extensionAlias: { ".js": [".ts", ".js"] },
 			fallback: fallbackMap(),
