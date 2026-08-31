@@ -43,7 +43,7 @@
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath, isoDate } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -129,13 +129,6 @@ export interface BuildPostcodeCodePointResult {
 }
 
 /**
- * `YYYY-MM-DD` in UTC — the dated-artifact suffix.
- */
-function datestamp(now: Date): string {
-	return now.toISOString().slice(0, 10)
-}
-
-/**
  * What the shard records when an offline rebuild cannot recover a provenance field. A sentinel STRING rather than an
  * empty one: a consumer reading `source_release: ""` cannot tell "no release label exists" from "nobody looked", and
  * the meaning-of-zero rule says those are different claims.
@@ -168,7 +161,7 @@ export async function buildPostcodeCodePoint(
 ): Promise<BuildPostcodeCodePointResult> {
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
-	const stamp = datestamp(now)
+	const stamp = isoDate(now)
 	const sourceDir = options.sourceDir ?? String(dataRootPath("codepoint", stamp))
 	const out = options.out ?? String(dataRootPath("wof", `postalcode-gb-codepoint-${stamp}.db`))
 

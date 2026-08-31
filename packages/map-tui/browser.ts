@@ -20,6 +20,7 @@
  * on is not a recoverable shell, so restore is the one operation that must survive any exit path.
  */
 
+import { clamp } from "@mailwoman/core/utils"
 import { AsciifyTerminal, cursorTo, SGR_RESET } from "@sister.software/asciify/tui"
 
 import { blitFrame } from "#frame"
@@ -114,10 +115,6 @@ interface DragAnchor {
 	centerLat: number
 	zoom: number
 	moved: boolean
-}
-
-function clamp(value: number, min: number, max: number): number {
-	return Math.min(Math.max(value, min), max)
 }
 
 /**

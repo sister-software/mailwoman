@@ -35,7 +35,8 @@ import {
 } from "@mailwoman/codex/us"
 import { isPresent } from "@mailwoman/core/objects"
 import type { BIOLabel, ComponentTag } from "@mailwoman/core/types"
-import { mulberry32 } from "@mailwoman/core/utils"
+import { escapeRegExp, mulberry32 } from "@mailwoman/core/utils"
+import { stripCombiningMarks } from "@mailwoman/normalize/fold"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
 import { alignRow, assertSpanInvariants, type ComponentSpan } from "#utils/align"
@@ -142,22 +143,18 @@ export const doubleSpace: Augmentation = (row) => {
  * "Ile-de-France". Returns null if the row has no accents.
  */
 export const accentStrip: Augmentation = (row) => {
-	const stripped = stripAccents(row.raw)
+	const stripped = stripCombiningMarks(row.raw)
 
 	if (stripped === row.raw) return null
 	const newComponents: ComponentDict = {}
 
 	for (const [k, v] of Object.entries(row.components)) {
 		if (v) {
-			newComponents[k as ComponentTag] = stripAccents(v)
+			newComponents[k as ComponentTag] = stripCombiningMarks(v)
 		}
 	}
 
 	return withAugmentation(row, "accent-strip", stripped, newComponents)
-}
-
-function stripAccents(s: string): string {
-	return s.normalize("NFD").replaceAll(/\p{M}/gu, "")
 }
 
 // --- typo injection (#530) -------------------------------------------------
@@ -421,7 +418,7 @@ export const directionalExpand: Augmentation = (row) => {
 
 		if (replaced !== v) {
 			newComponents[tag] = replaced
-			newRaw = newRaw.replaceAll(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
+			newRaw = newRaw.replaceAll(new RegExp(`\\b${escapeRegExp(v)}\\b`, "g"), replaced)
 			changed = true
 		}
 	}
@@ -453,7 +450,7 @@ export const directionalAbbreviate: Augmentation = (row) => {
 
 		if (replaced !== v) {
 			newComponents[tag] = replaced
-			newRaw = newRaw.replaceAll(new RegExp(`\\b${escapeRegex(v)}\\b`, "g"), replaced)
+			newRaw = newRaw.replaceAll(new RegExp(`\\b${escapeRegExp(v)}\\b`, "g"), replaced)
 			changed = true
 		}
 	}
@@ -491,7 +488,7 @@ export const streetSuffixAbbreviate: Augmentation = (row) => {
 	if (newStreet === street) return null
 
 	const newComponents: ComponentDict = { ...row.components, street: newStreet }
-	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegExp(street)}\\b`, "g"), newStreet)
 
 	if (newRaw === row.raw) return null
 
@@ -524,7 +521,7 @@ export const streetSuffixExpand: Augmentation = (row) => {
 	if (newStreet === street) return null
 
 	const newComponents: ComponentDict = { ...row.components, street: newStreet }
-	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(street)}\\b`, "g"), newStreet)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegExp(street)}\\b`, "g"), newStreet)
 
 	if (newRaw === row.raw) return null
 
@@ -559,7 +556,7 @@ export const unitDesignatorAbbreviate: Augmentation = (row) => {
 	if (newUnit === unit) return null
 
 	const newComponents: ComponentDict = { ...row.components, unit: newUnit }
-	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegExp(unit)}\\b`, "g"), newUnit)
 
 	if (newRaw === row.raw) return null
 
@@ -590,7 +587,7 @@ export const unitDesignatorExpand: Augmentation = (row) => {
 	if (newUnit === unit) return null
 
 	const newComponents: ComponentDict = { ...row.components, unit: newUnit }
-	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegex(unit)}\\b`, "g"), newUnit)
+	const newRaw = row.raw.replaceAll(new RegExp(`\\b${escapeRegExp(unit)}\\b`, "g"), newUnit)
 
 	if (newRaw === row.raw) return null
 
@@ -628,7 +625,7 @@ export const particleStrip: Augmentation = (row) => {
 	const newComponents: ComponentDict = { ...row.components }
 	delete newComponents.street_prefix_particle
 	// Drop the particle from raw, then collapse any double spaces.
-	const re = new RegExp(`\\s+${escapeRegex(particle)}\\s+`, "g")
+	const re = new RegExp(`\\s+${escapeRegExp(particle)}\\s+`, "g")
 
 	if (!re.test(row.raw)) return null
 	const newRaw = row.raw.replace(re, " ").replaceAll(/\s+/g, " ").trim()
@@ -711,8 +708,33 @@ export function* synthesizeRow(
 	}
 }
 
-function escapeRegex(s: string): string {
-	return s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
+/**
+ * One element of `arr`, drawn with the supplied unit-interval source.
+ */
+export function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
+	return arr[Math.floor(random() * arr.length)]!
+}
+
+/**
+ * The primary locale a synthesizer renders for an ISO-3166-1 alpha-2 country. Unknown countries render as `en-US`.
+ */
+export function countryToLocale(country: string): string {
+	switch (country) {
+		case "US":
+			return "en-US"
+		case "CA":
+			return "en-CA"
+		case "GB":
+			return "en-GB"
+		case "AU":
+			return "en-AU"
+		case "FR":
+			return "fr-FR"
+		case "DE":
+			return "de-DE"
+		default:
+			return "en-US"
+	}
 }
 
 // ===========================================================================

@@ -47,6 +47,20 @@ export function scriptEntryPath(): string {
  * that has already taken a command name off the front passes the remainder as `args` and it is used as given. The
  * result is typed from the config exactly as the builtin types it.
  */
+/**
+ * A flag's value, or a thrown error naming the flag and the command that needs it.
+ *
+ * `parseArgs` has no required-option concept: an absent `--name` is `undefined`, and a script that forwards that into a
+ * path or a URL fails far from the flag that caused it.
+ */
+export function requiredArgument(scope: string, name: string, value: string | undefined): string {
+	if (value === undefined) {
+		throw new Error(`${scope}: --${name} is required`)
+	}
+
+	return value
+}
+
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
 	// The builtin types its result from the whole config object, so supplying `args` moves the type; the parsed shape
 	// depends on `options`/`allowPositionals` alone, which `T` carries.

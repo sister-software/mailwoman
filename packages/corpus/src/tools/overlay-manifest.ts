@@ -28,6 +28,8 @@ import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/utils"
 import { basename, dirname, join } from "path-ts"
 
+import { escapeSQLString } from "#utils/parquet"
+
 interface ShardDescriptor {
 	split: string
 	path: string
@@ -51,13 +53,6 @@ interface BaseManifest {
 	total_rows: number
 }
 
-/**
- * Escape a path for single-quoted SQL string literals.
- */
-function sqlString(value: string): string {
-	return value.replaceAll("'", "''")
-}
-
 async function descriptor(
 	localPath: string,
 	modalPath: string,
@@ -68,7 +63,7 @@ async function descriptor(
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
 	const db = await instance.connect()
-	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${sqlString(localPath)}')`)
+	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`)
 	const sids = result.getRowObjects().map((r) => r.source_id as string)
 
 	return {

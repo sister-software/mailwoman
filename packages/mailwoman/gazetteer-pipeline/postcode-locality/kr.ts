@@ -38,7 +38,7 @@
  *   preserving behavior.
  */
 
-import { pyFloat, pyRound } from "@mailwoman/core/utils"
+import { isoSecondsUTC, pyFloat, pyRound } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -76,13 +76,6 @@ function norm(s: string | null | undefined): string {
 
 function bare(s: string | null | undefined): string {
 	return norm(s).replace(SUFFIX, "")
-}
-
-/**
- * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
- */
-function isoSeconds(): string {
-	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
 
 export interface PostcodeLocalityKROptions {
@@ -287,7 +280,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				"ceiling_note",
 				"name tier capped by WOF KR Hangul-name coverage; dominant miss = 구 urban districts (Juso source walled, #293 follow-up)",
 			],
-			["built_at", isoSeconds()],
+			["built_at", isoSecondsUTC()],
 		]
 
 		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")

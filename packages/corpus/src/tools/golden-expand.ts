@@ -51,6 +51,7 @@ import { $private } from "@mailwoman/core/env"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { isPresent, tryParsingJSON } from "@mailwoman/core/objects"
 import { dataRootPath } from "@mailwoman/core/utils"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
 import { createNewlineWriter } from "spliterator"
 
@@ -435,10 +436,6 @@ function parseCandidates(text: string): Candidate[] {
 
 // ── Validator ─────────────────────────────────────────────────────────────
 
-function normalize(s: string): string {
-	return s.toLowerCase().replaceAll(/\s+/g, " ").trim()
-}
-
 /**
  * Components that are NEVER allowed to be dropped — keeps degenerate single-token candidates out.
  */
@@ -450,7 +447,7 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 	if (candidate.raw.length > MAX_CANDIDATE_LENGTH) return false
 
 	if (/```|<\/?\w+>|^\s*\{/.test(candidate.raw)) return false
-	const normRaw = normalize(candidate.raw)
+	const normRaw = foldCaseWhitespace(candidate.raw)
 	const dropped = new Set(candidate.dropped)
 
 	// LLM cannot drop required components present in the seed.
@@ -466,7 +463,7 @@ function validate(seed: Seed, candidate: Candidate): boolean {
 
 		if (!value) continue
 
-		if (!normRaw.includes(normalize(value))) return false
+		if (!normRaw.includes(foldCaseWhitespace(value))) return false
 
 		keptCount++
 	}

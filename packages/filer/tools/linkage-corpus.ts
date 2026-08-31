@@ -11,6 +11,7 @@
  *   Nothing here imports `linkage-eval.ts`, so the dependency between the two stays one-directional.
  */
 
+import { createUnionFind } from "@mailwoman/core/utils"
 import { createHash } from "@mailwoman/core/utils/hash"
 
 import { FilerIdentifierType } from "#schema"
@@ -241,48 +242,6 @@ export function buildFilteredEvalInputs(): LinkageEvalInputs {
 	const providerRows = buildLinkageEvalProviderRows().map((row) => ({ ...row, holdingCompany: null }))
 
 	return { form499Rows, providerRows }
-}
-
-/**
- * A minimal union-find over string keys — used twice below, to fold FRNs into registrants and registrants into truth
- * families. Small enough to keep local; pulling in a dependency for 20 lines of disjoint-set would be the larger cost.
- */
-function createUnionFind(): { union: (a: string, b: string) => void; find: (a: string) => string } {
-	const parent = new Map<string, string>()
-
-	const find = (key: string): string => {
-		const current = parent.get(key)
-
-		if (current === undefined) {
-			parent.set(key, key)
-
-			return key
-		}
-
-		if (current === key) return key
-
-		const root = find(current)
-		parent.set(key, root)
-
-		return root
-	}
-
-	const union = (a: string, b: string): void => {
-		const rootA = find(a)
-		const rootB = find(b)
-
-		if (rootA === rootB) return
-
-		// Deterministic merge direction (lexicographic) — the component's representative must not depend on the order
-		// rows happened to arrive in, or the scored id universe would shift under an unrelated corpus edit.
-		if (rootA < rootB) {
-			parent.set(rootB, rootA)
-		} else {
-			parent.set(rootA, rootB)
-		}
-	}
-
-	return { union, find }
 }
 
 /**

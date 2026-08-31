@@ -34,7 +34,7 @@
 
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames-postal"
 import type { ShardMetaTable, WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -132,13 +132,6 @@ export interface BuildPostcodeGeonamesTailResult {
 }
 
 /**
- * `YYYY-MM-DD` in UTC — the dated-artifact suffix.
- */
-function datestamp(now: Date): string {
-	return now.toISOString().slice(0, 10)
-}
-
-/**
  * Build the sealed GeoNames-postal tail shard. See the module docstring for what this reproduces and why the country
  * order matters.
  */
@@ -149,7 +142,7 @@ export async function buildPostcodeGeonamesTail(
 	const now = opts.now ?? new Date()
 	const countries = [...(opts.countries ?? DEFAULT_GEONAMES_TAIL_COUNTRIES)].map((c) => c.toUpperCase())
 	const postalDir = opts.postalDir ?? String(dataRootPath("geonames-postal"))
-	const out = opts.out ?? String(dataRootPath("wof", `postalcode-geonames-tail-${datestamp(now)}.db`))
+	const out = opts.out ?? String(dataRootPath("wof", `postalcode-geonames-tail-${isoDate(now)}.db`))
 
 	if (!(await pathExists(postalDir))) {
 		throw new Error(

@@ -52,8 +52,8 @@ import { flattenTreeNodes } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { runPipeline } from "@mailwoman/core/pipeline"
-import type { AnchorLookup } from "@mailwoman/neural"
 import { NeuralAddressClassifier, parseGazetteerLexicon, PostcodeBinaryResolver } from "@mailwoman/neural"
+import { mergeAnchorLookups } from "@mailwoman/neural/anchor-inference"
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import { groupPhrases } from "@mailwoman/phrase-grouper"
@@ -110,41 +110,6 @@ export interface DemoCascadeSmokeResult {
 	total: number
 	pass: number
 	passRatePct: number
-}
-
-// Postcode anchor channel from the staged binaries — the same artifacts the demo fetches. Merge
-// mirrors neural-web's mergeAnchorLookups: union posteriors, mean non-zero centroids.
-function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
-	if (lookups.length === 1) return lookups[0]!
-	const merged: AnchorLookup = new Map()
-
-	for (const lookup of lookups) {
-		for (const [postcode, entry] of lookup) {
-			const existing = merged.get(postcode)
-
-			if (!existing) {
-				merged.set(postcode, { posterior: { ...entry.posterior }, lat: entry.lat, lon: entry.lon })
-
-				continue
-			}
-
-			for (const country of Object.keys(entry.posterior)) {
-				existing.posterior[country] = 1
-			}
-
-			if (entry.lat !== 0 || entry.lon !== 0) {
-				if (existing.lat === 0 && existing.lon === 0) {
-					existing.lat = entry.lat
-					existing.lon = entry.lon
-				} else {
-					existing.lat = (existing.lat + entry.lat) / 2
-					existing.lon = (existing.lon + entry.lon) / 2
-				}
-			}
-		}
-	}
-
-	return merged
 }
 
 /**

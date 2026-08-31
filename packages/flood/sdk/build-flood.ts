@@ -38,6 +38,7 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import {
+	assertAreaAgreement,
 	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
@@ -49,7 +50,7 @@ import {
 } from "@mailwoman/core/layers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { runChunkProcess } from "@mailwoman/core/utils"
-import { expandH3Cell, shortCellToInt, type H3Cell, type H3CellShort } from "@mailwoman/spatial"
+import { expandShortCellInt, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { compactCells, getResolution } from "h3-js"
@@ -272,7 +273,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 
 		const ingested = streamed!
 
-		assertAreaAgreement(ingested)
+		assertAreaAgreement("flood build", ingested.area, AREA_TOLERANCE)
 
 		options.onProgress?.(`${ingested.features.toLocaleString()} features written · resolving cells`)
 
@@ -433,22 +434,6 @@ export function aggregateChunks(chunks: ReadonlyArray<FloodChunkResult>): Stream
 }
 
 /**
- * Refuse an artifact whose rings do not add up to the area the source itself reports.
- *
- * The message carries the hole-blind total beside the nested one, because the gap between them is the diagnosis: a hole
- * read as an exterior ring answers "inside" for every point in it.
- */
-function assertAreaAgreement(streamed: StreamResult): void {
-	if (streamed.area.relativeGap <= AREA_TOLERANCE) return
-
-	throw new Error(
-		`flood build: the encoded rings total ${streamed.area.nestedKM2.toFixed(1)} km² against the source's ${streamed.area.sourceKM2.toFixed(1)} km² ` +
-			`(${(streamed.area.relativeGap * 100).toFixed(2)}% apart, tolerance ${(AREA_TOLERANCE * 100).toFixed(0)}%). Read without their holes the same rings total ` +
-			`${streamed.area.allExteriorKM2.toFixed(1)} km², so compare the two: a hole-blind read answers "inside" for every point in a hole`
-	)
-}
-
-/**
  * Run the ingest as a sequence of bounded child processes, one per range of the authority's feature ids.
  *
  * THE PARENT HOLDS NO HANDLE WHILE THEY RUN — its caller closed one before this and opens another after. Each child
@@ -539,7 +524,7 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 			.prepare("SELECT DISTINCT h3_cell FROM build_cell_touch WHERE zone_code = ? AND resolution = ? AND is_full = 1")
 			.all(zoneCode, resolution) as Array<{ h3_cell: number }>
 
-		const compacted = compactCells(wholeShort.map((row) => shortCellToLong(row.h3_cell, resolution)))
+		const compacted = compactCells(wholeShort.map((row) => expandShortCellInt(row.h3_cell, resolution)))
 
 		database.exec("BEGIN")
 
@@ -589,16 +574,6 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 		candidateRows,
 		resolutions: [...resolutions].toSorted((left, right) => left - right),
 	}
-}
-
-/**
- * The full H3 index for a short cell stored at `resolution`.
- *
- * Through `expandH3Cell` rather than a string concatenation, because it VALIDATES: a short cell that does not name a
- * valid cell at the stated resolution throws here instead of reaching `compactCells` as a plausible-looking index.
- */
-function shortCellToLong(shortCell: number, resolution: number): string {
-	return expandH3Cell(shortCell.toString(16).padStart(13, "0") as H3CellShort, resolution)
 }
 
 /**

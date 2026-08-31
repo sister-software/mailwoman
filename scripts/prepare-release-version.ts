@@ -32,6 +32,7 @@ import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { failScript } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { resolvePath } from "path-ts"
 import semver from "semver"
@@ -48,9 +49,7 @@ const { values } = parseArguments({
 const repoRoot = repoRootPath()
 
 function fail(message: string): never {
-	console.error(`prepare-release-version: ${message}`)
-
-	process.exit(1)
+	return failScript(`prepare-release-version: ${message}`)
 }
 
 if (!values.version) {

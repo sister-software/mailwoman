@@ -40,6 +40,7 @@
 
 import { createRequire } from "@mailwoman/core/module/resolvers"
 import { parseJSONStrict } from "@mailwoman/core/objects"
+import { failScript } from "@mailwoman/core/scripting/utils"
 import { repoRootPath } from "@mailwoman/core/utils"
 import { dirname, join } from "path-ts"
 import { $ } from "zx"
@@ -170,11 +171,6 @@ async function runVale(config: string, fixture: string): Promise<{ alerts: ValeA
 	return { alerts: Object.values(report).flat(), exitCode: result.exitCode ?? 0 }
 }
 
-function fail(message: string): never {
-	process.stderr.write(`${message}\n`)
-	process.exit(1)
-}
-
 async function checkLeg(leg: StyleLeg): Promise<void> {
 	process.stdout.write(
 		`== ${leg.dirtyFixture}: expect failure, >= ${leg.minDirtyErrors} errors, every rule file represented ==\n`
@@ -183,18 +179,20 @@ async function checkLeg(leg: StyleLeg): Promise<void> {
 	const dirty = await runVale(leg.config, leg.dirtyFixture)
 
 	if (dirty.exitCode === 0) {
-		fail(`FAIL: ${leg.dirtyFixture} exited 0 (expected a non-zero exit from error-severity hits)`)
+		failScript(`FAIL: ${leg.dirtyFixture} exited 0 (expected a non-zero exit from error-severity hits)`)
 	}
 
 	const errorCount = dirty.alerts.filter((alert) => alert.Severity === "error").length
 
 	if (errorCount < leg.minDirtyErrors) {
-		fail(`FAIL: ${leg.dirtyFixture} produced ${errorCount} error-severity hits, expected >= ${leg.minDirtyErrors}`)
+		failScript(
+			`FAIL: ${leg.dirtyFixture} produced ${errorCount} error-severity hits, expected >= ${leg.minDirtyErrors}`
+		)
 	}
 
 	for (const check of leg.ruleChecks) {
 		if (!dirty.alerts.some((alert) => alert.Check === check)) {
-			fail(`FAIL: rule ${check} did not fire on ${leg.dirtyFixture} (regression)`)
+			failScript(`FAIL: rule ${check} did not fire on ${leg.dirtyFixture} (regression)`)
 		}
 	}
 
@@ -214,14 +212,14 @@ async function checkLeg(leg: StyleLeg): Promise<void> {
 				process.stderr.write(`  ${leg.cleanFixture}:${alert.Line}  ${alert.Check}  ${alert.Message}\n`)
 			}
 
-			fail(`FAIL: ${leg.cleanFixture} tripped ${clean.alerts.length} alert(s) (false positive)`)
+			failScript(`FAIL: ${leg.cleanFixture} tripped ${clean.alerts.length} alert(s) (false positive)`)
 		}
 	} else if (clean.exitCode !== 0) {
 		for (const alert of clean.alerts) {
 			process.stderr.write(`  ${leg.cleanFixture}:${alert.Line}  ${alert.Check}  ${alert.Message}\n`)
 		}
 
-		fail(`FAIL: ${leg.cleanFixture} tripped a rule (false positive)`)
+		failScript(`FAIL: ${leg.cleanFixture} tripped a rule (false positive)`)
 	}
 
 	process.stdout.write(`OK: ${leg.cleanFixture} — 0 alerts\n`)

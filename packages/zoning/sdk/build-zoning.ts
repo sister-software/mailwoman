@@ -45,6 +45,7 @@ import {
 	LayerFreshnessPolicy,
 	LayerTier,
 	supportsExclusion,
+	sourcePresentCoverageCells,
 	writeLayerCoverage,
 	writeLayerManifest,
 	type CoverageCell,
@@ -382,7 +383,7 @@ export async function buildZoningDatabase(options: BuildZoningOptions): Promise<
 
 		const vocabulary = writeVocabularyRows(kdb, ingested.vocabulary)
 
-		const coverage = buildCoverageCells(ingested.observedByCoverageCell)
+		const coverage = sourcePresentCoverageCells(ingested.observedByCoverageCell)
 
 		assertNoNegativeClaim(coverage)
 
@@ -735,23 +736,6 @@ async function runBatchedIngest(
  */
 async function runChunk(script: string, args: readonly string[]): Promise<ZoningChunkResult> {
 	return runChunkProcess<ZoningChunkResult>({ script, args, context: "zoning build" })
-}
-
-/**
- * The coverage rows: one per cell the authority's own polygons reach, and none anywhere else.
- *
- * `observed_rows` counts the polygons reaching the cell, which is what the contract's column means. There is no
- * zero-row cell here and there cannot be one: a cell with no polygon gets NO ROW, because this product publishes
- * nothing that would let an empty cell be distinguished from land outside any adopted plan.
- */
-function buildCoverageCells(observed: Map<number, number>): CoverageCell[] {
-	const cells: CoverageCell[] = []
-
-	for (const [h3Cell, observedRows] of observed) {
-		cells.push({ h3Cell, completeness: 1, basis: CoverageBasis.SourcePresent, observedRows })
-	}
-
-	return cells.toSorted((left, right) => left.h3Cell - right.h3Cell)
 }
 
 /**

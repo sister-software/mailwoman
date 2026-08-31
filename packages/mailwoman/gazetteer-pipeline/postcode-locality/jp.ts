@@ -37,7 +37,7 @@
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
-import { pyFloat, pyRound } from "@mailwoman/core/utils"
+import { isoSecondsUTC, pyFloat, pyRound } from "@mailwoman/core/utils"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { assertDatabaseIntegrity, sealDatabase } from "@mailwoman/sqlite/sealed-db"
@@ -128,13 +128,6 @@ async function loadGeonamesPoints(path: string): Promise<Map<string, [number, nu
 	}
 
 	return out
-}
-
-/**
- * UTC ISO-8601 to the second, matching Python `datetime.now(utc).isoformat(timespec="seconds")`.
- */
-function isoSeconds(): string {
-	return new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00")
 }
 
 export interface PostcodeLocalityJPOptions {
@@ -260,7 +253,7 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 			["postcodes_total", String(keys.length)],
 			["postcodes_matched", String(matched)],
 			["match_rate", matchRate],
-			["built_at", isoSeconds()],
+			["built_at", isoSecondsUTC()],
 		]
 
 		const insMeta = kdb.prepare("INSERT OR REPLACE INTO meta VALUES (?,?)")

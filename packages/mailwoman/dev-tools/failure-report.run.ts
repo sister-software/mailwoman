@@ -27,6 +27,7 @@ import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { tempRootPath } from "@mailwoman/core/utils"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { basename, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
@@ -42,8 +43,6 @@ const SHORT_QUERY_TOKENS = 3
  * Gap from the leading count at which a row is emphasised in the report.
  */
 const NOTABLE_COUNT_GAP = 3
-
-const fold = (v: string): string => v.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 /**
  * Common fixture shape both corpora reduce to.
@@ -203,7 +202,7 @@ for (const { label, root } of specs) {
 			const tags = floorTags.get(goldLabel) ?? [goldLabel]
 			const got = tags.flatMap((t) => byTag.get(t) ?? []).join(" ")
 
-			if (fold(got) !== fold(gold.join(" "))) {
+			if (foldCaseWhitespace(got) !== foldCaseWhitespace(gold.join(" "))) {
 				fails.push({ label: goldLabel, expected: gold.join(" "), got })
 			}
 		}

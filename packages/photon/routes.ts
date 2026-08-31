@@ -9,7 +9,7 @@
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
-import { legacyQuery } from "@mailwoman/api-kit"
+import { asString, legacyQuery } from "@mailwoman/api-kit"
 
 import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, PhotonSearchParams } from "#engine"
 import { photonToSchemaOrg } from "#projection"
@@ -38,10 +38,6 @@ const MAX_LONGITUDE = 180
 const DEFAULT_LIMIT = 15
 
 const EMPTY: PhotonFeatureCollection = { type: "FeatureCollection", features: [] }
-
-function asString(raw: unknown): string | undefined {
-	return typeof raw === "string" && raw.length ? raw : undefined
-}
 
 function asStringArray(raw: unknown): string[] | undefined {
 	if (Array.isArray(raw)) return raw.filter((v): v is string => typeof v === "string")

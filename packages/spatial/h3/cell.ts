@@ -121,6 +121,16 @@ export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOL
 }
 
 /**
+ * The full H3 index for a short cell held as an integer, stored at `resolution`.
+ *
+ * Through {@link expandH3Cell} rather than a string concatenation, because it VALIDATES: a short cell that does not name
+ * a valid cell at the stated resolution throws here instead of reaching `compactCells` as a plausible-looking index.
+ */
+export function expandShortCellInt(shortCell: number, resolution: number): H3Cell {
+	return expandH3Cell(shortCell.toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort, resolution)
+}
+
+/**
  * Pack an H3 cell into the short-cell integer used as a clustered B-tree key across layer databases (poi.db, bdc.db,
  * address-id). 52 bits, so it stays inside `Number.MAX_SAFE_INTEGER` and SQLite's signed 64-bit integer column alike.
  */

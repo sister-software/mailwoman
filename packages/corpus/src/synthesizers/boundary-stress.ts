@@ -49,6 +49,7 @@
  *   base-locale shard. `synthesizers/boundary-stress.test.ts` proves the alignments.
  */
 
+import { pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -89,10 +90,6 @@ export interface SynthesizedBoundaryStressRow {
 	components: CanonicalRow["components"]
 	locale: string
 	template: BoundaryStressTemplate
-}
-
-function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
-	return arr[Math.floor(random() * arr.length)]!
 }
 
 /**

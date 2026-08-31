@@ -40,6 +40,7 @@ import {
 	fetchExhibit21Documents,
 	parseTenKFilings,
 	resolveCIKCandidates,
+	submissionsURL,
 	type CIK,
 	type CompanyTickerEntry,
 	type TenKFiling,
@@ -133,10 +134,6 @@ export interface EdgarIngestOptions extends CIKCorroborationOptions {
 interface SubmissionsPayload {
 	sic?: unknown
 	name?: unknown
-}
-
-function submissionsURL(cik: CIK): string {
-	return `https://data.sec.gov/submissions/CIK${cik}.json`
 }
 
 /**

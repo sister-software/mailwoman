@@ -28,6 +28,7 @@
  *   decompose-mode pressure.
  */
 
+import { countryToLocale, pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 export interface HouseVenueBaseTuple {
@@ -171,29 +172,6 @@ function randomHouseNumber(random: () => number): string {
 	const n = Math.floor(random() * max) + 1
 
 	return String(n)
-}
-
-function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
-	return arr[Math.floor(random() * arr.length)]!
-}
-
-function countryToLocale(country: string): string {
-	switch (country) {
-		case "US":
-			return "en-US"
-		case "CA":
-			return "en-CA"
-		case "GB":
-			return "en-GB"
-		case "AU":
-			return "en-AU"
-		case "FR":
-			return "fr-FR"
-		case "DE":
-			return "de-DE"
-		default:
-			return "en-US"
-	}
 }
 
 //#endregion

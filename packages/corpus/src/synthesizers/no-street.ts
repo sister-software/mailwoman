@@ -37,6 +37,7 @@
  *   `po-box.ts`; the same `NoStreetBaseTuple` shape is consumed.
  */
 
+import { countryToLocale, pick } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
 //#region Types
@@ -174,29 +175,6 @@ const COUNTRY_NAMES = new Map<string, ReadonlyArray<string>>([
 //#endregion
 
 //#region Synthesis
-
-function pick<T>(arr: ReadonlyArray<T>, random: () => number): T {
-	return arr[Math.floor(random() * arr.length)]!
-}
-
-function countryToLocale(country: string): string {
-	switch (country) {
-		case "US":
-			return "en-US"
-		case "CA":
-			return "en-CA"
-		case "GB":
-			return "en-GB"
-		case "AU":
-			return "en-AU"
-		case "FR":
-			return "fr-FR"
-		case "DE":
-			return "de-DE"
-		default:
-			return "en-US"
-	}
-}
 
 /**
  * Generate one no-street counter-example row for a base (locality, region, postcode, country) tuple. Picks a template

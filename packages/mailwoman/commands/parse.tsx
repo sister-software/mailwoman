@@ -10,6 +10,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import type { PolicyMode } from "@mailwoman/core/policy"
 import type { ComponentTag, Section } from "@mailwoman/core/types"
+import { percentile } from "@mailwoman/core/utils"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import { weightsPackageName } from "@mailwoman/neural/weights"
 import type { Resolver } from "@mailwoman/resolver"
@@ -544,13 +545,6 @@ async function runPipeline(input: string, options: ParseOptions): Promise<string
 
 const BENCHMARK_WARMUP_ITERATIONS = 5
 
-function percentile(sortedAsc: ReadonlyArray<number>, p: number): number {
-	if (!sortedAsc.length) return 0
-	const idx = Math.min(sortedAsc.length - 1, Math.floor((p / 100) * sortedAsc.length))
-
-	return sortedAsc[idx]!
-}
-
 function formatMs(ms: number): string {
 	if (ms < 1) return `${(ms * 1000).toFixed(0)}µs`
 
@@ -654,9 +648,9 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 		lines.push(
 			[
 				stage.padEnd(17),
-				formatMs(percentile(sorted, 50)).padStart(8),
-				formatMs(percentile(sorted, 95)).padStart(8),
-				formatMs(percentile(sorted, 99)).padStart(8),
+				formatMs(percentile(sorted, 50) ?? 0).padStart(8),
+				formatMs(percentile(sorted, 95) ?? 0).padStart(8),
+				formatMs(percentile(sorted, 99) ?? 0).padStart(8),
 				formatMs(sorted.at(-1) ?? 0).padStart(8),
 			].join("  ")
 		)
@@ -668,9 +662,9 @@ async function runBenchmark(input: string, options: ParseOptions, iterations: nu
 	lines.push(
 		[
 			"TOTAL".padEnd(17),
-			formatMs(percentile(totalsSorted, 50)).padStart(8),
-			formatMs(percentile(totalsSorted, 95)).padStart(8),
-			formatMs(percentile(totalsSorted, 99)).padStart(8),
+			formatMs(percentile(totalsSorted, 50) ?? 0).padStart(8),
+			formatMs(percentile(totalsSorted, 95) ?? 0).padStart(8),
+			formatMs(percentile(totalsSorted, 99) ?? 0).padStart(8),
 			formatMs(totalsSorted.at(-1) ?? 0).padStart(8),
 		].join("  ")
 	)

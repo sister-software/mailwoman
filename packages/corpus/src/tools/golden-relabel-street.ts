@@ -60,7 +60,7 @@ import { isStreetDirectionalToken, matchTrailingSuffix, type USStreetSuffix } fr
 import { pathExists, readDirectoryEntries, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { isPresent, parseJSONStrict, tryParsingJSON } from "@mailwoman/core/objects"
-import { sha256File } from "@mailwoman/core/utils"
+import { escapeRegExp, sha256File } from "@mailwoman/core/utils"
 import { basename, join } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
@@ -360,10 +360,6 @@ export function relabelGoldenStreetRow(
 		prefixSplit: Boolean(prefix),
 		beforeStreet: street,
 	}
-}
-
-function escapeRegExp(s: string): string {
-	return s.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 // ── Directory-level relabel ────────────────────────────────────────────────

@@ -68,6 +68,11 @@
 			"default": "./out/punctuation.js",
 			"types": "./out/punctuation.d.ts"
 		},
+		"./fold": {
+			"node": "./fold.ts",
+			"default": "./out/fold.js",
+			"types": "./out/fold.d.ts"
+		},
 		"./whitespace": {
 			"node": "./whitespace.ts",
 			"default": "./out/whitespace.js",

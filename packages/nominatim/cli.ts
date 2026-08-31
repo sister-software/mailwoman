@@ -15,7 +15,7 @@
  */
 
 import { composeAnnotators, toOpenCage } from "@mailwoman/annotations"
-import { printOpenAPIDocument, serveNode } from "@mailwoman/api-kit"
+import { serveNode } from "@mailwoman/api-kit"
 import { countryReferenceAnnotator, matchCountry } from "@mailwoman/codex/country"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -29,7 +29,7 @@ import {
 	gazetteerBannerLines,
 	gazetteerFreshness,
 	loadClassifierOrExit,
-	parseOpenAPIFlags,
+	openAPICommand,
 	resolveGazetteerOrExit,
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
@@ -329,22 +329,9 @@ async function serve(): Promise<void> {
 	})
 }
 
-/**
- * `openapi` — print (or `--out`-write) the emitted OpenAPI document for this surface. Builds the app around an
- * all-optional stub {@link NominatimEngine} (`{}` — every route answers 501 under this stub, but the document itself
- * only reflects the ROUTE TABLE, not handler behavior) so this NEVER boots the neural classifier or opens a gazetteer
- * DB: pure route-table introspection, fast regardless of data-root state. `--flavor 3.0` prints the 3.0.3 diet instead
- * of the default 3.1.0.
- */
-function openapi(): void {
-	const app = createNominatimApp({})
-
-	printOpenAPIDocument(app, NOMINATIM_DOC_INFO, parseOpenAPIFlags(BINARY_NAME))
-}
-
 await runDropInCLI({
 	binaryName: BINARY_NAME,
-	openapi,
+	openapi: openAPICommand(BINARY_NAME, createNominatimApp, NOMINATIM_DOC_INFO, {}),
 	serve,
 	usage: [
 		"  serve [--port 8080] [--host 0.0.0.0] [--candidate-db <path>] [--no-cors]",

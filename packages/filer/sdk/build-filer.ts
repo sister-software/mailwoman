@@ -184,6 +184,7 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, movePath, makeDirectories } from "@mailwoman/core/fs/writers"
+import { countRows } from "@mailwoman/sqlite"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { dirname } from "path-ts"
@@ -355,10 +356,6 @@ export interface BuildFilerResult {
  * into `filer_node`/`filer_edge` → index-after-load → manifest → seal → atomic move-into-place. See the module
  * docstring for the full flow rationale and the edges/attributes emitted.
  */
-function countRows(kdb: DatabaseClient<FilerDatabase>, table: string): number {
-	return (kdb.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get() as { c: number }).c
-}
-
 export async function buildFilerDatabase(options: BuildFilerOptions): Promise<BuildFilerResult> {
 	const progress = options.onProgress ?? (() => {})
 

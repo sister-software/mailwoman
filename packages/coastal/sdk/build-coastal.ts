@@ -37,12 +37,14 @@
 import { statPath } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import {
+	assertAreaAgreement,
 	CoverageBasis,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
 	LayerTier,
 	supportsExclusion,
+	sourcePresentCoverageCells,
 	writeLayerCoverage,
 	writeLayerManifest,
 	type CoverageCell,
@@ -293,13 +295,13 @@ export async function buildCoastalDatabase(options: BuildCoastalOptions): Promis
 		}
 
 		assertScenarioCounts(ingested.scenarioCounts, options.expectedFeatureCounts)
-		assertAreaAgreement(ingested)
+		assertAreaAgreement("coastal build", ingested.area, AREA_TOLERANCE)
 
 		options.onProgress?.(
 			`${ingested.erosionFeatures.toLocaleString()} erosion features · ${ingested.instabilityFeatures.toLocaleString()} ground-instability features written`
 		)
 
-		const coverage = buildCoverageCells(ingested.observedByCoverageCell)
+		const coverage = sourcePresentCoverageCells(ingested.observedByCoverageCell)
 
 		assertNoNegativeClaim(coverage)
 
@@ -455,22 +457,6 @@ export function aggregateChunks(chunks: ReadonlyArray<CoastalChunkResult>): Stre
 }
 
 /**
- * Refuse an artifact whose rings do not add up to the area the source itself reports.
- *
- * The message carries the hole-blind total beside the nested one, because the gap between them is the diagnosis: a hole
- * read as an exterior ring answers "inside" for every point in it.
- */
-function assertAreaAgreement(streamed: StreamResult): void {
-	if (streamed.area.relativeGap <= AREA_TOLERANCE) return
-
-	throw new Error(
-		`coastal build: the encoded rings total ${streamed.area.nestedKM2.toFixed(1)} km² against the source's ${streamed.area.sourceKM2.toFixed(1)} km² ` +
-			`(${(streamed.area.relativeGap * 100).toFixed(2)}% apart, tolerance ${(AREA_TOLERANCE * 100).toFixed(0)}%). Read without their holes the same rings total ` +
-			`${streamed.area.allExteriorKM2.toFixed(1)} km², so compare the two: a hole-blind read answers "inside" for every point in a hole`
-	)
-}
-
-/**
  * Refuse a scenario whose streamed count disagrees with the live service's.
  *
  * PER SCENARIO RATHER THAN POOLED, because a pooled total can agree while two layers are transposed — twelve layers of
@@ -603,29 +589,6 @@ async function runBatchedIngest(
  */
 async function runChunk(script: string, args: readonly string[]): Promise<CoastalChunkResult> {
 	return runChunkProcess<CoastalChunkResult>({ script, args, context: "coastal build" })
-}
-
-/**
- * The coverage rows: one per cell the authority's own polygons reach, and none anywhere else.
- *
- * `observed_rows` counts the polygons reaching the cell, which is what the contract's column means. There is no
- * zero-row cell here and there cannot be one: a cell with no polygon gets NO ROW, because this product publishes
- * nothing that would let an empty cell be distinguished from unmapped ground. That is precisely the asymmetry the flood
- * layer inverts, and the reason `completeness` sits beside a `source_present` basis rather than alone.
- */
-function buildCoverageCells(observed: Map<number, number>): CoverageCell[] {
-	const cells: CoverageCell[] = []
-
-	for (const [h3Cell, observedRows] of observed) {
-		cells.push({
-			h3Cell,
-			completeness: 1,
-			basis: CoverageBasis.SourcePresent,
-			observedRows,
-		})
-	}
-
-	return cells.toSorted((left, right) => left.h3Cell - right.h3Cell)
 }
 
 /**

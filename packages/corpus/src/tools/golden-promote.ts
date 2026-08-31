@@ -34,6 +34,7 @@
 import { readDirectory, pathExists } from "@mailwoman/core/fs/readers"
 import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/utils"
+import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { join } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 
@@ -101,10 +102,6 @@ export interface PromoteGoldenOptions {
 }
 
 // ── Filters ───────────────────────────────────────────────────────────────
-
-function normalize(s: string): string {
-	return s.toLowerCase().replaceAll(/\s+/g, " ").trim()
-}
 
 /**
  * Heuristic: an address with 5+ components but fewer than 2 separators (commas/newlines/dashes) is most likely glued
@@ -194,7 +191,7 @@ export async function promoteGolden(
 			priorEntries.push({ country, entries })
 
 			for (const e of entries) {
-				seenNormalized.add(normalize(e.raw))
+				seenNormalized.add(foldCaseWhitespace(e.raw))
 			}
 
 			report?.(`  prior ${country}: ${entries.length} entries (forward-copy base)`)
@@ -215,7 +212,7 @@ export async function promoteGolden(
 	const seenInBatch = new Set<string>()
 
 	for (const cand of candidates) {
-		const norm = normalize(cand.raw)
+		const norm = foldCaseWhitespace(cand.raw)
 
 		// Dedup pass 1: against prior versioned golden
 		if (seenNormalized.has(norm)) {

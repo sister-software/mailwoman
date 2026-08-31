@@ -66,6 +66,7 @@ import {
 	supportsExclusion,
 } from "@mailwoman/core/layers"
 import type { POIIntentOutcome } from "@mailwoman/core/pipeline"
+import { compareByCodePoint } from "@mailwoman/core/utils"
 import type {
 	CompiledGeographicModel,
 	ConceptRecord,
@@ -284,18 +285,6 @@ export interface AbsenceObservationRouteOptions {
 }
 
 /**
- * UTF-16 code point, ascending. `localeCompare` is the trap this avoids: its answer depends on the machine's collation,
- * so an order built with it is reproducible only on the machine that built it.
- */
-function byCodePoint(left: string, right: string): number {
-	if (left < right) return -1
-
-	if (left > right) return 1
-
-	return 0
-}
-
-/**
  * One category the artifact can speak about: the concept it names, the affordance assertion, and the mapping that ties
  * the external identifier to the concept.
  */
@@ -318,7 +307,9 @@ function indexAffordingCategories(model: CompiledGeographicModel): Map<string, A
 
 	const mappings = model.mappings.filter((mapping) => String(mapping.vocabulary) === POI_TAXONOMY_VOCABULARY)
 
-	for (const concept of model.concepts.toSorted((left, right) => byCodePoint(String(left.id), String(right.id)))) {
+	for (const concept of model.concepts.toSorted((left, right) =>
+		compareByCodePoint(String(left.id), String(right.id))
+	)) {
 		const mapping = mappings.find((candidate) => String(candidate.concept) === String(concept.id))
 
 		if (!mapping) continue
@@ -361,7 +352,7 @@ export function recoverCoverageResolution(cells: readonly number[]): number {
 async function readSurveyedCategories(db: DatabaseClient<POIDatabase>): Promise<string[]> {
 	const rows = await db.selectFrom("poi_category_codes").select("category").execute()
 
-	return rows.map((row) => row.category).toSorted(byCodePoint)
+	return rows.map((row) => row.category).toSorted(compareByCodePoint)
 }
 
 /**
@@ -416,7 +407,7 @@ export async function createAbsenceObservationRoute(
 
 		const identity: AbsenceRouteIdentity = {
 			modelVersion: model.modelVersion,
-			affordingCategoryIDs: [...affording.keys()].toSorted(byCodePoint),
+			affordingCategoryIDs: [...affording.keys()].toSorted(compareByCodePoint),
 			coverageDatabasePath: options.coverageDatabasePath,
 			coverageLayer,
 			surveyedCategoryID,

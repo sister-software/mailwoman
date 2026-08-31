@@ -40,6 +40,7 @@
 
 import type { CoincidentLocality } from "@mailwoman/resolver"
 import { haversineKm } from "@mailwoman/spatial"
+import { tableExists } from "@mailwoman/sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { WOFDatabase } from "#schema"
@@ -103,10 +104,6 @@ interface CandidateRow {
 	max_latitude: number
 	max_longitude: number
 	pop: number
-}
-
-function tableExists<DB>(db: DatabaseClient<DB>, name: string): boolean {
-	return !!db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?").get(name)
 }
 
 /**

@@ -61,7 +61,7 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import { tryParsingJSON } from "@mailwoman/core/objects"
-import { dataRootPath, md5File } from "@mailwoman/core/utils"
+import { dataRootPath, isoDate, md5File } from "@mailwoman/core/utils"
 import type { UPRNDatabase } from "@mailwoman/resolver-wof-sqlite/uprn-schema"
 import {
 	LATITUDE_MAX,
@@ -518,13 +518,6 @@ export interface BuildUPRNLayerResult {
 }
 
 /**
- * `YYYY-MM-DD` in UTC — the dated-acquisition suffix.
- */
-function datestamp(now: Date): string {
-	return now.toISOString().slice(0, 10)
-}
-
-/**
  * The sidecar {@link downloadOpenUPRN} writes beside the archive.
  */
 interface UPRNAcquisitionSidecar {
@@ -553,7 +546,7 @@ export async function buildUPRNLayer(options: BuildUPRNLayerOptions): Promise<Bu
 	const phase = options.onPhase ?? (() => {})
 	const started = Date.now()
 	const now = options.now ?? new Date()
-	const stamp = datestamp(now)
+	const stamp = isoDate(now)
 	const sourceDir = resolvePath(options.sourceDir ?? dataRootPath("os-uprn", stamp))
 	const out = options.out ?? String(dataRootPath("uprn", "uprn.db"))
 	const minimumPlausibleRows = options.minimumPlausibleRows ?? OPEN_UPRN_MINIMUM_PLAUSIBLE_ROWS
